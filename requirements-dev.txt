@@ -1,0 +1,25 @@
+-r requirements.txt
+
+pytest==7.4.2
+pytest-django==4.5.2
+hypothesis==6.82.7
+black==25.1.0
+ipython==9.1.0
+
+# Core type-checking
+mypy==1.10.0
+# mypy==1.6.1
+
+# Django type stubs
+django-stubs==5.0.2
+djangorestframework-stubs==3.15.5
+
+# Additional common type stubs
+types-requests==2.31.0.20240406
+types-python-dateutil==2.9.0.20241206
+types-PyYAML==6.0.12.20240311
+
+# Typing extensions for latest type features
+typing_extensions==4.13.2
+
+

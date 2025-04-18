@@ -1,3 +1,10 @@
 .env
-#*
+.git*
+*ignore*
+*#*
 *~
+*.pyc
+*cache*
+db.sqlite3
+*key
+.htpasswd

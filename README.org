@@ -1,1 +1,14 @@
 #+TITLE: Tuth program
+
+* Quick start for dev
+#+BEGIN_SRC bash  -i
+docker compose up --build
+#+END_SRC
+
+Then
+
+#+BEGIN_SRC bash  -i
+docker compose up
+#+END_SRC
+
+Then visite https://localhost/
