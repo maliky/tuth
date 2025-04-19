@@ -10,9 +10,6 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS").split()
 CSRF_TRUSTED_ORIGINS = os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS").split()
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
 DATABASES = {
     #https://docs.djangoproject.com/en/5.2/ref/databases/#postgresql-notes
     "default": {
@@ -20,8 +17,8 @@ DATABASES = {
         "NAME": os.getenv("POSTGRES_DB"),
         "USER": os.getenv("POSTGRES_USER"),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
-        "HOST": os.getenv("POSTGRES_HOST","db"),  # db is the docker-compose service
-        "PORT": os.getenv("POSTGRES_PORT","5432")
+        "HOST": os.getenv("POSTGRES_HOST"),  # db is the docker-compose service
+        "PORT": os.getenv("POSTGRES_PORT")
     }
 }
 
