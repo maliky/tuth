@@ -5,7 +5,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
-      - .env
+      - .env-dev
 
   web:
     build: .
@@ -16,7 +16,7 @@ services:
     volumes:
       - .:/code
     env_file:
-      - .env
+      - .env-dev
     depends_on:
       - db
     expose:
