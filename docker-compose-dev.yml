@@ -8,7 +8,10 @@ services:
       - .env-dev
 
   web:
-    build: .
+    build:
+      context: .
+      args:
+        ENV: dev
     volumes:
       - .:/code
     env_file:

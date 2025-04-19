@@ -1,6 +1,9 @@
 services:
   web:
-    build: .
+    build:
+      context: .
+      args:
+        ENV: prod
     volumes:
       - .:/code
     env_file:
