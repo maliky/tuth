@@ -1,6 +1,4 @@
-from .settings import *
-
-# ! Will not test real db. If I want to ttes tthe real db need to do it in docker
+from .settings_dev import *
 
 DATABASES["default"] = {
     "ENGINE": "django.db.backends.sqlite3",
