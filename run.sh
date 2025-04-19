@@ -23,12 +23,10 @@ fi
 if [[ "$1" == "-d" ]] || [[ "$1" == "--dev" ]]; then
     echo "Running in development mode..."
     export PYTHONPATH=$(pwd)
-    export DJANGO_SETTINGS_MODULE=app.settings_dev    
     ln -fs .env-dev .env
 elif [[ "$1" == "-p" ]] || [[ "$1" == "--prod" ]]; then
     echo "Running in production mode..."
-    export DJANGO_SETTINGS_MODULE=app.settings_prod
-    ln -fs .env-dev .env
+    ln -fs .env-prod .env
 fi
 
 python manage.py migrate
