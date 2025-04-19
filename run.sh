@@ -23,9 +23,11 @@ fi
 if [[ "$1" == "-d" ]] || [[ "$1" == "--dev" ]]; then
     echo "Running in development mode..."
     export PYTHONPATH=$(pwd)
+    export django_settings_module=app.settings_dev    
     ln -fs .env-dev .env
 elif [[ "$1" == "-p" ]] || [[ "$1" == "--prod" ]]; then
     echo "Running in production mode..."
+    export django_settings_module=app.settings_prod
     ln -fs .env-dev .env
 fi
 
