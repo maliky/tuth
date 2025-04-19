@@ -1,5 +1,10 @@
 #+TITLE: Tuth program
 
+* For prod
+#+BEGIN_SRC bash  -i
+docker compose -f docker-compose-prod.yml
+#+END_SRC
+
 * Quick start for dev
 #+BEGIN_SRC bash  -i
 docker compose up --build
