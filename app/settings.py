@@ -14,27 +14,20 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
+# Quick-start development settings - unsuitable for production
+# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-load_dotenv(BASE_DIR / '.env')
+load_dotenv(BASE_DIR / ".env")
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-notsecured-cu7ncf5wl4#5$kdq!ei7_&xdqpm$r!h_h*w=+gak=e_m(h^*3q")
 # python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
-DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "").split(',')
-CSRF_TRUSTED_ORIGINS = os.getenv(
-    "DJANGO_CSRF_TRUSTED_ORIGINS",
-    "https://localhost https://127.0.0.1"
-).split()
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-DEBUG = True
-
-ALLOWED_HOSTS = []
-
+DEBUG = os.getenv("DJANGO_DEBUG") == "True"
+ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS").split("")
+CSRF_TRUSTED_ORIGINS = os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS").split("")
 
 # Application definition
 
@@ -84,10 +77,10 @@ DATABASES = {
     #https://docs.djangoproject.com/en/5.2/ref/databases/#postgresql-notes
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("POSTGRES_DB","tuthdb"),
-        "USER": os.getenv("POSTGRES_USER","tuthuser"),
+        "NAME": os.getenv("POSTGRES_DB"),
+        "USER": os.getenv("POSTGRES_USER"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
         "HOST": os.getenv("POSTGRES_HOST","db"),  # db is the docker-compose service
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD","unsecured"),        
         "PORT": os.getenv("POSTGRES_PORT","5432")
     }
 }
