@@ -18,18 +18,4 @@ services:
       options:
         max-size: "50m"
         max-file: "5"
-      
-  # web:
-  #   image: ghcr.io/maliky/tuth:latest  # replace with your real GHCR path
-  #   restart: always
-  #   env_file:
-  #     - .env
-  #   volumes:
-  #     - .:/code
-  #     - static_volume:/code/static
-  #     - media_volume:/code/media
-  #     - /var/log/tuth:/code/logs
-  #   ports:
-  #     - "127.0.0.1:8000:8000"
 
-volumnes:
