@@ -2,8 +2,7 @@ services:
   web:
     build:
       context: .
-      args:
-        ENV: prod
+      dockerfile: Dockerfile-prod
     volumes:
       - .:/code
     env_file:
