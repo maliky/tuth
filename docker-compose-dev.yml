@@ -10,8 +10,7 @@ services:
   web:
     build:
       context: .
-      args:
-        ENV: dev
+      dockerfile: Dockerfile-dev
     volumes:
       - .:/code
     env_file:
