@@ -1,6 +1,5 @@
 .env*
-.git*
-*ignore*
+.git/*
 *#*
 *~
 *.pyc
