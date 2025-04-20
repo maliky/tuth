@@ -17,4 +17,4 @@ COPY . /code/
 
 EXPOSE 8000
 
-CMD ["bash", "./runs.sh", "--dev"]
+CMD ["bash", "./run.sh", "--dev"]
