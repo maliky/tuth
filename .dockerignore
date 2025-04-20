@@ -1,0 +1,9 @@
+.env*
+.git/*
+*#*
+*~
+*.pyc
+*cache*
+db.sqlite3
+*.key
+.htpasswd
