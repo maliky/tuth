@@ -1,19 +1,36 @@
 #+TITLE: Tuth program
 
-* For prod
-#+BEGIN_SRC bash  -i
-docker compose -f docker-compose-prod.yml
-#+END_SRC
+* Tuth Application — Quickstart Guide
 
-* Quick start for dev
-#+BEGIN_SRC bash  -i
-docker compose up --build
-#+END_SRC
+This document summarizes how to explicitly run and test the Tuth application in different environments.
 
-Then
+** 🟢 Development Environment
 
-#+BEGIN_SRC bash  -i
-docker compose up
-#+END_SRC
+To launch your dev environment (Docker Compose):
 
-Then visite https://localhost/
+#+begin_src bash
+docker-compose -f docker-compose-dev.yml up --build
+#+end_src
+
+Access explicitly at [[https://localhost][https://localhost]]
+
+** 🧪 Running Tests in Development
+
+Explicitly run tests within the dev container:
+
+#+begin_src bash
+docker-compose -f docker-compose-dev.yml run --rm web pytest tests/
+#+end_src
+
+** 🚀 Production Environment
+
+Build and launch explicitly the production environment:
+
+#+begin_src bash
+docker-compose -f docker-compose-prod.yml up --build -d
+#+end_src
+
+- Ensure that your production `.env-prod` file is explicitly configured and secure.
+
+Access explicitly via your production URL (e.g., [[https://tuth.koba.sarl][https://tuth.koba.sarl]]).
+

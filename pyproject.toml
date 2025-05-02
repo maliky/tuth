@@ -1,7 +1,6 @@
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "app.settings_test"
+addopts = "-p no:cacheprovider --assert=plain --strict-markers"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
-addopts = "--strict-markers"
 
 # [build-system]
 # requires = ["setuptools>=42", "wheel"]
