@@ -32,6 +32,7 @@ CSRF_TRUSTED_ORIGINS = os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS").split(',')
 # Application definition
 
 INSTALLED_APPS = [
+    "app.apps.AppConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",

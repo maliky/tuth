@@ -6,26 +6,26 @@ python_files = ["tests.py", "test_*.py", "*_tests.py"]
 # requires = ["setuptools>=42", "wheel"]
 # build-backend = "setuptools.build_meta"
 
-# [tool.black]
-# line-length = 90
-# target-version = ["py310"]
+[tool.black]
+line-length = 90
+target-version = ["py312"]
 
-# [tool.flake8]
-# exclude = "__pycache__,.git"
-# max-complexity = 15
-# max-line-length = 90
-# # The old ignore list: C901,W605,E203,D401,W503,D101,D107,D103,E501
-# ignore = [
-#   "C901",  # 'func' is too complex
-#   "W605",  # invalid escape sequence
-#   "E203",  # whitespace before ':'
-#   "D401",  # first line should be in imperative mood
-#   "W503",  # line break before binary operator
-#   "D101",  # missing docstring in public class
-#   "D107",  # missing docstring in __init__
-#   "D103",  # missing docstring in public function/class
-#   "E501",  # line too long
-# ]
+[tool.flake8]
+exclude = "__pycache__,.git"
+max-complexity = 15
+max-line-length = 90
+# The old ignore list: C901,W605,E203,D401,W503,D101,D107,D103,E501
+ignore = [
+  "C901",  # 'func' is too complex
+  "W605",  # invalid escape sequence
+  "E203",  # whitespace before ':'
+  "D401",  # first line should be in imperative mood
+  "W503",  # line break before binary operator
+  "D101",  # missing docstring in public class
+  "D107",  # missing docstring in __init__
+  "D103",  # missing docstring in public function/class
+  "E501",  # line too long
+]
 
 [tool.mypy]
 python_version = "3.12"
@@ -35,3 +35,7 @@ follow_imports = "silent"
 warn_redundant_casts = true
 warn_return_any = true
 warn_unreachable = true
+plugins = ["mypy_django_plugin.main"]
+
+[tool.django-stubs]
+django_settings_module = "app.settings"
