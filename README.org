@@ -4,17 +4,29 @@
 
 This document summarizes how to explicitly run and test the Tuth application in different environments.
 
-** 🟢 Development Environment
-
-To launch your dev environment (Docker Compose):
-
+** Development Environment
+To make some change
+create a new branch or switch to dev branch
+do you changes
+if adding python libraries (through pip install xyz)
+add them to requirements.txt
+#+BEGIN_SRC bash  
+echo "xyz" > requirements.txt
+#+END_SRC
+do code checks
+#+BEGIN_SRC python
+black app/ && flake8 app/ && mypy app/
+#+END_SRC
+To launch your docker-compose dev environment to test
 #+begin_src bash
 docker-compose -f docker-compose-dev.yml up --build
 #+end_src
 
 Access explicitly at [[https://localhost][https://localhost]]
 
-** 🧪 Running Tests in Development
+test and push
+
+** Running Tests in Development
 
 Explicitly run tests within the dev container:
 
@@ -22,7 +34,7 @@ Explicitly run tests within the dev container:
 docker-compose -f docker-compose-dev.yml run --rm web pytest tests/
 #+end_src
 
-** 🚀 Production Environment
+** Production Environment
 
 Build and launch explicitly the production environment:
 

@@ -4,6 +4,8 @@ from __future__ import (
 
 from django.db import models
 from django.contrib.auth.models import User
+from app.constants import CLEARANCE_CHOICES
+from app.models.utils import make_choices
 
 
 # ─────────── Finance ───────────────────────────────
@@ -13,11 +15,7 @@ class FinancialRecord(models.Model):
     total_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     clearance_status = models.CharField(
         max_length=50,
-        choices=[
-            ("pending", "Pending"),
-            ("cleared", "Cleared"),
-            ("blocked", "Blocked"),
-        ],
+        choices=make_choices(CLEARANCE_CHOICES),
         default="pending",
     )
     last_updated = models.DateTimeField(auto_now=True)

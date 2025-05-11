@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 from django.db import models
-from app.models.academics import College  # avoid circular import issues
+from app.constants import USER_ROLES
+from app.models.utils import make_choices
 
 
 class Profile(models.Model):
@@ -7,27 +10,12 @@ class Profile(models.Model):
 
 
 class RoleAssignment(models.Model):
-    USER_ROLES = [
-        ("Dean", "Dean"),
-        ("Chair", "Chair"),
-        ("Lecturer", "Lecturer"),
-        ("Assistant Professor", "Assistant Professor"),
-        ("Associate Professor", "Associate Professor"),
-        ("Professor", "Professor"),
-        ("Technician", "Technician"),
-        ("Lab Technician", "Lab Technician"),
-        ("Instructor", "Instructor"),
-        ("VPAA", "VPAA"),
-        ("Registrar", "Registrar"),
-        ("FinancialOfficer", "FinancialOfficer"),
-        ("EnrollmentOfficer", "EnrollmentOfficer"),
-    ]
     user = models.ForeignKey(
         "auth.User", on_delete=models.CASCADE, related_name="role_assignments"
     )
-    role = models.CharField(max_length=30, choices=USER_ROLES)
+    role = models.CharField(max_length=30, choices=make_choices(USER_ROLES))
     college = models.ForeignKey(
-        College,
+        "app.College",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,

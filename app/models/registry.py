@@ -4,6 +4,10 @@ from __future__ import (
 
 from django.db import models
 from django.contrib.auth.models import User
+from app.constants import REGISTRATION_STATUS_CHOICES
+from app.models.utils import validate_model_status
+from django.contrib.contenttypes.fields import GenericRelation
+from app.models.utils import make_choices
 
 
 # ─────────── Documents ─────────────────────────────
@@ -11,16 +15,11 @@ class Document(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE)
     file = models.FileField(upload_to="documents/")
     document_type = models.CharField(max_length=50)
-    upload_date = models.DateTimeField(auto_now_add=True)
-    verification_status = models.CharField(
-        max_length=50,
-        choices=[
-            ("pending", "Pending"),
-            ("approved", "Approved"),
-            ("rejected", "Rejected"),
-        ],
-        default="pending",
-    )
+    status_history = GenericRelation("app.StatusHistory", related_query_name="document")
+
+    def clean(self):
+        super().clean()
+        validate_model_status(self)
 
 
 # ─────────── Registrations & Rosters ───────────────
@@ -29,11 +28,7 @@ class Registration(models.Model):
     section = models.ForeignKey("app.Section", on_delete=models.CASCADE)
     status = models.CharField(
         max_length=30,
-        choices=[
-            ("pre_registered", "Pre-registered"),
-            ("confirmed", "Confirmed"),
-            ("pending_clearance", "Pending Clearance"),
-        ],
+        choices=make_choices(REGISTRATION_STATUS_CHOICES),
         default="pre_registered",
     )
     date_registered = models.DateTimeField(auto_now_add=True)

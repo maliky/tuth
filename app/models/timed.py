@@ -4,10 +4,10 @@ from django.db import models
 from django.core.validators import MinValueValidator
 from django.db.models.functions import ExtractYear
 from django.core.exceptions import ValidationError
-
-from app.models.academics import Course  # avoid circular import
-from app.models.spaces import Room
-
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+from app.constants import STATUS_CHOICES
+from app.models.utils import make_choices
 
 # ------------------------------------------------------------------
 # Academic Year & Term
@@ -72,7 +72,9 @@ class Term(models.Model):
 
 
 class Section(models.Model):
-    course = models.ForeignKey(Course, related_name="sections", on_delete=models.PROTECT)
+    course = models.ForeignKey(
+        "app.Course", related_name="sections", on_delete=models.PROTECT
+    )
     number = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
     term = models.ForeignKey(Term, on_delete=models.PROTECT)
     instructor = models.ForeignKey(
@@ -83,7 +85,7 @@ class Section(models.Model):
         on_delete=models.SET_NULL,
     )
     # could try lasy reference
-    room = models.ForeignKey(Room, null=True, blank=True, on_delete=models.SET_NULL)
+    room = models.ForeignKey("app.Room", null=True, blank=True, on_delete=models.SET_NULL)
     schedule = models.CharField(max_length=100, blank=True)
     max_seats = models.PositiveIntegerField(default=30, validators=[MinValueValidator(3)])
 
@@ -109,3 +111,19 @@ class Section(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.short_code} | {self.term} | {self.room}"
+
+
+class StatusHistory(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="statuses_authored",
+    )
+    state = models.CharField(max_length=30, choices=make_choices(STATUS_CHOICES))
+
+    # --- generic link ---
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_obj = GenericForeignKey("content_type", "object_id")
