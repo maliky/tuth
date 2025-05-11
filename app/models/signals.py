@@ -5,8 +5,7 @@ from django.dispatch import receiver
 
 from app.models.academics import Curriculum
 from app.models.timed import StatusHistory  # or whatever you named it
-
-APPROVED = "approved"  # keep in one constants module if you wish
+from app.constants import APPROVED
 
 
 @receiver(post_save, sender=StatusHistory)

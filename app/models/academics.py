@@ -3,25 +3,17 @@ from __future__ import annotations
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.db.models.functions import Lower
+from app.constants import (
+    CURRICULUM_LEVEL_CHOICES,
+    COLLEGE_CHOICES,
+)
+from app.models.utils import validate_model_status, make_choices
+from django.contrib.contenttypes.fields import GenericRelation
 
 # ------------------------------------------------------------------
 # College and Curriculum
 # ------------------------------------------------------------------
 
-COLLEGE_CHOICES: list[tuple[str, str]] = [
-    ("COHS", "College of Health Sciences"),
-    ("COAS", "College of Arts and Sciences"),
-    ("COED", "College of Education"),
-    ("CAFS", "College of Agriculture and Food Sciences"),
-    ("COET", "College of Engineering and Technology"),
-    ("COBA", "College of Business Administration"),
-]
-
-VALIDATION_STATUS_CHOICES = [
-    ("pending", "Pending"),
-    ("approved", "Approved"),
-    ("adjustments_required", "Adjustments Required"),
-]
 
 class College(models.Model):
     code = models.CharField(max_length=4, unique=True)
@@ -48,50 +40,73 @@ class College(models.Model):
 class Curriculum(models.Model):
     title = models.CharField(max_length=255)
     level = models.CharField(
-        max_length=15,
-        choices=[
-            ("freshman", "Freshman"),
-            ("sophomore", "Sophomore"),
-            ("junior", "Junior"),
-            ("senior", "Senior"),
-        ],
+        max_length=15, choices=make_choices(CURRICULUM_LEVEL_CHOICES)
     )
     college = models.ForeignKey(
-        College, on_delete=models.CASCADE, related_name="curricula"
+        "app.College", on_delete=models.CASCADE, related_name="curricula"
     )
-    created_by = models.ForeignKey(
-        "auth.User",
-        null=True,
-        on_delete=models.SET_NULL,
-        related_name="curricula_created",
-    )
-    validated_by = models.ForeignKey(
-        "auth.User",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="curricula_validated",
-    )
-    validation_status = models.CharField(
-        max_length=50,
-        choices= VALIDATION_STATUS_CHOICES,
-        default="pending",
+    academic_year = models.ForeignKey(
+        "app.AcademicYear", on_delete=models.PROTECT, related_name="curricula"
     )
     is_active = models.BooleanField(default=False)
-    creation_date = models.DateTimeField(auto_now_add=True)
-    validation_date = models.DateTimeField(null=True, blank=True)
+
+    status_history = GenericRelation("app.StatusHistory", related_query_name="curriculum")
+
+    def __str__(self) -> str:  # pragma: no cover
+        return f"{self.title} - {self.level} - {self.college}"
+
+    def _add_status(
+        self,
+        state,
+        author,
+    ):
+        """
+        Convenience wrapper to append a new Status row.
+        """
+        return self.status_history.create(
+            state=state,
+            author=author,
+        )
+
+    def set_status_revision(
+        self,
+        author,
+    ):
+        """
+        Convenience wrapper to append a new revision Status row.
+        """
+        return self._add_status(state="needs_revision", author=author)
+
+    def set_status_approved(
+        self,
+        author,
+    ):
+        """
+        Convenience wrapper to append a new Approved Status row.
+        """
+        return self._add_status(state="approved", author=author)
+
+    def set_status_pending(
+        self,
+        author,
+    ):
+        """
+        Convenience wrapper to append a new Pending Status row.
+        """
+        return self._add_status(state="pending", author=author)
+
+    def current_status(self):
+        """Return most recent status entry (or None)."""
+        return self.status_history.order_by("-created_at").first()
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["level", "college"],
+                fields=["level", "college", "academic_year"],
                 condition=models.Q(is_active=True),
                 name="uniq_active_curriculum_level_college",
             )
         ]
-
-    def __str__(self) -> str:  # pragma: no cover
-        return f"{self.title} - {self.level} - {self.college}"
 
 
 # ------------------------------------------------------------------
@@ -122,6 +137,9 @@ class Course(models.Model):
 
     # ---------- hooks ----------
     def save(self, *args, **kwargs):
+        """
+        updating course_code on the fly
+        """
         self.code = f"{self.name}{self.number}"
         super().save(*args, **kwargs)
 
@@ -134,6 +152,10 @@ class Course(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.code} - {self.title}"
+
+    def clean(self):
+        super().clean()
+        validate_model_status(self)
 
 
 class Prerequisite(models.Model):

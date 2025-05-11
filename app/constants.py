@@ -1,10 +1,18 @@
-CURRICULUM_LEVEL_CHOICES = [
-    ("freshman", "Freshman"),
-    ("sophomore", "Sophomore"),
-    ("junior", "Junior"),
-    ("senior", "Senior"),
-]
+APPROVED: str = "approved"  # keep in one constants module if you wish
 
+UNDEFINED_CHOICES: str = "undefined_choice"
+
+CURRICULUM_LEVEL_CHOICES: list[str] = [
+    "freshman",
+    "sophomore",
+    "junior",
+    "senior",
+]
+CLEARANCE_CHOICES: list[str] = [
+    "pending",
+    "cleared",
+    "blocked",
+]
 COLLEGE_CHOICES: list[tuple[str, str]] = [
     ("COHS", "College of Health Sciences"),
     ("COAS", "College of Arts and Sciences"),
@@ -13,31 +21,44 @@ COLLEGE_CHOICES: list[tuple[str, str]] = [
     ("COET", "College of Engineering and Technology"),
     ("COBA", "College of Business Administration"),
 ]
-REGISTRATION_STATUS_CHOICES = [
-    ("pre_registered", "Pre-registered"),
-    ("confirmed", "Confirmed"),
-    ("pending_clearance", "Pending Clearance"),
-]
-STATUS_CHOICES = [
-    ("pending", "Pending"),
-    ("approved", "Approved"),
-    ("adjustments_required", "Adjustments Required"),
-    ("rejected", "Rejected"),
+REGISTRATION_STATUS_CHOICES: list[str] = [
+    "pre_registered",
+    "confirmed",
+    "pending_clearance",
 ]
 
+# la séparation par classe me permet de vérifier la validité des états
+# au moment de la sauvegarde ou des modification du code.
+STATUS_CHOICES_PER_MODEL: dict[str, list[str]] = {
+    "curriculum": [
+        "pending",
+        "approved",
+        "needs_revision",
+    ],
+    "document": [
+        "pending",
+        "approved",
+        "adjustments_required",
+        "rejected",
+    ],
+}
 
-USER_ROLES = [
-    ("Dean", "Dean"),
-    ("Chair", "Chair"),
-    ("Lecturer", "Lecturer"),
-    ("Assistant Professor", "Assistant Professor"),
-    ("Associate Professor", "Associate Professor"),
-    ("Professor", "Professor"),
-    ("Technician", "Technician"),
-    ("Lab Technician", "Lab Technician"),
-    ("Instructor", "Instructor"),
-    ("VPAA", "VPAA"),
-    ("Registrar", "Registrar"),
-    ("FinancialOfficer", "FinancialOfficer"),
-    ("EnrollmentOfficer", "EnrollmentOfficer"),
+STATUS_CHOICES: list[str] = list(
+    set([c for choices in STATUS_CHOICES_PER_MODEL.values() for c in choices])
+)
+
+USER_ROLES: list[str] = [
+    "dean",
+    "chair",
+    "lecturer",
+    "assistant_professor",
+    "associate_professor",
+    "professor",
+    "technician",
+    "lab_technician",
+    "instructor",
+    "vpaa",
+    "registrar",
+    "financial_officer",
+    "enrollment_officer",
 ]

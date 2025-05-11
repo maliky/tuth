@@ -6,31 +6,31 @@ from app.models import (
     College,
     Curriculum,
     Course,
-    Section,
-    Prerequisite,
-    Document,
-    FinancialRecord,
-    PaymentHistory,
-    Registration,
-    ClassRoster,
-    Profile,
-    RoleAssignment,
 )
+
 
 class CurriculumResource(resources.ModelResource):
     class Meta:
         model = Curriculum
         # specify fields order or exclude if needed
-        fields = ("id", "title", "level", "academic_year", "college__code",
-                  "validation_status", "is_active")
-        
+        fields = (
+            "id",
+            "title",
+            "level",
+            "academic_year",
+            "college__code",
+            "validation_status",
+            "is_active",
+        )
+
+
 @admin.register(College)
 class CollegeAdmin(admin.ModelAdmin):
     list_display = ("code", "fullname", "current_dean")
 
 
 @admin.register(Curriculum)
-class CurriculumAdmin(GuardedModelAdmin):
+class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = CurriculumResource
     list_display = ("title", "level", "academic_year", "college", "is_active")
     list_filter = ("college", "level", "academic_year", "is_active")
@@ -41,13 +41,15 @@ class CourseInline(admin.TabularInline):
     model = Course
     extra = 0
 
+
 class CourseResource(resources.ModelResource):
     class Meta:
         model = Course
-        exclude = ("description",)   # example: omit long text if not needed
+        exclude = ("description",)  # example: omit long text if not needed
+
 
 @admin.register(Course)
-class CourseAdmin(admin.ModelAdmin):
+class CourseAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     resource_class = CourseResource
     list_display = ("code", "title", "curriculum", "credit_hours")
     list_filter = ("curriculum__college", "curriculum__academic_year")

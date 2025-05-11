@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
+
 from pathlib import Path
 from dotenv import load_dotenv
 import os
@@ -26,13 +27,15 @@ DEBUG = os.getenv("DJANGO_DEBUG") == "True"
 # python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS").split(',')
-CSRF_TRUSTED_ORIGINS = os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS").split(',')
+ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",")
+CSRF_TRUSTED_ORIGINS = os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
 
 # Application definition
 
 INSTALLED_APPS = [
-    "app.apps.AppConfig",
+    "import_export",
+    "app.apps.TuthAppConfig",
+    "guardian",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -50,6 +53,15 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+# https://docs.djangoproject.com/en/5.2/topics/auth/customizing/#specifying-authentication-backensd
+AUTHENTICATION_BACKENDS = (
+    "django.contrib.auth.backends.ModelBackend",
+    "guardian.backends.ObjectPermissionBackend",  # add this backend
+)
+
+# may be needed for anonymous users
+# ANONYMOUS_USER_ID = -1
 
 ROOT_URLCONF = "app.urls"
 
@@ -89,17 +101,17 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-#### DB
+# ### DB
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 DATABASES = {
     "default": {
-        "ENGINE": os.getenv('POSTGRES_ENGINE',"django.db.backends.postgresql"),
+        "ENGINE": os.getenv("POSTGRES_ENGINE", "django.db.backends.postgresql"),
         "NAME": os.getenv("POSTGRES_DB"),
         "USER": os.getenv("POSTGRES_USER"),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
-        "HOST": os.getenv("POSTGRES_HOST"), 
-        "PORT": os.getenv("POSTGRES_PORT")
+        "HOST": os.getenv("POSTGRES_HOST"),
+        "PORT": os.getenv("POSTGRES_PORT"),
     }
 }
 
@@ -127,5 +139,3 @@ MEDIA_ROOT = BASE_DIR / "media/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-

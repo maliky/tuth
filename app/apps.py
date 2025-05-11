@@ -1,9 +1,12 @@
 from django.apps import AppConfig
 
 
-class AppConfig(AppConfig):
+class TuthAppConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "app"
 
     def ready(self):
-        import app.models
+        """
+        this garanties that my signal are imported when I use the application.
+        """
+        import app.models  # noqa: F401
