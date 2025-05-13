@@ -12,7 +12,3 @@ def validate_model_status(instance):
             f"Allowed statuses: {', '.join(valid_statuses)}."
         )
     return None
-
-
-def make_choices(main_list: list[str] = [UNDEFINED_CHOICES]) -> list[tuple[str, str]]:
-    return [(elt, elt.replace("_", " ").title()) for elt in main_list]

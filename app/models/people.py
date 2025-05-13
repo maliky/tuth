@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from django.db import models
 from app.constants import USER_ROLES
-from app.models.utils import make_choices
+from app.app_utils import make_choices
 
 
 class Profile(models.Model):

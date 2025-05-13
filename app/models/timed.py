@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from app.constants import STATUS_CHOICES
-from app.models.utils import make_choices
+from app.app_utils import make_choices
 
 # ------------------------------------------------------------------
 # Academic Year & Term
