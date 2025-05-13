@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from app.constants import REGISTRATION_STATUS_CHOICES
 from app.models.utils import validate_model_status
 from django.contrib.contenttypes.fields import GenericRelation
-from app.models.utils import make_choices
+from app.app_utils import make_choices
 
 
 # ─────────── Documents ─────────────────────────────

@@ -1,37 +1,55 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail  # e exit immediatly if error, -u unset var are error -o pipefail forward errors
 
 printusage() {
-    prog=$(basename "$0")
-    echo "lance l'application en mode dev ou prod"
-    echo "Usage: $prog arg"  >&2
-    echo "arg1: -d --dev  -p --prod: Option qui définie l'environement d'execution de l'application"
-    echo "" >&2
-    echo "Options:" >&2
-    echo " -h or --help	  Print this messages" >&2
+    cat >&2 <<EOF
+Usage: $(basename "$0") [-d | --dev] [-p | --prod] [-m | --migrate]
+
+Options
+  -d, --dev       Run in development mode (loads .env-dev)
+  -p, --prod      Run in production mode  (loads .env-prod)
+  -m, --migrate   Run 'makemigrations' and 'migrate' before starting
+  -h, --help      Show this help
+EOF
 }
 
-#### Run section
+# ---- parse CLI -------------------------------------------------------------
+MODE=""
+RUN_MIGRATIONS=false
 
-# print.cmd.helper
-if [[ -z "$1" ]] || [[ "$1" == '-h' ]]  || [[ "$1" == '--help' ]];
-then  # -z if for empty
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -d|--dev)   MODE=dev ;;
+        -p|--prod)  MODE=prod ;;
+        -m|--migrate) RUN_MIGRATIONS=false ;;
+        -h|--help)  printusage; exit 0 ;;
+        *)          echo "Unknown option: $1" >&2; printusage; exit 1 ;;
+    esac
+    shift
+done
+
+if [[ -z "$MODE" ]]; then
+    echo "Error: you must specify --dev or --prod" >&2
     printusage
     exit 1
 fi
 
-# Check the environment variable FLASK_ENV
-if [[ "$1" == "-d" ]] || [[ "$1" == "--dev" ]]; then
-    echo "Running in development mode..."
-    export PYTHONPATH=$(pwd)
+# ---- load environment ------------------------------------------------------
+echo "Running in $MODE mode…"
+if [[ $MODE == dev ]]; then
     ln -fs .env-dev .env
-elif [[ "$1" == "-p" ]] || [[ "$1" == "--prod" ]]; then
-    echo "Running in production mode..."
+else
     ln -fs .env-prod .env
 fi
+export $(grep -v '^#' .env | xargs)  # load variables
 
-export $(grep -v '^#' .env | xargs)  # explicitly load variables from .env
+# ---- optional migrations ---------------------------------------------------
+if $RUN_MIGRATIONS; then
+    echo "▶  Running makemigrations and migrate"
+    python manage.py makemigrations app
+    python manage.py migrate
+fi
 
-python manage.py migrate
+# ---- static & server -------------------------------------------------------
 python manage.py collectstatic --noinput
 gunicorn app.wsgi:application --bind 0.0.0.0:8000
-

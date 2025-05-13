@@ -7,7 +7,8 @@ from app.constants import (
     CURRICULUM_LEVEL_CHOICES,
     COLLEGE_CHOICES,
 )
-from app.models.utils import validate_model_status, make_choices
+from app.models.utils import validate_model_status
+from app.app_utils import make_choices
 from django.contrib.contenttypes.fields import GenericRelation
 
 # ------------------------------------------------------------------

@@ -5,7 +5,7 @@ from __future__ import (
 from django.db import models
 from django.contrib.auth.models import User
 from app.constants import CLEARANCE_CHOICES
-from app.models.utils import make_choices
+from app.app_utils import make_choices
 
 
 # ─────────── Finance ───────────────────────────────

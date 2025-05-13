@@ -17,22 +17,22 @@ do code checks
 #+BEGIN_SRC python
 black app/ && flake8 app/ && mypy app/
 #+END_SRC
-To launch your docker-compose dev environment to test
+
+*** Launch your docker-compose dev environment 
 #+begin_src bash
 docker-compose -f docker-compose-dev.yml up --build
 #+end_src
 
-Access explicitly at [[https://localhost][https://localhost]]
-
-test and push
-
-** Running Tests in Development
+*** Running Tests in Development
 
 Explicitly run tests within the dev container:
 
 #+begin_src bash
 docker-compose -f docker-compose-dev.yml run --rm web pytest tests/
 #+end_src
+
+Access explicitly at [[https://localhost][https://localhost]]
+
 
 ** Production Environment
 
