@@ -111,11 +111,9 @@ class Course(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                Lower("code"), "curriculum", name="uniq_course_code_per_curriculum"
+                Lower("code"), "curriculum__college", name="uniq_course_code_per_college"
             )
         ]
-
-
 
 
 class Prerequisite(models.Model):
