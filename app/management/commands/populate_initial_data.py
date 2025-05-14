@@ -1,115 +1,143 @@
 # app/management/commands/populate_initial_data.py
+from __future__ import annotations
+
+from datetime import date
+
+from django.contrib.auth.models import Group, Permission, User
+from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
-from django.contrib.auth.models import User, Group, Permission
 from django.db import transaction
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
-from django.contrib.contenttypes.models import ContentType
 
-
-# from guardian.shortcuts import assign_perm
+# from app.models.timed import AcademicYear, Term, Section
 
 from app.constants import (
     COLLEGE_CHOICES,
-    USER_ROLES,
+    DEFAULT_ROLE_TO_COLLEGE,
     OBJECT_PERM_MATRIX,
     TEST_PW,
-    DEFAULT_ROLE_TO_COLLEGE,
+    USER_ROLES,
 )
-from app.models import College, RoleAssignment
+from app.models import AcademicYear, College, RoleAssignment
 
-# ---------- helper maps ----------
+
+# ────────────────────────────────────────────────────────────────────
+# Pure helpers
+# ────────────────────────────────────────────────────────────────────
+
+
+def ensure_superuser():
+    SUPERUSER = {"username": "dev", "email": "dev@tubmanu.edu.lr", "password": "dev"}
+
+    if not User.objects.filter(username=SUPERUSER["username"]).exists():
+        User.objects.create_superuser(**SUPERUSER)
+        print("✔ Superuser recreated.")
+    else:
+        print("Superuser already present.")
+
+
+
+def populate_academic_years(start_year: int = 2009, end_year: int | None = None) -> None:
+    """Insert `AcademicYear` rows from start_year … end_year (inclusive)."""
+    if end_year is None:
+        end_year = date.today().year
+
+    for year in range(start_year, end_year + 1):
+        starting = date(year, 9, 1)  # 1 Sep sits in allowed (Jul-Oct) window
+        _, created = AcademicYear.objects.get_or_create(starting_date=starting)
+        verb = "Created" if created else "Exists "
+        print(f"  {verb}: {starting.strftime('%Y')}/{end_year"})  # console feedback
+
+
+def populate_colleges() -> dict[str, College]:
+    """Return mapping code → College instance (created or fetched)."""
+    mapping: dict[str, College] = {}
+    for code, fullname in COLLEGE_CHOICES:
+        obj, _ = College.objects.get_or_create(code=code, defaults={"fullname": fullname})
+        mapping[code] = obj
+        print(f"  ✓ {code:<4} {fullname}")
+    return mapping
+
+
+def ensure_role_groups() -> dict[str, Group]:
+    """Ensure one `Group` per role; return mapping role → group."""
+    return {
+        role: Group.objects.get_or_create(name=role.capitalize())[0]
+        for role in USER_ROLES
+    }
+
+
+def upsert_test_user(username: str, pwd: str) -> User:
+    user, created = User.objects.get_or_create(username=username)
+    if created:
+        user.set_password(pwd)
+        user.email = f"{username.replace('_', '.')}@tu.koba.sarl"
+        user.is_staff = True
+        user.save()
+    return user
+
+
+def content_type_map() -> dict[str, ContentType]:
+    """Lazy build if you don't keep a constant in constants.py."""
+    return {
+        name: ContentType.objects.get(app_label="app", model=name)
+        for name in OBJECT_PERM_MATRIX
+    }
+
+
+# ────────────────────────────────────────────────────────────────────
+# Management Command
+# ────────────────────────────────────────────────────────────────────
 
 
 class Command(BaseCommand):
-    help = "Populate development DB with colleges, groups, roles and test users."
+    help = "Populate dev DB with colleges, groups, test users, permissions, AY."
 
     @transaction.atomic
     def handle(self, *args, **options):
-        self.stdout.write(self.style.NOTICE("⚙  Populating colleges…"))
+        self.stdout.write(self.style.NOTICE("\n✔  Creating superuser.\n"))
+        ensure_superuser()  # dev admin
 
-        CONTENT_TYPE_MAP = {
-            model_name: ContentType.objects.get(app_label="app", model=model_name)
-            for model_name in OBJECT_PERM_MATRIX
-        }
+        self.stdout.write(self.style.NOTICE("⚙  Colleges"))
+        code2college = populate_colleges()
 
-        code_to_college = {}
-        for code, fullname in COLLEGE_CHOICES:
-            obj, _ = College.objects.get_or_create(
-                code=code, defaults={"fullname": fullname}
-            )
-            code_to_college[code] = obj
-            self.stdout.write(f"  ✓ {code} ({fullname})")
+        self.stdout.write(self.style.NOTICE("\n⚙  Groups"))
+        role_groups = ensure_role_groups()
 
-        self.stdout.write(self.style.NOTICE("\n⚙  Populating groups (one per role)…"))
-        role_groups = {
-            role: Group.objects.get_or_create(name=role.capitalize())[0]
-            for role in USER_ROLES
-        }
-
-        self.stdout.write(
-            self.style.NOTICE("\n⚙  Populating users and role-assignments…")
-        )
+        self.stdout.write(self.style.NOTICE("\n⚙  Users + RoleAssignments"))
         for role in USER_ROLES:
-            username = f"test_{role}"
-            user, created = User.objects.get_or_create(username=username)
-            if created:
-                user.set_password(TEST_PW)
-                user.email = f"{username.replace('_', '.')}@tu.koba.sarl"
-                user.is_staff = True
-                user.save()
-                self.stdout.write(self.style.SUCCESS(f"  + user '{username}' created"))
+            u = upsert_test_user(f"test_{role}", TEST_PW)
+            u.groups.add(role_groups[role])
+            college = code2college.get(DEFAULT_ROLE_TO_COLLEGE.get(role, ""), None)
 
-            else:
-                self.stdout.write(f"  = user '{username}' already exists")
-
-            # add to group (makes permission assignment easier later)
-            user.groups.add(role_groups[role])
-
-            # optional college assignment
-            college = None
-            if role in DEFAULT_ROLE_TO_COLLEGE:
-                college = code_to_college[DEFAULT_ROLE_TO_COLLEGE[role]]
-
-            # create / update RoleAssignment
             RoleAssignment.objects.update_or_create(
-                user=user,
+                user=u,
                 role=role,
                 college=college,
                 defaults={"start_date": timezone.now().date(), "end_date": None},
             )
+            self.stdout.write(f"  ↳ {u.username} ({role})")
 
-        self.stdout.write(self.style.SUCCESS("\n✔  Initial data population complete.\n"))
+        self.stdout.write(self.style.NOTICE("\n⚙  Model-level permissions"))
+        ctype_map = content_type_map()
 
-        for model_name, perms in OBJECT_PERM_MATRIX.items():
-            content_type = CONTENT_TYPE_MAP[model_name]
-
-            for perm_codename, roles in perms.items():
-                perm = Permission.objects.get(
-                    codename=perm_codename, content_type=content_type
-                )
+        for model_name, perm_dict in OBJECT_PERM_MATRIX.items():
+            ct = ctype_map[model_name]
+            for perm_name, roles in perm_dict.items():
+                codename = f"{perm_name}_{model_name}"
+                perm = Permission.objects.get(codename=codename, content_type=ct)
                 for role in roles:
-                    group = role_groups[role]
-                    group.permissions.add(perm)
-                    self.stdout.write(self.style.SUCCESS(f"Permission {perm} to {group}"))
+                    role_groups[role].permissions.add(perm)
 
-        # Object-level permission assignment for all roles linked to a specific college
+        self.stdout.write(self.style.NOTICE("\n⚙  Object-level college perms"))
         for ra in RoleAssignment.objects.filter(college__isnull=False):
-            user = ra.user
-            college = ra.college
-            role = ra.role
-            for perm_codename, roles in OBJECT_PERM_MATRIX["college"].items():
-                if role in roles:
-                    assign_perm(perm_codename, user, college)
-                    self.stdout.write(
-                        self.style.SUCCESS(
-                            f"Object perm '{perm_codename}' assigned to '{user}' for '{college}'"
-                        )
-                    )
+            for perm_name, roles in OBJECT_PERM_MATRIX["college"].items():
+                codename = f"{perm_name}_college"
+                if ra.role in roles:
+                    assign_perm(codename, ra.user, ra.college)
 
-        self.stdout.write(
-            self.style.SUCCESS("\n✔ Guardian object-level permissions assigned.\n")
-        )
+        self.stdout.write(self.style.NOTICE("\n⚙  Academic years"))
+        populate_academic_years()
 
-
-# +END_SRC
+        self.stdout.write(self.style.SUCCESS("\n✔  All seed data created.\n"))
