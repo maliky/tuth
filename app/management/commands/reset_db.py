@@ -7,8 +7,9 @@ class Command(BaseCommand):
     """
     python manage.py reset_db
     python manage.py migrate
-    python manage.py populate_initial_data 
-   """
+    python manage.py populate_initial_data
+    """
+
     help = "Completely resets the database by dropping all tables."
 
     def handle(self, *args, **options):
