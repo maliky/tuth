@@ -33,6 +33,24 @@ docker-compose -f docker-compose-dev.yml run --rm web pytest tests/
 
 Access explicitly at [[https://localhost][https://localhost]]
 
+*** Restarting from fresh
+#+BEGIN_SRC bash term2
+  docker-compose -f docker-compose-dev.yml down -v
+  sudo rm app/migrations/*
+#+END_SRC
+
+Dans un autre terminal
+#+BEGIN_SRC bash term2
+   docker-compose -f docker-compose-dev.yml up --build
+#+END_SRC
+
+#+BEGIN_SRC bash  term3
+    docker-compose -f docker-compose-dev.yml exec web python manage.py makemigrations app
+    docker-compose -f docker-compose-dev.yml exec web python manage.py migrate
+    docker-compose -f docker-compose-dev.yml exec web python manage.py populate_initial_data
+#+END_SRC
+
+
 
 ** Production Environment
 

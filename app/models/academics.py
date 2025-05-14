@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from django.db import models
 from django.core.exceptions import ValidationError
-from django.db.models.functions import Lower
 from app.constants import (
     CURRICULUM_LEVEL_CHOICES,
     COLLEGE_CHOICES,
@@ -86,7 +85,13 @@ class Course(models.Model):
     curriculum = models.ForeignKey(
         Curriculum, related_name="courses", on_delete=models.PROTECT
     )
-
+    college = models.ForeignKey(
+        "app.College",
+        null=True,
+        on_delete=models.PROTECT,
+        related_name="courses",
+        editable=False,  # users pick curriculum, not college
+    )
     prerequisites: models.ManyToManyField["Course", "Prerequisite"] = (
         models.ManyToManyField(
             "self",
@@ -103,6 +108,9 @@ class Course(models.Model):
         updating course_code on the fly
         """
         self.code = f"{self.name}{self.number}"
+        # auto-populate college from curriculum
+        if self.curriculum_id:
+            self.college = self.curriculum.college
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:  # pragma: no cover
@@ -111,7 +119,9 @@ class Course(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                Lower("code"), "curriculum__college", name="uniq_course_code_per_college"
+                fields=["code", "college"],
+                condition=models.Q(college__isnull=False),
+                name="uniq_course_code_per_college",
             )
         ]
 

@@ -12,6 +12,7 @@ class AcademicYearAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     date_hierarchy = "starting_date"
     inlines = [TermInline]
     ordering = ("-starting_date",)
+    search_fields = ("long_name", "short_name")
 
 
 @admin.register(Term)
@@ -19,6 +20,7 @@ class TermAdmin(GuardedModelAdmin):
     list_display = ("__str__", "academic_year", "number", "start_date", "end_date")
     list_filter = ("academic_year", "number")
     autocomplete_fields = ("academic_year",)
+    search_fields = ("academic_year__long_name", "number")
 
 
 @admin.register(Section)

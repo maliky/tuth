@@ -25,6 +25,7 @@ class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
         "academic_year",
         "college",
     )
+    search_fields = ("title",)
 
 
 @admin.register(Course)
@@ -39,6 +40,7 @@ class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
         "curriculum__college",
         "curriculum__academic_year",
     )
+    search_fields = ("code", "title")
 
 
 @admin.register(Prerequisite)
