@@ -28,7 +28,7 @@ from app.models import AcademicYear, College, RoleAssignment
 
 
 def ensure_superuser():
-    SUPERUSER = {"username": "dev", "email": "dev@tubmanu.edu.lr", "password": "dev"}
+    SUPERUSER = {"username": "dev", "email": "dev@tu.koba.sarl", "password": "dev"}
 
     if not User.objects.filter(username=SUPERUSER["username"]).exists():
         User.objects.create_superuser(**SUPERUSER)
@@ -46,7 +46,7 @@ def populate_academic_years(start_year: int = 2009, end_year: int | None = None)
         starting = date(year, 9, 1)  # 1 Sep sits in allowed (Jul-Oct) window
         _, created = AcademicYear.objects.get_or_create(starting_date=starting)
         verb = "Created" if created else "Exists "
-        print(f"{verb}: {starting.strftime('%Y')}/{end_year}")  # console feedback
+        print(f"{verb}: {starting.strftime('%Y')}/{end_year}") 
 
 
 def populate_colleges() -> dict[str, College]:
@@ -128,6 +128,7 @@ class Command(BaseCommand):
                 perm = Permission.objects.get(codename=codename, content_type=ct)
                 for role in roles:
                     role_groups[role].permissions.add(perm)
+            self.stdout.write(f"  ↳ {model_name} ({perm_dict.keys()})")
 
         self.stdout.write(self.style.NOTICE("\n⚙  Object-level college perms"))
         for ra in RoleAssignment.objects.filter(college__isnull=False):
@@ -135,6 +136,7 @@ class Command(BaseCommand):
                 codename = f"{perm_name}_college"
                 if ra.role in roles:
                     assign_perm(codename, ra.user, ra.college)
+            self.stdout.write(f"  ↳ {perm_name} {roles}")
 
         self.stdout.write(self.style.NOTICE("\n⚙  Academic years"))
         populate_academic_years()
