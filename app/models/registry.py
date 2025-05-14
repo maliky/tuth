@@ -4,7 +4,7 @@ from __future__ import (
 
 from django.db import models
 from django.contrib.auth.models import User
-from app.constants import REGISTRATION_STATUS_CHOICES
+from app.constants import STATUS_CHOICES_PER_MODEL
 from app.models.utils import validate_model_status
 from django.contrib.contenttypes.fields import GenericRelation
 from app.app_utils import make_choices
@@ -28,7 +28,7 @@ class Registration(models.Model):
     section = models.ForeignKey("app.Section", on_delete=models.CASCADE)
     status = models.CharField(
         max_length=30,
-        choices=make_choices(REGISTRATION_STATUS_CHOICES),
+        choices=make_choices(STATUS_CHOICES_PER_MODEL["registration"]),
         default="pre_registered",
     )
     date_registered = models.DateTimeField(auto_now_add=True)

@@ -4,10 +4,7 @@ from django.db import models
 from django.core.validators import MinValueValidator
 from django.db.models.functions import ExtractYear
 from django.core.exceptions import ValidationError
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
-from app.constants import STATUS_CHOICES
-from app.app_utils import make_choices
+
 
 # ------------------------------------------------------------------
 # Academic Year & Term
@@ -111,19 +108,3 @@ class Section(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.short_code} | {self.term} | {self.room}"
-
-
-class StatusHistory(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    author = models.ForeignKey(
-        "auth.User",
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name="statuses_authored",
-    )
-    state = models.CharField(max_length=30, choices=make_choices(STATUS_CHOICES))
-
-    # --- generic link ---
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
-    content_obj = GenericForeignKey("content_type", "object_id")
