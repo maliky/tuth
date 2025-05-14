@@ -8,6 +8,7 @@ from app.constants import (
     COLLEGE_CHOICES,
 )
 from app.models.utils import validate_model_status
+from app.models.mixins import StatusableMixin
 from app.app_utils import make_choices
 from django.contrib.contenttypes.fields import GenericRelation
 
@@ -38,7 +39,7 @@ class College(models.Model):
         return f"{self.code} - {self.fullname}"
 
 
-class Curriculum(models.Model):
+class Curriculum(StatusableMixin, models.Model):
     title = models.CharField(max_length=255)
     level = models.CharField(
         max_length=15, choices=make_choices(CURRICULUM_LEVEL_CHOICES)
@@ -56,49 +57,9 @@ class Curriculum(models.Model):
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.title} - {self.level} - {self.college}"
 
-    def _add_status(
-        self,
-        state,
-        author,
-    ):
-        """
-        Convenience wrapper to append a new Status row.
-        """
-        return self.status_history.create(
-            state=state,
-            author=author,
-        )
-
-    def set_status_revision(
-        self,
-        author,
-    ):
-        """
-        Convenience wrapper to append a new revision Status row.
-        """
-        return self._add_status(state="needs_revision", author=author)
-
-    def set_status_approved(
-        self,
-        author,
-    ):
-        """
-        Convenience wrapper to append a new Approved Status row.
-        """
-        return self._add_status(state="approved", author=author)
-
-    def set_status_pending(
-        self,
-        author,
-    ):
-        """
-        Convenience wrapper to append a new Pending Status row.
-        """
-        return self._add_status(state="pending", author=author)
-
-    def current_status(self):
-        """Return most recent status entry (or None)."""
-        return self.status_history.order_by("-created_at").first()
+    def clean(self):
+        super().clean()
+        validate_model_status(self)
 
     class Meta:
         constraints = [
@@ -144,19 +105,15 @@ class Course(models.Model):
         self.code = f"{self.name}{self.number}"
         super().save(*args, **kwargs)
 
+    def __str__(self) -> str:  # pragma: no cover
+        return f"{self.code} - {self.title}"
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 Lower("code"), "curriculum", name="uniq_course_code_per_curriculum"
             )
         ]
-
-    def __str__(self) -> str:  # pragma: no cover
-        return f"{self.code} - {self.title}"
-
-    def clean(self):
-        super().clean()
-        validate_model_status(self)
 
 
 class Prerequisite(models.Model):

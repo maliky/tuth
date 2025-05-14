@@ -1,10 +1,10 @@
-# app/models/signals.py  (create if it doesn't exist)
+# app/models/signals.py
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from app.models.academics import Curriculum
-from app.models.timed import StatusHistory  # or whatever you named it
+from app.models.mixins import StatusHistory
 from app.constants import APPROVED
 
 
