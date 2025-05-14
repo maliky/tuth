@@ -1,4 +1,10 @@
 OBJECT_PERM_MATRIX = {
+    "prerequisite": {
+        "view": ["dean", "chair", "registrar", "vpaa"],
+        "add": ["dean", "registrar", "vpaa"],
+        "change": ["dean", "registrar", "vpaa"],
+        "delete": ["vpaa"],
+    },
     "college": {
         "view": [
             "dean",

@@ -156,26 +156,41 @@ class PrerequisiteInline(admin.TabularInline):
     """
 
     model = Prerequisite  # the through model
-    fk_name = "prerequisite_course"  # points TO this course
+    fk_name = "course"
     verbose_name_plural = "Is prerequisite for"
     extra = 0
-    autocomplete_fields = ("course",)  # ⇦ pick by code or title
+    autocomplete_fields = ("prerequisite_course",)  
 
 
-class RequiredInline(admin.TabularInline):
-    model = Prerequisite  # same table
-    fk_name = "course"  # prerequisites OF this course
-    verbose_name_plural = "Requires"
-    extra = 1
+from django.contrib import admin
+from app.models.academics import Prerequisite
+
+
+class RequiresInline(admin.TabularInline):
+    """
+    Prerequisites that *this* course **needs**.
+
+    Example:  “CS201 requires → [CS101]”
+    Stored row: course = CS201 , prerequisite_course = CS101
+    """
+    model = Prerequisite          #
+    fk_name = "course"            # this course is the dependent one
+    verbose_name = "required prerequisite"
+    verbose_name_plural = "Prerequisites this course needs"
+    extra = 0
     autocomplete_fields = ("prerequisite_course",)
 
 
-@admin.register(Course)
-class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    resource_class = CourseResource
-    list_display = ("code", "title", "curriculum", "credit_hours")
-    list_filter = ("curriculum__college", "curriculum__academic_year")
-    search_fields = ("code", "title")
-    autocomplete_fields = ("curriculum",)
-    ordering = ("code",)
-    inlines = [SectionInline, RequiredInline, PrerequisiteInline]
+class RequiredByInline(admin.TabularInline):
+    """
+    Courses that **depend** on *this* course.
+
+    Example:  “[CS201] requires CS101”  → viewed on the CS101 page
+    Stored row: course = CS201 , prerequisite_course = CS101
+    """
+    model = Prerequisite
+    fk_name = "prerequisite_course"      # this course is the prerequisite
+    verbose_name = "dependent course"
+    verbose_name_plural = "Courses that require this course"
+    extra = 0
+    autocomplete_fields = ("course",)
