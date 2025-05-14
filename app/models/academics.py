@@ -116,6 +116,8 @@ class Course(models.Model):
         ]
 
 
+
+
 class Prerequisite(models.Model):
     course = models.ForeignKey(
         Course, related_name="course_prereq_edges", on_delete=models.CASCADE
