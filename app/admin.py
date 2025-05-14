@@ -1,17 +1,18 @@
 # app/admin.py
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin  # object-level perms
-from import_export.admin import ImportExportModelAdmin
 from import_export import resources
+from import_export.admin import ImportExportModelAdmin
 
 from app.models import (
-    College,
-    Room,
-    Curriculum,
-    Course,
     AcademicYear,
-    Term,
+    College,
+    Course,
+    Curriculum,
+    Room,
     Section,
+    Term,
+    Prerequisite,
 )
 
 # ────────────────────────────────────────────────────────────
@@ -116,17 +117,6 @@ class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     ordering = ("-academic_year__starting_date", "title")
 
 
-@admin.register(Course)
-class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    resource_class = CourseResource
-    list_display = ("code", "title", "curriculum", "credit_hours")
-    list_filter = ("curriculum__college", "curriculum__academic_year")
-    search_fields = ("code", "title")
-    autocomplete_fields = ("curriculum",)
-    inlines = [SectionInline]
-    ordering = ("code",)
-
-
 @admin.register(Section)
 class SectionAdmin(GuardedModelAdmin):
     """
@@ -155,3 +145,37 @@ class SectionAdmin(GuardedModelAdmin):
         "course__code",
         "number",
     )
+
+
+class PrerequisiteInline(admin.TabularInline):
+    """
+    Two inlines give a full 360° view:
+
+    • `source`   – courses for which THIS course is the prerequisite
+    • `target`   – prerequisites that THIS course requires
+    """
+
+    model = Prerequisite  # the through model
+    fk_name = "prerequisite_course"  # points TO this course
+    verbose_name_plural = "Is prerequisite for"
+    extra = 0
+    autocomplete_fields = ("course",)  # ⇦ pick by code or title
+
+
+class RequiredInline(admin.TabularInline):
+    model = Prerequisite  # same table
+    fk_name = "course"  # prerequisites OF this course
+    verbose_name_plural = "Requires"
+    extra = 1
+    autocomplete_fields = ("prerequisite_course",)
+
+
+@admin.register(Course)
+class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+    resource_class = CourseResource
+    list_display = ("code", "title", "curriculum", "credit_hours")
+    list_filter = ("curriculum__college", "curriculum__academic_year")
+    search_fields = ("code", "title")
+    autocomplete_fields = ("curriculum",)
+    ordering = ("code",)
+    inlines = [SectionInline, RequiredInline, PrerequisiteInline]
