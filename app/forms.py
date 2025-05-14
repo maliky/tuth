@@ -1,7 +1,7 @@
 from django import forms
 
 from app.constants import STATUS_CHOICES_PER_MODEL
-from app.models.timed import StatusHistory
+from app.models.mixins import StatusHistory
 from app.app_utils import make_choices
 from django.forms import ChoiceField
 
