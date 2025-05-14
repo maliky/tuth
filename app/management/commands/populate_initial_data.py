@@ -37,7 +37,6 @@ def ensure_superuser():
         print("Superuser already present.")
 
 
-
 def populate_academic_years(start_year: int = 2009, end_year: int | None = None) -> None:
     """Insert `AcademicYear` rows from start_year … end_year (inclusive)."""
     if end_year is None:
@@ -47,7 +46,7 @@ def populate_academic_years(start_year: int = 2009, end_year: int | None = None)
         starting = date(year, 9, 1)  # 1 Sep sits in allowed (Jul-Oct) window
         _, created = AcademicYear.objects.get_or_create(starting_date=starting)
         verb = "Created" if created else "Exists "
-        print(f"  {verb}: {starting.strftime('%Y')}/{end_year"})  # console feedback
+        print(f"{verb}: {starting.strftime('%Y')}/{end_year}")  # console feedback
 
 
 def populate_colleges() -> dict[str, College]:
