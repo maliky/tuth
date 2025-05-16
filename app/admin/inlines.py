@@ -1,6 +1,16 @@
 # app/admin/inlines.py
 from django.contrib import admin
-from app.models import Term, Section, Prerequisite
+from app.models import Term, Section, Prerequisite, Course, Curriculum
+
+
+class CourseInline(admin.TabularInline):  # or admin.StackedInline for more detail
+    model = Course
+    extra = 1
+    autocomplete_fields = ("curriculum",)
+    fields = ("code", "title", "credit_hours")
+    readonly_fields = ("code", "title", "credit_hours")
+    show_change_link = True  # convenient for editing courses quickly
+    classes = ("collapse",)
 
 
 class TermInline(admin.TabularInline):
@@ -16,6 +26,7 @@ class SectionInline(admin.TabularInline):
     extra = 0
     fields = ("number", "term", "instructor", "room", "max_seats")
     ordering = ("term__academic_year__starting_date", "term__number", "number")
+    classes = ("collapse",)
 
 
 class RequiresInline(admin.TabularInline):
@@ -32,3 +43,11 @@ class PrerequisiteInline(admin.TabularInline):
     verbose_name_plural = "Courses that require this course"
     extra = 0
     autocomplete_fields = ("course",)
+
+class CurriculumInline(admin.TabularInline):
+    model = Curriculum
+    extra = 2
+    fields = ("Title", "is_active")
+    ordering = ("Title", "is_active")
+    #classes = ("collapse",)
+    

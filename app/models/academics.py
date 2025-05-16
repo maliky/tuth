@@ -43,9 +43,9 @@ class College(models.Model):
 
 class Curriculum(StatusableMixin, models.Model):
     title = models.CharField(max_length=255)
-    level = models.CharField(
-        max_length=15, choices=make_choices(CURRICULUM_LEVEL_CHOICES)
-    )
+    # level = models.CharField(
+    #     max_length=15, choices=make_choices(CURRICULUM_LEVEL_CHOICES)
+    # )
     college = models.ForeignKey(
         "app.College", on_delete=models.CASCADE, related_name="curricula"
     )
