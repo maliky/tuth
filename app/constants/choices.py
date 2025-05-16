@@ -1,3 +1,16 @@
+# app/constants/choices.py
+from django.db.models import IntegerChoices
+
+
+class CreditChoices(IntegerChoices):
+    ONE = 1, "1"
+    TWO = 2, "2"
+    THREE = 3, "3"
+    FOUR = 4, "4"
+    SiX = 6, "6"
+    TEN = 10, "10"
+
+
 APPROVED: str = "approved"
 UNDEFINED_CHOICES: str = "undefined_choice"
 

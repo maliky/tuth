@@ -1,14 +1,19 @@
 # app/admin/college_admin.py
+from django import forms
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 
 from app.models import College, Course, Curriculum, Prerequisite
+from app.constants.choices import CreditChoices
 
 from .inlines import PrerequisiteInline, RequiresInline, SectionInline
 from .resources import CourseResource, CurriculumResource, PrerequisiteResource
 
+from app.admin.filters import CurriculumFilter
 
+
+    
 @admin.register(College)
 class CollegeAdmin(admin.ModelAdmin):
     list_display = ("code", "fullname", "current_dean")
@@ -28,11 +33,24 @@ class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     search_fields = ("title",)
 
 
+class CourseForm(forms.ModelForm):
+    credit_hours = forms.TypedChoiceField(
+        coerce=int,
+        choices=CreditChoices.choices,
+        empty_value=None,  # show blank to type anything
+        widget=forms.NumberInput(attrs={"min": 1}),  # numeric input
+    )
+
+    class Meta:
+        model = Course
+        fields = "__all__"
+
+
 @admin.register(Course)
 class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = CourseResource
     list_display = ("code", "title", "curriculum", "credit_hours")
-    list_filter = ("curriculum__college", "curriculum__academic_year")
+    list_filter = ("curriculum__college", "curriculum")
     autocomplete_fields = ("curriculum",)
     inlines = [SectionInline, PrerequisiteInline, RequiresInline]
     list_select_related = (
@@ -41,6 +59,17 @@ class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
         "curriculum__academic_year",
     )
     search_fields = ("code", "title")
+    form = CourseForm
+    fieldsets = (
+        (None, {"fields": ("name", "number", "title", "credit_hours", "curriculum")}),
+        (
+            "Additional details",
+            {
+                "classes": ("collapse",),
+                "fields": ("description",),
+            },
+        ),
+    )
 
 
 @admin.register(Prerequisite)
@@ -48,3 +77,8 @@ class PrerequisiteAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = PrerequisiteResource
     list_display = ("course", "prerequisite_course")
     autocomplete_fields = ("course", "prerequisite_course")
+    list_filter      = (CurriculumFilter,)
+
+
+
+    
