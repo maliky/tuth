@@ -11,7 +11,6 @@ from app.models.mixins import StatusableMixin
 from app.app_utils import make_choices
 from django.contrib.contenttypes.fields import GenericRelation
 
-from django.core.validators import MinValueValidator
 from app.constants.choices import CreditChoices
 
 # ------------------------------------------------------------------
@@ -86,18 +85,21 @@ class Course(models.Model):
     description: models.TextField = models.TextField(blank=True)
     credit_hours = models.PositiveSmallIntegerField(
         default=CreditChoices.THREE,
-        choices=CreditChoices.choices,  # 1 / 3 / 4 in the admin dropdown
-        validators=[MinValueValidator(1)],  # still accepts any positive value
+        choices=CreditChoices.choices,  # 0, 1 / 3 / 4 in the admin dropdown
     )
     curriculum = models.ForeignKey(
-        Curriculum, related_name="courses", on_delete=models.PROTECT
+        "app.Curriculum",
+        related_name="courses",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
     )
     college = models.ForeignKey(
         "app.College",
-        null=True,
-        on_delete=models.PROTECT,
         related_name="courses",
-        editable=False,  # users pick curriculum, not college
+        null=True,
+        on_delete=models.SET_NULL,
+        editable=False,
     )
     prerequisites: models.ManyToManyField["Course", "Prerequisite"] = (
         models.ManyToManyField(
@@ -116,8 +118,11 @@ class Course(models.Model):
         """
         self.code = f"{self.name}{self.number}"
         # auto-populate college from curriculum
-        if self.curriculum_id:
+
+        if self.curriculum is not None:
             self.college = self.curriculum.college
+        else:
+            self.college = None
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:  # pragma: no cover

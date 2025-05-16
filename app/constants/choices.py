@@ -3,6 +3,7 @@ from django.db.models import IntegerChoices
 
 
 class CreditChoices(IntegerChoices):
+    NULL = 0, "0"
     ONE = 1, "1"
     TWO = 2, "2"
     THREE = 3, "3"
