@@ -11,6 +11,9 @@ from app.models.mixins import StatusableMixin
 from app.app_utils import make_choices
 from django.contrib.contenttypes.fields import GenericRelation
 
+from django.core.validators import MinValueValidator
+from app.constants.choices import CreditChoices
+
 # ------------------------------------------------------------------
 # College and Curriculum
 # ------------------------------------------------------------------
@@ -81,7 +84,11 @@ class Course(models.Model):
     title = models.CharField(max_length=255)
     code = models.CharField(max_length=20, editable=False)
     description: models.TextField = models.TextField(blank=True)
-    credit_hours: models.PositiveSmallIntegerField = models.PositiveSmallIntegerField()
+    credit_hours = models.PositiveSmallIntegerField(
+        default=CreditChoices.THREE,
+        choices=CreditChoices.choices,  # 1 / 3 / 4 in the admin dropdown
+        validators=[MinValueValidator(1)],  # still accepts any positive value
+    )
     curriculum = models.ForeignKey(
         Curriculum, related_name="courses", on_delete=models.PROTECT
     )
