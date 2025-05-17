@@ -17,6 +17,10 @@ class Document(models.Model):
     document_type = models.CharField(max_length=50)
     status_history = GenericRelation("app.StatusHistory", related_query_name="document")
 
+    def current_status(self):
+        """Return the most recent status entry or ``None`` if empty."""
+        return self.status_history.first()
+
     def clean(self):
         super().clean()
         validate_model_status(self)
