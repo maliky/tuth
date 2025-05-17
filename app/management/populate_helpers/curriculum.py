@@ -2,6 +2,14 @@ from datetime import date
 from app.models import AcademicYear, Curriculum, Course, Prerequisite
 from app.constants import TEST_ENVIRONMENTAL_STUDIES_CURRICULUM
 from .utils import log
+import re
+
+
+def extract_code(code):
+    "Given a course code return the num and the code"
+    assert "/" not in code
+    rpat = r"(?P<code>[A-Z]+)(?P<num>[0-9]+)"
+    return re.search(rpat, code).groups()
 
 
 # --------------------------------- academic years ---------------------------------
@@ -32,19 +40,20 @@ def populate_environmental_studies_curriculum(cmd, colleges):
     course_map = {}
 
     # first pass – courses in the main list
-    for _, _, code, title, credits, _ in TEST_ENVIRONMENTAL_STUDIES_CURRICULUM:
-        dept_code, course_num = code[:3], code[3:]  # safe: 6-char rule
+    for _, col_code, code, title, credits, _ in TEST_ENVIRONMENTAL_STUDIES_CURRICULUM:
+        dept_code, course_num = extract_code(code)
         course, created = Course.objects.get_or_create(
             name=dept_code,
             number=course_num,
-            curriculum=curriculum,
+            college=colleges[col_code],
             defaults={"title": title, "credit_hours": credits},
         )
+        course.curricula.add(curriculum)
         course_map[code] = course
         log(cmd, f"    ↳ Course {code} {'created' if created else 'found'}")
 
     # second pass – ensure every prerequisite course exists (create placeholder if not)
-    for _, _, _, _, _, prereqs in TEST_ENVIRONMENTAL_STUDIES_CURRICULUM:
+    for _, col_code, _, _, _, prereqs in TEST_ENVIRONMENTAL_STUDIES_CURRICULUM:
         if not prereqs:
             continue
         for prereq_code in map(str.strip, prereqs.split(";")):  # strip spaces
@@ -53,12 +62,13 @@ def populate_environmental_studies_curriculum(cmd, colleges):
                 placeholder, _ = Course.objects.get_or_create(
                     name=dept_code,
                     number=course_num,
-                    curriculum=curriculum,
+                    college=colleges[col_code],
                     defaults={
                         "title": f"Placeholder for {prereq_code}",
                         "credit_hours": 0,
                     },
                 )
+                placeholder.curricula.add(curriculum)
                 course_map[prereq_code] = placeholder
                 log(cmd, f"    ↳ Placeholder course {prereq_code} created")
 

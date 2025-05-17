@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import TypeVarTuple
 
 from django.db import models
 from django.core.exceptions import ValidationError
@@ -72,6 +73,19 @@ class Curriculum(StatusableMixin, models.Model):
             )
         ]
 
+    class Concentration(models.Model):
+        """Optional major for a curriculum."""
+
+        name = models.CharField(max_length=255)
+        curriculum = models.ForeignKey(
+            Curriculum,
+            on_delete=models.CASCADE,
+            related_name="concentrations",
+        )
+
+        def __str__(self) -> str:  # pragma: no cover
+            return f"{self.name} ({self.curriculum})"
+
 
 # ------------------------------------------------------------------
 # Course and Prerequisite
@@ -86,18 +100,22 @@ class Course(models.Model):
     description: models.TextField = models.TextField(blank=True)
     credit_hours = models.PositiveSmallIntegerField(
         default=CreditChoices.THREE,
-        choices=CreditChoices.choices,  # 1 / 3 / 4 in the admin dropdown
-        validators=[MinValueValidator(1)],  # still accepts any positive value
-    )
-    curriculum = models.ForeignKey(
-        Curriculum, related_name="courses", on_delete=models.PROTECT
+        choices=CreditChoices.choices,
     )
     college = models.ForeignKey(
         "app.College",
-        null=True,
         on_delete=models.PROTECT,
         related_name="courses",
-        editable=False,  # users pick curriculum, not college
+    )
+    curricula = modes.ManyToManyField(
+        Curriculm,
+        related_name="courses",
+        blank=True,
+    )
+    concentration = models.ManyToManyField(
+        "app.Concentration",
+        related_name="courses",
+        blank=True,
     )
     prerequisites: models.ManyToManyField["Course", "Prerequisite"] = (
         models.ManyToManyField(
@@ -115,9 +133,6 @@ class Course(models.Model):
         updating course_code on the fly
         """
         self.code = f"{self.name}{self.number}"
-        # auto-populate college from curriculum
-        if self.curriculum_id:
-            self.college = self.curriculum.college
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:  # pragma: no cover
@@ -127,7 +142,6 @@ class Course(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["code", "college"],
-                condition=models.Q(college__isnull=False),
                 name="uniq_course_code_per_college",
             )
         ]
