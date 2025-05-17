@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import TypeVarTuple
 
 from django.db import models
 from django.core.exceptions import ValidationError
@@ -12,7 +11,6 @@ from app.models.mixins import StatusableMixin
 from app.app_utils import make_choices
 from django.contrib.contenttypes.fields import GenericRelation
 
-from django.core.validators import MinValueValidator
 from app.constants.choices import CreditChoices
 
 # ------------------------------------------------------------------
@@ -73,18 +71,19 @@ class Curriculum(StatusableMixin, models.Model):
             )
         ]
 
-    class Concentration(models.Model):
-        """Optional major for a curriculum."""
 
-        name = models.CharField(max_length=255)
-        curriculum = models.ForeignKey(
-            Curriculum,
-            on_delete=models.CASCADE,
-            related_name="concentrations",
-        )
+class Concentration(models.Model):
+    """Optional major for a curriculum."""
 
-        def __str__(self) -> str:  # pragma: no cover
-            return f"{self.name} ({self.curriculum})"
+    name = models.CharField(max_length=255)
+    curriculum = models.ForeignKey(
+        "app.curriculum",
+        on_delete=models.CASCADE,
+        related_name="concentrations",
+    )
+
+    def __str__(self) -> str:  # pragma: no cover
+        return f"{self.name} ({self.curriculum})"
 
 
 # ------------------------------------------------------------------
@@ -107,10 +106,12 @@ class Course(models.Model):
         on_delete=models.PROTECT,
         related_name="courses",
     )
-    curricula = modes.ManyToManyField(
-        Curriculm,
-        related_name="courses",
-        blank=True,
+    curricula: models.ManyToManyField["Curriculum", models.Model] = (
+        models.ManyToManyField(
+            "app.Curriculum",
+            related_name="courses",
+            blank=True,
+        )
     )
     concentration = models.ManyToManyField(
         "app.Concentration",

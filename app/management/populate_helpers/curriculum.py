@@ -9,7 +9,9 @@ def extract_code(code):
     "Given a course code return the num and the code"
     assert "/" not in code
     rpat = r"(?P<code>[A-Z]+)(?P<num>[0-9]+)"
-    return re.search(rpat, code).groups()
+    match = re.search(rpat, code)
+    assert match is not None, f"Code '{code}' doesn't match expected pattern"
+    return match.groups()
 
 
 # --------------------------------- academic years ---------------------------------
