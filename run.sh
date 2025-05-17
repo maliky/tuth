@@ -21,7 +21,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         -d|--dev)   MODE=dev ;;
         -p|--prod)  MODE=prod ;;
-        -m|--migrate) RUN_MIGRATIONS=false ;;
+        -m|--migrate) RUN_MIGRATIONS=true ;;
         -h|--help)  printusage; exit 0 ;;
         *)          echo "Unknown option: $1" >&2; printusage; exit 1 ;;
     esac
