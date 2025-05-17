@@ -7,7 +7,13 @@ from import_export.admin import ImportExportModelAdmin
 from app.models import College, Course, Curriculum, Prerequisite
 from app.constants.choices import CreditChoices
 
-from .inlines import CurriculumInline, PrerequisiteInline, RequiresInline, SectionInline, CourseInline
+from .inlines import (
+    CurriculumInline,
+    PrerequisiteInline,
+    RequiresInline,
+    SectionInline,
+    CourseInline,
+)
 from .resources import CourseResource, CurriculumResource, PrerequisiteResource
 
 from app.admin.filters import CurriculumFilter
@@ -17,12 +23,14 @@ from app.admin.filters import CurriculumFilter
 class CollegeAdmin(admin.ModelAdmin):
     list_display = ("code", "fullname", "current_dean")
     inlines = [CurriculumInline]
+    search_fields = ("code", "fullname")
+
 
 @admin.register(Curriculum)
 class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = CurriculumResource
-    list_display = ("title", "level", "academic_year", "college", "is_active")
-    list_filter = ("college", "level", "academic_year", "is_active")
+    list_display = ("title", "academic_year", "college", "is_active")
+    list_filter = ("college", "academic_year", "is_active")
     autocomplete_fields = ("college", "academic_year")
     list_select_related = (
         "academic_year",
@@ -30,6 +38,7 @@ class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     )
     search_fields = ("title",)
     inlines = [CourseInline]
+
 
 class CourseForm(forms.ModelForm):
     credit_hours = forms.TypedChoiceField(

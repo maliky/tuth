@@ -3,12 +3,10 @@ from __future__ import annotations
 from django.db import models
 from django.core.exceptions import ValidationError
 from app.constants import (
-    CURRICULUM_LEVEL_CHOICES,
     COLLEGE_CHOICES,
 )
 from app.models.utils import validate_model_status
 from app.models.mixins import StatusableMixin
-from app.app_utils import make_choices
 from django.contrib.contenttypes.fields import GenericRelation
 
 from app.constants.choices import CreditChoices
@@ -42,9 +40,6 @@ class College(models.Model):
 
 class Curriculum(StatusableMixin, models.Model):
     title = models.CharField(max_length=255)
-    # level = models.CharField(
-    #     max_length=15, choices=make_choices(CURRICULUM_LEVEL_CHOICES)
-    # )
     college = models.ForeignKey(
         "app.College", on_delete=models.CASCADE, related_name="curricula"
     )
@@ -56,7 +51,7 @@ class Curriculum(StatusableMixin, models.Model):
     status_history = GenericRelation("app.StatusHistory", related_query_name="curriculum")
 
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.title} - {self.level} - {self.college}"
+        return f"{self.title} - {self.college}"
 
     def clean(self):
         super().clean()
@@ -65,9 +60,9 @@ class Curriculum(StatusableMixin, models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["level", "college", "academic_year"],
+                fields=["college", "academic_year"],
                 condition=models.Q(is_active=True),
-                name="uniq_active_curriculum_level_college",
+                name="uniq_active_curriculum_college",
             )
         ]
 
@@ -80,6 +75,10 @@ class Curriculum(StatusableMixin, models.Model):
 class Course(models.Model):
     name = models.CharField(max_length=10)  # e.g. MATH
     number = models.CharField(max_length=10)  # e.g. 101
+    level = models.CharField(
+        max_length=15, choices=make_choices(CURRICULUM_LEVEL_CHOICES)
+    )
+    department = models.CharField(max_length=255, blank=True)
     title = models.CharField(max_length=255)
     code = models.CharField(max_length=20, editable=False)
     description: models.TextField = models.TextField(blank=True)

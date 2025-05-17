@@ -5,12 +5,11 @@ from app.models import Term, Section, Prerequisite, Course, Curriculum
 
 class CourseInline(admin.TabularInline):  # or admin.StackedInline for more detail
     model = Course
-    extra = 1
+    extra = 0
     autocomplete_fields = ("curriculum",)
-    fields = ("code", "title", "credit_hours")
-    readonly_fields = ("code", "title", "credit_hours")
-    show_change_link = True  # convenient for editing courses quickly
-    classes = ("collapse",)
+    fields = ("code")
+    # show_change_link = True  # convenient for editing courses quickly
+    # classes = ("collapse",)
 
 
 class TermInline(admin.TabularInline):
@@ -44,10 +43,10 @@ class PrerequisiteInline(admin.TabularInline):
     extra = 0
     autocomplete_fields = ("course",)
 
+
 class CurriculumInline(admin.TabularInline):
     model = Curriculum
-    extra = 2
-    fields = ("Title", "is_active")
-    ordering = ("Title", "is_active")
-    #classes = ("collapse",)
-    
+    extra = 0
+    fields = ("title", "is_active")
+    ordering = ("title", "is_active")
+    # classes = ("collapse",)

@@ -22,7 +22,6 @@ def populate_environmental_studies_curriculum(cmd, colleges):
 
     curriculum, created = Curriculum.objects.get_or_create(
         title="BSc Environmental Studies",
-        level="bachelor",
         college=colleges["COAS"],
         academic_year=ay,
     )
