@@ -1,4 +1,4 @@
-from .academics import College, Curriculum, Course, Prerequisite, Concentrations
+from .academics import College, Curriculum, Course, Prerequisite, Concentration
 from .registry import (
     Document,
     Registration,

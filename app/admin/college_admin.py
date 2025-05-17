@@ -13,7 +13,6 @@ from .resources import CourseResource, CurriculumResource, PrerequisiteResource
 from app.admin.filters import CurriculumFilter
 
 
-    
 @admin.register(College)
 class CollegeAdmin(admin.ModelAdmin):
     list_display = ("code", "fullname", "current_dean")
@@ -77,8 +76,4 @@ class PrerequisiteAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = PrerequisiteResource
     list_display = ("course", "prerequisite_course")
     autocomplete_fields = ("course", "prerequisite_course")
-    list_filter      = (CurriculumFilter,)
-
-
-
-    
+    list_filter = (CurriculumFilter,)
