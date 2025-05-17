@@ -35,6 +35,14 @@ COLLEGE_CHOICES: list[tuple[str, str]] = [
     ("COBA", "College of Business Administration"),
 ]
 
+departments_choice{
+    "COHS": [(""),],
+        "COAS": [(""),],
+        "COED": [(""),],
+        "CAFS": [(""),],
+        "COET": [(""),],
+        "COBA": [(""),],
+}
 # la séparation par classe me permet de vérifier la validité des états
 # au moment de la sauvegarde ou des modification du code.
 STATUS_CHOICES_PER_MODEL: dict[str, list[str]] = {
