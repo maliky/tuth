@@ -50,4 +50,4 @@ class PrerequisiteResource(resources.ModelResource):
 class SectionResource(resources.ModelResource):
     class Meta:
         model = Section
-        import_id_fields = ("course", "term", "number")
+        import_id_fields = ("course", "semester", "number")

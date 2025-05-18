@@ -7,7 +7,7 @@ from .registry import (
 from .finance import FinancialRecord, PaymentHistory
 from .people import Profile, RoleAssignment
 from .spaces import Building, Room
-from .timed import AcademicYear, Term, Section
+from .timed import AcademicYear, Term, Section, Semester
 from .mixins import StatusHistory
 
 __all__ = [
@@ -28,5 +28,6 @@ __all__ = [
     "Room",
     "AcademicYear",
     "Term",
+    "Semester",
     "StatusHistory",
 ]

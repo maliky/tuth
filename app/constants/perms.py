@@ -156,4 +156,17 @@ OBJECT_PERM_MATRIX = {
         "delete": ["vpaa"],
         "add": ["registrar", "vpaa"],
     },
+    "semester": {
+        "view": [
+            "vpaa",
+            "registrar",
+            "dean",
+            "chair",
+            "student",
+            "prospective_student",
+        ],
+        "change": ["vpaa", "registrar"],
+        "delete": ["vpaa"],
+        "add": ["registrar", "vpaa"],
+    },
 }

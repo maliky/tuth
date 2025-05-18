@@ -48,19 +48,16 @@ class CourseForm(forms.ModelForm):
 @admin.register(Course)
 class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = CourseResource
-    list_display = ("code", "title", "curriculum", "credit_hours")
-    list_filter = ("curriculum__college", "curriculum")
-    autocomplete_fields = ("curriculum",)
+    list_display = ("code", "title", "curriculua", "credit_hours")
+    list_filter = ("curriculua__college", "curriculua")
+    autocomplete_fields = ("curriculua",)
     inlines = [SectionInline, PrerequisiteInline, RequiresInline]
-    list_select_related = (
-        "curriculum",
-        "curriculum__college",
-        "curriculum__academic_year",
-    )
+    list_select_related = ()
+
     search_fields = ("code", "title")
     form = CourseForm
     fieldsets = (
-        (None, {"fields": ("name", "number", "title", "credit_hours", "curriculum")}),
+        (None, {"fields": ("name", "number", "title", "credit_hours", "curriculua")}),
         (
             "Additional details",
             {
