@@ -2,6 +2,13 @@
 from django.db.models import IntegerChoices
 
 
+class SEMESTER_NUMBER(IntegerChoices):
+    FIRST = 1, "First"
+    SECOND = 2, "Second"
+    VACATION = 3, "Vacation"
+    REMEDIAL = 4, "Remedial"
+
+
 class CreditChoices(IntegerChoices):
     ONE = 1, "1"
     TWO = 2, "2"

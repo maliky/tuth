@@ -1,21 +1,21 @@
 # app/admin/inlines.py
 from django.contrib import admin
-from app.models import Term, Section, Prerequisite
+from app.models import Semester, Section, Prerequisite
 
 
-class TermInline(admin.TabularInline):
-    model = Term
+class SemesterInline(admin.TabularInline):
+    model = Semester
     extra = 0
     max_num = 3
     fields = ("number", "start_date", "end_date")
-    ordering = ("number",)
+    ordering = ("start_date",)
 
 
 class SectionInline(admin.TabularInline):
     model = Section
     extra = 0
-    fields = ("number", "term", "instructor", "room", "max_seats")
-    ordering = ("term__academic_year__starting_date", "term__number", "number")
+    fields = ("number", "semester", "instructor", "room", "max_seats")
+    ordering = ("semester__starting_date", "number")
 
 
 class RequiresInline(admin.TabularInline):

@@ -128,6 +128,11 @@ class Course(models.Model):
         )
     )
 
+    @classmethod
+    def for_curriculum(cls, curriculum: "Curriculum") -> models.QuerySet:
+        "helper function. get the course for a specific curriculum"
+        return cls.objects.filter(curricula=curriculum).distinct()
+
     # ---------- hooks ----------
     def save(self, *args, **kwargs):
         """

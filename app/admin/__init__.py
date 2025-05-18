@@ -9,7 +9,7 @@ Keep this file short and **never** use “import *”, so that static
 analysis tools understand what gets imported.
 """
 
-from .academic_admin import AcademicYearAdmin, TermAdmin, SectionAdmin  # noqa: F401
+from .academic_admin import AcademicYearAdmin, SemesterAdmin, SectionAdmin  # noqa: F401
 from .college_admin import (  # noqa: F401
     CollegeAdmin,
     CurriculumAdmin,

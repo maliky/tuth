@@ -14,7 +14,7 @@ class CurriculumFilter(admin.SimpleListFilter):
     def queryset(self, request, qs):
         if self.value():
             return qs.filter(
-                Q(course__curriculum_id=self.value())
-                | Q(prerequisite_course__curriculum_id=self.value())
-            )
+                Q(course__curriculan_id=self.value())
+                | Q(prerequisite_course__curriculua_id=self.value())
+            ).distinct()
         return qs
