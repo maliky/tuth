@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from django.db import models
 from django.core.exceptions import ValidationError
-from app.constants import CURRICULUM_LEVEL_CHOICES, COLLEGE_CHOICES, CREDIT_CHOICES
+from app.constants import LEVEL_CHOICES, COLLEGE_CHOICES, CREDIT_CHOICES
 from app.models.utils import validate_model_status
 from app.models.mixins import StatusableMixin
-from app.app_utils import make_choices, make_course_code
+from app.app_utils import make_course_code
 from django.contrib.contenttypes.fields import GenericRelation
 
 # ------------------------------------------------------------------
@@ -42,15 +42,15 @@ class Curriculum(StatusableMixin, models.Model):
     college = models.ForeignKey(
         "app.College", on_delete=models.CASCADE, related_name="curricula"
     )
-    creation_year = models.ForeignKey(
-        "app.AcademicYear", on_delete=models.PROTECT, related_name="curricula"
-    )
+    # a constraint is that we should not have a curriculum in a college
+    # created in the same year with same title
+    creation_date = models.DateField()
     is_active = models.BooleanField(default=False)
 
     status_history = GenericRelation("app.StatusHistory", related_query_name="curriculum")
 
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.title} - {self.level} - {self.college}"
+        return f"{self.title} - {self.college}"
 
     def clean(self):
         super().clean()
@@ -59,9 +59,9 @@ class Curriculum(StatusableMixin, models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["level", "college", "academic_year"],
+                fields=["college", "created_date"],
                 condition=models.Q(is_active=True),
-                name="uniq_active_curriculum_level_college",
+                name="uniq_active_curriculum_college",
             )
         ]
 
@@ -95,10 +95,6 @@ class Course(models.Model):
         default=CREDIT_CHOICES.THREE,
         choices=CREDIT_CHOICES.choices,
     )
-    level = models.PositiveSmallIntegerField(
-        default=CURRICULUM_LEVEL_CHOICES.FRESHMAN,
-        choices=CURRICULUM_LEVEL_CHOICES.choices,
-    )
 
     college = models.ForeignKey(
         "app.College",
@@ -125,6 +121,14 @@ class Course(models.Model):
         )
     )
 
+    @property
+    def level(self) -> str:
+        """
+        Return 'freshman' / 'sophomore' / … based on the first digit of
+        `number`.  Falls back to 'other' when the pattern doesn’t match.
+        """
+        return LEVEL_CHOICES.get(self.number[:1], "other")
+
     @classmethod
     def for_curriculum(cls, curriculum: "Curriculum") -> models.QuerySet:
         "helper function. get the course for a specific curriculum"
@@ -136,9 +140,6 @@ class Course(models.Model):
         updating course_code on the fly
         """
         self.code = make_course_code(name=self.name, number=self.number)
-        if number and number[0].isdigit():
-            self.level = int(self.number[0])
-            # else need to raise a warning
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:  # pragma: no cover
@@ -178,7 +179,7 @@ class Prerequisite(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["curriculum", "course", "prerequisite_course"],
-                name="uniq_prerequisite_pair",
+                name="uniq_prerequisite_per_curriculum",
             ),
             models.CheckConstraint(
                 check=~models.Q(course=models.F("prerequisite_course")),
