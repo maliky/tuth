@@ -9,8 +9,6 @@ from app.management.populate_helpers import (
     upsert_test_users_and_roles,
     grant_model_level_perms,
     grant_college_object_perms,
-    populate_academic_years,
-    populate_environmental_studies_curriculum,
 )
 
 

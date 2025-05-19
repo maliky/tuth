@@ -4,6 +4,7 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from app.models import AcademicYear, Semester, Section
 from .inlines import SemesterInline
+from .resources import SemesterResource
 
 
 @admin.register(AcademicYear)
@@ -17,6 +18,7 @@ class AcademicYearAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 @admin.register(Semester)
 class SemesterAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+    resource_class =  SemesterResource
     list_display = ("__str__", "academic_year", "number", "start_date", "end_date")
     list_filter = ("academic_year", "number")
     autocomplete_fields = ("academic_year",)

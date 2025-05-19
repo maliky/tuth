@@ -2,16 +2,11 @@ from __future__ import annotations
 
 from django.db import models
 from django.core.exceptions import ValidationError
-from app.constants import (
-    CURRICULUM_LEVEL_CHOICES,
-    COLLEGE_CHOICES,
-)
+from app.constants import CURRICULUM_LEVEL_CHOICES, COLLEGE_CHOICES, CREDIT_CHOICES
 from app.models.utils import validate_model_status
 from app.models.mixins import StatusableMixin
-from app.app_utils import make_choices
+from app.app_utils import make_choices, make_course_code
 from django.contrib.contenttypes.fields import GenericRelation
-
-from app.constants.choices import CreditChoices
 
 # ------------------------------------------------------------------
 # College and Curriculum
@@ -42,13 +37,12 @@ class College(models.Model):
 
 class Curriculum(StatusableMixin, models.Model):
     title = models.CharField(max_length=255)
-    level = models.CharField(
-        max_length=15, choices=make_choices(CURRICULUM_LEVEL_CHOICES)
-    )
+    short_name = models.CharField(max_length=30, blank=True, null=True)
+
     college = models.ForeignKey(
         "app.College", on_delete=models.CASCADE, related_name="curricula"
     )
-    academic_year = models.ForeignKey(
+    creation_year = models.ForeignKey(
         "app.AcademicYear", on_delete=models.PROTECT, related_name="curricula"
     )
     is_active = models.BooleanField(default=False)
@@ -98,9 +92,14 @@ class Course(models.Model):
     code = models.CharField(max_length=20, editable=False)
     description: models.TextField = models.TextField(blank=True)
     credit_hours = models.PositiveSmallIntegerField(
-        default=CreditChoices.THREE,
-        choices=CreditChoices.choices,
+        default=CREDIT_CHOICES.THREE,
+        choices=CREDIT_CHOICES.choices,
     )
+    level = models.PositiveSmallIntegerField(
+        default=CURRICULUM_LEVEL_CHOICES.FRESHMAN,
+        choices=CURRICULUM_LEVEL_CHOICES.choices,
+    )
+
     college = models.ForeignKey(
         "app.College",
         on_delete=models.PROTECT,
@@ -136,7 +135,10 @@ class Course(models.Model):
         """
         updating course_code on the fly
         """
-        self.code = f"{self.name}{self.number}"
+        self.code = make_course_code(name=self.name, number=self.number)
+        if number and number[0].isdigit():
+            self.level = int(self.number[0])
+            # else need to raise a warning
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:  # pragma: no cover
@@ -158,20 +160,28 @@ class Prerequisite(models.Model):
     prerequisite_course = models.ForeignKey(
         Course, related_name="required_for_edges", on_delete=models.CASCADE
     )
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["course", "prerequisite_course"], name="uniq_prerequisite_pair"
-            ),
-            models.CheckConstraint(
-                check=~models.Q(course=models.F("prerequisite_course")),
-                name="no_self_prerequisite",
-            ),
-        ]
+    curriculum = models.ForeignKey(
+        "app.Curriculum",
+        on_delete=models.CASCADE,
+        related_name="prerequisites",
+        null=True,
+        blank=True,
+    )
 
     def clean(self) -> None:
         if Prerequisite.objects.filter(
             course=self.prerequisite_course, prerequisite_course=self.course
         ).exists():
             raise ValidationError("Circular prerequisite detected.")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["curriculum", "course", "prerequisite_course"],
+                name="uniq_prerequisite_pair",
+            ),
+            models.CheckConstraint(
+                check=~models.Q(course=models.F("prerequisite_course")),
+                name="no_self_prerequisite",
+            ),
+        ]

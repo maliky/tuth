@@ -2,13 +2,12 @@
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
-from .resources import BuildingResource, RoomResource
+from .resources import RoomResource
 from app.models import Building, Room
 
 
 @admin.register(Building)
-class BuildingAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    resource_class = BuildingResource
+class BuildingAdmin(GuardedModelAdmin):
     list_display = ("short_name", "full_name")
     search_fields = ("short_name", "full_name")
 
