@@ -1,6 +1,5 @@
 # app/admin/filters.py
 from django.contrib import admin
-from django.db.models import Q
 from app.models import Curriculum
 
 
@@ -13,8 +12,6 @@ class CurriculumFilter(admin.SimpleListFilter):
 
     def queryset(self, request, qs):
         if self.value():
-            return qs.filter(
-                Q(course__curricula_id=self.value())
-                | Q(prerequisite_course__curricula_id=self.value())
-            ).distinct()
+            return qs.filter(curriculum_id=self.value())
+
         return qs

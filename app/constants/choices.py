@@ -14,7 +14,7 @@ class TERM_NUMBER(IntegerChoices):
     SECOND = 2, "Second"
 
 
-class CreditChoices(IntegerChoices):
+class CREDIT_CHOICES(IntegerChoices):
     ONE = 1, "1"
     TWO = 2, "2"
     THREE = 3, "3"
@@ -23,15 +23,17 @@ class CreditChoices(IntegerChoices):
     TEN = 10, "10"
 
 
+class CURRICULUM_LEVEL_CHOICES(IntergerChoices):
+    FRESHMAN = 1, "freshman"
+    SOPHOMORE = 2, "sophomore"
+    JUNIOR = 3, "junior"
+    SENIOR_1 = 4, "senior_1"
+    SENIOR_2 = 5, "senior_2"
+
+
 APPROVED: str = "approved"
 UNDEFINED_CHOICES: str = "undefined_choice"
 
-CURRICULUM_LEVEL_CHOICES: list[str] = [
-    "freshman",
-    "sophomore",
-    "junior",
-    "senior",
-]
 CLEARANCE_CHOICES: list[str] = [
     "pending",
     "cleared",

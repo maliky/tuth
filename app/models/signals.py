@@ -26,3 +26,17 @@ def sync_curriculum_is_active(sender, instance, **kwargs):
     if target.is_active != should_be_active:
         target.is_active = should_be_active
         target.save(update_fields=["is_active"])
+
+
+@receiver(pre_save, sender=Section)
+def autoincrement_section_number(sender, instance, **kwargs):
+    "to increment section number"
+    if instance.pk or instance.number:
+        return
+    with transaction.atomic():
+        last = (
+            Section.objects.filter(course=instance.course, semester=instance.semester)
+            .select_for_update()
+            .aggregate(mx=Max("number"))
+        )["mx"] or 0
+        instance.number = last + 1
