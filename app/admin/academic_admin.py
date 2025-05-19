@@ -18,7 +18,7 @@ class AcademicYearAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 @admin.register(Semester)
 class SemesterAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    resource_class =  SemesterResource
+    resource_class = SemesterResource
     list_display = ("__str__", "academic_year", "number", "start_date", "end_date")
     list_filter = ("academic_year", "number")
     autocomplete_fields = ("academic_year",)

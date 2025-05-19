@@ -1,9 +1,11 @@
 # app/models/signals.py
 
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
+from django.db import transaction
+from django.db.models import Max
 from django.dispatch import receiver
 
-from app.models.academics import Curriculum
+from app.models import Curriculum, Section
 from app.models.mixins import StatusHistory
 from app.constants import APPROVED
 

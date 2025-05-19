@@ -1,7 +1,16 @@
 # app/admin/resources.py
 from import_export import resources, fields, widgets
-from app.models import Course, Curriculum, Building, Room, Prerequisite, Section, College, Semester
-from app.admin.widgets import BuildingWidget
+from app.app_utils import make_course_code
+from app.models import (
+    Course,
+    Curriculum,
+    Room,
+    Prerequisite,
+    Section,
+    College,
+    Semester,
+)
+from app.admin.widgets import BuildingWidget, AcademicYearWidget
 
 
 class CurriculumResource(resources.ModelResource):
@@ -10,14 +19,14 @@ class CurriculumResource(resources.ModelResource):
         fields = (
             "title",
             "short_name",
-            "creation_year",
+            "creation_date",
             "college__code",
             "is_active",
         )
 
 
 class CourseResource(resources.ModelResource):
-    # ── columns coming from the file ──────────────────────────────
+    # ── columns coming from the file ───────────────
     name = fields.Field(column_name="name")
     number = fields.Field(column_name="number")
     title = fields.Field(column_name="title")
@@ -50,7 +59,7 @@ class CourseResource(resources.ModelResource):
         if not row.get("code"):
             # penser à avoir une fonction dans utils qui génère le code du course
             # permettrat de changer cela consitently accross code base.
-            row["code"] = f"{row['name']}{row['number']}"
+            row["code"] = make_course_code(self.name, self.number)
 
     class Meta:
         model = Course
@@ -61,12 +70,11 @@ class CourseResource(resources.ModelResource):
             "title",
             "credit_hours",
             "college",
+            "prerequisites",
             "code",  # include it so the generated value reaches save()
         )
         skip_unchanged = True
         report_skipped = True
-
-
 
 
 class RoomResource(resources.ModelResource):
@@ -86,28 +94,30 @@ class PrerequisiteResource(resources.ModelResource):
     curriculum = fields.Field(
         column_name="curriculum",
         attribute="curriculum",
-        widget=widgets.ForeignKeyWidget(Curriculum, "short_name"),
+        widget=widgets.ForeignKeyWidget(Curriculum, field="short_name"),
     )
     course = fields.Field(
         column_name="course",
         attribute="course",
-        widget=widgets.ForeignKeyWidget(Course, "code"),
+        widget=widgets.ForeignKeyWidget(Course, field="code"),
     )
     prerequisite_course = fields.Field(
         column_name="prerequisite",
         attribute="prerequisite_course",
-        widget=widgets.ForeignKeyWidget(Course, "code"),
+        widget=widgets.ForeignKeyWidget(Course, field="code"),
     )
-    
+
     class Meta:
         model = Prerequisite
         import_id_fields = ("curriculum", "course", "prerequisite_course")
+        fields = ("curriculum", "course", "prerequisite_course")
 
 
 class SectionResource(resources.ModelResource):
     class Meta:
         model = Section
         import_id_fields = ("course", "semester", "number")
+
 
 class SemesterResource(resources.ModelResource):
     academic_year = fields.Field(
@@ -120,4 +130,3 @@ class SemesterResource(resources.ModelResource):
         model = Semester
         import_id_fields = ("academic_year", "number")
         fields = ("academic_year", "number", "start_date", "end_date")
-        
