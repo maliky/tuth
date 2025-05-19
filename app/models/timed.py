@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from app.constants.choices import SEMESTER_NUMBER
+from app.constants.choices import SEMESTER_NUMBER, TERM_NUMBER
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.db.models.functions import ExtractYear
 from django.core.exceptions import ValidationError
-
+from app.models.utils import validate_subperiod
+from datetime import timedelta
 
 # ------------------------------------------------------------------
 # Academic Year & Semesters & Term
@@ -13,17 +14,22 @@ from django.core.exceptions import ValidationError
 
 
 class AcademicYear(models.Model):
-    starting_date = models.DateField(unique=True)
+    start_date = models.DateField(unique=True)
     end_date = models.DateField(unique=True)
     long_name = models.CharField(max_length=9, editable=False, unique=True)
     short_name = models.CharField(max_length=5, editable=False, unique=True)
 
     def clean(self) -> None:
-        if self.starting_date.month not in (7, 8, 9, 10):
+        if self.start_date.month not in (7, 8, 9, 10):
             raise ValidationError("Start date must be in July–October.")
 
     def save(self, *args, **kwargs) -> None:
-        ys = self.starting_date.year
+        ys = self.start_date.year
+
+        if self.start_date and not self.end_date:
+            # the day *before* next academic year starts
+            self.end_date = self.start_date.replace(year=ys + 1) - timedelta(days=1)
+
         ye = ys + 1
         self.long_name = f"{ys}/{ye}"
         self.short_name = f"{str(ys)[-2:]}-{str(ye)[-2:]}"
@@ -35,48 +41,36 @@ class AcademicYear(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                ExtractYear("starting_date"),
+                ExtractYear("start_date"),
                 name="uniq_academic_year_by_year",
             )
         ]
-        ordering = ["-starting_date"]
+        ordering = ["-start_date"]
 
 
 class Semester(models.Model):
     academic_year = models.ForeignKey(
-        AcademicYear, on_delete=models.PROTECT, related_name="semester"
+        "app.AcademicYear", on_delete=models.PROTECT, related_name="semesters"
     )
     number = models.PositiveSmallIntegerField(
-        choices=SEMESTER_NUMBER.choices, help_text="Semester Number"
+        choices=SEMESTER_NUMBER.choices, help_text="Semester number"
     )
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
 
     def clean(self) -> None:
         "Checking that the start and end date of the Semester are within the academic years dates"
-        super().clean()
-        if self.start_date and self.end_date:
-            if self.end_date < self.start_date:
-                raise ValidationError("Semester end date must be after start date.")
-        year_start = self.academic_year.starting_date
-        year_end = self.academic_year.end_date
-        for field in ("start_date", "end_date"):
-            dt = getattr(self, field)
-            if dt and not (year_start <= dt <= year_end):
-                raise ValidationError(
-                    "Semester dates must fall within the academic year."
-                )
-        # checking no overlapping semester in same acadmic year
-        if self.start_date and self.end_date:
-            qs = Semester.objects.filter(
-                academic_year=self.academic_year,
-                start_date__lt=self.end_date,
-                end_date__gt=self.start_date,
-            )
-            if self.pk:
-                qs = qs.exclude(pk=self.pk)
-            if qs.exists():
-                raise ValidationError("Overlapping semesters in the same academic year.")
+        validate_subperiod(
+            sub_start=self.start_date,
+            sub_end=self.end_date,
+            container_start=self.academic_year.start_date,
+            container_end=self.academic_year.end_date,
+            overlap_qs=Semester.objects.filter(academic_year=self.academic_year).exclude(
+                pk=self.pk
+            ),
+            overlap_message="Overlapping Semesters in the same academic year.",
+            label="semester",
+        )
 
     class Meta:
         constraints = [
@@ -84,33 +78,43 @@ class Semester(models.Model):
                 fields=["academic_year", "number"], name="uniq_semester_per_year"
             )
         ]
-        ordering = ["academic_year__starting_date", "number"]
+        ordering = ["start_date"]
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.academic_year.short_name}_Sem{self.number}"
 
 
 class Term(models.Model):
-    academic_year = models.ForeignKey(
-        AcademicYear, on_delete=models.PROTECT, related_name="terms"
+    semester = models.ForeignKey(
+        "app.Semester", on_delete=models.PROTECT, related_name="terms"
     )
     number = models.PositiveSmallIntegerField(
-        choices=[(1, "1"), (2, "2"), (3, "3")],
-        help_text="1, 2 or 3 (first, second or summer semester).",
+        choices=TERM_NUMBER.choices, help_text="Term number"
     )
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
 
+    def clean(self):
+        validate_subperiod(
+            sub_start=self.start_date,
+            sub_end=self.end_date,
+            container_start=self.semester.start_date,
+            container_end=self.semester.end_date,
+            overlap_qs=Term.objects.filter(semester=self.semester).exclude(pk=self.pk),
+            overlap_message="Overlapping terms in the same semester.",
+            label="term",
+        )
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["academic_year", "number"], name="uniq_term_per_year"
+                fields=["semester", "number"], name="uniq_term_per_semester"
             )
         ]
-        ordering = ["academic_year__starting_date", "number"]
+        ordering = ["start_date", "number"]
 
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.academic_year.short_name}_T{self.number}"
+        return f"{self.semester}T{self.number}"
 
 
 # ------------------------------------------------------------------
@@ -143,7 +147,7 @@ class Section(models.Model):
                 name="uniq_section_per_course_semester",
             )
         ]
-        ordering = ["semester__academic_year__starting_date", "course__name"]
+        ordering = ["semester__academic_year__start_date", "course__name"]
 
     # ---------- display helpers ----------
     @property

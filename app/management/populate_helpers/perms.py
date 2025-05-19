@@ -7,7 +7,11 @@ from app.models import RoleAssignment
 
 def grant_model_level_perms(groups):
     for model, perms in OBJECT_PERM_MATRIX.items():
-        ct = ContentType.objects.get(app_label="app", model=model)
+        try:
+            ct = ContentType.objects.get(app_label="app", model=model)
+        except Exception:
+            print(f">> model={model} <<")
+
         for perm_name, roles in perms.items():
             perm = Permission.objects.get(
                 codename=f"{perm_name}_{model}", content_type=ct

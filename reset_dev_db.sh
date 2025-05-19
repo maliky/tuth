@@ -1,6 +1,9 @@
-#/bin/bash
+#!/usr/bin/env bash
+set -e
 
-docker compose -f docker-compose-dev.yml exec web bash -c \
-  "python manage.py reset_db && \
-   python manage.py migrate --noinput && \
-   python manage.py populate_initial_data"
+sudo rm -rf app/migrations/*
+
+docker compose -f docker-compose-dev.yml exec web python manage.py reset_db
+docker compose -f docker-compose-dev.yml exec web python manage.py makemigrations app
+docker compose -f docker-compose-dev.yml exec web python manage.py migrate
+docker compose -f docker-compose-dev.yml exec web python manage.py populate_initial_data

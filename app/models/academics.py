@@ -106,12 +106,10 @@ class Course(models.Model):
         on_delete=models.PROTECT,
         related_name="courses",
     )
-    curricula: models.ManyToManyField["Curriculum", models.Model] = (
-        models.ManyToManyField(
-            "app.Curriculum",
-            related_name="courses",
-            blank=True,
-        )
+    curricula: models.ManyToManyField["Curriculum", "Course"] = models.ManyToManyField(
+        "app.Curriculum",
+        related_name="courses",
+        blank=True,
     )
     concentration = models.ManyToManyField(
         "app.Concentration",

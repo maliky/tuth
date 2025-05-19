@@ -7,7 +7,7 @@ from import_export.admin import ImportExportModelAdmin
 from app.models import College, Course, Curriculum, Prerequisite
 from app.constants.choices import CreditChoices
 
-from .inlines import PrerequisiteInline, RequiresInline, SectionInline
+from .inlines import PrerequisiteInline, RequiresInline, SectionInline, CurriculaInline
 from .resources import CourseResource, CurriculumResource, PrerequisiteResource
 
 from app.admin.filters import CurriculumFilter
@@ -48,16 +48,16 @@ class CourseForm(forms.ModelForm):
 @admin.register(Course)
 class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = CourseResource
-    list_display = ("code", "title", "curriculua", "credit_hours")
-    list_filter = ("curriculua__college", "curriculua")
-    autocomplete_fields = ("curriculua",)
-    inlines = [SectionInline, PrerequisiteInline, RequiresInline]
-    list_select_related = ()
+    list_display = ("code", "title", "credit_hours")
+    list_filter = ("curricula__college", "curricula")
+    autocomplete_fields = ("curricula",)
+    inlines = [SectionInline, PrerequisiteInline, RequiresInline, CurriculaInline]
+    list_select_related = ("college",)
 
     search_fields = ("code", "title")
     form = CourseForm
     fieldsets = (
-        (None, {"fields": ("name", "number", "title", "credit_hours", "curriculua")}),
+        (None, {"fields": ("name", "number", "title", "credit_hours", "curricula")}),
         (
             "Additional details",
             {
