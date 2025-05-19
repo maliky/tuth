@@ -1,6 +1,6 @@
 # app/admin/inlines.py
 from django.contrib import admin
-from app.models import Semester, Section, Prerequisite
+from app.models import Semester, Section, Prerequisite, Course
 
 
 class SemesterInline(admin.TabularInline):
@@ -11,11 +11,17 @@ class SemesterInline(admin.TabularInline):
     ordering = ("start_date",)
 
 
+class CurriculaInline(admin.TabularInline):
+    model = Course.curricula.through
+    extra = 1
+    autocomplete_fields = ("curriculum",)
+
+
 class SectionInline(admin.TabularInline):
     model = Section
     extra = 0
     fields = ("number", "semester", "instructor", "room", "max_seats")
-    ordering = ("semester__starting_date", "number")
+    ordering = ("semester__start_date", "number")
 
 
 class RequiresInline(admin.TabularInline):

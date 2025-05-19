@@ -16,6 +16,6 @@ class BuildingAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 @admin.register(Room)
 class RoomAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = RoomResource
-    list_display = ("name", "building", "standard_capacity", "exam_capacity")
-    search_fields = ("name", "building__short_name", "building__full_name")
+    list_display = ("name", "building__short_name", "standard_capacity", "exam_capacity")
+    search_fields = ("name", "building__short_name")
     autocomplete_fields = ("building",)

@@ -9,6 +9,11 @@ class SEMESTER_NUMBER(IntegerChoices):
     REMEDIAL = 4, "Remedial"
 
 
+class TERM_NUMBER(IntegerChoices):
+    FIRST = 1, "First"
+    SECOND = 2, "Second"
+
+
 class CreditChoices(IntegerChoices):
     ONE = 1, "1"
     TWO = 2, "2"

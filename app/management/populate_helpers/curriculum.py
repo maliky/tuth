@@ -1,6 +1,8 @@
 from datetime import date
 from app.models import AcademicYear, Curriculum, Course, Prerequisite
 from app.constants import TEST_ENVIRONMENTAL_STUDIES_CURRICULUM
+from app.constants.choices import TERM_NUMBER, SEMESTER_NUMBER
+from app.models.timed import Term, Semester
 from .utils import log
 import re
 
@@ -16,9 +18,75 @@ def extract_code(code):
 
 # --------------------------------- academic years ---------------------------------
 def populate_academic_years(cmd, start=2009, end=None):
+    """
+    Build AcademicYear ► Semester ► Term scaffolding from `start`-`end`
+    (end year inclusive).  The calendar we apply is:
+
+    ┌───────────────┬────────────────┬───────────────────┐
+    │ Semester #    │ Span           │ Terms (1 / 2)     │
+    ├───────────────┼────────────────┼───────────────────┤
+    │ 1 (First)     │ Aug-11 → Dec-20│ Sep-01→Oct-20 /   │
+    │               │                │ Oct-21→Dec-20     │
+    │ 2 (Second)    │ Jan-01 → Jun-01│ Jan-01→Mar-25 /   │
+    │               │                │ Mar-26→Jun-01     │
+    │ 3 (Vacation)  │ Jun-02 → Aug-10│ (no internal terms)│
+    └───────────────┴────────────────┴───────────────────┘
+    """
     end = end or date.today().year
     for y in range(start, end + 1):
-        AcademicYear.objects.get_or_create(starting_date=date(y, 9, 1))
+        ay, _ = AcademicYear.objects.get_or_create(
+            start_date=date(y, 8, 11),
+            end_date=date(y + 1, 8, 10),
+        )
+
+        # ── Semester 1 ─────────────────────────────────
+        sem1, _ = Semester.objects.get_or_create(
+            academic_year=ay,
+            number=SEMESTER_NUMBER.FIRST,
+            start_date=date(y, 8, 11),
+            end_date=date(y, 12, 20),
+        )
+        Term.objects.get_or_create(
+            semester=sem1,
+            number=TERM_NUMBER.FIRST,
+            start_date=date(y, 9, 1),
+            end_date=date(y, 10, 20),
+        )
+        Term.objects.get_or_create(
+            semester=sem1,
+            number=TERM_NUMBER.SECOND,
+            start_date=date(y, 10, 21),
+            end_date=date(y, 12, 20),
+        )
+
+        # ── Semester 2 ─────────────────────────────────
+        sem2, _ = Semester.objects.get_or_create(
+            academic_year=ay,
+            number=SEMESTER_NUMBER.SECOND,
+            start_date=date(y + 1, 1, 1),
+            end_date=date(y + 1, 6, 1),
+        )
+        Term.objects.get_or_create(
+            semester=sem2,
+            number=TERM_NUMBER.FIRST,
+            start_date=date(y + 1, 1, 1),
+            end_date=date(y + 1, 3, 25),
+        )
+        Term.objects.get_or_create(
+            semester=sem2,
+            number=TERM_NUMBER.SECOND,
+            start_date=date(y + 1, 3, 26),
+            end_date=date(y + 1, 6, 1),
+        )
+
+        # ── Semester 3 (vacation/remedial) ─────────────
+        Semester.objects.get_or_create(
+            academic_year=ay,
+            number=SEMESTER_NUMBER.VACATION,
+            start_date=date(y + 1, 6, 2),
+            end_date=date(y + 1, 8, 10),
+        )
+
     log(cmd, f"✔ Academic years {start}–{end} populated.", "SUCCESS")
 
 
@@ -27,7 +95,7 @@ def populate_environmental_studies_curriculum(cmd, colleges):
     log(cmd, "⚙  Populating BSc Environmental Studies curriculum")
 
     ay, _ = AcademicYear.objects.get_or_create(
-        starting_date=date.today().replace(month=9, day=1)
+        start_date=date.today().replace(month=9, day=1)
     )
 
     curriculum, created = Curriculum.objects.get_or_create(

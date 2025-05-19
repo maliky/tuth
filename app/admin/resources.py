@@ -1,6 +1,7 @@
 # app/admin/resources.py
 from import_export import resources, fields, widgets
 from app.models import Course, Curriculum, Building, Room, Prerequisite, Section
+from app.admin.widgets import BuildingWidget
 
 
 class CurriculumResource(resources.ModelResource):
@@ -36,9 +37,16 @@ class BuildingResource(resources.ModelResource):
 
 
 class RoomResource(resources.ModelResource):
+    building = fields.Field(
+        column_name="building",
+        attribute="building",
+        widget=BuildingWidget("building", "short_name"),
+    )
+
     class Meta:
         model = Room
         import_id_fields = ("name", "building")
+        fields = ("name", "building")
 
 
 class PrerequisiteResource(resources.ModelResource):

@@ -8,15 +8,15 @@ from .inlines import SemesterInline
 
 @admin.register(AcademicYear)
 class AcademicYearAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    list_display = ("long_name", "starting_date", "short_name")
-    date_hierarchy = "starting_date"
+    list_display = ("long_name", "start_date", "short_name")
+    date_hierarchy = "start_date"
     inlines = [SemesterInline]
-    ordering = ("-starting_date",)
+    ordering = ("-start_date",)
     search_fields = ("long_name", "short_name")
 
 
 @admin.register(Semester)
-class SemesterAdmin(GuardedModelAdmin):
+class SemesterAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     list_display = ("__str__", "academic_year", "number", "start_date", "end_date")
     list_filter = ("academic_year", "number")
     autocomplete_fields = ("academic_year",)
@@ -26,8 +26,8 @@ class SemesterAdmin(GuardedModelAdmin):
 @admin.register(Section)
 class SectionAdmin(GuardedModelAdmin):
     list_display = ("long_code", "course", "semester", "instructor", "room", "max_seats")
-    list_filter = ("semester", "course__curriculua__college")
-    autocomplete_fields = ("course", "term", "instructor", "room")
+    list_filter = ("semester", "course__curricula__college")
+    autocomplete_fields = ("course", "semester", "instructor", "room")
     list_select_related = (
         "course",
         "semester",
