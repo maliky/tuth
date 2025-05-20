@@ -19,7 +19,7 @@ class CREDIT_CHOICES(IntegerChoices):
     TWO = 2, "2"
     THREE = 3, "3"
     FOUR = 4, "4"
-    SiX = 6, "6"
+    SIX = 6, "6"
     TEN = 10, "10"
 
 
@@ -27,8 +27,8 @@ LEVEL_CHOICES = {
     "1": "freshman",
     "2": "sophomore",
     "3": "junior",
-    "4": "senior1",
-    "5": "senior2",
+    "4": "senior",
+    "5": "senior",
 }
 
 

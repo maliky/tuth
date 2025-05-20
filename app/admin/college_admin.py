@@ -24,7 +24,7 @@ class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = CurriculumResource
     list_display = ("college", "title", "short_name", "creation_date", "is_active")
     list_filter = ("college", "short_name", "is_active")
-    autocomplete_fields = ("college", "creation_date")
+    autocomplete_fields = ("college",)
     list_select_related = (
         "creation_date",
         "college",

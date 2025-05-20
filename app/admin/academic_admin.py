@@ -8,7 +8,7 @@ from .resources import SemesterResource
 
 
 @admin.register(AcademicYear)
-class AcademicYearAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+class AcademicYearAdmin(GuardedModelAdmin):
     list_display = ("long_name", "start_date", "short_name")
     date_hierarchy = "start_date"
     inlines = [SemesterInline]
@@ -19,10 +19,10 @@ class AcademicYearAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 @admin.register(Semester)
 class SemesterAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = SemesterResource
-    list_display = ("__str__", "academic_year", "number", "start_date", "end_date")
-    list_filter = ("academic_year", "number")
+    list_display = ("__str__",)
+    list_filter = ("academic_year",)  # needs academic_year her
     autocomplete_fields = ("academic_year",)
-    search_fields = ("academic_year__long_name", "number")
+    search_fields = ("__str__",)
 
 
 @admin.register(Section)

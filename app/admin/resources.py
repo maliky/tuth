@@ -59,7 +59,7 @@ class CourseResource(resources.ModelResource):
         if not row.get("code"):
             # penser à avoir une fonction dans utils qui génère le code du course
             # permettrat de changer cela consitently accross code base.
-            row["code"] = make_course_code(self.name, self.number)
+            row["code"] = make_course_code(row["name"], row["number"])
 
     class Meta:
         model = Course
@@ -129,4 +129,9 @@ class SemesterResource(resources.ModelResource):
     class Meta:
         model = Semester
         import_id_fields = ("academic_year", "number")
-        fields = ("academic_year", "number", "start_date", "end_date")
+        fields = (
+            "academic_year",
+            "number",
+            "start_date",
+            "end_date",
+        )  # do not remove academic_year
