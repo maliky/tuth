@@ -101,7 +101,7 @@ def populate_environmental_studies_curriculum(cmd, colleges):
     curriculum, created = Curriculum.objects.get_or_create(
         title="BSc Environmental Studies",
         college=colleges["COAS"],
-        academic_year=ay,
+        creation_date=date.today(),
     )
     log(cmd, f"  ↳ Curriculum {curriculum.title} {'created' if created else 'found'}")
 

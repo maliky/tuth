@@ -59,7 +59,7 @@ class Curriculum(StatusableMixin, models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["college", "created_date"],
+                fields=["college", "creation_date"],
                 condition=models.Q(is_active=True),
                 name="uniq_active_curriculum_college",
             )
