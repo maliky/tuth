@@ -60,6 +60,10 @@ class Semester(models.Model):
 
     def clean(self) -> None:
         "Checking that the start and end date of the Semester are within the academic years dates"
+        # Semester.clean() and Term.clean() call validate_subperiod() but not
+        # full_clean() on related objects. In admin workflows the parent may still
+        # carry invalid dates. Consider a parent-before-child save order or
+        # database-level CHECK constraints.
         validate_subperiod(
             sub_start=self.start_date,
             sub_end=self.end_date,

@@ -4,6 +4,7 @@ from app.app_utils import make_course_code
 from app.models import (
     Course,
     Curriculum,
+    CurriculumCourse,
     Room,
     Prerequisite,
     Section,
@@ -11,6 +12,24 @@ from app.models import (
     Semester,
 )
 from app.admin.widgets import BuildingWidget, AcademicYearWidget
+
+
+class CurriculumCourseResource(resources.ModelResource):
+    curriculum = fields.Field(
+        column_name="curriculum",
+        attribute="curriculum",
+        widget=widgets.ForeignKeyWidget(Curriculum, field="short_name"),
+    )
+    course = fields.Field(
+        column_name="course",
+        attribute="course",
+        widget=widgets.ForeignKeyWidget(Course, field="code"),
+    )
+
+    class Meta:
+        model = CurriculumCourse
+        import_id_fields = ("curriculum", "course")
+        fields = ("curriculum", "course")
 
 
 class CurriculumResource(resources.ModelResource):

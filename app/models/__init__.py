@@ -1,4 +1,11 @@
-from .academics import College, Curriculum, Course, Prerequisite, Concentration
+from .academics import (
+    College,
+    Curriculum,
+    Course,
+    Prerequisite,
+    Concentration,
+    CurriculumCourse,
+)
 from .registry import (
     Document,
     Registration,
@@ -13,6 +20,7 @@ from .mixins import StatusHistory
 __all__ = [
     "College",
     "Curriculum",
+    "CurriculumCourse",
     "Concentration",
     "Course",
     "Prerequisite",
