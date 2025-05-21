@@ -47,7 +47,7 @@ class AcademicYearWidget(widgets.ForeignKeyWidget):
             ys, ye = short.split("-")  # '25-26' -> '25', '26'
             AcademicYear.objects.create(
                 start_date=date(int("20" + ys), 9, 1),
-                end_date=date(int("20" + ye), 8, 31),
+                #                end_date=date(int("20" + ye), 8, 31),
             )
 
     class Meta:

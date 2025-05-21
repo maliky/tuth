@@ -1,9 +1,10 @@
 from django import forms
 
-from app.constants import STATUS_CHOICES_PER_MODEL
+from app.constants import STATUS_CHOICES_PER_MODEL, CREDIT_CHOICES
 from app.models.mixins import StatusHistory
 from app.app_utils import make_choices
 from django.forms import ChoiceField
+from app.models import Course
 
 
 class StatusHistoryForm(forms.ModelForm):
@@ -27,3 +28,16 @@ class StatusHistoryForm(forms.ModelForm):
             field = self.fields["state"]
             assert isinstance(field, ChoiceField)
             field.choices = make_choices(allowed)
+
+
+class CourseForm(forms.ModelForm):
+    credit_hours = forms.TypedChoiceField(
+        coerce=int,
+        choices=CREDIT_CHOICES.choices,
+        empty_value=None,  # show blank to type anything
+        widget=forms.NumberInput(attrs={"min": 1}),  # numeric input
+    )
+
+    class Meta:
+        model = Course
+        fields = "__all__"

@@ -30,7 +30,7 @@ def validate_subperiod(
     Generic date-range validator.
 
     - chronology (start ≤ end)
-    - fully inside its container dates
+    - fully inside its container dates (yes. borders included)
     - no overlap with siblings (pass the queryset already filtered on parent)
 
     Raise ``ValidationError`` on failure.

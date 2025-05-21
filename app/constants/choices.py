@@ -23,13 +23,12 @@ class CREDIT_CHOICES(IntegerChoices):
     TEN = 10, "10"
 
 
-LEVEL_CHOICES = {
-    "1": "freshman",
-    "2": "sophomore",
-    "3": "junior",
-    "4": "senior",
-    "5": "senior",
-}
+class LEVEL_CHOICES(IntegerChoices):
+    ONE = 1, "freshman"
+    TWO = 2, "sophomore"
+    THREE = 3, "junior"
+    FOUR = 4, "senior"
+    FIVE = 5, "senior"
 
 
 APPROVED: str = "approved"
