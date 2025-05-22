@@ -1,5 +1,5 @@
-from app.models import College
-from app.constants import COLLEGE_CHOICES, STYLE_DEFAULT
+from app.academics import College
+from app.shared.constants import COLLEGE_CHOICES, STYLE_DEFAULT
 
 
 def log(cmd, msg, style=STYLE_DEFAULT):

@@ -1,10 +1,12 @@
-from datetime import date
-from app.models import AcademicYear, Curriculum, Course, Prerequisite
-from app.constants import TEST_ENVIRONMENTAL_STUDIES_CURRICULUM
-from app.constants.choices import TERM_NUMBER, SEMESTER_NUMBER
-from app.models.timed import Term, Semester
-from .utils import log
 import re
+from datetime import date
+
+from app.academics import Course, Curriculum, Prerequisite
+from app.shared.constants import TEST_ENVIRONMENTAL_STUDIES_CURRICULUM
+from app.shared.constants.choices import SEMESTER_NUMBER, TERM_NUMBER
+from app.timetable import AcademicYear, Semester, Term
+
+from .utils import log
 
 
 def extract_code(code):

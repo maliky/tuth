@@ -1,8 +1,9 @@
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from guardian.shortcuts import assign_perm
-from app.constants import OBJECT_PERM_MATRIX
-from app.models import RoleAssignment
+
+from app.shared.constants import OBJECT_PERM_MATRIX
+from app.people import RoleAssignment
 
 
 def grant_model_level_perms(groups):
