@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from app.management.populate_helpers import (
+from app.shared.management.populate_helpers import (
     ensure_role_groups,
     ensure_superuser,
     grant_college_object_perms,

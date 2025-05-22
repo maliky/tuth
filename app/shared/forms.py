@@ -23,8 +23,7 @@ class StatusHistoryForm(forms.ModelForm):
         )
         if ct:
             # probablement à revoir à cause de ma nouvelle structure
-            key = f"app.{ct.model}"
-            allowed = STATUS_CHOICES_PER_MODEL.get(key, [])
+            allowed = STATUS_CHOICES_PER_MODEL.get(ct.model, [])
 
             field = self.fields["state"]
             assert isinstance(field, ChoiceField)

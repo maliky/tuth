@@ -10,5 +10,4 @@ class AcademicsConfig(AppConfig):
         """
         this garanties that my signal are imported when I use the application.
         """
-        # import app.models  # noqa: F401
         import app.academics.signals  # noqa: F401

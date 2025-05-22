@@ -23,7 +23,10 @@ class Section(models.Model):
     room = models.ForeignKey(
         "spaces.Room", null=True, blank=True, on_delete=models.SET_NULL
     )
+    # à voir plus tard, schedule ?  22/05/2025
     schedule = models.CharField(max_length=100, blank=True)
+
+    # to be defined by Admin & VPA
     max_seats = models.PositiveIntegerField(default=30, validators=[MinValueValidator(3)])
 
     class Meta:

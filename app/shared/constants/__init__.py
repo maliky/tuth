@@ -12,6 +12,7 @@ from .curriculum import TEST_ENVIRONMENTAL_STUDIES_CURRICULUM
 from .perms import (
     TEST_PW,
     OBJECT_PERM_MATRIX,
+    MODEL_APP,
 )
 
 from .roles import (
