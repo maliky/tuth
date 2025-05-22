@@ -7,7 +7,7 @@ class CourseInline(admin.TabularInline):  # or admin.StackedInline for more deta
     model = Course
     extra = 0
     autocomplete_fields = ("curriculum",)
-    fields = ("code")
+    fields = "code"
     # show_change_link = True  # convenient for editing courses quickly
     # classes = ("collapse",)
 
