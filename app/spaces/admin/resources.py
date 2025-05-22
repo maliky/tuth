@@ -1,5 +1,5 @@
 from import_export import fields, resources
-from space.models import Room
+from app.spaces.models import Room
 
 from .widgets import BuildingWidget
 
