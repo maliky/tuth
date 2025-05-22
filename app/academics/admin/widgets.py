@@ -1,5 +1,5 @@
 from import_export import widgets
-from app.timetable import AcademicYear, Semester
+from app.timetable.models import AcademicYear, Semester
 import re
 from datetime import date
 

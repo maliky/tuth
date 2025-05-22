@@ -1,4 +1,4 @@
-from app.academics import College
+from app.academics.models import College
 from app.shared.constants import COLLEGE_CHOICES, STYLE_DEFAULT
 
 

@@ -2,8 +2,8 @@ from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 
-from app.space.admin import RoomResource
-from app.spaces import Building, Room
+from .ressources import RoomResource
+from app.spaces.models import Building, Room
 
 
 @admin.register(Building)

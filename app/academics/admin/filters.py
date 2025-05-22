@@ -1,5 +1,5 @@
 from django.contrib import admin
-from app.academics import Curriculum
+from app.academics.models import Curriculum
 
 
 class CurriculumFilter(admin.SimpleListFilter):

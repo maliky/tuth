@@ -3,7 +3,7 @@ from django.db.models import Max
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
-from app.timetable import Section
+from app.timetable.models import Section
 
 
 @receiver(pre_save, sender=Section)

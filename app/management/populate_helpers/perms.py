@@ -3,7 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from guardian.shortcuts import assign_perm
 
 from app.shared.constants import OBJECT_PERM_MATRIX
-from app.people import RoleAssignment
+from app.people.models import RoleAssignment
 
 
 def grant_model_level_perms(groups):

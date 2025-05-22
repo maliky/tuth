@@ -1,6 +1,6 @@
 from import_export import widgets
 
-from app.spaces import Building
+from app.spaces.models import Building
 
 
 class BuildingWidget(widgets.ForeignKeyWidget):

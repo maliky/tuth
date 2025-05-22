@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from app.academics import Prerequisite, CurriculumCourse
+from app.academics.models import Prerequisite, CurriculumCourse
 
 
 class RequiresInline(admin.TabularInline):

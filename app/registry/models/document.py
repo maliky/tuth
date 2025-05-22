@@ -5,7 +5,7 @@ from __future__ import (
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 
-from app.people import StudentProfil
+from app.people.models import StudentProfil
 from app.shared.utils import validate_model_status
 
 

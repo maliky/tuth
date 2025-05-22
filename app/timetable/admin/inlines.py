@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from app.timetable import Section, Semester
+from app.timetable.models import Section, Semester
 
 
 class SemesterInline(admin.TabularInline):

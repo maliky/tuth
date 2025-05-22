@@ -2,7 +2,7 @@ from django.contrib.auth.models import Group, User
 from django.utils import timezone
 
 from app.shared.constants import DEFAULT_ROLE_TO_COLLEGE, TEST_PW, USER_ROLES
-from app.people import RoleAssignment
+from app.people.models import RoleAssignment
 
 from .utils import log
 

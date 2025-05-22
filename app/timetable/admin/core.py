@@ -2,7 +2,7 @@
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
-from app.timetable import AcademicYear, Semester, Section
+from app.timetable.models import AcademicYear, Semester, Section
 from .inlines import SemesterInline
 from .resources import SemesterResource
 
@@ -19,7 +19,6 @@ class AcademicYearAdmin(GuardedModelAdmin):
 @admin.register(Semester)
 class SemesterAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = SemesterResource
-    list_display = ("__str__",)
     list_filter = ("academic_year",)  # needs academic_year her
     autocomplete_fields = ("academic_year",)
     search_fields = ("__str__",)
