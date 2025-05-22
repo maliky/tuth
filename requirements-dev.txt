@@ -3,28 +3,30 @@
 pytest==7.4.2
 pytest-django==4.5.2
 hypothesis==6.82.7
-pytest-bdd
+pytest-bdd==8.1.0
 black==25.1.0
 ipython==9.1.0
 
 # Core type-checking
 mypy==1.10.0
-# mypy==1.6.1
 
 # Django type stubs
-django-stubs
-djangorestframework-stubs
+django-stubs==5.1.3
+django-stubs-ext==5.1.3
+djangorestframework-stubs==3.15.3
 
 # Additional common type stubs
 types-requests==2.31.0.20240406
 types-python-dateutil==2.9.0.20241206
 types-PyYAML==6.0.12.20240311
 
-# Typing extensions for latest type features
+# Typing extensions
 typing_extensions==4.13.2
 
-# linters and code helper
-ruff
-ruff-lsp
-python-lsp-server[all]
-
+# Linters and code helpers
+ruff==0.11.5
+ruff-lsp==0.0.62
+python-lsp-server[all]==1.12.2
+flake8==7.1.2
+flake8-bugbear==24.12.12
+Flake8-pyproject==1.2.3

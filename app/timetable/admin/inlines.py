@@ -14,5 +14,5 @@ class SemesterInline(admin.TabularInline):
 class SectionInline(admin.TabularInline):
     model = Section
     extra = 0
-    fields = ("number", "semester", "instructor", "room", "max_seats")
+    fields = ("course", "number", "semester", "instructor", "room", "max_seats")
     ordering = ("semester__start_date", "number")

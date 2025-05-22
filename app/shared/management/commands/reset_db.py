@@ -1,4 +1,3 @@
-# app/management/commands/reset_db.py
 from django.core.management.base import BaseCommand
 from django.db import connection
 

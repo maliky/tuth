@@ -1,4 +1,25 @@
 TEST_PW = "test"
+MODEL_APP = {
+    "college": "academics",
+    "course": "academics",
+    "curriculum": "academics",
+    "concentration": "academics",
+    "prerequisite": "academics",
+    "curriculumcourse": "academics",
+    "section": "timetable",
+    "semester": "timetable",
+    "term": "timetable",
+    "academicyear": "timetable",
+    "building": "spaces",
+    "room": "spaces",
+    "financialrecord": "finance",
+    "paymenthistory": "finance",
+    "profile": "people",
+    "roleassignment": "people",
+    "document": "registry",
+    "registration": "registry",
+    "classroster": "registry",
+}
 
 OBJECT_PERM_MATRIX = {
     "prerequisite": {

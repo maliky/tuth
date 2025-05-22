@@ -1,7 +1,7 @@
 """
 Re-export helper functions so management commands can do:
 
-    from app.populate_helpers import log, populate_colleges, ...
+    from app.shared.populate_helpers import log, populate_colleges, ...
 """
 
 from .auth import (

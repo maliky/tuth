@@ -25,7 +25,7 @@ class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     inlines = [SectionInline, PrerequisiteInline, RequiresInline]
     list_select_related = ("college",)
 
-    search_fields = ("code", "title")
+    search_fields = ("code", "number", "title")
     form = CourseForm
     fieldsets = (
         (None, {"fields": ("name", "number", "title", "credit_hours", "curricula")}),
@@ -42,9 +42,10 @@ class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 @admin.register(Prerequisite)
 class PrerequisiteAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = PrerequisiteResource
-    list_display = ("curriculum", "course", "prerequisite_course")
-    autocomplete_fields = ("curriculum", "course", "prerequisite_course")
+    list_display = ("course", "prerequisite_course", "curriculum")
+    autocomplete_fields = ("course", "prerequisite_course", "curriculum")
     list_filter = (CurriculumFilter,)
+    search_field = ("course", "prerequisite_course", "curriculum")
 
 
 @admin.register(Curriculum)
@@ -54,10 +55,7 @@ class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     list_filter = ("college", "short_name", "is_active")
     autocomplete_fields = ("college",)
     inlines = [CurriculumCourseInline]
-    list_select_related = (
-        "creation_date",
-        "college",
-    )
+    list_select_related = ("college",)
     search_fields = ("title",)
 
 

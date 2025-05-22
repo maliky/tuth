@@ -15,6 +15,7 @@ class Course(models.Model):
     credit_hours = models.PositiveSmallIntegerField(
         default=CREDIT_NUMBER.THREE,
         choices=CREDIT_NUMBER.choices,
+        blank=True
     )
 
     # the college responsible for this course
