@@ -1,9 +1,10 @@
 from __future__ import annotations
-from django.db import models
+
+from datetime import timedelta
 
 from django.core.exceptions import ValidationError
+from django.db import models
 from django.db.models.functions import ExtractYear
-from datetime import timedelta
 
 
 class AcademicYear(models.Model):

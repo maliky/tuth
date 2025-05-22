@@ -3,7 +3,7 @@ from __future__ import annotations
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 
-from app.models.utils import validate_model_status
+from app.shared.utils import validate_model_status
 from app.shared.mixins import StatusableMixin
 
 

@@ -3,15 +3,13 @@ from __future__ import annotations
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from app.models import Course
-
 
 class Prerequisite(models.Model):
     course = models.ForeignKey(
-        Course, related_name="course_prereq_edges", on_delete=models.CASCADE
+        "academics.Course", related_name="course_prereq_edges", on_delete=models.CASCADE
     )
     prerequisite_course = models.ForeignKey(
-        Course, related_name="required_for_edges", on_delete=models.CASCADE
+        "academics.Course", related_name="required_for_edges", on_delete=models.CASCADE
     )
     curriculum = models.ForeignKey(
         "academics.Curriculum",

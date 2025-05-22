@@ -1,6 +1,6 @@
 from __future__ import annotations
 from django.db import models
-from app.shared import SEMESTER_NUMBER
+from app.shared.enums import SEMESTER_NUMBER
 from app.timetable.utils import validate_subperiod
 
 

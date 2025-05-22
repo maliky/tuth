@@ -3,4 +3,11 @@ from .core import (
     CurriculumAdmin,
     CourseAdmin,
     PrerequisiteAdmin,
-)  # if you added the direct Prerequisite admin
+)
+
+__all__ = [
+    "CollegeAdmin",
+    "CurriculumAdmin",
+    "CourseAdmin",
+    "PrerequisiteAdmin",
+]

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from django.db import models
 
-from app.shared.constants import CREDIT_NUMBER, LEVEL_NUMBER, SEMESTER_NUMBER
+from app.shared.enums import CREDIT_NUMBER, LEVEL_NUMBER, SEMESTER_NUMBER
 
 
 class CurriculumCourse(models.Model):
