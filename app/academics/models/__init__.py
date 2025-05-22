@@ -5,7 +5,7 @@ from .curriculum import Curriculum
 from .curriculum_course import CurriculumCourse
 from .prerequisite import Prerequisite
 
-__all = [
+__all__ = [
     "College",
     "Concentration",
     "Course",

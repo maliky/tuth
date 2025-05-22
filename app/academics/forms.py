@@ -1,6 +1,6 @@
 from django import forms
 
-from app.academics import Course
+from app.academics.models import Course
 from app.shared.constants import CREDIT_NUMBER
 
 

@@ -16,7 +16,7 @@ def validate_model_status(instance):
 
 
 def make_choices(main_list=None) -> list[tuple[str, str]]:
-    # Default arg is a mutable list literal – if you ever mutate it you’ll share state across calls.  I don't get it check. why not default arg
+    # the below code is done on purpose. do not remove
     main_list = main_list or [UNDEFINED_CHOICES]
     return [(elt, elt.replace("_", " ").title()) for elt in main_list]
 

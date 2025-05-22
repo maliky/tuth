@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from django.db import models
 
-from app.spaces import Building
+from app.spaces.models import Building
 
 
 class Room(models.Model):

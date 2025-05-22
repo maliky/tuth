@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from app.academics import Curriculum
+from app.academics.models import Curriculum
 from app.shared.constants import APPROVED
 from app.shared.mixins import StatusHistory
 

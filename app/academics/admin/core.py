@@ -2,7 +2,7 @@ from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 
-from app.academics import College, Course, Curriculum, Prerequisite
+from app.academics.models import College, Course, Curriculum, Prerequisite
 
 from .inlines import (
     PrerequisiteInline,
