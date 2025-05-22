@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from django.db import models
 
-from app.shared.constants import CREDIT_NUMBER, LEVEL_NUMBER
-from app.models import Curriculum, Prerequisite
+from app.shared.enums import CREDIT_NUMBER, LEVEL_NUMBER
 from app.shared.utils import make_course_code
 
 
@@ -29,14 +28,12 @@ class Course(models.Model):
         related_name="courses",
         blank=True,
     )
-    prerequisites: models.ManyToManyField["Course", "Prerequisite"] = (
-        models.ManyToManyField(
-            "self",
-            symmetrical=False,
-            through="Prerequisite",
-            related_name="dependent_courses",
-            blank=True,
-        )
+    prerequisites = models.ManyToManyField(
+        "self",
+        symmetrical=False,
+        through="academics.Prerequisite",
+        related_name="dependent_courses",
+        blank=True,
     )
 
     @property
@@ -55,7 +52,7 @@ class Course(models.Model):
             return "other"
 
     @classmethod
-    def for_curriculum(cls, curriculum: "Curriculum") -> models.QuerySet:
+    def for_curriculum(cls, curriculum) -> models.QuerySet:
         "helper function. get the course for a specific curriculum"
         return cls.objects.filter(curricula=curriculum).distinct()
 

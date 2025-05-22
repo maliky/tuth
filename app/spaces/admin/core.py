@@ -2,7 +2,7 @@ from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 
-from .ressources import RoomResource
+from .resources import RoomResource
 from app.spaces.models import Building, Room
 
 

@@ -5,12 +5,12 @@ from __future__ import (
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 
-from app.people.models import StudentProfil
+from app.people.models import StudentProfile
 from app.shared.utils import validate_model_status
 
 
 class Document(models.Model):
-    student_profil = models.ForeignKey(StudentProfil, on_delete=models.CASCADE)
+    student_profil = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
     file = models.FileField(upload_to="documents/")
     document_type = models.CharField(max_length=50)
     status_history = GenericRelation(

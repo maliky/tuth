@@ -1,4 +1,4 @@
-from .academic_year import Academic_year
+from .academic_year import AcademicYear
 from .section import Section
 from .semester import Semester
 from .term import Term

@@ -1,7 +1,7 @@
 from django import forms
 
 from app.academics.models import Course
-from app.shared.constants import CREDIT_NUMBER
+from app.shared.enums import CREDIT_NUMBER
 
 
 class CourseForm(forms.ModelForm):

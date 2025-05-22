@@ -7,9 +7,10 @@ from app.academics.models import College, Course, Curriculum, Prerequisite
 from .inlines import (
     PrerequisiteInline,
     RequiresInline,
-    SectionInline,
     CurriculumCourseInline,
 )
+from app.timetable.admin import SectionInline
+
 from .resources import CourseResource, CurriculumResource, PrerequisiteResource
 from .forms import CourseForm
 from .filters import CurriculumFilter

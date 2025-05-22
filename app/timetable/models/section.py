@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from django.core.validators import MinValueValidator
 from django.db import models
-from timetable.models import Semester
+
+from .semester import Semester
 
 
 class Section(models.Model):
