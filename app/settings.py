@@ -34,8 +34,13 @@ CSRF_TRUSTED_ORIGINS = os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
 
 INSTALLED_APPS = [
     "import_export",
-    "app.apps.TuthAppConfig",
     "guardian",
+    "app.shared",
+    "app.academics",
+    "app.timetable",
+    "app.spaces",
+    "app.people",
+    "app.finance",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",

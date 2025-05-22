@@ -2,13 +2,13 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from app.management.populate_helpers import (
+    ensure_role_groups,
+    ensure_superuser,
+    grant_college_object_perms,
+    grant_model_level_perms,
     log,
     populate_colleges,
-    ensure_superuser,
-    ensure_role_groups,
     upsert_test_users_and_roles,
-    grant_model_level_perms,
-    grant_college_object_perms,
 )
 
 
