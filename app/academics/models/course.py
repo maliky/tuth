@@ -13,9 +13,7 @@ class Course(models.Model):
     code = models.CharField(max_length=20, editable=False)
     description: models.TextField = models.TextField(blank=True)
     credit_hours = models.PositiveSmallIntegerField(
-        default=CREDIT_NUMBER.THREE,
-        choices=CREDIT_NUMBER.choices,
-        blank=True
+        default=CREDIT_NUMBER.THREE, choices=CREDIT_NUMBER.choices, blank=True
     )
 
     # the college responsible for this course

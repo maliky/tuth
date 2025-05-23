@@ -28,7 +28,7 @@ class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     search_fields = ("code", "number", "title")
     form = CourseForm
     fieldsets = (
-        (None, {"fields": ("name", "number", "title", "credit_hours", "curricula")}),
+        (None, {"fields": ("name", "number", "title", "credit_hours", "college", "curricula")}),
         (
             "Additional details",
             {

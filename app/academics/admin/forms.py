@@ -1,13 +1,7 @@
-from django import forms
-from django.db import transaction
-
-from app.academics.models import Course, Curriculum, CurriculumCourse
-from app.shared.enums import CREDIT_NUMBER
-
-
 # app/academics/admin/forms.py
 from django import forms
 from django.db import transaction
+
 from app.academics.models import Course, Curriculum, CurriculumCourse
 from app.shared.enums import CREDIT_NUMBER
 
