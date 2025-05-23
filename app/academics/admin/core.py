@@ -9,9 +9,12 @@ from .inlines import (
     RequiresInline,
     CurriculumCourseInline,
 )
-from app.timetable.admin import SectionInline
-
-from .resources import CourseResource, CurriculumResource, PrerequisiteResource
+from .resources import (
+    CourseResource,
+    CurriculumResource,
+    PrerequisiteResource,
+    CollegeResource,
+)
 from .forms import CourseForm
 from .filters import CurriculumFilter
 
@@ -22,10 +25,10 @@ class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     list_display = ("code", "title", "credit_hours", "college")
     list_filter = ("curricula__college", "curricula")
     autocomplete_fields = ("curricula",)
-    inlines = [SectionInline, PrerequisiteInline, RequiresInline]
+    inlines = [CurriculumCourseInline, PrerequisiteInline, RequiresInline]
     list_select_related = ("college",)
 
-    search_fields = ("code", "number", "title")
+    search_fields = ("code", "curricula__short_name", "sections__number")
     form = CourseForm
     fieldsets = (
         (None, {"fields": ("name", "number", "title", "credit_hours", "college", "curricula")}),
@@ -51,7 +54,7 @@ class PrerequisiteAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 @admin.register(Curriculum)
 class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = CurriculumResource
-    list_display = ("college", "title", "short_name", "creation_date", "is_active")
+    list_display = ("short_name", "college")
     list_filter = ("college", "short_name", "is_active")
     autocomplete_fields = ("college",)
     inlines = [CurriculumCourseInline]
@@ -60,6 +63,7 @@ class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 
 @admin.register(College)
-class CollegeAdmin(admin.ModelAdmin):
+class CollegeAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    resource_class = CollegeResource
     list_display = ("code", "fullname", "current_dean")
     search_fields = ("code", "fullname")
