@@ -8,6 +8,7 @@ Usage: $(basename "$0") [-d | --dev] [-p | --prod] [-m | --migrate]
 Options
   -d, --dev       Run in development mode (loads .env-dev)
   -p, --prod      Run in production mode  (loads .env-prod)
+  -t, --test      Run in test mode (loads .env-test)
   -m, --migrate   Run 'makemigrations' and 'migrate' before starting
   -h, --help      Show this help
 EOF
@@ -21,6 +22,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         -d|--dev)   MODE=dev ;;
         -p|--prod)  MODE=prod ;;
+        -t|--test)  MODE=test ;;        
         -m|--migrate) RUN_MIGRATIONS=true ;;
         -h|--help)  printusage; exit 0 ;;
         *)          echo "Unknown option: $1" >&2; printusage; exit 1 ;;
@@ -38,8 +40,10 @@ fi
 echo "Running in $MODE mode…"
 if [[ $MODE == dev ]]; then
     ln -fs .env-dev .env
-else
+elif [[ $MODE == prod ]]; then
     ln -fs .env-prod .env
+else [[ $MODE == test ]]; then
+    ln -fs .env-test .env
 fi
 export $(grep -v '^#' .env | xargs)  # load variables
 
