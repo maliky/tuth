@@ -112,3 +112,15 @@ class PrerequisiteResource(resources.ModelResource):
         model = Prerequisite
         import_id_fields = ("curriculum", "course", "prerequisite_course")
         fields = ("curriculum", "course", "prerequisite_course")
+
+
+class CollegeResource(resources.ModelResource):
+    """Simple import-export resource for :class:`~app.academics.models.College`."""
+
+    class Meta:
+        model = College
+        import_id_fields = ("code",)
+        fields = (
+            "code",
+            "fullname",
+        )
