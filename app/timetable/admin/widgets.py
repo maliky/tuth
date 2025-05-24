@@ -1,5 +1,7 @@
 from import_export import widgets
 from app.timetable.models import AcademicYear, Semester
+from app.academics.models import College, Course
+from app.shared.management.populate_helpers.curriculum import extract_code
 import re
 from datetime import date
 
@@ -36,3 +38,64 @@ class AcademicYearWidget(widgets.ForeignKeyWidget):
         model = Semester
         import_id_fields = ("academic_year", "number")
         fields = ("academic_year", "number", "start_date", "end_date")
+
+
+class CollegeWidget(widgets.ForeignKeyWidget):
+    """Return or create a :class:`College` from its code."""
+
+    def clean(self, value, row=None, *args, **kwargs):
+        if not value:
+            return None
+        obj, _ = College.objects.get_or_create(
+            code=value,
+            defaults={"fullname": value},
+        )
+        return obj
+
+
+class CourseWidget(widgets.ForeignKeyWidget):
+    """Return or create a :class:`Course` from its code and row college."""
+
+    def clean(self, value, row=None, *args, **kwargs):
+        if not value:
+            return None
+        dept_code, course_num = extract_code(value)
+        college_code = row.get("college") if row else None
+        college = None
+        if college_code:
+            college, _ = College.objects.get_or_create(
+                code=college_code,
+                defaults={"fullname": college_code},
+            )
+        course, _ = Course.objects.get_or_create(
+            name=dept_code,
+            number=course_num,
+            college=college,
+            defaults={"title": value},
+        )
+        return course
+
+
+class SemesterWidget(widgets.ForeignKeyWidget):
+    """Parse ``YY-YY_SemN`` notation and return the :class:`Semester`."""
+
+    pattern = re.compile(r"^(?P<year>\d{2}-\d{2})_Sem(?P<num>\d+)$")
+
+    def clean(self, value, row=None, *args, **kwargs):
+        if not value:
+            return None
+        match = self.pattern.match(value)
+        if not match:
+            raise ValueError("Invalid semester format")
+        ay_short = match.group("year")
+        sem_no = int(match.group("num"))
+        start_year = int("20" + ay_short.split("-")[0])
+        ay, _ = AcademicYear.objects.get_or_create(
+            short_name=ay_short,
+            defaults={"start_date": date(start_year, 8, 11)},
+        )
+        semester, _ = Semester.objects.get_or_create(
+            academic_year=ay,
+            number=sem_no,
+        )
+        return semester
