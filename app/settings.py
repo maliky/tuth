@@ -20,7 +20,13 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-load_dotenv(BASE_DIR / ".env")
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    def load_dotenv(*args, **kwargs): pass
+
+
 
 DEBUG = os.getenv("DJANGO_DEBUG") == "True"
 
