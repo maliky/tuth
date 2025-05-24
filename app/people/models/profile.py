@@ -23,6 +23,7 @@ class StudentProfile(StatusableMixin, models.Model):
         "academics.Curriculum", on_delete=models.SET_NULL, null=True
     )
     enrollment_year = models.PositiveSmallIntegerField()
+    enrollment_date = models.DateField(null=True, blank=True)
 
     # Optional: additional personal information
     bio = models.TextField(blank=True)

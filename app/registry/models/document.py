@@ -5,7 +5,9 @@ from __future__ import (
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from app.shared.utils import validate_model_status
+from app.people.models import StudentProfile
+from app.shared.constants import DOCUMENT_TYPES
+from app.shared.utils import make_choices, validate_model_status
 
 
 class Document(models.Model):
@@ -13,7 +15,7 @@ class Document(models.Model):
     profile_id = models.PositiveIntegerField()
     profile = GenericForeignKey("profile_type", "profile_id")
     file = models.FileField(upload_to="documents/")
-    document_type = models.CharField(max_length=50)
+    document_type = models.CharField(max_length=50, choices=make_choices(DOCUMENT_TYPES))
     status_history = GenericRelation(
         "shared.StatusHistory", related_query_name="document"
     )
