@@ -10,7 +10,7 @@ college,course,semester,number,instructor,room,max_seats
 • **course**    ─ mandatory  ─ Course.code   (e.g. MATH101)
 • **semester**  ─ mandatory  ─ “YY-YY_SemN” (e.g. 24-25_Sem1)
 • **number**    ─ optional   ─ if blank/0 the autoincrement signal fills it
-• **instructor** / **room**  ─ FK IDs or leave blank
+• **instructor** / **room**  ─ 
 • **max_seats** ─ optional   ─ defaults to 30
 
 Usage inside any management command
