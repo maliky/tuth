@@ -64,3 +64,11 @@ docker-compose -f docker-compose-prod.yml up --build -d
 
 Access explicitly via your production URL (e.g., [[https://tuth.koba.sarl][https://tuth.koba.sarl]]).
 
+** Data Import/Export
+
+Several admin screens expose Import and Export buttons powered by
+the =django-import-export= package. Use these buttons to upload CSV
+or XLSX files and to download existing records. Models such as
+Courses, Curricula and Sections already provide corresponding
+resources.
+
