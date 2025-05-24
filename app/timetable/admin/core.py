@@ -4,7 +4,7 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from app.timetable.models import AcademicYear, Semester, Section
 from .inlines import SemesterInline
-from .resources import SemesterResource
+from .resources import SectionResource, SemesterResource
 
 
 @admin.register(AcademicYear)
@@ -25,7 +25,8 @@ class SemesterAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 
 @admin.register(Section)
-class SectionAdmin(GuardedModelAdmin):
+class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+    resource_class = SectionResource
     list_display = ("long_code", "course", "semester", "instructor", "room", "max_seats")
     list_filter = (
         "semester",
