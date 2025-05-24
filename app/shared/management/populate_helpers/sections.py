@@ -70,17 +70,26 @@ def populate_sections_from_csv(cmd, csv_path: Path | str | IO[str]) -> None:
             course = cw.clean(row["course"], row)
             semester = sw.clean(row["semester"], row)
 
-            number_raw = row.get("number") or ""
-            number_int = int(number_raw) if number_raw.strip().isdigit() else None
+            number_raw = (row.get("number") or "").strip()
+            number_int = int(number_raw) if number_raw.isdigit() else None
+
+            instr_raw = (row.get("instructor") or "").strip()
+            instr_id = int(instr_raw) if instr_raw.isdigit() else None
+
+            room_raw = (row.get("room") or "").strip()
+            room_id = int(room_raw) if room_raw.isdigit() else None
+
+            max_raw = (row.get("max_seats") or "").strip()
+            max_seats = int(max_raw) if max_raw.isdigit() else 30
 
             sec, made = Section.objects.get_or_create(
                 course=course,
                 semester=semester,
                 number=number_int,  # None → autoincrement signal
                 defaults={
-                    "instructor_id": row.get("instructor") or None,
-                    "room_id": row.get("room") or None,
-                    "max_seats": int(row.get("max_seats") or 30),
+                    "instructor_id": instr_id,
+                    "room_id": room_id,
+                    "max_seats": max_seats,
                 },
             )
             created += int(made)
