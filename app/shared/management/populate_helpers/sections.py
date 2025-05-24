@@ -104,7 +104,6 @@ def populate_sections_from_csv(cmd, csv_path: Path | str | IO[str]) -> None:
                 semester=semester,
                 number=number_int,  # None → autoincrement signal
                 defaults={
-
                     "instructor_id": instructor_id,
                     "room_id": room_id,
                     "max_seats": max_seats,
