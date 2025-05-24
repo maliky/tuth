@@ -32,5 +32,5 @@ Run them **before every commit**:
 
 ```bash
 black app/                       # auto-format
-flak8 check app/                 # lint (PEP 8 + isort)
+flake8 check app/                 # lint (PEP 8 + isort)
 mypy app/                        # strict typing
