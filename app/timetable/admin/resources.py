@@ -12,7 +12,7 @@ class SectionResource(resources.ModelResource):
     college = fields.Field(
         column_name="college",
         widget=CollegeWidget(College, "code"),
-        readonly=True,
+        # readonly=True,
     )
     course = fields.Field(
         column_name="course",
@@ -39,6 +39,7 @@ class SectionResource(resources.ModelResource):
     class Meta:
         model = Section
         import_id_fields = ("course", "semester", "number")
+        skip_unchanged = True
 
 
 class SemesterResource(resources.ModelResource):

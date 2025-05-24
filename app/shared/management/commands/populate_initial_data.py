@@ -1,3 +1,5 @@
+from pathlib import Path
+from app.shared.management.populate_helpers.sections import populate_sections_from_csv
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
@@ -23,6 +25,8 @@ class Command(BaseCommand):
         log(self, "\n⚙ Colleges")
         colleges = populate_colleges(self)
 
+        log(self, "\n⚙ Sections")
+        populate_sections_from_csv(self, Path("Seed_data/sections.csv"))
         log(self, "\n⚙ Groups & Users")
         groups = ensure_role_groups()
         upsert_test_users_and_roles(self, colleges, groups)
