@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-from dotenv import load_dotenv
 import os
 
 # Quick-start development settings - unsuitable for production
@@ -21,11 +20,11 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    def load_dotenv(*args, **kwargs): pass
+    from dotenv import load_dotenv  # type: ignore[import-not-found]
 
+    load_dotenv()
+except ImportError as ie:
+    raise (ie)
 
 
 DEBUG = os.getenv("DJANGO_DEBUG") == "True"

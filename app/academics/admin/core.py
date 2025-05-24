@@ -1,3 +1,4 @@
+from app.timetable.admin.inlines import SectionInline
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
@@ -31,7 +32,19 @@ class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     search_fields = ("code", "curricula__short_name", "sections__number")
     form = CourseForm
     fieldsets = (
-        (None, {"fields": ("name", "number", "title", "credit_hours", "college", "curricula")}),
+        (
+            None,
+            {
+                "fields": (
+                    "name",
+                    "number",
+                    "title",
+                    "credit_hours",
+                    "college",
+                    "curricula",
+                )
+            },
+        ),
         (
             "Additional details",
             {

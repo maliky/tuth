@@ -1,9 +1,11 @@
 from datetime import date
 from pathlib import Path
 from import_export import fields, resources
+from app.academics.models.college import College
+from app.academics.models.course import Course
 from app.timetable.models import AcademicYear, Section, Semester
 
-from .widgets import AcademicYearWidget
+from .widgets import AcademicYearWidget, CollegeWidget, CourseWidget, SemesterWidget
 
 
 class SectionResource(resources.ModelResource):
