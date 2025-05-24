@@ -2,25 +2,32 @@ from datetime import date
 from pathlib import Path
 from import_export import fields, resources
 from app.timetable.models import AcademicYear, Section, Semester
+from app.academics.models import College, Course
 
-from .widgets import AcademicYearWidget
+from .widgets import (
+    AcademicYearWidget,
+    CollegeWidget,
+    CourseWidget,
+    SemesterWidget,
+)
 
 
 class SectionResource(resources.ModelResource):
-    def before_import_row(self, row, **kwargs):
-        """Create missing academic years or semesters on the fly."""
-        ay_short = row.get("academic_year")
-        sem_no = row.get("semester")
-        if ay_short:
-            ay, _ = AcademicYear.objects.get_or_create(
-                short_name=ay_short,
-                defaults={"start_date": date(int("20" + ay_short.split("-")[0]), 9, 1)},
-            )
-            if sem_no:
-                Semester.objects.get_or_create(
-                    academic_year=ay,
-                    number=int(sem_no),
-                )
+    college = fields.Field(
+        column_name="college",
+        widget=CollegeWidget(College, "code"),
+        readonly=True,
+    )
+    course = fields.Field(
+        column_name="course",
+        attribute="course",
+        widget=CourseWidget(Course, "code"),
+    )
+    semester = fields.Field(
+        column_name="semester",
+        attribute="semester",
+        widget=SemesterWidget(Semester, "id"),
+    )
 
     def save_instance(self, instance, using_transactions=True, dry_run=False):
         try:
