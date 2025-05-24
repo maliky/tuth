@@ -5,6 +5,7 @@ from app.timetable.models import AcademicYear, Semester
 import re
 from datetime import date
 from app.shared.management.populate_helpers.curriculum import extract_code
+from app.academics.admin.widgets import CourseWidget
 
 
 class AcademicYearWidget(widgets.ForeignKeyWidget):
@@ -52,29 +53,6 @@ class CollegeWidget(widgets.ForeignKeyWidget):
             defaults={"fullname": value},
         )
         return obj
-
-
-class CourseWidget(widgets.ForeignKeyWidget):
-    """Return or create a :class:`Course` from its code and row college."""
-
-    def clean(self, value, row=None, *args, **kwargs):
-        if not value:
-            return None
-        dept_code, course_num = extract_code(value)
-        college_code = row.get("college") if row else None
-        college = None
-        if college_code:
-            college, _ = College.objects.get_or_create(
-                code=college_code,
-                defaults={"fullname": college_code},
-            )
-        course, _ = Course.objects.get_or_create(
-            name=dept_code,
-            number=course_num,
-            college=college,
-            defaults={"title": value},
-        )
-        return course
 
 
 class SemesterWidget(widgets.ForeignKeyWidget):

@@ -31,10 +31,8 @@ from typing import IO
 
 from app.shared.management.populate_helpers.utils import log
 from app.timetable.models import Section
-from app.timetable.admin.widgets import (
-    CourseWidget,
-    SemesterWidget,
-)
+from app.academics.admin.widgets import CourseWidget
+from app.timetable.admin.widgets import SemesterWidget
 from app.academics.models import Course
 from app.timetable.models import Semester
 from app.spaces.models import Room
