@@ -5,7 +5,8 @@ from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.timetable.models import AcademicYear, Section, Semester
 
-from .widgets import AcademicYearWidget, CollegeWidget, CourseWidget, SemesterWidget
+from .widgets import AcademicYearWidget, CollegeWidget, SemesterWidget
+from app.academics.admin.widgets import CourseWidget
 
 
 class SectionResource(resources.ModelResource):
