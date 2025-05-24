@@ -6,13 +6,14 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 
 from app.people.models import StudentProfile
-from app.shared.utils import validate_model_status
+from app.shared.constants import DOCUMENT_TYPES
+from app.shared.utils import make_choices, validate_model_status
 
 
 class Document(models.Model):
     student_profil = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
     file = models.FileField(upload_to="documents/")
-    document_type = models.CharField(max_length=50)
+    document_type = models.CharField(max_length=50, choices=make_choices(DOCUMENT_TYPES))
     status_history = GenericRelation(
         "shared.StatusHistory", related_query_name="document"
     )
