@@ -10,7 +10,7 @@ college,course,semester,number,instructor,room,max_seats
 • **course**    ─ mandatory  ─ Course.code   (e.g. MATH101)
 • **semester**  ─ mandatory  ─ “YY-YY_SemN” (e.g. 24-25_Sem1)
 • **number**    ─ optional   ─ if blank/0 the autoincrement signal fills it
-• **instructor** / **room**  ─ 
+• **instructor** / **room**  ─
 • **max_seats** ─ optional   ─ defaults to 30
 
 Usage inside any management command
@@ -37,6 +37,9 @@ from app.timetable.admin.widgets import (
 )
 from app.academics.models import Course
 from app.timetable.models import Semester
+from app.spaces.models import Room
+from django.contrib.auth.models import User
+from app.shared.constants import TEST_PW
 
 
 def populate_sections_from_csv(cmd, csv_path: Path | str | IO[str]) -> None:
@@ -71,16 +74,39 @@ def populate_sections_from_csv(cmd, csv_path: Path | str | IO[str]) -> None:
             semester = sw.clean(row["semester"], row)
 
             number_raw = row.get("number") or ""
-            number_int = int(number_raw) if number_raw.strip().isdigit() else None
+            number_int = int(number_raw.strip()) if number_raw.strip().isdigit() else None
+
+            instructor_raw = (row.get("instructor") or "").strip()
+            instructor_id = None
+            if instructor_raw:
+                instructor_obj, _ = User.objects.get_or_create(
+                    username=instructor_raw,
+                    defaults={"password": TEST_PW},
+                )
+                instructor_id = instructor_obj.id
+
+            room_raw = (row.get("room") or "").strip()
+            room_id = None
+            if room_raw:
+                if room_raw.isdigit() and Room.objects.filter(pk=int(room_raw)).exists():
+                    room_id = int(room_raw)
+                else:
+                    room_obj, _ = Room.objects.get_or_create(name=room_raw)
+                    room_id = room_obj.id
+
+            max_seats_raw = row.get("max_seats") or ""
+            max_seats = (
+                int(max_seats_raw.strip()) if max_seats_raw.strip().isdigit() else 30
+            )
 
             sec, made = Section.objects.get_or_create(
                 course=course,
                 semester=semester,
                 number=number_int,  # None → autoincrement signal
                 defaults={
-                    "instructor_id": row.get("instructor") or None,
-                    "room_id": row.get("room") or None,
-                    "max_seats": int(row.get("max_seats") or 30),
+                    "instructor_id": instructor_id,
+                    "room_id": room_id,
+                    "max_seats": max_seats,
                 },
             )
             created += int(made)
