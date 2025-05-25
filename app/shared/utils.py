@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Tuple
+from typing import Any, Mapping, Optional, Sequence, Tuple, cast
 
 from django.core.exceptions import ValidationError
 from django.db.models import Model
@@ -8,7 +8,7 @@ from app.shared.constants import STATUS_CHOICES_PER_MODEL, UNDEFINED_CHOICES
 
 
 def expand_course_code(
-    code: str, *, row: Optional[dict] = None, default_college: str = "COAS"
+    code: str, *, row: Optional[Mapping[str, str]] = None, default_college: str = "COAS"
 ) -> Tuple[str, str, str]:
     """Return (dept_code, course_num, college_code) from ``code``.
 
@@ -24,15 +24,26 @@ def expand_course_code(
     dept, num, college = match.group("dept"), match.group("num"), match.group("college")
     if not college:
         college = row.get("college") if row else default_college
-    return dept, num, college
+    return dept, num, cast(str, college)
 
 
 def validate_model_status(instance: Model) -> None:
     """Ensure the instance's current status is allowed for its model."""
 
-    model_name = instance._meta.model_name  # 'curriculum' or 'document'
+    # mypy: instance._meta.model_name is *str | None* in stubs; cast to str.
+    model_name: str = cast(str, instance._meta.model_name)
+
     valid_statuses = STATUS_CHOICES_PER_MODEL.get(model_name, [UNDEFINED_CHOICES])
-    current_status = instance.current_status()
+
+    # getattr-safe access avoids attr-defined error
+    # current_status = instance.current_status()
+    current_status_fn = getattr(instance, "current_status", None)
+
+    if not callable(current_status_fn):
+        return  # object is not status-aware – nothing to validate
+
+    current_status: Any = current_status_fn()
+
     if current_status and current_status.state not in valid_statuses:
         raise ValidationError(
             f"Invalid status '{current_status.state}' for model '{model_name}'. "

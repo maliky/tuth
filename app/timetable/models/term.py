@@ -18,11 +18,15 @@ class Term(models.Model):
     end_date = models.DateField(null=True, blank=True)
 
     def clean(self):
+        container_start = self.semester.start_date
+        container_end = self.semester.end_date
+        assert container_start is not None and container_end is not None
+
         validate_subperiod(
             sub_start=self.start_date,
             sub_end=self.end_date,
-            container_start=self.semester.start_date,
-            container_end=self.semester.end_date,
+            container_start=container_start,
+            container_end=container_end,
             overlap_qs=Term.objects.filter(semester=self.semester).exclude(pk=self.pk),
             overlap_message="Overlapping terms in the same semester.",
             label="term",
