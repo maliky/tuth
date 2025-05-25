@@ -50,7 +50,8 @@ export $(grep -v '^#' .env | xargs)  # load variables
 # ---- optional migrations ---------------------------------------------------
 if $RUN_MIGRATIONS; then
     echo "▶  Running makemigrations and migrate"
-    python manage.py makemigrations app
+    # should makemigraton for all discovered apps
+    python manage.py makemigrations
     python manage.py migrate
 fi
 

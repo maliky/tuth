@@ -8,6 +8,7 @@ from django.db import models
 # need to do this extensively and for other profils when import tests ok
 class StudentProfile(StatusableMixin, models.Model):
     """Additional personal and academic data for a user."""
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     student_id = models.CharField(max_length=20, unique=True)
