@@ -13,7 +13,7 @@ from app.shared.utils import make_course_code
 class CurriculumResource(resources.ModelResource):
     """
     Columns expected in the CSV  (case-sensitive):
-        short_name, long_name, college, list_courses
+        short_name, title, college, list_courses
     """
 
     # -------- bookkeeping ---------------------------------------------------

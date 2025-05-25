@@ -73,6 +73,7 @@ class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     list_filter = ("college", "short_name", "is_active")
     autocomplete_fields = ("college",)
     inlines = [CurriculumCourseInline]
+    # list_selected_relate reduce the number of queries in db
     list_select_related = ("college",)
     search_fields = ("title",)
 
