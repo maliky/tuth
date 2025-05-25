@@ -9,13 +9,26 @@ from app.timetable.models import AcademicYear, Semester, Term
 from .utils import log
 
 
-def extract_code(code):
-    "Given a course code return the num and the code"
+_COURSE_PATTERN = re.compile(
+    r"(?P<dept>[A-Z]{2,4})(?P<num>[0-9]{3})(?:\s*-\s*(?P<college>\w+))?"
+)
+
+
+def extract_code(code: str, *, row: dict | None = None, default_college: str = "COAS"):
+    """Return (dept_code, course_num, college_code) from ``code``.
+
+    ``code`` may optionally include the college after a dash.  If missing,
+    ``row['college']`` is used when available, otherwise ``default_college``.
+    ``row`` is the raw CSV row passed during imports.
+    """
+
     assert "/" not in code
-    rpat = r"(?P<code>[A-Z]+)(?P<num>[0-9]+)"
-    match = re.search(rpat, code)
+    match = _COURSE_PATTERN.search(code.strip().upper())
     assert match is not None, f"Code '{code}' doesn't match expected pattern"
-    return match.groups()
+    dept, num, college = match.group("dept"), match.group("num"), match.group("college")
+    if not college:
+        college = row.get("college") if row else default_college
+    return dept, num, college
 
 
 # --------------------------------- academic years ---------------------------------
