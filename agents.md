@@ -25,6 +25,13 @@ This guide explains how to spin up the development stack, run checks, write test
 
 Do not commit change made to migration files. The will be regenerated with new DB.
 
+### naming
+Don't change existing variable names
+
+### Documentation & comments
+- Comment your additions, especially if removing code
+- Document succintly new class, methods, or functions
+
 ### Branching
 
 Always work on a feature branch off of `dev`.  
