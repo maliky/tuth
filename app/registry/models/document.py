@@ -5,7 +5,6 @@ from __future__ import (
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from app.people.models import StudentProfile
 from app.shared.constants import DOCUMENT_TYPES
 from app.shared.utils import make_choices, validate_model_status
 

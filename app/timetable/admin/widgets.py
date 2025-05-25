@@ -1,11 +1,8 @@
 from import_export import widgets
 from app.academics.models.college import College
-from app.academics.models.course import Course
 from app.timetable.models import AcademicYear, Semester
 import re
 from datetime import date
-from app.shared.management.populate_helpers.curriculum import extract_code
-from app.academics.admin.widgets import CourseWidget
 
 
 class AcademicYearWidget(widgets.ForeignKeyWidget):
