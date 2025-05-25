@@ -59,6 +59,17 @@ class CurriculumCourse(models.Model):
     def save(self, *args, **kwargs):
         if self.credit_hours is None:
             self.credit_hours = self.course.credit_hours
+
+        if self.year_level is None:
+            # Extract first digit from course.number to set default year_level
+            number_str = str(self.course.number).strip()
+            if number_str.isdigit():
+                self.year_level = int(number_str[0])
+            else:
+                raise ValueError(
+                    f"Invalid course.number '{self.course.number}' for deriving year_level"
+                )
+
         super().save(*args, **kwargs)
 
     class Meta:

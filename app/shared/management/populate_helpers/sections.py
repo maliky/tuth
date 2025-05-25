@@ -95,7 +95,7 @@ def populate_sections_from_csv(cmd: BaseCommand, csv_path: Path | str | IO[str])
                     room_id = room_obj.id
 
             max_seats_raw = (row.get("max_seats") or "").strip()
-            max_seats = int(max_raw) if max_raw.isdigit() else 30
+            max_seats = int(max_seats_raw) if max_seats_raw.isdigit() else 30
 
             sec, made = Section.objects.get_or_create(
                 course=course,
