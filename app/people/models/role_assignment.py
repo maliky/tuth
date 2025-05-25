@@ -7,6 +7,8 @@ from app.shared.utils import make_choices
 
 
 class RoleAssignment(models.Model):
+    """Period during which a user holds a specific role."""
+
     user = models.ForeignKey(
         "auth.User", on_delete=models.CASCADE, related_name="role_assignments"
     )

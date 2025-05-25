@@ -5,6 +5,8 @@ from app.timetable.utils import validate_subperiod
 
 
 class Semester(models.Model):
+    """Half of an academic year (e.g. semester 1 or 2)."""
+
     academic_year = models.ForeignKey(
         "timetable.AcademicYear", on_delete=models.PROTECT, related_name="semesters"
     )

@@ -10,6 +10,8 @@ from app.shared.utils import make_choices, validate_model_status
 
 
 class Document(models.Model):
+    """File uploaded to support a user profile (transcript, bill, …)."""
+
     profile_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     profile_id = models.PositiveIntegerField()
     profile = GenericForeignKey("profile_type", "profile_id")

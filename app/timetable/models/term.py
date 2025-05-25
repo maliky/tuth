@@ -6,6 +6,8 @@ from app.timetable.utils import validate_subperiod
 
 
 class Term(models.Model):
+    """One of the sub-periods that divide a semester."""
+
     semester = models.ForeignKey(
         "timetable.Semester", on_delete=models.PROTECT, related_name="terms"
     )

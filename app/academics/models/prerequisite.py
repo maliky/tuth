@@ -5,6 +5,8 @@ from django.db import models
 
 
 class Prerequisite(models.Model):
+    """Relationship describing that one course must precede another."""
+
     course = models.ForeignKey(
         "academics.Course", related_name="course_prereq_edges", on_delete=models.CASCADE
     )
@@ -20,6 +22,8 @@ class Prerequisite(models.Model):
     )
 
     def clean(self) -> None:
+        """Prevent reciprocal prerequisites that would create a cycle."""
+
         if Prerequisite.objects.filter(
             course=self.prerequisite_course, prerequisite_course=self.course
         ).exists():

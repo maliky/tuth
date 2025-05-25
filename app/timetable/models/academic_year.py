@@ -8,6 +8,8 @@ from django.db.models.functions import ExtractYear
 
 
 class AcademicYear(models.Model):
+    """Top-level period covering two consecutive semesters."""
+
     start_date = models.DateField(unique=True)
     end_date = models.DateField(unique=True)
     long_name = models.CharField(max_length=9, editable=False, unique=True)

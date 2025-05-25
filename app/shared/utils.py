@@ -24,6 +24,8 @@ def expand_course_code(
 
 
 def validate_model_status(instance):
+    """Ensure the instance's current status is allowed for its model."""
+
     model_name = instance._meta.model_name  # 'curriculum' or 'document'
     valid_statuses = STATUS_CHOICES_PER_MODEL.get(model_name, [UNDEFINED_CHOICES])
     current_status = instance.current_status()
@@ -36,10 +38,14 @@ def validate_model_status(instance):
 
 
 def make_choices(main_list=None) -> list[tuple[str, str]]:
+    """Return choices tuple suitable for a Django ``choices`` argument."""
+
     # the below code is done on purpose. do not remove
     main_list = main_list or [UNDEFINED_CHOICES]
     return [(elt, elt.replace("_", " ").title()) for elt in main_list]
 
 
 def make_course_code(name, number):
+    """Compact representation used internally to identify a course."""
+
     return f"{name}{number}".upper()
