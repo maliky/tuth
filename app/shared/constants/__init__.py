@@ -25,7 +25,7 @@ from .roles import (
 
 STYLE_DEFAULT = "NOTICE"
 COURSE_PATTERN = re.compile(
-    r"(?P<dept>[A-Z]{2,4})(?P<num>[0-9]{3})(?:\s*-\s*(?P<college>\w+))?"
+    r"(?P<dept>[A-Z]{2,4})[_-]?(?P<num>[0-9]{3})(?:\s*-\s*(?P<college>[A-Z]{3,4}))?"
 )
 
 __ALL__ = [
