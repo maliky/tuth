@@ -1,3 +1,4 @@
+from app.academics.admin.actions import update_curriculum
 from app.timetable.admin.inlines import SectionInline
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
@@ -58,6 +59,7 @@ class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 @admin.register(Prerequisite)
 class PrerequisiteAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = PrerequisiteResource
+    actions = [update_curriculum]
     list_display = ("course", "prerequisite_course", "curriculum")
     autocomplete_fields = ("course", "prerequisite_course", "curriculum")
     list_filter = (CurriculumFilter,)
@@ -70,12 +72,15 @@ class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     # add the action button on the import form
     import_form_class = BulkActionImportForm
     list_display = ("short_name", "title", "college")
-    list_filter = ("college", "short_name", "is_active")
+    list_filter = ("college", "is_active")
     autocomplete_fields = ("college",)
     inlines = [CurriculumCourseInline]
     # list_selected_relate reduce the number of queries in db
     list_select_related = ("college",)
-    search_fields = ("title",)
+    search_fields = (
+        "short_name",
+        "title",
+    )
 
 
 @admin.register(College)
