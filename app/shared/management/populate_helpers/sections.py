@@ -29,6 +29,8 @@ from csv import DictReader
 from pathlib import Path
 from typing import IO
 
+from django.core.management.base import BaseCommand
+
 from app.shared.management.populate_helpers.utils import log
 from app.timetable.models import Section
 from app.academics.admin.widgets import CourseWidget
@@ -40,7 +42,7 @@ from django.contrib.auth.models import User
 from app.shared.constants import TEST_PW
 
 
-def populate_sections_from_csv(cmd, csv_path: Path | str | IO[str]) -> None:
+def populate_sections_from_csv(cmd: BaseCommand, csv_path: Path | str | IO[str]) -> None:
     """
     Read *csv_path* and guarantee every row exists as a Section.
 

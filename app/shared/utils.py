@@ -1,11 +1,15 @@
+from typing import Optional, Sequence, Tuple
+
 from django.core.exceptions import ValidationError
+from django.db.models import Model
+
 from app.shared.constants import COURSE_PATTERN
 from app.shared.constants import STATUS_CHOICES_PER_MODEL, UNDEFINED_CHOICES
 
 
 def expand_course_code(
-    code: str, *, row: dict | None = None, default_college: str = "COAS"
-):
+    code: str, *, row: Optional[dict] = None, default_college: str = "COAS"
+) -> Tuple[str, str, str]:
     """Return (dept_code, course_num, college_code) from ``code``.
 
     ``code`` may optionally include the college after a dash.  If missing,
@@ -23,7 +27,7 @@ def expand_course_code(
     return dept, num, college
 
 
-def validate_model_status(instance):
+def validate_model_status(instance: Model) -> None:
     """Ensure the instance's current status is allowed for its model."""
 
     model_name = instance._meta.model_name  # 'curriculum' or 'document'
@@ -34,18 +38,15 @@ def validate_model_status(instance):
             f"Invalid status '{current_status.state}' for model '{model_name}'. "
             f"Allowed statuses: {', '.join(valid_statuses)}."
         )
-    return None
 
 
-def make_choices(main_list=None) -> list[tuple[str, str]]:
+def make_choices(main_list: Optional[Sequence[str]] = None) -> list[tuple[str, str]]:
     """Return choices tuple suitable for a Django ``choices`` argument."""
-
     # the below code is done on purpose. do not remove
     main_list = main_list or [UNDEFINED_CHOICES]
     return [(elt, elt.replace("_", " ").title()) for elt in main_list]
 
 
-def make_course_code(name, number):
+def make_course_code(name: str, number: str) -> str:
     """Compact representation used internally to identify a course."""
-
     return f"{name}{number}".upper()

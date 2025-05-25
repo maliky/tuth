@@ -1,14 +1,16 @@
+from datetime import date
+from typing import Optional
+
 from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
-from typing import Optional
 
 
 def validate_subperiod(
     *,
-    sub_start,
-    sub_end,
-    container_start,
-    container_end,
+    sub_start: Optional[date],
+    sub_end: Optional[date],
+    container_start: date,
+    container_end: date,
     overlap_qs: Optional[QuerySet] = None,
     overlap_message: str = "Overlapping periods.",
     label: str = "period",
