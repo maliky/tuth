@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from csv import DictReader
+from datetime import date
 from pathlib import Path
 from typing import IO
 
@@ -76,7 +77,9 @@ def populate_curricula_from_csv(cmd, csv_path: Path | str | IO[str]) -> None:
 
             cur, cur_created = Curriculum.objects.get_or_create(
                 short_name=short_name,
-                defaults=dict(title=long_name, college=college, creation_date=cmd.today),
+                defaults=dict(
+                    title=long_name, college=college, creation_date=date.today()
+                ),
             )
 
             # college-mismatch safety check
