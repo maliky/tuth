@@ -25,18 +25,21 @@ Usage inside any management command
 """
 
 from __future__ import annotations
+
 from csv import DictReader
 from pathlib import Path
 from typing import IO
 
+from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
-from app.shared.management.populate_helpers.utils import log
-from app.timetable.models import Section
 from app.academics.admin.widgets import CourseWidget
-from app.timetable.admin.widgets import SemesterWidget
 from app.academics.models import Course
-from app.timetable.models import Semester
+from app.shared.constants import TEST_PW
+from app.shared.management.populate_helpers.utils import log
+from app.spaces.models import Room
+from app.timetable.admin.widgets import SemesterWidget
+from app.timetable.models import Section, Semester
 
 
 def populate_sections_from_csv(cmd: BaseCommand, csv_path: Path | str | IO[str]) -> None:
@@ -73,13 +76,25 @@ def populate_sections_from_csv(cmd: BaseCommand, csv_path: Path | str | IO[str])
             number_raw = (row.get("number") or "").strip()
             number_int = int(number_raw) if number_raw.isdigit() else None
 
-            instr_raw = (row.get("instructor") or "").strip()
-            instr_id = int(instr_raw) if instr_raw.isdigit() else None
+            instructor_raw = (row.get("instructor") or "").strip()
+            if instructor_raw:
+                instructor_obj, _ = User.objects.get_or_create(
+                    username=instructor_raw,
+                    defaults={"password": TEST_PW},
+                )
+
+            instructor_id = int(instructor_raw) if instructor_raw.isdigit() else None
 
             room_raw = (row.get("room") or "").strip()
             room_id = int(room_raw) if room_raw.isdigit() else None
+            if room_raw:
+                if room_raw.isdigit() and Room.objects.filter(pk=int(room_raw)).exists():
+                    room_id = int(room_raw)
+                else:
+                    room_obj, _ = Room.objects.get_or_create(name=room_raw)
+                    room_id = room_obj.id
 
-            max_raw = (row.get("max_seats") or "").strip()
+            max_seats_raw = (row.get("max_seats") or "").strip()
             max_seats = int(max_raw) if max_raw.isdigit() else 30
 
             sec, made = Section.objects.get_or_create(
@@ -87,7 +102,7 @@ def populate_sections_from_csv(cmd: BaseCommand, csv_path: Path | str | IO[str])
                 semester=semester,
                 number=number_int,  # None → autoincrement signal
                 defaults={
-                    "instructor_id": instr_id,
+                    "instructor_id": instructor_id,
                     "room_id": room_id,
                     "max_seats": max_seats,
                 },
