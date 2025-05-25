@@ -37,10 +37,4 @@ class Command(BaseCommand):
         log(self, "\n⚙ College object-level permissions")
         grant_college_object_perms()
 
-        log(self, "\n⚙ Academic calendar")
-        # populate_academic_years(self)
-
-        log(self, "\n⚙ Populating Environmental Studies curriculum")
-        # populate_environmental_studies_curriculum(self, colleges)
-
         log(self, "\n✔ All seed data created.\n", "SUCCESS")

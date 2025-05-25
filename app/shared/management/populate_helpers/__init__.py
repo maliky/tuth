@@ -10,11 +10,6 @@ from .auth import (
     upsert_test_users_and_roles,
 )
 
-from .curriculum import (
-    populate_academic_years,
-    populate_environmental_studies_curriculum,
-)
-
 from .perms import (
     grant_college_object_perms,
     grant_model_level_perms,
@@ -29,6 +24,4 @@ __all__ = [
     "upsert_test_users_and_roles",
     "grant_model_level_perms",
     "grant_college_object_perms",
-    "populate_academic_years",
-    "populate_environmental_studies_curriculum",
 ]
