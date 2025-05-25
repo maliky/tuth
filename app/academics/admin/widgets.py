@@ -1,7 +1,7 @@
 from import_export import widgets
 from app.academics.models.college import College
 from app.academics.models.course import Course
-from app.shared.management.populate_helpers.curriculum import expand_course_code
+from app.shared.utils import expand_course_code
 
 
 class CourseWidget(widgets.ForeignKeyWidget):
