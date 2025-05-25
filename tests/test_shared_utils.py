@@ -1,11 +1,12 @@
-import pytest
 from datetime import date
-from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
 from types import SimpleNamespace
 
+import pytest
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+
 from app.academics.models import College, Curriculum
-from app.shared.utils import validate_model_status
+from app.shared.utils import expand_course_code, validate_model_status
 
 
 class DummyHistory:
@@ -70,3 +71,23 @@ def test_validate_model_status_no_history():
     curriculum.current_status = lambda: history.first()  # type: ignore[assignment]
     result = validate_model_status(curriculum)  # type: ignore[func-returns-value]
     assert result is None
+
+
+def test_expand_code_explicit_college():
+    result = expand_course_code("MATH101 - COET", row={"college": "COAS"})
+    assert result == ("MATH", "101", "COET")
+
+
+def test_expand_code_defaults_to_row_college():
+    dept, num, college = expand_course_code("CHEM100", row={"college": "COAS"})
+    assert (dept, num, college) == ("CHEM", "100", "COAS")
+
+
+def test_expand_code_defaults_to_coas_when_row_missing():
+    dept, num, college = expand_course_code("BIOL105")
+    assert college == "COAS"
+
+
+def test_expand_code_invalid_format():
+    with pytest.raises(AssertionError):
+        expand_course_code("MATH/101")
