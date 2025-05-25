@@ -1,6 +1,26 @@
 from django.core.exceptions import ValidationError
-
+from app.shared.constants import COURSE_PATTERN
 from app.shared.constants import STATUS_CHOICES_PER_MODEL, UNDEFINED_CHOICES
+
+
+def expand_course_code(
+    code: str, *, row: dict | None = None, default_college: str = "COAS"
+):
+    """Return (dept_code, course_num, college_code) from ``code``.
+
+    ``code`` may optionally include the college after a dash.  If missing,
+    ``row['college']`` is used when available, otherwise ``default_college``.
+    ``row`` is the raw CSV row passed during imports.
+    """
+
+    assert "/" not in code
+
+    match = COURSE_PATTERN.search(code.strip().upper())
+    assert match is not None, f"Code '{code}' doesn't match expected pattern"
+    dept, num, college = match.group("dept"), match.group("num"), match.group("college")
+    if not college:
+        college = row.get("college") if row else default_college
+    return dept, num, college
 
 
 def validate_model_status(instance):

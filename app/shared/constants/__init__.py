@@ -1,3 +1,4 @@
+import re
 from .choices import (
     APPROVED,
     UNDEFINED_CHOICES,
@@ -23,10 +24,14 @@ from .roles import (
 
 
 STYLE_DEFAULT = "NOTICE"
+COURSE_PATTERN = re.compile(
+    r"(?P<dept>[A-Z]{2,4})(?P<num>[0-9]{3})(?:\s*-\s*(?P<college>\w+))?"
+)
 
 __ALL__ = [
     "APPROVED",
     "STYLE_DEFAULT",
+    "COURSE_PATTERN",
     "UNDEFINED_CHOICES",
     "CLEARANCE_CHOICES",
     "COLLEGE_CHOICES",

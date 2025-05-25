@@ -1,21 +1,11 @@
-import re
 from datetime import date
 
 from app.academics.models import Course, Curriculum, Prerequisite
 from app.shared.constants import TEST_ENVIRONMENTAL_STUDIES_CURRICULUM
 from app.shared.enums import SEMESTER_NUMBER, TERM_NUMBER
+from app.shared.utils import expand_course_code
 from app.timetable.models import AcademicYear, Semester, Term
-
 from .utils import log
-
-
-def extract_code(code):
-    "Given a course code return the num and the code"
-    assert "/" not in code
-    rpat = r"(?P<code>[A-Z]+)(?P<num>[0-9]+)"
-    match = re.search(rpat, code)
-    assert match is not None, f"Code '{code}' doesn't match expected pattern"
-    return match.groups()
 
 
 # --------------------------------- academic years ---------------------------------
@@ -112,7 +102,7 @@ def populate_environmental_studies_curriculum(cmd, colleges):
 
     # first pass – courses in the main list
     for _, col_code, code, title, credits, _ in TEST_ENVIRONMENTAL_STUDIES_CURRICULUM:
-        dept_code, course_num = extract_code(code)
+        dept_code, course_num = expand_course_code(code)
         course, created = Course.objects.get_or_create(
             name=dept_code,
             number=course_num,
