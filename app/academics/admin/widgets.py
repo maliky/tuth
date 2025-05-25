@@ -62,6 +62,7 @@ class CourseWidget(widgets.ForeignKeyWidget):
                 number=number,
                 college=college,
                 credit_hours=3,
+                title=value,
             )
         else:
             course = qs.get()

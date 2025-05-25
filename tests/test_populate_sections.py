@@ -30,6 +30,7 @@ def test_populate_sections_strip_and_optional_fields():
         """college,course,semester,number,instructor,room,max_seats\n"
         "COAS,MATH101,24-25_Sem1, 5 , 2 , 1 , 40\n"
         "COAS,MATH102,24-25_Sem1, , , , \n"
+        """
     )
 
     cmd = DummyCmd()
