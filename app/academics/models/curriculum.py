@@ -8,8 +8,8 @@ from app.shared.mixins import StatusableMixin
 
 
 class Curriculum(StatusableMixin, models.Model):
-    title = models.CharField(max_length=255)
-    short_name = models.CharField(max_length=30, blank=True, null=True)
+    title = models.CharField(max_length=255, blank=True, null=True)
+    short_name = models.CharField(max_length=30)
 
     college = models.ForeignKey(
         "academics.College", on_delete=models.CASCADE, related_name="curricula"
@@ -30,7 +30,7 @@ class Curriculum(StatusableMixin, models.Model):
     )
 
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.title} - {self.college}"
+        return f"{self.title or self.short_name}"
 
     def clean(self):
         super().clean()

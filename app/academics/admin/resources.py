@@ -1,42 +1,124 @@
+from django.contrib import messages
 from import_export import resources, fields, widgets
+from app.academics.admin.widgets import CollegeWidget, CourseManyWidget
 from app.academics.models import (
     Curriculum,
     Course,
-    CurriculumCourse,
     Prerequisite,
     College,
 )
 from app.shared.utils import make_course_code
 
 
-class CurriculumCourseResource(resources.ModelResource):
-    curriculum = fields.Field(
-        column_name="curriculum",
-        attribute="curriculum",
-        widget=widgets.ForeignKeyWidget(Curriculum, field="short_name"),
-    )
-    course = fields.Field(
-        column_name="course",
-        attribute="course",
-        widget=widgets.ForeignKeyWidget(Course, field="code"),
-    )
-
-    class Meta:
-        model = CurriculumCourse
-        import_id_fields = ("curriculum", "course")
-        fields = ("curriculum", "course")
-
-
 class CurriculumResource(resources.ModelResource):
+    """
+    Columns expected in the CSV  (case-sensitive):
+        short_name, long_name, college, list_courses
+    """
+
+    # -------- bookkeeping ---------------------------------------------------
+    def __init__(self, *args, **kwargs):
+        # for keeping track of what is been added or replaced
+        super().__init__(*args, **kwargs)
+        self._created: set[str] = set()
+        self._merged: set[str] = set()
+        self._replaced: set[str] = set()
+        self._new_colleges: set[str] = set()
+        self.fields["college"].widget._resource = self
+
+    # ------------------------------------------------------------------ helpers
+    def _action(self) -> str:
+        """
+        'merge' (default) or 'replace'  — read once from the import form.
+        """
+        value = (self._kwargs or {}).get("action", "merge")
+        return str(value).lower()  # str to garantee return type for mypy
+
+    # ----- FKs ---------------------------------------------------------------
+    college = fields.Field(
+        column_name="college",
+        attribute="college",
+        widget=CollegeWidget(College, "code"),  # auto-creates + logs
+    )
+
+    # ----- synthetic M2M list -----------------------------------------------
+    list_courses = fields.Field(
+        column_name="list_courses",
+        attribute="courses",
+        widget=CourseManyWidget(),  # ⬆ defined in step 1
+    )
+
+    # ----- niceties ----------------------------------------------------------
+    def before_import_row(self, row, **kwargs):
+        # default long_name -> short_name
+        if not row.get("long_name"):
+            row["long_name"] = row["short_name"]
+
+    # ----- merge / replace logic --------------------------------------------
+    def save_instance(self, instance, using_transactions=True, dry_run=False):
+        """
+        Merge vs Replace:
+          – If Curriculum exists AND already has courses,
+            look for `action` whose value can be 'merge' or 'replace'.
+          – Absent / invalid => default to *merge*.
+        """
+        exists = instance.pk is not None
+        super().save_instance(instance, using_transactions, dry_run)
+
+        if dry_run:
+            return  # nothing else to do
+
+        sn = instance.short_name
+        if not exists:
+            self._created.add(sn)
+        elif self._action() == "replace":
+            instance.courses.clear()
+            self._replaced.add(sn)
+        else:
+            self._merged.add(sn)
+
+    def after_save_instance(self, instance, using_transactions=True, dry_run=False):
+        """
+        Hook happens *after* Many-to-Many relations have been cleaned by the
+        widget.  We do nothing special here – creation was already handled
+        by CourseManyWidget.
+        """
+        return super().after_save_instance(instance, using_transactions, dry_run)
+
+    def after_import(self, dataset, result, using_transactions, dry_run=False, **kwargs):
+        if dry_run:  # nothing permanent happened
+            return
+
+        request = kwargs.get("request")
+        if not request:
+            return
+
+        parts: list[str] = []
+        if self._created:
+            parts.append(f"curricula {', '.join(sorted(self._created))} created")
+        if self._merged:
+            parts.append(f"curricula {', '.join(sorted(self._merged))} updated")
+        if self._replaced:
+            parts.append(f"curricula {', '.join(sorted(self._replaced))} replaced")
+
+        if parts:
+            msg = " · ".join(parts)
+            if self._new_colleges:
+                msg += f" · colleges {', '.join(sorted(self._new_colleges))} created"
+            messages.success(request, msg.capitalize() + ".")
+
+    # ----- Meta --------------------------------------------------------------
     class Meta:
         model = Curriculum
+        import_id_fields = ("short_name",)
         fields = (
-            "title",
             "short_name",
-            "creation_date",
-            "college__code",
-            "is_active",
+            "title",
+            "college",
+            "list_courses",
         )
+        skip_unchanged = True
+        report_skipped = True
 
 
 class CourseResource(resources.ModelResource):

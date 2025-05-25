@@ -1,5 +1,4 @@
 from import_export import widgets
-from app.academics.models.college import College
 from app.timetable.models import AcademicYear, Semester
 import re
 from datetime import date
@@ -37,19 +36,6 @@ class AcademicYearWidget(widgets.ForeignKeyWidget):
         model = Semester
         import_id_fields = ("academic_year", "number")
         fields = ("academic_year", "number", "start_date", "end_date")
-
-
-class CollegeWidget(widgets.ForeignKeyWidget):
-    """Return or create a :class:`College` from its code."""
-
-    def clean(self, value, row=None, *args, **kwargs):
-        if not value:
-            return None
-        obj, _ = College.objects.get_or_create(
-            code=value,
-            defaults={"fullname": value},
-        )
-        return obj
 
 
 class SemesterWidget(widgets.ForeignKeyWidget):

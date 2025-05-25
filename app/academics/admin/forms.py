@@ -7,6 +7,14 @@ from django.contrib.admin.widgets import AutocompleteSelect
 from app.shared.utils import make_course_code
 from app.academics.models import Course, Curriculum, CurriculumCourse, College
 from app.shared.enums import CREDIT_NUMBER
+from import_export.forms import ImportForm
+
+
+class BulkActionImportForm(ImportForm):
+    ACTION_CHOICES = (("merge", "Merge (append)"), ("replace", "Replace (wipe first)"))
+    action = forms.ChoiceField(
+        choices=ACTION_CHOICES, initial="merge", label="Action for existing curricula"
+    )
 
 
 class CourseForm(forms.ModelForm):

@@ -4,6 +4,30 @@ from app.academics.models.course import Course
 from app.shared.utils import expand_course_code
 
 
+class CourseManyWidget(widgets.ManyToManyWidget):
+    """
+    Parse the `list_courses` column (semicolon-separated list of codes),
+      auto-create missing Course rows exactly like Section import does.
+    """
+
+    def __init__(self):
+        # use the same separator everywhere
+        super().__init__(Course, separator=";", field="code")
+        # re-use the existing single-course widget for DRYness
+        self._cw = CourseWidget(Course, "code")
+
+    def clean(self, value, row=None, *args, **kwargs):
+        if not value:
+            return []  # keep M2M empty
+        courses = []
+        for token in value.split(self.separator):
+            token = token.strip()
+            if token:
+                # propagate row – it contains "college"
+                courses.append(self._cw.clean(token, row))
+        return courses
+
+
 class CourseWidget(widgets.ForeignKeyWidget):
     """Return or create a :class:`Course` from its code and row college."""
 
@@ -42,3 +66,22 @@ class CourseWidget(widgets.ForeignKeyWidget):
         else:
             course = qs.get()
         return course
+
+
+class CollegeWidget(widgets.ForeignKeyWidget):
+    """Return or create a :class:`College` from its code."""
+
+    def clean(self, value, row=None, *args, **kwargs):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._resource = None  # will be injected by Resource below
+
+        if not value:
+            return None
+        obj, created = College.objects.get_or_create(
+            code=value,
+            defaults={"fullname": value},
+        )
+        if created and self._resource:  # resource back-reference present
+            self._resource._new_colleges.add(value)
+        return obj
