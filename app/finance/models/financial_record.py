@@ -10,6 +10,8 @@ from app.shared.utils import make_choices
 
 
 class FinancialRecord(models.Model):
+    """Aggregate balance for a student."""
+
     student = models.OneToOneField(User, on_delete=models.CASCADE)
     total_due = models.DecimalField(max_digits=10, decimal_places=2)
     total_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)

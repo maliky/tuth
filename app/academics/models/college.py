@@ -7,6 +7,8 @@ from app.shared.constants import COLLEGE_CHOICES
 
 
 class College(models.Model):
+    """Institutional unit responsible for a set of programmes."""
+
     code = models.CharField(max_length=4, unique=True)
     fullname = models.CharField(max_length=255)
 
@@ -16,6 +18,8 @@ class College(models.Model):
 
     @property
     def current_dean(self):
+        """Return the user currently assigned as dean or ``None``."""
+
         ra = (
             self.role_assignments.filter(role="Dean", end_date__isnull=True)
             .order_by("-start_date")

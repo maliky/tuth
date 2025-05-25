@@ -8,6 +8,8 @@ from app.shared.mixins import StatusableMixin
 
 
 class Curriculum(StatusableMixin, models.Model):
+    """Academic programme offered by a College."""
+
     title = models.CharField(max_length=255, blank=True, null=True)
     short_name = models.CharField(max_length=30)
 
@@ -33,6 +35,8 @@ class Curriculum(StatusableMixin, models.Model):
         return f"{self.title or self.short_name}"
 
     def clean(self):
+        """Validate the curriculum and its current status."""
+
         super().clean()
         validate_model_status(self)
 

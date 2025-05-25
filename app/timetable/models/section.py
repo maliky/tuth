@@ -7,6 +7,8 @@ from .semester import Semester
 
 
 class Section(models.Model):
+    """Scheduled instance of a course in a specific semester."""
+
     course = models.ForeignKey(
         "academics.Course", related_name="sections", on_delete=models.PROTECT
     )

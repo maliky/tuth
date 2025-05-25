@@ -7,6 +7,8 @@ from django.contrib.auth.models import User
 
 
 class ClassRoster(models.Model):
+    """Container for the list of students enrolled in a section."""
+
     section = models.OneToOneField("timetable.Section", on_delete=models.CASCADE)
     updated_by = models.ForeignKey(
         User, null=True, on_delete=models.SET_NULL, related_name="rosters_updated"

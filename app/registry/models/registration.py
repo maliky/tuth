@@ -10,6 +10,8 @@ from app.shared.utils import make_choices
 
 
 class Registration(models.Model):
+    """Enrollment of a student in a course section."""
+
     student = models.ForeignKey(User, on_delete=models.CASCADE)
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)
     status = models.CharField(

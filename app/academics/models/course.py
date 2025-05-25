@@ -7,6 +7,8 @@ from app.shared.utils import make_course_code
 
 
 class Course(models.Model):
+    """Catalog entry defining a unit of instruction."""
+
     name = models.CharField(max_length=10)  # e.g. MATH
     number = models.CharField(max_length=10)  # e.g. 101
     title = models.CharField(max_length=255)
@@ -52,7 +54,7 @@ class Course(models.Model):
 
     @classmethod
     def for_curriculum(cls, curriculum) -> models.QuerySet:
-        "helper function. get the course for a specific curriculum"
+        """Return courses included in the given curriculum."""
         return cls.objects.filter(curricula=curriculum).distinct()
 
     # ---------- hooks ----------

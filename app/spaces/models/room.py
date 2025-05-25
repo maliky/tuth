@@ -6,6 +6,8 @@ from .building import Building
 
 
 class Room(models.Model):
+    """Individual teaching space located in a building."""
+
     name = models.CharField(max_length=30)
     building = models.ForeignKey(
         Building, null=True, blank=True, on_delete=models.SET_NULL, related_name="rooms"
