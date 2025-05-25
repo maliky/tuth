@@ -69,7 +69,7 @@ class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = CurriculumResource
     # add the action button on the import form
     import_form_class = BulkActionImportForm
-    list_display = ("short_name", "college")
+    list_display = ("short_name", "title", "college")
     list_filter = ("college", "short_name", "is_active")
     autocomplete_fields = ("college",)
     inlines = [CurriculumCourseInline]
