@@ -26,9 +26,10 @@ class SectionResource(resources.ModelResource):
         widget=SemesterWidget(Semester, "id"),
     )
 
-    def save_instance(self, instance, using_transactions=True, dry_run=False):
+    def save_instance(self, instance, is_create, row, **kwargs):
+        """Wrap save to log errors during import."""
         try:
-            return super().save_instance(instance, using_transactions, dry_run)
+            return super().save_instance(instance, is_create, row, **kwargs)
         except Exception as exc:  # pragma: no cover - log & abort
             log_dir = Path("logs")
             log_dir.mkdir(exist_ok=True)

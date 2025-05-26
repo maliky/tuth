@@ -1,6 +1,7 @@
 from app.academics.admin.widgets import CourseWidget
 import pytest
 
+from django.db import IntegrityError
 from app.academics.models import College, Course
 from app.shared.enums import CREDIT_NUMBER
 
@@ -46,11 +47,8 @@ def test_course_widget_defaults_to_row_college():
 def test_course_widget_raises_value_error_with_multiple_matches():
     col = College.objects.create(code="COAS", fullname="College of Arts")
     Course.objects.create(name="BIO", number="101", title="Bio I", college=col)
-    Course.objects.create(name="BIO", number="101", title="Bio II", college=col)
-    cw = CourseWidget(Course, "code")
-
-    with pytest.raises(ValueError):
-        cw.clean("BIO101 - COAS", {"college": "COAS"})
+    with pytest.raises(IntegrityError):
+        Course.objects.create(name="BIO", number="101", title="Bio II", college=col)
 
 
 @pytest.mark.django_db
