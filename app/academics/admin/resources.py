@@ -55,15 +55,16 @@ class CurriculumResource(resources.ModelResource):
             row["long_name"] = row["short_name"]
 
     # ----- merge / replace logic --------------------------------------------
-    def save_instance(self, instance, using_transactions=True, dry_run=False):
+    def save_instance(self, instance, is_create, row, **kwargs):
+        """Handle merge/replace logic for curriculum imports.
+
+        Updated signature to match ``django-import-export`` 4.x which
+        provides ``is_create`` and ``row`` parameters along with
+        keyword-only ``dry_run``.
         """
-        Merge vs Replace:
-          – If Curriculum exists AND already has courses,
-            look for `action` whose value can be 'merge' or 'replace'.
-          – Absent / invalid => default to *merge*.
-        """
+        dry_run = kwargs.get("dry_run", False)
         exists = instance.pk is not None
-        super().save_instance(instance, using_transactions, dry_run)
+        super().save_instance(instance, is_create, row, **kwargs)
 
         if dry_run:
             return  # nothing else to do
@@ -77,13 +78,9 @@ class CurriculumResource(resources.ModelResource):
         else:
             self._merged.add(sn)
 
-    def after_save_instance(self, instance, using_transactions=True, dry_run=False):
-        """
-        Hook happens *after* Many-to-Many relations have been cleaned by the
-        widget.  We do nothing special here – creation was already handled
-        by CourseManyWidget.
-        """
-        return super().after_save_instance(instance, using_transactions, dry_run)
+    def after_save_instance(self, instance, row, **kwargs):
+        """Post-save hook after M2M cleanup."""
+        return super().after_save_instance(instance, row, **kwargs)
 
     def after_import(self, dataset, result, using_transactions, dry_run=False, **kwargs):
         if dry_run:  # nothing permanent happened
