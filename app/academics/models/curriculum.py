@@ -1,4 +1,5 @@
 from __future__ import annotations
+from datetime import date
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
@@ -24,7 +25,7 @@ class Curriculum(StatusableMixin, models.Model):
     )
     # a constraint is that we should not have a curriculum in a college
     # created in the same year with same title
-    creation_date = models.DateField()
+    creation_date = models.DateField(default=date.today)
     is_active = models.BooleanField(default=False)
 
     status_history = GenericRelation(
