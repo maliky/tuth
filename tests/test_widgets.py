@@ -54,7 +54,6 @@ def test_course_widget_raises_value_error_with_multiple_matches():
 
     with pytest.raises(ValueError):
         cw.clean("BIO101 - COAS", {"college": "COAS"})
->>>>>>> github/codo/update-widget-instantiations-to-use-keyword-arguments
 
 
 @pytest.mark.django_db
