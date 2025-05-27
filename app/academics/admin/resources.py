@@ -82,7 +82,10 @@ class CurriculumResource(resources.ModelResource):
         """Post-save hook after M2M cleanup."""
         return super().after_save_instance(instance, row, **kwargs)
 
-    def after_import(self, dataset, result, using_transactions, dry_run=False, **kwargs):
+    def after_import(self, dataset, result, **kwargs):
+        """Post-import summary."""
+        super().after_import(dataset, result, **kwargs)
+        dry_run = kwargs.get("dry_run", False)
         if dry_run:  # nothing permanent happened
             return
 
@@ -169,7 +172,7 @@ class CourseResource(resources.ModelResource):
             row["__skip_row__"] = True
             return
 
-        row["code"] = make_course_code(row["name"], row["number"])
+        row["code"] = make_course_code(name=row["name"], number=row["number"])
 
     def skip_row(self, instance, original, row, import_validation_errors=None):
         if row.get("__skip_row__"):

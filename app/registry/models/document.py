@@ -1,11 +1,10 @@
 from __future__ import (
     annotations,
 )
-
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from typing import Optional
+from typing import Optional, cast
 
 from app.shared.mixins import StatusHistory
 from app.shared.constants import DOCUMENT_TYPES
@@ -26,7 +25,8 @@ class Document(models.Model):
 
     def current_status(self) -> Optional[StatusHistory]:
         """Return the most recent status entry or ``None`` if empty."""
-        return self.status_history.first()
+
+        return cast(Optional[StatusHistory], self.status_history.first())
 
     def clean(self) -> None:
         super().clean()

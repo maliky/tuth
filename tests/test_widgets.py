@@ -47,6 +47,7 @@ def test_course_widget_defaults_to_row_college():
 def test_course_widget_raises_value_error_with_multiple_matches():
     col = College.objects.create(code="COAS", fullname="College of Arts")
     Course.objects.create(name="BIO", number="101", title="Bio I", college=col)
+
     with pytest.raises(IntegrityError):
         Course.objects.create(name="BIO", number="101", title="Bio II", college=col)
 
@@ -69,3 +70,28 @@ def test_course_widget_token_college_overrides_row_college():
 
     assert result == course
     assert result.college == token_college
+
+
+@pytest.mark.django_db
+def test_college_widget_tracks_new_colleges():
+    cw = CollegeWidget(College, "code")
+    dummy = SimpleNamespace(_new_colleges=set())
+    cw._resource = dummy
+
+    obj = cw.clean("COET")
+
+    assert obj.code == "COET"
+    assert "COET" in dummy._new_colleges
+
+
+@pytest.mark.django_db
+def test_college_widget_skips_existing_colleges():
+    College.objects.create(code="COAS", fullname="Arts")
+    cw = CollegeWidget(College, "code")
+    dummy = SimpleNamespace(_new_colleges=set())
+    cw._resource = dummy
+
+    obj = cw.clean("COAS")
+
+    assert obj.code == "COAS"
+    assert not dummy._new_colleges

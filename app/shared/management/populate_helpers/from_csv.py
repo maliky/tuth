@@ -18,7 +18,7 @@ from app.timetable.models import Section, Semester
 
 # widgets = encapsulated creation logic & regex parsing
 cw = CourseWidget(model=Course, field="code")
-colw = CollegeWidget(model=College, field="code")
+clg_widget = CollegeWidget(model=College, field="code")
 
 
 @transaction.atomic
@@ -71,7 +71,11 @@ def populate_curricula_from_csv(cmd, csv_path: Path | str | IO[str]) -> None:
                 continue
 
             # ─── resolve / create FK objects ────────────────────────────────
-            college = colw.clean(row["college"], row)
+            college = clg_widget.clean(row["college"], row)
+            assert (
+                college is not None
+            ), "populate_curricula_from_csv(): college cannot be None"
+
             short_name = row["short_name"].strip()
             long_name = (row.get("long_name") or short_name).strip()
 
@@ -82,7 +86,6 @@ def populate_curricula_from_csv(cmd, csv_path: Path | str | IO[str]) -> None:
                 ),
             )
 
-            # college-mismatch safety check
             if not cur_created and cur.college_id != college.id:
                 log(
                     cmd,

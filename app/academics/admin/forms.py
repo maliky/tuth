@@ -59,7 +59,7 @@ class CourseForm(forms.ModelForm):
             name = (self.data.get("name") or "").strip() or init.get("name", "")
             number = (self.data.get("number") or "").strip() or init.get("number", "")
             if name and number:
-                code = make_course_code(name, number)
+                code = make_course_code(name=name, number=number)
                 colleges = list(
                     Course.objects.filter(code=code)
                     .values_list("college_id", flat=True)
@@ -90,7 +90,7 @@ class CourseForm(forms.ModelForm):
         cleaned = cast(MutableMapping[str, Any], super().clean())  # ← FIX #2/3
 
         if not cleaned.get("college") and cleaned.get("name") and cleaned.get("number"):
-            code = make_course_code(cleaned["name"], cleaned["number"])
+            code = make_course_code(name=cleaned["name"], number=cleaned["number"])
             colleges = list(
                 Course.objects.filter(code=code)
                 .values_list("college_id", flat=True)
