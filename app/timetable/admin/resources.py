@@ -12,18 +12,18 @@ from app.academics.admin.widgets import CollegeWidget, CourseWidget
 class SectionResource(resources.ModelResource):
     college = fields.Field(
         column_name="college",
-        widget=CollegeWidget(College, "code"),
+        widget=CollegeWidget(model=College, field="code"),
         # readonly=True,
     )
     course = fields.Field(
         column_name="course",
         attribute="course",
-        widget=CourseWidget(Course, "code"),
+        widget=CourseWidget(model=Course, field="code"),
     )
     semester = fields.Field(
         column_name="semester",
         attribute="semester",
-        widget=SemesterWidget(Semester, "id"),
+        widget=SemesterWidget(model=Semester, field="id"),
     )
 
     def save_instance(self, instance, is_create, row, **kwargs):
@@ -48,7 +48,7 @@ class SemesterResource(resources.ModelResource):
     academic_year = fields.Field(
         column_name="academic_year",
         attribute="academic_year",
-        widget=AcademicYearWidget("academic_year", "short_name"),
+        widget=AcademicYearWidget(model=AcademicYear, field="short_name"),
     )
 
     class Meta:
