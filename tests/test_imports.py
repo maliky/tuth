@@ -1,2 +1,9 @@
-# Add a one-line tests/test_imports.py that simply pytest.importorskip each package and does from django.apps import apps; apps.check_models_ready(). It will flag any bad dotted-path early.
+import pytest
+from django.conf import settings
+from django.apps import apps
 
+
+@pytest.mark.parametrize("app_name", settings.INSTALLED_APPS)
+def test_import_and_check_models(app_name):
+    pytest.importorskip(app_name)
+    apps.check_models_ready()
