@@ -4,6 +4,7 @@ from __future__ import (
 
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models import QuerySet
 
 
 class ClassRoster(models.Model):
@@ -16,7 +17,7 @@ class ClassRoster(models.Model):
     last_updated = models.DateTimeField(auto_now=True)
 
     @property
-    def students(self):
+    def students(self) -> QuerySet[User]:
         """Return all users registered to this section."""
         return User.objects.filter(
             registration__section=self.section

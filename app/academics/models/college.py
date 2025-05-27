@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.contrib.auth.models import User
+from typing import Optional
 
 from app.shared.constants import COLLEGE_CHOICES
 
@@ -17,7 +19,7 @@ class College(models.Model):
             raise ValidationError("Invalid (code, fullname) pair for College.")
 
     @property
-    def current_dean(self):
+    def current_dean(self) -> Optional[User]:
         """Return the user currently assigned as dean or ``None``."""
 
         ra = (
