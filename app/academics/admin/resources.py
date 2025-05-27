@@ -7,7 +7,7 @@ from app.academics.models import (
     Prerequisite,
     College,
 )
-from app.shared.utils import make_course_code
+from app.shared.utils import expand_course_code, make_course_code
 
 
 class CurriculumResource(resources.ModelResource):
@@ -120,10 +120,10 @@ class CurriculumResource(resources.ModelResource):
 
 class CourseResource(resources.ModelResource):
     # ── columns coming from the file ───────────────
-    name = fields.Field(column_name="name")
-    number = fields.Field(column_name="number")
-    title = fields.Field(column_name="title")
-    credit_hours = fields.Field(column_name="credit_hours")
+    name = fields.Field(column_name="name", attribute="name")
+    number = fields.Field(column_name="number", attribute="number")
+    title = fields.Field(column_name="title", attribute="title")
+    credit_hours = fields.Field(column_name="credit_hours", attribute="credit_hours")
 
     # college is a FK → use the college **code** found in the file
     college = fields.Field(
@@ -135,7 +135,9 @@ class CourseResource(resources.ModelResource):
     )
 
     # internal column – we *generate* it so import-export can use it as PK
-    code = fields.Field(column_name="code")  # no header needed in the file
+    code = fields.Field(
+        column_name="code", attribute="code"
+    )  # no header needed in the file
 
     prerequisites = fields.Field(
         column_name="prerequisites",
@@ -143,16 +145,48 @@ class CourseResource(resources.ModelResource):
         widget=widgets.ManyToManyWidget(Course, field="code", separator=";"),
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._mismatched_rows: list[dict] = []
+
     # ── hooks ────────────────────────────────────────────────────
     def before_import_row(self, row, **kwargs):
-        """
-        Build the missing `code` on the fly so that
-        import-export can identify (or create) the row.
-        """
-        if not row.get("code"):
-            # penser à avoir une fonction dans utils qui génère le code du course
-            # permettrat de changer cela consitently accross code base.
-            row["code"] = make_course_code(row["name"], row["number"])
+        """Normalize the code fields and flag inconsistent rows."""
+        code = row.get("code") or ""
+        name, number, _ = expand_course_code(code, row=row)
+
+        if not row.get("name"):
+            row["name"] = name
+        elif str(row["name"]).strip().upper() != name:
+            self._mismatched_rows.append(dict(row))
+            row["__skip_row__"] = True
+            return
+
+        if not row.get("number"):
+            row["number"] = number
+        elif str(row["number"]).strip() != number:
+            self._mismatched_rows.append(dict(row))
+            row["__skip_row__"] = True
+            return
+
+        row["code"] = make_course_code(row["name"], row["number"])
+
+    def skip_row(self, instance, original, row, import_validation_errors=None):
+        if row.get("__skip_row__"):
+            return True
+        return super().skip_row(instance, original, row, import_validation_errors)
+
+    def after_import(self, dataset, result, using_transactions, dry_run=False, **kwargs):
+        if dry_run or not self._mismatched_rows:
+            return
+        request = kwargs.get("request")
+        if not request:
+            return
+        codes = ", ".join(sorted(r.get("code", "") for r in self._mismatched_rows))
+        messages.warning(
+            request,
+            (f"{len(self._mismatched_rows)} course rows skipped: {codes}."),
+        )
 
     class Meta:
         model = Course
