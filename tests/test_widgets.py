@@ -9,7 +9,7 @@ from app.shared.enums import CREDIT_NUMBER
 def test_course_widget_returns_existing_course():
     col = College.objects.create(code="COAS", fullname="College of Arts")
     course = Course.objects.create(name="MATH", number="101", title="Math", college=col)
-    cw = CourseWidget(Course, "code")
+    cw = CourseWidget(model=Course, field="code")
 
     result = cw.clean("MATH101 - COAS", {"college": "COAS"})
 
@@ -20,7 +20,7 @@ def test_course_widget_returns_existing_course():
 
 @pytest.mark.django_db
 def test_course_widget_creates_missing_course_and_college():
-    cw = CourseWidget(Course, "code")
+    cw = CourseWidget(model=Course, field="code")
 
     course = cw.clean("PHY102 - COET", {"college": "COET"})
 
@@ -33,7 +33,7 @@ def test_course_widget_creates_missing_course_and_college():
 @pytest.mark.django_db
 def test_course_widget_defaults_to_row_college():
     col = College.objects.create(code="COAS", fullname="College of Arts")
-    cw = CourseWidget(Course, "code")
+    cw = CourseWidget(model=Course, field="code")
 
     course = cw.clean("CHEM100", {"college": "COAS"})
 
@@ -47,7 +47,7 @@ def test_course_widget_raises_value_error_with_multiple_matches():
     col = College.objects.create(code="COAS", fullname="College of Arts")
     Course.objects.create(name="BIO", number="101", title="Bio I", college=col)
     Course.objects.create(name="BIO", number="101", title="Bio II", college=col)
-    cw = CourseWidget(Course, "code")
+    cw = CourseWidget(model=Course, field="code")
 
     with pytest.raises(ValueError):
         cw.clean("BIO101 - COAS", {"college": "COAS"})
@@ -60,7 +60,7 @@ def test_course_widget_token_college_overrides_row_college():
     course = Course.objects.create(
         name="MATH", number="101", title="Math", college=token_college
     )
-    cw = CourseWidget(Course, "code")
+    cw = CourseWidget(model=Course, field="code")
 
     result = cw.clean("MATH101 - COET", {"college": row_college.code})
 

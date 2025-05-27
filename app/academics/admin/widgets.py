@@ -14,7 +14,7 @@ class CourseManyWidget(widgets.ManyToManyWidget):
         # use the same separator everywhere
         super().__init__(Course, separator=";", field="code")
         # re-use the existing single-course widget for DRYness
-        self._cw = CourseWidget(Course, "code")
+        self._cw = CourseWidget(model=Course, field="code")
 
     def clean(self, value, row=None, *args, **kwargs):
         if not value:

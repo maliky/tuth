@@ -17,8 +17,8 @@ from app.timetable.admin.widgets import SemesterWidget
 from app.timetable.models import Section, Semester
 
 # widgets = encapsulated creation logic & regex parsing
-cw = CourseWidget(Course, "code")
-colw = CollegeWidget(College, "code")
+cw = CourseWidget(model=Course, field="code")
+colw = CollegeWidget(model=College, field="code")
 
 
 @transaction.atomic
@@ -146,8 +146,8 @@ def populate_sections_from_csv(cmd, csv_path: Path | str | IO[str]) -> None:
     log(cmd, "⚙  Sections")          # headline
     populate_sections_from_csv(cmd, Path("seed/sections.csv"))
     """
-    cw = CourseWidget(Course, "code")
-    sw = SemesterWidget(Semester, "id")
+    cw = CourseWidget(model=Course, field="code")
+    sw = SemesterWidget(model=Semester, field="id")
 
     # accept a file-like object (for tests) or a path
     if isinstance(csv_path, (str, Path)):

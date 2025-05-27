@@ -49,8 +49,8 @@ def populate_sections_from_csv(cmd: BaseCommand, csv_path: Path | str | IO[str])
     *cmd* is the calling management-command instance so we can
     write coloured output with the shared ``log`` helper.
     """
-    cw = CourseWidget(Course, "code")
-    sw = SemesterWidget(Semester, "id")
+    cw = CourseWidget(model=Course, field="code")
+    sw = SemesterWidget(model=Semester, field="id")
 
     # accept a file-like object (for tests) or a path
     if isinstance(csv_path, (str, Path)):

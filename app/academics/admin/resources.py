@@ -38,7 +38,7 @@ class CurriculumResource(resources.ModelResource):
     college = fields.Field(
         column_name="college",
         attribute="college",
-        widget=CollegeWidget(College, "code"),  # auto-creates + logs
+        widget=CollegeWidget(model=College, field="code"),  # auto-creates + logs
     )
 
     # ----- synthetic M2M list -----------------------------------------------
