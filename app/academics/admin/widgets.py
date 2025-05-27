@@ -11,12 +11,13 @@ class CourseManyWidget(widgets.ManyToManyWidget):
     """
 
     def __init__(self):
-        # use the same separator everywhere
+        """Initialise with the standard separator and helper widget."""
         super().__init__(Course, separator=";", field="code")
         # re-use the existing single-course widget for DRYness
         self._cw = CourseWidget(model=Course, field="code")
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, *args, **kwargs) -> list[Course]:
+        """Return a list of courses parsed from ``value``."""
         if not value:
             return []  # keep M2M empty
         courses = []
@@ -24,14 +25,16 @@ class CourseManyWidget(widgets.ManyToManyWidget):
             token = token.strip()
             if token:
                 # propagate row – it contains "college"
-                courses.append(self._cw.clean(token, row))
+                course = self._cw.clean(token, row)
+                if course:
+                    courses.append(course)
         return courses
 
 
 class CourseWidget(widgets.ForeignKeyWidget):
     """Return or create a :class:`Course` from its code and row college."""
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, *args, **kwargs) -> Course | None:
         """Return the Course object described by ``value``.
 
         ``value`` may include the college code after a hyphen.  When omitted,
@@ -72,11 +75,13 @@ class CourseWidget(widgets.ForeignKeyWidget):
 class CollegeWidget(widgets.ForeignKeyWidget):
     """Return or create a :class:`College` from its code."""
 
-    def clean(self, value, row=None, *args, **kwargs):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self._resource = None  # will be injected by Resource below
+    def __init__(self, *args, **kwargs):
+        """Initialise and set a placeholder for the parent resource."""
+        super().__init__(*args, **kwargs)
+        self._resource = None  # will be injected by Resource below
 
+    def clean(self, value, row=None, *args, **kwargs) -> College | None:
+        """Return the college represented by ``value``."""
         if not value:
             return None
         obj, created = College.objects.get_or_create(
