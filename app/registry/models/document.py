@@ -5,6 +5,9 @@ from __future__ import (
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from typing import Optional
+
+from app.shared.mixins import StatusHistory
 from app.shared.constants import DOCUMENT_TYPES
 from app.shared.utils import make_choices, validate_model_status
 
@@ -21,10 +24,10 @@ class Document(models.Model):
         "shared.StatusHistory", related_query_name="document"
     )
 
-    def current_status(self):
+    def current_status(self) -> Optional[StatusHistory]:
         """Return the most recent status entry or ``None`` if empty."""
         return self.status_history.first()
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
         validate_model_status(self)
