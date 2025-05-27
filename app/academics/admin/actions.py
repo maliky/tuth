@@ -5,7 +5,7 @@ from django import forms
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 
 
-from app.academics.models import Curriculum  # the target model
+from app.academics.models import Curriculum, College  # the target model
 
 
 @admin.action(description="Attach / update curriculum on selected prerequisites")
@@ -44,4 +44,38 @@ def update_curriculum(modeladmin, request, queryset):
         request,
         "admin/update_curriculum.html",
         dict(items=queryset, form=form, title="Bulk-set curriculum"),
+    )
+
+
+@admin.action(description="Attach / update college on selected courses")
+def update_college(modeladmin, request, queryset):
+    """Bulk-set the ``college`` FK on Course rows."""
+
+    class _CollegeForm(forms.Form):
+        _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
+        college = forms.ModelChoiceField(
+            queryset=College.objects.all(),
+            label="College to apply",
+        )
+
+    if "apply" in request.POST:
+        form = _CollegeForm(request.POST)
+        if form.is_valid():
+            college = form.cleaned_data["college"]
+            updated = queryset.update(college=college)
+            modeladmin.message_user(
+                request,
+                f"{updated} course(s) were linked to {college}.",
+                messages.SUCCESS,
+            )
+            return redirect(request.get_full_path())
+    else:
+        form = _CollegeForm(
+            initial={"_selected_action": request.POST.getlist(ACTION_CHECKBOX_NAME)}
+        )
+
+    return render(
+        request,
+        "admin/update_college.html",
+        dict(items=queryset, form=form, title="Bulk-set college"),
     )

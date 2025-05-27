@@ -1,4 +1,4 @@
-from app.academics.admin.actions import update_curriculum
+from app.academics.admin.actions import update_curriculum, update_college
 from app.timetable.admin.inlines import SectionInline
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
@@ -29,6 +29,7 @@ class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     autocomplete_fields = ("curricula", "college")
     inlines = [SectionInline, PrerequisiteInline, RequiresInline]
     list_select_related = ("college",)
+    actions = [update_college]
 
     search_fields = ("code", "curricula__short_name", "sections__number")
     form = CourseForm
