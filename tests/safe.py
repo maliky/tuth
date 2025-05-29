@@ -1,5 +1,5 @@
+from app.shared.constants.roles import DEFAULT_ROLE_TO_COLLEGE, USER_ROLES
 from django.test import SimpleTestCase
-from app.constants.roles import USER_ROLES, DEFAULT_ROLE_TO_COLLEGE
 
 
 class RoleMappingTest(SimpleTestCase):

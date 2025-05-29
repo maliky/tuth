@@ -25,4 +25,5 @@ class ReservationInline(admin.TabularInline):
 
     model = Reservation
     extra = 0
-    fields = ("student", "section", "status", "credit_hours_cache")    
+    fields = ("student", "section", "status", "credit_hours_cache", "date_requested")
+    readonly_fields = ("date_requested",)

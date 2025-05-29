@@ -3,7 +3,7 @@ from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from app.timetable.models import AcademicYear, Semester, Section
-from .inlines import SemesterInline
+from .inlines import SemesterInline, ReservationInline
 from .resources import SectionResource, SemesterResource
 
 
@@ -28,6 +28,7 @@ class SemesterAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = SectionResource
     list_display = ("long_code", "course", "semester", "faculty", "room", "max_seats")
+    inlines= [ReservationInline]
     list_filter = (
         "semester",
         "course__code",

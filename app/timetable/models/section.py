@@ -31,7 +31,9 @@ class Section(models.Model):
 
     # to be defined by Admin & VPA
     max_seats = models.PositiveIntegerField(default=30, validators=[MinValueValidator(3)])
+    current_registrations = models.PositiveIntegerField(default=0, editable=False)
 
+    
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -53,10 +55,6 @@ class Section(models.Model):
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.long_code} | {self.room}"
 
-    def current_registrations(self):
-        """Return the number of students currently enrolled."""
-        return self.registrations.filter(status=StatusRegistration.COMPLETED).count()
-
     def has_available_seats(self):
-        """Check if the section can accommodate more registrations."""
-        return self.current_registrations() < self.max_seats
+        """Return 'True' if the section still has seats available."""
+        return self.current_registrations < self.max_seats
