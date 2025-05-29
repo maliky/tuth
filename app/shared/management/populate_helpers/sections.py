@@ -4,13 +4,13 @@ Helper to bulk-create Section rows from a CSV file.
 
 Expected CSV headers  (case-sensitive)
 ──────────────────────────────────────
-college,course,semester,number,instructor,room,max_seats
+college,course,semester,number,faculty,room,max_seats
 
 • **college**   ─ mandatory  ─ College.code  (e.g. COAS)
 • **course**    ─ mandatory  ─ Course.code   (e.g. MATH101)
 • **semester**  ─ mandatory  ─ “YY-YY_SemN” (e.g. 24-25_Sem1)
 • **number**    ─ optional   ─ if blank/0 the autoincrement signal fills it
-• **instructor** / **room**  ─
+• **faculty** / **room**  ─
 • **max_seats** ─ optional   ─ defaults to 30
 
 Usage inside any management command
@@ -76,14 +76,14 @@ def populate_sections_from_csv(cmd: BaseCommand, csv_path: Path | str | IO[str])
             number_raw = (row.get("number") or "").strip()
             number_int = int(number_raw) if number_raw.isdigit() else None
 
-            instructor_raw = (row.get("instructor") or "").strip()
-            if instructor_raw:
-                instructor_obj, _ = User.objects.get_or_create(
-                    username=instructor_raw,
+            faculty_raw = (row.get("faculty") or "").strip()
+            if faculty_raw:
+                faculty_obj, _ = User.objects.get_or_create(
+                    username=faculty_raw,
                     defaults={"password": TEST_PW},
                 )
 
-            instructor_id = int(instructor_raw) if instructor_raw.isdigit() else None
+            faculty_id = int(faculty_raw) if faculty_raw.isdigit() else None
 
             room_raw = (row.get("room") or "").strip()
             room_id = int(room_raw) if room_raw.isdigit() else None
@@ -102,7 +102,7 @@ def populate_sections_from_csv(cmd: BaseCommand, csv_path: Path | str | IO[str])
                 semester=semester,
                 number=number_int,  # None → autoincrement signal
                 defaults={
-                    "instructor_id": instructor_id,
+                    "faculty_id": faculty_id,
                     "room_id": room_id,
                     "max_seats": max_seats,
                 },

@@ -2,7 +2,7 @@ from __future__ import (
     annotations,
 )  # to postpone evaluation of type hints
 
-from django.contrib.auth.models import User
+from app.people.models.profile import StaffProfile
 from django.db import models
 
 
@@ -16,5 +16,8 @@ class PaymentHistory(models.Model):
     payment_date = models.DateTimeField(auto_now_add=True)
     method = models.CharField(max_length=50, blank=True)  # cash, bank, mobile …
     recorded_by = models.ForeignKey(
-        User, null=True, on_delete=models.SET_NULL, related_name="payments_recorded"
+        StaffProfile,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="payments_recorded",
     )

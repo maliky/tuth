@@ -27,24 +27,24 @@ class SemesterAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 @admin.register(Section)
 class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = SectionResource
-    list_display = ("long_code", "course", "semester", "instructor", "room", "max_seats")
+    list_display = ("long_code", "course", "semester", "faculty", "room", "max_seats")
     list_filter = (
         "semester",
         "course__code",
         "course__curricula",
         "course__curricula__college",
-        "instructor",
+        "faculty",
         "room",
     )
-    autocomplete_fields = ("course", "semester", "instructor", "room")
+    autocomplete_fields = ("course", "semester", "faculty", "room")
     list_select_related = (
         "course",
         "semester",
-        "instructor",
+        "faculty",
         "room",
     )
 
     search_fields = (
         "^course__code",  # fast starts-with on indexed code
-        "instructor__username",  # or __first_name / __last_name
+        "faculty__username",  # or __first_name / __last_name
     )

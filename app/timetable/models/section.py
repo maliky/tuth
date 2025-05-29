@@ -14,8 +14,8 @@ class Section(models.Model):
     )
     number = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
     semester = models.ForeignKey(Semester, on_delete=models.PROTECT)
-    instructor = models.ForeignKey(
-        "auth.User",
+    faculty = models.ForeignKey(
+        "people.FacultyProfile",
         null=True,
         blank=True,
         limit_choices_to={"role_assignments__role": "Instructor"},
@@ -51,3 +51,11 @@ class Section(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.long_code} | {self.room}"
+
+    def current_registrations(self):
+        return self.registrations.filter(status='validated').count()
+
+    def has_available_seats(self):
+        # checke the way section connects to Registration.  What the default name
+        return self.registrations.filter(status='validated').count() < self.max_seats
+    

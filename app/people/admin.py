@@ -1,9 +1,9 @@
 from django.contrib import admin
 
-from .models import InstructorProfile
+from .models import FacultyProfile
 
 
-@admin.register(InstructorProfile)
+@admin.register(FacultyProfile)
 class InstructorProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "department", "college", "status")
     search_fields = (

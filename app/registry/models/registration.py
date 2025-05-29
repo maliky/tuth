@@ -2,7 +2,7 @@ from __future__ import (
     annotations,
 )
 
-from django.contrib.auth.models import User
+from app.shared.constants.choices import StatusRegistration
 from django.db import models
 
 from app.shared.constants import STATUS_CHOICES_PER_MODEL
@@ -12,15 +12,17 @@ from app.shared.utils import make_choices
 class Registration(models.Model):
     """Enrollment of a student in a course section."""
 
-    student = models.ForeignKey(User, on_delete=models.CASCADE)
+    student = models.ForeignKey("people.StudentProfile", on_delete=models.CASCADE)
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)
     status = models.CharField(
         max_length=30,
-        choices=make_choices(STATUS_CHOICES_PER_MODEL["registration"]),
-        default="pre_registered",
+        choices=make_choices(StatusRegistration.choices),
+        default=StatusRegistration.PENDING,
     )
+    #> to update with reservation date
+    #> but what happen if the reservation is canceled.  Keep the field.
+    date_latest_reservation = models.DateTimeField(null=True, blank=True)
     date_registered = models.DateTimeField(auto_now_add=True)
-    date_pre_registered = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         constraints = [

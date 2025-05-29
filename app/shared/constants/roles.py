@@ -9,7 +9,7 @@ USER_ROLES: list[str] = [
     "professor",
     "technician",
     "lab_technician",
-    "instructor",
+    "faculty",
     "vpaa",
     "registrar",
     "financial_officer",
@@ -25,5 +25,5 @@ DEFAULT_ROLE_TO_COLLEGE = {
     "professor": "COAS",
     "technician": "COAS",
     "lab_technician": "COAS",
-    "instructor": "COAS",
+    "faculty": "COAS",
 }

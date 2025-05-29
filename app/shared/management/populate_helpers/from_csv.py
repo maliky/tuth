@@ -130,13 +130,13 @@ def populate_sections_from_csv(cmd, csv_path: Path | str | IO[str]) -> None:
 
     Expected CSV headers  (case-sensitive)
     ──────────────────────────────────────
-    college,course,semester,number,instructor,room,max_seats
+    college,course,semester,number,faculty,room,max_seats
 
     • **college**   ─ mandatory  ─ College.code  (e.g. COAS)
     • **course**    ─ mandatory  ─ Course.code   (e.g. MATH101)
     • **semester**  ─ mandatory  ─ “YY-YY_SemN” (e.g. 24-25_Sem1)
     • **number**    ─ optional   ─ if blank/0 the autoincrement signal fills it
-    • **instructor** / **room**  ─
+    • **faculty** / **room**  ─
     • **max_seats** ─ optional   ─ defaults to 30
 
     Usage inside any management command
@@ -176,14 +176,14 @@ def populate_sections_from_csv(cmd, csv_path: Path | str | IO[str]) -> None:
             number_raw = row.get("number") or ""
             number_int = int(number_raw.strip()) if number_raw.strip().isdigit() else None
 
-            instructor_raw = (row.get("instructor") or "").strip()
-            instructor_id = None
-            if instructor_raw:
-                instructor_obj, _ = User.objects.get_or_create(
-                    username=instructor_raw,
+            faculty_raw = (row.get("faculty") or "").strip()
+            faculty_id = None
+            if faculty_raw:
+                faculty_obj, _ = User.objects.get_or_create(
+                    username=faculty_raw,
                     defaults={"password": TEST_PW},
                 )
-                instructor_id = instructor_obj.id
+                faculty_id = faculty_obj.id
 
             room_raw = (row.get("room") or "").strip()
             room_id = None
@@ -204,7 +204,7 @@ def populate_sections_from_csv(cmd, csv_path: Path | str | IO[str]) -> None:
                 semester=semester,
                 number=number_int,  # None → autoincrement signal
                 defaults={
-                    "instructor_id": instructor_id,
+                    "faculty_id": faculty_id,
                     "room_id": room_id,
                     "max_seats": max_seats,
                 },

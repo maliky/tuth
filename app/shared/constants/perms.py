@@ -45,7 +45,7 @@ OBJECT_PERM_MATRIX = {
         "view": [
             "dean",
             "chair",
-            "instructor",
+            "faculty",
             "registrar",
             "vpaa",
             "student",
@@ -59,7 +59,7 @@ OBJECT_PERM_MATRIX = {
         "view": [
             "dean",
             "chair",
-            "instructor",
+            "faculty",
             "lecturer",
             "registrar",
             "vpaa",
@@ -74,7 +74,7 @@ OBJECT_PERM_MATRIX = {
         "view": [
             "dean",
             "chair",
-            "instructor",
+            "faculty",
             "registrar",
             "vpaa",
             "lecturer",
@@ -130,7 +130,7 @@ OBJECT_PERM_MATRIX = {
             "dean",
             "chair",
             "registrar",
-            "instructor",
+            "faculty",
             "student",
             "prospective_student",
         ],

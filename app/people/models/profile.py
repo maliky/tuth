@@ -1,67 +1,133 @@
+# app/people/models/profile.py
 from __future__ import annotations
 
-from app.shared.mixins import StatusableMixin
+from datetime import date
+from pathlib import Path
 from django.contrib.auth.models import User
 from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+from app.shared.mixins import StatusableMixin
 
 
-# need to do this extensively and for other profils when import tests ok
-class StudentProfile(StatusableMixin, models.Model):
-    """Additional personal and academic data for a user."""
+# ──────────────────────────────────────────────────────────────────────────────
+# Helpers
+# ──────────────────────────────────────────────────────────────────────────────
+def photo_upload_to(instance: "BaseProfile", filename: str) -> str:
+    """Store uploads under `photos/<model>/<user-id>/<filename>`."""
+    _class = instance.__class__.__name__.lower()
+    return str(Path("photos") / _class / str(instance.user_id) / filename)
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
 
-    student_id = models.CharField(max_length=20, unique=True)
-    date_of_birth = models.DateField(null=True, blank=True)
+# ──────────────────────────────────────────────────────────────────────────────
+# Abstract base with all shared columns  ( **NO TABLE CREATED** )
+# ──────────────────────────────────────────────────────────────────────────────
+class BaseProfile(StatusableMixin, models.Model):
+    """Common demographic & contact information for every person on campus."""
 
-    # Contact Information
+    # --- linkage ---
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+
+    # --- demographics ---
+    date_of_birth = models.DateField(_("date of birth"), null=True, blank=True)
+
+    # --- contact ---
     phone_number = models.CharField(max_length=15, blank=True)
     address = models.TextField(blank=True)
-    email_number = models.CharField(max_length=15, blank=True)
+    personal_email = models.EmailField(_("personal e-mail"), blank=True)
 
-    # Academic Information
-    college = models.ForeignKey("academics.College", on_delete=models.SET_NULL, null=True)
-    curriculum = models.ForeignKey(
-        "academics.Curriculum", on_delete=models.SET_NULL, null=True
-    )
-    enrollment_year = models.PositiveSmallIntegerField()
-    enrollment_date = models.DateField(null=True, blank=True)
-
-    # Optional: additional personal information
+    # --- misc ---
     bio = models.TextField(blank=True)
-    photo = models.ImageField(upload_to="student_photos/", null=True, blank=True)
+    photo = models.ImageField(upload_to=photo_upload_to, null=True, blank=True)
 
-    # Automatic timestamps
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"{self.user.get_full_name()} ({self.student_id})"
+    @property
+    def age(self) -> int | None:
+        if self.date_of_birth:
+            today = date.today()
+            return (
+                today.year
+                - self.date_of_birth.year
+                - (
+                    (today.month, today.day)
+                    < (self.date_of_birth.month, self.date_of_birth.day)
+                )
+            )
+        return None
+
+    # convenience for admin lists / logs
+    def __str__(self) -> str:  # pragma: no cover
+        full = self.user.get_full_name() or self.user.username
+        #        return f"{full} | {self._meta.verbose_name.title()}"
+        return f"{full}"
 
     class Meta:
-        ordering = ["user__last_name", "user__first_name"]
+        abstract = True
+        ordering = ["user__first_name", "user__last_name"]
 
 
-class InstructorProfile(models.Model):
-    """Profile information for faculty members."""
+# ──────────────────────────────────────────────────────────────────────────────
+# Student
+# ──────────────────────────────────────────────────────────────────────────────
+class StudentProfile(BaseProfile):
+    """Extra academic information for enrolled students."""
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    student_id = models.CharField(max_length=20, unique=True)
+
+    # academics
+    college = models.ForeignKey(
+        "academics.College", on_delete=models.SET_NULL, null=True, blank=True
+    )
+    curriculum = models.ForeignKey(
+        "academics.Curriculum", on_delete=models.SET_NULL, null=True, blank=True
+    )
+
+    # > This should an semester. Can be any of 1 or 2
+    # > update this field with FK
+    enrollment_semester = models.PositiveSmallIntegerField()
+    enrollment_date = models.DateField(null=True, blank=True)
+
+    # convenience computed property
+    class Meta(BaseProfile.Meta):
+        verbose_name = _("student profile")
+        verbose_name_plural = _("student profiles")
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Staff (non-teaching personnel)
+# ──────────────────────────────────────────────────────────────────────────────
+class StaffProfile(BaseProfile):
+    """Generic data for all employees of the university."""
+
+    staff_id = models.CharField(max_length=20, unique=True)
     employment_date = models.DateField(null=True, blank=True)
+
+    division = models.CharField(max_length=100, blank=True)
     department = models.CharField(max_length=100, blank=True)
-    status = models.CharField(max_length=20, blank=True)
+    position = models.CharField(max_length=50, blank=True)
+
+    class Meta(BaseProfile.Meta):
+        verbose_name = _("staff profile")
+        verbose_name_plural = _("staff profiles")
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Faculty / Instructor ( specialised Staff )
+# ──────────────────────────────────────────────────────────────────────────────
+class FacultyProfile(StaffProfile):
+    """Faculty member who teaches courses."""
+
     college = models.ForeignKey(
         "academics.College", on_delete=models.SET_NULL, null=True, blank=True
     )
     courses = models.ManyToManyField(
-        "academics.Course", related_name="instructors", blank=True
+        "academics.Course", related_name="facultys", blank=True
     )
-    bio = models.TextField(blank=True)
-    photo = models.ImageField(upload_to="instructor_photos/", null=True, blank=True)
-    personal_page = models.URLField(blank=True)
+
     google_profile = models.URLField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    personal_website = models.URLField(blank=True)
 
-    class Meta:
-        ordering = ["user__last_name", "user__first_name"]
-
-    def __str__(self) -> str:  # pragma: no cover
-        return self.user.get_full_name()
+    class Meta(StaffProfile.Meta):
+        verbose_name = _("faculty profile")
+        verbose_name_plural = _("faculty profiles")
