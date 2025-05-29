@@ -44,6 +44,27 @@ def create_reservation(request, section_id):
     return redirect("student_dashboard")
 
 
+@login_required
+def student_dashboard(request):
+    """List reservations and handle creation via POST."""
+    student = request.user.profile.studentprofile
+    if request.method == "POST":
+        section_id = request.POST.get("section_id")
+        if section_id:
+            return create_reservation(request, section_id)
+
+    reservations = (
+        Reservation.objects.filter(student=student)
+        .select_related("section__course")
+        .order_by("-date_requested")
+    )
+    return render(
+        request,
+        "website/reservations.html",
+        {"reservations": reservations},
+    )
+
+
 def validate_credit_limit(student, section, max_credits=18):
     reserved_credits = (
         Reservation.objects.filter(

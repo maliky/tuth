@@ -1,8 +1,10 @@
 import pytest
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from app.people.models import StudentProfile
 from app.timetable.models import Section, Semester, AcademicYear, Reservation
 from app.academics.models import Course, College
+from django.urls import reverse
 
 
 @pytest.mark.django_db
@@ -67,3 +69,10 @@ def test_reservation_mark_paid_creates_payment():
 
     assert reservation.status == "paid"
     assert reservation.payment.amount == reservation.fee_total
+
+@pytest.mark.django_db
+def test_student_dashboard_url(client, superuser):
+    client.force_login(superuser)
+    url = reverse("student_dashboard")
+    resp = client.get(url)
+    assert resp.status_code == 200

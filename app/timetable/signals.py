@@ -1,9 +1,12 @@
 from django.db import transaction
 from django.db.models import Max
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 
-from app.timetable.models import Section
+from django.db.models import F
+
+from app.timetable.models import Section, Reservation
+from app.shared.constants import StatusReservation
 
 
 @receiver(pre_save, sender=Section)

@@ -6,7 +6,13 @@ from django.utils import timezone
 from people.models import StudentProfile
 from timetable.models import Section
 
-from app.shared.constants import MAX_STUDENT_CREDITS
+from decimal import Decimal
+
+from app.shared.constants import (
+    MAX_STUDENT_CREDITS,
+    TUITION_RATE_PER_CREDIT,
+    PaymentMethod,
+)
 from app.shared.constants.choices import StatusReservation
 from app.timetable.models.validator import CreditLimitValidator
 
@@ -57,6 +63,15 @@ class Reservation(models.Model):
             .get("total")
             or 0
         )
+
+    # ------------------------------------------------------------------
+    # COMPUTED PROPERTIES
+    # ------------------------------------------------------------------
+    @property
+    def fee_total(self) -> Decimal:
+        """Total fee for this reservation."""
+        credit_hours = self.section.course.credit_hours
+        return credit_hours * TUITION_RATE_PER_CREDIT
 
     # ------------------------------------------------------------------
     # LIFE-CYCLE OVERRIDES

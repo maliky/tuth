@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>My Reservations</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet" />
+  </head>
+  <body class="p-4">
+    <h1 class="mb-4">My Reservations</h1>
+    {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-info">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Section</th>
+          <th>Status</th>
+          <th>Fee</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in reservations %}
+        <tr>
+          <td>{{ r.section }}</td>
+          <td>{{ r.get_status_display }}</td>
+          <td>{{ r.fee_total }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3">No reservations.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </body>
+</html>
