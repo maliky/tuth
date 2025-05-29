@@ -1,8 +1,10 @@
 import pytest
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+
+from app.academics.models import College, Course
 from app.people.models import StudentProfile
-from app.timetable.models import Section, Semester, AcademicYear, Reservation
-from app.academics.models import Course, College
+from app.timetable.models import AcademicYear, Reservation, Section, Semester
 
 
 @pytest.mark.django_db

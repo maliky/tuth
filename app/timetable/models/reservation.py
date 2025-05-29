@@ -1,13 +1,16 @@
-from app.finance.models import Payment, FinancialRecord
-from app.shared.mixins import StatusableMixin
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils import timezone
-from people.models import StudentProfile
 from timetable.models import Section
 
+from app.finance.models import FinancialRecord, Payment
+from app.people.models import StudentProfile
 from app.shared.constants import MAX_STUDENT_CREDITS
 from app.shared.constants.choices import StatusReservation
+from app.shared.constants.finance import PaymentMethod
+from app.shared.mixins import StatusableMixin
 from app.timetable.models.validator import CreditLimitValidator
 
 
@@ -23,9 +26,15 @@ class Reservation(models.Model):
     date_requested = models.DateTimeField(default=timezone.now)
     date_validated = models.DateTimeField(blank=True, null=True)
 
-    credit_hours_cache = models.PositiveSmallIntegerField(
+    credit_hours = models.PositiveSmallIntegerField(
         editable=False, null=True, help_text="Snapshot of credit hours at save-time"
     )  # <-- ②
+
+    @property
+    def fee_total(self):
+        """get all the section fees, apply the financial aid compute how much the student owe to TU"""
+        # > fill in the gap.
+        return None
 
     def __str__(self):
         return f"{self.student} -> {self.section} ({self.status})"
@@ -73,7 +82,7 @@ class Reservation(models.Model):
         CreditLimitValidator()(self)
 
     def save(self, *args, **kwargs):
-        self.credit_hours_cache = self.credit_hours()
+        self.credit_hours = self.credit_hours()
         super().save(*args, **kwargs)
 
     # ------------------------------------------------------------------
@@ -95,10 +104,6 @@ class Reservation(models.Model):
         ), "Reservation already cancelled."
         self.status = self.StatusReservation.CANCELLED
         self.save()
-
-    def student_fee(self):
-        """get all the section fees, apply the financial aid compute how much the student owe to TU"""
-        # > fill in the gap.
 
     def mark_paid(self, by_user):
         """Record payment and mark reservation as paid."""
