@@ -58,9 +58,7 @@ class BaseProfile(StatusableMixin, models.Model):
 
     # convenience for admin lists / logs
     def __str__(self) -> str:  # pragma: no cover
-        full = self.user.get_full_name() or self.user.username
-        #        return f"{full} | {self._meta.verbose_name.title()}"
-        return f"{full}"
+        return self.user.get_full_name() or self.user.username
 
     class Meta:
         abstract = True

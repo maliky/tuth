@@ -22,6 +22,15 @@ DOCUMENT_TYPES: list[str] = [
 ]
 
 
+class FeeTypeLabels(models.TextChoices):
+    """Enumeration of fee types."""
+
+    TUITION = "tuition", "Tuition"
+    LAB = "lab", "Lab"
+    RESEARCH = "research", "Research"
+    OTHER = "other", "Other"
+
+
 class StatusReservation(models.TextChoices):
     REQUESTED = "requested", "Requested"
     VALIDATED = "validated", "Validated"
@@ -30,8 +39,8 @@ class StatusReservation(models.TextChoices):
 
 class StatusRegistration(models.TextChoices):
     PENDING = "pending payment", "Pending Payment"
-    FINANCIALY_CLEARED = "financialy_cleared", "Financialy_Cleared"    
-    COMPLETED = "completed", "Completed"    
+    FINANCIALY_CLEARED = "financialy_cleared", "Financialy_Cleared"
+    COMPLETED = "completed", "Completed"
     APPROVED = "approved", "Approved"
 
 

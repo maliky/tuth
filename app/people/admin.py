@@ -5,7 +5,7 @@ from .models import FacultyProfile
 
 @admin.register(FacultyProfile)
 class InstructorProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "department", "college", "status")
+    list_display = ("user", "department", "college", "position")
     search_fields = (
         "user__username",
         "user__first_name",

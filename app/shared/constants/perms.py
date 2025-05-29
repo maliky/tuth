@@ -1,5 +1,6 @@
 TEST_PW = "test"
 MODEL_APP = {
+    "reservation": "timetable",
     "college": "academics",
     "course": "academics",
     "curriculum": "academics",
@@ -22,6 +23,12 @@ MODEL_APP = {
 }
 
 OBJECT_PERM_MATRIX = {
+    "reservation": {
+        "view": ["registrar", "enrollment_officer", "vpaa", "student"],
+        "change": ["registrar", "enrollment_officer"],
+        "delete": ["registrar"],
+        "add": ["registrar", "enrollment_officer", "student"],
+    },
     "prerequisite": {
         "view": ["dean", "chair", "registrar", "vpaa"],
         "add": ["dean", "registrar", "vpaa"],

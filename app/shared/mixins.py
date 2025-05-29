@@ -56,5 +56,14 @@ class StatusableMixin(models.Model):
     def set_rejected(self, author):
         return self._add_status("rejected", author)
 
+    def validate_state(self, allowed: list[str]) -> None:
+        """Ensure ``self.status`` is one of ``allowed``."""
+
+        status = getattr(self, "status", None)
+        if status not in allowed:
+            raise ValidationError(
+                f"Invalid state '{status}'. Allowed states: {', '.join(allowed)}."
+            )
+
     class Meta:
         abstract = True

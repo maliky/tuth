@@ -1,6 +1,8 @@
+from app.timetable.models.reservation import Reservation
 from django.contrib import admin
 
 from app.timetable.models import Section, Semester
+
 
 
 class SemesterInline(admin.TabularInline):
@@ -16,3 +18,11 @@ class SectionInline(admin.TabularInline):
     extra = 0
     fields = ("course", "number", "semester", "faculty", "room", "max_seats")
     ordering = ("semester__start_date", "number")
+
+
+class ReservationInline(admin.TabularInline):
+    """Display reservations inline with credit hours snapshot."""
+
+    model = Reservation
+    extra = 0
+    fields = ("student", "section", "status", "credit_hours_cache")    

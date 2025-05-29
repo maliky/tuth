@@ -8,7 +8,8 @@ from .choices import (
     STATUS_CHOICES_PER_MODEL,
     STATUS_CHOICES,
     StatusRegistration,
-    StatusReservation
+    StatusReservation,
+    FeeTypeLabels,
 )
 
 from .curriculum import TEST_ENVIRONMENTAL_STUDIES_CURRICULUM
@@ -47,4 +48,5 @@ __ALL__ = [
     "OBJECT_PERM_MATRIX",
     "USER_ROLES",
     "DEFAULT_ROLE_TO_COLLEGE",
+    "FeeTypeLabels",
 ]

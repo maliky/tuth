@@ -1,9 +1,12 @@
-# app/website/views.py
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.shortcuts import get_object_or_404, redirect, render
+
+from app.shared.constants.choices import StatusReservation
 from app.timetable.models.reservation import Reservation
 from app.timetable.models.section import Section
-from django.shortcuts import render
-
-# import redirect
 
 
 def landing_page(request):
@@ -18,18 +21,20 @@ def create_reservation(request, section_id):
     reservation, created = Reservation.objects.get_or_create(
         student=student,
         section=section,
-        defaults={"status": Reservation.Status.REQUESTED},
+        defaults={"status": StatusReservation.REQUESTED},
     )
 
     if not created:
         messages.info(request, "You have already reserved this section.")
         return redirect("student_dashboard")
 
-    if not section.has_available_seats():
+    try:
+        reservation.full_clean()
+    except ValidationError as err:
         reservation.delete()
-        messages.error(request, "Section is full.")
+        messages.error(request, str(err))
         return redirect("student_dashboard")
-
+        
     if not validate_credit_limit(student, section):
         reservation.delete()
         messages.error(request, "Exceeded credit-hour limit.")

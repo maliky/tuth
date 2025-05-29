@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from app.shared.constants.choices import StatusRegistration
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -53,9 +54,9 @@ class Section(models.Model):
         return f"{self.long_code} | {self.room}"
 
     def current_registrations(self):
-        return self.registrations.filter(status='validated').count()
+        """Return the number of students currently enrolled."""
+        return self.registrations.filter(status=StatusRegistration.COMPLETED).count()
 
     def has_available_seats(self):
-        # checke the way section connects to Registration.  What the default name
-        return self.registrations.filter(status='validated').count() < self.max_seats
-    
+        """Check if the section can accommodate more registrations."""
+        return self.current_registrations() < self.max_seats

@@ -1,10 +1,13 @@
-from app.shared.constants import MAX_STUDENT_CREDITS
-from django.db import models
+from app.shared.mixins import StatusableMixin
+from django.core.exceptions import ValidationError
+from django.db import models, transaction
 from django.utils import timezone
 from people.models import StudentProfile
 from timetable.models import Section
 
+from app.shared.constants import MAX_STUDENT_CREDITS
 from app.shared.constants.choices import StatusReservation
+from app.timetable.models.validator import CreditLimitValidator
 
 
 class Reservation(models.Model):
@@ -62,17 +65,13 @@ class Reservation(models.Model):
         super().clean()
 
         #  validate seat capacity
-        if (
-            self.status != StatusReservation.CANCELLED
-            and not self.section.has_available_seats()
-        ):
-            raise ValidationError("Section has no available seats.")
+        if not self.section.has_available_seats():
+            StatusableMixin.validate_state(self, [StatusReservation.CANCELLED])
 
         # apply credit-hour rule
-        CreditLimitValidator()(self)  # see §2
+        CreditLimitValidator()(self)  
 
     def save(self, *args, **kwargs):
-        # ⑥ – keep the cache up-to-date
         self.credit_hours_cache = self.credit_hours()
         super().save(*args, **kwargs)
 
@@ -90,9 +89,10 @@ class Reservation(models.Model):
         self.save(update_fields=["status", "credit_hours_cache", "date_validated"])
 
     def cancel(self):
-        assert self.status != self.Status.CANCELLED, "Reservation already cancelled."
-        self.status = self.Status.CANCELLED
+        assert self.status != self.StatusReservation.CANCELLED, "Reservation already cancelled."
+        self.status = self.StatusReservation.CANCELLED
         self.save()
+
 
     def student_fee(self):
         """get all the section fees, apply the financial aid compute how much the student owe to TU"""

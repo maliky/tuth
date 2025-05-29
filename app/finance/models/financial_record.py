@@ -3,6 +3,7 @@ from __future__ import (
 )  # to postpone evaluation of type hints
 
 from app.people.models.profile import StaffProfile, StudentProfile
+from app.shared.constants.choices import FeeTypeLabels
 from django.db import models
 
 from app.shared.constants import CLEARANCE_CHOICES
@@ -34,7 +35,7 @@ class FeeType(models.Model):
     #> list the type extensively
     #> a specialy feetype is the credit_hour_fee, it is then use to compute the Course amount
     # e.g. are Tuition, Lab, Research, etc.
-    name = models.CharField(max_length=50)  
+    name = models.CharField(max_length=50, choices=FeeTypeLabels.choices)  
     amount = models.DecimalField(max_digits=10, decimal_places=2)
 
 class SectionFee(models.Model):

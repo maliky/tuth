@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.contrib.auth.models import FacultyProfile
+from app.people.models import FacultyProfile
 from typing import Optional
 
 from app.shared.constants import COLLEGE_CHOICES
