@@ -34,7 +34,7 @@ def create_reservation(request, section_id):
         reservation.delete()
         messages.error(request, str(err))
         return redirect("student_dashboard")
-        
+
     if not validate_credit_limit(student, section):
         reservation.delete()
         messages.error(request, "Exceeded credit-hour limit.")

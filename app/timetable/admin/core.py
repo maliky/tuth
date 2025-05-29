@@ -28,7 +28,7 @@ class SemesterAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = SectionResource
     list_display = ("long_code", "course", "semester", "faculty", "room", "max_seats")
-    inlines= [ReservationInline]
+    inlines = [ReservationInline]
     list_filter = (
         "semester",
         "course__code",

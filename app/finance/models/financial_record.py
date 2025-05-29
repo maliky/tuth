@@ -31,14 +31,14 @@ class FinancialRecord(models.Model):
 
 
 class FeeType(models.Model):
-    #> Add this as a TextChoices ins constants.choices
-    #> list the type extensively
-    #> a specialy feetype is the credit_hour_fee, it is then use to compute the Course amount
+    # > Add this as a TextChoices ins constants.choices
+    # > list the type extensively
+    # > a specialy feetype is the credit_hour_fee, it is then use to compute the Course amount
     # e.g. are Tuition, Lab, Research, etc.
-    name = models.CharField(max_length=50, choices=FeeTypeLabels.choices)  
+    name = models.CharField(max_length=50, choices=FeeTypeLabels.choices)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+
 
 class SectionFee(models.Model):
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)
     fee_type = models.ForeignKey(FeeType, on_delete=models.CASCADE)
-    

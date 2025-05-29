@@ -2,10 +2,11 @@ from __future__ import (
     annotations,
 )
 
-from app.people.models.profile import StudentProfile
-from app.shared.constants.choices import StatusRegistration
 from django.db import models
 from django.db.models import QuerySet
+
+from app.people.models.profile import StudentProfile
+from app.shared.constants.registry import StatusRegistration
 
 
 class ClassRoster(models.Model):

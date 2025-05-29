@@ -3,8 +3,11 @@ from typing import Any, Mapping, Optional, Sequence, Tuple, cast
 from django.core.exceptions import ValidationError
 from django.db.models import Model
 
-from app.shared.constants import COURSE_PATTERN
-from app.shared.constants import STATUS_CHOICES_PER_MODEL, UNDEFINED_CHOICES
+from app.shared.constants import (
+    COURSE_PATTERN,
+    STATUS_CHOICES_PER_MODEL,
+    UNDEFINED_CHOICES,
+)
 
 
 def expand_course_code(
@@ -21,22 +24,26 @@ def expand_course_code(
 
     match = COURSE_PATTERN.search(code.strip().upper())
     assert match is not None, f"Code '{code}' doesn't match expected pattern"
+
     dept, num, college = match.group("dept"), match.group("num"), match.group("college")
-    if not college:
-        college = row.get("college") if row else default_college
+    if row and "college" in row:
+        college = row["college"]
+    else:
+        college = default_college
+
     return dept, num, cast(str, college)
 
 
 def validate_model_status(instance: Model) -> None:
-    """Ensure the instance's current status is allowed for its model."""
-
-    # mypy: instance._meta.model_name is *str | None* in stubs; cast to str.
+    """
+    Ensure the most recent status in ``instance.status_history`` is allowed for
+    the concrete model involved.  Models that do **not** expose a
+    ``current_status()`` helper are silently ignored.
+    """
     model_name: str = cast(str, instance._meta.model_name)
 
     valid_statuses = STATUS_CHOICES_PER_MODEL.get(model_name, [UNDEFINED_CHOICES])
 
-    # getattr-safe access avoids attr-defined error
-    # current_status = instance.current_status()
     current_status_fn = getattr(instance, "current_status", None)
 
     if not callable(current_status_fn):

@@ -2,8 +2,9 @@ from __future__ import (
     annotations,
 )  # to postpone evaluation of type hints
 
-from app.people.models.profile import StaffProfile
 from django.db import models
+
+from app.people.models.profile import StaffProfile
 
 
 class PaymentHistory(models.Model):

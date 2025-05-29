@@ -35,7 +35,7 @@ def reserve_sections(
         )
 
         # > I hope to come here only with available section, as
-        # > only the section with available seats should be shown to the student 
+        # > only the section with available seats should be shown to the student
         for sec in section_list:
             if not sec.has_available_seats():
                 raise ValidationError(f"Section {sec} has no available seats.")

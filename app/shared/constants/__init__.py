@@ -1,5 +1,3 @@
-from app.shared.constants.academics import COLLEGE_CHOICES, MAX_STUDENT_CREDITS
-
 from .academics import COLLEGE_CHOICES, COURSE_PATTERN, MAX_STUDENT_CREDITS
 from .choices import (
     APPROVED,
@@ -16,13 +14,14 @@ from .finance import (
     StatusReservation,
 )
 from .perms import (
+    DEFAULT_ROLE_TO_COLLEGE,
     MODEL_APP,
     OBJECT_PERM_MATRIX,
     TEST_PW,
-    DEFAULT_ROLE_TO_COLLEGE,
     USER_ROLES,
 )
 from .registry import DOCUMENT_TYPES, StatusRegistration
+
 
 STYLE_DEFAULT = "NOTICE"
 

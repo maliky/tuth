@@ -6,7 +6,7 @@ class PaymentMethod(models.TextChoices):
     CASH = "cash", "Cash"
     MOBILE_MONEY = "mobile_money", "Mobile Money"
     CRYPTO = "crytpo", "Crypto (ADA)"
-    WIRE = "wire", "Wire"    
+    WIRE = "wire", "Wire"
 
 
 class FeeTypeLabels(models.TextChoices):

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from app.shared.constants.choices import StatusRegistration
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -33,7 +32,6 @@ class Section(models.Model):
     max_seats = models.PositiveIntegerField(default=30, validators=[MinValueValidator(3)])
     current_registrations = models.PositiveIntegerField(default=0, editable=False)
 
-    
     class Meta:
         constraints = [
             models.UniqueConstraint(

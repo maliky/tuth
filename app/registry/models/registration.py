@@ -2,11 +2,9 @@ from __future__ import (
     annotations,
 )
 
-from app.shared.constants.choices import StatusRegistration
 from django.db import models
 
-from app.shared.constants import STATUS_CHOICES_PER_MODEL
-from app.shared.utils import make_choices
+from app.shared.constants.registry import StatusRegistration
 
 
 class Registration(models.Model):
@@ -16,11 +14,11 @@ class Registration(models.Model):
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)
     status = models.CharField(
         max_length=30,
-        choices=make_choices(StatusRegistration.choices),
+        choices=StatusRegistration.choices,
         default=StatusRegistration.PENDING,
     )
-    #> to update with reservation date
-    #> but what happen if the reservation is canceled.  Keep the field.
+    # > to update with reservation date
+    # > but what happen if the reservation is canceled.  Keep the field.
     date_latest_reservation = models.DateTimeField(null=True, blank=True)
     date_registered = models.DateTimeField(auto_now_add=True)
 

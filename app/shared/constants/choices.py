@@ -1,5 +1,3 @@
-from django.db import models
-
 APPROVED: str = "approved"
 UNDEFINED_CHOICES: str = "undefined_choice"
 
