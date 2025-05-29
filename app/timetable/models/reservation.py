@@ -3,8 +3,8 @@ from app.shared.mixins import StatusableMixin
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils import timezone
-from people.models import StudentProfile
-from timetable.models import Section
+from app.people.models import StudentProfile
+from .section import Section
 
 from decimal import Decimal
 
@@ -13,7 +13,7 @@ from app.shared.constants import (
     TUITION_RATE_PER_CREDIT,
     PaymentMethod,
 )
-from app.shared.constants.choices import StatusReservation
+from app.shared.constants import StatusReservation
 from app.timetable.models.validator import CreditLimitValidator
 
 

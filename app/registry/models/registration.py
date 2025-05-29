@@ -16,7 +16,7 @@ class Registration(models.Model):
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)
     status = models.CharField(
         max_length=30,
-        choices=make_choices(StatusRegistration.choices),
+        choices=StatusRegistration.choices,
         default=StatusRegistration.PENDING,
     )
     #> to update with reservation date

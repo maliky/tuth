@@ -1,5 +1,9 @@
 from django.db import models
 
+# keep this import here so existing modules can simply import StatusRegistration
+# from this file without adjusting paths
+from .registry import StatusRegistration
+
 APPROVED: str = "approved"
 UNDEFINED_CHOICES: str = "undefined_choice"
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from app.people.models.profile import StaffProfile
 from django.db import models
 
-from app.shared.constants.choices import PaymentMethod
+from app.shared.constants import PaymentMethod
 
 class Payment(models.Model):
     """Payment made for a reservation."""

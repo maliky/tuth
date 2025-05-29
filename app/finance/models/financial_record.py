@@ -3,7 +3,7 @@ from __future__ import (
 )  # to postpone evaluation of type hints
 
 from app.people.models.profile import StaffProfile, StudentProfile
-from app.shared.constants.choices import FeeTypeLabels
+from app.shared.constants import FeeTypeLabels
 from django.db import models
 
 from app.shared.constants import CLEARANCE_CHOICES
