@@ -1,3 +1,4 @@
+from app.finance.models import Payment, FinancialRecord
 from app.shared.mixins import StatusableMixin
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
@@ -69,7 +70,7 @@ class Reservation(models.Model):
             StatusableMixin.validate_state(self, [StatusReservation.CANCELLED])
 
         # apply credit-hour rule
-        CreditLimitValidator()(self)  
+        CreditLimitValidator()(self)
 
     def save(self, *args, **kwargs):
         self.credit_hours_cache = self.credit_hours()
@@ -89,14 +90,38 @@ class Reservation(models.Model):
         self.save(update_fields=["status", "credit_hours_cache", "date_validated"])
 
     def cancel(self):
-        assert self.status != self.StatusReservation.CANCELLED, "Reservation already cancelled."
+        assert (
+            self.status != self.StatusReservation.CANCELLED
+        ), "Reservation already cancelled."
         self.status = self.StatusReservation.CANCELLED
         self.save()
-
 
     def student_fee(self):
         """get all the section fees, apply the financial aid compute how much the student owe to TU"""
         # > fill in the gap.
+
+    def mark_paid(self, by_user):
+        """Record payment and mark reservation as paid."""
+
+        if self.status == StatusReservation.PAID:
+            raise ValueError("Reservation already paid.")
+
+        Payment.objects.create(
+            reservation=self,
+            amount=self.fee_total,
+            method=PaymentMethod.CASH,
+            recorded_by=by_user,
+        )
+
+        fr, _ = FinancialRecord.objects.get_or_create(
+            student=self.student, defaults={"total_due": Decimal("0.00")}
+        )
+        # > we may have something to do here if the student is on scholarship 28/05/25
+        fr.total_paid = (fr.total_paid or Decimal("0.00")) + self.fee_total
+        fr.save(update_fields=["total_paid"])
+
+        self.status = StatusReservation.PAID
+        self.save(update_fields=["status"])
 
     class Meta:
         unique_together = ("student", "section")

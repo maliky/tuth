@@ -1,35 +1,30 @@
-import re
+from app.shared.constants.academics import COLLEGE_CHOICES, MAX_STUDENT_CREDITS
+
+from .academics import COLLEGE_CHOICES, COURSE_PATTERN, MAX_STUDENT_CREDITS
 from .choices import (
     APPROVED,
-    UNDEFINED_CHOICES,
     CLEARANCE_CHOICES,
-    COLLEGE_CHOICES,
-    DOCUMENT_TYPES,
-    STATUS_CHOICES_PER_MODEL,
     STATUS_CHOICES,
-    StatusRegistration,
-    StatusReservation,
-    FeeTypeLabels,
+    STATUS_CHOICES_PER_MODEL,
+    UNDEFINED_CHOICES,
 )
-
 from .curriculum import TEST_ENVIRONMENTAL_STUDIES_CURRICULUM
-
+from .finance import (
+    TUITION_RATE_PER_CREDIT,
+    FeeTypeLabels,
+    PaymentMethod,
+    StatusReservation,
+)
 from .perms import (
-    TEST_PW,
-    OBJECT_PERM_MATRIX,
     MODEL_APP,
-)
-
-from .roles import (
-    USER_ROLES,
+    OBJECT_PERM_MATRIX,
+    TEST_PW,
     DEFAULT_ROLE_TO_COLLEGE,
+    USER_ROLES,
 )
+from .registry import DOCUMENT_TYPES, StatusRegistration
 
-MAX_STUDENT_CREDITS= 18
 STYLE_DEFAULT = "NOTICE"
-COURSE_PATTERN = re.compile(
-    r"(?P<dept>[A-Z]{2,4})[_-]?(?P<num>[0-9]{3})(?:\s*-\s*(?P<college>[A-Z]{3,4}))?"
-)
 
 __ALL__ = [
     "APPROVED",
@@ -49,4 +44,7 @@ __ALL__ = [
     "USER_ROLES",
     "DEFAULT_ROLE_TO_COLLEGE",
     "FeeTypeLabels",
+    "StatusReservation",
+    "PaymentMethod",
+    "TUITION_RATE_PER_CREDIT",
 ]
