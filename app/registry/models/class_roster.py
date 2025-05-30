@@ -6,7 +6,7 @@ from django.db import models
 from django.db.models import QuerySet
 
 from app.people.models.profile import StudentProfile
-from app.shared.constants.registry import StatusRegistration
+from app.shared.constants import StatusRegistration
 
 
 class ClassRoster(models.Model):

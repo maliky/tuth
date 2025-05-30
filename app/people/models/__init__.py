@@ -1,4 +1,4 @@
-from .profile import StudentProfile, FacultyProfile
+from .profile import StudentProfile, FacultyProfile, DonorProfile
 from .role_assignment import RoleAssignment
 
-__all__ = ["StudentProfile", "FacultyProfile", "RoleAssignment"]
+__all__ = ["StudentProfile", "FacultyProfile", "DonorProfile", "RoleAssignment"]

@@ -4,15 +4,14 @@ from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils import timezone
 
-from app.finance.models import FinancialRecord, Payment
+from app.finance.models import FinancialRecord, Payment,  CreditLimitValidator
 from app.shared.constants import (
     MAX_STUDENT_CREDITS,
     TUITION_RATE_PER_CREDIT,
     PaymentMethod,
+    StatusReservation,
 )
-from app.shared.constants.finance import StatusReservation
 from app.shared.mixins import StatusableMixin
-from app.timetable.models.validator import CreditLimitValidator
 
 
 class Reservation(StatusableMixin, models.Model):

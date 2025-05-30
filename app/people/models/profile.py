@@ -134,3 +134,18 @@ class FacultyProfile(StaffProfile):
     class Meta(StaffProfile.Meta):
         verbose_name = _("faculty profile")
         verbose_name_plural = _("faculty profiles")
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Donor
+# ──────────────────────────────────────────────────────────────────────────────
+class DonorProfile(BaseProfile):
+    """Contact information for donors supporting students."""
+
+    donor_id = models.CharField(max_length=20, unique=True)
+    contact_via_email = models.BooleanField(default=True)
+    contact_via_phone = models.BooleanField(default=False)
+
+    class Meta(BaseProfile.Meta):
+        verbose_name = _("donor profile")
+        verbose_name_plural = _("donor profiles")

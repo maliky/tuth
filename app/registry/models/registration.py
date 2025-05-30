@@ -4,7 +4,7 @@ from __future__ import (
 
 from django.db import models
 
-from app.shared.constants.registry import StatusRegistration
+from app.shared.constants import StatusRegistration
 
 
 class Registration(models.Model):
