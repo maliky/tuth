@@ -3,19 +3,19 @@ TEST_PW = "test"
 USER_ROLES: list[str] = [
     "student",
     "prospective_student",
+    "technician",
+    "lab_technician",
+    "registrar",
+    "enrollment_officer",
     "dean",
     "chair",
     "lecturer",
     "assistant_professor",
     "associate_professor",
     "professor",
-    "technician",
-    "lab_technician",
     "faculty",
     "vpaa",
-    "registrar",
     "financial_officer",
-    "enrollment_officer",
 ]
 
 DEFAULT_ROLE_TO_COLLEGE = {

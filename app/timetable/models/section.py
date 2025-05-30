@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models import Q
 
 from .semester import Semester
 
@@ -18,8 +19,19 @@ class Section(models.Model):
         "people.FacultyProfile",
         null=True,
         blank=True,
-        limit_choices_to={"role_assignments__role": "Instructor"},
         on_delete=models.SET_NULL,
+        limit_choices_to=Q(
+            user__role_assignments__role__in=[
+                "faculty",
+                "lecturer",
+                "assistant_professor",
+                "dean",
+                "chair",
+                "associate_professor",
+                "professor",
+                "vpaa",
+            ]
+        ),
     )
     # could try lasy reference
     room = models.ForeignKey(
