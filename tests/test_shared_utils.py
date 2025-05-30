@@ -91,3 +91,8 @@ def test_expand_code_defaults_to_coas_when_row_missing():
 def test_expand_code_invalid_format():
     with pytest.raises(AssertionError):
         expand_course_code("MATH/101")
+
+
+def test_expand_code_accepts_underscore():
+    dept, num, college = expand_course_code("ACCT_404")
+    assert (dept, num, college) == ("ACCT", "404", "COAS")
