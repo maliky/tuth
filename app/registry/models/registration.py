@@ -10,8 +10,12 @@ from app.shared.constants.registry import StatusRegistration
 class Registration(models.Model):
     """Enrollment of a student in a course section."""
 
-    student = models.ForeignKey("people.StudentProfile", on_delete=models.CASCADE)
-    section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)
+    student = models.ForeignKey(
+        "people.StudentProfile", on_delete=models.CASCADE, related_name="registrations"
+    )
+    section = models.ForeignKey(
+        "timetable.Section", on_delete=models.CASCADE, related_name="registrations"
+    )
     status = models.CharField(
         max_length=30,
         choices=StatusRegistration.choices,

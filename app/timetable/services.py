@@ -5,10 +5,10 @@ from typing import Iterable, List
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Sum
-from people.models import StudentProfile
 
+from app.people.models import StudentProfile
 from app.shared.constants import MAX_STUDENT_CREDITS
-from app.shared.constants.choices import StatusReservation
+from app.shared.constants.finance import StatusReservation
 from app.timetable.models import Reservation, Section
 
 

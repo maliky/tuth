@@ -1,3 +1,4 @@
+from .reservation import Reservation
 from .academic_year import AcademicYear
 from .section import Section
 from .semester import Semester
@@ -8,4 +9,5 @@ __all__ = [
     "Term",
     "Semester",
     "Section",
+    "Reservation",
 ]

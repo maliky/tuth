@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-
 from django.db import models
 
-from app.shared.constants.choices import PaymentMethod
+from app.shared.constants.finance import PaymentMethod
 
 
 class Payment(models.Model):

@@ -1,10 +1,10 @@
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.shortcuts import get_object_or_404, redirect, render
 
-from app.shared.constants.choices import StatusReservation
+from app.shared.constants.finance import StatusReservation
 from app.timetable.models.reservation import Reservation
 from app.timetable.models.section import Section
 
@@ -17,7 +17,6 @@ def landing_page(request):
 def create_reservation(request, section_id):
     student = request.user.profile.studentprofile
     section = get_object_or_404(Section, id=section_id)
-
     reservation, created = Reservation.objects.get_or_create(
         student=student,
         section=section,

@@ -3,7 +3,6 @@ UNDEFINED_CHOICES: str = "undefined_choice"
 
 CLEARANCE_CHOICES: list[str] = ["pending", "cleared", "blocked"]
 
-
 # la séparation par classe me permet de vérifier la validité des états
 # au moment de la sauvegarde ou des modification du code.
 # > TODO : rewrite below as several models.TextChoices and update correponding models and calls.

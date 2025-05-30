@@ -31,7 +31,7 @@ def expand_course_code(
     else:
         college = default_college
 
-    return dept, num, cast(str, college)
+    return dept, num, college
 
 
 def validate_model_status(instance: Model) -> None:

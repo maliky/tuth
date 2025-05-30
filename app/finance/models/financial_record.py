@@ -2,11 +2,11 @@ from __future__ import (
     annotations,
 )  # to postpone evaluation of type hints
 
-from app.people.models.profile import StaffProfile, StudentProfile
-from app.shared.constants.choices import FeeTypeLabels
 from django.db import models
 
+from app.people.models.profile import StaffProfile, StudentProfile
 from app.shared.constants import CLEARANCE_CHOICES
+from app.shared.constants.finance import FeeTypeLabels
 from app.shared.utils import make_choices
 
 

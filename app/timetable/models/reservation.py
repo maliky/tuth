@@ -1,25 +1,23 @@
-from app.finance.models import Payment, FinancialRecord
-from app.shared.mixins import StatusableMixin
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils import timezone
-from people.models import StudentProfile
-from timetable.models import Section
 
-from decimal import Decimal
-
+from app.finance.models import FinancialRecord, Payment
 from app.shared.constants import (
     MAX_STUDENT_CREDITS,
     TUITION_RATE_PER_CREDIT,
     PaymentMethod,
 )
-from app.shared.constants.choices import StatusReservation
+from app.shared.constants.finance import StatusReservation
+from app.shared.mixins import StatusableMixin
 from app.timetable.models.validator import CreditLimitValidator
 
 
-class Reservation(models.Model):
-    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
-    section = models.ForeignKey(Section, on_delete=models.CASCADE)
+class Reservation(StatusableMixin, models.Model):
+    student = models.ForeignKey("people.StudentProfile", on_delete=models.CASCADE)
+    section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)
     status = models.CharField(
         max_length=30,
         choices=StatusReservation.choices,
@@ -82,9 +80,9 @@ class Reservation(models.Model):
 
         #  validate seat capacity
         if not self.section.has_available_seats():
-            StatusableMixin.validate_state(self, [StatusReservation.CANCELLED])
+            self.validate_state([StatusReservation.CANCELLED])
 
-        # apply credit-hour rule
+        # apply credit-hour rule, the idea is that we may reuse this elsewhere
         CreditLimitValidator()(self)
 
     def save(self, *args, **kwargs):
@@ -106,9 +104,9 @@ class Reservation(models.Model):
 
     def cancel(self):
         assert (
-            self.status != self.StatusReservation.CANCELLED
+            self.status != StatusReservation.CANCELLED
         ), "Reservation already cancelled."
-        self.status = self.StatusReservation.CANCELLED
+        self.status = StatusReservation.CANCELLED
         self.save()
 
     def student_fee(self):
