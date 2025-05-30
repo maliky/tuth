@@ -24,13 +24,14 @@ class ReservationInline(admin.TabularInline):
 
     model = Reservation
     extra = 0
-    fields = ("student", "section", "status", "credit_hours_cache", "date_requested", "credit_hours_live")
+    fields = (
+        "student",
+        "section",
+        "status",
+        "date_requested",
+        "credit_hours",
+    )
     readonly_fields = (
         "date_requested",
+        "credit_hours",
     )
-    # new helper column
-    def credit_hours_live(self, obj: Reservation) -> int:  # type: ignore[misc]  # mypy OK
-        """Current credit-hour tally for this reservation’s student."""
-        return obj.credit_hours()
-    
-    credit_hours_live.short_description = "Credit hours"

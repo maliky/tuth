@@ -55,7 +55,7 @@ class Reservation(StatusableMixin, models.Model):
     # ------------------------------------------------------------------
     def credit_hours(self) -> int:  # <-- ③
         """
-        Sum of *validated* or *requested* sections for *this* student
+        Sum of *validated* or *requested* sections credit hours for *this* student
         (excludes cancelled reservations).
         """
         return (

@@ -31,7 +31,7 @@ class College(models.Model):
         if not ra:
             return None
         try:
-            return cast(Optional[FacultyProfile], getattr(ra, "facultyprofile", None)) 
+            return cast(Optional[FacultyProfile], getattr(ra, "facultyprofile", None))
         except FacultyProfile.DoesNotExist:
             return None
 

@@ -1,49 +1,18 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any, cast
 
 from django.core.management.base import BaseCommand, CommandError
-from import_export import resources
 from tablib import Dataset
 
-from app.academics.admin.resources import CourseResource, CollegeResource
+from app.academics.admin.resources import CollegeResource, CourseResource
+from app.people.admin.resources import RegistrationResource, StudentResource
 from app.timetable.admin.resources import (
     AcademicYearResource,
     SectionResource,
     SemesterResource,
 )
-from app.people.models import StudentProfile
-from app.registry.models import Registration
-
-
-class StudentResource(resources.ModelResource):
-    """Resource for bulk importing :class:`StudentProfile` rows."""
-
-    class Meta:
-        model = StudentProfile
-        import_id_fields = ("student_id",)
-        fields = (
-            "student_id",
-            "user",
-            "college",
-            "curriculum",
-            "enrollment_semester",
-            "enrollment_date",
-        )
-
-
-class RegistrationResource(resources.ModelResource):
-    """Resource for bulk importing :class:`Registration` rows."""
-
-    class Meta:
-        model = Registration
-        import_id_fields = ("student", "section")
-        fields = (
-            "student",
-            "section",
-            "status",
-            "date_latest_reservation",
-        )
 
 
 class Command(BaseCommand):
@@ -89,7 +58,7 @@ class Command(BaseCommand):
             for row in ws.iter_rows(min_row=2, values_only=True):
                 dataset.append(list(row))
 
-            resource = resource_cls()
+            resource = cast(Any, resource_cls())
             result = resource.import_data(
                 dataset, dry_run=options["dry_run"], raise_errors=True
             )

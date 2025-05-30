@@ -1,7 +1,7 @@
 from .core import (
     CollegeAdmin,
-    CurriculumAdmin,
     CourseAdmin,
+    CurriculumAdmin,
     PrerequisiteAdmin,
 )
 

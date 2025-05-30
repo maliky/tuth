@@ -1,8 +1,7 @@
 from django.contrib import admin
 
-from .models import FacultyProfile, DonorProfile, StudentProfile
+from app.people.models import FacultyProfile, DonorProfile, StudentProfile
 
-academics/models/
 
 @admin.register(StudentProfile)
 class StudentProfileAdmin(admin.ModelAdmin):
