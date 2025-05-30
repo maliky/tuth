@@ -21,7 +21,6 @@ class SectionInline(admin.TabularInline):
 
 class ReservationInline(admin.TabularInline):
     """Display reservations inline with credit hours snapshot."""
-
     model = Reservation
     extra = 0
     fields = ("student", "section", "status", "credit_hours_cache", "date_requested")
