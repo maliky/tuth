@@ -39,7 +39,7 @@ Access explicitly at [[https://localhost][https://localhost]]
   sudo rm app/migrations/*
 #+END_SRC
 
-Dans un autre terminal
+In another terminal
 #+BEGIN_SRC bash term2
    docker-compose -f docker-compose-dev.yml up --build
 #+END_SRC
