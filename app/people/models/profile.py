@@ -26,7 +26,12 @@ class BaseProfile(StatusableMixin, models.Model):
     """Common demographic & contact information for every person on campus."""
 
     # --- linkage ---
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="%(class)s_profile",
+        related_query_name="%(class)s_profile",
+    )
 
     # --- demographics ---
     date_of_birth = models.DateField(_("date of birth"), null=True, blank=True)
