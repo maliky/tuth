@@ -25,10 +25,15 @@ class College(models.Model):
         ra = (
             self.role_assignments.filter(role="Dean", end_date__isnull=True)
             .order_by("-start_date")
-            .select_related("user__profile")
+            .select_related("user")
             .first()
         )
-        return getattr(ra.userr, "profile", None) if ra else None  # type: ignore[attr-defined]
+        if not ra:
+            return None
+        try:
+            return ra.user.facultyprofile
+        except FacultyProfile.DoesNotExist:
+            return None
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.code} - {self.fullname}"

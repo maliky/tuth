@@ -19,6 +19,6 @@ class ClassRoster(models.Model):
     def students(self) -> QuerySet[StudentProfile]:
         """Return all users registered to this section."""
         return StudentProfile.objects.filter(
-            registrations__section=self.section,
-            registrations__status=StatusRegistration.COMPLETED,
+            student_registrations__section=self.section,
+            student_registrations__status=StatusRegistration.COMPLETED,
         )

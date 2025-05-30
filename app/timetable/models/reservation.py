@@ -16,8 +16,14 @@ from app.timetable.models.validator import CreditLimitValidator
 
 
 class Reservation(StatusableMixin, models.Model):
-    student = models.ForeignKey("people.StudentProfile", on_delete=models.CASCADE)
-    section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)
+    student = models.ForeignKey(
+        "people.StudentProfile",
+        on_delete=models.CASCADE,
+        related_name="student_reservations",
+    )
+    section = models.ForeignKey(
+        "timetable.Section", on_delete=models.CASCADE, related_name="section_reservations"
+    )
     status = models.CharField(
         max_length=30,
         choices=StatusReservation.choices,
