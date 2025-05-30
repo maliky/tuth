@@ -3,7 +3,7 @@ from __future__ import annotations
 from django.core.exceptions import ValidationError
 from django.db import models
 from app.people.models import FacultyProfile
-from typing import Optional
+from typing import Optional, cast
 
 from app.shared.constants import COLLEGE_CHOICES
 
@@ -31,7 +31,7 @@ class College(models.Model):
         if not ra:
             return None
         try:
-            return ra.user.facultyprofile
+            return cast(Optional[FacultyProfile], getattr(ra, "facultyprofile", None)) 
         except FacultyProfile.DoesNotExist:
             return None
 

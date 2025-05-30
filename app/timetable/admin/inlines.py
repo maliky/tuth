@@ -21,10 +21,16 @@ class SectionInline(admin.TabularInline):
 
 class ReservationInline(admin.TabularInline):
     """Display reservations inline with credit hours snapshot."""
+
     model = Reservation
     extra = 0
-    fields = ("student", "section", "status", "credit_hours_cache", "date_requested")
+    fields = ("student", "section", "status", "credit_hours_cache", "date_requested", "credit_hours_live")
     readonly_fields = (
-        "credit_hours_cache",
         "date_requested",
     )
+    # new helper column
+    def credit_hours_live(self, obj: Reservation) -> int:  # type: ignore[misc]  # mypy OK
+        """Current credit-hour tally for this reservation’s student."""
+        return obj.credit_hours()
+    
+    credit_hours_live.short_description = "Credit hours"

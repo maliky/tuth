@@ -4,8 +4,6 @@ from __future__ import (
 
 from django.db import models
 
-from app.people.models.profile import StaffProfile
-
 
 class PaymentHistory(models.Model):
     """Individual payment made toward a financial record."""
@@ -17,7 +15,7 @@ class PaymentHistory(models.Model):
     payment_date = models.DateTimeField(auto_now_add=True)
     method = models.CharField(max_length=50, blank=True)  # cash, bank, mobile …
     recorded_by = models.ForeignKey(
-        StaffProfile,
+        "people.StaffProfile",
         null=True,
         on_delete=models.SET_NULL,
         related_name="payments_recorded",

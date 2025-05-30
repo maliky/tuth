@@ -5,7 +5,6 @@ from __future__ import (
 
 from django.db import models
 
-from app.people.models.profile import StaffProfile, StudentProfile
 from app.shared.constants import CLEARANCE_CHOICES
 from app.shared.constants.finance import FeeTypeLabels
 from app.shared.utils import make_choices
@@ -14,7 +13,7 @@ from app.shared.utils import make_choices
 class FinancialRecord(models.Model):
     """Aggregate balance for a student."""
 
-    student = models.OneToOneField("app.people.StudentProfile", on_delete=models.CASCADE)
+    student = models.OneToOneField("people.StudentProfile", on_delete=models.CASCADE)
     total_due = models.DecimalField(max_digits=10, decimal_places=2)
     total_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     clearance_status = models.CharField(
@@ -24,7 +23,7 @@ class FinancialRecord(models.Model):
     )
     last_updated = models.DateTimeField(auto_now=True)
     verified_by = models.ForeignKey(
-        "app.people.StaffProfile",
+        "people.StaffProfile",
         null=True,
         on_delete=models.SET_NULL,
         related_name="financial_records_verified",

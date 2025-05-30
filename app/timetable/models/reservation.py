@@ -1,16 +1,18 @@
 from decimal import Decimal
 
+from app.timetable.models.validator import CreditLimitValidator
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils import timezone
 
-from app.finance.models import CreditLimitValidator, FinancialRecord, Payment
+from app.finance.models import FinancialRecord, Payment
 from app.shared.constants import (
     MAX_STUDENT_CREDITS,
     TUITION_RATE_PER_CREDIT,
     PaymentMethod,
     StatusReservation,
 )
+
 from app.shared.mixins import StatusableMixin
 
 
@@ -32,15 +34,11 @@ class Reservation(StatusableMixin, models.Model):
     date_requested = models.DateTimeField(default=timezone.now)
     date_validated = models.DateTimeField(blank=True, null=True)
 
-    credit_hours = models.PositiveSmallIntegerField(
-        editable=False, null=True, help_text="Snapshot of credit hours at save-time"
-    )  # <-- ②
-
     @property
-    def fee_total(self):
-        """get all the section fees, apply the financial aid compute how much the student owe to TU"""
-        # > fill in the gap.
-        return None
+    def fee_total(self) -> Decimal:
+        """Total fee for this reservation."""
+        credit_hours = self.section.course.credit_hours
+        return credit_hours * TUITION_RATE_PER_CREDIT
 
     def __str__(self):
         return f"{self.student} -> {self.section} ({self.status})"
@@ -74,15 +72,6 @@ class Reservation(StatusableMixin, models.Model):
         )
 
     # ------------------------------------------------------------------
-    # COMPUTED PROPERTIES
-    # ------------------------------------------------------------------
-    @property
-    def fee_total(self) -> Decimal:
-        """Total fee for this reservation."""
-        credit_hours = self.section.course.credit_hours
-        return credit_hours * TUITION_RATE_PER_CREDIT
-
-    # ------------------------------------------------------------------
     # LIFE-CYCLE OVERRIDES
     # ------------------------------------------------------------------
     def clean(self):
@@ -97,7 +86,6 @@ class Reservation(StatusableMixin, models.Model):
         CreditLimitValidator()(self)
 
     def save(self, *args, **kwargs):
-        self.credit_hours = self.credit_hours()
         super().save(*args, **kwargs)
 
     # ------------------------------------------------------------------
@@ -111,7 +99,7 @@ class Reservation(StatusableMixin, models.Model):
 
         self.status = StatusReservation.VALIDATED
         self.full_clean()
-        self.save(update_fields=["status", "credit_hours_cache", "date_validated"])
+        self.save(update_fields=["status", "date_validated"])
 
     def cancel(self):
         assert (
