@@ -6,5 +6,9 @@ from . import views
 urlpatterns = [
     # “admin:login” is provided by Django’s admin site
     path("", TemplateView.as_view(template_name="website/landing.html"), name="landing"),
-    path("tuth/reservations/", views.student_dashboard, name="student_dashboard"),
+    path(
+        "tuth/dashboard/",
+        views.student_dashboard,
+        name="student_dashboard",
+    ),
 ]
