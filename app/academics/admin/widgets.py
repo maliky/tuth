@@ -8,97 +8,154 @@ from app.shared.utils import expand_course_code
 
 class CourseManyWidget(widgets.ManyToManyWidget):
     """
-    Parse the `list_courses` column (semicolon-separated list of codes),
-      auto-create missing Course rows exactly like Section import does.
+    Parses the `list_courses` column from CSV input, which should be
+    a semicolon-separated list of course codes. Automatically creates
+    Course objects if they don't exist yet, using the logic defined in
+    the CourseWidget.
     """
 
     def __init__(self):
-        """Initialise with the standard separator and helper widget."""
+        """
+        Initialize the widget:
+        - Uses ";" as a separator between multiple course codes.
+        - Delegates the parsing and creation of individual courses to CourseWidget.
+        """
         super().__init__(Course, separator=";", field="code")
-        # re-use the existing single-course widget for DRYness
         self._cw = CourseWidget(model=Course, field="code")
 
     def clean(self, value, row=None, *args, **kwargs) -> list[Course]:
-        """Return a list of courses parsed from ``value``."""
+        """
+        Returns a list of Course instances parsed from the provided CSV value.
+
+        If `value` is empty or missing, returns an empty list (no courses associated).
+        """
         if not value:
-            return []  # keep M2M empty
+            return []
+
         courses = []
         for token in value.split(self.separator):
             token = token.strip()
             if token:
-                # propagate row – it contains "college"
+                # Delegate to CourseWidget to parse/create individual course
                 course = self._cw.clean(token, row)
                 if course:
                     courses.append(course)
+
         return courses
 
 
 class CourseWidget(widgets.ForeignKeyWidget):
-    """Return or create a :class:`Course` from its code and row college."""
+    """
+    Widget to find or create a Course instance given a course code.
+
+    The course code can optionally include a college code suffix separated by a hyphen.
+    If the college code is not provided explicitly, it defaults to the value from
+    `row['college']` or "COAS".
+    """
 
     def clean(self, value, row=None, *args, **kwargs) -> Course | None:
-        """Return the Course object described by ``value``.
-
-        ``value`` may include the college code after a hyphen.  When omitted,
-        the college is taken from ``row['college']`` or defaults to ``"COAS"``.
         """
+        Return a Course object matching the provided value.
 
+        `value` example formats:
+          - "AGR121" (implies college from row or "COAS")
+          - "AGR121-CFAS" (explicit college code CFAS)
+
+        If the course does not exist, it will be created with default attributes.
+        """
         if not value:
             return None
 
         name, number, college_code = expand_course_code(value, row=row)
 
+        # Get or create the college
         college, _ = College.objects.get_or_create(
             code=college_code,
             defaults={"fullname": college_code},
         )
 
-        # find existing course(s) for this triple
+        # Check for existing course
         qs = Course.objects.filter(name=name, number=number, college=college)
         count = qs.count()
         code = f"{name}{number}"
+
         if count > 1:
             raise ValueError(
-                f"Integrity Error: Multiple courses found for {code} in {college_code}"
+                f"Integrity Error: Multiple courses found for {code} in college {college_code}"
             )
+
         if count == 0:
+            # Create a new course with default values
             course = Course.objects.create(
                 name=name,
                 number=number,
                 college=college,
-                credit_hours=3,
+                credit_hours=3,  # Default to 3 credits, adjustable later
                 title=value,
             )
         else:
             course = qs.get()
+
         return course
 
 
 class CollegeWidget(widgets.ForeignKeyWidget):
-    """Return or create a :class:`College` from its code."""
+    """
+    Widget to find or create a College instance given a college code.
+
+    Automatically tracks newly created colleges for reporting purposes.
+    """
 
     def __init__(self, *args, **kwargs):
-        """Initialise and set a placeholder for the parent resource."""
+        """
+        Initializes the widget and sets a placeholder (`_resource`) for
+        back-reference to the parent import resource (if provided).
+        """
         super().__init__(*args, **kwargs)
-        self._resource = None  # will be injected by Resource below
+        self._resource = None  # Will be injected by the resource using this widget
 
     def clean(self, value, row=None, *args, **kwargs) -> College | None:
-        """Return the college represented by ``value``."""
+        """
+        Returns a College object matching the provided code.
+
+        If the college does not exist, it is automatically created with a default name
+        equal to its code. Newly created colleges are logged via `_resource` if available.
+        """
         if not value:
             return None
-        obj, created = College.objects.get_or_create(
+
+        college, created = College.objects.get_or_create(
             code=value,
             defaults={"fullname": value},
         )
-        if created and self._resource:  # resource back-reference present
+
+        if created and self._resource:
+            # Log newly created college for import summary
             self._resource._new_colleges.add(value)
-        return obj
+
+        return college
 
 
 class CurriculumWidget(widgets.ForeignKeyWidget):
-    """Return or create a :class:`Curriculum` using row['college']."""
+    """
+    Widget to find or create a Curriculum instance given its short_name.
+
+    Associates the curriculum to a college explicitly provided in `row['college']`
+    or defaults to "COAS" if none is provided. Checks integrity to avoid conflicts
+    where the same curriculum short_name exists in a different college.
+    """
 
     def clean(self, value, row=None, *args, **kwargs) -> Curriculum | None:
+        """
+        Returns a Curriculum object matching the provided short_name.
+
+        Example input row:
+          - row["curriculum"] = "Bsc Agriculture"
+          - row["college"] = "CFAS" (optional, defaults to "COAS")
+
+        Automatically creates curriculum with today's date and provided college if it
+        does not already exist.
+        """
         if not value:
             return None
 
@@ -108,7 +165,7 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
             defaults={"fullname": college_code},
         )
 
-        curriculum, _ = Curriculum.objects.get_or_create(
+        curriculum, created = Curriculum.objects.get_or_create(
             short_name=value.strip(),
             defaults={
                 "title": value.strip(),
@@ -117,9 +174,11 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
             },
         )
 
-        if curriculum.college != college:
+        if not created and curriculum.college != college:
             raise ValueError(
-                f"Curriculum {curriculum.short_name} exists in {curriculum.college.code}"
+                f"Integrity Error: Curriculum '{curriculum.short_name}' already exists "
+                f"in college '{curriculum.college.code}', but attempted to associate "
+                f"with college '{college.code}'."
             )
 
         return curriculum
