@@ -56,7 +56,7 @@ class CurriculumCourse(models.Model):
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.curriculum} <-> {self.course}"
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
         if self.credit_hours is None:
             self.credit_hours = self.course.credit_hours
 

@@ -46,10 +46,10 @@ class Reservation(StatusableMixin, models.Model):
 
         return tuition_fee + additional_fees
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.student} -> {self.section} ({self.status})"
 
-    def _check_credit_limit(self):
+    def _check_credit_limit(self) -> None:
         prospective = self.credit_hours() + self.section.course.credit_hours
         if prospective > MAX_STUDENT_CREDITS:
             raise ValidationError(
@@ -80,7 +80,7 @@ class Reservation(StatusableMixin, models.Model):
     # ------------------------------------------------------------------
     # LIFE-CYCLE OVERRIDES
     # ------------------------------------------------------------------
-    def clean(self):
+    def clean(self) -> None:
         """Model-level validation before every save()."""
         super().clean()
 
@@ -91,14 +91,14 @@ class Reservation(StatusableMixin, models.Model):
         # apply credit-hour rule, the idea is that we may reuse this elsewhere
         CreditLimitValidator()(self)
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
         super().save(*args, **kwargs)
 
     # ------------------------------------------------------------------
     # USER-FACING OPERATIONS
     # ------------------------------------------------------------------
     @transaction.atomic
-    def validate(self):
+    def validate(self) -> None:
         """Finance / Registrar marks the reservation as validated."""
         if self.status == StatusReservation.VALIDATED:
             raise ValueError("Reservation already validated.")
@@ -107,33 +107,15 @@ class Reservation(StatusableMixin, models.Model):
         self.full_clean()
         self.save(update_fields=["status", "date_validated"])
 
-    def cancel(self):
+    def cancel(self) -> None:
         assert (
             self.status != StatusReservation.CANCELLED
         ), "Reservation already cancelled."
         self.status = StatusReservation.CANCELLED
         self.save()
 
-    def student_fee(self):
-        """Return the amount owed by the student for this reservation."""
+    def mark_paid(self, by_user: models.Model) -> None:
 
-        tuition = self.section.course.credit_hours * TUITION_RATE_PER_CREDIT
-        extras = self.section.sectionfee_set.aggregate(total=models.Sum("amount")).get(
-            "total"
-        ) or Decimal("0.00")
-        total = tuition + extras
-
-        # If the student model exposes a scholarship amount, subtract it
-        scholarship = getattr(self.student, "scholarship_amount", None)
-        if scholarship:
-            try:
-                total -= Decimal(scholarship)
-            except Exception:
-                pass
-
-        return max(total, Decimal("0.00"))
-
-    def mark_paid(self, by_user):
         """Record payment and mark reservation as paid."""
 
         if self.status == StatusReservation.PAID:

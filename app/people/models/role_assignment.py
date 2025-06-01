@@ -33,5 +33,5 @@ class RoleAssignment(models.Model):
             models.Index(fields=["role", "college", "end_date"]),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.user} -> {self.role} ({self.start_date})"

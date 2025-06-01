@@ -36,7 +36,7 @@ class Curriculum(StatusableMixin, models.Model):
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.title or self.short_name}"
 
-    def clean(self):
+    def clean(self) -> None:
         """Validate the curriculum and its current status."""
 
         super().clean()

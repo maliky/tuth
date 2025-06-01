@@ -65,6 +65,6 @@ class Section(models.Model):
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.long_code} | {self.room}"
 
-    def has_available_seats(self):
+    def has_available_seats(self) -> bool:
         """Return 'True' if the section still has seats available."""
         return self.current_registrations < self.max_seats
