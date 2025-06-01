@@ -2,12 +2,14 @@ from .core import (
     CollegeAdmin,
     CourseAdmin,
     CurriculumAdmin,
+    CurriculumCourseAdmin,
     PrerequisiteAdmin,
 )
 
 __all__ = [
     "CollegeAdmin",
-    "CurriculumAdmin",
     "CourseAdmin",
+    "CurriculumAdmin",
+    "CurriculumCourseAdmin",
     "PrerequisiteAdmin",
 ]

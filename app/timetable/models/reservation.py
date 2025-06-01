@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from app.finance.models.financial_record import SectionFee
 from app.timetable.models.validator import CreditLimitValidator
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
@@ -36,9 +37,14 @@ class Reservation(StatusableMixin, models.Model):
 
     @property
     def fee_total(self) -> Decimal:
-        """Total fee for this reservation."""
-        credit_hours = self.section.course.credit_hours
-        return credit_hours * TUITION_RATE_PER_CREDIT
+        """Total fee for this reservation (tuition + section fees)."""
+
+        tuition_fee = self.section.course.credit_hours * TUITION_RATE_PER_CREDIT
+        additional_fees = SectionFee.objects.filter(section=self.section).aggregate(
+            total=models.Sum("amount")
+        ).get("total") or Decimal("0.00")
+
+        return tuition_fee + additional_fees
 
     def __str__(self):
         return f"{self.student} -> {self.section} ({self.status})"
@@ -80,7 +86,7 @@ class Reservation(StatusableMixin, models.Model):
 
         #  validate seat capacity
         if not self.section.has_available_seats():
-            self.validate_state([StatusReservation.CANCELLED])
+            self.validate_status([StatusReservation.CANCELLED])
 
         # apply credit-hour rule, the idea is that we may reuse this elsewhere
         CreditLimitValidator()(self)
@@ -107,6 +113,25 @@ class Reservation(StatusableMixin, models.Model):
         ), "Reservation already cancelled."
         self.status = StatusReservation.CANCELLED
         self.save()
+
+    def student_fee(self):
+        """Return the amount owed by the student for this reservation."""
+
+        tuition = self.section.course.credit_hours * TUITION_RATE_PER_CREDIT
+        extras = self.section.sectionfee_set.aggregate(total=models.Sum("amount")).get(
+            "total"
+        ) or Decimal("0.00")
+        total = tuition + extras
+
+        # If the student model exposes a scholarship amount, subtract it
+        scholarship = getattr(self.student, "scholarship_amount", None)
+        if scholarship:
+            try:
+                total -= Decimal(scholarship)
+            except Exception:
+                pass
+
+        return max(total, Decimal("0.00"))
 
     def mark_paid(self, by_user):
         """Record payment and mark reservation as paid."""

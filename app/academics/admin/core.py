@@ -1,24 +1,26 @@
-from app.academics.admin.actions import update_curriculum, update_college
-from app.timetable.admin.inlines import SectionInline
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 
+from app.academics.admin.actions import update_college, update_curriculum
 from app.academics.models import College, Course, Curriculum, Prerequisite
+from app.academics.models.curriculum_course import CurriculumCourse
+from app.timetable.admin.inlines import SectionInline
 
+from .filters import CurriculumFilter
+from .forms import BulkActionImportForm, CourseForm
 from .inlines import (
+    CurriculumCourseInline,
     PrerequisiteInline,
     RequiresInline,
-    CurriculumCourseInline,
 )
 from .resources import (
+    CollegeResource,
     CourseResource,
+    CurriculumCourseResource,
     CurriculumResource,
     PrerequisiteResource,
-    CollegeResource,
 )
-from .forms import BulkActionImportForm, CourseForm
-from .filters import CurriculumFilter
 
 
 @admin.register(Course)
@@ -85,7 +87,15 @@ class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 
 @admin.register(College)
-class CollegeAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+class CollegeAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = CollegeResource
     list_display = ("code", "fullname", "current_dean")
     search_fields = ("code", "fullname")
+
+
+@admin.register(CurriculumCourse)
+class CurriculumCourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+    resource_class = CurriculumCourseResource
+    list_display = ("curriculum", "course")
+    autocomplete_fields = ("curriculum", "course")
+    list_select_related = ("curriculum", "course")

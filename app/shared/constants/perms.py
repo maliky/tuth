@@ -1,22 +1,25 @@
+from django.db import models
+
 TEST_PW = "test"
 
-USER_ROLES: list[str] = [
-    "student",
-    "prospective_student",
-    "technician",
-    "lab_technician",
-    "registrar",
-    "enrollment_officer",
-    "dean",
-    "chair",
-    "lecturer",
-    "assistant_professor",
-    "associate_professor",
-    "professor",
-    "faculty",
-    "vpaa",
-    "financial_officer",
-]
+
+class UserRole(models.TextChoices):
+    STUDENT = "student", "Student"
+    PROSPECTIVE_STUDENT = "prospective_student", "Prospective Student"
+    TECHNICIAN = "technician", "Technician"
+    LAB_technician = "lab_technician", "Lab Technician"
+    REGISTRAR = "registrar", "Registrar"
+    ENROLLMENT_officer = "enrollment_officer", "Enrollment Officer"
+    DEAN = "dean", "Dean"
+    CHAIR = "chair", "Chair"
+    LECTURER = "lecturer", "Lecturer"
+    ASSISTANT_professor = "assistant_professor", "Assistant Professor"
+    ASSOCIATE_professor = "associate_professor", "Associate Professor"
+    PROFESSOR = "professor", "Professor"
+    FACULTY = "faculty", "Faculty"
+    VPAA = "vpaa", "Vpaa"
+    FINANCIALOFFICER = "financial_officer", "Financial Officer"
+
 
 DEFAULT_ROLE_TO_COLLEGE = {
     "dean": "COAS",  # map role → default college code

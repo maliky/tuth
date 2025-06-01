@@ -1,11 +1,18 @@
 from django.contrib import messages
-from import_export import resources, fields, widgets
-from app.academics.admin.widgets import CollegeWidget, CourseManyWidget
+from import_export import fields, resources, widgets
+
+from app.academics.admin.widgets import (
+    CollegeWidget,
+    CourseManyWidget,
+    CourseWidget,
+    CurriculumWidget,
+)
 from app.academics.models import (
-    Curriculum,
-    Course,
-    Prerequisite,
     College,
+    Course,
+    Curriculum,
+    CurriculumCourse,
+    Prerequisite,
 )
 from app.shared.utils import expand_course_code, make_course_code
 
@@ -240,3 +247,33 @@ class CollegeResource(resources.ModelResource):
             "code",
             "fullname",
         )
+
+
+class CurriculumCourseResource(resources.ModelResource):
+    """Import curriculum-course rows with a curriculum name and course code."""
+
+    curriculum = fields.Field(
+        column_name="curriculum_name",
+        attribute="curriculum",
+        widget=CurriculumWidget(model=Curriculum, field="short_name"),
+    )
+    college = fields.Field(column_name="college")
+    course = fields.Field(
+        column_name="course",
+        attribute="course",
+        widget=CourseWidget(model=Course, field="code"),
+    )
+
+    class Meta:
+        model = CurriculumCourse
+        import_id_fields = ("curriculum", "course")
+        fields = (
+            "curriculum",
+            "college",
+            "course",
+        )
+        skip_unchanged = True
+        report_skipped = True
+
+    def dehydrate_college(self, obj):
+        return obj.curriculum.college.code

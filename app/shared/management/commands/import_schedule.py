@@ -48,6 +48,7 @@ class Command(BaseCommand):
             for row in reader:
                 try:
                     college = clg_w.clean(row["college"], row)
+                    assert college is not None, "college cannot be None"
                     course = cw.clean(f'{row["course_code"]}{row["course_no"]}', row)
                     semester = sw.clean(row["semester"], row)
                     section_no = int(row["section"]) if row["section"].strip() else 1
@@ -90,7 +91,6 @@ class Command(BaseCommand):
                 f"{added_curricula} curricula, {added_curriculum_courses} curriculum-courses added, {skipped} skipped."
             )
         )
-
 
 
 def _ensure_room(raw: str) -> int | None:

@@ -1,13 +1,6 @@
-from typing import Any, Mapping, Optional, Sequence, Tuple, cast
+from typing import Mapping, Optional, Tuple
 
-from django.core.exceptions import ValidationError
-from django.db.models import Model
-
-from app.shared.constants import (
-    COURSE_PATTERN,
-    STATUS_CHOICES_PER_MODEL,
-    UNDEFINED_CHOICES,
-)
+from app.shared.constants import COURSE_PATTERN
 
 
 def expand_course_code(
@@ -32,37 +25,6 @@ def expand_course_code(
         college = default_college
 
     return dept, num, college
-
-
-def validate_model_status(instance: Model) -> None:
-    """
-    Ensure the most recent status in ``instance.status_history`` is allowed for
-    the concrete model involved.  Models that do **not** expose a
-    ``current_status()`` helper are silently ignored.
-    """
-    model_name: str = cast(str, instance._meta.model_name)
-
-    valid_statuses = STATUS_CHOICES_PER_MODEL.get(model_name, [UNDEFINED_CHOICES])
-
-    current_status_fn = getattr(instance, "current_status", None)
-
-    if not callable(current_status_fn):
-        return  # object is not status-aware – nothing to validate
-
-    current_status: Any = current_status_fn()
-
-    if current_status and current_status.state not in valid_statuses:
-        raise ValidationError(
-            f"Invalid status '{current_status.state}' for model '{model_name}'. "
-            f"Allowed statuses: {', '.join(valid_statuses)}."
-        )
-
-
-def make_choices(main_list: Optional[Sequence[str]] = None) -> list[tuple[str, str]]:
-    """Return choices tuple suitable for a Django ``choices`` argument."""
-    # the below code is done on purpose. do not remove
-    main_list = main_list or [UNDEFINED_CHOICES]
-    return [(elt, elt.replace("_", " ").title()) for elt in main_list]
 
 
 def make_course_code(name: str, number: str) -> str:

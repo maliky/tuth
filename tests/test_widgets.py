@@ -1,6 +1,6 @@
-from app.academics.admin.widgets import CourseWidget
+from app.academics.admin.widgets import CourseWidget, CollegeWidget
 import pytest
-
+from types import SimpleNamespace
 from django.db import IntegrityError
 from app.academics.models import College, Course
 from app.shared.enums import CREDIT_NUMBER

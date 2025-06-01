@@ -1,13 +1,16 @@
-from __future__ import (
-    annotations,
-)
+from __future__ import annotations
 
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.utils import timezone
 
 from app.shared.constants import StatusRegistration
+from app.shared.mixins import StatusableMixin
+from app.timetable.models import Reservation
 
 
-class Registration(models.Model):
+class Registration(StatusableMixin, models.Model):
     """Enrollment of a student in a course section."""
 
     student = models.ForeignKey(
@@ -20,6 +23,7 @@ class Registration(models.Model):
         on_delete=models.CASCADE,
         related_name="section_registrations",
     )
+    # this is optional and I could get it through the SatusableMixin
     status = models.CharField(
         max_length=30,
         choices=StatusRegistration.choices,
@@ -40,3 +44,13 @@ class Registration(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.student} – {self.section} -  {self.status}"
+
+
+@receiver(post_save, sender=Reservation)
+def update_latest_reservation(sender, instance, **kwargs):
+    """Keep ``date_latest_reservation`` in sync with reservation activity."""
+    reg, _ = Registration.objects.get_or_create(
+        student=instance.student, section=instance.section
+    )
+    reg.date_latest_reservation = timezone.now()
+    reg.save(update_fields=["date_latest_reservation"])

@@ -1,10 +1,9 @@
 from __future__ import annotations
 from datetime import date
 
-from django.contrib.contenttypes.fields import GenericRelation
+from app.shared.constants.academics import StatusCurriculum
 from django.db import models
 
-from app.shared.utils import validate_model_status
 from app.shared.mixins import StatusableMixin
 
 
@@ -28,8 +27,10 @@ class Curriculum(StatusableMixin, models.Model):
     creation_date = models.DateField(default=date.today)
     is_active = models.BooleanField(default=False)
 
-    status_history = GenericRelation(
-        "shared.StatusHistory", related_query_name="curriculum"
+    status = models.CharField(
+        max_length=30,
+        choices=StatusCurriculum.choices,
+        default=StatusCurriculum.PENDING,
     )
 
     def __str__(self) -> str:  # pragma: no cover
@@ -39,7 +40,7 @@ class Curriculum(StatusableMixin, models.Model):
         """Validate the curriculum and its current status."""
 
         super().clean()
-        validate_model_status(self)
+        self.validate_status(StatusCurriculum)
 
     class Meta:
         constraints = [

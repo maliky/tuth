@@ -53,3 +53,21 @@ def test_year_level_defaults_from_course_number():
 
     assert created
     assert cc.year_level == 2
+
+
+@pytest.mark.django_db
+def test_curriculum_course_resource_imports_rows():
+    college = College.objects.create(code="COAS", fullname="Arts")
+    Course.objects.create(name="BIO", number="101", title="Bio I", college=college)
+    Course.objects.create(name="BIO", number="201", title="Bio II", college=college)
+
+    data = Dataset(headers=["curriculum_name", "college", "course"])
+    data.append(["SCI", "COAS", "BIO101"])
+    data.append(["SCI", "COAS", "BIO201"])
+
+    resource = CurriculumCourseResource()
+    result = resource.import_data(data, raise_errors=True)
+    assert not result.has_errors()
+
+    curriculum = Curriculum.objects.get(short_name="SCI")
+    assert curriculum.courses.count() == 2

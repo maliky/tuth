@@ -1,6 +1,8 @@
+from datetime import date
+
 from import_export import widgets
-from app.academics.models.college import College
-from app.academics.models.course import Course
+
+from app.academics.models import College, Course, Curriculum
 from app.shared.utils import expand_course_code
 
 
@@ -91,3 +93,33 @@ class CollegeWidget(widgets.ForeignKeyWidget):
         if created and self._resource:  # resource back-reference present
             self._resource._new_colleges.add(value)
         return obj
+
+
+class CurriculumWidget(widgets.ForeignKeyWidget):
+    """Return or create a :class:`Curriculum` using row['college']."""
+
+    def clean(self, value, row=None, *args, **kwargs) -> Curriculum | None:
+        if not value:
+            return None
+
+        college_code = (row.get("college") or "COAS").strip()
+        college, _ = College.objects.get_or_create(
+            code=college_code,
+            defaults={"fullname": college_code},
+        )
+
+        curriculum, _ = Curriculum.objects.get_or_create(
+            short_name=value.strip(),
+            defaults={
+                "title": value.strip(),
+                "college": college,
+                "creation_date": date.today(),
+            },
+        )
+
+        if curriculum.college != college:
+            raise ValueError(
+                f"Curriculum {curriculum.short_name} exists in {curriculum.college.code}"
+            )
+
+        return curriculum

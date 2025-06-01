@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from django.db import models
 
-from app.shared.constants import USER_ROLES
-from app.shared.utils import make_choices
+from app.shared.constants.perms import UserRole
 
 
 class RoleAssignment(models.Model):
@@ -12,7 +11,7 @@ class RoleAssignment(models.Model):
     user = models.ForeignKey(
         "auth.User", on_delete=models.CASCADE, related_name="role_assignments"
     )
-    role = models.CharField(max_length=30, choices=make_choices(USER_ROLES))
+    role = models.CharField(max_length=30, choices=UserRole.choices)
     college = models.ForeignKey(
         "academics.College",
         null=True,

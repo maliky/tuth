@@ -1,3 +1,4 @@
+from django.db import models
 import re
 
 MAX_STUDENT_CREDITS = 18
@@ -13,3 +14,9 @@ COLLEGE_CHOICES: list[tuple[str, str]] = [
     ("COET", "College of Engineering and Technology"),
     ("COBA", "College of Business Administration"),
 ]
+
+
+class StatusCurriculum(models.TextChoices):
+    PENDING = "pending", "Pending"
+    APPROVED = "approved", "Approved"
+    NEEDS_REVISION = "needs_revision", "Needs Revision"

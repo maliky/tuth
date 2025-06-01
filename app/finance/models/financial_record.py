@@ -1,13 +1,8 @@
-from __future__ import (
-    annotations,
-)  # to postpone evaluation of type hints
-
+from __future__ import annotations
 
 from django.db import models
 
-from app.shared.constants import CLEARANCE_CHOICES
-from app.shared.constants.finance import FeeTypeLabels
-from app.shared.utils import make_choices
+from app.shared.constants.finance import FeeType, StatusClearance
 
 
 class FinancialRecord(models.Model):
@@ -18,7 +13,7 @@ class FinancialRecord(models.Model):
     total_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     clearance_status = models.CharField(
         max_length=50,
-        choices=make_choices(CLEARANCE_CHOICES),
+        choices=StatusClearance.choices,
         default="pending",
     )
     last_updated = models.DateTimeField(auto_now=True)
@@ -30,15 +25,7 @@ class FinancialRecord(models.Model):
     )
 
 
-class FeeType(models.Model):
-    # > Add this as a TextChoices ins constants.choices
-    # > list the type extensively
-    # > a specialy feetype is the credit_hour_fee, it is then use to compute the Course amount
-    # e.g. are Tuition, Lab, Research, etc.
-    name = models.CharField(max_length=50, choices=FeeTypeLabels.choices)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-
-
 class SectionFee(models.Model):
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)
-    fee_type = models.ForeignKey(FeeType, on_delete=models.CASCADE)
+    fee_type = models.CharField(max_length=50, choices=FeeType.choices)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)

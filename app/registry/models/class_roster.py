@@ -1,11 +1,9 @@
-from __future__ import (
-    annotations,
-)
+from __future__ import annotations
 
 from django.db import models
 from django.db.models import QuerySet
 
-from app.people.models.profile import StudentProfile
+from app.people.models import StudentProfile
 from app.shared.constants import StatusRegistration
 
 

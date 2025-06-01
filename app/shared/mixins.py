@@ -1,11 +1,10 @@
+from typing import Any, Iterable
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
 
 from app.shared.constants import STATUS_CHOICES
-
-from .utils import make_choices
 
 
 class StatusHistory(models.Model):
@@ -16,7 +15,7 @@ class StatusHistory(models.Model):
         null=True,
         related_name="statuses_authored",
     )
-    state = models.CharField(max_length=30, choices=make_choices(STATUS_CHOICES))
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES)
 
     # --- generic link ---
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
@@ -57,10 +56,15 @@ class StatusableMixin(models.Model):
     def set_rejected(self, author):
         return self._add_status("rejected", author)
 
-    def validate_state(self, allowed: list[str]) -> None:
-        """Ensure ``self.status`` is one of ``allowed``."""
+    def validate_status(self, allowed: Iterable[Any]) -> None:
+        """
+        Ensure ``self.status`` is one of ``allowed``.
+        accept list of tuple or list of str
+        """
 
         status = getattr(self, "status", None)
+        allowed = {a.value if hasattr(a, "value") else a for a in allowed}
+
         if status not in allowed:
             raise ValidationError(
                 f"Invalid state '{status}'. Allowed states: {', '.join(allowed)}."

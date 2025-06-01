@@ -1,10 +1,8 @@
 from django import forms
+from django.core.exceptions import FieldDoesNotExist
 from django.forms import ChoiceField
 
-from app.shared.constants import STATUS_CHOICES_PER_MODEL
-
 from .mixins import StatusHistory
-from .utils import make_choices
 
 
 class StatusHistoryForm(forms.ModelForm):
@@ -18,13 +16,19 @@ class StatusHistoryForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        ct = self.initial.get("content_type") or getattr(
+        content_type = self.initial.get("content_type") or getattr(
             self.instance, "content_type", None
         )
-        if ct:
-            # probablement à revoir à cause de ma nouvelle structure
-            allowed = STATUS_CHOICES_PER_MODEL.get(ct.model, [])
+        if content_type:
 
             field = self.fields["state"]
             assert isinstance(field, ChoiceField)
-            field.choices = make_choices(allowed)
+            model_cls = content_type.model_class()
+            if model_cls:
+                try:
+                    # where is this getting the field status from?
+                    # it may not have been defined in the
+                    status_field = model_cls._meta.get_field("status")
+                    field.choices = status_field.choices
+                except FieldDoesNotExist:
+                    pass
