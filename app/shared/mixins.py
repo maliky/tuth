@@ -2,6 +2,8 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.contrib.auth.models import User
+from typing import Optional
 
 from app.shared.constants import STATUS_CHOICES
 
@@ -39,22 +41,23 @@ class StatusableMixin(models.Model):
     )
 
     # ─── helpers ──────────────────────────────────────────────
-    def _add_status(self, state: str, author):
+    def _add_status(self, state: str, author: Optional[User]) -> StatusHistory:
+        """Helper to append a new status entry."""
         return self.status_history.create(state=state, author=author)
 
-    def current_status(self):
+    def current_status(self) -> Optional[StatusHistory]:
         return self.status_history.first()
 
-    def set_pending(self, author):
+    def set_pending(self, author: Optional[User]) -> StatusHistory:
         return self._add_status("pending", author)
 
-    def set_revision(self, author):
+    def set_revision(self, author: Optional[User]) -> StatusHistory:
         return self._add_status("needs_revision", author)
 
-    def set_approved(self, author):
+    def set_approved(self, author: Optional[User]) -> StatusHistory:
         return self._add_status("approved", author)
 
-    def set_rejected(self, author):
+    def set_rejected(self, author: Optional[User]) -> StatusHistory:
         return self._add_status("rejected", author)
 
     def validate_state(self, allowed: list[str]) -> None:

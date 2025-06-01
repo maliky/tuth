@@ -4,6 +4,7 @@ from django.db import models
 
 from app.shared.enums import CREDIT_NUMBER, LEVEL_NUMBER
 from app.shared.utils import make_course_code
+from app.academics.models.curriculum import Curriculum
 
 
 class Course(models.Model):
@@ -53,12 +54,12 @@ class Course(models.Model):
             return "other"
 
     @classmethod
-    def for_curriculum(cls, curriculum) -> models.QuerySet:
+    def for_curriculum(cls, curriculum: Curriculum) -> models.QuerySet:
         """Return courses included in the given curriculum."""
         return cls.objects.filter(curricula=curriculum).distinct()
 
     # ---------- hooks ----------
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
         """
         updating course_code on the fly
         """

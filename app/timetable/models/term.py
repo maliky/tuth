@@ -17,7 +17,7 @@ class Term(models.Model):
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
 
-    def clean(self):
+    def clean(self) -> None:
         container_start = self.semester.start_date
         container_end = self.semester.end_date
         assert container_start is not None and container_end is not None
