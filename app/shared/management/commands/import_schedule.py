@@ -16,6 +16,32 @@ from app.timetable.admin.widgets import SemesterWidget
 from app.timetable.models import Section, Semester
 
 
+# ./academics/admin/resources.py: class CollegeResource
+# ./academics/admin/resources.py: class CourseResource
+# ./academics/admin/resources.py: class CurriculumCourseResource
+# ./academics/admin/resources.py: class CurriculumResource
+# ./academics/admin/resources.py: class PrerequisiteResource
+#
+# ./academics/admin/widgets.py: class CourseManyWidget
+# ./academics/admin/widgets.py:: class CollegeWidget
+# ./academics/admin/widgets.py:: class CourseWidget
+# ./academics/admin/widgets.py:: class CurriculumWidget
+
+# ./people/admin/resources.py: class RegistrationResource
+#
+# ./people/admin/resources.py: class StudentResource
+
+# ./spaces/admin/resources.py: class RoomResource
+#
+# ./spaces/admin/widgets.py: class BuildingWidget
+
+# ./timetable/admin/resources.py: class AcademicYearResource
+# ./timetable/admin/resources.py: class SectionResource
+# ./timetable/admin/resources.py: class SemesterResource
+#
+# ./timetable/admin/widgets.py: class AcademicYearWidget
+# ./timetable/admin/widgets.py:: class SemesterWidget
+
 class Command(BaseCommand):
     """Import schedule, creating colleges, courses, semesters, sections, faculty, and curricula."""
 
