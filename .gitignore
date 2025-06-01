@@ -12,3 +12,4 @@ static/*
 *.crt
 nginx/*
 codo-tuth-env/
+Seed*
