@@ -9,9 +9,16 @@ from django.db import transaction
 
 from app.academics.admin.widgets import CourseWidget, CollegeWidget
 from app.academics.models import College, Course, Curriculum, CurriculumCourse
+<<<<<<< HEAD
+=======
+from app.people.models import FacultyProfile
+from app.shared.constants import TEST_PW
+from app.spaces.admin import RoomWidget
+>>>>>>> github/codo/update-import_schedule.py-functionality
 from app.spaces.models import Room
 from app.timetable.admin.widgets import SemesterWidget
-from app.timetable.models import Section, Semester
+from app.timetable.models import Schedule, Section, Semester
+from django.utils.dateparse import parse_date, parse_time
 
 
 # ./academics/admin/resources.py: class CollegeResource
@@ -67,10 +74,9 @@ class Command(BaseCommand):
         cw = CourseWidget(model=Course, field="code")
         clg_w = CollegeWidget(model=College, field="code")
         sw = SemesterWidget(model=Semester, field="id")
+        rw = RoomWidget(model=Room, field="name")
 
-        added_sections = added_curricula = added_curriculum_courses = added_faculty = (
-            skipped
-        ) = 0
+        added_sections = added_curricula = added_curriculum_courses = added_faculty = skipped = 0
 
         with path.open(newline="", encoding="utf-8") as fh:
             reader = csv.DictReader(fh)
@@ -81,9 +87,15 @@ class Command(BaseCommand):
                     course = cw.clean(f'{row["course_code"]}{row["course_no"]}', row)
                     semester = sw.clean(row["semester"], row)
                     section_no = int(row["section"]) if row["section"].strip() else 1
-                    room_id = _ensure_room(row["location"])
-                    faculty = _ensure_faculty(row["instructor"], college)
-                    curriculum = _ensure_curriculum(row["curriculum"], college)
+                    room = rw.clean(row.get("location"))
+                    faculty = _ensure_faculty(row.get("instructor"), college)
+                    curriculum = _ensure_curriculum(row.get("curriculum"), college)
+
+                    weekday = _parse_weekday(row.get("weekday") or row.get("days"))
+                    start_time, end_time = _parse_times(row["time_start"], row["time_end"])
+                    schedule = _ensure_schedule(weekday, start_time, end_time, room, faculty)
+                    start_date = parse_date((row.get("sts") or "")[:10])
+                    end_date = parse_date((row.get("ets") or "")[:10])
 
                     if dry_run:
                         continue
@@ -93,14 +105,17 @@ class Command(BaseCommand):
                         semester=semester,
                         number=section_no,
                         defaults={
-                            "room_id": room_id,
+                            "room": room,
                             "faculty": faculty,
                             "max_seats": 30,
-                            "schedule": _human_time(row),
+                            "schedule": schedule,
+                            "start_date": start_date,
+                            "end_date": end_date,
                         },
                     )
                     if created:
                         added_sections += 1
+                        self.stdout.write(self.style.SUCCESS(f"  ↳ section {section.long_code}"))
 
                     # Link course to curriculum
                     cc, cc_created = CurriculumCourse.objects.get_or_create(
@@ -116,12 +131,12 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"{added_sections} sections, {added_faculty} faculty, "
-                f"{added_curricula} curricula, {added_curriculum_courses} curriculum-courses added, {skipped} skipped."
+                f"{added_sections} sections, {added_curriculum_courses} curriculum-courses added, {skipped} skipped."
             )
         )
 
 
+<<<<<<< HEAD
 def _ensure_room(raw: str) -> int | None:
     if not raw or raw.lower() == "nan":
         return None
@@ -129,6 +144,26 @@ def _ensure_room(raw: str) -> int | None:
     return room.id
 
 
+=======
+def _ensure_faculty(raw: str, college: College) -> FacultyProfile | None:
+    if not raw or raw.lower() == "nan":
+        return None
+    fullname = raw.strip()
+    username = fullname.replace(" ", "_").lower()
+    user, created = User.objects.get_or_create(
+        username=username, fullname=fullname, defaults={"password": TEST_PW}
+    )
+
+    if created:
+        user.set_password(TEST_PW)
+        user.save()
+
+    faculty_profile, fp_created = FacultyProfile.objects.get_or_create(
+        user=user, defaults={"college": college}
+    )
+
+    return faculty_profile
+>>>>>>> github/codo/update-import_schedule.py-functionality
 
 
 def _ensure_curriculum(curriculum_title: str, college: College) -> Curriculum:
@@ -139,8 +174,35 @@ def _ensure_curriculum(curriculum_title: str, college: College) -> Curriculum:
     return curriculum
 
 
-def _human_time(row: dict[str, str]) -> str:
-    weekday = row.get("weekday") or row.get("days")
-    if not weekday:
-        raise ValueError("Missing 'weekday' or 'days' in row.")
-    return f'{weekday[:3]} {row["time_start"]}-{row["time_end"]}'
+def _parse_weekday(raw: str) -> int:
+    mapping = {
+        "mon": 1,
+        "tue": 2,
+        "wed": 3,
+        "thu": 4,
+        "fri": 5,
+        "sat": 6,
+        "sun": 7,
+    }
+    token = (raw or "").strip().lower()[:3]
+    if token not in mapping:
+        raise ValueError(f"Invalid weekday '{raw}'")
+    return mapping[token]
+
+
+def _parse_times(start: str, end: str):
+    st = parse_time(start)
+    et = parse_time(end)
+    if st is None or et is None:
+        raise ValueError("Invalid time values")
+    return st, et
+
+
+def _ensure_schedule(weekday: int, start_time, end_time, room: Room | None, faculty: FacultyProfile | None) -> Schedule:
+    obj, _ = Schedule.objects.get_or_create(
+        weekday=weekday,
+        start_time=start_time,
+        end_time=end_time,
+        defaults={"room": room, "faculty": faculty},
+    )
+    return obj
