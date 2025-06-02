@@ -9,12 +9,8 @@ from django.db import transaction
 
 from app.academics.admin.widgets import CourseWidget, CollegeWidget
 from app.academics.models import College, Course, Curriculum, CurriculumCourse
-<<<<<<< HEAD
-=======
 from app.people.models import FacultyProfile
-from app.shared.constants import TEST_PW
 from app.spaces.admin import RoomWidget
->>>>>>> github/codo/update-import_schedule.py-functionality
 from app.spaces.models import Room
 from app.timetable.admin.widgets import SemesterWidget
 from app.timetable.models import Schedule, Section, Semester
@@ -76,7 +72,7 @@ class Command(BaseCommand):
         sw = SemesterWidget(model=Semester, field="id")
         rw = RoomWidget(model=Room, field="name")
 
-        added_sections = added_curricula = added_curriculum_courses = added_faculty = skipped = 0
+        added_sections = added_curricula = added_curriculum_courses = skipped = 0
 
         with path.open(newline="", encoding="utf-8") as fh:
             reader = csv.DictReader(fh)
@@ -136,34 +132,6 @@ class Command(BaseCommand):
         )
 
 
-<<<<<<< HEAD
-def _ensure_room(raw: str) -> int | None:
-    if not raw or raw.lower() == "nan":
-        return None
-    room, _ = Room.objects.get_or_create(name=raw.strip())
-    return room.id
-
-
-=======
-def _ensure_faculty(raw: str, college: College) -> FacultyProfile | None:
-    if not raw or raw.lower() == "nan":
-        return None
-    fullname = raw.strip()
-    username = fullname.replace(" ", "_").lower()
-    user, created = User.objects.get_or_create(
-        username=username, fullname=fullname, defaults={"password": TEST_PW}
-    )
-
-    if created:
-        user.set_password(TEST_PW)
-        user.save()
-
-    faculty_profile, fp_created = FacultyProfile.objects.get_or_create(
-        user=user, defaults={"college": college}
-    )
-
-    return faculty_profile
->>>>>>> github/codo/update-import_schedule.py-functionality
 
 
 def _ensure_curriculum(curriculum_title: str, college: College) -> Curriculum:
