@@ -61,3 +61,23 @@ class SemesterWidget(widgets.ForeignKeyWidget):
             number=sem_no,
         )
         return semester
+
+
+class SectionCodeWidget(widgets.Widget):
+    """Parse ``YY-YY_SemN:section`` strings and return Semester + number."""
+
+    def __init__(self, semester_widget: SemesterWidget | None = None) -> None:
+        super().__init__()
+        self.semester_widget = semester_widget or SemesterWidget(
+            model=Semester, field="id"
+        )
+        self.number: int | None = None
+
+    def clean(self, value, row=None, *args, **kwargs):
+        if not value:
+            return None
+        sem_token, num_token = value.split(":", 1)
+        semester = self.semester_widget.clean(sem_token.strip(), row, *args, **kwargs)
+        number = int(num_token.strip()) if num_token.strip().isdigit() else None
+        self.number = number
+        return semester, number

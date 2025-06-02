@@ -29,7 +29,7 @@ def autoincrement_section_number(sender, instance, **kwargs):
 
 
 @receiver(post_save, sender=Reservation)
-def increment_section_count(sender, instance, created, **kwargs):
+def increment_current_registration(sender, instance, created, **kwargs):
     """Increment ``current_registrations`` when a reservation is validated."""
     if instance.status != StatusReservation.VALIDATED:
         return

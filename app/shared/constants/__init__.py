@@ -1,6 +1,8 @@
 from itertools import chain
 from typing import List, Tuple
 
+from app.shared.constants.timetable import StatusReservation
+
 from .academics import (
     COLLEGE_CHOICES,
     COURSE_PATTERN,
@@ -13,8 +15,8 @@ from .finance import (
     FeeType,
     PaymentMethod,
     StatusClearance,
-    StatusReservation,
 )
+
 from .perms import (
     DEFAULT_ROLE_TO_COLLEGE,
     MODEL_APP,

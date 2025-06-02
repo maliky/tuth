@@ -53,7 +53,9 @@ class CourseWidget(widgets.ForeignKeyWidget):
     `row['college']` or "COAS".
     """
 
-    def clean(self, value, row=None, *args, **kwargs) -> Course | None:
+    def clean(
+        self, value, row=None, credit_field: str | None = None, *args, **kwargs
+    ) -> Course | None:
         """
         Return a Course object matching the provided value.
 
@@ -85,12 +87,20 @@ class CourseWidget(widgets.ForeignKeyWidget):
             )
 
         if count == 0:
-            # Create a new course with default values
+            credit_hours = 3
+            if credit_field and row:
+                raw = row.get(credit_field)
+                if raw is not None:
+                    try:
+                        credit_hours = int(str(raw).strip())
+                    except (ValueError, TypeError):
+                        credit_hours = 3
+
             course = Course.objects.create(
                 name=name,
                 number=number,
                 college=college,
-                credit_hours=3,  # Default to 3 credits, adjustable later
+                credit_hours=credit_hours,
                 title=value,
             )
         else:

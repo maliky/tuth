@@ -72,3 +72,12 @@ or XLSX files and to download existing records. Models such as
 Courses, Curricula and Sections already provide corresponding
 resources.
 
+
+** Importing a full workbook
+Use ``import_workbook`` to load an Excel file containing
+``timetable``, ``academics``, ``people`` and ``spaces`` sheets.
+
+# +begin_src bash
+python manage.py import_workbook myfile.xlsx --dry-run
+# +end_src
+Run the command without ``--dry-run`` to persist changes.

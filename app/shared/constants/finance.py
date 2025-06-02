@@ -25,11 +25,4 @@ class FeeType(models.TextChoices):
     TUITION = "tuition", "Tuition"
 
 
-class StatusReservation(models.TextChoices):
-    CANCELLED = "cancelled", "Cancelled"
-    PAID = "paid", "Paid"
-    REQUESTED = "requested", "Requested"
-    VALIDATED = "validated", "Validated"
-
-
 TUITION_RATE_PER_CREDIT = Decimal("5.00")

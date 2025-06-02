@@ -10,11 +10,6 @@ from app.academics.admin.widgets import CollegeWidget, CourseWidget
 
 
 class SectionResource(resources.ModelResource):
-    college = fields.Field(
-        column_name="college",
-        widget=CollegeWidget(model=College, field="code"),
-        # readonly=True,
-    )
     course = fields.Field(
         column_name="course",
         attribute="course",
@@ -25,7 +20,11 @@ class SectionResource(resources.ModelResource):
         attribute="semester",
         widget=SemesterWidget(model=Semester, field="id"),
     )
-
+    schedule = fields.Field(
+        column_name="schedule"
+        attribute=
+    )
+    
     def save_instance(self, instance, is_create, row, **kwargs):
         """Wrap save to log errors during import."""
         try:
@@ -40,7 +39,7 @@ class SectionResource(resources.ModelResource):
 
     class Meta:
         model = Section
-        import_id_fields = ("course", "semester", "number")
+        import_id_fields = ("number", "course", "semester")
         skip_unchanged = True
 
 

@@ -115,7 +115,6 @@ class Reservation(StatusableMixin, models.Model):
         self.save()
 
     def mark_paid(self, by_user: models.Model) -> None:
-
         """Record payment and mark reservation as paid."""
 
         if self.status == StatusReservation.PAID:

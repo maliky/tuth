@@ -46,6 +46,7 @@ from app.timetable.models import Section, Semester
 # For CourseWidget we should construct something of the format
 # "<course_code>_<course_no>-<college>" and Course Widget will take care for the creation for course and college
 
+
 class Command(BaseCommand):
     """Import schedule, creating colleges, courses, semesters, sections, faculty, and curricula."""
 

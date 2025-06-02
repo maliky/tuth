@@ -1,6 +1,7 @@
 from typing import Mapping, Optional, Tuple
 
 from app.shared.constants import COURSE_PATTERN
+
 # r"(?P<dept>[A-Z]{2,4})[_-]?(?P<num>[0-9]{3})(?:\s*-\s*(?P<college>[A-Z]{3,4}))?"
 
 
