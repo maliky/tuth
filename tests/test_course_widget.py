@@ -3,6 +3,7 @@ from django.db.utils import IntegrityError
 
 from app.academics.admin.widgets import CourseWidget
 from app.academics.models import College, Course
+from app.shared.enums import CREDIT_NUMBER
 
 
 @pytest.mark.django_db
@@ -69,3 +70,29 @@ def test_course_widget_token_college_overrides_row_college():
 
     assert result == course
     assert result.college == token_college
+
+
+@pytest.mark.django_db
+def test_course_widget_uses_credit_field_and_title_on_create():
+    cw = CourseWidget(model=Course, field="code")
+
+    row = {"college": "COAS", "credit_hours": "4", "course_title": "Adv Math"}
+    course = cw.clean("MATH201", row, credit_field="credit_hours")
+
+    assert course.credit_hours == CREDIT_NUMBER.FOUR
+    assert course.title == "Adv Math"
+
+
+@pytest.mark.django_db
+def test_course_widget_updates_existing_course_title_and_credits():
+    col = College.objects.create(code="COAS", fullname="Arts")
+    course = Course.objects.create(name="MATH", number="201", title="Old", college=col, credit_hours=3)
+    cw = CourseWidget(model=Course, field="code")
+
+    row = {"college": "COAS", "credit_hours": "4", "course_title": "New"}
+    updated = cw.clean("MATH201", row, credit_field="credit_hours")
+
+    course.refresh_from_db()
+    assert updated == course
+    assert course.credit_hours == CREDIT_NUMBER.FOUR
+    assert course.title == "New"
