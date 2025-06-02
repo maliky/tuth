@@ -72,3 +72,20 @@ or XLSX files and to download existing records. Models such as
 Courses, Curricula and Sections already provide corresponding
 resources.
 
+** Schedule Import
+
+Follow this sequence to reset the database and load a schedule CSV:
+
+#+begin_src bash
+docker-compose -f docker-compose-dev.yml exec web python manage.py reset_db
+docker-compose -f docker-compose-dev.yml exec web python manage.py makemigrations
+docker-compose -f docker-compose-dev.yml exec web python manage.py migrate
+docker-compose -f docker-compose-dev.yml exec web python manage.py import_schedule Seed_data/tu_schedule_Sem1_24-25_b.csv
+#+end_src
+
+The command summarizes how many *sections*, *faculty*, *curricula* and
+*curriculum‑courses* were created and any skipped rows.
+
+After completion, log in to =/admin/= and check the Courses, Colleges,
+Rooms and Sections pages to verify the imported data.
+
