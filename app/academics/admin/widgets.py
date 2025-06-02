@@ -58,12 +58,15 @@ class CourseWidget(widgets.ForeignKeyWidget):
     ) -> Course | None:
         """
         Return a Course object matching the provided value.
+        The optional ``credit_field`` argument specifies the CSV column used for
+        credit hours when creating or updating a course.
 
-        `value` example formats:
-          - "AGR121" (implies college from row or "COAS")
-          - "AGR121-CFAS" (explicit college code CFAS)
+        ``value`` example formats:
+          - ``"AGR121"`` (implies college from row or ``"COAS"``)
+          - ``"AGR121-CFAS"`` (explicit college code CFAS)
 
-        If the course does not exist, it will be created with default attributes.
+        If the course does not exist it will be created, otherwise the existing
+        course is returned (and updated when fields differ).
         """
         if not value:
             return None
@@ -86,25 +89,34 @@ class CourseWidget(widgets.ForeignKeyWidget):
                 f"Integrity Error: Multiple courses found for {code} in college {college_code}"
             )
 
+        # Pull optional data from the row
+        cr_raw = row.get(credit_field) if row else None
+        title_raw = row.get("course_title") if row else None
+
         if count == 0:
-            credit_hours = 3
-            if credit_field and row:
-                raw = row.get(credit_field)
-                if raw is not None:
-                    try:
-                        credit_hours = int(str(raw).strip())
-                    except (ValueError, TypeError):
-                        credit_hours = 3
+            # Create a new course with info from the row (credits default to 3)
+            credit_hours = int(cr_raw) if str(cr_raw).strip().isdigit() else 3
 
             course = Course.objects.create(
                 name=name,
                 number=number,
                 college=college,
                 credit_hours=credit_hours,
-                title=value,
+                title=title_raw or value,
             )
         else:
             course = qs.get()
+            updated = False
+            if title_raw and course.title != title_raw:
+                course.title = title_raw
+                updated = True
+            if cr_raw and str(cr_raw).strip().isdigit():
+                cr_val = int(cr_raw)
+                if cr_val != course.credit_hours:
+                    course.credit_hours = cr_val
+                    updated = True
+            if updated:
+                course.save(update_fields=["title", "credit_hours"])
 
         return course
 
