@@ -6,21 +6,25 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import F
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 
 from app.finance.models import FinancialRecord
 from app.registry.models import Registration
+from app.people.models import StudentProfile
 from app.shared.constants.finance import StatusReservation
 from app.timetable.models.reservation import Reservation
 from app.timetable.models.section import Section
 
 
-def landing_page(request):
+def landing_page(request: HttpRequest) -> HttpResponse:
+    """Render the website landing page."""
     return render(request, "website/landing.html")
 
 
 @login_required
-def create_reservation(request, section_id):
+def create_reservation(request: HttpRequest, section_id: int) -> HttpResponseRedirect:
+    """Reserve a section for the current student if possible."""
     student = request.user.profile.studentprofile
     section = get_object_or_404(Section, id=section_id)
 
@@ -96,7 +100,10 @@ def student_dashboard(request):
     return render(request, "website/student_dashboard.html", context)
 
 
-def validate_credit_limit(student, section, max_credits=18):
+def validate_credit_limit(
+    student: StudentProfile, section: Section, max_credits: int = 18
+) -> bool:
+    """Return ``True`` if adding ``section`` keeps the student under ``max_credits``."""
     reserved_credits = (
         Reservation.objects.filter(
             student=student, status__in=["requested", "validated"]
