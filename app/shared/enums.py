@@ -35,3 +35,14 @@ class LEVEL_NUMBER(IntegerChoices):
     THREE = 3, "junior"
     FOUR = 4, "senior"
     FIVE = 5, "senior"
+
+
+class WEEKDAYS_NUMBER(IntegerChoices):
+    """Integer representation of weekdays."""
+
+    MONDAY = 1, "Monday"
+    TUESDAY = 2, "Tuesday"
+    WEDNESDAY = 3, "Wednesday"
+    THURSDAY = 4, "Thursday"
+    FRIDAY = 5, "Friday"
+    SATURDAY = 6, "Saturday"
