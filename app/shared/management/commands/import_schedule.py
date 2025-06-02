@@ -3,14 +3,12 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-from django.contrib.auth.models import User
+from app.people.models.profile import _ensure_faculty
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from app.academics.admin.widgets import CourseWidget, CollegeWidget
 from app.academics.models import College, Course, Curriculum, CurriculumCourse
-from app.people.models import FacultyProfile
-from app.shared.constants import TEST_PW
 from app.spaces.models import Room
 from app.timetable.admin.widgets import SemesterWidget
 from app.timetable.models import Section, Semester
@@ -131,24 +129,6 @@ def _ensure_room(raw: str) -> int | None:
     return room.id
 
 
-def _ensure_faculty(raw: str, college: College) -> FacultyProfile | None:
-    if not raw or raw.lower() == "nan":
-        return None
-    fullname = raw.strip()
-    username = fullname.replace(" ", "_").lower()
-    user, created = User.objects.get_or_create(
-        username=username, fullname=fullname, defaults={"password": TEST_PW}
-    )
-
-    if created:
-        user.set_password(TEST_PW)
-        user.save()
-
-    faculty_profile, fp_created = FacultyProfile.objects.get_or_create(
-        user=user, defaults={"college": college}
-    )
-
-    return faculty_profile
 
 
 def _ensure_curriculum(curriculum_title: str, college: College) -> Curriculum:

@@ -8,6 +8,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from app.shared.mixins import StatusableMixin
+from app.shared.constants import TEST_PW
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -149,3 +150,35 @@ class DonorProfile(BaseProfile):
     class Meta(BaseProfile.Meta):
         verbose_name = _("donor profile")
         verbose_name_plural = _("donor profiles")
+
+
+def _ensure_faculty(fullname: str, college: "College") -> FacultyProfile:
+    """Return a :class:`FacultyProfile` for *fullname*, creating records.
+
+    Splits the provided ``fullname`` into first and last names, constructs a
+    username from the initials of the given names and the last name, and then
+    ensures both the ``User`` and associated ``FacultyProfile`` exist.  The user
+    password is set to ``TEST_PW`` when created.
+    """
+
+    parts = fullname.split()
+    if not parts:
+        raise ValueError("fullname cannot be empty")
+
+    first = parts[0]
+    last = parts[-1]
+    initials = "".join(p[0] for p in parts[:-1]) or first[0]
+    username = f"{initials}.{last}".lower()
+
+    user, created = User.objects.get_or_create(
+        username=username,
+        defaults={"first_name": first, "last_name": last, "password": TEST_PW},
+    )
+    if created:
+        user.set_password(TEST_PW)
+        user.save()
+
+    profile, _ = FacultyProfile.objects.get_or_create(
+        user=user, defaults={"college": college}
+    )
+    return profile
