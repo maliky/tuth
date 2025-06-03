@@ -1,9 +1,5 @@
-<<<<<<< HEAD
-# tests/test_section_widgets.py
-from __future__ import annotations
-=======
 """Test section widgets module."""
->>>>>>> github/codo/add-missing-module-level-docstrings
+from __future__ import annotations
 
 import pytest
 

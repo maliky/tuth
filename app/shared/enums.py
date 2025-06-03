@@ -2,9 +2,6 @@
 
 from django.db.models import IntegerChoices
 
-<<<<<<< HEAD
-=======
-
 class WEEKDAYS_NUMBER(IntegerChoices):
     MONDAY = 1, "Monday"
     TUESDAY = 2, "Tuesday"
@@ -13,6 +10,7 @@ class WEEKDAYS_NUMBER(IntegerChoices):
     FRIDAY = 5, "Friday"
     SATURDAY = 6, "Saturday"
 >>>>>>> github/codo/add-missing-module-level-docstrings
+
 
 
 class SEMESTER_NUMBER(IntegerChoices):
