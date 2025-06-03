@@ -1,5 +1,16 @@
 from __future__ import annotations
 
+"""Import schedule information from a CSV file.
+
+Usage::
+    python manage.py import_schedule <path/to/file.csv> [--dry-run]
+
+Expected CSV headers (case-sensitive)::
+    college, course_code, course_no, semester, section,
+    location, instructor, curriculum,
+    weekday or days, time_start, time_end, sts, ets
+"""
+
 import csv
 from pathlib import Path
 
