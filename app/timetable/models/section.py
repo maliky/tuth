@@ -47,7 +47,7 @@ class Section(models.Model):
         return f"{self.semester} {self.short_code}"
 
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.long_code} | {self.room}"
+        return f"{self.long_code} | {self.schedule.room}"
 
     def has_available_seats(self) -> bool:
         """Return 'True' if the section still has seats available."""

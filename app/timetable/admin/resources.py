@@ -5,7 +5,8 @@ from import_export import fields, resources, widgets
 
 from app.academics.admin.widgets import CourseWidget
 from app.academics.models import Course
-from app.timetable.models import AcademicYear, Schedule, Section, Semester
+from app.timetable.models import AcademicYear, Section, Semester
+from app.timetable.models.schedule import Schedule
 
 from .widgets import AcademicYearWidget, SemesterWidget
 

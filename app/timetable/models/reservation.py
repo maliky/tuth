@@ -16,10 +16,8 @@ from app.shared.constants import (
     StatusReservation,
 )
 from app.shared.mixins import StatusableMixin
-from typing import TYPE_CHECKING:
-
-if TYPE_CHECKING:
-    from app.timetable.models import CreditLimitValidator, Section
+from app.timetable.models.section import Section
+from app.timetable.models.validator import CreditLimitValidator
 
 
 class Reservation(StatusableMixin, models.Model):
