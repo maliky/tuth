@@ -6,6 +6,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from .semester import Semester
 from .schedule import Schedule
+from app.spaces.models import Room
 
 
 class Section(models.Model):
@@ -45,6 +46,11 @@ class Section(models.Model):
     @property
     def long_code(self) -> str:
         return f"{self.semester} {self.short_code}"
+
+    @property
+    def room(self) -> Room | None:
+        """Return teaching room associated with this section."""
+        return self.schedule.room
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.long_code} | {self.room}"

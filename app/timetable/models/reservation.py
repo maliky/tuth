@@ -16,9 +16,10 @@ from app.shared.constants import (
     StatusReservation,
 )
 from app.shared.mixins import StatusableMixin
-from typing import TYPE_CHECKING:
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from app.people.models import StaffProfile
     from app.timetable.models import CreditLimitValidator, Section
 
 
@@ -124,7 +125,7 @@ class Reservation(StatusableMixin, models.Model):
             current_registrations=F("current_registrations") - 1
         )
 
-    def mark_paid(self, by_user: models.Model) -> None:
+    def mark_paid(self, by_user: "StaffProfile | None") -> None:
         """Record payment and mark reservation as paid."""
 
         if self.status == StatusReservation.PAID:

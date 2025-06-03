@@ -1,12 +1,11 @@
 """Mixins module."""
 
-from typing import Any, Iterable
+from typing import Any, Iterable, Optional, cast
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth.models import User
-from typing import Optional
 
 from app.shared.constants import STATUS_CHOICES
 
@@ -44,10 +43,12 @@ class StatusableMixin(models.Model):
     # ─── helpers ──────────────────────────────────────────────
     def _add_status(self, status: str, author: Optional[User]) -> StatusHistory:
         """Helper to append a new status entry."""
-        return self.status_history.create(status=status, author=author)
+        return cast(
+            StatusHistory, self.status_history.create(status=status, author=author)
+        )
 
     def current_status(self) -> Optional[StatusHistory]:
-        return self.status_history.first()
+        return cast(Optional[StatusHistory], self.status_history.first())
 
     def set_pending(self, author: Optional[User]) -> StatusHistory:
         return self._add_status("pending", author)

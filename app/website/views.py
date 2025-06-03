@@ -7,6 +7,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import F
+from django.contrib.auth.models import User
+from typing import cast
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -25,7 +27,8 @@ def landing_page(request: HttpRequest) -> HttpResponse:
 @login_required
 def create_reservation(request: HttpRequest, section_id: int) -> HttpResponseRedirect:
     """Reserve a section for the current student if possible."""
-    student = request.user.profile.studentprofile
+    user = cast(User, request.user)
+    student = user.studentprofile
     section = get_object_or_404(Section, id=section_id)
 
     if Reservation.objects.filter(student=student, section=section).exists():
@@ -57,7 +60,8 @@ def create_reservation(request: HttpRequest, section_id: int) -> HttpResponseRed
 @login_required
 def student_dashboard(request):
     """Display the student's reservations, registrations and fees."""
-    student = request.user.profile.studentprofile
+    user = cast(User, request.user)
+    student = user.studentprofile
 
     if request.method == "POST":
         section_id = request.POST.get("section_id")

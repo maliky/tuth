@@ -8,7 +8,7 @@ from app.shared.constants import StatusReservation
 def cancel_expired_reservations():
     now = timezone.now()
     expired_reservations = Reservation.objects.filter(
-        status=StatusReservation.REQUESTED, validation_deadline__lt=now
+        status=StatusReservation.REQUESTED, validation_dealine__lt=now
     )
 
     with transaction.atomic():

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import timedelta, timezone
+from datetime import timedelta
+from django.utils import timezone
 from typing import Iterable, List
 
 from django.core.exceptions import ValidationError
@@ -61,7 +62,7 @@ def reserve_sections(
                 student=student,
                 section=sec,
                 status=StatusReservation.REQUESTED,
-                validation_deadline=timezone.now() + timedelta(days=2),
+                validation_dealine=timezone.now() + timedelta(days=2),
             )
             Section.objects.filter(pk=sec.pk).update(
                 current_registrations=F("current_registrations") + 1
