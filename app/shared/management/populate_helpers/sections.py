@@ -73,20 +73,20 @@ def populate_sections_from_csv(cmd: BaseCommand, csv_path: Path | str | IO[str])
             course = cw.clean(row["course"], row)
             semester = sw.clean(row["semester"], row)
 
-            number_raw = (row.get("number") or "").strip()
-            number_int = int(number_raw) if number_raw.isdigit() else None
+            number_raw = row.get("number") or ""
+            number_int = int(number_raw.strip()) if number_raw.strip().isdigit() else None
 
             faculty_raw = (row.get("faculty") or "").strip()
+            faculty_id = None
             if faculty_raw:
                 faculty_obj, _ = User.objects.get_or_create(
                     username=faculty_raw,
                     defaults={"password": TEST_PW},
                 )
-
-            faculty_id = int(faculty_raw) if faculty_raw.isdigit() else None
+                faculty_id = faculty_obj.id
 
             room_raw = (row.get("room") or "").strip()
-            room_id = int(room_raw) if room_raw.isdigit() else None
+            room_id = None
             if room_raw:
                 if room_raw.isdigit() and Room.objects.filter(pk=int(room_raw)).exists():
                     room_id = int(room_raw)
@@ -94,8 +94,10 @@ def populate_sections_from_csv(cmd: BaseCommand, csv_path: Path | str | IO[str])
                     room_obj, _ = Room.objects.get_or_create(name=room_raw)
                     room_id = room_obj.id
 
-            max_seats_raw = (row.get("max_seats") or "").strip()
-            max_seats = int(max_seats_raw) if max_seats_raw.isdigit() else 30
+            max_seats_raw = row.get("max_seats") or ""
+            max_seats = (
+                int(max_seats_raw.strip()) if max_seats_raw.strip().isdigit() else 30
+            )
 
             sec, made = Section.objects.get_or_create(
                 course=course,
