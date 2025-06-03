@@ -1,3 +1,5 @@
+"""Initialization for the models package."""
+
 from .building import Building
 from .room import Room
 

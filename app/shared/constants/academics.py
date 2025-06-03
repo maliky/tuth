@@ -1,3 +1,5 @@
+"""Academics module."""
+
 from django.db import models
 import re
 

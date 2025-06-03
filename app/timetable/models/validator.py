@@ -1,3 +1,5 @@
+"""Validator module."""
+
 from django.core.exceptions import ValidationError
 
 from app.shared.constants import MAX_STUDENT_CREDITS

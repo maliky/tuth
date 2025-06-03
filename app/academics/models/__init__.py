@@ -1,3 +1,5 @@
+"""Initialization for the models package."""
+
 from .college import College
 from .concentration import Concentration
 from .course import Course

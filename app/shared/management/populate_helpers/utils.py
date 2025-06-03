@@ -1,3 +1,5 @@
+"""Utils module."""
+
 from app.academics.models import College
 from typing import Dict
 

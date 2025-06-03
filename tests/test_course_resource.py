@@ -1,3 +1,5 @@
+"""Test course resource module."""
+
 import tablib
 import pytest
 

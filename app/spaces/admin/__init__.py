@@ -1,3 +1,5 @@
+"""Initialization for the admin package."""
+
 from .core import BuildingAdmin, RoomAdmin
 from .resources import RoomResource
 from .widgets import BuildingWidget, RoomWidget

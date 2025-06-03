@@ -1,3 +1,5 @@
+"""Core module."""
+
 from app.timetable.admin.inlines import SectionInline
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin

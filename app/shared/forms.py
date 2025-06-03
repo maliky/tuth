@@ -1,3 +1,5 @@
+"""Forms module."""
+
 from django import forms
 from django.core.exceptions import FieldDoesNotExist
 from django.forms import ChoiceField

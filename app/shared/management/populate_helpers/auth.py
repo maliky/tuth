@@ -1,3 +1,5 @@
+"""Auth module."""
+
 from app.shared.constants.perms import UserRole
 from django.contrib.auth.models import Group, User
 from django.utils import timezone

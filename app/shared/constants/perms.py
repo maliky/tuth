@@ -1,3 +1,5 @@
+"""Perms module."""
+
 from django.db import models
 
 TEST_PW = "test"

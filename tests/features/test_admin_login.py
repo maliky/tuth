@@ -1,10 +1,13 @@
+"""Test admin login module."""
+
 from pytest_bdd import scenario, given, when, then, parsers
 from django.urls import reverse
 
 
-@scenario('admin_login.feature', 'Superuser logs in successfully')
+@scenario("admin_login.feature", "Superuser logs in successfully")
 def test_admin_login():
     pass
+
 
 @given("I am on the admin login page", target_fixture="response")
 def admin_login_page(client):

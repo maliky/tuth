@@ -1,3 +1,5 @@
+"""Reset db module."""
+
 from django.core.management.base import BaseCommand
 from django.db import connection
 

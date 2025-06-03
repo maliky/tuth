@@ -1,3 +1,5 @@
+"""Test curriculum course module."""
+
 from datetime import date
 
 import pytest

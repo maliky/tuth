@@ -1,3 +1,5 @@
+"""Populate initial data module."""
+
 from pathlib import Path
 from app.shared.management.populate_helpers.from_csv import (
     populate_curricula_from_csv,

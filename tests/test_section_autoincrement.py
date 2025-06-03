@@ -1,3 +1,5 @@
+"""Test section autoincrement module."""
+
 import pytest
 from datetime import date
 

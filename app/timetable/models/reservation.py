@@ -1,3 +1,5 @@
+"""Reservation module."""
+
 from decimal import Decimal
 
 from app.finance.models.financial_record import SectionFee

@@ -1,3 +1,5 @@
+"""Resources module."""
+
 from import_export import fields, resources
 from app.spaces.models import Room, Building
 
