@@ -10,7 +10,7 @@ class DocumentType(models.TextChoices):
 
 class StatusRegistration(models.TextChoices):
     PENDING = "pending payment", "Pending Payment"
-    FINANCIALY_CLEARED = "financialy_cleared", "Financialy_Cleared"
+    FINANCIALLY_CLEARED = "financialy_cleared", "Financialy_Cleared"
     COMPLETED = "completed", "Completed"
     APPROVED = "approved", "Approved"
 

@@ -1,6 +1,6 @@
 from django.db import transaction
 from django.db.models import Max
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import pre_save, post_save, post_delete
 from django.dispatch import receiver
 
 from django.db.models import F
@@ -36,4 +36,15 @@ def increment_current_registration(sender, instance, created, **kwargs):
     with transaction.atomic():
         Section.objects.filter(pk=instance.section_id).update(
             current_registrations=F("current_registrations") + 1
+        )
+
+
+@receiver(post_delete, sender=Reservation)
+def decrement_current_registration(sender, instance, **kwargs):
+    """Decrement ``current_registrations`` when a reservation is removed."""
+    if instance.status not in [StatusReservation.VALIDATED, StatusReservation.PAID]:
+        return
+    with transaction.atomic():
+        Section.objects.filter(pk=instance.section_id).update(
+            current_registrations=F("current_registrations") - 1
         )

@@ -43,7 +43,7 @@ if [[ $MODE == dev ]]; then
 elif [[ $MODE == prod ]]; then
     ln -fs .env-prod .env
 elif [[ $MODE == test ]]; then
-    ln -fs .env-test .env
+    ln -fs env-test .env
 fi
 export $(grep -v '^#' .env | xargs)  # load variables
 

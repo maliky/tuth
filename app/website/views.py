@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-# mypy: ignore-errors
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
@@ -10,11 +9,11 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 
 from app.finance.models import FinancialRecord
-from app.registry.models import Registration
 from app.people.models import StudentProfile
-from app.shared.constants.finance import StatusReservation
-from app.timetable.models.reservation import Reservation
-from app.timetable.models.section import Section
+from app.registry.models import Registration
+from app.shared.constants import StatusReservation
+from app.timetable.models import Reservation, 
+
 
 
 def landing_page(request: HttpRequest) -> HttpResponse:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import timedelta, timezone
 from typing import Iterable, List
 
 from django.core.exceptions import ValidationError
@@ -22,7 +23,7 @@ def reserve_sections(
 
     with transaction.atomic():
         # > detail what is the output of the assignement below.
-        current = (
+        current_reservations = (
             Reservation.objects.filter(
                 student=student,
                 status__in=[
@@ -40,23 +41,28 @@ def reserve_sections(
                 raise ValidationError(f"Section {sec} has no available seats.")
 
         new_credits = sum(sec.course.credit_hours for sec in section_list)
-        prospective = current + new_credits
+        prospective = current_reservations + new_credits
         # > this will need to be updated.
-        # > the logic is that student can request a course even is credit is above
-        # > MAX_STUDENT_CREDIT but, the dean and VPAA can still validate
-        # > the reservation.  So their should be a temporary state, flag for
-        # > dean and VPAA
+        # > the logic is that student cannot request a course even his credit is 
+        # > above MAX_STUDENT_CREDIT but, the dean and VPAA can still authorise
+        # > such reservation to be made.  So their should be a temporary state, 
+        # > flag for dean and VPAA
         if prospective > MAX_STUDENT_CREDITS:
             raise ValidationError(
                 f"Credit limit exceeded ({prospective}/{MAX_STUDENT_CREDITS})."
             )
 
         reservations: List[Reservation] = []
+        
         for sec in section_list:
             res = Reservation.objects.create(
                 student=student,
                 section=sec,
                 status=StatusReservation.REQUESTED,
+                validation_deadline=timezone.now() + timedelta(days=2),  
+            )
+            Section.objects.filter(pk=sec.pk).update(
+                current_registrations=F("current_registrations") + 1
             )
             reservations.append(res)
         return reservations

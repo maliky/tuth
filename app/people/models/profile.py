@@ -30,8 +30,8 @@ class BaseProfile(StatusableMixin, models.Model):
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
-        related_name="%(class)s_profile",
-        related_query_name="%(class)s_profile",
+        related_name="%(class)s",
+        related_query_name="%(class)s",
     )
 
     # --- demographics ---

@@ -40,9 +40,9 @@ class StatusableMixin(models.Model):
     )
 
     # ─── helpers ──────────────────────────────────────────────
-    def _add_status(self, state: str, author: Optional[User]) -> StatusHistory:
+    def _add_status(self, status: str, author: Optional[User]) -> StatusHistory:
         """Helper to append a new status entry."""
-        return self.status_history.create(state=state, author=author)
+        return self.status_history.create(status=status, author=author)
 
     def current_status(self) -> Optional[StatusHistory]:
         return self.status_history.first()

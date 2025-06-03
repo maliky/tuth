@@ -1,20 +1,20 @@
+from datetime import timedelta
 from decimal import Decimal
 
-from app.finance.models.financial_record import SectionFee
-from app.timetable.models.validator import CreditLimitValidator
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils import timezone
 
 from app.finance.models import FinancialRecord, Payment
+from app.finance.models.financial_record import SectionFee
 from app.shared.constants import (
     MAX_STUDENT_CREDITS,
     TUITION_RATE_PER_CREDIT,
     PaymentMethod,
     StatusReservation,
 )
-
 from app.shared.mixins import StatusableMixin
+from app.timetable.models.validator import CreditLimitValidator
 
 
 class Reservation(StatusableMixin, models.Model):
@@ -32,6 +32,7 @@ class Reservation(StatusableMixin, models.Model):
         default=StatusReservation.REQUESTED,
     )
 
+    validation_dealine = models.DateTimeField(default=timezone.now() + timedelta(days=2))
     date_requested = models.DateTimeField(default=timezone.now)
     date_validated = models.DateTimeField(blank=True, null=True)
 
@@ -112,7 +113,11 @@ class Reservation(StatusableMixin, models.Model):
             self.status != StatusReservation.CANCELLED
         ), "Reservation already cancelled."
         self.status = StatusReservation.CANCELLED
-        self.save()
+
+        self.save(update_fields=["status"])
+        Section.objects.filter(pk=self.section_id).update(
+            current_registrations=F("current_registrations") - 1
+        )
 
     def mark_paid(self, by_user: models.Model) -> None:
         """Record payment and mark reservation as paid."""

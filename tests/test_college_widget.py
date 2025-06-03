@@ -7,14 +7,13 @@ from app.academics.models.college import College
 
 
 @pytest.mark.django_db
-def test_college_widget_tracks_new_colleges():
-    cw = CollegeWidget(College, "code")
+def test_college_widget_tracks_new_colleges() -> None:
+    widget: CollegeWidget = CollegeWidget(College, "code")
     dummy = SimpleNamespace(_new_colleges=set())
-    cw._resource = dummy
+    widget._resource = dummy
 
-    obj = cw.clean("COET")
-
-    assert obj.code == "COET"
+    college: College = widget.clean("COET")
+    assert college.code == "COET"
     assert "COET" in dummy._new_colleges
 
 

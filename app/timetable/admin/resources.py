@@ -1,12 +1,14 @@
 from datetime import date
 from pathlib import Path
-from import_export import fields, resources
+
+from import_export import fields, resources, widgets
+
+from app.academics.admin.widgets import CollegeWidget, CourseWidget
 from app.academics.models.college import College
 from app.academics.models.course import Course
-from app.timetable.models import AcademicYear, Section, Semester
+from app.timetable.models import AcademicYear, Schedule, Section, Semester
 
 from .widgets import AcademicYearWidget, SemesterWidget
-from app.academics.admin.widgets import CollegeWidget, CourseWidget
 
 
 class SectionResource(resources.ModelResource):
@@ -21,10 +23,11 @@ class SectionResource(resources.ModelResource):
         widget=SemesterWidget(model=Semester, field="id"),
     )
     schedule = fields.Field(
-        column_name="schedule"
-        attribute=
+        column_name="schedule",
+        attribute="schedule",
+        widget=widgets.ForeignKeyWidget(Schedule, field="id"),
     )
-    
+
     def save_instance(self, instance, is_create, row, **kwargs):
         """Wrap save to log errors during import."""
         try:

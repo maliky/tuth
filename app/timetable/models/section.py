@@ -3,7 +3,7 @@ from __future__ import annotations
 from django.core.validators import MinValueValidator
 from django.db import models
 from .semester import Semester
-
+from .schedule import Schedule
 
 class Section(models.Model):
     """Scheduled instance of a course in a specific semester."""
