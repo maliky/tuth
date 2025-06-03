@@ -7,7 +7,7 @@ from typing import Iterable, List
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import F, Sum
 
 from app.people.models import StudentProfile
 from app.shared.constants import MAX_STUDENT_CREDITS, StatusReservation
@@ -45,9 +45,9 @@ def reserve_sections(
         new_credits = sum(sec.course.credit_hours for sec in section_list)
         prospective = current_reservations + new_credits
         # > this will need to be updated.
-        # > the logic is that student cannot request a course even his credit is 
+        # > the logic is that student cannot request a course even his credit is
         # > above MAX_STUDENT_CREDIT but, the dean and VPAA can still authorise
-        # > such reservation to be made.  So their should be a temporary state, 
+        # > such reservation to be made.  So their should be a temporary state,
         # > flag for dean and VPAA
         if prospective > MAX_STUDENT_CREDITS:
             raise ValidationError(
@@ -55,13 +55,13 @@ def reserve_sections(
             )
 
         reservations: List[Reservation] = []
-        
+
         for sec in section_list:
             res = Reservation.objects.create(
                 student=student,
                 section=sec,
                 status=StatusReservation.REQUESTED,
-                validation_deadline=timezone.now() + timedelta(days=2),  
+                validation_deadline=timezone.now() + timedelta(days=2),
             )
             Section.objects.filter(pk=sec.pk).update(
                 current_registrations=F("current_registrations") + 1

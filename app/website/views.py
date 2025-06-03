@@ -14,8 +14,7 @@ from app.finance.models import FinancialRecord
 from app.people.models import StudentProfile
 from app.registry.models import Registration
 from app.shared.constants import StatusReservation
-from app.timetable.models import Reservation, 
-
+from app.timetable.models import Reservation, Section
 
 
 def landing_page(request: HttpRequest) -> HttpResponse:

@@ -1,8 +1,11 @@
 """Validator module."""
 
+from typing import TYPE_CHECKING
+
 from django.core.exceptions import ValidationError
 
 from app.shared.constants import MAX_STUDENT_CREDITS
+
 if TYPE_CHECKING:
     from app.timetable.models import Reservation
 

@@ -5,10 +5,10 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
+from django.db.models import F
 from django.utils import timezone
 
-from app.finance.models import FinancialRecord, Payment
-from app.finance.models.financial_record import SectionFee
+from app.finance.models import FinancialRecord, Payment, SectionFee
 from app.shared.constants import (
     MAX_STUDENT_CREDITS,
     TUITION_RATE_PER_CREDIT,
@@ -16,7 +16,10 @@ from app.shared.constants import (
     StatusReservation,
 )
 from app.shared.mixins import StatusableMixin
-from app.timetable.models.validator import CreditLimitValidator
+from typing import TYPE_CHECKING:
+
+if TYPE_CHECKING:
+    from app.timetable.models import CreditLimitValidator, Section
 
 
 class Reservation(StatusableMixin, models.Model):

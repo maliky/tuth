@@ -42,7 +42,7 @@ for s in [
 ]:
     _raw += s.choices
 
-# Does not preserve the order but does not matter.    
+# Does not preserve the order but does not matter.
 STATUS_CHOICES = list(set(_raw))
 
 

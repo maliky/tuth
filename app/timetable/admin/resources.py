@@ -3,9 +3,8 @@ from pathlib import Path
 
 from import_export import fields, resources, widgets
 
-from app.academics.admin.widgets import CollegeWidget, CourseWidget
-from app.academics.models.college import College
-from app.academics.models.course import Course
+from app.academics.admin.widgets import CourseWidget
+from app.academics.models import Course
 from app.timetable.models import AcademicYear, Schedule, Section, Semester
 
 from .widgets import AcademicYearWidget, SemesterWidget
