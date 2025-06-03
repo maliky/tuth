@@ -10,10 +10,10 @@ from app.academics.models import College, Course, Curriculum, CurriculumCourse
 
 
 @pytest.mark.django_db
-def test_curriculum_import_sets_year_level():
-    college = College.objects.create(code="COAS", fullname="College of Arts")
-    Course.objects.create(name="BIO", number="101", title="Bio I", college=college)
-    Course.objects.create(name="BIO", number="201", title="Bio II", college=college)
+def test_curriculum_import_sets_year_level(college_factory, course_factory):
+    college = college_factory(code="COAS", fullname="College of Arts")
+    course_factory(name="BIO", number="101", title="Bio I", college=college)
+    course_factory(name="BIO", number="201", title="Bio II", college=college)
 
     data = Dataset(headers=["short_name", "title", "college", "list_courses"])
     data.append(["SCI", "Science", college.code, "BIO101;BIO201"])
@@ -30,8 +30,8 @@ def test_curriculum_import_sets_year_level():
 
 
 @pytest.mark.django_db
-def test_year_level_defaults_from_course_number():
-    college = College.objects.create(
+def test_year_level_defaults_from_course_number(college_factory, course_factory):
+    college = college_factory(
         code="COET",
         fullname="College of Engineering and Technology",
     )
@@ -41,7 +41,7 @@ def test_year_level_defaults_from_course_number():
         college=college,
         creation_date=date.today(),
     )
-    course = Course.objects.create(
+    course = course_factory(
         name="CSC",
         number="201",
         title="Intro",
@@ -58,10 +58,10 @@ def test_year_level_defaults_from_course_number():
 
 
 @pytest.mark.django_db
-def test_curriculum_course_resource_imports_rows():
-    college = College.objects.create(code="COAS", fullname="Arts")
-    Course.objects.create(name="BIO", number="101", title="Bio I", college=college)
-    Course.objects.create(name="BIO", number="201", title="Bio II", college=college)
+def test_curriculum_course_resource_imports_rows(college_factory, course_factory):
+    college = college_factory(code="COAS", fullname="Arts")
+    course_factory(name="BIO", number="101", title="Bio I", college=college)
+    course_factory(name="BIO", number="201", title="Bio II", college=college)
 
     data = Dataset(headers=["curriculum_name", "college", "course"])
     data.append(["SCI", "COAS", "BIO101"])

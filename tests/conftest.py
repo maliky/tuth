@@ -102,3 +102,38 @@ def superuser(db):
     return User.objects.create_superuser(
         username="super", email="super@example.com", password="secret123"
     )
+
+
+# ─── generic factories ------------------------------------------------------
+@pytest.fixture
+def college_factory():
+    """Return helper to create colleges on demand."""
+
+    def _make(code: str = "COAS", fullname: str = "College"):
+        return College.objects.create(code=code, fullname=fullname)
+
+    return _make
+
+
+@pytest.fixture
+def course_factory(college_factory):
+    """Return helper to create courses linked to a college."""
+
+    def _make(
+        name: str = "TEST",
+        number: str = "101",
+        title: str = "Course",
+        credit_hours: int = 3,
+        college=None,
+    ):
+        if college is None:
+            college = college_factory()
+        return Course.objects.create(
+            name=name,
+            number=number,
+            title=title,
+            credit_hours=credit_hours,
+            college=college,
+        )
+
+    return _make

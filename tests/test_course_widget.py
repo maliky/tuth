@@ -9,9 +9,9 @@ from app.shared.enums import CREDIT_NUMBER
 
 
 @pytest.mark.django_db
-def test_course_widget_returns_existing_course():
-    col = College.objects.create(code="COAS", fullname="College of Arts")
-    course = Course.objects.create(name="MATH", number="101", title="Math", college=col)
+def test_course_widget_returns_existing_course(college_factory, course_factory):
+    col = college_factory(code="COAS", fullname="College of Arts")
+    course = course_factory(name="MATH", number="101", title="Math", college=col)
     cw = CourseWidget(model=Course, field="code")
 
     result = cw.clean("MATH101 - COAS", {"college": "COAS"})
@@ -34,8 +34,8 @@ def test_course_widget_creates_missing_course_and_college():
 
 
 @pytest.mark.django_db
-def test_course_widget_defaults_to_row_college():
-    col = College.objects.create(code="COAS", fullname="College of Arts")
+def test_course_widget_defaults_to_row_college(college_factory):
+    col = college_factory(code="COAS", fullname="College of Arts")
     cw = CourseWidget(model=Course, field="code")
 
     course = cw.clean("CHEM100", {"college": "COAS"})
@@ -46,12 +46,12 @@ def test_course_widget_defaults_to_row_college():
 
 
 @pytest.mark.django_db
-def test_course_widget_raises_value_error_with_multiple_matches():
-    col = College.objects.create(code="COAS", fullname="College of Arts")
-    Course.objects.create(name="BIO", number="101", title="Bio I", college=col)
+def test_course_widget_raises_value_error_with_multiple_matches(college_factory, course_factory):
+    col = college_factory(code="COAS", fullname="College of Arts")
+    course_factory(name="BIO", number="101", title="Bio I", college=col)
 
     with pytest.raises(IntegrityError):
-        Course.objects.create(name="BIO", number="101", title="Bio II", college=col)
+        course_factory(name="BIO", number="101", title="Bio II", college=col)
 
     cw = CourseWidget(model=Course, field="code")
 
@@ -60,12 +60,10 @@ def test_course_widget_raises_value_error_with_multiple_matches():
 
 
 @pytest.mark.django_db
-def test_course_widget_token_college_overrides_row_college():
-    row_college = College.objects.create(code="COAS", fullname="College of Arts")
-    token_college = College.objects.create(code="COET", fullname="College of Engineering")
-    course = Course.objects.create(
-        name="MATH", number="101", title="Math", college=token_college
-    )
+def test_course_widget_token_college_overrides_row_college(college_factory, course_factory):
+    row_college = college_factory(code="COAS", fullname="College of Arts")
+    token_college = college_factory(code="COET", fullname="College of Engineering")
+    course = course_factory(name="MATH", number="101", title="Math", college=token_college)
     cw = CourseWidget(model=Course, field="code")
 
     result = cw.clean("MATH101 - COET", {"college": row_college.code})
@@ -86,10 +84,14 @@ def test_course_widget_uses_credit_field_and_title_on_create():
 
 
 @pytest.mark.django_db
-def test_course_widget_updates_existing_course_title_and_credits():
-    col = College.objects.create(code="COAS", fullname="Arts")
-    course = Course.objects.create(
-        name="MATH", number="201", title="Old", college=col, credit_hours=3
+def test_course_widget_updates_existing_course_title_and_credits(college_factory, course_factory):
+    col = college_factory(code="COAS", fullname="Arts")
+    course = course_factory(
+        name="MATH",
+        number="201",
+        title="Old",
+        college=col,
+        credit_hours=3,
     )
     cw = CourseWidget(model=Course, field="code")
 
