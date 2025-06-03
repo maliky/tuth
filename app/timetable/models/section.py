@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from app.spaces.models.room import Room
-
 from .schedule import Schedule
-from .semester import Semester
+
+if TYPE_CHECKING:
+    from app.spaces.models.room import Room
 
 
 class Section(models.Model):
@@ -18,13 +20,13 @@ class Section(models.Model):
     course = models.ForeignKey(
         "academics.Course", related_name="sections", on_delete=models.PROTECT
     )
-    semester = models.ForeignKey(Semester, on_delete=models.PROTECT)
+    semester = models.ForeignKey("timetable.Semester", on_delete=models.PROTECT)
 
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
 
     schedule = models.ForeignKey(
-        Schedule, on_delete=models.PROTECT, related_name="schedule"
+        "timetable.Schedule", on_delete=models.PROTECT, related_name="schedule"
     )
 
     # to be defined by Admin & VPA
@@ -53,6 +55,11 @@ class Section(models.Model):
     @property
     def long_code(self) -> str:
         return f"{self.semester} {self.short_code}"
+
+    @property
+    def room(self) -> Room | None:
+        """Return teaching room associated with this section."""
+        return self.schedule.room
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.long_code} | {self.schedule.room}"

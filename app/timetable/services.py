@@ -62,7 +62,7 @@ def reserve_sections(
                 student=student,
                 section=sec,
                 status=StatusReservation.REQUESTED,
-                validation_deadline=timezone.now() + timedelta(days=2),
+                validation_dealine=timezone.now() + timedelta(days=2),
             )
             Section.objects.filter(pk=sec.pk).update(
                 current_registrations=F("current_registrations") + 1

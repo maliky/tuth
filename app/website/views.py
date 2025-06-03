@@ -9,14 +9,13 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.db import models
-from django.db.models import ExpressionWrapper, F, IntegerField, QuerySet
+from django.db.models import ExpressionWrapper, F, IntegerField, QuerySet, Sum
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 
-from app.finance.models import FinancialRecord
-from app.people.models import StudentProfile
-from app.registry.models import Registration
+from app.finance.models.financial_record import FinancialRecord
+from app.people.models.profile import StudentProfile
+from app.registry.models.registration import Registration
 from app.registry.models.grade import Grade
 from app.shared.constants import StatusReservation
 from app.timetable.models import Reservation, Section
@@ -125,7 +124,7 @@ def validate_credit_limit(
     reserved_credits = (
         Reservation.objects.filter(
             student=student, status__in=["requested", "validated"]
-        ).aggregate(total=models.Sum("section__course__credit_hours"))["total"]
+        ).aggregate(total=Sum("section__course__credit_hours"))["total"]
         or 0
     )
 
