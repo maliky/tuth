@@ -4,12 +4,12 @@ import tablib
 import pytest
 
 from app.academics.admin.resources import CourseResource
-from app.academics.models import College, Course
+from app.academics.models import Course
 
 
 @pytest.mark.django_db
-def test_course_import_without_name_number():
-    College.objects.create(code="COAS", fullname="Arts")
+def test_course_import_without_name_number(college):
+    _ = college
     dataset = tablib.Dataset(
         headers=["code", "title", "year", "college", "name", "number"]
     )
@@ -22,8 +22,8 @@ def test_course_import_without_name_number():
 
 
 @pytest.mark.django_db
-def test_course_import_skips_mismatched_rows():
-    College.objects.create(code="COAS", fullname="Arts")
+def test_course_import_skips_mismatched_rows(college):
+    _ = college
     dataset = tablib.Dataset(headers=["code", "name", "number", "title", "college"])
     dataset.append(["MATH101", "MATH", "101", "Calc I", "COAS"])
     dataset.append(["ENG101", "ENG", "201", "Eng", "COAS"])

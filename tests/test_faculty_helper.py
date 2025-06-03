@@ -3,14 +3,14 @@
 import pytest
 from django.contrib.auth.models import User
 
-from app.academics.models import College
+
 from app.people.models.profile import _ensure_faculty, FacultyProfile
 from app.shared.constants import TEST_PW
 
 
 @pytest.mark.django_db
-def test_ensure_faculty_creates_user_and_profile():
-    col = College.objects.create(code="COAS", fullname="College of Arts")
+def test_ensure_faculty_creates_user_and_profile(college_factory):
+    col = college_factory(code="COAS", fullname="College of Arts")
 
     prof = _ensure_faculty("Jane Doe", col)
 
@@ -26,8 +26,8 @@ def test_ensure_faculty_creates_user_and_profile():
 
 
 @pytest.mark.django_db
-def test_ensure_faculty_is_idempotent():
-    col = College.objects.create(code="COAS", fullname="College of Arts")
+def test_ensure_faculty_is_idempotent(college_factory):
+    col = college_factory(code="COAS", fullname="College of Arts")
     prof1 = _ensure_faculty("Jane Doe", col)
     prof2 = _ensure_faculty("Jane Doe", col)
 
