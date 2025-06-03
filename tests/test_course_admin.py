@@ -1,3 +1,5 @@
+"""Test course admin module."""
+
 import pytest
 from django.contrib.admin.widgets import AutocompleteSelect
 

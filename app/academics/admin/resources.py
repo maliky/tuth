@@ -1,3 +1,5 @@
+"""Resources module."""
+
 from django.contrib import messages
 from import_export import fields, resources, widgets
 

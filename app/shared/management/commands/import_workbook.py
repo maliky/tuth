@@ -1,3 +1,5 @@
+"""Import workbook module."""
+
 from __future__ import annotations
 
 """Import data from an Excel workbook.

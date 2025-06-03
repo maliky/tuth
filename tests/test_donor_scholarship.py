@@ -1,3 +1,5 @@
+"""Test donor scholarship module."""
+
 import pytest
 from datetime import date
 from django.contrib.auth import get_user_model

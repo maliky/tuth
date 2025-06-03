@@ -1,3 +1,5 @@
+"""Curriculum module."""
+
 # code should absolutely be 6 char long, else will fail.
 TEST_ENVIRONMENTAL_STUDIES_CURRICULUM = [
     ("24-25_Sem1", "COAS", "ENG101", "Grammar and Phonetics", 3, ""),

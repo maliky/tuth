@@ -1,3 +1,5 @@
+"""Test timetable dates module."""
+
 import pytest
 from datetime import date
 from django.core.exceptions import ValidationError

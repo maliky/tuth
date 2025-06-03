@@ -1,3 +1,5 @@
+"""Test room widget module."""
+
 import pytest
 
 from app.spaces.admin.widgets import RoomWidget

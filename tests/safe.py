@@ -1,3 +1,5 @@
+"""Safe module."""
+
 from app.shared.constants.roles import DEFAULT_ROLE_TO_COLLEGE, USER_ROLES
 from django.test import SimpleTestCase
 

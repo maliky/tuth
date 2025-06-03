@@ -1,3 +1,5 @@
+"""Test course widget module."""
+
 import pytest
 from django.db.utils import IntegrityError
 
@@ -86,7 +88,9 @@ def test_course_widget_uses_credit_field_and_title_on_create():
 @pytest.mark.django_db
 def test_course_widget_updates_existing_course_title_and_credits():
     col = College.objects.create(code="COAS", fullname="Arts")
-    course = Course.objects.create(name="MATH", number="201", title="Old", college=col, credit_hours=3)
+    course = Course.objects.create(
+        name="MATH", number="201", title="Old", college=col, credit_hours=3
+    )
     cw = CourseWidget(model=Course, field="code")
 
     row = {"college": "COAS", "credit_hours": "4", "course_title": "New"}

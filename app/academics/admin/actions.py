@@ -1,3 +1,5 @@
+"""Actions module."""
+
 # app/academics/admin/actions.py
 from django.contrib import admin, messages
 from django.shortcuts import render, redirect

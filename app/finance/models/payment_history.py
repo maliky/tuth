@@ -1,3 +1,5 @@
+"""Payment history module."""
+
 from __future__ import annotations  # to postpone evaluation of type hints
 
 from django.db import models

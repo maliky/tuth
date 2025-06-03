@@ -1,3 +1,5 @@
+"""Test college widget module."""
+
 from types import SimpleNamespace
 
 import pytest

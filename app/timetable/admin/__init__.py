@@ -1,3 +1,5 @@
+"""Initialization for the admin package."""
+
 from .core import AcademicYearAdmin, SectionAdmin, SemesterAdmin
 from .inlines import SemesterInline, SectionInline, ReservationInline
 from .resources import AcademicYearResource, SectionResource, SemesterResource

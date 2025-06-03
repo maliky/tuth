@@ -1,3 +1,5 @@
+"""Core module."""
+
 from django.contrib import admin
 
 from app.people.models import FacultyProfile, DonorProfile, StudentProfile

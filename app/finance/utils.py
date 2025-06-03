@@ -1,3 +1,5 @@
+"""Utils module."""
+
 from decimal import Decimal
 
 from app.shared.constants import TUITION_RATE_PER_CREDIT

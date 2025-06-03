@@ -1,3 +1,5 @@
+"""Initialization for the models package."""
+
 from .academic_year import AcademicYear
 from .reservation import Reservation
 from .section import Section

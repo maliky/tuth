@@ -1,3 +1,5 @@
+"""Signals module."""
+
 from django.db import transaction
 from django.db.models import Max
 from django.db.models.signals import pre_save, post_save, post_delete

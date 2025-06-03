@@ -1,3 +1,5 @@
+"""Test faculty helper module."""
+
 import pytest
 from django.contrib.auth.models import User
 

@@ -1,3 +1,5 @@
+"""Populate initial data module."""
+
 from pathlib import Path
 
 """Seed the development database with sample data.

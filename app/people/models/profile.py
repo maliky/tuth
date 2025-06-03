@@ -1,3 +1,5 @@
+"""Profile module."""
+
 # app/people/models/profile.py
 from __future__ import annotations
 

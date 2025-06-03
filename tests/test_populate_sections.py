@@ -1,3 +1,5 @@
+"""Test populate sections module."""
+
 import io
 from types import SimpleNamespace
 

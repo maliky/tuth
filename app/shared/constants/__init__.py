@@ -1,3 +1,5 @@
+"""Initialization for the constants package."""
+
 from itertools import chain
 from typing import List, Tuple
 

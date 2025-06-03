@@ -1,3 +1,5 @@
+"""Core module."""
+
 from django.contrib import admin
 
 from app.finance.models import Payment, Scholarship
