@@ -11,8 +11,8 @@ CSV files loaded:
 """
 from app.shared.management.populate_helpers.from_csv import (
     populate_curricula_from_csv,
-    populate_sections_from_csv,
 )
+from app.shared.management.populate_helpers.sections import populate_sections_from_csv
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
