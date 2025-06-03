@@ -1,5 +1,16 @@
 from __future__ import annotations
 
+"""Import data from an Excel workbook.
+
+Usage::
+    python manage.py import_workbook <workbook.xlsx> [--dry-run]
+
+The workbook should contain sheets named ``timetable``, ``academics``,
+``people`` and ``spaces``.  Each sheet must have headers recognised by the
+respective importer, for example ``section`` and ``course`` in the timetable
+sheet or ``initials``/``lastname`` in the people sheet.
+"""
+
 import re
 from pathlib import Path
 from typing import Any

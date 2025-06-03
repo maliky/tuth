@@ -1,6 +1,16 @@
 from django.core.management.base import BaseCommand
 from django.db import connection
 
+"""Drop all tables to start from a clean database.
+
+Usage::
+    python manage.py reset_db
+
+Follow with::
+    python manage.py migrate
+    python manage.py populate_initial_data
+"""
+
 
 class Command(BaseCommand):
     """

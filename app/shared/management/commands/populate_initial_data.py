@@ -1,4 +1,14 @@
 from pathlib import Path
+
+"""Seed the development database with sample data.
+
+Usage::
+    python manage.py populate_initial_data
+
+CSV files loaded:
+    ``Seed_data/curricula.csv`` – columns ``short_name,long_name,college,list_courses``
+    ``Seed_data/sections.csv``  – columns ``college,course,semester,number,faculty,room,max_seats``
+"""
 from app.shared.management.populate_helpers.from_csv import (
     populate_curricula_from_csv,
     populate_sections_from_csv,
