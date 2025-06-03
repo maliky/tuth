@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from django.core.validators import MinValueValidator
 from django.db import models
-from .semester import Semester
+
+from app.spaces.models.room import Room
+
 from .schedule import Schedule
+from .semester import Semester
 
 
 class Section(models.Model):
@@ -38,6 +41,11 @@ class Section(models.Model):
         ordering = ["semester", "course", "number"]
 
     # ---------- display helpers ----------
+    @property
+    def room(self) -> Room | None:
+        """Return teaching room associated with this section."""
+        return self.schedule.room
+
     @property
     def short_code(self) -> str:
         return f"{self.course.code}:s{self.number}"

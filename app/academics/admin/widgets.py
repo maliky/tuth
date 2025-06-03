@@ -92,12 +92,12 @@ class CourseWidget(widgets.ForeignKeyWidget):
             )
 
         # Pull optional data from the row
-        cr_raw = row.get(credit_field) if row else None
+        cr_raw: str = (row.get("credit_hours") or "").strip()  # always str for mypy
         title_raw = row.get("course_title") if row else None
 
         if count == 0:
             # Create a new course with info from the row (credits default to 3)
-            credit_hours = int(cr_raw) if str(cr_raw).strip().isdigit() else 3
+            credit_hours = int(cr_raw) if cr_raw.isdigit() else 3
 
             course = Course.objects.create(
                 name=name,

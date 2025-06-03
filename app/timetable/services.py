@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from datetime import timedelta, timezone
+from datetime import timedelta
 from typing import Iterable, List
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import F, Sum
+from django.utils import timezone
 
 from app.people.models import StudentProfile
 from app.shared.constants import MAX_STUDENT_CREDITS, StatusReservation

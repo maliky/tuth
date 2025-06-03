@@ -2,17 +2,22 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
+from typing import cast
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import F
+from django.db.models import ExpressionWrapper, F, IntegerField, QuerySet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 
 from app.finance.models import FinancialRecord
 from app.people.models import StudentProfile
 from app.registry.models import Registration
+from app.registry.models.grade import Grade
 from app.shared.constants import StatusReservation
 from app.timetable.models import Reservation, Section
 
@@ -25,7 +30,8 @@ def landing_page(request: HttpRequest) -> HttpResponse:
 @login_required
 def create_reservation(request: HttpRequest, section_id: int) -> HttpResponseRedirect:
     """Reserve a section for the current student if possible."""
-    student = request.user.profile.studentprofile
+    user = cast(User, request.user)
+    student = user.studentprofile
     section = get_object_or_404(Section, id=section_id)
 
     if Reservation.objects.filter(student=student, section=section).exists():
@@ -57,15 +63,21 @@ def create_reservation(request: HttpRequest, section_id: int) -> HttpResponseRed
 @login_required
 def student_dashboard(request):
     """Display the student's reservations, registrations and fees."""
-    student = request.user.profile.studentprofile
+    user = cast(User, request.user)
+    student = user.studentprofile
 
     if request.method == "POST":
         section_id = request.POST.get("section_id")
         if section_id:
             return create_reservation(request, section_id)
 
-    available_sections = (
-        Section.objects.annotate(seats_left=F("max_seats") - F("current_registrations"))  # type: ignore[misc]
+    available_sections: QuerySet[Section] = (
+        Section.objects.annotate(
+            seats_left=ExpressionWrapper(
+                F("max_seats") - F("current_registrations"),  # type: ignore
+                output_field=IntegerField(),
+            )
+        )
         .filter(seats_left__gt=0)
         .select_related("course")
     )
@@ -83,11 +95,17 @@ def student_dashboard(request):
     )
 
     financial_record = FinancialRecord.objects.filter(student=student).first()
-    outstanding_fees = 0
-    if financial_record:
-        outstanding_fees = financial_record.total_due - financial_record.total_paid
+    outstanding_fees = (
+        financial_record.total_due - financial_record.total_paid
+        if financial_record
+        else Decimal("0.00")
+    )
 
-    past_grades = []  # Placeholder until grading is implemented
+    past_grades = (
+        Grade.objects.filter(student=student)
+        .select_related("section__course")
+        .order_by("-graded_on")
+    )
 
     context = {
         "available_sections": available_sections,

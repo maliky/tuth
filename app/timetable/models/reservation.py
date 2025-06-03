@@ -2,6 +2,7 @@
 
 from datetime import timedelta
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
@@ -19,6 +20,9 @@ from app.shared.mixins import StatusableMixin
 from app.timetable.models.section import Section
 from app.timetable.models.validator import CreditLimitValidator
 
+if TYPE_CHECKING:
+    from app.people.models.profile import StaffProfile
+
 
 class Reservation(StatusableMixin, models.Model):
     student = models.ForeignKey(
@@ -35,7 +39,7 @@ class Reservation(StatusableMixin, models.Model):
         default=StatusReservation.REQUESTED,
     )
 
-    validation_dealine = models.DateTimeField(default=timezone.now() + timedelta(days=2))
+    validation_deadline = models.DateTimeField(default=timezone.now() + timedelta(days=2))
     date_requested = models.DateTimeField(default=timezone.now)
     date_validated = models.DateTimeField(blank=True, null=True)
 
@@ -122,7 +126,7 @@ class Reservation(StatusableMixin, models.Model):
             current_registrations=F("current_registrations") - 1
         )
 
-    def mark_paid(self, by_user: models.Model) -> None:
+    def mark_paid(self, by_user: "StaffProfile") -> None:
         """Record payment and mark reservation as paid."""
 
         if self.status == StatusReservation.PAID:
