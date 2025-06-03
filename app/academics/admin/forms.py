@@ -1,3 +1,5 @@
+"""Forms module."""
+
 # app/academics/admin/forms.py
 from typing import Any, MutableMapping, cast
 from django import forms

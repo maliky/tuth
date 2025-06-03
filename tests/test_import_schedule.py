@@ -1,3 +1,5 @@
+"""Test import schedule module."""
+
 import io
 import pytest
 from django.core.management import call_command

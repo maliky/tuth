@@ -1,3 +1,5 @@
+"""Inlines module."""
+
 from app.timetable.models.reservation import Reservation
 from django.contrib import admin
 

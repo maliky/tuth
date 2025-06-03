@@ -1,3 +1,5 @@
+"""Filters module."""
+
 from django.contrib import admin
 from app.academics.models import Curriculum
 

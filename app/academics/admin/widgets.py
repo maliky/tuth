@@ -1,3 +1,5 @@
+"""Widgets module."""
+
 from datetime import date
 
 from import_export import widgets

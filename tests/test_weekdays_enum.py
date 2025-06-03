@@ -1,3 +1,5 @@
+"""Test weekdays enum module."""
+
 from app.shared.enums import WEEKDAYS_NUMBER
 
 

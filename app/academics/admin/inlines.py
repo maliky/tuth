@@ -1,3 +1,5 @@
+"""Inlines module."""
+
 from django.contrib import admin
 
 from app.academics.models import Prerequisite, CurriculumCourse

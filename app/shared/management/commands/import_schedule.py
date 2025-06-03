@@ -1,3 +1,5 @@
+"""Import schedule module."""
+
 from __future__ import annotations
 
 import csv
@@ -88,8 +90,12 @@ class Command(BaseCommand):
                     curriculum = _ensure_curriculum(row.get("curriculum"), college)
 
                     weekday = _parse_weekday(row.get("weekday") or row.get("days"))
-                    start_time, end_time = _parse_times(row["time_start"], row["time_end"])
-                    schedule = _ensure_schedule(weekday, start_time, end_time, room, faculty)
+                    start_time, end_time = _parse_times(
+                        row["time_start"], row["time_end"]
+                    )
+                    schedule = _ensure_schedule(
+                        weekday, start_time, end_time, room, faculty
+                    )
                     start_date = parse_date((row.get("sts") or "")[:10])
                     end_date = parse_date((row.get("ets") or "")[:10])
 
@@ -111,7 +117,9 @@ class Command(BaseCommand):
                     )
                     if created:
                         added_sections += 1
-                        self.stdout.write(self.style.SUCCESS(f"  ↳ section {section.long_code}"))
+                        self.stdout.write(
+                            self.style.SUCCESS(f"  ↳ section {section.long_code}")
+                        )
 
                     # Link course to curriculum
                     cc, cc_created = CurriculumCourse.objects.get_or_create(
@@ -130,8 +138,6 @@ class Command(BaseCommand):
                 f"{added_sections} sections, {added_curriculum_courses} curriculum-courses added, {skipped} skipped."
             )
         )
-
-
 
 
 def _ensure_curriculum(curriculum_title: str, college: College) -> Curriculum:
@@ -166,7 +172,9 @@ def _parse_times(start: str, end: str):
     return st, et
 
 
-def _ensure_schedule(weekday: int, start_time, end_time, room: Room | None, faculty: FacultyProfile | None) -> Schedule:
+def _ensure_schedule(
+    weekday: int, start_time, end_time, room: Room | None, faculty: FacultyProfile | None
+) -> Schedule:
     obj, _ = Schedule.objects.get_or_create(
         weekday=weekday,
         start_time=start_time,

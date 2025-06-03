@@ -1,3 +1,5 @@
+"""Widgets module."""
+
 from import_export import widgets
 
 from app.spaces.models import Building, Room

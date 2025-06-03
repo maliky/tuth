@@ -1,3 +1,5 @@
+"""Widgets module."""
+
 from import_export import widgets
 from app.timetable.models import AcademicYear, Semester
 import re

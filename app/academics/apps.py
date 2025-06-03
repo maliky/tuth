@@ -1,3 +1,5 @@
+"""Apps module."""
+
 # app/academics/apps.py
 from django.apps import AppConfig
 

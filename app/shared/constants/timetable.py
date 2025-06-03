@@ -1,3 +1,5 @@
+"""Timetable module."""
+
 from django.db import models
 
 

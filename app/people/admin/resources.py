@@ -1,3 +1,5 @@
+"""Resources module."""
+
 from app.people.models import StudentProfile
 from app.registry.models import Registration
 

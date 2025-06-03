@@ -1,3 +1,5 @@
+"""Test import schedule cmd module."""
+
 import io
 import tempfile
 import pytest

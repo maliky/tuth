@@ -1,3 +1,5 @@
+"""Test shared utils module."""
+
 from datetime import date
 
 import pytest

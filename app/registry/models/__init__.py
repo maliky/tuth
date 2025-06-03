@@ -1,3 +1,5 @@
+"""Initialization for the models package."""
+
 from .class_roster import ClassRoster
 from .document import Document
 from .registration import Registration

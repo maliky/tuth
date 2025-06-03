@@ -1,3 +1,5 @@
+"""Utils module."""
+
 from typing import Mapping, Optional, Tuple
 
 from app.shared.constants import COURSE_PATTERN

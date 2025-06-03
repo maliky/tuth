@@ -1,3 +1,5 @@
+"""Test section widgets module."""
+
 import pytest
 
 from app.timetable.admin import SectionCodeWidget
