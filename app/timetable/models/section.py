@@ -7,10 +7,8 @@ from typing import TYPE_CHECKING
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from .schedule import Schedule
-
 if TYPE_CHECKING:
-    from app.spaces.models.room import Room
+    from app.spaces.models import Room
 
 
 class Section(models.Model):
@@ -56,13 +54,8 @@ class Section(models.Model):
     def long_code(self) -> str:
         return f"{self.semester} {self.short_code}"
 
-    @property
-    def room(self) -> Room | None:
-        """Return teaching room associated with this section."""
-        return self.schedule.room
-
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.long_code} | {self.schedule.room}"
+        return f"{self.long_code} | {self.room}"
 
     def has_available_seats(self) -> bool:
         """Return 'True' if the section still has seats available."""

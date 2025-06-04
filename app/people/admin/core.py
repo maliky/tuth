@@ -1,36 +1,41 @@
 """Core module."""
 
 from django.contrib import admin
+from guardian.admin import GuardedModelAdmin
+from import_export.admin import ImportExportModelAdmin
 
-from app.people.models import FacultyProfile, DonorProfile, StudentProfile
+from app.people.models import DonorProfile, FacultyProfile, StudentProfile
 
 
 @admin.register(StudentProfile)
-class StudentProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "student_id", "college", "curriculum")
+class StudentProfileAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+    list_display = ("student_id", "user", "college", "curriculum")
     search_fields = (
         "student_id",
         "user__username",
         "user__first_name",
         "user__last_name",
     )
+    #> add an inlines to list the current course of the students = []
+    #> add an inlines to list the passed course of the students = []    
+    list_filter = ("college", "curriculum")
     autocomplete_fields = ("user", "college", "curriculum")
 
 
 @admin.register(FacultyProfile)
-class InstructorProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "department", "college", "position")
+class FacultyProfileAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+    list_display = ("user", "division", "department", "college", "position")
     search_fields = (
         "user__username",
         "user__first_name",
         "user__last_name",
-        "department",
     )
+    list_filter = ("college", "curriculum")
     autocomplete_fields = ("user", "college", "courses")
 
 
 @admin.register(DonorProfile)
-class DonorProfileAdmin(admin.ModelAdmin):
+class DonorProfileAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     list_display = ("user", "donor_id")
     search_fields = (
         "user__username",

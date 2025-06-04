@@ -27,11 +27,6 @@ class Course(models.Model):
         on_delete=models.PROTECT,
         related_name="courses",
     )
-    concentration = models.ManyToManyField(
-        "academics.Concentration",
-        related_name="courses",
-        blank=True,
-    )
     prerequisites = models.ManyToManyField(
         "self",
         symmetrical=False,

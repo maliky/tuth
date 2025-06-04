@@ -17,18 +17,42 @@ from app.shared.constants import TEST_PW
 from app.shared.mixins import StatusableMixin
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Helpers
-# ──────────────────────────────────────────────────────────────────────────────
 def photo_upload_to(instance: "BaseProfile", filename: str) -> str:
     """Store uploads under `photos/<model>/<user-id>/<filename>`."""
     _class = instance.__class__.__name__.lower()
     return str(Path("photos") / _class / str(instance.user_id) / filename)
 
+def _ensure_faculty(fullname: str, college: "College") -> FacultyProfile:
+    """Return a :class:`FacultyProfile` for *fullname*, creating records.
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Abstract base with all shared columns  ( **NO TABLE CREATED** )
-# ──────────────────────────────────────────────────────────────────────────────
+    Splits the provided ``fullname`` into first and last names, constructs a
+    username from the initials of the given names and the last name, and then
+    ensures both the ``User`` and associated ``FacultyProfile`` exist.  The user
+    password is set to ``TEST_PW`` when created.
+    """
+
+    parts = fullname.split()
+    if not parts:
+        raise ValueError("fullname cannot be empty")
+
+    first = parts[0]
+    last = parts[-1]
+    initials = "".join(p[0] for p in parts[:-1]) or first[0]
+    username = f"{initials}.{last}".lower()
+
+    user, created = User.objects.get_or_create(
+        username=username,
+        defaults={"first_name": first, "last_name": last, "password": TEST_PW},
+    )
+    if created:
+        user.set_password(TEST_PW)
+        user.save()
+
+    profile, _ = FacultyProfile.objects.get_or_create(
+        user=user, defaults={"college": college}
+    )
+    return profile
+
 class BaseProfile(StatusableMixin, models.Model):
     """Common demographic & contact information for every person on campus."""
 
@@ -39,7 +63,11 @@ class BaseProfile(StatusableMixin, models.Model):
         related_name="%(class)s",
         related_query_name="%(class)s",
     )
-
+    # --- titles ---
+    # # need to define a list of choice well structured
+    # name_prefix = models.TextField(blank=True)
+    # name_suffix = models.TextField(blank=True)
+    # name_title = models.TextField(blank=True)
     # --- demographics ---
     date_of_birth = models.DateField(_("date of birth"), null=True, blank=True)
 
@@ -77,9 +105,6 @@ class BaseProfile(StatusableMixin, models.Model):
         ordering = ["user__first_name", "user__last_name"]
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Student
-# ──────────────────────────────────────────────────────────────────────────────
 class StudentProfile(BaseProfile):
     """Extra academic information for enrolled students."""
 
@@ -98,15 +123,17 @@ class StudentProfile(BaseProfile):
     enrollment_semester = models.PositiveSmallIntegerField()
     enrollment_date = models.DateField(null=True, blank=True)
 
+    # > need to create a method to compute le level of the student based on the number
+    # of credit completed
+    # def credit_completed(self) -> int:
+    #     self.courses.credit
+        
     # convenience computed property
     class Meta(BaseProfile.Meta):
         verbose_name = _("student profile")
         verbose_name_plural = _("student profiles")
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Staff (non-teaching personnel)
-# ──────────────────────────────────────────────────────────────────────────────
 class StaffProfile(BaseProfile):
     """Generic data for all employees of the university."""
 
@@ -122,9 +149,6 @@ class StaffProfile(BaseProfile):
         verbose_name_plural = _("staff profiles")
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Faculty / Instructor ( specialised Staff )
-# ──────────────────────────────────────────────────────────────────────────────
 class FacultyProfile(StaffProfile):
     """Faculty member who teaches courses."""
 
@@ -132,7 +156,7 @@ class FacultyProfile(StaffProfile):
         "academics.College", on_delete=models.SET_NULL, null=True, blank=True
     )
     courses = models.ManyToManyField(
-        "academics.Course", related_name="facultys", blank=True
+        "academics.Course", related_name="faculties", blank=True
     )
 
     google_profile = models.URLField(blank=True)
@@ -143,9 +167,6 @@ class FacultyProfile(StaffProfile):
         verbose_name_plural = _("faculty profiles")
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Donor
-# ──────────────────────────────────────────────────────────────────────────────
 class DonorProfile(BaseProfile):
     """Contact information for donors supporting students."""
 
@@ -158,33 +179,3 @@ class DonorProfile(BaseProfile):
         verbose_name_plural = _("donor profiles")
 
 
-def _ensure_faculty(fullname: str, college: "College") -> FacultyProfile:
-    """Return a :class:`FacultyProfile` for *fullname*, creating records.
-
-    Splits the provided ``fullname`` into first and last names, constructs a
-    username from the initials of the given names and the last name, and then
-    ensures both the ``User`` and associated ``FacultyProfile`` exist.  The user
-    password is set to ``TEST_PW`` when created.
-    """
-
-    parts = fullname.split()
-    if not parts:
-        raise ValueError("fullname cannot be empty")
-
-    first = parts[0]
-    last = parts[-1]
-    initials = "".join(p[0] for p in parts[:-1]) or first[0]
-    username = f"{initials}.{last}".lower()
-
-    user, created = User.objects.get_or_create(
-        username=username,
-        defaults={"first_name": first, "last_name": last, "password": TEST_PW},
-    )
-    if created:
-        user.set_password(TEST_PW)
-        user.save()
-
-    profile, _ = FacultyProfile.objects.get_or_create(
-        user=user, defaults={"college": college}
-    )
-    return profile

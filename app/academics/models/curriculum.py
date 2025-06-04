@@ -13,7 +13,7 @@ class Curriculum(StatusableMixin, models.Model):
     """Academic programme offered by a College."""
 
     short_name = models.CharField(max_length=30)
-    title = models.CharField(max_length=255, blank=True, null=True)
+    long_name = models.CharField(max_length=255, blank=True, null=True)
 
     college = models.ForeignKey(
         "academics.College", on_delete=models.CASCADE, related_name="curricula"
@@ -36,7 +36,7 @@ class Curriculum(StatusableMixin, models.Model):
     )
 
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.title or self.short_name}"
+        return f"{self.short_name}"
 
     def clean(self) -> None:
         """Validate the curriculum and its current status."""

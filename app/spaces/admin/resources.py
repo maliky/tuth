@@ -7,6 +7,8 @@ from .widgets import BuildingWidget
 
 
 class RoomResource(resources.ModelResource):
+    # ? we need this be we import from a short_name only and not the int id field of
+    # building
     building = fields.Field(
         column_name="building",
         attribute="building",
@@ -15,5 +17,4 @@ class RoomResource(resources.ModelResource):
 
     class Meta:
         model = Room
-        import_id_fields = ("name", "building")
-        fields = ("name", "building")
+        # fields are (in order): building, code, standard_capacity, exam_capacity

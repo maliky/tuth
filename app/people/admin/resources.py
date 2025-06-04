@@ -5,7 +5,18 @@ from app.registry.models import Registration
 
 from import_export import resources
 
-
+class FacultyResource(resources.ModelResource):
+    """Resource for bulk importing :class:`FacultyProfile` rows"""
+    class Meta:
+        model = FacultyProfile
+        fields = (
+            "user",
+            "college",
+            "curriculum",
+            "enrollment_semester",
+            "enrollment_date",
+        )
+    
 class StudentResource(resources.ModelResource):
     """Resource for bulk importing :class:`StudentProfile` rows."""
 

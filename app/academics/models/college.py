@@ -38,4 +38,4 @@ class College(models.Model):
             return None
 
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.code} - {self.fullname}"
+        return f"{self.code}"
