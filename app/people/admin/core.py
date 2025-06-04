@@ -30,8 +30,12 @@ class FacultyProfileAdmin(ImportExportModelAdmin, GuardedModelAdmin):
         "user__first_name",
         "user__last_name",
     )
-    list_filter = ("college", "curriculum")
-    autocomplete_fields = ("user", "college", "courses")
+    # not sure to be able to use curricula which is a computed property
+    list_filter = ("college", "position", "curricula")
+    autocomplete_fields = (
+        "user",
+        "college",
+    )
 
 
 @admin.register(DonorProfile)

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -12,7 +12,10 @@ if TYPE_CHECKING:
 
 
 class Section(models.Model):
-    """Scheduled instance of a course in a specific semester."""
+    """
+    A single course‐offering in a given Semester.
+    We’ll now allow each Section to have multiple Schedule rows.
+    """
 
     number = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
     semester = models.ForeignKey("timetable.Semester", on_delete=models.PROTECT)
@@ -22,13 +25,28 @@ class Section(models.Model):
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
 
-    schedule = models.ForeignKey(
-        "timetable.Schedule", on_delete=models.PROTECT, related_name="schedule"
+    current_registrations = models.PositiveIntegerField(default=0, editable=False)
+    faculty = models.ForeignKey(
+        "people.FacultyProfile",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="faculty",
+        # limit_choices_to={
+        #     "user__role_assignments__role__in": [
+        #         "faculty",
+        #         "lecturer",
+        #         "assistant_professor",
+        #         "dean",
+        #         "chair",
+        #         "associate_professor",
+        #         "professor",
+        #         "vpaa",
+        #     ]
+        # },
     )
-
     # to be defined by Admin & VPA
     max_seats = models.PositiveIntegerField(default=30, validators=[MinValueValidator(3)])
-    current_registrations = models.PositiveIntegerField(default=0, editable=False)
 
     class Meta:
         constraints = [
@@ -41,9 +59,19 @@ class Section(models.Model):
 
     # ---------- display helpers ----------
     @property
-    def room(self) -> Room | None:
-        """Return teaching room associated with this section."""
-        return self.schedule.location
+    def locations(self) -> List[Room]:
+        """
+        Return a list of all Room instances in which this section meets.
+        """
+        # “schedules” is the related_name on Schedule → Section
+        return [s.location for s in self.schedules.all() if s.location]
+
+    @property
+    def location_codes(self) -> str:
+        """
+        Return a comma-separated string of each Room’s code.
+        """
+        return ", ".join(room.code for room in self.locations)
 
     @property
     def short_code(self) -> str:
@@ -54,7 +82,7 @@ class Section(models.Model):
         return f"{self.semester} {self.short_code}"
 
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.long_code} | {self.room}"
+        return f"{self.long_code} | {self.location_codes}"
 
     def has_available_seats(self) -> bool:
         """Return 'True' if the section still has seats available."""

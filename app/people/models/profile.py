@@ -8,9 +8,10 @@ from pathlib import Path
 
 from django.contrib.auth.models import User
 from django.db import models
-
+from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
 
+from app.academics.models.curriculum import Curriculum
 from app.shared.mixins import StatusableMixin
 
 
@@ -137,6 +138,17 @@ class FacultyProfile(StaffProfile):
     )
     google_profile = models.URLField(blank=True)
     personal_website = models.URLField(blank=True)
+
+    @property
+    def curricula(self) -> QuerySet[Curriculum]:
+        """
+        Return all Curriculum instances in which this faculty is teaching.
+
+        Traverses: Curriculum → courses → sections → schedule → faculty
+        """
+        return Curriculum.objects.filter(
+            courses__sections__schedule__faculty=self
+        ).distinct()
 
     class Meta(StaffProfile.Meta):
         verbose_name = _("faculty profile")

@@ -1,6 +1,7 @@
 """Inlines module."""
 
 from app.timetable.models.reservation import Reservation
+from app.timetable.models.schedule import Schedule
 from django.contrib import admin
 
 from app.timetable.models import Section, Semester
@@ -14,10 +15,17 @@ class SemesterInline(admin.TabularInline):
     ordering = ("start_date",)
 
 
+class ScheduleInline(admin.TabularInline):
+    model = Schedule
+    extra = 0
+    fields = ("weekday", "start_time", "end_time", "location")
+    autocomplete_fields = ("location",)
+
+
 class SectionInline(admin.TabularInline):
     model = Section
     extra = 0
-    fields = ("course", "number", "semester", "faculty", "room", "max_seats")
+    fields = ("course", "number", "semester", "faculty", "schedule")
     ordering = ("semester__start_date", "number")
 
 
