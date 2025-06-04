@@ -1,6 +1,6 @@
 """Core module."""
 
-from app.timetable.admin.inlines import SectionInline
+from app.timetable.admin.inlines import ScheduleInline
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
@@ -19,6 +19,6 @@ class BuildingAdmin(GuardedModelAdmin):
 class RoomAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = RoomResource
     list_display = ("name", "building", "standard_capacity", "exam_capacity")
-    search_fields = ("building", "name")
+    search_fields = ("building__short_name", "name")
     autocomplete_fields = ["building"]
-    inlines = [SectionInline]
+    inlines = [ScheduleInline]

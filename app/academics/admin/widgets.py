@@ -1,11 +1,65 @@
 """Widgets module."""
 
 from datetime import date
+from typing import Any, Optional
 
 from import_export import widgets
 
 from app.academics.models import College, Course, Curriculum
-from app.shared.utils import expand_course_code
+from app.shared.utils import expand_course_code, make_course_code
+
+
+class CourseWidget(widgets.ForeignKeyWidget):
+    """
+    Accept three separate columns – course_code (dept), course_no (num),
+    and college – and return or create the matching Course instance.
+
+    Expected CSV columns in the *row* dict
+    --------------------------------------
+    * ``course_code``  – department part (e.g. "AGR")
+    * ``course_no``    – number part     (e.g. "121")
+    * ``college``      – college code    (e.g. "CAFS") – optional
+
+    If *college* is empty, defaults to ``"COAS"``.
+    """
+
+    def clean(
+        self,
+        value: Any,
+        row: Optional[dict[str, Any]] = None,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Optional[Course]:
+        """
+        *value* is ignored (import-export still passes the column declared in
+        the resource, but the info we need is spread across *row*).
+        """
+
+        if row is None:
+            return None
+
+        dept = (row.get("course_code") or "").strip().upper()
+        num = (row.get("course_no") or "").strip()
+        if not dept or not num:
+            # nothing to do – widget returns NULL, FK stays blank
+            return None
+
+        college_code = (row.get("college") or "COAS").strip().upper()
+
+        # ── get or create the College ─────────────────────────────
+        college, _ = College.objects.get_or_create(
+            code=college_code, defaults={"fullname": college_code}
+        )
+
+        # ── get or create the Course ──────────────────────────────
+        code = make_course_code(dept, num)  # e.g. AGR121
+        course, _ = Course.objects.get_or_create(
+            name=dept,
+            number=num,
+            college=college,
+            defaults={"title": row.get("course_title", code)},
+        )
+        return course
 
 
 class CourseManyWidget(widgets.ManyToManyWidget):
@@ -13,17 +67,17 @@ class CourseManyWidget(widgets.ManyToManyWidget):
     Parses the `list_courses` column from CSV input, which should be
     a semicolon-separated list of course codes. Automatically creates
     Course objects if they don't exist yet, using the logic defined in
-    the CourseWidget.
+    the CourseCodeWidget.
     """
 
     def __init__(self):
         """
         Initialize the widget:
         - Uses ";" as a separator between multiple course codes.
-        - Delegates the parsing and creation of individual courses to CourseWidget.
+        - Delegates the parsing and creation of individual courses to CourseCodeWidget.
         """
         super().__init__(Course, separator=";", field="code")
-        self._cw = CourseWidget(model=Course, field="code")
+        self._cw = CourseCodeWidget(model=Course, field="code")
 
     def clean(self, value, row=None, *args, **kwargs) -> list[Course]:
         """
@@ -38,7 +92,7 @@ class CourseManyWidget(widgets.ManyToManyWidget):
         for token in value.split(self.separator):
             token = token.strip()
             if token:
-                # Delegate to CourseWidget to parse/create individual course
+                # Delegate to CourseCodeWidget to parse/create individual course
                 course = self._cw.clean(token, row)
                 if course:
                     courses.append(course)
@@ -46,7 +100,7 @@ class CourseManyWidget(widgets.ManyToManyWidget):
         return courses
 
 
-class CourseWidget(widgets.ForeignKeyWidget):
+class CourseCodeWidget(widgets.ForeignKeyWidget):
     """
     Widget to find or create a Course instance given a course code.
 

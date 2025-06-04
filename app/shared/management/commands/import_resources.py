@@ -3,12 +3,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from import_export import resources
-
 from django.core.management.base import BaseCommand, CommandParser
-from app.timetable.admin.resources import ScheduleResource, SemesterResource
+from django.db import transaction
+from import_export import resources
 from tablib import Dataset
+
 from app.academics.admin.resources import CourseResource, CurriculumCourseResource
+from app.timetable.admin.resources import ScheduleResource, SemesterResource
 
 
 class Command(BaseCommand):
@@ -31,19 +32,33 @@ class Command(BaseCommand):
 
         dataset = Dataset().load(open(path).read(), format="csv")
 
-        RESOURCES_MAP: dict[str, type[resources.ModelResource]] = {
-            "Course": CourseResource,  # and College
-            # "Room": RoomResource, # and Building
-            "CurriculumCourse": CurriculumCourseResource,
-            "Semester": SemesterResource,  # and Academic year
-            "Schedule": ScheduleResource,  # and Faculty, Room and Building
-        }
+        RESOURCES_MAP: list[tuple[str, type[resources.ModelResource]]] = [
+            ("Course", CourseResource),  # and College
+            # "Room", RoomResource, # and Building
+            ("CurriculumCourse", CurriculumCourseResource),
+            ("Semester", SemesterResource),  # and Academic year
+            ("Schedule", ScheduleResource),  # and Faculty, Room and Building
+        ]
 
-        for key, ResourceClass in RESOURCES_MAP.items():
+        for key, ResourceClass in RESOURCES_MAP:
             resource: resources.ModelResource = ResourceClass()
-            result = resource.import_data(dataset, dry_run=True)
 
-            if not result.has_errors():
-                resource.import_data(dataset, dry_run=False)
+            validation = resource.import_data(dataset, dry_run=True)
+
+            if validation.has_errors():
+                self.stdout.write(self.style.ERROR(f"'{key}': validation errors:"))
+
+                for row_index, row_err in validation.row_errors():
+                    for err in row_err:
+                        self.stdout.write(f"  row {row_index}: {err.error}")
+                continue  # skip to next resource
+
+            # real import
+            try:
+                with transaction.atomic():
+                    resource.import_data(dataset, dry_run=False)
+            except Exception as exc:
+                self.stdout.write(self.style.ERROR(f"{key} import failed: {exc}"))
+                continue
 
             self.stdout.write(self.style.SUCCESS(f"{key} import completed."))

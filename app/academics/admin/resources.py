@@ -6,7 +6,7 @@ from import_export import fields, resources, widgets
 from app.academics.admin.widgets import (
     CollegeWidget,
     CourseManyWidget,
-    CourseWidget,
+    CourseCodeWidget,
     CurriculumWidget,
 )
 from app.academics.models import (
@@ -263,7 +263,7 @@ class CurriculumCourseResource(resources.ModelResource):
     course = fields.Field(
         column_name="course",
         attribute="course",
-        widget=CourseWidget(model=Course, field="code"),
+        widget=CourseCodeWidget(model=Course, field="code"),
     )
 
     class Meta:

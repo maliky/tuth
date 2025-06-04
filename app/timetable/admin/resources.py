@@ -1,7 +1,7 @@
 from datetime import date
 from pathlib import Path
 
-from import_export import fields, resources, widgets
+from import_export import fields, resources
 
 from app.academics.admin.widgets import CourseWidget
 from app.academics.models import Course
@@ -12,7 +12,7 @@ from app.spaces.models.core import Room
 from app.timetable.models import AcademicYear, Section, Semester
 from app.timetable.models.schedule import Schedule
 
-from .widgets import AcademicYearWidget, SemesterWidget
+from .widgets import AcademicYearWidget, SectionWidget, SemesterCodeWidget
 
 
 class ScheduleResource(resources.ModelResource):
@@ -26,6 +26,11 @@ class ScheduleResource(resources.ModelResource):
         attribute="faculty",
         widget=FacultyProfileWidget(model=FacultyProfile, field="full_name"),
     )
+    section = fields.Field(
+        column_name="section",
+        attribute="section",
+        widget=SectionWidget(model=Section, field="id"),
+    )
 
     class Meta:
         model = Schedule
@@ -34,19 +39,14 @@ class ScheduleResource(resources.ModelResource):
 
 class SectionResource(resources.ModelResource):
     course = fields.Field(
-        column_name="course",
+        column_name="course_code",
         attribute="course",
-        widget=CourseWidget(model=Course, field="code"),
+        widget=CourseWidget(model=Course, field="id"),
     )
     semester = fields.Field(
         column_name="semester",
         attribute="semester",
-        widget=SemesterWidget(model=Semester, field="id"),
-    )
-    schedule = fields.Field(
-        column_name="schedule",
-        attribute="schedule",
-        widget=widgets.ForeignKeyWidget(Schedule, field="id"),
+        widget=SemesterCodeWidget(model=Semester, field="id"),
     )
 
     def save_instance(self, instance, is_create, row, **kwargs):

@@ -19,7 +19,7 @@ class ScheduleInline(admin.TabularInline):
     model = Schedule
     extra = 0
     fields = ("weekday", "start_time", "end_time", "location")
-    autocomplete_fields = ("location",)
+    autocomplete_fields = ("location", "section")
 
 
 class SectionInline(admin.TabularInline):

@@ -31,7 +31,7 @@ class FacultyProfileAdmin(ImportExportModelAdmin, GuardedModelAdmin):
         "user__last_name",
     )
     # not sure to be able to use curricula which is a computed property
-    list_filter = ("college", "position", "curricula")
+    list_filter = ("college", "position")
     autocomplete_fields = (
         "user",
         "college",

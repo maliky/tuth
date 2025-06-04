@@ -1,9 +1,14 @@
 """Widgets module."""
 
-from import_export import widgets
-from app.timetable.models import AcademicYear, Semester
 import re
 from datetime import date
+from typing import Tuple, cast
+
+from import_export import widgets
+
+from app.academics.admin.widgets import CourseCodeWidget
+from app.academics.models import Course
+from app.timetable.models import AcademicYear, Section, Semester
 
 
 class AcademicYearWidget(widgets.ForeignKeyWidget):
@@ -40,7 +45,7 @@ class AcademicYearWidget(widgets.ForeignKeyWidget):
         fields = ("academic_year", "number", "start_date", "end_date")
 
 
-class SemesterWidget(widgets.ForeignKeyWidget):
+class SemesterCodeWidget(widgets.ForeignKeyWidget):
     """Parse ``YY-YY_SemN`` notation and return the :class:`Semester`."""
 
     pattern = re.compile(r"^(?P<year>\d{2}-\d{2})_Sem(?P<num>\d+)$")
@@ -68,9 +73,9 @@ class SemesterWidget(widgets.ForeignKeyWidget):
 class SectionCodeWidget(widgets.Widget):
     """Parse ``YY-YY_SemN:section`` strings and return Semester + number."""
 
-    def __init__(self, semester_widget: SemesterWidget | None = None) -> None:
+    def __init__(self, semester_widget: SemesterCodeWidget | None = None) -> None:
         super().__init__()
-        self.semester_widget = semester_widget or SemesterWidget(
+        self.semester_widget = semester_widget or SemesterCodeWidget(
             model=Semester, field="id"
         )
         self.number: int | None = None
@@ -83,3 +88,53 @@ class SectionCodeWidget(widgets.Widget):
         number = int(num_token.strip()) if num_token.strip().isdigit() else None
         self.number = number
         return semester, number
+
+
+class SectionWidget(widgets.ForeignKeyWidget):
+    """
+    Parse four CSV columns (ay, sem#, course code, section#) and return a Section.
+    Expected CSV headers:  academic_year, semester, course, section_no
+    """
+
+    ay_widget = AcademicYearWidget(model=AcademicYear, field="short_name")
+    c_widget = CourseCodeWidget(model=Course, field="code")  # creates Course if needed
+
+    def _parse_row(self, row) -> Tuple[AcademicYear, Semester, Course | None, int]:
+        ay_token = (row.get("academic_year") or "").strip()
+        sem_no_raw = (row.get("semester") or "").strip()
+        course_raw = (row.get("course") or "").strip()
+        sec_no_raw = (row.get("section_no") or "").strip()
+
+        if not (ay_token and sem_no_raw and course_raw and sec_no_raw):
+            raise ValueError("Missing AY / semester / course / section_no")
+
+        ay = cast(AcademicYear, self.ay_widget.clean(ay_token, row))
+        sem_no = int(sem_no_raw)
+        semester, _ = Semester.objects.get_or_create(academic_year=ay, number=sem_no)
+
+        course = self.c_widget.clean(course_raw, row)
+
+        sec_no = int(sec_no_raw)
+        return ay, semester, course, sec_no
+
+    # ------------ widget API ------------
+    def clean(self, value, row=None, *args, **kwargs) -> Section | None:
+        """
+        *value* is ignored (we rely entirely on the other columns).
+        """
+        if row is None:
+            raise ValueError("Row context required")
+
+        _, semester, course, sec_no = self._parse_row(row)
+
+        section, _ = Section.objects.get_or_create(
+            semester=semester,
+            course=course,
+            number=sec_no,
+        )
+        return section
+
+    def render(self, value: Section, obj=None):  # optional – for exports
+        if not value:
+            return ""
+        return f"{value.semester}:{value.course.code}:s{value.number}"
