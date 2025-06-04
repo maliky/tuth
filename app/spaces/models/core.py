@@ -21,18 +21,23 @@ class Room(models.Model):
     building = models.ForeignKey(
         Building, null=True, blank=True, on_delete=models.SET_NULL, related_name="rooms"
     )
-    code = models.CharField(max_length=30)
+    name = models.CharField(max_length=30)
+
     standard_capacity = models.PositiveIntegerField(default=45)
     exam_capacity = models.PositiveIntegerField(default=30)
+
+    @property
+    def code(self) -> str:
+        if self.building:
+            return f"{self.building}-{self.name}"
+        return self.name
+
+    def __str__(self) -> str:  # pragma: no cover
+        return self.code
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["code", "building"], name="unique_room_per_building"
+                fields=["name", "building"], name="unique_room_per_building"
             )
         ]
-
-    def __str__(self) -> str:  # pragma: no cover
-        if self.building:
-            return f"{self.building}-{self.code}"
-        return self.code

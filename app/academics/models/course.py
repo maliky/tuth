@@ -12,10 +12,10 @@ from app.academics.models.curriculum import Curriculum
 class Course(models.Model):
     """Catalog entry defining a unit of instruction."""
 
+    code = models.CharField(max_length=20, editable=False)
     name = models.CharField(max_length=10)  # e.g. MATH
     number = models.CharField(max_length=10)  # e.g. 101
     title = models.CharField(max_length=255)
-    code = models.CharField(max_length=20, editable=False)
     description: models.TextField = models.TextField(blank=True)
     credit_hours = models.PositiveSmallIntegerField(
         default=CREDIT_NUMBER.THREE, choices=CREDIT_NUMBER.choices, blank=True

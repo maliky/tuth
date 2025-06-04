@@ -11,15 +11,14 @@ class Schedule(models.Model):
     weekday = models.PositiveSmallIntegerField(
         choices=WEEKDAYS_NUMBER.choices, help_text="Week day number (Monday 1...)"
     )
-    room = models.ForeignKey(
-        "spaces.Room", null=True, blank=True, on_delete=models.SET_NULL
-    )
+    start_time = models.TimeField(null=True, blank=True)
+    end_time = models.TimeField(null=True, blank=True)
     faculty = models.ForeignKey(
         "people.FacultyProfile",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        # > need to fixe people.StaffProfile.user: (fields.E304) Reverse accessor 'User.profile' for 'people.StaffProfile.user' clashes with reverse accessor for 'people.StudentProfile.user'.	HINT: Add or change a related_name argument to the definition for 'people.StaffProfile.user' or 'people.StudentProfile.user'.
+        related_name="faculty",
         # limit_choices_to={
         #     "user__role_assignments__role__in": [
         #         "faculty",
@@ -33,8 +32,15 @@ class Schedule(models.Model):
         #     ]
         # },
     )
-
-    start_time = models.TimeField(null=True, blank=True)
-    end_time = models.TimeField(null=True, blank=True)
+    location = models.ForeignKey(
+        "spaces.Room", null=True, blank=True, on_delete=models.SET_NULL
+    )
 
     # > validation end_time should alway be bigger than start_time
+    # ? need to check that there no overlap. may need to store duration
+    # and implement a non overlap function like for semester and terms.
+    def clean(self) -> None:
+        """Check that the date are correct"""
+        if self.end_time is not None:
+            if self.start_time:
+                assert self.start_time < self.end_time

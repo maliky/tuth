@@ -9,7 +9,7 @@ class CurriculumFilter(admin.SimpleListFilter):
     parameter_name = "curriculum"
 
     def lookups(self, request, model_admin):
-        return [(c.pk, c.title) for c in Curriculum.objects.all()]
+        return [(c.pk, c.short_name) for c in Curriculum.objects.all()]
 
     def queryset(self, request, qs):
         if self.value():

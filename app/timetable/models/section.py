@@ -15,11 +15,10 @@ class Section(models.Model):
     """Scheduled instance of a course in a specific semester."""
 
     number = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
+    semester = models.ForeignKey("timetable.Semester", on_delete=models.PROTECT)
     course = models.ForeignKey(
         "academics.Course", related_name="sections", on_delete=models.PROTECT
     )
-    semester = models.ForeignKey("timetable.Semester", on_delete=models.PROTECT)
-
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
 
@@ -44,7 +43,7 @@ class Section(models.Model):
     @property
     def room(self) -> Room | None:
         """Return teaching room associated with this section."""
-        return self.schedule.room
+        return self.schedule.location
 
     @property
     def short_code(self) -> str:
@@ -60,3 +59,9 @@ class Section(models.Model):
     def has_available_seats(self) -> bool:
         """Return 'True' if the section still has seats available."""
         return self.current_registrations < self.max_seats
+
+    def clean(self) -> None:
+        """Check that the date are correct"""
+        if self.end_date is not None:
+            if self.start_date:
+                assert self.start_date < self.end_date

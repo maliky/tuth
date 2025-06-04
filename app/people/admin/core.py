@@ -16,8 +16,8 @@ class StudentProfileAdmin(ImportExportModelAdmin, GuardedModelAdmin):
         "user__first_name",
         "user__last_name",
     )
-    #> add an inlines to list the current course of the students = []
-    #> add an inlines to list the passed course of the students = []    
+    # > add an inlines to list the current course of the students = []
+    # > add an inlines to list the passed course of the students = []
     list_filter = ("college", "curriculum")
     autocomplete_fields = ("user", "college", "curriculum")
 

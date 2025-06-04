@@ -5,10 +5,31 @@ from import_export import fields, resources, widgets
 
 from app.academics.admin.widgets import CourseWidget
 from app.academics.models import Course
+from app.people.admin.widgets import FacultyProfileWidget
+from app.people.models.profile import FacultyProfile
+from app.spaces.admin.widgets import RoomWidget
+from app.spaces.models.core import Room
 from app.timetable.models import AcademicYear, Section, Semester
 from app.timetable.models.schedule import Schedule
 
 from .widgets import AcademicYearWidget, SemesterWidget
+
+
+class ScheduleResource(resources.ModelResource):
+    room = fields.Field(
+        column_name="location",
+        attribute="location",
+        widget=RoomWidget(model=Room, field="location"),
+    )
+    faculty = fields.Field(
+        column_name="faculty",
+        attribute="faculty",
+        widget=FacultyProfileWidget(model=FacultyProfile, field="full_name"),
+    )
+
+    class Meta:
+        model = Schedule
+        import_id_fields = ("weekday", "location", "faculty", "start_time")
 
 
 class SectionResource(resources.ModelResource):
@@ -51,6 +72,10 @@ class SemesterResource(resources.ModelResource):
         column_name="academic_year",
         attribute="academic_year",
         widget=AcademicYearWidget(model=AcademicYear, field="short_name"),
+    )
+    number = fields.Field(
+        column_name="semester",
+        attribute="number",
     )
 
     class Meta:

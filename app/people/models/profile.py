@@ -5,15 +5,12 @@ from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from django.contrib.auth.models import User
 from django.db import models
+
 from django.utils.translation import gettext_lazy as _
 
-if TYPE_CHECKING:
-    from app.academics.models import College
-from app.shared.constants import TEST_PW
 from app.shared.mixins import StatusableMixin
 
 
@@ -22,36 +19,6 @@ def photo_upload_to(instance: "BaseProfile", filename: str) -> str:
     _class = instance.__class__.__name__.lower()
     return str(Path("photos") / _class / str(instance.user_id) / filename)
 
-def _ensure_faculty(fullname: str, college: "College") -> FacultyProfile:
-    """Return a :class:`FacultyProfile` for *fullname*, creating records.
-
-    Splits the provided ``fullname`` into first and last names, constructs a
-    username from the initials of the given names and the last name, and then
-    ensures both the ``User`` and associated ``FacultyProfile`` exist.  The user
-    password is set to ``TEST_PW`` when created.
-    """
-
-    parts = fullname.split()
-    if not parts:
-        raise ValueError("fullname cannot be empty")
-
-    first = parts[0]
-    last = parts[-1]
-    initials = "".join(p[0] for p in parts[:-1]) or first[0]
-    username = f"{initials}.{last}".lower()
-
-    user, created = User.objects.get_or_create(
-        username=username,
-        defaults={"first_name": first, "last_name": last, "password": TEST_PW},
-    )
-    if created:
-        user.set_password(TEST_PW)
-        user.save()
-
-    profile, _ = FacultyProfile.objects.get_or_create(
-        user=user, defaults={"college": college}
-    )
-    return profile
 
 class BaseProfile(StatusableMixin, models.Model):
     """Common demographic & contact information for every person on campus."""
@@ -63,24 +30,36 @@ class BaseProfile(StatusableMixin, models.Model):
         related_name="%(class)s",
         related_query_name="%(class)s",
     )
+    # User model will provide : username, first_name, last_name, email, groups, user_permissions, is_staff, is_active, password, is_superuser, last_login,  date_joined, full_name
+
     # --- titles ---
     # # need to define a list of choice well structured
-    # name_prefix = models.TextField(blank=True)
-    # name_suffix = models.TextField(blank=True)
-    # name_title = models.TextField(blank=True)
+    name_prefix = models.TextField(blank=True)
+    name_suffix = models.TextField(blank=True)
+    middle_name = models.TextField(blank=True)
+
     # --- demographics ---
     date_of_birth = models.DateField(_("date of birth"), null=True, blank=True)
-
     # --- contact ---
     phone_number = models.CharField(max_length=15, blank=True)
-    address = models.TextField(blank=True)
-    personal_email = models.EmailField(_("personal e-mail"), blank=True)
+    physical_address = models.TextField(blank=True)
 
     # --- misc ---
     bio = models.TextField(blank=True)
     photo = models.ImageField(upload_to=photo_upload_to, null=True, blank=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    @property
+    def full_name(self) -> str:
+        fullname = " ".join(
+            [
+                self.name_prefix,
+                self.user.first_name,
+                self.middle_name,
+                self.user.last_name,
+                self.name_suffix,
+            ]
+        ).strip()
+        return fullname
 
     @property
     def age(self) -> int | None:
@@ -89,6 +68,7 @@ class BaseProfile(StatusableMixin, models.Model):
             return (
                 today.year
                 - self.date_of_birth.year
+                # moins 1 ou 0, si l'anniversaire est passé cette année.
                 - (
                     (today.month, today.day)
                     < (self.date_of_birth.month, self.date_of_birth.day)
@@ -98,11 +78,11 @@ class BaseProfile(StatusableMixin, models.Model):
 
     # convenience for admin lists / logs
     def __str__(self) -> str:  # pragma: no cover
-        return self.user.get_full_name() or self.user.username
+        return self.full_name
 
     class Meta:
         abstract = True
-        ordering = ["user__first_name", "user__last_name"]
+        ordering = ["user__last_name", "user__first_name"]
 
 
 class StudentProfile(BaseProfile):
@@ -127,7 +107,7 @@ class StudentProfile(BaseProfile):
     # of credit completed
     # def credit_completed(self) -> int:
     #     self.courses.credit
-        
+
     # convenience computed property
     class Meta(BaseProfile.Meta):
         verbose_name = _("student profile")
@@ -155,10 +135,6 @@ class FacultyProfile(StaffProfile):
     college = models.ForeignKey(
         "academics.College", on_delete=models.SET_NULL, null=True, blank=True
     )
-    courses = models.ManyToManyField(
-        "academics.Course", related_name="faculties", blank=True
-    )
-
     google_profile = models.URLField(blank=True)
     personal_website = models.URLField(blank=True)
 
@@ -177,5 +153,3 @@ class DonorProfile(BaseProfile):
     class Meta(BaseProfile.Meta):
         verbose_name = _("donor profile")
         verbose_name_plural = _("donor profiles")
-
-

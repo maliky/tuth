@@ -1,6 +1,5 @@
 """Widgets module."""
 
-from typing import Optional
 from import_export import widgets
 
 from app.spaces.models import Building, Room
@@ -17,7 +16,7 @@ class BuildingWidget(widgets.ForeignKeyWidget):
         if not value:
             return None
 
-        building, _created = Building.objects.get_or_create(
+        building, _ = Building.objects.get_or_create(
             short_name=value,
             defaults={"full_name": value},
         )
@@ -37,7 +36,7 @@ class RoomWidget(widgets.ForeignKeyWidget):
         bcode, _, rcode = [v.strip() for v in value.partition("-")]
 
         bw = BuildingWidget(model=Building, field="short_name")
-        building = 
+        building = bw.clean(value, row, *args, **kwargs)
 
         if not rcode:
             return None

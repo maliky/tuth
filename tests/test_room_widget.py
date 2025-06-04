@@ -15,7 +15,7 @@ def test_room_widget_creates_building_and_room():
 
     building = Building.objects.get(short_name="B1")
     assert room.building == building
-    assert room.code == "101"
+    assert room.name == "101"
 
 
 @pytest.mark.django_db
