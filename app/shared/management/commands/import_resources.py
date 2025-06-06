@@ -49,8 +49,7 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR(f"'{key}': validation errors:"))
 
                 for row_index, row_err in validation.row_errors():
-                    for err in row_err:
-                        self.stdout.write(f"  row {row_index}: {err.error}")
+                    self.stdout.write(f"  row {row_index}: {row_err[0]}")
                 continue  # skip to next resource
 
             # real import

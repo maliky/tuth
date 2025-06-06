@@ -3,27 +3,39 @@
 * Tuth Application — Quickstart Guide
 
 This document summarizes how to explicitly run and test the Tuth application in different environments.
+** The apps
+Here are the different applications you will find in this directory
+- Registry for documents, registrations, class rosters
+- Spaces for building and room
+- Academics for courses, curricula, colleges and prerequisites
+- Timetable for reservations, semesters & schedule definitions
+- People for role and user profile  
+- Finance for payements, scholarship and financial_records.
+
 
 ** Development Environment
-To make some change
-create a new branch or switch to dev branch
-do you changes
-if adding python libraries (through pip install xyz)
-add them to requirements.txt
+To make some change :
+- Create a new branch or switch to dev branch
+- Do you changes
+If adding python libraries (through `pip install ...`)
+- add them to requirements-dev.txt
 #+BEGIN_SRC bash  
-echo "xyz" > requirements.txt
+echo "xyz" > requirements-dev.txt
 #+END_SRC
-do code checks
+- Do code checks with 
 #+BEGIN_SRC python
 black app/ && flake8 app/ && mypy app/
 #+END_SRC
 
-*** Launch your docker-compose dev environment 
+
+*** Launch your docker-compose dev environment
+You can review the Dockerfile-dev and the docker-compose-dev.yml file and then build the Docker environment.
 #+begin_src bash
 docker-compose -f docker-compose-dev.yml up --build
 #+end_src
 
-*** Running Tests in Development
+*** Running Tests 
+**** Localy
 
 Explicitly run tests within the dev container:
 

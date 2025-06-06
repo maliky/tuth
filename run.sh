@@ -31,13 +31,11 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$MODE" ]]; then
-    echo "Error: you must specify --dev or --prod" >&2
-    printusage
-    exit 1
+    MODE="test"
 fi
 
 # ---- load environment ------------------------------------------------------
-echo "Running in $MODE mode…"
+echo ">> Running in $MODE mode…<<"
 if [[ $MODE == dev ]]; then
     ln -fs .env-dev .env
 elif [[ $MODE == prod ]]; then
@@ -49,12 +47,28 @@ export $(grep -v '^#' .env | xargs)  # load variables
 
 # ---- optional migrations ---------------------------------------------------
 if $RUN_MIGRATIONS; then
-    echo "▶  Running makemigrations and migrate"
+    # we start from fresh db
+    if [[ $MODE == dev ]]; then
+        python manage reset_db
+    elif [[ $MODE == test ]]; then
+        sudo find . -path "*migrations*" -type f -delete
+        rm $DJANGO_DB_NAME
+    fi
+    echo ">> Running makemigrations and migrate <<"
     # should makemigraton for all discovered apps
     python manage.py makemigrations
-    python manage.py migrate
+    python manage.py makemigrations registry spaces academics timetable people finance
+    python manage.py migrate 
 fi
 
 # ---- static & server -------------------------------------------------------
 python manage.py collectstatic --noinput
-gunicorn app.wsgi:application --bind 0.0.0.0:8000
+
+if [[ $MODE == dev ||  $MODE == prod ]]; then
+    echo ">> Running gunicorn server <<"
+    gunicorn app.wsgi:application --bind 0.0.0.0:8000
+elif [[ $MODE == test ]]; then
+    echo ">> Running local server <<"    
+    python manage.py runserver
+fi
+
