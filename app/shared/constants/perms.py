@@ -48,7 +48,7 @@ MODEL_APP = {
     "semester": "timetable",
     "term": "timetable",
     "academicyear": "timetable",
-    "building": "spaces",
+    "space": "spaces",
     "room": "spaces",
     "financialrecord": "finance",
     "paymenthistory": "finance",
@@ -182,7 +182,7 @@ OBJECT_PERM_MATRIX = {
         "delete": ["registrar"],
         "add": ["registrar"],
     },
-    "building": {
+    "space": {
         "view": [
             "registrar",
             "vpaa",

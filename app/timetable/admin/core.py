@@ -55,7 +55,7 @@ class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     # If you want to prefetch all the Schedule → Room relationships:
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.prefetch_related("schedules__location")
+        return qs.prefetch_related("schedules__room")
 
     @admin.display(description="Schedules")
     def all_schedules(self, obj: Section) -> str:
@@ -68,6 +68,6 @@ class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
             day = sched.get_weekday_display()  # “Monday”, “Tuesday”, etc.
             st = sched.start_time.strftime("%H:%M") if sched.start_time else ""
             et = sched.end_time.strftime("%H:%M") if sched.end_time else ""
-            room = sched.location or ""
+            room = sched.space or ""
             slots.append(f"{day} {st}–{et} ({room})")
         return "; ".join(slots) or "—"

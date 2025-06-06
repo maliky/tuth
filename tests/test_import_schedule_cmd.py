@@ -4,7 +4,7 @@ import io
 import tempfile
 import pytest
 from django.core.management import call_command
-from app.spaces.models import Building, Room
+from app.spaces.models import Location, Room
 from app.timetable.models import Section, Schedule
 
 
@@ -27,5 +27,5 @@ def test_import_schedule_creates_schedule_and_building(tmp_path):
     assert sched.start_time.strftime("%H:%M") == "08:00"
     assert sched.end_time.strftime("%H:%M") == "09:00"
 
-    assert Building.objects.filter(short_name="B2").exists()
+    assert Location.objects.filter(short_name="B2").exists()
     assert Room.objects.count() == 0

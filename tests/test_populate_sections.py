@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import pytest
 from django.contrib.auth import get_user_model
 
-from app.spaces.models import Building, Room
+from app.spaces.models import Location, Room
 from app.shared.management.populate_helpers.sections import populate_sections_from_csv
 from app.timetable.models import Section
 
@@ -25,7 +25,7 @@ class DummyCmd:
 def test_populate_sections_strip_and_optional_fields():
     User = get_user_model()
     User.objects.create(id=2, username="inst")
-    building = Building.objects.create(id=1, short_name="B1")
+    building = Location.objects.create(id=1, short_name="B1")
     Room.objects.create(id=1, name="101", building=building)
 
     csv = io.StringIO(

@@ -18,8 +18,8 @@ class SemesterInline(admin.TabularInline):
 class ScheduleInline(admin.TabularInline):
     model = Schedule
     extra = 0
-    fields = ("weekday", "start_time", "end_time", "location")
-    autocomplete_fields = ("location", "section")
+    fields = ("weekday", "start_time", "end_time", "space")
+    autocomplete_fields = ("room", "section")
 
 
 class SectionInline(admin.TabularInline):

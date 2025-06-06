@@ -14,7 +14,7 @@ def test_room_widget_creates_building_and_room():
     room = rw.clean("B1-101")
 
     building = Building.objects.get(short_name="B1")
-    assert room.building == building
+    assert room.location == building
     assert room.name == "101"
 
 

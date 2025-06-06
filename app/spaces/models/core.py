@@ -1,36 +1,34 @@
-"""Building module."""
+"""Space module."""
 
 from __future__ import annotations
 
 from django.db import models
 
 
-class Building(models.Model):
+class Space(models.Model):
     """Physical structure that groups multiple rooms."""
 
-    short_name = models.CharField(max_length=10, unique=True)
-    full_name = models.CharField(max_length=100, blank=True)
+    short_name = models.CharField(max_length=15, unique=True, db_index=True)
+    full_name = models.CharField(max_length=128, blank=True)
 
     def __str__(self) -> str:  # pragma: no cover
         return self.short_name
 
 
 class Room(models.Model):
-    """Individual teaching space located in a building."""
+    """Individual teaching space located in a space."""
 
-    building = models.ForeignKey(
-        Building, null=True, blank=True, on_delete=models.SET_NULL, related_name="rooms"
+    code = models.CharField(max_length=30)
+    space = models.ForeignKey(
+        Space, null=True, blank=True, on_delete=models.PROTECT, related_name="rooms"
     )
-    name = models.CharField(max_length=30)
 
     standard_capacity = models.PositiveIntegerField(default=45)
     exam_capacity = models.PositiveIntegerField(default=30)
 
     @property
-    def code(self) -> str:
-        if self.building:
-            return f"{self.building}-{self.name}"
-        return self.name
+    def full_code(self) -> str:
+        return f"{self.space}-{self.code}"
 
     def __str__(self) -> str:  # pragma: no cover
         return self.code
@@ -38,6 +36,10 @@ class Room(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "building"], name="unique_room_per_building"
+                fields=["space", "code"], name="unique_room_per_space"
             )
         ]
+        indexes = [
+            models.Index(fields=["space", "code"]),
+        ]
+        ordering = ["space__short_name", "code"]

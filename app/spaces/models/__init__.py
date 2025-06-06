@@ -1,8 +1,8 @@
 """Initialization for the models package."""
 
-from .core import Building, Room
+from .core import Space, Room
 
 __all__ = [
     "Room",
-    "Building",
+    "Space",
 ]

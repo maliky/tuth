@@ -31,6 +31,7 @@ def expand_course_code(
     return dept, num, college
 
 
-def make_course_code(name: str, number: str) -> str:
+def make_course_code(name: str, number: str, college: str | None = None) -> str:
     """Compact representation used internally to identify a course."""
-    return f"{name}{number}".upper()
+    cc = "" if college is None else f"-{college}"
+    return f"{name}{number}{cc}".upper()

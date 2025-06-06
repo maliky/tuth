@@ -2,44 +2,53 @@
 
 from import_export import widgets
 
-from app.spaces.models import Building, Room
+from app.spaces.models import Space
+from app.spaces.models.core import Room
 
 
-class BuildingWidget(widgets.ForeignKeyWidget):
+class SpaceWidget(widgets.ForeignKeyWidget):
     """
-    Accept a building *short_name*.
-    If it exists, return the Building instance;
-    otherwise create a shell Building row on the fly.
+    Accept a space *short_name*.
+    If it exists, return the Space instance;
+    otherwise create a Space on the fly.
     """
 
-    def clean(self, value, row=None, *args, **kwargs) -> Building | None:
+    def clean(self, value, row=None, *args, **kwargs):
         if not value:
             return None
 
-        building, _ = Building.objects.get_or_create(
-            short_name=value,
-            defaults={"full_name": value},
+        space_name, _, _ = [v.strip() for v in value.partition("-")]
+        space, _ = Space.objects.get_or_create(
+            short_name=space_name,
+            defaults={"full_name": space_name},
         )
-        return building
+        return space
 
 
 class RoomWidget(widgets.ForeignKeyWidget):
     """
-    Parse a Building-Room token and return the :class:`Room`.
-    Resolve "B1-101" strings into Room objects and building
+    Parse CSV field like "AA-01" or "SAPEC-SAPEC".
+    Auto-create Space and Room instances.
     """
+        
 
-    def clean(self, value, row=None, *args, **kwargs) -> Room | None:
+    def clean(self, value, row=None, *args, **kwargs):
         if not value:
             return None
 
-        bcode, _, rcode = [v.strip() for v in value.partition("-")]
+        space_name, _, room_code = [v.strip() for v in value.partition("-")]
 
-        bw = BuildingWidget(model=Building, field="short_name")
-        building = bw.clean(value, row, *args, **kwargs)
+        space, _ = Space.objects.get_or_create(
+            short_name=space_name,
+            defaults={"full_name": space_name},
+        )
 
-        if not rcode:
-            return None
+        room, _ = Room.objects.get_or_create(
+            space=space,
+            code=room_code,
+        )
 
-        room, _ = Room.objects.get_or_create(name=rcode, building=building)
         return room
+
+    def render(self, value, obj=None):
+        return f"{value.space.short_name}-{value.code}" if value else ""

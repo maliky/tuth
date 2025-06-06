@@ -52,7 +52,8 @@ if $RUN_MIGRATIONS; then
         python manage reset_db
     elif [[ $MODE == test ]]; then
         sudo find . -path "*migrations*" -type f -delete
-        rm $DJANGO_DB_NAME
+        sudo find . -type d -name "__pycache__" -exec rm -rf {} +        
+        rm -f $DJANGO_DB_NAME
     fi
     echo ">> Running makemigrations and migrate <<"
     # should makemigraton for all discovered apps

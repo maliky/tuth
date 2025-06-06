@@ -25,4 +25,3 @@ class CurriculumCourseInline(admin.TabularInline):
     model = CurriculumCourse
     extra = 0
     autocomplete_fields = ("course",)
-    ordering = ("year_level", "semester_no")

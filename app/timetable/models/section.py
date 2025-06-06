@@ -59,19 +59,19 @@ class Section(models.Model):
 
     # ---------- display helpers ----------
     @property
-    def locations(self) -> List[Room]:
+    def spaces(self) -> List[Room]:
         """
         Return a list of all Room instances in which this section meets.
         """
         # “schedules” is the related_name on Schedule → Section
-        return [s.location for s in self.schedules.all() if s.location]
+        return [s.space for s in self.schedules.all() if s.space]
 
     @property
-    def location_codes(self) -> str:
+    def space_codes(self) -> str:
         """
         Return a comma-separated string of each Room’s code.
         """
-        return ", ".join(room.code for room in self.locations)
+        return ", ".join(room.code for room in self.spaces)
 
     @property
     def short_code(self) -> str:
@@ -82,7 +82,7 @@ class Section(models.Model):
         return f"{self.semester} {self.short_code}"
 
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.long_code} | {self.location_codes}"
+        return f"{self.long_code} | {self.space_codes}"
 
     def has_available_seats(self) -> bool:
         """Return 'True' if the section still has seats available."""

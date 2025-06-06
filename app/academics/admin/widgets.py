@@ -21,6 +21,7 @@ class CourseWidget(widgets.ForeignKeyWidget):
     * ``college``      – college code    (e.g. "CAFS") – optional
 
     If *college* is empty, defaults to ``"COAS"``.
+
     """
 
     def clean(
@@ -34,14 +35,12 @@ class CourseWidget(widgets.ForeignKeyWidget):
         *value* is ignored (import-export still passes the column declared in
         the resource, but the info we need is spread across *row*).
         """
-
         if row is None:
             return None
 
-        dept = (row.get("course_code") or "").strip().upper()
-        num = (row.get("course_no") or "").strip()
-        if not dept or not num:
-            # nothing to do – widget returns NULL, FK stays blank
+        course_code = (row.get("course_code") or "").strip().upper()
+        course_no = (row.get("course_no") or "").strip()
+        if not course_code or not course_no:
             return None
 
         college_code = (row.get("college") or "COAS").strip().upper()
@@ -52,10 +51,10 @@ class CourseWidget(widgets.ForeignKeyWidget):
         )
 
         # ── get or create the Course ──────────────────────────────
-        code = make_course_code(dept, num)  # e.g. AGR121
+        code = make_course_code(course_code, course_no)  # e.g. AGR121
         course, _ = Course.objects.get_or_create(
-            name=dept,
-            number=num,
+            name=course_code,
+            number=course_no,
             college=college,
             defaults={"title": row.get("course_title", code)},
         )
@@ -246,7 +245,7 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
         curriculum, created = Curriculum.objects.get_or_create(
             short_name=value.strip(),
             defaults={
-                "title": value.strip(),
+                "short_name": value.strip(),
                 "college": college,
                 "creation_date": date.today(),
             },

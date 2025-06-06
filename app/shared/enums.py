@@ -16,6 +16,7 @@ class TERM_NUMBER(IntegerChoices):
 
 
 class CREDIT_NUMBER(IntegerChoices):
+    ZERO = 0, "0"
     ONE = 1, "1"
     TWO = 2, "2"
     THREE = 3, "3"
@@ -34,10 +35,11 @@ class LEVEL_NUMBER(IntegerChoices):
 
 class WEEKDAYS_NUMBER(IntegerChoices):
     """Integer representation of weekdays."""
-
+    TBA = 0, "TBA"
     MONDAY = 1, "Monday"
     TUESDAY = 2, "Tuesday"
     WEDNESDAY = 3, "Wednesday"
     THURSDAY = 4, "Thursday"
     FRIDAY = 5, "Friday"
     SATURDAY = 6, "Saturday"
+    

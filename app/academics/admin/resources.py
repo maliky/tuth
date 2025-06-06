@@ -5,8 +5,8 @@ from import_export import fields, resources, widgets
 
 from app.academics.admin.widgets import (
     CollegeWidget,
-    CourseManyWidget,
     CourseCodeWidget,
+    CourseManyWidget,
     CurriculumWidget,
 )
 from app.academics.models import (
@@ -16,7 +16,7 @@ from app.academics.models import (
     CurriculumCourse,
     Prerequisite,
 )
-from app.shared.utils import expand_course_code, make_course_code
+from app.shared.utils import make_course_code
 
 
 class CurriculumResource(resources.ModelResource):
@@ -130,15 +130,6 @@ class CurriculumResource(resources.ModelResource):
         report_skipped = True
 
 
-# app/academics/admin/resources.py  – excerpt
-from import_export import resources, fields, widgets
-from django.contrib import messages
-
-from app.academics.models import Course, College
-from app.academics.admin.widgets import CollegeWidget
-from app.shared.utils import make_course_code
-
-
 class CourseResource(resources.ModelResource):
     """
     Import / export definition for Course rows coming from the *cleaned_tscc.csv*
@@ -169,7 +160,7 @@ class CourseResource(resources.ModelResource):
         column_name="prerequisites",
         attribute="prerequisites",
         widget=widgets.ManyToManyWidget(Course, field="code", separator=";"),
-)
+    )
 
     # ─── constructor – track rows skipped by validation logic ────────────────
     def __init__(self, *args, **kwargs):
@@ -284,27 +275,58 @@ class CurriculumCourseResource(resources.ModelResource):
     """Import curriculum-course rows with a curriculum name and course code."""
 
     curriculum = fields.Field(
-        column_name="curriculum_name",
+        column_name="curriculum",
         attribute="curriculum",
         widget=CurriculumWidget(model=Curriculum, field="short_name"),
     )
-    college = fields.Field(column_name="college")
     course = fields.Field(
-        column_name="course",
+        column_name="code",
         attribute="course",
         widget=CourseCodeWidget(model=Course, field="code"),
     )
 
+    # ─── internal “code” column – generated on the fly (AGR121) ──────────────
+    code = fields.Field(column_name="code", attribute="code")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._mismatched_rows: list[dict] = []  # for admin feedback
+
+    def before_import_row(self, row: dict, **kwargs) -> None:
+        """
+        Build the compact ``code`` (e.g. AGR121) so import-export can
+        use it as the primary key for lookups / updates.
+        """
+        not_in_row = {"course_code", "course_no", "college"} - set(row)
+        assert not len(not_in_row), f"{not_in_row} are not in row header"
+
+        row["code"] = make_course_code(
+            name=row["course_code"], number=row["course_no"], college=row["college"]
+        )
+
+        # If you need to skip rows with missing dept/num, mark them:
+        if not row["course_code"] or not row["course_no"]:
+            row["__skip_row__"] = True
+            self._mismatched_rows.append(row)
+
+    def skip_row(  # noqa: D401  (import-export API)
+        self,
+        instance,
+        original,
+        row,
+        import_validation_errors=None,
+    ) -> bool:
+        """Import-export calls this to decide whether to skip the row."""
+        if row.get("__skip_row__"):
+            return True
+        return super().skip_row(instance, original, row, import_validation_errors)
+
     class Meta:
         model = CurriculumCourse
-        import_id_fields = ("curriculum", "course")
-        fields = (
+        import_id_fields = (
             "curriculum",
-            "college",
             "course",
         )
+        fields = ("curriculum", "course", "code", "credit_hours")
         skip_unchanged = True
         report_skipped = True
-
-    def dehydrate_college(self, obj):
-        return obj.curriculum.college.code

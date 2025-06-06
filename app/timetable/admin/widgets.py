@@ -8,7 +8,25 @@ from import_export import widgets
 
 from app.academics.admin.widgets import CourseCodeWidget
 from app.academics.models import Course
+from app.shared.enums import WEEKDAYS_NUMBER
 from app.timetable.models import AcademicYear, Section, Semester
+
+
+class WeekdayWidget(widgets.IntegerWidget):
+    """Accept either the integer 1-7 or the English weekday name."""
+
+    def clean(self, value, row=None, *args, **kwargs):
+        _map = {label.lower(): num for num, label in WEEKDAYS_NUMBER.choices}
+
+        if value is None or not value:
+            return None
+
+        token = str(value).strip().lower()
+        if token.isdigit():
+            return int(token)
+
+        assert token in _map, f"{token} is not in {_map}"
+        return _map[token]
 
 
 class AcademicYearWidget(widgets.ForeignKeyWidget):

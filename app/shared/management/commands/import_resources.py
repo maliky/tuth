@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from app.spaces.admin.resources import RoomResource
 from django.core.management.base import BaseCommand, CommandParser
 from django.db import transaction
 from import_export import resources
@@ -33,13 +34,13 @@ class Command(BaseCommand):
         dataset = Dataset().load(open(path).read(), format="csv")
 
         RESOURCES_MAP: list[tuple[str, type[resources.ModelResource]]] = [
-            ("Course", CourseResource),  # and College
-            # "Room", RoomResource, # and Building
-            ("CurriculumCourse", CurriculumCourseResource),
-            ("Semester", SemesterResource),  # and Academic year
-            ("Schedule", ScheduleResource),  # and Faculty, Room and Building
+            # ("Course", CourseResource),  # and College
+            # ("Room", RoomResource),  # and Space
+            # ("CurriculumCourse", CurriculumCourseResource),
+            # ("Semester", SemesterResource),  # and Academic year
+            ("Schedule", ScheduleResource),  # and Faculty, Room and Space
         ]
-
+        
         for key, ResourceClass in RESOURCES_MAP:
             resource: resources.ModelResource = ResourceClass()
 
@@ -47,10 +48,11 @@ class Command(BaseCommand):
 
             if validation.has_errors():
                 self.stdout.write(self.style.ERROR(f"'{key}': validation errors:"))
-
-                for row_index, row_err in validation.row_errors():
-                    self.stdout.write(f"  row {row_index}: {row_err[0]}")
-                continue  # skip to next resource
+                import ipdb; ipdb.set_trace()
+                if validation.row_errors():
+                    row_index, row_err = validation.row_errors()[0]
+                self.stdout.write(f"  row {row_index}: {row_err[0]}")
+                continue
 
             # real import
             try:

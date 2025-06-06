@@ -12,7 +12,7 @@ class Schedule(models.Model):
     A “meeting slot” for a Section:
       - weekday (1=Monday … 7=Sunday)
       - start_time / end_time
-      - location (Room)
+      - space (Room)
       - which Section this slot belongs to
     """
 
@@ -22,8 +22,8 @@ class Schedule(models.Model):
     )
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
-    location = models.ForeignKey(
-        "spaces.Room", null=True, blank=True, on_delete=models.SET_NULL
+    room = models.ForeignKey(
+        "spaces.Room", on_delete=models.PROTECT, related_name="schedules"
     )
     section = models.ForeignKey(
         "timetable.Section", on_delete=models.PROTECT, related_name="schedules"
@@ -42,3 +42,15 @@ class Schedule(models.Model):
 
     def __str__(self):
         return f"{self.section}: {self.get_weekday_display()} {self.start_time}–{self.end_time}"
+
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["weekday", "space", "faculty", "start_time"],
+                name="uniq_slot_per_room_faculty",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["weekday", "space", "faculty", "start_time"]),
+        ]    

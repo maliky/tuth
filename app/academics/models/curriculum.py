@@ -12,7 +12,7 @@ from app.shared.mixins import StatusableMixin
 class Curriculum(StatusableMixin, models.Model):
     """Academic programme offered by a College."""
 
-    short_name = models.CharField(max_length=30)
+    short_name = models.CharField(max_length=40)
     long_name = models.CharField(max_length=255, blank=True, null=True)
 
     college = models.ForeignKey(

@@ -12,41 +12,48 @@ from app.spaces.models.core import Room
 from app.timetable.models import AcademicYear, Section, Semester
 from app.timetable.models.schedule import Schedule
 
-from .widgets import AcademicYearWidget, SectionWidget, SemesterCodeWidget
+from .widgets import AcademicYearWidget, SectionWidget, SemesterCodeWidget, WeekdayWidget
 
 
 class ScheduleResource(resources.ModelResource):
     room = fields.Field(
         column_name="location",
-        attribute="location",
-        widget=RoomWidget(model=Room, field="location"),
-    )
-    faculty = fields.Field(
-        column_name="faculty",
-        attribute="faculty",
-        widget=FacultyProfileWidget(model=FacultyProfile, field="full_name"),
+        attribute="room",        
+        widget=RoomWidget(model=Room),
     )
     section = fields.Field(
         column_name="section",
         attribute="section",
-        widget=SectionWidget(model=Section, field="id"),
+        widget=SectionWidget(model=Section),
+    )
+
+    weekday = fields.Field(
+        column_name="weekday",
+        attribute="weekday",
+        widget=WeekdayWidget(),
     )
 
     class Meta:
         model = Schedule
-        import_id_fields = ("weekday", "location", "faculty", "start_time")
+        import_id_fields = ("weekday", "room", "start_time")
+        fields = ("weekday", "start_time", "end_time", "room",  "section")
 
 
 class SectionResource(resources.ModelResource):
     course = fields.Field(
         column_name="course_code",
         attribute="course",
-        widget=CourseWidget(model=Course, field="id"),
+        widget=CourseWidget(model=Course),
     )
     semester = fields.Field(
         column_name="semester",
         attribute="semester",
-        widget=SemesterCodeWidget(model=Semester, field="id"),
+        widget=SemesterCodeWidget(model=Semester),
+    )
+    faculty = fields.Field(
+        column_name="faculty",
+        attribute="faculty",
+        widget=FacultyProfileWidget(model=FacultyProfile, field="full_name"),
     )
 
     def save_instance(self, instance, is_create, row, **kwargs):
