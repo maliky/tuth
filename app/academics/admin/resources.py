@@ -130,79 +130,108 @@ class CurriculumResource(resources.ModelResource):
         report_skipped = True
 
 
-class CourseResource(resources.ModelResource):
-    # ── columns coming from the file ───────────────
-    name = fields.Field(column_name="name", attribute="name")
-    number = fields.Field(column_name="number", attribute="number")
-    title = fields.Field(column_name="title", attribute="title")
-    credit_hours = fields.Field(column_name="credit_hours", attribute="credit_hours")
+# app/academics/admin/resources.py  – excerpt
+from import_export import resources, fields, widgets
+from django.contrib import messages
 
-    # college is a FK → use the college **code** found in the file
+from app.academics.models import Course, College
+from app.academics.admin.widgets import CollegeWidget
+from app.shared.utils import make_course_code
+
+
+class CourseResource(resources.ModelResource):
+    """
+    Import / export definition for Course rows coming from the *cleaned_tscc.csv*
+    file (or any file that has **separate** course_code / course_no columns).
+
+    Columns expected in the CSV (case-sensitive):
+        course_code, course_no, title, credit, college, prerequisites
+    """
+
+    # ─── columns that map 1-to-1 onto Course fields ──────────────────────────
+    name = fields.Field(column_name="course_code", attribute="name")  # AGR
+    number = fields.Field(column_name="course_no", attribute="number")  # 121
+    title = fields.Field(column_name="title", attribute="title")
+    credit_hours = fields.Field(column_name="credit", attribute="credit_hours")
+
+    # ─── college FK – lookup by code via CollegeWidget ───────────────────────
     college = fields.Field(
-        column_name="college",  # header in the CSV/XLSX
-        attribute="college",  # model field
-        widget=widgets.ForeignKeyWidget(  # look-up by…
-            College, field="code"  # … College.code
-        ),
+        column_name="college",
+        attribute="college",
+        widget=CollegeWidget(College, field="code"),  # "CAFS" → <College id=…>
     )
 
-    # internal column – we *generate* it so import-export can use it as PK
-    code = fields.Field(
-        column_name="code", attribute="code"
-    )  # no header needed in the file
+    # ─── internal “code” column – generated on the fly (AGR121) ──────────────
+    code = fields.Field(column_name="code", attribute="code")
 
+    # ─── many-to-many prerequisites – semicolon-separated list of codes ──────
     prerequisites = fields.Field(
         column_name="prerequisites",
         attribute="prerequisites",
         widget=widgets.ManyToManyWidget(Course, field="code", separator=";"),
-    )
+)
 
+    # ─── constructor – track rows skipped by validation logic ────────────────
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._mismatched_rows: list[dict] = []
+        self._mismatched_rows: list[dict] = []  # for admin feedback
 
-    # ── hooks ────────────────────────────────────────────────────
-    def before_import_row(self, row, **kwargs):
-        """Normalize the code fields and flag inconsistent rows."""
-        code = row.get("code") or ""
-        name, number, _ = expand_course_code(code, row=row)
+    # ── import-export hooks ──────────────────────────────────────────────────
+    def before_import_row(self, row: dict, **kwargs) -> None:
+        """
+        Build the compact ``code`` (e.g. AGR121) so import-export can
+        use it as the primary key for lookups / updates.
+        """
+        row["code"] = make_course_code(row["course_code"], row["course_no"])
 
-        if not row.get("name"):
-            row["name"] = name
-        elif str(row["name"]).strip().upper() != name:
-            self._mismatched_rows.append(dict(row))
+        # If you need to skip rows with missing dept/num, mark them:
+        if not row["course_code"] or not row["course_no"]:
             row["__skip_row__"] = True
-            return
+            self._mismatched_rows.append(row)
 
-        if not row.get("number"):
-            row["number"] = number
-        elif str(row["number"]).strip() != number:
-            self._mismatched_rows.append(dict(row))
-            row["__skip_row__"] = True
-            return
-
-        row["code"] = make_course_code(name=row["name"], number=row["number"])
-
-    def skip_row(self, instance, original, row, import_validation_errors=None):
+    def skip_row(  # noqa: D401  (import-export API)
+        self,
+        instance,
+        original,
+        row,
+        import_validation_errors=None,
+    ) -> bool:
+        """Import-export calls this to decide whether to skip the row."""
         if row.get("__skip_row__"):
             return True
         return super().skip_row(instance, original, row, import_validation_errors)
 
-    def after_import(self, dataset, result, using_transactions, dry_run=False, **kwargs):
+    def after_import(
+        self,
+        dataset,
+        result,
+        using_transactions,
+        dry_run: bool = False,
+        **kwargs,
+    ) -> None:
+        """
+        Once the import finishes, flash one admin message if we skipped rows due
+        to missing / mismatched data.
+        """
         if dry_run or not self._mismatched_rows:
             return
-        request = kwargs.get("request")
+
+        request = kwargs.get("request")  # present only in admin import
         if not request:
             return
+
         codes = ", ".join(sorted(r.get("code", "") for r in self._mismatched_rows))
         messages.warning(
             request,
-            (f"{len(self._mismatched_rows)} course rows skipped: {codes}."),
+            f"{len(self._mismatched_rows)} course rows skipped: {codes}.",
         )
 
+    # ── meta options ─────────────────────────────────────────────────────────
     class Meta:
         model = Course
+        # Uniqueness criterion for updates
         import_id_fields = ("name", "number", "college")
+        # Exposed / accepted columns
         fields = (
             "name",
             "number",
@@ -210,10 +239,10 @@ class CourseResource(resources.ModelResource):
             "credit_hours",
             "college",
             "prerequisites",
-            "code",  # include it so the generated value reaches save()
+            "code",
         )
-        skip_unchanged = True
-        report_skipped = True
+        skip_unchanged = True  # do not rewrite identical rows
+        report_skipped = True  # include skipped-row info in the Result
 
 
 class PrerequisiteResource(resources.ModelResource):
