@@ -3,6 +3,7 @@
 from .core import AcademicYearAdmin, SectionAdmin, SemesterAdmin
 from .inlines import SemesterInline, SectionInline, ReservationInline
 from .resources import AcademicYearResource, SectionResource, SemesterResource
+from .schedule import ScheduleAdmin
 
 __all__ = [
     "AcademicYearAdmin",
@@ -14,4 +15,5 @@ __all__ = [
     "AcademicYearResource",
     "SemesterResource",
     "ReservationInline",
+    "ScheduleAdmin",
 ]
