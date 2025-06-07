@@ -18,14 +18,14 @@ class SemesterInline(admin.TabularInline):
 class ScheduleInline(admin.TabularInline):
     model = Schedule
     extra = 0
-    fields = ("weekday", "start_time", "end_time", "space")
+    fields = ("weekday", "start_time", "end_time", "room")
     autocomplete_fields = ("room", "section")
 
 
 class SectionInline(admin.TabularInline):
     model = Section
     extra = 0
-    fields = ("course", "number", "semester", "faculty", "schedule")
+    fields = ("course", "number", "semester", "faculty", "max_seats")
     ordering = ("semester__start_date", "number")
 
 
