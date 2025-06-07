@@ -16,7 +16,11 @@ from import_export import resources
 from tablib import Dataset
 
 from app.academics.admin.resources import CourseResource, CurriculumCourseResource
-from app.timetable.admin.resources import ScheduleResource, SemesterResource
+from app.timetable.admin.resources import (
+    ScheduleResource,
+    SectionResource,
+    SemesterResource,
+)
 
 
 class Command(BaseCommand):
@@ -42,11 +46,12 @@ class Command(BaseCommand):
         dataset = Dataset().load(open(path).read(), format="csv")
 
         RESOURCES_MAP: list[tuple[str, type[resources.ModelResource]]] = [
-            ("Course", CourseResource),  # and College
-            ("Room", RoomResource),  # and Space
-            ("CurriculumCourse", CurriculumCourseResource),
-            ("Semester", SemesterResource),  # and Academic year
-            ("Schedule", ScheduleResource),  # and Faculty, Room and Space
+            # ("Course", CourseResource),  # and College
+            # ("Room", RoomResource),  # and Space
+            # ("CurriculumCourse", CurriculumCourseResource),
+            # ("Semester", SemesterResource),  # and Academic year
+            # ("Schedule", ScheduleResource),  # and Faculty, Room and Space
+            ("Section", SectionResource)
         ]
 
         for key, ResourceClass in RESOURCES_MAP:
@@ -73,9 +78,7 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR(f"{key} import failed: {exc}"))
                 continue
 
-
             self.stdout.write(self.style.SUCCESS(f"{key} import completed."))
         # groups = ensure_role_groups()  # returns {"student": Group, …}
         # colleges = {c.code: c for c in College.objects.all()}
         # upsert_test_users_and_roles(self, colleges, groups)
-

@@ -10,6 +10,7 @@ from app.people.models import DonorProfile, FacultyProfile, StudentProfile
 @admin.register(StudentProfile)
 class StudentProfileAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """Admin interface for :class:`~app.people.models.StudentProfile`."""
+
     list_display = ("student_id", "user", "college", "curriculum")
     search_fields = (
         "student_id",
@@ -26,6 +27,7 @@ class StudentProfileAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 @admin.register(FacultyProfile)
 class FacultyProfileAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """Admin options for :class:`~app.people.models.FacultyProfile`."""
+
     list_display = ("user", "division", "department", "college", "position")
     search_fields = (
         "user__username",
@@ -43,6 +45,7 @@ class FacultyProfileAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 @admin.register(DonorProfile)
 class DonorProfileAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """Admin management for :class:`~app.people.models.DonorProfile`."""
+
     list_display = ("user", "donor_id")
     search_fields = (
         "user__username",

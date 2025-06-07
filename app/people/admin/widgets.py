@@ -100,12 +100,14 @@ class FacultyProfileWidget(widgets.ForeignKeyWidget):
             raw = re.sub(self.PREFIX_PATTERN, "", raw).strip()
 
         # Extract first name
+        first_name=""
+        last_name=""
+        
         m = re.match(self.FIRST_PATTERN, raw)
-        first_name = m.group(1) if m else ""
-        if first_name:
+        if m:
+            first_name = m.group(1) 
             raw = raw[len(first_name) :].strip()
 
-        # Extract last name (whatever remains at end)
         m = re.search(self.LAST_PATTERN, raw)
         if m:
             last_name = m.group(1)
@@ -141,10 +143,11 @@ class FacultyProfileWidget(widgets.ForeignKeyWidget):
         college_code = (row.get(self.college_field) or "").strip()
         college, _ = College.objects.get_or_create(code=college_code)
 
+        staff_id_value = f"TU-{uname.lower()}"
         # Create or retrieve FacultyProfile
         profile, _ = FacultyProfile.objects.get_or_create(
             user=user,
-            defaults={"college": college},
+            defaults={"college": college, "staff_id": staff_id_value},
         )
 
         # Update profile fields

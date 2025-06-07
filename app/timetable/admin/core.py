@@ -12,6 +12,7 @@ from .resources import SectionResource, SemesterResource
 @admin.register(AcademicYear)
 class AcademicYearAdmin(GuardedModelAdmin):
     """Admin settings for :class:`~app.timetable.models.AcademicYear`."""
+
     list_display = ("long_name", "start_date", "short_name")
     date_hierarchy = "start_date"
     inlines = [SemesterInline]
@@ -22,6 +23,7 @@ class AcademicYearAdmin(GuardedModelAdmin):
 @admin.register(Semester)
 class SemesterAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """Admin configuration for :class:`~app.timetable.models.Semester`."""
+
     resource_class = SemesterResource
     list_filter = ("academic_year",)  # needs academic_year her
     autocomplete_fields = ("academic_year",)
@@ -31,6 +33,7 @@ class SemesterAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 @admin.register(Section)
 class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """Admin interface for :class:`~app.timetable.models.Section`."""
+
     resource_class = SectionResource
     list_display = ("long_code", "course", "semester", "faculty", "max_seats")
     inlines = [ReservationInline, ScheduleInline]

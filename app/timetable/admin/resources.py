@@ -40,6 +40,8 @@ class ScheduleResource(resources.ModelResource):
 
 
 class SectionResource(resources.ModelResource):
+    number = fields.Field(column_name="section_no", attribute="number")
+
     course = fields.Field(
         column_name="course_code",
         attribute="course",
@@ -70,8 +72,9 @@ class SectionResource(resources.ModelResource):
 
     class Meta:
         model = Section
-        import_id_fields = ("number", "course", "semester")
+        import_id_fields = ("number", "course", "semester", "faculty")
         skip_unchanged = True
+        bulk_import = True
 
 
 class SemesterResource(resources.ModelResource):
@@ -81,7 +84,7 @@ class SemesterResource(resources.ModelResource):
         widget=AcademicYearWidget(model=AcademicYear, field="short_name"),
     )
     number = fields.Field(
-        column_name="semester",
+        column_name="semester_no",
         attribute="number",
     )
 
