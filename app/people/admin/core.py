@@ -4,6 +4,7 @@ from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 
+from app.academics.admin.filters import CurriculumFilter
 from app.people.models import DonorProfile, FacultyProfile, StudentProfile
 
 
@@ -19,7 +20,7 @@ class StudentProfileAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     )
     # > add an inlines to list the current course of the students = []
     # > add an inlines to list the passed course of the students = []
-    list_filter = ("college", "curriculum")
+    list_filter = ("college", CurriculumFilter)
     autocomplete_fields = ("user", "college", "curriculum")
 
 
