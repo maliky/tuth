@@ -64,7 +64,7 @@ class Section(models.Model):
         Return a list of all Room instances in which this section meets.
         """
         # “schedules” is the related_name on Schedule → Section
-        return [s.space for s in self.schedules.all() if s.space]
+        return [s.room for s in self.schedules.all() if s.room]
 
     @property
     def space_codes(self) -> str:

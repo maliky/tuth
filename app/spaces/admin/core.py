@@ -10,7 +10,7 @@ from app.spaces.models import Space, Room
 
 
 @admin.register(Space)
-class Space(GuardedModelAdmin):
+class SpaceAdmin(GuardedModelAdmin):
     search_fields = ("short_name", "full_name")
     list_display = ("short_name", "full_name")
 

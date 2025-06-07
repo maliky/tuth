@@ -1,10 +1,9 @@
 """spaces.Resources module."""
 
-from typing import Any
 from import_export import fields, resources
 from app.spaces.models import Space, Room
 
-from .widgets import RoomWidget, SpaceWidget
+from .widgets import SpaceWidget
 
 
 class SpaceResource(resources.ModelResource):

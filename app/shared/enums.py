@@ -35,6 +35,7 @@ class LEVEL_NUMBER(IntegerChoices):
 
 class WEEKDAYS_NUMBER(IntegerChoices):
     """Integer representation of weekdays."""
+
     TBA = 0, "TBA"
     MONDAY = 1, "Monday"
     TUESDAY = 2, "Tuesday"
@@ -42,4 +43,3 @@ class WEEKDAYS_NUMBER(IntegerChoices):
     THURSDAY = 4, "Thursday"
     FRIDAY = 5, "Friday"
     SATURDAY = 6, "Saturday"
-    

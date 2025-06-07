@@ -18,7 +18,7 @@ from .widgets import AcademicYearWidget, SectionWidget, SemesterCodeWidget, Week
 class ScheduleResource(resources.ModelResource):
     room = fields.Field(
         column_name="location",
-        attribute="room",        
+        attribute="room",
         widget=RoomWidget(model=Room),
     )
     section = fields.Field(
@@ -36,7 +36,7 @@ class ScheduleResource(resources.ModelResource):
     class Meta:
         model = Schedule
         import_id_fields = ("weekday", "room", "start_time")
-        fields = ("weekday", "start_time", "end_time", "room",  "section")
+        fields = ("weekday", "start_time", "end_time", "room", "section")
 
 
 class SectionResource(resources.ModelResource):

@@ -43,14 +43,13 @@ class Schedule(models.Model):
     def __str__(self):
         return f"{self.section}: {self.get_weekday_display()} {self.start_time}–{self.end_time}"
 
-
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["weekday", "space", "faculty", "start_time"],
-                name="uniq_slot_per_room_faculty",
+                fields=["weekday", "room", "start_time"],
+                name="uniq_slot_per_room",
             )
         ]
         indexes = [
-            models.Index(fields=["weekday", "space", "faculty", "start_time"]),
-        ]    
+            models.Index(fields=["weekday", "room", "start_time"]),
+        ]

@@ -30,7 +30,6 @@ class RoomWidget(widgets.ForeignKeyWidget):
     Parse CSV field like "AA-01" or "SAPEC-SAPEC".
     Auto-create Space and Room instances.
     """
-        
 
     def clean(self, value, row=None, *args, **kwargs):
         if not value:

@@ -26,7 +26,29 @@ echo "xyz" > requirements-dev.txt
 #+BEGIN_SRC python
 black app/ && flake8 app/ && mypy app/
 #+END_SRC
-
+*** Test
+You can run `./run.sh -m` to start a fresh test on the local machine. (you need python requirements*.txt to be installed).
+in a second terminal populate your db with a file having this structure
+#+BEGIN_VERBATIM
+academic_year: 25-26
+semester: 1 
+college: CAFS
+course_code: AGR
+course_no: 121
+course_long_code: AGR121-CAFS
+course_title: Practicum I
+credit_hours: 1
+curriculum: Bsc Agriculture
+section: 1
+location: SAPEC-SAPEC
+space: SAPEC
+room: SAPEC
+faculty: Prof A
+weekday: Friday
+start_time: 9:00
+end_time: 10:00
+#+END_VERBATIM
+Check the run.sh script to check where to put th file.
 
 *** Launch your docker-compose dev environment
 You can review the Dockerfile-dev and the docker-compose-dev.yml file and then build the Docker environment.

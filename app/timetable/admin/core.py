@@ -68,6 +68,6 @@ class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
             day = sched.get_weekday_display()  # “Monday”, “Tuesday”, etc.
             st = sched.start_time.strftime("%H:%M") if sched.start_time else ""
             et = sched.end_time.strftime("%H:%M") if sched.end_time else ""
-            room = sched.space or ""
+            room = sched.room or ""
             slots.append(f"{day} {st}–{et} ({room})")
         return "; ".join(slots) or "—"
