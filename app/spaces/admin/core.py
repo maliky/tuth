@@ -11,12 +11,14 @@ from app.spaces.models import Space, Room
 
 @admin.register(Space)
 class SpaceAdmin(GuardedModelAdmin):
+    """Admin management for :class:`~app.spaces.models.Space`."""
     search_fields = ("short_name", "full_name")
     list_display = ("short_name", "full_name")
 
 
 @admin.register(Room)
 class RoomAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+    """Admin configuration for :class:`~app.spaces.models.Room`."""
     resource_class = RoomResource
     list_display = ("code", "space", "standard_capacity", "exam_capacity")
     search_fields = ("space__short_name", "code")
