@@ -3,6 +3,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from app.academics.models.college import College
+from app.shared.management.populate_helpers.auth import (
+    ensure_role_groups,
+    ensure_superuser,
+    upsert_test_users_and_roles,
+)
 from app.spaces.admin.resources import RoomResource
 from django.core.management.base import BaseCommand, CommandParser
 from django.db import transaction
@@ -27,6 +33,8 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args: Any, **options: Any) -> None:
+        ensure_superuser(self)
+
         path = Path(options["file_path"])
         if not path.exists():
             raise FileNotFoundError(str(path))
@@ -65,4 +73,9 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR(f"{key} import failed: {exc}"))
                 continue
 
+
             self.stdout.write(self.style.SUCCESS(f"{key} import completed."))
+        # groups = ensure_role_groups()  # returns {"student": Group, …}
+        # colleges = {c.code: c for c in College.objects.all()}
+        # upsert_test_users_and_roles(self, colleges, groups)
+
