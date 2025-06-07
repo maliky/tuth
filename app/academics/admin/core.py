@@ -27,6 +27,7 @@ from .resources import (
 
 @admin.register(Course)
 class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+    """Admin interface configuration for :class:`~app.academics.models.Course`."""
     resource_class = CourseResource
     list_display = ("code", "title", "credit_hours", "college")
     list_filter = ("curricula__college", "curricula")
@@ -63,6 +64,7 @@ class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 @admin.register(Prerequisite)
 class PrerequisiteAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+    """Admin interface for :class:`~app.academics.models.Prerequisite`."""
     resource_class = PrerequisiteResource
     actions = [update_curriculum]
     list_display = ("course", "prerequisite_course", "curriculum")
@@ -73,6 +75,7 @@ class PrerequisiteAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 @admin.register(Curriculum)
 class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+    """Admin options for :class:`~app.academics.models.Curriculum`."""
     resource_class = CurriculumResource
     # add the action button on the import form
     import_form_class = BulkActionImportForm
@@ -90,6 +93,7 @@ class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 @admin.register(College)
 class CollegeAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+    """Admin interface for :class:`~app.academics.models.College`."""
     resource_class = CollegeResource
     list_display = ("code", "fullname", "current_dean")
     search_fields = ("code", "fullname")
@@ -97,6 +101,7 @@ class CollegeAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 @admin.register(CurriculumCourse)
 class CurriculumCourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+    """Admin screen for :class:`~app.academics.models.CurriculumCourse`."""
     resource_class = CurriculumCourseResource
     list_display = ("curriculum", "course")
     autocomplete_fields = ("curriculum", "course")

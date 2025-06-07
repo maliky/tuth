@@ -9,6 +9,7 @@ from .models import Reservation
 
 @admin.register(Reservation)
 class ReservationAdmin(admin.ModelAdmin):
+    """Admin interface for :class:`~app.timetable.models.Reservation`."""
     list_display = (
         "student",
         "section",

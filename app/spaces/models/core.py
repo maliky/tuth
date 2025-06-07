@@ -28,6 +28,7 @@ class Room(models.Model):
 
     @property
     def full_code(self) -> str:
+        """Full room identifier combining space short name and code."""
         return f"{self.space}-{self.code}"
 
     def __str__(self) -> str:  # pragma: no cover
