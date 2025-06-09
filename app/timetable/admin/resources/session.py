@@ -7,13 +7,13 @@ from app.timetable.models.session import Session
 
 class SessionResource(resources.ModelResource):
     room = fields.Field(
-        column_name="location",
+        column_name="room",
         attribute="room",
         widget=RoomWidget(),
     )
     schedule = fields.Field(
         column_name="weekday",
-        attribute="weekday",
+        attribute="room",
         widget=WeekdayWidget(),
     )
 

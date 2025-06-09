@@ -63,15 +63,16 @@ class ScheduleWidget(widgets.ForeignKeyWidget):
 class WeekdayWidget(widgets.IntegerWidget):
     """Accept either the integer 1-7 or the English weekday name."""
 
-    def clean(self, value, row=None, *args, **kwargs) -> str | None:
+    def clean(self, value, row=None, *args, **kwargs) -> str | int | None:
         if not value:
             return None
 
-        _map = {label.lower(): num for num, label in WEEKDAYS_NUMBER.choices}
         token = str(value).strip().lower()
 
         if token.isdigit():
             return int(token)
 
+        _map = {label.lower(): num for num, label in WEEKDAYS_NUMBER.choices}
         assert token in _map, f"{token} is not in {_map}"
+
         return _map[token]
