@@ -38,18 +38,19 @@ class RoomWidget(widgets.ForeignKeyWidget):
         self.space_w = SpaceWidget()
 
     def clean(self, value, row=None, *args, **kwargs) -> Space | None:
-        if not value:
-            return None
+
+        tba_space, _ = Space.objects.get_or_create(
+            code="TBA", defaults={"full_name": "To Be Announced"}
+        )
 
         room_code = value.strip()
 
-        assert "space" in row, f"'space' column not found in {row.keys()}"
-        space_code = row.get("space", "").strip()
+        space_code = (row or {}).get("space", "").strip()
         space = self.space_w.clean(value=space_code, row=row)
 
         room, _ = Room.objects.get_or_create(
-            space=space,
-            code=room_code,
+            space=space or tba_space,
+            code=room_code or "TBA",
         )
 
         return room

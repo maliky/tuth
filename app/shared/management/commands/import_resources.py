@@ -48,8 +48,8 @@ class Command(BaseCommand):
             # ("Room", RoomResource),  # and Space
             # ("CurriculumCourse", CurriculumCourseResource),
             # ("Semester", SemesterResource),  # and Academic year
-            ("Session", SessionResource),  # and Faculty, Room and Space
-            # ("Section", SectionResource)
+            # ("Session", SessionResource),  # and Faculty, Room and Space
+            ("Section", SectionResource)
         ]
 
         for key, ResourceClass in RESOURCES_MAP:

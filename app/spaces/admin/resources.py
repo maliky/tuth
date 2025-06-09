@@ -6,27 +6,12 @@ from app.spaces.models import Room
 from .widgets import SpaceWidget
 
 
-# class SpaceResource(resources.ModelResource):
-#     """Simple import-export resource for Space."""
-
-#     space = fields.Field(
-#         column_name="space",
-#         attribute="code",
-#     )
-
-#     class Meta:
-#         model = Space
-#         import_id_fields = ("code",)
-#         fields = ("code", "full_name")
-#         skip_unchanged = True
-
-
 class RoomResource(resources.ModelResource):
     """Standard import-export resource for Room with associated Space."""
 
     space = fields.Field(
         column_name="space",
-        attribute="code",
+        attribute="space",
         widget=SpaceWidget(),
     )
 

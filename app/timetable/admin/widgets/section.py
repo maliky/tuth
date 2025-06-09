@@ -8,7 +8,7 @@ from app.timetable.models.section import Section
 
 
 class SectionWidget(widgets.ForeignKeyWidget):
-    "Parse the necessary CSV columns (no section code) to get a section object."
+    "Parse the necessary CSV columns (no, section code) to get a section object."
 
     def __init__(self):
         super().__init__(Section)  # using pk until export is done

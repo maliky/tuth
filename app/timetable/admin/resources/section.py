@@ -4,7 +4,7 @@ from import_export import fields, resources
 
 from app.academics.admin.widgets import CourseWidget
 from app.people.admin.widgets import FacultyProfileWidget
-from app.timetable.admin.widgets import SemesterWidget, SessionWidget
+from app.timetable.admin.widgets import SemesterWidget
 from app.timetable.models.section import Section
 
 
@@ -21,12 +21,6 @@ class SectionResource(resources.ModelResource):
         widget=CourseWidget(),
     )
     number = fields.Field(column_name="section_no", attribute="number")
-    session = fields.Field(
-        column_name="weekday",
-        attribute="session",
-        widget=SessionWidget(),
-    )
-
     faculty = fields.Field(
         column_name="faculty",
         attribute="faculty",
