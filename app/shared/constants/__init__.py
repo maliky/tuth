@@ -46,7 +46,7 @@ for s in [
 STATUS_CHOICES = list(set(_raw))
 
 
-__ALL__ = [
+__all__ = [
     "APPROVED",
     "CLEARANCE_CHOICES",
     "COLLEGE_CHOICES",
@@ -68,4 +68,5 @@ __ALL__ = [
     "TUITION_RATE_PER_CREDIT",
     "UNDEFINED_CHOICES",
     "UserRole",
+    "USER_ROLES",
 ]

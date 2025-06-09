@@ -11,8 +11,10 @@ from django.db import models
 from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
 
+from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
 from app.shared.mixins import StatusableMixin
+from app.shared.constants import TEST_PW
 
 
 def photo_upload_to(instance: "BaseProfile", filename: str) -> str:
@@ -165,3 +167,33 @@ class DonorProfile(BaseProfile):
     class Meta(BaseProfile.Meta):
         verbose_name = _("donor profile")
         verbose_name_plural = _("donor profiles")
+
+
+def _ensure_faculty(name: str, college: "College") -> FacultyProfile:
+    """Return a faculty profile for ``name`` linked to ``college``."""
+
+    parts = name.strip().split()
+    if len(parts) < 2:
+        raise ValueError("Full name must include first and last name")
+
+    first, last = parts[0], parts[-1]
+    initials = "".join(p[0] for p in parts[:-1]) or first[0]
+    username = f"{initials.lower()}.{last.lower()}"
+
+    user, created = User.objects.get_or_create(
+        username=username,
+        defaults={"first_name": first, "last_name": last},
+    )
+    if created:
+        user.set_password(TEST_PW)
+        user.save()
+
+    profile, _ = FacultyProfile.objects.get_or_create(
+        user=user,
+        defaults={"college": college, "staff_id": f"TU-{username}"},
+    )
+    if profile.college != college:
+        profile.college = college
+        profile.save(update_fields=["college"])
+
+    return profile
