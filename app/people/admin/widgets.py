@@ -172,4 +172,4 @@ class FacultyProfileWidget(widgets.ForeignKeyWidget):
     def render(self, value, obj=None) -> str:
         if not value:
             return ""
-        return value.full_name
+        return value.long_name

@@ -49,7 +49,7 @@ export $(grep -v '^#' .env | xargs)  # load variables
 if $RUN_MIGRATIONS; then
     # we start from fresh db
     if [[ $MODE == dev ]]; then
-        python manage reset_db
+        python manage.py reset_db
     elif [[ $MODE == test ]]; then
         sudo find . -path "*migrations*" -type f -delete
         sudo find . -type d -name "__pycache__" -exec rm -rf {} +        

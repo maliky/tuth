@@ -10,7 +10,7 @@ from app.timetable.models.section import Section
 
 class SectionResource(resources.ModelResource):
     semester = fields.Field(
-        column_name="semester",
+        column_name="semester_no",
         attribute="semester",
         widget=SemesterWidget(),
     )
@@ -43,4 +43,4 @@ class SectionResource(resources.ModelResource):
         model = Section
         import_id_fields = ("number", "course", "semester", "faculty")
         skip_unchanged = True
-        bulk_import = True
+        use_bulk = True

@@ -34,7 +34,7 @@ class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
     search_fields = (
         "^course__code",  # fast starts-with on indexed code
-        "faculty__full_name",  # or __first_name / __last_name
+        "faculty__long_name",  # or __first_name / __last_name
     )
 
     # If you want to prefetch all the Session → Room relationships:

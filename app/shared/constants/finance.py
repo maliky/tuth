@@ -12,7 +12,7 @@ class StatusClearance(models.TextChoices):
 
 class PaymentMethod(models.TextChoices):
     CASH = "cash", "Cash"
-    CRYPTO = "crytpo", "Crypto (ADA)"
+    CRYPTO = "crypto", "Crypto (ADA)"
     MOBILE_MONEY = "mobile_money", "Mobile Money"
     WIRE = "wire", "Wire"
 
