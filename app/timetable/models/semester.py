@@ -43,4 +43,4 @@ class Semester(models.Model):
         ordering = ["start_date"]
 
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.academic_year.short_name}_Sem{self.number}"
+        return f"{self.academic_year.code}_Sem{self.number}"

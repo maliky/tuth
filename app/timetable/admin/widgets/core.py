@@ -35,7 +35,7 @@ class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
     def before_import_row(self, row, **kwargs):
         # auto-create AY if missing
         short = row["academic_year"]
-        if not AcademicYear.objects.filter(short_name=short).exists():
+        if not AcademicYear.objects.filter(code=short).exists():
             ys, ye = short.split("-")  # '25-26' -> '25', '26'
             AcademicYear.objects.create(
                 start_date=date(int("20" + ys), 9, 1),
@@ -88,7 +88,7 @@ class SemesterCodeWidget(widgets.ForeignKeyWidget):
         sem_no = int(m.group("num"))
         start_year = int("20" + ay_short.split("-")[0])
         ay, _ = AcademicYear.objects.get_or_create(
-            short_name=ay_short,
+            code=ay_short,
             defaults={"start_date": date(start_year, 8, 11)},
         )
         semester, _ = Semester.objects.get_or_create(

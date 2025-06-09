@@ -88,10 +88,7 @@ class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     inlines = [CurriculumCourseInline]
     # list_selected_relate reduce the number of queries in db
     list_select_related = ("college",)
-    search_fields = (
-        "short_name",
-        "long_name",
-    )
+    search_fields = ("short_name", "long_name")
 
 
 @admin.register(College)
