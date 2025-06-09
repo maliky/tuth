@@ -1,0 +1,52 @@
+from datetime import date
+from pathlib import Path
+from import_export import fields, resources
+
+from app.academics.admin.widgets import CourseWidget
+from app.people.admin.widgets import FacultyProfileWidget
+from app.timetable.admin.widgets import SemesterWidget, SessionWidget
+from app.timetable.models.section import Section
+
+
+class SectionResource(resources.ModelResource):
+    semester = fields.Field(
+        column_name="semester",
+        attribute="semester",
+        widget=SemesterWidget(),
+    )
+    course = fields.Field(
+        # could be other course columns
+        column_name="course_code",
+        attribute="course",
+        widget=CourseWidget(),
+    )
+    number = fields.Field(column_name="section_no", attribute="number")
+    session = fields.Field(
+        column_name="weekday",
+        attribute="session",
+        widget=SessionWidget(),
+    )
+
+    faculty = fields.Field(
+        column_name="faculty",
+        attribute="faculty",
+        widget=FacultyProfileWidget(),
+    )
+
+    def save_instance(self, instance, is_create, row, **kwargs):
+        """Wrap save to log errors during import."""
+        try:
+            return super().save_instance(instance, is_create, row, **kwargs)
+        except Exception as exc:  # pragma: no cover - log & abort
+            log_dir = Path("logs")
+            log_dir.mkdir(exist_ok=True)
+            logfile = log_dir / f"import_{date.today():%Y%m%d}.log"
+            with logfile.open("a") as fh:
+                fh.write(f"{exc}\n")
+            raise
+
+    class Meta:
+        model = Section
+        import_id_fields = ("number", "course", "semester", "faculty")
+        skip_unchanged = True
+        bulk_import = True
