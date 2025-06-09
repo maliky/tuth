@@ -2,23 +2,30 @@
 
 from __future__ import annotations
 
-from django.core.exceptions import ValidationError
-from django.db import models
-from app.people.models import FacultyProfile
 from typing import Optional, cast
 
-from app.shared.constants import COLLEGE_CHOICES
+from django.core.exceptions import ValidationError
+from django.db import models
+
+from app.people.models import FacultyProfile
+from app.shared.constants.academics import CollegeCodeChoices, CollegeLongNameChoices
 
 
 class College(models.Model):
     """Institutional unit responsible for a set of programmes."""
 
-    code = models.CharField(max_length=4, unique=True)
-    fullname = models.CharField(max_length=255)
+    # there should be no constraint here as the VPA may need to
+    # rework the name of the colleges from time to time.
+    code = models.CharField(
+        max_length=4,
+        choices=CollegeCodeChoices.choices,
+        default=CollegeCodeChoices.COAS,
+    )
 
-    def clean(self) -> None:
-        if (self.code, self.fullname) not in COLLEGE_CHOICES:
-            raise ValidationError("Invalid (code, fullname) pair for College.")
+    long_name = models.CharField(
+        max_length=50,
+        choices=CollegeLongNameChoices.choices,
+    )
 
     @property
     def current_dean(self) -> Optional[FacultyProfile]:
@@ -39,3 +46,14 @@ class College(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.code}"
+
+    def clean(self) -> None:
+        if self.code and self.long_name:
+            if self.code != self.long_name:
+                raise ValidationError(
+                    f"College code {self.code} and long name {self.long_name} must have the same key."
+                )
+
+    def save(self, *args, **kwargs):
+        self.long_name = CollegeLongNameChoices[self.code]
+        super().save(*args, **kwargs)

@@ -1,9 +1,15 @@
 """Initialization for the admin package."""
 
-from .core import AcademicYearAdmin, SectionAdmin, SemesterAdmin
-from .inlines import SemesterInline, SectionInline, ReservationInline
-from .resources import AcademicYearResource, SectionResource, SemesterResource
-from .schedule import ScheduleAdmin
+from app.timetable.admin.registers.core import (
+    AcademicYearAdmin,
+    SemesterAdmin,
+)
+from app.timetable.admin.registers.section import SectionAdmin
+from app.timetable.admin.registers.session import SessionAdmin
+from app.timetable.admin.resources.core import AcademicYearResource, SemesterResource
+from app.timetable.admin.resources.section import SectionResource
+
+from .inlines import ReservationInline, SectionInline, SemesterInline
 
 __all__ = [
     "AcademicYearAdmin",
@@ -15,5 +21,5 @@ __all__ = [
     "AcademicYearResource",
     "SemesterResource",
     "ReservationInline",
-    "ScheduleAdmin",
+    "SessionAdmin",
 ]

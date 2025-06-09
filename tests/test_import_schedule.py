@@ -3,7 +3,7 @@
 import io
 import pytest
 from django.core.management import call_command
-from app.timetable.models import Section, Schedule, Semester
+from app.timetable.models import Section, Session, Semester
 from app.academics.models import College
 
 
@@ -19,7 +19,7 @@ def test_import_schedule_creates_section(tmp_path):
     call_command("import_schedule", str(path))
 
     section = Section.objects.get()
-    schedule = Schedule.objects.get()
+    schedule = Session.objects.get()
 
     assert section.schedule == schedule
     assert section.start_date.isoformat() == "2024-09-01"

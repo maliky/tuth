@@ -99,8 +99,8 @@ class CollegeAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """Admin interface for :class:`~app.academics.models.College`."""
 
     resource_class = CollegeResource
-    list_display = ("code", "fullname", "current_dean")
-    search_fields = ("code", "fullname")
+    list_display = ("code", "long_name", "current_dean")
+    search_fields = ("code", "long_name")
 
 
 @admin.register(CurriculumCourse)

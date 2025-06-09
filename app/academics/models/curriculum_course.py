@@ -10,8 +10,6 @@ from app.shared.enums import CREDIT_NUMBER
 class CurriculumCourse(models.Model):
     """
     Junction table between Curriculum and Course.
-    You can extend it with fields such as `semester_level`,
-    `is_required`, `order_in_semester`,
     """
 
     curriculum = models.ForeignKey(

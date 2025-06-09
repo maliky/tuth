@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 
 from app.academics.models import College, Course
 from app.people.models import StaffProfile, StudentProfile
-from app.timetable.models import AcademicYear, Schedule, Section, Semester
+from app.timetable.models import AcademicYear, Session, Section, Semester
 
 User = get_user_model()
 
@@ -52,7 +52,7 @@ def semester(academic_year):
 
 @pytest.fixture
 def schedule():
-    return Schedule.objects.create(weekday=1)
+    return Session.objects.create(weekday=1)
 
 
 # ─── user / profile helpers ──────────────────────────────────────────────────

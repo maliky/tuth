@@ -50,8 +50,8 @@ class BaseProfile(StatusableMixin, models.Model):
     photo = models.ImageField(upload_to=photo_upload_to, null=True, blank=True)
 
     @property
-    def full_name(self) -> str:
-        fullname = " ".join(
+    def long_name(self) -> str:
+        long_name = " ".join(
             [
                 self.name_prefix,
                 self.user.first_name,
@@ -60,7 +60,7 @@ class BaseProfile(StatusableMixin, models.Model):
                 self.name_suffix,
             ]
         ).strip()
-        return fullname
+        return long_name
 
     @property
     def age(self) -> int | None:
@@ -79,7 +79,7 @@ class BaseProfile(StatusableMixin, models.Model):
 
     # convenience for admin lists / logs
     def __str__(self) -> str:  # pragma: no cover
-        return self.full_name
+        return self.long_name
 
     class Meta:
         abstract = True
@@ -144,10 +144,10 @@ class FacultyProfile(StaffProfile):
         """
         Return all Curriculum instances in which this faculty is teaching.
 
-        Traverses: Curriculum → courses → sections → schedule → faculty
+        Traverses: Curriculum → courses → sections → session → faculty
         """
         return Curriculum.objects.filter(
-            courses__sections__schedule__faculty=self
+            courses__sections__session__faculty=self
         ).distinct()
 
     class Meta(StaffProfile.Meta):

@@ -1,20 +1,24 @@
 """spaces.Resources module."""
 
 from import_export import fields, resources
-from app.spaces.models import Space, Room
+from app.spaces.models import Room
 
 from .widgets import SpaceWidget
 
 
-class SpaceResource(resources.ModelResource):
-    """Simple import-export resource for Space."""
+# class SpaceResource(resources.ModelResource):
+#     """Simple import-export resource for Space."""
 
-    class Meta:
-        model = Space
-        import_id_fields = ("short_name",)
-        fields = ("short_name", "full_name")
-        skip_unchanged = True
-        report_skipped = True
+#     space = fields.Field(
+#         column_name="space",
+#         attribute="code",
+#     )
+
+#     class Meta:
+#         model = Space
+#         import_id_fields = ("code",)
+#         fields = ("code", "full_name")
+#         skip_unchanged = True
 
 
 class RoomResource(resources.ModelResource):
@@ -22,8 +26,8 @@ class RoomResource(resources.ModelResource):
 
     space = fields.Field(
         column_name="space",
-        attribute="space",
-        widget=SpaceWidget(model=Space, field="short_name"),
+        attribute="code",
+        widget=SpaceWidget(),
     )
 
     code = fields.Field(
@@ -31,7 +35,6 @@ class RoomResource(resources.ModelResource):
         attribute="code",
     )
 
-    # ── add capacities if they’re in your CSV (optional) ────────────
     standard_capacity = fields.Field(column_name="standard_capacity")
     exam_capacity = fields.Field(column_name="exam_capacity")
 
@@ -40,4 +43,3 @@ class RoomResource(resources.ModelResource):
         import_id_fields = ("space", "code")
         fields = ("space", "code", "standard_capacity", "exam_capacity")
         skip_unchanged = True
-        report_skipped = True

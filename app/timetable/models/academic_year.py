@@ -12,16 +12,21 @@ from django.db.models.functions import ExtractYear
 class AcademicYear(models.Model):
     """Top-level period covering two consecutive semesters."""
 
+    code = models.CharField(max_length=5, editable=False, unique=True)
+    long_name = models.CharField(max_length=9, editable=False, unique=True)
     start_date = models.DateField(unique=True)
     end_date = models.DateField(unique=True)
-    long_name = models.CharField(max_length=9, editable=False, unique=True)
-    short_name = models.CharField(max_length=5, editable=False, unique=True)
 
     def clean(self) -> None:
         if self.start_date.month not in (7, 8, 9, 10):
             raise ValidationError("Start date must be in July–October.")
+        if self.start_date:
+            if self.end_date:
+                assert self.end_date.year > self.start_date.year
 
     def save(self, *args, **kwargs) -> None:
+
+        # setting a default for the end_year
         ys = self.start_date.year
 
         if self.start_date and not self.end_date:
@@ -30,7 +35,8 @@ class AcademicYear(models.Model):
 
         ye = ys + 1
         self.long_name = f"{ys}/{ye}"
-        self.short_name = f"{str(ys)[-2:]}-{str(ye)[-2:]}"
+        self.code = f"{str(ys)[-2:]}-{str(ye)[-2:]}"
+
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:  # pragma: no cover

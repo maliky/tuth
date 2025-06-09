@@ -1,6 +1,6 @@
 """Core module."""
 
-from app.timetable.admin.inlines import ScheduleInline
+from app.timetable.admin.inlines import SessionInline
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
@@ -13,8 +13,8 @@ from app.spaces.models import Space, Room
 class SpaceAdmin(GuardedModelAdmin):
     """Admin management for :class:`~app.spaces.models.Space`."""
 
-    search_fields = ("short_name", "full_name")
-    list_display = ("short_name", "full_name")
+    search_fields = ("code", "full_name")
+    list_display = ("code", "full_name")
 
 
 @admin.register(Room)
@@ -25,4 +25,4 @@ class RoomAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     list_display = ("code", "space", "standard_capacity", "exam_capacity")
     search_fields = ("space__short_name", "code")
     autocomplete_fields = ["space"]
-    inlines = [ScheduleInline]
+    inlines = [SessionInline]

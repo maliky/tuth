@@ -17,14 +17,14 @@ from tablib import Dataset
 
 from app.academics.admin.resources import CourseResource, CurriculumCourseResource
 from app.timetable.admin.resources import (
-    ScheduleResource,
+    SessionResource,
     SectionResource,
     SemesterResource,
 )
 
 
 class Command(BaseCommand):
-    """Load sections and schedules from ``cleaned_tscc.csv`` or provided file."""
+    """Load sections and sessions from ``cleaned_tscc.csv`` or provided file."""
 
     help = "Import resources from a CSV file"
 
@@ -46,12 +46,12 @@ class Command(BaseCommand):
         dataset = Dataset().load(open(path).read(), format="csv")
 
         RESOURCES_MAP: list[tuple[str, type[resources.ModelResource]]] = [
-            # ("Course", CourseResource),  # and College
+            ("Course", CourseResource),  # and College
             # ("Room", RoomResource),  # and Space
             # ("CurriculumCourse", CurriculumCourseResource),
             # ("Semester", SemesterResource),  # and Academic year
-            # ("Schedule", ScheduleResource),  # and Faculty, Room and Space
-            ("Section", SectionResource)
+            # ("Session", SessionResource),  # and Faculty, Room and Space
+            # ("Section", SectionResource)
         ]
 
         for key, ResourceClass in RESOURCES_MAP:

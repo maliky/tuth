@@ -14,48 +14,28 @@ if TYPE_CHECKING:
 class Section(models.Model):
     """
     A single course‐offering in a given Semester.
-    We’ll now allow each Section to have multiple Schedule rows.
+    A section may have several session row
     """
 
-    number = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
     semester = models.ForeignKey("timetable.Semester", on_delete=models.PROTECT)
-    course = models.ForeignKey(
-        "academics.Course", related_name="sections", on_delete=models.PROTECT
+    course = models.ForeignKey("academics.Course", on_delete=models.PROTECT)
+    number = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
+    session = models.ForeignKey(
+        "timetable.Session", on_delete=models.PROTECT, null=True, blank=True
     )
-    start_date = models.DateField(null=True, blank=True)
-    end_date = models.DateField(null=True, blank=True)
-
-    current_registrations = models.PositiveIntegerField(default=0, editable=False)
     faculty = models.ForeignKey(
         "people.FacultyProfile",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name="faculty",
-        # limit_choices_to={
-        #     "user__role_assignments__role__in": [
-        #         "faculty",
-        #         "lecturer",
-        #         "assistant_professor",
-        #         "dean",
-        #         "chair",
-        #         "associate_professor",
-        #         "professor",
-        #         "vpaa",
-        #     ]
-        # },
     )
+
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+
+    current_registrations = models.PositiveIntegerField(default=0, editable=False)
     # to be defined by Admin & VPA
     max_seats = models.PositiveIntegerField(default=30, validators=[MinValueValidator(3)])
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["course", "semester", "number"],
-                name="uniq_section_per_course_semester",
-            )
-        ]
-        ordering = ["semester", "course", "number"]
 
     # ---------- display helpers ----------
     @property
@@ -63,8 +43,7 @@ class Section(models.Model):
         """
         Return a list of all Room instances in which this section meets.
         """
-        # “schedules” is the related_name on Schedule → Section
-        return [s.room for s in self.schedules.all() if s.room]
+        return [s.room for s in self.session_set.all() if s.room]
 
     @property
     def space_codes(self) -> str:
@@ -93,3 +72,13 @@ class Section(models.Model):
         if self.end_date is not None:
             if self.start_date:
                 assert self.start_date < self.end_date
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["semester", "course", "number", "session"],
+                name="uniq_section_per_course_session",
+            )
+        ]
+        ordering = ["semester", "course", "number", "session"]
+        indexes = [models.Index(fields=["semester", "course", "number"])]

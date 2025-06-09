@@ -8,11 +8,11 @@ from django.db import models
 class Space(models.Model):
     """Physical structure that groups multiple rooms."""
 
-    short_name = models.CharField(max_length=15, unique=True, db_index=True)
+    code = models.CharField(max_length=15, unique=True, db_index=True)
     full_name = models.CharField(max_length=128, blank=True)
 
     def __str__(self) -> str:  # pragma: no cover
-        return self.short_name
+        return self.code
 
 
 class Room(models.Model):

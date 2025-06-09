@@ -4,8 +4,7 @@ from django.contrib import messages
 from import_export import fields, resources, widgets
 
 from app.academics.admin.widgets import (
-    CollegeWidget,
-    CourseCodeWidget,
+    CourseWidget,
     CourseManyWidget,
     CurriculumWidget,
 )
@@ -44,9 +43,9 @@ class CurriculumResource(resources.ModelResource):
 
     # ----- FKs ---------------------------------------------------------------
     college = fields.Field(
-        column_name="college",
+        column_name="college_code",
         attribute="college",
-        widget=CollegeWidget(model=College, field="code"),  # auto-creates + logs
+        widget=widgets.ForeignKeyWidget(College, field="code"),
     )
 
     # ----- synthetic M2M list -----------------------------------------------
@@ -148,7 +147,7 @@ class CourseResource(resources.ModelResource):
     college = fields.Field(
         column_name="college",
         attribute="college",
-        widget=CollegeWidget(College, field="code"),  # "CAFS" → <College id=…>
+        widget=widgets.ForeignKeyWidget(College, field="code"),
     )
 
     # ─── many-to-many prerequisites – semicolon-separated list of codes ──────
@@ -185,17 +184,13 @@ class PrerequisiteResource(resources.ModelResource):
     curriculum = fields.Field(
         column_name="curriculum",
         attribute="curriculum",
-        widget=widgets.ForeignKeyWidget(Curriculum, field="short_name"),
+        widget=CurriculumWidget(),
     )
     course = fields.Field(
-        column_name="course_long_code",
-        attribute="course",
-        widget=widgets.ForeignKeyWidget(Course, field="code"),
+        column_name="course_long_code", attribute="course", widget=CourseWidget()
     )
     prerequisite_course = fields.Field(
-        column_name="prerequisite",
-        attribute="prerequisite_course",
-        widget=widgets.ForeignKeyWidget(Course, field="code"),
+        column_name="prerequisite", attribute="prerequisite_course", widget=CourseWidget()
     )
 
     class Meta:
@@ -212,7 +207,7 @@ class CollegeResource(resources.ModelResource):
         import_id_fields = ("code",)
         fields = (
             "code",
-            "fullname",
+            "long_name",
         )
 
 
@@ -222,12 +217,12 @@ class CurriculumCourseResource(resources.ModelResource):
     curriculum = fields.Field(
         column_name="curriculum",
         attribute="curriculum",
-        widget=CurriculumWidget(model=Curriculum, field="short_name"),
+        widget=CurriculumWidget(),
     )
     course = fields.Field(
         column_name="course_long_code",
         attribute="course",
-        widget=CourseCodeWidget(model=Course, field="code"),
+        widget=CourseWidget(),
     )
 
     class Meta:

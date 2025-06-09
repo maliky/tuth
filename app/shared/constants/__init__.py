@@ -6,7 +6,7 @@ from typing import List, Tuple
 from app.shared.constants.timetable import StatusReservation
 
 from .academics import (
-    COLLEGE_CHOICES,
+    CollegeCodeChoices,
     COURSE_PATTERN,
     MAX_STUDENT_CREDITS,
     StatusCurriculum,

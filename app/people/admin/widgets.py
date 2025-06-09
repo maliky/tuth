@@ -15,6 +15,9 @@ class UserWidget(widgets.ForeignKeyWidget):
     Take a name and create a user with defaults
     """
 
+    def __init__(self):
+        super().__init__(User, field="username")
+
     def clean(self, value, row=None, *args, **kwargs) -> User | None:
         if not value:
             return None
@@ -70,11 +73,11 @@ class FacultyProfileWidget(widgets.ForeignKeyWidget):
     FIRST_PATTERN = r"^([A-Za-z-]+)"
     LAST_PATTERN = r"([A-Za-z-]+)$"
 
-    def __init__(self, college_field="college", **kwargs):
+    def __init__(self, college_field="college"):
         """
         college_field: name of the CSV column that holds the college code.
         """
-        super().__init__(**kwargs)
+        super().__init__(FacultyProfile, field="staff_id")
         self.college_field = college_field
 
     def clean(self, value, row=None, *args, **kwargs) -> FacultyProfile | None:
@@ -100,12 +103,12 @@ class FacultyProfileWidget(widgets.ForeignKeyWidget):
             raw = re.sub(self.PREFIX_PATTERN, "", raw).strip()
 
         # Extract first name
-        first_name=""
-        last_name=""
-        
+        first_name = ""
+        last_name = ""
+
         m = re.match(self.FIRST_PATTERN, raw)
         if m:
-            first_name = m.group(1) 
+            first_name = m.group(1)
             raw = raw[len(first_name) :].strip()
 
         m = re.search(self.LAST_PATTERN, raw)
@@ -169,12 +172,4 @@ class FacultyProfileWidget(widgets.ForeignKeyWidget):
     def render(self, value, obj=None) -> str:
         if not value:
             return ""
-        # show “Prefix First Middle Last Suffix”
-        parts = [
-            value.name_prefix,
-            value.first_name,
-            value.middle_name,
-            value.last_name,
-            value.name_suffix,
-        ]
-        return " ".join(p for p in parts if p).strip()
+        return value.full_name

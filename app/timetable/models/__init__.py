@@ -1,6 +1,6 @@
 """Initialization for the models package."""
 
-from .schedule import Schedule
+from .session import Session
 from .academic_year import AcademicYear
 from .reservation import Reservation
 from .section import Section
@@ -12,7 +12,7 @@ from .validator import CreditLimitValidator
 __all__ = [
     "AcademicYear",
     "Term",
-    "Schedule",
+    "Session",
     "Semester",
     "Section",
     "Reservation",

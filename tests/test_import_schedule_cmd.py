@@ -5,7 +5,7 @@ import tempfile
 import pytest
 from django.core.management import call_command
 from app.spaces.models import Location, Room
-from app.timetable.models import Section, Schedule
+from app.timetable.models import Section, Session
 
 
 @pytest.mark.django_db
@@ -22,7 +22,7 @@ def test_import_schedule_creates_schedule_and_building(tmp_path):
     section = Section.objects.get(course__code="MATH101")
     assert section.schedule == "Mon 08:00-09:00"
 
-    sched = Schedule.objects.get()
+    sched = Session.objects.get()
     assert sched.weekday == 1
     assert sched.start_time.strftime("%H:%M") == "08:00"
     assert sched.end_time.strftime("%H:%M") == "09:00"

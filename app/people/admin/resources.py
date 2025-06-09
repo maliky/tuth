@@ -1,6 +1,5 @@
 """Resources module."""
 
-from django.contrib.auth.models import User
 from import_export import fields, resources
 
 from app.people.admin.widgets import UserWidget
@@ -17,9 +16,7 @@ class FacultyResource(resources.ModelResource):
     user = fields.Field(
         column_name="faculty",
         attribute="user",
-        widget=UserWidget(
-            model=User, field="faculty"
-        ),  # not sure about the field value here.
+        widget=UserWidget(),
     )
 
     class Meta:
