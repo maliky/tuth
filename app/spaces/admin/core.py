@@ -23,6 +23,6 @@ class RoomAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
     resource_class = RoomResource
     list_display = ("code", "space", "standard_capacity", "exam_capacity")
-    search_fields = ("space__short_name", "code")
+    search_fields = ("space__code", "code")
     autocomplete_fields = ["space"]
     inlines = [SessionInline]

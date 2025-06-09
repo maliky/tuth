@@ -3,6 +3,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from django.core.management.base import BaseCommand, CommandParser
+from django.db import transaction
+from import_export import resources
+from tablib import Dataset
+
+from app.academics.admin.resources import CourseResource, CurriculumCourseResource
 from app.academics.models.college import College
 from app.shared.management.populate_helpers.auth import (
     ensure_role_groups,
@@ -10,17 +16,9 @@ from app.shared.management.populate_helpers.auth import (
     upsert_test_users_and_roles,
 )
 from app.spaces.admin.resources import RoomResource
-from django.core.management.base import BaseCommand, CommandParser
-from django.db import transaction
-from import_export import resources
-from tablib import Dataset
-
-from app.academics.admin.resources import CourseResource, CurriculumCourseResource
-from app.timetable.admin.resources import (
-    SessionResource,
-    SectionResource,
-    SemesterResource,
-)
+from app.timetable.admin.resources.core import SemesterResource
+from app.timetable.admin.resources.section import SectionResource
+from app.timetable.admin.resources.session import SessionResource
 
 
 class Command(BaseCommand):

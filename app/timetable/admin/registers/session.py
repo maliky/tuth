@@ -14,8 +14,8 @@ class SessionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
     resource_class = SessionResource
     list_display = ("weekday", "start_time", "end_time", "room")
-    list_filter = ("weekday", "room")
-    autocomplete_fields = "room"
+    list_filter = ("schedule__weekday", "room")
+    autocomplete_fields = ("room",)
 
 
 @admin.register(Schedule)
@@ -24,6 +24,5 @@ class ScheduleAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
     resource_class = Schedule
     list_display = ("weekday", "start_time", "end_time")
-    list_filter = "weekday"
-    search_fields = ("room",)
-    autocomplete_fields = "room"
+    list_filter = ("weekday",)
+    search_fields = ("weekday",)

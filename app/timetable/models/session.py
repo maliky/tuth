@@ -39,7 +39,18 @@ class Session(models.Model):
 
     room = models.ForeignKey("spaces.Room", on_delete=models.PROTECT)
     schedule = models.ForeignKey(
-        "timetable.Schedule", on_delete=models.CASCADE, null=True, blank=True
+        "timetable.Schedule",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="schedules",
+    )
+    section = models.ForeignKey(
+        "timetable.Section",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="sessions",
     )
 
     @property

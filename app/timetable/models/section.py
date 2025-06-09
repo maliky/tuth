@@ -20,9 +20,6 @@ class Section(models.Model):
     semester = models.ForeignKey("timetable.Semester", on_delete=models.PROTECT)
     course = models.ForeignKey("academics.Course", on_delete=models.PROTECT)
     number = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
-    session = models.ForeignKey(
-        "timetable.Session", on_delete=models.PROTECT, null=True, blank=True
-    )
     faculty = models.ForeignKey(
         "people.FacultyProfile",
         null=True,
@@ -43,7 +40,7 @@ class Section(models.Model):
         """
         Return a list of all Room instances in which this section meets.
         """
-        return [s.room for s in self.session_set.all() if s.room]
+        return [s.room for s in self.sessions.all() if s.room]
 
     @property
     def space_codes(self) -> str:
@@ -76,9 +73,9 @@ class Section(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["semester", "course", "number", "session"],
-                name="uniq_section_per_course_session",
+                fields=["semester", "course", "number"],
+                name="uniq_section_per_course",
             )
         ]
-        ordering = ["semester", "course", "number", "session"]
+        ordering = ["semester", "course", "number"]
         indexes = [models.Index(fields=["semester", "course", "number"])]

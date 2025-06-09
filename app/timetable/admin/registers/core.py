@@ -25,5 +25,5 @@ class SemesterAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """Admin configuration for :class:`~app.timetable.models.Semester`."""
 
     resource_class = SemesterResource
-    list_filter = ("academic_year",)  # needs academic_year here
-
+    list_filter = ("academic_year",)
+    search_fields = ("academic_year__code", "academic_year__long_name")

@@ -43,4 +43,4 @@ class Room(models.Model):
         indexes = [
             models.Index(fields=["space", "code"]),
         ]
-        ordering = ["space__short_name", "code"]
+        ordering = ["space__code", "code"]
