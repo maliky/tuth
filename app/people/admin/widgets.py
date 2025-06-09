@@ -11,12 +11,15 @@ from app.shared.constants import TEST_PW
 
 
 class UserWidget(widgets.ForeignKeyWidget):
-    """
-    Take a name and create a user with defaults
+    """Create or lookup :class:`User` instances with basic defaults.
+
+    The widget keeps an internal cache so repeated calls with the same name do
+    not hit the database again.
     """
 
     def __init__(self):
         super().__init__(User, field="username")
+        self._cache: dict[str, User] = {}
 
     def clean(self, value, row=None, *args, **kwargs) -> User | None:
         if not value:
@@ -31,6 +34,9 @@ class UserWidget(widgets.ForeignKeyWidget):
         initials = "".join(p[0] for p in parts[:-1]) or first[0]
         username = f"{initials}{last}".lower()
 
+        if username in self._cache:
+            return self._cache[username]
+
         user, created = User.objects.get_or_create(
             username=username,
             defaults={"first_name": first, "last_name": last, "password": TEST_PW},
@@ -39,17 +45,21 @@ class UserWidget(widgets.ForeignKeyWidget):
             user.set_password(TEST_PW)
             user.save()
 
+        self._cache[username] = user
         return user
 
 
 class FacultyProfileWidget(widgets.ForeignKeyWidget):
-    """
-    Given a CSV cell containing something like
-      "Dr. John A. Smith PhD"
-    this widget will:
-      • extract prefix ("Dr"), suffix ("PhD"), middle initials ("A")
-      • extract first ("John") and last ("Smith")
-      • create or retrieve a User(username=initials+".last") and FacultyProfile
+    """Parse a full name and return a ``FacultyProfile`` instance.
+
+    The widget caches lookups so identical rows don't trigger multiple database
+    queries.
+
+    Given a CSV cell containing something like ``"Dr. John A. Smith PhD"`` this
+    widget will:
+      • extract prefix (``"Dr"``), suffix (``"PhD"``), middle initials (``"A"``)
+      • extract first (``"John"``) and last (``"Smith"``)
+      • create or retrieve a ``User`` and ``FacultyProfile`` record
     """
 
     # regex patterns to pull suffixes, prefixes, initials, etc.
@@ -79,10 +89,15 @@ class FacultyProfileWidget(widgets.ForeignKeyWidget):
         """
         super().__init__(FacultyProfile, field="staff_id")
         self.college_field = college_field
+        self._cache: dict[str, FacultyProfile] = {}
 
     def clean(self, value, row=None, *args, **kwargs) -> FacultyProfile | None:
         if not value:
             return None
+
+        key = f"{value.strip()}|{(row.get(self.college_field) or '').strip() if row else ''}"
+        if key in self._cache:
+            return self._cache[key]
 
         raw = value.strip()
 
@@ -167,9 +182,11 @@ class FacultyProfileWidget(widgets.ForeignKeyWidget):
         if updated:
             profile.save(update_fields=["name_prefix", "name_suffix", "middle_name"])
 
+        self._cache[key] = profile
         return profile
 
     def render(self, value, obj=None) -> str:
         if not value:
             return ""
-        return value.long_name
+        return value.long_name  # type: ignore[no-any-return]
+    
