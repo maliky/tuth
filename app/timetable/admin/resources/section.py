@@ -44,4 +44,4 @@ class SectionResource(resources.ModelResource):
         import_id_fields = ("number", "course", "semester")
         fields = ("number", "course", "semester", "faculty")        
         skip_unchanged = True
-        use_bulk = True
+        use_bulk = False  # bypass the signal incrementing the section number

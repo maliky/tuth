@@ -8,7 +8,10 @@ from django.db import transaction
 from import_export import resources
 from tablib import Dataset
 
-from app.academics.admin.resources import CourseResource, CurriculumCourseResource  # noqa: F401
+from app.academics.admin.resources import (
+    CourseResource,
+    CurriculumCourseResource,
+)  # noqa: F401
 from app.academics.models.college import College  # noqa: F401
 from app.shared.management.populate_helpers.auth import (  # noqa: F401
     ensure_role_groups,
@@ -42,6 +45,15 @@ class Command(BaseCommand):
             raise FileNotFoundError(str(path))
 
         dataset = Dataset().load(open(path).read(), format="csv")
+
+        # filter any blank column headers that may appear due to trailing commas
+        while "" in dataset.headers:
+            idx = dataset.headers.index("")
+            dataset.headers.pop(idx)
+            dataset._data = [
+                tuple(value for j, value in enumerate(row) if j != idx)
+                for row in dataset._data
+            ]
 
         RESOURCES_MAP: list[tuple[str, type[resources.ModelResource]]] = [
             # ("Course", CourseResource),  # and College
