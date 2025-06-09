@@ -23,8 +23,8 @@ def expand_course_code(
     assert match is not None, f"Code '{code}' doesn't match expected pattern"
 
     dept, num, college = match.group("dept"), match.group("num"), match.group("college")
-    if row and "college" in row:
-        college = row["college"]
+    if row and "college_code" in row:
+        college = row["college_code"]
     else:
         college = default_college
 

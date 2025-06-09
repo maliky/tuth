@@ -44,10 +44,10 @@ class Command(BaseCommand):
         dataset = Dataset().load(open(path).read(), format="csv")
 
         RESOURCES_MAP: list[tuple[str, type[resources.ModelResource]]] = [
-            ("Course", CourseResource),  # and College
+            # ("Course", CourseResource),  # and College
             # ("Room", RoomResource),  # and Space
             # ("CurriculumCourse", CurriculumCourseResource),
-            # ("Semester", SemesterResource),  # and Academic year
+            ("Semester", SemesterResource),  # and Academic year
             # ("Session", SessionResource),  # and Faculty, Room and Space
             # ("Section", SectionResource)
         ]

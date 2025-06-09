@@ -35,5 +35,5 @@ class AcademicYearResource(resources.ModelResource):
             "start_date",
             "end_date",
             "long_name",
-            "short_name",
+            "code",
         )

@@ -58,7 +58,7 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
 
         Example input row:
           - row["curriculum"] = "Bsc Agriculture"
-          - row["college"] = "CAFS" (optional, defaults to "COAS")
+          - row["college_code"] = "CAFS" (optional, defaults to "COAS")
 
         Automatically creates curriculum with today's date.
         """
@@ -118,7 +118,7 @@ class CourseWidget(widgets.ForeignKeyWidget):
         if not course_code or not course_no:
             return None
 
-        college_code = row.get("college", "COAS").strip().upper()
+        college_code = row.get("college_code", "COAS").strip().upper()
 
         # ── get or create the College ─────────────────────────────
         college, _ = College.objects.get_or_create(code=college_code)
@@ -249,3 +249,18 @@ class CourseCodeWidget(widgets.ForeignKeyWidget):
                 course.save(update_fields=["title", "credit_hours"])
 
         return course
+
+
+class CollegeWidget(widgets.ForeignKeyWidget):
+    def __init__(self):
+        super().__init__(College, field="code")
+
+    def clean(self, value, row=None, *args, **kwargs) -> College | None:
+        """Lookup for the college and create it if not found"""
+        if not value:
+            return None
+
+        code = value.strip()
+        college, _ = College.objects.get_or_create(code=code)
+
+        return college
