@@ -93,10 +93,13 @@ class CourseWidget(widgets.ForeignKeyWidget):
 
     If *college* is empty, defaults to ``"COAS"``.
 
+    Lookups are cached so repeated rows referencing the same course do not hit
+    the database multiple times.
     """
 
     def __init__(self):
         super().__init__(Course, field="code")
+        self._cache: dict[tuple[str, str, str], Course] = {}
 
     def clean(
         self,
@@ -120,6 +123,10 @@ class CourseWidget(widgets.ForeignKeyWidget):
 
         college_code = row.get("college_code", "COAS").strip().upper()
 
+        key = (course_code, course_no, college_code)
+        if key in self._cache:
+            return self._cache[key]
+
         # ── get or create the College ─────────────────────────────
         college, _ = College.objects.get_or_create(code=college_code)
 
@@ -131,6 +138,7 @@ class CourseWidget(widgets.ForeignKeyWidget):
             college=college,
             defaults={"title": row.get("course_title", code)},
         )
+        self._cache[key] = course
         return course
 
 

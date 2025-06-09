@@ -8,17 +8,17 @@ from django.db import transaction
 from import_export import resources
 from tablib import Dataset
 
-from app.academics.admin.resources import CourseResource, CurriculumCourseResource
-from app.academics.models.college import College
-from app.shared.management.populate_helpers.auth import (
+from app.academics.admin.resources import CourseResource, CurriculumCourseResource  # noqa: F401
+from app.academics.models.college import College  # noqa: F401
+from app.shared.management.populate_helpers.auth import (  # noqa: F401
     ensure_role_groups,
     ensure_superuser,
     upsert_test_users_and_roles,
 )
-from app.spaces.admin.resources import RoomResource
-from app.timetable.admin.resources.core import SemesterResource
+from app.spaces.admin.resources import RoomResource  # noqa: F401
+from app.timetable.admin.resources.core import SemesterResource  # noqa: F401
 from app.timetable.admin.resources.section import SectionResource
-from app.timetable.admin.resources.session import SessionResource
+from app.timetable.admin.resources.session import SessionResource  # noqa: F401
 
 
 class Command(BaseCommand):
