@@ -23,9 +23,9 @@ class SessionWidget(widgets.ForeignKeyWidget):
         if not value:
             return None
 
-        room = self.room_w(value.strip(), row)
+        room = self.room_w.clean(value.strip(), row)
 
-        weekday_value = row.get("weekday", "").strip
+        weekday_value = row.get("weekday", "").strip()
         schedule = self.schedule_w.clean(value=weekday_value, row=row)
 
         session, _ = Session.objects.get_or_create(
@@ -48,8 +48,8 @@ class ScheduleWidget(widgets.ForeignKeyWidget):
 
         weekday = value.strip()
 
-        start_time = row.get("start_time", "").str()
-        end_time = row.get("end_time", "").str()
+        start_time = row.get("start_time", "").strip()
+        end_time = row.get("end_time", "").strip()
 
         schedule, _ = Schedule.objects.get_or_create(
             weekday=weekday,

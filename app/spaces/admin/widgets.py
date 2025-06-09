@@ -14,7 +14,7 @@ class SpaceWidget(widgets.ForeignKeyWidget):
     """
 
     def __init__(self):
-        super().__init__(Space, field="core")
+        super().__init__(Space, field="code")
 
     def clean(self, value, row=None, *args, **kwargs):
 

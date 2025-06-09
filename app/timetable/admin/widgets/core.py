@@ -27,7 +27,7 @@ class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
 
         start_year = int("20" + m.group(1))
         ay, _ = AcademicYear.objects.get_or_create(
-            short_name=value,
+            code=value,
             defaults={"start_date": date(start_year, 8, 11)},
         )
         return ay
@@ -80,7 +80,7 @@ class SemesterCodeWidget(widgets.ForeignKeyWidget):
         if not value:
             return None
 
-        m = self.pattern.match(value)
+        m = self.sem_pat.match(value)
 
         assert m, f"Invalid semester format, got {m} for {self.sem_pat}"
 

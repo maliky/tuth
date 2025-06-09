@@ -47,8 +47,8 @@ class Command(BaseCommand):
             # ("Course", CourseResource),  # and College
             # ("Room", RoomResource),  # and Space
             # ("CurriculumCourse", CurriculumCourseResource),
-            ("Semester", SemesterResource),  # and Academic year
-            # ("Session", SessionResource),  # and Faculty, Room and Space
+            # ("Semester", SemesterResource),  # and Academic year
+            ("Session", SessionResource),  # and Faculty, Room and Space
             # ("Section", SectionResource)
         ]
 

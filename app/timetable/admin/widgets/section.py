@@ -24,7 +24,7 @@ class SectionWidget(widgets.ForeignKeyWidget):
             raise ValueError("Row context required")
 
         sem_no_value, course_code_value, sec_no_value = [
-            row.get(v).strip() for v in ("semester_no", "course_code", "section_no")
+            row.get(v, "").strip() for v in ("semester_no", "course_code", "section_no")
         ]
 
         semester = self.sem_w.clean(value=sem_no_value, row=row)

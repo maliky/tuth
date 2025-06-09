@@ -36,7 +36,7 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
         curriculum_course, _ = CurriculumCourse.objects.get_or_create(
             curriculum=curriculum,
             course=course,
-            credits_hours=row.get("credit_hours", "").strip(),
+            credit_hours=row.get("credit_hours", "").strip(),
             is_required=row.get("is_required", True).strip(),
         )
         return curriculum_course
