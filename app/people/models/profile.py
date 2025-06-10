@@ -13,6 +13,7 @@ from django.utils.translation import gettext_lazy as _
 
 from app.academics.models.curriculum import Curriculum
 from app.shared.mixins import StatusableMixin
+from app.shared.constants import TEST_PW
 
 
 def photo_upload_to(instance: "BaseProfile", filename: str) -> str:
@@ -165,3 +166,37 @@ class DonorProfile(BaseProfile):
     class Meta(BaseProfile.Meta):
         verbose_name = _("donor profile")
         verbose_name_plural = _("donor profiles")
+
+
+def _ensure_faculty(full_name: str, college: "College") -> FacultyProfile:
+    """Return a :class:`FacultyProfile` for ``full_name`` in ``college``."""
+
+    # Split the provided name and pick first/last parts
+    parts = full_name.split()
+    first = parts[0] if parts else ""
+    last = parts[-1] if len(parts) > 1 else ""
+
+    # Build ``j.doe`` style username and reuse if matching user exists
+    base = f"{first[:1].lower()}.{last.lower()}"
+    username = base
+    counter = 1
+    while True:
+        user, created = User.objects.get_or_create(
+            username=username,
+            defaults={"first_name": first, "last_name": last, "password": TEST_PW},
+        )
+        if created:
+            user.set_password(TEST_PW)
+            user.save()
+            break
+        if user.first_name == first and user.last_name == last:
+            break
+        counter += 1
+        username = f"{base}{counter}"
+
+    # Create or fetch faculty profile with unique staff id
+    staff_id = f"TU-{username}"
+    profile, _ = FacultyProfile.objects.get_or_create(
+        user=user, defaults={"college": college, "staff_id": staff_id}
+    )
+    return profile

@@ -21,7 +21,7 @@ def test_ensure_faculty_creates_user_and_profile(college_factory):
     assert user.last_name == "Doe"
     assert user.check_password(TEST_PW)
 
-    assert User.objects.count() == 1
+    assert User.objects.exclude(username="AnonymousUser").count() == 1
     assert FacultyProfile.objects.count() == 1
 
 
@@ -32,5 +32,5 @@ def test_ensure_faculty_is_idempotent(college_factory):
     prof2 = _ensure_faculty("Jane Doe", col)
 
     assert prof1.id == prof2.id
-    assert User.objects.count() == 1
+    assert User.objects.exclude(username="AnonymousUser").count() == 1
     assert FacultyProfile.objects.count() == 1
