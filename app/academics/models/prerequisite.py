@@ -38,7 +38,7 @@ class Prerequisite(models.Model):
                 name="uniq_prerequisite_per_curriculum",
             ),
             models.CheckConstraint(
-                check=~models.Q(course=models.F("prerequisite_course")),
+                condition=~models.Q(course=models.F("prerequisite_course")),
                 name="no_self_prerequisite",
             ),
         ]

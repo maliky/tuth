@@ -1,6 +1,6 @@
 """
 Reusable fixtures for reservation-related tests.
-Put this file at tests/conftest.py – pytest will auto-discover it.
+pytest auto-discover it.
 """
 
 from datetime import date
@@ -9,10 +9,11 @@ import pytest
 from django.contrib.auth import get_user_model
 
 from app.academics.models import College, Course
-
-# direct import avoids relying on package re-exports
 from app.people.models.profile import StaffProfile, StudentProfile
-from app.timetable.models import AcademicYear, Session, Section, Semester
+from app.timetable.models.academic_year import AcademicYear
+from app.timetable.models.section import Section
+from app.timetable.models.semester import Semester
+from app.timetable.models.session import Session
 
 User = get_user_model()
 
