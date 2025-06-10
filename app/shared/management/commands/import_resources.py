@@ -46,6 +46,9 @@ class Command(BaseCommand):
 
         dataset = Dataset().load(open(path).read(), format="csv")
 
+        # sanitize column headers: strip whitespace and drop empties
+        dataset.headers = [(header or "").strip() for header in dataset.headers]
+
         # filter any blank column headers that may appear due to trailing commas
         while "" in dataset.headers:
             idx = dataset.headers.index("")

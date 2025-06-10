@@ -189,4 +189,3 @@ class FacultyProfileWidget(widgets.ForeignKeyWidget):
         if not value:
             return ""
         return value.long_name  # type: ignore[no-any-return]
-    
