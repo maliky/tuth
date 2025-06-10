@@ -31,7 +31,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
-            "file_path",
+            "-f", "--file_path",
             nargs="?",
             default="../Docs/Data/cleaned_tscc.csv",
             help="Path to CSV file with resources data",
@@ -74,7 +74,7 @@ class Command(BaseCommand):
 
             if validation.has_errors():
                 self.stdout.write(self.style.ERROR(f"'{key}': validation errors:"))
-                # import ipdb; ipdb.set_trace()
+                import ipdb; ipdb.set_trace()
                 if validation.row_errors():
                     row_index, row_err = validation.row_errors()[0]
                     self.stdout.write(f"  row {row_index}: {row_err[0]}")
