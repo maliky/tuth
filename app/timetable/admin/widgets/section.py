@@ -53,7 +53,13 @@ class SectionCodeWidget(widgets.Widget):
         self.sem_code_w = SemesterWidget()
         self.crs_code_w = CourseWidget()
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(
+        self,
+        value: str | None,
+        row: dict[str, str] | None = None,
+        *args,
+        **kwargs,
+    ) -> Section | None:
         if not value:
             return None
 
