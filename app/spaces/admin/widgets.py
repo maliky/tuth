@@ -16,7 +16,13 @@ class SpaceWidget(widgets.ForeignKeyWidget):
     def __init__(self):
         super().__init__(Space, field="code")
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(
+        self,
+        value: str | None,
+        row: dict[str, str] | None = None,
+        *args,
+        **kwargs,
+    ) -> Space | None:
 
         if not value:
             return None
@@ -37,7 +43,13 @@ class RoomWidget(widgets.ForeignKeyWidget):
         super().__init__(Room, field="code")
         self.space_w = SpaceWidget()
 
-    def clean(self, value, row=None, *args, **kwargs) -> Space | None:
+    def clean(
+        self,
+        value: str,
+        row: dict[str, str] | None = None,
+        *args,
+        **kwargs,
+    ) -> Room | None:
 
         tba_space, _ = Space.objects.get_or_create(
             code="TBA", defaults={"full_name": "To Be Announced"}
@@ -66,7 +78,13 @@ class RoomCodeWidget(widgets.ForeignKeyWidget):
         super().__init__(Room, field="code")
         self.space_w = SpaceWidget()
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(
+        self,
+        value: str | None,
+        row: dict[str, str] | None = None,
+        *args,
+        **kwargs,
+    ) -> Room | None:
         if not value:
             return None
 

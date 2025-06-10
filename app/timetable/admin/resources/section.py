@@ -27,7 +27,13 @@ class SectionResource(resources.ModelResource):
         widget=FacultyProfileWidget(),
     )
 
-    def save_instance(self, instance, is_create, row, **kwargs):
+    def save_instance(
+        self,
+        instance: Section,
+        is_create: bool,
+        row: dict[str, str],
+        **kwargs,
+    ) -> None:
         """Wrap save to log errors during import."""
         try:
             return super().save_instance(instance, is_create, row, **kwargs)

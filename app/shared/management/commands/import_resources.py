@@ -8,10 +8,10 @@ from django.db import transaction
 from import_export import resources
 from tablib import Dataset
 
-from app.academics.admin.resources import (
+from app.academics.admin.resources import (  # noqa: F401
     CourseResource,
     CurriculumCourseResource,
-)  # noqa: F401
+)
 from app.academics.models.college import College  # noqa: F401
 from app.shared.management.populate_helpers.auth import (  # noqa: F401
     ensure_role_groups,
@@ -44,7 +44,7 @@ class Command(BaseCommand):
         if not path.exists():
             raise FileNotFoundError(str(path))
 
-        dataset = Dataset().load(open(path).read(), format="csv")
+        dataset: Dataset = Dataset().load(open(path).read(), format="csv")
 
         # sanitize column headers: strip whitespace and drop empties
         dataset.headers = [(header or "").strip() for header in dataset.headers]
@@ -70,7 +70,7 @@ class Command(BaseCommand):
         for key, ResourceClass in RESOURCES_MAP:
             resource: resources.ModelResource = ResourceClass()
 
-            validation = resource.import_data(dataset, dry_run=True)
+            validation: resources.Result = resource.import_data(dataset, dry_run=True)
 
             if validation.has_errors():
                 self.stdout.write(self.style.ERROR(f"'{key}': validation errors:"))

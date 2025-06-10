@@ -16,7 +16,13 @@ class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
         super().__init__(AcademicYear, field="code")
         self.ay_pat = re.compile(r"^(\d{2})-(\d{2})$")
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(
+        self,
+        value: str | None,
+        row: dict[str, str] | None = None,
+        *args,
+        **kwargs,
+    ) -> AcademicYear | None:
 
         if not value:
             return None
@@ -50,7 +56,13 @@ class SemesterWidget(widgets.ForeignKeyWidget):
         super().__init__(Semester)  # using pk until start_date can be proven to be uniq
         self.ay_w = AcademicYearCodeWidget()
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(
+        self,
+        value: str | None,
+        row: dict[str, str] | None = None,
+        *args,
+        **kwargs,
+    ) -> Semester | None:
         if not value:
             return None
 
@@ -76,7 +88,13 @@ class SemesterCodeWidget(widgets.ForeignKeyWidget):
         super().__init__(Semester)
         self.sem_pat = re.compile(r"^(?P<year>\d{2}-\d{2})_Sem(?P<num>\d+)$")
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(
+        self,
+        value: str | None,
+        row: dict[str, str] | None = None,
+        *args,
+        **kwargs,
+    ) -> Semester | None:
         if not value:
             return None
 
