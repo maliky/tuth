@@ -9,7 +9,9 @@ import pytest
 from django.contrib.auth import get_user_model
 
 from app.academics.models import College, Course
-from app.people.models import StaffProfile, StudentProfile
+
+# direct import avoids relying on package re-exports
+from app.people.models.profile import StaffProfile, StudentProfile
 from app.timetable.models import AcademicYear, Session, Section, Semester
 
 User = get_user_model()
@@ -18,7 +20,7 @@ User = get_user_model()
 # ─── reference data ──────────────────────────────────────────────────────────
 @pytest.fixture
 def college():
-    return College.objects.create(code="COAS", fullname="College of Arts and Sciences")
+    return College.objects.create(code="COAS", long_name="College of Arts and Sciences")
 
 
 @pytest.fixture
@@ -110,7 +112,7 @@ def college_factory():
     """Return helper to create colleges on demand."""
 
     def _make(code: str = "COAS", fullname: str = "College"):
-        return College.objects.create(code=code, fullname=fullname)
+        return College.objects.create(code=code, long_name=fullname)
 
     return _make
 
