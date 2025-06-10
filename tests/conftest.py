@@ -110,7 +110,8 @@ def college_factory():
     """Return helper to create colleges on demand."""
 
     def _make(code: str = "COAS", fullname: str = "College"):
-        return College.objects.create(code=code, fullname=fullname)
+        del fullname  # long_name handled by model
+        return College.objects.create(code=code)
 
     return _make
 
