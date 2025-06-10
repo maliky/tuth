@@ -1,4 +1,5 @@
-testdb
+*log
+testdb*
 .env*
 .git/*
 *#*
