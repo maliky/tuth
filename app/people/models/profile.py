@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -12,8 +13,11 @@ from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
 
 from app.academics.models.curriculum import Curriculum
-from app.shared.mixins import StatusableMixin
 from app.shared.constants import TEST_PW
+from app.shared.mixins import StatusableMixin
+
+if TYPE_CHECKING:
+    import College
 
 
 def photo_upload_to(instance: "BaseProfile", filename: str) -> str:

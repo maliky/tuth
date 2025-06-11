@@ -83,19 +83,19 @@ class FacultyProfileWidget(widgets.ForeignKeyWidget):
     FIRST_PATTERN = r"^([A-Za-z-]+)"
     LAST_PATTERN = r"([A-Za-z-]+)$"
 
-    def __init__(self, college_field="college"):
+    def __init__(self, college_column="college_code"):
         """
         college_field: name of the CSV column that holds the college code.
         """
         super().__init__(FacultyProfile, field="staff_id")
-        self.college_field = college_field
+        self.college_column = college_column
         self._cache: dict[str, FacultyProfile] = {}
 
     def clean(self, value, row=None, *args, **kwargs) -> FacultyProfile | None:
         if not value:
             return None
 
-        key = f"{value.strip()}|{(row.get(self.college_field) or '').strip() if row else ''}"
+        key = f"{value.strip()}|{(row.get(self.college_column) or '').strip() if row else ''}"
         if key in self._cache:
             return self._cache[key]
 
@@ -158,32 +158,34 @@ class FacultyProfileWidget(widgets.ForeignKeyWidget):
             user.save()
 
         # Determine college
-        college_code = (row.get(self.college_field) or "").strip()
+        college_code = (row.get(self.college_column) or "").strip()
         college, _ = College.objects.get_or_create(code=college_code)
 
-        staff_id_value = f"TU-{uname.lower()}"
+        staff_id_value = f"TU-{uname.lower()}"[:17]
         # Create or retrieve FacultyProfile
-        profile, _ = FacultyProfile.objects.get_or_create(
+        facutly_profile, _ = FacultyProfile.objects.get_or_create(
             user=user,
             defaults={"college": college, "staff_id": staff_id_value},
         )
 
         # Update profile fields
         updated = False
-        if name_prefix and profile.name_prefix != name_prefix:
-            profile.name_prefix = name_prefix
+        if name_prefix:
+            facutly_profile.name_prefix = name_prefix
             updated = True
-        if name_suffix and profile.name_suffix != name_suffix:
-            profile.name_suffix = name_suffix
+        if name_suffix:
+            facutly_profile.name_suffix = name_suffix
             updated = True
-        if middle_name and profile.middle_name != middle_name:
-            profile.middle_name = middle_name
+        if middle_name:
+            facutly_profile.middle_name = middle_name
             updated = True
         if updated:
-            profile.save(update_fields=["name_prefix", "name_suffix", "middle_name"])
+            facutly_profile.save(
+                update_fields=["name_prefix", "name_suffix", "middle_name"]
+            )
 
-        self._cache[key] = profile
-        return profile
+        self._cache[key] = facutly_profile
+        return facutly_profile
 
     def render(self, value, obj=None) -> str:
         if not value:

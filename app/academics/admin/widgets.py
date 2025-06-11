@@ -30,8 +30,8 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
 
         curriculum = self.curriculm_w.clean(value=value.strip(), row=row)
 
-        course_code_value = row.get("course_code", "").strip()
-        course = self.course_w.clean(value=course_code_value, row=row)
+        course_name_value = row.get("course_name", "").strip()
+        course = self.course_w.clean(value=course_name_value, row=row)
 
         curriculum_course, _ = CurriculumCourse.objects.get_or_create(
             curriculum=curriculum,
@@ -82,12 +82,12 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
 
 class CourseWidget(widgets.ForeignKeyWidget):
     """
-    Accept three separate columns – course_code (dept), course_no (num),
+    Accept three separate columns – course_name (dept), course_no (num),
     and college – and return or create the matching Course instance.
 
     Expected CSV columns in the *row* dict
     --------------------------------------
-    * ``course_code``  – department part (e.g. "AGR")
+    * ``course_name``  – department part (e.g. "AGR")
     * ``course_no``    – number part     (e.g. "121")
     * ``college``      – college code    (e.g. "CAFS") – optional
 
@@ -115,15 +115,15 @@ class CourseWidget(widgets.ForeignKeyWidget):
         if row is None:
             return None
 
-        course_code = row.get("course_code", "").strip().upper()
+        course_name = row.get("course_name", "").strip().upper()
         course_no = row.get("course_no", "").strip()
 
-        if not course_code or not course_no:
+        if not course_name or not course_no:
             return None
 
         college_code = row.get("college_code", "COAS").strip().upper()
 
-        key = (course_code, course_no, college_code)
+        key = (course_name, course_no, college_code)
         if key in self._cache:
             return self._cache[key]
 
@@ -131,9 +131,9 @@ class CourseWidget(widgets.ForeignKeyWidget):
         college, _ = College.objects.get_or_create(code=college_code)
 
         # ── get or create the Course ──────────────────────────────
-        code = make_course_code(course_code, course_no)  # e.g. AGR121
+        code = make_course_code(course_name, course_no)  # e.g. AGR121
         course, _ = Course.objects.get_or_create(
-            name=course_code,
+            name=course_name,
             number=course_no,
             college=college,
             defaults={"title": row.get("course_title", code)},

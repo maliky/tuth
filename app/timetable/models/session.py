@@ -19,6 +19,22 @@ class Schedule(models.Model):
         # can we shorten weekday to only have the first 3 char?
         return f"{self.weekday}: {self.start_time}-{self.end_time}"
 
+    @property
+    def weekday_name(self) -> str:
+        """
+        Return the human‐readable name of this schedule’s weekday,
+        e.g. "Monday", "Tuesday", etc.
+        """
+        return self.get_weekday_display()
+
+    @property
+    def start_time_str(self) -> str:
+        return self.start_time.strftime("%H:%M")
+
+    @property
+    def end_time_str(self) -> str:
+        return self.end_time.strftime("%H:%M") if self.end_time else ""
+
     # > validation end_time should alway be bigger than start_time
     # ? need to check that there no overlap. may need to store duration
     # and implement a non overlap function like for semester and terms.
@@ -55,15 +71,15 @@ class Session(models.Model):
 
     @property
     def weekday(self):
-        return self.schedule.weekday
+        return self.schedule.weekday if self.schedule else ""
 
     @property
     def start_time(self):
-        return self.schedule.start_time
+        return self.schedule.start_time if self.schedule else ""
 
     @property
     def end_time(self):
-        return self.schedule.end_time
+        return self.schedule.end_time if self.schedule else ""
 
     def __str__(self):
         return f"{self.schedule}, {self.room}"

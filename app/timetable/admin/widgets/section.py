@@ -1,5 +1,6 @@
 """timetable.admin.widgets.section module"""
 
+from typing import Optional, cast
 from import_export import widgets
 
 from app.academics.admin.widgets import CourseWidget
@@ -23,21 +24,19 @@ class SectionWidget(widgets.ForeignKeyWidget):
         if row is None:
             raise ValueError("Row context required")
 
-        sem_no_value, course_code_value, sec_no_value = [
-            row.get(v, "").strip() for v in ("semester_no", "course_code", "section_no")
+        sem_no_value, course_name_value, sec_no_value = [
+            row.get(v, "").strip() for v in ("semester_no", "course_name", "section_no")
         ]
 
         semester = self.sem_w.clean(value=sem_no_value, row=row)
-        course = self.course_w.clean(value=course_code_value, row=row)
+        course = self.course_w.clean(value=course_name_value, row=row)
 
         number = int(sec_no_value)
 
         section, _ = Section.objects.get_or_create(
-            semester=semester,
-            course=course,
-            number=number,
+            semester=semester, course=course, number=number
         )
-        return section
+        return cast(Optional[Section], section)
 
     def render(self, value: Section, obj=None):  # optional – for exports
         if not value:
@@ -50,25 +49,24 @@ class SectionCodeWidget(widgets.Widget):
 
     def __init__(self) -> None:
         super().__init__(Section)
-        self.sem_code_w = SemesterWidget()
-        self.crs_code_w = CourseWidget()
+        self.sem_w = SemesterWidget()
+        self.crs_w = CourseWidget()
 
     def clean(
         self,
-        value: str | None,
-        row: dict[str, str] | None = None,
+        value: str,
+        row: dict[str, str],
         *args,
         **kwargs,
     ) -> Section | None:
-        if not value:
-            return None
+        "Expecting the value to be"
 
-        course_code_value = row.get("course_code", "").strip()
-        course = self.crs_code_w.clean(value=course_code_value, row=row)
+        course_name_value = row.get("course_name", "").strip()
+        course = self.crs_w.clean(value=course_name_value, row=row)
 
         sem_code_value, _, sec_no = [v.strip() for v in value.partition(":")]
 
-        semester = self.sem_code_w.clean(value=sem_code_value, row=row)
+        semester = self.sem_w.clean(value=sem_code_value, row=row)
         number = int(sec_no) if sec_no.isdigit() else None
 
         section, _ = Section.objects.get_or_create(

@@ -132,15 +132,15 @@ class CurriculumResource(resources.ModelResource):
 class CourseResource(resources.ModelResource):
     """
     Import / export definition for Course rows coming from the *cleaned_tscc.csv*
-    file (or any file that has **separate** course_code / course_no columns).
+    file (or any file that has **separate** course_name / course_no columns).
 
     Columns expected in the CSV (case-sensitive):
-        course_code, course_no, course_title, credit_hours, college_code, prerequisites
+        course_name, course_no, course_title, credit_hours, college_code, prerequisites
     """
 
     # ─── columns that map 1-to-1 onto Course fields ──────────────────────────
 
-    name = fields.Field(column_name="course_code", attribute="name")  # AGR
+    name = fields.Field(column_name="course_name", attribute="name")  # AGR
     number = fields.Field(column_name="course_no", attribute="number")  # 121
     title = fields.Field(column_name="course_title", attribute="title")
     # credit_hours = fields.Field(column_name="credit_hours", attribute="credit_hours")
@@ -174,7 +174,6 @@ class CourseResource(resources.ModelResource):
             "credit_hours",
             "college",
             "prerequisites",
-            "course_long_code",
         )
         skip_unchanged = True  # do not rewrite identical rows
         report_skipped = True  # include skipped-row info in the Result
@@ -187,7 +186,7 @@ class PrerequisiteResource(resources.ModelResource):
         widget=CurriculumWidget(),
     )
     course = fields.Field(
-        column_name="course_long_code", attribute="course", widget=CourseWidget()
+        column_name="course_code", attribute="course", widget=CourseWidget()
     )
     prerequisite_course = fields.Field(
         column_name="prerequisite", attribute="prerequisite_course", widget=CourseWidget()
@@ -195,8 +194,8 @@ class PrerequisiteResource(resources.ModelResource):
 
     class Meta:
         model = Prerequisite
-        import_id_fields = ("curriculum", "course_long_code", "prerequisite_course")
-        fields = ("curriculum", "course_long_code", "prerequisite_course")
+        import_id_fields = ("curriculum", "course", "prerequisite_course")
+        fields = ("curriculum", "course", "prerequisite_course")
 
 
 class CollegeResource(resources.ModelResource):
@@ -220,7 +219,7 @@ class CurriculumCourseResource(resources.ModelResource):
         widget=CurriculumWidget(),
     )
     course = fields.Field(
-        column_name="course_code",
+        column_name="course_name",
         attribute="course",
         widget=CourseWidget(),
     )

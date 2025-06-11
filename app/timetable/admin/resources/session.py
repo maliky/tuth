@@ -1,3 +1,5 @@
+"""Import/export resources for timetable models. (Session)"""
+
 from import_export import fields, resources
 
 from app.spaces.admin.widgets import RoomWidget

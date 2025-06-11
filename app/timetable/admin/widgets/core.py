@@ -59,7 +59,7 @@ class SemesterWidget(widgets.ForeignKeyWidget):
     def clean(
         self,
         value: str | None,
-        row: dict[str, str] | None = None,
+        row: dict[str, str],
         *args,
         **kwargs,
     ) -> Semester | None:

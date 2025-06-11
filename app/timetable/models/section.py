@@ -13,8 +13,8 @@ if TYPE_CHECKING:
 
 class Section(models.Model):
     """
-    A single course‐offering in a given Semester.
-    A section may have several session row
+    A single course offering in a given semester.
+    A section can include multiple session rows.
     """
 
     semester = models.ForeignKey("timetable.Semester", on_delete=models.PROTECT)

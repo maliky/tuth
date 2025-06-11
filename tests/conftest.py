@@ -2,30 +2,37 @@
 Reusable fixtures for reservation-related tests.
 pytest auto-discover it.
 """
+# conftest.py
+from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
+from typing import Callable, Optional
 
 import pytest
 from django.contrib.auth import get_user_model
 
-from app.academics.models import College, Course
-from app.people.models.profile import StaffProfile, StudentProfile
+from app.academics.models.college import College
+from app.academics.models.course import Course
+from app.people.models.profile import FacultyProfile, StaffProfile, StudentProfile
+from app.spaces.models.core import Room, Space
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
-from app.timetable.models.session import Session
+from app.timetable.models.session import Schedule, Session
 
 User = get_user_model()
 
 
-# ─── reference data ──────────────────────────────────────────────────────────
+# ─── reference data ───────────────────────────────────────────
+
 @pytest.fixture
-def college():
+def college() -> College:
+    # field is `long_name`, not `fullname`
     return College.objects.create(code="COAS", long_name="College of Arts and Sciences")
 
 
 @pytest.fixture
-def course(college):
+def course(college: College) -> Course:
     return Course.objects.create(
         name="TEST",
         number="101",
@@ -36,36 +43,82 @@ def course(college):
 
 
 @pytest.fixture
-def academic_year():
-    return AcademicYear.objects.create(
-        start_date=date(2025, 9, 1),
-        end_date=date(2026, 8, 31),
-    )
+def academic_year() -> AcademicYear:
+    # only start_date is mandatory; code & long_name are auto-generated in save()
+    return AcademicYear.objects.create(start_date=date(2025, 9, 1))
 
 
 @pytest.fixture
-def semester(academic_year):
+def semester(academic_year: AcademicYear) -> Semester:
     return Semester.objects.create(
         academic_year=academic_year,
         number=1,
-        start_date=date(2025, 9, 1),
+        start_date=academic_year.start_date,
         end_date=date(2026, 1, 15),
     )
 
 
 @pytest.fixture
-def schedule():
-    return Session.objects.create(weekday=1)
-
-
-# ─── user / profile helpers ──────────────────────────────────────────────────
-@pytest.fixture
-def student_user():
-    return User.objects.create(username="student")
+def space() -> Space:
+    # model is Space with fields `code` and `full_name`
+    return Space.objects.create(code="AA", full_name="Academic Annex")
 
 
 @pytest.fixture
-def student_profile(student_user):
+def room(space: Space) -> Room:
+    # Room has fields `code` and FK `space`
+    return Room.objects.create(code="101", space=space)
+
+
+@pytest.fixture
+def schedule() -> Schedule:
+    # Schedule has `weekday`, `start_time`, and `end_time`
+    now = datetime.now().time()
+    return Schedule.objects.create(weekday=1, start_time=now, end_time=now)
+
+
+# ─── section factory ───────────────────────────────────────────
+
+@pytest.fixture
+def section_factory(
+    course: Course, semester: Semester, schedule: Schedule
+) -> Callable[[int], Section]:
+    def _make(number: int) -> Section:
+        return Section.objects.create(
+            course=course,
+            semester=semester,
+            number=number,
+            faculty=None,
+            start_date=semester.start_date,
+            end_date=semester.end_date,
+            max_seats=30,
+            schedule=schedule,
+        )
+
+    return _make
+
+
+@pytest.fixture
+def session(
+    section_factory: Callable[[int], Section], room: Room, schedule: Schedule
+) -> Session:
+    # Session model has FK `room`, `schedule`, `section`
+    return Session.objects.create(
+        room=room, schedule=schedule, section=section_factory(1)
+    )
+
+
+# ─── user / profile helpers ─────────────────────────────────────
+
+@pytest.fixture
+def student_user() -> User:
+    return User.objects.create_user(username="student")
+
+
+@pytest.fixture
+def student_profile(student_user: User) -> StudentProfile:
+    # StudentProfile fields: user, student_id, college (nullable), curriculum (nullable),
+    # enrollment_semester, enrollment_date (nullable)
     return StudentProfile.objects.create(
         user=student_user,
         student_id="S123456",
@@ -74,68 +127,55 @@ def student_profile(student_user):
 
 
 @pytest.fixture
-def staff_profile():
-    user = User.objects.create(username="staff")
+def staff_profile() -> StaffProfile:
+    # StaffProfile requires `staff_id`
+    user = User.objects.create_user(username="staff")
     return StaffProfile.objects.create(user=user, staff_id="ST123")
 
 
-# ─── section factory ─────────────────────────────────────────────────────────
 @pytest.fixture
-def section_factory(course, semester, schedule):
-    """
-    Usage:
-        sec = section_factory(3)      # number=3
-    """
-
-    def _make(number: int):
-        return Section.objects.create(
-            course=course,
-            semester=semester,
-            schedule=schedule,
-            number=number,
-            max_seats=30,
-        )
-
-    return _make
+def faculty_profile(college: College) -> FacultyProfile:
+    # FacultyProfile inherits StaffProfile and adds `staff_id` plus optional fields
+    # Reuse staff_profile but override college
+    user = User.objects.create_user(username="faculty")
+    return FacultyProfile.objects.create(user=user, staff_id="FP001", college=college)
 
 
 @pytest.fixture
-def superuser(db):
-    User = get_user_model()
+def superuser() -> User:
     return User.objects.create_superuser(
         username="super", email="super@example.com", password="secret123"
     )
 
 
-# ─── generic factories ------------------------------------------------------
-@pytest.fixture
-def college_factory():
-    """Return helper to create colleges on demand."""
-
-    def _make(code: str = "COAS"):
-        return College.objects.create(code=code)
-    return _make
-
+# ─── generic factories ───────────────────────────────────────────
 
 @pytest.fixture
-def course_factory(college_factory):
-    """Return helper to create courses linked to a college."""
+def college_factory() -> Callable[[str], College]:
+    def _factory(code: str = "COAS") -> College:
+        return College.objects.create(code=code, long_name=code)
 
-    def _make(
+    return _factory
+
+
+@pytest.fixture
+def course_factory(college_factory: Callable[[str], College]) -> Callable[..., Course]:
+    def _factory(
         name: str = "TEST",
         number: str = "101",
         title: str = "Course",
         credit_hours: int = 3,
-        college=None,
-    ):
-        if college is None:
-            college = college_factory()
+        college: Optional[College] = None,
+    ) -> Course:
+        college_obj = college if (college := college) else college_factory()
         return Course.objects.create(
             name=name,
             number=number,
             title=title,
             credit_hours=credit_hours,
-            college=college,
+            college=college_obj,
         )
 
-    return _make
+    return _factory
+
+

@@ -49,10 +49,7 @@ class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
         For example: “Mon 09:00–10:00 (Rm 101); Wed 09:00–10:00 (Rm 101)”
         """
         slots = []
-        for sched in obj.sessions.all():
-            day = sched.get_weekday_display()  # “Monday”, “Tuesday”, etc.
-            st = sched.start_time.strftime("%H:%M") if sched.start_time else ""
-            et = sched.end_time.strftime("%H:%M") if sched.end_time else ""
-            room = sched.room or ""
-            slots.append(f"{day} {st}–{et} ({room})")
-        return "; ".join(slots) or "—"
+        for sess in obj.sessions.all():
+            slots.append(f"{sess.schedule} ({sess.room})")
+
+        return "; ".join(slots) or "--"

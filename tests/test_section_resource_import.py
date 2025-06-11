@@ -18,7 +18,7 @@ def make_dataset(headers, rows):
 
 
 @pytest.mark.parametrize(
-    "missing", ["academic_year", "semester_no", "course_code", "section_no", "faculty"]
+    "missing", ["academic_year", "semester_no", "course_name", "section_no", "faculty"]
 )
 @pytest.mark.django_db
 def test_missing_required_header_triggers_error(missing, course, semester):
@@ -26,15 +26,11 @@ def test_missing_required_header_triggers_error(missing, course, semester):
     If any of the five required columns is absent, import_data(dry_run=True)
     must report errors.
     """
-    headers = ["academic_year", "semester_no", "course_code", "section_no", "faculty"]
+    headers = ["academic_year", "semester_no", "course_name", "section_no", "faculty"]
     headers.remove(missing)
-    row = {
-        "academic_year": semester.academic_year.code,
-        "semester_no": str(semester.number),
-        "course_code": course.code,
-        "section_no": "1",
-        "faculty": "John Doe",
-    }
+    row = { "academic_year": semester.academic_year.code,
+            "semester_no": str(semester.number), "course_name":
+            course.code, "section_no": "1", "faculty": "John Doe", }
     ds = make_dataset(headers, [row])
     res = SectionResource()
     # strip blank headers if any
@@ -49,11 +45,11 @@ def test_successful_import_creates_section(course, semester):
     A well-formed row with all five required columns imports cleanly
     and creates a Section.
     """
-    headers = ["academic_year", "semester_no", "course_code", "section_no", "faculty"]
+    headers = ["academic_year", "semester_no", "course_name", "section_no", "faculty"]
     row = {
         "academic_year": semester.academic_year.code,
         "semester_no": str(semester.number),
-        "course_code": course.code,
+        "course_name": course.code,
         "section_no": "1",
         "faculty": "Jane Smith",
     }
@@ -61,7 +57,9 @@ def test_successful_import_creates_section(course, semester):
     res = SectionResource()
     # dry_run should pass
     dry = res.import_data(ds, dry_run=True)
+    
     assert not dry.has_errors()
+        
     # real import
     imp = res.import_data(ds, dry_run=False)
     assert isinstance(imp, results.ImportResult)
@@ -71,11 +69,11 @@ def test_successful_import_creates_section(course, semester):
 
 # @pytest.mark.django_db
 # def test_import_section_2_without_1_fails(course, semester):
-#     headers = ["academic_year", "semester_no", "course_code", "section_no", "faculty"]
+#     headers = ["academic_year", "semester_no", "course_name", "section_no", "faculty"]
 #     row = {
 #         "academic_year": semester.academic_year.code,
 #         "semester_no": str(semester.number),
-#         "course_code": course.code,
+#         "course_name": course.code,
 #         "section_no": "2",
 #         "faculty": "jane",
 #     }

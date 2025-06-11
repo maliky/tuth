@@ -1,3 +1,5 @@
+"""Import/export resources for timetable models. (Section)"""
+
 from datetime import date
 from pathlib import Path
 from import_export import fields, resources
@@ -16,7 +18,7 @@ class SectionResource(resources.ModelResource):
     )
     course = fields.Field(
         # could be other course columns
-        column_name="course_code",
+        column_name="course_name",
         attribute="course",
         widget=CourseWidget(),
     )
@@ -33,7 +35,7 @@ class SectionResource(resources.ModelResource):
         is_create: bool,
         row: dict[str, str],
         **kwargs,
-    ) -> None:
+    ):
         """Wrap save to log errors during import."""
         try:
             return super().save_instance(instance, is_create, row, **kwargs)
