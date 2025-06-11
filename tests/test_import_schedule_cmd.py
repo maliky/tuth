@@ -9,7 +9,7 @@ from app.timetable.models import Section, Session
 
 
 @pytest.mark.django_db
-def test_import_schedule_creates_schedule_and_building(tmp_path):
+def test_import_schedule_creates_schedule_and_space(tmp_path):
     csv = io.StringIO(
         "college,course_name,course_no,semester,section,location,weekday,time_start,time_end,instructor,curriculum\n"
         "COAS,MATH,101,24-25_Sem1,1,B2,Mon,08:00,09:00,Dr Foo,BSCS\n"

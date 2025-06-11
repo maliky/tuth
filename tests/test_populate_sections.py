@@ -25,8 +25,8 @@ class DummyCmd:
 def test_populate_sections_strip_and_optional_fields():
     User = get_user_model()
     User.objects.create(id=2, username="inst")
-    building = Location.objects.create(id=1, short_name="B1")
-    Room.objects.create(id=1, name="101", building=building)
+    space = Location.objects.create(id=1, code="B1")
+    Room.objects.create(id=1, name="101", space=space)
 
     csv = io.StringIO(
         """college,course,semester,number,instructor,room,max_seats\n"
