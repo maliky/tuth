@@ -46,10 +46,11 @@ def test_successful_import_creates_section(course, semester):
     and creates a Section.
     """
     headers = ["academic_year", "semester_no", "course_name", "section_no", "faculty"]
+
     row = {
         "academic_year": semester.academic_year.code,
         "semester_no": str(semester.number),
-        "course_name": course.code,
+        "course_name": course.name,
         "section_no": "1",
         "faculty": "Jane Smith",
     }

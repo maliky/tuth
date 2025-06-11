@@ -1,7 +1,5 @@
 """Import/export resources for timetable models. (Section)"""
 
-from datetime import date
-from pathlib import Path
 from import_export import fields, resources
 
 from app.academics.admin.widgets import CourseWidget
@@ -11,6 +9,11 @@ from app.timetable.models.section import Section
 
 
 class SectionResource(resources.ModelResource):
+    academic_year = fields.Field(
+        column_name="academic_year",
+        attribute="semester",
+        widget=SemesterWidget(),
+    )
     semester = fields.Field(
         column_name="semester_no",
         attribute="semester",
@@ -29,27 +32,27 @@ class SectionResource(resources.ModelResource):
         widget=FacultyProfileWidget(),
     )
 
-    def save_instance(
-        self,
-        instance: Section,
-        is_create: bool,
-        row: dict[str, str],
-        **kwargs,
-    ):
-        """Wrap save to log errors during import."""
-        try:
-            return super().save_instance(instance, is_create, row, **kwargs)
-        except Exception as exc:  # pragma: no cover - log & abort
-            log_dir = Path("logs")
-            log_dir.mkdir(exist_ok=True)
-            logfile = log_dir / f"import_{date.today():%Y%m%d}.log"
-            with logfile.open("a") as fh:
-                fh.write(f"{exc}\n")
-            raise
+    # def save_instance(
+    #     self,
+    #     instance: Section,
+    #     is_create: bool,
+    #     row: dict[str, str],
+    #     **kwargs,
+    # ):
+    #     """Wrap save to log errors during import."""
+    #     try:
+    #         return super().save_instance(instance, is_create, row, **kwargs)
+    #     except Exception as exc:  # pragma: no cover - log & abort
+    #         log_dir = Path("logs")
+    #         log_dir.mkdir(exist_ok=True)
+    #         logfile = log_dir / f"import_{date.today():%Y%m%d}.log"
+    #         with logfile.open("a") as fh:
+    #             fh.write(f"{exc}\n")
+    #         raise
 
     class Meta:
         model = Section
-        import_id_fields = ("number", "course", "semester")
-        fields = ("number", "course", "semester", "faculty")
+        import_id_fields = ("number", "course", "semester", "faculty", "academic_year")
+        fields = ("number", "course", "semester", "faculty", "academic_year")
         skip_unchanged = True
-        use_bulk = False  # bypass the signal incrementing the section number
+        use_bulk = False

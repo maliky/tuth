@@ -8,6 +8,18 @@ from import_export import widgets
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester
 
+def ensure_academic_year_code(code: str) -> AcademicYear:
+    """
+    Look up or auto-create an AcademicYear from its 'YY-YY' code.
+    """
+    code = code.strip()
+    if not AcademicYear.objects.filter(code=code).exists():
+        ys, _ = code.split("-")
+        start = date(int("20" + ys), 9, 1)
+        AcademicYear.objects.create(start_date=start, code=code)
+        
+    return AcademicYear.objects.get(code=code)
+
 
 class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
     """Create an academic year from its code. eg 25-26"""
@@ -15,6 +27,11 @@ class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(AcademicYear, field="code")
         self.ay_pat = re.compile(r"^(\d{2})-(\d{2})$")
+
+    def before_import_row(self, row, **kwargs):
+        code = row.get("academic_year", "").strip()
+        if code:
+            ensure_academic_year_code(code)
 
     def clean(
         self,
@@ -38,15 +55,6 @@ class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
         )
         return ay
 
-    def before_import_row(self, row, **kwargs):
-        # auto-create AY if missing
-        short = row["academic_year"]
-        if not AcademicYear.objects.filter(code=short).exists():
-            ys, ye = short.split("-")  # '25-26' -> '25', '26'
-            AcademicYear.objects.create(
-                start_date=date(int("20" + ys), 9, 1),
-                # end_date=date(int("20" + ye), 8, 31),
-            )
 
 
 class SemesterWidget(widgets.ForeignKeyWidget):
@@ -55,6 +63,10 @@ class SemesterWidget(widgets.ForeignKeyWidget):
     def __init__(self):
         super().__init__(Semester)  # using pk until start_date can be proven to be uniq
         self.ay_w = AcademicYearCodeWidget()
+
+    def before_import_row(self, row, **kwargs):
+        self.ay_w.before_import_row(row, **kwargs)
+        
 
     def clean(
         self,
@@ -68,7 +80,6 @@ class SemesterWidget(widgets.ForeignKeyWidget):
 
         sem_no = value.strip()
 
-        assert "academic_year" in row, f"not `academic_year` found in {row}"
         ay_code_value = row.get("academic_year", "").strip()
 
         ay = self.ay_w.clean(value=ay_code_value, row=row)

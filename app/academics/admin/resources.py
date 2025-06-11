@@ -186,7 +186,7 @@ class PrerequisiteResource(resources.ModelResource):
         widget=CurriculumWidget(),
     )
     course = fields.Field(
-        column_name="course_code", attribute="course", widget=CourseWidget()
+        column_name="course_name", attribute="course", widget=CourseWidget()
     )
     prerequisite_course = fields.Field(
         column_name="prerequisite", attribute="prerequisite_course", widget=CourseWidget()
