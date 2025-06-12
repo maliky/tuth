@@ -123,7 +123,7 @@ class StudentProfile(BaseProfile):
 class StaffProfile(BaseProfile):
     """Generic data for all employees of the university."""
 
-    staff_id = models.CharField(max_length=20, unique=True)
+    staff_id = models.CharField(max_length=13, unique=True)
     employment_date = models.DateField(null=True, blank=True)
 
     division = models.CharField(max_length=100, blank=True)

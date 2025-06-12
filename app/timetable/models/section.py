@@ -24,7 +24,7 @@ class Section(models.Model):
         "people.FacultyProfile",
         null=True,
         blank=True,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
     )
 
     start_date = models.DateField(null=True, blank=True)
@@ -74,7 +74,7 @@ class Section(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["semester", "course", "number"],
-                name="uniq_section_per_course",
+                name="uniq_section_per_course_faculty",
             )
         ]
         ordering = ["semester", "course", "number"]

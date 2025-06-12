@@ -37,6 +37,12 @@ class Command(BaseCommand):
             default="../Docs/Data/cleaned_tscc.csv",
             help="Path to CSV file with resources data",
         )
+    def clean_column_headers(self,dataset):
+        """filter any blank column headers that may appear due to trailing commas"""
+        # sanitize column headers: strip whitespace and drop empties
+        dataset.headers = [(header or "").strip() for header in dataset.headers]
+        return dataset
+
 
     def handle(self, *args: Any, **options: Any) -> None:
         ensure_superuser(self)
@@ -46,18 +52,9 @@ class Command(BaseCommand):
             raise FileNotFoundError(str(path))
 
         dataset: Dataset = Dataset().load(open(path).read(), format="csv")
-
-        # sanitize column headers: strip whitespace and drop empties
-        dataset.headers = [(header or "").strip() for header in dataset.headers]
-
-        # filter any blank column headers that may appear due to trailing commas
-        while "" in dataset.headers:
-            idx = dataset.headers.index("")
-            dataset.headers.pop(idx)
-            dataset._data = [
-                tuple(value for j, value in enumerate(row) if j != idx)
-                for row in dataset._data
-            ]
+        dataset = self.clean_column_headers(dataset)
+        
+        # import ipdb;                ipdb.set_trace()
 
         RESOURCES_MAP: list[tuple[str, type[resources.ModelResource]]] = [
             # ("Course", CourseResource),  # and College
@@ -70,14 +67,11 @@ class Command(BaseCommand):
 
         for key, ResourceClass in RESOURCES_MAP:
             resource: resources.ModelResource = ResourceClass()
-
             validation: resources.Result = resource.import_data(dataset, dry_run=True)
 
             if validation.has_errors():
                 self.stdout.write(self.style.ERROR(f"'{key}': validation errors:"))
-                import ipdb
 
-                ipdb.set_trace()
                 if validation.row_errors():
                     row_index, row_err = validation.row_errors()[0]
                     self.stdout.write(f"  row {row_index}: {row_err[0]}")

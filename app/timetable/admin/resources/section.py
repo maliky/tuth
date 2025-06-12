@@ -1,5 +1,6 @@
 """Import/export resources for timetable models. (Section)"""
 
+from typing import Any
 from import_export import fields, resources
 
 from app.academics.admin.widgets import CourseWidget
@@ -9,11 +10,14 @@ from app.timetable.models.section import Section
 
 
 class SectionResource(resources.ModelResource):
-    academic_year = fields.Field(
-        column_name="academic_year",
-        attribute="semester",
-        widget=SemesterWidget(),
-    )
+
+    # just to keep it in headers and accessible for other.
+    academic_year = fields.Field(column_name="academic_year", attribute=None)
+    course_no = fields.Field(column_name="course_no", attribute=None)
+    college_code = fields.Field(column_name="college_code", attribute=None)
+
+    # for this section, it is mandatory that the semester be attached to a year
+    # when exporting we should export the semester_code
     semester = fields.Field(
         column_name="semester_no",
         attribute="semester",
@@ -26,33 +30,32 @@ class SectionResource(resources.ModelResource):
         widget=CourseWidget(),
     )
     number = fields.Field(column_name="section_no", attribute="number")
+
     faculty = fields.Field(
         column_name="faculty",
         attribute="faculty",
         widget=FacultyProfileWidget(),
     )
 
-    # def save_instance(
-    #     self,
-    #     instance: Section,
-    #     is_create: bool,
-    #     row: dict[str, str],
-    #     **kwargs,
-    # ):
-    #     """Wrap save to log errors during import."""
-    #     try:
-    #         return super().save_instance(instance, is_create, row, **kwargs)
-    #     except Exception as exc:  # pragma: no cover - log & abort
-    #         log_dir = Path("logs")
-    #         log_dir.mkdir(exist_ok=True)
-    #         logfile = log_dir / f"import_{date.today():%Y%m%d}.log"
-    #         with logfile.open("a") as fh:
-    #             fh.write(f"{exc}\n")
-    #         raise
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+
+        pass
+
+    def before_import(self, dataset, **kwargs):
+        pass
 
     class Meta:
         model = Section
-        import_id_fields = ("number", "course", "semester", "faculty", "academic_year")
-        fields = ("number", "course", "semester", "faculty", "academic_year")
+        import_id_fields = ("semester", "number", "course", "faculty")
+        fields = (
+            "number",
+            "course",
+            "semester",
+            "faculty",
+            "academic_year",
+            "course_no",
+            "college_code",
+        )
         skip_unchanged = True
         use_bulk = False

@@ -8,6 +8,7 @@ from import_export import widgets
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester
 
+
 def ensure_academic_year_code(code: str) -> AcademicYear:
     """
     Look up or auto-create an AcademicYear from its 'YY-YY' code.
@@ -17,7 +18,7 @@ def ensure_academic_year_code(code: str) -> AcademicYear:
         ys, _ = code.split("-")
         start = date(int("20" + ys), 9, 1)
         AcademicYear.objects.create(start_date=start, code=code)
-        
+
     return AcademicYear.objects.get(code=code)
 
 
@@ -27,11 +28,6 @@ class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(AcademicYear, field="code")
         self.ay_pat = re.compile(r"^(\d{2})-(\d{2})$")
-
-    def before_import_row(self, row, **kwargs):
-        code = row.get("academic_year", "").strip()
-        if code:
-            ensure_academic_year_code(code)
 
     def clean(
         self,
@@ -56,17 +52,12 @@ class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
         return ay
 
 
-
 class SemesterWidget(widgets.ForeignKeyWidget):
     """Derive the Semester from a semestr no and an academic year code"""
 
     def __init__(self):
         super().__init__(Semester)  # using pk until start_date can be proven to be uniq
         self.ay_w = AcademicYearCodeWidget()
-
-    def before_import_row(self, row, **kwargs):
-        self.ay_w.before_import_row(row, **kwargs)
-        
 
     def clean(
         self,
@@ -79,7 +70,6 @@ class SemesterWidget(widgets.ForeignKeyWidget):
             return None
 
         sem_no = value.strip()
-
         ay_code_value = row.get("academic_year", "").strip()
 
         ay = self.ay_w.clean(value=ay_code_value, row=row)

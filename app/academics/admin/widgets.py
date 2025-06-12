@@ -114,7 +114,7 @@ class CourseWidget(widgets.ForeignKeyWidget):
         """
         if row is None:
             return None
-
+        # import pdb; pdb.set_trace()
         course_name = row.get("course_name", "").strip().upper()
         course_no = row.get("course_no", "").strip()
 

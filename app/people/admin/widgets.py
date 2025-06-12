@@ -54,6 +54,7 @@ class FacultyProfileWidget(widgets.ForeignKeyWidget):
 
     The widget caches lookups so identical rows don't trigger multiple database
     queries.
+    need college code
 
     Given a CSV cell containing something like ``"Dr. John A. Smith PhD"`` this
     widget will:
@@ -83,66 +84,89 @@ class FacultyProfileWidget(widgets.ForeignKeyWidget):
     FIRST_PATTERN = r"^([A-Za-z-]+)"
     LAST_PATTERN = r"([A-Za-z-]+)$"
 
-    def __init__(self, college_column="college_code"):
+    def __init__(self):
         """
         college_field: name of the CSV column that holds the college code.
         """
         super().__init__(FacultyProfile, field="staff_id")
-        self.college_column = college_column
         self._cache: dict[str, FacultyProfile] = {}
 
-    def clean(self, value, row=None, *args, **kwargs) -> FacultyProfile | None:
-        if not value:
-            return None
-
-        key = f"{value.strip()}|{(row.get(self.college_column) or '').strip() if row else ''}"
-        if key in self._cache:
-            return self._cache[key]
-
-        raw = value.strip()
-
-        # Extract suffix
+    def _extract_suffix(self, value):
         name_suffix = ""
         for pat in self.SUFFIX_PATTERNS:
-            m = re.search(pat, raw, flags=re.IGNORECASE)
+            m = re.search(pat, value, flags=re.IGNORECASE)
             if m:
                 name_suffix = m.group(0).replace(".", "").upper()
-                raw = re.sub(pat, "", raw, flags=re.IGNORECASE).strip()
+                value = re.sub(pat, "", value, flags=re.IGNORECASE).strip()
                 break
+        return name_suffix, value
 
-        # Extract prefix
-        m = re.search(self.PREFIX_PATTERN, raw)
+    def _extract_prefix(self, value):
+        m = re.search(self.PREFIX_PATTERN, value)
         name_prefix = ""
         if m:
             name_prefix = m.group(0).replace(".", "")
-            raw = re.sub(self.PREFIX_PATTERN, "", raw).strip()
+            value = re.sub(self.PREFIX_PATTERN, "", value).strip()
+        return name_prefix, value
 
+    def _extract_firstnlast(self, value):
         # Extract first name
         first_name = ""
         last_name = ""
 
-        m = re.match(self.FIRST_PATTERN, raw)
+        m = re.match(self.FIRST_PATTERN, value)
         if m:
             first_name = m.group(1)
-            raw = raw[len(first_name) :].strip()
+            value = value[len(first_name) :].strip()
 
-        m = re.search(self.LAST_PATTERN, raw)
+        m = re.search(self.LAST_PATTERN, value)
         if m:
             last_name = m.group(1)
-            raw = re.sub(self.LAST_PATTERN, "", raw).strip()
+            value = re.sub(self.LAST_PATTERN, "", value).strip()
+        return first_name, last_name, value
 
-        # Extract all middle name
-        middle_name = raw
-
-        # Build a username: use first letter(s) of first + last
+    def _make_unique_username(self, first_name, last_name, length=13):
+        """
+        Generating a unique username
+        """
         uname_base = (first_name[:1] + last_name).lower()
-        uname = uname_base
-
-        # in case we have several username similar
+        uname = uname_base[:length]
         counter = 1
         while User.objects.filter(username=uname).exists():
             counter += 1
             uname = f"{uname_base}{counter}"
+        return uname
+
+    def _updating_names(self, faculty_profile, prefix=None, suffix=None, middle=None):
+        # Update profile fields
+        if prefix:
+            faculty_profile.name_prefix = prefix
+        if suffix:
+            faculty_profile.name_suffix = suffix
+        if middle:
+            faculty_profile.middle_name = middle
+
+        if prefix or suffix or middle:
+            faculty_profile.save(
+                update_fields=["name_prefix", "name_suffix", "middle_name"]
+            )
+
+    def clean(self, value, row=None, *args, **kwargs) -> FacultyProfile | None:
+        assert value, f"value {value} should not be empty or None"
+        raw_value = value.strip()
+
+        college_code = row.get("college_code", "COAS").strip()
+        if not college_code:
+            college_code = "COAS"
+
+        name_suffix, raw_value = self._extract_suffix(raw_value)
+        name_prefix, raw_value = self._extract_prefix(raw_value)
+        first_name, last_name, middle_name = self._extract_firstnlast(raw_value)
+
+        uname = self._make_unique_username(first_name=first_name, last_name=last_name)
+
+        if uname in self._cache:
+            return self._cache[uname]
 
         # Create or retrieve User
         user, created = User.objects.get_or_create(
@@ -157,37 +181,27 @@ class FacultyProfileWidget(widgets.ForeignKeyWidget):
             user.set_password(TEST_PW)
             user.save()
 
-        # Determine college
-        college_code = (row.get(self.college_column) or "").strip()
         college, _ = College.objects.get_or_create(code=college_code)
 
-        staff_id_value = f"TU-{uname.lower()}"[:17]
-        # Create or retrieve FacultyProfile
-        facutly_profile, _ = FacultyProfile.objects.get_or_create(
+        faculty_profile, _ = FacultyProfile.objects.get_or_create(
             user=user,
-            defaults={"college": college, "staff_id": staff_id_value},
+            defaults={
+                "college": college,
+                "staff_id": f"TU-{uname}",
+            },
+        )
+        self._updating_names(
+            faculty_profile, suffix=name_suffix, prefix=name_prefix, middle=middle_name
         )
 
-        # Update profile fields
-        updated = False
-        if name_prefix:
-            facutly_profile.name_prefix = name_prefix
-            updated = True
-        if name_suffix:
-            facutly_profile.name_suffix = name_suffix
-            updated = True
-        if middle_name:
-            facutly_profile.middle_name = middle_name
-            updated = True
-        if updated:
-            facutly_profile.save(
-                update_fields=["name_prefix", "name_suffix", "middle_name"]
-            )
-
-        self._cache[key] = facutly_profile
-        return facutly_profile
+        self._cache[uname] = faculty_profile
+        return faculty_profile
 
     def render(self, value, obj=None) -> str:
         if not value:
             return ""
         return value.long_name  # type: ignore[no-any-return]
+
+    def after_import(self, dataset, result, **kwargs):
+        if kwargs.get("dry_run", False):
+            self._cache.clear()
