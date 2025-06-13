@@ -37,12 +37,12 @@ class Command(BaseCommand):
             default="../Docs/Data/cleaned_tscc.csv",
             help="Path to CSV file with resources data",
         )
-    def clean_column_headers(self,dataset):
+
+    def clean_column_headers(self, dataset):
         """filter any blank column headers that may appear due to trailing commas"""
         # sanitize column headers: strip whitespace and drop empties
         dataset.headers = [(header or "").strip() for header in dataset.headers]
         return dataset
-
 
     def handle(self, *args: Any, **options: Any) -> None:
         ensure_superuser(self)
@@ -53,19 +53,18 @@ class Command(BaseCommand):
 
         dataset: Dataset = Dataset().load(open(path).read(), format="csv")
         dataset = self.clean_column_headers(dataset)
-        
-        # import ipdb;                ipdb.set_trace()
 
         RESOURCES_MAP: list[tuple[str, type[resources.ModelResource]]] = [
-            # ("Course", CourseResource),  # and College
-            # ("Room", RoomResource),  # and Space
-            # ("CurriculumCourse", CurriculumCourseResource),
-            # ("Semester", SemesterResource),  # and Academic year
-            # ("Session", SessionResource),  # and Faculty, Room and Space
-            ("Section", SectionResource)
+            ("Course", CourseResource),  # and College
+            ("Room", RoomResource),  # and Space
+            ("CurriculumCourse", CurriculumCourseResource),
+            ("semester", SemesterResource),  # and Academic year
+            ("Session", SessionResource),  # and Faculty, Room and Space
+            ("Section", SectionResource),
         ]
 
         for key, ResourceClass in RESOURCES_MAP:
+
             resource: resources.ModelResource = ResourceClass()
             validation: resources.Result = resource.import_data(dataset, dry_run=True)
 
@@ -86,6 +85,12 @@ class Command(BaseCommand):
                     resource.import_data(dataset, dry_run=False)
             except Exception as exc:
                 self.stdout.write(self.style.ERROR(f"{key} import failed: {exc}"))
+                import traceback
+
+                traceback.print_exc()
+                import ipdb
+
+                ipdb.set_trace()
                 continue
 
             self.stdout.write(self.style.SUCCESS(f"{key} import completed."))

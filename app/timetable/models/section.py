@@ -73,9 +73,13 @@ class Section(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["semester", "course", "number"],
+                fields=["semester", "course", "number", "faculty"],
                 name="uniq_section_per_course_faculty",
             )
         ]
+        indexes = [
+            models.Index(fields=["semester", "course"]),
+            models.Index(fields=["semester", "course", "number"]),
+            models.Index(fields=["semester", "course", "number", "faculty"]),
+        ]
         ordering = ["semester", "course", "number"]
-        indexes = [models.Index(fields=["semester", "course", "number"])]

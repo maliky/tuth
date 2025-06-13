@@ -39,11 +39,24 @@ class SectionResource(resources.ModelResource):
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-
         pass
 
     def before_import(self, dataset, **kwargs):
+        super().before_import(dataset, **kwargs)
         pass
+
+    # def save_instance(self, instance,  is_create, row, **kwargs):
+    #     # import ipdb; ipdb.set_trace()
+    #     try:
+    #         super().save_instance(instance,  is_create, row, **kwargs)
+    #     except Exception as exc:
+    #         print("Integrity Error on Row:", row)
+    #         print("Instance values:")
+    #         print("course:", instance.course, instance.course.pk)
+    #         print("faculty:", instance.faculty, instance.faculty.pk)
+    #         print("semester:", instance.semester, instance.semester.pk)
+    #         import ipdb; ipdb.set_trace()
+    #         raise exc
 
     class Meta:
         model = Section

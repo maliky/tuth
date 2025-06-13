@@ -9,6 +9,77 @@ from app.academics.models import College
 from app.people.models.profile import FacultyProfile
 from app.shared.constants import TEST_PW
 
+# regex patterns to pull suffixes, prefixes, initials, etc.
+SUFFIX_PATTERNS = [
+    r"\b(?:Ph\.?\s*D(?P<dot>\.)?)(?(dot)\s*|\b)",
+    r"\b(?:Ed\.?\s*D(?P<dot>\.)?)(?(dot)\s*|\b)",
+    r"\b(?:MD)\b",
+    r"\b(?:SHF)\b",
+    r"\b(?:(?:Jr|Sr)(?P<dot>\.)?)(?(dot)\s*|\b)",
+    r"\b(?:I{1,3})\b",
+    # r"\bPh\.?\s*[Dd]\.?\b",
+    # r"\bEd\.?\s*[Dd]\.?\b",
+    # r"\bMD\b",
+    # r"\bSHF\b",
+    # r"\b(?:Jr|Sr)\.?\b",
+    # r"\bI{1,3}\b",
+]
+PREFIX_PATTERN = r"\b(?:Dr|Mme|Mr|Prof|Rev|Sr|Fr)\.?\b"
+INITIAL_PATTERN = r"\b([A-Z])\.?\b"
+# first and last assume word characters or hyphen
+FIRST_PATTERN = r"^([A-Za-z-]+)"
+LAST_PATTERN = r"([A-Za-z-]+)$"
+
+
+def extract_suffix(value):
+    name_suffix = ""
+    for pat in SUFFIX_PATTERNS:
+        m = re.search(pat, value, flags=re.IGNORECASE)
+        if m:
+            name_suffix = m.group(0).replace(".", "").upper()
+            value = re.sub(pat, "", value, flags=re.IGNORECASE).strip()
+            break
+    return name_suffix, value
+
+
+def extract_prefix(value):
+    m = re.search(PREFIX_PATTERN, value)
+    name_prefix = ""
+    if m:
+        name_prefix = m.group(0).replace(".", "")
+        value = re.sub(PREFIX_PATTERN, "", value).strip()
+    return name_prefix, value
+
+
+def extract_firstnlast(value):
+    # Extract first name
+    first_name = ""
+    last_name = ""
+
+    m = re.match(FIRST_PATTERN, value)
+    if m:
+        first_name = m.group(1)
+        value = value[len(first_name) :].strip()
+
+    m = re.search(LAST_PATTERN, value)
+    if m:
+        last_name = m.group(1)
+        value = re.sub(LAST_PATTERN, "", value).strip()
+    return first_name, last_name, value
+
+
+def make_unique_username(first_name, last_name, length=13):
+    """
+    Generating a unique username
+    """
+    uname_base = (first_name[:1] + last_name).lower()
+    uname = uname_base[:length]
+    counter = 1
+    while User.objects.filter(username=uname).exists():
+        counter += 1
+        uname = f"{uname_base}{counter}"
+    return uname
+
 
 class UserWidget(widgets.ForeignKeyWidget):
     """Create or lookup :class:`User` instances with basic defaults.
@@ -63,27 +134,6 @@ class FacultyProfileWidget(widgets.ForeignKeyWidget):
       • create or retrieve a ``User`` and ``FacultyProfile`` record
     """
 
-    # regex patterns to pull suffixes, prefixes, initials, etc.
-    SUFFIX_PATTERNS = [
-        r"\b(?:Ph\.?\s*D(?P<dot>\.)?)(?(dot)\s*|\b)",
-        r"\b(?:Ed\.?\s*D(?P<dot>\.)?)(?(dot)\s*|\b)",
-        r"\b(?:MD)\b",
-        r"\b(?:SHF)\b",
-        r"\b(?:(?:Jr|Sr)(?P<dot>\.)?)(?(dot)\s*|\b)",
-        r"\b(?:I{1,3})\b",
-        # r"\bPh\.?\s*[Dd]\.?\b",
-        # r"\bEd\.?\s*[Dd]\.?\b",
-        # r"\bMD\b",
-        # r"\bSHF\b",
-        # r"\b(?:Jr|Sr)\.?\b",
-        # r"\bI{1,3}\b",
-    ]
-    PREFIX_PATTERN = r"\b(?:Dr|Mme|Mr|Prof|Rev|Sr|Fr)\.?\b"
-    INITIAL_PATTERN = r"\b([A-Z])\.?\b"
-    # first and last assume word characters or hyphen
-    FIRST_PATTERN = r"^([A-Za-z-]+)"
-    LAST_PATTERN = r"([A-Za-z-]+)$"
-
     def __init__(self):
         """
         college_field: name of the CSV column that holds the college code.
@@ -91,85 +141,22 @@ class FacultyProfileWidget(widgets.ForeignKeyWidget):
         super().__init__(FacultyProfile, field="staff_id")
         self._cache: dict[str, FacultyProfile] = {}
 
-    def _extract_suffix(self, value):
-        name_suffix = ""
-        for pat in self.SUFFIX_PATTERNS:
-            m = re.search(pat, value, flags=re.IGNORECASE)
-            if m:
-                name_suffix = m.group(0).replace(".", "").upper()
-                value = re.sub(pat, "", value, flags=re.IGNORECASE).strip()
-                break
-        return name_suffix, value
-
-    def _extract_prefix(self, value):
-        m = re.search(self.PREFIX_PATTERN, value)
-        name_prefix = ""
-        if m:
-            name_prefix = m.group(0).replace(".", "")
-            value = re.sub(self.PREFIX_PATTERN, "", value).strip()
-        return name_prefix, value
-
-    def _extract_firstnlast(self, value):
-        # Extract first name
-        first_name = ""
-        last_name = ""
-
-        m = re.match(self.FIRST_PATTERN, value)
-        if m:
-            first_name = m.group(1)
-            value = value[len(first_name) :].strip()
-
-        m = re.search(self.LAST_PATTERN, value)
-        if m:
-            last_name = m.group(1)
-            value = re.sub(self.LAST_PATTERN, "", value).strip()
-        return first_name, last_name, value
-
-    def _make_unique_username(self, first_name, last_name, length=13):
-        """
-        Generating a unique username
-        """
-        uname_base = (first_name[:1] + last_name).lower()
-        uname = uname_base[:length]
-        counter = 1
-        while User.objects.filter(username=uname).exists():
-            counter += 1
-            uname = f"{uname_base}{counter}"
-        return uname
-
-    def _updating_names(self, faculty_profile, prefix=None, suffix=None, middle=None):
-        # Update profile fields
-        if prefix:
-            faculty_profile.name_prefix = prefix
-        if suffix:
-            faculty_profile.name_suffix = suffix
-        if middle:
-            faculty_profile.middle_name = middle
-
-        if prefix or suffix or middle:
-            faculty_profile.save(
-                update_fields=["name_prefix", "name_suffix", "middle_name"]
-            )
-
     def clean(self, value, row=None, *args, **kwargs) -> FacultyProfile | None:
+
         assert value, f"value {value} should not be empty or None"
         raw_value = value.strip()
 
-        college_code = row.get("college_code", "COAS").strip()
-        if not college_code:
-            college_code = "COAS"
+        name_suffix, raw_value = extract_suffix(raw_value)
+        name_prefix, raw_value = extract_prefix(raw_value)
+        first_name, last_name, middle_name = extract_firstnlast(raw_value)
 
-        name_suffix, raw_value = self._extract_suffix(raw_value)
-        name_prefix, raw_value = self._extract_prefix(raw_value)
-        first_name, last_name, middle_name = self._extract_firstnlast(raw_value)
-
-        uname = self._make_unique_username(first_name=first_name, last_name=last_name)
+        uname = make_unique_username(first_name=first_name, last_name=last_name)
 
         if uname in self._cache:
             return self._cache[uname]
 
         # Create or retrieve User
-        user, created = User.objects.get_or_create(
+        user, user_created = User.objects.get_or_create(
             username=uname,
             defaults={
                 "first_name": first_name.capitalize(),
@@ -177,22 +164,32 @@ class FacultyProfileWidget(widgets.ForeignKeyWidget):
                 "password": TEST_PW,
             },
         )
-        if created:
+        if user_created:
             user.set_password(TEST_PW)
             user.save()
 
-        college, _ = College.objects.get_or_create(code=college_code)
+        college_code = row.get("college_code", "COAS").strip()
 
-        faculty_profile, _ = FacultyProfile.objects.get_or_create(
+        if not college_code:
+            college_code = "COAS"
+
+        college, college_created = College.objects.get_or_create(code=college_code)
+
+        if college_created:
+            college.save()
+
+        faculty_profile, faculty_created = FacultyProfile.objects.get_or_create(
             user=user,
             defaults={
                 "college": college,
                 "staff_id": f"TU-{uname}",
+                "name_suffix": name_suffix,
+                "name_prefix": name_prefix,
+                "middle_name": middle_name,
             },
         )
-        self._updating_names(
-            faculty_profile, suffix=name_suffix, prefix=name_prefix, middle=middle_name
-        )
+        if faculty_created:
+            faculty_profile.save()
 
         self._cache[uname] = faculty_profile
         return faculty_profile

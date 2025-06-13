@@ -13,6 +13,7 @@ class Course(models.Model):
     """Catalog entry defining a unit of instruction."""
 
     code = models.CharField(max_length=20, editable=False)
+    # > need to change it and everywhere with course_dept
     name = models.CharField(max_length=10)  # e.g. MATH
     number = models.CharField(max_length=10)  # e.g. 101
     title = models.CharField(max_length=255)

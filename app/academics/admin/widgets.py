@@ -128,16 +128,20 @@ class CourseWidget(widgets.ForeignKeyWidget):
             return self._cache[key]
 
         # ── get or create the College ─────────────────────────────
-        college, _ = College.objects.get_or_create(code=college_code)
+        college, college_created = College.objects.get_or_create(code=college_code)
+        if college_created:
+            college.save()
 
         # ── get or create the Course ──────────────────────────────
         code = make_course_code(course_name, course_no)  # e.g. AGR121
-        course, _ = Course.objects.get_or_create(
+        course, course_created = Course.objects.get_or_create(
             name=course_name,
             number=course_no,
             college=college,
             defaults={"title": row.get("course_title", code)},
         )
+        if course_created:
+            course.save()
         self._cache[key] = course
         return course
 
