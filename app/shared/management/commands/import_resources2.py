@@ -26,12 +26,13 @@ class Command(BaseCommand):
 
     #: Mapping **filename → (label, ResourceClass)**
     FILEMAP: dict[str, Tuple[str, type[resources.ModelResource]]] = {
-        "course.csv": ("Course", CourseResource),  # + College
-        "space.csv": ("Room", RoomResource),  # + Space
-        "curriculum_course.csv": ("CurriculumCourse", CurriculumCourseResource),
+        "faculty.csv": ("Faculty", FacultyRessource),
+        "room.csv": ("Room", RoomResource),  # + Space
         "semester.csv": ("Semester", SemesterResource),  # + AcademicYear
-        "session.csv": ("Session", SessionResource),  # + Faculty / Room
+        "course.csv": ("Course", CourseResource),  # + College
+        "curriculum_course.csv": ("CurriculumCourse", CurriculumCourseResource),
         "section.csv": ("Section", SectionResource),
+        "session.csv": ("Session", SessionResource),  # + Faculty / Room
     }
 
     def _load_csv(self, csv_path: Path, label=None) -> Dataset | None:

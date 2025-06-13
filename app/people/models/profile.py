@@ -127,6 +127,8 @@ class StaffProfile(BaseProfile):
     employment_date = models.DateField(null=True, blank=True)
 
     division = models.CharField(max_length=100, blank=True)
+    # ! if talking of faculty they could be in different departments
+    # ! would need a foreign key here
     department = models.CharField(max_length=100, blank=True)
     position = models.CharField(max_length=50, blank=True)
 

@@ -22,11 +22,14 @@ class FacultyResource(resources.ModelResource):
     class Meta:
         model = FacultyProfile
         fields = (
-            "user",
+            "staff_id"
             "college",
-            "curriculum",
-            "enrollment_semester",
-            "enrollment_date",
+            "name_prefix",
+            "name_suffix",
+            "middle_name",
+            "first_name",
+            "last_name"
+            "username"
         )
 
 
