@@ -13,7 +13,7 @@ from django.contrib.auth import get_user_model
 
 from app.academics.models.college import College
 from app.academics.models.course import Course
-from app.people.models.profile import FacultyProfile, StaffProfile, StudentProfile
+from app.people.models.profiles import Faculty, Staff, Student
 from app.spaces.models.core import Room, Space
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.section import Section
@@ -116,10 +116,10 @@ def student_user() -> User:
 
 
 @pytest.fixture
-def student_profile(student_user: User) -> StudentProfile:
-    # StudentProfile fields: user, student_id, college (nullable), curriculum (nullable),
+def student_profile(student_user: User) -> Student:
+    # Student fields: user, student_id, college (nullable), curriculum (nullable),
     # enrollment_semester, enrollment_date (nullable)
-    return StudentProfile.objects.create(
+    return Student.objects.create(
         user=student_user,
         student_id="S123456",
         enrollment_semester=1,
@@ -127,18 +127,18 @@ def student_profile(student_user: User) -> StudentProfile:
 
 
 @pytest.fixture
-def staff_profile() -> StaffProfile:
-    # StaffProfile requires `staff_id`
+def staff_profile() -> Staff:
+    # Staff requires `staff_id`
     user = User.objects.create_user(username="staff")
-    return StaffProfile.objects.create(user=user, staff_id="ST123")
+    return Staff.objects.create(user=user, staff_id="ST123")
 
 
 @pytest.fixture
-def faculty_profile(college: College) -> FacultyProfile:
-    # FacultyProfile inherits StaffProfile and adds `staff_id` plus optional fields
+def faculty_profile(college: College) -> Faculty:
+    # Faculty inherits Staff and adds `staff_id` plus optional fields
     # Reuse staff_profile but override college
     user = User.objects.create_user(username="faculty")
-    return FacultyProfile.objects.create(user=user, staff_id="FP001", college=college)
+    return Faculty.objects.create(user=user, staff_id="FP001", college=college)
 
 
 @pytest.fixture

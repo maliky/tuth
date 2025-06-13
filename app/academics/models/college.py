@@ -7,7 +7,7 @@ from typing import Optional, cast
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from app.people.models import FacultyProfile
+from app.people.models import Faculty
 from app.shared.constants.academics import CollegeCodeChoices, CollegeLongNameChoices
 
 
@@ -28,7 +28,7 @@ class College(models.Model):
     )
 
     @property
-    def current_dean(self) -> Optional[FacultyProfile]:
+    def current_dean(self) -> Optional[Faculty]:
         """Return the user currently assigned as dean or ``None``."""
 
         ra = (
@@ -40,8 +40,8 @@ class College(models.Model):
         if not ra:
             return None
         try:
-            return cast(Optional[FacultyProfile], getattr(ra, "facultyprofile", None))
-        except FacultyProfile.DoesNotExist:
+            return cast(Optional[Faculty], getattr(ra, "facultyprofile", None))
+        except Faculty.DoesNotExist:
             return None
 
     def __str__(self) -> str:  # pragma: no cover

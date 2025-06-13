@@ -4,7 +4,7 @@ from typing import Any
 from import_export import fields, resources
 
 from app.academics.admin.widgets import CourseWidget
-from app.people.admin.widgets import FacultyProfileWidget
+from app.people.admin.widgets import FacultyWidget
 from app.timetable.admin.widgets import SemesterWidget
 from app.timetable.models.section import Section
 
@@ -34,7 +34,7 @@ class SectionResource(resources.ModelResource):
     faculty = fields.Field(
         column_name="faculty",
         attribute="faculty",
-        widget=FacultyProfileWidget(),
+        widget=FacultyWidget(),
     )
 
     def __init__(self, **kwargs: Any) -> None:

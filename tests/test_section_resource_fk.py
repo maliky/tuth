@@ -56,7 +56,7 @@ def _as_csv(tmp_path: Path, dataset: Dataset) -> Path:
 @pytest.mark.django_db
 def test_double_import_with_same_resource_raises_fk(course, semester):
     """
-    Same resource → dry‑run then real run ⇒ orphan FacultyProfile cached ⇒ FK error.
+    Same resource → dry‑run then real run ⇒ orphan Faculty cached ⇒ FK error.
     """
     ds = _dataset(course, semester)
     res = SectionResource()
@@ -65,7 +65,7 @@ def test_double_import_with_same_resource_raises_fk(course, semester):
     dry = res.import_data(ds, dry_run=True)
     assert not dry.has_errors()
 
-    # second pass re‑uses the cached FacultyProfile and breaks FK
+    # second pass re‑uses the cached Faculty and breaks FK
     with pytest.raises(IntegrityError):
         res.import_data(ds, dry_run=False)
 

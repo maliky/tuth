@@ -10,7 +10,7 @@ from app.shared.constants.finance import FeeType, StatusClearance
 class FinancialRecord(models.Model):
     """Aggregate balance for a student."""
 
-    student = models.OneToOneField("people.StudentProfile", on_delete=models.CASCADE)
+    student = models.OneToOneField("people.Student", on_delete=models.CASCADE)
     total_due = models.DecimalField(max_digits=10, decimal_places=2)
     total_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     clearance_status = models.CharField(
@@ -20,7 +20,7 @@ class FinancialRecord(models.Model):
     )
     last_updated = models.DateTimeField(auto_now=True)
     verified_by = models.ForeignKey(
-        "people.StaffProfile",
+        "people.Staff",
         null=True,
         on_delete=models.SET_NULL,
         related_name="financial_records_verified",

@@ -15,7 +15,7 @@ class PaymentHistory(models.Model):
     payment_date = models.DateTimeField(auto_now_add=True)
     method = models.CharField(max_length=50, blank=True)  # cash, bank, mobile …
     recorded_by = models.ForeignKey(
-        "people.StaffProfile",
+        "people.Staff",
         null=True,
         on_delete=models.SET_NULL,
         related_name="payments_recorded",

@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Tuple
 
+from app.people.admin.resources import FacultyResource
 from django.core.management.base import BaseCommand, CommandParser
 from django.db import transaction
 from import_export import resources
@@ -26,7 +27,7 @@ class Command(BaseCommand):
 
     #: Mapping **filename → (label, ResourceClass)**
     FILEMAP: dict[str, Tuple[str, type[resources.ModelResource]]] = {
-        "faculty.csv": ("Faculty", FacultyRessource),
+        "faculty.csv": ("Faculty", FacultyResource),
         "room.csv": ("Room", RoomResource),  # + Space
         "semester.csv": ("Semester", SemesterResource),  # + AcademicYear
         "course.csv": ("Course", CourseResource),  # + College

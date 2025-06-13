@@ -21,7 +21,7 @@ class Section(models.Model):
     course = models.ForeignKey("academics.Course", on_delete=models.PROTECT)
     number = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
     faculty = models.ForeignKey(
-        "people.FacultyProfile",
+        "people.Faculty",
         null=True,
         blank=True,
         on_delete=models.CASCADE,

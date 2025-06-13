@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from import_export import widgets
 
 from app.academics.models import College
-from app.people.models.profile import FacultyProfile
+from app.people.models.profiles import Faculty, Staff
 from app.shared.constants import TEST_PW
 
 # regex patterns to pull suffixes, prefixes, initials, etc.
@@ -17,16 +17,9 @@ SUFFIX_PATTERNS = [
     r"\b(?:SHF)\b",
     r"\b(?:(?:Jr|Sr)(?P<dot>\.)?)(?(dot)\s*|\b)",
     r"\b(?:I{1,3})\b",
-    # r"\bPh\.?\s*[Dd]\.?\b",
-    # r"\bEd\.?\s*[Dd]\.?\b",
-    # r"\bMD\b",
-    # r"\bSHF\b",
-    # r"\b(?:Jr|Sr)\.?\b",
-    # r"\bI{1,3}\b",
 ]
 PREFIX_PATTERN = r"\b(?:Dr|Mme|Mr|Prof|Rev|Sr|Fr)\.?\b"
 INITIAL_PATTERN = r"\b([A-Z])\.?\b"
-# first and last assume word characters or hyphen
 FIRST_PATTERN = r"^([A-Za-z-]+)"
 LAST_PATTERN = r"([A-Za-z-]+)$"
 
@@ -68,7 +61,7 @@ def extract_firstnlast(value):
     return first_name, last_name, value
 
 
-def make_unique_username(first_name, last_name, length=13):
+def _unique_usernrame(first_name, last_name, length=13):
     """
     Generating a unique username
     """
@@ -81,124 +74,82 @@ def make_unique_username(first_name, last_name, length=13):
     return uname
 
 
-class UserWidget(widgets.ForeignKeyWidget):
-    """Create or lookup :class:`User` instances with basic defaults.
+def _split_name(value):
+    name_suffix, value = extract_suffix(value)
+    name_prefix, value = extract_prefix(value)
+    first_name, last_name, middle_name = extract_firstnlast(value)
+    return name_prefix, first_name, middle_name, last_name, name_suffix
 
-    The widget keeps an internal cache so repeated calls with the same name do
-    not hit the database again.
+
+class StaffProfileWidget(widgets.ForeignKeyWidget):
+    """
+    “faculty”  ➜  User  ➜  Staff
+
+    • expects the column value to be the full display name.
+    • returns the *Staff* (not the User!) so foreign-keys can point to it.
     """
 
     def __init__(self):
-        super().__init__(User, field="username")
-        self._cache: dict[str, User] = {}
+        # > explain this,  Does it means to initiate a Staff instance ,
+        super().__init__(Staff, field="staff_id")
+        self._cache: dict[str, Staff] = {}
 
-    def clean(self, value, row=None, *args, **kwargs) -> User | None:
+    def clean(self, value, row=None, *args, **kwargs) -> Staff | None:
         if not value:
             return None
 
-        parts = value.split()
-        if not parts:
-            raise ValueError("name cannot be empty")
-
-        first = parts[0]
-        last = parts[-1]
-        initials = "".join(p[0] for p in parts[:-1]) or first[0]
-        username = f"{initials}{last}".lower()
+        prefix, first, middle, last, suffix = _split_name(value)
+        username = _unique_usernrame(first, last)
 
         if username in self._cache:
             return self._cache[username]
 
-        user, created = User.objects.get_or_create(
+        user, _ = User.objects.get_or_create(
             username=username,
-            defaults={"first_name": first, "last_name": last, "password": TEST_PW},
-        )
-        if created:
-            user.set_password(TEST_PW)
-            user.save()
-
-        self._cache[username] = user
-        return user
-
-
-class FacultyProfileWidget(widgets.ForeignKeyWidget):
-    """Parse a full name and return a ``FacultyProfile`` instance.
-
-    The widget caches lookups so identical rows don't trigger multiple database
-    queries.
-    need college code
-
-    Given a CSV cell containing something like ``"Dr. John A. Smith PhD"`` this
-    widget will:
-      • extract prefix (``"Dr"``), suffix (``"PhD"``), middle initials (``"A"``)
-      • extract first (``"John"``) and last (``"Smith"``)
-      • create or retrieve a ``User`` and ``FacultyProfile`` record
-    """
-
-    def __init__(self):
-        """
-        college_field: name of the CSV column that holds the college code.
-        """
-        super().__init__(FacultyProfile, field="staff_id")
-        self._cache: dict[str, FacultyProfile] = {}
-
-    def clean(self, value, row=None, *args, **kwargs) -> FacultyProfile | None:
-
-        assert value, f"value {value} should not be empty or None"
-        raw_value = value.strip()
-
-        name_suffix, raw_value = extract_suffix(raw_value)
-        name_prefix, raw_value = extract_prefix(raw_value)
-        first_name, last_name, middle_name = extract_firstnlast(raw_value)
-
-        uname = make_unique_username(first_name=first_name, last_name=last_name)
-
-        if uname in self._cache:
-            return self._cache[uname]
-
-        # Create or retrieve User
-        user, user_created = User.objects.get_or_create(
-            username=uname,
             defaults={
-                "first_name": first_name.capitalize(),
-                "last_name": last_name.capitalize(),
+                "first_name": first.capitalize(),
+                "last_name": last.capitalize(),
                 "password": TEST_PW,
             },
         )
-        if user_created:
-            user.set_password(TEST_PW)
-            user.save()
 
-        college_code = row.get("college_code", "COAS").strip()
-
-        if not college_code:
-            college_code = "COAS"
-
-        college, college_created = College.objects.get_or_create(code=college_code)
-
-        if college_created:
-            college.save()
-
-        faculty_profile, faculty_created = FacultyProfile.objects.get_or_create(
+        staff, _ = Staff.objects.get_or_create(
             user=user,
             defaults={
-                "college": college,
-                "staff_id": f"TU-{uname}",
-                "name_suffix": name_suffix,
-                "name_prefix": name_prefix,
-                "middle_name": middle_name,
+                "name_prefix": prefix,
+                "middle_name": middle,
+                "name_suffix": suffix,
             },
         )
-        if faculty_created:
-            faculty_profile.save()
-
-        self._cache[uname] = faculty_profile
-        return faculty_profile
+        self._cache[username] = staff
+        return staff
 
     def render(self, value, obj=None) -> str:
-        if not value:
-            return ""
-        return value.long_name  # type: ignore[no-any-return]
+        return value.long_name if value else ""  # type: ignore[no-any-return]
 
     def after_import(self, dataset, result, **kwargs):
         if kwargs.get("dry_run", False):
             self._cache.clear()
+
+
+class FacultyWidget(widgets.ForeignKeyWidget):
+    """
+    Builds on StaffWidget: first get the Staff, then ensure a Faculty row exists.
+    """
+
+    def __init__(self):
+        super().__init__(Faculty, field="id")
+
+    def clean(self, value: str, row=None, *args, **kwargs) -> Faculty | None:
+        staff = super().clean(value, row, *args, **kwargs)
+        if staff is None:
+            return None
+        # pick the college code from the row (or a default)
+        code = (row or {}).get("college_code", "COAS").strip().upper()
+        college, _ = College.objects.get_or_create(code=code)
+
+        faculty, _ = Faculty.objects.get_or_create(
+            staff_profile=staff,
+            defaults={"college": college},
+        )
+        return faculty

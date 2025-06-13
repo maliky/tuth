@@ -84,9 +84,9 @@ def test_student_dashboard_url(client, superuser):
     """
     Basic smoke test – dashboard should load for an authenticated student.
     """
-    from app.people.models import StudentProfile
+    from app.people.models import Student
 
-    StudentProfile.objects.create(
+    Student.objects.create(
         user=superuser,
         student_id="SUPER",
         enrollment_semester=1,

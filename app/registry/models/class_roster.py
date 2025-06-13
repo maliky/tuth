@@ -5,7 +5,7 @@ from __future__ import annotations
 from django.db import models
 from django.db.models import QuerySet
 
-from app.people.models import StudentProfile
+from app.people.models import Student
 from app.shared.constants import StatusRegistration
 
 
@@ -16,9 +16,9 @@ class ClassRoster(models.Model):
     last_updated = models.DateTimeField(auto_now=True)
 
     @property
-    def students(self) -> QuerySet[StudentProfile]:
+    def students(self) -> QuerySet[Student]:
         """Return all users registered to this section."""
-        return StudentProfile.objects.filter(
+        return Student.objects.filter(
             student_registrations__section=self.section,
             student_registrations__status=StatusRegistration.COMPLETED,
         )

@@ -1,5 +1,5 @@
 """Initialization for the admin package."""
 
-from .core import StudentProfileAdmin, DonorProfileAdmin, FacultyProfileAdmin
+from .core import StudentAdmin, DonorAdmin, FacultyAdmin
 
-__all__ = ["FacultyProfileAdmin", "DonorProfileAdmin", "StudentProfileAdmin"]
+__all__ = ["FacultyAdmin", "DonorAdmin", "StudentAdmin"]

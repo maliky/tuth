@@ -264,15 +264,7 @@ class CourseCodeWidget(widgets.ForeignKeyWidget):
 
 
 class CollegeWidget(widgets.ForeignKeyWidget):
+    """Simple FK helper so we can import `college_code` if present."""
+
     def __init__(self):
         super().__init__(College, field="code")
-
-    def clean(self, value, row=None, *args, **kwargs) -> College | None:
-        """Lookup for the college and create it if not found"""
-        if not value:
-            return None
-
-        code = value.strip()
-        college, _ = College.objects.get_or_create(code=code)
-
-        return college

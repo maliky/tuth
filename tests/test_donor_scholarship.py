@@ -4,7 +4,7 @@ import pytest
 from datetime import date
 from django.contrib.auth import get_user_model
 
-from app.people.models import DonorProfile, StudentProfile
+from app.people.models import Donor, Student
 from app.finance.models import Scholarship
 
 
@@ -12,7 +12,7 @@ from app.finance.models import Scholarship
 def test_donor_profile_creation():
     User = get_user_model()
     user = User.objects.create(username="donor")
-    donor = DonorProfile.objects.create(user=user, donor_id="D001")
+    donor = Donor.objects.create(user=user, donor_id="D001")
 
     assert donor.donor_id == "D001"
 
@@ -23,8 +23,8 @@ def test_scholarship_links_donor_student():
     d_user = User.objects.create(username="donor")
     s_user = User.objects.create(username="stud")
 
-    donor = DonorProfile.objects.create(user=d_user, donor_id="D002")
-    student = StudentProfile.objects.create(
+    donor = Donor.objects.create(user=d_user, donor_id="D002")
+    student = Student.objects.create(
         user=s_user,
         student_id="S001",
         enrollment_semester=1,

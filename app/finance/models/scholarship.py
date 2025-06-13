@@ -9,12 +9,12 @@ class Scholarship(models.Model):
     """Financial aid linking a donor to a student."""
 
     donor = models.ForeignKey(
-        "people.DonorProfile",
+        "people.Donor",
         on_delete=models.CASCADE,
         related_name="scholarships",
     )
     student = models.ForeignKey(
-        "people.StudentProfile",
+        "people.Student",
         on_delete=models.CASCADE,
         related_name="scholarships",
     )

@@ -22,12 +22,12 @@ from app.timetable.models.section import Section
 from app.timetable.models.validator import CreditLimitValidator
 
 if TYPE_CHECKING:
-    from app.people.models.profile import StaffProfile
+    from app.people.models.profiles import Staff
 
 
 class Reservation(StatusableMixin, models.Model):
     student = models.ForeignKey(
-        "people.StudentProfile",
+        "people.Student",
         on_delete=models.CASCADE,
         related_name="student_reservations",
     )
@@ -127,7 +127,7 @@ class Reservation(StatusableMixin, models.Model):
             current_registrations=F("current_registrations") - 1
         )
 
-    def mark_paid(self, by_user: "StaffProfile") -> None:
+    def mark_paid(self, by_user: "Staff") -> None:
         """Record payment and mark reservation as paid."""
 
         if self.status == StatusReservation.PAID:

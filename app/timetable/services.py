@@ -10,14 +10,12 @@ from django.db import transaction
 from django.db.models import F, Sum
 from django.utils import timezone
 
-from app.people.models import StudentProfile
+from app.people.models import Student
 from app.shared.constants import MAX_STUDENT_CREDITS, StatusReservation
 from app.timetable.models import Reservation, Section
 
 
-def reserve_sections(
-    student: StudentProfile, sections: Iterable[Section]
-) -> List[Reservation]:
+def reserve_sections(student: Student, sections: Iterable[Section]) -> List[Reservation]:
     """Create reservation objects for ``student`` on each section.
 
     All checks are performed beforehand so the operation is atomic.

@@ -13,9 +13,7 @@ class Payment(models.Model):
     reservation = models.OneToOneField("timetable.Reservation", on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=8, decimal_places=2)
     method = models.CharField(max_length=20, choices=PaymentMethod.choices)
-    recorded_by = models.ForeignKey(
-        "people.StaffProfile", null=True, on_delete=models.SET_NULL
-    )
+    recorded_by = models.ForeignKey("people.Staff", null=True, on_delete=models.SET_NULL)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:  # pragma: no cover

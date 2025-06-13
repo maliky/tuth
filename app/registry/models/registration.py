@@ -16,7 +16,7 @@ class Registration(StatusableMixin, models.Model):
     """Enrollment of a student in a course section."""
 
     student = models.ForeignKey(
-        "people.StudentProfile",
+        "people.Student",
         on_delete=models.CASCADE,
         related_name="student_registrations",
     )

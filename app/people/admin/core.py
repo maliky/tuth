@@ -1,16 +1,17 @@
 """Core module."""
 
+from app.people.admin.resources import FacultyResource
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 
 from app.academics.admin.filters import CurriculumFilter
-from app.people.models import DonorProfile, FacultyProfile, StudentProfile
+from app.people.models import Donor, Faculty, Student
 
 
-@admin.register(StudentProfile)
-class StudentProfileAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin interface for :class:`~app.people.models.StudentProfile`."""
+@admin.register(Student)
+class StudentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+    """Admin interface for :class:`~app.people.models.Student`."""
 
     list_display = ("student_id", "user", "college", "curriculum")
     search_fields = (
@@ -25,27 +26,20 @@ class StudentProfileAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     autocomplete_fields = ("user", "college", "curriculum")
 
 
-@admin.register(FacultyProfile)
-class FacultyProfileAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin options for :class:`~app.people.models.FacultyProfile`."""
+@admin.register(Faculty)
+class FacultyAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+    """Admin options for :class:`~app.people.models.Faculty`."""
 
-    list_display = ("user", "division", "department", "college", "position")
-    search_fields = (
-        "user__username",
-        "user__first_name",
-        "user__last_name",
-    )
-    # not sure to be able to use curricula which is a computed property
-    list_filter = ("college", "position")
-    autocomplete_fields = (
-        "user",
-        "college",
-    )
+    resource_classes = FacultyResource
+    list_display = ("staff_profile", "college", "academic_rank")
+    autocomplete_fields = ("staff_profile", "college")
+    search_fields = ("last_name", "first_name")
+    list_filter = "college"
 
 
-@admin.register(DonorProfile)
-class DonorProfileAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin management for :class:`~app.people.models.DonorProfile`."""
+@admin.register(Donor)
+class DonorAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+    """Admin management for :class:`~app.people.models.Donor`."""
 
     list_display = ("user", "donor_id")
     search_fields = (
