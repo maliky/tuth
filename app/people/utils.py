@@ -1,7 +1,9 @@
 # regex patterns to pull suffixes, prefixes, initials, etc.
 import re
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 SUFFIX_PATTERNS = [
     re.compile(p, re.IGNORECASE)

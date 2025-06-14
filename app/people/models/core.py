@@ -5,11 +5,14 @@
 from datetime import date
 from pathlib import Path
 
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from app.shared.mixins import StatusableMixin
-from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.models import User
+
+User = get_user_model()
 
 
 def photo_upload_to(instance: "AbstractPerson", filename: str) -> str:
@@ -26,12 +29,11 @@ class UserDelegateMixin:
     Example:
         class Person(UserDelegateMixin, models.Model):
             user = models.OneToOneField(User, on_delete=models.CASCADE)
-            …
     """
 
     # > mixin need testing
     def _delegate_user(self):
-        """Return the User instance we should forward to."""
+        """Return the User instance we should forward to. Can and should probably be overiden."""
         return self.user
 
     def _attr_to_get(self):
@@ -73,8 +75,12 @@ class UserDelegateMixin:
 
     # write access ----------------------------------------
     def __setattr__(self, name, value):
+        """
+        If the attribute is one of the candidate, we set the user attribute
+        delegate user should be overiden to return the correct path user
+        """
         if name in self._attr_to_set():
-            setattr(self.user, name, value)
+            object.__setattr__(self._delegate_user(), name, value)
         else:
             object.__setattr__(self, name, value)
 
@@ -103,6 +109,9 @@ class AbstractPerson(StatusableMixin, UserDelegateMixin, models.Model):
     # --- misc ---
     bio = models.TextField(blank=True)
     photo = models.ImageField(upload_to=photo_upload_to, null=True, blank=True)
+
+    ID_FIELD: str | None = None
+    ID_PREFIX: str = "TU_"
 
     @property
     def long_name(self) -> str:
@@ -136,16 +145,30 @@ class AbstractPerson(StatusableMixin, UserDelegateMixin, models.Model):
     def __str__(self) -> str:  # pragma: no cover
         return self.long_name
 
-    def _mk_user_id(self, prefix: str = "TU_") -> str:
+    def _exists_user(self):
+        try:
+            _ = self.user
+        except User.DoesNotExist:
+            raise ValidationError("User must have been saved at this point.")
+
+    def _mk_id(self) -> str:
         """
         Build a deterministic ID from the *related* user primary key.
         Example: user.pk = 42  →  TUID-S0042
         """
-        assert (
-            self.user.pk is not None
-        ), f"Cannot generate Id if user.pk is None. Save user {self.user} first."
+        self._exists_user()
+        assert self.user.pk is not None, "Cannot generate Id if user.pk is None."
 
-        return f"{prefix}{self.user.id:04}"
+        return f"{self.ID_PREFIX}{self.user.id:04}"
+
+    def save(self, *args, **kwargs):
+        """the attribute is for eg donor_id or staff_id and the prefix is used in the _mk_id"""
+        super().save(*args, **kwargs)
+        id_field = self.ID_FIELD
+        assert id_field, "needs to be set / override, is the field to set"
+        new_id = self._mk_id()
+        object.__setattr__(self, id_field, new_id)
+        super().save(update_fields=[id_field])
 
     class Meta:
         abstract = True

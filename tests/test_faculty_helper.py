@@ -1,10 +1,12 @@
 """Test faculty helper module."""
 
 import pytest
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 
 from app.people.models.staffs import Faculty, ensure_faculty
 from app.shared.constants import TEST_PW
+
+User = get_user_model()
 
 
 @pytest.mark.django_db

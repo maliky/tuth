@@ -1,16 +1,20 @@
 """Auth module."""
 
-from app.shared.constants.perms import UserRole
-from django.contrib.auth.models import Group, User
-from django.utils import timezone
 from typing import Dict
-from django.core.management.base import BaseCommand
-from app.academics.models import College
 
-from app.shared.constants import DEFAULT_ROLE_TO_COLLEGE, TEST_PW
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
+from django.core.management.base import BaseCommand
+from django.utils import timezone
+
+from app.academics.models import College
 from app.people.models import RoleAssignment
+from app.shared.constants import DEFAULT_ROLE_TO_COLLEGE, TEST_PW
+from app.shared.constants.perms import UserRole
 
 from .utils import log
+
+User = get_user_model()
 
 
 def ensure_superuser(cmd: BaseCommand) -> None:

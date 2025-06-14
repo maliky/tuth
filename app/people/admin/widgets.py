@@ -1,12 +1,14 @@
 """People.Admin.Widgets module."""
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from import_export import widgets
 
 from app.academics.models import College
 from app.people.models.staffs import Faculty, Staff
 from app.people.utils import mk_username, split_name
 from app.shared.constants import TEST_PW
+
+User = get_user_model()
 
 
 class StaffProfileWidget(widgets.ForeignKeyWidget):

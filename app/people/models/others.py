@@ -1,30 +1,21 @@
-"""others module."""
+"""others people module."""
 
 # app/people/models/others.py
 
 from __future__ import annotations
 
-
-# from app import academics
-from app.people.models.core import AbstractPerson
 from django.db import models
 
-
-DONOR_ID_PREFIX = "TU_DNR"
-STUDENT_ID_PREFIX = "TU_STD"
+from app.people.models.core import AbstractPerson
 
 
 class Donor(AbstractPerson, models.Model):
     """Contact information for donors supporting students."""
 
-    donor_id = models.CharField(max_length=13, unique=True, editable=False)
+    ID_FIELD = "donor_id"
+    ID_PREFIX = "TU_DNR"
 
-    def save(self, *args, **kwargs):
-        assert (
-            self.user is not None
-        ), f"User must be saved before the Donor. Check {self.user}."
-        self.donor_id = self._mk_user_id(DONOR_ID_PREFIX)
-        super().save(*args, **kwargs)
+    donor_id = models.CharField(max_length=13, unique=True, editable=False, blank=False)
 
     class Meta:
         constraints = [
@@ -34,6 +25,9 @@ class Donor(AbstractPerson, models.Model):
 
 class Student(AbstractPerson):
     """Extra academic information for enrolled students."""
+
+    ID_FIELD = "student_id"
+    ID_PREFIX = "TU_STD"
 
     student_id = models.CharField(max_length=20, unique=True)
 
@@ -54,13 +48,6 @@ class Student(AbstractPerson):
     # of credit completed
     # def credit_completed(self) -> int:
     #     self.courses.credit
-
-    def save(self, *args, **kwargs):
-        assert (
-            self.user is not None
-        ), f"User must be saved before the Student. Check {self.user}."
-        self.student_id = self._mk_user_id(STUDENT_ID_PREFIX)
-        super().save(*args, **kwargs)
 
     class Meta:
         constraints = [

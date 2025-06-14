@@ -3,20 +3,19 @@
 # app/people/models/staffs.py
 
 from typing import TYPE_CHECKING
+
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import QuerySet
 
+from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
 from app.people.models.core import AbstractPerson, UserDelegateMixin
 from app.people.utils import mk_username, split_name
 from app.shared.constants import TEST_PW
 from app.shared.mixins import StatusableMixin
-from django.contrib.auth.models import User
 
-if TYPE_CHECKING:
-    from app.academics.models.college import College
-
-STAFF_ID_PREFIX = "TU_STF"
+User = get_user_model()
 
 
 class Faculty(StatusableMixin, UserDelegateMixin, models.Model):
@@ -43,7 +42,13 @@ class Faculty(StatusableMixin, UserDelegateMixin, models.Model):
     def save(self, *args, **kwargs):
         assert (
             self.staff_profile is not None
-        ), "Staff in the profil must be save before the Faculty. Check"
+        ), "Staff profil must be save before the Faculty. Check"
+        try:
+            _ = self.college
+        except College.DoesNotExist:
+            college, college_created = College.objects.get_or_create(code="COAS")
+            self.college = college
+
         super().save(*args, **kwargs)
 
     def _delegate_user(self):
@@ -54,6 +59,9 @@ class Faculty(StatusableMixin, UserDelegateMixin, models.Model):
 class Staff(AbstractPerson):
     """Base class for Staffs."""
 
+    ID_FIELD = "staff_id"
+    ID_PREFIX = "TU_STF"
+
     staff_id = models.CharField(max_length=13, unique=True, editable=False)
     employment_date = models.DateField(null=True, blank=True)
 
@@ -63,13 +71,6 @@ class Staff(AbstractPerson):
     # ! would need a foreign key here
     department = models.CharField(max_length=100, blank=True)
     position = models.CharField(max_length=50, blank=True)
-
-    def save(self, *args, **kwargs):
-
-        assert self.user is not None, "User must be save before the staff."
-
-        self.staff_id = self._mk_user_id(STAFF_ID_PREFIX)
-        super().save(*args, **kwargs)
 
     class Meta:
         constraints = [

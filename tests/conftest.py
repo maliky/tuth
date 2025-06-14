@@ -9,7 +9,7 @@ from datetime import date, datetime
 from typing import Callable, Optional
 
 import pytest
-from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 
 from app.academics.models.college import College
 from app.academics.models.course import Course
@@ -20,9 +20,6 @@ from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
 from app.timetable.models.session import Schedule, Session
-
-User = get_user_model()
-
 
 # ─── reference data ───────────────────────────────────────────
 
