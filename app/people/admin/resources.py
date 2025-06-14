@@ -24,19 +24,11 @@ class FacultyResource(resources.ModelResource):
         attribute="staff_profile",
         widget=StaffProfileWidget(),
     )
-    college = fields.Field(
-        column_name="college_code", attribute="college", widget=CollegeWidget()
-    )
-    academic_rank = fields.Field(
-        column_name="rank",
-        attribute="academic_rank",
-        default="Lecturer",
-    )
 
     class Meta:
         model = Faculty
         import_id_fields = ("staff_profile",)
-        fields = ("staff_profile", "college", "academic_rank")
+        fields = ("staff_profile")
         skip_unchanged = True
         report_skipped = False
 

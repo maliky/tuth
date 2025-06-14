@@ -22,7 +22,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
     def __init__(self):
         # > explain this,  Does it means to initiate a Staff instance ,
         super().__init__(Staff, field="staff_id")
-        self._cache: dict[str, Staff] = {}
+        # self._cache: dict[str, Staff] = {}
 
     def clean(self, value, row=None, *args, **kwargs) -> Staff | None:
         if not value:
@@ -31,8 +31,8 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         prefix, first, middle, last, suffix = split_name(value)
         username = mk_username(first, last, unique=True)
 
-        if username in self._cache:
-            return self._cache[username]
+        # if username in self._cache:
+        #     return self._cache[username]
 
         user, _ = User.objects.get_or_create(
             username=username,
@@ -51,7 +51,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
                 "name_suffix": suffix,
             },
         )
-        self._cache[username] = staff
+        # self._cache[username] = staff
         return staff
 
     def render(self, value, obj=None) -> str:

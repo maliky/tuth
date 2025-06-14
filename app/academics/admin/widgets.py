@@ -272,6 +272,6 @@ class CollegeWidget(widgets.ForeignKeyWidget):
     def clean(self, value, row=None, *args, **kwargs) -> College | None:
         if not value:
             return None
-        code = str(value).strip().upper()
+        code = (value or "COAS").strip().upper() 
         college, _ = College.objects.get_or_create(code=code)
         return college

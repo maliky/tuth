@@ -27,8 +27,8 @@ class Command(BaseCommand):
 
     #: Mapping **filename → (label, ResourceClass)**
     FILEMAP: dict[str, Tuple[str, type[resources.ModelResource]]] = {
-        "room.csv": ("Room", RoomResource),  # + Space
         "faculty.csv": ("Faculty", FacultyResource),
+        "room.csv": ("Room", RoomResource),  # + Space
         "course.csv": ("Course", CourseResource),  # + College
         "semester.csv": ("Semester", SemesterResource),  # + AcademicYear
         "curriculum_course.csv": ("CurriculumCourse", CurriculumCourseResource),

@@ -18,7 +18,9 @@ User = get_user_model()
 
 class Faculty(StatusableMixin, UserDelegateMixin, models.Model):
     staff_profile = models.OneToOneField("people.Staff", on_delete=models.CASCADE)
-    college = models.ForeignKey("academics.College", on_delete=models.CASCADE)
+    college = models.ForeignKey(
+        "academics.College", on_delete=models.CASCADE, null=True, blank=True
+    )
 
     google_profile = models.URLField(blank=True)
     personal_website = models.URLField(blank=True)
@@ -47,6 +49,8 @@ class Faculty(StatusableMixin, UserDelegateMixin, models.Model):
             college, college_created = College.objects.get_or_create(code="COAS")
             self.college = college
 
+        if not self.college_id:  # ← check for NULL / missing FK
+            self.college, _ = College.objects.get_or_create(code="COAS")
         super().save(*args, **kwargs)
 
     def _delegate_user(self):
