@@ -5,7 +5,7 @@ from import_export import fields, resources
 from app.academics.admin.widgets import CollegeWidget
 from app.people.admin.widgets import StaffProfileWidget
 from app.people.models import Student
-from app.people.models.profiles import Faculty
+from app.people.models.staffs import Faculty
 from app.registry.models import Registration
 
 # ? should I have a User Ressource class and extand the profile from it ?

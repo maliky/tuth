@@ -13,7 +13,8 @@ from django.contrib.auth import get_user_model
 
 from app.academics.models.college import College
 from app.academics.models.course import Course
-from app.people.models.profiles import Faculty, Staff, Student
+from app.people.models.others import Student
+from app.people.models.staffs import Faculty, Staff
 from app.spaces.models.core import Room, Space
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.section import Section

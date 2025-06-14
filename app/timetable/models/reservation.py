@@ -17,12 +17,11 @@ from app.shared.constants import (
     StatusReservation,
 )
 from app.shared.mixins import StatusableMixin
-
 from app.timetable.models.section import Section
 from app.timetable.models.validator import CreditLimitValidator
 
 if TYPE_CHECKING:
-    from app.people.models.profiles import Staff
+    from app.people.models.staffs import Staff
 
 
 class Reservation(StatusableMixin, models.Model):

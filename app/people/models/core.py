@@ -1,19 +1,15 @@
-"""Profiles module."""
+"""core module for people."""
 
-# app/people/models/profiles.py
-
-from __future__ import annotations
+# app/people/models/core.py
 
 from datetime import date
 from pathlib import Path
 
-from django.contrib.auth.models import User
 from django.db import models
-from django.db.models import QuerySet
-from django.utils.translation import gettext_lazy as _
 
-from app.academics.models.curriculum import Curriculum
 from app.shared.mixins import StatusableMixin
+from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.models import User
 
 
 def photo_upload_to(instance: "AbstractPerson", filename: str) -> str:
@@ -140,84 +136,17 @@ class AbstractPerson(StatusableMixin, UserDelegateMixin, models.Model):
     def __str__(self) -> str:  # pragma: no cover
         return self.long_name
 
+    def _mk_user_id(self, prefix: str = "TU_") -> str:
+        """
+        Build a deterministic ID from the *related* user primary key.
+        Example: user.pk = 42  →  TUID-S0042
+        """
+        assert (
+            self.user.pk is not None
+        ), f"Cannot generate Id if user.pk is None. Save user {self.user} first."
+
+        return f"{prefix}{self.user.id:04}"
+
     class Meta:
         abstract = True
         ordering = ["user__first_name", "user__last_name"]
-
-
-class Staff(AbstractPerson):
-    """Base class for Staffs."""
-
-    # should be created on the fly and be unique (use some cultural combination of words)
-    staff_id = models.CharField(max_length=13, unique=True)
-    employment_date = models.DateField(null=True, blank=True)
-
-    division = models.CharField(max_length=100, blank=True)
-    # ! if talking of faculty they could be in different departments
-    # ! would need a foreign key here
-    department = models.CharField(max_length=100, blank=True)
-    position = models.CharField(max_length=50, blank=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=["user"], name="uniq_staff_per_user")
-        ]
-
-
-class Donor(AbstractPerson, models.Model):
-    """Contact information for donors supporting students."""
-
-    donor_id = models.CharField(max_length=20, unique=True)
-
-
-class Faculty(StatusableMixin, UserDelegateMixin, models.Model):
-    staff_profile = models.OneToOneField(Staff, on_delete=models.CASCADE)
-    college = models.ForeignKey(
-        "academics.College", on_delete=models.SET_NULL, null=True, blank=True
-    )
-    google_profile = models.URLField(blank=True)
-    personal_website = models.URLField(blank=True)
-    academic_rank = models.CharField(max_length=50, null=True, blank=True)
-    # teaching load should be a function per semester or year
-    # teaching_load = models.IntegerField()
-
-    @property
-    def curricula(self) -> QuerySet[Curriculum]:
-        """
-        Return all Curriculum instances in which this faculty is teaching.
-
-        Traverses: Curriculum → courses → sections → session → faculty
-        """
-        return Curriculum.objects.filter(
-            courses__sections__session__faculty=self
-        ).distinct()
-
-    #
-
-    def _delegate_user(self):
-        """Return the User instance we should forward to."""
-        return self.staff_profile.user
-
-
-class Student(AbstractPerson):
-    """Extra academic information for enrolled students."""
-
-    student_id = models.CharField(max_length=20, unique=True)
-
-    # academics
-    college = models.ForeignKey(
-        "academics.College", on_delete=models.SET_NULL, null=True, blank=True
-    )
-    curriculum = models.ForeignKey(
-        "academics.Curriculum", on_delete=models.SET_NULL, null=True, blank=True
-    )
-
-    # > This should an semester. Can be any of 1 or 2
-    # > update this field with FK
-    enrollment_semester = models.PositiveSmallIntegerField()
-    enrollment_date = models.DateField(null=True, blank=True)
-
-    # > need to create a method to compute le level of the student based on the number
-    # of credit completed
-    # def credit_completed(self) -> int:
-    #     self.courses.credit

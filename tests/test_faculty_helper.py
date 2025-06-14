@@ -3,16 +3,15 @@
 import pytest
 from django.contrib.auth.models import User
 
-
-from app.people.models.profiles import _ensure_faculty, Faculty
+from app.people.models.staffs import Faculty, ensure_faculty
 from app.shared.constants import TEST_PW
 
 
 @pytest.mark.django_db
-def test_ensure_faculty_creates_user_and_profile(college_factory):
+def testensure_faculty_creates_user_and_profile(college_factory):
     col = college_factory(code="COAS", fullname="College of Arts")
 
-    prof = _ensure_faculty("Jane Doe", col)
+    prof = ensure_faculty("Jane Doe", col)
 
     assert prof.college == col
     user = prof.user
@@ -26,10 +25,10 @@ def test_ensure_faculty_creates_user_and_profile(college_factory):
 
 
 @pytest.mark.django_db
-def test_ensure_faculty_is_idempotent(college_factory):
+def testensure_faculty_is_idempotent(college_factory):
     col = college_factory(code="COAS", fullname="College of Arts")
-    prof1 = _ensure_faculty("Jane Doe", col)
-    prof2 = _ensure_faculty("Jane Doe", col)
+    prof1 = ensure_faculty("Jane Doe", col)
+    prof2 = ensure_faculty("Jane Doe", col)
 
     assert prof1.id == prof2.id
     assert User.objects.exclude(username="AnonymousUser").count() == 1
