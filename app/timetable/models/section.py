@@ -57,6 +57,18 @@ class Section(models.Model):
     def long_code(self) -> str:
         return f"{self.semester} {self.short_code}"
 
+    # compatibility aliases -------------------------------------------------
+    @property
+    def instructor_id(self):
+        """Return the associated faculty id."""
+        return self.faculty_id
+
+    @property
+    def room_id(self):
+        """Return the room id of the first session if any."""
+        first = self.sessions.first()
+        return first.room_id if first else None
+
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.long_code} | {self.space_codes}"
 
