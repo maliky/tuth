@@ -221,3 +221,31 @@ class Student(AbstractPerson):
     # of credit completed
     # def credit_completed(self) -> int:
     #     self.courses.credit
+
+
+def _ensure_faculty(name: str, college: "academics.College") -> Faculty:
+    """Return an existing or new Faculty for the given name and college."""
+    first, last = name.split(" ", 1)
+    username = f"{first[0].lower()}.{last.lower()}"
+    user, created = User.objects.get_or_create(
+        username=username,
+        defaults={"first_name": first, "last_name": last},
+    )
+    if created:
+        from app.shared.constants import TEST_PW
+
+        user.set_password(TEST_PW)
+        user.save()
+        staff = Staff.objects.create(user=user, staff_id=f"ST{user.id:03}")
+        faculty = Faculty.objects.create(staff_profile=staff, college=college)
+    else:
+        staff = getattr(user, "staff", None)
+        if staff is None:
+            staff = Staff.objects.create(user=user, staff_id=f"ST{user.id:03}")
+        faculty = getattr(staff, "faculty", None)
+        if faculty is None:
+            faculty = Faculty.objects.create(staff_profile=staff, college=college)
+        elif faculty.college != college:
+            faculty.college = college
+            faculty.save()
+    return faculty
