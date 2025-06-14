@@ -6,7 +6,7 @@ from django.db import models
 
 
 class Concentration(models.Model):
-    """Optional major for a curriculum."""
+    """Optional specialization that further narrows a curriculum."""
 
     # revoir
     name = models.CharField(max_length=255)
@@ -23,4 +23,5 @@ class Concentration(models.Model):
     # )
 
     def __str__(self) -> str:  # pragma: no cover
+        """Return the name and associated curriculum."""
         return f"{self.name} ({self.curriculum})"

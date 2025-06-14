@@ -1,4 +1,10 @@
-"""Academics module."""
+"""Constants used by the :mod:`academics` app.
+
+This module centralizes enumerations and patterns used when working with
+academic entities such as :class:`~app.academics.models.Course` or
+curricula. It exposes the ``COURSE_PATTERN`` regular expression, maximum
+credit load for a student and enumerations for colleges and curriculum
+statuses."""
 
 from django.db import models
 import re

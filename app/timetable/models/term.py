@@ -20,6 +20,7 @@ class Term(models.Model):
     end_date = models.DateField(null=True, blank=True)
 
     def clean(self) -> None:
+        """Validate dates are inside the parent semester and do not overlap."""
         container_start = self.semester.start_date
         container_end = self.semester.end_date
         assert container_start is not None and container_end is not None

@@ -17,4 +17,5 @@ class Payment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:  # pragma: no cover
+        """Return a concise representation of the payment."""
         return f"{self.reservation} - {self.amount}"

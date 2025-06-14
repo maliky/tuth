@@ -56,9 +56,11 @@ class Reservation(StatusableMixin, models.Model):
         return tuition_fee + additional_fees
 
     def __str__(self) -> str:
+        """Return ``student -> section (status)``."""
         return f"{self.student} -> {self.section} ({self.status})"
 
     def _check_credit_limit(self) -> None:
+        """Internal helper raising ``ValidationError`` if credit limit exceeded."""
         prospective = self.credit_hours() + self.section.course.credit_hours
         if prospective > MAX_STUDENT_CREDITS:
             raise ValidationError(
@@ -101,6 +103,7 @@ class Reservation(StatusableMixin, models.Model):
         CreditLimitValidator()(self)
 
     def save(self, *args, **kwargs) -> None:
+        """Persist the reservation without extra side effects."""
         super().save(*args, **kwargs)
 
     # ------------------------------------------------------------------
@@ -117,6 +120,7 @@ class Reservation(StatusableMixin, models.Model):
         self.save(update_fields=["status", "date_validated"])
 
     def cancel(self) -> None:
+        """Cancel the reservation and free a seat in the section."""
         assert (
             self.status != StatusReservation.CANCELLED
         ), "Reservation already cancelled."

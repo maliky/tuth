@@ -1,4 +1,8 @@
-"""Curriculum module."""
+"""Sample curriculum data used in development and tests.
+
+``TEST_ENVIRONMENTAL_STUDIES_CURRICULUM`` provides a ready-made list of
+course tuples that can be loaded to quickly seed a Curriculum instance
+for experiments or unit tests."""
 
 # code should absolutely be 6 char long, else will fail.
 TEST_ENVIRONMENTAL_STUDIES_CURRICULUM = [
