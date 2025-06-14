@@ -18,6 +18,7 @@ class AcademicYear(models.Model):
     end_date = models.DateField(unique=True)
 
     def clean(self) -> None:
+        """Ensure start and end dates form a valid academic year."""
         if self.start_date.month not in (7, 8, 9, 10):
             raise ValidationError("Start date must be in July–October.")
         if self.start_date:
@@ -25,6 +26,7 @@ class AcademicYear(models.Model):
                 assert self.end_date.year > self.start_date.year
 
     def save(self, *args, **kwargs) -> None:
+        """Populate derived fields ``long_name`` and ``code`` before saving."""
 
         # setting a default for the end_year
         ys = self.start_date.year

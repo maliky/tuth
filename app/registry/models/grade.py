@@ -1,7 +1,11 @@
+"""Grade records for completed course sections."""
+
 from django.db import models
 
 
 class Grade(models.Model):
+    """Letter/numeric grade awarded to a student for a Section."""
+
     student = models.ForeignKey("people.Student", on_delete=models.CASCADE)
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)
     letter_grade = models.CharField(max_length=2)  # A+, A, B, etc.
@@ -11,5 +15,6 @@ class Grade(models.Model):
     class Meta:
         unique_together = ("student", "section")
 
-    def __str__(self):
+    def __str__(self) -> str:  # pragma: no cover
+        """Human readable representation used in admin lists."""
         return f"{self.student} – {self.section}: {self.letter_grade}"

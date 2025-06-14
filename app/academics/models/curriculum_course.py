@@ -8,9 +8,7 @@ from app.shared.enums import CREDIT_NUMBER
 
 
 class CurriculumCourse(models.Model):
-    """
-    Junction table between Curriculum and Course.
-    """
+    """Map :class:`Curriculum` instances to their constituent courses."""
 
     curriculum = models.ForeignKey(
         "academics.Curriculum", on_delete=models.CASCADE, related_name="programme_lines"
@@ -41,9 +39,11 @@ class CurriculumCourse(models.Model):
         )
 
     def __str__(self) -> str:  # pragma: no cover
+        """Return ``Curriculum <-> Course`` for readability."""
         return f"{self.curriculum} <-> {self.course}"
 
     def save(self, *args, **kwargs) -> None:
+        """Default ``credit_hours`` to the course value when unset."""
         if self.credit_hours is None:
             self.credit_hours = self.course.credit_hours
 

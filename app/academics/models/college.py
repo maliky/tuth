@@ -28,6 +28,7 @@ class College(models.Model):
         return f"{self.code}"
 
     def clean(self) -> None:
+        """Validate that ``code`` and ``long_name`` refer to the same entry."""
         if self.code and self.long_name:
             if self.code != self.long_name:
                 raise ValidationError(
@@ -35,5 +36,6 @@ class College(models.Model):
                 )
 
     def save(self, *args, **kwargs) -> None:
+        """Ensure ``long_name`` matches the selected ``code`` before saving."""
         self.long_name = CollegeLongNameChoices[self.code]
         super().save(*args, **kwargs)

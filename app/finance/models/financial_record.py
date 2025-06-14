@@ -28,6 +28,8 @@ class FinancialRecord(models.Model):
 
 
 class SectionFee(models.Model):
+    """Additional fee charged for a specific course section."""
+
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)
     fee_type = models.CharField(max_length=50, choices=FeeType.choices)
     amount = models.DecimalField(max_digits=10, decimal_places=2)

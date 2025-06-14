@@ -1,4 +1,4 @@
-"""Initialization for the constants package."""
+"""Expose shared constants and enumerations used throughout the project."""
 
 from itertools import chain
 from typing import List, Tuple

@@ -10,7 +10,7 @@ from app.academics.models.curriculum import Curriculum
 
 
 class Course(models.Model):
-    """Catalog entry defining a unit of instruction."""
+    """University catalogue entry describing a single course offering."""
 
     code = models.CharField(max_length=20, editable=False)
     # > need to change it and everywhere with course_dept
@@ -58,13 +58,12 @@ class Course(models.Model):
 
     # ---------- hooks ----------
     def save(self, *args, **kwargs) -> None:
-        """
-        updating course_code on the fly
-        """
+        """Populate ``code`` from ``name`` and ``number`` before saving."""
         self.code = make_course_code(name=self.name, number=self.number)
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:  # pragma: no cover
+        """Return the ``CODE - Title`` representation."""
         return f"{self.code} - {self.title}"
 
     class Meta:

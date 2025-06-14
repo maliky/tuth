@@ -10,7 +10,7 @@ from app.shared.mixins import StatusableMixin
 
 
 class Curriculum(StatusableMixin, models.Model):
-    """Academic programme offered by a College."""
+    """Set of courses that make up a degree programme within a college."""
 
     short_name = models.CharField(max_length=40)
     long_name = models.CharField(max_length=255, blank=True, null=True)
@@ -36,6 +36,7 @@ class Curriculum(StatusableMixin, models.Model):
     )
 
     def __str__(self) -> str:  # pragma: no cover
+        """Return the curriculum short name."""
         return f"{self.short_name}"
 
     def clean(self) -> None:
