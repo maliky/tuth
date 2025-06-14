@@ -1,4 +1,4 @@
-"""Forms module."""
+"""Admin forms for the academics app."""
 
 # app/academics/admin/forms.py
 from typing import Any, MutableMapping, cast
@@ -13,6 +13,7 @@ from import_export.forms import ImportForm
 
 
 class BulkActionImportForm(ImportForm):
+    """Import form allowing bulk actions on curricula data."""
     ACTION_CHOICES = (("merge", "Merge (append)"), ("replace", "Replace (wipe first)"))
     action = forms.ChoiceField(
         choices=ACTION_CHOICES, initial="merge", label="Action for existing curricula"
@@ -20,7 +21,11 @@ class BulkActionImportForm(ImportForm):
 
 
 class CourseForm(forms.ModelForm):
-    """Admin form exposing a writable 'curricula' field."""
+    """Admin form used to create or edit ``Course`` instances.
+
+    The form exposes a writable ``curricula`` field and populates several
+    defaults to streamline data entry in the admin.
+    """
 
     credit_hours = forms.TypedChoiceField(
         coerce=int,
@@ -38,6 +43,14 @@ class CourseForm(forms.ModelForm):
     # initial values & non-required title
     # ──────────────────────────────────────────────────────────
     def __init__(self, *args, **kwargs):
+        """Initialize the form with dynamic defaults.
+
+        Parameters
+        ----------
+        *args, **kwargs
+            Standard Django ``ModelForm`` arguments.
+        """
+
         self.admin_site = kwargs.pop("admin_site", admin.site)
         super().__init__(*args, **kwargs)
 
@@ -80,15 +93,31 @@ class CourseForm(forms.ModelForm):
     # save logic
     # ──────────────────────────────────────────────────────────
     def save(self, commit=True):
-        """
-        * Return the Course instance (maybe unsaved).
-        * Defer M2M synchronisation until save_m2m().
+        """Save the form and stage curricula updates.
+
+        Parameters
+        ----------
+        commit : bool, optional
+            Whether to persist the ``Course`` immediately. Defaults to ``True``.
+
+        Returns
+        -------
+        Course
+            The created or updated course instance.
         """
         self._pending_curricula = set(self.cleaned_data.get("curricula", []))
         course = super().save(commit=commit)
         return course
 
     def clean(self):
+        """Validate and enhance cleaned data.
+
+        Returns
+        -------
+        dict[str, Any]
+            The cleaned data with inferred ``college`` when possible.
+        """
+
         cleaned = cast(MutableMapping[str, Any], super().clean())  # ← FIX #2/3
 
         if not cleaned.get("college") and cleaned.get("name") and cleaned.get("number"):
@@ -108,7 +137,14 @@ class CourseForm(forms.ModelForm):
 
     @transaction.atomic
     def save_m2m(self):
-        """Run *after* the admin has saved the Course (`id` now exists)."""
+        """Synchronize curricula relationships.
+
+        Called by Django after ``save()`` when handling many-to-many data.
+
+        Returns
+        -------
+        None
+        """
         super().save_m2m()  # default Django stuff
 
         course = self.instance

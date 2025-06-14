@@ -1,4 +1,4 @@
-"""Auth module."""
+"""Helpers to create demo users and roles during data population."""
 
 from app.shared.constants.perms import UserRole
 from django.contrib.auth.models import Group, User
@@ -14,6 +14,8 @@ from .utils import log
 
 
 def ensure_superuser(cmd: BaseCommand) -> None:
+    """Recreate the default development superuser."""
+
     su = dict(username="dev", email="dev@tu.koba.sarl", password="dev")
     User.objects.filter(username=su["username"]).delete()
     User.objects.create_superuser(**su)
@@ -21,6 +23,8 @@ def ensure_superuser(cmd: BaseCommand) -> None:
 
 
 def ensure_role_groups() -> Dict[str, Group]:
+    """Create missing ``Group`` objects for each user role."""
+
     return {
         role: Group.objects.get_or_create(name=role.capitalize())[0]
         for role, label in UserRole
@@ -30,6 +34,8 @@ def ensure_role_groups() -> Dict[str, Group]:
 def upsert_test_users_and_roles(
     cmd: BaseCommand, colleges: Dict[str, College], groups: Dict[str, Group]
 ) -> None:
+    """Create test users for each role and associate default colleges."""
+
     for role, _ in UserRole:
         user, _ = User.objects.get_or_create(username=f"test_{role}")
         user.is_staff = True

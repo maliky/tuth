@@ -1,4 +1,4 @@
-"""Utils module."""
+"""Utility helpers for the timetable app."""
 
 from datetime import date
 from typing import Optional
@@ -17,14 +17,25 @@ def validate_subperiod(
     overlap_message: str = "Overlapping periods.",
     label: str = "period",
 ) -> None:
-    """
-    Generic date-range validator.
+    """Validate that a child period fits within its container.
 
-    - chronology (start ≤ end)
-    - fully inside its container dates (yes. borders included)
-    - no overlap with siblings (pass the queryset already filtered on parent)
+    Parameters
+    ----------
+    sub_start, sub_end : date | None
+        Start and end dates of the sub period.
+    container_start, container_end : date
+        Bounds of the parent period.
+    overlap_qs : QuerySet | None, optional
+        Sibling queryset to check for overlaps.
+    overlap_message : str, optional
+        Error message for overlapping periods.
+    label : str, optional
+        Field name used in the error dict.
 
-    Raise ``ValidationError`` on failure.
+    Raises
+    ------
+    ValidationError
+        If the period is invalid or overlaps with an existing one.
     """
     # chronological order -----------------------------------------------------
     if sub_start and sub_end and sub_end < sub_start:

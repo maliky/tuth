@@ -10,10 +10,17 @@ from __future__ import annotations
 
 
 def parse_int(value: str | None) -> int | None:
-    """Return ``int(value)`` when possible.
+    """Safely convert a string to ``int``.
 
-    Handles numbers represented as ``"1.0"`` or ``"1"`` and ignores
-    non-numeric strings by returning ``None``.
+    Parameters
+    ----------
+    value : str | None
+        Raw numeric value possibly containing trailing decimals.
+
+    Returns
+    -------
+    int | None
+        The integer representation or ``None`` if conversion fails.
     """
 
     if value is None:
