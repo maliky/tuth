@@ -14,6 +14,7 @@ from import_export.forms import ImportForm
 
 class BulkActionImportForm(ImportForm):
     """Import form allowing bulk actions on curricula data."""
+
     ACTION_CHOICES = (("merge", "Merge (append)"), ("replace", "Replace (wipe first)"))
     action = forms.ChoiceField(
         choices=ACTION_CHOICES, initial="merge", label="Action for existing curricula"

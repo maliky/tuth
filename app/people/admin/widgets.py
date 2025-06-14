@@ -1,9 +1,9 @@
 """People.Admin.Widgets module."""
 
+from app.academics.admin.widgets import CollegeWidget
 from django.contrib.auth import get_user_model
 from import_export import widgets
 
-from app.academics.models import College
 from app.people.models.staffs import Faculty, Staff
 from app.people.utils import mk_username, split_name
 from app.shared.constants import TEST_PW
@@ -72,13 +72,17 @@ class FacultyWidget(widgets.ForeignKeyWidget):
         super().__init__(Faculty)
 
     def clean(self, value: str, row=None, *args, **kwargs) -> Faculty | None:
-        staff = super().clean(value, row, *args, **kwargs)
+        if not value:
+            return None
+
+        staff = StaffProfileWidget().clean(value, row, *args, **kwargs)
 
         if staff is None:
             return None
         # pick the college code from the row (or a default)
+
         code = (row or {}).get("college_code", "COAS").strip().upper()
-        college, _ = College.objects.get_or_create(code=code)
+        college = CollegeWidget().clean(code, row)
 
         faculty, _ = Faculty.objects.get_or_create(
             staff_profile=staff,
