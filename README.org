@@ -2,33 +2,34 @@
 
 * Tuth Application — Quickstart Guide
 
-This document summarizes how to explicitly run and test the Tuth application in different environments.
+This document summarizes how to run and test the Tuth application in different environments.
 ** The apps
-Here are the different applications you will find in this directory
+Here are the different applications you will find in this directory:
 - Registry for documents, registrations, class rosters
 - Spaces for building and room
 - Academics for courses, curricula, colleges and prerequisites
 - Timetable for reservations, semesters & schedule definitions
 - People for role and user profile  
-- Finance for payements, scholarship and financial_records.
+- Finance for payments, scholarship and financial_records.
 
 
 ** Development Environment
-To make some change :
-- Create a new branch or switch to dev branch
-- Do you changes
-If adding python libraries (through `pip install ...`)
-- add them to requirements-dev.txt
+To make changes :
+- Create a new branch from `dev` or switch to the `dev` branch
+- Make your changes
+If you add Python libraries using `pip install ...`,
+ - add them to `requirements-dev.txt`
 #+BEGIN_SRC bash  
 echo "xyz" > requirements-dev.txt
 #+END_SRC
-- Do code checks with 
+- Run code checks: 
 #+BEGIN_SRC python
 black app/ && flake8 app/ && mypy app/
 #+END_SRC
-*** Test
-You can run `./run.sh -m` to start a fresh test on the local machine. (you need python requirements*.txt to be installed).
-in a second terminal populate your db with a file having this structure
+*** Tests
+Install dependencies from `requirements-dev.txt` and `requirements-test.txt` before running tests.
+You can run `./run.sh -m` to start a fresh test on the local machine.
+In a second terminal populate your DB with a file having this structure:
 #+BEGIN_VERBATIM
 academic_year: 25-26
 semester: 1 
@@ -48,32 +49,32 @@ weekday: Friday
 start_time: 9:00
 end_time: 10:00
 #+END_VERBATIM
-Check the run.sh script to check where to put th file.
+Check the `run.sh` script to see where to put the file.
 
 *** Launch your docker-compose dev environment
-You can review the Dockerfile-dev and the docker-compose-dev.yml file and then build the Docker environment.
+Review `Dockerfile-dev` and `docker-compose-dev.yml`, then build the Docker environment.
 #+begin_src bash
 docker-compose -f docker-compose-dev.yml up --build
 #+end_src
 
 *** Running Tests 
-**** Localy
+**** Locally
 
-Explicitly run tests within the dev container:
+Run tests within the dev container:
 
 #+begin_src bash
 docker-compose -f docker-compose-dev.yml run --rm web pytest tests/
 #+end_src
 
-Access explicitly at [[https://localhost][https://localhost]]
+Access the application at [[https://localhost][https://localhost]]
 
-*** Restarting from fresh
+*** Restart from a clean state
 #+BEGIN_SRC bash term2
   docker-compose -f docker-compose-dev.yml down -v
   sudo rm app/migrations/*
 #+END_SRC
 
-In another terminal
+In another terminal,
 #+BEGIN_SRC bash term2
    docker-compose -f docker-compose-dev.yml up --build
 #+END_SRC
@@ -88,15 +89,15 @@ In another terminal
 
 ** Production Environment
 
-Build and launch explicitly the production environment:
+Build and launch the production environment:
 
 #+begin_src bash
 docker-compose -f docker-compose-prod.yml up --build -d
 #+end_src
 
-- Ensure that your production `.env-prod` file is explicitly configured and secure.
+- Ensure that your production `.env-prod` file is configured and secure.
 
-Access explicitly via your production URL (e.g., [[https://tuth.koba.sarl][https://tuth.koba.sarl]]).
+Access the application via your production URL (e.g., [[https://tuth.koba.sarl][https://tuth.koba.sarl]]).
 
 ** Data Import/Export
 
