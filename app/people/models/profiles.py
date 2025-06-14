@@ -7,6 +7,9 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 
+from typing import TYPE_CHECKING
+
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import QuerySet
@@ -14,6 +17,9 @@ from django.utils.translation import gettext_lazy as _
 
 from app.academics.models.curriculum import Curriculum
 from app.shared.mixins import StatusableMixin
+
+if TYPE_CHECKING:  # pragma: no cover - hints only
+    from app.academics.models import College
 
 
 def photo_upload_to(instance: "AbstractPerson", filename: str) -> str:
@@ -221,3 +227,48 @@ class Student(AbstractPerson):
     # of credit completed
     # def credit_completed(self) -> int:
     #     self.courses.credit
+
+
+def _ensure_faculty(full_name: str, college: "College") -> Faculty:
+    """Return a :class:`Faculty` for ``full_name`` in ``college``.
+
+    Creates the related ``User`` and ``Staff`` rows when necessary.  Accounts
+    are generated using a ``j.doe`` style username and the default test
+    password.
+    """
+
+    from app.shared.constants import TEST_PW
+
+    parts = full_name.split()
+    first = parts[0] if parts else ""
+    last = parts[-1] if len(parts) > 1 else ""
+
+    base = f"{first[:1].lower()}.{last.lower()}"
+    username = base or "user"
+    counter = 1
+    User = get_user_model()
+    while True:
+        user, created = User.objects.get_or_create(
+            username=username,
+            defaults={"first_name": first, "last_name": last},
+        )
+        if created:
+            user.set_password(TEST_PW)
+            user.save()
+            break
+        if user.first_name == first and user.last_name == last:
+            break
+        counter += 1
+        username = f"{base}{counter}"
+
+    staff_id = f"TU-{username}"
+    staff, _ = Staff.objects.get_or_create(
+        user=user,
+        defaults={"staff_id": staff_id, "phone": "000"},
+    )
+
+    fac, _ = Faculty.objects.get_or_create(
+        staff_profile=staff,
+        defaults={"college": college},
+    )
+    return fac
