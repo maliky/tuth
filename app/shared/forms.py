@@ -1,4 +1,4 @@
-"""Forms module."""
+"""Utility forms shared across the project."""
 
 from django import forms
 from django.core.exceptions import FieldDoesNotExist
@@ -8,8 +8,10 @@ from .mixins import StatusHistory
 
 
 class StatusHistoryForm(forms.ModelForm):
-    """
-    limite the choice to those allowed for the model
+    """ModelForm for creating status history records.
+
+    The form limits the ``state`` choices to those defined on the related
+    model so only valid transitions are offered.
     """
 
     class Meta:
@@ -17,6 +19,14 @@ class StatusHistoryForm(forms.ModelForm):
         fields = ["state", "author"]
 
     def __init__(self, *args, **kwargs):
+        """Initialize the form and adjust state choices.
+
+        Parameters
+        ----------
+        *args, **kwargs
+            Standard Django ``ModelForm`` arguments.
+        """
+
         super().__init__(*args, **kwargs)
         content_type = self.initial.get("content_type") or getattr(
             self.instance, "content_type", None

@@ -1,4 +1,4 @@
-"""Services module."""
+"""Business logic helpers for the timetable app."""
 
 from __future__ import annotations
 
@@ -16,9 +16,24 @@ from app.timetable.models import Reservation, Section
 
 
 def reserve_sections(student: Student, sections: Iterable[Section]) -> List[Reservation]:
-    """Create reservation objects for ``student`` on each section.
+    """Reserve a set of sections for a student.
 
-    All checks are performed beforehand so the operation is atomic.
+    Parameters
+    ----------
+    student : Student
+        The student requesting the reservations.
+    sections : Iterable[Section]
+        Sections to be reserved.
+
+    Returns
+    -------
+    list[Reservation]
+        The newly created reservation objects.
+
+    Raises
+    ------
+    ValidationError
+        If capacity or credit constraints are violated.
     """
     section_list = list(sections)
 
