@@ -16,8 +16,8 @@ SUFFIX_PATTERNS = [
         r"\b(?:I{1,3})\b",
     ]
 ]
-PREFIX_PATTERN = re.compile(r"\b(?:Dr|Mme|Mr|Prof|Rev|Sr|Fr)\.?\b")
-INITIAL_PATTERN = re.compile(r"\b([A-Z])\.?\b")
+PREFIX_PATTERN = re.compile(r"\b(?:Dr|Mme|Mr|Prof|Rev|Sr|Fr)(?P<dot>\.)?(?(dot)\s*|\b)")
+INITIAL_PATTERN = re.compile(r"\b([A-Z])(?P<dot>\.)?(?(dot)\s*|\b)")
 FIRST_PATTERN = re.compile(r"^([A-Za-z-]+)")
 LAST_PATTERN = re.compile(r"([A-Za-z-]+)$")
 
@@ -28,7 +28,7 @@ def extract_suffix(raw_name: str) -> tuple[str, str]:
     for pat in SUFFIX_PATTERNS:
         m = re.search(pat, raw_name)
         if m:
-            name_suffix = m.group(0).replace(".", "").upper()
+            name_suffix = m.group(0).replace(".", "").strip()
             raw_name = re.sub(pat, "", raw_name).strip()
             break
     return name_suffix, raw_name
@@ -39,7 +39,7 @@ def extract_prefix(raw_name: str) -> tuple[str, str]:
     m = re.search(PREFIX_PATTERN, raw_name)
     name_prefix = ""
     if m:
-        name_prefix = m.group(0).replace(".", "")
+        name_prefix = m.group(0).replace(".", "").strip()
         raw_name = re.sub(PREFIX_PATTERN, "", raw_name).strip()
     return name_prefix, raw_name
 

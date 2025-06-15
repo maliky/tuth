@@ -79,13 +79,8 @@ class FacultyWidget(widgets.ForeignKeyWidget):
 
         if staff is None:
             return None
-        # pick the college code from the row (or a default)
-
-        code = (row or {}).get("college_code", "COAS").strip().upper()
-        college = CollegeWidget().clean(code, row)
 
         faculty, _ = Faculty.objects.get_or_create(
             staff_profile=staff,
-            defaults={"college": college},
         )
         return faculty

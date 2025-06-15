@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from app.people.admin.resources import FacultyResource
 from django.core.management.base import BaseCommand, CommandParser
 from django.db import transaction
 from import_export import resources
@@ -55,12 +56,13 @@ class Command(BaseCommand):
         dataset = self.clean_column_headers(dataset)
 
         RESOURCES_MAP: list[tuple[str, type[resources.ModelResource]]] = [
-            ("Course", CourseResource),  # and College
+            ("Faculty", FacultyResource),  # and College
             ("Room", RoomResource),  # and Space
-            ("CurriculumCourse", CurriculumCourseResource),
+            ("Course", CourseResource),  # and College
             ("semester", SemesterResource),  # and Academic year
-            ("Session", SessionResource),  # and Faculty, Room and Space
+            ("CurriculumCourse", CurriculumCourseResource),
             ("Section", SectionResource),
+            ("Session", SessionResource),  # and Faculty, Room and Space
         ]
 
         for key, ResourceClass in RESOURCES_MAP:
