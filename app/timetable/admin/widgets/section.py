@@ -4,17 +4,19 @@ from typing import Optional, cast
 from import_export import widgets
 
 from app.academics.admin.widgets import CourseWidget
+from app.people.admin.widgets import FacultyWidget
 from app.timetable.admin.widgets.core import SemesterWidget
 from app.timetable.models.section import Section
 
 
 class SectionWidget(widgets.ForeignKeyWidget):
-    "Parse the necessary CSV columns (no, section code) to get a section object."
+    "Parse the necessary CSV columns to get a section object."
 
     def __init__(self):
         super().__init__(Section)  # using pk until export is done
         self.course_w = CourseWidget()
         self.sem_w = SemesterWidget()
+        self.faculty_w = FacultyWidget()
 
     # ------------ widget API ------------
     def clean(self, value, row=None, *args, **kwargs) -> Section | None:
@@ -24,17 +26,19 @@ class SectionWidget(widgets.ForeignKeyWidget):
         if row is None:
             raise ValueError("Row context required")
 
-        sem_no_value, course_name_value, sec_no_value = [
-            row.get(v, "").strip() for v in ("semester_no", "course_name", "section_no")
+        sem_no_value, course_name_value, sec_no_value, faculty_value = [
+            row.get(v, "").strip()
+            for v in ("semester_no", "course_name", "section_no", "faculty")
         ]
 
         semester = self.sem_w.clean(value=sem_no_value, row=row)
         course = self.course_w.clean(value=course_name_value, row=row)
+        faculty = self.faculty_w.clean(value=faculty_value, row=row)
 
         number = int(sec_no_value)
 
         section, _ = Section.objects.get_or_create(
-            semester=semester, course=course, number=number
+            semester=semester, course=course, number=number, faculty=faculty_value
         )
         return cast(Optional[Section], section)
 

@@ -49,6 +49,17 @@ def extract_firstnlast(raw_name: str) -> tuple[str, str, str]:
     first_name = ""
     last_name = ""
 
+    # Before we simply map the first -> first and last -> last
+    # We try to enforce the following rule.
+    # if only one name is there, it is the last
+    # if two parts are there, and one is 2 or less char,
+    # we take is as initial of first name.
+    # else standard first middle last
+
+    # we harmonize dot for initial stuff
+    raw_name = re.sub('\. *', '. ', raw_name)
+    raw_name = re.sub(',', ' ', raw_name)
+    
     m = re.match(FIRST_PATTERN, raw_name)
     if m:
         first_name = m.group(1)
@@ -61,8 +72,13 @@ def extract_firstnlast(raw_name: str) -> tuple[str, str, str]:
     return first_name, last_name, raw_name
 
 
-def split_name(raw_name: str) -> tuple[str, str, str, str, str]:
-    """Splits a raw_name in prefix, first, middle, last, suffix"""
+def split_name(name: str) -> tuple[str, str, str, str, str]:
+    """
+    Splits a raw_name in prefix, first, middle, last, suffix
+    Idealy the name's part are in logical order.
+    but we try to take care of last before first
+    or just last and initials for the first
+    """
     name_suffix, raw_name = extract_suffix(raw_name)
     name_prefix, raw_name = extract_prefix(raw_name)
     first_name, last_name, middle_name = extract_firstnlast(raw_name)

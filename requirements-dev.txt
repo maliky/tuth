@@ -31,3 +31,7 @@ flake8==7.1.2
 flake8-bugbear==24.12.12
 Flake8-pyproject==1.2.3
 ipdb
+
+# profilers
+django-extensions
+pygraphviz

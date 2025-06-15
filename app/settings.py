@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     # third partie apps
     "import_export",
     "guardian",
+    "django_extensions",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
