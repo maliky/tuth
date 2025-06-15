@@ -38,7 +38,7 @@ class SectionWidget(widgets.ForeignKeyWidget):
         number = int(sec_no_value)
 
         section, _ = Section.objects.get_or_create(
-            semester=semester, course=course, number=number, faculty=faculty_value
+            semester=semester, course=course, number=number, faculty=faculty
         )
         return cast(Optional[Section], section)
 

@@ -1,6 +1,5 @@
 """People.Admin.Widgets module."""
 
-from app.academics.admin.widgets import CollegeWidget
 from django.contrib.auth import get_user_model
 from import_export import widgets
 

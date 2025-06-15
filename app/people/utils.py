@@ -57,9 +57,9 @@ def extract_firstnlast(raw_name: str) -> tuple[str, str, str]:
     # else standard first middle last
 
     # we harmonize dot for initial stuff
-    raw_name = re.sub('\. *', '. ', raw_name)
-    raw_name = re.sub(',', ' ', raw_name)
-    
+    raw_name = re.sub(r"\. *", ". ", raw_name)
+    raw_name = re.sub(r",", " ", raw_name)
+
     m = re.match(FIRST_PATTERN, raw_name)
     if m:
         first_name = m.group(1)
@@ -79,7 +79,7 @@ def split_name(name: str) -> tuple[str, str, str, str, str]:
     but we try to take care of last before first
     or just last and initials for the first
     """
-    name_suffix, raw_name = extract_suffix(raw_name)
+    name_suffix, raw_name = extract_suffix(name)
     name_prefix, raw_name = extract_prefix(raw_name)
     first_name, last_name, middle_name = extract_firstnlast(raw_name)
     return name_prefix, first_name, middle_name, last_name, name_suffix
