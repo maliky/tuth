@@ -16,7 +16,6 @@ class GradeAdmin(admin.ModelAdmin):
         "numeric_grade",
         "graded_on",
     )
-    list_filter = ("section", "student")
     search_fields = (
         "student__student_id",
         "student__user__username",
@@ -32,7 +31,6 @@ class ClassRosterAdmin(admin.ModelAdmin):
     """Admin interface for :class:`~app.registry.models.ClassRoster`."""
 
     list_display = ("section", "student_count", "last_updated")
-    list_filter = ("section",)
     search_fields = (
         "section__course__code",
         "section__number",

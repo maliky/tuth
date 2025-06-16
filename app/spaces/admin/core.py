@@ -22,7 +22,8 @@ class RoomAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """Admin configuration for :class:`~app.spaces.models.Room`."""
 
     resource_class = RoomResource
-    list_display = ("code", "space", "standard_capacity", "exam_capacity")
+    list_display = ("space", "code", "standard_capacity", "exam_capacity")
+    list_filter = ("space",)
     search_fields = ("space__code", "code")
     autocomplete_fields = ["space"]
     inlines = [SessionInline]

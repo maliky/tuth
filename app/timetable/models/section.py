@@ -59,6 +59,15 @@ class Section(models.Model):
         """Combine semester code and ``short_code`` for uniqueness."""
         return f"{self.semester} {self.short_code}"
 
+    @property
+    def available_seats(self) -> int:
+        """Return the number of seats available."""
+        return (
+            self.max_seats - self.current_registrations
+            if self.has_available_seats()
+            else 0
+        )
+
     def __str__(self) -> str:  # pragma: no cover
         """Return a human readable identifier with allocated rooms."""
         return f"{self.long_code} | {self.space_codes}"

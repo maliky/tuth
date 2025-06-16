@@ -31,7 +31,7 @@ class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
     resource_class = CourseResource
     list_display = ("code", "title", "credit_hours", "college")
-    list_filter = ("curricula__college", "curricula")
+    list_filter = ("curricula__college", "curricula", "college")
     autocomplete_fields = ("curricula", "college")
     inlines = [SectionInline, PrerequisiteInline, RequiresInline]
     list_select_related = ("college",)
@@ -108,3 +108,4 @@ class CurriculumCourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     list_display = ("curriculum", "course")
     autocomplete_fields = ("curriculum", "course")
     list_select_related = ("curriculum", "course")
+    search_fields = ("curriculum__short_name", "course__code")

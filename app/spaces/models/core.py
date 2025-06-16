@@ -14,6 +14,10 @@ class Space(models.Model):
     def __str__(self) -> str:  # pragma: no cover
         return self.code
 
+    class Meta:
+        verbose_name = "Space / Buiding"
+        verbose_name_plural = "Spaces / Buildings"
+
 
 class Room(models.Model):
     """Individual teaching space located in a space."""

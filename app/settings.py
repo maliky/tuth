@@ -136,8 +136,9 @@ DATABASES = {
 
 LANGUAGE_CODE = "en-gb"
 
+USE_L10N = True
 TIME_ZONE = "UTC"
-
+FORMAT_MODULE_PATH = "app.formats"
 USE_I18N = True
 USE_TZ = True
 

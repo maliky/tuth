@@ -1,13 +1,14 @@
 """Session module."""
 
 from __future__ import annotations
-
-from django.db import models
+from datetime import date, datetime, time, timedelta
+from django.db import models, transaction
 
 from app.shared.enums import WEEKDAYS_NUMBER
 
 
 class Schedule(models.Model):
+
     weekday = models.PositiveSmallIntegerField(
         choices=WEEKDAYS_NUMBER.choices,
         help_text="Week day number (Monday=1, Tuesday=2, …)",
@@ -46,6 +47,48 @@ class Schedule(models.Model):
         if self.end_time is not None:
             assert self.start_time < self.end_time, "start_time must be before end_time"
 
+    def save(self, *args, **kwargs):
+        """
+        # 1) ensure we always have a weekday
+        # 2) if no start_time, find the first free 5-minute slot >= 01:00
+        """
+        if self.weekday is None:
+            self.weekday = WEEKDAYS_NUMBER.TBA
+
+        if self.start_time is None:
+            self.start_time = self._find_next_free_slot()
+
+        super().save(*args, **kwargs)
+
+    def _find_next_free_slot(self) -> time:
+        """
+        Scan in 5-minute steps from 01:00 today until we
+        find a (weekday, start_time) combination that doesn't exist yet.
+        """
+        # anchor at 0 AM today
+        cursor = datetime.combine(date.today(), time(1, 0))
+        step = timedelta(minutes=5)
+
+        nb_slots = int(3600 / step.seconds)  # should be 5
+
+        # wrap in a transaction so concurrent saves won’t collide
+        with transaction.atomic():
+            # cap at from 0:00 to 6:00 hrs to avoid infinite loops
+            # 12, 5min slots in on hour
+            for _ in range(6 * nb_slots):
+                t = cursor.time()
+                exists = Schedule.objects.filter(
+                    weekday=self.weekday,
+                    start_time=t,
+                ).exists()
+                if not exists:
+                    return t
+                cursor += step
+
+        raise RuntimeError(
+            "Could not find a free 5-minute slot on {self.weekday}. -> no Schedule"
+        )
+
 
 class Session(models.Model):
     """
@@ -57,6 +100,8 @@ class Session(models.Model):
     """
 
     room = models.ForeignKey("spaces.Room", on_delete=models.PROTECT)
+
+    # I have to be carrefull about TBA schedules, the may raise uniq constraint
     schedule = models.ForeignKey(
         "timetable.Schedule",
         on_delete=models.CASCADE,
@@ -91,13 +136,14 @@ class Session(models.Model):
         """Return ``Schedule, Room`` for use in admin lists."""
         return f"{self.schedule}, {self.room}"
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["room", "schedule"],
-                name="uniq_schedule_per_room",
-            )
-        ]
-        indexes = [
-            models.Index(fields=["room", "schedule"]),
-        ]
+    # No constraints for now. because how to handle TBA
+    # class Meta:
+    #     constraints = [
+    #         models.UniqueConstraint(
+    #             fields=["room", "schedule"],
+    #             name="uniq_schedule_per_room",
+    #         )
+    #     ]
+    #     indexes = [
+    #         models.Index(fields=["room", "schedule"]),
+    #     ]

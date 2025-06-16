@@ -17,7 +17,11 @@ User = get_user_model()
 
 
 class Faculty(StatusableMixin, UserDelegateMixin, models.Model):
+
     staff_profile = models.OneToOneField("people.Staff", on_delete=models.CASCADE)
+
+    # Rattachement College but could have many more
+    # > needs to be changed to ManyToMany
     college = models.ForeignKey(
         "academics.College", on_delete=models.CASCADE, null=True, blank=True
     )
@@ -39,6 +43,13 @@ class Faculty(StatusableMixin, UserDelegateMixin, models.Model):
             courses__sections__session__faculty=self
         ).distinct()
 
+    @property
+    def staff_id(self):
+        return self.staff_profile.staff_id
+
+    def __str__(self) -> str:  # pragma: no cover
+        return f"{self.staff_profile}"
+
     def save(self, *args, **kwargs):
         assert (
             self.staff_profile is not None
@@ -57,6 +68,10 @@ class Faculty(StatusableMixin, UserDelegateMixin, models.Model):
         """Return the User instance we should forward to."""
         return self.staff_profile.user
 
+    class Meta:
+        verbose_name = "Faculty"
+        verbose_name_plural = "Faculty profiles"
+
 
 class Staff(AbstractPerson):
     """Base class for Staffs."""
@@ -67,8 +82,8 @@ class Staff(AbstractPerson):
     staff_id = models.CharField(max_length=13, unique=True, editable=False)
     employment_date = models.DateField(null=True, blank=True)
 
+    # > need to model an organogram where I can add division & departments
     division = models.CharField(max_length=100, blank=True)
-
     # ! if talking of faculty they could be in different departments
     # ! would need a foreign key here
     department = models.CharField(max_length=100, blank=True)

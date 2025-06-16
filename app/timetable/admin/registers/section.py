@@ -14,14 +14,11 @@ class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """Admin interface for :class:`~app.timetable.models.Section`."""
 
     resource_class = SectionResource
-    list_display = ("long_code", "course", "semester", "faculty", "max_seats")
+    list_display = ("semester", "course", "number", "faculty", "available_seats")
     inlines = [ReservationInline, SessionInline]
     list_filter = (
-        "semester",
         "course__curricula__college",
         "course__curricula",
-        "course__code",
-        "faculty",
     )
     autocomplete_fields = ("course", "semester", "faculty")
 

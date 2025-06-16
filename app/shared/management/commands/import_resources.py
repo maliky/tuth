@@ -22,7 +22,10 @@ from app.shared.management.populate_helpers.auth import (  # noqa: F401
 from app.spaces.admin.resources import RoomResource  # noqa: F401
 from app.timetable.admin.resources.core import SemesterResource  # noqa: F401
 from app.timetable.admin.resources.section import SectionResource
-from app.timetable.admin.resources.session import SessionResource  # noqa: F401
+from app.timetable.admin.resources.session import (
+    ScheduleResource,
+    SessionResource,
+)  # noqa: F401
 
 
 class Command(BaseCommand):
@@ -58,6 +61,7 @@ class Command(BaseCommand):
         RESOURCES_MAP: list[tuple[str, type[resources.ModelResource]]] = [
             ("Faculty", FacultyResource),  # and College
             ("Room", RoomResource),  # and Space
+            ("Schedule", ScheduleResource),
             ("Course", CourseResource),  # and College
             ("semester", SemesterResource),  # and Academic year
             ("CurriculumCourse", CurriculumCourseResource),

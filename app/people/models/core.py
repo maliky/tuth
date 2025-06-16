@@ -86,6 +86,10 @@ class UserDelegateMixin:
 
 
 class AbstractPerson(StatusableMixin, UserDelegateMixin, models.Model):
+
+    ID_FIELD: str | None = None
+    ID_PREFIX: str = "TU_"
+
     # >  need testing
     # --- linkage ---
     user = models.OneToOneField(
@@ -95,23 +99,19 @@ class AbstractPerson(StatusableMixin, UserDelegateMixin, models.Model):
         related_query_name="%(class)s",
     )
 
-    phone = models.CharField(max_length=20)
     # # need to define a list of choice well structured
-    name_prefix = models.TextField(blank=True)
-    name_suffix = models.TextField(blank=True)
-    middle_name = models.TextField(blank=True)
+    name_prefix = models.CharField(blank=True)
+    name_suffix = models.CharField(blank=True)
+    middle_name = models.CharField(blank=True)
 
     date_of_birth = models.DateField(_("date of birth"), null=True, blank=True)
 
     phone_number = models.CharField(max_length=15, blank=True)
-    physical_address = models.TextField(blank=True)
+    physical_address = models.CharField(blank=True)
 
     # --- misc ---
     bio = models.TextField(blank=True)
     photo = models.ImageField(upload_to=photo_upload_to, null=True, blank=True)
-
-    ID_FIELD: str | None = None
-    ID_PREFIX: str = "TU_"
 
     @property
     def long_name(self) -> str:
