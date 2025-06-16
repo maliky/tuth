@@ -13,11 +13,11 @@ from app.timetable.models.section import Section
 class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """Admin interface for :class:`~app.timetable.models.Section`."""
 
+    # ! TODO ajouter à la list, les rooms occupé et le nombre de sessions, le nombre de crédits
     resource_class = SectionResource
     list_display = ("semester", "course", "number", "faculty", "available_seats")
     inlines = [ReservationInline, SessionInline]
     list_filter = (
-        "course__curricula__college",
         "course__curricula",
     )
     autocomplete_fields = ("course", "semester", "faculty")

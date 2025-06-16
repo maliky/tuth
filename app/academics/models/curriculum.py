@@ -37,7 +37,7 @@ class Curriculum(StatusableMixin, models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         """Return the curriculum short name."""
-        return f"{self.short_name}"
+        return f"{self.college}: {self.short_name}"
 
     def clean(self) -> None:
         """Validate the curriculum and its current status."""
@@ -46,6 +46,7 @@ class Curriculum(StatusableMixin, models.Model):
         self.validate_status(StatusCurriculum)
 
     class Meta:
+        ordering = ["college", "short_name"]
         constraints = [
             models.UniqueConstraint(
                 fields=["college", "short_name"],

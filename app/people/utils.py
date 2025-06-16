@@ -18,7 +18,7 @@ SUFFIX_PATTERNS = [
 ]
 PREFIX_PATTERN = re.compile(r"\b(?:Dr|Mme|Mr|Prof|Rev|Sr|Fr)(?P<dot>\.)?(?(dot)\s*|\b)")
 INITIAL_PATTERN = re.compile(r"\b([A-Z])(?P<dot>\.)?(?(dot)\s*|\b)")
-FIRST_PATTERN = re.compile(r"^([A-Za-z-]+)")
+FIRST_PATTERN = re.compile(r"^([A-Za-z-]+|[A-Za-z-]\.?)")
 LAST_PATTERN = re.compile(r"([A-Za-z-]+)$")
 
 

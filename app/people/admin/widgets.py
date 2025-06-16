@@ -28,7 +28,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
             return None
 
         prefix, first, middle, last, suffix = split_name(value)
-        username = mk_username(first, last, unique=True)
+        username = mk_username(first, last, unique=False)
 
         # if username in self._cache:
         #     return self._cache[username]

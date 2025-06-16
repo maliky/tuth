@@ -16,11 +16,6 @@ class Schedule(models.Model):
     start_time = models.TimeField()
     end_time = models.TimeField(null=True, blank=True)
 
-    def __str__(self):
-        """Return ``weekday: start-end`` for quick inspection in admin."""
-        # can we shorten weekday to only have the first 3 char?
-        return f"{self.weekday}: {self.start_time}-{self.end_time}"
-
     @property
     def weekday_name(self) -> str:
         """
@@ -28,6 +23,11 @@ class Schedule(models.Model):
         e.g. "Monday", "Tuesday", etc.
         """
         return self.get_weekday_display()
+
+    @property
+    def weekday_str(self):
+        "return the str version of the day_no"
+        return WEEKDAYS_NUMBER(self.weekday).label
 
     @property
     def start_time_str(self) -> str:
@@ -39,26 +39,10 @@ class Schedule(models.Model):
         """End time formatted as ``HH:MM`` or empty string."""
         return self.end_time.strftime("%H:%M") if self.end_time else ""
 
-    # > validation end_time should alway be bigger than start_time
-    # ? need to check that there no overlap. may need to store duration
-    # and implement a non overlap function like for semester and terms.
-    def clean(self) -> None:
-        """Check that the date are correct"""
-        if self.end_time is not None:
-            assert self.start_time < self.end_time, "start_time must be before end_time"
-
-    def save(self, *args, **kwargs):
-        """
-        # 1) ensure we always have a weekday
-        # 2) if no start_time, find the first free 5-minute slot >= 01:00
-        """
-        if self.weekday is None:
-            self.weekday = WEEKDAYS_NUMBER.TBA
-
-        if self.start_time is None:
-            self.start_time = self._find_next_free_slot()
-
-        super().save(*args, **kwargs)
+    def __str__(self):
+        """Return ``weekday: start-end`` for quick inspection in admin."""
+        # can we shorten weekday to only have the first 3 char?
+        return f"{self.weekday_str}: {self.start_time_str}-{self.end_time_str}"
 
     def _find_next_free_slot(self) -> time:
         """
@@ -88,6 +72,30 @@ class Schedule(models.Model):
         raise RuntimeError(
             "Could not find a free 5-minute slot on {self.weekday}. -> no Schedule"
         )
+
+    # > validation end_time should alway be bigger than start_time
+    # ? need to check that there no overlap. may need to store duration
+    # and implement a non overlap function like for semester and terms.
+    def clean(self) -> None:
+        """Check that the date are correct"""
+        if self.end_time is not None:
+            assert self.start_time < self.end_time, "start_time must be before end_time"
+
+    def save(self, *args, **kwargs):
+        """
+        # 1) ensure we always have a weekday
+        # 2) if no start_time, find the first free 5-minute slot >= 01:00
+        """
+        if self.weekday is None:
+            self.weekday = WEEKDAYS_NUMBER.TBA
+
+        if self.start_time is None:
+            self.start_time = self._find_next_free_slot()
+
+        super().save(*args, **kwargs)
+
+    class Meta:
+        ordering = ["weekday", "start_time", "end_time"]
 
 
 class Session(models.Model):

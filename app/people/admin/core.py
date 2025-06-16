@@ -13,13 +13,13 @@ class FacultyAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """Admin options for :class:`~app.people.models.Faculty`."""
 
     resource_classes = FacultyResource
-    fields = [
+    fields = (
         "staff_profile",
         "college",
         "google_profile",
         "personal_website",
         "academic_rank",
-    ]
+    )
 
     list_display = ("staff_profile",)
     list_filter = ("college",)
