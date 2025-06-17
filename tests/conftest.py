@@ -15,6 +15,7 @@ from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.people.models.others import Student
 from app.people.models.staffs import Faculty, Staff
+from app.academics.models.department import Department
 from app.spaces.models.core import Room, Space
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.section import Section
@@ -125,10 +126,20 @@ def student_profile(student_user: User) -> Student:
 
 
 @pytest.fixture
-def staff_profile() -> Staff:
+def department_factory(college_factory: Callable[[str], College]) -> Callable[..., Department]:
+    def _factory(code: str = "GEN", college: Optional[College] = None) -> Department:
+        college_obj = college if (college := college) else college_factory()
+        return Department.objects.create(code=code, college=college_obj)
+
+    return _factory
+
+
+@pytest.fixture
+def staff_profile(department_factory: Callable[..., Department]) -> Staff:
     # Staff requires `staff_id`
     user = User.objects.create_user(username="staff")
-    return Staff.objects.create(user=user, staff_id="ST123")
+    dept = department_factory()
+    return Staff.objects.create(user=user, staff_id="ST123", department=dept)
 
 
 @pytest.fixture

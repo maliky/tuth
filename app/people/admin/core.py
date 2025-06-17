@@ -91,18 +91,31 @@ class StaffAdmin(GuardedModelAdmin):
                 #                "classes": ("collapse",),
             },
         ),
+        (
+            "Work Info",
+            {
+                "fields": (
+                    "employment_date",
+                    "division",
+                    "department",
+                    "position",
+                ),
+            },
+        ),
     )
     list_display = (
         "long_name",
         "user",
         "staff_id",
+        "department",
     )
     search_fields = (
         "staff_id",
         "user__username",
         "long_name",
+        "department__code",
     )
-    autocomplete_fields = ("user",)
+    autocomplete_fields = ("user", "department")
     readonly_fields = ("staff_id", "long_name", "age")
 
 

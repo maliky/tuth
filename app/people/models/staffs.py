@@ -8,6 +8,7 @@ from django.db.models import QuerySet
 
 from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
+from app.academics.models.department import Department
 from app.people.models.core import AbstractPerson, UserDelegateMixin
 from app.people.utils import mk_username, split_name
 from app.shared.constants import TEST_PW
@@ -86,7 +87,12 @@ class Staff(AbstractPerson):
     division = models.CharField(max_length=100, blank=True)
     # ! if talking of faculty they could be in different departments
     # ! would need a foreign key here
-    department = models.CharField(max_length=100, blank=True)
+    department = models.ForeignKey(
+        Department,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
     position = models.CharField(max_length=50, blank=True)
 
     class Meta:

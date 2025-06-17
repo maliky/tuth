@@ -15,6 +15,7 @@ from app.academics.models import (
     Curriculum,
     CurriculumCourse,
     Prerequisite,
+    Department,
 )
 
 
@@ -237,3 +238,17 @@ class CurriculumCourseResource(resources.ModelResource):
         )
         skip_unchanged = True
         report_skipped = True
+
+
+class DepartmentResource(resources.ModelResource):
+    """Resource for :class:`~app.academics.models.Department`."""
+
+    class Meta:
+        model = Department
+        import_id_fields = ("code",)
+        fields = (
+            "code",
+            "full_name",
+            "college",
+        )
+
