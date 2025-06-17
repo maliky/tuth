@@ -16,7 +16,9 @@ SUFFIX_PATTERNS = [
         r"\b(?:I{1,3})\b",
     ]
 ]
-PREFIX_PATTERN = re.compile(r"\b(?:Dr|Mme|Mr|Prof|Rev|Sr|Fr)(?P<dot>\.)?(?(dot)\s*|\b)")
+PREFIX_PATTERN = re.compile(
+    r"\b(?:Dr|Mme|Mrs?|Ms|Prof|Rev|Sr|Fr)(?P<dot>\.)?(?(dot)\s*|\b)", re.IGNORECASE
+)
 INITIAL_PATTERN = re.compile(r"\b([A-Z])(?P<dot>\.)?(?(dot)\s*|\b)")
 FIRST_PATTERN = re.compile(r"^([A-Za-z-]+|[A-Za-z-]\.?)")
 LAST_PATTERN = re.compile(r"([A-Za-z-]+)$")
@@ -44,6 +46,12 @@ def extract_prefix(raw_name: str) -> tuple[str, str]:
     return name_prefix, raw_name
 
 
+def inverse_if_comma(raw_name: str) -> str:
+    """Reverse the parts separated by a comma eg. A, B -> B, A"""
+    parts = raw_name.split(",")
+    return " ".join([p for p in parts[::-1]])
+
+
 def extract_firstnlast(raw_name: str) -> tuple[str, str, str]:
     """Extracts the first and last parts of a name."""
     first_name = ""
@@ -58,7 +66,9 @@ def extract_firstnlast(raw_name: str) -> tuple[str, str, str]:
 
     # we harmonize dot for initial stuff
     raw_name = re.sub(r"\. *", ". ", raw_name)
-    raw_name = re.sub(r",", " ", raw_name)
+    # Une règle implicite c'est que s'il y a une virgule
+    # c'est que le last name is first. we reverse
+    raw_name = inverse_if_comma(raw_name).strip()
 
     m = re.match(FIRST_PATTERN, raw_name)
     if m:
@@ -69,6 +79,12 @@ def extract_firstnlast(raw_name: str) -> tuple[str, str, str]:
     if m:
         last_name = m.group(1)
         raw_name = re.sub(LAST_PATTERN, "", raw_name).strip()
+
+    # removing any trailing dots
+    raw_name = re.sub(r"^\.", "", raw_name).strip()
+    if not last_name and not raw_name:
+        # we suppose the first_name to be the last name
+        return last_name, first_name, raw_name
     return first_name, last_name, raw_name
 
 

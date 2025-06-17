@@ -236,6 +236,7 @@ class CurriculumCourseResource(resources.ModelResource):
             "course",
             "credit_hours",
         )
+        list_filter = ("curriculum_college", "curriculum")
         skip_unchanged = True
         report_skipped = True
 

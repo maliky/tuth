@@ -16,9 +16,9 @@ class FacultyAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     fields = (
         "staff_profile",
         "college",
+        "academic_rank",
         "google_profile",
         "personal_website",
-        "academic_rank",
     )
 
     list_display = ("staff_profile",)
@@ -30,19 +30,6 @@ class FacultyAdmin(ImportExportModelAdmin, GuardedModelAdmin):
         "staff_profile__last_name",
     )
     autocomplete_fields = ("staff_profile",)
-
-    def get_fields(self, request, obj=None):
-        """
-        override the function getting the fields from the model
-        without rewriting them all. but the one I want to promote in 'front'
-        """
-        all_fields = super().get_fields(request, obj)
-        # ensure these come first, in this order:
-        # front = ['staff_profile__long_name', 'staff_profile__staff_id']
-        front: list[str] = [""]
-        # remove them from the master list and re-insert at front
-        rest = [f for f in all_fields if f not in front]
-        return front + rest
 
 
 @admin.register(Donor)
