@@ -91,12 +91,6 @@ class Command(BaseCommand):
                     resource.import_data(dataset, dry_run=False)
             except Exception as exc:
                 self.stdout.write(self.style.ERROR(f"{key} import failed: {exc}"))
-                import traceback
-
-                traceback.print_exc()
-                import ipdb
-
-                ipdb.set_trace()
                 continue
 
             self.stdout.write(self.style.SUCCESS(f"{key} import completed."))

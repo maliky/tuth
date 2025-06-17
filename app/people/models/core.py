@@ -21,71 +21,7 @@ def photo_upload_to(instance: "AbstractPerson", filename: str) -> str:
     return str(Path("photos") / _class / str(instance.user_id) / filename)
 
 
-class UserDelegateMixin:
-    """
-    Add read-only access to a few attributes of the related `user`.
-    Designed to be inherited *before* the concrete model.
-
-    Example:
-        class Person(UserDelegateMixin, models.Model):
-            user = models.OneToOneField(User, on_delete=models.CASCADE)
-    """
-
-    # > mixin need testing
-    def _delegate_user(self):
-        """Return the User instance we should forward to. Can and should probably be overiden."""
-        return self.user
-
-    def _attr_to_get(self):
-        return (
-            "username",
-            "first_name",
-            "last_name",
-            "email",
-            "groups",
-            "user_permissions",
-            "is_staff",
-            "is_active",
-            "password",
-            "is_superuser",
-            "full_name",
-        )
-
-    def _attr_to_set(self):
-        return (
-            "first_name",
-            "last_name",
-            "email",
-            "groups",
-            "user_permissions",
-            "is_staff",
-            "is_active",
-        )
-
-    # delegate read access ----------------------------------------------------
-    def __getattr__(self, name):
-        if name in self._attr_to_get():
-            # bypass getattr-dispatch to avoid accidental recursion
-            # > I was dumb "paranoid" by the machine. for keeping this. How nice of it.
-            return object.__getattribute__(self._delegate_user(), name)
-        else:
-            # Use object.__getattribute__ instead of getattr to directly access the object's
-            # attribute and bypass __getattr__ to avoid infinite recursion.
-            return object.__getattribute__(self, name)
-
-    # write access ----------------------------------------
-    def __setattr__(self, name, value):
-        """
-        If the attribute is one of the candidate, we set the user attribute
-        delegate user should be overiden to return the correct path user
-        """
-        if name in self._attr_to_set():
-            object.__setattr__(self._delegate_user(), name, value)
-        else:
-            object.__setattr__(self, name, value)
-
-
-class AbstractPerson(StatusableMixin, UserDelegateMixin, models.Model):
+class AbstractPerson(StatusableMixin, models.Model):
 
     ID_FIELD: str | None = None
     ID_PREFIX: str = "TU_"
@@ -140,6 +76,41 @@ class AbstractPerson(StatusableMixin, UserDelegateMixin, models.Model):
                 )
             )
         return None
+    @property
+    def username(self):
+        return self.user.username
+
+    @property
+    def first_name(self):
+        return self.user.first_name
+
+    @property
+    def last_name(self):
+        return self.user.last_name
+
+    @property
+    def full_name(self):
+        return self.user.full_name
+
+    @property
+    def email(self):
+        return self.user.email
+
+    def set_username(self, value):
+        return object._setattr__(self.user, "username", value)
+
+    def set_first_name(self, value):
+        return object._setattr__(self.user, "first_name", value)
+
+    def set_last_name(self, value):
+        return object._setattr__(self.user, "last_name", value)
+
+    def set_full_name(self, value):
+        return object._setattr__(self.user, "full_name", value)
+
+    def set_email(self, value):
+        return object._setattr__(self.user, "email", value)
+
 
     # convenience for admin lists / logs
     def __str__(self) -> str:  # pragma: no cover

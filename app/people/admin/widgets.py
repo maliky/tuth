@@ -1,4 +1,12 @@
-"""People.Admin.Widgets module."""
+"""People.Admin.Widgets module.
+
+Usage::
+
+    >>> from app.people.admin.widgets import StaffProfileWidget
+    >>> widget = StaffProfileWidget()
+    >>> staff = widget.clean("Dr. Jane Doe")
+    >>> print(staff.long_name)
+"""
 
 from django.contrib.auth import get_user_model
 from import_export import widgets
@@ -19,7 +27,9 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
     """
 
     def __init__(self):
-        # > explain this,  Does it means to initiate a Staff instance ,
+        # Configure the parent widget to operate on the Staff model so
+        # that ``clean`` returns actual ``Staff`` objects using the
+        # ``staff_id`` field as the lookup key.
         super().__init__(Staff, field="staff_id")
         # self._cache: dict[str, Staff] = {}
 

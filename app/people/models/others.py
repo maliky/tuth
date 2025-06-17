@@ -5,11 +5,12 @@
 from __future__ import annotations
 
 from django.db import models
+from guardian.utils import Model
 
 from app.people.models.core import AbstractPerson
 
 
-class Donor(AbstractPerson, models.Model):
+class Donor(AbstractPerson):
     """Contact information for donors supporting students."""
 
     ID_FIELD = "donor_id"

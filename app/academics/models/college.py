@@ -39,3 +39,7 @@ class College(models.Model):
         """Ensure ``long_name`` matches the selected ``code`` before saving."""
         self.long_name = CollegeLongNameChoices[self.code]
         super().save(*args, **kwargs)
+
+
+    class Meta:
+        ordering = ["code"]

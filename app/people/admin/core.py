@@ -12,7 +12,7 @@ from import_export.admin import ImportExportModelAdmin
 class FacultyAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """Admin options for :class:`~app.people.models.Faculty`."""
 
-    resource_classes = FacultyResource
+    resource_class = FacultyResource
     fields = (
         "staff_profile",
         "college",
@@ -25,8 +25,9 @@ class FacultyAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     list_filter = ("college",)
     search_fields = (
         "staff_profile__staff_id",
-        "staff_profile__user__username",
-        "staff_profile__user__full_name",
+        "staff_profile__username",
+        "staff_profile__first_name",
+        "staff_profile__last_name",        
     )
     autocomplete_fields = ("staff_profile",)
 
@@ -52,9 +53,11 @@ class DonorAdmin(GuardedModelAdmin):
     search_fields = (
         "donor_id",
         "user__username",
-        "user__full_name",
+        "user__first_name",
+        "user__last_name",        
     )
     autocomplete_fields = ("user",)
+
 
 
 @admin.register(Staff)
@@ -111,6 +114,7 @@ class StudentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     search_fields = (
         "student_id",
         "user__username",
-        "user__full_name",
+        "user__first_name",
+        "user__last_name",        
     )
     autocomplete_fields = ("user",)

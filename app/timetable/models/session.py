@@ -3,11 +3,17 @@
 from __future__ import annotations
 from datetime import date, datetime, time, timedelta
 from django.db import models, transaction
+from django.forms import ValidationError
 
 from app.shared.enums import WEEKDAYS_NUMBER
 
 
 class Schedule(models.Model):
+
+    # a ref date for the time
+    REF_DATE = date(2009, 9, 1)
+    # a time of ref for the start of the day
+    REF_DATE_START_TIME = REF_DATE + timedelta(hours=8)
 
     weekday = models.PositiveSmallIntegerField(
         choices=WEEKDAYS_NUMBER.choices,
@@ -50,16 +56,17 @@ class Schedule(models.Model):
         find a (weekday, start_time) combination that doesn't exist yet.
         """
         # anchor at 0 AM today
-        cursor = datetime.combine(date.today(), time(1, 0))
+
+        cursor = datetime.combine(self.REF_DATE, time(1, 0))
         step = timedelta(minutes=5)
 
-        nb_slots = int(3600 / step.seconds)  # should be 5
+        nb_slots_hours = int(3600 / step.seconds)  # should be 5
 
         # wrap in a transaction so concurrent saves won’t collide
         with transaction.atomic():
             # cap at from 0:00 to 6:00 hrs to avoid infinite loops
             # 12, 5min slots in on hour
-            for _ in range(6 * nb_slots):
+            for _ in range(6 * nb_slots_hours):
                 t = cursor.time()
                 exists = Schedule.objects.filter(
                     weekday=self.weekday,
@@ -87,12 +94,22 @@ class Schedule(models.Model):
         # 2) if no start_time, find the first free 5-minute slot >= 01:00
         """
         if self.weekday is None:
-            self.weekday = WEEKDAYS_NUMBER.TBA
+            self.weekday = WEEKDAYS_NUMBER.TBA  # type: ignore[unreachable]
 
         if self.start_time is None:
-            self.start_time = self._find_next_free_slot()
+            self.start_time = self._find_next_free_slot()  # type: ignore[unreachable]
 
         super().save(*args, **kwargs)
+
+    def is_set(self):
+        """Returns True when the schedule is fully set."""
+        weekday_set = self.weekday is not None and self.weekday != WEEKDAYS_NUMBER.TBA
+
+        # we suppose that all unassigned time are before the ref_dat_start_time
+        start_time_set = self.start_time < self.REF_DATE_START_TIME
+        end_time_set = self.start_time is not None
+
+        return weekday_set and start_time_set and end_time_set
 
     class Meta:
         ordering = ["weekday", "start_time", "end_time"]
@@ -155,3 +172,26 @@ class Session(models.Model):
     #     indexes = [
     #         models.Index(fields=["room", "schedule"]),
     #     ]
+
+    def clean(self) -> None:
+        """Ensure no overlapping session exists for the same room."""
+        super().clean()
+
+        # > when testing need to take in account the specific rull for schedule.is_set
+        # ie overlap possible for TBA or start_time < 8:00 AM.
+        if not self.schedule.is_set() or not self.room:
+            return
+
+        start = self.schedule.start_time
+        end = self.schedule.end_time
+
+        if start and end:
+            clash = Session.objects.filter(
+                room=self.room,
+                schedule__weekday=self.schedule.weekday,
+                schedule__start_time__lt=end,
+                schedule__end_time__gt=start,
+            ).exclude(pk=self.pk)
+
+            if clash.exists():
+                raise ValidationError({"schedule": "Overlapping session for this room."})

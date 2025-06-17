@@ -16,7 +16,7 @@ from app.shared.mixins import StatusableMixin
 User = get_user_model()
 
 
-class Faculty(StatusableMixin, UserDelegateMixin, models.Model):
+class Faculty(StatusableMixin, models.Model):
 
     staff_profile = models.OneToOneField("people.Staff", on_delete=models.CASCADE)
 

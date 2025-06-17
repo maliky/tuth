@@ -13,7 +13,11 @@ from app.shared.mixins import StatusableMixin, StatusHistory
 
 
 class Document(StatusableMixin, models.Model):
-    """File uploaded to support a user profile (transcript, bill, …)."""
+    """File uploaded to support a user profile.
+
+    The ``profile`` generic relation allows attaching documents to different
+    profile models (students, staff, etc.).
+    """
 
     profile_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     profile_id = models.PositiveIntegerField()
@@ -34,3 +38,13 @@ class Document(StatusableMixin, models.Model):
     def clean(self) -> None:
         super().clean()
         self.validate_status(StatusDocument)
+
+    class Meta:
+        """Model metadata."""
+
+        # Index both components of the generic relation to speed up lookups
+        indexes = [
+            models.Index(fields=["profile_type", "profile_id"]),
+        ]
+
+        
