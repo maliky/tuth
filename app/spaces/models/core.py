@@ -44,7 +44,7 @@ class Room(models.Model):
         return space_str != code_str
 
     def __str__(self) -> str:  # pragma: no cover
-        return self.full_code 
+        return self.full_code
 
     class Meta:
         constraints = [

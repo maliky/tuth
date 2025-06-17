@@ -126,4 +126,3 @@ class CurriculumCourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     autocomplete_fields = ("curriculum", "course")
     list_select_related = ("curriculum", "course")
     search_fields = ("curriculum__short_name", "course__code")
-

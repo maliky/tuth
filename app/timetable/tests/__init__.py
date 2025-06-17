@@ -1,1 +1,1 @@
-"""Initialization for the test package."""
+"""Initialization for the tests timetable package."""

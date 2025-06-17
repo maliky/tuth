@@ -76,6 +76,7 @@ class AbstractPerson(StatusableMixin, models.Model):
                 )
             )
         return None
+
     @property
     def username(self):
         return self.user.username
@@ -110,7 +111,6 @@ class AbstractPerson(StatusableMixin, models.Model):
 
     def set_email(self, value):
         return object._setattr__(self.user, "email", value)
-
 
     # convenience for admin lists / logs
     def __str__(self) -> str:  # pragma: no cover

@@ -251,4 +251,3 @@ class DepartmentResource(resources.ModelResource):
             "full_name",
             "college",
         )
-

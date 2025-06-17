@@ -46,5 +46,3 @@ class Document(StatusableMixin, models.Model):
         indexes = [
             models.Index(fields=["profile_type", "profile_id"]),
         ]
-
-        

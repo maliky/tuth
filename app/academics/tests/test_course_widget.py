@@ -46,7 +46,9 @@ def test_course_widget_defaults_to_row_college(college_factory):
 
 
 @pytest.mark.django_db
-def test_course_widget_raises_value_error_with_multiple_matches(college_factory, course_factory):
+def test_course_widget_raises_value_error_with_multiple_matches(
+    college_factory, course_factory
+):
     col = college_factory(code="COAS", fullname="College of Arts")
     course_factory(name="BIO", number="101", title="Bio I", college=col)
 
@@ -60,10 +62,14 @@ def test_course_widget_raises_value_error_with_multiple_matches(college_factory,
 
 
 @pytest.mark.django_db
-def test_course_widget_token_college_overrides_row_college(college_factory, course_factory):
+def test_course_widget_token_college_overrides_row_college(
+    college_factory, course_factory
+):
     row_college = college_factory(code="COAS", fullname="College of Arts")
     token_college = college_factory(code="COET", fullname="College of Engineering")
-    course = course_factory(name="MATH", number="101", title="Math", college=token_college)
+    course = course_factory(
+        name="MATH", number="101", title="Math", college=token_college
+    )
     cw = CourseWidget(model=Course, field="code")
 
     result = cw.clean("MATH101 - COET", {"college": row_college.code})
@@ -84,7 +90,9 @@ def test_course_widget_uses_credit_field_and_title_on_create():
 
 
 @pytest.mark.django_db
-def test_course_widget_updates_existing_course_title_and_credits(college_factory, course_factory):
+def test_course_widget_updates_existing_course_title_and_credits(
+    college_factory, course_factory
+):
     col = college_factory(code="COAS", fullname="Arts")
     course = course_factory(
         name="MATH",

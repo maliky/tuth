@@ -40,6 +40,5 @@ class College(models.Model):
         self.long_name = CollegeLongNameChoices[self.code]
         super().save(*args, **kwargs)
 
-
     class Meta:
         ordering = ["code"]

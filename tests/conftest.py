@@ -115,13 +115,13 @@ def student_user() -> User:
 
 
 @pytest.fixture
-def student_profile(student_user: User) -> Student:
+def student_profile(student_user: User, semester: Semester) -> Student:
     # Student fields: user, student_id, college (nullable), curriculum (nullable),
     # enrollment_semester, enrollment_date (nullable)
     return Student.objects.create(
         user=student_user,
         student_id="S123456",
-        enrollment_semester=1,
+        enrollment_semester=semester,
     )
 
 

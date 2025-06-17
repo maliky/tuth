@@ -20,7 +20,7 @@ class GradeAdmin(admin.ModelAdmin):
         "student__student_id",
         "student__user__username",
         "student__user__first_name",
-        "student__user__last_name",        
+        "student__user__last_name",
         "section__course__code",
         "section__number",
     )

@@ -8,6 +8,7 @@ from django.db import models
 from guardian.utils import Model
 
 from app.people.models.core import AbstractPerson
+from app.timetable.models.semester import Semester
 
 
 class Donor(AbstractPerson):
@@ -42,7 +43,10 @@ class Student(AbstractPerson):
 
     # > This should an semester. Can be any of 1 or 2
     # > update this field with FK
-    enrollment_semester = models.PositiveSmallIntegerField()
+    enrollment_semester = models.ForeignKey(
+        Semester,
+        on_delete=models.PROTECT,
+    )
     enrollment_date = models.DateField(null=True, blank=True)
 
     # > need to create a method to compute le level of the student based on the number

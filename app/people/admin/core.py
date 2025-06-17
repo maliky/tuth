@@ -27,7 +27,7 @@ class FacultyAdmin(ImportExportModelAdmin, GuardedModelAdmin):
         "staff_profile__staff_id",
         "staff_profile__username",
         "staff_profile__first_name",
-        "staff_profile__last_name",        
+        "staff_profile__last_name",
     )
     autocomplete_fields = ("staff_profile",)
 
@@ -54,10 +54,9 @@ class DonorAdmin(GuardedModelAdmin):
         "donor_id",
         "user__username",
         "user__first_name",
-        "user__last_name",        
+        "user__last_name",
     )
     autocomplete_fields = ("user",)
-
 
 
 @admin.register(Staff)
@@ -128,6 +127,6 @@ class StudentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
         "student_id",
         "user__username",
         "user__first_name",
-        "user__last_name",        
+        "user__last_name",
     )
     autocomplete_fields = ("user",)
