@@ -4,10 +4,10 @@ import csv
 from io import StringIO
 from pathlib import Path
 
+from import_export import results
 import pytest
 from django.core import management
 from django.db import IntegrityError
-from import_export import results, resources
 from tablib import Dataset
 
 from app.timetable.admin.resources.section import SectionResource

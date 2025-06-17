@@ -9,7 +9,7 @@ from django.db.models import QuerySet
 from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
-from app.people.models.core import AbstractPerson, UserDelegateMixin
+from app.people.models.core import AbstractPerson
 from app.people.utils import mk_username, split_name
 from app.shared.constants import TEST_PW
 from app.shared.mixins import StatusableMixin

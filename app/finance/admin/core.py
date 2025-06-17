@@ -3,6 +3,7 @@
 from django.contrib import admin
 
 from app.finance.models.payment import Payment
+
 from app.finance.models.payment_history import PaymentHistory
 from app.finance.models.scholarship import Scholarship
 
@@ -16,14 +17,6 @@ class PaymentAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at",)
 
 
-@admin.register(PaymentHistory)
-class PaymentHistoryAdmin(admin.ModelAdmin):
-    """Admin interface for :class:`~app.finance.models.PaymentHistory`."""
-
-    # Shows summary string plus related info
-    list_display = ("__str__", "financial_record", "method", "recorded_by")
-
-
 @admin.register(Scholarship)
 class ScholarshipAdmin(admin.ModelAdmin):
     """Admin interface for :class:`~app.finance.models.Scholarship`."""
@@ -34,13 +27,8 @@ class ScholarshipAdmin(admin.ModelAdmin):
 
 @admin.register(PaymentHistory)
 class PaymentHistoryAdmin(admin.ModelAdmin):
-    """Admin settings for :class:`~app.finance.models.PaymentHistory`."""
+    """Admin interface for :class:`~app.finance.models.PaymentHistory`."""
 
-    list_display = (
-        "financial_record",
-        "amount",
-        "method",
-        "recorded_by",
-        "payment_date",
-    )
+    # Shows summary string plus related info
+    list_display = ("__str__", "financial_record", "method", "recorded_by")
     readonly_fields = ("payment_date",)

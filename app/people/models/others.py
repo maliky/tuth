@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 from django.db import models
-from guardian.utils import Model
 
 from app.people.models.core import AbstractPerson
 from app.timetable.models.semester import Semester

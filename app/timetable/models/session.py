@@ -1,7 +1,7 @@
 """Session module."""
 
 from __future__ import annotations
-from datetime import date, datetime, time, timedelta
+from datetime import datetime, time, timedelta
 from django.db import models, transaction
 from django.forms import ValidationError
 
@@ -11,9 +11,10 @@ from app.shared.enums import WEEKDAYS_NUMBER
 class Schedule(models.Model):
 
     # a ref date for the time
-    REF_DATE = date(2009, 9, 1)
+    REF_DATE = datetime(2009, 9, 1)
     # a time of ref for the start of the day
-    REF_DATE_START_TIME = REF_DATE + timedelta(hours=8)
+    REF_TIME = time(8, 0)
+    REF_DATETIME = REF_DATE + timedelta(hours=REF_TIME.hour)
 
     weekday = models.PositiveSmallIntegerField(
         choices=WEEKDAYS_NUMBER.choices,
@@ -106,7 +107,7 @@ class Schedule(models.Model):
         weekday_set = self.weekday is not None and self.weekday != WEEKDAYS_NUMBER.TBA
 
         # we suppose that all unassigned time are before the ref_dat_start_time
-        start_time_set = self.start_time < self.REF_DATE_START_TIME
+        start_time_set = self.start_time < self.REF_TIME
         end_time_set = self.start_time is not None
 
         return weekday_set and start_time_set and end_time_set
@@ -161,6 +162,9 @@ class Session(models.Model):
         """Return ``Schedule, Room`` for use in admin lists."""
         return f"{self.schedule}, {self.room}"
 
+    def schedule_is_set(self):
+        return self.schedule is not None and self.schedule.is_set()
+
     # No constraints for now. because how to handle TBA
     # class Meta:
     #     constraints = [
@@ -177,9 +181,10 @@ class Session(models.Model):
         """Ensure no overlapping session exists for the same room."""
         super().clean()
 
-        # > when testing need to take in account the specific rull for schedule.is_set
+        if self.schedule is None:
+            return
         # ie overlap possible for TBA or start_time < 8:00 AM.
-        if not self.schedule.is_set() or not self.room:
+        if not self.schedule_is_set() and not self.room:
             return
 
         start = self.schedule.start_time

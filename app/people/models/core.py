@@ -91,26 +91,26 @@ class AbstractPerson(StatusableMixin, models.Model):
 
     @property
     def full_name(self):
-        return self.user.full_name
+        return self.user.get_full_name()
 
     @property
     def email(self):
         return self.user.email
 
     def set_username(self, value):
-        return object._setattr__(self.user, "username", value)
+        return object.__setattr__(self.user, "username", value)
 
     def set_first_name(self, value):
-        return object._setattr__(self.user, "first_name", value)
+        return object.__setattr__(self.user, "first_name", value)
 
     def set_last_name(self, value):
-        return object._setattr__(self.user, "last_name", value)
+        return object.__setattr__(self.user, "last_name", value)
 
     def set_full_name(self, value):
-        return object._setattr__(self.user, "full_name", value)
+        return object.__setattr__(self.user, "full_name", value)
 
     def set_email(self, value):
-        return object._setattr__(self.user, "email", value)
+        return object.__setattr__(self.user, "email", value)
 
     # convenience for admin lists / logs
     def __str__(self) -> str:  # pragma: no cover
