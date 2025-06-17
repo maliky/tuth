@@ -72,7 +72,7 @@ class PrerequisiteAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     list_display = ("course", "prerequisite_course", "curriculum")
     autocomplete_fields = ("course", "prerequisite_course", "curriculum")
     list_filter = (CurriculumFilter,)
-    search_field = ("course", "prerequisite_course", "curriculum")
+    search_fields = ("course", "prerequisite_course", "curriculum")
 
 
 @admin.register(Curriculum)

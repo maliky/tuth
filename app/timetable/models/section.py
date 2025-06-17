@@ -60,7 +60,7 @@ class Section(models.Model):
         return f"{self.semester} {self.short_code}"
 
     @property
-    def available_seats(self) -> int:
+    def available_seats(self) -> bool:
         """Return the number of seats available."""
         return (
             self.max_seats - self.current_registrations
@@ -70,7 +70,7 @@ class Section(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         """Return a human readable identifier with allocated rooms."""
-        return f"{self.long_code} | {self.space_codes}"
+        return f"{self.short} | {self.space_codes}"
 
     def has_available_seats(self) -> bool:
         """Return 'True' if the section still has seats available."""

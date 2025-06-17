@@ -17,9 +17,7 @@ class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = SectionResource
     list_display = ("semester", "course", "number", "faculty", "available_seats")
     inlines = [ReservationInline, SessionInline]
-    list_filter = (
-        "course__curricula",
-    )
+    list_filter = ("course__curricula",)
     autocomplete_fields = ("course", "semester", "faculty")
 
     # When Django pulls a Section list, it will join these related tables to reduce queries:

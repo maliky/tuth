@@ -13,7 +13,7 @@ from app.timetable.models import AcademicYear, Semester
 class AcademicYearAdmin(GuardedModelAdmin):
     """Admin settings for :class:`~app.timetable.models.AcademicYear`."""
 
-    list_display = ("long_name", "start_date", "code")
+    list_display = ("long_name", "start_date", "end_date", "code")
     date_hierarchy = "start_date"
     inlines = [SemesterInline]
     ordering = ("-start_date",)
