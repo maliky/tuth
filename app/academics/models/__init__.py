@@ -6,6 +6,7 @@ from .course import Course
 from .curriculum import Curriculum
 from .curriculum_course import CurriculumCourse
 from .prerequisite import Prerequisite
+from .department import Department
 
 __all__ = [
     "College",
@@ -14,4 +15,5 @@ __all__ = [
     "CurriculumCourse",
     "Curriculum",
     "Prerequisite",
+    "Department",
 ]

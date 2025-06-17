@@ -5,7 +5,13 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 
 from app.academics.admin.actions import update_college, update_curriculum
-from app.academics.models import College, Course, Curriculum, Prerequisite
+from app.academics.models import (
+    College,
+    Course,
+    Curriculum,
+    Prerequisite,
+    Department,
+)
 from app.academics.models.curriculum_course import CurriculumCourse
 from app.timetable.admin.inlines import SectionInline
 
@@ -22,6 +28,7 @@ from .resources import (
     CurriculumCourseResource,
     CurriculumResource,
     PrerequisiteResource,
+    DepartmentResource,
 )
 
 
@@ -100,6 +107,16 @@ class CollegeAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     search_fields = ("code", "long_name")
 
 
+@admin.register(Department)
+class DepartmentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+    """Admin interface for :class:`~app.academics.models.Department`."""
+
+    resource_class = DepartmentResource
+    list_display = ("code", "full_name", "college")
+    search_fields = ("code", "full_name")
+    autocomplete_fields = ("college",)
+
+
 @admin.register(CurriculumCourse)
 class CurriculumCourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """Admin screen for :class:`~app.academics.models.CurriculumCourse`."""
@@ -109,3 +126,4 @@ class CurriculumCourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     autocomplete_fields = ("curriculum", "course")
     list_select_related = ("curriculum", "course")
     search_fields = ("curriculum__short_name", "course__code")
+
