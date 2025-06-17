@@ -20,3 +20,7 @@ class PaymentHistory(models.Model):
         on_delete=models.SET_NULL,
         related_name="payments_recorded",
     )
+
+    def __str__(self) -> str:  # pragma: no cover
+        """Return "<amount> on <date>" for admin readability."""
+        return f"{self.amount} on {self.payment_date.date()}"
