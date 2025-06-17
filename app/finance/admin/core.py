@@ -11,8 +11,17 @@ from app.finance.models.scholarship import Scholarship
 class PaymentAdmin(admin.ModelAdmin):
     """Admin settings for :class:`~app.finance.models.Payment`."""
 
-    list_display = ("reservation", "amount", "method", "recorded_by", "created_at")
+    # Use Payment.__str__ for readability in list views
+    list_display = ("__str__", "reservation", "method", "recorded_by")
     readonly_fields = ("created_at",)
+
+
+@admin.register(PaymentHistory)
+class PaymentHistoryAdmin(admin.ModelAdmin):
+    """Admin interface for :class:`~app.finance.models.PaymentHistory`."""
+
+    # Shows summary string plus related info
+    list_display = ("__str__", "financial_record", "method", "recorded_by")
 
 
 @admin.register(Scholarship)

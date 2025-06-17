@@ -22,7 +22,7 @@ class PaymentHistory(models.Model):
     )
 
     def __str__(self) -> str:  # pragma: no cover
-        """Return "student - amount" for readability in admin screens."""
+        """Return "student - amount" for admin readability."""
         return f"{self.financial_record.student} - {self.amount}"
 
     class Meta:
