@@ -1,3 +1,23 @@
+"""Name-parsing utilities.
+
+This module exposes helper functions for parsing a person's name into
+its component parts and for generating usernames. Each helper focuses on
+extracting a specific portion of a name, allowing the caller to split a
+raw string into prefix, first name, middle name, last name and suffix.
+
+Functions:
+    extract_suffix(raw_name): Return any suffix (e.g., "Jr", "PhD") and
+        the remaining text.
+    extract_prefix(raw_name): Return any prefix (e.g., "Dr", "Prof") and
+        the remaining text.
+    inverse_if_comma(raw_name): Swap comma-separated name segments.
+    extract_firstnlast(raw_name): Identify first and last name elements.
+    split_name(name): Split a name into prefix, first, middle, last and
+        suffix parts.
+    mk_username(first, last, unique=False, length=13): Create a standard
+        username from the provided names.
+"""
+
 # regex patterns to pull suffixes, prefixes, initials, etc.
 import re
 
