@@ -2,6 +2,9 @@ import pytest
 from decimal import Decimal
 from app.finance.models import FinancialRecord, PaymentHistory
 
+# Reuse fixtures defined in the project-level ``tests.conftest`` module.
+pytest_plugins = ["tests.conftest"]
+
 
 @pytest.mark.django_db
 def test_payment_history_str(student_profile, staff_profile):
@@ -9,4 +12,7 @@ def test_payment_history_str(student_profile, staff_profile):
     ph = PaymentHistory.objects.create(
         financial_record=fr, amount=Decimal("25.00"), recorded_by=staff_profile
     )
-    assert str(ph) == f"{ph.amount} on {ph.payment_date.date()}"
+    assert (
+        str(ph)
+        == f"{ph.amount} on {ph.payment_date_str} for {ph.financial_record.student}"
+    )

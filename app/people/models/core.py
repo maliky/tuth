@@ -21,7 +21,6 @@ def photo_upload_to(instance: "AbstractPerson", filename: str) -> str:
     return str(Path("photos") / _class / str(instance.user_id) / filename)
 
 
-
 class AbstractPerson(StatusableMixin, models.Model):
     """Base information shared by all people profiles.
 
@@ -119,9 +118,6 @@ class AbstractPerson(StatusableMixin, models.Model):
     def set_last_name(self, value):
         return object.__setattr__(self.user, "last_name", value)
 
-    def set_full_name(self, value):
-        return object.__setattr__(self.user, "full_name", value)
-
     def set_email(self, value):
         return object.__setattr__(self.user, "email", value)
 
@@ -147,12 +143,12 @@ class AbstractPerson(StatusableMixin, models.Model):
 
     def save(self, *args, **kwargs):
         """The attribute is for eg donor_id or staff_id and the prefix is used in the _mk_id"""
-        # The ID_FIELD is mandatory for subclass and therefore the super().save() cannot proceed if it is not set.  
+        # The ID_FIELD is mandatory for subclass and therefore the super().save() cannot proceed if it is not set.
         assert self.ID_FIELD, "Needs to be set before creating new ID."
         new_id = self._mk_id()
         object.__setattr__(self, self.ID_FIELD, new_id)
         super().save(*args, **kwargs)
-        #super().save(update_fields=[self.ID_FIELD])
+        # super().save(update_fields=[self.ID_FIELD])
 
     class Meta:
         abstract = True

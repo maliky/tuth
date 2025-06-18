@@ -93,7 +93,7 @@ class Staff(AbstractPerson):
         >>> Staff.objects.create(user=user, staff_id="ST01", department=dept)
 
         >>> staff_profile  # from tests.conftest
-    
+
     Side Effects:
         ``save()`` from :class:`AbstractPerson` sets ``staff_id``.
     """

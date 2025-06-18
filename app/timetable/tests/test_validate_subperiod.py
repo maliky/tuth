@@ -15,6 +15,11 @@ def test_valid_subperiod_inside_container():
         start_date=ay.start_date,
         end_date=date(2026, 1, 15),
     )
+    # ? is there a way to factor this test in one place
+    # and still contentate the type checker mypy?
+    assert sem.start_date is not None
+    assert sem.end_date is not None
+
     validate_subperiod(
         sub_start=date(2025, 9, 10),
         sub_end=date(2025, 10, 10),
@@ -32,6 +37,9 @@ def test_subperiod_end_before_start_raises():
         start_date=ay.start_date,
         end_date=date(2026, 1, 15),
     )
+    assert sem.start_date is not None
+    assert sem.end_date is not None
+
     with pytest.raises(ValidationError):
         validate_subperiod(
             sub_start=date(2025, 10, 10),
@@ -50,6 +58,9 @@ def test_subperiod_outside_container_raises():
         start_date=ay.start_date,
         end_date=date(2026, 1, 15),
     )
+    assert sem.start_date is not None
+    assert sem.end_date is not None
+
     with pytest.raises(ValidationError):
         validate_subperiod(
             sub_start=date(2025, 8, 31),
@@ -74,6 +85,8 @@ def test_overlapping_subperiod_raises():
         start_date=date(2025, 9, 1),
         end_date=date(2025, 9, 30),
     )
+    assert sem.start_date is not None
+    assert sem.end_date is not None
 
     with pytest.raises(ValidationError):
         validate_subperiod(
@@ -83,6 +96,3 @@ def test_overlapping_subperiod_raises():
             container_end=sem.end_date,
             overlap_qs=Term.objects.filter(semester=sem),
         )
-
-
-

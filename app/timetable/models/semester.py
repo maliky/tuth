@@ -7,7 +7,7 @@ from app.timetable.utils import validate_subperiod
 
 
 class Semester(models.Model):
-    """Half of an academic year (e.g. semester 1 or 2).
+    """Major section of academic year (e.g. semester 1, 2 or 3 vacations).
 
     Example:
         >>> from app.timetable.models import Semester
@@ -18,6 +18,8 @@ class Semester(models.Model):
     number = models.PositiveSmallIntegerField(
         choices=SEMESTER_NUMBER.choices, help_text="Semester number"
     )
+    # > Could be interesting to set this to the academic_year start date automaticaly on save
+    # > and force non null values.
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
 

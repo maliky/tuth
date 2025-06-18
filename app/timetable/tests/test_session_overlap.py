@@ -5,6 +5,15 @@ from django.core.exceptions import ValidationError
 from app.timetable.models.session import Schedule, Session
 from app.timetable.models.section import Section
 
+# > find out why the room fixture is not been picked up
+# app/timetable/tests/test_session_overlap.py E
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> traceback >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# file /home/mlk/Jobs/TU/2024/Tuth-project/Tuth_app/app/timetable/tests/test_session_overlap.py, line 9
+#   @pytest.mark.django_db
+#   def test_session_overlap_same_room_raises_validationerror(room, course, semester):
+# E       fixture 'room' not found
+# >
+
 
 @pytest.mark.django_db
 def test_session_overlap_same_room_raises_validationerror(room, course, semester):

@@ -45,8 +45,12 @@ class PaymentHistory(models.Model):
     )
 
     def __str__(self) -> str:  # pragma: no cover
-        """Return "student - amount" for admin readability."""
-        return f"{self.financial_record.student} - {self.amount}"
+        """Return "amount on date for student" for admin readability."""
+        return f"{self.amount} on {self.payment_date_str} for {self.financial_record.student}"
+
+    @property
+    def payment_date_str(self):
+        self.payment_date.strftime("%H:%M:%S")
 
     class Meta:
         ordering = ["-payment_date"]

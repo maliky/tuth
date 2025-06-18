@@ -11,9 +11,7 @@ def test_expand_code_explicit_college():
 
 
 def test_expand_code_defaults_to_row_college():
-    dept, num, college = expand_course_code(
-        "CHEM100", row={"college_code": "COAS"}
-    )
+    dept, num, college = expand_course_code("CHEM100", row={"college_code": "COAS"})
     assert (dept, num, college) == ("CHEM", "100", "COAS")
 
 

@@ -12,9 +12,9 @@ from app.finance.models import Scholarship
 def test_donor_profile_creation():
     User = get_user_model()
     user = User.objects.create(username="donor")
-    donor = Donor.objects.create(user=user, donor_id="D001")
+    donor = Donor.objects.create(user=user)
 
-    assert donor.donor_id == "D001"
+    assert donor.donor_id == f"TU_DNR000{user.id}"
 
 
 @pytest.mark.django_db
@@ -23,10 +23,9 @@ def test_scholarship_links_donor_student(semester):
     d_user = User.objects.create(username="donor")
     s_user = User.objects.create(username="stud")
 
-    donor = Donor.objects.create(user=d_user, donor_id="D002")
+    donor = Donor.objects.create(user=d_user)
     student = Student.objects.create(
         user=s_user,
-        student_id="S001",
         enrollment_semester=semester,
     )
 

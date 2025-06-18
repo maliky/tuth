@@ -66,7 +66,8 @@ def space() -> Space:
 @pytest.fixture
 def room(space: Space) -> Room:
     # Room has fields `code` and FK `space`
-    return Room.objects.create(code="101", space=space)
+    r = Room.objects.create(code="101", space=space)
+    return r
 
 
 @pytest.fixture
@@ -111,7 +112,7 @@ def session(
 
 @pytest.fixture
 def student_user() -> User:
-    return User.objects.create_user(username="student")
+    return User.objects.create_user(username="test_student", first_name="Socrates", last_name="Thot")
 
 
 @pytest.fixture
@@ -120,7 +121,6 @@ def student_profile(student_user: User, semester: Semester) -> Student:
     # enrollment_semester, enrollment_date (nullable)
     return Student.objects.create(
         user=student_user,
-        student_id="S123456",
         enrollment_semester=semester,
     )
 

@@ -1,4 +1,4 @@
-"""Views module."""
+"""Website views for the student dashboard and reservation creation."""
 
 from __future__ import annotations
 
