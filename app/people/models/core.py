@@ -133,13 +133,13 @@ class AbstractPerson(StatusableMixin, models.Model):
         return f"{self.ID_PREFIX}{self.user.id:04}"
 
     def save(self, *args, **kwargs):
-        """the attribute is for eg donor_id or staff_id and the prefix is used in the _mk_id"""
-        super().save(*args, **kwargs)
-        id_field = self.ID_FIELD
-        assert id_field, "needs to be set / override, is the field to set"
+        """The attribute is for eg donor_id or staff_id and the prefix is used in the _mk_id"""
+        # The ID_FIELD is mandatory for subclass and therefore the super().save() cannot proceed if it is not set.  
+        assert self.ID_FIELD, "Needs to be set before creating new ID."
         new_id = self._mk_id()
-        object.__setattr__(self, id_field, new_id)
-        super().save(update_fields=[id_field])
+        object.__setattr__(self, self.ID_FIELD, new_id)
+        super().save(*args, **kwargs)
+        #super().save(update_fields=[self.ID_FIELD])
 
     class Meta:
         abstract = True
