@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+"""Import resources from per-model CSV files located in a directory.
+
+Each file is mapped to a ``ModelResource`` class used for validation and
+insertion. Running this command requires a superuser and results in database
+records being created or updated for each resource type found.
+"""
+
 from pathlib import Path
 from typing import Any, Tuple
 
@@ -81,6 +88,8 @@ class Command(BaseCommand):
 
     # ------------------------------------------------------------------ args
     def add_arguments(self, parser: CommandParser) -> None:
+        """Add the ``--dir`` option pointing to the directory of CSV files."""
+
         parser.add_argument(
             "-d",
             "--dir",
@@ -90,6 +99,8 @@ class Command(BaseCommand):
 
     # ---------------------------------------------------------------- handle
     def handle(self, *args: Any, **opts: Any) -> None:
+        """Execute the import for every known CSV file in the directory."""
+
         ensure_superuser(self)
 
         base_path: Path = Path(opts["dir"]).expanduser().resolve()

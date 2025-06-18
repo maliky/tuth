@@ -1,5 +1,13 @@
 from __future__ import annotations
 
+"""Import multiple resources from a single CSV file.
+
+This command reads a consolidated CSV export containing data for various
+models such as faculty, rooms and timetable elements. It ensures a superuser
+account exists and then creates or updates database records via the admin
+resources for each model.
+"""
+
 from pathlib import Path
 from typing import Any
 
@@ -34,6 +42,8 @@ class Command(BaseCommand):
     help = "Import resources from a CSV file"
 
     def add_arguments(self, parser: CommandParser) -> None:
+        """Register ``--file_path`` CLI option for the CSV to import."""
+
         parser.add_argument(
             "-f",
             "--file_path",
@@ -43,12 +53,14 @@ class Command(BaseCommand):
         )
 
     def clean_column_headers(self, dataset):
-        """filter any blank column headers that may appear due to trailing commas"""
+        """Strip blank headers that may appear due to trailing commas."""
         # sanitize column headers: strip whitespace and drop empties
         dataset.headers = [(header or "").strip() for header in dataset.headers]
         return dataset
 
     def handle(self, *args: Any, **options: Any) -> None:
+        """Validate and import each resource from the provided CSV."""
+
         ensure_superuser(self)
 
         path = Path(options["file_path"])
