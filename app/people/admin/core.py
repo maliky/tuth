@@ -1,7 +1,8 @@
 """Core module."""
 
 from app.people.admin.resources import FacultyResource
-from app.people.models.others import Donor, Student
+from app.people.models.student import Student
+from app.people.models.donor import Donor
 from app.people.models.staffs import Faculty, Staff
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin

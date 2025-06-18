@@ -28,7 +28,7 @@ class AbstractPerson(StatusableMixin, models.Model):
         >>> from django.contrib.auth import get_user_model
         >>> User = get_user_model()
         >>> user = User.objects.create(username="john")
-        >>> from app.people.models.others import Student
+        >>> from app.people.models.student import Student
         >>> Student.objects.create(user=user, student_id="S1", enrollment_semester=semester)
 
     Side Effects:

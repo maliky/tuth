@@ -1,9 +1,11 @@
 """Test admin login module."""
 
-from pytest_bdd import scenario, given, when, then, parsers
+import pytest
 from django.urls import reverse
+from pytest_bdd import given, parsers, scenario, then, when
 
 
+@pytest.mark.django_db
 @scenario("admin_login.feature", "Superuser logs in successfully")
 def test_admin_login():
     pass

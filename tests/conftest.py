@@ -13,7 +13,7 @@ from django.contrib.auth.models import User
 
 from app.academics.models.college import College
 from app.academics.models.course import Course
-from app.people.models.others import Student
+from app.people.models.student import Student
 from app.people.models.staffs import Faculty, Staff
 from app.academics.models.department import Department
 from app.spaces.models.core import Room, Space
@@ -92,7 +92,6 @@ def section_factory(
             start_date=semester.start_date,
             end_date=semester.end_date,
             max_seats=30,
-            schedule=schedule,
         )
 
     return _make
@@ -128,7 +127,7 @@ def student_profile(student_user: User, semester: Semester) -> Student:
 @pytest.fixture
 def department_factory(college_factory: Callable[[str], College]) -> Callable[..., Department]:
     def _factory(code: str = "GEN", college: Optional[College] = None) -> Department:
-        college_obj = college if (college := college) else college_factory()
+        college_obj = college or college_factory()
         return Department.objects.create(code=code, college=college_obj)
 
     return _factory
@@ -177,7 +176,7 @@ def course_factory(college_factory: Callable[[str], College]) -> Callable[..., C
         credit_hours: int = 3,
         college: Optional[College] = None,
     ) -> Course:
-        college_obj = college if (college := college) else college_factory()
+        college_obj = college or college_factory()
         return Course.objects.create(
             name=name,
             number=number,
