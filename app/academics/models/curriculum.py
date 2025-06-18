@@ -13,8 +13,12 @@ class Curriculum(StatusableMixin, models.Model):
     """Set of courses that make up a degree programme within a college.
 
     Example:
-        >>> curriculum = Curriculum.objects.create(short_name="BSc", college=college)
-        >>> curriculum.set_pending(author=None)
+        >>> from app.academics.models import Curriculum, College
+        >>> col = College.objects.create(code="COAS", long_name="Arts and Sciences")
+        >>> Curriculum.objects.create(short_name="BSCS", college=col)
+
+    Side Effects:
+        Status changes update ``is_active`` via signals.
     """
 
     short_name = models.CharField(max_length=40)

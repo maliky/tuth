@@ -14,8 +14,17 @@ if TYPE_CHECKING:
 class Section(models.Model):
     """A single course offering in a given semester.
 
+    A section can include multiple session rows.
+
     Example:
+        >>> from app.timetable.models import Section
         >>> Section.objects.create(course=course, semester=semester, number=1)
+
+        >>> Section.objects.create(course=course, semester=semester)
+
+    Side Effects:
+        Section numbers auto-increment and ``current_registrations``
+        are adjusted by reservation signals.
     """
 
     semester = models.ForeignKey("timetable.Semester", on_delete=models.PROTECT)

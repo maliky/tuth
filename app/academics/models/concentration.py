@@ -9,7 +9,9 @@ class Concentration(models.Model):
     """Optional specialization that further narrows a curriculum.
 
     Example:
-        >>> Concentration.objects.create(name="Agro", curriculum=curriculum)
+        >>> from app.academics.models import Concentration, Curriculum
+        >>> curriculum = Curriculum.objects.first()
+        >>> Concentration.objects.create(name="Statistics", curriculum=curriculum)
     """
 
     # revoir

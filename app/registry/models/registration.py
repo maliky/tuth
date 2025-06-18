@@ -16,6 +16,7 @@ class Registration(StatusableMixin, models.Model):
     """Enrollment of a student in a course section.
 
     Example:
+        >>> from app.registry.models import Registration
         >>> reg = Registration.objects.create(
         ...     student=student_profile,
         ...     section=section_factory(1),
@@ -27,6 +28,12 @@ class Registration(StatusableMixin, models.Model):
         >>> reg.refresh_from_db()
         >>> reg.date_latest_reservation is not None
         True
+
+        >>> Registration.objects.create(student=student, section=section)
+
+    Side Effects:
+        ``date_latest_reservation`` is updated whenever a
+        :class:`~app.timetable.models.Reservation` is saved.
     """
 
     student = models.ForeignKey(

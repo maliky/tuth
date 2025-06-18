@@ -28,11 +28,15 @@ class Reservation(StatusableMixin, models.Model):
     """Student request to enroll in a section.
 
     Example:
+        >>> from app.timetable.models import Reservation
         >>> reservation = Reservation.objects.create(
         ...     student=student_profile,
         ...     section=section_factory(1),
         ... )
         >>> reservation.mark_paid(by_user=staff_profile)
+
+    Side Effects:
+        Signals adjust section registration counts when validated or deleted.
     """
 
     student = models.ForeignKey(

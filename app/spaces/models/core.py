@@ -9,6 +9,7 @@ class Space(models.Model):
     """Physical structure that groups multiple rooms.
 
     Example:
+        >>> from app.spaces.models import Space
         >>> Space.objects.create(code="AA", full_name="Academic Annex")
     """
 
@@ -27,6 +28,7 @@ class Room(models.Model):
     """Individual teaching space located in a space.
 
     Example:
+        >>> from app.spaces.models import Room
         >>> Room.objects.create(code="101", space=space)
     """
 

@@ -9,9 +9,10 @@ from app.shared.enums import WEEKDAYS_NUMBER
 
 
 class Schedule(models.Model):
-    """Time slot definition used by session objects.
+    """Weekday/Time slot definition used by session objects.
 
     Example:
+        >>> from app.timetable.models import Schedule
         >>> Schedule.objects.create(weekday=1, start_time=time(9, 0))
     """
 
@@ -125,6 +126,7 @@ class Session(models.Model):
     """A meeting slot for a Section.
 
     Example:
+        >>> from app.timetable.models import Session
         >>> Session.objects.create(room=room, schedule=schedule, section=section)
     """
 

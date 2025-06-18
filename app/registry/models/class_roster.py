@@ -13,6 +13,7 @@ class ClassRoster(models.Model):
     """Container for the list of students enrolled in a section.
 
     Example:
+        >>> from app.registry.models import ClassRoster
         >>> roster = ClassRoster.objects.create(section=section)
         >>> roster.students.count()
         0

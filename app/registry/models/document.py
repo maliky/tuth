@@ -19,12 +19,15 @@ class Document(StatusableMixin, models.Model):
     profile models (students, staff, etc.).
 
     Example:
+        >>> from app.registry.models import Document
         >>> doc = Document.objects.create(
         ...     profile=student_profile,
         ...     file="id.pdf",
         ...     document_type=DocumentType.ID_CARD,
         ... )
         >>> doc.set_pending(author=None)
+    Side Effects:
+        Status changes are tracked via ``status_history``.
     """
 
     profile_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)

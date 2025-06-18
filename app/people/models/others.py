@@ -14,8 +14,12 @@ class Donor(AbstractPerson):
     """Contact information for donors supporting students.
 
     Example:
+        >>> from app.people.models import Donor
         >>> user = User.objects.create_user(username="donor")
         >>> Donor.objects.create(user=user, donor_id="DN001")
+
+    Side Effects:
+        ``save()`` from :class:`AbstractPerson` populates ``donor_id``.
     """
 
     ID_FIELD = "donor_id"
@@ -33,10 +37,13 @@ class Student(AbstractPerson):
     """Extra academic information for enrolled students.
 
     Example:
+        >>> from app.people.models import Student
         >>> user = User.objects.create_user(username="stud")
         >>> s = Student.objects.create(user=user, enrollment_semester=semester)
         >>> s.student_id  # auto-set from user id
         'TU_STD0001'
+    Side Effects:
+        ``save()`` from :class:`AbstractPerson` populates ``student_id``.
     """
 
     ID_FIELD = "student_id"

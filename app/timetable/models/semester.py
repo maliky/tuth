@@ -10,10 +10,8 @@ class Semester(models.Model):
     """Half of an academic year (e.g. semester 1 or 2).
 
     Example:
-        >>> semester = Semester.objects.create(
-        ...     academic_year=academic_year,
-        ...     number=1,
-        ... )
+        >>> from app.timetable.models import Semester
+        >>> Semester.objects.create(academic_year=year, number=1)
     """
 
     academic_year = models.ForeignKey("timetable.AcademicYear", on_delete=models.PROTECT)

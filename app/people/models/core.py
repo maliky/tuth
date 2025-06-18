@@ -21,12 +21,19 @@ def photo_upload_to(instance: "AbstractPerson", filename: str) -> str:
     return str(Path("photos") / _class / str(instance.user_id) / filename)
 
 
+
 class AbstractPerson(StatusableMixin, models.Model):
     """Base information shared by all people profiles.
 
     Example:
-        >>> user = User.objects.create_user(username="demo")
+        >>> from django.contrib.auth import get_user_model
+        >>> User = get_user_model()
+        >>> user = User.objects.create(username="john")
+        >>> from app.people.models.others import Student
         >>> Student.objects.create(user=user, student_id="S1", enrollment_semester=semester)
+
+    Side Effects:
+        ``save()`` assigns an ID derived from ``user``.
     """
 
     ID_FIELD: str | None = None

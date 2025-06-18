@@ -12,7 +12,14 @@ class College(models.Model):
     """Institutional unit responsible for a set of programmes.
 
     Example:
-        >>> college_factory(code="COAS")
+        >>> from app.academics.models import College
+        >>> College.objects.create(
+        ...     code="COAS",
+        ...     long_name="College of Arts and Sciences",
+        ... )
+
+    Side Effects:
+        ``save()`` sets ``long_name`` based on ``code``.
     """
 
     # there should be no constraint here as the VPA may need to

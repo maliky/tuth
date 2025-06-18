@@ -13,7 +13,11 @@ class AcademicYear(models.Model):
     """Top-level period covering two consecutive semesters.
 
     Example:
+        >>> from app.timetable.models import AcademicYear
         >>> AcademicYear.objects.create(start_date=date(2025, 9, 1))
+
+    Side Effects:
+        ``save()`` computes ``code`` and ``long_name``.
     """
 
     code = models.CharField(max_length=5, editable=False, unique=True)
