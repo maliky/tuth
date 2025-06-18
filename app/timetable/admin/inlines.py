@@ -8,6 +8,8 @@ from app.timetable.models import Section, Semester
 
 
 class SemesterInline(admin.TabularInline):
+    """Inline for managing :class:`~app.timetable.models.Semester` rows."""
+
     model = Semester
     extra = 0
     max_num = 3
@@ -16,6 +18,8 @@ class SemesterInline(admin.TabularInline):
 
 
 class SessionInline(admin.TabularInline):
+    """Inline editor for :class:`~app.timetable.models.Session`."""
+
     model = Session
     extra = 0
     fields = ("room", "schedule")
@@ -23,6 +27,8 @@ class SessionInline(admin.TabularInline):
 
 
 class SectionInline(admin.TabularInline):
+    """Inline for creating :class:`~app.timetable.models.Section` rows."""
+
     model = Section
     extra = 0
     fields = (
@@ -39,7 +45,10 @@ class SectionInline(admin.TabularInline):
 
 
 class ReservationInline(admin.TabularInline):
-    """Display reservations inline with credit hours snapshot."""
+    """Inline for :class:`~app.timetable.models.Reservation` records.
+
+    Shows each reservation with status and credit hour snapshot.
+    """
 
     model = Reservation
     extra = 0

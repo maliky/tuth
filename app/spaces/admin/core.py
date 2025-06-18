@@ -11,7 +11,10 @@ from app.spaces.models import Space, Room
 
 @admin.register(Space)
 class SpaceAdmin(GuardedModelAdmin):
-    """Admin management for :class:`~app.spaces.models.Space`."""
+    """Admin management for :class:`~app.spaces.models.Space`.
+
+    Exposes basic listing and search over the space code and name.
+    """
 
     search_fields = ("code", "full_name")
     list_display = ("code", "full_name")
@@ -19,7 +22,12 @@ class SpaceAdmin(GuardedModelAdmin):
 
 @admin.register(Room)
 class RoomAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin configuration for :class:`~app.spaces.models.Room`."""
+    """Admin configuration for :class:`~app.spaces.models.Room`.
+
+    ``list_display`` shows the room code and capacities. Sessions are edited via
+    ``SessionInline``. The ``full_code`` field is read‑only and the space
+    relation uses autocomplete.
+    """
 
     resource_class = RoomResource
     fields = (

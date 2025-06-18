@@ -10,7 +10,11 @@ from import_export.admin import ImportExportModelAdmin
 
 @admin.register(Faculty)
 class FacultyAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin options for :class:`~app.people.models.Faculty`."""
+    """Admin options for :class:`~app.people.models.Faculty`.
+
+    Displays the staff profile with optional filtering by college. The faculty
+    resource is used for import/export operations.
+    """
 
     resource_class = FacultyResource
     fields = (
@@ -34,7 +38,10 @@ class FacultyAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 @admin.register(Donor)
 class DonorAdmin(GuardedModelAdmin):
-    """Admin management for :class:`~app.people.models.Donor`."""
+    """Admin management for :class:`~app.people.models.Donor`.
+
+    Shows each donor's user and ID with autocomplete for the user relation.
+    """
 
     list_display = ("user", "donor_id")
     search_fields = (
@@ -48,7 +55,11 @@ class DonorAdmin(GuardedModelAdmin):
 
 @admin.register(Staff)
 class StaffAdmin(GuardedModelAdmin):
-    """Admin management for :class:`~app.people.models.Staff`."""
+    """Admin management for :class:`~app.people.models.Staff`.
+
+    Provides detailed fieldsets for personal and work information. Important
+    fields like ``staff_id`` are read-only to avoid accidental edits.
+    """
 
     fieldsets = (
         (
@@ -107,7 +118,11 @@ class StaffAdmin(GuardedModelAdmin):
 
 @admin.register(Student)
 class StudentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin interface for :class:`~app.people.models.Student`."""
+    """Admin interface for :class:`~app.people.models.Student`.
+
+    ``list_display`` shows the related user and student ID with search enabled
+    on both fields. Import/export is supported via ``ImportExportModelAdmin``.
+    """
 
     list_display = ("user", "student_id")
     search_fields = (

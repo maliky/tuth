@@ -7,7 +7,11 @@ from app.registry.models import ClassRoster, Grade
 
 @admin.register(Grade)
 class GradeAdmin(admin.ModelAdmin):
-    """Admin interface for :class:`~app.registry.models.Grade`."""
+    """Admin interface for :class:`~app.registry.models.Grade`.
+
+    Shows student, section and grade fields in the list view with autocomplete
+    lookups for student and section.
+    """
 
     list_display = (
         "student",
@@ -29,7 +33,11 @@ class GradeAdmin(admin.ModelAdmin):
 
 @admin.register(ClassRoster)
 class ClassRosterAdmin(admin.ModelAdmin):
-    """Admin interface for :class:`~app.registry.models.ClassRoster`."""
+    """Admin interface for :class:`~app.registry.models.ClassRoster`.
+
+    Displays the section and counts enrolled students via ``student_count``.
+    The ``section`` foreign key is autocompleted for convenience.
+    """
 
     list_display = ("section", "student_count", "last_updated")
     search_fields = (

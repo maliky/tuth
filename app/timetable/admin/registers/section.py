@@ -11,7 +11,12 @@ from app.timetable.models.section import Section
 
 @admin.register(Section)
 class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin interface for :class:`~app.timetable.models.Section`."""
+    """Admin interface for :class:`~app.timetable.models.Section`.
+
+    ``list_display`` includes semester, course and faculty information while
+    ``inlines`` manage reservations and sessions. Filtering by curriculum is
+    available through ``list_filter``.
+    """
 
     # ! TODO ajouter à la list, les rooms occupé et le nombre de sessions, le nombre de crédits
     resource_class = SectionResource
