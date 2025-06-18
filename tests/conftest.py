@@ -160,9 +160,10 @@ def superuser() -> User:
 # ─── generic factories ───────────────────────────────────────────
 
 @pytest.fixture
-def college_factory() -> Callable[[str], College]:
-    def _factory(code: str = "COAS") -> College:
-        return College.objects.create(code=code, long_name=code)
+def college_factory() -> Callable[..., College]:
+    def _factory(code: str = "COAS", long_name: Optional[str] = None) -> College:
+        """Create ``College`` with matching ``code`` and ``long_name``."""
+        return College.objects.create(code=code, long_name=long_name or code)
 
     return _factory
 

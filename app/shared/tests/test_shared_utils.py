@@ -6,12 +6,14 @@ from app.shared.utils import expand_course_code
 
 
 def test_expand_code_explicit_college():
-    result = expand_course_code("MATH101 - COET", row={"college": "COAS"})
+    result = expand_course_code("MATH101 - COET", row={"college_code": "COAS"})
     assert result == ("MATH", "101", "COET")
 
 
 def test_expand_code_defaults_to_row_college():
-    dept, num, college = expand_course_code("CHEM100", row={"college": "COAS"})
+    dept, num, college = expand_course_code(
+        "CHEM100", row={"college_code": "COAS"}
+    )
     assert (dept, num, college) == ("CHEM", "100", "COAS")
 
 
