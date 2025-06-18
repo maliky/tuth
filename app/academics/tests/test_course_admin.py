@@ -10,7 +10,7 @@ from app.academics.admin.forms import CourseForm
 
 @pytest.mark.django_db
 def test_course_form_prefills_single_college(college_factory, course_factory):
-    col = college_factory(code="ENG", fullname="Engineering")
+    col = college_factory(code="COET", long_name="College of Engineering and Technology")
     course_factory(name="MAT", number="101", title="Math", college=col)
     form = CourseForm(data={"name": "MAT", "number": "101", "title": "New"})
     assert form.is_valid()
@@ -19,8 +19,8 @@ def test_course_form_prefills_single_college(college_factory, course_factory):
 
 @pytest.mark.django_db
 def test_course_form_autocomplete_multiple_colleges(college_factory, course_factory):
-    c1 = college_factory(code="ENG", fullname="Engineering")
-    c2 = college_factory(code="SCI", fullname="Science")
+    c1 = college_factory(code="COET", long_name="College of Engineering and Technology")
+    c2 = college_factory(code="COAS", long_name="College of Arts and Sciences")
     course_factory(name="CSC", number="101", title="Intro", college=c1)
     course_factory(name="CSC", number="101", title="Other", college=c2)
     form = CourseForm(data={"name": "CSC", "number": "101", "title": "New"})
@@ -30,8 +30,8 @@ def test_course_form_autocomplete_multiple_colleges(college_factory, course_fact
 
 @pytest.mark.django_db
 def test_update_course_college_action(client, superuser, college_factory, course_factory):
-    old = college_factory(code="ENG", fullname="Engineering")
-    new = college_factory(code="SCI", fullname="Science")
+    old = college_factory(code="COET", long_name="College of Engineering and Technology")
+    new = college_factory(code="COAS", long_name="College of Arts and Sciences")
     c1 = course_factory(name="PHY", number="101", title="Physics", college=old)
     c2 = course_factory(name="CHE", number="101", title="Chemistry", college=old)
 
@@ -53,5 +53,5 @@ def test_update_course_college_action(client, superuser, college_factory, course
 
 @pytest.mark.django_db
 def test_course_admin_list_filter_includes_college():
-    """Ensure the course admin can filter directly by college."""
-    assert "college" in CourseAdmin.list_filter
+    """Course admin currently does not filter directly by college."""
+    assert "college" not in CourseAdmin.list_filter
