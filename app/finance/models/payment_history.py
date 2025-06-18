@@ -6,7 +6,27 @@ from django.db import models
 
 
 class PaymentHistory(models.Model):
-    """Individual payment made toward a financial record."""
+    """Record of a payment against a financial record.
+
+    This model keeps a log of every payment for auditing purposes. No signals
+    are currently attached.
+
+    Attributes:
+        financial_record (finance.FinancialRecord): Record the payment belongs
+            to.
+        amount (Decimal): Amount paid.
+        payment_date (datetime): Timestamp when the payment was recorded.
+        method (str): Optional textual description of the method used.
+        recorded_by (people.Staff): Staff user who entered the payment.
+
+    Example:
+        >>> from decimal import Decimal
+        >>> PaymentHistory.objects.create(
+        ...     financial_record=record,
+        ...     amount=Decimal("25.00"),
+        ...     method="cash",
+        ... )
+    """
 
     financial_record = models.ForeignKey(
         "finance.FinancialRecord", related_name="payments", on_delete=models.CASCADE

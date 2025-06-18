@@ -6,7 +6,30 @@ from django.db import models
 
 
 class Scholarship(models.Model):
-    """Financial aid linking a donor to a student."""
+    """Financial aid linking a donor to a student.
+
+    Scholarships can reduce a student's balance in their
+    :class:`~app.finance.models.FinancialRecord` through custom business logic.
+    No signals are attached by default.
+
+    Attributes:
+        donor (people.Donor): Person or organization funding the scholarship.
+        student (people.Student): Recipient of the aid.
+        amount (Decimal): Monetary value of the scholarship.
+        start_date (date): When the scholarship becomes active.
+        end_date (date): Optional expiration date.
+        conditions (str): Extra eligibility notes.
+
+    Example:
+        >>> from decimal import Decimal
+        >>> from datetime import date
+        >>> Scholarship.objects.create(
+        ...     donor=donor,
+        ...     student=student,
+        ...     amount=Decimal("1000.00"),
+        ...     start_date=date.today(),
+        ... )
+    """
 
     donor = models.ForeignKey(
         "people.Donor",
