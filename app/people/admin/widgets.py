@@ -19,11 +19,11 @@ User = get_user_model()
 
 
 class StaffProfileWidget(widgets.ForeignKeyWidget):
-    """
-    “faculty”  ➜  User  ➜  Staff
+    """Create or fetch a :class:`Staff` from a full name.
 
-    • expects the column value to be the full display name.
-    • returns the *Staff* (not the User!) so foreign-keys can point to it.
+    The widget splits the display name, creates the corresponding ``User`` if
+    needed and returns the linked ``Staff`` profile so foreign keys can refer to
+    it directly.
     """
 
     def __init__(self):
@@ -72,9 +72,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
 
 
 class FacultyWidget(widgets.ForeignKeyWidget):
-    """
-    Builds on StaffWidget: first get the Staff, then ensure a Faculty row exists.
-    """
+    """Ensure a :class:`Faculty` entry exists for the given staff name."""
 
     def __init__(self):
         # field is "id" by default

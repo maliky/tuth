@@ -8,10 +8,7 @@ from app.timetable.models.session import Schedule, Session
 
 
 class SessionWidget(widgets.ForeignKeyWidget):
-    """
-    Get a session if the room is present
-    We give a room value
-    """
+    """Create a :class:`Session` from room and schedule data."""
 
     def __init__(self):
         super().__init__(Session)  # va exporter session.pk
@@ -36,7 +33,7 @@ class SessionWidget(widgets.ForeignKeyWidget):
 
 
 class ScheduleWidget(widgets.ForeignKeyWidget):
-    """Get the schedule from a weekdays value + start and end time"""
+    """Return a :class:`Schedule` based on weekday and times."""
 
     def __init__(self):
         super().__init__(Schedule)
