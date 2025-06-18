@@ -12,8 +12,8 @@ from app.academics.models import Curriculum, College  # the target model
 
 @admin.action(description="Attach / update curriculum on selected prerequisites")
 def update_curriculum(modeladmin, request, queryset):
-    """
-    Bulk-update the ``curriculum`` FK on Prerequisite rows picked in the change list.
+    """Bulk-update the ``curriculum`` FK on selected prerequisites.
+
     Works in two steps:
       1. GET  → show a tiny form asking for the Curriculum.
       2. POST → apply it and send a flash message.

@@ -40,9 +40,7 @@ class ScheduleWidget(widgets.ForeignKeyWidget):
         self.weekday_w = WeekdayWidget
 
     def clean(self, value, row=None, *args, **kwargs) -> Schedule | None:
-        """
-        We get the weekday but start and end time should be present in row
-        """
+        """Return an existing ``Schedule`` using data from the import row."""
 
         weekday: int | None = self.weekday_w().clean(value=value)
         if weekday is None:
