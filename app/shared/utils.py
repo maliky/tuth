@@ -17,7 +17,9 @@ def expand_course_code(
     code : str
         Raw course code such as ``"AGR121-CFAS"``.
     row : Mapping[str, str] | None, optional
-        Optional CSV row providing a ``college_code`` fallback.
+        Optional CSV row providing a ``college_code`` fallback. The
+        ``college_code`` value is used only when the course code itself
+        does not include a college segment.
     default_college : str, optional
         College code to use when none is provided. Defaults to ``"COAS"``.
 
@@ -32,11 +34,17 @@ def expand_course_code(
     match = COURSE_PATTERN.search(code.strip().upper())
     assert match is not None, f"Code '{code}' doesn't match expected pattern"
 
-    dept, num, college = match.group("dept"), match.group("num"), match.group("college")
-    if row and "college_code" in row:
-        college = row["college_code"]
-    else:
-        college = default_college
+    dept, num, college = (
+        match.group("dept"),
+        match.group("num"),
+        match.group("college"),
+    )
+
+    if not college:
+        if row and "college_code" in row:
+            college = row["college_code"]
+        else:
+            college = default_college
 
     return dept, num, college
 
