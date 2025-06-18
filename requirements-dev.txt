@@ -35,3 +35,4 @@ ipdb
 # profilers
 django-extensions
 pygraphviz
+flake8-docstrings

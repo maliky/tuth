@@ -27,6 +27,8 @@ ignore = [
   "D103",  # missing docstring in public function/class
   "E501",  # line too long
 ]
+docstring-convention = "google"
+
 
 [tool.mypy]
 python_version = "3.12"
