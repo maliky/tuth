@@ -18,6 +18,11 @@ User = get_user_model()
 
 
 class Faculty(StatusableMixin, models.Model):
+    """Instructor profile linked to a staff member.
+
+    Example:
+        >>> faculty_profile  # from tests.conftest
+    """
 
     staff_profile = models.OneToOneField("people.Staff", on_delete=models.CASCADE)
 
@@ -75,7 +80,11 @@ class Faculty(StatusableMixin, models.Model):
 
 
 class Staff(AbstractPerson):
-    """Base class for Staffs."""
+    """Base class for Staffs.
+
+    Example:
+        >>> staff_profile  # from tests.conftest
+    """
 
     ID_FIELD = "staff_id"
     ID_PREFIX = "TU_STF"

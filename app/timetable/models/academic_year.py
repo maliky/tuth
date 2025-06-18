@@ -10,7 +10,11 @@ from django.db.models.functions import ExtractYear
 
 
 class AcademicYear(models.Model):
-    """Top-level period covering two consecutive semesters."""
+    """Top-level period covering two consecutive semesters.
+
+    Example:
+        >>> AcademicYear.objects.create(start_date=date(2025, 9, 1))
+    """
 
     code = models.CharField(max_length=5, editable=False, unique=True)
     long_name = models.CharField(max_length=9, editable=False, unique=True)

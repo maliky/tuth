@@ -4,7 +4,16 @@ from django.db import models
 
 
 class Grade(models.Model):
-    """Letter/numeric grade awarded to a student for a Section."""
+    """Letter/numeric grade awarded to a student for a Section.
+
+    Example:
+        >>> Grade.objects.create(
+        ...     student=student_profile,
+        ...     section=section_factory(1),
+        ...     letter_grade="A",
+        ...     numeric_grade=95,
+        ... )
+    """
 
     student = models.ForeignKey("people.Student", on_delete=models.CASCADE)
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)

@@ -25,6 +25,9 @@ class PaymentHistory(models.Model):
         ...     financial_record=record,
         ...     amount=Decimal("25.00"),
         ...     method="cash",
+        >>> PaymentHistory.objects.create(
+        ...     financial_record=record,
+        ...     amount=Decimal("20.00"),
         ... )
     """
 

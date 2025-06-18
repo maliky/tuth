@@ -24,6 +24,10 @@ class Payment(models.Model):
         ...     amount=Decimal("50.00"),
         ...     method=PaymentMethod.CASH,
         ...     recorded_by=staff,
+        >>> Payment.objects.create(
+        ...     reservation=reservation,
+        ...     amount=Decimal("10.00"),
+        ...     method=PaymentMethod.CASH,
         ... )
     """
 

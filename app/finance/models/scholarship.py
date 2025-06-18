@@ -25,8 +25,8 @@ class Scholarship(models.Model):
         >>> from datetime import date
         >>> Scholarship.objects.create(
         ...     donor=donor,
-        ...     student=student,
-        ...     amount=Decimal("1000.00"),
+        ...     student=student_profil,
+        ...     amount=Decimal("100.00"),
         ...     start_date=date.today(),
         ... )
     """

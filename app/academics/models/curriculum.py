@@ -10,7 +10,12 @@ from app.shared.mixins import StatusableMixin
 
 
 class Curriculum(StatusableMixin, models.Model):
-    """Set of courses that make up a degree programme within a college."""
+    """Set of courses that make up a degree programme within a college.
+
+    Example:
+        >>> curriculum = Curriculum.objects.create(short_name="BSc", college=college)
+        >>> curriculum.set_pending(author=None)
+    """
 
     short_name = models.CharField(max_length=40)
     long_name = models.CharField(max_length=255, blank=True, null=True)

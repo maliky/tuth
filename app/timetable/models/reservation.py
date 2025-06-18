@@ -25,6 +25,16 @@ if TYPE_CHECKING:
 
 
 class Reservation(StatusableMixin, models.Model):
+    """Student request to enroll in a section.
+
+    Example:
+        >>> reservation = Reservation.objects.create(
+        ...     student=student_profile,
+        ...     section=section_factory(1),
+        ... )
+        >>> reservation.mark_paid(by_user=staff_profile)
+    """
+
     student = models.ForeignKey(
         "people.Student",
         on_delete=models.CASCADE,

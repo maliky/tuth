@@ -28,6 +28,7 @@ class FinancialRecord(models.Model):
         ...     student=student,
         ...     total_due=Decimal("500.00"),
         ... )
+        >>> FinancialRecord.objects.create(student=student_profile, total_due=0)
     """
 
     student = models.OneToOneField("people.Student", on_delete=models.CASCADE)
@@ -62,6 +63,7 @@ class SectionFee(models.Model):
         ...     fee_type=FeeType.LAB,
         ...     amount=Decimal("25.00"),
         ... )
+        >>> SectionFee.objects.create(section=section, fee_type=FeeType.LAB, amount=50)
     """
 
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)

@@ -10,7 +10,11 @@ from app.academics.models.curriculum import Curriculum
 
 
 class Course(models.Model):
-    """University catalogue entry describing a single course offering."""
+    """University catalogue entry describing a single course offering.
+
+    Example:
+        >>> course_factory(name="CSC", number="101", title="Intro")
+    """
 
     code = models.CharField(max_length=20, editable=False)
     # > need to change it and everywhere with course_dept
