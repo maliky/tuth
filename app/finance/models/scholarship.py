@@ -24,4 +24,5 @@ class Scholarship(models.Model):
     conditions = models.TextField(blank=True)
 
     def __str__(self) -> str:  # pragma: no cover
+        """Return ``"donor -> student"`` for readability in admin screens."""
         return f"{self.donor} -> {self.student}"

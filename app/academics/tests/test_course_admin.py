@@ -2,9 +2,9 @@
 
 import pytest
 from django.contrib.admin.widgets import AutocompleteSelect
-
 from django.urls import reverse
 
+from app.academics.admin.core import CourseAdmin
 from app.academics.admin.forms import CourseForm
 
 
@@ -49,3 +49,9 @@ def test_update_course_college_action(client, superuser, college_factory, course
     c2.refresh_from_db()
     assert c1.college == new
     assert c2.college == new
+
+
+@pytest.mark.django_db
+def test_course_admin_list_filter_includes_college():
+    """Ensure the course admin can filter directly by college."""
+    assert "college" in CourseAdmin.list_filter

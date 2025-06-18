@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from django.contrib.auth import get_user_model
 from django.db import models
 
 from app.shared.constants.perms import UserRole
+
+User = get_user_model()
 
 
 class RoleAssignment(models.Model):

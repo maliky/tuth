@@ -40,13 +40,16 @@ class ScheduleWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
         super().__init__(Schedule)
-        self.room_w = RoomCodeWidget()
+        self.weekday_w = WeekdayWidget
 
     def clean(self, value, row=None, *args, **kwargs) -> Schedule | None:
-        if not value:
-            return None
+        """
+        We get the weekday but start and end time should be present in row
+        """
 
-        weekday = value.strip()
+        weekday: int | None = self.weekday_w().clean(value=value)
+        if weekday is None:
+            return None
 
         start_time = row.get("start_time", "").strip()
         end_time = row.get("end_time", "").strip()
@@ -63,7 +66,7 @@ class ScheduleWidget(widgets.ForeignKeyWidget):
 class WeekdayWidget(widgets.IntegerWidget):
     """Accept either the integer 1-7 or the English weekday name."""
 
-    def clean(self, value, row=None, *args, **kwargs) -> str | int | None:
+    def clean(self, value, row=None, *args, **kwargs) -> int | None:
         if not value:
             return None
 

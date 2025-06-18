@@ -18,7 +18,7 @@ def test_donor_profile_creation():
 
 
 @pytest.mark.django_db
-def test_scholarship_links_donor_student():
+def test_scholarship_links_donor_student(semester):
     User = get_user_model()
     d_user = User.objects.create(username="donor")
     s_user = User.objects.create(username="stud")
@@ -27,7 +27,7 @@ def test_scholarship_links_donor_student():
     student = Student.objects.create(
         user=s_user,
         student_id="S001",
-        enrollment_semester=1,
+        enrollment_semester=semester,
     )
 
     scholarship = Scholarship.objects.create(

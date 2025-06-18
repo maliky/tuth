@@ -29,12 +29,12 @@ class SectionInline(admin.TabularInline):
         "semester",
         "course",
         "number",
-        "session",
         "faculty",
         "start_date",
         "max_seats",
         "current_registrations",
     )
+    readonly_fields = ("current_registrations",)
     ordering = ("semester__start_date", "number")
 
 

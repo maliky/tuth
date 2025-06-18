@@ -1,16 +1,18 @@
 "tests/test_section_resource_fk.py"
+
 import csv
 from io import StringIO
 from pathlib import Path
 
+from import_export import results
 import pytest
 from django.core import management
 from django.db import IntegrityError
-from import_export import results, resources
 from tablib import Dataset
 
 from app.timetable.admin.resources.section import SectionResource
 from app.timetable.models import Section
+
 
 # ------------------------------------------------------------------ helpers
 def _dataset(course, semester, faculty="Jane Smith") -> Dataset:
@@ -29,11 +31,11 @@ def _dataset(course, semester, faculty="Jane Smith") -> Dataset:
     ds.append(
         (
             semester.academic_year.code,  # 25‑26
-            course.name,                  # AGR
-            str(course.number),           # 121
-            faculty,                      # Jane Smith
-            "1",                          # section_no
-            str(semester.number),         # 1
+            course.name,  # AGR
+            str(course.number),  # 121
+            faculty,  # Jane Smith
+            "1",  # section_no
+            str(semester.number),  # 1
         )
     )
     return ds
@@ -78,14 +80,12 @@ def test_double_import_with_new_resource_is_safe(course, semester):
     """
     ds = _dataset(course, semester)
 
-    SectionResource().import_data(ds, dry_run=True)   # validation
+    SectionResource().import_data(ds, dry_run=True)  # validation
     real = SectionResource().import_data(ds, dry_run=False)
 
     assert isinstance(real, results.Result)
     assert not real.has_errors()
-    assert Section.objects.filter(
-        course=course, semester=semester, number=1
-    ).exists()
+    assert Section.objects.filter(course=course, semester=semester, number=1).exists()
 
 
 @pytest.mark.django_db

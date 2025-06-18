@@ -1,6 +1,8 @@
 """Initialization for the models package."""
 
-from .profiles import Student, Faculty, Donor, Staff
+from app.people.models.others import Donor, Student
+from app.people.models.staffs import Faculty, Staff
+
 from .role_assignment import RoleAssignment
 
 __all__ = [

@@ -20,3 +20,10 @@ class PaymentHistory(models.Model):
         on_delete=models.SET_NULL,
         related_name="payments_recorded",
     )
+
+    def __str__(self) -> str:  # pragma: no cover
+        """Return "student - amount" for admin readability."""
+        return f"{self.financial_record.student} - {self.amount}"
+
+    class Meta:
+        ordering = ["-payment_date"]

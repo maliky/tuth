@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from app.people.admin.resources import FacultyResource
 from django.core.management.base import BaseCommand, CommandParser
 from django.db import transaction
 from import_export import resources
@@ -21,7 +22,10 @@ from app.shared.management.populate_helpers.auth import (  # noqa: F401
 from app.spaces.admin.resources import RoomResource  # noqa: F401
 from app.timetable.admin.resources.core import SemesterResource  # noqa: F401
 from app.timetable.admin.resources.section import SectionResource
-from app.timetable.admin.resources.session import SessionResource  # noqa: F401
+from app.timetable.admin.resources.session import (
+    ScheduleResource,
+    SessionResource,
+)  # noqa: F401
 
 
 class Command(BaseCommand):
@@ -55,12 +59,14 @@ class Command(BaseCommand):
         dataset = self.clean_column_headers(dataset)
 
         RESOURCES_MAP: list[tuple[str, type[resources.ModelResource]]] = [
-            ("Course", CourseResource),  # and College
+            ("Faculty", FacultyResource),  # and College
             ("Room", RoomResource),  # and Space
-            ("CurriculumCourse", CurriculumCourseResource),
+            ("Schedule", ScheduleResource),
+            ("Course", CourseResource),  # and College
             ("semester", SemesterResource),  # and Academic year
-            ("Session", SessionResource),  # and Faculty, Room and Space
+            ("CurriculumCourse", CurriculumCourseResource),
             ("Section", SectionResource),
+            ("Session", SessionResource),  # and Faculty, Room and Space
         ]
 
         for key, ResourceClass in RESOURCES_MAP:
@@ -85,12 +91,6 @@ class Command(BaseCommand):
                     resource.import_data(dataset, dry_run=False)
             except Exception as exc:
                 self.stdout.write(self.style.ERROR(f"{key} import failed: {exc}"))
-                import traceback
-
-                traceback.print_exc()
-                import ipdb
-
-                ipdb.set_trace()
                 continue
 
             self.stdout.write(self.style.SUCCESS(f"{key} import completed."))

@@ -1,4 +1,5 @@
 """Test reservation module."""
+
 import pytest
 from django.core.exceptions import ValidationError
 from django.urls import reverse
@@ -80,7 +81,7 @@ def test_delete_reservation_decrements_section_count(student_profile, section_fa
 
 # ─── dashboard view ──────────────────────────────────────────────────────────
 @pytest.mark.django_db
-def test_student_dashboard_url(client, superuser):
+def test_student_dashboard_url(client, superuser, semester):
     """
     Basic smoke test – dashboard should load for an authenticated student.
     """
@@ -89,7 +90,7 @@ def test_student_dashboard_url(client, superuser):
     Student.objects.create(
         user=superuser,
         student_id="SUPER",
-        enrollment_semester=1,
+        enrollment_semester=semester,
     )
     client.force_login(superuser)
 

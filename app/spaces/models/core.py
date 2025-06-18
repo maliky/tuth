@@ -14,6 +14,10 @@ class Space(models.Model):
     def __str__(self) -> str:  # pragma: no cover
         return self.code
 
+    class Meta:
+        verbose_name = "Space / Buiding"
+        verbose_name_plural = "Spaces / Buildings"
+
 
 class Room(models.Model):
     """Individual teaching space located in a space."""
@@ -29,10 +33,18 @@ class Room(models.Model):
     @property
     def full_code(self) -> str:
         """Full room identifier combining space short name and code."""
-        return f"{self.space}-{self.code}"
+        if self.is_specific_room():
+            return f"{self.space}-{self.code}"
+        else:
+            return f"{self.code} (Space)"
+
+    def is_specific_room(self):
+        space_str = f"{self.space}".lower()
+        code_str = self.code.lower()
+        return space_str != code_str
 
     def __str__(self) -> str:  # pragma: no cover
-        return self.code
+        return self.full_code
 
     class Meta:
         constraints = [

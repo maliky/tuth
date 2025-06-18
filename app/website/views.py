@@ -14,9 +14,9 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 
 from app.finance.models.financial_record import FinancialRecord
-from app.people.models.profiles import Student
-from app.registry.models.registration import Registration
+from app.people.models.others import Student
 from app.registry.models.grade import Grade
+from app.registry.models.registration import Registration
 from app.shared.constants import StatusReservation
 from app.timetable.models import Reservation, Section
 

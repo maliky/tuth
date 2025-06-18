@@ -2,13 +2,47 @@
 
 from import_export import fields, resources
 
-from app.academics.admin.widgets import CollegeWidget
 from app.people.admin.widgets import StaffProfileWidget
 from app.people.models import Student
-from app.people.models.profiles import Faculty
+from app.people.models.staffs import Faculty, Staff
+from app.people.utils import mk_username, split_name
 from app.registry.models import Registration
 
-# ? should I have a User Ressource class and extand the profile from it ?
+
+class DirectoryContactResource(resources.ModelResource):
+    """Import staff directory rows and create/update Staff profiles."""
+
+    username = fields.Field(column_name="username", attribute="user__username")
+    first_name = fields.Field(column_name="first_name", attribute="user__first_name")
+    last_name = fields.Field(column_name="last_name", attribute="user__last_name")
+    middle_name = fields.Field(column_name="middle_name", attribute="middle_name")
+    name_prefix = fields.Field(column_name="name_prefix", attribute="name_prefix")
+    name_suffix = fields.Field(column_name="name_suffix", attribute="name_suffix")
+
+    class Meta:
+        model = Staff
+        import_id_fields = ("user__username",)
+        fields = (
+            "username",
+            "first_name",
+            "last_name",
+            "middle_name",
+            "name_prefix",
+            "name_suffix",
+        )
+        skip_unchanged = True
+        report_skipped = True
+
+    def before_import_row(self, row, **kwargs):
+        raw = row.get("faculty") or row.get("name") or ""
+        prefix, first, middle, last, suffix = split_name(raw)
+        row["name_prefix"] = prefix
+        row["first_name"] = first
+        row["middle_name"] = middle
+        row["last_name"] = last
+        row["name_suffix"] = suffix
+        if not row.get("username"):
+            row["username"] = mk_username(first, last, unique=True)
 
 
 class FacultyResource(resources.ModelResource):
@@ -24,19 +58,11 @@ class FacultyResource(resources.ModelResource):
         attribute="staff_profile",
         widget=StaffProfileWidget(),
     )
-    college = fields.Field(
-        column_name="college_code", attribute="college", widget=CollegeWidget()
-    )
-    academic_rank = fields.Field(
-        column_name="rank",
-        attribute="academic_rank",
-        default="Lecturer",
-    )
 
     class Meta:
         model = Faculty
         import_id_fields = ("staff_profile",)
-        fields = ("staff_profile", "college", "academic_rank")
+        fields = "staff_profile"
         skip_unchanged = True
         report_skipped = False
 

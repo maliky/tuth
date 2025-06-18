@@ -1,10 +1,7 @@
 """Test shared utils module."""
 
-from datetime import date
-
 import pytest
 
-from app.academics.models import College, Curriculum
 from app.shared.utils import expand_course_code
 
 
