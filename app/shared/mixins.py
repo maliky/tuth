@@ -12,6 +12,23 @@ from app.shared.constants import STATUS_CHOICES
 
 
 class StatusHistory(models.Model):
+    """Single entry in the status timeline of another model.
+
+    Each row links back to the target object via a generic relation and is
+    created whenever :class:`StatusableMixin` helpers are called.  Receivers of
+    ``post_save`` may react to the addition of a status row.  For instance,
+    :func:`app.academics.signals.sync_curriculum_is_active` toggles
+    ``Curriculum.is_active`` when curriculum statuses change.
+
+    Example:
+        >>> from app.shared.mixins import StatusHistory
+        >>> StatusHistory.objects.create(
+        ...     status="approved",
+        ...     content_object=my_obj,
+        ...     author=user,
+        ... )
+    """
+
     created_at = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(
         "auth.User",
@@ -32,9 +49,28 @@ class StatusHistory(models.Model):
 
 
 class StatusableMixin(models.Model):
-    """
-    Plug-and-play: inherit *before* concrete model.
-    Adds `status_history` + helper methods.
+    """Add a status audit trail to any model.
+
+    Inherit from this mixin **before** the concrete model class.  It injects a
+    ``status_history`` generic relation along with helpers that create
+    :class:`StatusHistory` entries (``set_pending``, ``set_approved`` …).  Your
+    model is expected to declare a ``status`` field storing its current state.
+
+    Example:
+        >>> class MyModel(StatusableMixin, models.Model):
+        ...     status = models.CharField(max_length=30, choices=STATUS_CHOICES)
+        ...
+        ...     class Meta:
+        ...         app_label = "myapp"
+
+        >>> obj = MyModel.objects.create()
+        >>> obj.set_pending(author=None)
+        >>> obj.current_status().status
+        'pending'
+
+    Side Effects:
+        Creating a status entry may trigger ``post_save`` receivers tied to
+        :class:`StatusHistory`.
     """
 
     status_history = GenericRelation(
