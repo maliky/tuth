@@ -7,7 +7,14 @@ from django.db import models
 
 
 class Prerequisite(models.Model):
-    """Relationship describing that one course must precede another."""
+    """Relationship describing that one course must precede another.
+
+    Example:
+        >>> Prerequisite.objects.create(
+        ...     course=course,
+        ...     prerequisite_course=prereq,
+        ... )
+    """
 
     course = models.ForeignKey(
         "academics.Course", related_name="course_prereq_edges", on_delete=models.CASCADE

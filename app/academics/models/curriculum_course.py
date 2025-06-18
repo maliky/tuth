@@ -8,7 +8,11 @@ from app.shared.enums import CREDIT_NUMBER
 
 
 class CurriculumCourse(models.Model):
-    """Map :class:`Curriculum` instances to their constituent courses."""
+    """Map :class:`Curriculum` instances to their constituent courses.
+
+    Example:
+        >>> CurriculumCourse.objects.create(curriculum=curriculum, course=course)
+    """
 
     curriculum = models.ForeignKey(
         "academics.Curriculum", on_delete=models.CASCADE, related_name="programme_lines"

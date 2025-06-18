@@ -11,7 +11,12 @@ from app.timetable.models.semester import Semester
 
 
 class Donor(AbstractPerson):
-    """Contact information for donors supporting students."""
+    """Contact information for donors supporting students.
+
+    Example:
+        >>> user = User.objects.create_user(username="donor")
+        >>> Donor.objects.create(user=user, donor_id="DN001")
+    """
 
     ID_FIELD = "donor_id"
     ID_PREFIX = "TU_DNR"
@@ -25,7 +30,14 @@ class Donor(AbstractPerson):
 
 
 class Student(AbstractPerson):
-    """Extra academic information for enrolled students."""
+    """Extra academic information for enrolled students.
+
+    Example:
+        >>> user = User.objects.create_user(username="stud")
+        >>> s = Student.objects.create(user=user, enrollment_semester=semester)
+        >>> s.student_id  # auto-set from user id
+        'TU_STD0001'
+    """
 
     ID_FIELD = "student_id"
     ID_PREFIX = "TU_STD"

@@ -8,7 +8,15 @@ from app.shared.constants import PaymentMethod
 
 
 class Payment(models.Model):
-    """Payment made for a reservation."""
+    """Payment made for a reservation.
+
+    Example:
+        >>> Payment.objects.create(
+        ...     reservation=reservation,
+        ...     amount=Decimal("10.00"),
+        ...     method=PaymentMethod.CASH,
+        ... )
+    """
 
     reservation = models.OneToOneField("timetable.Reservation", on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=8, decimal_places=2)

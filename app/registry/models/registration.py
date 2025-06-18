@@ -13,7 +13,21 @@ from app.timetable.models import Reservation
 
 
 class Registration(StatusableMixin, models.Model):
-    """Enrollment of a student in a course section."""
+    """Enrollment of a student in a course section.
+
+    Example:
+        >>> reg = Registration.objects.create(
+        ...     student=student_profile,
+        ...     section=section_factory(1),
+        ... )
+        >>> Reservation.objects.create(
+        ...     student=reg.student,
+        ...     section=reg.section,
+        ... )  # signal sets ``date_latest_reservation``
+        >>> reg.refresh_from_db()
+        >>> reg.date_latest_reservation is not None
+        True
+    """
 
     student = models.ForeignKey(
         "people.Student",

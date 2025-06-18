@@ -8,7 +8,11 @@ from app.shared.constants.finance import FeeType, StatusClearance
 
 
 class FinancialRecord(models.Model):
-    """Aggregate balance for a student."""
+    """Aggregate balance for a student.
+
+    Example:
+        >>> FinancialRecord.objects.create(student=student_profile, total_due=0)
+    """
 
     student = models.OneToOneField("people.Student", on_delete=models.CASCADE)
     total_due = models.DecimalField(max_digits=10, decimal_places=2)
@@ -28,7 +32,11 @@ class FinancialRecord(models.Model):
 
 
 class SectionFee(models.Model):
-    """Additional fee charged for a specific course section."""
+    """Additional fee charged for a specific course section.
+
+    Example:
+        >>> SectionFee.objects.create(section=section, fee_type=FeeType.LAB, amount=50)
+    """
 
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)
     fee_type = models.CharField(max_length=50, choices=FeeType.choices)

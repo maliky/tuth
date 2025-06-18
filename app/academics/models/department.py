@@ -6,7 +6,11 @@ from django.db import models
 
 
 class Department(models.Model):
-    """Academic department belonging to a college."""
+    """Academic department belonging to a college.
+
+    Example:
+        >>> department_factory(code="ENG")
+    """
 
     code = models.CharField(max_length=50, unique=True)
     full_name = models.CharField(max_length=128, blank=True)

@@ -6,7 +6,16 @@ from django.db import models
 
 
 class Scholarship(models.Model):
-    """Financial aid linking a donor to a student."""
+    """Financial aid linking a donor to a student.
+
+    Example:
+        >>> Scholarship.objects.create(
+        ...     donor=donor,
+        ...     student=student_profile,
+        ...     amount=Decimal("100"),
+        ...     start_date=date.today(),
+        ... )
+    """
 
     donor = models.ForeignKey(
         "people.Donor",

@@ -9,7 +9,11 @@ from app.shared.constants.academics import CollegeCodeChoices, CollegeLongNameCh
 
 
 class College(models.Model):
-    """Institutional unit responsible for a set of programmes."""
+    """Institutional unit responsible for a set of programmes.
+
+    Example:
+        >>> college_factory(code="COAS")
+    """
 
     # there should be no constraint here as the VPA may need to
     # rework the name of the colleges from time to time.
