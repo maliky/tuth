@@ -20,9 +20,7 @@ class SectionWidget(widgets.ForeignKeyWidget):
 
     # ------------ widget API ------------
     def clean(self, value, row=None, *args, **kwargs) -> Section | None:
-        """
-        *value* is ignored (we rely entirely on the other columns).
-        """
+        """Return the ``Section`` referenced by the CSV row."""
         if row is None:
             raise ValueError("Row context required")
 
@@ -63,7 +61,7 @@ class SectionCodeWidget(widgets.Widget):
         *args,
         **kwargs,
     ) -> Section | None:
-        "Expecting the value to be"
+        """Return the ``Section`` identified by the import code string."""
 
         course_name_value = row.get("course_name", "").strip()
         course = self.crs_w.clean(value=course_name_value, row=row)

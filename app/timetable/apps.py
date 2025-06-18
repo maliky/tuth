@@ -9,7 +9,5 @@ class TimetableConfig(AppConfig):
     verbose_name = "Timetable"
 
     def ready(self):
-        """
-        this garanties that my signal are imported when I use the application.
-        """
+        """Ensure timetable signals are imported when the app is ready."""
         import app.timetable.signals  # noqa: F401
