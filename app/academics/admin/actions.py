@@ -20,6 +20,13 @@ def update_curriculum(modeladmin, request, queryset):
     """
 
     class _CurriculumForm(forms.Form):
+        """Capture the curriculum for the bulk action.
+
+        The form keeps the primary keys of the selected prerequisites in
+        ``_selected_action`` and exposes a ``curriculum`` field for the admin
+        user to pick the destination programme.
+        """
+
         _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
         curriculum = forms.ModelChoiceField(
             queryset=Curriculum.objects.all(),
@@ -54,6 +61,13 @@ def update_college(modeladmin, request, queryset):
     """Bulk-set the ``college`` FK on Course rows."""
 
     class _CollegeForm(forms.Form):
+        """Collect the target college for the bulk update.
+
+        Like ``_CurriculumForm``, this form stores the selection in
+        ``_selected_action`` so the action can update the chosen course rows on
+        submission.
+        """
+
         _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
         college = forms.ModelChoiceField(
             queryset=College.objects.all(),

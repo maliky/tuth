@@ -13,10 +13,11 @@ from app.shared.utils import expand_course_code, make_course_code
 
 
 class CurriculumCourseWidget(widgets.ForeignKeyWidget):
-    """
-    Create a CurriculumCourse line based on :
-    - the curriculum short name and
-    - the course code, number and college
+    """Create or fetch ``CurriculumCourse`` rows from CSV data.
+
+    The widget delegates curriculum and course parsing to ``CurriculumWidget``
+    and ``CourseWidget`` then assembles a :class:`CurriculumCourse` instance from
+    the results.
     """
 
     def __init__(self, *args, **kwargs):
@@ -43,10 +44,10 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
 
 
 class CurriculumWidget(widgets.ForeignKeyWidget):
-    """
-    Widget to find or create a Curriculum instance given its short_name.
+    """Look up or create a :class:`Curriculum` from a short name.
 
-    Associates the curriculum to a college explicitly provided in `row['college']`
+    The associated college is determined from ``row['college_code']`` when
+    present. Missing curricula are created automatically.
     """
 
     def __init__(self):
@@ -81,20 +82,11 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
 
 
 class CourseWidget(widgets.ForeignKeyWidget):
-    """
-    Accept three separate columns – course_name (dept), course_no (num),
-    and college – and return or create the matching Course instance.
+    """Convert ``course_*`` CSV columns into a :class:`Course`.
 
-    Expected CSV columns in the *row* dict
-    --------------------------------------
-    * ``course_name``  – department part (e.g. "AGR")
-    * ``course_no``    – number part     (e.g. "121")
-    * ``college``      – college code    (e.g. "CAFS") – optional
-
-    If *college* is empty, defaults to ``"COAS"``.
-
-    Lookups are cached so repeated rows referencing the same course do not hit
-    the database multiple times.
+    ``course_name`` and ``course_no`` identify the course while ``college`` is
+    optional and defaults to ``"COAS"``. Results are cached to avoid duplicate
+    queries when several rows reference the same course.
     """
 
     def __init__(self):
@@ -147,11 +139,10 @@ class CourseWidget(widgets.ForeignKeyWidget):
 
 
 class CourseManyWidget(widgets.ManyToManyWidget):
-    """
-    Parses the `list_courses` column from CSV input, which should be
-    a semicolon-separated list of course codes. Automatically creates
-    Course objects if they don't exist yet, using the logic defined in
-    the CourseCodeWidget.
+    """Parse ``list_courses`` and return a list of :class:`Course` objects.
+
+    The widget splits the CSV column on ``;`` and delegates parsing of each
+    token to :class:`CourseWidget`, creating courses on the fly when needed.
     """
 
     def __init__(self):
@@ -185,12 +176,11 @@ class CourseManyWidget(widgets.ManyToManyWidget):
 
 
 class CourseCodeWidget(widgets.ForeignKeyWidget):
-    """
-    Widget to find or create a Course instance given a course code.
+    """Resolve a course code into a :class:`Course`.
 
-    The course code can optionally include a college code suffix separated by a hyphen.
-    If the college code is not provided explicitly, it defaults to the value from
-    `row['college']` or "COAS".
+    Supports optional ``-<college>`` suffixes and falls back to
+    ``row['college']`` or ``"COAS"`` when the suffix is absent. New courses are
+    created automatically with data from the import row.
     """
 
     def __init__(self):
@@ -264,7 +254,7 @@ class CourseCodeWidget(widgets.ForeignKeyWidget):
 
 
 class CollegeWidget(widgets.ForeignKeyWidget):
-    """Simple FK helper so we can import `college_code` if present."""
+    """Return or create the ``College`` referenced by ``college_code``."""
 
     def __init__(self):
         super().__init__(College, field="code")

@@ -7,11 +7,7 @@ from app.spaces.models.core import Room
 
 
 class SpaceWidget(widgets.ForeignKeyWidget):
-    """
-    Accept a space *code*.
-    If it exists, return the Space instance;
-    otherwise create a Space on the fly.
-    """
+    """Return the :class:`Space` identified by ``code`` or create it."""
 
     def __init__(self):
         super().__init__(Space, field="code")
@@ -35,9 +31,7 @@ class SpaceWidget(widgets.ForeignKeyWidget):
 
 
 class RoomWidget(widgets.ForeignKeyWidget):
-    """
-    Parse a value with the room_code.  Check the row for a space.
-    """
+    """Resolve or create a :class:`Room` using ``room_code`` and ``space``."""
 
     def __init__(self):
         super().__init__(Room, field="code")
@@ -69,10 +63,7 @@ class RoomWidget(widgets.ForeignKeyWidget):
 
 
 class RoomCodeWidget(widgets.ForeignKeyWidget):
-    """
-    Parse CSV field like "AA-01" or "SAPEC-SAPEC".
-    Auto-create Space and Room instances.
-    """
+    """Create a :class:`Room` from values like ``"AA-01"``."""
 
     def __init__(self):
         super().__init__(Room, field="code")

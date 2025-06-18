@@ -13,7 +13,12 @@ from import_export.forms import ImportForm
 
 
 class BulkActionImportForm(ImportForm):
-    """Import form allowing bulk actions on curricula data."""
+    """Import form with an extra action selector.
+
+    Adds a choice field named ``action`` so bulk uploads can either merge or
+    replace existing curricula. The rest of the import-export behaviour remains
+    unchanged.
+    """
 
     ACTION_CHOICES = (("merge", "Merge (append)"), ("replace", "Replace (wipe first)"))
     action = forms.ChoiceField(
@@ -22,10 +27,11 @@ class BulkActionImportForm(ImportForm):
 
 
 class CourseForm(forms.ModelForm):
-    """Admin form used to create or edit ``Course`` instances.
+    """Admin form for ``Course`` with extra curricula handling.
 
-    The form exposes a writable ``curricula`` field and populates several
-    defaults to streamline data entry in the admin.
+    The form exposes a writable ``curricula`` field and sets sensible defaults
+    for ``credit_hours`` and ``college`` based on the course code. These tweaks
+    simplify data entry while keeping the underlying model unchanged.
     """
 
     credit_hours = forms.TypedChoiceField(

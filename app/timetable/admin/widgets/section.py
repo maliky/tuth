@@ -10,7 +10,7 @@ from app.timetable.models.section import Section
 
 
 class SectionWidget(widgets.ForeignKeyWidget):
-    "Parse the necessary CSV columns to get a section object."
+    """Create a :class:`Section` from multiple CSV columns."""
 
     def __init__(self):
         super().__init__(Section)  # using pk until export is done
@@ -49,7 +49,7 @@ class SectionWidget(widgets.ForeignKeyWidget):
 
 
 class SectionCodeWidget(widgets.Widget):
-    """Parse ``YY-YY_SemN:sec_no`` strings and a section"""
+    """Resolve ``YY-YY_SemN:sec_no`` codes into :class:`Section` objects."""
 
     def __init__(self) -> None:
         super().__init__(Section)
