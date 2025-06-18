@@ -8,7 +8,15 @@ from app.shared.enums import CREDIT_NUMBER
 
 
 class CurriculumCourse(models.Model):
-    """Map :class:`Curriculum` instances to their constituent courses."""
+    """Map :class:`Curriculum` instances to their constituent courses.
+
+    Example:
+        >>> from app.academics.models import CurriculumCourse
+        >>> CurriculumCourse.objects.create(curriculum=curriculum, course=course)
+
+    Side Effects:
+        ``save()`` defaults ``credit_hours`` to the course value when missing.
+    """
 
     curriculum = models.ForeignKey(
         "academics.Curriculum", on_delete=models.CASCADE, related_name="programme_lines"

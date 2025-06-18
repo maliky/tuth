@@ -10,7 +10,16 @@ from app.academics.models.curriculum import Curriculum
 
 
 class Course(models.Model):
-    """University catalogue entry describing a single course offering."""
+    """University catalogue entry describing a single course offering.
+
+    Example:
+        >>> from app.academics.models import Course, College
+        >>> coas = College.objects.create(code="COAS", long_name="College of Arts and Sciences")
+        >>> Course.objects.create(name="MATH", number="101", title="Algebra", college=coas)
+
+    Side Effects:
+        ``save()`` populates ``code`` from ``name`` and ``number``.
+    """
 
     code = models.CharField(max_length=20, editable=False)
     # > need to change it and everywhere with course_dept

@@ -9,6 +9,12 @@ from app.shared.enums import WEEKDAYS_NUMBER
 
 
 class Schedule(models.Model):
+    """Weekday/time slot used by :class:`Session`.
+
+    Example:
+        >>> from app.timetable.models import Schedule
+        >>> Schedule.objects.create(weekday=1, start_time=time(9, 0))
+    """
 
     # a ref date for the time
     REF_DATE = datetime(2009, 9, 1)
@@ -117,12 +123,11 @@ class Schedule(models.Model):
 
 
 class Session(models.Model):
-    """
-    A “meeting slot” for a Section:
-      - weekday (1=Monday … 7=Sunday)
-      - start_time / end_time
-      - space (Room)
-      - which Section this slot belongs to
+    """A meeting slot for a :class:`Section`.
+
+    Example:
+        >>> from app.timetable.models import Session
+        >>> Session.objects.create(room=room, schedule=schedule, section=section)
     """
 
     room = models.ForeignKey("spaces.Room", on_delete=models.PROTECT)

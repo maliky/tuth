@@ -6,7 +6,12 @@ from django.db import models
 
 
 class Space(models.Model):
-    """Physical structure that groups multiple rooms."""
+    """Physical structure that groups multiple rooms.
+
+    Example:
+        >>> from app.spaces.models import Space
+        >>> Space.objects.create(code="AA", full_name="Academic Annex")
+    """
 
     code = models.CharField(max_length=15, unique=True, db_index=True)
     full_name = models.CharField(max_length=128, blank=True)
@@ -20,7 +25,12 @@ class Space(models.Model):
 
 
 class Room(models.Model):
-    """Individual teaching space located in a space."""
+    """Individual teaching space located in a space.
+
+    Example:
+        >>> from app.spaces.models import Room
+        >>> Room.objects.create(space=space, code="101")
+    """
 
     code = models.CharField(max_length=30)
     space = models.ForeignKey(

@@ -17,6 +17,13 @@ class Document(StatusableMixin, models.Model):
 
     The ``profile`` generic relation allows attaching documents to different
     profile models (students, staff, etc.).
+
+    Example:
+        >>> from app.registry.models import Document
+        >>> Document.objects.create(profile=student, file="id.pdf", document_type=DocumentType.ID)
+
+    Side Effects:
+        Status changes are tracked via ``status_history``.
     """
 
     profile_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)

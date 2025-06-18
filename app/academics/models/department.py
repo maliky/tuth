@@ -6,7 +6,13 @@ from django.db import models
 
 
 class Department(models.Model):
-    """Academic department belonging to a college."""
+    """Academic department belonging to a college.
+
+    Example:
+        >>> from app.academics.models import Department, College
+        >>> coas = College.objects.create(code="COAS", long_name="College of Arts and Sciences")
+        >>> Department.objects.create(code="MATH", college=coas)
+    """
 
     code = models.CharField(max_length=50, unique=True)
     full_name = models.CharField(max_length=128, blank=True)

@@ -13,7 +13,16 @@ from app.timetable.models import Reservation
 
 
 class Registration(StatusableMixin, models.Model):
-    """Enrollment of a student in a course section."""
+    """Enrollment of a student in a course section.
+
+    Example:
+        >>> from app.registry.models import Registration
+        >>> Registration.objects.create(student=student, section=section)
+
+    Side Effects:
+        ``date_latest_reservation`` is updated whenever a
+        :class:`~app.timetable.models.Reservation` is saved.
+    """
 
     student = models.ForeignKey(
         "people.Student",

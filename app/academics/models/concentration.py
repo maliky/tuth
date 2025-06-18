@@ -6,7 +6,13 @@ from django.db import models
 
 
 class Concentration(models.Model):
-    """Optional specialization that further narrows a curriculum."""
+    """Optional specialization that further narrows a curriculum.
+
+    Example:
+        >>> from app.academics.models import Concentration, Curriculum
+        >>> curriculum = Curriculum.objects.first()
+        >>> Concentration.objects.create(name="Statistics", curriculum=curriculum)
+    """
 
     # revoir
     name = models.CharField(max_length=255)

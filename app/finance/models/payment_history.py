@@ -6,7 +6,12 @@ from django.db import models
 
 
 class PaymentHistory(models.Model):
-    """Individual payment made toward a financial record."""
+    """Individual payment made toward a financial record.
+
+    Example:
+        >>> from app.finance.models import PaymentHistory
+        >>> PaymentHistory.objects.create(financial_record=record, amount=25)
+    """
 
     financial_record = models.ForeignKey(
         "finance.FinancialRecord", related_name="payments", on_delete=models.CASCADE

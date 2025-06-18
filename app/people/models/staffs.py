@@ -18,6 +18,15 @@ User = get_user_model()
 
 
 class Faculty(StatusableMixin, models.Model):
+    """Teaching staff profile linked to a :class:`Staff` record.
+
+    Example:
+        >>> from app.people.models import Faculty
+        >>> Faculty.objects.create(staff_profile=staff, college=college)
+
+    Side Effects:
+        ``save()`` assigns the default college when none is set.
+    """
 
     staff_profile = models.OneToOneField("people.Staff", on_delete=models.CASCADE)
 
@@ -75,7 +84,15 @@ class Faculty(StatusableMixin, models.Model):
 
 
 class Staff(AbstractPerson):
-    """Base class for Staffs."""
+    """Base class for Staffs.
+
+    Example:
+        >>> from app.people.models import Staff
+        >>> Staff.objects.create(user=user, staff_id="ST01", department=dept)
+
+    Side Effects:
+        ``save()`` from :class:`AbstractPerson` sets ``staff_id``.
+    """
 
     ID_FIELD = "staff_id"
     ID_PREFIX = "TU_STF"

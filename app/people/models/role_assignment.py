@@ -11,7 +11,12 @@ User = get_user_model()
 
 
 class RoleAssignment(models.Model):
-    """Period during which a user holds a specific role."""
+    """Period during which a user holds a specific role.
+
+    Example:
+        >>> from app.people.models import RoleAssignment
+        >>> RoleAssignment.objects.create(user=user, role=UserRole.ADMIN)
+    """
 
     user = models.ForeignKey(
         "auth.User", on_delete=models.CASCADE, related_name="role_assignments"

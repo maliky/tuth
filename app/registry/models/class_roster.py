@@ -10,7 +10,12 @@ from app.shared.constants import StatusRegistration
 
 
 class ClassRoster(models.Model):
-    """Container for the list of students enrolled in a section."""
+    """Container for the list of students enrolled in a section.
+
+    Example:
+        >>> from app.registry.models import ClassRoster
+        >>> ClassRoster.objects.create(section=section)
+    """
 
     section = models.OneToOneField("timetable.Section", on_delete=models.CASCADE)
     last_updated = models.DateTimeField(auto_now=True)

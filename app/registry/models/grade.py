@@ -4,7 +4,12 @@ from django.db import models
 
 
 class Grade(models.Model):
-    """Letter/numeric grade awarded to a student for a Section."""
+    """Letter/numeric grade awarded to a student for a Section.
+
+    Example:
+        >>> from app.registry.models import Grade
+        >>> Grade.objects.create(student=student, section=section, letter_grade="A", numeric_grade=90)
+    """
 
     student = models.ForeignKey("people.Student", on_delete=models.CASCADE)
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)

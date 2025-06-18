@@ -25,6 +25,16 @@ if TYPE_CHECKING:
 
 
 class Reservation(StatusableMixin, models.Model):
+    """Student’s reservation of a seat in a section.
+
+    Example:
+        >>> from app.timetable.models import Reservation
+        >>> Reservation.objects.create(student=student, section=section)
+
+    Side Effects:
+        Signals adjust section registration counts when validated or deleted.
+    """
+
     student = models.ForeignKey(
         "people.Student",
         on_delete=models.CASCADE,
