@@ -29,8 +29,12 @@ class ReservationAdmin(admin.ModelAdmin):
     list_filter = ("status",)
     actions = ["validate_reservation", "mark_paid_action"]
 
-    @admin.action(description="Mark selected reservations as paid")
+    @admin.action(description="Validated selected reservation")
     def validate_reservation(self, request, queryset):
+        """Validation the selected reservation.
+
+        No user control is done.
+        """
         for reservation in queryset:
             try:
                 reservation.validate()
@@ -39,5 +43,6 @@ class ReservationAdmin(admin.ModelAdmin):
 
     @admin.action(description="Mark selected reservations paid")
     def mark_paid_action(self, request, queryset):
+        """Mark as paid the selected reservations."""
         for reservation in queryset:
             reservation.mark_paid(request.user)

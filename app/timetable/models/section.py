@@ -83,7 +83,7 @@ class Section(models.Model):
         return self.current_registrations < self.max_seats
 
     def clean(self) -> None:
-        """Check that the date are correct"""
+        """Check that the dates are correct."""
         if self.end_date is not None:
             if self.start_date:
                 assert self.start_date < self.end_date

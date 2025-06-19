@@ -36,9 +36,9 @@ class CurriculumCourse(models.Model):
 
     @property
     def effective_credit_hours(self) -> int:
-        """
-        Credits to show on transcripts: curriculum override -or-
-        fallback to the catalogue value.
+        """Credits to show on transcripts.
+
+        It can be the Curriculum override. It fallbacks on the catalogue value.
         """
         return (
             self.credit_hours

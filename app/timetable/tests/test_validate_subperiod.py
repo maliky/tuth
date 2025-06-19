@@ -1,3 +1,5 @@
+"""Test the subperiod integrity."""
+
 import pytest
 from datetime import date
 from django.core.exceptions import ValidationError

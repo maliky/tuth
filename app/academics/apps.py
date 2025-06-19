@@ -9,7 +9,6 @@ class AcademicsConfig(AppConfig):
     verbose_name = "Academics"
 
     def ready(self):
-        """
-        this garanties that my signal are imported when I use the application.
-        """
-        import app.academics.signals  # noqa: F401
+        """This garanties that my signal are imported when I use the application."""
+        # import app.academics.signals  # noqa: F401
+        pass

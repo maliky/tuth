@@ -13,10 +13,8 @@ from app.timetable.choices import StatusReservation
 
 @receiver(pre_save, sender=Section)
 def autoincrement_section_number(sender, instance, **kwargs):
-    "to increment section number"
-    # but you skip the logic when ``instance.pk`` is truthy (evaluates to True).
-    # That works for normal updates, however ``bulk_create`` bypasses signals
-    # entirely. Consider using a database sequence to guarantee unique numbers
+    """Increment section number."""
+    # ! this should be remove and replaced by a database sequence to guarantee unique numbers
     # when inserting rows in bulk.
     if instance.pk or instance.number:
 

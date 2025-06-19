@@ -1,4 +1,4 @@
-"""timetable.admin.widgets.section module"""
+"""timetable.admin.widgets.section module."""
 
 from typing import Optional, cast
 from import_export import widgets
@@ -24,13 +24,13 @@ class SectionWidget(widgets.ForeignKeyWidget):
         if row is None:
             raise ValueError("Row context required")
 
-        sem_no_value, course_name_value, sec_no_value, faculty_value = [
+        sem_no_value, course_dept_value, sec_no_value, faculty_value = [
             row.get(v, "").strip()
-            for v in ("semester_no", "course_name", "section_no", "faculty")
+            for v in ("semester_no", "course_dept", "section_no", "faculty")
         ]
 
         semester = self.sem_w.clean(value=sem_no_value, row=row)
-        course = self.course_w.clean(value=course_name_value, row=row)
+        course = self.course_w.clean(value=course_dept_value, row=row)
         faculty = self.faculty_w.clean(value=faculty_value, row=row)
 
         number = int(sec_no_value)
@@ -40,7 +40,8 @@ class SectionWidget(widgets.ForeignKeyWidget):
         )
         return cast(Optional[Section], section)
 
-    def render(self, value: Section, obj=None):  # optional – for exports
+    def render(self, value: Section, obj=None):
+        """Render the values for exports."""
         if not value:
             return ""
         return f"{value.semester}:{value.course.code}:s{value.number}"
@@ -63,8 +64,8 @@ class SectionCodeWidget(widgets.Widget):
     ) -> Section | None:
         """Return the ``Section`` identified by the import code string."""
 
-        course_name_value = row.get("course_name", "").strip()
-        course = self.crs_w.clean(value=course_name_value, row=row)
+        course_dept_value = row.get("course_dept", "").strip()
+        course = self.crs_w.clean(value=course_dept_value, row=row)
 
         sem_code_value, _, sec_no = [v.strip() for v in value.partition(":")]
 

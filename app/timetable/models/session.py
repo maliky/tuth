@@ -31,15 +31,15 @@ class Schedule(models.Model):
 
     @property
     def weekday_name(self) -> str:
-        """
-        Return the human‐readable name of this schedule’s weekday,
+        """Return the human‐readable name of this schedule’s weekday.
+
         e.g. "Monday", "Tuesday", etc.
         """
         return self.get_weekday_display()
 
     @property
     def weekday_str(self):
-        "return the str version of the day_no"
+        """Return the str version of the day_no."""
         return WEEKDAYS_NUMBER(self.weekday).label
 
     @property
@@ -58,8 +58,9 @@ class Schedule(models.Model):
         return f"{self.weekday_str}: {self.start_time_str}-{self.end_time_str}"
 
     def _find_next_free_slot(self) -> time:
-        """
-        Scan in 5-minute steps from 01:00 today until we
+        """Find a free time slot at the begining of the day.
+
+        Scan in 5-minute steps from 01:00 of today until we
         find a (weekday, start_time) combination that doesn't exist yet.
         """
         # anchor at 0 AM today
@@ -91,14 +92,15 @@ class Schedule(models.Model):
     # ? need to check that there no overlap. may need to store duration
     # and implement a non overlap function like for semester and terms.
     def clean(self) -> None:
-        """Check that the date are correct"""
+        """Check that the date are correct."""
         if self.end_time is not None:
             assert self.start_time < self.end_time, "start_time must be before end_time"
 
     def save(self, *args, **kwargs):
-        """
-        # 1) ensure we always have a weekday
-        # 2) if no start_time, find the first free 5-minute slot >= 01:00
+        """Check and save the Schedule.
+
+        1) ensure we always have a weekday.
+        2) if no start_time, find the first free 5-minute slot >= 01:00
         """
         if self.weekday is None:
             self.weekday = WEEKDAYS_NUMBER.TBA  # type: ignore[unreachable]
@@ -168,6 +170,7 @@ class Session(models.Model):
         return f"{self.schedule}, {self.room}"
 
     def schedule_is_set(self):
+        """Return true a the schedule is set."""
         return self.schedule is not None and self.schedule.is_set()
 
     # No constraints for now. because how to handle TBA

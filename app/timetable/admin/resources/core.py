@@ -1,4 +1,4 @@
-"""Import/export resources for timetable models. (Semester & AcademicYear)"""
+"""Import/export resources for timetable models. (Semester & AcademicYear)."""
 
 from import_export import fields, resources
 

@@ -1,11 +1,12 @@
-"""Import/export resources for timetable models. (Section)"""
+"""Import/export resources for section models."""
 
 from typing import Any
+
 from import_export import fields, resources
 
 from app.academics.admin.widgets import CourseWidget
 from app.people.admin.widgets import FacultyWidget
-from app.timetable.admin.widgets import SemesterWidget
+from app.timetable.admin.widgets.core import SemesterWidget
 from app.timetable.models.section import Section
 
 
@@ -25,7 +26,7 @@ class SectionResource(resources.ModelResource):
     )
     course = fields.Field(
         # could be other course columns
-        column_name="course_name",
+        column_name="course_dept",
         attribute="course",
         widget=CourseWidget(),
     )
@@ -39,11 +40,10 @@ class SectionResource(resources.ModelResource):
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        pass
 
     def before_import(self, dataset, **kwargs):
+        """Is this realy usefull ?"""
         super().before_import(dataset, **kwargs)
-        pass
 
     # def save_instance(self, instance,  is_create, row, **kwargs):
     #     # import ipdb; ipdb.set_trace()

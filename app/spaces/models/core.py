@@ -19,6 +19,14 @@ class Space(models.Model):
     def __str__(self) -> str:  # pragma: no cover
         return self.code
 
+    @classmethod
+    def get_tba_space(cls):
+        """Returns a TBA instance of the Space."""
+        tba_space, _ = cls.objects.get_or_create(
+            code="TBA", defaults={"full_name": "To Be Announced"}
+        )
+        return tba_space
+
     class Meta:
         verbose_name = "Space / Buiding"
         verbose_name_plural = "Spaces / Buildings"
@@ -40,6 +48,9 @@ class Room(models.Model):
     standard_capacity = models.PositiveIntegerField(default=45)
     exam_capacity = models.PositiveIntegerField(default=30)
 
+    def __str__(self) -> str:  # pragma: no cover
+        return self.full_code
+
     @property
     def full_code(self) -> str:
         """Full room identifier combining space short name and code."""
@@ -49,12 +60,10 @@ class Room(models.Model):
             return f"{self.code} (Space)"
 
     def is_specific_room(self):
+        """Returns true if the room is inside a space/buildings which is set."""
         space_str = f"{self.space}".lower()
         code_str = self.code.lower()
         return space_str != code_str
-
-    def __str__(self) -> str:  # pragma: no cover
-        return self.full_code
 
     class Meta:
         constraints = [

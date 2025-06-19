@@ -77,13 +77,13 @@ def extract_prefix(raw_name: str) -> tuple[str, str]:
 
 
 def inverse_if_comma(raw_name: str) -> str:
-    """Reverse the parts separated by a comma eg. A, B -> B, A"""
+    """Reverse the parts separated by a comma eg. A, B -> B, A."""
     parts = raw_name.split(",")
     return " ".join([p for p in parts[::-1]])
 
 
 def inverse_if_first_last(raw_name: str) -> str:
-    """Reverse the parts if the second is made of initial but not the first"""
+    """Reverse the parts if the second is made of initial but not the first."""
     front_part, _, back_part = raw_name.partition(" ")
     front_m = re.match(INITIAL_PATTERN, front_part)
     back_m = re.match(INITIAL_PATTERN, back_part)
@@ -130,11 +130,11 @@ def extract_firstnlast(raw_name: str) -> tuple[str, str, str]:
 
 
 def split_name(name: str) -> tuple[str, str, str, str, str]:
-    """
-    Splits a raw_name in prefix, first, middle, last, suffix
+    """Splits a raw_name in prefix, first, middle, last, suffix.
+
     Idealy the name's part are in logical order.
     but we try to take care of last before first
-    or just last and initials for the first
+    or just last and initials for the first.
     """
     name_suffix, raw_name = extract_suffix(name)
     name_prefix, raw_name = extract_prefix(raw_name)
@@ -156,8 +156,13 @@ def split_name(name: str) -> tuple[str, str, str, str, str]:
 
 
 def mk_username(first: str, last: str, unique=False, length: int = 13) -> str:
-    """Generates a standard username. if unique is True make sure it is unique"""
-    username_base = (first[:1] + last).lower()
+    """Generates a standard username.
+
+    If unique is True make sure it is unique.
+    The default rule is to take the first 2 char of the first name
+    and concatenate them with the last name.
+    """
+    username_base = (first[:2] + last).lower()
     username = username_base[:length]
 
     if unique:

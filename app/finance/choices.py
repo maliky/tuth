@@ -1,4 +1,7 @@
+"""Choice module for finance app."""
+
 from django.db import models
+
 
 class StatusClearance(models.TextChoices):
     PENDING = "pending", "Pending"

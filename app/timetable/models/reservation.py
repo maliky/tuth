@@ -6,6 +6,7 @@ from datetime import timedelta
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
+from app.finance.constants import TUITION_RATE_PER_CREDIT
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.db.models import F
@@ -13,8 +14,7 @@ from django.utils import timezone
 
 from app.finance.choices import PaymentMethod
 from app.finance.models import FinancialRecord, Payment, SectionFee
-from app.shared.constants.academics import MAX_STUDENT_CREDITS
-from app.shared.constants.finance import TUITION_RATE_PER_CREDIT
+from app.academics.constants import MAX_STUDENT_CREDITS
 from app.shared.status.mixins import StatusableMixin
 from app.timetable.choices import StatusReservation
 from app.timetable.models.section import Section
@@ -85,10 +85,10 @@ class Reservation(StatusableMixin, models.Model):
     # ------------------------------------------------------------------
     # BUSINESS HELPERS
     # ------------------------------------------------------------------
-    def credit_hours(self) -> int:  # <-- ③
-        """
-        Sum of *validated* or *requested* sections credit hours for *this* student
-        (excludes cancelled reservations).
+    def credit_hours(self) -> int:
+        """Sum of validated or requested sections credit hours for the student.
+
+        Excludes cancelled reservations.
         """
         return (
             Reservation.objects.filter(

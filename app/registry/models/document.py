@@ -13,7 +13,6 @@ from app.registry.choices import DocumentType, StatusDocument
 from app.shared.status.mixins import StatusHistory, StatusableMixin
 
 
-
 class Document(StatusableMixin, models.Model):
     """File uploaded to support a user profile.
 
@@ -32,10 +31,11 @@ class Document(StatusableMixin, models.Model):
         Status changes are tracked via ``status_history``.
     """
 
+    # ! the folowing 2 are not too clear. needs clarifications
     profile_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     profile_id = models.PositiveIntegerField()
     profile = GenericForeignKey("profile_type", "profile_id")
-    file = models.FileField(upload_to="documents/")
+    data_file = models.FileField(upload_to="documents/")
     document_type = models.CharField(max_length=50, choices=DocumentType.choices)
     status = models.CharField(
         max_length=30,
@@ -49,6 +49,7 @@ class Document(StatusableMixin, models.Model):
         return cast(Optional[StatusHistory], self.status_history.first())
 
     def clean(self) -> None:
+        """Validating the change of DocumentStatus."""
         super().clean()
         self.validate_status(StatusDocument)
 

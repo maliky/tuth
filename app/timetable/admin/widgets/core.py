@@ -10,9 +10,7 @@ from app.timetable.models.semester import Semester
 
 
 def ensure_academic_year_code(code: str) -> AcademicYear:
-    """
-    Look up or auto-create an AcademicYear from its 'YY-YY' code.
-    """
+    """Look up or auto-create an AcademicYear from its 'YY-YY' code."""
     code = code.strip()
     if not AcademicYear.objects.filter(code=code).exists():
         ys, _ = code.split("-")
@@ -36,7 +34,7 @@ class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
         *args,
         **kwargs,
     ) -> AcademicYear | None:
-
+        """Get the academic year from the code YY-YY."""
         if not value:
             return None
 
@@ -69,6 +67,7 @@ class SemesterWidget(widgets.ForeignKeyWidget):
         *args,
         **kwargs,
     ) -> Semester | None:
+        """Get the semester from a number and look for the academic year code also."""
         if not value:
             return None
 
@@ -100,6 +99,7 @@ class SemesterCodeWidget(widgets.ForeignKeyWidget):
         *args,
         **kwargs,
     ) -> Semester | None:
+        """Get the semester and the ay directly from the fullfledge code."""
         if not value:
             return None
 

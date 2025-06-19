@@ -34,8 +34,9 @@ class DirectoryContactResource(resources.ModelResource):
         report_skipped = True
 
     def before_import_row(self, row, **kwargs):
-        raw = row.get("faculty") or row.get("name") or ""
-        prefix, first, middle, last, suffix = split_name(raw)
+        """Get the faculty name and populate the username if empty."""
+        raw_name = (row.get("faculty") or row.get("name") or "").strip()
+        prefix, first, middle, last, suffix = split_name(raw_name)
         row["name_prefix"] = prefix
         row["first_name"] = first
         row["middle_name"] = middle
@@ -46,9 +47,8 @@ class DirectoryContactResource(resources.ModelResource):
 
 
 class FacultyResource(resources.ModelResource):
-    """
-    Expected CSV columns
-    ────────────────────
+    """Expected CSV columns.
+
     faculty        ← long display name (“Dr. Jane A. Doe PhD”…)
     college_code   ← optional – defaults to “COAS”
     """

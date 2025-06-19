@@ -8,6 +8,7 @@ from app.academics.admin.widgets import (
     CourseManyWidget,
     CourseWidget,
     CurriculumWidget,
+    DepartmentWidget,
 )
 from app.academics.models import (
     College,
@@ -20,10 +21,7 @@ from app.academics.models import (
 
 
 class CurriculumResource(resources.ModelResource):
-    """
-    Columns expected in the CSV  (case-sensitive):
-        short_name, title, college, list_courses
-    """
+    """Columns expected in the CSV  (case-sensitive): short_name, title, college, list_courses."""
 
     # -------- bookkeeping ---------------------------------------------------
     def __init__(self, *args, **kwargs):
@@ -37,9 +35,7 @@ class CurriculumResource(resources.ModelResource):
 
     # ------------------------------------------------------------------ helpers
     def _action(self) -> str:
-        """
-        'merge' (default) or 'replace'  — read once from the import form.
-        """
+        """Merge (default) or 'replace'  — read once from the import form."""
         value = (self._kwargs or {}).get("action", "merge")
         return str(value).lower()  # str to garantee return type for mypy
 
@@ -59,6 +55,7 @@ class CurriculumResource(resources.ModelResource):
 
     # ----- niceties ----------------------------------------------------------
     def before_import_row(self, row, **kwargs):
+        """Set a default for long_name with short_name."""
         # default long_name -> short_name
         if not row.get("long_name"):
             row["long_name"] = row["short_name"]
@@ -131,20 +128,23 @@ class CurriculumResource(resources.ModelResource):
 
 
 class CourseResource(resources.ModelResource):
-    """
-    Import / export definition for Course rows coming from the *cleaned_tscc.csv*
-    file (or any file that has **separate** course_name / course_no columns).
+    """Import / export definition for Course rows.
+
+    Row should come from the *cleaned_tscc.csv* (file with course_dept & course_no columns).
 
     Columns expected in the CSV (case-sensitive):
-        course_name, course_no, course_title, credit_hours, college_code, prerequisites
+        course_dept, course_no, course_title, credit_hours, college_code, prerequisites
     """
 
     # ─── columns that map 1-to-1 onto Course fields ──────────────────────────
 
-    name = fields.Field(column_name="course_name", attribute="name")  # AGR
     number = fields.Field(column_name="course_no", attribute="number")  # 121
     title = fields.Field(column_name="course_title", attribute="title")
     # credit_hours = fields.Field(column_name="credit_hours", attribute="credit_hours")
+
+    department = fields.Field(
+        column_name="course_dept", attribute="department", widget=DepartmentWidget()
+    )
 
     # ─── college FK – lookup by code via CollegeWidget ───────────────────────
     college = fields.Field(
@@ -169,7 +169,7 @@ class CourseResource(resources.ModelResource):
         import_id_fields = ("name", "number", "college")
         # Exposed / accepted columns
         fields = (
-            "name",
+            "department",
             "number",
             "title",
             "credit_hours",
@@ -187,7 +187,7 @@ class PrerequisiteResource(resources.ModelResource):
         widget=CurriculumWidget(),
     )
     course = fields.Field(
-        column_name="course_name", attribute="course", widget=CourseWidget()
+        column_name="course_dept", attribute="course", widget=CourseWidget()
     )
     prerequisite_course = fields.Field(
         column_name="prerequisite", attribute="prerequisite_course", widget=CourseWidget()
@@ -220,7 +220,7 @@ class CurriculumCourseResource(resources.ModelResource):
         widget=CurriculumWidget(),
     )
     course = fields.Field(
-        column_name="course_name",
+        column_name="course_dept",
         attribute="course",
         widget=CourseWidget(),
     )

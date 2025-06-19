@@ -7,9 +7,9 @@ from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from app.academics.models import College
+from app.academics.models.college import College
 from app.people.choices import UserRole
-from app.people.models import RoleAssignment
+from app.people.models.role_assignment import RoleAssignment
 from app.shared.auth.perms import DEFAULT_ROLE_TO_COLLEGE, TEST_PW
 from app.shared.csv.utils import log
 

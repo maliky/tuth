@@ -1,4 +1,4 @@
-"""core module for people."""
+"""Core module for people."""
 
 # app/people/models/core.py
 
@@ -36,7 +36,7 @@ class AbstractPerson(StatusableMixin, models.Model):
     """
 
     ID_FIELD: str | None = None
-    ID_PREFIX: str = "TU_"
+    ID_PREFIX: str = "TU-"
 
     # >  need testing
     # --- linkage ---
@@ -63,6 +63,7 @@ class AbstractPerson(StatusableMixin, models.Model):
 
     @property
     def long_name(self) -> str:
+        """Get the long name from the different name parts."""
         long_name = " ".join(
             [
                 self.name_prefix,
@@ -76,6 +77,7 @@ class AbstractPerson(StatusableMixin, models.Model):
 
     @property
     def age(self) -> int | None:
+        """Compute and returns the age of the abstract user."""
         if self.date_of_birth:
             today = date.today()
             return (
@@ -91,64 +93,105 @@ class AbstractPerson(StatusableMixin, models.Model):
 
     @property
     def username(self):
+        """Returns the username."""
         return self.user.username
 
     @property
     def first_name(self):
+        """Returns the first_name."""
         return self.user.first_name
 
     @property
     def last_name(self):
+        """Returns the last_name."""
         return self.user.last_name
 
     @property
     def full_name(self):
+        """Returns the full name, that is first and last names."""
         return self.user.get_full_name()
 
     @property
     def email(self):
+        """Return the use email."""
         return self.user.email
 
     def set_username(self, value):
+        """Set the username."""
         return object.__setattr__(self.user, "username", value)
 
     def set_first_name(self, value):
+        """Sets the firstname."""
         return object.__setattr__(self.user, "first_name", value)
 
     def set_last_name(self, value):
+        """Sets the lastname."""
         return object.__setattr__(self.user, "last_name", value)
 
     def set_email(self, value):
+        """Sets the email."""
         return object.__setattr__(self.user, "email", value)
 
     # convenience for admin lists / logs
     def __str__(self) -> str:  # pragma: no cover
         return self.long_name
 
-    def _exists_user(self):
+    def _exists_user(self) -> None:
+        """Returns the user if it exists."""
         try:
             _ = self.user
         except User.DoesNotExist:
             raise ValidationError("User must have been saved at this point.")
 
     def _mk_id(self) -> str:
-        """
-        Build a deterministic ID from the *related* user primary key.
+        """Build a deterministic ID from the *related* user primary key.
+
         Example: user.pk = 42  →  TUID-S0042
         """
+        # > we need a better logic tolarating existing id.
+        # > the Id number should not be linked to the user but the the students
+        # > the logic should go do.
+        # > If I create a student a donor a staff a staff a student I should seed
+        # > tu00001, dnr00001, stf00001, stf00002, tu00002.
         self._exists_user()
-        assert self.user.pk is not None, "Cannot generate Id if user.pk is None."
 
-        return f"{self.ID_PREFIX}{self.user.id:04}"
+        if self.user.pk is None:
+            raise ValidationError("Cannot generate Id if user.pk is None.")
+
+        # > I want to get all the ids of the class of objet calling this function (Staff, Donor, Student...)
+        # > Then I order those number (they will have been strip of the ID_PREFIX)
+        # > I identify gaps in the number sequence.  (non attributed no)
+        # > I create a new number withing that gap.
+        # > Could be speeded up if I kept in a table for each class the available numbers below the highest
+        # > attributed to that class.
+        # > if no number available the I would just give the next integer.
+        return f"{self.ID_PREFIX}{self.user.id:05}"
+
+    def id_field_exists(self) -> None:
+        """Raise an exception if ID_PREFIX is not set."""
+        # > the check will not be detected by mypy. so ignore[arg-type]
+        # would be good to find more clean to use mypy
+        if not self.ID_FIELD:
+            raise ValidationError("ID_FIELD needs to be set before creating new ID.")
+
+    def get_id_no(self) -> int | None:
+        """Remove the ID_PREFIX and Returns the number associated with the id field."""
+        self.id_field_exists()
+        obj_id = object.__getattribute__(self, self.ID_FIELD)  # type: ignore[arg-type]
+
+        if obj_id is None:
+            return None
+
+        _, _, obj_no_str = obj_id.partition(self.ID_PREFIX)  # type: ignore[arg-type]
+        return int(obj_no_str)
 
     def save(self, *args, **kwargs):
-        """The attribute is for eg donor_id or staff_id and the prefix is used in the _mk_id"""
-        # The ID_FIELD is mandatory for subclass and therefore the super().save() cannot proceed if it is not set.
-        assert self.ID_FIELD, "Needs to be set before creating new ID."
-        new_id = self._mk_id()
-        object.__setattr__(self, self.ID_FIELD, new_id)
-        super().save(*args, **kwargs)
-        # super().save(update_fields=[self.ID_FIELD])
+        """Create an ID and saves it for each model using _mk_id and ID_FIELD."""
+        id_no = self.get_id_no()
+        if id_no is None:
+            new_id = self._mk_id()
+            object.__setattr__(self, self.ID_FIELD, new_id)  # type: ignore[arg-type]
+            super().save(*args, **kwargs)
 
     class Meta:
         abstract = True

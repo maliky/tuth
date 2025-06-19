@@ -1,5 +1,5 @@
-"""
-Custom site-wide format definitions for English.
+"""Custom site-wide format definitions for English.
+
 Any directive allowed by Django’s `date` template filter is valid.
 """
 

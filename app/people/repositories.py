@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 """Data access helpers for the people app."""
+
+from __future__ import annotations
 
 from django.contrib.auth import get_user_model
 from django.db import transaction

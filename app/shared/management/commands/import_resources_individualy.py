@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Import resources from per-model CSV files located in a directory.
 
 Each file is mapped to a ``ModelResource`` class used for validation and
@@ -7,10 +5,11 @@ insertion. Running this command requires a superuser and results in database
 records being created or updated for each resource type found.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Any, Tuple
 
-from app.people.admin.resources import FacultyResource
 from django.core.management.base import BaseCommand, CommandParser
 from django.db import transaction
 from import_export import resources
@@ -20,11 +19,12 @@ from app.academics.admin.resources import (  # noqa: F401
     CourseResource,
     CurriculumCourseResource,
 )
+from app.people.admin.resources import FacultyResource
+from app.shared.auth.helpers import ensure_superuser
 from app.spaces.admin.resources import RoomResource  # noqa: F401
 from app.timetable.admin.resources.core import SemesterResource  # noqa: F401
 from app.timetable.admin.resources.section import SectionResource
 from app.timetable.admin.resources.session import SessionResource  # noqa: F401
-from app.shared.auth.helpers import ensure_superuser
 
 
 class Command(BaseCommand):

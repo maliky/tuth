@@ -1,4 +1,4 @@
-"""app.timetable.admin.registers.section module"""
+"""app.timetable.admin.registers.section module."""
 
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
@@ -37,15 +37,20 @@ class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
         "faculty__long_name",  # or __first_name / __last_name
     )
 
-    # If you want to prefetch all the Session → Room relationships:
     def get_queryset(self, request):
+        """Returns something to make it faster.  But what is not clear.
+
+        Prefetch all the Session → Room relationships:
+        """
+        # ! Need explaination on this get_queryset(request)
+        # ! What is in request ?
         qs = super().get_queryset(request)
         return qs.prefetch_related("sessions__room")
 
     @admin.display(description="Sessions")
     def all_sessions(self, obj: Section) -> str:
-        """
-        Return a human-readable summary of this Section’s sessions.
+        """Return a human-readable summary of this Section’s sessions.
+
         For example: “Mon 09:00–10:00 (Rm 101); Wed 09:00–10:00 (Rm 101)”
         """
         slots = []

@@ -9,6 +9,7 @@ class CurriculumFilter(admin.SimpleListFilter):
     parameter_name = "curriculum"
 
     def lookups(self, request, model_admin):
+        """Update the filter so only curricula of the already selecte college show."""
         qs = model_admin.get_queryset(request)
         college_id = request.GET.get("college__id__exact")
 
@@ -24,6 +25,7 @@ class CurriculumFilter(admin.SimpleListFilter):
         return [(c["curriculum"], c["curriculum__short_name"]) for c in curricula]
 
     def queryset(self, request, qs):
+        """Overide the queryset returning a curriculum."""
         if self.value():
             return qs.filter(curriculum_id=self.value())
 

@@ -12,9 +12,9 @@ from django.db import transaction
 from django.db.models import F, Sum
 from django.utils import timezone
 
+from app.academics.constants import MAX_STUDENT_CREDITS
 from app.people.models import Student
-from app.shared.constants import StatusReservation
-from app.shared.constants.academics import MAX_STUDENT_CREDITS
+from app.timetable.choices import StatusReservation
 from app.timetable.models import Reservation, Section
 
 logger = logging.getLogger(__name__)

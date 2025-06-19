@@ -7,7 +7,6 @@ from app.spaces.models.core import Room
 
 
 class SpaceWidget(widgets.ForeignKeyWidget):
-    """Return the :class:`Space` identified by ``code`` or create it."""
 
     def __init__(self):
         super().__init__(Space, field="code")
@@ -19,6 +18,10 @@ class SpaceWidget(widgets.ForeignKeyWidget):
         *args,
         **kwargs,
     ) -> Space | None:
+        """Return an optional Space identified by ``code``.
+
+        if it does not exists, creates it.
+        """
 
         if not value:
             return None
@@ -44,10 +47,7 @@ class RoomWidget(widgets.ForeignKeyWidget):
         *args,
         **kwargs,
     ) -> Room | None:
-
-        tba_space, _ = Space.objects.get_or_create(
-            code="TBA", defaults={"full_name": "To Be Announced"}
-        )
+        """Using the room no, and the space code, returns a Room (eventualy)."""
 
         room_code = value.strip()
 
@@ -55,7 +55,7 @@ class RoomWidget(widgets.ForeignKeyWidget):
         space = self.space_w.clean(value=space_code, row=row)
 
         room, _ = Room.objects.get_or_create(
-            space=space or tba_space,
+            space=space or Space.get_tba_space(),
             code=room_code or "TBA",
         )
 
@@ -76,6 +76,10 @@ class RoomCodeWidget(widgets.ForeignKeyWidget):
         *args,
         **kwargs,
     ) -> Room | None:
+        """Using the room code returns the Room.
+
+        The room code should include the space code as AA-102.
+        """
         if not value:
             return None
 
@@ -90,4 +94,5 @@ class RoomCodeWidget(widgets.ForeignKeyWidget):
         return room
 
     def render(self, room, obj=None):
+        """Transform a room object in a string for export."""
         return f"{room.space.code}-{room.code}" if room else ""

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Import multiple resources from a single CSV file.
 
 This command reads a consolidated CSV export containing data for various
@@ -8,10 +6,11 @@ account exists and then creates or updates database records via the admin
 resources for each model.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Any
 
-from app.people.admin.resources import FacultyResource
 from django.core.management.base import BaseCommand, CommandParser
 from django.db import transaction
 from import_export import resources
@@ -22,6 +21,7 @@ from app.academics.admin.resources import (  # noqa: F401
     CurriculumCourseResource,
 )
 from app.academics.models.college import College  # noqa: F401
+from app.people.admin.resources import FacultyResource
 from app.shared.auth.helpers import (  # noqa: F401
     ensure_role_groups,
     ensure_superuser,

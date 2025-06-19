@@ -31,6 +31,7 @@ class Command(BaseCommand):
     help = "Completely resets the database by dropping all tables."
 
     def handle(self, *args, **options):
+        """Reset the Database. Erase all history."""
         self.stdout.write(self.style.WARNING("Resetting the database..."))
 
         with connection.cursor() as cursor:

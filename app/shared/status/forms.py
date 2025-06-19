@@ -4,7 +4,7 @@ from django import forms
 from django.core.exceptions import FieldDoesNotExist
 from django.forms import ChoiceField
 
-from .mixins import StatusHistory
+from app.shared.status.mixins import StatusHistory
 
 
 class StatusHistoryForm(forms.ModelForm):
@@ -16,7 +16,7 @@ class StatusHistoryForm(forms.ModelForm):
 
     class Meta:
         model = StatusHistory
-        fields = ["state", "author"]
+        fields = ["status", "author"]
 
     def __init__(self, *args, **kwargs):
         """Initialize the form and adjust state choices.

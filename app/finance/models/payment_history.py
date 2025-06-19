@@ -12,8 +12,7 @@ class PaymentHistory(models.Model):
     are currently attached.
 
     Attributes:
-        financial_record (finance.FinancialRecord): Record the payment belongs
-            to.
+        financial_record (finance.FinancialRecord): Record the payment belongs to.
         amount (Decimal): Amount paid.
         payment_date (datetime): Timestamp when the payment was recorded.
         method (str): Optional textual description of the method used.
@@ -25,9 +24,6 @@ class PaymentHistory(models.Model):
         ...     financial_record=record,
         ...     amount=Decimal("25.00"),
         ...     method="cash",
-        >>> PaymentHistory.objects.create(
-        ...     financial_record=record,
-        ...     amount=Decimal("20.00"),
         ... )
     """
 
@@ -50,6 +46,7 @@ class PaymentHistory(models.Model):
 
     @property
     def payment_date_str(self):
+        """Get the payment date as str."""
         self.payment_date.strftime("%H:%M:%S")
 
     class Meta:

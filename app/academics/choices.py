@@ -1,5 +1,8 @@
+"""Choices module for academic package."""
+
 from django.db import models
 from django.db.models import IntegerChoices
+
 
 class CollegeCodeChoices(models.TextChoices):
     COHS = "cohs", "COHS"

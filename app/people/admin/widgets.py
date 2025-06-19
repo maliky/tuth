@@ -15,17 +15,10 @@ from app.people.models.staffs import Faculty, Staff
 from app.people.utils import mk_username, split_name
 from app.shared.auth.perms import TEST_PW
 
-TEST_PW
 User = get_user_model()
 
 
 class StaffProfileWidget(widgets.ForeignKeyWidget):
-    """Create or fetch a :class:`Staff` from a full name.
-
-    The widget splits the display name, creates the corresponding ``User`` if
-    needed and returns the linked ``Staff`` profile so foreign keys can refer to
-    it directly.
-    """
 
     def __init__(self):
         # Configure the parent widget to operate on the Staff model so
@@ -35,6 +28,13 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         # self._cache: dict[str, Staff] = {}
 
     def clean(self, value, row=None, *args, **kwargs) -> Staff | None:
+        """Create or fetch a :class:`Staff` from a full name.
+
+        The widget splits the display name, creates the corresponding ``User`` if
+        needed and returns the linked ``Staff`` profile so foreign keys can refer to
+        it directly.
+        """
+
         if not value:
             return None
 
@@ -65,9 +65,11 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         return staff
 
     def render(self, value, obj=None) -> str:
+        """For the value (staff) for export."""
         return value.long_name if value else ""  # type: ignore[no-any-return]
 
     def after_import(self, dataset, result, **kwargs):
+        """Remove any cache which may be present after import."""
         if kwargs.get("dry_run", False):
             self._cache.clear()
 
@@ -80,15 +82,19 @@ class FacultyWidget(widgets.ForeignKeyWidget):
         super().__init__(Faculty)
 
     def clean(self, value: str, row=None, *args, **kwargs) -> Faculty | None:
+        """From the faculty name, tries to get a faculty object.
+
+        Create user and staff if necessary.
+        """
         if not value:
             return None
 
         # ? Should I use Peoplerepository.get_or_create_faculty?
+        # ... Not obvious as I would need to pass the whole row.
         staff = StaffProfileWidget().clean(value, row, *args, **kwargs)
 
         if staff is None:
             return None
-
 
         faculty, _ = Faculty.objects.get_or_create(
             staff_profile=staff,

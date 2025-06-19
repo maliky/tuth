@@ -1,3 +1,5 @@
+"""tests function for payment history of the finance app."""
+
 import pytest
 from decimal import Decimal
 from app.finance.models import FinancialRecord, PaymentHistory

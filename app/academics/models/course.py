@@ -22,13 +22,17 @@ class Course(models.Model):
     """
 
     code = models.CharField(max_length=20, editable=False)
-    # > need to change it and everywhere with course_dept
-    name = models.CharField(max_length=10)  # e.g. MATH
     number = models.CharField(max_length=10)  # e.g. 101
     title = models.CharField(max_length=255)
     description: models.TextField = models.TextField(blank=True)
     credit_hours = models.PositiveSmallIntegerField(
         default=CREDIT_NUMBER.THREE, choices=CREDIT_NUMBER.choices, blank=True
+    )
+    # > need to change it and everywhere with course_dept
+    department = models.ForeignKey(  # eg. MATH
+        "academics.Department",
+        on_delete=models.PROTECT,
+        related_name="courses",
     )
 
     # the college responsible for this course
@@ -47,10 +51,9 @@ class Course(models.Model):
 
     @property
     def level(self) -> str:
-        """
-        Human-friendly year level derived from the first digit of
-        the course number – returns the enum *label* or "other"
-        when the pattern does not match a known level.
+        """Human-friendly year level derived from the first digit of the course number.
+
+        Returns the enum *label* or "other" when the pattern does not match a known level.
         """
         try:
             digit = int(self.number.strip()[0])  # "101" → 1
@@ -68,7 +71,8 @@ class Course(models.Model):
     # ---------- hooks ----------
     def save(self, *args, **kwargs) -> None:
         """Populate ``code`` from ``name`` and ``number`` before saving."""
-        self.code = make_course_code(name=self.name, number=self.number)
+        dept = f"{self.department}"
+        self.code = make_course_code(dept, number=self.number)
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:  # pragma: no cover

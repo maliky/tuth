@@ -2,14 +2,16 @@
 
 # app/academics/admin/forms.py
 from typing import Any, MutableMapping, cast
+
 from django import forms
-from django.db import transaction
 from django.contrib import admin
 from django.contrib.admin.widgets import AutocompleteSelect
-from app.shared.utils import make_course_code
-from app.academics.models import Course, Curriculum, CurriculumCourse, College
-from app.academics.choices import CREDIT_NUMBER
+from django.db import transaction
 from import_export.forms import ImportForm
+
+from app.academics.choices import CREDIT_NUMBER
+from app.academics.models import College, Course, Curriculum, CurriculumCourse
+from app.shared.utils import make_course_code
 
 
 class BulkActionImportForm(ImportForm):
@@ -78,10 +80,12 @@ class CourseForm(forms.ModelForm):
         # prefill college if the course code uniquely maps to one college
         if not self.instance.pk:
 
-            name = (self.data.get("name") or "").strip() or init.get("name", "")
+            dept = (self.data.get("department") or "").strip() or init.get(
+                "department", ""
+            )
             number = (self.data.get("number") or "").strip() or init.get("number", "")
-            if name and number:
-                code = make_course_code(name=name, number=number)
+            if dept and number:
+                code = make_course_code(department=dept, number=number)
                 colleges = list(
                     Course.objects.filter(code=code)
                     .values_list("college_id", flat=True)
@@ -128,7 +132,7 @@ class CourseForm(forms.ModelForm):
         cleaned = cast(MutableMapping[str, Any], super().clean())  # ← FIX #2/3
 
         if not cleaned.get("college") and cleaned.get("name") and cleaned.get("number"):
-            code = make_course_code(name=cleaned["name"], number=cleaned["number"])
+            code = make_course_code(department=cleaned["name"], number=cleaned["number"])
             colleges = list(
                 Course.objects.filter(code=code)
                 .values_list("college_id", flat=True)

@@ -2,7 +2,7 @@
 
 from typing import Mapping, Optional, Tuple
 
-from app.shared.constants import COURSE_PATTERN
+from app.academics.constants import COURSE_PATTERN
 
 # r"(?P<dept>[A-Z]{2,4})[_-]?(?P<num>[0-9]{3})(?:\s*-\s*(?P<college>[A-Z]{3,4}))?"
 
@@ -49,22 +49,10 @@ def expand_course_code(
     return dept, num, college
 
 
-def make_course_code(name: str, number: str, college: str | None = None) -> str:
-    """Return a compact code from name, number and optional college.
+def make_course_code(department: str, number: str, college: str | None = None) -> str:
+    """Return a compact code from department, number and optional college.
 
-    Parameters
-    ----------
-    name : str
-        Department code.
-    number : str
-        Course number.
-    college : str | None, optional
-        College code to include in the resulting string.
-
-    Returns
-    -------
-    str
-        A normalized course identifier.
+    Returns:  A normalized course identifier.
     """
     cc = "" if college is None else f"-{college}"
-    return f"{name}{number}{cc}".upper()
+    return f"{department}{number}{cc}".upper()

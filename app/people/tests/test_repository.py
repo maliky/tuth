@@ -1,3 +1,5 @@
+"""Test for creating faculty from the people app."""
+
 import pytest
 
 from app.people.repositories import PeopleRepository

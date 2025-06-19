@@ -1,3 +1,5 @@
+"""Testing session overlap."""
+
 import pytest
 from datetime import time
 from django.core.exceptions import ValidationError

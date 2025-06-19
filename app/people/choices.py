@@ -1,4 +1,7 @@
+"""Module for choices constants used for people."""
+
 from django.db import models
+
 
 class UserRole(models.TextChoices):
     STUDENT = "student", "Student"

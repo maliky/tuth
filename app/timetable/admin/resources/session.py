@@ -1,12 +1,11 @@
-"""Import/export resources for timetable models. (Session)"""
+"""Import/export resources for timetable sessions models."""
 
 from import_export import fields, resources
 from import_export.widgets import TimeWidget
 
 from app.spaces.admin.widgets import RoomWidget
-from app.timetable.admin.widgets import WeekdayWidget
 from app.timetable.admin.widgets.section import SectionWidget
-from app.timetable.admin.widgets.session import ScheduleWidget
+from app.timetable.admin.widgets.session import ScheduleWidget, WeekdayWidget
 from app.timetable.models.session import Schedule, Session
 
 

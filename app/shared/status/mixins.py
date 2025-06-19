@@ -8,7 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from app.shared.constants import STATUS_CHOICES
+from app.registry.constants import STATUS_CHOICES
 
 
 class StatusHistory(models.Model):
@@ -16,9 +16,7 @@ class StatusHistory(models.Model):
 
     Each row links back to the target object via a generic relation and is
     created whenever :class:`StatusableMixin` helpers are called.  Receivers of
-    ``post_save`` may react to the addition of a status row.  For instance,
-    :func:`app.academics.signals.sync_curriculum_is_active` toggles
-    ``Curriculum.is_active`` when curriculum statuses change.
+    ``post_save`` may react to the addition of a status row.
 
     Example:
         >>> from app.shared.status.mixins import StatusHistory
@@ -85,24 +83,29 @@ class StatusableMixin(models.Model):
         )
 
     def current_status(self) -> Optional[StatusHistory]:
+        """Get the current status of the object."""
         return cast(Optional[StatusHistory], self.status_history.first())
 
     def set_pending(self, author: Optional[User]) -> StatusHistory:
+        """Set the status to pending."""
         return self._add_status("pending", author)
 
     def set_revision(self, author: Optional[User]) -> StatusHistory:
+        """Set the status to revisions."""
         return self._add_status("needs_revision", author)
 
     def set_approved(self, author: Optional[User]) -> StatusHistory:
+        """Set the status to approved."""
         return self._add_status("approved", author)
 
     def set_rejected(self, author: Optional[User]) -> StatusHistory:
+        """Set the status to rejected."""
         return self._add_status("rejected", author)
 
     def validate_status(self, allowed: Iterable[Any]) -> None:
-        """
-        Ensure ``self.status`` is one of ``allowed``.
-        accept list of tuple or list of str
+        """Ensure ``self.status`` is an allowed one.
+
+        Accept list of tuple or list of str
         """
 
         status = getattr(self, "status", None)

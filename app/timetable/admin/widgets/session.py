@@ -1,4 +1,4 @@
-"""timetable.admin.widgets.session module"""
+"""timetable.admin.widgets.session module."""
 
 from import_export import widgets
 
@@ -16,7 +16,7 @@ class SessionWidget(widgets.ForeignKeyWidget):
         self.schedule_w = ScheduleWidget()
 
     def clean(self, value, row=None, *args, **kwargs) -> Session | None:
-        "value should be the room?"
+        """Value should be the room?"""
         if not value:
             return None
 
@@ -37,12 +37,12 @@ class ScheduleWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
         super().__init__(Schedule)
-        self.weekday_w = WeekdayWidget
+        self.weekday_w = WeekdayWidget()
 
     def clean(self, value, row=None, *args, **kwargs) -> Schedule | None:
         """Return an existing ``Schedule`` using data from the import row."""
 
-        weekday: int | None = self.weekday_w().clean(value=value)
+        weekday: int | None = self.weekday_w.clean(value=value)
         if weekday is None:
             return None
 
@@ -62,6 +62,7 @@ class WeekdayWidget(widgets.IntegerWidget):
     """Accept either the integer 1-7 or the English weekday name."""
 
     def clean(self, value, row=None, *args, **kwargs) -> int | None:
+        """Accept either the integer 1-7 or the English weekday name."""
         if not value:
             return None
 

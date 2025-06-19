@@ -6,12 +6,11 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import QuerySet
 
+from django.core.exceptions import ValidationError
 from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.people.models.core import AbstractPerson
-from app.people.utils import mk_username, split_name
-from app.shared.auth.perms import TEST_PW
 from app.shared.status.mixins import StatusableMixin
 
 User = get_user_model()
@@ -43,10 +42,12 @@ class Faculty(StatusableMixin, models.Model):
     # teaching load should be a function per semester or year
     # teaching_load = models.IntegerField()
 
+    def __str__(self) -> str:  # pragma: no cover
+        return f"{self.staff_profile}"
+
     @property
     def curricula(self) -> QuerySet[Curriculum]:
-        """
-        Return all Curriculum instances in which this faculty is teaching.
+        """Return all Curriculum instances in which this faculty is teaching.
 
         Traverses: Curriculum → courses → sections → session → faculty
         """
@@ -56,15 +57,13 @@ class Faculty(StatusableMixin, models.Model):
 
     @property
     def staff_id(self):
+        """Get the staff id."""
         return self.staff_profile.staff_id
 
-    def __str__(self) -> str:  # pragma: no cover
-        return f"{self.staff_profile}"
-
     def save(self, *args, **kwargs):
-        assert (
-            self.staff_profile is not None
-        ), "Staff profil must be save before the Faculty. Check"
+        """Check that we have a college for the staff before save."""
+        if self.staff_profile is None:
+            raise ValidationError("Staff profil must be save before the Faculty's")
         try:
             _ = self.college
         except College.DoesNotExist:
@@ -88,12 +87,9 @@ class Staff(AbstractPerson):
     """Base class for Staffs.
 
     Example:
-
         >>> from app.people.models import Staff
         >>> Staff.objects.create(user=user, staff_id="ST01", department=dept)
-
         >>> staff_profile  # from tests.conftest
-
     Side Effects:
         ``save()`` from :class:`AbstractPerson` sets ``staff_id``.
     """
@@ -101,7 +97,7 @@ class Staff(AbstractPerson):
     ID_FIELD = "staff_id"
     ID_PREFIX = "TU_STF"
 
-    staff_id = models.CharField(max_length=13, unique=True, editable=False)
+    staff_id = models.CharField(max_length=13, unique=True)
     employment_date = models.DateField(null=True, blank=True)
 
     # > need to model an organogram where I can add division & departments
