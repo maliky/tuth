@@ -112,30 +112,32 @@ class CourseWidget(widgets.ForeignKeyWidget):
         """
         if row is None:
             return None
-        # import pdb; pdb.set_trace()
         course_dept = (row.get("course_dept") or "").strip().upper()
-        department = self.department_w.clean(course_dept)
-        course_no = row.get("course_no","").strip()
+        department = self.department_w.clean(course_dept, row)
+
+        course_no = row.get("course_no", "").strip()
 
         if not course_dept or not course_no:
             return None
 
-        college = self.college_w.clean(row.get("college_code"))        
+        college_code = (row.get("college_code") or "").strip()
+        college = self.college_w.clean(college_code)
 
         key = (course_dept, course_no, college_code)
         if key in self._cache:
-            return self._cache[key]
+            return self._cache.get(key)
 
         code = make_course_code(course_dept, course_no)  # e.g. AGR121
-        
+
         course, course_created = Course.objects.get_or_create(
-            department=department,
             number=course_no,
             college=college,
             defaults={"title": row.get("course_title", code)},
         )
-        if course_created:
-            course.save()
+
+        if department and not course.departments.filter(pk=department.pk).exists():
+            course.departments.add(department)
+
         self._cache[key] = course
         return course
 
@@ -205,42 +207,44 @@ class CourseCodeWidget(widgets.ForeignKeyWidget):
             return None
 
         dept_code, number, college_code = expand_course_code(value, row=row)
+        course_code = make_course_code(dept_code, number, college_code)
 
         department = self.department_w.clean(dept_code)
         college = self.college_w.clean(college_code)
 
-        qs = Course.objects.filter(department=department, number=number, college=college)
+        qs = Course.objects.filter(code=course_code, college=college)
         count = qs.count()
-        code = f"{dept_code}{number}"
 
         if count > 1:
             raise ValueError(
-                f"Integrity Error: Multiple courses found for {code} in college {college_code}"
+                f"Integrity Error: Multiple courses found for {course_code} in college {college_code}"
             )
 
         # Pull optional data from the row
-        cr_raw: str = (row.get("credit_hours") or "").strip()  # always str for mypy
+        credit_hours = (row.get("credit_hours") or "").strip()  # always str for mypy
         title_raw = row.get("course_title") if row else None
 
         if count == 0:
             # Create a new course with info from the row (credits default to 3)
-            credit_hours = int(cr_raw) if cr_raw.isdigit() else 3
+            credit_hours = int(credit_hours) if credit_hours.isdigit() else 3
 
             course = Course.objects.create(
-                department=cast(Department, department),
                 number=number,
                 college=cast(College, college),
                 credit_hours=credit_hours,
                 title=title_raw or value,
             )
+            if department and not course.departments.filter(pk=department.pk).exists():
+                course.departments.add(department)
+
         else:
             course = qs.get()
             updated = False
             if title_raw and course.title != title_raw:
                 course.title = title_raw
                 updated = True
-            if cr_raw and str(cr_raw).strip().isdigit():
-                cr_val = int(cr_raw)
+            if credit_hours and str(credit_hours).strip().isdigit():
+                cr_val = int(credit_hours)
                 if cr_val != course.credit_hours:
                     course.credit_hours = cr_val
                     updated = True
@@ -261,12 +265,12 @@ class DepartmentWidget(widgets.ForeignKeyWidget):
         """Return or create the ``Department`` referenced by ``course_dept`` and college_code."""
         if not value:
             return None
-        code = value.strip().upper()
+        dept_code = value.strip().upper()
 
         college_code = (row.get("college_code") or "").strip()
         college = self.college_w.clean(college_code)
 
-        department, _ = Department.objects.get_or_create(code=code, college=college)
+        department, _ = Department.objects.get_or_create(code=dept_code, college=college)
         return department
 
 
@@ -280,6 +284,8 @@ class CollegeWidget(widgets.ForeignKeyWidget):
         """Return or create the ``College`` referenced by ``college_code``."""
         if not value:
             return None
+
         code = (value or "COAS").strip().upper()
         college, _ = College.objects.get_or_create(code=code)
+
         return college

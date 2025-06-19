@@ -43,14 +43,14 @@ class CurriculumResource(resources.ModelResource):
     college = fields.Field(
         column_name="college_code",
         attribute="college",
-        widget=widgets.ForeignKeyWidget(College, field="code"),
+        widget=CollegeWidget(),
     )
 
     # ----- synthetic M2M list -----------------------------------------------
     list_courses = fields.Field(
         column_name="list_courses",
         attribute="courses",
-        widget=CourseManyWidget(),  # ⬆ defined in step 1
+        widget=CourseManyWidget(),
     )
 
     # ----- niceties ----------------------------------------------------------
@@ -142,8 +142,8 @@ class CourseResource(resources.ModelResource):
     title = fields.Field(column_name="course_title", attribute="title")
     # credit_hours = fields.Field(column_name="credit_hours", attribute="credit_hours")
 
-    department = fields.Field(
-        column_name="course_dept", attribute="department", widget=DepartmentWidget()
+    departments = fields.Field(
+        column_name="course_dept", attribute="departments", widget=DepartmentWidget()
     )
 
     # ─── college FK – lookup by code via CollegeWidget ───────────────────────
@@ -166,10 +166,10 @@ class CourseResource(resources.ModelResource):
     class Meta:
         model = Course
         # Uniqueness criterion for updates
-        import_id_fields = ("department", "number", "college")
+        import_id_fields = ("number", "college")
         # Exposed / accepted columns
         fields = (
-            "department",
+            "departments",
             "number",
             "title",
             "credit_hours",
@@ -246,7 +246,7 @@ class DepartmentResource(resources.ModelResource):
 
     class Meta:
         model = Department
-        import_id_fields = ("code",)
+        import_id_fields = ("code", "college")
         fields = (
             "code",
             "full_name",

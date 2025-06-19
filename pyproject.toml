@@ -12,7 +12,7 @@ target-version = ["py312"]
 
 [tool.flake8]
 per-file-ignores = ["__init__.py:F401"]
-exclude = "__pycache__,.git"
+exclude = "__pycache__,.git,migrations"
 max-complexity = 15
 max-line-length = 90
 # The old ignore list: C901,W605,E203,D401,W503,D101,D107,D103,E501

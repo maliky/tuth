@@ -62,6 +62,8 @@ class StaffAdmin(GuardedModelAdmin):
     fields like ``staff_id`` are read-only to avoid accidental edits.
     """
 
+    # ▸ custom helper so list_display works with M2M
+
     fieldsets = (
         (
             None,
@@ -74,7 +76,7 @@ class StaffAdmin(GuardedModelAdmin):
             },
         ),
         (
-            "Personnal Info",
+            "Personal Info",
             {
                 "fields": (
                     "photo",
@@ -111,7 +113,7 @@ class StaffAdmin(GuardedModelAdmin):
         "staff_id",
         "user__username",
         "long_name",
-        "department__code",
+        "department",
     )
     autocomplete_fields = ("user", "department")
     readonly_fields = ("staff_id", "long_name", "age")

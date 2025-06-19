@@ -29,3 +29,9 @@ class Department(models.Model):
 
     class Meta:
         ordering = ["code"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["code", "college"],
+                name="uniq_department_code_per_college",
+            ),
+        ]

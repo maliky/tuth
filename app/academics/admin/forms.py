@@ -74,18 +74,19 @@ class CourseForm(forms.ModelForm):
         if not self.instance.pk:
             self.fields["credit_hours"].initial = CREDIT_NUMBER.THREE
 
-        # make title optional in the *form* even if model says otherwise
         self.fields["title"].required = False
 
-        # prefill college if the course code uniquely maps to one college
+        # departments is a M2M: POSTed as a list, initial as a queryset
         if not self.instance.pk:
-
-            dept = (self.data.get("department") or "").strip() or init.get(
-                "department", ""
+            raw_depts = (
+                self.data.getlist("departments")  # type: ignore[attr-defined]
+                if self.data
+                else [d.code for d in init.get("departments", [])]
             )
+            dept = (raw_depts[0] if raw_depts else "").strip().upper()
             number = (self.data.get("number") or "").strip() or init.get("number", "")
             if dept and number:
-                code = make_course_code(department=dept, number=number)
+                code = make_course_code(dept_code=dept, number=number)
                 colleges = list(
                     Course.objects.filter(code=code)
                     .values_list("college_id", flat=True)
@@ -100,9 +101,6 @@ class CourseForm(forms.ModelForm):
                         remote_field, self.admin_site
                     )
 
-    # ──────────────────────────────────────────────────────────
-    # save logic
-    # ──────────────────────────────────────────────────────────
     def save(self, commit=True):
         """Save the form and stage curricula updates.
 
@@ -131,10 +129,15 @@ class CourseForm(forms.ModelForm):
 
         cleaned = cast(MutableMapping[str, Any], super().clean())  # ← FIX #2/3
 
-        if not cleaned.get("college") and cleaned.get("name") and cleaned.get("number"):
-            code = make_course_code(department=cleaned["name"], number=cleaned["number"])
+        cleaned_depts = cleaned.get("departments")
+        cleaned_clg = cleaned.get("college")
+        if not cleaned_clg and cleaned.get("number") and cleaned_depts:
+            first_dept = cleaned_depts[0]
+            course_code = make_course_code(
+                dept_code=first_dept, number=cleaned["number"], college_code=cleaned_clg
+            )
             colleges = list(
-                Course.objects.filter(code=code)
+                Course.objects.filter(code=course_code)
                 .values_list("college_id", flat=True)
                 .distinct()
             )

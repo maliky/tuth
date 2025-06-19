@@ -70,8 +70,8 @@ class Course(models.Model):
     # ---------- hooks ----------
     def save(self, *args, **kwargs) -> None:
         """Populate ``code`` from ``name`` and ``number`` before saving."""
-        dept = f"{self.departments}"
-        self.code = make_course_code(dept, number=self.number)
+        dept_code = f"{self.departments}"
+        self.code = make_course_code(dept_code, number=self.number)
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:  # pragma: no cover
