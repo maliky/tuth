@@ -10,8 +10,7 @@ from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.people.models.core import AbstractPerson
-from app.people.utils import mk_username, split_name
-from app.shared.constants import TEST_PW
+
 from app.shared.mixins import StatusableMixin
 
 User = get_user_model()
@@ -123,34 +122,8 @@ class Staff(AbstractPerson):
 
 
 def ensure_faculty(name: str, college: "College") -> Faculty:
-    """
-    Return an existing or new Faculty for the given name and college.
-    ! This can update the college.
-    """
-    _, first, _, last, _ = split_name(name)
-    username = mk_username(first, last, unique=False)
+    """Return an existing or new Faculty for the given name and college."""
 
-    user, user_created = User.objects.get_or_create(
-        username=username,
-        defaults={"first_name": first, "last_name": last},
-    )
+    from app.people.repositories import PeopleRepository
 
-    if user_created:
-        user.set_password(TEST_PW)
-        user.save()
-        staff, _ = Staff.objects.get_or_create(user=user)
-        faculty = Faculty.objects.create(staff_profile=staff, college=college)
-
-        return faculty
-
-    staff, _ = Staff.objects.get_or_create(user=user)
-
-    faculty, faculty_created = Faculty.objects.get_or_create(
-        staff_profile=staff, college=college
-    )
-
-    if faculty.college != college:
-        faculty.college = college
-        faculty.save()
-
-    return faculty
+    return PeopleRepository.get_or_create_faculty(name=name, college=college)
