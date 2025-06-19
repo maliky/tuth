@@ -8,7 +8,7 @@ from django.dispatch import receiver
 from django.db.models import F
 
 from app.timetable.models import Section, Reservation
-from app.shared.constants import StatusReservation
+from app.timetable.choices import StatusReservation
 
 
 @receiver(pre_save, sender=Section)

@@ -6,8 +6,14 @@ curricula. It exposes the ``COURSE_PATTERN`` regular expression, maximum
 credit load for a student and enumerations for colleges and curriculum
 statuses."""
 
-from django.db import models
 import re
+from app.academics.choices import (
+    CollegeCodeChoices,
+    CollegeLongNameChoices,
+    StatusCurriculum,
+    CREDIT_NUMBER,
+    LEVEL_NUMBER,
+)
 
 MAX_STUDENT_CREDITS = 18
 COURSE_PATTERN = re.compile(
@@ -15,25 +21,3 @@ COURSE_PATTERN = re.compile(
 )
 
 
-class CollegeCodeChoices(models.TextChoices):
-    COHS = "cohs", "COHS"
-    COAS = "coas", "COAS"
-    COED = "coed", "COED"
-    CAFS = "cafs", "CAFS"
-    COET = "coet", "COET"
-    COBA = "coba", "COBA"
-
-
-class CollegeLongNameChoices(models.TextChoices):
-    COHS = "cohs_long_name", "College of Health Sciences"
-    COAS = "coas_long_name", "College of Arts and Sciences"
-    COED = "coed_long_name", "College of Education"
-    CAFS = "cafs_long_name", "College of Agriculture and Food Sciences"
-    COET = "coet_long_name", "College of Engineering and Technology"
-    COBA = "coba_long_name", "College of Business Administration"
-
-
-class StatusCurriculum(models.TextChoices):
-    PENDING = "pending", "Pending"
-    APPROVED = "approved", "Approved"
-    NEEDS_REVISION = "needs_revision", "Needs Revision"

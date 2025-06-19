@@ -7,7 +7,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
 
-from app.shared.constants import StatusRegistration
+from app.registry.choices import StatusRegistration
 from app.shared.mixins import StatusableMixin
 from app.timetable.models import Reservation
 

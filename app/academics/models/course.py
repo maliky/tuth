@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from django.db import models
 
-from app.shared.enums import CREDIT_NUMBER, LEVEL_NUMBER
+from app.academics.choices import CREDIT_NUMBER, LEVEL_NUMBER
 from app.shared.utils import make_course_code
 from app.academics.models.curriculum import Curriculum
 

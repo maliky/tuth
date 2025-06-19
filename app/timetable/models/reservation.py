@@ -12,12 +12,9 @@ from django.db.models import F
 from django.utils import timezone
 
 from app.finance.models import FinancialRecord, Payment, SectionFee
-from app.shared.constants import (
-    MAX_STUDENT_CREDITS,
-    TUITION_RATE_PER_CREDIT,
-    PaymentMethod,
-    StatusReservation,
-)
+from app.shared.constants import MAX_STUDENT_CREDITS, TUITION_RATE_PER_CREDIT
+from app.finance.choices import PaymentMethod
+from app.timetable.choices import StatusReservation
 from app.shared.mixins import StatusableMixin
 from app.timetable.models.section import Section
 from app.timetable.models.validator import CreditLimitValidator

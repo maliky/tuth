@@ -5,7 +5,7 @@ from __future__ import annotations
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from app.shared.constants.academics import CollegeCodeChoices, CollegeLongNameChoices
+from app.academics.choices import CollegeCodeChoices, CollegeLongNameChoices
 
 
 class College(models.Model):

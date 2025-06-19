@@ -3,7 +3,7 @@
 from __future__ import annotations
 from datetime import date
 
-from app.shared.constants.academics import StatusCurriculum
+from app.academics.choices import StatusCurriculum
 from django.db import models
 
 from app.shared.mixins import StatusableMixin
