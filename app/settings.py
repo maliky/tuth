@@ -155,3 +155,31 @@ MEDIA_ROOT = BASE_DIR / "media/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# --------------------------------------------------------------
+# Logging configuration
+# --------------------------------------------------------------
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "json": {
+            "format": '{"time": "%(asctime)s", "level": "%(levelname)s", '
+            '"name": "%(name)s", "message": %(message)s}',
+        },
+    },
+    "handlers": {
+        "actions": {
+            "class": "logging.FileHandler",
+            "filename": LOG_DIR / "actions.log",
+            "formatter": "json",
+        },
+    },
+    "root": {
+        "handlers": ["actions"],
+        "level": "INFO",
+    },
+}
