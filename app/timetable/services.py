@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import timedelta
 from typing import Iterable, List
+import json
+import logging
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -13,6 +15,8 @@ from django.utils import timezone
 from app.people.models import Student
 from app.shared.constants import MAX_STUDENT_CREDITS, StatusReservation
 from app.timetable.models import Reservation, Section
+
+logger = logging.getLogger(__name__)
 
 
 def reserve_sections(student: Student, sections: Iterable[Section]) -> List[Reservation]:
@@ -76,6 +80,16 @@ def reserve_sections(student: Student, sections: Iterable[Section]) -> List[Rese
                 section=sec,
                 status=StatusReservation.REQUESTED,
                 validation_deadline=timezone.now() + timedelta(days=2),
+            )
+            logger.info(
+                json.dumps(
+                    {
+                        "action": "reservation_created",
+                        "student": student.id,
+                        "section": sec.id,
+                        "reservation": res.id,
+                    }
+                )
             )
             Section.objects.filter(pk=sec.pk).update(
                 current_registrations=F("current_registrations") + 1

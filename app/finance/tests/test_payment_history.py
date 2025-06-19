@@ -2,8 +2,8 @@ import pytest
 from decimal import Decimal
 from app.finance.models import FinancialRecord, PaymentHistory
 
-# Reuse fixtures defined in the project-level ``tests.conftest`` module.
-pytest_plugins = ["tests.conftest"]
+# Fixtures from ``tests.conftest`` are automatically available; no explicit
+# ``pytest_plugins`` declaration is needed.
 
 
 @pytest.mark.django_db

@@ -3,6 +3,8 @@
 from datetime import timedelta
 from decimal import Decimal
 from typing import TYPE_CHECKING
+import json
+import logging
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
@@ -22,6 +24,8 @@ from app.timetable.models.validator import CreditLimitValidator
 
 if TYPE_CHECKING:
     from app.people.models.staffs import Staff
+
+logger = logging.getLogger(__name__)
 
 
 class Reservation(StatusableMixin, models.Model):
@@ -155,6 +159,18 @@ class Reservation(StatusableMixin, models.Model):
             amount=self.fee_total,
             method=PaymentMethod.CASH,
             recorded_by=by_user,
+        )
+
+        logger.info(
+            json.dumps(
+                {
+                    "action": "payment_recorded",
+                    "reservation": self.pk,
+                    "amount": str(self.fee_total),
+                    "method": PaymentMethod.CASH,
+                    "recorded_by": by_user.id,
+                }
+            )
         )
 
         fr, _ = FinancialRecord.objects.get_or_create(

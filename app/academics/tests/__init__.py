@@ -1,4 +1,5 @@
-"""Initialization for the tests academics package."""
+"""Initialization for the academics tests package."""
 
-# Reuse fixtures defined in the project-level ``tests.conftest`` module.
-pytest_plugins = ("tests.conftest",)
+# Fixtures are provided by the project-level ``tests.conftest`` module which
+# is automatically discovered by pytest. No explicit ``pytest_plugins`` is
+# required here.

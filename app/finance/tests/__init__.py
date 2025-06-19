@@ -1,4 +1,4 @@
-"""Initialization for the tests finance package."""
+"""Initialization for the finance tests package."""
 
-# Reuse fixtures defined in the project-level ``tests.conftest`` module.
-pytest_plugins = ("tests.conftest",)
+# The project-level ``tests.conftest`` provides shared fixtures, automatically
+# loaded by pytest. No need to declare ``pytest_plugins`` here.
