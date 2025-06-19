@@ -19,7 +19,7 @@ from .finance import (
     StatusClearance,
 )
 
-from .perms import (
+from app.shared.auth.perms import (
     DEFAULT_ROLE_TO_COLLEGE,
     MODEL_APP,
     OBJECT_PERM_MATRIX,

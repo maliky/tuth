@@ -12,7 +12,7 @@ from app.academics.models.department import Department
 from app.people.models.core import AbstractPerson
 from app.people.utils import mk_username, split_name
 from app.shared.constants import TEST_PW
-from app.shared.mixins import StatusableMixin
+from app.shared.status.mixins import StatusableMixin
 
 User = get_user_model()
 

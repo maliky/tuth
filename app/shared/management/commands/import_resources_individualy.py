@@ -24,7 +24,7 @@ from app.spaces.admin.resources import RoomResource  # noqa: F401
 from app.timetable.admin.resources.core import SemesterResource  # noqa: F401
 from app.timetable.admin.resources.section import SectionResource
 from app.timetable.admin.resources.session import SessionResource  # noqa: F401
-from app.shared.management.populate_helpers.auth import ensure_superuser
+from app.shared.auth.helpers import ensure_superuser
 
 
 class Command(BaseCommand):

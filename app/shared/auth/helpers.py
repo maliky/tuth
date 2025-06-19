@@ -10,9 +10,9 @@ from django.utils import timezone
 from app.academics.models import College
 from app.people.models import RoleAssignment
 from app.shared.constants import DEFAULT_ROLE_TO_COLLEGE, TEST_PW
-from app.shared.constants.perms import UserRole
+from app.shared.auth.perms import UserRole
 
-from .utils import log
+from app.shared.csv.utils import log
 
 User = get_user_model()
 

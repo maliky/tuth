@@ -10,7 +10,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from app.shared.mixins import StatusableMixin
+from app.shared.status.mixins import StatusableMixin
 
 User = get_user_model()
 

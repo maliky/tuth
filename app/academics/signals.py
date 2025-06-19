@@ -5,7 +5,7 @@ from django.dispatch import receiver
 
 from app.academics.models import Curriculum
 from app.shared.constants import APPROVED
-from app.shared.mixins import StatusHistory
+from app.shared.status.mixins import StatusHistory
 
 
 @receiver(post_save, sender=StatusHistory)

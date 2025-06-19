@@ -16,7 +16,7 @@ from app.shared.constants import (
     PaymentMethod,
     StatusReservation,
 )
-from app.shared.mixins import StatusableMixin
+from app.shared.status.mixins import StatusableMixin
 from app.timetable.models.section import Section
 from app.timetable.models.validator import CreditLimitValidator
 

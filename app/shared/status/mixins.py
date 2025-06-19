@@ -21,7 +21,7 @@ class StatusHistory(models.Model):
     ``Curriculum.is_active`` when curriculum statuses change.
 
     Example:
-        >>> from app.shared.mixins import StatusHistory
+        >>> from app.shared.status.mixins import StatusHistory
         >>> StatusHistory.objects.create(
         ...     status="approved",
         ...     content_object=my_obj,
