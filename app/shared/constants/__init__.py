@@ -3,30 +3,17 @@
 from itertools import chain
 from typing import List, Tuple
 
-from app.shared.constants.timetable import StatusReservation
+from app.timetable.choices import StatusReservation
 
-from .academics import (
-    CollegeCodeChoices,
-    COURSE_PATTERN,
-    MAX_STUDENT_CREDITS,
-    StatusCurriculum,
-)
+from .academics import COURSE_PATTERN, MAX_STUDENT_CREDITS
+from app.academics.choices import CollegeCodeChoices, StatusCurriculum
 from .curriculum import TEST_ENVIRONMENTAL_STUDIES_CURRICULUM
-from .finance import (
-    TUITION_RATE_PER_CREDIT,
-    FeeType,
-    PaymentMethod,
-    StatusClearance,
-)
+from .finance import TUITION_RATE_PER_CREDIT
+from app.finance.choices import FeeType, PaymentMethod, StatusClearance
 
-from .perms import (
-    DEFAULT_ROLE_TO_COLLEGE,
-    MODEL_APP,
-    OBJECT_PERM_MATRIX,
-    TEST_PW,
-    UserRole,
-)
-from .registry import DocumentType, StatusDocument, StatusRegistration
+from .perms import DEFAULT_ROLE_TO_COLLEGE, MODEL_APP, OBJECT_PERM_MATRIX, TEST_PW
+from app.people.choices import UserRole
+from app.registry.choices import DocumentType, StatusDocument, StatusRegistration
 
 STYLE_DEFAULT = "NOTICE"
 

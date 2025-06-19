@@ -2,7 +2,7 @@
 
 from import_export import widgets
 
-from app.shared.enums import WEEKDAYS_NUMBER
+from app.timetable.choices import WEEKDAYS_NUMBER
 from app.spaces.admin.widgets import RoomCodeWidget
 from app.timetable.models.session import Schedule, Session
 

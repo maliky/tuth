@@ -5,7 +5,7 @@ from datetime import datetime, time, timedelta
 from django.db import models, transaction
 from django.forms import ValidationError
 
-from app.shared.enums import WEEKDAYS_NUMBER
+from app.timetable.choices import WEEKDAYS_NUMBER
 
 
 class Schedule(models.Model):

@@ -8,7 +8,7 @@ from django.contrib import admin
 from django.contrib.admin.widgets import AutocompleteSelect
 from app.shared.utils import make_course_code
 from app.academics.models import Course, Curriculum, CurriculumCourse, College
-from app.shared.enums import CREDIT_NUMBER
+from app.academics.choices import CREDIT_NUMBER
 from import_export.forms import ImportForm
 
 

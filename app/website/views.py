@@ -17,7 +17,7 @@ from app.finance.models.financial_record import FinancialRecord
 from app.people.models.student import Student
 from app.registry.models.grade import Grade
 from app.registry.models.registration import Registration
-from app.shared.constants import StatusReservation
+from app.timetable.choices import StatusReservation
 from app.timetable.models import Reservation, Section
 
 
@@ -123,7 +123,8 @@ def validate_credit_limit(
     """Return ``True`` if adding ``section`` keeps the student under ``max_credits``."""
     reserved_credits = (
         Reservation.objects.filter(
-            student=student, status__in=["requested", "validated"]
+            student=student,
+            status__in=[StatusReservation.REQUESTED, StatusReservation.VALIDATED],
         ).aggregate(total=Sum("section__course__credit_hours"))["total"]
         or 0
     )

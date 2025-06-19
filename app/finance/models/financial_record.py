@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from django.db import models
 
-from app.shared.constants.finance import FeeType, StatusClearance
+from app.finance.choices import FeeType, StatusClearance
 
 
 class FinancialRecord(models.Model):
@@ -37,7 +37,7 @@ class FinancialRecord(models.Model):
     clearance_status = models.CharField(
         max_length=50,
         choices=StatusClearance.choices,
-        default="pending",
+        default=StatusClearance.PENDING,
     )
     last_updated = models.DateTimeField(auto_now=True)
     verified_by = models.ForeignKey(

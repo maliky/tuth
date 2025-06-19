@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from django.db import models
-from app.shared.enums import SEMESTER_NUMBER
+from app.timetable.choices import SEMESTER_NUMBER
 from app.timetable.utils import validate_subperiod
 
 

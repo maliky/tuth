@@ -1,6 +1,6 @@
 """Test weekdays enum module."""
 
-from app.shared.enums import WEEKDAYS_NUMBER
+from app.timetable.choices import WEEKDAYS_NUMBER
 
 
 def test_monday_is_one():

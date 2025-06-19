@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.db import transaction
 from django.db.models import F
 from app.timetable.models import Reservation, Section
-from app.shared.constants import StatusReservation
+from app.timetable.choices import StatusReservation
 
 
 def cancel_expired_reservations():

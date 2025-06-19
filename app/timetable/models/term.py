@@ -3,7 +3,7 @@
 from __future__ import annotations
 from django.db import models
 
-from app.shared.enums import TERM_NUMBER
+from app.timetable.choices import TERM_NUMBER
 from app.timetable.utils import validate_subperiod
 
 

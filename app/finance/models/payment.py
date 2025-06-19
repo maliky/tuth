@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from django.db import models
 
-from app.shared.constants import PaymentMethod
+from app.finance.choices import PaymentMethod
 
 
 class Payment(models.Model):
