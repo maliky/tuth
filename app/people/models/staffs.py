@@ -119,11 +119,3 @@ class Staff(AbstractPerson):
         constraints = [
             models.UniqueConstraint(fields=["user"], name="uniq_staff_per_user"),
         ]
-
-
-def ensure_faculty(name: str, college: "College") -> Faculty:
-    """Return an existing or new Faculty for the given name and college."""
-
-    from app.people.repositories import PeopleRepository
-
-    return PeopleRepository.get_or_create_faculty(name=name, college=college)

@@ -82,10 +82,12 @@ class FacultyWidget(widgets.ForeignKeyWidget):
         if not value:
             return None
 
+        # ? Should I use Peoplerepository.get_or_create_faculty?
         staff = StaffProfileWidget().clean(value, row, *args, **kwargs)
 
         if staff is None:
             return None
+
 
         faculty, _ = Faculty.objects.get_or_create(
             staff_profile=staff,
