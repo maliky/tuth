@@ -8,8 +8,10 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
+
 from app.registry.choices import DocumentType, StatusDocument
-from app.shared.mixins import StatusableMixin, StatusHistory
+from app.shared.status.mixins import StatusHistory, StatusableMixin
+
 
 
 class Document(StatusableMixin, models.Model):

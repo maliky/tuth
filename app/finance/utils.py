@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 
-from app.shared.constants import TUITION_RATE_PER_CREDIT
+from app.shared.constants.finance import TUITION_RATE_PER_CREDIT
 
 
 def tuition_for(course, credit_hours: int) -> Decimal:

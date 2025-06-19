@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from django.core.exceptions import ValidationError
 
-from app.shared.constants import MAX_STUDENT_CREDITS
+from app.shared.constants.academics import MAX_STUDENT_CREDITS
 
 if TYPE_CHECKING:
     from app.timetable.models import Reservation

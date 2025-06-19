@@ -1,21 +1,22 @@
 """Reservation module."""
 
+import json
+import logging
 from datetime import timedelta
 from decimal import Decimal
 from typing import TYPE_CHECKING
-import json
-import logging
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.db.models import F
 from django.utils import timezone
 
-from app.finance.models import FinancialRecord, Payment, SectionFee
-from app.shared.constants import MAX_STUDENT_CREDITS, TUITION_RATE_PER_CREDIT
 from app.finance.choices import PaymentMethod
+from app.finance.models import FinancialRecord, Payment, SectionFee
+from app.shared.constants.academics import MAX_STUDENT_CREDITS
+from app.shared.constants.finance import TUITION_RATE_PER_CREDIT
+from app.shared.status.mixins import StatusableMixin
 from app.timetable.choices import StatusReservation
-from app.shared.mixins import StatusableMixin
 from app.timetable.models.section import Section
 from app.timetable.models.validator import CreditLimitValidator
 

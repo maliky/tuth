@@ -7,8 +7,6 @@ help the permissions middleware resolve context information."""
 
 from django.db import models
 
-from app.people.choices import UserRole
-
 TEST_PW = "test"
 
 

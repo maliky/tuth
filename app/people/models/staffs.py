@@ -10,8 +10,9 @@ from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.people.models.core import AbstractPerson
-
-from app.shared.mixins import StatusableMixin
+from app.people.utils import mk_username, split_name
+from app.shared.auth.perms import TEST_PW
+from app.shared.status.mixins import StatusableMixin
 
 User = get_user_model()
 

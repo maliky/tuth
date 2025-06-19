@@ -22,7 +22,7 @@ from app.academics.admin.resources import (  # noqa: F401
     CurriculumCourseResource,
 )
 from app.academics.models.college import College  # noqa: F401
-from app.shared.management.populate_helpers.auth import (  # noqa: F401
+from app.shared.auth.helpers import (  # noqa: F401
     ensure_role_groups,
     ensure_superuser,
     upsert_test_users_and_roles,

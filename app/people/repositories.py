@@ -8,7 +8,7 @@ from django.db import transaction
 from app.academics.models.college import College
 from app.people.models.staffs import Faculty, Staff
 from app.people.utils import mk_username, split_name
-from app.shared.constants import TEST_PW
+from app.shared.auth.perms import TEST_PW
 
 User = get_user_model()
 

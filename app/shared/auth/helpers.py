@@ -8,11 +8,10 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from app.academics.models import College
-from app.people.models import RoleAssignment
-from app.shared.constants import DEFAULT_ROLE_TO_COLLEGE, TEST_PW
 from app.people.choices import UserRole
-
-from .utils import log
+from app.people.models import RoleAssignment
+from app.shared.auth.perms import DEFAULT_ROLE_TO_COLLEGE, TEST_PW
+from app.shared.csv.utils import log
 
 User = get_user_model()
 

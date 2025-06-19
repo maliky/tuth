@@ -5,7 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from guardian.shortcuts import assign_perm
 
 from app.people.models import RoleAssignment
-from app.shared.constants import OBJECT_PERM_MATRIX, MODEL_APP
+from app.shared.auth.perms import MODEL_APP, OBJECT_PERM_MATRIX
 
 # def get_content_type(model_name):
 #     model = apps.get_model("shared", model_name)  # Adjust "shared" to match actual app name

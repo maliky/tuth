@@ -6,7 +6,7 @@ from datetime import date
 from app.academics.choices import StatusCurriculum
 from django.db import models
 
-from app.shared.mixins import StatusableMixin
+from app.shared.status.mixins import StatusableMixin
 
 
 class Curriculum(StatusableMixin, models.Model):
