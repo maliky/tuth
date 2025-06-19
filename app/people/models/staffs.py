@@ -5,6 +5,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import QuerySet
+from django.core.exceptions import ValidationError
 
 from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
@@ -62,9 +63,8 @@ class Faculty(StatusableMixin, models.Model):
         return f"{self.staff_profile}"
 
     def save(self, *args, **kwargs):
-        assert (
-            self.staff_profile is not None
-        ), "Staff profil must be save before the Faculty. Check"
+        if self.staff_profile is None:
+            raise ValidationError("Staff profile must be saved before the Faculty.")
         try:
             _ = self.college
         except College.DoesNotExist:

@@ -1,6 +1,7 @@
 """timetable.admin.widgets.session module"""
 
 from import_export import widgets
+from django.core.exceptions import ValidationError
 
 from app.shared.enums import WEEKDAYS_NUMBER
 from app.spaces.admin.widgets import RoomCodeWidget
@@ -73,6 +74,7 @@ class WeekdayWidget(widgets.IntegerWidget):
             return int(token)
 
         _map = {label.lower(): num for num, label in WEEKDAYS_NUMBER.choices}
-        assert token in _map, f"{token} is not in {_map}"
+        if token not in _map:
+            raise ValidationError(f"{token} is not in {_map}")
 
         return _map[token]

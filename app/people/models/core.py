@@ -29,7 +29,11 @@ class AbstractPerson(StatusableMixin, models.Model):
         >>> User = get_user_model()
         >>> user = User.objects.create(username="john")
         >>> from app.people.models.student import Student
-        >>> Student.objects.create(user=user, student_id="S1", enrollment_semester=semester)
+        >>> Student.objects.create(
+        ...     user=user,
+        ...     student_id="S1",
+        ...     enrollment_semester=semester,
+        ... )
 
     Side Effects:
         ``save()`` assigns an ID derived from ``user``.
@@ -137,14 +141,17 @@ class AbstractPerson(StatusableMixin, models.Model):
         Example: user.pk = 42  →  TUID-S0042
         """
         self._exists_user()
-        assert self.user.pk is not None, "Cannot generate Id if user.pk is None."
+        if self.user.pk is None:
+            raise ValidationError("Cannot generate Id if user.pk is None.")
 
         return f"{self.ID_PREFIX}{self.user.id:04}"
 
     def save(self, *args, **kwargs):
-        """The attribute is for eg donor_id or staff_id and the prefix is used in the _mk_id"""
-        # The ID_FIELD is mandatory for subclass and therefore the super().save() cannot proceed if it is not set.
-        assert self.ID_FIELD, "Needs to be set before creating new ID."
+        """Set the ID field using ``_mk_id`` before saving."""
+        # ``ID_FIELD`` is mandatory for subclasses. ``super().save()``
+        # cannot proceed if it is not set.
+        if not self.ID_FIELD:
+            raise ValidationError("Needs to be set before creating new ID.")
         new_id = self._mk_id()
         object.__setattr__(self, self.ID_FIELD, new_id)
         super().save(*args, **kwargs)

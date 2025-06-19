@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 from django.db import models
+from django.core.exceptions import ValidationError
 
 from app.shared.enums import TERM_NUMBER
 from app.timetable.utils import validate_subperiod
@@ -28,7 +29,8 @@ class Term(models.Model):
         """Validate dates are inside the parent semester and do not overlap."""
         container_start = self.semester.start_date
         container_end = self.semester.end_date
-        assert container_start is not None and container_end is not None
+        if container_start is None or container_end is None:
+            raise ValidationError("Parent semester must have start and end dates")
 
         validate_subperiod(
             sub_start=self.start_date,

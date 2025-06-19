@@ -29,10 +29,12 @@ def expand_course_code(
         The department code, course number and college code.
     """
 
-    assert "/" not in code
+    if "/" in code:
+        raise ValueError("Course code cannot contain '/' characters.")
 
     match = COURSE_PATTERN.search(code.strip().upper())
-    assert match is not None, f"Code '{code}' doesn't match expected pattern"
+    if match is None:
+        raise ValueError(f"Code '{code}' doesn't match expected pattern")
 
     dept, num, college = (
         match.group("dept"),

@@ -2,6 +2,7 @@
 
 import re
 from datetime import date
+from django.core.exceptions import ValidationError
 
 from import_export import widgets
 
@@ -42,7 +43,8 @@ class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
 
         m = self.ay_pat.match(value)
 
-        assert m, f"Invalid academic year short name, but got {m} for {self.ay_pat}"
+        if not m:
+            raise ValidationError(f"Invalid academic year short name, but got {value}")
 
         start_year = int("20" + m.group(1))
         ay, ay_created = AcademicYear.objects.get_or_create(
@@ -105,7 +107,8 @@ class SemesterCodeWidget(widgets.ForeignKeyWidget):
 
         m = self.sem_pat.match(value)
 
-        assert m, f"Invalid semester format, got {m} for {self.sem_pat}"
+        if not m:
+            raise ValidationError(f"Invalid semester format: {value}")
 
         ay_short = m.group("year")
         sem_no = int(m.group("num"))

@@ -134,9 +134,8 @@ class Reservation(StatusableMixin, models.Model):
 
     def cancel(self) -> None:
         """Cancel the reservation and free a seat in the section."""
-        assert (
-            self.status != StatusReservation.CANCELLED
-        ), "Reservation already cancelled."
+        if self.status == StatusReservation.CANCELLED:
+            raise ValueError("Reservation already cancelled.")
         self.status = StatusReservation.CANCELLED
 
         self.save(update_fields=["status"])

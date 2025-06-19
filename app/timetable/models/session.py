@@ -92,8 +92,9 @@ class Schedule(models.Model):
     # and implement a non overlap function like for semester and terms.
     def clean(self) -> None:
         """Check that the date are correct"""
-        if self.end_time is not None:
-            assert self.start_time < self.end_time, "start_time must be before end_time"
+        if self.end_time is not None and self.start_time:
+            if self.start_time >= self.end_time:
+                raise ValidationError("start_time must be before end_time")
 
     def save(self, *args, **kwargs):
         """
@@ -120,6 +121,12 @@ class Schedule(models.Model):
 
     class Meta:
         ordering = ["weekday", "start_time", "end_time"]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(end_time__gt=models.F("start_time")),
+                name="schedule_end_after_start",
+            )
+        ]
 
 
 class Session(models.Model):

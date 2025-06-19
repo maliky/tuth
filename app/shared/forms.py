@@ -34,7 +34,8 @@ class StatusHistoryForm(forms.ModelForm):
         if content_type:
 
             field = self.fields["state"]
-            assert isinstance(field, ChoiceField)
+            if not isinstance(field, ChoiceField):
+                raise TypeError("state field must be a ChoiceField")
             model_cls = content_type.model_class()
             if model_cls:
                 try:

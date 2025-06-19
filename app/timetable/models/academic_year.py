@@ -29,9 +29,9 @@ class AcademicYear(models.Model):
         """Ensure start and end dates form a valid academic year."""
         if self.start_date.month not in (7, 8, 9, 10):
             raise ValidationError("Start date must be in July–October.")
-        if self.start_date:
-            if self.end_date:
-                assert self.end_date.year > self.start_date.year
+        if self.start_date and self.end_date:
+            if self.end_date.year <= self.start_date.year:
+                raise ValidationError("end_date must be in the following year")
 
     def save(self, *args, **kwargs) -> None:
         """Populate derived fields ``long_name`` and ``code`` before saving."""
@@ -57,6 +57,10 @@ class AcademicYear(models.Model):
             models.UniqueConstraint(
                 ExtractYear("start_date"),
                 name="uniq_academic_year_by_year",
-            )
+            ),
+            models.CheckConstraint(
+                check=models.Q(end_date__gt=models.F("start_date")),
+                name="end_date_after_start_date",
+            ),
         ]
         ordering = ["-start_date"]

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List
 
 from django.core.validators import MinValueValidator
+from django.core.exceptions import ValidationError
 from django.db import models
 
 if TYPE_CHECKING:
@@ -88,16 +89,20 @@ class Section(models.Model):
 
     def clean(self) -> None:
         """Check that the date are correct"""
-        if self.end_date is not None:
-            if self.start_date:
-                assert self.start_date < self.end_date
+        if self.end_date is not None and self.start_date:
+            if self.start_date >= self.end_date:
+                raise ValidationError("start_date must be before end_date")
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=["semester", "course", "number", "faculty"],
                 name="uniq_section_per_course_faculty",
-            )
+            ),
+            models.CheckConstraint(
+                check=models.Q(end_date__gt=models.F("start_date")),
+                name="section_end_after_start",
+            ),
         ]
         indexes = [
             models.Index(fields=["semester", "course"]),
