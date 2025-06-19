@@ -29,9 +29,8 @@ class Course(models.Model):
         default=CREDIT_NUMBER.THREE, choices=CREDIT_NUMBER.choices, blank=True
     )
     # > need to change it and everywhere with course_dept
-    department = models.ForeignKey(  # eg. MATH
+    departments = models.ManyToManyField(  # eg. MATH
         "academics.Department",
-        on_delete=models.PROTECT,
         related_name="courses",
     )
 
@@ -71,7 +70,7 @@ class Course(models.Model):
     # ---------- hooks ----------
     def save(self, *args, **kwargs) -> None:
         """Populate ``code`` from ``name`` and ``number`` before saving."""
-        dept = f"{self.department}"
+        dept = f"{self.departments}"
         self.code = make_course_code(dept, number=self.number)
         super().save(*args, **kwargs)
 

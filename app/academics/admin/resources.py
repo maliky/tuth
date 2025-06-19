@@ -166,7 +166,7 @@ class CourseResource(resources.ModelResource):
     class Meta:
         model = Course
         # Uniqueness criterion for updates
-        import_id_fields = ("name", "number", "college")
+        import_id_fields = ("department", "number", "college")
         # Exposed / accepted columns
         fields = (
             "department",

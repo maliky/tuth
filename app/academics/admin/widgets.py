@@ -94,7 +94,9 @@ class CourseWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
         super().__init__(Course, field="code")
-        self._cache: dict[tuple[str, str, str], Course] = {}
+        self.department_w = DepartmentWidget()
+        self.college_w = CollegeWidget()
+        self._cache = {}
 
     def clean(
         self,
@@ -111,27 +113,23 @@ class CourseWidget(widgets.ForeignKeyWidget):
         if row is None:
             return None
         # import pdb; pdb.set_trace()
-        course_dept = row.get("course_dept", "").strip().upper()
-        course_no = row.get("course_no", "").strip()
+        course_dept = (row.get("course_dept") or "").strip().upper()
+        department = self.department_w.clean(course_dept)
+        course_no = row.get("course_no","").strip()
 
         if not course_dept or not course_no:
             return None
 
-        college_code = row.get("college_code", "COAS").strip().upper()
+        college = self.college_w.clean(row.get("college_code"))        
 
         key = (course_dept, course_no, college_code)
         if key in self._cache:
             return self._cache[key]
 
-        # ── get or create the College ─────────────────────────────
-        college, college_created = College.objects.get_or_create(code=college_code)
-        if college_created:
-            college.save()
-
-        # ── get or create the Course ──────────────────────────────
         code = make_course_code(course_dept, course_no)  # e.g. AGR121
+        
         course, course_created = Course.objects.get_or_create(
-            name=course_dept,
+            department=department,
             number=course_no,
             college=college,
             defaults={"title": row.get("course_title", code)},

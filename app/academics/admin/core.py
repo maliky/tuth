@@ -62,7 +62,7 @@ class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
             None,
             {
                 "fields": (
-                    "name",
+                    "departments",
                     "number",
                     "title",
                     "credit_hours",

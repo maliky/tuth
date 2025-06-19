@@ -3,4 +3,4 @@
 from app.registry.choices import StatusDocument, StatusRegistration
 
 
-STATUS_CHOICES = list(set(list(StatusDocument.choices) + list(StatusRegistration)))
+STATUS_CHOICES = list(set(list(StatusDocument.choices) + list(StatusRegistration.choices)))
