@@ -1,11 +1,13 @@
 """Test donor scholarship module."""
 
-import pytest
 from datetime import date
+
+import pytest
 from django.contrib.auth import get_user_model
 
-from app.people.models import Donor, Student
 from app.finance.models import Scholarship
+from app.people.models.donor import Donor
+from app.people.models.student import Student
 
 
 @pytest.mark.django_db

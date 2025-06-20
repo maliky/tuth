@@ -4,27 +4,28 @@ from typing import Any, Optional, cast
 
 from import_export import widgets
 
-from app.academics.models import College, Course
+from app.academics.models.college import College
+from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
-from app.academics.models.curriculum_course import CurriculumCourse
 from app.academics.models.department import Department
-from app.shared.utils import expand_course_code, make_course_code
+from app.academics.models.program import Program
+from app.shared.utils import expand_course_code
 
 
-class CurriculumCourseWidget(widgets.ForeignKeyWidget):
-    """Create or fetch CurriculumCourse rows from CSV data.
+class ProgramWidget(widgets.ForeignKeyWidget):
+    """Create or fetch Program rows from CSV data.
 
     The widget delegates curriculum and course parsing to CurriculumWidget
-    and CourseWidget then assembles a :class:CurriculumCourse instance from
+    and CourseWidget then assembles a :class:Program instance from
     the results.
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(CurriculumCourse)
+        super().__init__(Program)
         self.curriculm_w = CurriculumWidget()
         self.course_w = CourseWidget()
 
-    def clean(self, value, row=None, *args, **kwargs) -> CurriculumCourse | None:
+    def clean(self, value, row=None, *args, **kwargs) -> Program | None:
         """Assemble course_dept, curriculum and course to return a curriculum course."""
         if not value:
             return None
@@ -36,13 +37,13 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
         course_dept_value = row.get("course_dept", "").strip()
         course = self.course_w.clean(value=course_dept_value, row=row)
 
-        curriculum_course, _ = CurriculumCourse.objects.get_or_create(
+        program, _ = Program.objects.get_or_create(
             curriculum=curriculum,
             course=course,
             credit_hours=row.get("credit_hours", "").strip(),
             is_required=row.get("is_required", True).strip(),
         )
-        return curriculum_course
+        return program
 
 
 class CurriculumWidget(widgets.ForeignKeyWidget):
@@ -122,8 +123,6 @@ class CourseWidget(widgets.ForeignKeyWidget):
         if key in self._cache:
             return self._cache.get(key)
 
-        code = make_course_code(department, course_no)  # e.g. AGR121
-
         course, _ = Course.objects.get_or_create(
             number=course_no,
             department=department,
@@ -133,16 +132,14 @@ class CourseWidget(widgets.ForeignKeyWidget):
 
 
 class CourseManyWidget(widgets.ManyToManyWidget):
-    """Parse list_courses and return a list of :class:Course objects.
+    """Parse list_courses and return a list of Course objects.
 
     The widget splits the CSV column on ; and delegates parsing of each
-    token to :class:CourseWidget, creating courses on the fly when needed.
+    token to CourseWidget, creating courses on the fly when needed.
     """
 
     def __init__(self):
-        # Uses ";" as a separator between multiple course codes.
         super().__init__(Course, separator=";", field="code")
-        # Delegates the parsing and creation of individual courses to CourseCodeWidget.
         self.course_w = CourseWidget()
 
     def clean(self, value, row=None, *args, **kwargs) -> list[Course]:
@@ -166,7 +163,10 @@ class CourseManyWidget(widgets.ManyToManyWidget):
 
 
 class CourseCodeWidget(widgets.ForeignKeyWidget):
-    """Resolve a course code into a Course."""
+    """Resolve a course code  into a Course.
+
+    A Course code is <college_code>-<dept_code><course_no>.
+    """
 
     def __init__(self):
         super().__init__(Course, field="code")
@@ -177,59 +177,32 @@ class CourseCodeWidget(widgets.ForeignKeyWidget):
     ) -> Course | None:
         """Return a Course object matching the provided value.
 
-        The optional credit_field argument specifies the CSV column used for
-        credit hours when creating or updating a course.
-
         value example formats:
           - "AGR121" (implies college from row or "COAS")
           - "CAFS-AGR121" (explicit dept AGR from CAFS college)
 
-        If the course does not exist it will be created, otherwise the existing
-        course is returned (and updated when fields differ).
+        If course, college or department do not exist they will be created,
+        otherwise the existing course is returned (and updated when fields differ).
         """
         if not value:
             return None
 
-        dept_code, number, college_code = expand_course_code(value, row=row)
-        department = self.department_w.clean(dept_code, row)
+        dept_code, course_no, college_code = expand_course_code(value, row=row)
+        dept = self.department_w.clean(dept_code, row)
 
-        course_code = make_course_code(department, number)
+        # course_code = make_course_code(dept, course_no)
 
-        qs = Course.objects.filter(code=course_code, department=department)
-
-        count = qs.count()
-
-        if count > 1:
-            raise ValueError(
-                f"Integrity Error: Multiple courses found for {course_code} in department {department}"
-            )
-
-        # Pull optional data from the row
-        credit_hours = (row.get("credit_hours") or "").strip()  # always str for mypy
         title_raw = row.get("course_title") if row else None
 
-        if count == 0:
-            credit_hours = int(credit_hours) if credit_hours.isdigit() else 3
-
-            course = Course.objects.create(
-                number=number,
-                department=cast(Department, department),
-                credit_hours=credit_hours,
-                title=title_raw or value,
-            )
-        else:
-            course = qs.get()
-            updated = False
-            if title_raw and course.title != title_raw:
-                course.title = title_raw
-                updated = True
-            if credit_hours and str(credit_hours).strip().isdigit():
-                cr_val = int(credit_hours)
-                if cr_val != course.credit_hours:
-                    course.credit_hours = cr_val
-                    updated = True
-            if updated:
-                course.save(update_fields=["title", "credit_hours"])
+        course, _ = Course.objects.get_or_create(
+            department=dept,
+            course_no=course_no,
+        )
+        # defaults are ignore in case of existance
+        # since we want to update in all case, just doing it.
+        if title_raw and course.title != title_raw:
+            course.title = title_raw
+            course.save(update_fields=["title"])
 
         return course
 
@@ -238,13 +211,15 @@ class CollegeWidget(widgets.ForeignKeyWidget):
     """Return or create the College referenced by college_code."""
 
     def __init__(self):
+        # field is a Model attribute used to identify uniquely the instances.
+        # if not set then default to pk
         super().__init__(College, field="code")
 
-    def clean(self, value, row=None, *args, **kwargs) -> College | None:
-        """Return or create the College referenced by college_code."""
-        if not value:
-            return None
+    def clean(self, value, row=None, *args, **kwargs) -> College:
+        """Return or create the College referenced by college_code.
 
+        Defaults to COAS.
+        """
         code = (value or "COAS").strip().upper()
         college, _ = College.objects.get_or_create(code=code)
 
@@ -255,48 +230,21 @@ class DepartmentWidget(widgets.ForeignKeyWidget):
     """Return or create the Department referenced by course_dept and college_code."""
 
     def __init__(self):
-        super().__init__(Department, field="course_dept")
+        super().__init__(Department, field="code")
         self.college_w = CollegeWidget()
 
-    def clean(self, value, row=None, *args, **kwargs) -> Department | None:
-        """Return or create the Department referenced by course_dept and college_code."""
-        if not value:
-            return None
+    def clean(self, value, row=None, *args, **kwargs) -> Department:
+        """Return or create the Department using course_dept and college_code.
 
-        dept_short_name = value.strip().upper()
+        If nothing passed, return a default value.
+        """
+        dept_short_name = (value or "").strip().upper()
+        if not dept_short_name:
+            return Department.get_default()
+
         college = self.college_w.clean((row.get("college_code") or "").strip())
 
         department, _ = Department.objects.get_or_create(
             short_name=dept_short_name, college=college
         )
         return department
-
-
-class DepartmentManyWidget(widgets.ManyToManyWidget):
-    """Parse list_dept and return a list of :class:Deparments objects.
-
-    The widget splits the CSV column on ; and delegates parsing of each
-    token to :class:CourseWidget, creating courses on the fly when needed.
-    """
-
-    def __init__(self):
-        super().__init__(Department, separator=";", field="code")
-        self.department_w = DepartmentWidget()
-
-    def clean(self, value, row=None, *args, **kwargs) -> list[Course]:
-        """Returns a list of Departments instances parsed from the provided CSV value.
-
-        If value is empty or missing, returns an empty list (no departement associated).
-        """
-        if not value:
-            return []
-
-        departements = []
-        for token in value.split(self.separator):
-            token = token.strip()
-            if token:
-                dept = self.department_w.clean(token, row)
-                if dept:
-                    departements.append(dept)
-
-        return departements

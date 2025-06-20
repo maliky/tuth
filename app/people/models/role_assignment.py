@@ -14,7 +14,6 @@ class RoleAssignment(models.Model):
     """Period during which a user holds a specific role.
 
     Example:
-        >>> from app.people.models import RoleAssignment
         >>> RoleAssignment.objects.create(
         ...     user=user,
         ...     role=UserRole.REGISTRAR,

@@ -18,7 +18,7 @@ from tablib import Dataset
 
 from app.academics.admin.resources import (  # noqa: F401
     CourseResource,
-    CurriculumCourseResource,
+    ProgramResource,
 )
 from app.academics.models.college import College  # noqa: F401
 from app.people.admin.resources import FacultyResource
@@ -76,7 +76,7 @@ class Command(BaseCommand):
             ("Schedule", ScheduleResource),
             ("Course", CourseResource),  # and College
             ("semester", SemesterResource),  # and Academic year
-            ("CurriculumCourse", CurriculumCourseResource),
+            ("Program", ProgramResource),
             ("Section", SectionResource),
             ("Session", SessionResource),  # and Faculty, Room and Space
         ]

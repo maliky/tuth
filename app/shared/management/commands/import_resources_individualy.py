@@ -17,7 +17,7 @@ from tablib import Dataset
 
 from app.academics.admin.resources import (  # noqa: F401
     CourseResource,
-    CurriculumCourseResource,
+    ProgramResource,
 )
 from app.people.admin.resources import FacultyResource
 from app.shared.auth.helpers import ensure_superuser
@@ -41,7 +41,7 @@ class Command(BaseCommand):
         "schedule.csv": ("Schedule", ScheduleResource),
         "course.csv": ("Course", CourseResource),  # + College
         "semester.csv": ("Semester", SemesterResource),  # + AcademicYear
-        "curriculum_course.csv": ("CurriculumCourse", CurriculumCourseResource),
+        "program.csv": ("Program", ProgramResource),
         "section.csv": ("Section", SectionResource),
         "session.csv": ("Session", SessionResource),  # + Faculty / Room
     }

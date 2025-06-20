@@ -9,7 +9,7 @@ from app.timetable.admin.registers.session import SessionAdmin
 from app.timetable.admin.resources.core import AcademicYearResource, SemesterResource
 from app.timetable.admin.resources.section import SectionResource
 
-from .inlines import ReservationInline, SectionInline, SemesterInline
+from .inlines import SectionInline, SemesterInline
 
 __all__ = [
     "AcademicYearAdmin",
@@ -20,6 +20,5 @@ __all__ = [
     "SectionResource",
     "AcademicYearResource",
     "SemesterResource",
-    "ReservationInline",
     "SessionAdmin",
 ]

@@ -1,18 +1,6 @@
-"""Constants for scheduling and reservations.
+"""Constants for scheduling."""
 
-Currently this includes the :class:StatusReservation enumeration used to
-track the life cycle of a student's reservation of a section.
-"""
-
-from django.db import models
 from django.db.models import IntegerChoices
-
-
-class StatusReservation(models.TextChoices):
-    CANCELLED = "cancelled", "Cancelled"
-    PAID = "paid", "Paid"
-    REQUESTED = "requested", "Requested"
-    VALIDATED = "validated", "Validated"
 
 
 class SEMESTER_NUMBER(IntegerChoices):

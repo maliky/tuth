@@ -4,7 +4,7 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from guardian.shortcuts import assign_perm
 
-from app.people.models import RoleAssignment
+from app.people.models.role_assignment import RoleAssignment
 from app.shared.auth.perms import MODEL_APP, OBJECT_PERM_MATRIX
 
 # def get_content_type(model_name):

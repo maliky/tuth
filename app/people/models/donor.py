@@ -13,7 +13,6 @@ class Donor(AbstractPerson):
     """Contact information for donors supporting students.
 
     Example:
-        >>> from app.people.models import Donor
         >>> user = User.objects.create_user(username="donor")
         >>> Donor.objects.create(user=user, donor_id="DN001")
 

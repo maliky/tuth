@@ -1,5 +1,5 @@
-"""
-Reusable fixtures for reservation-related tests.
+"""Reusable fixtures.
+
 pytest auto-discover it.
 """
 # conftest.py
@@ -13,14 +13,15 @@ from django.contrib.auth.models import User
 
 from app.academics.models.college import College
 from app.academics.models.course import Course
-from app.people.models.student import Student
-from app.people.models.staffs import Faculty, Staff
 from app.academics.models.department import Department
+from app.people.models.staffs import Faculty, Staff
+from app.people.models.student import Student
 from app.spaces.models.core import Room, Space
 from app.timetable.models.academic_year import AcademicYear
+from app.timetable.models.schedule import Schedule
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
-from app.timetable.models.session import Schedule, Session
+from app.timetable.models.session import Session
 
 # ─── reference data ───────────────────────────────────────────
 

@@ -2,7 +2,8 @@
 
 from django.contrib import admin
 
-from app.registry.models import ClassRoster, Grade
+from app.registry.models.class_roster import ClassRoster
+from app.registry.models.grade import Grade
 
 
 @admin.register(Grade)

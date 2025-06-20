@@ -1,13 +1,13 @@
 """Actions module."""
 
 # app/academics/admin/actions.py
-from django.contrib import admin, messages
-from django.shortcuts import render, redirect
 from django import forms
+from django.contrib import admin, messages
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
+from django.shortcuts import redirect, render
 
-
-from app.academics.models import Curriculum, College  # the target model
+from app.academics.models.college import College
+from app.academics.models.curriculum import Curriculum
 
 
 @admin.action(description="Attach / update curriculum on selected prerequisites")

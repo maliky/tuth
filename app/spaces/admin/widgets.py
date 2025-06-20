@@ -2,8 +2,7 @@
 
 from import_export import widgets
 
-from app.spaces.models import Space
-from app.spaces.models.core import Room
+from app.spaces.models.core import Room, Space
 
 
 class SpaceWidget(widgets.ForeignKeyWidget):

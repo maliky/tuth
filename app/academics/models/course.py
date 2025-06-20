@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from django.db import models
 
-from app.academics.choices import CREDIT_NUMBER, LEVEL_NUMBER
+from app.academics.choices import LEVEL_NUMBER
 from app.shared.utils import make_course_code
 from app.academics.models.curriculum import Curriculum
 
@@ -13,7 +13,6 @@ class Course(models.Model):
     """University catalogue entry describing a single course offering.
 
     Example:
-        >>> from app.academics.models import Course, Department, College
         >>> COAS = College.get_default()
         >>> MATH = Departement.objects.create(code="COAS", long_name="College of Arts and Sciences")
         >>> Course.objects.create(name="MATH", number="101", title="Algebra", college=coas)
@@ -28,14 +27,12 @@ class Course(models.Model):
         related_name="courses",
     )
     number = models.CharField(max_length=10)  # e.g. 101
-    # the 2 above make the code
-    code = models.CharField(max_length=20, editable=False)
-    # with college must be unique.
 
-    credit_hours = models.PositiveSmallIntegerField(
-        default=CREDIT_NUMBER.THREE, choices=CREDIT_NUMBER.choices
-    )
+    # the above combined make a unique code
+    code = models.CharField(max_length=20, editable=False)
+
     title = models.CharField(max_length=255, blank=True, null=True)
+
     description: models.TextField = models.TextField(blank=True, null=True)
     prerequisites = models.ManyToManyField(
         "self",
@@ -66,8 +63,7 @@ class Course(models.Model):
 
     def _set_code(self):
         if not self.code:
-            dept_short_name = f"{self.department.short_name}"
-            self.code = make_course_code(dept_short_name, number=self.number)
+            self.code = make_course_code(self.department, number=self.number)
 
     # ---------- hooks ----------
     def save(self, *args, **kwargs) -> None:

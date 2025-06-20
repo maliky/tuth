@@ -5,7 +5,9 @@ from datetime import date
 from django.core.exceptions import ValidationError
 
 from app.timetable.utils import validate_subperiod
-from app.timetable.models import AcademicYear, Semester, Term
+from app.timetable.models.academic_year import AcademicYear
+from app.timetable.models.semester import Semester
+from app.timetable.models.term import Term
 
 
 @pytest.mark.django_db

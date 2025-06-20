@@ -1,9 +1,13 @@
 """Test timetable dates module."""
 
-import pytest
 from datetime import date
+
+import pytest
 from django.core.exceptions import ValidationError
-from app.timetable.models import AcademicYear, Semester, Term
+
+from app.timetable.models.academic_year import AcademicYear
+from app.timetable.models.semester import Semester
+from app.timetable.models.term import Term
 
 
 def make_semester(

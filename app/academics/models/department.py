@@ -37,7 +37,7 @@ class Department(models.Model):
         super().save(*args, **kwargs)
 
     @classmethod
-    def get_default(cls):
+    def get_default(cls) -> Department:
         """Return the default Department."""
         default_dept, _ = cls.objects.get_or_create(
             code="DFT",

@@ -1,8 +1,11 @@
 """tests function for payment history of the finance app."""
 
-import pytest
 from decimal import Decimal
-from app.finance.models import FinancialRecord, PaymentHistory
+
+import pytest
+
+from app.finance.models.financial_record import FinancialRecord
+from app.finance.models.payment_history import PaymentHistory
 
 # Fixtures from tests.conftest are automatically available; no explicit
 # pytest_plugins declaration is needed.

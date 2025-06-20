@@ -20,7 +20,6 @@ class Faculty(StatusableMixin, models.Model):
     """Teaching staff profile linked to a :class:Staff record.
 
     Example:
-        >>> from app.people.models import Faculty
         >>> Faculty.objects.create(staff_profile=staff, college=college)
         >>> faculty_profile  # from tests.conftest
 
@@ -87,7 +86,6 @@ class Staff(AbstractPerson):
     """Base class for Staffs.
 
     Example:
-        >>> from app.people.models import Staff
         >>> Staff.objects.create(user=user, staff_id="ST01", department=dept)
         >>> staff_profile  # from tests.conftest
     Side Effects:

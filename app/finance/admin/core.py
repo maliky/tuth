@@ -10,20 +10,15 @@ from app.finance.models.scholarship import Scholarship
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
-    """Admin settings for :class:~app.finance.models.Payment.
+    """Admin settings for Payment."""
 
-    Uses list_display to show reservation, method and recorder and marks
-    created_at as read-only.
-    """
-
-    # Use Payment.__str__ for readability in list views
-    list_display = ("__str__", "reservation", "method", "recorded_by")
+    list_display = ("__str__", "method", "recorded_by")
     readonly_fields = ("created_at",)
 
 
 @admin.register(Scholarship)
 class ScholarshipAdmin(admin.ModelAdmin):
-    """Admin interface for :class:~app.finance.models.Scholarship.
+    """Admin interface forScholarship.
 
     Autocomplete is enabled for donor and student foreign keys and key fields
     are displayed in the list view.

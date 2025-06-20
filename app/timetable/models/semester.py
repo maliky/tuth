@@ -10,7 +10,6 @@ class Semester(models.Model):
     """Major section of academic year (e.g. semester 1, 2 or 3 vacations).
 
     Example:
-        >>> from app.timetable.models import Semester
         >>> Semester.objects.create(academic_year=year, number=1)
     """
 

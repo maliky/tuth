@@ -5,12 +5,13 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 
 from app.timetable.admin.resources.session import ScheduleResource, SessionResource
-from app.timetable.models.session import Schedule, Session
+from app.timetable.models.schedule import Schedule
+from app.timetable.models.session import Session
 
 
 @admin.register(Session)
 class SessionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin configuration for :class:~app.timetable.models.Session.
+    """Admin configuration for Session.
 
     list_display exposes schedule, room and related section details. The
     list can be filtered by weekday or space.
@@ -20,16 +21,18 @@ class SessionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     list_display = (
         "schedule",
         "room",
-        "section__course",
+        "section__program__course",
         "section__semester",
         "section__number",
         "section__faculty",
     )
     search_fields = ("section",)
-    # is it possible to filter per space?
     list_filter = ("schedule__weekday", "room__space")
-    # if already in filter remove from here
-    # autocomplete_fields = ("room",)
+    # useful when creating new schedules
+    autocomplete_fields = (
+        "schedule",
+        "room",
+    )
 
 
 @admin.register(Schedule)
@@ -43,3 +46,8 @@ class ScheduleAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     list_display = ("weekday", "start_time", "end_time")
     list_filter = ("weekday",)
     search_fields = ("weekday",)
+    # useful when creating new schedules
+    autocomplete_fields = (
+        "weekday",
+        "start_time",
+    )

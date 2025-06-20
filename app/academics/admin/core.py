@@ -5,29 +5,27 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 
 from app.academics.admin.actions import update_curriculum
-from app.academics.models import (
-    College,
-    Course,
-    Curriculum,
-    Prerequisite,
-    Department,
-)
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.college import College
+from app.academics.models.course import Course
+from app.academics.models.curriculum import Curriculum
+from app.academics.models.department import Department
+from app.academics.models.prerequisite import Prerequisite
+from app.academics.models.program import Program
 from app.timetable.admin.inlines import SectionInline
 
 from .filters import CurriculumFilter
 from .inlines import (
-    CurriculumCourseInline,
     PrerequisiteInline,
+    ProgramInline,
     RequiresInline,
 )
 from .resources import (
     CollegeResource,
     CourseResource,
-    CurriculumCourseResource,
     CurriculumResource,
-    PrerequisiteResource,
     DepartmentResource,
+    PrerequisiteResource,
+    ProgramResource,
 )
 
 
@@ -100,7 +98,7 @@ class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     list_display = ("short_name", "long_name", "college")
     list_filter = "college"
     autocomplete_fields = ("college",)
-    inlines = [CurriculumCourseInline]
+    inlines = [ProgramInline]
 
     # list_selected_relate reduces the number of queries in db
     list_select_related = ("college",)
@@ -137,16 +135,16 @@ class DepartmentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     )
 
 
-@admin.register(CurriculumCourse)
-class CurriculumCourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin screen for :class:~app.academics.models.CurriculumCourse.
+@admin.register(Program)
+class ProgramAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+    """Admin screen for :class:~app.academics.models.Program.
 
     list_display shows the curriculum and related course while
     autocomplete_fields make lookups faster. list_select_related joins
     both relations for efficient queries.
     """
 
-    resource_class = CurriculumCourseResource
+    resource_class = ProgramResource
     list_display = ("curriculum", "course")
     autocomplete_fields = ("curriculum", "course")
     list_select_related = ("curriculum", "course")

@@ -11,7 +11,6 @@ class Term(models.Model):
     """One of the sub-periods that divide a semester.
 
     Example:
-        >>> from app.timetable.models import Term
         >>> Term.objects.create(semester=semester, number=1)
     """
 

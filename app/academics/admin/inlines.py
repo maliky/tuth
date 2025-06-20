@@ -2,7 +2,8 @@
 
 from django.contrib import admin
 
-from app.academics.models import Prerequisite, CurriculumCourse
+from app.academics.models.prerequisite import Prerequisite
+from app.academics.models.program import Program
 
 
 class RequiresInline(admin.TabularInline):
@@ -25,9 +26,9 @@ class PrerequisiteInline(admin.TabularInline):
     autocomplete_fields = ("course",)
 
 
-class CurriculumCourseInline(admin.TabularInline):
+class ProgramInline(admin.TabularInline):
     """Inline for linking courses to a curriculum."""
 
-    model = CurriculumCourse
+    model = Program
     extra = 0
     autocomplete_fields = ("course",)

@@ -10,14 +10,13 @@ from app.academics.admin.widgets import (
     CurriculumWidget,
     DepartmentWidget,
 )
-from app.academics.models import (
-    College,
-    Course,
-    Curriculum,
-    CurriculumCourse,
-    Prerequisite,
-    Department,
-)
+
+from app.academics.models.college import College
+from app.academics.models.course import Course
+from app.academics.models.curriculum import Curriculum
+from app.academics.models.program import Program
+from app.academics.models.prerequisite import Prerequisite
+from app.academics.models.department import Department
 
 
 class CurriculumResource(resources.ModelResource):
@@ -118,7 +117,7 @@ class CourseResource(resources.ModelResource):
     """
 
     number_f = fields.Field(attribute="number", column_name="course_no")  # 121
-    title = fields.Field(attribute="title", column_name="course_title")
+    title_f = fields.Field(attribute="title", column_name="course_title")
 
     department_f = fields.Field(
         attribute="department", column_name="course_dept", widget=DepartmentWidget()
@@ -188,8 +187,8 @@ class CollegeResource(resources.ModelResource):
         )
 
 
-class CurriculumCourseResource(resources.ModelResource):
-    """Import curriculum-course rows with a curriculum name and course no and dept."""
+class ProgramResource(resources.ModelResource):
+    """Import a program  curriculum name and course no and dept."""
 
     curriculum_f = fields.Field(
         attribute="curriculum",
@@ -205,7 +204,7 @@ class CurriculumCourseResource(resources.ModelResource):
     credit_hours_f = fields.Field(attribute="credit_hours", column_name="credit_hours")
 
     class Meta:
-        model = CurriculumCourse
+        model = Program
         import_id_fields = (
             "curriculum_f",
             "course_f",

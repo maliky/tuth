@@ -3,10 +3,10 @@
 from import_export import fields, resources
 
 from app.people.admin.widgets import StaffProfileWidget
-from app.people.models import Student
 from app.people.models.staffs import Faculty, Staff
+from app.people.models.student import Student
 from app.people.utils import mk_username, split_name
-from app.registry.models import Registration
+from app.registry.models.registration import Registration
 
 
 class DirectoryContactResource(resources.ModelResource):
@@ -93,5 +93,4 @@ class RegistrationResource(resources.ModelResource):
             "student",
             "section",
             "status",
-            "date_latest_reservation",
         )

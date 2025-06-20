@@ -20,7 +20,7 @@ class Document(StatusableMixin, models.Model):
     profile models (students, staff, etc.).
 
     Example:
-        >>> from app.registry.models import Document
+        >>> from app.registry.models.documnets import Document
         >>> doc = Document.objects.create(
         ...     profile=student_profile,
         ...     file="id.pdf",

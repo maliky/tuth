@@ -4,11 +4,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List
 
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 
+from app.academics.models.course import Course
+from app.academics.models.curriculum import Curriculum
+
 if TYPE_CHECKING:
-    from app.spaces.models import Room
+    from app.spaces.models.core import Room
 
 
 class Section(models.Model):
@@ -23,12 +27,13 @@ class Section(models.Model):
         >>> Section.objects.create(course=course, semester=semester)
 
     Side Effects:
-        Section numbers auto-increment and current_registrations
-        are adjusted by reservation signals.
+        Section numbers auto-increment
     """
 
     semester = models.ForeignKey("timetable.Semester", on_delete=models.PROTECT)
-    course = models.ForeignKey("academics.Course", on_delete=models.PROTECT)
+    program = models.ForeignKey(
+        "academics.Program", on_delete=models.CASCADE, related_name="sections"
+    )
     number = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
     faculty = models.ForeignKey(
         "people.Faculty",
@@ -44,7 +49,22 @@ class Section(models.Model):
     # to be defined by Admin & VPA
     max_seats = models.PositiveIntegerField(default=30, validators=[MinValueValidator(3)])
 
-    # ---------- display helpers ----------
+    @property
+    def course(self) -> Course:
+        """Return the Course associated with the program of this section."""
+        course = self.program.course
+        if not course:
+            raise ValidationError("Course has to be set.")
+        return course
+
+    @property
+    def curriculum(self) -> Curriculum:
+        """Return the Curriculum associated with the program of this section."""
+        curriculum = self.program.curriculum
+        if not curriculum:
+            raise ValidationError("Curriculum has to be set.")
+        return self.program.curriculum
+
     @property
     def spaces(self) -> List[Room]:
         """Return a list of all Room instances in which this section meets."""
@@ -96,8 +116,8 @@ class Section(models.Model):
             )
         ]
         indexes = [
-            models.Index(fields=["semester", "course"]),
-            models.Index(fields=["semester", "course", "number"]),
-            models.Index(fields=["semester", "course", "number", "faculty"]),
+            models.Index(fields=["semester", "program"]),
+            models.Index(fields=["semester", "program", "number"]),
+            models.Index(fields=["semester", "program", "number", "faculty"]),
         ]
-        ordering = ["semester", "course", "number"]
+        ordering = ["semester", "program", "number"]

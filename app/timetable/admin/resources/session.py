@@ -6,7 +6,8 @@ from import_export.widgets import TimeWidget
 from app.spaces.admin.widgets import RoomWidget
 from app.timetable.admin.widgets.section import SectionWidget
 from app.timetable.admin.widgets.session import ScheduleWidget, WeekdayWidget
-from app.timetable.models.session import Schedule, Session
+from app.timetable.models.schedule import Schedule
+from app.timetable.models.session import Session
 
 
 class ScheduleResource(resources.ModelResource):

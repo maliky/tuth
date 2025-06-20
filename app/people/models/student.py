@@ -15,7 +15,6 @@ class Student(AbstractPerson):
     """Extra academic information for enrolled students.
 
     Example:
-        >>> from app.people.models import Student
         >>> user = User.objects.create_user(username="stud")
         >>> s = Student.objects.create(user=user, enrollment_semester=semester)
         >>> s.student_id  # auto-set from user id

@@ -13,7 +13,6 @@ class Curriculum(StatusableMixin, models.Model):
     """Set of courses that make up a degree programme within a college.
 
     Example:
-        >>> from app.academics.models import Curriculum, College
         >>> col = College.objects.create(code="COAS", long_name="Arts and Sciences")
         >>> Curriculum.objects.create(short_name="BSCS", college=col)
 
@@ -29,7 +28,7 @@ class Curriculum(StatusableMixin, models.Model):
     )
     courses = models.ManyToManyField(
         "academics.Course",
-        through="academics.CurriculumCourse",
+        through="academics.Program",
         related_name="curricula",  # <-- reverse accessor course.curricula
         blank=True,
     )

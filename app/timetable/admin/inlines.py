@@ -1,10 +1,10 @@
 """app.timetable.Inlines modules."""
 
-from app.timetable.models.reservation import Reservation
-from app.timetable.models.session import Session
 from django.contrib import admin
 
-from app.timetable.models import Section, Semester
+from app.timetable.models.section import Section
+from app.timetable.models.semester import Semester
+from app.timetable.models.session import Session
 
 
 class SemesterInline(admin.TabularInline):
@@ -42,24 +42,3 @@ class SectionInline(admin.TabularInline):
     )
     readonly_fields = ("current_registrations",)
     ordering = ("semester__start_date", "number")
-
-
-class ReservationInline(admin.TabularInline):
-    """Inline for :class:~app.timetable.models.Reservation records.
-
-    Shows each reservation with status and credit hour snapshot.
-    """
-
-    model = Reservation
-    extra = 0
-    fields = (
-        "student",
-        "section",
-        "status",
-        "date_requested",
-        "credit_hours",
-    )
-    readonly_fields = (
-        "date_requested",
-        "credit_hours",
-    )

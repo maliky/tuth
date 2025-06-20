@@ -7,7 +7,7 @@ class Grade(models.Model):
     """Letter/numeric grade awarded to a student for a Section.
 
     Example:
-        >>> from app.registry.models import Grade
+        >>> from app.registry.models.grade import Grade
         >>> Grade.objects.create(
         ...     student=student_profile,   # check test factories
         ...     section=section_factory(1),

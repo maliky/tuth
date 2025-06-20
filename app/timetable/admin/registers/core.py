@@ -6,7 +6,8 @@ from import_export.admin import ImportExportModelAdmin
 
 from app.timetable.admin.inlines import SemesterInline
 from app.timetable.admin.resources.core import SemesterResource
-from app.timetable.models import AcademicYear, Semester
+from app.timetable.models.academic_year import AcademicYear
+from app.timetable.models.semester import Semester
 
 
 @admin.register(AcademicYear)

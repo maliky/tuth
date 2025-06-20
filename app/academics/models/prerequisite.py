@@ -10,7 +10,6 @@ class Prerequisite(models.Model):
     """Relationship describing that one course must precede another.
 
     Example:
-        >>> from app.academics.models import Prerequisite
         >>> Prerequisite.objects.create(course=course, prerequisite_course=other_course)
 
     Side Effects:

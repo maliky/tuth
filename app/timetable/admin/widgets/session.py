@@ -2,9 +2,10 @@
 
 from import_export import widgets
 
-from app.timetable.choices import WEEKDAYS_NUMBER
 from app.spaces.admin.widgets import RoomCodeWidget
-from app.timetable.models.session import Schedule, Session
+from app.timetable.choices import WEEKDAYS_NUMBER
+from app.timetable.models.schedule import Schedule
+from app.timetable.models.session import Session
 
 
 class SessionWidget(widgets.ForeignKeyWidget):

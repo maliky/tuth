@@ -5,7 +5,7 @@ from __future__ import annotations
 from django.db import models
 from django.db.models import QuerySet
 
-from app.people.models import Student
+from app.people.models.student import Student
 from app.registry.choices import StatusRegistration
 
 
@@ -13,7 +13,7 @@ class ClassRoster(models.Model):
     """Container for the list of students enrolled in a section.
 
     Example:
-        >>> from app.registry.models import ClassRoster
+        >>> from app.registry.models.class_roster import ClassRoster
         >>> roster = ClassRoster.objects.create(section=section)
         >>> roster.students.count()
         0
