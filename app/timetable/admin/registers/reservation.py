@@ -8,14 +8,14 @@ from django.contrib import admin
 
 @admin.register(Reservation)
 class ReservationAdmin(admin.ModelAdmin):
-    """Admin interface for :class:`~app.timetable.models.Reservation`.
+    """Admin interface for :class:~app.timetable.models.Reservation.
 
-    ``list_display`` shows student, section, status and fee details. Two custom
+    list_display shows student, section, status and fee details. Two custom
     actions allow validating or marking reservations as paid.
 
     Example:
-        Select reservations and choose **Validate reservation** to confirm
-        them or **Mark paid** once payment is received.
+        Select reservations and choose Validate reservation to confirm
+        them or Mark paid once payment is received.
     """
 
     list_display = (

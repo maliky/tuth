@@ -16,7 +16,7 @@ from app.shared.status.mixins import StatusHistory, StatusableMixin
 class Document(StatusableMixin, models.Model):
     """File uploaded to support a user profile.
 
-    The ``profile`` generic relation allows attaching documents to different
+    The profile generic relation allows attaching documents to different
     profile models (students, staff, etc.).
 
     Example:
@@ -28,7 +28,7 @@ class Document(StatusableMixin, models.Model):
         ... )
         >>> doc.set_pending(author=None)
     Side Effects:
-        Status changes are tracked via ``status_history``.
+        Status changes are tracked via status_history.
     """
 
     # ! the folowing 2 are not too clear. needs clarifications
@@ -44,7 +44,7 @@ class Document(StatusableMixin, models.Model):
     )
 
     def current_status(self) -> Optional[StatusHistory]:
-        """Return the most recent status entry or ``None`` if empty."""
+        """Return the most recent status entry or None if empty."""
 
         return cast(Optional[StatusHistory], self.status_history.first())
 

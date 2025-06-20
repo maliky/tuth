@@ -11,8 +11,8 @@ class FinancialRecord(models.Model):
     """Financial snapshot for a student.
 
     Tracks the overall balance and clearance status for a student. Individual
-    payments are stored as :class:`~app.finance.models.PaymentHistory` instances
-    via the ``payments`` related name.
+    payments are stored as :class:~app.finance.models.PaymentHistory instances
+    via the payments related name.
 
     Attributes:
         student (people.Student): Owner of the record.
@@ -53,7 +53,7 @@ class SectionFee(models.Model):
 
     Attributes:
         section (timetable.Section): Section the fee applies to.
-        fee_type (str): Type of fee as defined in :class:`FeeType`.
+        fee_type (str): Type of fee as defined in :class:FeeType.
         amount (Decimal): Monetary value of the fee.
 
     Example:

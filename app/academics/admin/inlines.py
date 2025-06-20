@@ -6,7 +6,7 @@ from app.academics.models import Prerequisite, CurriculumCourse
 
 
 class RequiresInline(admin.TabularInline):
-    """Inline editor for :class:`~app.academics.models.Prerequisite` needed by a course."""
+    """Inline editor for :class:~app.academics.models.Prerequisite needed by a course."""
 
     model = Prerequisite
     fk_name = "course"

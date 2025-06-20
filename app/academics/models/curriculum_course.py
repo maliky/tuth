@@ -8,14 +8,14 @@ from app.academics.choices import CREDIT_NUMBER
 
 
 class CurriculumCourse(models.Model):
-    """Map :class:`Curriculum` instances to their constituent courses.
+    """Map :class:Curriculum instances to their constituent courses.
 
     Example:
         >>> from app.academics.models import CurriculumCourse
         >>> CurriculumCourse.objects.create(curriculum=curriculum, course=course)
 
     Side Effects:
-        ``save()`` defaults ``credit_hours`` to the course value when missing.
+        save() defaults credit_hours to the course value when missing.
     """
 
     curriculum = models.ForeignKey(
@@ -47,11 +47,11 @@ class CurriculumCourse(models.Model):
         )
 
     def __str__(self) -> str:  # pragma: no cover
-        """Return ``Curriculum <-> Course`` for readability."""
+        """Return Curriculum <-> Course for readability."""
         return f"{self.curriculum} <-> {self.course}"
 
     def save(self, *args, **kwargs) -> None:
-        """Default ``credit_hours`` to the course value when unset."""
+        """Default credit_hours to the course value when unset."""
         if self.credit_hours is None:
             self.credit_hours = self.course.credit_hours
 

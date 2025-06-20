@@ -4,7 +4,7 @@ from typing import Any
 
 from import_export import fields, resources
 
-from app.academics.admin.widgets import DepartmentWidget
+from app.academics.admin.widgets import CourseWidget
 from app.people.admin.widgets import FacultyWidget
 from app.timetable.admin.widgets.core import SemesterWidget
 from app.timetable.models.section import Section
@@ -28,7 +28,7 @@ class SectionResource(resources.ModelResource):
         # could be other course columns
         column_name="course_dept",
         attribute="course",
-        widget=DepartmentWidget(),
+        widget=CourseWidget(),
     )
     number = fields.Field(column_name="section_no", attribute="number")
 

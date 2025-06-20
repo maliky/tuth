@@ -4,8 +4,8 @@ import pytest
 from decimal import Decimal
 from app.finance.models import FinancialRecord, PaymentHistory
 
-# Fixtures from ``tests.conftest`` are automatically available; no explicit
-# ``pytest_plugins`` declaration is needed.
+# Fixtures from tests.conftest are automatically available; no explicit
+# pytest_plugins declaration is needed.
 
 
 @pytest.mark.django_db

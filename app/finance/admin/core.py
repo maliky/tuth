@@ -10,10 +10,10 @@ from app.finance.models.scholarship import Scholarship
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
-    """Admin settings for :class:`~app.finance.models.Payment`.
+    """Admin settings for :class:~app.finance.models.Payment.
 
-    Uses ``list_display`` to show reservation, method and recorder and marks
-    ``created_at`` as read-only.
+    Uses list_display to show reservation, method and recorder and marks
+    created_at as read-only.
     """
 
     # Use Payment.__str__ for readability in list views
@@ -23,7 +23,7 @@ class PaymentAdmin(admin.ModelAdmin):
 
 @admin.register(Scholarship)
 class ScholarshipAdmin(admin.ModelAdmin):
-    """Admin interface for :class:`~app.finance.models.Scholarship`.
+    """Admin interface for :class:~app.finance.models.Scholarship.
 
     Autocomplete is enabled for donor and student foreign keys and key fields
     are displayed in the list view.
@@ -35,7 +35,7 @@ class ScholarshipAdmin(admin.ModelAdmin):
 
 @admin.register(PaymentHistory)
 class PaymentHistoryAdmin(admin.ModelAdmin):
-    """Admin interface for :class:`~app.finance.models.PaymentHistory`.
+    """Admin interface for :class:~app.finance.models.PaymentHistory.
 
     Shows a summary string along with the record, payment method and user.
     Payment date is shown but cannot be edited.

@@ -18,7 +18,7 @@ class Course(models.Model):
         >>> Course.objects.create(name="MATH", number="101", title="Algebra", college=coas)
 
     Side Effects:
-        ``save()`` populates ``code`` from ``name`` and ``number``.
+        save() populates code from name and number.
     """
 
     code = models.CharField(max_length=20, editable=False)
@@ -50,7 +50,7 @@ class Course(models.Model):
     def level(self) -> str:
         """Human-friendly year level derived from the first digit of the course number.
 
-        Returns the enum *label* or "other" when the pattern does not match a known level.
+        Returns the enum label or "other" when the pattern does not match a known level.
         """
         try:
             digit = int(self.number.strip()[0])  # "101" → 1
@@ -67,13 +67,13 @@ class Course(models.Model):
 
     # ---------- hooks ----------
     def save(self, *args, **kwargs) -> None:
-        """Populate ``code`` from ``name`` and ``number`` before saving."""
+        """Populate code from name and number before saving."""
         dept_code = f"{self.departments}"
         self.code = make_course_code(dept_code, number=self.number)
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:  # pragma: no cover
-        """Return the ``CODE - Title`` representation."""
+        """Return the CODE - Title representation."""
         return f"{self.code} - {self.title}"
 
     class Meta:

@@ -22,16 +22,16 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
         # Configure the parent widget to operate on the Staff model so
-        # that ``clean`` returns actual ``Staff`` objects using the
-        # ``staff_id`` field as the lookup key.
+        # that clean returns actual Staff objects using the
+        # staff_id field as the lookup key.
         super().__init__(Staff, field="staff_id")
         # self._cache: dict[str, Staff] = {}
 
     def clean(self, value, row=None, *args, **kwargs) -> Staff | None:
-        """Create or fetch a :class:`Staff` from a full name.
+        """Create or fetch a :class:Staff from a full name.
 
-        The widget splits the display name, creates the corresponding ``User`` if
-        needed and returns the linked ``Staff`` profile so foreign keys can refer to
+        The widget splits the display name, creates the corresponding User if
+        needed and returns the linked Staff profile so foreign keys can refer to
         it directly.
         """
 
@@ -75,7 +75,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
 
 
 class FacultyWidget(widgets.ForeignKeyWidget):
-    """Ensure a :class:`Faculty` entry exists for the given staff name."""
+    """Ensure a :class:Faculty entry exists for the given staff name."""
 
     def __init__(self):
         # field is "id" by default

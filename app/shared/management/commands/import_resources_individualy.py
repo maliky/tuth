@@ -1,6 +1,6 @@
 """Import resources from per-model CSV files located in a directory.
 
-Each file is mapped to a ``ModelResource`` class used for validation and
+Each file is mapped to a ModelResource class used for validation and
 insertion. Running this command requires a superuser and results in database
 records being created or updated for each resource type found.
 """
@@ -28,11 +28,22 @@ from app.timetable.admin.resources.session import SessionResource  # noqa: F401
 
 
 class Command(BaseCommand):
-    """Import data dumps produced by the *split-csv* notebook / script."""
+    """Import data dumps produced by the split-csv notebook / script."""
 
     help = "Import resources from individual CSV files found in a directory."
 
-    #: Mapping **filename → (label, ResourceClass)**
+    def add_arguments(self, parser: CommandParser) -> None:
+        """Register --files_dir option for individual CSV to import."""
+
+        parser.add_argument(
+            "-d",
+            "--dir_path",
+            nargs="?",
+            default="./Seed_data/Models",
+            help="Path to CSV dir with resources data",
+        )
+
+    #: Mapping filename → (label, ResourceClass)
     FILEMAP: dict[str, Tuple[str, type[resources.ModelResource]]] = {
         "faculty.csv": ("Faculty", FacultyResource),
         "room.csv": ("Room", RoomResource),  # + Space
@@ -44,7 +55,7 @@ class Command(BaseCommand):
     }
 
     def _load_csv(self, csv_path: Path, label=None) -> Dataset | None:
-        """Read *path* and return a sanitised `tablib.Dataset`."""
+        """Read path and return a sanitised tablib.Dataset."""
         if not csv_path.exists():
             self.stdout.write(
                 self.style.WARNING(f"↷ skipping {label}: {csv_path.name} missing")
@@ -88,7 +99,7 @@ class Command(BaseCommand):
 
     # ------------------------------------------------------------------ args
     def add_arguments(self, parser: CommandParser) -> None:
-        """Add the ``--dir`` option pointing to the directory of CSV files."""
+        """Add the --dir option pointing to the directory of CSV files."""
 
         parser.add_argument(
             "-d",
@@ -98,7 +109,7 @@ class Command(BaseCommand):
         )
 
     # ---------------------------------------------------------------- handle
-    def handle(self, *args: Any, **opts: Any) -> None:
+    def handle(self, args: Any, opts: Any) -> None:
         """Execute the import for every known CSV file in the directory."""
 
         ensure_superuser(self)

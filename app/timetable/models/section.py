@@ -23,7 +23,7 @@ class Section(models.Model):
         >>> Section.objects.create(course=course, semester=semester)
 
     Side Effects:
-        Section numbers auto-increment and ``current_registrations``
+        Section numbers auto-increment and current_registrations
         are adjusted by reservation signals.
     """
 
@@ -47,7 +47,7 @@ class Section(models.Model):
     # ---------- display helpers ----------
     @property
     def spaces(self) -> List[Room]:
-        """Return a list of all ``Room`` instances in which this section meets."""
+        """Return a list of all Room instances in which this section meets."""
         return [s.room for s in self.sessions.all() if s.room]
 
     @property
@@ -62,7 +62,7 @@ class Section(models.Model):
 
     @property
     def long_code(self) -> str:
-        """Combine semester code and ``short_code`` for uniqueness."""
+        """Combine semester code and short_code for uniqueness."""
         return f"{self.semester} {self.short_code}"
 
     @property

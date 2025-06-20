@@ -44,16 +44,16 @@ class Schedule(models.Model):
 
     @property
     def start_time_str(self) -> str:
-        """Start time formatted as ``HH:MM``."""
+        """Start time formatted as HH:MM."""
         return self.start_time.strftime("%H:%M")
 
     @property
     def end_time_str(self) -> str:
-        """End time formatted as ``HH:MM`` or empty string."""
+        """End time formatted as HH:MM or empty string."""
         return self.end_time.strftime("%H:%M") if self.end_time else ""
 
     def __str__(self):
-        """Return ``weekday: start-end`` for quick inspection in admin."""
+        """Return weekday: start-end for quick inspection in admin."""
         # can we shorten weekday to only have the first 3 char?
         return f"{self.weekday_str}: {self.start_time_str}-{self.end_time_str}"
 
@@ -166,7 +166,7 @@ class Session(models.Model):
         return self.schedule.end_time if self.schedule else ""
 
     def __str__(self):
-        """Return ``Schedule, Room`` for use in admin lists."""
+        """Return Schedule, Room for use in admin lists."""
         return f"{self.schedule}, {self.room}"
 
     def schedule_is_set(self):

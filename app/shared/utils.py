@@ -15,13 +15,13 @@ def expand_course_code(
     Parameters
     ----------
     code : str
-        Raw course code such as ``"AGR121-CFAS"``.
+        Raw course code such as "AGR121-CFAS".
     row : Mapping[str, str] | None, optional
-        Optional CSV row providing a ``college_code`` fallback. The
-        ``college_code`` value is used only when the course code itself
+        Optional CSV row providing a college_code fallback. The
+        college_code value is used only when the course code itself
         does not include a college segment.
     default_college : str, optional
-        College code to use when none is provided. Defaults to ``"COAS"``.
+        College code to use when none is provided. Defaults to "COAS".
 
     Returns
     -------

@@ -26,7 +26,7 @@ from app.timetable.models.session import Schedule, Session
 
 @pytest.fixture
 def college() -> College:
-    # field is `long_name`, not `fullname`
+    # field is long_name, not fullname
     return College.objects.create(code="COAS", long_name="College of Arts and Sciences")
 
 
@@ -59,20 +59,20 @@ def semester(academic_year: AcademicYear) -> Semester:
 
 @pytest.fixture
 def space() -> Space:
-    # model is Space with fields `code` and `full_name`
+    # model is Space with fields code and full_name
     return Space.objects.create(code="AA", full_name="Academic Annex")
 
 
 @pytest.fixture
 def room(space: Space) -> Room:
-    # Room has fields `code` and FK `space`
+    # Room has fields code and FK space
     r = Room.objects.create(code="101", space=space)
     return r
 
 
 @pytest.fixture
 def schedule() -> Schedule:
-    # Schedule has `weekday`, `start_time`, and `end_time`
+    # Schedule has weekday, start_time, and end_time
     now = datetime.now().time()
     return Schedule.objects.create(weekday=1, start_time=now, end_time=now)
 
@@ -101,7 +101,7 @@ def section_factory(
 def session(
     section_factory: Callable[[int], Section], room: Room, schedule: Schedule
 ) -> Session:
-    # Session model has FK `room`, `schedule`, `section`
+    # Session model has FK room, schedule, section
     return Session.objects.create(
         room=room, schedule=schedule, section=section_factory(1)
     )
@@ -135,7 +135,7 @@ def department_factory(college_factory: Callable[[str], College]) -> Callable[..
 
 @pytest.fixture
 def staff_profile(department_factory: Callable[..., Department]) -> Staff:
-    # Staff requires `staff_id`
+    # Staff requires staff_id
     user = User.objects.create_user(username="staff")
     dept = department_factory()
     return Staff.objects.create(user=user, staff_id="ST123", department=dept)
@@ -143,7 +143,7 @@ def staff_profile(department_factory: Callable[..., Department]) -> Staff:
 
 @pytest.fixture
 def faculty_profile(college: College) -> Faculty:
-    # Faculty inherits Staff and adds `staff_id` plus optional fields
+    # Faculty inherits Staff and adds staff_id plus optional fields
     # Reuse staff_profile but override college
     user = User.objects.create_user(username="faculty")
     return Faculty.objects.create(user=user, staff_id="FP001", college=college)
@@ -161,7 +161,7 @@ def superuser() -> User:
 @pytest.fixture
 def college_factory() -> Callable[..., College]:
     def _factory(code: str = "COAS", long_name: Optional[str] = None) -> College:
-        """Create ``College`` with matching ``code`` and ``long_name``."""
+        """Create College with matching code and long_name."""
         return College.objects.create(code=code, long_name=long_name or code)
 
     return _factory

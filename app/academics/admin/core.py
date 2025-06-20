@@ -34,16 +34,16 @@ from .resources import (
 
 @admin.register(Course)
 class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin interface for :class:`~app.academics.models.Course`.
+    """Admin interface for :class:~app.academics.models.Course.
 
     Provides course management with extra tools:
-    * ``list_display`` shows the code, title, credits and college fields.
-    * ``list_filter`` allows filtering by curriculum.
-    * ``inlines`` embed related sections and prerequisite relations.
-    * ``actions`` exposes the ``update_college`` bulk action.
+    - list_display shows the code, title, credits and college fields.
+    - list_filter allows filtering by curriculum.
+    - inlines embed related sections and prerequisite relations.
+    - actions exposes the update_college bulk action.
 
     Example:
-        Select multiple courses and choose **Update college** from the actions
+        Select multiple courses and choose Update college from the actions
         dropdown to assign them all to a different college.
     """
 
@@ -83,16 +83,16 @@ class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 @admin.register(Prerequisite)
 class PrerequisiteAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin interface for :class:`~app.academics.models.Prerequisite`.
+    """Admin interface for :class:~app.academics.models.Prerequisite.
 
     Options configured:
-    * ``list_display`` shows the course, the prerequisite and the curriculum.
-    * ``list_filter`` uses :class:`CurriculumFilter` to narrow by curriculum.
-    * ``actions`` provides ``update_curriculum`` for bulk updates.
+    - list_display shows the course, the prerequisite and the curriculum.
+    - list_filter uses :class:CurriculumFilter to narrow by curriculum.
+    - actions provides update_curriculum for bulk updates.
 
     Example:
         On the prerequisites list page, select rows and run
-        **Attach / update curriculum** to set a curriculum for them.
+        Attach / update curriculum to set a curriculum for them.
     """
 
     resource_class = PrerequisiteResource
@@ -105,14 +105,14 @@ class PrerequisiteAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 @admin.register(Curriculum)
 class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin options for :class:`~app.academics.models.Curriculum`.
+    """Admin options for :class:~app.academics.models.Curriculum.
 
     Key features:
-    * Uses ``BulkActionImportForm`` for import/export with an extra action
+    - Uses BulkActionImportForm for import/export with an extra action
       button.
-    * ``inlines`` manage related curriculum courses inline.
-    * ``list_display`` includes short and long names with the college.
-    * ``list_filter`` allows filtering by college and active state.
+    - inlines manage related curriculum courses inline.
+    - list_display includes short and long names with the college.
+    - list_filter allows filtering by college and active state.
     """
 
     resource_class = CurriculumResource
@@ -129,10 +129,10 @@ class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 @admin.register(College)
 class CollegeAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin settings for :class:`~app.academics.models.College`.
+    """Admin settings for :class:~app.academics.models.College.
 
     Displays the college code and name and provides search capability on both
-    fields via ``list_display`` and ``search_fields``.
+    fields via list_display and search_fields.
     """
 
     resource_class = CollegeResource
@@ -142,9 +142,9 @@ class CollegeAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 @admin.register(Department)
 class DepartmentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin interface for :class:`~app.academics.models.Department`.
+    """Admin interface for :class:~app.academics.models.Department.
 
-    Shows department code, name and college. ``autocomplete_fields`` speeds up
+    Shows department code, name and college. autocomplete_fields speeds up
     college selection when editing a department.
     """
 
@@ -156,10 +156,10 @@ class DepartmentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 @admin.register(CurriculumCourse)
 class CurriculumCourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin screen for :class:`~app.academics.models.CurriculumCourse`.
+    """Admin screen for :class:~app.academics.models.CurriculumCourse.
 
-    ``list_display`` shows the curriculum and related course while
-    ``autocomplete_fields`` make lookups faster. ``list_select_related`` joins
+    list_display shows the curriculum and related course while
+    autocomplete_fields make lookups faster. list_select_related joins
     both relations for efficient queries.
     """
 

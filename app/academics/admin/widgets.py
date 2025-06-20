@@ -12,10 +12,10 @@ from app.shared.utils import expand_course_code, make_course_code
 
 
 class CurriculumCourseWidget(widgets.ForeignKeyWidget):
-    """Create or fetch ``CurriculumCourse`` rows from CSV data.
+    """Create or fetch CurriculumCourse rows from CSV data.
 
-    The widget delegates curriculum and course parsing to ``CurriculumWidget``
-    and ``CourseWidget`` then assembles a :class:`CurriculumCourse` instance from
+    The widget delegates curriculum and course parsing to CurriculumWidget
+    and CourseWidget then assembles a :class:CurriculumCourse instance from
     the results.
     """
 
@@ -46,9 +46,9 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
 
 
 class CurriculumWidget(widgets.ForeignKeyWidget):
-    """Look up or create a :class:`Curriculum` from a short name.
+    """Look up or create a :class:Curriculum from a short name.
 
-    The associated college is determined from ``row['college_code']`` when
+    The associated college is determined from row['college_code'] when
     present. Missing curricula are created automatically.
     """
 
@@ -83,10 +83,10 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
 
 
 class CourseWidget(widgets.ForeignKeyWidget):
-    """Convert ``course_*`` CSV columns into a :class:`Course`.
+    """Convert course_* CSV columns into a :class:Course.
 
-    ``course_dept`` and ``course_no`` identify the course while ``college`` is
-    optional and defaults to ``"COAS"``. Results are cached to avoid duplicate
+    course_dept and course_no identify the course while college is
+    optional and defaults to "COAS". Results are cached to avoid duplicate
     queries when several rows reference the same course.
     """
 
@@ -105,7 +105,7 @@ class CourseWidget(widgets.ForeignKeyWidget):
     ) -> Course | None:
         """Return a Course gotten from dept, no and college_code.
 
-        *Value* is ignored (import-export still passes the column declared in
+        Value is ignored (import-export still passes the column declared in
         the resource, but the info we need is spread across *row*).
         """
         if row is None:
@@ -141,10 +141,10 @@ class CourseWidget(widgets.ForeignKeyWidget):
 
 
 class CourseManyWidget(widgets.ManyToManyWidget):
-    """Parse ``list_courses`` and return a list of :class:`Course` objects.
+    """Parse list_courses and return a list of :class:Course objects.
 
-    The widget splits the CSV column on ``;`` and delegates parsing of each
-    token to :class:`CourseWidget`, creating courses on the fly when needed.
+    The widget splits the CSV column on ; and delegates parsing of each
+    token to :class:CourseWidget, creating courses on the fly when needed.
     """
 
     def __init__(self):
@@ -156,7 +156,7 @@ class CourseManyWidget(widgets.ManyToManyWidget):
     def clean(self, value, row=None, *args, **kwargs) -> list[Course]:
         """Returns a list of Course instances parsed from the provided CSV value.
 
-        If `value` is empty or missing, returns an empty list (no courses associated).
+        If value is empty or missing, returns an empty list (no courses associated).
         """
         if not value:
             return []
@@ -174,10 +174,10 @@ class CourseManyWidget(widgets.ManyToManyWidget):
 
 
 class CourseCodeWidget(widgets.ForeignKeyWidget):
-    """Resolve a course code into a :class:`Course`.
+    """Resolve a course code into a :class:Course.
 
-    Supports optional ``-<college>`` suffixes and falls back to
-    ``row['college']`` or ``"COAS"`` when the suffix is absent. New courses are
+    Supports optional -<college> suffixes and falls back to
+    row['college'] or "COAS" when the suffix is absent. New courses are
     created automatically with data from the import row.
     """
 
@@ -191,12 +191,12 @@ class CourseCodeWidget(widgets.ForeignKeyWidget):
     ) -> Course | None:
         """Return a Course object matching the provided value.
 
-        The optional ``credit_field`` argument specifies the CSV column used for
+        The optional credit_field argument specifies the CSV column used for
         credit hours when creating or updating a course.
 
-        ``value`` example formats:
-          - ``"AGR121"`` (implies college from row or ``"COAS"``)
-          - ``"AGR121-CFAS"`` (explicit college code CFAS)
+        value example formats:
+          - "AGR121" (implies college from row or "COAS")
+          - "AGR121-CFAS" (explicit college code CFAS)
 
         If the course does not exist it will be created, otherwise the existing
         course is returned (and updated when fields differ).
@@ -253,13 +253,13 @@ class CourseCodeWidget(widgets.ForeignKeyWidget):
 
 
 class CollegeWidget(widgets.ForeignKeyWidget):
-    """Return or create the ``College`` referenced by ``college_code``."""
+    """Return or create the College referenced by college_code."""
 
     def __init__(self):
         super().__init__(College, field="code")
 
     def clean(self, value, row=None, *args, **kwargs) -> College | None:
-        """Return or create the ``College`` referenced by ``college_code``."""
+        """Return or create the College referenced by college_code."""
         if not value:
             return None
 
@@ -270,14 +270,14 @@ class CollegeWidget(widgets.ForeignKeyWidget):
 
 
 class DepartmentWidget(widgets.ForeignKeyWidget):
-    """Return or create the ``Department`` referenced by ``course_dept`` and college_code."""
+    """Return or create the Department referenced by course_dept and college_code."""
 
     def __init__(self):
         super().__init__(Department, field="course_dept")
         self.college_w = CollegeWidget()
 
     def clean(self, value, row=None, *args, **kwargs) -> Department | None:
-        """Return or create the ``Department`` referenced by ``course_dept`` and college_code."""
+        """Return or create the Department referenced by course_dept and college_code."""
         if not value:
             return None
         dept_code = value.strip().upper()
@@ -290,10 +290,10 @@ class DepartmentWidget(widgets.ForeignKeyWidget):
 
 
 class DepartmentManyWidget(widgets.ManyToManyWidget):
-    """Parse ``list_dept`` and return a list of :class:`Deparments` objects.
+    """Parse list_dept and return a list of :class:Deparments objects.
 
-    The widget splits the CSV column on ``;`` and delegates parsing of each
-    token to :class:`CourseWidget`, creating courses on the fly when needed.
+    The widget splits the CSV column on ; and delegates parsing of each
+    token to :class:CourseWidget, creating courses on the fly when needed.
     """
 
     def __init__(self):
@@ -303,7 +303,7 @@ class DepartmentManyWidget(widgets.ManyToManyWidget):
     def clean(self, value, row=None, *args, **kwargs) -> list[Course]:
         """Returns a list of Departments instances parsed from the provided CSV value.
 
-        If `value` is empty or missing, returns an empty list (no departement associated).
+        If value is empty or missing, returns an empty list (no departement associated).
         """
         if not value:
             return []

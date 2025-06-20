@@ -68,7 +68,7 @@ class FacultyResource(resources.ModelResource):
 
 
 class StudentResource(resources.ModelResource):
-    """Resource for bulk importing :class:`Student` rows."""
+    """Resource for bulk importing :class:Student rows."""
 
     class Meta:
         model = Student
@@ -84,7 +84,7 @@ class StudentResource(resources.ModelResource):
 
 
 class RegistrationResource(resources.ModelResource):
-    """Resource for bulk importing :class:`Registration` rows."""
+    """Resource for bulk importing :class:Registration rows."""
 
     class Meta:
         model = Registration

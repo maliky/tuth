@@ -19,7 +19,7 @@ class PeopleRepository:
     @staticmethod
     @transaction.atomic
     def get_or_create_faculty(name: str, college: College) -> Faculty:
-        """Return an existing or new ``Faculty`` for the given name and college."""
+        """Return an existing or new Faculty for the given name and college."""
 
         _, first, _, last, _ = split_name(name)
         username = mk_username(first, last, unique=False)

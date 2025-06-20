@@ -10,7 +10,7 @@ from app.shared.status.mixins import StatusHistory
 class StatusHistoryForm(forms.ModelForm):
     """ModelForm for creating status history records.
 
-    The form limits the ``state`` choices to those defined on the related
+    The form limits the state choices to those defined on the related
     model so only valid transitions are offered.
     """
 
@@ -24,7 +24,7 @@ class StatusHistoryForm(forms.ModelForm):
         Parameters
         ----------
         *args, **kwargs
-            Standard Django ``ModelForm`` arguments.
+            Standard Django ModelForm arguments.
         """
 
         super().__init__(*args, **kwargs)

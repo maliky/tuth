@@ -24,7 +24,7 @@ class Registration(StatusableMixin, models.Model):
         >>> Reservation.objects.create(
         ...     student=reg.student,
         ...     section=reg.section,
-        ... )  # signal sets ``date_latest_reservation``
+        ... )  # signal sets date_latest_reservation
         >>> reg.refresh_from_db()
         >>> reg.date_latest_reservation is not None
         True
@@ -32,8 +32,8 @@ class Registration(StatusableMixin, models.Model):
         >>> Registration.objects.create(student=student, section=section)
 
     Side Effects:
-        ``date_latest_reservation`` is updated whenever a
-        :class:`~app.timetable.models.Reservation` is saved.
+        date_latest_reservation is updated whenever a
+        :class:~app.timetable.models.Reservation is saved.
     """
 
     student = models.ForeignKey(
@@ -71,7 +71,7 @@ class Registration(StatusableMixin, models.Model):
 
 @receiver(post_save, sender=Reservation)
 def update_latest_reservation(sender, instance, **kwargs):
-    """Keep ``date_latest_reservation`` in sync with reservation activity."""
+    """Keep date_latest_reservation in sync with reservation activity."""
     reg, _ = Registration.objects.get_or_create(
         student=instance.student, section=instance.section
     )

@@ -20,7 +20,7 @@ class Command(BaseCommand):
     """Drop all tables from the default database.
 
     This command iterates over every table in the current schema and issues a
-    ``DROP TABLE ... CASCADE`` statement. It is useful for resetting a local
+    DROP TABLE ... CASCADE statement. It is useful for resetting a local
     database when starting development from scratch.
 
     Warning:

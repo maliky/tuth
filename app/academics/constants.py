@@ -1,6 +1,6 @@
-"""Constants used by the :mod:`academics` app.
+"""Constants used by the :mod:academics app.
 
-It exposes the ``COURSE_PATTERN`` regular expression, maximum
+It exposes the COURSE_PATTERN regular expression, maximum
 credit load for a student and enumerations for colleges and curriculum
 statuses.
 """

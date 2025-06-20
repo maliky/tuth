@@ -17,7 +17,7 @@ User = get_user_model()
 
 
 class Faculty(StatusableMixin, models.Model):
-    """Teaching staff profile linked to a :class:`Staff` record.
+    """Teaching staff profile linked to a :class:Staff record.
 
     Example:
         >>> from app.people.models import Faculty
@@ -25,7 +25,7 @@ class Faculty(StatusableMixin, models.Model):
         >>> faculty_profile  # from tests.conftest
 
     Side Effects:
-        ``save()`` assigns the default college when none is set.
+        save() assigns the default college when none is set.
     """
 
     staff_profile = models.OneToOneField("people.Staff", on_delete=models.CASCADE)
@@ -91,7 +91,7 @@ class Staff(AbstractPerson):
         >>> Staff.objects.create(user=user, staff_id="ST01", department=dept)
         >>> staff_profile  # from tests.conftest
     Side Effects:
-        ``save()`` from :class:`AbstractPerson` sets ``staff_id``.
+        save() from :class:AbstractPerson sets staff_id.
     """
 
     ID_FIELD = "staff_id"

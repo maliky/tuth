@@ -18,7 +18,7 @@ class SpaceWidget(widgets.ForeignKeyWidget):
         *args,
         **kwargs,
     ) -> Space | None:
-        """Return an optional Space identified by ``code``.
+        """Return an optional Space identified by code.
 
         if it does not exists, creates it.
         """
@@ -34,7 +34,7 @@ class SpaceWidget(widgets.ForeignKeyWidget):
 
 
 class RoomWidget(widgets.ForeignKeyWidget):
-    """Resolve or create a :class:`Room` using ``room_code`` and ``space``."""
+    """Resolve or create a :class:Room using room_code and space."""
 
     def __init__(self):
         super().__init__(Room, field="code")
@@ -63,7 +63,7 @@ class RoomWidget(widgets.ForeignKeyWidget):
 
 
 class RoomCodeWidget(widgets.ForeignKeyWidget):
-    """Create a :class:`Room` from values like ``"AA-01"``."""
+    """Create a :class:Room from values like "AA-01"."""
 
     def __init__(self):
         super().__init__(Room, field="code")

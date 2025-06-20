@@ -18,7 +18,7 @@ class Donor(AbstractPerson):
         >>> Donor.objects.create(user=user, donor_id="DN001")
 
     Side Effects:
-        ``save()`` from :class:`AbstractPerson` populates ``donor_id``.
+        save() from :class:AbstractPerson populates donor_id.
     """
 
     ID_FIELD = "donor_id"

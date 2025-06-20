@@ -29,7 +29,7 @@ def make_semester(
 def make_term(
     sem: Semester, start: date, end: date, number: int = 1, *, persist: bool = False
 ) -> Term:
-    """Return a term instance bound to ``sem``."""
+    """Return a term instance bound to sem."""
 
     term = Term(
         semester=sem,

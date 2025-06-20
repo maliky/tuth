@@ -71,11 +71,11 @@ class Reservation(StatusableMixin, models.Model):
         return tuition_fee + additional_fees
 
     def __str__(self) -> str:
-        """Return ``student -> section (status)``."""
+        """Return student -> section (status)."""
         return f"{self.student} -> {self.section} ({self.status})"
 
     def _check_credit_limit(self) -> None:
-        """Internal helper raising ``ValidationError`` if credit limit exceeded."""
+        """Internal helper raising ValidationError if credit limit exceeded."""
         prospective = self.credit_hours() + self.section.course.credit_hours
         if prospective > MAX_STUDENT_CREDITS:
             raise ValidationError(

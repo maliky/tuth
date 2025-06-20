@@ -1,9 +1,9 @@
 """Authorization related constants.
 
 The objects defined here power the role based access control system.
-``OBJECT_PERM_MATRIX`` maps model names and operations to the roles
+OBJECT_PERM_MATRIX maps model names and operations to the roles
 allowed to perform them.
-``DEFAULT_ROLE_TO_COLLEGE`` and ``MODEL_APP`` help the permissions
+DEFAULT_ROLE_TO_COLLEGE and MODEL_APP help the permissions
 middleware resolve context information.
 """
 

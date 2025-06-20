@@ -21,7 +21,7 @@ def ensure_academic_year_code(code: str) -> AcademicYear:
 
 
 class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
-    """Convert ``YY-YY`` codes into :class:`AcademicYear` objects."""
+    """Convert YY-YY codes into :class:AcademicYear objects."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(AcademicYear, field="code")
@@ -54,7 +54,7 @@ class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
 
 
 class SemesterWidget(widgets.ForeignKeyWidget):
-    """Build a :class:`Semester` from its number and academic year."""
+    """Build a :class:Semester from its number and academic year."""
 
     def __init__(self):
         super().__init__(Semester)  # using pk until start_date can be proven to be uniq
@@ -86,7 +86,7 @@ class SemesterWidget(widgets.ForeignKeyWidget):
 
 
 class SemesterCodeWidget(widgets.ForeignKeyWidget):
-    """Parse ``YY-YY_SemN`` strings into :class:`Semester` objects."""
+    """Parse YY-YY_SemN strings into :class:Semester objects."""
 
     def __init__(self):
         super().__init__(Semester)

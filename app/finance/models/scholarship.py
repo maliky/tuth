@@ -9,7 +9,7 @@ class Scholarship(models.Model):
     """Financial aid linking a donor to a student.
 
     Scholarships can reduce a student's balance in their
-    :class:`~app.finance.models.FinancialRecord` through custom business logic.
+    :class:~app.finance.models.FinancialRecord through custom business logic.
     No signals are attached by default.
 
     Attributes:
@@ -47,5 +47,5 @@ class Scholarship(models.Model):
     conditions = models.TextField(blank=True)
 
     def __str__(self) -> str:  # pragma: no cover
-        """Return ``"donor -> student"`` for readability in admin screens."""
+        """Return "donor -> student" for readability in admin screens."""
         return f"{self.donor} -> {self.student}"

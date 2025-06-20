@@ -120,7 +120,7 @@ def student_dashboard(request):
 def validate_credit_limit(
     student: Student, section: Section, max_credits: int = 18
 ) -> bool:
-    """Return ``True`` if adding ``section`` keeps the student under ``max_credits``."""
+    """Return True if adding section keeps the student under max_credits."""
     reserved_credits = (
         Reservation.objects.filter(
             student=student,

@@ -13,7 +13,7 @@ class Payment(models.Model):
     Attributes:
         reservation (timetable.Reservation): Reservation being paid for.
         amount (Decimal): Value of the transaction.
-        method (str): Payment method from :class:`PaymentMethod`.
+        method (str): Payment method from :class:PaymentMethod.
         recorded_by (people.Staff): Staff member who logged the payment.
         created_at (datetime): Timestamp when the record was created.
 

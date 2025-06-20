@@ -14,7 +14,7 @@ class Prerequisite(models.Model):
         >>> Prerequisite.objects.create(course=course, prerequisite_course=other_course)
 
     Side Effects:
-        ``clean()`` prevents circular dependencies.
+        clean() prevents circular dependencies.
     """
 
     course = models.ForeignKey(

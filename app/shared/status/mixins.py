@@ -15,8 +15,8 @@ class StatusHistory(models.Model):
     """Single entry in the status timeline of another model.
 
     Each row links back to the target object via a generic relation and is
-    created whenever :class:`StatusableMixin` helpers are called.  Receivers of
-    ``post_save`` may react to the addition of a status row.
+    created whenever :class:StatusableMixin helpers are called.  Receivers of
+    post_save may react to the addition of a status row.
 
     Example:
         >>> from app.shared.status.mixins import StatusHistory
@@ -49,10 +49,10 @@ class StatusHistory(models.Model):
 class StatusableMixin(models.Model):
     """Add a status audit trail to any model.
 
-    Inherit from this mixin **before** the concrete model class.  It injects a
-    ``status_history`` generic relation along with helpers that create
-    :class:`StatusHistory` entries (``set_pending``, ``set_approved`` …).  Your
-    model is expected to declare a ``status`` field storing its current state.
+    Inherit from this mixin before the concrete model class.  It injects a
+    status_history generic relation along with helpers that create
+    :class:StatusHistory entries (set_pending, set_approved …).  Your
+    model is expected to declare a status field storing its current state.
 
     Example:
         >>> class MyModel(StatusableMixin, models.Model):
@@ -67,8 +67,8 @@ class StatusableMixin(models.Model):
         'pending'
 
     Side Effects:
-        Creating a status entry may trigger ``post_save`` receivers tied to
-        :class:`StatusHistory`.
+        Creating a status entry may trigger post_save receivers tied to
+        :class:StatusHistory.
     """
 
     status_history = GenericRelation(
@@ -103,7 +103,7 @@ class StatusableMixin(models.Model):
         return self._add_status("rejected", author)
 
     def validate_status(self, allowed: Iterable[Any]) -> None:
-        """Ensure ``self.status`` is an allowed one.
+        """Ensure self.status is an allowed one.
 
         Accept list of tuple or list of str
         """

@@ -3,24 +3,24 @@
 from typing import Optional, cast
 from import_export import widgets
 
-from app.academics.admin.widgets import DepartmentWidget
+from app.academics.admin.widgets import CourseWidget
 from app.people.admin.widgets import FacultyWidget
 from app.timetable.admin.widgets.core import SemesterWidget
 from app.timetable.models.section import Section
 
 
 class SectionWidget(widgets.ForeignKeyWidget):
-    """Create a :class:`Section` from multiple CSV columns."""
+    """Create a :class:Section from multiple CSV columns."""
 
     def __init__(self):
         super().__init__(Section)  # using pk until export is done
-        self.course_w = DepartmentWidget()
+        self.course_w = CourseWidget()
         self.sem_w = SemesterWidget()
         self.faculty_w = FacultyWidget()
 
     # ------------ widget API ------------
     def clean(self, value, row=None, *args, **kwargs) -> Section | None:
-        """Return the ``Section`` referenced by the CSV row."""
+        """Return the Section referenced by the CSV row."""
         if row is None:
             raise ValueError("Row context required")
 
@@ -48,12 +48,12 @@ class SectionWidget(widgets.ForeignKeyWidget):
 
 
 class SectionCodeWidget(widgets.Widget):
-    """Resolve ``YY-YY_SemN:sec_no`` codes into :class:`Section` objects."""
+    """Resolve YY-YY_SemN:sec_no codes into :class:Section objects."""
 
     def __init__(self) -> None:
         super().__init__(Section)
         self.sem_w = SemesterWidget()
-        self.crs_w = DepartmentWidget()
+        self.crs_w = CourseWidget()
 
     def clean(
         self,
@@ -62,7 +62,7 @@ class SectionCodeWidget(widgets.Widget):
         *args,
         **kwargs,
     ) -> Section | None:
-        """Return the ``Section`` identified by the import code string."""
+        """Return the Section identified by the import code string."""
 
         course_dept_value = row.get("course_dept", "").strip()
         course = self.crs_w.clean(value=course_dept_value, row=row)

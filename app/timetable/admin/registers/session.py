@@ -10,9 +10,9 @@ from app.timetable.models.session import Schedule, Session
 
 @admin.register(Session)
 class SessionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin configuration for :class:`~app.timetable.models.Session`.
+    """Admin configuration for :class:~app.timetable.models.Session.
 
-    ``list_display`` exposes schedule, room and related section details. The
+    list_display exposes schedule, room and related section details. The
     list can be filtered by weekday or space.
     """
 
@@ -34,7 +34,7 @@ class SessionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 @admin.register(Schedule)
 class ScheduleAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin interface for :class:`~app.timetable.models.Schedule`.
+    """Admin interface for :class:~app.timetable.models.Schedule.
 
     Allows filtering by weekday and supports import/export operations.
     """

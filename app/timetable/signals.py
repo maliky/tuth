@@ -30,7 +30,7 @@ def autoincrement_section_number(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Reservation)
 def increment_current_registration(sender, instance, created, **kwargs):
-    """Increment ``current_registrations`` when a reservation is validated."""
+    """Increment current_registrations when a reservation is validated."""
     if instance.status != StatusReservation.VALIDATED:
         return
     with transaction.atomic():
@@ -41,7 +41,7 @@ def increment_current_registration(sender, instance, created, **kwargs):
 
 @receiver(post_delete, sender=Reservation)
 def decrement_current_registration(sender, instance, **kwargs):
-    """Decrement ``current_registrations`` when a reservation is removed."""
+    """Decrement current_registrations when a reservation is removed."""
     if instance.status not in [StatusReservation.VALIDATED, StatusReservation.PAID]:
         return
     with transaction.atomic():

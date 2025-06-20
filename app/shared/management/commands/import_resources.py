@@ -37,18 +37,18 @@ from app.timetable.admin.resources.session import (
 
 
 class Command(BaseCommand):
-    """Load sections and sessions from ``cleaned_tscc.csv`` or provided file."""
+    """Load sections and sessions from cleaned_tscc.csv or provided file."""
 
     help = "Import resources from a CSV file"
 
     def add_arguments(self, parser: CommandParser) -> None:
-        """Register ``--file_path`` CLI option for the CSV to import."""
+        """Register --file_path CLI option for the CSV to import."""
 
         parser.add_argument(
             "-f",
             "--file_path",
             nargs="?",
-            default="../Docs/Data/cleaned_tscc.csv",
+            default="./Seed_data/cleaned_tscc.csv",
             help="Path to CSV file with resources data",
         )
 

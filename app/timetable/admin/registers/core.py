@@ -11,10 +11,10 @@ from app.timetable.models import AcademicYear, Semester
 
 @admin.register(AcademicYear)
 class AcademicYearAdmin(GuardedModelAdmin):
-    """Admin settings for :class:`~app.timetable.models.AcademicYear`.
+    """Admin settings for :class:~app.timetable.models.AcademicYear.
 
     Displays academic year information and embeds semesters via
-    ``SemesterInline``. The listing is ordered by start date in descending
+    SemesterInline. The listing is ordered by start date in descending
     order and grouped by the start date hierarchy.
     """
 
@@ -26,10 +26,10 @@ class AcademicYearAdmin(GuardedModelAdmin):
 
 @admin.register(Semester)
 class SemesterAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin configuration for :class:`~app.timetable.models.Semester`.
+    """Admin configuration for :class:~app.timetable.models.Semester.
 
     Provides import/export support and filters semesters by academic year.
-    ``list_display`` shows the academic year, number and date range.
+    list_display shows the academic year, number and date range.
     """
 
     resource_class = SemesterResource

@@ -16,7 +16,7 @@ User = get_user_model()
 
 
 def photo_upload_to(instance: "AbstractPerson", filename: str) -> str:
-    """Store uploads under `photos/<model>/<user-id>/<filename>`."""
+    """Store uploads under photos/<model>/<user-id>/<filename>."""
     _class = instance.__class__.__name__.lower()
     return str(Path("photos") / _class / str(instance.user_id) / filename)
 
@@ -32,7 +32,7 @@ class AbstractPerson(StatusableMixin, models.Model):
         >>> Student.objects.create(user=user, student_id="S1", enrollment_semester=semester)
 
     Side Effects:
-        ``save()`` assigns an ID derived from ``user``.
+        save() assigns an ID derived from user.
     """
 
     ID_FIELD: str | None = None
@@ -144,7 +144,7 @@ class AbstractPerson(StatusableMixin, models.Model):
             raise ValidationError("User must have been saved at this point.")
 
     def _mk_id(self) -> str:
-        """Build a deterministic ID from the *related* user primary key.
+        """Build a deterministic ID from the related user primary key.
 
         Example: user.pk = 42  →  TUID-S0042
         """

@@ -64,9 +64,9 @@ class CurriculumResource(resources.ModelResource):
     def save_instance(self, instance, is_create, row, **kwargs):
         """Handle merge/replace logic for curriculum imports.
 
-        Updated signature to match ``django-import-export`` 4.x which
-        provides ``is_create`` and ``row`` parameters along with
-        keyword-only ``dry_run``.
+        Updated signature to match django-import-export 4.x which
+        provides is_create and row parameters along with
+        keyword-only dry_run.
         """
         dry_run = kwargs.get("dry_run", False)
         exists = instance.pk is not None
@@ -130,7 +130,7 @@ class CurriculumResource(resources.ModelResource):
 class CourseResource(resources.ModelResource):
     """Import / export definition for Course rows.
 
-    Row should come from the *cleaned_tscc.csv* (file with course_dept & course_no columns).
+    Row should come from the cleaned_tscc.csv (file with course_dept & course_no columns).
 
     Columns expected in the CSV (case-sensitive):
         course_dept, course_no, course_title, credit_hours, college_code, prerequisites
@@ -202,7 +202,7 @@ class PrerequisiteResource(resources.ModelResource):
 
 
 class CollegeResource(resources.ModelResource):
-    """Simple import-export resource for :class:`~app.academics.models.College`."""
+    """Simple import-export resource for :class:~app.academics.models.College."""
 
     class Meta:
         model = College
@@ -244,7 +244,7 @@ class CurriculumCourseResource(resources.ModelResource):
 
 
 class DepartmentResource(resources.ModelResource):
-    """Resource for :class:`~app.academics.models.Department`."""
+    """Resource for :class:~app.academics.models.Department."""
 
     class Meta:
         model = Department

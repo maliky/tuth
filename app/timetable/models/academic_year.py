@@ -17,7 +17,7 @@ class AcademicYear(models.Model):
         >>> AcademicYear.objects.create(start_date=date(2025, 9, 1))
 
     Side Effects:
-        ``save()`` computes ``code`` and ``long_name``.
+        save() computes code and long_name.
     """
 
     code = models.CharField(max_length=5, editable=False, unique=True)
@@ -34,7 +34,7 @@ class AcademicYear(models.Model):
                 assert self.end_date.year > self.start_date.year
 
     def save(self, *args, **kwargs) -> None:
-        """Populate derived fields ``long_name`` and ``code`` before saving."""
+        """Populate derived fields long_name and code before saving."""
 
         # setting a default for the end_year
         ys = self.start_date.year

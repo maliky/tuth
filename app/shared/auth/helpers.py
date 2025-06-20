@@ -26,7 +26,7 @@ def ensure_superuser(cmd: BaseCommand) -> None:
 
 
 def ensure_role_groups() -> Dict[str, Group]:
-    """Create missing ``Group`` objects for each user role."""
+    """Create missing Group objects for each user role."""
 
     return {
         role: Group.objects.get_or_create(name=role.capitalize())[0]

@@ -18,7 +18,7 @@ class Curriculum(StatusableMixin, models.Model):
         >>> Curriculum.objects.create(short_name="BSCS", college=col)
 
     Side Effects:
-        Status changes update ``is_active`` via signals.
+        Status changes update is_active via signals.
     """
 
     short_name = models.CharField(max_length=40)

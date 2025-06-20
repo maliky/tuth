@@ -1,16 +1,16 @@
 """Helpers to import section data from CSV.
 
-This module provides :func:`populate_sections_from_csv` which creates the
+This module provides :func:populate_sections_from_csv which creates the
 fundamental timetable objects (academic years, semesters, courses, instructors,
 sessions and sections) from a CSV stream.  It is designed for seeding an empty
-database using the exported ``cleaned_tscc.csv`` file.
+database using the exported cleaned_tscc.csv file.
 """
 
 from __future__ import annotations
 
 
 def parse_int(value: str | None) -> int | None:
-    """Safely convert a string to ``int``.
+    """Safely convert a string to int.
 
     Parameters
     ----------
@@ -20,7 +20,7 @@ def parse_int(value: str | None) -> int | None:
     Returns
     -------
     int | None
-        The integer representation or ``None`` if conversion fails.
+        The integer representation or None if conversion fails.
     """
 
     if value is None:

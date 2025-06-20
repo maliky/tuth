@@ -12,7 +12,7 @@ from app.academics.models import Curriculum, College  # the target model
 
 @admin.action(description="Attach / update curriculum on selected prerequisites")
 def update_curriculum(modeladmin, request, queryset):
-    """Bulk-update the ``curriculum`` FK on selected prerequisites.
+    """Bulk-update the curriculum FK on selected prerequisites.
 
     Works in two steps:
       1. GET  → show a tiny form asking for the Curriculum.
@@ -23,7 +23,7 @@ def update_curriculum(modeladmin, request, queryset):
         """Capture the curriculum for the bulk action.
 
         The form keeps the primary keys of the selected prerequisites in
-        ``_selected_action`` and exposes a ``curriculum`` field for the admin
+        _selected_action and exposes a curriculum field for the admin
         user to pick the destination programme.
         """
 
@@ -58,13 +58,13 @@ def update_curriculum(modeladmin, request, queryset):
 
 @admin.action(description="Attach / update college on selected courses")
 def update_college(modeladmin, request, queryset):
-    """Bulk-set the ``college`` FK on Course rows."""
+    """Bulk-set the college FK on Course rows."""
 
     class _CollegeForm(forms.Form):
         """Collect the target college for the bulk update.
 
-        Like ``_CurriculumForm``, this form stores the selection in
-        ``_selected_action`` so the action can update the chosen course rows on
+        Like _CurriculumForm, this form stores the selection in
+        _selected_action so the action can update the chosen course rows on
         submission.
         """
 

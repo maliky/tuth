@@ -17,7 +17,7 @@ from app.shared.utils import make_course_code
 class BulkActionImportForm(ImportForm):
     """Import form with an extra action selector.
 
-    Adds a choice field named ``action`` so bulk uploads can either merge or
+    Adds a choice field named action so bulk uploads can either merge or
     replace existing curricula. The rest of the import-export behaviour remains
     unchanged.
     """
@@ -29,10 +29,10 @@ class BulkActionImportForm(ImportForm):
 
 
 class CourseForm(forms.ModelForm):
-    """Admin form for ``Course`` with extra curricula handling.
+    """Admin form for Course with extra curricula handling.
 
-    The form exposes a writable ``curricula`` field and sets sensible defaults
-    for ``credit_hours`` and ``college`` based on the course code. These tweaks
+    The form exposes a writable curricula field and sets sensible defaults
+    for credit_hours and college based on the course code. These tweaks
     simplify data entry while keeping the underlying model unchanged.
     """
 
@@ -57,7 +57,7 @@ class CourseForm(forms.ModelForm):
         Parameters
         ----------
         *args, **kwargs
-            Standard Django ``ModelForm`` arguments.
+            Standard Django ModelForm arguments.
         """
 
         self.admin_site = kwargs.pop("admin_site", admin.site)
@@ -107,7 +107,7 @@ class CourseForm(forms.ModelForm):
         Parameters
         ----------
         commit : bool, optional
-            Whether to persist the ``Course`` immediately. Defaults to ``True``.
+            Whether to persist the Course immediately. Defaults to True.
 
         Returns
         -------
@@ -124,7 +124,7 @@ class CourseForm(forms.ModelForm):
         Returns
         -------
         dict[str, Any]
-            The cleaned data with inferred ``college`` when possible.
+            The cleaned data with inferred college when possible.
         """
 
         cleaned = cast(MutableMapping[str, Any], super().clean())  # ← FIX #2/3
@@ -153,7 +153,7 @@ class CourseForm(forms.ModelForm):
     def save_m2m(self):
         """Synchronize curricula relationships.
 
-        Called by Django after ``save()`` when handling many-to-many data.
+        Called by Django after save() when handling many-to-many data.
 
         Returns
         -------

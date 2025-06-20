@@ -21,7 +21,7 @@ class Student(AbstractPerson):
         >>> s.student_id  # auto-set from user id
         'TU_STD0001'
     Side Effects:
-        ``save()`` from :class:`AbstractPerson` populates ``student_id``.
+        save() from :class:AbstractPerson populates student_id.
     """
 
     ID_FIELD = "student_id"

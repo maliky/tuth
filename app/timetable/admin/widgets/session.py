@@ -8,7 +8,7 @@ from app.timetable.models.session import Schedule, Session
 
 
 class SessionWidget(widgets.ForeignKeyWidget):
-    """Create a :class:`Session` from room and schedule data."""
+    """Create a :class:Session from room and schedule data."""
 
     def __init__(self):
         super().__init__(Session)  # va exporter session.pk
@@ -33,14 +33,14 @@ class SessionWidget(widgets.ForeignKeyWidget):
 
 
 class ScheduleWidget(widgets.ForeignKeyWidget):
-    """Return a :class:`Schedule` based on weekday and times."""
+    """Return a :class:Schedule based on weekday and times."""
 
     def __init__(self):
         super().__init__(Schedule)
         self.weekday_w = WeekdayWidget()
 
     def clean(self, value, row=None, *args, **kwargs) -> Schedule | None:
-        """Return an existing ``Schedule`` using data from the import row."""
+        """Return an existing Schedule using data from the import row."""
 
         weekday: int | None = self.weekday_w.clean(value=value)
         if weekday is None:
