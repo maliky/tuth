@@ -24,29 +24,21 @@ from app.shared.auth.helpers import ensure_superuser
 from app.spaces.admin.resources import RoomResource  # noqa: F401
 from app.timetable.admin.resources.core import SemesterResource  # noqa: F401
 from app.timetable.admin.resources.section import SectionResource
-from app.timetable.admin.resources.session import SessionResource  # noqa: F401
+from app.timetable.admin.resources.session import (
+    ScheduleResource,
+    SessionResource,
+)  # noqa: F401
 
 
 class Command(BaseCommand):
     """Import data dumps produced by the split-csv notebook / script."""
 
     help = "Import resources from individual CSV files found in a directory."
-
-    def add_arguments(self, parser: CommandParser) -> None:
-        """Register --files_dir option for individual CSV to import."""
-
-        parser.add_argument(
-            "-d",
-            "--dir_path",
-            nargs="?",
-            default="./Seed_data/Models",
-            help="Path to CSV dir with resources data",
-        )
-
     #: Mapping filename → (label, ResourceClass)
     FILEMAP: dict[str, Tuple[str, type[resources.ModelResource]]] = {
         "faculty.csv": ("Faculty", FacultyResource),
         "room.csv": ("Room", RoomResource),  # + Space
+        "schedule.csv": ("Schedule", ScheduleResource),
         "course.csv": ("Course", CourseResource),  # + College
         "semester.csv": ("Semester", SemesterResource),  # + AcademicYear
         "curriculum_course.csv": ("CurriculumCourse", CurriculumCourseResource),
@@ -104,7 +96,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "-d",
             "--dir",
-            default="../Docs/Data/Cleaned",
+            default="../Seed_Data/Individual_models",
             help="Directory containing the per-resource CSV files.",
         )
 

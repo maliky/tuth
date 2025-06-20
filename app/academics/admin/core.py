@@ -4,7 +4,7 @@ from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 
-from app.academics.admin.actions import update_college, update_curriculum
+from app.academics.admin.actions import update_curriculum
 from app.academics.models import (
     College,
     Course,
@@ -34,7 +34,7 @@ from .resources import (
 
 @admin.register(Course)
 class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin interface for :class:~app.academics.models.Course.
+    """Admin interface for Course.
 
     Provides course management with extra tools:
     - list_display shows the code, title, credits and college fields.
@@ -48,36 +48,21 @@ class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """
 
     resource_class = CourseResource
-    list_display = ("code", "title", "credit_hours", "college")
+    list_display = ("code", "title", "credit_hours")
     list_filter = ("curricula",)
-    autocomplete_fields = ("curricula", "college")
+    autocomplete_fields = "curricula"
     inlines = [SectionInline, PrerequisiteInline, RequiresInline]
-    list_select_related = ("college",)
-    actions = [update_college]
+    # list_select_related = ("college",)
+    # actions = [update_college]
 
-    search_fields = ("code", "curricula__short_name", "sections__number")
+    search_fields = ("code", "department", "curricula__short_name", "sections__number")
     form = CourseForm
     fieldsets = (
-        (
-            None,
-            {
-                "fields": (
-                    "departments",
-                    "number",
-                    "title",
-                    "credit_hours",
-                    "college",
-                    "curricula",
-                )
-            },
-        ),
-        (
-            "Additional details",
-            {
-                "classes": ("collapse",),
-                "fields": ("description",),
-            },
-        ),
+        "department",
+        "number",
+        "title",
+        "credit_hours",
+        "curricula",
     )
 
 
@@ -105,7 +90,7 @@ class PrerequisiteAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 @admin.register(Curriculum)
 class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin options for :class:~app.academics.models.Curriculum.
+    """Admin options for Curriculum.
 
     Key features:
     - Uses BulkActionImportForm for import/export with an extra action
@@ -119,7 +104,7 @@ class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     # add the action button on the import form
     import_form_class = BulkActionImportForm
     list_display = ("short_name", "long_name", "college")
-    list_filter = ("college", "is_active")
+    list_filter = "college"
     autocomplete_fields = ("college",)
     inlines = [CurriculumCourseInline]
     # list_selected_relate reduce the number of queries in db
@@ -149,9 +134,12 @@ class DepartmentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """
 
     resource_class = DepartmentResource
-    list_display = ("code", "full_name", "college")
-    search_fields = ("code", "full_name")
-    autocomplete_fields = ("college",)
+    list_display = ("short_name", "full_name", "college")
+    search_fields = ("short_name", "full_name", "college")
+    autocomplete_fields = (
+        "short_name",
+        "college",
+    )
 
 
 @admin.register(CurriculumCourse)

@@ -13,31 +13,30 @@ class Course(models.Model):
     """University catalogue entry describing a single course offering.
 
     Example:
-        >>> from app.academics.models import Course, College
-        >>> coas = College.objects.create(code="COAS", long_name="College of Arts and Sciences")
+        >>> from app.academics.models import Course, Department, College
+        >>> COAS = College.get_default()
+        >>> MATH = Departement.objects.create(code="COAS", long_name="College of Arts and Sciences")
         >>> Course.objects.create(name="MATH", number="101", title="Algebra", college=coas)
 
     Side Effects:
         save() populates code from name and number.
     """
 
-    code = models.CharField(max_length=20, editable=False)
-    number = models.CharField(max_length=10)  # e.g. 101
-    title = models.CharField(max_length=255)
-    description: models.TextField = models.TextField(blank=True)
-    credit_hours = models.PositiveSmallIntegerField(
-        default=CREDIT_NUMBER.THREE, choices=CREDIT_NUMBER.choices, blank=True
-    )
-    departments = models.ManyToManyField(  # eg. MATH
-        "academics.Department", related_name="courses", blank=False
-    )
-
-    # the college responsible for this course
-    college = models.ForeignKey(
-        "academics.College",
-        on_delete=models.PROTECT,
+    department = models.ForeignKey(
+        "academic.Department",
+        on_delete=models.CASCADE,
         related_name="courses",
     )
+    number = models.CharField(max_length=10)  # e.g. 101
+    # the 2 above make the code
+    code = models.CharField(max_length=20, editable=False)
+    # with college must be unique.
+
+    credit_hours = models.PositiveSmallIntegerField(
+        default=CREDIT_NUMBER.THREE, choices=CREDIT_NUMBER.choices
+    )
+    title = models.CharField(max_length=255, blank=True, null=True)
+    description: models.TextField = models.TextField(blank=True, null=True)
     prerequisites = models.ManyToManyField(
         "self",
         symmetrical=False,
@@ -65,11 +64,15 @@ class Course(models.Model):
         """Return courses included in the given curriculum."""
         return cls.objects.filter(curricula=curriculum).distinct()
 
+    def _set_code(self):
+        if not self.code:
+            dept_short_name = f"{self.department.short_name}"
+            self.code = make_course_code(dept_short_name, number=self.number)
+
     # ---------- hooks ----------
     def save(self, *args, **kwargs) -> None:
-        """Populate code from name and number before saving."""
-        dept_code = f"{self.departments}"
-        self.code = make_course_code(dept_code, number=self.number)
+        """Populate code from department short_name and number before saving."""
+        self._set_code()
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:  # pragma: no cover
@@ -79,7 +82,7 @@ class Course(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["code", "college"],
-                name="uniq_course_code_per_college",
+                fields=["department", "number"],
+                name="uniq_course_number_per_department",
             ),
         ]

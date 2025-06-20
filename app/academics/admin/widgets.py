@@ -125,12 +125,13 @@ class CourseWidget(widgets.ForeignKeyWidget):
         if key in self._cache:
             return self._cache.get(key)
 
-        code = make_course_code(course_dept, course_no)  # e.g. AGR121
+        code = make_course_code(course_dept, course_no, college_code)  # e.g. AGR121
 
         course, course_created = Course.objects.get_or_create(
             number=course_no,
+            department=department,
             college=college,
-            defaults={"title": row.get("course_title", code)},
+            defaults={"title": row.get("course_title", code), "code": code},
         )
 
         if department and not course.departments.filter(pk=department.pk).exists():
@@ -280,12 +281,13 @@ class DepartmentWidget(widgets.ForeignKeyWidget):
         """Return or create the Department referenced by course_dept and college_code."""
         if not value:
             return None
-        dept_code = value.strip().upper()
 
-        college_code = (row.get("college_code") or "").strip()
-        college = self.college_w.clean(college_code)
+        dept_short_name = value.strip().upper()
+        college = self.college_w.clean((row.get("college_code") or "").strip())
 
-        department, _ = Department.objects.get_or_create(code=dept_code, college=college)
+        department, _ = Department.objects.get_or_create(
+            short_name=dept_short_name, college=college
+        )
         return department
 
 
@@ -298,7 +300,7 @@ class DepartmentManyWidget(widgets.ManyToManyWidget):
 
     def __init__(self):
         super().__init__(Department, separator=";", field="code")
-        self.department_w = CourseWidget()
+        self.department_w = DepartmentWidget()
 
     def clean(self, value, row=None, *args, **kwargs) -> list[Course]:
         """Returns a list of Departments instances parsed from the provided CSV value.

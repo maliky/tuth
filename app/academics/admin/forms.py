@@ -32,7 +32,7 @@ class CourseForm(forms.ModelForm):
     """Admin form for Course with extra curricula handling.
 
     The form exposes a writable curricula field and sets sensible defaults
-    for credit_hours and college based on the course code. These tweaks
+    for credit_hours and department based on the course code. These tweaks
     simplify data entry while keeping the underlying model unchanged.
     """
 
@@ -48,17 +48,8 @@ class CourseForm(forms.ModelForm):
         help_text="Programmes that include this course",
     )
 
-    # ──────────────────────────────────────────────────────────
-    # initial values & non-required title
-    # ──────────────────────────────────────────────────────────
     def __init__(self, *args, **kwargs):
-        """Initialize the form with dynamic defaults.
-
-        Parameters
-        ----------
-        *args, **kwargs
-            Standard Django ModelForm arguments.
-        """
+        """Initialize the form with dynamic defaults."""
 
         self.admin_site = kwargs.pop("admin_site", admin.site)
         super().__init__(*args, **kwargs)

@@ -8,7 +8,7 @@ from app.academics.admin.widgets import (
     CourseManyWidget,
     CourseWidget,
     CurriculumWidget,
-    DepartmentManyWidget,
+    DepartmentWidget,
 )
 from app.academics.models import (
     College,
@@ -21,11 +21,10 @@ from app.academics.models import (
 
 
 class CurriculumResource(resources.ModelResource):
-    """Columns expected in the CSV  (case-sensitive): short_name, title, college, list_courses."""
+    """Columns expected in the CSV: short_name, title, college, list_courses."""
 
-    # -------- bookkeeping ---------------------------------------------------
     def __init__(self, *args, **kwargs):
-        # for keeping track of what is been added or replaced
+        """For keeping track of what is been added or replaced."""
         super().__init__(*args, **kwargs)
         self._created: set[str] = set()
         self._merged: set[str] = set()
@@ -33,34 +32,23 @@ class CurriculumResource(resources.ModelResource):
         self._new_colleges: set[str] = set()
         self.fields["college"].widget._resource = self
 
-    # ------------------------------------------------------------------ helpers
     def _action(self) -> str:
         """Merge (default) or 'replace'  — read once from the import form."""
         value = (self._kwargs or {}).get("action", "merge")
         return str(value).lower()  # str to garantee return type for mypy
 
-    # ----- FKs ---------------------------------------------------------------
-    college = fields.Field(
+    college_f = fields.Field(
         column_name="college_code",
         attribute="college",
         widget=CollegeWidget(),
     )
-
-    # ----- synthetic M2M list -----------------------------------------------
-    list_courses = fields.Field(
+    list_courses_f = fields.Field(
         column_name="list_courses",
         attribute="courses",
         widget=CourseManyWidget(),
     )
+    short_name_f = fields.Field(attribute="short_name", column_name="curriculum")
 
-    # ----- niceties ----------------------------------------------------------
-    def before_import_row(self, row, **kwargs):
-        """Set a default for long_name with short_name."""
-        # default long_name -> short_name
-        if not row.get("long_name"):
-            row["long_name"] = row["short_name"]
-
-    # ----- merge / replace logic --------------------------------------------
     def save_instance(self, instance, is_create, row, **kwargs):
         """Handle merge/replace logic for curriculum imports.
 
@@ -68,31 +56,26 @@ class CurriculumResource(resources.ModelResource):
         provides is_create and row parameters along with
         keyword-only dry_run.
         """
-        dry_run = kwargs.get("dry_run", False)
         exists = instance.pk is not None
         super().save_instance(instance, is_create, row, **kwargs)
 
-        if dry_run:
+        if kwargs.get("dry_run", False):
             return  # nothing else to do
 
-        sn = instance.short_name
+        short_name = instance.short_name
         if not exists:
-            self._created.add(sn)
+            self._created.add(short_name)
         elif self._action() == "replace":
             instance.courses.clear()
-            self._replaced.add(sn)
+            self._replaced.add(short_name)
         else:
-            self._merged.add(sn)
-
-    def after_save_instance(self, instance, row, **kwargs):
-        """Post-save hook after M2M cleanup."""
-        return super().after_save_instance(instance, row, **kwargs)
+            self._merged.add(short_name)
 
     def after_import(self, dataset, result, **kwargs):
         """Post-import summary."""
         super().after_import(dataset, result, **kwargs)
-        dry_run = kwargs.get("dry_run", False)
-        if dry_run:  # nothing permanent happened
+
+        if kwargs.get("dry_run", False):
             return
 
         request = kwargs.get("request")
@@ -113,15 +96,14 @@ class CurriculumResource(resources.ModelResource):
                 msg += f" · colleges {', '.join(sorted(self._new_colleges))} created"
             messages.success(request, msg.capitalize() + ".")
 
-    # ----- Meta --------------------------------------------------------------
     class Meta:
         model = Curriculum
-        import_id_fields = ("short_name",)
+        import_id_fields = ("short_name_f",)
         fields = (
-            "short_name",
+            "short_name_f",
             "title",
-            "college",
-            "list_courses",
+            "college_f",
+            "list_courses_f",
         )
         skip_unchanged = True
         report_skipped = True
@@ -130,66 +112,53 @@ class CurriculumResource(resources.ModelResource):
 class CourseResource(resources.ModelResource):
     """Import / export definition for Course rows.
 
-    Row should come from the cleaned_tscc.csv (file with course_dept & course_no columns).
+    Row should come from a CSV file with: course_dept, course_no and college_code columns.
 
-    Columns expected in the CSV (case-sensitive):
-        course_dept, course_no, course_title, credit_hours, college_code, prerequisites
+    Additional: course_title, prerequisites
     """
 
-    # ─── columns that map 1-to-1 onto Course fields ──────────────────────────
+    number_f = fields.Field(attribute="number", column_name="course_no")  # 121
+    title = fields.Field(attribute="title", column_name="course_title")
 
-    number = fields.Field(column_name="course_no", attribute="number")  # 121
-    title = fields.Field(column_name="course_title", attribute="title")
-    # credit_hours = fields.Field(column_name="credit_hours", attribute="credit_hours")
-
-    departments = fields.Field(
-        column_name="course_dept", attribute="departments", widget=DepartmentManyWidget()
+    department_f = fields.Field(
+        attribute="department", column_name="course_dept", widget=DepartmentWidget()
     )
-
-    # ─── college FK – lookup by code via CollegeWidget ───────────────────────
-    college = fields.Field(
-        column_name="college_code", attribute="college", widget=CollegeWidget()
-    )
-
-    # ─── many-to-many prerequisites – semicolon-separated list of codes ──────
-    prerequisites = fields.Field(
-        column_name="prerequisites",
+    prerequisite_f = fields.Field(
         attribute="prerequisites",
+        column_name="prerequisites",
         widget=CourseManyWidget(),
     )
 
-    # ─── constructor – track rows skipped by validation logic ────────────────
     def __init__(self, *args, **kwargs):
+        """Constructor – track rows skipped by validation logic."""
         super().__init__(*args, **kwargs)
         self._mismatched_rows: list[dict] = []  # for admin feedback
 
     class Meta:
         model = Course
         # Uniqueness criterion for updates
-        import_id_fields = ("number", "college")
+        import_id_fields = ("number_f", "department_f")
         # Exposed / accepted columns
         fields = (
-            "departments",
-            "number",
-            "title",
-            "credit_hours",
-            "college",
-            "prerequisites",
+            "number_f",
+            "department_f",
+            "title_f",
+            "prerequisite_f",
         )
         skip_unchanged = True  # do not rewrite identical rows
         report_skipped = True  # include skipped-row info in the Result
 
 
 class PrerequisiteResource(resources.ModelResource):
-    curriculum = fields.Field(
+    curriculum_f = fields.Field(
         column_name="curriculum",
         attribute="curriculum",
         widget=CurriculumWidget(),
     )
-    course = fields.Field(
+    course_f = fields.Field(
         column_name="course_dept", attribute="course", widget=CourseWidget()
     )
-    prerequisite_course = fields.Field(
+    prerequisite_course_f = fields.Field(
         column_name="prerequisite",
         attribute="prerequisite_course",
         widget=CourseWidget(),
@@ -197,46 +166,54 @@ class PrerequisiteResource(resources.ModelResource):
 
     class Meta:
         model = Prerequisite
-        import_id_fields = ("curriculum", "course", "prerequisite_course")
-        fields = ("curriculum", "course", "prerequisite_course")
+        import_id_fields = (
+            "curriculum_f",
+            "course_f",
+            "prerequisite_course_f",
+        )
+        fields = ("curriculum_f", "course_f", "prerequisite_course_f")
 
 
 class CollegeResource(resources.ModelResource):
-    """Simple import-export resource for :class:~app.academics.models.College."""
+    """Simple import-export resource for College."""
+
+    college_f = fields.Field(attribute="code", column_name="college_code")
 
     class Meta:
         model = College
-        import_id_fields = ("code",)
+        import_id_fields = ("college_f",)
         fields = (
-            "code",
+            "college_f",
             "long_name",
         )
 
 
 class CurriculumCourseResource(resources.ModelResource):
-    """Import curriculum-course rows with a curriculum name and course code."""
+    """Import curriculum-course rows with a curriculum name and course no and dept."""
 
-    curriculum = fields.Field(
-        column_name="curriculum",
+    curriculum_f = fields.Field(
         attribute="curriculum",
+        column_name="curriculum",
         widget=CurriculumWidget(),
     )
-    course = fields.Field(
-        column_name="course_dept",
+    # requires course_no columns too
+    course_f = fields.Field(
         attribute="course",
+        column_name="course_dept",
         widget=CourseWidget(),
     )
+    credit_hours_f = fields.Field(attribute="credit_hours", column_name="credit_hours")
 
     class Meta:
         model = CurriculumCourse
         import_id_fields = (
-            "curriculum",
-            "course",
+            "curriculum_f",
+            "course_f",
         )
         fields = (
-            "curriculum",
-            "course",
-            "credit_hours",
+            "curriculum_f",
+            "course_f",
+            "credit_hours_f",
         )
         list_filter = ("curriculum_college", "curriculum")
         skip_unchanged = True
@@ -244,13 +221,19 @@ class CurriculumCourseResource(resources.ModelResource):
 
 
 class DepartmentResource(resources.ModelResource):
-    """Resource for :class:~app.academics.models.Department."""
+    """Resource for Department."""
+
+    dept_f = fields.Field(
+        attribute="short_name", column_name="course_dept", widet=DepartmentWidget()
+    )
+    college_f = fields.Field(
+        attribute="college", column_name="college_code", widget=CollegeWidget()
+    )
 
     class Meta:
         model = Department
-        import_id_fields = ("code", "college")
+        import_id_fields = ("dept_f", "college_f")
         fields = (
-            "code",
-            "full_name",
-            "college",
+            "dept_f",
+            "college_f",
         )
