@@ -9,5 +9,5 @@ import re
 
 MAX_STUDENT_CREDITS = 18
 COURSE_PATTERN = re.compile(
-    r"(?P<dept>[A-Z]{2,4})[_-]?(?P<num>[0-9]{3})(?:\s*-\s*(?P<college>[A-Z]{3,4}))?"
+    r"(?:(?P<college>[A-Z]{3,4})-)?(?P<dept>[A-Z]{2,4})[_-]?(?P<num>[0-9]{3})"
 )

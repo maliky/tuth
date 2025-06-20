@@ -37,7 +37,7 @@ class College(models.Model):
     def get_default(cls):
         """Return the default college."""
         # will set the long_name by default on save
-        def_clg, _ = cls.get_or_create(code=CollegeCodeChoices.COAS)
+        def_clg, _ = cls.objects.get_or_create(code=CollegeCodeChoices.COAS)
         return def_clg
 
     def clean(self) -> None:
@@ -50,7 +50,7 @@ class College(models.Model):
 
     def save(self, *args, **kwargs) -> None:
         """Ensure long_name matches the selected code before saving."""
-        if self.long_name is None:
+        if not self.long_name:
             self.long_name = CollegeLongNameChoices[self.code]
         super().save(*args, **kwargs)
 

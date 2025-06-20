@@ -224,7 +224,7 @@ class DepartmentResource(resources.ModelResource):
     """Resource for Department."""
 
     dept_f = fields.Field(
-        attribute="short_name", column_name="course_dept", widet=DepartmentWidget()
+        attribute="short_name", column_name="course_dept", widget=DepartmentWidget()
     )
     college_f = fields.Field(
         attribute="college", column_name="college_code", widget=CollegeWidget()

@@ -16,7 +16,6 @@ from app.academics.models.curriculum_course import CurriculumCourse
 from app.timetable.admin.inlines import SectionInline
 
 from .filters import CurriculumFilter
-from .forms import BulkActionImportForm, CourseForm
 from .inlines import (
     CurriculumCourseInline,
     PrerequisiteInline,
@@ -48,15 +47,13 @@ class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """
 
     resource_class = CourseResource
-    list_display = ("code", "title", "credit_hours")
-    list_filter = ("curricula",)
+    list_display = ("code", "title", "credit_hours", "department")
+    list_filter = ("curricula", "department__college")
     autocomplete_fields = "curricula"
     inlines = [SectionInline, PrerequisiteInline, RequiresInline]
-    # list_select_related = ("college",)
-    # actions = [update_college]
+    list_select_related = ("department",)
 
     search_fields = ("code", "department", "curricula__short_name", "sections__number")
-    form = CourseForm
     fieldsets = (
         "department",
         "number",
@@ -93,8 +90,6 @@ class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """Admin options for Curriculum.
 
     Key features:
-    - Uses BulkActionImportForm for import/export with an extra action
-      button.
     - inlines manage related curriculum courses inline.
     - list_display includes short and long names with the college.
     - list_filter allows filtering by college and active state.
@@ -102,12 +97,12 @@ class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
     resource_class = CurriculumResource
     # add the action button on the import form
-    import_form_class = BulkActionImportForm
     list_display = ("short_name", "long_name", "college")
     list_filter = "college"
     autocomplete_fields = ("college",)
     inlines = [CurriculumCourseInline]
-    # list_selected_relate reduce the number of queries in db
+
+    # list_selected_relate reduces the number of queries in db
     list_select_related = ("college",)
     search_fields = ("short_name", "long_name")
 

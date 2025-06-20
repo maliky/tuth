@@ -23,7 +23,7 @@ class Course(models.Model):
     """
 
     department = models.ForeignKey(
-        "academic.Department",
+        "academics.Department",
         on_delete=models.CASCADE,
         related_name="courses",
     )

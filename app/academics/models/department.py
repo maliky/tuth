@@ -39,8 +39,8 @@ class Department(models.Model):
     @classmethod
     def get_default(cls):
         """Return the default Department."""
-        default_dept, _ = cls.get_or_create(
-            code="MATH_DFT",
+        default_dept, _ = cls.objects.get_or_create(
+            code="DFT",
             full_name="Mathematics' Default Department",
             college=College.get_default(),
         )

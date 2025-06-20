@@ -3,9 +3,7 @@
 from typing import Mapping, Optional, Tuple
 
 from app.academics.constants import COURSE_PATTERN
-
-# r"(?P<dept>[A-Z]{2,4})[_-]?(?P<num>[0-9]{3})(?:\s*-\s*(?P<college>[A-Z]{3,4}))?"
-
+from app.academics.models.department import Department
 
 def expand_course_code(
     code: str, *, row: Optional[Mapping[str, str]] = None, default_college: str = "COAS"
@@ -34,10 +32,10 @@ def expand_course_code(
     match = COURSE_PATTERN.search(code.strip().upper())
     assert match is not None, f"Code '{code}' doesn't match expected pattern"
 
-    dept, num, college = (
+    college, dept, num = (
+        match.group("college"),
         match.group("dept"),
         match.group("num"),
-        match.group("college"),
     )
 
     if not college:
@@ -46,13 +44,13 @@ def expand_course_code(
         else:
             college = default_college
 
-    return dept, num, college
+    return college, dept, num
 
 
-def make_course_code(dept_code: str, number: str, college_code: str | None = None) -> str:
+def make_course_code(dept: Department, number: str) -> str:
     """Return a compact code from a department, number and optional college.
 
     Returns:  A normalized course identifier.
     """
-    college_code = "" if college_code is None else f"-{college_code}"
-    return f"{dept_code}{number}{college_code}".upper()
+    college_code = dept.college.code
+    return f"{dept.short_name}{number}{college_code}".upper()

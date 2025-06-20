@@ -118,25 +118,16 @@ class CourseWidget(widgets.ForeignKeyWidget):
         if not course_dept or not course_no:
             return None
 
-        college_code = (row.get("college_code") or "").strip()
-        college = self.college_w.clean(college_code)
-
-        key = (course_dept, course_no, college_code)
+        key = (department, course_no)
         if key in self._cache:
             return self._cache.get(key)
 
-        code = make_course_code(course_dept, course_no, college_code)  # e.g. AGR121
+        code = make_course_code(department, course_no)  # e.g. AGR121
 
-        course, course_created = Course.objects.get_or_create(
+        course, _ = Course.objects.get_or_create(
             number=course_no,
             department=department,
-            college=college,
-            defaults={"title": row.get("course_title", code), "code": code},
         )
-
-        if department and not course.departments.filter(pk=department.pk).exists():
-            course.departments.add(department)
-
         self._cache[key] = course
         return course
 
@@ -175,17 +166,11 @@ class CourseManyWidget(widgets.ManyToManyWidget):
 
 
 class CourseCodeWidget(widgets.ForeignKeyWidget):
-    """Resolve a course code into a :class:Course.
-
-    Supports optional -<college> suffixes and falls back to
-    row['college'] or "COAS" when the suffix is absent. New courses are
-    created automatically with data from the import row.
-    """
+    """Resolve a course code into a Course."""
 
     def __init__(self):
         super().__init__(Course, field="code")
         self.department_w = DepartmentWidget()
-        self.college_w = CollegeWidget()
 
     def clean(
         self, value, row=None, credit_field: str | None = None, *args, **kwargs
@@ -197,7 +182,7 @@ class CourseCodeWidget(widgets.ForeignKeyWidget):
 
         value example formats:
           - "AGR121" (implies college from row or "COAS")
-          - "AGR121-CFAS" (explicit college code CFAS)
+          - "CAFS-AGR121" (explicit dept AGR from CAFS college)
 
         If the course does not exist it will be created, otherwise the existing
         course is returned (and updated when fields differ).
@@ -206,17 +191,17 @@ class CourseCodeWidget(widgets.ForeignKeyWidget):
             return None
 
         dept_code, number, college_code = expand_course_code(value, row=row)
-        course_code = make_course_code(dept_code, number, college_code)
+        department = self.department_w.clean(dept_code, row)
 
-        department = self.department_w.clean(dept_code)
-        college = self.college_w.clean(college_code)
+        course_code = make_course_code(department, number)
 
-        qs = Course.objects.filter(code=course_code, college=college)
+        qs = Course.objects.filter(code=course_code, department=department)
+
         count = qs.count()
 
         if count > 1:
             raise ValueError(
-                f"Integrity Error: Multiple courses found for {course_code} in college {college_code}"
+                f"Integrity Error: Multiple courses found for {course_code} in department {department}"
             )
 
         # Pull optional data from the row
@@ -224,18 +209,14 @@ class CourseCodeWidget(widgets.ForeignKeyWidget):
         title_raw = row.get("course_title") if row else None
 
         if count == 0:
-            # Create a new course with info from the row (credits default to 3)
             credit_hours = int(credit_hours) if credit_hours.isdigit() else 3
 
             course = Course.objects.create(
                 number=number,
-                college=cast(College, college),
+                department=cast(Department, department),
                 credit_hours=credit_hours,
                 title=title_raw or value,
             )
-            if department and not course.departments.filter(pk=department.pk).exists():
-                course.departments.add(department)
-
         else:
             course = qs.get()
             updated = False
