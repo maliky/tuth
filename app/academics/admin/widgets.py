@@ -10,8 +10,6 @@ from app.academics.models.curriculum_course import CurriculumCourse
 from app.academics.models.department import Department
 from app.shared.utils import expand_course_code, make_course_code
 
-# no need for a CollegeWidget, user foreignkeywidget
-
 
 class CurriculumCourseWidget(widgets.ForeignKeyWidget):
     """Create or fetch ``CurriculumCourse`` rows from CSV data.
@@ -254,6 +252,23 @@ class CourseCodeWidget(widgets.ForeignKeyWidget):
         return course
 
 
+class CollegeWidget(widgets.ForeignKeyWidget):
+    """Return or create the ``College`` referenced by ``college_code``."""
+
+    def __init__(self):
+        super().__init__(College, field="code")
+
+    def clean(self, value, row=None, *args, **kwargs) -> College | None:
+        """Return or create the ``College`` referenced by ``college_code``."""
+        if not value:
+            return None
+
+        code = (value or "COAS").strip().upper()
+        college, _ = College.objects.get_or_create(code=code)
+
+        return college
+
+
 class DepartmentWidget(widgets.ForeignKeyWidget):
     """Return or create the ``Department`` referenced by ``course_dept`` and college_code."""
 
@@ -274,18 +289,31 @@ class DepartmentWidget(widgets.ForeignKeyWidget):
         return department
 
 
-class CollegeWidget(widgets.ForeignKeyWidget):
-    """Return or create the ``College`` referenced by ``college_code``."""
+class DepartmentManyWidget(widgets.ManyToManyWidget):
+    """Parse ``list_dept`` and return a list of :class:`Deparments` objects.
+
+    The widget splits the CSV column on ``;`` and delegates parsing of each
+    token to :class:`CourseWidget`, creating courses on the fly when needed.
+    """
 
     def __init__(self):
-        super().__init__(College, field="code")
+        super().__init__(Department, separator=";", field="code")
+        self.department_w = CourseWidget()
 
-    def clean(self, value, row=None, *args, **kwargs) -> College | None:
-        """Return or create the ``College`` referenced by ``college_code``."""
+    def clean(self, value, row=None, *args, **kwargs) -> list[Course]:
+        """Returns a list of Departments instances parsed from the provided CSV value.
+
+        If `value` is empty or missing, returns an empty list (no departement associated).
+        """
         if not value:
-            return None
+            return []
 
-        code = (value or "COAS").strip().upper()
-        college, _ = College.objects.get_or_create(code=code)
+        departements = []
+        for token in value.split(self.separator):
+            token = token.strip()
+            if token:
+                dept = self.department_w.clean(token, row)
+                if dept:
+                    departements.append(dept)
 
-        return college
+        return departements

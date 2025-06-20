@@ -28,10 +28,8 @@ class Course(models.Model):
     credit_hours = models.PositiveSmallIntegerField(
         default=CREDIT_NUMBER.THREE, choices=CREDIT_NUMBER.choices, blank=True
     )
-    # > need to change it and everywhere with course_dept
     departments = models.ManyToManyField(  # eg. MATH
-        "academics.Department",
-        related_name="courses",
+        "academics.Department", related_name="courses", blank=False
     )
 
     # the college responsible for this course

@@ -1,14 +1,14 @@
 """Resources module."""
 
 from django.contrib import messages
-from import_export import fields, resources, widgets
+from import_export import fields, resources
 
 from app.academics.admin.widgets import (
     CollegeWidget,
     CourseManyWidget,
     CourseWidget,
     CurriculumWidget,
-    DepartmentWidget,
+    DepartmentManyWidget,
 )
 from app.academics.models import (
     College,
@@ -143,7 +143,7 @@ class CourseResource(resources.ModelResource):
     # credit_hours = fields.Field(column_name="credit_hours", attribute="credit_hours")
 
     departments = fields.Field(
-        column_name="course_dept", attribute="departments", widget=DepartmentWidget()
+        column_name="course_dept", attribute="departments", widget=DepartmentManyWidget()
     )
 
     # ─── college FK – lookup by code via CollegeWidget ───────────────────────
@@ -155,7 +155,7 @@ class CourseResource(resources.ModelResource):
     prerequisites = fields.Field(
         column_name="prerequisites",
         attribute="prerequisites",
-        widget=widgets.ManyToManyWidget(Course, field="code", separator=";"),
+        widget=CourseManyWidget(),
     )
 
     # ─── constructor – track rows skipped by validation logic ────────────────
@@ -190,7 +190,9 @@ class PrerequisiteResource(resources.ModelResource):
         column_name="course_dept", attribute="course", widget=CourseWidget()
     )
     prerequisite_course = fields.Field(
-        column_name="prerequisite", attribute="prerequisite_course", widget=CourseWidget()
+        column_name="prerequisite",
+        attribute="prerequisite_course",
+        widget=CourseWidget(),
     )
 
     class Meta:

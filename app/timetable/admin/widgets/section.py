@@ -3,7 +3,7 @@
 from typing import Optional, cast
 from import_export import widgets
 
-from app.academics.admin.widgets import CourseWidget
+from app.academics.admin.widgets import DepartmentWidget
 from app.people.admin.widgets import FacultyWidget
 from app.timetable.admin.widgets.core import SemesterWidget
 from app.timetable.models.section import Section
@@ -14,7 +14,7 @@ class SectionWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
         super().__init__(Section)  # using pk until export is done
-        self.course_w = CourseWidget()
+        self.course_w = DepartmentWidget()
         self.sem_w = SemesterWidget()
         self.faculty_w = FacultyWidget()
 
@@ -53,7 +53,7 @@ class SectionCodeWidget(widgets.Widget):
     def __init__(self) -> None:
         super().__init__(Section)
         self.sem_w = SemesterWidget()
-        self.crs_w = CourseWidget()
+        self.crs_w = DepartmentWidget()
 
     def clean(
         self,

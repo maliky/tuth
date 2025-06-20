@@ -180,18 +180,18 @@ class AbstractPerson(StatusableMixin, models.Model):
         obj_id = object.__getattribute__(self, self.ID_FIELD)  # type: ignore[arg-type]
 
         if obj_id is None:
-            return None
+            return 0
 
         _, _, obj_no_str = obj_id.partition(self.ID_PREFIX)  # type: ignore[arg-type]
-        return int(obj_no_str)
+        return int(obj_no_str) if obj_no_str else 0
 
     def save(self, *args, **kwargs):
         """Create an ID and saves it for each model using _mk_id and ID_FIELD."""
         id_no = self.get_id_no()
-        if id_no is None:
+        if not id_no:
             new_id = self._mk_id()
             object.__setattr__(self, self.ID_FIELD, new_id)  # type: ignore[arg-type]
-            super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     class Meta:
         abstract = True
