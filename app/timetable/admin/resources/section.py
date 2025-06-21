@@ -4,7 +4,7 @@ from typing import Any
 
 from import_export import fields, resources
 
-from app.academics.admin.widgets import CourseWidget
+from app.academics.admin.widgets import ProgramWidget
 from app.people.admin.widgets import FacultyWidget
 from app.timetable.admin.widgets.core import SemesterWidget
 from app.timetable.models.section import Section
@@ -13,24 +13,25 @@ from app.timetable.models.section import Section
 class SectionResource(resources.ModelResource):
 
     # just to keep it in headers and accessible for other.
-    academic_year = fields.Field(column_name="academic_year", attribute=None)
-    course_no = fields.Field(column_name="course_no", attribute=None)
-    college_code = fields.Field(column_name="college_code", attribute=None)
+    academic_year = fields.Field(attribute=None, column_name="academic_year")
+    course_no = fields.Field(attribute=None, column_name="course_no")
+    course_dept = fields.Field(attribute=None, column_name="course_dept")
+    college_code = fields.Field(attribute=None, column_name="college_code")
 
     # for this section, it is mandatory that the semester be attached to a year
     # when exporting we should export the semester_code
     semester = fields.Field(
-        column_name="semester_no",
         attribute="semester",
+        column_name="semester_no",
         widget=SemesterWidget(),
     )
-    course = fields.Field(
+    program = fields.Field(
         # could be other course columns
-        column_name="course_dept",
-        attribute="course",
-        widget=CourseWidget(),
+        attribute="program",
+        column_name="curriculum",
+        widget=ProgramWidget(),
     )
-    number = fields.Field(column_name="section_no", attribute="number")
+    number = fields.Field(attribute="number", column_name="section_no")
 
     faculty = fields.Field(
         column_name="faculty",
@@ -45,27 +46,15 @@ class SectionResource(resources.ModelResource):
         """Is this realy usefull ?"""
         super().before_import(dataset, **kwargs)
 
-    # def save_instance(self, instance,  is_create, row, **kwargs):
-    #     # import ipdb; ipdb.set_trace()
-    #     try:
-    #         super().save_instance(instance,  is_create, row, **kwargs)
-    #     except Exception as exc:
-    #         print("Integrity Error on Row:", row)
-    #         print("Instance values:")
-    #         print("course:", instance.course, instance.course.pk)
-    #         print("faculty:", instance.faculty, instance.faculty.pk)
-    #         print("semester:", instance.semester, instance.semester.pk)
-    #         import ipdb; ipdb.set_trace()
-    #         raise exc
-
     class Meta:
         model = Section
-        import_id_fields = ("semester", "number", "course", "faculty")
+        import_id_fields = ("semester", "program", "number", "faculty")
         fields = (
             "number",
-            "course",
+            "program",
             "semester",
             "faculty",
+            "course_dept",
             "academic_year",
             "course_no",
             "college_code",

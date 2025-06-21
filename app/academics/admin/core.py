@@ -11,7 +11,6 @@ from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.program import Program
-from app.timetable.admin.inlines import SectionInline
 
 from .filters import CurriculumFilter
 from .inlines import (
@@ -45,19 +44,25 @@ class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """
 
     resource_class = CourseResource
-    list_display = ("code", "title", "credit_hours", "department")
-    list_filter = ("curricula", "department__college")
-    autocomplete_fields = "curricula"
-    inlines = [SectionInline, PrerequisiteInline, RequiresInline]
+    list_display = (
+        "code",
+        "title",
+        "in_programs__credit_hours",
+        "in_programs__curriculum",
+        "department",
+    )
+    list_filter = ("in_programs__curriculum", "department__college")
+    autocomplete_fields = ("curricula",)
+    inlines = [PrerequisiteInline, RequiresInline]
     list_select_related = ("department",)
 
-    search_fields = ("code", "department", "curricula__short_name", "sections__number")
-    fieldsets = (
+    search_fields = ("code", "department", "sections__number")
+    fields = (
         "department",
         "number",
         "title",
-        "credit_hours",
-        "curricula",
+        "in_programs__credit_hours",
+        "in_programs__curriculum",
     )
 
 
@@ -96,7 +101,7 @@ class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = CurriculumResource
     # add the action button on the import form
     list_display = ("short_name", "long_name", "college")
-    list_filter = "college"
+    list_filter = ("college",)
     autocomplete_fields = ("college",)
     inlines = [ProgramInline]
 
@@ -129,10 +134,6 @@ class DepartmentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     resource_class = DepartmentResource
     list_display = ("short_name", "full_name", "college")
     search_fields = ("short_name", "full_name", "college")
-    autocomplete_fields = (
-        "short_name",
-        "college",
-    )
 
 
 @admin.register(Program)

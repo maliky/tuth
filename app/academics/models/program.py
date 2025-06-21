@@ -18,10 +18,10 @@ class Program(models.Model):
     """
 
     curriculum = models.ForeignKey(
-        "academics.Curriculum", on_delete=models.CASCADE, related_name="courses"
+        "academics.Curriculum", on_delete=models.CASCADE, related_name="programs"
     )
     course = models.ForeignKey(
-        "academics.Course", on_delete=models.CASCADE, related_name="curricula"
+        "academics.Course", on_delete=models.CASCADE, related_name="in_programs"
     )
     is_required = models.BooleanField(default=True)
 

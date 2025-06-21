@@ -8,7 +8,7 @@ from app.timetable.models.session import Session
 
 
 class SemesterInline(admin.TabularInline):
-    """Inline for managing :class:~app.timetable.models.Semester rows."""
+    """Inline for managing Semester rows."""
 
     model = Semester
     extra = 0
@@ -18,7 +18,7 @@ class SemesterInline(admin.TabularInline):
 
 
 class SessionInline(admin.TabularInline):
-    """Inline editor for :class:~app.timetable.models.Session."""
+    """Inline editor for Session rows."""
 
     model = Session
     extra = 0
@@ -27,13 +27,12 @@ class SessionInline(admin.TabularInline):
 
 
 class SectionInline(admin.TabularInline):
-    """Inline for creating :class:~app.timetable.models.Section rows."""
+    """Inline for creating Section rows."""
 
     model = Section
     extra = 0
     fields = (
         "semester",
-        "course",
         "number",
         "faculty",
         "start_date",

@@ -83,7 +83,7 @@ def test_overlapping_subperiod_raises():
         start_date=ay.start_date,
         end_date=date(2026, 1, 15),
     )
-    Term.objects.create(
+    Term.objects.create(  # type: ignore[attr-defined]
         semester=sem,
         number=1,
         start_date=date(2025, 9, 1),
@@ -93,10 +93,11 @@ def test_overlapping_subperiod_raises():
     assert sem.end_date is not None
 
     with pytest.raises(ValidationError):
+        overlap_qs = Term.objects.filter(semester=sem)  # type: ignore[attr-defined]
         validate_subperiod(
             sub_start=date(2025, 9, 15),
             sub_end=date(2025, 10, 15),
             container_start=sem.start_date,
             container_end=sem.end_date,
-            overlap_qs=Term.objects.filter(semester=sem),
+            overlap_qs=overlap_qs,
         )

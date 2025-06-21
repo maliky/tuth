@@ -48,7 +48,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # my apps
-    "app.website",
     "app.academics",
     "app.finance",
     "app.people",
@@ -56,6 +55,7 @@ INSTALLED_APPS = [
     "app.shared",
     "app.spaces",
     "app.timetable",
+    "app.website",
 ]
 
 MIDDLEWARE = [

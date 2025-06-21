@@ -50,7 +50,6 @@ def expand_course_code(
 def make_course_code(dept: Department, number: str) -> str:
     """Return a compact code from a department, number and optional college.
 
-    Returns:  A normalized course identifier.
+    Returns:  {dept.code}{number}
     """
-    college_code = dept.college.code
-    return f"{dept.short_name}{number}{college_code}".upper()
+    return f"{dept.code}{number}".upper()

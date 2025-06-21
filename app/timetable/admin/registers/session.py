@@ -46,8 +46,3 @@ class ScheduleAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     list_display = ("weekday", "start_time", "end_time")
     list_filter = ("weekday",)
     search_fields = ("weekday",)
-    # useful when creating new schedules
-    autocomplete_fields = (
-        "weekday",
-        "start_time",
-    )

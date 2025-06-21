@@ -1,20 +1,21 @@
 """timetable.admin.widgets.section module."""
 
 from typing import Optional, cast
+
 from import_export import widgets
 
-from app.academics.admin.widgets import CourseWidget
+from app.academics.admin.widgets import CourseWidget, ProgramWidget
 from app.people.admin.widgets import FacultyWidget
 from app.timetable.admin.widgets.core import SemesterWidget
 from app.timetable.models.section import Section
 
 
 class SectionWidget(widgets.ForeignKeyWidget):
-    """Create a :class:Section from multiple CSV columns."""
+    """Create a Section from multiple CSV columns."""
 
     def __init__(self):
         super().__init__(Section)  # using pk until export is done
-        self.course_w = CourseWidget()
+        self.program_w = ProgramWidget()
         self.sem_w = SemesterWidget()
         self.faculty_w = FacultyWidget()
 
@@ -24,19 +25,24 @@ class SectionWidget(widgets.ForeignKeyWidget):
         if row is None:
             raise ValueError("Row context required")
 
-        sem_no_value, course_dept_value, sec_no_value, faculty_value = [
-            row.get(v, "").strip()
-            for v in ("semester_no", "course_dept", "section_no", "faculty")
-        ]
+        curriculum_value = (row.get("curriculum") or "").strip()
+        program = self.program_w.clean(value=curriculum_value, row=row)
 
-        semester = self.sem_w.clean(value=sem_no_value, row=row)
-        course = self.course_w.clean(value=course_dept_value, row=row)
+        semester_no = (row.get("semester_no") or "").strip()
+        semester = self.sem_w.clean(value=semester_no, row=row)
+
+        faculty_value = (row.get("faculty") or "").strip()
         faculty = self.faculty_w.clean(value=faculty_value, row=row)
 
-        number = int(sec_no_value)
+        sec_no_value = (row.get("section_no") or "0").strip()
+
+        if sec_no_value.isdigit():
+            number = int(sec_no_value)
+        else:
+            number = 0
 
         section, _ = Section.objects.get_or_create(
-            semester=semester, course=course, number=number, faculty=faculty
+            semester=semester, program=program, number=number, faculty=faculty
         )
         return cast(Optional[Section], section)
 

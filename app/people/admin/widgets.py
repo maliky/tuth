@@ -75,7 +75,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
 
 
 class FacultyWidget(widgets.ForeignKeyWidget):
-    """Ensure a :class:Faculty entry exists for the given staff name."""
+    """Ensure a Faculty entry exists for the given staff name."""
 
     def __init__(self):
         # field is "id" by default

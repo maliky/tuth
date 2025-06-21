@@ -15,6 +15,7 @@ from app.shared.utils import expand_course_code
 class ProgramWidget(widgets.ForeignKeyWidget):
     """Create or fetch Program rows from CSV data.
 
+    use the curriculum_short name as the value.
     The widget delegates curriculum and course parsing to CurriculumWidget
     and CourseWidget then assembles a :class:Program instance from
     the results.
@@ -30,18 +31,19 @@ class ProgramWidget(widgets.ForeignKeyWidget):
         if not value:
             return None
 
+        curriculum_value = value.strip()
         curriculum = cast(
-            Curriculum, self.curriculm_w.clean(value=value.strip(), row=row)
+            Curriculum, self.curriculm_w.clean(value=curriculum_value, row=row)
         )
 
-        course_dept_value = row.get("course_dept", "").strip()
-        course = self.course_w.clean(value=course_dept_value, row=row)
+        course_dept = (row.get("course_dept") or "").strip()
+        course = self.course_w.clean(value=course_dept, row=row)
 
         program, _ = Program.objects.get_or_create(
             curriculum=curriculum,
             course=course,
             credit_hours=row.get("credit_hours", "").strip(),
-            is_required=row.get("is_required", True).strip(),
+            is_required=row.get("is_required", True),
         )
         return program
 
@@ -84,7 +86,7 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
 
 
 class CourseWidget(widgets.ForeignKeyWidget):
-    """Convert course_* CSV columns into a :class:Course.
+    """Convert course_* CSV columns into a Course.
 
     course_dept and course_no identify the course while college is
     optional and defaults to "COAS". Results are cached to avoid duplicate

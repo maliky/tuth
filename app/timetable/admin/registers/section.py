@@ -19,10 +19,10 @@ class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
     # ! TODO ajouter à la list, les rooms occupé et le nombre de sessions, le nombre de crédits
     resource_class = SectionResource
-    list_display = ("semester", "program", "no", "faculty", "available_seats")
+    list_display = ("semester", "program", "number", "faculty", "available_seats")
     inlines = [SessionInline]
     list_filter = ("program__curriculum",)
-    autocomplete_fields = ("program__course", "semester", "faculty")
+    autocomplete_fields = ("semester", "faculty")
 
     # Join related tables to reduce queries when pulling sections.
     list_select_related = (
