@@ -2,7 +2,7 @@
 set -e
 
 sudo find . -path "*migrations*" -type f -delete
-rm testdb
+rm db_test
 
 #docker compose -f docker-compose-dev.yml exec web python manage.py reset_db
 docker compose -f docker-compose-dev.yml exec web python manage.py makemigrations 

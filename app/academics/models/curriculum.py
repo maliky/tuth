@@ -4,6 +4,7 @@ from __future__ import annotations
 from datetime import date
 
 from app.academics.choices import StatusCurriculum
+from app.academics.models.college import College
 from django.db import models
 
 from app.shared.status.mixins import StatusableMixin
@@ -47,9 +48,21 @@ class Curriculum(StatusableMixin, models.Model):
         """Return the curriculum short name."""
         return f"{self.college}: {self.short_name}"
 
+    @classmethod
+    def get_default(cls) -> Curriculum:
+        """Returns a default curriculum."""
+        return cls.objects.create(
+            short_name="DFT_CUR", long_name="Curriculum par default"
+        )
+
+    def save(self, *args, **kwargs):
+        """Save a curriculum instance while setting defaults."""
+        if not self.college:
+            self.college = College.get_default()
+        super().save(*args, **kwargs)
+
     def clean(self) -> None:
         """Validate the curriculum and its current status."""
-
         super().clean()
         self.validate_status(StatusCurriculum)
 

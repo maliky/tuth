@@ -5,6 +5,7 @@
 from datetime import date
 from pathlib import Path
 
+from app.people.utils import extract_id_num
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -24,13 +25,7 @@ def photo_upload_to(instance: "AbstractPerson", filename: str) -> str:
 class AbstractPerson(StatusableMixin, models.Model):
     """Base information shared by all people profiles.
 
-    Example:
-        >>> from django.contrib.auth import get_user_model
-        >>> User = get_user_model()
-        >>> user = User.objects.create(username="john")
-        >>> from app.people.models.student import Student
-        >>> Student.objects.create(user=user, student_id="S1", enrollment_semester=semester)
-
+    Student, Donor, Staff->Facutly
     Side Effects:
         save() assigns an ID derived from user.
     """
@@ -136,36 +131,34 @@ class AbstractPerson(StatusableMixin, models.Model):
     def __str__(self) -> str:  # pragma: no cover
         return self.long_name
 
-    def _exists_user(self) -> None:
+    def _must_exists_user(self) -> None:
         """Returns the user if it exists."""
         try:
             _ = self.user
         except User.DoesNotExist:
             raise ValidationError("User must have been saved at this point.")
 
-    def _mk_id(self) -> str:
-        """Build a deterministic ID from the related user primary key.
+    @classmethod
+    def get_existing_id(cls) -> list[int]:
+        """Returns the list of existing number composing the user_ids."""
+        user_ids_str = cls.objects.values_list(cls.ID_FIELD, flat=True)  # type: ignore[attr-defined]
+        user_ids = [extract_id_num(v) for v in user_ids_str]
+        return user_ids
 
-        Example: user.pk = 42  →  TUID-S0042
-        """
-        # > we need a better logic tolarating existing id.
-        # > the Id number should not be linked to the user but the the students
-        # > the logic should go do.
-        # > If I create a student a donor a staff a staff a student I should seed
-        # > tu00001, dnr00001, stf00001, stf00002, tu00002.
-        self._exists_user()
+    def _mk_id(self) -> str:
+        """Build an ID incrementing the user_id depending on its class."""
+        self._must_exists_user()
 
         if self.user.pk is None:
             raise ValidationError("Cannot generate Id if user.pk is None.")
 
-        # > I want to get all the ids of the class of objet calling this function (Staff, Donor, Student...)
-        # > Then I order those number (they will have been strip of the ID_PREFIX)
-        # > I identify gaps in the number sequence.  (non attributed no)
-        # > I create a new number withing that gap.
-        # > Could be speeded up if I kept in a table for each class the available numbers below the highest
-        # > attributed to that class.
-        # > if no number available the I would just give the next integer.
-        return f"{self.ID_PREFIX}{self.user.id:05}"
+        existing_ids = self.get_existing_id()
+        if existing_ids:
+            next_num = max(existing_ids) + 1
+        else:
+            next_num = 1
+
+        return f"{self.ID_PREFIX}{next_num:05}"
 
     def id_field_exists(self) -> None:
         """Raise an exception if ID_PREFIX is not set."""

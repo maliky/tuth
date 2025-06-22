@@ -1,6 +1,6 @@
-test.repl.org
+_test.repl.org
 *log
-testdb*
+db_test*
 .env*
 .git/*
 *#*

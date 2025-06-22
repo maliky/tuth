@@ -5,12 +5,12 @@ from django.db.models import IntegerChoices
 
 
 class CollegeCodeChoices(models.TextChoices):
-    COHS = "cohs", "COHS"
-    COAS = "coas", "COAS"
-    COED = "coed", "COED"
-    CAFS = "cafs", "CAFS"
-    COET = "coet", "COET"
-    COBA = "coba", "COBA"
+    COHS = "COHS", "COHS"
+    COAS = "COAS", "COAS"
+    COED = "COED", "COED"
+    CAFS = "CAFS", "CAFS"
+    COET = "COET", "COET"
+    COBA = "COBA", "COBA"
 
 
 class CollegeLongNameChoices(models.TextChoices):

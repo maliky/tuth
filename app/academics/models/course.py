@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from app.academics.models.department import Department
 from django.db import models
 
 from app.academics.choices import LEVEL_NUMBER
@@ -65,10 +66,15 @@ class Course(models.Model):
         if not self.code:
             self.code = make_course_code(self.department, number=self.number)
 
+    def _set_dept(self):
+        if not self.department:
+            self.department = Department.get_default()
+
     # ---------- hooks ----------
     def save(self, *args, **kwargs) -> None:
         """Populate code from department short_name and number before saving."""
         self._set_code()
+        self._set_dept()
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:  # pragma: no cover

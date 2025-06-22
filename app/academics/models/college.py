@@ -34,8 +34,8 @@ class College(models.Model):
         return f"{self.code}"
 
     @classmethod
-    def get_default(cls):
-        """Return the default college."""
+    def get_default(cls) -> College:
+        """Return the default college ie. COAS."""
         # will set the long_name by default on save
         def_clg, _ = cls.objects.get_or_create(code=CollegeCodeChoices.COAS)
         return def_clg
@@ -51,7 +51,7 @@ class College(models.Model):
     def save(self, *args, **kwargs) -> None:
         """Ensure long_name matches the selected code before saving."""
         if not self.long_name:
-            self.long_name = CollegeLongNameChoices[self.code]
+            self.long_name = CollegeLongNameChoices[self.code.upper()].label
         super().save(*args, **kwargs)
 
     class Meta:

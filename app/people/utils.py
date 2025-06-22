@@ -22,8 +22,10 @@ Functions:
 import re
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 
 User = get_user_model()
+
 
 SUFFIX_PATTERNS = [
     re.compile(p, re.IGNORECASE)
@@ -39,7 +41,7 @@ SUFFIX_PATTERNS = [
 
 # prefix if followed by a dot then has a space just after
 PREFIX_PATTERN = re.compile(
-    r"(\b(?:Doc|Dr|Mme|Mrs?|Ms|Prof|Rev|Sr|Fr)(?P<dot>\.)?(?(dot)\s*|\b))", re.IGNORECASE
+    r"(\b(?:Doc|Dr|Mme|Mrs?|Ms|Prof|Rev|Sr|Fr)(?P<dot>\.)?(?(dot)\s*|\b))+", re.IGNORECASE
 )
 # A single letter folowed by a dot and a space or a word separatore '\b'
 FULL_INITIAL_PATTERN = re.compile(r"\b([A-Z])(?P<dot>\.)?(?(dot)\s*|\b)")
@@ -82,12 +84,20 @@ def inverse_if_comma(raw_name: str) -> str:
     return " ".join([p for p in parts[::-1]])
 
 
-def inverse_if_first_last(raw_name: str) -> str:
-    """Reverse the parts if the second is made of initial but not the first."""
+def inverse_if_initial_last(raw_name: str) -> str:
+    """Reverse the parts if the second is made only of initials."""
     front_part, _, back_part = raw_name.partition(" ")
-    front_m = re.match(INITIAL_PATTERN, front_part)
-    back_m = re.match(INITIAL_PATTERN, back_part)
-    return f"{back_m.group(0)} {front_part}" if back_m and not front_m else raw_name
+    # front_m = re.match(INITIAL_PATTERN, front_part)
+
+    REPEATING_INITIALS = r"([A-Z](\s|\b))*"
+    back_m = re.match(REPEATING_INITIALS, back_part)
+    if not back_m:
+        return raw_name
+
+    back_match = back_m.group(0)
+    if back_match != back_part:
+        return raw_name
+    return f"{back_part} {front_part}"
 
 
 def extract_firstnlast(raw_name: str) -> tuple[str, str, str]:
@@ -101,12 +111,16 @@ def extract_firstnlast(raw_name: str) -> tuple[str, str, str]:
     # we take is as initial of first name.
     # else standard first middle last
 
-    # we harmonize dot for initial stuff
-    raw_name = re.sub(r"\. *", ". ", raw_name)
-    # Une règle implicite c'est que s'il y a une virgule
-    # c'est que le last name is first. we reverse
+    # We remove extra spaces after dots
+    # raw_name = re.sub(r"\. *", ". ", raw_name)
+
+    # remove all dots
+    raw_name = re.sub(r"\. *", " ", raw_name)
+
+    # if we have a comma, inverse first and last
     raw_name = inverse_if_comma(raw_name).strip()
-    raw_name = inverse_if_first_last(raw_name).strip()
+    # if we have 2 parts made of initial only then must be first names
+    raw_name = inverse_if_initial_last(raw_name).strip()
 
     m = re.match(FIRST_PATTERN, raw_name)
     if m:
@@ -120,8 +134,10 @@ def extract_firstnlast(raw_name: str) -> tuple[str, str, str]:
         raw_name = re.sub(LAST_PATTERN, "", raw_name).strip()
 
     # removing any trailing dots
-    raw_name = re.sub(r"^\.", "", raw_name).strip()
+    # raw_name = re.sub(r"^\.", "", raw_name).strip()
 
+    # Harmonizing dots to initials
+    raw_name = re.sub(r"\b(\w)\b", r"\1.", raw_name).strip()
     if not last_name and not raw_name:  # so if only first_name
         # first_name -> last name
         return last_name, first_name, raw_name
@@ -160,7 +176,8 @@ def mk_username(first: str, last: str, unique=False, length: int = 13) -> str:
 
     If unique is True make sure it is unique.
     The default rule is to take the first 2 char of the first name
-    and concatenate them with the last name.
+    and concatenate them with the last name. All lowercase.
+    maxlenght 13 char
     """
     username_base = (first[:2] + last).lower()
     username = username_base[:length]
@@ -172,3 +189,15 @@ def mk_username(first: str, last: str, unique=False, length: int = 13) -> str:
             username = f"{username_base}{counter}"
 
     return username
+
+
+def extract_id_num(user_id: str) -> int:
+    """Extract the number of an user_id what ever the prefix."""
+    # using non greedy start
+    m = re.match(r".*?([0-9]+)", user_id)
+
+    if m is None:
+        raise ValidationError(f"A user id should have some digits in it. {user_id}")
+
+    # the group cannot be something else than digits
+    return int(m.groups(0)[0])
