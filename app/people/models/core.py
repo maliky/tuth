@@ -160,7 +160,7 @@ class AbstractPerson(StatusableMixin, models.Model):
 
         return f"{self.ID_PREFIX}{next_num:05}"
 
-    def id_field_exists(self) -> None:
+    def ensure_id_field_exists(self) -> None:
         """Raise an exception if ID_PREFIX is not set."""
         # > the check will not be detected by mypy. so ignore[arg-type]
         # would be good to find more clean to use mypy
@@ -169,19 +169,20 @@ class AbstractPerson(StatusableMixin, models.Model):
 
     def get_id_no(self) -> int | None:
         """Remove the ID_PREFIX and Returns the number associated with the id field."""
-        self.id_field_exists()
+        self.ensure_id_field_exists()
         obj_id = object.__getattribute__(self, self.ID_FIELD)  # type: ignore[arg-type]
 
         if obj_id is None:
-            return 0
+            return None
 
+        # the following suppose that after the prefix only numbers
         _, _, obj_no_str = obj_id.partition(self.ID_PREFIX)  # type: ignore[arg-type]
         return int(obj_no_str) if obj_no_str else 0
 
     def save(self, *args, **kwargs):
         """Create an ID and saves it for each model using _mk_id and ID_FIELD."""
         id_no = self.get_id_no()
-        if not id_no:
+        if id_no is None:
             new_id = self._mk_id()
             object.__setattr__(self, self.ID_FIELD, new_id)  # type: ignore[arg-type]
         super().save(*args, **kwargs)

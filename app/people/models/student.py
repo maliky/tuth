@@ -16,7 +16,7 @@ class Student(AbstractPerson):
 
     Example:
         >>> user = User.objects.create_user(username="stud")
-        >>> s = Student.objects.create(user=user, enrollment_semester=semester)
+        >>> s = Student.objects.create(user=user, current_enroled_semester=semester)
         >>> s.student_id  # auto-set from user id
         'TU_STD0001'
     Side Effects:
@@ -36,11 +36,12 @@ class Student(AbstractPerson):
         "academics.Curriculum", on_delete=models.SET_NULL, null=True, blank=True
     )
 
-    enrollment_semester = models.ForeignKey(
+    current_enroled_semester = models.ForeignKey(
         Semester,
         on_delete=models.PROTECT,
+        null=True,
     )
-    enrollment_date = models.DateField(null=True, blank=True)
+    first_enrollement_date = models.DateField(null=True, blank=True)
 
     # > need to create a method to compute le level of the student based on the
     # > number of credit completed

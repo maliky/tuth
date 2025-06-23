@@ -2,7 +2,7 @@
 
 from import_export import fields, resources
 
-from app.people.admin.widgets import StaffProfileWidget
+from app.people.admin.widgets import StaffProfileWidget, StudentWidget
 from app.people.models.staffs import Faculty, Staff
 from app.people.models.student import Student
 from app.people.utils import mk_username, split_name
@@ -49,8 +49,8 @@ class DirectoryContactResource(resources.ModelResource):
 class FacultyResource(resources.ModelResource):
     """Expected CSV columns.
 
-    faculty        ← long display name (“Dr. Jane A. Doe PhD”…)
-    college_code   ← optional – defaults to “COAS”
+    faculty        :long display name (“Dr. Jane A. Doe PhD”…)
+    college_code   :optional – defaults to “COAS”
     """
 
     staff_profile = fields.Field(
@@ -68,7 +68,15 @@ class FacultyResource(resources.ModelResource):
 
 
 class StudentResource(resources.ModelResource):
-    """Resource for bulk importing :class:Student rows."""
+    """Resource for bulk importing Student rows."""
+
+    # should populate the pk field directly 
+    student_id = fields.Field(column_name="fullname", widget=StudentWidget())
+    semester = fields.Field(
+        attribute="semester",
+        column_name="semester_no",
+        widget=SemesterWidget(),
+    )
 
     class Meta:
         model = Student
@@ -76,10 +84,6 @@ class StudentResource(resources.ModelResource):
         fields = (
             "student_id",
             "user",
-            "college",
-            "curriculum",
-            "enrollment_semester",
-            "enrollment_date",
         )
 
 

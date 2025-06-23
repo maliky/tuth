@@ -8,6 +8,7 @@ Usage::
     >>> print(staff.long_name)
 """
 
+from app.people.models.student import Student
 from django.contrib.auth import get_user_model
 from import_export import widgets
 
@@ -100,3 +101,47 @@ class FacultyWidget(widgets.ForeignKeyWidget):
             staff_profile=staff,
         )
         return faculty
+
+
+class StudentWidget(widgets.ForeignKeyWidget):
+    """Ensure a Faculty entry exists for the given staff name."""
+
+    def __init__(self):
+        # field is "id" by default
+        super().__init__(Student, field="student_id")
+
+    def clean(self, value: str, row=None, *args, **kwargs) -> Student | None:
+        """From the student name (an optionaly an id), gets a Student object.
+
+        Create user and student objects if necessary.
+        """
+        if not value:
+            return None
+
+        std_fullname = (value or "").strip()
+        prefix, first, middle, last, suffix = split_name(std_fullname)
+        username = mk_username(first, last, unique=True, student_scheme=True)
+
+        user, _ = User.objects.get_or_create(
+            username=username,
+            defaults={
+                "first_name": first.capitalize(),
+                "last_name": last.capitalize(),
+                "password": TEST_PW,
+            },
+        )
+
+        if "student_id" in row:
+            student_id = (row.get("student_id") or "").strip()
+
+        student, _ = Student.objects.get_or_create(
+            user=user,
+            defaults={
+                "student_id": student_id,
+                "name_prefix": prefix,
+                "middle_name": middle,
+                "name_suffix": suffix,
+            },
+        )
+
+        return student

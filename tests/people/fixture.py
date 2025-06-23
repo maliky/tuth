@@ -87,5 +87,5 @@ def student(
 ) -> Student:
     user = user_factory("letudiant")
     return Student.objects.create(
-        user=user, college=college, curriculum=curriculum, enrollment_semester=semester
+        user=user, college=college, curriculum=curriculum, current_enroled_semester=semester
     )

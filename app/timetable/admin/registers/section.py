@@ -27,9 +27,7 @@ class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     # Join related tables to reduce queries when pulling sections.
     list_select_related = ("program", "semester", "faculty")
 
-    search_fields = (
-        "^program__course__code",  # fast starts-with on indexed code
-    )
+    search_fields = ("^program__course__code",)  # fast starts-with on indexed code
 
     def get_queryset(self, request):
         """Prefetch all the Session -> Room relationships."""

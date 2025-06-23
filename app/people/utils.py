@@ -171,17 +171,24 @@ def split_name(name: str) -> tuple[str, str, str, str, str]:
     return name_prefix, first_name, middle_name, last_name, name_suffix
 
 
-def mk_username(first: str, last: str, unique=False, length: int = 13) -> str:
+def mk_username(
+    first: str, last: str, unique=False, max_length: int = 0, student_scheme=False
+) -> str:
     """Generates a standard username.
 
     If unique is True make sure it is unique.
     The default rule is to take the first 2 char of the first name
     and concatenate them with the last name. All lowercase.
-    maxlenght 13 char
+    but if student_scheme is True, take the first.lastname as username
+    - maxlength 13 char
     """
-    username_base = (first[:2] + last).lower()
-    username = username_base[:length]
+    if student_scheme == False:
+        username_base = (first[:2] + last).lower()
+    else:
+        username_base = f"{first}.{last}".lower()
 
+    username = username_base[:max_length] if max_length else username_base
+        
     if unique:
         counter = 1
         while User.objects.filter(username=username).exists():
