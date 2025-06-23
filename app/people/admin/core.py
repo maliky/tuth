@@ -29,10 +29,11 @@ class FacultyAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     list_display = ("staff_profile",)
     list_filter = ("college",)
     search_fields = (
-        "staff_profile__staff_id",
-        "staff_profile__username",
-        "staff_profile__first_name",
-        "staff_profile__last_name",
+        "academic_rank",
+        # "staff_profile__staff_id",
+        # "staff_profile__user__username",
+        # "staff_profile__first_name",
+        # "staff_profile__user",
     )
     autocomplete_fields = ("staff_profile",)
 
@@ -62,61 +63,29 @@ class StaffAdmin(GuardedModelAdmin):
     fields like staff_id are read-only to avoid accidental edits.
     """
 
-    # ▸ custom helper so list_display works with M2M
-
-    fieldsets = (
-        (
-            None,
-            {
-                "fields": (
-                    "long_name",
-                    "staff_id",
-                    "user",
-                ),
-            },
-        ),
-        (
-            "Personal Info",
-            {
-                "fields": (
-                    "photo",
-                    "name_prefix",
-                    "middle_name",
-                    "name_suffix",
-                    "phone_number",
-                    "physical_address",
-                    "date_of_birth",
-                    "bio",
-                ),
-                #                "classes": ("collapse",),
-            },
-        ),
-        (
-            "Work Info",
-            {
-                "fields": (
-                    "employment_date",
-                    "division",
-                    "department",
-                    "position",
-                ),
-            },
-        ),
-    )
-    list_display = (
-        "long_name",
+    fields = (
         "user",
         "staff_id",
+        "photo",
+        "name_prefix",
+        "middle_name",
+        "name_suffix",
+        "phone_number",
+        "physical_address",
+        "date_of_birth",
+        "bio",
+        "employment_date",
+        "division",
         "department",
+        "position",
     )
-    search_fields = (
+    list_display = (
         "staff_id",
-        "user__username",
-        "long_name",
         "department",
     )
-    autocomplete_fields = ("user", "department")
-    readonly_fields = ("staff_id", "long_name", "age")
+    search_fields = ("staff_id",)
+    autocomplete_fields = ("user",)
+    readonly_fields = ("staff_id", "age")
 
 
 @admin.register(Student)

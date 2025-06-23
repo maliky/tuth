@@ -25,17 +25,10 @@ class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     autocomplete_fields = ("semester", "faculty")
 
     # Join related tables to reduce queries when pulling sections.
-    list_select_related = (
-        "program",
-        "curriculum",
-        "course",
-        "semester",
-        "faculty",
-    )
+    list_select_related = ("program", "semester", "faculty")
 
     search_fields = (
         "^program__course__code",  # fast starts-with on indexed code
-        "faculty__long_name",  # or __first_name / __last_name
     )
 
     def get_queryset(self, request):

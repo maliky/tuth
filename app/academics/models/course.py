@@ -68,7 +68,7 @@ class Course(models.Model):
 
     def _set_dept(self):
         if not self.department:
-            self.department = Department.get_default()
+            self.ldepartment = Department.get_default()
 
     # ---------- hooks ----------
     def save(self, *args, **kwargs) -> None:

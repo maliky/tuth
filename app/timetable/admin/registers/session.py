@@ -26,7 +26,12 @@ class SessionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
         "section__number",
         "section__faculty",
     )
-    search_fields = ("section",)
+    # need to be 'real' fieds not FK,
+    search_fields = (
+        "section__program__course__code",
+        "section__program__course__title",
+        "section__faculty__staff_profile__user__first_name",
+    )
     list_filter = ("schedule__weekday", "room__space")
     # useful when creating new schedules
     autocomplete_fields = (

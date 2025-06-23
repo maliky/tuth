@@ -15,7 +15,8 @@ from app.academics.models.program import Program
 from .filters import CurriculumFilter
 from .inlines import (
     PrerequisiteInline,
-    ProgramInline,
+    CourseProgramInline,
+    CurriculumProgramInline,
     RequiresInline,
 )
 from .resources import (
@@ -47,23 +48,17 @@ class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     list_display = (
         "code",
         "title",
-        "in_programs__credit_hours",
-        "in_programs__curriculum",
+        "number",
+        "description",
         "department",
     )
-    list_filter = ("in_programs__curriculum", "department__college")
+    list_filter = ("department__college",)
     autocomplete_fields = ("curricula",)
-    inlines = [PrerequisiteInline, RequiresInline]
+    inlines = [PrerequisiteInline, RequiresInline, CourseProgramInline]
     list_select_related = ("department",)
 
-    search_fields = ("code", "department", "sections__number")
-    fields = (
-        "department",
-        "number",
-        "title",
-        "in_programs__credit_hours",
-        "in_programs__curriculum",
-    )
+    search_fields = ("code", "department__code", "title")
+    fields = ("department", "number", "title", "description")
 
 
 @admin.register(Prerequisite)
@@ -85,7 +80,7 @@ class PrerequisiteAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     list_display = ("course", "prerequisite_course", "curriculum")
     autocomplete_fields = ("course", "prerequisite_course", "curriculum")
     list_filter = (CurriculumFilter,)
-    search_fields = ("course", "prerequisite_course", "curriculum")
+    # search_fields = ("course", "prerequisite_course", "curriculum")
 
 
 @admin.register(Curriculum)
@@ -103,7 +98,7 @@ class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     list_display = ("short_name", "long_name", "college")
     list_filter = ("college",)
     autocomplete_fields = ("college",)
-    inlines = [ProgramInline]
+    inlines = [CurriculumProgramInline]
 
     # list_selected_relate reduces the number of queries in db
     list_select_related = ("college",)
@@ -132,8 +127,8 @@ class DepartmentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """
 
     resource_class = DepartmentResource
-    list_display = ("short_name", "full_name", "college")
-    search_fields = ("short_name", "full_name", "college")
+    list_display = ("short_name", "full_name", "code", "college")
+    search_fields = ("short_name", "full_name", "code")
 
 
 @admin.register(Program)

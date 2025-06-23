@@ -7,7 +7,7 @@ from app.academics.models.program import Program
 
 
 class RequiresInline(admin.TabularInline):
-    """Inline editor for :class:~app.academics.models.Prerequisite needed by a course."""
+    """Inline editor for Prerequisite needed by a course."""
 
     model = Prerequisite
     fk_name = "course"
@@ -26,9 +26,21 @@ class PrerequisiteInline(admin.TabularInline):
     autocomplete_fields = ("course",)
 
 
-class ProgramInline(admin.TabularInline):
-    """Inline for linking courses to a curriculum."""
+class CourseProgramInline(admin.TabularInline):
+    """Inline for linking courses to a program."""
 
     model = Program
+    fk_name = "course"
+    verbose_name_plural = "Curricula having this course."
+    extra = 0
+    autocomplete_fields = ("course",)
+
+
+class CurriculumProgramInline(admin.TabularInline):
+    """Inline for linking courses to a program."""
+
+    model = Program
+    fk_name = "curriculum"
+    verbose_name_plural = "Courses of this curriculum."
     extra = 0
     autocomplete_fields = ("course",)
