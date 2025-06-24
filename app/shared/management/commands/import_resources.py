@@ -72,7 +72,7 @@ class Command(BaseCommand):
         dataset = self.clean_column_headers(dataset)
 
         RESOURCES_MAP: list[tuple[str, type[resources.ModelResource]]] = [
-            # ("Student", StudentResource),
+            ("Student", StudentResource),
             ("Faculty", FacultyResource),  # and College
             ("Room", RoomResource),  # and Space
             ("Schedule", ScheduleResource),
