@@ -103,7 +103,7 @@ class FacultyWidget(widgets.ForeignKeyWidget):
         return faculty
 
 
-class StudentWidget(widgets.ForeignKeyWidget):
+class UserWidget(widgets.ForeignKeyWidget):
     """Ensure a Faculty entry exists for the given staff name."""
 
     def __init__(self):
@@ -131,17 +131,4 @@ class StudentWidget(widgets.ForeignKeyWidget):
             },
         )
 
-        if "student_id" in row:
-            student_id = (row.get("student_id") or "").strip()
-
-        student, _ = Student.objects.get_or_create(
-            user=user,
-            defaults={
-                "student_id": student_id,
-                "name_prefix": prefix,
-                "middle_name": middle,
-                "name_suffix": suffix,
-            },
-        )
-
-        return student
+        return user

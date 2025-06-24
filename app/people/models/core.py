@@ -181,8 +181,9 @@ class AbstractPerson(StatusableMixin, models.Model):
 
     def save(self, *args, **kwargs):
         """Create an ID and saves it for each model using _mk_id and ID_FIELD."""
+
         id_no = self.get_id_no()
-        if id_no is None:
+        if id_no is None or not id_no:
             new_id = self._mk_id()
             object.__setattr__(self, self.ID_FIELD, new_id)  # type: ignore[arg-type]
         super().save(*args, **kwargs)

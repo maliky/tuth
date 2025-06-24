@@ -182,13 +182,13 @@ def mk_username(
     but if student_scheme is True, take the first.lastname as username
     - maxlength 13 char
     """
-    if student_scheme == False:
+    if not student_scheme:
         username_base = (first[:2] + last).lower()
     else:
         username_base = f"{first}.{last}".lower()
 
     username = username_base[:max_length] if max_length else username_base
-        
+
     if unique:
         counter = 1
         while User.objects.filter(username=username).exists():

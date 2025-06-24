@@ -2,11 +2,12 @@
 
 from import_export import fields, resources
 
-from app.people.admin.widgets import StaffProfileWidget, StudentWidget
+from app.people.admin.widgets import StaffProfileWidget, UserWidget
 from app.people.models.staffs import Faculty, Staff
 from app.people.models.student import Student
 from app.people.utils import mk_username, split_name
 from app.registry.models.registration import Registration
+from app.timetable.admin.widgets.core import SemesterWidget
 
 
 class DirectoryContactResource(resources.ModelResource):
@@ -54,8 +55,8 @@ class FacultyResource(resources.ModelResource):
     """
 
     staff_profile = fields.Field(
-        column_name="faculty",
         attribute="staff_profile",
+        column_name="faculty",
         widget=StaffProfileWidget(),
     )
 
@@ -70,10 +71,10 @@ class FacultyResource(resources.ModelResource):
 class StudentResource(resources.ModelResource):
     """Resource for bulk importing Student rows."""
 
-    # should populate the pk field directly 
-    student_id = fields.Field(column_name="fullname", widget=StudentWidget())
-    semester = fields.Field(
-        attribute="semester",
+    # should populate the pk field directly
+    user = fields.Field(attribute="user", column_name="student_name", widget=UserWidget())
+    current_enroled_semester = fields.Field(
+        attribute="current_enroled_semester",
         column_name="semester_no",
         widget=SemesterWidget(),
     )
@@ -84,6 +85,10 @@ class StudentResource(resources.ModelResource):
         fields = (
             "student_id",
             "user",
+            "college",
+            "curriculum",
+            "current_enroled_semester",
+            "first_enrollement_date",
         )
 
 
