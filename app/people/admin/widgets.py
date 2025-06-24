@@ -12,6 +12,8 @@ from app.people.models.student import Student
 from django.contrib.auth import get_user_model
 from import_export import widgets
 
+from app.shared.utils import CachedWidgetMixin
+
 from app.people.models.staffs import Faculty, Staff
 from app.people.utils import mk_username, split_name
 from app.shared.auth.perms import TEST_PW
@@ -19,14 +21,13 @@ from app.shared.auth.perms import TEST_PW
 User = get_user_model()
 
 
-class StaffProfileWidget(widgets.ForeignKeyWidget):
+class StaffProfileWidget(CachedWidgetMixin, widgets.ForeignKeyWidget):
 
     def __init__(self):
         # Configure the parent widget to operate on the Staff model so
         # that clean returns actual Staff objects using the
         # staff_id field as the lookup key.
         super().__init__(Staff, field="staff_id")
-        # self._cache: dict[str, Staff] = {}
 
     def clean(self, value, row=None, *args, **kwargs) -> Staff | None:
         """Create or fetch a :class:Staff from a full name.
@@ -42,8 +43,8 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         prefix, first, middle, last, suffix = split_name(value)
         username = mk_username(first, last, unique=False)
 
-        # if username in self._cache:
-        #     return self._cache[username]
+        if username in self._cache:
+            return self._cache[username]
 
         user, _ = User.objects.get_or_create(
             username=username,
@@ -62,7 +63,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
                 "name_suffix": suffix,
             },
         )
-        # self._cache[username] = staff
+        self._cache[username] = staff
         return staff
 
     def render(self, value, obj=None) -> str:
@@ -70,17 +71,18 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         return value.long_name if value else ""  # type: ignore[no-any-return]
 
     def after_import(self, dataset, result, **kwargs):
-        """Remove any cache which may be present after import."""
-        if kwargs.get("dry_run", False):
-            self._cache.clear()
+        """Clear cached staff objects after each import."""
+
+        super().after_import(dataset, result, **kwargs)
 
 
-class FacultyWidget(widgets.ForeignKeyWidget):
+class FacultyWidget(CachedWidgetMixin, widgets.ForeignKeyWidget):
     """Ensure a Faculty entry exists for the given staff name."""
 
     def __init__(self):
         # field is "id" by default
         super().__init__(Faculty)
+        self.staff_w = StaffProfileWidget()
 
     def clean(self, value: str, row=None, *args, **kwargs) -> Faculty | None:
         """From the faculty name, tries to get a faculty object.
@@ -92,18 +94,27 @@ class FacultyWidget(widgets.ForeignKeyWidget):
 
         # ? Should I use Peoplerepository.get_or_create_faculty?
         # ... Not obvious as I would need to pass the whole row.
-        staff = StaffProfileWidget().clean(value, row, *args, **kwargs)
+        staff = self.staff_w.clean(value, row, *args, **kwargs)
 
         if staff is None:
             return None
 
+        key = staff.pk
+        if key in self._cache:
+            return self._cache[key]
+
         faculty, _ = Faculty.objects.get_or_create(
             staff_profile=staff,
         )
+        self._cache[key] = faculty
         return faculty
 
+    def after_import(self, dataset, result, **kwargs):
+        super().after_import(dataset, result, **kwargs)
+        self.staff_w.after_import(dataset, result, **kwargs)
 
-class UserWidget(widgets.ForeignKeyWidget):
+
+class UserWidget(CachedWidgetMixin, widgets.ForeignKeyWidget):
     """Ensure a Faculty entry exists for the given staff name."""
 
     def __init__(self):
@@ -122,6 +133,9 @@ class UserWidget(widgets.ForeignKeyWidget):
         prefix, first, middle, last, suffix = split_name(std_fullname)
         username = mk_username(first, last, unique=True, student_scheme=True)
 
+        if username in self._cache:
+            return self._cache[username]
+
         user, _ = User.objects.get_or_create(
             username=username,
             defaults={
@@ -131,4 +145,8 @@ class UserWidget(widgets.ForeignKeyWidget):
             },
         )
 
+        self._cache[username] = user
         return user
+
+    def after_import(self, dataset, result, **kwargs):
+        super().after_import(dataset, result, **kwargs)

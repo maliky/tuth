@@ -1,6 +1,8 @@
 """General utility helpers shared between apps."""
 
-from typing import Mapping, Optional, Tuple
+from typing import Any, Mapping, Optional, Tuple
+
+from django.db.models import Model
 
 from app.academics.constants import COURSE_PATTERN
 from app.academics.models.college import College
@@ -53,3 +55,26 @@ def make_course_code(dept: Department, number: str) -> str:
     Returns:  {dept.code}{number}
     """
     return f"{dept.code}{number}".upper()
+
+
+class CachedWidgetMixin:
+    """Simple cache support for import widgets.
+
+    Widgets mixing in this class keep a dictionary mapping arbitrary keys
+    to model instances created during the import process.  The cache is
+    cleared automatically after each import run.
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
+        self._cache: dict[Any, Model] = {}
+        super().__init__(*args, **kwargs)
+
+    def clear_cache(self) -> None:
+        """Empty the widget cache."""
+
+        self._cache.clear()
+
+    def after_import(self, dataset, result, **kwargs) -> None:
+        """Clear cached objects once import completes."""
+
+        self.clear_cache()

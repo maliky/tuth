@@ -4,6 +4,8 @@ from typing import Any, Optional, cast
 
 from import_export import widgets
 
+from app.shared.utils import CachedWidgetMixin
+
 from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
@@ -12,7 +14,7 @@ from app.academics.models.program import Program
 from app.shared.utils import expand_course_code
 
 
-class ProgramWidget(widgets.ForeignKeyWidget):
+class ProgramWidget(CachedWidgetMixin, widgets.ForeignKeyWidget):
     """Create or fetch Program rows from CSV data.
 
     use the curriculum_short name as the value.
@@ -39,16 +41,26 @@ class ProgramWidget(widgets.ForeignKeyWidget):
         course_dept = (row.get("course_dept") or "").strip()
         course = self.course_w.clean(value=course_dept, row=row)
 
+        key = (curriculum.pk, getattr(course, "pk", None))
+        if key in self._cache:
+            return self._cache[key]
+
         program, _ = Program.objects.get_or_create(
             curriculum=curriculum,
             course=course,
             credit_hours=row.get("credit_hours", "").strip(),
             is_required=row.get("is_required", True),
         )
+        self._cache[key] = program
         return program
 
+    def after_import(self, dataset, result, **kwargs):
+        super().after_import(dataset, result, **kwargs)
+        self.curriculm_w.after_import(dataset, result, **kwargs)
+        self.course_w.after_import(dataset, result, **kwargs)
 
-class CurriculumWidget(widgets.ForeignKeyWidget):
+
+class CurriculumWidget(CachedWidgetMixin, widgets.ForeignKeyWidget):
     """Look up or create a :class:Curriculum from a short name.
 
     The associated college is determined from row['college_code'] when
@@ -74,6 +86,10 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
             code=row.get("college_code", "").strip()
         )
 
+        key = value.strip().upper()
+        if key in self._cache:
+            return self._cache[key]
+
         curriculum, _ = Curriculum.objects.get_or_create(
             short_name=value.strip(),
             defaults={
@@ -82,10 +98,14 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
             },
         )
 
+        self._cache[key] = curriculum
         return curriculum
 
+    def after_import(self, dataset, result, **kwargs):
+        super().after_import(dataset, result, **kwargs)
 
-class CourseWidget(widgets.ForeignKeyWidget):
+
+class CourseWidget(CachedWidgetMixin, widgets.ForeignKeyWidget):
     """Convert course_* CSV columns into a Course.
 
     course_dept and course_no identify the course while college is
@@ -97,7 +117,6 @@ class CourseWidget(widgets.ForeignKeyWidget):
         super().__init__(Course, field="code")
         self.department_w = DepartmentWidget()
         self.college_w = CollegeWidget()
-        self._cache = {}
 
     def clean(
         self,
@@ -123,7 +142,7 @@ class CourseWidget(widgets.ForeignKeyWidget):
 
         key = (department, course_no)
         if key in self._cache:
-            return self._cache.get(key)
+            return self._cache[key]
 
         course, _ = Course.objects.get_or_create(
             number=course_no,
@@ -131,6 +150,11 @@ class CourseWidget(widgets.ForeignKeyWidget):
         )
         self._cache[key] = course
         return course
+
+    def after_import(self, dataset, result, **kwargs):
+        super().after_import(dataset, result, **kwargs)
+        self.department_w.after_import(dataset, result, **kwargs)
+        self.college_w.after_import(dataset, result, **kwargs)
 
 
 class CourseManyWidget(widgets.ManyToManyWidget):
@@ -164,7 +188,7 @@ class CourseManyWidget(widgets.ManyToManyWidget):
         return courses
 
 
-class CourseCodeWidget(widgets.ForeignKeyWidget):
+class CourseCodeWidget(CachedWidgetMixin, widgets.ForeignKeyWidget):
     """Resolve a course code  into a Course.
 
     A Course code is <college_code>-<dept_code><course_no>.
@@ -196,10 +220,15 @@ class CourseCodeWidget(widgets.ForeignKeyWidget):
 
         title_raw = row.get("course_title") if row else None
 
-        course, _ = Course.objects.get_or_create(
-            department=dept,
-            course_no=course_no,
-        )
+        key = (dept.pk, course_no)
+        if key in self._cache:
+            course = self._cache[key]
+        else:
+            course, _ = Course.objects.get_or_create(
+                department=dept,
+                course_no=course_no,
+            )
+            self._cache[key] = course
         # defaults are ignore in case of existance
         # since we want to update in all case, just doing it.
         if title_raw and course.title != title_raw:
@@ -208,8 +237,12 @@ class CourseCodeWidget(widgets.ForeignKeyWidget):
 
         return course
 
+    def after_import(self, dataset, result, **kwargs):
+        super().after_import(dataset, result, **kwargs)
+        self.department_w.after_import(dataset, result, **kwargs)
 
-class CollegeWidget(widgets.ForeignKeyWidget):
+
+class CollegeWidget(CachedWidgetMixin, widgets.ForeignKeyWidget):
     """Return or create the College referenced by college_code."""
 
     def __init__(self):
@@ -223,12 +256,19 @@ class CollegeWidget(widgets.ForeignKeyWidget):
         Defaults to COAS.
         """
         code = (value or "COAS").strip().upper()
+        if code in self._cache:
+            return self._cache[code]
+
         college, _ = College.objects.get_or_create(code=code)
 
+        self._cache[code] = college
         return college
 
+    def after_import(self, dataset, result, **kwargs):
+        super().after_import(dataset, result, **kwargs)
 
-class DepartmentWidget(widgets.ForeignKeyWidget):
+
+class DepartmentWidget(CachedWidgetMixin, widgets.ForeignKeyWidget):
     """Return or create the Department referenced by course_dept and college_code."""
 
     def __init__(self):
@@ -246,7 +286,16 @@ class DepartmentWidget(widgets.ForeignKeyWidget):
 
         college = self.college_w.clean((row.get("college_code") or "").strip())
 
+        key = (dept_short_name, getattr(college, "pk", None))
+        if key in self._cache:
+            return self._cache[key]
+
         department, _ = Department.objects.get_or_create(
             short_name=dept_short_name, college=college
         )
+        self._cache[key] = department
         return department
+
+    def after_import(self, dataset, result, **kwargs):
+        super().after_import(dataset, result, **kwargs)
+        self.college_w.after_import(dataset, result, **kwargs)

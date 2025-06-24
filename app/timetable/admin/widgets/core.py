@@ -5,6 +5,8 @@ from datetime import date
 
 from import_export import widgets
 
+from app.shared.utils import CachedWidgetMixin
+
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester
 
@@ -20,7 +22,7 @@ def ensure_academic_year_code(code: str) -> AcademicYear:
     return AcademicYear.objects.get(code=code)
 
 
-class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
+class AcademicYearCodeWidget(CachedWidgetMixin, widgets.ForeignKeyWidget):
     """Convert YY-YY codes into :class:AcademicYear objects."""
 
     def __init__(self, *args, **kwargs):
@@ -42,6 +44,10 @@ class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
 
         assert m, f"Invalid academic year short name, but got {m} for {self.ay_pat}"
 
+        key = value
+        if key in self._cache:
+            return self._cache[key]
+
         start_year = int("20" + m.group(1))
         ay, ay_created = AcademicYear.objects.get_or_create(
             code=value,
@@ -50,10 +56,15 @@ class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
         if ay_created:
             ay.save()
 
+        self._cache[key] = ay
+
         return ay
 
+    def after_import(self, dataset, result, **kwargs):
+        super().after_import(dataset, result, **kwargs)
 
-class SemesterWidget(widgets.ForeignKeyWidget):
+
+class SemesterWidget(CachedWidgetMixin, widgets.ForeignKeyWidget):
     """Build a :class:Semester from its number and academic year."""
 
     def __init__(self):
@@ -76,16 +87,26 @@ class SemesterWidget(widgets.ForeignKeyWidget):
 
         ay = self.ay_w.clean(value=ay_code_value, row=row)
 
+        key = (getattr(ay, "pk", None), sem_no)
+        if key in self._cache:
+            return self._cache[key]
+
         semester, semester_created = Semester.objects.get_or_create(
             academic_year=ay,
             number=sem_no,
         )
         if semester_created:
             semester.save()
+
+        self._cache[key] = semester
         return semester
 
+    def after_import(self, dataset, result, **kwargs):
+        super().after_import(dataset, result, **kwargs)
+        self.ay_w.after_import(dataset, result, **kwargs)
 
-class SemesterCodeWidget(widgets.ForeignKeyWidget):
+
+class SemesterCodeWidget(CachedWidgetMixin, widgets.ForeignKeyWidget):
     """Parse YY-YY_SemN strings into :class:Semester objects."""
 
     def __init__(self):
@@ -114,8 +135,17 @@ class SemesterCodeWidget(widgets.ForeignKeyWidget):
             code=ay_short,
             defaults={"start_date": date(start_year, 8, 11)},
         )
+
+        key = (ay.pk, sem_no)
+        if key in self._cache:
+            return self._cache[key]
+
         semester, _ = Semester.objects.get_or_create(
             academic_year=ay,
             number=sem_no,
         )
+        self._cache[key] = semester
         return semester
+
+    def after_import(self, dataset, result, **kwargs):
+        super().after_import(dataset, result, **kwargs)

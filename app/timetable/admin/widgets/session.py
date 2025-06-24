@@ -2,13 +2,15 @@
 
 from import_export import widgets
 
+from app.shared.utils import CachedWidgetMixin
+
 from app.spaces.admin.widgets import RoomCodeWidget
 from app.timetable.choices import WEEKDAYS_NUMBER
 from app.timetable.models.schedule import Schedule
 from app.timetable.models.session import Session
 
 
-class SessionWidget(widgets.ForeignKeyWidget):
+class SessionWidget(CachedWidgetMixin, widgets.ForeignKeyWidget):
     """Create a :class:Session from room and schedule data."""
 
     def __init__(self):
@@ -26,14 +28,24 @@ class SessionWidget(widgets.ForeignKeyWidget):
         weekday_value = row.get("weekday", "").strip()
         schedule = self.schedule_w.clean(value=weekday_value, row=row)
 
+        key = (getattr(room, "pk", None), getattr(schedule, "pk", None))
+        if key in self._cache:
+            return self._cache[key]
+
         session, _ = Session.objects.get_or_create(
             room=room,
             schedule=schedule,
         )
+        self._cache[key] = session
         return session
 
+    def after_import(self, dataset, result, **kwargs):
+        super().after_import(dataset, result, **kwargs)
+        self.room_w.after_import(dataset, result, **kwargs)
+        self.schedule_w.after_import(dataset, result, **kwargs)
 
-class ScheduleWidget(widgets.ForeignKeyWidget):
+
+class ScheduleWidget(CachedWidgetMixin, widgets.ForeignKeyWidget):
     """Return a :class:Schedule based on weekday and times."""
 
     def __init__(self):
@@ -50,13 +62,23 @@ class ScheduleWidget(widgets.ForeignKeyWidget):
         start_time = row.get("start_time", "").strip()
         end_time = row.get("end_time", "").strip()
 
+        key = (weekday, start_time, end_time)
+        if key in self._cache:
+            return self._cache[key]
+
         schedule, _ = Schedule.objects.get_or_create(
             weekday=weekday,
             start_time=start_time,
             end_time=end_time,
         )
 
+        self._cache[key] = schedule
+
         return schedule
+
+    def after_import(self, dataset, result, **kwargs):
+        super().after_import(dataset, result, **kwargs)
+        self.weekday_w.after_import(dataset, result, **kwargs)
 
 
 class WeekdayWidget(widgets.IntegerWidget):
