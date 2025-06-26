@@ -15,10 +15,10 @@ from app.finance.models.payment_history import PaymentHistory
 
 
 @pytest.mark.django_db
-def test_payment_history_str(student_profile, staff_profile):
-    fr = FinancialRecord.objects.create(student=student_profile, total_due=Decimal("0"))
+def test_payment_history_str(student, staff):
+    fr = FinancialRecord.objects.create(student=student, total_due=Decimal("0"))
     ph = PaymentHistory.objects.create(
-        financial_record=fr, amount=Decimal("25.00"), recorded_by=staff_profile
+        financial_record=fr, amount=Decimal("25.00"), recorded_by=staff
     )
     assert (
         str(ph)

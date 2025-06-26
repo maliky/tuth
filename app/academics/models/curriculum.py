@@ -46,8 +46,9 @@ class Curriculum(StatusableMixin, models.Model):
     )
 
     def __str__(self) -> str:  # pragma: no cover
-        """Return the curriculum short name."""
-        return f"{self.college}: {self.short_name}"
+        """Return the college (if set): & curriculum short name."""
+        suffix = f"{self.college}: " if self.college else ""
+        return suffix + self.short_name
 
     @classmethod
     def get_default(cls) -> Curriculum:

@@ -7,7 +7,6 @@ from typing import Callable, TypeAlias
 import pytest
 from django.contrib.auth.models import User
 
-from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.people.models.donor import Donor
@@ -82,13 +81,11 @@ def donor(user_factory: UserFactory) -> Donor:
 def student(
     user_factory: UserFactory,
     semester: Semester,
-    college: College,
     curriculum: Curriculum,
 ) -> Student:
     user = user_factory("letudiant")
     return Student.objects.create(
         user=user,
-        college=college,
         curriculum=curriculum,
         current_enroled_semester=semester,
     )

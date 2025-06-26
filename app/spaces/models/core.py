@@ -28,7 +28,7 @@ class Space(models.Model):
     def get_default(cls):
         """Returns a TBA instance of the Space."""
         tba_space, _ = cls.objects.get_or_create(
-            code="TBA", defaults={"full_name": "To Be Announced"}
+            code="TBA", defaults={"full_name": "Undefined space (TBA)"}
         )
         return tba_space
 

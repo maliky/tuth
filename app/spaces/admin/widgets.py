@@ -16,20 +16,21 @@ class SpaceWidget(widgets.ForeignKeyWidget):
         row: dict[str, str] | None = None,
         *args,
         **kwargs,
-    ) -> Space | None:
+    ) -> Space:
         """Return an optional Space identified by code.
 
-        if it does not exists, creates it.
+        If it does not exists, creates it.
+        If nothing is passed return the default Space.
         """
-
-        if not value:
-            return None
+        if not value or value == "<TBA>":
+            return Space.get_default()
 
         space, _ = Space.objects.get_or_create(
             code=value.strip(),
             defaults={"full_name": value.strip()},
         )
         return space
+
 
 
 class RoomWidget(widgets.ForeignKeyWidget):
@@ -45,19 +46,17 @@ class RoomWidget(widgets.ForeignKeyWidget):
         row: dict[str, str] | None = None,
         *args,
         **kwargs,
-    ) -> Room | None:
+    ) -> Room:
         """Using the room no, and the space code, returns a Room (eventualy)."""
 
         room_code = (value or "").strip()
+        space_code = ((row or {}).get("space") or "<TBA>").strip()
 
-        space_code = ((row or {}).get("space") or "").strip()
         space = self.space_w.clean(value=space_code, row=row)
-
         room, _ = Room.objects.get_or_create(
-            space=space or Space.get_default(),
             code=room_code or "TBA",
+            space=space or Space.get_default(),
         )
-
         return room
 
 

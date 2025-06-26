@@ -36,11 +36,11 @@ class Department(models.Model):
         super().save(*args, **kwargs)
 
     @classmethod
-    def get_default(cls):
+    def get_default(cls, code="DFT"):
         """Return the default Department."""
         default_dept, _ = cls.objects.get_or_create(
-            code="DFT",
-            full_name="Philosohpy is the Default Department",
+            code=code,
+            full_name=f"Department of {code}",
             college=College.get_default(),
         )
         return default_dept

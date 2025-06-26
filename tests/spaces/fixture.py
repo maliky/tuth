@@ -10,10 +10,10 @@ from app.spaces.models.core import Room, Space
 @pytest.fixture
 def space() -> Space:
     # model is Space with fields code and full_name
-    return Space.objects.create(code="AA", full_name="Academic Annex")
+    return Space.get_default()
 
 
 @pytest.fixture
 def room(space: Space) -> Room:
     # Room has fields code and FK space
-    return Room.objects.create(code="101", space=space)
+    return Room.get_default()

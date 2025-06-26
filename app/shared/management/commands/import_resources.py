@@ -73,12 +73,12 @@ class Command(BaseCommand):
 
         RESOURCES_MAP: list[tuple[str, type[resources.ModelResource]]] = [
             # ("Student", StudentResource),
-            ("Faculty", FacultyResource),  # and College
-            ("Room", RoomResource),  # and Space
-            ("Schedule", ScheduleResource),
-            ("Course", CourseResource),  # and College
-            ("semester", SemesterResource),  # and Academic year
-            ("Program", ProgramResource),
+            # ("Faculty", FacultyResource),  # and College
+            # ("Room", RoomResource),  # and Space
+            # ("Schedule", ScheduleResource),
+            # ("Course", CourseResource),  # and College
+            # ("semester", SemesterResource),  # and Academic year
+            # ("Program", ProgramResource),
             ("Section", SectionResource),
             ("Session", SessionResource),  # and Faculty, Room and Space
         ]

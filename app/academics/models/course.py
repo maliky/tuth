@@ -78,8 +78,8 @@ class Course(models.Model):
     # ---------- hooks ----------
     def save(self, *args, **kwargs) -> None:
         """Populate code from department short_name and number before saving."""
-        self._ensure_code()
         self._ensure_dept()
+        self._ensure_code()
         super().save(*args, **kwargs)
 
     @classmethod

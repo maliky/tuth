@@ -114,7 +114,7 @@ class AbstractPerson(StatusableMixin, models.Model):
     @property
     def obj_id(self) -> str:
         """Returns the value of cls.id_prexix."""
-        self.ensure_id_field_exists()
+        self._ensure_id_field_exists()
         objid = object.__getattribute__(self, self.ID_FIELD)  # type: ignore[arg-type]
 
         if objid is None:

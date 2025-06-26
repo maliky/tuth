@@ -49,11 +49,9 @@ def course_factory() -> CourseFactory:
 
 @pytest.fixture
 def curriculum(course_factory: CourseFactory) -> Curriculum:
-    cur = Curriculum.objects.create(
-        short_name="DFT_CUR", long_name="Curriculum par default"
-    )
-    course1 = course_factory("101", "Le premier jour.")
-    course2 = course_factory("102", "Le second jour heur cours...")
+    cur = Curriculum.get_default()
+    course1 = course_factory("101", "The first course.")
+    course2 = course_factory("102", "The second course.")
     Program.objects.bulk_create(
         [
             Program(curriculum=cur, course=course1),
@@ -73,13 +71,13 @@ def curriculum_empty() -> Curriculum:
 
 @pytest.fixture
 def department() -> Department:
-    return Department.objects.create(code="DEFT")
+    return Department.get_default()
 
 
 @pytest.fixture
 def department_factory() -> DepartmentFactory:
     def _make(code: str = "GEN") -> Department:
-        return Department.objects.create(code=code)
+        return Department.get_default(code)
 
     return _make
 

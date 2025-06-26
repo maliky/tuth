@@ -28,19 +28,19 @@ def test_mk_username_uniquess(user_factory):
     un1 = mk_username("Esop", "Thot")  # esthot
     u1 = user_factory(username=un1)
 
-    # create another user but with that name
-    un2 = mk_username("Esai", "Thot")  # esthot1
+    # create another user but with that username
+    un2 = mk_username("Esai", "Thot")  # esthot
     with pytest.raises(IntegrityError):
-        u2 = user_factory(username=un2)
+        _ = user_factory(username=un2)
         # should through UNIQUE constraint failed: auth_user.username
 
-    un2 = mk_username("Esai", "Thot", unique=True)  # esthot1
-    u2 = user_factory(username=un2)
+    un3 = mk_username("Esai", "Thot", unique=True)  # esthot1
+    u3 = user_factory(username=un3)
 
     assert un1 == "esthot", f"{un1}"
-    assert un2 == "esthot2", f"{un2}"
+    assert un3 == "esthot1", f"{un2}"
     assert u1.username == "esthot", f"{u1.username}"
-    assert u2.username == "esthot2", f"{u2.username}"
+    assert u3.username == "esthot1", f"{u3.username}"
 
 
 # Doit tester la création d'un staff d'un student d'un donor vérifier les ID
