@@ -12,11 +12,6 @@ from app.academics.models.department import Department
 from app.shared.utils import make_course_code
 from app.shared.types import CourseQuery
 
-# Reside only on module reload (so could stay in memory for long on prod)
-# it ensure unique default course
-DEFAULT_COURSE_NO = count(start=1, step=1)
-
-
 class Course(models.Model):
     """University catalogue entry describing a single course offering.
 
