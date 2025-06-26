@@ -5,6 +5,7 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 
 from app.timetable.admin.inlines import SessionInline
+from app.registry.admin.inlines import GradeInline
 from app.timetable.admin.resources.section import SectionResource
 from app.timetable.models.section import Section
 
@@ -20,7 +21,7 @@ class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     # ! TODO ajouter à la list, les rooms occupé et le nombre de sessions, le nombre de crédits
     resource_class = SectionResource
     list_display = ("semester", "program", "number", "faculty", "available_seats")
-    inlines = [SessionInline]
+    inlines = [SessionInline, GradeInline]
     list_filter = ("program__curriculum",)
     autocomplete_fields = ("semester", "faculty")
 
