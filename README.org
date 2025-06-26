@@ -12,6 +12,18 @@ Here are the different applications you will find in this directory:
 - People for role and user profile  
 - Finance for payments, scholarship and financial_records.
 
+** Running Locally without Docker
+For a quick local setup using SQLite, run:
+#+BEGIN_SRC bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp env-test .env
+python manage.py migrate
+python manage.py populate_initial_data
+python manage.py runserver
+#+END_SRC
+
 
 ** Development Environment
 To make changes :
@@ -52,10 +64,11 @@ end_time: 10:00
 Check the `run.sh` script to see where to put the file.
 
 *** Launch your docker-compose dev environment
-Review `Dockerfile-dev` and `docker-compose-dev.yml`, then build the Docker environment.
-#+begin_src bash
+Build and start the dev stack:
+#+BEGIN_SRC bash
 docker-compose -f docker-compose-dev.yml up --build
-#+end_src
+#+END_SRC
+Once the containers are running, visit [[https://localhost][https://localhost]] to access the app.
 
 *** Running Tests 
 **** Locally
