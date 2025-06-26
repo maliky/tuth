@@ -4,6 +4,7 @@ from django.db import models
 
 from app.shared.enums import CREDIT_NUMBER, LEVEL_NUMBER
 from app.shared.utils import make_course_code
+from app.shared.types import CourseQuery
 
 
 class Course(models.Model):
@@ -53,7 +54,7 @@ class Course(models.Model):
             return "other"
 
     @classmethod
-    def for_curriculum(cls, curriculum) -> models.QuerySet:
+    def for_curriculum(cls, curriculum) -> CourseQuery:
         """Return courses included in the given curriculum."""
         return cls.objects.filter(curricula=curriculum).distinct()
 
