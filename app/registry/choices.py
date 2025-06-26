@@ -18,6 +18,8 @@ class StatusRegistration(models.TextChoices):
     PENDING = "pending payment", "Pending Payment"
     FINANCIALLY_CLEARED = "financially_cleared", "Financially_Cleared"
     COMPLETED = "completed", "Completed"
+    CANCEL = "cancel", "Cancel"
+    REMOVE = "remove", "Remove"
     APPROVED = "approved", "Approved"
 
 
