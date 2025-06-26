@@ -29,6 +29,11 @@ class Schedule(models.Model):
     start_time = models.TimeField()
     end_time = models.TimeField(null=True, blank=True)
 
+    def __str__(self):
+        """Return weekday: start-end for quick inspection in admin."""
+        # can we shorten weekday to only have the first 3 char?
+        return f"{self.weekday_str}: {self.start_time_str}-{self.end_time_str}"
+
     @property
     def weekday_name(self) -> str:
         """Return the human‐readable name of this schedule’s weekday.
@@ -52,41 +57,33 @@ class Schedule(models.Model):
         """End time formatted as HH:MM or empty string."""
         return self.end_time.strftime("%H:%M") if self.end_time else ""
 
-    def __str__(self):
-        """Return weekday: start-end for quick inspection in admin."""
-        # can we shorten weekday to only have the first 3 char?
-        return f"{self.weekday_str}: {self.start_time_str}-{self.end_time_str}"
-
-    def _find_next_free_slot(self) -> time:
+    def _find_next_free_slot(self, weekday) -> time:
         """Find a free time slot at the begining of the day.
 
-        Scan in 5-minute steps from 01:00 of today until we
+        Scan in 1-minute steps from 01:00.
         find a (weekday, start_time) combination that doesn't exist yet.
         """
-        # anchor at 0 AM today
+        # Anchor at 0 AM the 1/01/2009, what we look at is the time.
+        cursor = datetime.combine(self.REF_DATE, time(0, 0))
+        step = timedelta(minutes=1)
 
-        cursor = datetime.combine(self.REF_DATE, time(1, 0))
-        step = timedelta(minutes=5)
-
-        nb_slots_hours = int(3600 / step.seconds)  # should be 5
+        # get the 1 minutes slots
+        nb_slots_hours = int(3600 / step.seconds)
 
         # wrap in a transaction so concurrent saves won’t collide
         with transaction.atomic():
-            # cap at from 0:00 to 6:00 hrs to avoid infinite loops
-            # 12, 5min slots in on hour
-            for _ in range(6 * nb_slots_hours):
+            # We cap it to avoid infinit loop.
+            for _ in range(24 * nb_slots_hours):
                 t = cursor.time()
                 exists = Schedule.objects.filter(
-                    weekday=self.weekday,
+                    weekday=weekday,
                     start_time=t,
                 ).exists()
                 if not exists:
                     return t
                 cursor += step
 
-        raise RuntimeError(
-            "Could not find a free 5-minute slot on {self.weekday}. -> no Schedule"
-        )
+        raise RuntimeError(f"Could not find a free 1-minute slot on {self.weekday}")
 
     # > validation end_time should alway be bigger than start_time
     # ? need to check that there no overlap. may need to store duration
@@ -106,7 +103,7 @@ class Schedule(models.Model):
             self.weekday = WEEKDAYS_NUMBER.TBA  # type: ignore[unreachable]
 
         if self.start_time is None:
-            self.start_time = self._find_next_free_slot()  # type: ignore[unreachable]
+            self.start_time = self._find_next_free_slot(self.weekday)  # type: ignore[unreachable]
 
         super().save(*args, **kwargs)
 
@@ -119,6 +116,22 @@ class Schedule(models.Model):
         end_time_set = self.start_time is not None
 
         return weekday_set and start_time_set and end_time_set
+
+    @classmethod
+    def get_default(cls, new_schedule=False):
+        """Return a default schedule.
+
+        If new schedule is True we return the a new schedule on TBA Day
+        """
+        tba_day = WEEKDAYS_NUMBER.TBA
+        if new_schedule:
+            start_time = cls._find_next_free_slot(tba_day)
+        else:
+            start_time = cls.REF_TIME
+
+        def_schedule, _ = cls.get_or_create(weekday=tba_day, start_time=start_time)
+
+        return def_schedule
 
     class Meta:
         ordering = ["weekday", "start_time", "end_time"]

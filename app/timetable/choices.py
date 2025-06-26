@@ -25,3 +25,4 @@ class WEEKDAYS_NUMBER(IntegerChoices):
     THURSDAY = 4, "Thursday"
     FRIDAY = 5, "Friday"
     SATURDAY = 6, "Saturday"
+    SUNDAY = 7, "Sunday"

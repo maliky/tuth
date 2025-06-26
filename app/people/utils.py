@@ -182,15 +182,15 @@ def mk_username(
     but if student_scheme is True, take the first.lastname as username
     - maxlength 13 char
     """
-    if not student_scheme:
-        username_base = (first[:2] + last).lower()
-    else:
+    if student_scheme:
         username_base = f"{first}.{last}".lower()
+    else:
+        username_base = (first[:2] + last).lower()
 
     username = username_base[:max_length] if max_length else username_base
 
     if unique:
-        counter = 1
+        counter = 0
         while User.objects.filter(username=username).exists():
             counter += 1
             username = f"{username_base}{counter}"
@@ -208,3 +208,18 @@ def extract_id_num(user_id: str) -> int:
 
     # the group cannot be something else than digits
     return int(m.groups(0)[0])
+
+
+def get_default_user():
+    """Returns a dummy User."""
+    d_user, _ = User.objects.get_or_create(
+        username="default_user",
+        defaults={
+            "first_name": "Kemyt",
+            "last_name": "Tuth",
+            "password": None,
+        },
+    )
+    d_user.set_unusable_password()
+    d_user.save()
+    return d_user

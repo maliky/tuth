@@ -111,6 +111,17 @@ class AbstractPerson(StatusableMixin, models.Model):
         """Return the use email."""
         return self.user.email
 
+    @property
+    def obj_id(self) -> str:
+        """Returns the value of cls.id_prexix."""
+        self.ensure_id_field_exists()
+        objid = object.__getattribute__(self, self.ID_FIELD)  # type: ignore[arg-type]
+
+        if objid is None:
+            return ""
+
+        return objid
+
     def set_username(self, value):
         """Set the username."""
         return object.__setattr__(self.user, "username", value)
@@ -138,13 +149,6 @@ class AbstractPerson(StatusableMixin, models.Model):
         except User.DoesNotExist:
             raise ValidationError("User must have been saved at this point.")
 
-    @classmethod
-    def get_existing_id(cls) -> list[int]:
-        """Returns the list of existing number composing the user_ids."""
-        user_ids_str = cls.objects.values_list(cls.ID_FIELD, flat=True)  # type: ignore[attr-defined]
-        user_ids = [extract_id_num(v) for v in user_ids_str]
-        return user_ids
-
     def _mk_id(self) -> str:
         """Build an ID incrementing the user_id depending on its class."""
         self._must_exists_user()
@@ -160,33 +164,34 @@ class AbstractPerson(StatusableMixin, models.Model):
 
         return f"{self.ID_PREFIX}{next_num:05}"
 
-    def ensure_id_field_exists(self) -> None:
+    def _ensure_id_field_exists(self) -> None:
         """Raise an exception if ID_PREFIX is not set."""
         # > the check will not be detected by mypy. so ignore[arg-type]
         # would be good to find more clean to use mypy
         if not self.ID_FIELD:
             raise ValidationError("ID_FIELD needs to be set before creating new ID.")
 
-    def get_id_no(self) -> int | None:
+    def _get_id_no(self) -> int | None:
         """Remove the ID_PREFIX and Returns the number associated with the id field."""
-        self.ensure_id_field_exists()
-        obj_id = object.__getattribute__(self, self.ID_FIELD)  # type: ignore[arg-type]
-
-        if obj_id is None:
-            return None
-
+        objid = self.obj_id
         # the following suppose that after the prefix only numbers
-        _, _, obj_no_str = obj_id.partition(self.ID_PREFIX)  # type: ignore[arg-type]
+        _, _, obj_no_str = objid.partition(self.ID_PREFIX)  # type: ignore[arg-type]
         return int(obj_no_str) if obj_no_str else 0
 
     def save(self, *args, **kwargs):
         """Create an ID and saves it for each model using _mk_id and ID_FIELD."""
-
-        id_no = self.get_id_no()
-        if id_no is None or not id_no:
+        # import ipdb; ipdb.set_trace()
+        if not self.obj_id:
             new_id = self._mk_id()
             object.__setattr__(self, self.ID_FIELD, new_id)  # type: ignore[arg-type]
         super().save(*args, **kwargs)
+
+    @classmethod
+    def get_existing_id(cls) -> list[int]:
+        """Returns the list of all existing number in the (class) ids field."""
+        user_ids_str = cls.objects.values_list(cls.ID_FIELD, flat=True)  # type: ignore[attr-defined]
+        user_ids = [extract_id_num(v) for v in user_ids_str]
+        return user_ids
 
     class Meta:
         abstract = True

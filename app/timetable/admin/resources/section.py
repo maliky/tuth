@@ -1,7 +1,5 @@
 """Import/export resources for section models."""
 
-from typing import Any
-
 from import_export import fields, resources
 
 from app.academics.admin.widgets import ProgramWidget
@@ -39,16 +37,9 @@ class SectionResource(resources.ModelResource):
         widget=FacultyWidget(),
     )
 
-    def __init__(self, **kwargs: Any) -> None:
-        super().__init__(**kwargs)
-
-    def before_import(self, dataset, **kwargs):
-        """Is this realy usefull ?"""
-        super().before_import(dataset, **kwargs)
-
     class Meta:
         model = Section
-        import_id_fields = ("semester", "program", "number", "faculty")
+        import_id_fields = ("semester", "program", "number")
         fields = (
             "number",
             "program",

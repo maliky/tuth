@@ -65,14 +65,14 @@ class WeekdayWidget(widgets.IntegerWidget):
     def clean(self, value, row=None, *args, **kwargs) -> int | None:
         """Accept either the integer 1-7 or the English weekday name."""
         if not value:
-            return None
+            return WEEKDAYS_NUMBER.TBA
 
-        token = str(value).strip().lower()
+        token = (str(value) or "").strip().lower()
 
         if token.isdigit():
             return int(token)
 
         _map = {label.lower(): num for num, label in WEEKDAYS_NUMBER.choices}
-        assert token in _map, f"{token} is not in {_map}"
+        assert token in _map, f"weekday: {token} is not in {_map}"
 
         return _map[token]

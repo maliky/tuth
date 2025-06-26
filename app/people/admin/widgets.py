@@ -86,9 +86,13 @@ class FacultyWidget(widgets.ForeignKeyWidget):
         """From the faculty name, tries to get a faculty object.
 
         Create user and staff if necessary.
+        if value is '<unique>' create a default unique faculty
         """
         if not value:
             return None
+
+        if value == "<unique>":
+            return Faculty.get___  # create unique faculty
 
         # ? Should I use Peoplerepository.get_or_create_faculty?
         # ... Not obvious as I would need to pass the whole row.
@@ -108,13 +112,17 @@ class UserWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
         # field is "id" by default
-        super().__init__(Student, field="student_id")
+        super().__init__(User)
 
     def clean(self, value: str, row=None, *args, **kwargs) -> Student | None:
         """From the student name (an optionaly an id), gets a Student object.
 
         Create user and student objects if necessary.
+        Should be use with a columns where you are sure that the instance
+        is unique because will creat new user name in case of duplicate name.
         """
+        # import ipdb; ipdb.set_trace()
+
         if not value:
             return None
 

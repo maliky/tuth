@@ -49,7 +49,7 @@ class ProgramWidget(widgets.ForeignKeyWidget):
 
 
 class CurriculumWidget(widgets.ForeignKeyWidget):
-    """Look up or create a :class:Curriculum from a short name.
+    """Look up or create a Curriculum from a short name.
 
     The associated college is determined from row['college_code'] when
     present. Missing curricula are created automatically.
@@ -67,17 +67,17 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
 
         Automatically creates curriculum with today's date.
         """
-        if not value:
-            return None
+        college_code = (row.get("college_code") or "").strip()
+        curriculum = (value or "").strip()
+        if not curriculum:
+            return Curriculum.get_default()
 
-        college, _ = College.objects.get_or_create(
-            code=row.get("college_code", "").strip()
-        )
+        college, _ = College.objects.get_or_create(code=college_code)
 
         curriculum, _ = Curriculum.objects.get_or_create(
-            short_name=value.strip(),
+            short_name=curriculum,
             defaults={
-                "short_name": value.strip(),
+                "long_name": curriculum,
                 "college": college,
             },
         )

@@ -18,7 +18,8 @@ if TYPE_CHECKING:
 class Section(models.Model):
     """A single course offering in a given semester.
 
-    A section can include multiple session rows.
+    A section can include multiple session rows or schedule.
+    Eg. MATH101 by M. Koné 25-26 (section) on Mondays and Thursday (sessions)
 
     Example:
         >>> from app.timetable.models import Section
@@ -109,15 +110,15 @@ class Section(models.Model):
                 assert self.start_date < self.end_date
 
     class Meta:
+        # May Move this to manual in Save check because does not hold for default programs
         constraints = [
             models.UniqueConstraint(
-                fields=["semester", "program", "number", "faculty"],
-                name="uniq_section_per_program_faculty",
+                fields=["semester", "program", "number"],
+                name="uniq_section_per_program",
             )
         ]
         indexes = [
             models.Index(fields=["semester", "program"]),
             models.Index(fields=["semester", "program", "number"]),
-            models.Index(fields=["semester", "program", "number", "faculty"]),
         ]
         ordering = ["semester", "program", "number"]

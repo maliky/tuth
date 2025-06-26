@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
-from app.academics.models.department import Department
+from itertools import count
+
 from django.db import models
 
 from app.academics.choices import LEVEL_NUMBER
-from app.shared.utils import make_course_code
 from app.academics.models.curriculum import Curriculum
+from app.academics.models.department import Department
+from app.shared.utils import make_course_code
+
+# Reside only on module reload (so could stay in memory for long on prod)
+# it ensure unique default course
+DEFAULT_COURSE_NO = count(start=1, step=1)
 
 
 class Course(models.Model):
@@ -29,7 +35,7 @@ class Course(models.Model):
     )
     number = models.CharField(max_length=10)  # e.g. 101
 
-    # the above combined make a unique code
+    # the above combined make a unique code, its mainly for backward compatibility
     code = models.CharField(max_length=20, editable=False)
 
     title = models.CharField(max_length=255, blank=True, null=True)
@@ -42,6 +48,10 @@ class Course(models.Model):
         related_name="dependent_courses",
         blank=True,
     )
+
+    def __str__(self) -> str:  # pragma: no cover
+        """Return the CODE - Title representation."""
+        return f"{self.code} - {self.title}"
 
     @property
     def level(self) -> str:
@@ -57,29 +67,40 @@ class Course(models.Model):
         except KeyError:  # digit ∉ enum
             return "other"
 
+    def _ensure_code(self):
+        if not self.code:
+            self.code = make_course_code(self.department, number=self.number)
+
+    def _ensure_dept(self):
+        if not self.department_id:
+            self.department = Department.get_default()
+
+    # ---------- hooks ----------
+    def save(self, *args, **kwargs) -> None:
+        """Populate code from department short_name and number before saving."""
+        self._ensure_code()
+        self._ensure_dept()
+        super().save(*args, **kwargs)
+
     @classmethod
     def for_curriculum(cls, curriculum: Curriculum) -> models.QuerySet:
         """Return courses included in the given curriculum."""
         return cls.objects.filter(curricula=curriculum).distinct()
 
-    def _set_code(self):
-        if not self.code:
-            self.code = make_course_code(self.department, number=self.number)
+    @classmethod
+    def get_default(cls, number: int = 0):
+        """Return a default Course."""
+        def_crs, _ = cls.objects.get_or_create(
+            department=Department.get_default(),
+            number=f"{number:04d}",
+            title=f"Default Course {number:04d}",
+        )
+        return def_crs
 
-    def _set_dept(self):
-        if not self.department:
-            self.ldepartment = Department.get_default()
-
-    # ---------- hooks ----------
-    def save(self, *args, **kwargs) -> None:
-        """Populate code from department short_name and number before saving."""
-        self._set_code()
-        self._set_dept()
-        super().save(*args, **kwargs)
-
-    def __str__(self) -> str:  # pragma: no cover
-        """Return the CODE - Title representation."""
-        return f"{self.code} - {self.title}"
+    @classmethod
+    def get_unique_default(cls):
+        """Return a default Course which is unique. A most 1000 course can be created."""
+        return Course.get_default(number=next(DEFAULT_COURSE_NO))
 
     class Meta:
         constraints = [

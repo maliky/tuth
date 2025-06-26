@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from app.academics.models.course import Course
+from app.academics.models.curriculum import Curriculum
 from django.db import models
 
 from app.academics.choices import CREDIT_NUMBER
@@ -34,7 +36,21 @@ class Program(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         """Return Curriculum <-> Course for readability."""
-        return f"{self.curriculum} <-> {self.course}"
+        return f"{self.course} in --> <-- has {self.curriculum}"
+
+    @classmethod
+    def get_default(cls, course=None) -> Program:
+        """Returns a default (unique) Program."""
+        if not course:
+            course = Course.get_default()
+        def_curriculum = Curriculum.get_default()
+        def_pg, _ = cls.objects.get_or_create(curriculum=def_curriculum, course=course)
+        return def_pg
+
+    def get_unique_default(cls) -> Program:
+        """Returns a default (unique) Program."""
+        dft_course = Course.get_default()
+        return Program.get_default(course=dft_course)
 
     class Meta:
         constraints = [

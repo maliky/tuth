@@ -25,23 +25,22 @@ class Department(models.Model):
         """The Department common represenation. ! This is not unique."""
         return self.code
 
-    def _get_n_set_code(self) -> str:
+    def _ensure_code(self) -> None:
         """Builds a unique deparment code from short_name and college."""
         if not self.code:
             self.code = f"{self.college}-{self.short_name}"
-        return self.code
 
     def save(self, *args, **kwargs) -> None:
         """Save the Department making sure the code is set."""
-        self._get_n_set_code()
+        self._ensure_code()
         super().save(*args, **kwargs)
 
     @classmethod
-    def get_default(cls) -> Department:
+    def get_default(cls):
         """Return the default Department."""
         default_dept, _ = cls.objects.get_or_create(
             code="DFT",
-            full_name="Mathematics' Default Department",
+            full_name="Philosohpy is the Default Department",
             college=College.get_default(),
         )
         return default_dept

@@ -17,8 +17,9 @@ class Curriculum(StatusableMixin, models.Model):
         >>> col = College.objects.create(code="COAS", long_name="Arts and Sciences")
         >>> Curriculum.objects.create(short_name="BSCS", college=col)
 
-    Side Effects:
-        Status changes update is_active via signals.
+    We use a default curriculm incompassing all the courses for non specified
+    curriculum, otherwize the student should be limited to the courses listed
+    in their curriculum.
     """
 
     short_name = models.CharField(max_length=40)
@@ -51,9 +52,12 @@ class Curriculum(StatusableMixin, models.Model):
     @classmethod
     def get_default(cls) -> Curriculum:
         """Returns a default curriculum."""
-        return cls.objects.create(
-            short_name="DFT_CUR", long_name="Curriculum par default"
+        def_curriculum, _ = cls.objects.get_or_create(
+            short_name="DFT_CUR",
+            long_name="Default Curriculum",
+            college=College.get_default(),
         )
+        return def_curriculum
 
     def save(self, *args, **kwargs):
         """Save a curriculum instance while setting defaults."""

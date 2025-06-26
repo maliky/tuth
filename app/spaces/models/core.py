@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+from itertools import count
+
 from django.db import models
+
+# Reside only on module reload (so could stay in memory for long on prod)
+DEFAULT_ROOM_CODE = count(start=1, step=1)
 
 
 class Space(models.Model):
@@ -20,7 +25,7 @@ class Space(models.Model):
         return self.code
 
     @classmethod
-    def get_tba_space(cls):
+    def get_default(cls):
         """Returns a TBA instance of the Space."""
         tba_space, _ = cls.objects.get_or_create(
             code="TBA", defaults={"full_name": "To Be Announced"}
@@ -41,29 +46,44 @@ class Room(models.Model):
     """
 
     code = models.CharField(max_length=30)
-    space = models.ForeignKey(
-        Space, null=True, blank=True, on_delete=models.PROTECT, related_name="rooms"
-    )
+    space = models.ForeignKey(Space, on_delete=models.PROTECT, related_name="rooms")
 
     standard_capacity = models.PositiveIntegerField(default=45)
     exam_capacity = models.PositiveIntegerField(default=30)
 
     def __str__(self) -> str:  # pragma: no cover
-        return self.full_code
-
-    @property
-    def full_code(self) -> str:
         """Full room identifier combining space short name and code."""
-        if self.is_specific_room():
+        if self.space_id:
             return f"{self.space}-{self.code}"
         else:
             return f"{self.code} (Space)"
 
-    def is_specific_room(self):
-        """Returns true if the room is inside a space/buildings which is set."""
-        space_str = f"{self.space}".lower()
-        code_str = self.code.lower()
-        return space_str != code_str
+    def _ensure_code(self):
+        if not self.code:
+            self.code = "TBA"
+
+    def _ensure_space(self):
+        if not self.space_id:
+            self.space = Space.get_default()
+
+    def save(self, *args, **kwargs):
+        """Make sure we have a room even if it's TBA."""
+        self._ensure_code()
+        self._ensure_space()
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_default(cls, code: int = 0):
+        """Returns a default Room."""
+        dft_room, _ = cls.objects.get_or_create(
+            code=f"TBA{code:04d}", space=Space.get_default()
+        )
+        return dft_room
+
+    @classmethod
+    def get_unique_default(cls):
+        """Returns a default unique Room."""
+        return Room.get_default(code=next(DEFAULT_ROOM_CODE))
 
     class Meta:
         constraints = [

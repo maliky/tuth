@@ -73,6 +73,7 @@ class StudentResource(resources.ModelResource):
 
     # should populate the pk field directly
     user = fields.Field(attribute="user", column_name="student_name", widget=UserWidget())
+
     current_enroled_semester = fields.Field(
         attribute="current_enroled_semester",
         column_name="semester_no",
@@ -85,7 +86,6 @@ class StudentResource(resources.ModelResource):
         fields = (
             "student_id",
             "user",
-            "college",
             "curriculum",
             "current_enroled_semester",
             "first_enrollement_date",

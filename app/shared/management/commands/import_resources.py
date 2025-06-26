@@ -72,7 +72,7 @@ class Command(BaseCommand):
         dataset = self.clean_column_headers(dataset)
 
         RESOURCES_MAP: list[tuple[str, type[resources.ModelResource]]] = [
-            ("Student", StudentResource),
+            # ("Student", StudentResource),
             ("Faculty", FacultyResource),  # and College
             ("Room", RoomResource),  # and Space
             ("Schedule", ScheduleResource),
@@ -86,6 +86,8 @@ class Command(BaseCommand):
         for key, ResourceClass in RESOURCES_MAP:
 
             resource: resources.ModelResource = ResourceClass()
+            # import ipdb; ipdb.set_trace()
+
             validation: resources.Result = resource.import_data(dataset, dry_run=True)
 
             if validation.has_errors():

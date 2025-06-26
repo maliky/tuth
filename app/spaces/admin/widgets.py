@@ -48,13 +48,13 @@ class RoomWidget(widgets.ForeignKeyWidget):
     ) -> Room | None:
         """Using the room no, and the space code, returns a Room (eventualy)."""
 
-        room_code = value.strip()
+        room_code = (value or "").strip()
 
-        space_code = (row or {}).get("space", "").strip()
+        space_code = ((row or {}).get("space") or "").strip()
         space = self.space_w.clean(value=space_code, row=row)
 
         room, _ = Room.objects.get_or_create(
-            space=space or Space.get_tba_space(),
+            space=space or Space.get_default(),
             code=room_code or "TBA",
         )
 
