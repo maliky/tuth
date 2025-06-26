@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import List
+
+from app.shared.types import SectionQuery
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -9,11 +11,11 @@ from django.db.models import Sum
 from app.people.models import StudentProfile
 from app.shared.constants import MAX_STUDENT_CREDITS
 from app.shared.constants.finance import StatusReservation
-from app.timetable.models import Reservation, Section
+from app.timetable.models import Reservation
 
 
 def reserve_sections(
-    student: StudentProfile, sections: Iterable[Section]
+    student: StudentProfile, sections: SectionQuery
 ) -> List[Reservation]:
     """Create reservation objects for ``student`` on each section.
 
