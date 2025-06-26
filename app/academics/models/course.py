@@ -10,6 +10,7 @@ from app.academics.choices import LEVEL_NUMBER
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.shared.utils import make_course_code
+from app.shared.types import CourseQuery
 
 # Reside only on module reload (so could stay in memory for long on prod)
 # it ensure unique default course
@@ -83,7 +84,7 @@ class Course(models.Model):
         super().save(*args, **kwargs)
 
     @classmethod
-    def for_curriculum(cls, curriculum: Curriculum) -> models.QuerySet:
+    def for_curriculum(cls, curriculum) -> CourseQuery:
         """Return courses included in the given curriculum."""
         return cls.objects.filter(curricula=curriculum).distinct()
 
