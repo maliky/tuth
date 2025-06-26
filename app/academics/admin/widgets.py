@@ -1,6 +1,6 @@
 """Widgets module."""
 
-from typing import Any, Optional, cast
+from typing import Any, Optional
 
 from import_export import widgets
 
@@ -9,16 +9,15 @@ from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.academics.models.program import Program
-from app.shared.utils import expand_course_code
+from app.shared.utils import expand_course_code, get_in_row
 
 
 class ProgramWidget(widgets.ForeignKeyWidget):
-    """Create or fetch Program rows from CSV data.
+    """Create or Program from CSV rows.
 
-    use the curriculum_short name as the value.
-    The widget delegates curriculum and course parsing to CurriculumWidget
-    and CourseWidget then assembles a :class:Program instance from
-    the results.
+    Use the curriculum_short name as the 'value'.
+    The widget delegates curriculum parsong to CurriculumWidget and course parsing
+    to CourseWidget then assembles a Program object from the results.
     """
 
     def __init__(self, *args, **kwargs):
@@ -26,24 +25,25 @@ class ProgramWidget(widgets.ForeignKeyWidget):
         self.curriculm_w = CurriculumWidget()
         self.course_w = CourseWidget()
 
-    def clean(self, value, row=None, *args, **kwargs) -> Program | None:
+    def clean(self, value, row=None, *args, **kwargs) -> Program:
         """Assemble course_dept, curriculum and course to return a curriculum course."""
-        if not value:
-            return None
 
-        curriculum_value = value.strip()
-        curriculum = cast(
-            Curriculum, self.curriculm_w.clean(value=curriculum_value, row=row)
+        # we don't use value.  We always get a course back
+        course = self.course_w.clean(value=None, row=row)
+
+        curriculum = (
+            self.curriculm_w.clean(value=value, row=row)
+            if value
+            else Curriculum.get_default()
         )
-
-        course_dept = (row.get("course_dept") or "").strip()
-        course = self.course_w.clean(value=course_dept, row=row)
 
         program, _ = Program.objects.get_or_create(
             curriculum=curriculum,
             course=course,
-            credit_hours=row.get("credit_hours", "").strip(),
-            is_required=row.get("is_required", True),
+            defaults={
+                "credit_hours": get_in_row("credit_hours", row),
+                "is_required": get_in_row("is_required", row),
+            },
         )
         return program
 
@@ -57,6 +57,7 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
         super().__init__(Curriculum, field="short_name")
+        self.college_w = CollegeWidget()
 
     def clean(self, value, row=None, *args, **kwargs) -> Curriculum | None:
         """Returns a Curriculum object matching the provided short_name in value.
@@ -67,17 +68,18 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
 
         Automatically creates curriculum with today's date.
         """
-        college_code = (row.get("college_code") or "").strip()
-        curriculum = (value or "").strip()
-        if not curriculum:
+        if not value:
             return Curriculum.get_default()
 
-        college, _ = College.objects.get_or_create(code=college_code)
+        short_name = value.strip()
+
+        college_code = get_in_row("college_code", row)
+        college = self.college_w(college_code)
 
         curriculum, _ = Curriculum.objects.get_or_create(
-            short_name=curriculum,
+            short_name=short_name,
             defaults={
-                "long_name": curriculum,
+                "long_name": short_name,
                 "college": college,
             },
         )
@@ -97,7 +99,6 @@ class CourseWidget(widgets.ForeignKeyWidget):
         super().__init__(Course, field="code")
         self.department_w = DepartmentWidget()
         self.college_w = CollegeWidget()
-        self._cache = {}
 
     def clean(
         self,
@@ -105,31 +106,22 @@ class CourseWidget(widgets.ForeignKeyWidget):
         row: Optional[dict[str, Any]] = None,
         *args: Any,
         **kwargs: Any,
-    ) -> Course | None:
+    ) -> Course:
         """Return a Course gotten from dept, no and college_code.
 
         Value is ignored (import-export still passes the column declared in
         the resource, but the info we need is spread across *row*).
         """
-        if row is None:
-            return None
-        course_dept = (row.get("course_dept") or "").strip().upper()
-        department = self.department_w.clean(course_dept, row)
+        course_no = get_in_row("course_no", row)
+        course_dept = get_in_row("course_dept", row)
 
-        course_no = row.get("course_no", "").strip()
-
-        if not course_dept or not course_no:
-            return None
-
-        key = (department, course_no)
-        if key in self._cache:
-            return self._cache.get(key)
+        if not course_no or not course_dept:
+            return Course.get_unique_default()
 
         course, _ = Course.objects.get_or_create(
             number=course_no,
-            department=department,
+            department=self.department_w.clean(course_dept, row),
         )
-        self._cache[key] = course
         return course
 
 
@@ -222,7 +214,10 @@ class CollegeWidget(widgets.ForeignKeyWidget):
 
         Defaults to COAS.
         """
-        code = (value or "COAS").strip().upper()
+        code = (value or "").strip().upper()
+        if not code:
+            return College.get_default()
+
         college, _ = College.objects.get_or_create(code=code)
 
         return college
@@ -240,9 +235,10 @@ class DepartmentWidget(widgets.ForeignKeyWidget):
 
         If nothing passed, return a default value.
         """
-        dept_short_name = (value or "").strip().upper()
-        if not dept_short_name:
+        if not value:
             return Department.get_default()
+
+        dept_short_name = (value or "").strip().upper()
 
         college = self.college_w.clean((row.get("college_code") or "").strip())
 

@@ -53,3 +53,12 @@ def make_course_code(dept: Department, number: str) -> str:
     Returns:  {dept.code}{number}
     """
     return f"{dept.code}{number}".upper()
+
+
+def get_in_row(key: str, row: Optional[dict[str, str | None]]) -> str:
+    """Return a value from the row which is a dict of str and optional None.
+
+    Does so safly always returning something even if None is in the row.
+    """
+
+    return ((row or {}).get(key) or "").strip()

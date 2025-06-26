@@ -11,6 +11,7 @@ from app.timetable.models.section import Section
 class SectionResource(resources.ModelResource):
 
     # just to keep it in headers and accessible for other.
+
     academic_year = fields.Field(attribute=None, column_name="academic_year")
     course_no = fields.Field(attribute=None, column_name="course_no")
     course_dept = fields.Field(attribute=None, column_name="course_dept")

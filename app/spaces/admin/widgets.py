@@ -32,7 +32,6 @@ class SpaceWidget(widgets.ForeignKeyWidget):
         return space
 
 
-
 class RoomWidget(widgets.ForeignKeyWidget):
     """Resolve or create a :class:Room using room_code and space."""
 
