@@ -65,7 +65,6 @@ class Student(AbstractPerson):
             in_programs__sections__grade__numeric_grade__gte=60,
         ).distinct()
 
-
     def allowed_courses(self) -> CourseQuery:
         """Return courses available for registration based on prerequisites."""
         curriculum = self.curriculum or Curriculum.get_default()

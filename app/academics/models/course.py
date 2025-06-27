@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from itertools import count
 
 from django.db import models
 
@@ -11,6 +10,8 @@ from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.shared.utils import make_course_code
 from app.shared.types import CourseQuery
+
+DEFAULT_COURSE_NO = count(start=1, step=1)
 
 
 class Course(models.Model):

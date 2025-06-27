@@ -36,9 +36,7 @@ def course_dashboard(request: HttpRequest) -> HttpResponse:
 
         if action == "remove":
             reg_id = request.POST.get("registration_id")
-            reg = get_object_or_404(
-                Registration, pk=reg_id, student=student
-            )
+            reg = get_object_or_404(Registration, pk=reg_id, student=student)
             # record the change before deleting the registration
             tables = connection.introspection.table_names()
             if StatusHistory._meta.db_table in tables:
@@ -56,9 +54,7 @@ def course_dashboard(request: HttpRequest) -> HttpResponse:
 
         if action == "update":
             reg_id = request.POST.get("registration_id")
-            reg = get_object_or_404(
-                Registration, pk=reg_id, student=student
-            )
+            reg = get_object_or_404(Registration, pk=reg_id, student=student)
             reg.status = request.POST.get("status")
             reg.save()
             messages.success(request, "Registration updated.")

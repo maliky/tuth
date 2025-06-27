@@ -22,7 +22,7 @@ class ProgramWidget(widgets.ForeignKeyWidget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(Program)
-        self.curriculm_w = CurriculumWidget()
+        self.curriculum_w = CurriculumWidget()
         self.course_w = CourseWidget()
 
     def clean(self, value, row=None, *args, **kwargs) -> Program:
@@ -32,7 +32,7 @@ class ProgramWidget(widgets.ForeignKeyWidget):
         course = self.course_w.clean(value=None, row=row)
 
         curriculum = (
-            self.curriculm_w.clean(value=value, row=row)
+            self.curriculum_w.clean(value=value, row=row)
             if value
             else Curriculum.get_default()
         )

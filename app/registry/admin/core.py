@@ -56,6 +56,7 @@ class ClassRosterAdmin(admin.ModelAdmin):
         """Return number of students enrolled in this roster."""
         return obj.students.count()
 
+
 @admin.register(Registration)
 class RegistrationAdmin(admin.ModelAdmin):
     """Allow students to register only for eligible sections."""
@@ -88,4 +89,4 @@ class RegistrationAdmin(admin.ModelAdmin):
                 kwargs["queryset"] = Section.objects.filter(
                     program__course__in=student.allowed_courses()
                 )
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)    
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
