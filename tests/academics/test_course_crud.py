@@ -1,27 +1,29 @@
 """Tests for CRUD of courses."""
 
-from app.academics.models.course import Course
-from app.academics.models.department import Department
 import pytest
 
-from app.people.models.student import Student
-from app.timetable.models.semester import Semester
+from app.academics.models.course import Course
 
 
 @pytest.mark.django_db
-def test_course_crud_all(student: Student, semester: Semester):
-    """We test that if a course A is a prerequisite to course B.
+def test_course_crud(course_factory, department_factory):
+    # create
+    dept = department_factory()
+    course = Course.objects.create(number="901", title="Intro", department=dept)
+    assert Course.objects.filter(pk=course.pk).exists()
 
-    then A must be passed to see B in allowed courses for the student.
-    """
-    course_a = Course.objects.create(
-        number="101", department=Department.get_default("D1")
-    )
-    course_b = Course.objects.create(
-        number="102", department=Department.get_default("D2")
-    )
-    assert course_a.id
-    assert course_a.id != course_b.id
-    assert course_a.number == "101"
-    assert course_a.department.id
-    assert course_a.department.short_name == "D1"
+    # read
+    fetched = Course.objects.get(pk=course.pk)
+    assert fetched == course
+
+    # update
+    fetched.title = "Introduction"
+    fetched.save()
+    updated = Course.objects.get(pk=course.pk)
+    assert updated.title == "Introduction"
+
+    # delete
+    updated.delete()
+    assert not Course.objects.filter(pk=course.pk).exists()
+
+>>>>>>> github/codo/create-crud-tests-for-academics-models
