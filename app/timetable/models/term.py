@@ -23,10 +23,14 @@ class Term(models.Model):
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
 
+    def __str__(self) -> str:  # pragma: no cover
+        return f"{self.semester}T{self.number}"
+
     def clean(self) -> None:
         """Validate dates are inside the parent semester and do not overlap."""
         container_start = self.semester.start_date
         container_end = self.semester.end_date
+
         assert container_start is not None and container_end is not None
         overlap_qs = Term.objects.filter(semester=self.semester).exclude(pk=self.pk)  # type: ignore[attr-defined]
         validate_subperiod(
@@ -47,5 +51,3 @@ class Term(models.Model):
         ]
         ordering = ["start_date", "number"]
 
-    def __str__(self) -> str:  # pragma: no cover
-        return f"{self.semester}T{self.number}"

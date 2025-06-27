@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from itertools import count
+from typing import Self
 
 from django.db import models
 
@@ -86,7 +87,7 @@ class Course(models.Model):
         return cls.objects.filter(curricula=curriculum).distinct()
 
     @classmethod
-    def get_default(cls, number: int = 0):
+    def get_default(cls, number: int = 0) -> Self:
         """Return a default Course."""
         def_crs, _ = cls.objects.get_or_create(
             department=Department.get_default(),
@@ -96,9 +97,9 @@ class Course(models.Model):
         return def_crs
 
     @classmethod
-    def get_unique_default(cls):
+    def get_unique_default(cls) -> Self:
         """Return a default Course which is unique. A most 1000 course can be created."""
-        return Course.get_default(number=next(DEFAULT_COURSE_NO))
+        return cls.get_default(number=next(DEFAULT_COURSE_NO))
 
     class Meta:
         constraints = [

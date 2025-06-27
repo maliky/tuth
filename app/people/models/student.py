@@ -79,7 +79,7 @@ class Student(AbstractPerson):
         """Make sure we have a curriculum for all students."""
         # import ipdb; ipdb.set_trace()
 
-        if not self.curriculum:
+        if not self.curriculum_id:
             self.curriculum = Curriculum.get_default()
         super().save(*args, **kwargs)
 

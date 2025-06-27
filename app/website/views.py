@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 from django.contrib import messages
-from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.models import AnonymousUser, User
+from django.core.exceptions import PermissionDenied
 from django.db import connection
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
 
-from app.shared.status import StatusHistory
-
+from app.people.models.student import Student
 from app.registry.choices import StatusRegistration
 from app.registry.models.registration import Registration
+from app.shared.status import StatusHistory
 from app.timetable.models.section import Section
 
 
@@ -19,11 +23,18 @@ def landing_page(request: HttpRequest) -> HttpResponse:
     return render(request, "website/landing.html")
 
 
+def _require_student(user: User | AnonymousUser) -> Student:
+    """Return the related Student or abort early."""
+    student = getattr(user, "student", None)
+    if student is None:
+        raise PermissionDenied("User has no Student profile.")
+    return cast(Student, student)  # <— only cast once, in one place
+
+
 def course_dashboard(request: HttpRequest) -> HttpResponse:
     """Allow a student to manage their course registrations."""
     # rely on the authenticated user's Student profile
-    student = request.user.student
-
+    student = _require_student(request.user)
     if request.method == "POST":
         action = request.POST.get("action")
 
@@ -55,7 +66,7 @@ def course_dashboard(request: HttpRequest) -> HttpResponse:
         if action == "update":
             reg_id = request.POST.get("registration_id")
             reg = get_object_or_404(Registration, pk=reg_id, student=student)
-            reg.status = request.POST.get("status")
+            reg.status = request.POST.get("status")  # type: ignore[assignment]
             reg.save()
             messages.success(request, "Registration updated.")
             return redirect("course_dashboard")

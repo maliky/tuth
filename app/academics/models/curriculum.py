@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 from datetime import date
+from typing import Self
 
 from app.academics.choices import StatusCurriculum
 from app.academics.models.college import College
@@ -46,11 +47,11 @@ class Curriculum(StatusableMixin, models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         """Return the college (if set): & curriculum short name."""
-        suffix = f"{self.college}: " if self.college else ""
+        suffix = f"{self.college}: " if self.college_id else ""
         return suffix + self.short_name
 
     @classmethod
-    def get_default(cls) -> Curriculum:
+    def get_default(cls) -> Self:
         """Returns a default curriculum."""
         def_curriculum, _ = cls.objects.get_or_create(
             short_name="DFT_CUR",
@@ -61,7 +62,7 @@ class Curriculum(StatusableMixin, models.Model):
 
     def save(self, *args, **kwargs):
         """Save a curriculum instance while setting defaults."""
-        if not self.college:
+        if not self.college_id:
             self.college = College.get_default()
         super().save(*args, **kwargs)
 

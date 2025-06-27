@@ -35,6 +35,9 @@ class RoleAssignment(models.Model):
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
 
+    def __str__(self) -> str:
+        return f"{self.user} -> {self.role} ({self.start_date})"
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -46,5 +49,3 @@ class RoleAssignment(models.Model):
             models.Index(fields=["role", "college", "end_date"]),
         ]
 
-    def __str__(self) -> str:
-        return f"{self.user} -> {self.role} ({self.start_date})"

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Self
 
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
@@ -54,15 +54,15 @@ class Section(models.Model):
     def course(self) -> Course:
         """Return the Course associated with the program of this section."""
         course = self.program.course
-        if not course:
+        if not course_id:
             raise ValidationError("Course has to be set.")
         return course
 
     @property
-    def curriculum(self) -> Curriculum:
+    def curriculum(self) -> Self:
         """Return the Curriculum associated with the program of this section."""
         curriculum = self.program.curriculum
-        if not curriculum:
+        if not curriculum_id:
             raise ValidationError("Curriculum has to be set.")
         return self.program.curriculum
 

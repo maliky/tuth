@@ -4,6 +4,7 @@
 
 from datetime import date
 from itertools import count
+from typing import Self
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -52,7 +53,7 @@ class Staff(AbstractPerson):
     position = models.CharField(max_length=50, blank=True)
 
     @classmethod
-    def get_default(cls, staff_id: int = 0):
+    def get_default(cls, staff_id: int = 0) -> Self:
         """Return a default Staff."""
         dft_staff, _ = cls.objects.get_or_create(
             staff_id=f"DFT_STF{staff_id:04d}",
@@ -64,9 +65,9 @@ class Staff(AbstractPerson):
         return dft_staff
 
     @classmethod
-    def get_unique_default(cls):
+    def get_unique_default(cls) -> Self:
         """Return a unique default Staff."""
-        return Staff.get_default(staff_id=next(DEFAULT_STAFF_ID))
+        return cls.get_default(staff_id=next(DEFAULT_STAFF_ID))
 
     class Meta:
         constraints = [
@@ -135,7 +136,7 @@ class Faculty(StatusableMixin, models.Model):
         return self.staff_profile.user
 
     @classmethod
-    def get_default(cls, profile=None):
+    def get_default(cls, profile=None) -> Self:
         """Returns a default Faculty."""
         if not profile:
             profile = Staff.get_default()
@@ -144,10 +145,10 @@ class Faculty(StatusableMixin, models.Model):
         return dft_faculty
 
     @classmethod
-    def get_unique_default(cls):
+    def get_unique_default(cls) -> Self:
         """Returns a unique default Faculty."""
         unique_profile = Staff.get_unique_default()
-        return Faculty.get_default(unique_profile)
+        return cls.get_default(unique_profile)
 
     class Meta:
         verbose_name = "Faculty"

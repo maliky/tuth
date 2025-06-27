@@ -34,17 +34,17 @@ class Session(models.Model):
     @property
     def weekday(self):
         """Shortcut to the schedule's weekday."""
-        return self.schedule.weekday if self.schedule else ""
+        return self.schedule.weekday if self.schedule_id else ""
 
     @property
     def start_time(self):
         """Shortcut to the schedule's starting time."""
-        return self.schedule.start_time if self.schedule else ""
+        return self.schedule.start_time if self.schedule_id else ""
 
     @property
     def end_time(self):
         """Shortcut to the schedule's ending time."""
-        return self.schedule.end_time if self.schedule else ""
+        return self.schedule.end_time if self.schedule_id else ""
 
     def __str__(self):
         """Return Schedule, Room for use in admin lists."""
@@ -70,10 +70,10 @@ class Session(models.Model):
         """Ensure no overlapping session exists for the same room."""
         super().clean()
 
-        if self.schedule is None:
+        if self.schedule_id is None:
             return
         # ie overlap possible for TBA or start_time < 8:00 AM.
-        if not self.schedule_is_set() and not self.room:
+        if not self.schedule_is_set() and not self.room_id:
             return
 
         start = self.schedule.start_time

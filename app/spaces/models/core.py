@@ -84,7 +84,7 @@ class Room(models.Model):
     @classmethod
     def get_unique_default(cls) -> Self:
         """Returns a default unique Room."""
-        return Room.get_default(code=next(DEFAULT_ROOM_CODE))
+        return cls.get_default(code=next(DEFAULT_ROOM_CODE))
 
     class Meta:
         constraints = [

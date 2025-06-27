@@ -1,6 +1,7 @@
 """Department model."""
 
 from __future__ import annotations
+from typing import Self
 
 from app.academics.models.college import College
 from django.db import models
@@ -36,7 +37,7 @@ class Department(models.Model):
         super().save(*args, **kwargs)
 
     @classmethod
-    def get_default(cls, code="DFT"):
+    def get_default(cls, code="DFT") -> Self:
         """Return the default Department."""
         default_dept, _ = cls.objects.get_or_create(
             code=code,

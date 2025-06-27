@@ -1,6 +1,7 @@
 """Curriculum course module."""
 
 from __future__ import annotations
+from typing import Self
 
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
@@ -39,7 +40,7 @@ class Program(models.Model):
         return f"{self.course} in --> <-- has {self.curriculum}"
 
     @classmethod
-    def get_default(cls, course=None) -> Program:
+    def get_default(cls, course=None) -> Self:
         """Returns a default (unique) Program."""
         if not course:
             course = Course.get_default()
@@ -47,7 +48,7 @@ class Program(models.Model):
         def_pg, _ = cls.objects.get_or_create(curriculum=def_curriculum, course=course)
         return def_pg
 
-    def get_unique_default(cls) -> Program:
+    def get_unique_default(cls) -> Self:
         """Returns a default (unique) Program."""
         dft_course = Course.get_default()
         return Program.get_default(course=dft_course)
