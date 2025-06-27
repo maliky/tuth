@@ -25,5 +25,3 @@ def test_course_crud(course_factory, department_factory):
     # delete
     updated.delete()
     assert not Course.objects.filter(pk=course.pk).exists()
-
->>>>>>> github/codo/create-crud-tests-for-academics-models
