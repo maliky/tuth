@@ -29,7 +29,7 @@ class Student(AbstractPerson):
     ID_PREFIX = "TU_STD"
 
     student_id = models.CharField(max_length=20, unique=True)
-    curriculum = models.ForeignKey("academics.Curriculum", on_delete=models.SET_NULL)
+    curriculum = models.ForeignKey("academics.Curriculum", on_delete=models.CASCADE)
     current_enroled_semester = models.ForeignKey(
         Semester,
         on_delete=models.PROTECT,

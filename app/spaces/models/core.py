@@ -31,7 +31,7 @@ class Space(models.Model):
         tba_space, _ = cls.objects.get_or_create(
             code="TBA", defaults={"full_name": "Undefined space (TBA)"}
         )
-        return cls(tba_space)
+        return tba_space
 
     class Meta:
         verbose_name = "Space / Buiding"
@@ -76,9 +76,8 @@ class Room(models.Model):
     @classmethod
     def get_default(cls, code: int = 0) -> Self:
         """Returns a default Room."""
-        dft_room, _ = cls.objects.get_or_create(
-            code=f"TBA{code:04d}", space=Space.get_default()
-        )
+        tba_space = Space.get_default()
+        dft_room, _ = cls.objects.get_or_create(code=f"TBA{code:04d}", space=tba_space)
         return dft_room
 
     @classmethod

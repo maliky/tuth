@@ -25,10 +25,10 @@ def test_expand_code_defaults_to_row_college():
 def test_expand_code_defaults_to_coas_when_row_missing(college, department_factory):
     dept = department_factory("BIOL")
 
-    college_code, dept_code, num = expand_course_code("BIOL105")
+    college_code, dept_short_name, num = expand_course_code("BIOL105")
 
     assert college_code == "COAS", f"college.code=>{college.code}"
-    assert dept_code == dept.code
+    assert dept_short_name == dept.short_name
     assert num == "105"
 
 
@@ -41,8 +41,8 @@ def test_expand_code_invalid_format():
 def test_expand_code_accepts_underscore(college, department_factory):
 
     dept = department_factory("ACCT")
-    college_code, dept_code, num = expand_course_code("ACCT_404")
+    college_code, dept_short_name, num = expand_course_code("ACCT_404")
 
     assert college_code == college.code
-    assert dept_code == dept.code
+    assert dept_short_name == dept.short_name
     assert num == "404"

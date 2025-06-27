@@ -54,7 +54,7 @@ class Section(models.Model):
     def course(self) -> Course:
         """Return the Course associated with the program of this section."""
         course = self.program.course
-        if not course_id:
+        if not course.id:
             raise ValidationError("Course has to be set.")
         return course
 
@@ -62,7 +62,7 @@ class Section(models.Model):
     def curriculum(self) -> Self:
         """Return the Curriculum associated with the program of this section."""
         curriculum = self.program.curriculum
-        if not curriculum_id:
+        if not curriculum.id:
             raise ValidationError("Curriculum has to be set.")
         return self.program.curriculum
 

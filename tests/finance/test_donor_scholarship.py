@@ -9,7 +9,6 @@ from app.finance.models import Scholarship
 from app.people.models.donor import Donor
 from app.people.models.student import Student
 
-# from tests.fixtures.timetable import semester
 
 
 @pytest.mark.django_db

@@ -76,8 +76,8 @@ def department() -> Department:
 
 @pytest.fixture
 def department_factory() -> DepartmentFactory:
-    def _make(code: str = "GEN") -> Department:
-        return Department.get_default(code)
+    def _make(short_name: str = "GEN") -> Department:
+        return Department.get_default(short_name)
 
     return _make
 

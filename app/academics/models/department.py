@@ -13,7 +13,6 @@ class Department(models.Model):
     Example: see get_default()
     """
 
-    code = models.CharField(max_length=50, unique=True, editable=False)
     short_name = models.CharField(max_length=6)
     full_name = models.CharField(max_length=128, blank=True)
     college = models.ForeignKey(
@@ -21,6 +20,8 @@ class Department(models.Model):
         on_delete=models.PROTECT,
         related_name="departments",
     )
+    # inclue college
+    code = models.CharField(max_length=50, unique=True, editable=False)
 
     def __str__(self) -> str:  # pragma: no cover
         """The Department common representaion. ! This is not unique."""
@@ -37,11 +38,11 @@ class Department(models.Model):
         super().save(*args, **kwargs)
 
     @classmethod
-    def get_default(cls, code="DFT") -> Self:
+    def get_default(cls, short_name="DFT") -> Self:
         """Return the default Department."""
         default_dept, _ = cls.objects.get_or_create(
-            code=code,
-            full_name=f"Department of {code}",
+            short_name= short_name,
+            full_name=f"Department of {short_name}",
             college=College.get_default(),
         )
         return default_dept
