@@ -51,7 +51,7 @@ class Program(models.Model):
     def get_unique_default(cls) -> Self:
         """Returns a default (unique) Program."""
         dft_course = Course.get_default()
-        return Program.get_default(course=dft_course)
+        return cls.get_default(course=dft_course)
 
     class Meta:
         constraints = [

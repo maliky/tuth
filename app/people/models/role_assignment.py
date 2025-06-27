@@ -48,4 +48,3 @@ class RoleAssignment(models.Model):
         indexes = [
             models.Index(fields=["role", "college", "end_date"]),
         ]
-

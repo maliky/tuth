@@ -23,7 +23,7 @@ def test_default_room_conflict():
 
     Saving a second empty room violates the composite unique key.
     """
-    space= Space.get_default()
+    space = Space.get_default()
     Room(code="1", space=space).save()  # first implicit “TBA / TBA”
     with pytest.raises(IntegrityError):
         Room(code="1", space=space).save()  # second conflicts with the first

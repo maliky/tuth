@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from app.timetable.choices import WEEKDAYS_NUMBER
 from django.db import models
 from django.forms import ValidationError
 
@@ -31,28 +32,24 @@ class Session(models.Model):
         related_name="sessions",
     )
 
-    @property
-    def weekday(self):
-        """Shortcut to the schedule's weekday."""
-        return self.schedule.weekday if self.schedule_id else ""
-
-    @property
-    def start_time(self):
-        """Shortcut to the schedule's starting time."""
-        return self.schedule.start_time if self.schedule_id else ""
-
-    @property
-    def end_time(self):
-        """Shortcut to the schedule's ending time."""
-        return self.schedule.end_time if self.schedule_id else ""
-
     def __str__(self):
         """Return Schedule, Room for use in admin lists."""
         return f"{self.schedule}, {self.room}"
 
-    def schedule_is_set(self):
-        """Return true a the schedule is set."""
-        return self.schedule is not None and self.schedule.is_set()
+    @property
+    def weekday(self):
+        """Shortcut to the schedule's weekday."""
+        return getattr(self.schedule, "weekday", WEEKDAYS_NUMBER.TBA)
+
+    @property
+    def start_time(self):
+        """Shortcut to the schedule's starting time."""
+        return getattr(self.schedule, "start_time", None)
+
+    @property
+    def end_time(self):
+        """Shortcut to the schedule's ending time."""
+        return getattr(self.schedule, "end_time", None)
 
     # No constraints for now. because how to handle TBA
     # class Meta:
@@ -73,16 +70,17 @@ class Session(models.Model):
         if self.schedule_id is None:
             return
         # ie overlap possible for TBA or start_time < 8:00 AM.
-        if not self.schedule_is_set() and not self.room_id:
+        if not self.room_id:
             return
 
-        start = self.schedule.start_time
-        end = self.schedule.end_time
+        start = self.schedule.start_time  # type: ignore[union-attr]
+        end = self.schedule.end_time  # type: ignore[union-attr]
+        weekday = getattr(self.schedule, "weekday", WEEKDAYS_NUMBER.TBA)
 
         if start and end:
             clash = Session.objects.filter(
                 room=self.room,
-                schedule__weekday=self.schedule.weekday,
+                schedule__weekday=weekday,
                 schedule__start_time__lt=end,
                 schedule__end_time__gt=start,
             ).exclude(pk=self.pk)

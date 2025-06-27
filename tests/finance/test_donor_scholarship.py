@@ -10,7 +10,6 @@ from app.people.models.donor import Donor
 from app.people.models.student import Student
 
 
-
 @pytest.mark.django_db
 def test_scholarship_links_donor_student(semester):
     User = get_user_model()

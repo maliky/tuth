@@ -50,4 +50,3 @@ class Term(models.Model):
             )
         ]
         ordering = ["start_date", "number"]
-

@@ -41,7 +41,7 @@ class Department(models.Model):
     def get_default(cls, short_name="DFT") -> Self:
         """Return the default Department."""
         default_dept, _ = cls.objects.get_or_create(
-            short_name= short_name,
+            short_name=short_name,
             full_name=f"Department of {short_name}",
             college=College.get_default(),
         )

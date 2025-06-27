@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Self
+from typing import TYPE_CHECKING, List
 
+from app.academics.models.curriculum import Curriculum
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 
 from app.academics.models.course import Course
-from app.academics.models.curriculum import Curriculum
 
 if TYPE_CHECKING:
     from app.spaces.models.core import Room
@@ -59,12 +59,13 @@ class Section(models.Model):
         return course
 
     @property
-    def curriculum(self) -> Self:
+    def curriculum(self) -> Curriculum:
         """Return the Curriculum associated with the program of this section."""
         curriculum = self.program.curriculum
         if not curriculum.id:
             raise ValidationError("Curriculum has to be set.")
-        return self.program.curriculum
+
+        return curriculum
 
     @property
     def spaces(self) -> List[Room]:
