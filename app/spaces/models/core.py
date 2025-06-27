@@ -31,7 +31,7 @@ class Space(models.Model):
         tba_space, _ = cls.objects.get_or_create(
             code="TBA", defaults={"full_name": "Undefined space (TBA)"}
         )
-        return cls(tba_space)
+        return tba_space
 
     class Meta:
         verbose_name = "Space / Buiding"
