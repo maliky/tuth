@@ -4,15 +4,12 @@
 
 from __future__ import annotations
 
-from app.academics.models.course import Course
-from app.academics.models.curriculum import Curriculum
-from app.academics.models.prerequisite import Prerequisite
-from app.people.models.core import AbstractPerson
-from app.registry.models.grade import Grade
-from app.shared.types import CourseQuery
 from django.db import models
 
-
+from app.academics.models.course import Course
+from app.academics.models.curriculum import Curriculum
+from app.people.models.core import AbstractPerson
+from app.shared.types import CourseQuery
 from app.timetable.models.semester import Semester
 
 
@@ -32,9 +29,7 @@ class Student(AbstractPerson):
     ID_PREFIX = "TU_STD"
 
     student_id = models.CharField(max_length=20, unique=True)
-    curriculum = models.ForeignKey(
-        "academics.Curriculum", on_delete=models.SET_NULL, null=True, blank=True
-    )
+    curriculum = models.ForeignKey("academics.Curriculum", on_delete=models.SET_NULL)
     current_enroled_semester = models.ForeignKey(
         Semester,
         on_delete=models.PROTECT,
@@ -56,7 +51,7 @@ class Student(AbstractPerson):
     @property
     def college(self):
         """Return the student's current college."""
-        self.curriculum.college
+        return self.curriculum.college
 
     def passed_courses(self) -> CourseQuery:
         """Return courses the student completed with a passing grade."""

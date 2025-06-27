@@ -57,14 +57,15 @@ class Schedule(models.Model):
         """End time formatted as HH:MM or empty string."""
         return self.end_time.strftime("%H:%M") if self.end_time else ""
 
-    def _find_next_free_slot(self, weekday) -> time:
+    @classmethod
+    def _find_next_free_slot(cls, weekday) -> time:
         """Find a free time slot at the begining of the day.
 
         Scan in 1-minute steps from 01:00.
         find a (weekday, start_time) combination that doesn't exist yet.
         """
         # Anchor at 0 AM the 1/01/2009, what we look at is the time.
-        cursor = datetime.combine(self.REF_DATE, time(0, 0))
+        cursor = datetime.combine(cls.REF_DATE, time(0, 0))
         step = timedelta(minutes=1)
 
         # get the 1 minutes slots
@@ -83,7 +84,7 @@ class Schedule(models.Model):
                     return t
                 cursor += step
 
-        raise RuntimeError(f"Could not find a free 1-minute slot on {self.weekday}")
+        raise RuntimeError(f"Could not find a free 1-minute slot on {weekday}")
 
     # > validation end_time should alway be bigger than start_time
     # ? need to check that there no overlap. may need to store duration
@@ -121,7 +122,7 @@ class Schedule(models.Model):
     def get_default(cls, new_schedule=False):
         """Return a default schedule.
 
-        If new schedule is True we return the a new schedule on TBA Day
+        If new schedule is True we return the a new schedule on TBA Day.
         """
         tba_day = WEEKDAYS_NUMBER.TBA
         if new_schedule:
@@ -129,7 +130,9 @@ class Schedule(models.Model):
         else:
             start_time = cls.REF_TIME
 
-        def_schedule, _ = cls.get_or_create(weekday=tba_day, start_time=start_time)
+        def_schedule, _ = cls.objects.get_or_create(
+            weekday=tba_day, start_time=start_time
+        )
 
         return def_schedule
 

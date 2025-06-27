@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+from itertools import count
 
 from django.db import models
 
 from app.academics.choices import LEVEL_NUMBER
-from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.shared.utils import make_course_code
 from app.shared.types import CourseQuery

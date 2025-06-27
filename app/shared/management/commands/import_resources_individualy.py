@@ -22,6 +22,7 @@ from app.academics.admin.resources import (  # noqa: F401
 from app.people.admin.resources import FacultyResource
 from app.shared.auth.helpers import ensure_superuser
 from app.spaces.admin.resources import RoomResource  # noqa: F401
+from app.people.admin.resources import StudentResource
 from app.timetable.admin.resources.core import SemesterResource  # noqa: F401
 from app.timetable.admin.resources.section import SectionResource
 from app.timetable.admin.resources.session import (
@@ -36,6 +37,7 @@ class Command(BaseCommand):
     help = "Import resources from individual CSV files found in a directory."
     #: Mapping filename → (label, ResourceClass)
     FILEMAP: dict[str, Tuple[str, type[resources.ModelResource]]] = {
+        "student.csv": ("Student", StudentResource),
         "faculty.csv": ("Faculty", FacultyResource),
         "room.csv": ("Room", RoomResource),  # + Space
         "schedule.csv": ("Schedule", ScheduleResource),

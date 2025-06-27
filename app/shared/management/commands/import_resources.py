@@ -11,7 +11,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from app.people.models.student import Student
 from django.core.management.base import BaseCommand, CommandParser
 from django.db import transaction
 from import_export import resources
@@ -24,9 +23,7 @@ from app.academics.admin.resources import (  # noqa: F401
 from app.academics.models.college import College  # noqa: F401
 from app.people.admin.resources import FacultyResource, StudentResource
 from app.shared.auth.helpers import (  # noqa: F401
-    ensure_role_groups,
     ensure_superuser,
-    upsert_test_users_and_roles,
 )
 from app.spaces.admin.resources import RoomResource  # noqa: F401
 from app.timetable.admin.resources.core import SemesterResource  # noqa: F401
@@ -72,13 +69,13 @@ class Command(BaseCommand):
         dataset = self.clean_column_headers(dataset)
 
         RESOURCES_MAP: list[tuple[str, type[resources.ModelResource]]] = [
-            # ("Student", StudentResource),
-            # ("Faculty", FacultyResource),  # and College
-            # ("Room", RoomResource),  # and Space
-            # ("Schedule", ScheduleResource),
-            # ("Course", CourseResource),  # and College
-            # ("semester", SemesterResource),  # and Academic year
-            # ("Program", ProgramResource),
+            ("Student", StudentResource),
+            ("Faculty", FacultyResource),  # and College
+            ("Room", RoomResource),  # and Space
+            ("Schedule", ScheduleResource),
+            ("Course", CourseResource),  # and College
+            ("semester", SemesterResource),  # and Academic year
+            ("Program", ProgramResource),
             ("Section", SectionResource),
             ("Session", SessionResource),  # and Faculty, Room and Space
         ]

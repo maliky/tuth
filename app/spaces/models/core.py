@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from itertools import count
+from typing import Self
 
 from django.db import models
 
@@ -25,12 +26,12 @@ class Space(models.Model):
         return self.code
 
     @classmethod
-    def get_default(cls):
+    def get_default(cls) -> Self:
         """Returns a TBA instance of the Space."""
         tba_space, _ = cls.objects.get_or_create(
             code="TBA", defaults={"full_name": "Undefined space (TBA)"}
         )
-        return tba_space
+        return cls(tba_space)
 
     class Meta:
         verbose_name = "Space / Buiding"
@@ -73,7 +74,7 @@ class Room(models.Model):
         super().save(*args, **kwargs)
 
     @classmethod
-    def get_default(cls, code: int = 0):
+    def get_default(cls, code: int = 0) -> Self:
         """Returns a default Room."""
         dft_room, _ = cls.objects.get_or_create(
             code=f"TBA{code:04d}", space=Space.get_default()
@@ -81,7 +82,7 @@ class Room(models.Model):
         return dft_room
 
     @classmethod
-    def get_unique_default(cls):
+    def get_unique_default(cls) -> Self:
         """Returns a default unique Room."""
         return Room.get_default(code=next(DEFAULT_ROOM_CODE))
 

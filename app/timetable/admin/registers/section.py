@@ -32,9 +32,15 @@ class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     search_fields = ("^program__course__code",)  # fast starts-with on indexed code
 
     def get_queryset(self, request):
-        """Prefetch all the Session -> Room relationships."""
-        qs = super().get_queryset(request)
-        return qs.prefetch_related("sessions__room")
+        """Prefetch sessions and limit sections to the current faculty."""
+        qs = super().get_queryset(request).prefetch_related("sessions__room")
+        if request.user.is_superuser:
+            return qs
+        try:
+            faculty = request.user.staff.faculty
+        except (AttributeError, Faculty.DoesNotExist):
+            return qs.none()
+        return qs.filter(faculty=faculty)
 
     @admin.display(description="Sessions")
     def all_sessions(self, obj: Section) -> str:

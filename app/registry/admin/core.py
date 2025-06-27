@@ -70,6 +70,10 @@ class RegistrationAdmin(admin.ModelAdmin):
     )
 
     def get_queryset(self, request):
+        """Override the Set of object returned for tis page.
+
+        Limit the registration to those of the student consulting the page.
+        """
         qs = super().get_queryset(request)
         if request.user.is_superuser:
             return qs
@@ -80,6 +84,10 @@ class RegistrationAdmin(admin.ModelAdmin):
         return qs.filter(student=student)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Probably orverriding the default form for the model.
+
+        List the program (course <-> curriculum) in which the student is enrolled.
+        """
         if db_field.name == "section" and not request.user.is_superuser:
             try:
                 student = request.user.student

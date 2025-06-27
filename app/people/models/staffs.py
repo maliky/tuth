@@ -2,10 +2,9 @@
 
 # app/people/models/staffs.py
 
-from itertools import count
 from datetime import date
+from itertools import count
 
-from app.academics.models import department
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -126,7 +125,7 @@ class Faculty(StatusableMixin, models.Model):
     def save(self, *args, **kwargs):
         """Check that we have a college for the staff before save."""
         if self.staff_profile is None:
-            raise ValidationError("Staff profile must be save before the Faculty")
+            raise ValidationError("Staff profile must be save before the Faculty.")
 
         self._ensure_college()
         super().save(*args, **kwargs)

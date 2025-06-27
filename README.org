@@ -10,7 +10,7 @@ Here are the different applications you will find in this directory:
 - Academics for courses, curricula, colleges and prerequisites
 - Timetable for reservations, semesters & schedule definitions
 - People for role and user profile  
-- Finance for payments, scholarship and financial_records.
+- Finance for payments, scholarships and financial records.
 
 ** Running Locally without Docker
 For a quick local setup using SQLite, run:

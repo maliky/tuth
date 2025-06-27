@@ -120,7 +120,7 @@ class AbstractPerson(StatusableMixin, models.Model):
         if objid is None:
             return ""
 
-        return objid
+        return str(objid)
 
     def set_username(self, value):
         """Set the username."""
