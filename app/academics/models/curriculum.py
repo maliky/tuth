@@ -17,9 +17,8 @@ class Curriculum(StatusableMixin, models.Model):
         >>> col = College.objects.create(code="COAS", long_name="Arts and Sciences")
         >>> Curriculum.objects.create(short_name="BSCS", college=col)
 
-    We use a default curriculm incompassing all the courses for non specified
-    curriculum, otherwize the student should be limited to the courses listed
-    in their curriculum.
+    We use a default curriculum encompassing all courses when none is specified;
+    otherwise the student is limited to the courses listed in their curriculum.
     """
 
     short_name = models.CharField(max_length=40)

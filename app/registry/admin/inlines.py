@@ -14,4 +14,3 @@ class GradeInline(admin.TabularInline):
     fields = ("student", "letter_grade", "numeric_grade", "graded_on")
     readonly_fields = ("graded_on",)
     autocomplete_fields = ("student",)
-

@@ -22,11 +22,11 @@ class Department(models.Model):
     )
 
     def __str__(self) -> str:  # pragma: no cover
-        """The Department common represenation. ! This is not unique."""
+        """The Department common representaion. ! This is not unique."""
         return self.code
 
     def _ensure_code(self) -> None:
-        """Builds a unique deparment code from short_name and college."""
+        """Build a unique department code from short_name and college."""
         if not self.code:
             self.code = f"{self.college}-{self.short_name}"
 

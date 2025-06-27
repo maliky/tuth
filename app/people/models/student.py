@@ -4,8 +4,12 @@
 
 from __future__ import annotations
 
+from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
+from app.academics.models.prerequisite import Prerequisite
 from app.people.models.core import AbstractPerson
+from app.registry.models.grade import Grade
+from app.shared.types import CourseQuery
 from django.db import models
 
 
@@ -51,8 +55,31 @@ class Student(AbstractPerson):
     #     self.courses.credit
     @property
     def college(self):
-        """Retunrs the Student current college."""
+        """Return the student's current college."""
         self.curriculum.college
+
+    def passed_courses(self) -> CourseQuery:
+        """Return courses the student completed with a passing grade."""
+        return Course.objects.filter(
+            in_programs__sections__grade__student=self,
+            in_programs__sections__grade__numeric_grade__gte=60,
+        ).distinct()
+
+
+    def allowed_courses(self) -> CourseQuery:
+        """Return courses available for registration based on prerequisites."""
+        curriculum = self.curriculum or Curriculum.get_default()
+        all_courses = Course.for_curriculum(curriculum)
+        passed = self.passed_courses()
+        allowed_ids: list[int] = []
+        passed_ids = set(passed.values_list("id", flat=True))
+        for course in all_courses.exclude(id__in=passed_ids):
+            req_ids = course.course_prereq_edges.filter(
+                curriculum=curriculum
+            ).values_list("prerequisite_course_id", flat=True)
+            if all(req_id in passed_ids for req_id in req_ids):
+                allowed_ids.append(course.id)
+        return Course.objects.filter(id__in=allowed_ids)
 
     def save(self, *args, **kwargs):
         """Make sure we have a curriculum for all students."""

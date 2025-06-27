@@ -16,7 +16,7 @@ class ProgramWidget(widgets.ForeignKeyWidget):
     """Create or Program from CSV rows.
 
     Use the curriculum_short name as the 'value'.
-    The widget delegates curriculum parsong to CurriculumWidget and course parsing
+    The widget delegates curriculum parsing to CurriculumWidget and course parsing
     to CourseWidget then assembles a Program object from the results.
     """
 

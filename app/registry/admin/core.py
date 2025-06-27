@@ -1,5 +1,8 @@
 """Admin configuration for registry models."""
 
+from app.people.models.student import Student
+from app.registry.models.registration import Registration
+from app.timetable.models.section import Section
 from django.contrib import admin
 
 from app.registry.models.class_roster import ClassRoster
@@ -52,3 +55,37 @@ class ClassRosterAdmin(admin.ModelAdmin):
     def student_count(self, obj: ClassRoster) -> int:
         """Return number of students enrolled in this roster."""
         return obj.students.count()
+
+@admin.register(Registration)
+class RegistrationAdmin(admin.ModelAdmin):
+    """Allow students to register only for eligible sections."""
+
+    list_display = ("student", "section", "status", "date_registered")
+    autocomplete_fields = ("student", "section")
+    search_fields = (
+        "student__student_id",
+        "section__program__course__code",
+        "section__number",
+    )
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        try:
+            student = request.user.student
+        except Student.DoesNotExist:
+            return qs.none()
+        return qs.filter(student=student)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "section" and not request.user.is_superuser:
+            try:
+                student = request.user.student
+            except Student.DoesNotExist:
+                kwargs["queryset"] = Section.objects.none()
+            else:
+                kwargs["queryset"] = Section.objects.filter(
+                    program__course__in=student.allowed_courses()
+                )
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)    

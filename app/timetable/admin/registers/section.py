@@ -1,11 +1,11 @@
 """app.timetable.admin.registers.section module."""
-
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 
-from app.timetable.admin.inlines import SessionInline
+from app.people.models.staffs import Faculty
 from app.registry.admin.inlines import GradeInline
+from app.timetable.admin.inlines import SessionInline
 from app.timetable.admin.resources.section import SectionResource
 from app.timetable.models.section import Section
 

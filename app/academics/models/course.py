@@ -12,6 +12,7 @@ from app.academics.models.department import Department
 from app.shared.utils import make_course_code
 from app.shared.types import CourseQuery
 
+
 class Course(models.Model):
     """University catalogue entry describing a single course offering.
 

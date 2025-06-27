@@ -5,6 +5,7 @@
 from itertools import count
 from datetime import date
 
+from app.academics.models import department
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -58,7 +59,7 @@ class Staff(AbstractPerson):
             staff_id=f"DFT_STF{staff_id:04d}",
             user=get_default_user(),
             employment_date=date.today(),
-            deparment=Department.get_default(),
+            department=Department.get_default(),
             position=f"Joker {staff_id:04d}",
         )
         return dft_staff
@@ -125,7 +126,7 @@ class Faculty(StatusableMixin, models.Model):
     def save(self, *args, **kwargs):
         """Check that we have a college for the staff before save."""
         if self.staff_profile is None:
-            raise ValidationError("Staff profil must be save before the Faculty's")
+            raise ValidationError("Staff profile must be save before the Faculty")
 
         self._ensure_college()
         super().save(*args, **kwargs)
