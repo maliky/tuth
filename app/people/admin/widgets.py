@@ -92,7 +92,7 @@ class FacultyWidget(widgets.ForeignKeyWidget):
             return None
 
         if value == "<unique>":
-            return Faculty.get___  # create unique faculty
+            return Faculty.get_unique_default()
 
         # ? Should I use Peoplerepository.get_or_create_faculty?
         # ... Not obvious as I would need to pass the whole row.
