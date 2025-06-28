@@ -41,8 +41,9 @@ def course() -> Course:
 
 @pytest.fixture
 def course_factory() -> CourseFactory:
-    def _make(number: str = "101", title: str = "Course") -> Course:
-        return Course.objects.create(number=number, title=title)
+    # something not right here
+    def _make(department: Department, number: str = "101") -> Course:
+        return Course.objects.create(number=number, department=department)
 
     return _make
 
@@ -76,7 +77,7 @@ def department() -> Department:
 
 @pytest.fixture
 def department_factory() -> DepartmentFactory:
-    def _make(short_name: str = "GEN") -> Department:
+    def _make(short_name: str = "TSTD", full_name="Test Deptarment", college=college) -> Department:
         return Department.get_default(short_name)
 
     return _make

@@ -30,8 +30,8 @@ def test_curriculum_crud(college_factory):
     tables = connection.introspection.table_names()
     if StatusHistory._meta.db_table not in tables:
         from django.db import connection as conn
+
         with conn.schema_editor() as schema:
             schema.create_model(StatusHistory)
     updated.delete()
     assert not Curriculum.objects.filter(pk=curriculum.pk).exists()
-

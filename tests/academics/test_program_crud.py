@@ -25,4 +25,3 @@ def test_program_crud(course_factory, college_factory):
     # delete
     updated.delete()
     assert not Program.objects.filter(pk=program.pk).exists()
-

@@ -65,5 +65,3 @@ def test_grade_unique_student_section(student, semester):
             letter_grade="B",
             numeric_grade=80,
         )
-
-

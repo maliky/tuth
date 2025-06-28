@@ -1,4 +1,4 @@
-"""Tests for DB unique constraints in academics models."""
+"""Tests for DB unique constraints in Academics models."""
 
 import pytest
 from django.db import IntegrityError
@@ -13,8 +13,10 @@ from app.academics.models.prerequisite import Prerequisite
 pytestmark = pytest.mark.django_db
 
 
-def test_department_unique_short_name(college):
-    Department.objects.create(code="D1", short_name="GEN", college=college)
+def test_department_unique_short_name_in_college(department_factory, college):
+    """In a College a department short_name should be unique."""
+    dept = department_factory(short_name="GEN", college=college)
+    Department.objects.create(
     with pytest.raises(IntegrityError):
         Department.objects.create(code="D2", short_name="GEN", college=college)
 
@@ -36,17 +38,18 @@ def test_program_unique_course_per_curriculum(course):
         Program.objects.create(curriculum=curriculum, course=course)
 
 
-def test_prerequisite_unique_per_curriculum(course_factory):
+def test_prerequisite_unique_per_curriculum(department_factory, course_factory):
     curriculum = Curriculum.objects.create(
         short_name="CURPRQ",
         long_name="Curriculum for prereqs",
         college=College.get_default(),
     )
-    c1 = course_factory("201", "First")
-    c2 = course_factory("202", "Second")
-    Prerequisite.objects.create(
-        curriculum=curriculum, course=c2, prerequisite_course=c1
-    )
+    dept = department_factory()
+    c1 = course_factory(dept, "201")
+    c2 = course_factory(dept, "202")
+    
+    Prerequisite.objects.create(curriculum=curriculum, course=c2, prerequisite_course=c1)
+    
     with pytest.raises(IntegrityError):
         Prerequisite.objects.create(
             curriculum=curriculum, course=c2, prerequisite_course=c1
@@ -65,4 +68,3 @@ def test_prerequisite_no_self(course):
             course=course,
             prerequisite_course=course,
         )
-

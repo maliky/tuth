@@ -14,4 +14,3 @@ def test_space_get_default_returns_saved_instance():
     # ensure that retrieving again returns the same record
     same_space = Space.get_default()
     assert same_space.pk == space.pk
-

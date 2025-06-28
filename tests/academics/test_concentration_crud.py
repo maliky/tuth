@@ -1,3 +1,4 @@
+"""Basic crud control on Concentratoin."""
 import pytest
 
 from app.academics.models.concentration import Concentration
@@ -5,6 +6,7 @@ from app.academics.models.concentration import Concentration
 
 @pytest.mark.django_db
 def test_concentration_crud(curriculum):
+    """Test Create Read Update Delete operation on Concentration Model."""
     # create
     concentration = Concentration.objects.create(
         name="Statistics",
@@ -25,4 +27,3 @@ def test_concentration_crud(curriculum):
     # delete
     updated.delete()
     assert not Concentration.objects.filter(pk=concentration.pk).exists()
-

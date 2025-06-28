@@ -60,5 +60,3 @@ def test_section_unique_per_program(semester, course):
             end_date=semester.end_date,
             max_seats=30,
         )
-
-

@@ -1,3 +1,4 @@
+"""Basic crud control on Department."""
 import pytest
 
 from app.academics.models.department import Department
@@ -5,6 +6,7 @@ from app.academics.models.department import Department
 
 @pytest.mark.django_db
 def test_department_crud(department_factory, college_factory):
+    """Test Create Read Update Delete operation on Department Model."""
     # create
     dept = Department.objects.create(
         short_name="MATH",
@@ -26,4 +28,4 @@ def test_department_crud(department_factory, college_factory):
     # delete
     updated.delete()
     assert not Department.objects.filter(pk=dept.pk).exists()
-
+    assert Department.objects.filter(pk=dept.pk).exists()

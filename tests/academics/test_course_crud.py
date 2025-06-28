@@ -1,4 +1,4 @@
-"""Tests for CRUD of courses."""
+"""Tests for CRUD of Courses model."""
 
 import pytest
 
@@ -7,9 +7,11 @@ from app.academics.models.course import Course
 
 @pytest.mark.django_db
 def test_course_crud(course_factory, department_factory):
+    """Test the Course CRUD operations."""
+
     # create
     dept = department_factory()
-    course = Course.objects.create(number="901", title="Intro", department=dept)
+    course = course_factory(dep, "901", title="Intro")
     assert Course.objects.filter(pk=course.pk).exists()
 
     # read
@@ -25,5 +27,3 @@ def test_course_crud(course_factory, department_factory):
     # delete
     updated.delete()
     assert not Course.objects.filter(pk=course.pk).exists()
-
->>>>>>> github/codo/create-crud-tests-for-academics-models

@@ -13,7 +13,10 @@ pytestmark = pytest.mark.django_db
 
 def test_unique_role_per_period(user, college):
     start = date.today()
-    RoleAssignment.objects.create(user=user, role=UserRole.REGISTRAR, college=college, start_date=start)
+    RoleAssignment.objects.create(
+        user=user, role=UserRole.REGISTRAR, college=college, start_date=start
+    )
     with pytest.raises(IntegrityError):
-        RoleAssignment.objects.create(user=user, role=UserRole.REGISTRAR, college=college, start_date=start)
-
+        RoleAssignment.objects.create(
+            user=user, role=UserRole.REGISTRAR, college=college, start_date=start
+        )
