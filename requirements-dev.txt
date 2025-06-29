@@ -36,6 +36,9 @@ flake8-docstrings
 
 ipdb
 
+# for generating model fixtures
+model_bakery==1.18.0
+
 # profilers
 pygraphviz
 

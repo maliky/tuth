@@ -5,7 +5,7 @@ from django.db import connection
 from app.academics.models.curriculum import Curriculum
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 def test_curriculum_crud(college_factory):
     # create
     college = college_factory()
