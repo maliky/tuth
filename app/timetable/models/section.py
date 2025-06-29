@@ -31,11 +31,14 @@ class Section(models.Model):
         Section numbers auto-increment
     """
 
+    # ~~~~ Mandatory ~~~~
     semester = models.ForeignKey("timetable.Semester", on_delete=models.PROTECT)
     program = models.ForeignKey(
         "academics.Program", on_delete=models.CASCADE, related_name="sections"
     )
     number = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
+
+    # ~~~~ Optional ~~~~
     faculty = models.ForeignKey(
         "people.Faculty",
         null=True,
@@ -50,12 +53,16 @@ class Section(models.Model):
     # to be defined by Admin & VPA
     max_seats = models.PositiveIntegerField(default=30, validators=[MinValueValidator(3)])
 
+    def __str__(self) -> str:  # pragma: no cover
+        """Return a human readable identifier with allocated rooms."""
+        return f"{self.short_code} | {self.space_codes}"
+
     @property
     def course(self) -> Course:
         """Return the Course associated with the program of this section."""
         course = self.program.course
         if not course.id:
-            raise ValidationError("Course has to be set.")
+            raise ValidationError("Course must be set for this property.")
         return course
 
     @property
@@ -63,7 +70,7 @@ class Section(models.Model):
         """Return the Curriculum associated with the program of this section."""
         curriculum = self.program.curriculum
         if not curriculum.id:
-            raise ValidationError("Curriculum has to be set.")
+            raise ValidationError("Curriculum must be set for this property.")
 
         return curriculum
 
@@ -95,10 +102,6 @@ class Section(models.Model):
             if self.has_available_seats()
             else 0
         )
-
-    def __str__(self) -> str:  # pragma: no cover
-        """Return a human readable identifier with allocated rooms."""
-        return f"{self.short_code} | {self.space_codes}"
 
     def has_available_seats(self) -> bool:
         """Return 'True' if the section still has seats available."""

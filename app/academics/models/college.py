@@ -37,7 +37,7 @@ class College(models.Model):
     def get_default(cls) -> College:
         """Return the default college ie. COAS."""
         # will set the long_name by default on save
-        def_clg, _ = cls.objects.get_or_create(code=CollegeCodeChoices.COAS)
+        def_clg, _ = cls.objects.get_or_create(code=CollegeCodeChoices.DEFT)
         return def_clg
 
     def clean(self) -> None:

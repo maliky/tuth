@@ -86,17 +86,20 @@ class Faculty(StatusableMixin, models.Model):
         save() assigns the default college when none is set.
     """
 
+    # ~~~~ Mandatory ~~~~
     staff_profile = models.OneToOneField("people.Staff", on_delete=models.CASCADE)
 
-    # Rattachement College but could have many more
-    # > needs to be changed to ManyToMany
+    # ~~~~ Optional ~~~~
+    # Main college for the faculty (Could be a department also)
+    # just for administrative convieniance
     college = models.ForeignKey(
         "academics.College", on_delete=models.CASCADE, null=True, blank=True
     )
-
+    # We can get all the colleges of the facutly via section->Program->..
     google_profile = models.URLField(blank=True)
     personal_website = models.URLField(blank=True)
     academic_rank = models.CharField(max_length=50, null=True, blank=True)
+
     # teaching load should be a function per semester or year
     # teaching_load = models.IntegerField()
 

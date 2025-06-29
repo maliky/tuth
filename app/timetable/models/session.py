@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
-from app.timetable.choices import WEEKDAYS_NUMBER
+from datetime import time
+from typing import Optional
+
+from app.timetable.models.schedule import Schedule
 from django.db import models
 from django.forms import ValidationError
+
+from app.timetable.choices import WEEKDAYS_NUMBER
 
 
 class Session(models.Model):
@@ -14,18 +19,18 @@ class Session(models.Model):
         >>> Session.objects.create(room=room, schedule=schedule, section=section)
     """
 
+    # ~~~~ Mandatory ~~~~
     room = models.ForeignKey("spaces.Room", on_delete=models.PROTECT)
-
-    # I have to be carrefull about TBA schedules, the may raise uniq constraint
-    schedule = models.ForeignKey(
-        "timetable.Schedule",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="schedules",
-    )
     section = models.ForeignKey(
         "timetable.Section",
+        on_delete=models.CASCADE,
+        related_name="sessions",
+    )
+
+    # ~~~~ Optional ~~~~
+    # ! be carreful with TBA schedules
+    schedule = models.ForeignKey(
+        "timetable.Schedule",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -37,17 +42,17 @@ class Session(models.Model):
         return f"{self.schedule}, {self.room}"
 
     @property
-    def weekday(self):
+    def weekday(self) -> int:
         """Shortcut to the schedule's weekday."""
         return getattr(self.schedule, "weekday", WEEKDAYS_NUMBER.TBA)
 
     @property
-    def start_time(self):
+    def start_time(self) -> Optional[time]:
         """Shortcut to the schedule's starting time."""
         return getattr(self.schedule, "start_time", None)
 
     @property
-    def end_time(self):
+    def end_time(self) -> Optional[time]:
         """Shortcut to the schedule's ending time."""
         return getattr(self.schedule, "end_time", None)
 
@@ -68,7 +73,8 @@ class Session(models.Model):
         super().clean()
 
         if self.schedule_id is None:
-            return
+            self.schedule = Schedule.get_uniq_default()
+
         # ie overlap possible for TBA or start_time < 8:00 AM.
         if not self.room_id:
             return
@@ -87,3 +93,25 @@ class Session(models.Model):
 
             if clash.exists():
                 raise ValidationError({"schedule": "Overlapping session for this room."})
+
+    class Meta:
+        # if schedule is null, null != null so no problem.
+        constraints = [
+            models.UniqueConstraint(
+                fields=["section", "schedule"], name="uniq_schedule_per_section"
+            )
+        ]
+        indexes = [models.Index(fields=["section", "schedule"])]
+
+        # #### for overlap ####
+        # constraints = [
+        #     ExclusionConstraint(
+        #         name="no_time_overlap_per_section",
+        #         expressions=[
+        #             ("section",          RangeOperators.EQUAL),     # same section
+        #             (Func(F("start_time"), F("end_time"),
+        #                   function="timerange"), RangeOperators.OVERLAPS),
+        #         ],
+        #     ),
+        # ]
+        # indexes = [GistIndex(fields=["section", "start_time", "end_time"])]

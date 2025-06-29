@@ -1,7 +1,7 @@
 """Verify Room / Space unique-constraint and default-room logic."""
 
 import pytest
-from django.db import IntegrityError
+from django.db import transaction, IntegrityError
 
 from app.spaces.models.core import Space, Room
 
@@ -14,7 +14,8 @@ def test_unique_room_per_space():
     Room.objects.create(code="101", space=space)
 
     with pytest.raises(IntegrityError):
-        Room.objects.create(code="101", space=space)
+        with transaction.atomic():
+            Room.objects.create(code="101", space=space)
 
 
 @pytest.mark.django_db(transaction=True)  # needed for the transaction=True
@@ -26,4 +27,5 @@ def test_default_room_conflict():
     space = Space.get_default()
     Room(code="1", space=space).save()  # first implicit “TBA / TBA”
     with pytest.raises(IntegrityError):
-        Room(code="1", space=space).save()  # second conflicts with the first
+        with transaction.atomic():
+            Room(code="1", space=space).save()  # second conflicts with the first

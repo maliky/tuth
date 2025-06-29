@@ -1,8 +1,12 @@
-"""Schedule module."""
+"""Schedule module.
+
+It defines on moment on campus.  So we can visualize what it happening at that time.
+"""
 
 from __future__ import annotations
 
 from datetime import datetime, time, timedelta
+from typing import Self
 
 from django.db import models, transaction
 
@@ -14,6 +18,9 @@ class Schedule(models.Model):
 
     Example:
         >>> Schedule.objects.create(weekday=1, start_time=time(9, 0))
+
+    It's possible to have several session for the same schedule but it cannot be
+    session of the same section (course).
     """
 
     # a ref date for the time
@@ -22,11 +29,15 @@ class Schedule(models.Model):
     REF_TIME = time(8, 0)
     REF_DATETIME = REF_DATE + timedelta(hours=REF_TIME.hour)
 
+    # ~~~~ Mandatory ~~~~
     weekday = models.PositiveSmallIntegerField(
         choices=WEEKDAYS_NUMBER.choices,
         help_text="Week day number (Monday=1, Tuesday=2, …)",
+        default=WEEKDAYS_NUMBER.TBA,
     )
     start_time = models.TimeField()
+
+    # ~~~~ Optional ~~~~
     end_time = models.TimeField(null=True, blank=True)
 
     def __str__(self):
@@ -100,9 +111,6 @@ class Schedule(models.Model):
         1) ensure we always have a weekday.
         2) if no start_time, find the first free 5-minute slot >= 01:00
         """
-        if self.weekday is None:
-            self.weekday = WEEKDAYS_NUMBER.TBA  # type: ignore[unreachable]
-
         if self.start_time is None:
             self.start_time = self._find_next_free_slot(self.weekday)  # type: ignore[unreachable]
 
@@ -110,7 +118,7 @@ class Schedule(models.Model):
 
     def is_set(self):
         """Returns True when the schedule is fully set."""
-        weekday_set = self.weekday is not None and self.weekday != WEEKDAYS_NUMBER.TBA
+        weekday_set = self.weekday != WEEKDAYS_NUMBER.TBA
 
         # we suppose that all unassigned time are before the ref_dat_start_time
         start_time_set = self.start_time < self.REF_TIME
@@ -119,19 +127,29 @@ class Schedule(models.Model):
         return weekday_set and start_time_set and end_time_set
 
     @classmethod
-    def get_default(cls, new_schedule=False):
-        """Return a default schedule.
+    def get_default(cls, day=WEEKDAYS_NUMBER.TBA) -> Self:
+        """Return a default schedule."""
+        def_schedule, _ = cls.objects.get_or_create(
+            weekday=day,
+            start_time=cls.REF_TIME,
+        )
 
-        If new schedule is True we return the a new schedule on TBA Day.
+        return def_schedule
+
+    @classmethod
+    def get_uniq_default(cls, day=WEEKDAYS_NUMBER.TBA) -> Self:
+        """Return a uniqe default schedule.
+
+        We suppose that there always a time slot available in TBA.
         """
-        tba_day = WEEKDAYS_NUMBER.TBA
-        if new_schedule:
-            start_time = cls._find_next_free_slot(tba_day)
-        else:
-            start_time = cls.REF_TIME
+        try:
+            start_time = cls._find_next_free_slot(day)
+        except RuntimeError as rte:
+            raise RuntimeError(f"Could not find a free time slot on {day}")
 
         def_schedule, _ = cls.objects.get_or_create(
-            weekday=tba_day, start_time=start_time
+            weekday=day,
+            start_time=start_time,
         )
 
         return def_schedule
