@@ -10,4 +10,7 @@ pytest_plugins = [
     "tests.academics.fixture",
     "tests.people.fixture",
     "tests.spaces.fixture",
+    "tests.finance.fixture",
+    "tests.registry.fixture",
+    "tests.shared.fixture",
 ]
