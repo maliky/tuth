@@ -15,7 +15,7 @@ class Concentration(models.Model):
         >>> Concentration.objects.create(name="Statistics", curriculum=curriculum)
     """
 
-    # revoir
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     name = models.CharField(max_length=255)
     curriculum = models.ForeignKey(
         "academics.curriculum",

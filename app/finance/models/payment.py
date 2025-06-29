@@ -31,10 +31,15 @@ class Payment(models.Model):
         ... )
     """
 
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     program = models.OneToOneField("academics.Program", on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=8, decimal_places=2)
     method = models.CharField(max_length=20, choices=PaymentMethod.choices)
+
+    # ~~~~~~~~ Optional ~~~~~~~~
     recorded_by = models.ForeignKey("people.Staff", null=True, on_delete=models.SET_NULL)
+
+    # ~~~~ Auto-filled ~~~~
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:  # pragma: no cover

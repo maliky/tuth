@@ -19,6 +19,7 @@ class Registration(StatusableMixin, models.Model):
         ... )
     """
 
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     student = models.ForeignKey(
         "people.Student",
         on_delete=models.CASCADE,
@@ -29,6 +30,8 @@ class Registration(StatusableMixin, models.Model):
         on_delete=models.CASCADE,
         related_name="section_registrations",
     )
+
+    # ~~~~ Auto-filled ~~~~
     # this is optional and I could get it through the SatusableMixin
     status = models.CharField(
         max_length=30,

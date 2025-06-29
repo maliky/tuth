@@ -16,12 +16,15 @@ class Prerequisite(models.Model):
         clean() prevents circular dependencies.
     """
 
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     course = models.ForeignKey(
         "academics.Course", related_name="course_prereq_edges", on_delete=models.CASCADE
     )
     prerequisite_course = models.ForeignKey(
         "academics.Course", related_name="required_for_edges", on_delete=models.CASCADE
     )
+
+    # ~~~~~~~~ Optional ~~~~~~~~
     curriculum = models.ForeignKey(
         "academics.Curriculum",
         on_delete=models.CASCADE,

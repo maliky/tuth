@@ -31,6 +31,7 @@ class Scholarship(models.Model):
         ... )
     """
 
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     donor = models.ForeignKey(
         "people.Donor",
         on_delete=models.CASCADE,
@@ -43,6 +44,8 @@ class Scholarship(models.Model):
     )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     start_date = models.DateField()
+
+    # ~~~~~~~~ Optional ~~~~~~~~
     end_date = models.DateField(null=True, blank=True)
     conditions = models.TextField(blank=True)
 

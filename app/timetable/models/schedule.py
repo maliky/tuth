@@ -29,7 +29,7 @@ class Schedule(models.Model):
     REF_TIME = time(8, 0)
     REF_DATETIME = REF_DATE + timedelta(hours=REF_TIME.hour)
 
-    # ~~~~ Mandatory ~~~~
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     weekday = models.PositiveSmallIntegerField(
         choices=WEEKDAYS_NUMBER.choices,
         help_text="Week day number (Monday=1, Tuesday=2, …)",
@@ -37,7 +37,7 @@ class Schedule(models.Model):
     )
     start_time = models.TimeField()
 
-    # ~~~~ Optional ~~~~
+    # ~~~~~~~~ Optional ~~~~~~~~
     end_time = models.TimeField(null=True, blank=True)
 
     def __str__(self):

@@ -37,7 +37,10 @@ class Staff(AbstractPerson):
     ID_FIELD = "staff_id"
     ID_PREFIX = "TU_STF"
 
+    # ~~~~ Auto-filled ~~~~
     staff_id = models.CharField(max_length=13, unique=True)
+
+    # ~~~~~~~~ Optional ~~~~~~~~
     employment_date = models.DateField(null=True, blank=True)
 
     # > need to model an organogram where I can add division & departments

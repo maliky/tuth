@@ -18,10 +18,11 @@ class Space(models.Model):
         >>> from app.spaces.models.core import Space
         >>> Space.objects.create(code="AA", full_name="Academic Annex")
     """
-    # ~~~~ Mandatory ~~~~
+
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     code = models.CharField(max_length=15, unique=True, db_index=True)
 
-    # ~~~~ Optional ~~~~
+    # ~~~~~~~~ Optional ~~~~~~~~
     # replace this to long name
     full_name = models.CharField(max_length=128, blank=True)
 
@@ -49,10 +50,11 @@ class Room(models.Model):
         >>> Room.objects.create(code="101", space=space)
     """
 
-    # ~~~~ Mandatory ~~~~ 
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     code = models.CharField(max_length=30)
-    space = models.ForeignKey(Space, on_delete=models.PROTECT, related_name="rooms")
 
+    # ~~~~ Auto-filled ~~~~
+    space = models.ForeignKey(Space, on_delete=models.PROTECT, related_name="rooms")
     standard_capacity = models.PositiveIntegerField(default=45)
     exam_capacity = models.PositiveIntegerField(default=30)
 

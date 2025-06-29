@@ -19,10 +19,11 @@ class AcademicYear(models.Model):
         save() computes code and long_name.
     """
 
-    # ~~~~ Mandatory ~~~~
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     start_date = models.DateField(unique=True)
     end_date = models.DateField(unique=True)
-    # non editable
+
+    # ~~~~ Read-only ~~~~
     code = models.CharField(max_length=5, editable=False, unique=True)
     long_name = models.CharField(max_length=9, editable=False, unique=True)
 

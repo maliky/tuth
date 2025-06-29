@@ -22,27 +22,28 @@ class Curriculum(StatusableMixin, models.Model):
     otherwise the student is limited to the courses listed in their curriculum.
     """
 
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     short_name = models.CharField(max_length=40)
-    long_name = models.CharField(max_length=255, blank=True, null=True)
 
+    # ~~~~ Auto-filled ~~~~
     college = models.ForeignKey(
         "academics.College", on_delete=models.CASCADE, related_name="curricula"
     )
+    creation_date = models.DateField(default=date.today)
+    is_active = models.BooleanField(default=False)
+    status = models.CharField(
+        max_length=30,
+        choices=StatusCurriculum.choices,
+        default=StatusCurriculum.PENDING,
+    )
+
+    # ~~~~~~~~ Optional ~~~~~~~~
+    long_name = models.CharField(max_length=255, blank=True, null=True)
     courses = models.ManyToManyField(
         "academics.Course",
         through="academics.Program",
         related_name="curricula",  # <-- reverse accessor course.curricula
         blank=True,
-    )
-    # a constraint is that we should not have a curriculum in a college
-    # created in the same year with same title
-    creation_date = models.DateField(default=date.today)
-    is_active = models.BooleanField(default=False)
-
-    status = models.CharField(
-        max_length=30,
-        choices=StatusCurriculum.choices,
-        default=StatusCurriculum.PENDING,
     )
 
     def __str__(self) -> str:  # pragma: no cover

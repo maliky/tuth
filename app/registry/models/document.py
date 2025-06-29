@@ -32,11 +32,15 @@ class Document(StatusableMixin, models.Model):
     """
 
     # ! the folowing 2 are not too clear. needs clarifications
+
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     profile_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     profile_id = models.PositiveIntegerField()
     profile = GenericForeignKey("profile_type", "profile_id")
     data_file = models.FileField(upload_to="documents/")
     document_type = models.CharField(max_length=50, choices=DocumentType.choices)
+
+    # ~~~~ Auto-filled ~~~~
     status = models.CharField(
         max_length=30,
         choices=StatusDocument.choices,

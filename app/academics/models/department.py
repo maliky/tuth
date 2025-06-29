@@ -13,7 +13,7 @@ class Department(models.Model):
     Example: see get_default()
     """
 
-    # mandatory
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     short_name = models.CharField(max_length=6)
     # woulde be good to restric this to a few dept.
     # but it is also here that I should set the Truth
@@ -23,7 +23,7 @@ class Department(models.Model):
     #     default=DepartmentShortNameChoice.DEFT,
     # )
 
-    # Auto-completed
+    # ~~~~ Auto-filled ~~~~
     college = models.ForeignKey(
         "academics.College",
         on_delete=models.PROTECT,
@@ -31,7 +31,7 @@ class Department(models.Model):
     )
     long_name = models.CharField(max_length=128, blank=True)
 
-    # non editable
+    # ~~~~ Read-only ~~~~
     code = models.CharField(max_length=50, unique=True, editable=False)
 
     def __str__(self) -> str:  # pragma: no cover

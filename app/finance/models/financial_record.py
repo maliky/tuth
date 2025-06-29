@@ -31,8 +31,11 @@ class FinancialRecord(models.Model):
         >>> FinancialRecord.objects.create(student=student_profile, total_due=0)
     """
 
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     student = models.OneToOneField("people.Student", on_delete=models.CASCADE)
     total_due = models.DecimalField(max_digits=10, decimal_places=2)
+
+    # ~~~~ Auto-filled ~~~~
     total_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     clearance_status = models.CharField(
         max_length=50,
@@ -40,6 +43,8 @@ class FinancialRecord(models.Model):
         default=StatusClearance.PENDING,
     )
     last_updated = models.DateTimeField(auto_now=True)
+
+    # ~~~~~~~~ Optional ~~~~~~~~
     verified_by = models.ForeignKey(
         "people.Staff",
         null=True,
@@ -66,6 +71,7 @@ class SectionFee(models.Model):
         >>> SectionFee.objects.create(section=section, fee_type=FeeType.LAB, amount=50)
     """
 
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)
     fee_type = models.CharField(max_length=50, choices=FeeType.choices)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
