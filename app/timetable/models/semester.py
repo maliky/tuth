@@ -13,10 +13,13 @@ class Semester(models.Model):
         >>> Semester.objects.create(academic_year=year, number=1)
     """
 
+    # ~~~~ Mandatory ~~~~
     academic_year = models.ForeignKey("timetable.AcademicYear", on_delete=models.PROTECT)
     number = models.PositiveSmallIntegerField(
         choices=SEMESTER_NUMBER.choices, help_text="Semester number"
     )
+
+    # ~~~~ Optional ~~~~
     # > Could be interesting to set this to the academic_year start date automaticaly on save
     # > and force non null values.
     start_date = models.DateField(null=True, blank=True)

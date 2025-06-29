@@ -51,10 +51,10 @@ class Curriculum(StatusableMixin, models.Model):
         return suffix + self.short_name
 
     @classmethod
-    def get_default(cls) -> Self:
+    def get_default(cls, short_name="DFT_CUR") -> Self:
         """Returns a default curriculum."""
         def_curriculum, _ = cls.objects.get_or_create(
-            short_name="DFT_CUR",
+            short_name=short_name,
             long_name="Default Curriculum",
             college=College.get_default(),
         )

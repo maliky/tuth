@@ -74,7 +74,7 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
         short_name = value.strip()
 
         college_code = get_in_row("college_code", row)
-        college = self.college_w(college_code)
+        college = self.college_w.clean(college_code)
 
         curriculum, _ = Curriculum.objects.get_or_create(
             short_name=short_name,

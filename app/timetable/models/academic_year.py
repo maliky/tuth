@@ -19,10 +19,15 @@ class AcademicYear(models.Model):
         save() computes code and long_name.
     """
 
-    code = models.CharField(max_length=5, editable=False, unique=True)
-    long_name = models.CharField(max_length=9, editable=False, unique=True)
+    # ~~~~ Mandatory ~~~~
     start_date = models.DateField(unique=True)
     end_date = models.DateField(unique=True)
+    # non editable
+    code = models.CharField(max_length=5, editable=False, unique=True)
+    long_name = models.CharField(max_length=9, editable=False, unique=True)
+
+    def __str__(self) -> str:  # pragma: no cover
+        return self.long_name
 
     def clean(self) -> None:
         """Ensure start and end dates form a valid academic year."""
@@ -47,9 +52,6 @@ class AcademicYear(models.Model):
         self.code = f"{str(ys)[-2:]}-{str(ye)[-2:]}"
 
         super().save(*args, **kwargs)
-
-    def __str__(self) -> str:  # pragma: no cover
-        return self.long_name
 
     class Meta:
         constraints = [

@@ -127,8 +127,8 @@ class DepartmentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """
 
     resource_class = DepartmentResource
-    list_display = ("short_name", "full_name", "code", "college")
-    search_fields = ("short_name", "full_name", "code")
+    list_display = ("short_name", "long_name", "code", "college")
+    search_fields = ("short_name", "long_name", "code")
 
 
 @admin.register(Program)

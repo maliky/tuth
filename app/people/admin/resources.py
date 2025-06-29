@@ -48,8 +48,9 @@ class DirectoryContactResource(resources.ModelResource):
 
 
 class FacultyResource(resources.ModelResource):
-    """Expected CSV columns.
+    """Import-Export Faculty staff.
 
+    CSV columns:
     faculty        :long display name (“Dr. Jane A. Doe PhD”…)
     college_code   :optional – defaults to “COAS”
     """

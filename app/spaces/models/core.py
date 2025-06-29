@@ -18,8 +18,11 @@ class Space(models.Model):
         >>> from app.spaces.models.core import Space
         >>> Space.objects.create(code="AA", full_name="Academic Annex")
     """
-
+    # ~~~~ Mandatory ~~~~
     code = models.CharField(max_length=15, unique=True, db_index=True)
+
+    # ~~~~ Optional ~~~~
+    # replace this to long name
     full_name = models.CharField(max_length=128, blank=True)
 
     def __str__(self) -> str:  # pragma: no cover
@@ -46,6 +49,7 @@ class Room(models.Model):
         >>> Room.objects.create(code="101", space=space)
     """
 
+    # ~~~~ Mandatory ~~~~ 
     code = models.CharField(max_length=30)
     space = models.ForeignKey(Space, on_delete=models.PROTECT, related_name="rooms")
 

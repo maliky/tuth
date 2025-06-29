@@ -15,17 +15,25 @@ class Department(models.Model):
 
     # mandatory
     short_name = models.CharField(max_length=6)
+    # woulde be good to restric this to a few dept.
+    # but it is also here that I should set the Truth
+    # short_name = models.CharField(
+    #     max_length=6,
+    #     choices=DepartmentShortNameChoice.choices,
+    #     default=DepartmentShortNameChoice.DEFT,
+    # )
+
     # Auto-completed
     college = models.ForeignKey(
         "academics.College",
         on_delete=models.PROTECT,
         related_name="departments",
     )
-    full_name = models.CharField(max_length=128, blank=True)
+    long_name = models.CharField(max_length=128, blank=True)
 
     # non editable
     code = models.CharField(max_length=50, unique=True, editable=False)
-    
+
     def __str__(self) -> str:  # pragma: no cover
         """The Department common representaion. ! This is not unique."""
         return self.code
@@ -39,16 +47,17 @@ class Department(models.Model):
         """Make sure to have a college for the department."""
         if not self.college_id:
             self.college = College.get_default()
-    def _ensure_full_name(self)->None:
+
+    def _ensure_long_name(self) -> None:
         """Make sure a title is set."""
-        if not self.full_name:
-            self.full_name = f"{self.code} Department in {self.college}"
+        if not self.long_name:
+            self.long_name = f"{self.code} Department in {self.college}"
 
     def save(self, *args, **kwargs) -> None:
         """Save the Department making sure the code is set."""
         self._ensure_code()
         self._ensure_college()
-        self._ensure_full_name()
+        self._ensure_long_name()
         super().save(*args, **kwargs)
 
     @classmethod
@@ -56,7 +65,7 @@ class Department(models.Model):
         """Return the default Department."""
         default_dept, _ = cls.objects.get_or_create(
             short_name=short_name,
-            full_name=f"Department of {short_name}",
+            long_name=f"Department of {short_name}",
             college=College.get_default(),
         )
         return default_dept

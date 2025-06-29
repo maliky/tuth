@@ -1,5 +1,6 @@
 """Test shared utils module."""
 
+from app.academics.models.college import College
 import pytest
 
 from app.shared.utils import expand_course_code
@@ -22,12 +23,14 @@ def test_expand_code_defaults_to_row_college():
 
 
 @pytest.mark.django_db
-def test_expand_code_defaults_to_coas_when_row_missing(college, department_factory):
+def test_expand_code_to_defaults_when_row_missing(college, department_factory):
     dept = department_factory("BIOL")
 
+    dft_college = College.get_default()
+    
     college_code, dept_short_name, num = expand_course_code("BIOL105")
 
-    assert college_code == "COAS", f"college.code=>{college.code}"
+    assert college_code == dft_college.code
     assert dept_short_name == dept.short_name
     assert num == "105"
 

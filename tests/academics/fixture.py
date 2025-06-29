@@ -4,22 +4,47 @@ from __future__ import annotations
 
 from typing import Callable, TypeAlias
 
-from app.academics.models.curriculum import Curriculum
-from app.academics.models.program import Program
 import pytest
 
 from app.academics.models.college import College
 from app.academics.models.course import Course
+from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
+from app.academics.models.program import Program
 
 CollegeFactory: TypeAlias = Callable[[str], College]
-CourseFactory: TypeAlias = Callable[[str, str], Course]
+CourseFactory: TypeAlias = Callable[[str], Course]
+CurriculumFactory: TypeAlias = Callable[[str], Curriculum]
 DepartmentFactory: TypeAlias = Callable[[str], Department]
+ProgramFactory: TypeAlias = Callable[[str, str], Program]
 
 
 @pytest.fixture
 def college() -> College:
     return College.get_default()
+
+
+@pytest.fixture
+def course() -> Course:
+    return Course.get_default("111")
+
+
+@pytest.fixture
+def curriculum() -> Curriculum:
+    return Curriculum.get_default()
+
+
+@pytest.fixture
+def department() -> Department:
+    return Department.get_default("TSTD")
+
+
+@pytest.fixture
+def program() -> Program:
+    return Program.get_default()
+
+
+# ~~~~~~~~~~~~~~~~ DB Constraints  ~~~~~~~~~~~~~~~~
 
 
 @pytest.fixture
@@ -32,60 +57,34 @@ def college_factory() -> CollegeFactory:
 
 
 @pytest.fixture
-def course() -> Course:
-    return Course.objects.create(
-        number="101",
-        title="Course de test",
-    )
-
-
-@pytest.fixture
-def course_factory() -> CourseFactory:
-    # something not right here
-    def _make(department: Department, number: str = "101") -> Course:
-        return Course.objects.create(number=number, department=department)
-
-    return _make
-
-
-@pytest.fixture
-def curriculum(course_factory: CourseFactory) -> Curriculum:
-    cur = Curriculum.get_default()
-    course1 = course_factory("101", "The first course.")
-    course2 = course_factory("102", "The second course.")
-    Program.objects.bulk_create(
-        [
-            Program(curriculum=cur, course=course1),
-            Program(curriculum=cur, course=course2),
-        ]
-    )
-    return cur
-
-
-@pytest.fixture
-def curriculum_empty() -> Curriculum:
-    cur = Curriculum.objects.create(
-        short_name="EMPTY_CUR", long_name="An Empty Curriculum (no courses)"
-    )
-    return cur
-
-
-@pytest.fixture
-def department() -> Department:
-    return Department.get_default()
-
-
-@pytest.fixture
 def department_factory() -> DepartmentFactory:
-    def _make(short_name: str = "TSTD", full_name="Test Deptarment", college=college) -> Department:
+    def _make(short_name: str = "TEST_DETP") -> Department:
         return Department.get_default(short_name)
 
     return _make
 
 
 @pytest.fixture
-def program(curriculum_empty: Curriculum, course: Course) -> Program:
-    return Program.objects.create(
-        curriculum=curriculum_empty,
-        course=course,
-    )
+def curriculum_factory() -> CurriculumFactory:
+    def _make(short_name: str = "TEST_CUR") -> Curriculum:
+        return Curriculum.get_default(short_name)
+
+    return _make
+
+
+@pytest.fixture
+def course_factory() -> CourseFactory:
+    def _make(number: str = "101") -> Course:
+        return Course.get_default(number)
+
+    return _make
+
+
+@pytest.fixture
+def program_factory(course_factory, curriculum_factory) -> ProgramFactory:
+    def _make(course_num="111", curriculum_short_name: str = "CUR_FTEST") -> Program:
+        course = course_factory(course_num)
+        curriculum = curriculum_factory(curriculum_short_name)
+        return Program(course=course, curriculum=curriculum)
+
+    return _make

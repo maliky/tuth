@@ -20,16 +20,15 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
         # Configure the parent widget to operate on the Staff model so
-        # that clean returns actual Staff objects using the
+        # that clean, returns actual Staff objects using the
         # staff_id field as the lookup key.
         super().__init__(Staff, field="staff_id")
 
     def clean(self, value, row=None, *args, **kwargs) -> Staff:
-        """Create or fetch a :class:Staff from a full name.
+        """Create or fetch a Staff from a name.
 
-        The widget splits the display name, creates the corresponding User if
-        needed and returns the linked Staff profile so foreign keys can refer to
-        it directly.
+        The widget splits the name, creates and the corresponding User if
+        needed.  It returns the linked Staff profile.
         """
 
         if not value:

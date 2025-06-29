@@ -88,19 +88,20 @@ class Course(models.Model):
         return cls.objects.filter(curricula=curriculum).distinct()
 
     @classmethod
-    def get_default(cls, number: int = 0) -> Self:
+    def get_default(cls, number: str = "0000") -> Self:
         """Return a default Course."""
         def_crs, _ = cls.objects.get_or_create(
             department=Department.get_default(),
-            number=f"{number:04d}",
-            title=f"Default Course {number:04d}",
+            number=number,
+            title=f"Default Course {number}",
         )
         return def_crs
 
     @classmethod
     def get_unique_default(cls) -> Self:
         """Return a default Course which is unique. A most 1000 course can be created."""
-        return cls.get_default(number=next(DEFAULT_COURSE_NO))
+        number = f"{next(DEFAULT_COURSE_NO):04d}"
+        return cls.get_default(number=number)
 
     class Meta:
         constraints = [

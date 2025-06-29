@@ -1,7 +1,7 @@
 """Module to test some function of the people app."""
 
 import pytest
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 
 from app.people.utils import extract_id_num, mk_username, split_name
 
@@ -31,8 +31,9 @@ def test_mk_username_uniquess(user_factory):
     # create another user but with that username
     un2 = mk_username("Esai", "Thot")  # esthot
     with pytest.raises(IntegrityError):
-        _ = user_factory(username=un2)
-        # should through UNIQUE constraint failed: auth_user.username
+        with transaction.atomic():
+            _ = user_factory(username=un2)
+            # should through UNIQUE constraint failed: auth_user.username
 
     un3 = mk_username("Esai", "Thot", unique=True)  # esthot1
     u3 = user_factory(username=un3)
