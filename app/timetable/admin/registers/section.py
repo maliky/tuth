@@ -19,9 +19,17 @@ class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     inlines manage sessions. Filtering by curriculum is available through list_filter.
     """
 
-    # ! TODO ajouter à la list, les rooms occupé et le nombre de sessions, le nombre de crédits
     resource_class = SectionResource
-    list_display = ("semester", "program", "number", "faculty", "available_seats")
+    list_display = (
+        "semester",
+        "program",
+        "number",
+        "faculty",
+        "available_seats",
+        "space_codes",
+        "session_count",
+        "credit_hours",
+    )
     inlines = [SessionInline, GradeInline]
     list_filter = ("program__curriculum",)
     autocomplete_fields = ("semester", "faculty")
@@ -53,3 +61,13 @@ class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
             slots.append(f"{sess.schedule} ({sess.room})")
 
         return "; ".join(slots) or "--"
+
+    @admin.display(description="# Sessions")
+    def session_count(self, obj: Section) -> int:
+        """Return the number of sessions attached to this section."""
+        return obj.sessions.count()
+
+    @admin.display(description="Credits")
+    def credit_hours(self, obj: Section) -> int:
+        """Return credit hours for this section's program."""
+        return obj.program.credit_hours

@@ -4,6 +4,7 @@ from app.people.admin.resources import FacultyResource
 from app.people.models.student import Student
 from app.people.models.donor import Donor
 from app.people.models.staffs import Faculty, Staff
+from app.timetable.admin.inlines import SectionInline
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
@@ -25,17 +26,24 @@ class FacultyAdmin(ImportExportModelAdmin, GuardedModelAdmin):
         "google_profile",
         "personal_website",
     )
-
-    list_display = ("staff_profile",)
-    list_filter = ("college",)
-    search_fields = (
-        "academic_rank",
-        # "staff_profile__staff_id",
-        # "staff_profile__user__username",
-        # "staff_profile__first_name",
-        # "staff_profile__user",
+    list_display = (
+        "faculty_name",
+        "faculty_staff_id",
     )
+    list_filter = ("college",)
+    search_fields = ("faculty_staff_id", "faculty_name")
     autocomplete_fields = ("staff_profile",)
+    inlines = [SectionInline]
+
+    @admin.display(description="Long Name", ordering="staff_profile__user__first_name")
+    def faculty_name(self, obj):
+        """Add the long name to the admin."""
+        return obj.staff_profile.long_name
+
+    @admin.display(description="Faculty Staff ID", ordering="staff_profile__staff_id")
+    def faculty_staff_id(self, obj):
+        """Add the long name to the admin."""
+        return obj.staff_profile.staff_id
 
 
 @admin.register(Donor)
@@ -80,8 +88,8 @@ class StaffAdmin(GuardedModelAdmin):
         "position",
     )
     list_display = (
+        "long_name",
         "staff_id",
-        "department",
     )
     search_fields = ("staff_id",)
     autocomplete_fields = ("user",)
@@ -96,11 +104,12 @@ class StudentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     on both fields. Import/export is supported via ImportExportModelAdmin.
     """
 
-    list_display = ("user", "student_id")
+    list_display = ("long_name", "student_id", "user")
     search_fields = (
         "student_id",
         "user__username",
-        "user__first_name",
-        "user__last_name",
+        # "long_name"
+        # "user__first_name",
+        # "user__last_name",
     )
     autocomplete_fields = ("user",)

@@ -1,5 +1,7 @@
 """Helpers to grant permissions during initial data population."""
 
+import logging
+
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from guardian.shortcuts import assign_perm
@@ -12,13 +14,16 @@ from app.shared.auth.perms import MODEL_APP, OBJECT_PERM_MATRIX
 #     return ContentType.objects.get_for_model(model)
 
 
+logger = logging.getLogger(__name__)
+
+
 def grant_model_level_perms(groups):
     """Assign model-level permissions to the provided groups."""
     for model, perms in OBJECT_PERM_MATRIX.items():
         try:
             ct = ContentType.objects.get(app_label=MODEL_APP[model], model=model)
         except Exception:
-            print(f">> model={model} <<")
+            logger.exception("Unable to get content type '%s'", model)
 
         for perm_name, roles in perms.items():
             perm = Permission.objects.get(

@@ -61,6 +61,7 @@ class Program(models.Model):
         )
         return def_pg
 
+    @classmethod
     def get_unique_default(cls) -> Self:
         """Returns a default unique Program."""
         u_course = Course.get_unique_default()

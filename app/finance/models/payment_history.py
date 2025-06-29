@@ -45,9 +45,9 @@ class PaymentHistory(models.Model):
         return f"{self.amount} on {self.payment_date_str} for {self.financial_record.student}"
 
     @property
-    def payment_date_str(self):
-        """Get the payment date as str."""
-        self.payment_date.strftime("%H:%M:%S")
+    def payment_date_str(self) -> str:
+        """Get the payment date as HH:MM:SS formated string."""
+        return self.payment_date.strftime("%H:%M:%S")
 
     class Meta:
         ordering = ["-payment_date"]

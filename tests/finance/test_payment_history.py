@@ -24,3 +24,14 @@ def test_payment_history_str(student, staff):
         str(ph)
         == f"{ph.amount} on {ph.payment_date_str} for {ph.financial_record.student}"
     )
+
+
+@pytest.mark.django_db
+def test_payment_date_str_returns_non_empty_string(student, staff):
+    """payment_date_str should always return a non-empty string."""
+    fr = FinancialRecord.objects.create(student=student, total_due=Decimal("0"))
+    ph = PaymentHistory.objects.create(
+        financial_record=fr, amount=Decimal("25.00"), recorded_by=staff
+    )
+    assert isinstance(ph.payment_date_str, str)
+    assert ph.payment_date_str != ""

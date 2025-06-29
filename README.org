@@ -29,23 +29,19 @@ python manage.py migrate
 python manage.py populate_initial_data
 python manage.py runserver
 #+END_SRC
-
-** Running Locally without Docker
-For a quick local setup using SQLite, run:
-#+BEGIN_SRC bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-cp env-test .env
-python manage.py migrate
-python manage.py populate_initial_data
-python manage.py runserver
-#+END_SRC
 Open http://127.0.0.1:8000 in your browser.
 
 
 ** Development Environment
 To make changes :
+The repo includes a ~.python-version~ file which instructs *pyenv* to use a
+virtual environment named ~tuth~. You can create it with:
+#+BEGIN_SRC bash
+pyenv virtualenv 3.12.0 tuth
+pyenv local tuth
+#+END_SRC
+If you prefer not to use ~pyenv virtualenv~, replace the file content with a
+supported Python version such as ~3.12~.
 - Create a new branch from `dev` or switch to the `dev` branch
 - Make your changes
 If you add Python libraries using `pip install ...`,
@@ -81,6 +77,11 @@ start_time: 9:00
 end_time: 10:00
 #+END_VERBATIM
 Check the `run.sh` script to see where to put the file.
+
+Before starting the stack, copy the sample environment file:
+#+BEGIN_SRC bash
+cp .env-dev.example .env-dev
+#+END_SRC
 
 *** Launch your docker-compose dev environment
 Build and start the dev stack:
@@ -131,6 +132,11 @@ In another terminal,
 ** Production Environment
 
 Build and launch the production environment:
+
+# Copy the sample production environment settings:
+#+BEGIN_SRC bash
+cp .env-prod.example .env-prod
+#+END_SRC
 
 #+begin_src bash
 docker-compose -f docker-compose-prod.yml up --build -d

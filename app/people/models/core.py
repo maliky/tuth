@@ -33,22 +33,22 @@ class AbstractPerson(StatusableMixin, models.Model):
     ID_FIELD: str | None = None
     ID_PREFIX: str = "TU-"
 
-    # >  need testing
-    # --- linkage ---
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
         related_name="%(class)s",
         related_query_name="%(class)s",
     )
+    # ~~~~ Autofilled ~~~~
+    # long_name = models.CharField(blank=False, editable=False)
 
+    # ~~~~~~~~ Optional ~~~~~~~~
     # # need to define a list of choice well structured
     name_prefix = models.CharField(blank=True)
     name_suffix = models.CharField(blank=True)
     middle_name = models.CharField(blank=True)
-
     date_of_birth = models.DateField(_("date of birth"), null=True, blank=True)
-
     phone_number = models.CharField(max_length=15, blank=True)
     physical_address = models.CharField(blank=True)
 
@@ -56,9 +56,13 @@ class AbstractPerson(StatusableMixin, models.Model):
     bio = models.TextField(blank=True)
     photo = models.ImageField(upload_to=photo_upload_to, null=True, blank=True)
 
+    # convenience for admin lists / logs
+    def __str__(self) -> str:  # pragma: no cover
+        return self.long_name
+
     @property
-    def long_name(self) -> str:
-        """Get the long name from the different name parts."""
+    def long_name(self) -> None:
+        """Set the long name from the different name parts."""
         long_name = " ".join(
             [
                 self.name_prefix,
@@ -122,6 +126,19 @@ class AbstractPerson(StatusableMixin, models.Model):
 
         return str(objid)
 
+    # def _ensure_long_name(self) -> None:
+    #     """Set the long name from the different name parts."""
+    #     if not self.long_name:
+    #         self.long_name = " ".join(
+    #             [
+    #                 self.name_prefix,
+    #                 self.first_name,
+    #                 self.middle_name,
+    #                 self.last_name,
+    #                 self.name_suffix,
+    #             ]
+    #         ).strip()
+
     def set_username(self, value):
         """Set the username."""
         return object.__setattr__(self.user, "username", value)
@@ -137,10 +154,6 @@ class AbstractPerson(StatusableMixin, models.Model):
     def set_email(self, value):
         """Sets the email."""
         return object.__setattr__(self.user, "email", value)
-
-    # convenience for admin lists / logs
-    def __str__(self) -> str:  # pragma: no cover
-        return self.long_name
 
     def _must_exists_user(self) -> None:
         """Returns the user if it exists."""
@@ -180,7 +193,6 @@ class AbstractPerson(StatusableMixin, models.Model):
 
     def save(self, *args, **kwargs):
         """Create an ID and saves it for each model using _mk_id and ID_FIELD."""
-        # import ipdb; ipdb.set_trace()
         if not self.obj_id:
             new_id = self._mk_id()
             object.__setattr__(self, self.ID_FIELD, new_id)  # type: ignore[arg-type]

@@ -19,16 +19,15 @@ from app.shared.auth.perms import TEST_PW
 class StaffProfileWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
-        # Configure the parent widget to operate on the Staff model so
-        # that clean, returns actual Staff objects using the
-        # staff_id field as the lookup key.
         super().__init__(Staff, field="staff_id")
 
     def clean(self, value, row=None, *args, **kwargs) -> Staff:
         """Create or fetch a Staff from a name.
 
         The widget splits the name, creates and the corresponding User if
-        needed.  It returns the linked Staff profile.
+        needed.  It returns or creates the linked Staff profile.
+
+        If no value, create a new unique staff.
         """
 
         if not value:

@@ -10,7 +10,7 @@ from app.shared.status.mixins import StatusHistory
 class StatusHistoryForm(forms.ModelForm):
     """ModelForm for creating status history records.
 
-    The form limits the state choices to those defined on the related
+    The form limits the status choices to those defined on the related
     model so only valid transitions are offered.
     """
 
@@ -19,7 +19,7 @@ class StatusHistoryForm(forms.ModelForm):
         fields = ["status", "author"]
 
     def __init__(self, *args, **kwargs):
-        """Initialize the form and adjust state choices.
+        """Initialize the form and adjust status choices.
 
         Parameters
         ----------
@@ -33,7 +33,7 @@ class StatusHistoryForm(forms.ModelForm):
         )
         if content_type:
 
-            field = self.fields["state"]
+            field = self.fields["status"]
             assert isinstance(field, ChoiceField)
             model_cls = content_type.model_class()
             if model_cls:

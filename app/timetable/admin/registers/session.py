@@ -1,5 +1,6 @@
 """Session admin module."""
 
+from app.timetable.admin.inlines import SessionInline
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
@@ -54,3 +55,4 @@ class ScheduleAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     list_display = ("weekday", "start_time", "end_time")
     list_filter = ("weekday",)
     search_fields = ("weekday",)
+    inlines = [SessionInline]

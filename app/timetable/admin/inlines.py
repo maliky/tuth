@@ -22,8 +22,8 @@ class SessionInline(admin.TabularInline):
 
     model = Session
     extra = 0
-    fields = ("room", "schedule")
-    autocomplete_fields = ("room", "schedule")
+    fields = ("section", "room", "schedule", )
+    autocomplete_fields = ("section", "room", "schedule", )
 
 
 class SectionInline(admin.TabularInline):
@@ -40,4 +40,6 @@ class SectionInline(admin.TabularInline):
         "current_registrations",
     )
     readonly_fields = ("current_registrations",)
-    ordering = ("semester__start_date", "number")
+    ordering = ("-semester__start_date", "-number")
+
+

@@ -19,6 +19,7 @@ class SpaceAdmin(GuardedModelAdmin):
     search_fields = ("code", "full_name")
     list_display = ("code", "full_name")
 
+    # > list the sections in that building for the current semester
 
 @admin.register(Room)
 class RoomAdmin(ImportExportModelAdmin, GuardedModelAdmin):
@@ -36,7 +37,7 @@ class RoomAdmin(ImportExportModelAdmin, GuardedModelAdmin):
         "exam_capacity",
         "space",
     )
-    list_display = ("standard_capacity", "exam_capacity")
+    list_display = ("code", "space", "standard_capacity", "exam_capacity")
     list_filter = ("space",)
     search_fields = ("space__code", "code")
     autocomplete_fields = ["space"]

@@ -39,7 +39,7 @@ class Session(models.Model):
 
     def __str__(self):
         """Return Schedule, Room for use in admin lists."""
-        return f"{self.schedule}, {self.room}"
+        return f"{self.section}, {self.room} ~ {self.schedule}"
 
     @property
     def weekday(self) -> int:

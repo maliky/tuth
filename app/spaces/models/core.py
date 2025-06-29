@@ -37,7 +37,7 @@ class Space(models.Model):
         return tba_space
 
     class Meta:
-        verbose_name = "Space / Buiding"
+        verbose_name = "Space / Building"
         verbose_name_plural = "Spaces / Buildings"
 
 
