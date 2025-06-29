@@ -31,14 +31,14 @@ class Section(models.Model):
         Section numbers auto-increment
     """
 
-    # ~~~~ Mandatory ~~~~
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     semester = models.ForeignKey("timetable.Semester", on_delete=models.PROTECT)
     program = models.ForeignKey(
         "academics.Program", on_delete=models.CASCADE, related_name="sections"
     )
     number = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
 
-    # ~~~~ Optional ~~~~
+    # ~~~~~~~~ Optional ~~~~~~~~
     faculty = models.ForeignKey(
         "people.Faculty",
         null=True,
@@ -49,7 +49,10 @@ class Section(models.Model):
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
 
+    # ~~~~ Read-only ~~~~
     current_registrations = models.PositiveIntegerField(default=0, editable=False)
+
+    # ~~~~ Auto-filled ~~~~
     # to be defined by Admin & VPA
     max_seats = models.PositiveIntegerField(default=30, validators=[MinValueValidator(3)])
 

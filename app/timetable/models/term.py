@@ -14,7 +14,7 @@ class Term(models.Model):
         >>> Term.objects.create(semester=semester, number=1)
     """
 
-    # ### mandatory
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     semester = models.ForeignKey(
         "timetable.Semester", on_delete=models.PROTECT, related_name="terms"
     )
@@ -22,7 +22,7 @@ class Term(models.Model):
         choices=TERM_NUMBER.choices, help_text="Term number"
     )
 
-    # ~~~~ Optional ~~~~
+    # ~~~~~~~~ Optional ~~~~~~~~
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
 

@@ -27,18 +27,20 @@ class Course(models.Model):
         save() populates code from name and number.
     """
 
-    # mandatory
+    # ~~~~~~~~ Mandatory ~~~~~~~~
+    number = models.CharField(max_length=10)  # e.g. 101
+
+    # ~~~~ Auto-filled ~~~~
     department = models.ForeignKey(
         "academics.Department",
         on_delete=models.CASCADE,
         related_name="courses",
     )
-    number = models.CharField(max_length=10)  # e.g. 101
 
-    # non editable
+    # ~~~~ Read-only ~~~~
     code = models.CharField(max_length=20, editable=False)
 
-    # optional
+    # ~~~~~~~~ Optional ~~~~~~~~
     title = models.CharField(max_length=255, blank=True, null=True)
     description: models.TextField = models.TextField(blank=True, null=True)
     prerequisites = models.ManyToManyField(

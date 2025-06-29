@@ -21,10 +21,14 @@ class RoleAssignment(models.Model):
         ... )
     """
 
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     user = models.ForeignKey(
         "auth.User", on_delete=models.CASCADE, related_name="role_assignments"
     )
     role = models.CharField(max_length=30, choices=UserRole.choices)
+    start_date = models.DateField()
+
+    # ~~~~~~~~ Optional ~~~~~~~~
     college = models.ForeignKey(
         "academics.College",
         null=True,
@@ -32,7 +36,6 @@ class RoleAssignment(models.Model):
         on_delete=models.SET_NULL,
         related_name="role_assignments",
     )
-    start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
 
     def __str__(self) -> str:

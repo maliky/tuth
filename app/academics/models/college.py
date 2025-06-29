@@ -19,12 +19,15 @@ class College(models.Model):
 
     # ! there should be no constraint here as the VPA may need to
     # rework the name of the colleges from time to time.
+
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     code = models.CharField(
         max_length=4,
         choices=CollegeCodeChoices.choices,
         default=CollegeCodeChoices.COAS,
     )
 
+    # ~~~~ Auto-filled ~~~~
     long_name = models.CharField(
         max_length=50,
         choices=CollegeLongNameChoices.choices,

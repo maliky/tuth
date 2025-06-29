@@ -19,7 +19,10 @@ class ClassRoster(models.Model):
         0
     """
 
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     section = models.OneToOneField("timetable.Section", on_delete=models.CASCADE)
+
+    # ~~~~ Auto-filled ~~~~
     last_updated = models.DateTimeField(auto_now=True)
 
     @property

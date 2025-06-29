@@ -19,7 +19,7 @@ class Session(models.Model):
         >>> Session.objects.create(room=room, schedule=schedule, section=section)
     """
 
-    # ~~~~ Mandatory ~~~~
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     room = models.ForeignKey("spaces.Room", on_delete=models.PROTECT)
     section = models.ForeignKey(
         "timetable.Section",
@@ -27,7 +27,7 @@ class Session(models.Model):
         related_name="sessions",
     )
 
-    # ~~~~ Optional ~~~~
+    # ~~~~~~~~ Optional ~~~~~~~~
     # ! be carreful with TBA schedules
     schedule = models.ForeignKey(
         "timetable.Schedule",

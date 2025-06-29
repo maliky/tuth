@@ -16,10 +16,13 @@ class Grade(models.Model):
         ... )
     """
 
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     student = models.ForeignKey("people.Student", on_delete=models.CASCADE)
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)
     letter_grade = models.CharField(max_length=2)  # A+, A, B, etc.
     numeric_grade = models.DecimalField(max_digits=4, decimal_places=1)  # e.g., 85.5
+
+    # ~~~~ Auto-filled ~~~~
     graded_on = models.DateField(auto_now_add=True)
 
     class Meta:

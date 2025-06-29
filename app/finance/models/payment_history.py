@@ -27,11 +27,16 @@ class PaymentHistory(models.Model):
         ... )
     """
 
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     financial_record = models.ForeignKey(
         "finance.FinancialRecord", related_name="payments", on_delete=models.CASCADE
     )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    # ~~~~ Auto-filled ~~~~
     payment_date = models.DateTimeField(auto_now_add=True)
+
+    # ~~~~~~~~ Optional ~~~~~~~~
     method = models.CharField(max_length=50, blank=True)  # cash, bank, mobile …
     recorded_by = models.ForeignKey(
         "people.Staff",

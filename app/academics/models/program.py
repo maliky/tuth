@@ -30,7 +30,7 @@ class Program(models.Model):
         "academics.Course", on_delete=models.CASCADE, related_name="in_programs"
     )
 
-    # ~~ Autofilled if empty ~~
+    # ~~~~ Auto-filled ~~~~
     is_required = models.BooleanField(default=True)
 
     # credit hours depend on the curricula not the Course
