@@ -9,10 +9,12 @@ ships with a coherent permission matrix.
 
 import logging
 from pathlib import Path
+from typing import Any
 
 import yaml
 from django.apps import apps
-from django.contrib.auth.models import ContentType, Group, Permission
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand, CommandError
 
 from app.people.choices import UserRole  # authoritative list of roles
@@ -25,8 +27,8 @@ class Command(BaseCommand):
 
     def __init__(self, *args, **kwargs):
         super(*args, **kwargs)
-        self.roles_defined = {}
-        self.spec = None
+        self.roles_defined = set()
+        self.spec: Any = None
 
     # ------------------------------------------------------------------
     # entry point
@@ -61,20 +63,22 @@ class Command(BaseCommand):
             app_label = self.spec["model_app"][model]
             my_models = apps.get_model(app_label, model)
 
-            # get the ContentType row
-            ct = ct_cache.setdefault(model, ContentType.objects.get_for_model(my_models))
+            _ct = ContentType.objects.get_for_model(my_models)
+            # return _ct if model is not a key of the dict & insert it.
+            # else return the value of the model key
+            ct = ct_cache.setdefault(model, _ct)
 
             # Iterate create, read, update, delete actions
             for action, role_list in acts.items():
                 # Django auto-creates permissions named "<action>_<model>"
                 # e.g.  view_course, change_course …
-                perm, _ = Permission.objects.get_or_create(
+                perm, _created = Permission.objects.get_or_create(
                     codename=f"{action}_{model}", content_type=ct
                 )
 
-                #  Attach that permission to every listed role group
+                #  Attach that permission to every group listed in role_list
                 for role in role_list:
-                    grp, _ = Group.objects.get_or_create(
+                    grp, _created = Group.objects.get_or_create(
                         name=" ".join([r.capitalize() for r in role.split("_")])
                     )
                     grp.permissions.add(perm)  # final grant

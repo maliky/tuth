@@ -33,6 +33,8 @@ ignore = [
 docstring-convention = "google"
 
 
+
+
 [tool.mypy]
 python_version = "3.12"
 check_untyped_defs = true

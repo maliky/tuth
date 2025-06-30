@@ -53,16 +53,16 @@ def test_crud_every_model():
             pytest.xfail(f"{model.__name__}: cannot build – {exc}")
 
         # READ
-        fetched = model.objects.get(pk=obj.pk)
+        fetched = model.objects.get(pk=obj.pk)  # type: ignore [attr-defined]
         assert fetched == obj, f"{model.__name__} read failed"
 
         # UPDATE
         if _touch(obj):  # only save if we really changed something
             obj.save()
-            updated = model.objects.get(pk=obj.pk)
+            updated = model.objects.get(pk=obj.pk)  # type: ignore [attr-defined]
             assert updated.pk == obj.pk, f"{model.__name__} update lost PK"
 
         # DELETE
         pk = obj.pk
         obj.delete()
-        assert not model.objects.filter(pk=pk).exists(), f"{model.__name__} delete failed"
+        assert not model.objects.filter(pk=pk).exists(), f"{model.__name__} delete failed"  # type: ignore [attr-defined]
