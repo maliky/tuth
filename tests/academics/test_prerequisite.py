@@ -7,42 +7,6 @@ from app.academics.models.prerequisite import Prerequisite
 
 pytestmark = pytest.mark.django_db
 
-# ~~~~~~~~~~~~~~~~DB Constraints ~~~~~~~~~~~~~~~~
-
-
-def test_prerequisite_crud(curriculum, course_factory):
-    """Test Create Read Update Delete operation on College Model."""
-    # create
-    course_a = course_factory("101")
-    course_b = course_factory("202")
-    course_c = course_factory("303")
-
-    prereq = Prerequisite.objects.create(
-        curriculum=curriculum,
-        course=course_b,
-        prerequisite_course=course_a,
-    )
-    assert Prerequisite.objects.filter(pk=prereq.pk).exists()
-
-    # read
-    fetched = Prerequisite.objects.get(pk=prereq.pk)
-    assert fetched == prereq
-
-    # update
-    assert fetched.prerequisite_course != course_c
-
-    fetched.prerequisite_course = course_c
-    fetched.save()
-
-    updated = Prerequisite.objects.get(pk=prereq.pk)
-    assert updated.prerequisite_course.number == "303"
-
-    # delete
-    updated.delete()
-    assert not Prerequisite.objects.filter(pk=updated.pk).exists()
-    assert not Prerequisite.objects.filter(pk=prereq.pk).exists()
-    assert not Prerequisite.objects.filter(pk=fetched.pk).exists()
-
 
 # ~~~~~~~~~~~~~~~~ DB Constraints ~~~~~~~~~~~~~~~~
 

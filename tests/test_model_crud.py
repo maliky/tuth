@@ -30,12 +30,12 @@ def _touch(model_instance):
 @pytest.mark.parametrize(
     "model",
     [m for m in apps.get_models() if not _is_skippable(m)],
-    ids=lambda m: m.__name__,
+    ids=lambda m: m.__name__,  # for logging tracking
 )
 def test_crud_every_model(model):
     """Create, read, update and delete for each model."""
     try:
-        obj = baker.make(model)
+        obj = baker.make(model)  # type: ignore [var-annotated]
     except Exception as exc:  # pragma: no cover - model may have complex deps
         pytest.xfail(f"{model.__name__}: cannot build - {exc}")
 

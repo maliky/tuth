@@ -8,34 +8,6 @@ from app.academics.models.program import Program
 pytestmark = pytest.mark.django_db
 
 
-# ~~~~~~~~~~~~~~~~ DB consraints~~~~~~~~~~~~~~~~
-
-
-def test_program_crud(course, curriculum):
-
-    # create
-    program = Program.objects.create(curriculum=curriculum, course=course)
-    assert Program.objects.filter(pk=program.pk).exists()
-
-    # read
-    fetched = Program.objects.get(pk=program.pk)
-    assert fetched == program
-
-    # update
-    assert fetched.is_required is True
-
-    fetched.is_required = False
-    fetched.save()
-    updated = Program.objects.get(pk=program.pk)
-    assert updated.is_required is False
-
-    # delete
-    updated.delete()
-    assert not Program.objects.filter(pk=updated.pk).exists()
-    assert not Program.objects.filter(pk=program.pk).exists()
-    assert not Program.objects.filter(pk=fetched.pk).exists()
-
-
 # ~~~~~~~~~~~~~~~~ DB Constraints ~~~~~~~~~~~~~~~~
 
 
