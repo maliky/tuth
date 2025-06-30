@@ -69,7 +69,7 @@ def academic_year_factory() -> AcademicYearFactory:
 def semester_factory(academic_year_factory: AcademicYearFactory) -> SemesterFactory:
     def _make(number: int, ay_start_date: datetime = DEF_DATE) -> Semester:
 
-        ay = academic_year_factory(start_date=ay_start_date)
+        ay = academic_year_factory(ay_start_date)
 
         return Semester.objects.create(academic_year=ay, number=number)
 

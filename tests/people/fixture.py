@@ -15,7 +15,7 @@ from tests.academics.fixture import CurriculumFactory
 UserFactory: TypeAlias = Callable[[str], User]
 StaffFactory: TypeAlias = Callable[[str], Staff]
 StudentFactory: TypeAlias = Callable[[str, str], Student]
-DonorFactory: TypeAlias = Callable[[str, str], Donor]
+DonorFactory: TypeAlias = Callable[[str], Donor]
 
 
 @pytest.fixture
@@ -107,13 +107,12 @@ def student_factory(
 
 
 @pytest.fixture
-def donor_factory(user_factory: UserFactory, curriculum_factory) -> DonorFactory:
+def donor_factory(user_factory: UserFactory) -> DonorFactory:
     """Return a callable for making extra Donoro objects on demand."""
 
-    def _make(uname: str, curri_short_name: str) -> Donor:
+    def _make(uname: str) -> Donor:
         return Donor.objects.create(
             user=user_factory(uname),
-            curriculum=curriculum_factory(curri_short_name),
         )
 
     return _make

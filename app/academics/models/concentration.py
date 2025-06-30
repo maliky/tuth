@@ -18,7 +18,7 @@ class Concentration(models.Model):
     # ~~~~~~~~ Mandatory ~~~~~~~~
     name = models.CharField(max_length=255)
     curriculum = models.ForeignKey(
-        "academics.curriculum",
+        "academics.Curriculum",
         on_delete=models.CASCADE,
         related_name="concentrations",
     )
