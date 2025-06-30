@@ -62,6 +62,7 @@ def class_roster(section: Section) -> ClassRoster:
 
 # ─── factory fixtures ──────────────────────────────────────────────────────
 
+
 @pytest.fixture
 def registration_factory() -> RegistrationFactory:
     """Return a callable to build registrations."""
@@ -125,4 +126,3 @@ def class_roster_factory() -> ClassRosterFactory:
         return ClassRoster.objects.create(section=section)
 
     return _make
-

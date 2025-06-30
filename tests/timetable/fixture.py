@@ -67,7 +67,7 @@ def academic_year_factory() -> AcademicYearFactory:
 
 @pytest.fixture
 def semester_factory(academic_year_factory: AcademicYearFactory) -> SemesterFactory:
-    def _make(number: int, ay_start_date:datetime= DEF_DATE) -> Semester:
+    def _make(number: int, ay_start_date: datetime = DEF_DATE) -> Semester:
         ay = academic_year_factory(start_date=ay_start_date)
         return Semester.objects.create(academic_year=ay, number=number)
 
@@ -88,7 +88,7 @@ def section_factory(
 
 @pytest.fixture
 def session_factory(section_factory: SectionFactory, room_factory) -> SessionFactory:
-    def _make(room_code:str, course_number: str, curriculum_short_name: str) -> Session:
+    def _make(room_code: str, course_number: str, curriculum_short_name: str) -> Session:
         room = room_factory(room_code="007")
         section = section_factory(course_number, curriculum_short_name, 1)
         return Session.objects.create(section=section, room=room)

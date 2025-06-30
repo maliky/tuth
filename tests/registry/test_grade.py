@@ -8,6 +8,7 @@ pytestmark = pytest.mark.django_db  # replace the @pytest.mark.django_db decorat
 
 # ~~~~~~~~~~~~~~~ DB constraints ~~~~~~~~~~~~~~~~
 
+
 def test_grade_unique_student_section(student, section):
     """A student only have one grade for a section (the final grade)."""
 

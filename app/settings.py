@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+import sys
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -169,6 +170,9 @@ LOGGING = {
             "format": '{"time": "%(asctime)s", "level": "%(levelname)s", '
             '"name": "%(name)s", "message": %(message)s}',
         },
+        "verbose": {
+            "format": "%(asctime)s  %(levelname)-8s  %(name)s :: %(message)s",
+        },
     },
     "handlers": {
         "actions": {
@@ -176,9 +180,15 @@ LOGGING = {
             "filename": LOG_DIR / "actions.log",
             "formatter": "json",
         },
+        "stdout": {
+            "class": "logging.StreamHandler",
+            "stream": sys.stdout,
+            "level": "INFO",
+            "formatter": "verbose",  # or colour
+        },
     },
     "root": {
-        "handlers": ["actions"],
+        "handlers": ["actions", "stdout"],
         "level": "INFO",
     },
 }

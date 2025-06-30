@@ -25,6 +25,7 @@ DEFAULT_ROLE_TO_COLLEGE = {
 
 MODEL_APP = {
     "college": "academics",
+    "program": "academics",
     "course": "academics",
     "curriculum": "academics",
     "concentration": "academics",

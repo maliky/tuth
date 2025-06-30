@@ -28,11 +28,8 @@ class Student(AbstractPerson):
     ID_FIELD = "student_id"
     ID_PREFIX = "TU_STD"
 
-    # ~~~~ Auto-filled ~~~~
     student_id = models.CharField(max_length=20, unique=True)
     curriculum = models.ForeignKey("academics.Curriculum", on_delete=models.CASCADE)
-
-    # ~~~~~~~~ Optional ~~~~~~~~
     current_enroled_semester = models.ForeignKey(
         Semester,
         on_delete=models.PROTECT,
@@ -80,7 +77,6 @@ class Student(AbstractPerson):
 
     def save(self, *args, **kwargs):
         """Make sure we have a curriculum for all students."""
-        # import ipdb; ipdb.set_trace()
 
         if not self.curriculum_id:
             self.curriculum = Curriculum.get_default()

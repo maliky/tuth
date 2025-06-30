@@ -49,7 +49,7 @@ def program() -> Program:
 
 @pytest.fixture
 def college_factory() -> CollegeFactory:
-    def _make(code: str = "COAS") -> College:
+    def _make(code: str = "CLG_TEST") -> College:
         """Create College with matching code."""
         return College.objects.create(code=code)
 
@@ -58,7 +58,7 @@ def college_factory() -> CollegeFactory:
 
 @pytest.fixture
 def department_factory() -> DepartmentFactory:
-    def _make(short_name: str = "TEST_DETP") -> Department:
+    def _make(short_name: str = "DEPT_TEST") -> Department:
         return Department.get_default(short_name)
 
     return _make
@@ -66,7 +66,7 @@ def department_factory() -> DepartmentFactory:
 
 @pytest.fixture
 def curriculum_factory() -> CurriculumFactory:
-    def _make(short_name: str = "TEST_CUR") -> Curriculum:
+    def _make(short_name: str = "CURRI_TEST") -> Curriculum:
         return Curriculum.get_default(short_name)
 
     return _make

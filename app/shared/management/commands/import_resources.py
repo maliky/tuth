@@ -11,6 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandParser
 from django.db import transaction
 from import_export import resources
@@ -32,6 +33,9 @@ from app.timetable.admin.resources.session import (
     ScheduleResource,
     SessionResource,
 )  # noqa: F401
+
+# manage the permissions
+call_command("load_permissions", verbosity=0)
 
 
 class Command(BaseCommand):

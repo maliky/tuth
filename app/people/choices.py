@@ -4,6 +4,8 @@ from django.db import models
 
 
 class UserRole(models.TextChoices):
+    CASHIER = "cashier", "Cashier"
+    VPA = "vpa", "Vice President Administration"
     STUDENT = "student", "Student"
     PROSPECTIVE_STUDENT = "prospective_student", "Prospective Student"
     TECHNICIAN = "technician", "Technician"

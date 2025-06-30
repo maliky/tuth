@@ -21,6 +21,7 @@ class SpaceAdmin(GuardedModelAdmin):
 
     # > list the sections in that building for the current semester
 
+
 @admin.register(Room)
 class RoomAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """Admin configuration for :class:~app.spaces.models.Room.

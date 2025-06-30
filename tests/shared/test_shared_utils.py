@@ -27,7 +27,7 @@ def test_expand_code_to_defaults_when_row_missing(college, department_factory):
     dept = department_factory("BIOL")
 
     dft_college = College.get_default()
-    
+
     college_code, dept_short_name, num = expand_course_code("BIOL105")
 
     assert college_code == dft_college.code

@@ -7,7 +7,6 @@ from typing import Optional, Self
 from django.db import models
 
 from app.academics.choices import CREDIT_NUMBER
-from app.academics.models.concentration import Concentration
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 

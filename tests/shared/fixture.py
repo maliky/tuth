@@ -62,4 +62,3 @@ def status_history_factory() -> StatusHistoryFactory:
         )
 
     return _make
-
