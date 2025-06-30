@@ -34,13 +34,20 @@ class AbstractPerson(StatusableMixin, models.Model):
     ID_PREFIX: str = "TU-"
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
+    # > this is redundant but mabye necessary
+    # if I want to hide the User model from the common user.
+    # first_name = models.CharField(blank=True)
+    # last_name = models.CharField(blank=True)
+
+    # ~~~~ Autofilled ~~~~
+    # need to be filled automatically with the data from the first name, last name,
+    # > I want the user to be created on the fly when I save this but
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
         related_name="%(class)s",
         related_query_name="%(class)s",
     )
-    # ~~~~ Autofilled ~~~~
     # long_name = models.CharField(blank=False, editable=False)
 
     # ~~~~~~~~ Optional ~~~~~~~~
@@ -58,10 +65,10 @@ class AbstractPerson(StatusableMixin, models.Model):
 
     # convenience for admin lists / logs
     def __str__(self) -> str:  # pragma: no cover
-        return self.long_name
+        return f"{self.long_name}"
 
     @property
-    def long_name(self) -> None:
+    def long_name(self) -> str:
         """Set the long name from the different name parts."""
         long_name = " ".join(
             [

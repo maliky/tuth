@@ -18,22 +18,19 @@ from app.finance.models import (
     PaymentHistory,
     Scholarship,
 )
-from app.people.models.donor import Donor
-from app.people.models.staffs import Staff
-from app.people.models.student import Student
-from app.academics.models.program import Program
 from tests.academics.fixture import ProgramFactory
 from tests.people.fixture import StaffFactory
 
-FinancialRecordFactory: TypeAlias = Callable[[Student, Decimal], FinancialRecord]
-PaymentFactory: TypeAlias = Callable[[Program, Staff, Decimal], Payment]
+FinancialRecordFactory: TypeAlias = Callable[[str, str, Decimal], FinancialRecord]
+PaymentFactory: TypeAlias = Callable[[str, str, str, Decimal], Payment]
 PaymentHistoryFactory: TypeAlias = Callable[
-    [FinancialRecord, Staff, Decimal], PaymentHistory
+    [str, str, str, Decimal, Decimal], PaymentHistory
 ]
-ScholarshipFactory: TypeAlias = Callable[[Donor, Student, Decimal], Scholarship]
+ScholarshipFactory: TypeAlias = Callable[[str, str, str, Decimal, date], Scholarship]
 
 DECIMAL_0 = Decimal("0")
 DECIMAL_1 = Decimal("1")
+DECIMAL_10 = Decimal("10")
 TODAY = date.today()
 
 
@@ -63,10 +60,8 @@ def payment_history(financial_record, staff) -> PaymentHistory:
 
 
 @pytest.fixture
-def scholarship(donor_factory, student_factor) -> Scholarship:
+def scholarship(donor, student) -> Scholarship:
     """Default scholarship linking donor and student."""
-    donor = donor_factory()
-    student = student_factory()
     return Scholarship.objects.create(
         donor=donor, student=student, amount=DECIMAL_1, start_date=TODAY
     )
@@ -79,50 +74,80 @@ def scholarship(donor_factory, student_factor) -> Scholarship:
 def financial_record_factory(student_factory) -> FinancialRecordFactory:
     """Return a callable to build financial records."""
 
-    def _make(student, total_due: Decimal = DECIMAL_0) -> FinancialRecord:
-        return FinancialRecord.objects.create(student=student, total_due=total_due)
-
-    return _make
-
-
-@pytest.fixture
-def payment_factory(program_factory:ProgramFactory, staff_factory:StaffFactory) -> PaymentFactory:
-    """Return a callable to build payment records."""
-
-    def _make(program, staff, amount: Decimal = DECIMAL_1) -> Payment:
-        return Payment.objects.create(
-            program=program, amount=amount, method=PaymentMethod.CASH, recorded_by=staff
+    def _make(
+        student_uname: str, curri_short_name: str, total_due: Decimal = DECIMAL_0
+    ) -> FinancialRecord:
+        return FinancialRecord.objects.create(
+            student=student_factory(student_uname, curri_short_name),
+            total_due=total_due,
         )
 
     return _make
 
 
 @pytest.fixture
-def payment_history_factory(financial_record_factory, staff_factory) -> PaymentHistoryFactory:
+def payment_factory(
+    program_factory: ProgramFactory, staff_factory: StaffFactory
+) -> PaymentFactory:
+    """Return a callable to build payment records."""
+
+    def _make(
+        course_no: str,
+        curri_short_name: str,
+        staff_uname: str,
+        amount: Decimal = DECIMAL_1,
+    ) -> Payment:
+        return Payment.objects.create(
+            program=program_factory(course_no, curri_short_name),
+            amount=amount,
+            method=PaymentMethod.CASH,
+            recorded_by=staff_factory(staff_uname),
+        )
+
+    return _make
+
+
+@pytest.fixture
+def payment_history_factory(
+    financial_record_factory, staff_factory
+) -> PaymentHistoryFactory:
     """Return a callable to build payment history entries."""
 
     def _make(
-        financial_record, staff, amount: Decimal = DECIMAL_1
+        stud_uname: str,
+        curri_short_name: str,
+        staff_uname: str,
+        amount_paid: Decimal = DECIMAL_1,
+        total_due: Decimal = DECIMAL_10,
     ) -> PaymentHistory:
+        staff = staff_factory(staff_uname)
+        financial_record = financial_record_factory(
+            stud_uname, curri_short_name, total_due=total_due
+        )
+
         return PaymentHistory.objects.create(
-            financial_record=financial_record, amount=amount, recorded_by=staff
+            financial_record=financial_record, amount=amount_paid, recorded_by=staff
         )
 
     return _make
 
 
 @pytest.fixture
-def scholarship_factory() -> ScholarshipFactory:
+def scholarship_factory(donor_factory, student_factory) -> ScholarshipFactory:
     """Return a callable to build scholarships."""
 
     def _make(
-        donor: Donor,
-        student: Student,
+        donor_uname: str,
+        student_uname: str,
+        curri_short_name: str = "DFT_CURRI",
         amount: Decimal = DECIMAL_1,
         start_date: date = TODAY,
     ) -> Scholarship:
         return Scholarship.objects.create(
-            donor=donor, student=student, amount=amount, start_date=start_date
+            donor=donor_factory(donor_uname),
+            student=student_factory(student_uname, curri_short_name),
+            amount=amount,
+            start_date=start_date,
         )
 
     return _make

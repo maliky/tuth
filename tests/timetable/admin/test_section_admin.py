@@ -1,3 +1,5 @@
+"""Test the admin app for finance."""
+
 import pytest
 from django.contrib import admin
 
@@ -9,6 +11,7 @@ from app.timetable.admin.registers.section import SectionAdmin
 
 @pytest.mark.django_db
 def test_section_admin_list_display_fields():
+    """Check the required field are there."""
     admin_obj = SectionAdmin(Section, admin.site)
     assert "space_codes" in admin_obj.list_display
     assert "session_count" in admin_obj.list_display
@@ -17,6 +20,7 @@ def test_section_admin_list_display_fields():
 
 @pytest.mark.django_db
 def test_section_admin_counts(section, room, schedule):
+    """Check that the admin does update the number of registration."""
     other = Schedule.get_default(day=2)
     Session.objects.create(section=section, room=room, schedule=schedule)
     Session.objects.create(section=section, room=room, schedule=other)

@@ -7,8 +7,6 @@ from typing import Callable, TypeAlias
 
 import pytest
 
-from app.academics.models.program import Program
-from app.spaces.models.core import Room
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.schedule import Schedule
 from app.timetable.models.section import Section
@@ -59,7 +57,9 @@ def session(section, room) -> Session:
 
 @pytest.fixture
 def academic_year_factory() -> AcademicYearFactory:
+
     def _make(start_date: datetime = DEF_DATE) -> AcademicYear:
+
         return AcademicYear.objects.create(start_date=start_date)
 
     return _make
@@ -68,7 +68,9 @@ def academic_year_factory() -> AcademicYearFactory:
 @pytest.fixture
 def semester_factory(academic_year_factory: AcademicYearFactory) -> SemesterFactory:
     def _make(number: int, ay_start_date: datetime = DEF_DATE) -> Semester:
+
         ay = academic_year_factory(start_date=ay_start_date)
+
         return Semester.objects.create(academic_year=ay, number=number)
 
     return _make

@@ -4,20 +4,18 @@ from __future__ import annotations
 
 from typing import Callable, TypeAlias
 
-from app.academics.models import department
 import pytest
 from django.contrib.auth.models import User
 
-from app.academics.models.curriculum import Curriculum
-from app.academics.models.department import Department
 from app.people.models.donor import Donor
 from app.people.models.staffs import Faculty, Staff
 from app.people.models.student import Student
-from app.timetable.models.semester import Semester
-from tests.academics.fixture import DepartmentFactory, department_factory
+from tests.academics.fixture import CurriculumFactory
 
 UserFactory: TypeAlias = Callable[[str], User]
-StaffFactory: TypeAlias = Callable[[str, Department], Staff]
+StaffFactory: TypeAlias = Callable[[str], Staff]
+StudentFactory: TypeAlias = Callable[[str, str], Student]
+DonorFactory: TypeAlias = Callable[[str, str], Donor]
 
 
 @pytest.fixture
@@ -35,17 +33,17 @@ def user() -> User:
 
 
 @pytest.fixture
-def staff(user_factory: UserFactory, department) -> Staff:
+def staff(user_factory: UserFactory) -> Staff:
     """A staff."""
     # Staff requires staff_id
     staff_u = user_factory("mboulot")
-    return Staff.objects.create(user=staff_u, staff_id="ST123", department=department)
+    return Staff.objects.create(user=staff_u, staff_id="ST123")
 
 
 @pytest.fixture
-def faculty(staff_factory: StaffFactory, department) -> Faculty:
+def faculty(staff_factory: StaffFactory) -> Faculty:
     """Default Faculty."""
-    staff = staff_factory("elprofessor", department)
+    staff = staff_factory("elprofessor")
     return Faculty.objects.create(staff_profile=staff)
 
 
@@ -56,9 +54,7 @@ def donor(user_factory: UserFactory) -> Donor:
 
 
 @pytest.fixture
-def student(
-    user_factory: UserFactory, semester: Semester, curriculum: Curriculum
-) -> Student:
+def student(user_factory: UserFactory, semester, curriculum) -> Student:
     user = user_factory("letudiant")
     return Student.objects.create(
         user=user, curriculum=curriculum, current_enroled_semester=semester
@@ -66,37 +62,6 @@ def student(
 
 
 # ~~~~~~~~~~~~~~~~ Factories ~~~~~~~~~~~~~~~~
-@pytest.fixture
-def staff_factory(
-    user_factory: UserFactory, department_factory: DepartmentFactory
-) -> StaffFactory:
-    """Return a callable for making extra Staff objects on demand.
-
-    my_staff = staff_factory("joe", some_department)
-    """
-
-    def _make(uname: str, dpt_short_name: str) -> Staff:
-        department = department_factory(dpt_short_name)
-        user = user_factory(uname)
-        return Staff.objects.create(user=user, department=department)
-
-    return _make
-
-@pytest.fixture
-def student_factory(
-    user_factory: UserFactory, department_factory: DepartmentFactory
-) -> StaffFactory:
-    """Return a callable for making extra Staff objects on demand.
-
-    my_staff = staff_factory("joe", some_department)
-    """
-
-    def _make(uname: str, dpt_short_name: str) -> Staff:
-        department = department_factory(dpt_short_name)
-        user = user_factory(uname)
-        return Staff.objects.create(user=user, department=department)
-
-    return _make
 
 
 @pytest.fixture
@@ -105,5 +70,50 @@ def user_factory() -> UserFactory:
 
     def _make(username: str) -> User:
         return User.objects.create_user(username=username)
+
+    return _make
+
+
+@pytest.fixture
+def staff_factory(user_factory: UserFactory) -> StaffFactory:
+    """Return a callable for making extra Staff objects on demand.
+
+    my_staff = staff_factory("joe", some_department)
+    """
+
+    def _make(staff_uname: str) -> Staff:
+
+        return Staff.objects.create(user=user_factory(staff_uname))
+
+    return _make
+
+
+@pytest.fixture
+def student_factory(
+    user_factory: UserFactory, curriculum_factory: CurriculumFactory
+) -> StudentFactory:
+    """Return a callable for making extra Student objects on demand.
+
+    my_student = student_factory("joe", some_curriculum short name)
+    """
+
+    def _make(uname: str, curri_short_name: str) -> Student:
+        return Student.objects.create(
+            user=user_factory(uname),
+            curriculum=curriculum_factory(curri_short_name),
+        )
+
+    return _make
+
+
+@pytest.fixture
+def donor_factory(user_factory: UserFactory, curriculum_factory) -> DonorFactory:
+    """Return a callable for making extra Donoro objects on demand."""
+
+    def _make(uname: str, curri_short_name: str) -> Donor:
+        return Donor.objects.create(
+            user=user_factory(uname),
+            curriculum=curriculum_factory(curri_short_name),
+        )
 
     return _make

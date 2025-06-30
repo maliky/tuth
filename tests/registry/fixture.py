@@ -11,24 +11,24 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from app.registry.choices import DocumentType, StatusRegistration
 from app.registry.models import ClassRoster, Document, Grade, Registration
-from app.people.models.student import Student
-from app.timetable.models.section import Section
 
-DocumentFactory: TypeAlias = Callable[[Student], Document]
-RegistrationFactory: TypeAlias = Callable[[Student, Section], Registration]
-GradeFactory: TypeAlias = Callable[[Student, Section, str], Grade]
-ClassRosterFactory: TypeAlias = Callable[[Section], ClassRoster]
+RegistrationFactory: TypeAlias = Callable[[str, str, str, str], Registration]
+GradeFactory: TypeAlias = Callable[[str, str, str, str, Decimal], Grade]
+DocumentFactory: TypeAlias = Callable[[str, str], Document]
+ClassRosterFactory: TypeAlias = Callable[[str, str], ClassRoster]
+
+DECIMAL_90 = Decimal("90")
 
 
 @pytest.fixture
-def registration(student: Student, section: Section) -> Registration:
+def registration(student, section) -> Registration:
     """Default registration for a student."""
 
     return Registration.objects.create(student=student, section=section)
 
 
 @pytest.fixture
-def grade(student: Student, section: Section) -> Grade:
+def grade(student, section) -> Grade:
     """Default grade for a student in a section."""
 
     return Grade.objects.create(
@@ -40,7 +40,7 @@ def grade(student: Student, section: Section) -> Grade:
 
 
 @pytest.fixture
-def document(student: Student) -> Document:
+def document(student) -> Document:
     """Default document attached to a student."""
 
     ct = ContentType.objects.get_for_model(student)
@@ -54,7 +54,7 @@ def document(student: Student) -> Document:
 
 
 @pytest.fixture
-def class_roster(section: Section) -> ClassRoster:
+def class_roster(section) -> ClassRoster:
     """Default class roster for a section."""
 
     return ClassRoster.objects.create(section=section)
@@ -64,17 +64,19 @@ def class_roster(section: Section) -> ClassRoster:
 
 
 @pytest.fixture
-def registration_factory() -> RegistrationFactory:
+def registration_factory(student_factory, section_factory) -> RegistrationFactory:
     """Return a callable to build registrations."""
 
+    #    TODO
     def _make(
-        student: Student,
-        section: Section,
+        student_uname: str,
+        curri_short_name: str,
+        course_number: str,
         status: str = StatusRegistration.PENDING,
     ) -> Registration:
         return Registration.objects.create(
-            student=student,
-            section=section,
+            student=student_factory(student_uname, curri_short_name),
+            section=section_factory(course_number, curri_short_name),
             status=status,
         )
 
@@ -82,18 +84,20 @@ def registration_factory() -> RegistrationFactory:
 
 
 @pytest.fixture
-def grade_factory() -> GradeFactory:
+def grade_factory(student_factory, section_factory) -> GradeFactory:
     """Return a callable to build grades."""
 
     def _make(
-        student: Student,
-        section: Section,
+        student_uname: str,
+        curri_short_name: str,
+        course_number: str,
         letter: str = "A",
-        numeric: Decimal = Decimal("90"),
+        numeric: Decimal = DECIMAL_90,
     ) -> Grade:
+
         return Grade.objects.create(
-            student=student,
-            section=section,
+            student=student_factory(student_uname, curri_short_name),
+            section=section_factory(course_number, curri_short_name),
             letter_grade=letter,
             numeric_grade=numeric,
         )
@@ -102,10 +106,11 @@ def grade_factory() -> GradeFactory:
 
 
 @pytest.fixture
-def document_factory() -> DocumentFactory:
+def document_factory(student_factory) -> DocumentFactory:
     """Return a callable to build documents."""
 
-    def _make(student: Student) -> Document:
+    def _make(student_uname: str, curri_short_name: str) -> Document:
+        student = student_factory(student_uname, curri_short_name)
         ct = ContentType.objects.get_for_model(student)
         file_data = SimpleUploadedFile("doc.txt", b"data")
         return Document.objects.create(
@@ -119,10 +124,12 @@ def document_factory() -> DocumentFactory:
 
 
 @pytest.fixture
-def class_roster_factory() -> ClassRosterFactory:
+def class_roster_factory(section_factory) -> ClassRosterFactory:
     """Return a callable to build class rosters."""
 
-    def _make(section: Section) -> ClassRoster:
-        return ClassRoster.objects.create(section=section)
+    def _make(course_number: str, curri_short_name: str) -> ClassRoster:
+        return ClassRoster.objects.create(
+            section=section_factory(course_number, curri_short_name)
+        )
 
     return _make

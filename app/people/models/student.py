@@ -28,9 +28,11 @@ class Student(AbstractPerson):
     ID_FIELD = "student_id"
     ID_PREFIX = "TU_STD"
 
-    # ~~~~ Auto-filled ~~~~
-    student_id = models.CharField(max_length=20, unique=True)
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     curriculum = models.ForeignKey("academics.Curriculum", on_delete=models.CASCADE)
+
+    # ~~~~ Auto-filled ~~~~
+    student_id = models.CharField(max_length=20, unique=True, blank=True)
 
     # ~~~~~~~~ Optional ~~~~~~~~
     current_enroled_semester = models.ForeignKey(

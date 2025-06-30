@@ -37,8 +37,9 @@ class Staff(AbstractPerson):
     ID_FIELD = "staff_id"
     ID_PREFIX = "TU_STF"
 
-    # ~~~~ Auto-filled ~~~~
-    staff_id = models.CharField(max_length=13, unique=True)
+    # ~~~~~~~~ Mandatory ~~~~~~~~
+    # ~~~~ Auto-filled ~~~~ /     # ~~~~ Read-only ~~~~
+    staff_id = models.CharField(max_length=13, unique=True, editable=False)
 
     # ~~~~~~~~ Optional ~~~~~~~~
     employment_date = models.DateField(null=True, blank=True)

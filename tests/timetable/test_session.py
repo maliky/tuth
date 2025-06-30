@@ -3,7 +3,6 @@
 import pytest
 from django.db import IntegrityError, transaction
 
-from app.timetable.models.section import Section
 from app.timetable.models.session import Session
 
 pytestmark = pytest.mark.django_db  # replace the @pytest.mark.django_db decorator

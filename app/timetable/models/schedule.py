@@ -144,8 +144,8 @@ class Schedule(models.Model):
         """
         try:
             start_time = cls._find_next_free_slot(day)
-        except RuntimeError as rte:
-            raise rte(f"Could not find a free time slot on {day}")
+        except RuntimeError:
+            raise RuntimeError(f"Could not find a free time slot on {day}")
 
         def_schedule, _ = cls.objects.get_or_create(
             weekday=day,

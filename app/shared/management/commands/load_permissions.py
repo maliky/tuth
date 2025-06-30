@@ -92,7 +92,7 @@ class Command(BaseCommand):
         }
 
     def get_unknow_models(self):
-        """Return the unknow models from the YAML file."""        
+        """Return the unknow models from the YAML file."""
         return {
             model
             for model in self.spec["model_app"]

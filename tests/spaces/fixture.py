@@ -8,7 +8,7 @@ import pytest
 from app.spaces.models.core import Room, Space
 
 RoomFactory: TypeAlias = Callable[[str, str], Room]
-SpaceFactory: TypeAlise = Callable[[str], Space]
+SpaceFactory: TypeAlias = Callable[[str], Space]
 
 
 @pytest.fixture
