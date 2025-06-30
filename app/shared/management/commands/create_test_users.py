@@ -6,7 +6,7 @@ from app.people.choices import UserRole
 
 
 class Command(BaseCommand):
-    """Create test users."""
+    """Create test users using the UserRole."""
 
     help = "Create test users and assign them to role groups."
 
