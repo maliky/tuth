@@ -6,6 +6,7 @@ from app.timetable.models.section import Section
 from django.contrib import admin
 
 from app.shared.mixins import HistoricalAccessMixin
+from app.shared.admin import SemesterFilter
 
 from app.registry.models.class_roster import ClassRoster
 from app.registry.models.grade import Grade
@@ -35,6 +36,7 @@ class GradeAdmin(HistoricalAccessMixin, admin.ModelAdmin):
         "section__number",
     )
     autocomplete_fields = ("student", "section")
+    list_filter = (SemesterFilter,)
 
 
 @admin.register(ClassRoster)
@@ -46,6 +48,7 @@ class ClassRosterAdmin(admin.ModelAdmin):
     """
 
     list_display = ("section", "student_count", "last_updated")
+    list_filter = (SemesterFilter,)
     search_fields = (
         "section__course__code",
         "section__number",
@@ -64,6 +67,7 @@ class RegistrationAdmin(HistoricalAccessMixin, admin.ModelAdmin):
     """Allow students to register only for eligible sections."""
 
     list_display = ("student", "section", "status", "date_registered")
+    list_filter = (SemesterFilter,)
     autocomplete_fields = ("student", "section")
     search_fields = (
         "student__student_id",
