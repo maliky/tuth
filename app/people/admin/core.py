@@ -8,10 +8,11 @@ from app.timetable.admin.inlines import SectionInline
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
+from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
 
 
 @admin.register(Faculty)
-class FacultyAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+class FacultyAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Admin options for :class:~app.people.models.Faculty.
 
     Displays the staff profile with optional filtering by college. The faculty
@@ -64,7 +65,7 @@ class DonorAdmin(GuardedModelAdmin):
 
 
 @admin.register(Staff)
-class StaffAdmin(GuardedModelAdmin):
+class StaffAdmin(DepartmentRestrictedAdmin, GuardedModelAdmin):
     """Admin management for :class:~app.people.models.Staff.
 
     Provides detailed fieldsets for personal and work information. Important

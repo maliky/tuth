@@ -3,6 +3,7 @@
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
+from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
 
 from app.academics.admin.actions import update_curriculum
 from app.academics.models.college import College
@@ -30,7 +31,7 @@ from .resources import (
 
 
 @admin.register(Course)
-class CourseAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+class CourseAdmin(DepartmentRestrictedAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Admin interface for Course.
 
     Provides course management with extra tools:
@@ -84,7 +85,7 @@ class PrerequisiteAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 
 @admin.register(Curriculum)
-class CurriculumAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+class CurriculumAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Admin options for Curriculum.
 
     Key features:
@@ -119,7 +120,7 @@ class CollegeAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 
 @admin.register(Department)
-class DepartmentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+class DepartmentAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Admin interface for :class:~app.academics.models.Department.
 
     Shows department code, name and college. autocomplete_fields speeds up
@@ -132,7 +133,7 @@ class DepartmentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 
 @admin.register(Program)
-class ProgramAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+class ProgramAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Admin screen for :class:~app.academics.models.Program.
 
     list_display shows the curriculum and related course while
@@ -141,6 +142,7 @@ class ProgramAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """
 
     resource_class = ProgramResource
+    college_field = "curriculum__college"
     list_display = ("curriculum", "course")
     autocomplete_fields = ("curriculum", "course")
     list_select_related = ("curriculum", "course")

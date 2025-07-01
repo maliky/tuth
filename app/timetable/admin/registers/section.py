@@ -3,6 +3,7 @@
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
+from app.shared.admin.mixins import CollegeRestrictedAdmin
 
 from app.people.models.staffs import Faculty
 from app.registry.admin.inlines import GradeInline
@@ -12,7 +13,7 @@ from app.timetable.models.section import Section
 
 
 @admin.register(Section)
-class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+class SectionAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Admin interface for Section.
 
     list_display includes semester, course and faculty information while
@@ -20,6 +21,7 @@ class SectionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     """
 
     resource_class = SectionResource
+    college_field = "program__curriculum__college"
     list_display = (
         "semester",
         "program",
