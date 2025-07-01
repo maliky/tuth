@@ -6,6 +6,9 @@ from app.finance.models.payment import Payment
 
 from app.finance.models.payment_history import PaymentHistory
 from app.finance.models.scholarship import Scholarship
+from app.finance.models.financial_record import FinancialRecord
+
+from app.shared.mixins import HistoricalAccessMixin
 
 
 @admin.register(Payment)
@@ -14,6 +17,14 @@ class PaymentAdmin(admin.ModelAdmin):
 
     list_display = ("__str__", "method", "recorded_by")
     readonly_fields = ("created_at",)
+
+
+@admin.register(FinancialRecord)
+class FinancialRecordAdmin(HistoricalAccessMixin, admin.ModelAdmin):
+    """Admin interface for :class:`~app.finance.models.FinancialRecord`."""
+
+    list_display = ("student", "total_due", "total_paid", "clearance_status")
+    autocomplete_fields = ("student", "verified_by")
 
 
 @admin.register(Scholarship)
@@ -29,7 +40,7 @@ class ScholarshipAdmin(admin.ModelAdmin):
 
 
 @admin.register(PaymentHistory)
-class PaymentHistoryAdmin(admin.ModelAdmin):
+class PaymentHistoryAdmin(HistoricalAccessMixin, admin.ModelAdmin):
     """Admin interface for :class:~app.finance.models.PaymentHistory.
 
     Shows a summary string along with the record, payment method and user.
