@@ -5,12 +5,14 @@ from app.registry.models.registration import Registration
 from app.timetable.models.section import Section
 from django.contrib import admin
 
+from app.shared.mixins import HistoricalAccessMixin
+
 from app.registry.models.class_roster import ClassRoster
 from app.registry.models.grade import Grade
 
 
 @admin.register(Grade)
-class GradeAdmin(admin.ModelAdmin):
+class GradeAdmin(HistoricalAccessMixin, admin.ModelAdmin):
     """Admin interface for :class:~app.registry.models.Grade.
 
     Shows student, section and grade fields in the list view with autocomplete
@@ -58,7 +60,7 @@ class ClassRosterAdmin(admin.ModelAdmin):
 
 
 @admin.register(Registration)
-class RegistrationAdmin(admin.ModelAdmin):
+class RegistrationAdmin(HistoricalAccessMixin, admin.ModelAdmin):
     """Allow students to register only for eligible sections."""
 
     list_display = ("student", "section", "status", "date_registered")
@@ -75,13 +77,14 @@ class RegistrationAdmin(admin.ModelAdmin):
         Limit the registration to those of the student consulting the page.
         """
         qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
+        if request.user.is_superuser or self.has_historical_access(request.user):
+            return self.get_historical_queryset(request)
         try:
             student = request.user.student
         except Student.DoesNotExist:
             return qs.none()
-        return qs.filter(student=student)
+        qs = qs.filter(student=student)
+        return self.filter_current_semester(qs)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Probably orverriding the default form for the model.
