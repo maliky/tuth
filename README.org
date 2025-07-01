@@ -2,6 +2,10 @@
 
 * Tuth Application — Quickstart Guide
 
+** Tuth Application Overview
+
+Tuth is a student information and academic management system designed to streamline administrative tasks at the university. It manages student profiles, curricula, courses, registrations, class schedules, financial transactions, and role-based permissions, all through Django's admin interface.
+
 This document summarizes how to run and test the Tuth application in different environments.
 ** Getting the Code
 Clone the repository and enter its directory:
@@ -11,12 +15,14 @@ cd tuth
 #+END_SRC
 ** The apps
 Here are the different applications you will find in this directory:
-- Registry for documents, registrations, class rosters
-- Spaces for building and room
-- Academics for courses, curricula, colleges and prerequisites
-- Timetable for reservations, semesters & schedule definitions
-- People for role and user profile  
-- Finance for payments, scholarships and financial records.
+| App Name | Description |
+|------------+-----------------------------------------------------------|
+| Registry | Handles student documents, registrations, and class rosters |
+| Spaces | Manages buildings, rooms, and locations |
+| Academics | Maintains courses, curricula, colleges, and prerequisites |
+| Timetable | Schedules sections, semesters, academic years, and sessions |
+| People | Manages user profiles, roles, and permissions |
+| Finance | Processes payments, financial records, and scholarships |
 
 ** Running Locally without Docker
 For a quick local setup using SQLite, run:
