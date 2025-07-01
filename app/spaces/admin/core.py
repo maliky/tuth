@@ -17,9 +17,25 @@ class SpaceAdmin(GuardedModelAdmin):
     """
 
     search_fields = ("code", "full_name")
-    list_display = ("code", "full_name")
+    list_display = ("code", "full_name", "current_sections")
 
-    # > list the sections in that building for the current semester
+    def current_sections(self, obj):
+        """Return sections scheduled in this space for the current semester."""
+        from app.timetable.models.section import Section
+        from app.timetable.utils import get_current_semester
+
+        semester = get_current_semester()
+        if semester is None:
+            return "--"
+        sections = (
+            Section.objects.filter(
+                semester=semester, sessions__room__space=obj
+            )
+            .distinct()
+            .order_by("program__course__code", "number")
+        )
+        codes = [s.short_code for s in sections]
+        return ", ".join(codes) if codes else "--"
 
 
 @admin.register(Room)

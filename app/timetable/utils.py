@@ -59,3 +59,15 @@ def validate_subperiod(
         ).exists()
         if clash:
             raise ValidationError({label: overlap_message})
+
+
+def get_current_semester(today: Optional[date] = None):
+    """Return the Semester active for *today* or ``None`` if none."""
+    from app.timetable.models.semester import Semester
+
+    today = today or date.today()
+    return (
+        Semester.objects.filter(start_date__lte=today, end_date__gte=today)
+        .order_by("start_date")
+        .first()
+    )
