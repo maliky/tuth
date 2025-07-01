@@ -51,6 +51,10 @@ def upsert_test_users_and_roles(
             user=user,
             role=role,
             college=college,
-            defaults={"start_date": timezone.now().date(), "end_date": None},
+            defaults={
+                "start_date": timezone.now().date(),
+                "end_date": None,
+                "department": None,
+            },
         )
         log(cmd, f"  ↳ {user.username} ({role})")

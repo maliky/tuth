@@ -11,13 +11,21 @@ from app.people.choices import UserRole
 pytestmark = pytest.mark.django_db
 
 
-def test_unique_role_per_period(user, college):
+def test_unique_role_per_period(user, college, department):
     start = date.today()
     RoleAssignment.objects.create(
-        user=user, role=UserRole.REGISTRAR, college=college, start_date=start
+        user=user,
+        role=UserRole.REGISTRAR,
+        college=college,
+        department=department,
+        start_date=start,
     )
     with pytest.raises(IntegrityError):
         with transaction.atomic():
             RoleAssignment.objects.create(
-                user=user, role=UserRole.REGISTRAR, college=college, start_date=start
+                user=user,
+                role=UserRole.REGISTRAR,
+                college=college,
+                department=department,
+                start_date=start,
             )

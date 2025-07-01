@@ -35,7 +35,7 @@ def grant_model_level_perms(groups):
 
 def grant_college_object_perms():
     """Grant object-level college permissions to role assignments."""
-    for ra in RoleAssignment.objects.select_related("college"):
+    for ra in RoleAssignment.objects.select_related("college", "department"):
         if ra.college is None:
             continue
         for perm_name, roles in OBJECT_PERM_MATRIX["college"].items():
