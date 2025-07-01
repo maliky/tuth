@@ -2,6 +2,8 @@
 
 from django.contrib import admin
 
+from app.shared.admin import SemesterFilter
+
 from app.finance.models.payment import Payment
 
 from app.finance.models.payment_history import PaymentHistory
@@ -13,6 +15,7 @@ class PaymentAdmin(admin.ModelAdmin):
     """Admin settings for Payment."""
 
     list_display = ("__str__", "method", "recorded_by")
+    list_filter = (SemesterFilter,)
     readonly_fields = ("created_at",)
 
 
@@ -38,4 +41,5 @@ class PaymentHistoryAdmin(admin.ModelAdmin):
 
     # Shows summary string plus related info
     list_display = ("__str__", "financial_record", "method", "recorded_by")
+    list_filter = (SemesterFilter,)
     readonly_fields = ("payment_date",)
