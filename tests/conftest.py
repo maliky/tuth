@@ -13,4 +13,5 @@ pytest_plugins = [
     "tests.finance.fixture",
     "tests.registry.fixture",
     "tests.shared.fixture",
+    "tests.shared.permissions_fixtures",
 ]
