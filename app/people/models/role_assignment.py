@@ -19,6 +19,9 @@ class RoleAssignment(models.Model):
         ...     role=UserRole.REGISTRAR,
         ...     start_date=date.today(),
         ... )
+
+    The optional ``department`` field further scopes a role within a
+    specific academic department, similar to ``college``.
     """
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
@@ -36,6 +39,13 @@ class RoleAssignment(models.Model):
         on_delete=models.SET_NULL,
         related_name="role_assignments",
     )
+    department = models.ForeignKey(
+        "academics.Department",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="role_assignments",
+    )
     end_date = models.DateField(null=True, blank=True)
 
     def __str__(self) -> str:
@@ -44,10 +54,10 @@ class RoleAssignment(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["user", "role", "college", "start_date"],
+                fields=["user", "role", "college", "department", "start_date"],
                 name="unique_role_per_period",
             )
         ]
         indexes = [
-            models.Index(fields=["role", "college", "end_date"]),
+            models.Index(fields=["role", "college", "department", "end_date"]),
         ]
