@@ -49,7 +49,7 @@ def program() -> Program:
 
 @pytest.fixture
 def college_factory() -> CollegeFactory:
-    def _make(code: str = "CLG_TEST") -> College:
+    def _make(code: str = "TEST") -> College:
         """Create College with matching code."""
         return College.objects.create(code=code)
 

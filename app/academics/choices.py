@@ -96,6 +96,7 @@ class CollegeCodeChoices(models.TextChoices):
     COET = "COET", "COET"
     COBA = "COBA", "COBA"
     DEFT = "DEFT", "DEFT"  # default
+    TEST = "TEST", "TEST"  # for test purposes
 
 
 class CollegeLongNameChoices(models.TextChoices):
@@ -109,7 +110,7 @@ class CollegeLongNameChoices(models.TextChoices):
         "deft_long_name",
         "College of default when no other college is chosen.",
     )  # default
-
+    TEST = "test_long_name", "College used for Test purposes"  # for test purposes
 
 class StatusCurriculum(models.TextChoices):
     PENDING = "pending", "Pending"

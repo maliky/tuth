@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Iterable
 
-from django.contrib.auth.models import User
 from django.http import HttpRequest
 
 from app.people.models.role_assignment import RoleAssignment
@@ -20,7 +19,7 @@ class HistoricalAccessMixin:
         "enrollment_officer",
     }
 
-    def has_historical_access(self, user: User) -> bool:
+    def has_historical_access(self, user) -> bool:
         """Return True if user has a role with historical privileges."""
 
         return RoleAssignment.objects.filter(

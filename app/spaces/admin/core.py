@@ -28,9 +28,7 @@ class SpaceAdmin(GuardedModelAdmin):
         if semester is None:
             return "--"
         sections = (
-            Section.objects.filter(
-                semester=semester, sessions__room__space=obj
-            )
+            Section.objects.filter(semester=semester, sessions__room__space=obj)
             .distinct()
             .order_by("program__course__code", "number")
         )

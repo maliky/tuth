@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Callable, TypeAlias
 
 import pytest
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 
 from app.people.models.donor import Donor
 from app.people.models.staffs import Faculty, Staff
@@ -13,6 +13,7 @@ from app.people.models.student import Student
 from tests.academics.fixture import CurriculumFactory
 
 UserFactory: TypeAlias = Callable[[str], User]
+GroupFactory: TypeAlias = Callable[[str], Group]
 StaffFactory: TypeAlias = Callable[[str], Staff]
 StudentFactory: TypeAlias = Callable[[str, str], Student]
 DonorFactory: TypeAlias = Callable[[str], Donor]
@@ -62,6 +63,16 @@ def student(user_factory: UserFactory, semester, curriculum) -> Student:
 
 
 # ~~~~~~~~~~~~~~~~ Factories ~~~~~~~~~~~~~~~~
+
+
+@pytest.fixture
+def group_factory() -> GroupFactory:
+    """Returns a function to create a group."""
+
+    def _make(name: str) -> Group:
+        return Group.objects.create(name=name)
+
+    return _make
 
 
 @pytest.fixture
