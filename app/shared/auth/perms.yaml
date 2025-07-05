@@ -49,37 +49,37 @@ model_app:
 # ---------------------------------------------------------------------
 object_perm_matrix:
   college:
-    view:   [dean, chair, vpaa, vpa, registrar, student, prospective_student]
+    view:   [dean, chair, vpaa,  registrar, student, student_prospecting]
     add:    [vpaa]
     change: [vpaa, dean]
     delete: [vpaa]
 
   department:
-    view:   [dean, chair, vpaa, vpa, registrar, faculty]
+    view:   [dean, chair, vpaa,  registrar, faculty]
     add:    [dean, vpaa]
     change: [dean, vpaa]
     delete: [vpaa]
 
   course:
-    view:   [dean, chair, faculty, lecturer, registrar, vpaa, vpa, student, prospective_student]
+    view:   [dean, chair, faculty, registrar, vpaa,  student, student_prospecting]
     add:    [chair, dean, vpaa]
     change: [chair, dean, vpaa]
     delete: [vpaa]
 
   curriculum:
-    view:   [dean, chair, faculty, registrar, vpaa, vpa, student, prospective_student]
+    view:   [dean, chair, faculty, registrar, vpaa,  student, student_prospecting]
     add:    [dean, vpaa]
     change: [dean, vpaa]
     delete: [vpaa]
 
   concentration:
-    view:   [dean, chair, vpaa, vpa, registrar, faculty]
+    view:   [dean, chair, vpaa,  registrar, faculty]
     add:    [dean, vpaa]
     change: [dean, vpaa]
     delete: [vpaa]
 
   program:
-    view:   [dean, chair, vpaa, vpa, registrar, faculty, student]
+    view:   [dean, chair, vpaa,  registrar, faculty, student]
     add:    [chair, dean, vpaa]
     change: [chair, dean, vpaa]
     delete: [vpaa]
@@ -91,127 +91,127 @@ object_perm_matrix:
     delete: [vpaa]
 
   student:
-    view:   [registrar, faculty, financial_officer, vpaa, vpa, student]
+    view:   [registrar, faculty, finance_officer, vpaa,  student]
     add:    [enrollment_officer]
     change: [enrollment_officer, registrar]
     delete: [registrar]
 
   faculty:
-    view:   [dean, chair, vpaa, vpa, registrar, faculty]
+    view:   [dean, chair, vpaa,  registrar, faculty]
     add:    [vpaa]
     change: [vpaa]
     delete: [vpaa]
 
   staff:
-    view:   [vpaa, vpa, registrar]
+    view:   [vpaa,  registrar]
     add:    [vpaa]
     change: [vpaa]
     delete: [vpaa]
 
   donor:
-    view:   [financial_officer, vpaa, vpa]
-    add:    [financial_officer]
-    change: [financial_officer]
-    delete: [financial_officer]
+    view:   [finance_officer, vpaa, vpa]
+    add:    [finance_officer]
+    change: [finance_officer]
+    delete: [finance_officer]
 
   space:
-    view:   [registrar, vpaa, vpa, dean, chair, student, prospective_student]
+    view:   [registrar, vpaa,  dean, chair, student, student_prospecting]
     add:    [registrar, vpaa]
     change: [registrar]
     delete: [vpaa]
 
   room:
-    view:   [registrar, vpaa, vpa, dean, chair, student, prospective_student]
+    view:   [registrar, vpaa,  dean, chair, student, student_prospecting]
     add:    [registrar]
     change: [registrar]
     delete: [registrar]
 
   academicyear:
-    view:   [vpaa, vpa, registrar, dean, chair, student, prospective_student]
+    view:   [vpaa,  registrar, dean, chair, student, student_prospecting]
     add:    [vpaa]
     change: [vpaa]
     delete: [vpaa]
 
   semester:
-    view:   [vpaa, vpa, registrar, dean, chair, student, prospective_student]
+    view:   [vpaa,  registrar, dean, chair, student, student_prospecting]
     add:    [registrar, vpaa]
     change: [vpaa, registrar]
     delete: [vpaa]
 
   term:
-    view:   [vpaa, vpa, registrar, dean, chair, student, prospective_student]
+    view:   [vpaa,  registrar, dean, chair, student, student_prospecting]
     add:    [registrar, vpaa]
     change: [vpaa, registrar]
     delete: [vpaa]
 
   schedule:
-    view:   [registrar, faculty, vpaa, vpa, student]
+    view:   [registrar, faculty, vpaa,  student]
     add:    [registrar]
     change: [registrar, vpaa]
     delete: [registrar]
 
   session:
-    view:   [registrar, faculty, vpaa, vpa, student]
+    view:   [registrar, faculty, vpaa,  student]
     add:    [registrar]
     change: [registrar, vpaa]
     delete: [registrar]
 
   section:
-    view:   [dean, chair, faculty, registrar, vpaa, vpa, lecturer, student]
+    view:   [dean, chair, faculty, registrar, vpaa,  student]
     add:    [registrar, chair, dean]
     change: [registrar, chair, dean, vpaa]
     delete: [registrar]
 
   document:
-    view:   [registrar, financial_officer, enrollment_officer, vpaa, vpa, student, prospective_student]
-    add:    [registrar, enrollment_officer, student, prospective_student]
+    view:   [registrar, finance_officer, enrollment_officer, vpaa,  student, student_prospecting]
+    add:    [registrar, enrollment_officer, student, student_prospecting]
     change: [registrar]
     delete: [registrar]
 
   registration:
-    view:   [registrar, enrollment_officer, vpaa, vpa, student]
+    view:   [registrar, enrollment_officer, vpaa,  student]
     add:    [registrar, enrollment_officer, student]
     change: [registrar, enrollment_officer]
     delete: [registrar]
 
   classroster:
-    view:   [registrar, vpaa, vpa, dean, chair, faculty]
+    view:   [registrar, vpaa,  dean, chair, faculty]
     add:    [registrar]
     change: [registrar]
     delete: [registrar]
 
   grade:
-    view:   [registrar, faculty, vpaa, vpa, student]
+    view:   [registrar, faculty, vpaa,  student]
     add:    [faculty]
     change: [registrar]
     delete: [registrar]
 
   financialrecord:
-    view:   [financial_officer, registrar, vpaa, vpa, student]
-    add:    [financial_officer]
-    change: [financial_officer]
+    view:   [finance_officer, registrar, vpaa,  student]
+    add:    [finance_officer]
+    change: [finance_officer]
     delete: [vpa]
 
   payment:
-    view:   [cashier, financial_officer, registrar, vpaa, vpa, student]
+    view:   [cashier, finance_officer, registrar, vpaa,  student]
     add:    [cashier]
-    change: [financial_officer, vpaa]     
-    delete: [financial_officer]
+    change: [finance_officer, vpaa]     
+    delete: [finance_officer]
 
   paymenthistory:
-    view:   [cashier, financial_officer, registrar, vpaa, vpa, student]
+    view:   [cashier, finance_officer, registrar, vpaa,  student]
     add:    [cashier]
-    change: [financial_officer]
+    change: [finance_officer]
     delete: []
 
   scholarship:
-    view:   [financial_officer, registrar, vpaa, vpa, student]
-    add:    [financial_officer]
-    change: [financial_officer, vpaa]
-    delete: [financial_officer]
+    view:   [finance_officer, registrar, vpaa,  student]
+    add:    [finance_officer]
+    change: [finance_officer, vpaa]
+    delete: [finance_officer]
 
   sectionfee:
-    view:   [financial_officer, registrar, vpaa, vpa]
-    add:    [financial_officer]
-    change: [financial_officer, vpaa]
-    delete: [financial_officer]
+    view:   [finance_officer, registrar, vpaa, vpa]
+    add:    [finance_officer]
+    change: [finance_officer, vpaa]
+    delete: [finance_officer]

@@ -15,15 +15,9 @@ class UserRole(models.TextChoices):
     REGISTRAR_OFFICER = "registrar", "Registrar"
     STUDENT = "student", "Student"
     STUDENT_PROSPECTING = "student_prospecting", "Student Prospecting"
-    VPAA = "vice_president_acadmic_affaires", "Vice President Academic Affairs"
+    VPAA = "vpaa", "Vice President Academic Affairs"
     ADMINISTRATOR = "administrator", "Administrator"
     IT_OFFICER = (
         "it_officer",
         "It Officer",
-    )  # capitalize for coherence. do not chante to IT
-    # ASSISTANT_PROFESSOR = "assistant_professor", "Assistant Professor"
-    # ASSOCIATE_PROFESSOR = "associate_professor", "Associate Professor"
-    # LAB_TECHNICIAN = "lab_technician", "Lab Technician"
-    # LECTURER = "lecturer", "Lecturer"
-    # PROFESSOR = "professor", "Professor"
-    # TECHNICIAN = "technician", "Technician"
+    )
