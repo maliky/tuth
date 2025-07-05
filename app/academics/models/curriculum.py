@@ -48,8 +48,8 @@ class Curriculum(StatusableMixin, models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         """Return the college (if set): & curriculum short name."""
-        suffix = f"{self.college}: " if self.college_id else ""
-        return suffix + self.short_name
+        _prefix = f" ({self.college})" if self.college_id else ""
+        return self.short_name + _prefix
 
     @classmethod
     def get_default(cls, short_name="DFT_CUR") -> Self:
@@ -61,10 +61,18 @@ class Curriculum(StatusableMixin, models.Model):
         )
         return def_curriculum
 
+    def _ensure_activity(self):
+        """Make sure than only an aproved curriculum can be active."""
+        # > TODO would be good to bubble up a warning message to inform user
+        # of the change.
+        if self.status != StatusCurriculum.APPROVED:
+            self.is_active = False
+
     def save(self, *args, **kwargs):
         """Save a curriculum instance while setting defaults."""
         if not self.college_id:
             self.college = College.get_default()
+        self._ensure_activity()
         super().save(*args, **kwargs)
 
     def clean(self) -> None:

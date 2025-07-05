@@ -47,12 +47,14 @@ def expand_course_code(
     return college_code, dept_short_name, course_no
 
 
-def make_course_code(dept: Department, number: str) -> str:
-    """Return a compact code from a department, number and optional college.
+def make_course_code(dept: Department, number: str, short=False) -> str:
+    """Return a course code.
 
-    Returns:  {dept.code}{number}
+    formed from dept.code+course.num
+    if short == True use dept.short_name (without college info)
     """
-    return f"{dept.code}{number}".upper()
+    _dept_code = dept.short_name if short else dept.code
+    return f"{_dept_code}{number}".upper()
 
 
 def get_in_row(key: str, row: Optional[dict[str, str | None]]) -> str:

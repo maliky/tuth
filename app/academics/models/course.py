@@ -41,6 +41,7 @@ class Course(models.Model):
     code = models.CharField(max_length=20, editable=False)
 
     # ~~~~~~~~ Optional ~~~~~~~~
+    short_code = models.CharField(max_length=20, editable=True, null=True, blank=True)
     title = models.CharField(max_length=255, blank=True, null=True)
     description: models.TextField = models.TextField(blank=True, null=True)
     prerequisites = models.ManyToManyField(
@@ -53,7 +54,7 @@ class Course(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         """Return the CODE - Title representation."""
-        return f"{self.code} - {self.title}"
+        return f"{self.short_code} - {self.title}"
 
     @property
     def level(self) -> str:
@@ -69,19 +70,26 @@ class Course(models.Model):
         except KeyError:  # digit ∉ enum
             return "other"
 
-    def _ensure_code(self):
+    def _ensure_codes(self):
         if not self.code:
             self.code = make_course_code(self.department, number=self.number)
+        if not self.short_code:
+            self.short_code = make_course_code(
+                self.department, number=self.number, short=True
+            )
 
     def _ensure_dept(self):
         if not self.department_id:
             self.department = Department.get_default()
 
+    # > TODO: get the list of teachers for this course.sections during the current semester.
+    # > TODO: get the list of student enrolled in this course.sections during the current semester.
+
     # ---------- hooks ----------
     def save(self, *args, **kwargs) -> None:
         """Populate code from department short_name and number before saving."""
         self._ensure_dept()
-        self._ensure_code()
+        self._ensure_codes()
         super().save(*args, **kwargs)
 
     @classmethod

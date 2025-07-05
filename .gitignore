@@ -16,6 +16,7 @@ db_test*
 .git/*
 codo-tuth-env/
 logs/*
+*log*
 nginx/*
 static/*
 

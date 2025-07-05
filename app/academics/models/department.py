@@ -15,7 +15,7 @@ class Department(models.Model):
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     short_name = models.CharField(max_length=6)
-    # woulde be good to restric this to a few dept.
+    # would be good to restric this to a few dept.
     # but it is also here that I should set the Truth
     # short_name = models.CharField(
     #     max_length=6,
@@ -51,7 +51,7 @@ class Department(models.Model):
     def _ensure_long_name(self) -> None:
         """Make sure a title is set."""
         if not self.long_name:
-            self.long_name = f"{self.code} Department in {self.college}"
+            self.long_name = f"{self.short_name} department of {self.college}"
 
     def save(self, *args, **kwargs) -> None:
         """Save the Department making sure the code is set."""

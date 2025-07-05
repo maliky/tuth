@@ -31,9 +31,8 @@ class CourseProgramInline(admin.TabularInline):
 
     model = Program
     fk_name = "course"
-    verbose_name_plural = "Curricula having this course."
+    verbose_name_plural = "Curricula with this course."
     extra = 0
-    autocomplete_fields = ("course",)
 
 
 class CurriculumProgramInline(admin.TabularInline):
@@ -41,6 +40,16 @@ class CurriculumProgramInline(admin.TabularInline):
 
     model = Program
     fk_name = "curriculum"
-    verbose_name_plural = "Courses of this curriculum."
+    verbose_name_plural = "Courses in this curriculum."
     extra = 0
     autocomplete_fields = ("course",)
+
+
+# class CourseProgramInline(admin.TabularInline):
+#     """Inline for linking programs to a course."""
+
+#     model = Program
+#     fk_name = "curriculum"
+#     verbose_name_plural = "Courses in this program."
+#     extra = 0
+#     # autocomplete_fields = ("curriculum",)

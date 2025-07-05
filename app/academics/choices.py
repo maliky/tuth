@@ -112,6 +112,7 @@ class CollegeLongNameChoices(models.TextChoices):
     )  # default
     TEST = "test_long_name", "College used for Test purposes"  # for test purposes
 
+
 class StatusCurriculum(models.TextChoices):
     PENDING = "pending", "Pending"
     APPROVED = "approved", "Approved"

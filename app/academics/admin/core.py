@@ -30,6 +30,19 @@ from .resources import (
 )
 
 
+@admin.register(College)
+class CollegeAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+    """Admin settings for :class:~app.academics.models.College.
+
+    Displays the college code and name and provides search capability on both
+    fields via list_display and search_fields.
+    """
+
+    resource_class = CollegeResource
+    list_display = ("code", "long_name")
+    search_fields = ("code", "long_name")
+
+
 @admin.register(Course)
 class CourseAdmin(DepartmentRestrictedAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Admin interface for Course.
@@ -47,19 +60,54 @@ class CourseAdmin(DepartmentRestrictedAdmin, ImportExportModelAdmin, GuardedMode
 
     resource_class = CourseResource
     list_display = (
-        "code",
+        "short_code",
         "title",
-        "number",
-        "description",
         "department",
     )
     list_filter = ("department__college",)
     autocomplete_fields = ("curricula",)
+    # > TODO: Add the list of student enrolled in this course the current semester.
     inlines = [PrerequisiteInline, RequiresInline, CourseProgramInline]
     list_select_related = ("department",)
 
-    search_fields = ("code", "department__code", "title")
-    fields = ("department", "number", "title", "description")
+    search_fields = ("short_code", "department__code", "title")
+    fields = ("short_code", "department", "number", "title", "description")
+
+
+@admin.register(Curriculum)
+class CurriculumAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelAdmin):
+    """Admin options for Curriculum.
+
+    Key features:
+    - inlines manage related curriculum courses inline.
+    - list_display includes short and long names with the college.
+    - list_filter allows filtering by college and active state.
+    """
+
+    resource_class = CurriculumResource
+    # add the action button on the import form
+    list_display = ("short_name", "long_name", "college", "is_active", "status")
+    list_filter = ("college",)
+    autocomplete_fields = ("college",)
+    inlines = [CurriculumProgramInline]
+
+    # list_selected_relate reduces the number of queries in db
+    list_select_related = ("college",)
+    search_fields = ("short_name", "long_name")
+
+
+@admin.register(Department)
+class DepartmentAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelAdmin):
+    """Admin interface for :class:~app.academics.models.Department.
+
+    Shows department code, name and college. autocomplete_fields speeds up
+    college selection when editing a department.
+    """
+
+    resource_class = DepartmentResource
+    list_display = ("short_name", "college", "long_name")
+    list_filter = ("college",)
+    search_fields = ("short_name", "college", "long_name")
 
 
 @admin.register(Prerequisite)
@@ -84,54 +132,6 @@ class PrerequisiteAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     # search_fields = ("course", "prerequisite_course", "curriculum")
 
 
-@admin.register(Curriculum)
-class CurriculumAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin options for Curriculum.
-
-    Key features:
-    - inlines manage related curriculum courses inline.
-    - list_display includes short and long names with the college.
-    - list_filter allows filtering by college and active state.
-    """
-
-    resource_class = CurriculumResource
-    # add the action button on the import form
-    list_display = ("short_name", "long_name", "college")
-    list_filter = ("college",)
-    autocomplete_fields = ("college",)
-    inlines = [CurriculumProgramInline]
-
-    # list_selected_relate reduces the number of queries in db
-    list_select_related = ("college",)
-    search_fields = ("short_name", "long_name")
-
-
-@admin.register(College)
-class CollegeAdmin(ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin settings for :class:~app.academics.models.College.
-
-    Displays the college code and name and provides search capability on both
-    fields via list_display and search_fields.
-    """
-
-    resource_class = CollegeResource
-    list_display = ("code", "long_name")
-    search_fields = ("code", "long_name")
-
-
-@admin.register(Department)
-class DepartmentAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin interface for :class:~app.academics.models.Department.
-
-    Shows department code, name and college. autocomplete_fields speeds up
-    college selection when editing a department.
-    """
-
-    resource_class = DepartmentResource
-    list_display = ("short_name", "long_name", "code", "college")
-    search_fields = ("short_name", "long_name", "code")
-
-
 @admin.register(Program)
 class ProgramAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Admin screen for :class:~app.academics.models.Program.
@@ -143,7 +143,11 @@ class ProgramAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelA
 
     resource_class = ProgramResource
     college_field = "curriculum__college"
-    list_display = ("curriculum", "course")
+    list_display = ("course", "curriculum")
+    # need to order the filter by curriculum_college
+    list_filter = ("curriculum",)
     autocomplete_fields = ("curriculum", "course")
     list_select_related = ("curriculum", "course")
     search_fields = ("curriculum__short_name", "course__code")
+    # inlines = [CourseProgramInline]
+    # > Add the list all curriculum having this particular program, CurriculumInline
