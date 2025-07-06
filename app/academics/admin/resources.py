@@ -1,5 +1,6 @@
 """Resources module."""
 
+from app.academics.choices import CREDIT_NUMBER
 from django.contrib import messages
 from import_export import fields, resources
 
@@ -201,7 +202,9 @@ class ProgramResource(resources.ModelResource):
         column_name="course_dept",
         widget=CourseWidget(),
     )
-    credit_hours_f = fields.Field(attribute="credit_hours", column_name="credit_hours")
+    credit_hours_f = fields.Field(
+        attribute="credit_hours", column_name="credit_hours", default=CREDIT_NUMBER.THREE
+    )
 
     class Meta:
         model = Program

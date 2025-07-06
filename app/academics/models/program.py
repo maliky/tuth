@@ -51,6 +51,17 @@ class Program(models.Model):
         """Return Curriculum <-> Course for readability."""
         return f"{self.course} <-> {self.curriculum}"
 
+    def _ensure_credit_hours(self):
+        """Make sure the credit_hours is set."""
+        if not self.credit_hours:
+            self.credit_hours = CREDIT_NUMBER.THREE
+            
+    def save(self, *args,**kwargs):
+        """Make sure we set default before saving."""
+        if not self.credit_hours:
+            self._ensure_credit_hours()
+        super().save(*args, **kwargs)
+
     @classmethod
     def get_default(cls, _course: Optional[Course] = None) -> Self:
         """Returns a default Program."""
