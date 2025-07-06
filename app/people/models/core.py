@@ -28,6 +28,10 @@ class AbstractPerson(StatusableMixin, models.Model):
     Student, Donor, Staff->Facutly
     Side Effects:
         save() assigns an ID derived from user.
+
+    https://docs.djangoproject.com/en/5.2/topics/auth/customizing/#specifying-custom-user-model
+    # https://docs.djangoproject.com/en/5.2/topics/auth/customizing/#django.contrib.auth.models.AbstractUser
+
     """
 
     ID_FIELD: str | None = None
@@ -38,6 +42,10 @@ class AbstractPerson(StatusableMixin, models.Model):
     # if I want to hide the User model from the common user.
     # first_name = models.CharField(blank=True)
     # last_name = models.CharField(blank=True)
+    # first_name = models.CharField()
+    # last_name = models.CharField()
+    # username = models.CharField()
+    # email = models.EmailField()
 
     # ~~~~ Autofilled ~~~~
     # need to be filled automatically with the data from the first name, last name,
@@ -49,6 +57,7 @@ class AbstractPerson(StatusableMixin, models.Model):
         related_query_name="%(class)s",
     )
     # long_name = models.CharField(blank=False, editable=False)
+    # full_name = models.CharField(blank=True)
 
     # ~~~~~~~~ Optional ~~~~~~~~
     # # need to define a list of choice well structured

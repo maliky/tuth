@@ -17,25 +17,24 @@ from app.people.utils import extract_id_num, mk_username, split_name
 )
 def test_mk_username_default(first, last, username):
     """Default username generation without uniqueness."""
-    assert (
-        mk_username(first, last) == username
-    ), f"{first} {last} {mk_username(first, last)}-> != {username}"
+    _uname = mk_username(first, last, prefix_len=2)
+    assert _uname == username, f"{first} {last} {_uname}-> != {username}"
 
 
 @pytest.mark.django_db(transaction=True)
 def test_mk_username_uniquess(user_factory):
     """Check if the username stay uniq increased by number."""
-    un1 = mk_username("Esop", "Thot")  # esthot
+    un1 = mk_username("Esop", "Thot", prefix_len=2)  # esthot
     u1 = user_factory(username=un1)
 
     # create another user but with that username
-    un2 = mk_username("Esai", "Thot")  # esthot
+    un2 = mk_username("Esai", "Thot", prefix_len=2)  # esthot
     with pytest.raises(IntegrityError):
         with transaction.atomic():
             _ = user_factory(username=un2)
             # should through UNIQUE constraint failed: auth_user.username
 
-    un3 = mk_username("Esai", "Thot", unique=True)  # esthot1
+    un3 = mk_username("Esai", "Thot", exclude=True, prefix_len=2)  # esthot1
     u3 = user_factory(username=un3)
 
     assert un1 == "esthot", f"{un1}"
@@ -62,6 +61,9 @@ def test_mk_username_uniquess(user_factory):
         ("B Doe", "", "B.", "", "Doe", ""),
         ("Doe", "", "", "", "Doe", ""),
         (" Doc Oum", "Doc.", "", "", "Oum", ""),
+        # need to be consitent with number of name to distinguish the 2 below
+        ("Nimely, II, William N.", "", "William", "N.", "NimelyII", ""),
+        ("Nimely, William G.", "", "William", "G.", "Nimely", ""),
     ],
 )
 def test_split_name_initial_patterns(raw, prefix, first, middle, last, suffix):

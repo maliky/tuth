@@ -20,6 +20,7 @@ Functions:
 
 # regex patterns to pull suffixes, prefixes, initials, etc.
 import re
+from typing import Optional
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -145,11 +146,21 @@ def extract_firstnlast(raw_name: str) -> tuple[str, str, str]:
     return first_name, last_name, raw_name
 
 
+def handle_numbered_name_suffix(last_name, name_suffix):
+    """Concatenate any roman numeral from the suffix in the last_name."""
+    pat = r"\b(?:I{1,3})\b(?:,|\.)?"
+    m = re.search(pat, name_suffix)
+    if m:
+        name_suffix = re.sub(pat, "", name_suffix)
+        last_name += re.sub(r"\.|,", "", m.group()).strip()
+    return last_name, name_suffix
+
+
 def split_name(name: str) -> tuple[str, str, str, str, str]:
     """Splits a raw_name in prefix, first, middle, last, suffix.
 
     Idealy the name's part are in logical order.
-    but we try to take care of last before first
+    but we try to take care of last before first when separated by comma
     or just last and initials for the first.
     """
     name_suffix, raw_name = extract_suffix(name)
@@ -168,32 +179,50 @@ def split_name(name: str) -> tuple[str, str, str, str, str]:
 
     # Restore dots on prefixes
     name_prefix = re.sub(PREFIX_PATTERN, r"\1.", name_prefix)
+
+    # special case if the suffix is a number I, II... we append it to the lastname
+    last_name, name_suffix = handle_numbered_name_suffix(last_name, name_suffix)
+
     return name_prefix, first_name, middle_name, last_name, name_suffix
 
 
 def mk_username(
-    first: str, last: str, unique=False, max_length: int = 0, student_scheme=False
+    first: str,
+    last: str,
+    middle: str = "",
+    unique=False,
+    exclude: Optional[set[str]] = None,
+    prefix_len: Optional[int] = None,
 ) -> str:
-    """Generates a standard username.
+    """Generates a username.
 
-    If unique is True make sure it is unique.
-    The default rule is to take the first 2 char of the first name
-    and concatenate them with the last name. All lowercase.
-    but if student_scheme is True, take the first.lastname as username
-    - maxlength 13 char
+    Takes the initial of first and middle and add them to the last name
+    all lowercase.  Can set the prefix_len to reduce the part
+    of the first name been chopped.
+    When the middle name is give, take 2 char from it.
+    exclude permits to generate a username not in the list
     """
-    if student_scheme:
-        username_base = f"{first}.{last}".lower()
-    else:
-        username_base = (first[:2] + last).lower()
+    middle_initial = re.sub(r"\.| ", "", middle)[:2]
+    baseusername = (first[:prefix_len] + middle_initial + last).lower()
+    # import pdb; pdb.set_trace()
 
-    username = username_base[:max_length] if max_length else username_base
-
+    username = baseusername
     if unique:
-        counter = 0
+        counter = 1
         while User.objects.filter(username=username).exists():
             counter += 1
-            username = f"{username_base}{counter}"
+            username = f"{baseusername}{counter}"
+
+    if exclude:
+        counter = 1
+        # {username} - exclude is empty when username in exclude
+        # and we don't want that..
+        # its not empty if username is not in exclude
+        # in that case
+        while len({username} - exclude) == 0:
+            counter += 1
+            username = f"{baseusername}{counter}"
+
 
     return username
 

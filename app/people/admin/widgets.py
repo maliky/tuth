@@ -34,7 +34,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
             return Staff.get_unique_default()
 
         prefix, first, middle, last, suffix = split_name(value)
-        username = mk_username(first, last, unique=False)
+        username = mk_username(first, last, prefix_len=2)
 
         user, _ = User.objects.get_or_create(
             username=username,
@@ -91,19 +91,21 @@ class FacultyWidget(widgets.ForeignKeyWidget):
         return faculty
 
 
-class UserWidget(widgets.ForeignKeyWidget):
-    """Ensure a Faculty entry exists for the given staff name."""
+class StudentUserWidget(widgets.ForeignKeyWidget):
+    """Ensure a Student User exists."""
 
     def __init__(self):
         # field is "id" by default
         super().__init__(User)
+        self._cache: dict[str, str] = dict()
+        self._exclude = set()
 
     def clean(self, value: str, row=None, *args, **kwargs) -> User | None:
         """From the student name (an optionaly an id), gets a Student object.
 
         Create user and student objects if necessary.
-        Should be use with a columns where you are sure that the instance
-        is unique because will creat new user name in case of duplicate name.
+        Use the extrat colum student_id to desambiguate sames names
+        and create uniq username.
         """
 
         if not value:
@@ -111,7 +113,14 @@ class UserWidget(widgets.ForeignKeyWidget):
 
         std_fullname = (value or "").strip()
         prefix, first, middle, last, suffix = split_name(std_fullname)
-        username = mk_username(first, last, unique=True, student_scheme=True)
+
+        assert "student_id" in row
+        stdid = row.get("student_id")
+        username = self._cache.get(
+            stdid, mk_username(first, last, middle, exclude=self._exclude)
+        )
+        self._cache[stdid] = username
+        self._exclude |= {username}
 
         user, _ = User.objects.get_or_create(
             username=username,
@@ -121,5 +130,9 @@ class UserWidget(widgets.ForeignKeyWidget):
                 "password": TEST_PW,
             },
         )
-
         return user
+
+    def after_import(self, dataset, result, **kwargs):
+        """Remove any cache which may be present after import."""
+        self._exclude = set()
+        self.cache = dict()        

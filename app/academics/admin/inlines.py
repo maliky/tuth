@@ -33,7 +33,8 @@ class CourseProgramInline(admin.TabularInline):
     fk_name = "course"
     verbose_name_plural = "Curricula with this course."
     extra = 0
-    autocomplete_fields= ('curriculum',)
+    autocomplete_fields = ("curriculum",)
+
 
 class CurriculumProgramInline(admin.TabularInline):
     """Inline for linking courses to a program."""

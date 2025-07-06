@@ -2,7 +2,7 @@
 
 from import_export import fields, resources
 
-from app.people.admin.widgets import StaffProfileWidget, UserWidget
+from app.people.admin.widgets import StaffProfileWidget, StudentUserWidget
 from app.people.models.staffs import Faculty, Staff
 from app.people.models.student import Student
 from app.people.utils import mk_username, split_name
@@ -44,7 +44,7 @@ class DirectoryContactResource(resources.ModelResource):
         row["last_name"] = last
         row["name_suffix"] = suffix
         if not row.get("username"):
-            row["username"] = mk_username(first, last, unique=True)
+            row["username"] = mk_username(first, last, exclude=True)
 
 
 class FacultyResource(resources.ModelResource):
@@ -73,7 +73,9 @@ class StudentResource(resources.ModelResource):
     """Resource for bulk importing Student rows."""
 
     # should populate the pk field directly
-    user = fields.Field(attribute="user", column_name="student_name", widget=UserWidget())
+    user = fields.Field(
+        attribute="user", column_name="student_name", widget=StudentUserWidget()
+    )
 
     current_enroled_semester = fields.Field(
         attribute="current_enroled_semester",

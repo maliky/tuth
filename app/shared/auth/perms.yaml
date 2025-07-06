@@ -85,7 +85,7 @@ object_perm_matrix:
     delete: [vpaa]
 
   prerequisite:
-    view:   [dean, chair, registrar, vpaa, vpa]
+    view:   [dean, chair, registrar, vpaa]
     add:    [dean, registrar, vpaa]
     change: [dean, registrar, vpaa]
     delete: [vpaa]
@@ -109,7 +109,7 @@ object_perm_matrix:
     delete: [vpaa]
 
   donor:
-    view:   [finance_officer, vpaa, vpa]
+    view:   [finance_officer, vpaa]
     add:    [finance_officer]
     change: [finance_officer]
     delete: [finance_officer]
@@ -190,7 +190,7 @@ object_perm_matrix:
     view:   [finance_officer, registrar, vpaa,  student]
     add:    [finance_officer]
     change: [finance_officer]
-    delete: [vpa]
+    delete: []
 
   payment:
     view:   [cashier, finance_officer, registrar, vpaa,  student]
@@ -211,7 +211,7 @@ object_perm_matrix:
     delete: [finance_officer]
 
   sectionfee:
-    view:   [finance_officer, registrar, vpaa, vpa]
+    view:   [finance_officer, registrar, vpaa]
     add:    [finance_officer]
     change: [finance_officer, vpaa]
     delete: [finance_officer]
