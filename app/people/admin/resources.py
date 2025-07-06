@@ -1,6 +1,8 @@
 """Resources module."""
 
 from import_export import fields, resources
+from django.contrib.auth.models import Group
+from app.people.choices import UserRole
 
 from app.people.admin.widgets import StaffProfileWidget, StudentUserWidget
 from app.people.models.staffs import Faculty, Staff
@@ -68,6 +70,15 @@ class FacultyResource(resources.ModelResource):
         skip_unchanged = True
         report_skipped = False
 
+    def after_save_instance(self, instance, row, **kwargs) -> None:
+        """Assign the faculty group to the related user."""
+        if kwargs.get("dry_run"):
+            return
+
+        user = instance.staff_profile.user
+        group, _ = Group.objects.get_or_create(name=UserRole.FACULTY.label)
+        user.groups.add(group)
+
 
 class StudentResource(resources.ModelResource):
     """Resource for bulk importing Student rows."""
@@ -93,6 +104,14 @@ class StudentResource(resources.ModelResource):
             "current_enroled_semester",
             "first_enrollement_date",
         )
+
+    def after_save_instance(self, instance, row, **kwargs) -> None:
+        """Assign the student group to the user when importing."""
+        if kwargs.get("dry_run") or instance.user is None:
+            return
+
+        group, _ = Group.objects.get_or_create(name=UserRole.STUDENT.label)
+        instance.user.groups.add(group)
 
 
 class RegistrationResource(resources.ModelResource):
