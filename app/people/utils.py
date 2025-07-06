@@ -223,7 +223,6 @@ def mk_username(
             counter += 1
             username = f"{baseusername}{counter}"
 
-
     return username
 
 

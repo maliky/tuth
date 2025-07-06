@@ -107,7 +107,7 @@ class DepartmentAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedMod
     resource_class = DepartmentResource
     list_display = ("short_name", "long_name", "college")
     list_filter = ("college",)
-    search_fields = ("short_name","long_name", "college")
+    search_fields = ("short_name", "long_name", "college")
 
 
 @admin.register(Prerequisite)

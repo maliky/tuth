@@ -1,3 +1,5 @@
+"""Tests for importing users and assigning groups to them."""
+
 import pytest
 from tablib import Dataset
 from django.contrib.auth import get_user_model

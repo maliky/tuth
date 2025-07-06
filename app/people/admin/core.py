@@ -1,6 +1,7 @@
 """Core module."""
 
 from app.people.admin.resources import FacultyResource
+from app.people.forms import StudentFrom
 from app.people.models.student import Student
 from app.people.models.donor import Donor
 from app.people.models.staffs import Faculty, Staff
@@ -105,12 +106,53 @@ class StudentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     on both fields. Import/export is supported via ImportExportModelAdmin.
     """
 
+    form = StudentFrom
     list_display = ("long_name", "student_id", "user")
-    search_fields = (
-        "student_id",
-        "user__username",
-        # "long_name"
-        # "user__first_name",
-        # "user__last_name",
+    search_fields = ("student_id", "user__username", "user")
+    fieldsets = (
+        (
+            "Personal details",
+            {
+                "fields": (
+                    "name_prefix",
+                    "first_name",
+                    "middle_name",
+                    "last_name",
+                    "name_suffix",
+                    "date_of_birth",
+                    "phone_number",
+                    "physical_address",
+                    "bio",
+                    "photo",
+                    "curriculum",
+                )
+            },
+        ),
+        (
+            "Account (username & password)",
+            {
+                "fields": ("user__username", "user__email", "password1", "password2"),
+                "description": (
+                    "Username / e-mail are auto-generated from the name fields. "
+                    "Provide a password only when you want to change it."
+                ),
+            },
+        ),
     )
-    autocomplete_fields = ("user",)
+    readonly_fields = ("username", "email")
+
+    # -------------- helpers for readonly panel --------------
+    @admin.display(description="Username")
+    def username(self, obj):
+        """Access the username."""
+        return obj.user.username
+
+    @admin.display(description="Email")
+    def email(self, obj):
+        """Access the email."""
+        return obj.user.email
+
+    def save_model(self, request, obj, form, change):
+        """Save the model."""
+        # The form.save() handles creating and linking the User.
+        obj.save()

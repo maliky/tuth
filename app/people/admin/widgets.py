@@ -135,4 +135,4 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
     def after_import(self, dataset, result, **kwargs):
         """Remove any cache which may be present after import."""
         self._exclude = set()
-        self.cache = dict()        
+        self.cache = dict()

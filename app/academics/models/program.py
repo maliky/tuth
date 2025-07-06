@@ -55,8 +55,8 @@ class Program(models.Model):
         """Make sure the credit_hours is set."""
         if not self.credit_hours:
             self.credit_hours = CREDIT_NUMBER.THREE
-            
-    def save(self, *args,**kwargs):
+
+    def save(self, *args, **kwargs):
         """Make sure we set default before saving."""
         if not self.credit_hours:
             self._ensure_credit_hours()

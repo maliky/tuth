@@ -38,26 +38,14 @@ class AbstractPerson(StatusableMixin, models.Model):
     ID_PREFIX: str = "TU-"
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
-    # > this is redundant but mabye necessary
-    # if I want to hide the User model from the common user.
-    # first_name = models.CharField(blank=True)
-    # last_name = models.CharField(blank=True)
-    # first_name = models.CharField()
-    # last_name = models.CharField()
-    # username = models.CharField()
-    # email = models.EmailField()
-
     # ~~~~ Autofilled ~~~~
-    # need to be filled automatically with the data from the first name, last name,
-    # > I want the user to be created on the fly when I save this but
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
         related_name="%(class)s",
         related_query_name="%(class)s",
     )
-    # long_name = models.CharField(blank=False, editable=False)
-    # full_name = models.CharField(blank=True)
+    long_name = models.CharField(editable=False)
 
     # ~~~~~~~~ Optional ~~~~~~~~
     # # need to define a list of choice well structured
@@ -77,20 +65,6 @@ class AbstractPerson(StatusableMixin, models.Model):
         return f"{self.long_name}"
 
     @property
-    def long_name(self) -> str:
-        """Set the long name from the different name parts."""
-        long_name = " ".join(
-            [
-                self.name_prefix,
-                self.first_name,
-                self.middle_name,
-                self.last_name,
-                self.name_suffix,
-            ]
-        ).strip()
-        return long_name
-
-    @property
     def age(self) -> int | None:
         """Compute and returns the age of the abstract user."""
         if self.date_of_birth:
@@ -107,34 +81,9 @@ class AbstractPerson(StatusableMixin, models.Model):
         return None
 
     @property
-    def username(self):
-        """Returns the username."""
-        return self.user.username
-
-    @property
-    def first_name(self):
-        """Returns the first_name."""
-        return self.user.first_name
-
-    @property
-    def last_name(self):
-        """Returns the last_name."""
-        return self.user.last_name
-
-    @property
-    def full_name(self):
-        """Returns the full name, that is first and last names."""
-        return self.user.get_full_name()
-
-    @property
-    def email(self):
-        """Return the use email."""
-        return self.user.email
-
-    @property
     def obj_id(self) -> str:
         """Returns the value of cls.id_prexix."""
-        self._ensure_id_field_exists()
+        self._is_id_field()
         objid = object.__getattribute__(self, self.ID_FIELD)  # type: ignore[arg-type]
 
         if objid is None:
@@ -142,69 +91,53 @@ class AbstractPerson(StatusableMixin, models.Model):
 
         return str(objid)
 
-    # def _ensure_long_name(self) -> None:
-    #     """Set the long name from the different name parts."""
-    #     if not self.long_name:
-    #         self.long_name = " ".join(
-    #             [
-    #                 self.name_prefix,
-    #                 self.first_name,
-    #                 self.middle_name,
-    #                 self.last_name,
-    #                 self.name_suffix,
-    #             ]
-    #         ).strip()
+    def _ensure_long_name(self) -> None:
+        """Set the long name from the different name parts."""
+        self._ensure_user()
+        if not self.long_name:
+            self.long_name = " ".join(
+                [
+                    self.name_prefix,
+                    self.user.first_name,
+                    self.middle_name,
+                    self.user.last_name,
+                    self.name_suffix,
+                ]
+            ).strip()
 
-    def set_username(self, value):
-        """Set the username."""
-        return object.__setattr__(self.user, "username", value)
+    def _ensure_user(self):
+        """Make sure the user exsits."""
+        if not self._exists_user():
+            raise ValidationError("A user must exists.")
 
-    def set_first_name(self, value):
-        """Sets the firstname."""
-        return object.__setattr__(self.user, "first_name", value)
-
-    def set_last_name(self, value):
-        """Sets the lastname."""
-        return object.__setattr__(self.user, "last_name", value)
-
-    def set_email(self, value):
-        """Sets the email."""
-        return object.__setattr__(self.user, "email", value)
-
-    def _must_exists_user(self) -> None:
+    def _exists_user(self) -> bool:
         """Returns the user if it exists."""
         try:
             _ = self.user
+            return True
         except User.DoesNotExist:
-            raise ValidationError("User must have been saved at this point.")
+            return False
 
     def _mk_id(self) -> str:
         """Build an ID incrementing the user_id depending on its class."""
-        self._must_exists_user()
-
-        if self.user.pk is None:
-            raise ValidationError("Cannot generate Id if user.pk is None.")
-
         existing_ids = self.get_existing_id()
-        if existing_ids:
-            next_num = max(existing_ids) + 1
-        else:
-            next_num = 1
+
+        next_num = max(existing_ids) + 1 if existing_ids else 1
 
         return f"{self.ID_PREFIX}{next_num:05}"
 
-    def _ensure_id_field_exists(self) -> None:
+    def _is_id_field(self) -> None:
         """Raise an exception if ID_PREFIX is not set."""
-        # > the check will not be detected by mypy. so ignore[arg-type]
-        # would be good to find more clean to use mypy
         if not self.ID_FIELD:
             raise ValidationError("ID_FIELD needs to be set before creating new ID.")
 
     def _get_id_no(self) -> int | None:
         """Remove the ID_PREFIX and Returns the number associated with the id field."""
         objid = self.obj_id
-        # the following suppose that after the prefix only numbers
+
+        # the following suppose that after the prefix str there's only numbers.
         _, _, obj_no_str = objid.partition(self.ID_PREFIX)  # type: ignore[arg-type]
+
         return int(obj_no_str) if obj_no_str else 0
 
     def save(self, *args, **kwargs):
@@ -212,6 +145,8 @@ class AbstractPerson(StatusableMixin, models.Model):
         if not self.obj_id:
             new_id = self._mk_id()
             object.__setattr__(self, self.ID_FIELD, new_id)  # type: ignore[arg-type]
+
+        self._ensure_long_name()
         super().save(*args, **kwargs)
 
     @classmethod
