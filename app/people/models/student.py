@@ -27,7 +27,8 @@ class Student(AbstractPerson):
     """
 
     ID_FIELD = "student_id"
-    ID_PREFIX = "TU_STD"
+    ID_PREFIX = "TU-STD"
+    EMAIL_SUFFIX = ".stud@tubmanu.edu.lr"
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     curriculum = models.ForeignKey("academics.Curriculum", on_delete=models.CASCADE)
@@ -47,7 +48,7 @@ class Student(AbstractPerson):
         """Show the student id, name and user name."""
         ret = f"{self.student_id}"
         if self.user:
-            ret += f"- {self.user}: {self.user.username}"
+            ret += f": {self.long_name} ({self.username})"
         return ret
 
     # > need to create a method to compute le level of the student based on the
@@ -58,18 +59,6 @@ class Student(AbstractPerson):
     def college(self):
         """Return the student's current college."""
         return self.curriculum.college
-
-    @classmethod
-    def mk_username(cls, first, middle, last, unique=True) -> str:
-        """Make a username following Student conventions."""
-
-        return mk_username(first, middle, last, unique)
-
-    @classmethod
-    def mk_email(cls, username) -> str:
-        """Make a email following Student conventions."""
-
-        return f"{username}.stud@tubmanu.edu.lr"
 
     def passed_courses(self) -> CourseQuery:
         """Return courses the student completed with a passing grade."""

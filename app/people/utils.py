@@ -19,6 +19,7 @@ Functions:
 """
 
 # regex patterns to pull suffixes, prefixes, initials, etc.
+from pathlib import Path
 import re
 from typing import Optional
 
@@ -251,3 +252,9 @@ def get_default_user():
     d_user.set_unusable_password()
     d_user.save()
     return d_user
+
+
+def photo_upload_to(instance, filename: str) -> str:
+    """Store uploads under photos/<model>/<user-id>/<filename>."""
+    _class = instance.__class__.__name__.lower()
+    return str(Path("photos") / _class / str(instance.user_id) / filename)

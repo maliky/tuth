@@ -101,10 +101,10 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         self._exclude = set()
 
     def clean(self, value: str, row=None, *args, **kwargs) -> User | None:
-        """From the student name (an optionaly an id), gets a Student object.
+        """From the student name (and an id), gets a Student object.
 
         Create user and student objects if necessary.
-        Use the extrat colum student_id to desambiguate sames names
+        Use the extra column student_id to desambiguate sames names
         and create uniq username.
         """
 
@@ -116,6 +116,8 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
 
         assert "student_id" in row
         stdid = row.get("student_id")
+        # in case we get same f, l & m name for different id, this will
+        # create a new username because the default one will be in _exclude
         username = self._cache.get(
             stdid, mk_username(first, last, middle, exclude=self._exclude)
         )

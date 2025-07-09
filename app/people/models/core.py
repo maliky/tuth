@@ -1,25 +1,17 @@
 """Core module for people."""
 
-# app/people/models/core.py
-
 from datetime import date
-from pathlib import Path
 
-from app.people.utils import extract_id_num
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.utils.text import slugify
 
+from app.people.utils import extract_id_num, mk_username, photo_upload_to
 from app.shared.status.mixins import StatusableMixin
 
 User = get_user_model()
-
-
-def photo_upload_to(instance: "AbstractPerson", filename: str) -> str:
-    """Store uploads under photos/<model>/<user-id>/<filename>."""
-    _class = instance.__class__.__name__.lower()
-    return str(Path("photos") / _class / str(instance.user_id) / filename)
 
 
 class AbstractPerson(StatusableMixin, models.Model):
@@ -36,6 +28,7 @@ class AbstractPerson(StatusableMixin, models.Model):
 
     ID_FIELD: str | None = None
     ID_PREFIX: str = "TU-"
+    EMAIL_SUFFIX: str = "@tubmanu.edu.lr"
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     # ~~~~ Autofilled ~~~~
@@ -44,9 +37,11 @@ class AbstractPerson(StatusableMixin, models.Model):
         on_delete=models.CASCADE,
         related_name="%(class)s",
         related_query_name="%(class)s",
+        blank=True,
     )
     long_name = models.CharField(editable=False)
-
+    username = models.CharField(editable=True)
+    email = models.EmailField(editable=True)
     # ~~~~~~~~ Optional ~~~~~~~~
     # # need to define a list of choice well structured
     name_prefix = models.CharField(blank=True)
@@ -91,19 +86,33 @@ class AbstractPerson(StatusableMixin, models.Model):
 
         return str(objid)
 
+    def _update_email(self) -> None:
+        """Update the user email."""
+        self._ensure_username()
+        self.email = self.mk_email()
+
+    def _update_username(self) -> None:
+        """Update the user username."""
+        self._ensure_username()
+        self.email = self.mk_email()
+
+    def _update_long_name(self) -> None:
+        """Update the long name."""
+        self.long_name = " ".join(
+            [
+                self.name_prefix,
+                self.user.first_name,
+                self.middle_name,
+                self.user.last_name,
+                self.name_suffix,
+            ]
+        ).strip()
+
     def _ensure_long_name(self) -> None:
         """Set the long name from the different name parts."""
         self._ensure_user()
         if not self.long_name:
-            self.long_name = " ".join(
-                [
-                    self.name_prefix,
-                    self.user.first_name,
-                    self.middle_name,
-                    self.user.last_name,
-                    self.name_suffix,
-                ]
-            ).strip()
+            self._update_long_name()
 
     def _ensure_user(self):
         """Make sure the user exsits."""
@@ -117,6 +126,39 @@ class AbstractPerson(StatusableMixin, models.Model):
             return True
         except User.DoesNotExist:
             return False
+
+    def _ensure_username(self):
+        """Create a model field matching the user field for admin."""
+        self._ensure_user()
+        if self.user.username:
+            self.username = self.user.username
+        else:
+            # Should never get here because username is mandatory for a user.
+            raise ValidationError("A username should exists.")
+
+    def _ensure_email(self):
+        """Create a model field matching the email field for admin."""
+        self._ensure_username()
+
+        if self.user.email:
+            self.email = self.user.email
+        else:
+            self.mk_email(self.username)
+
+    def mk_email(self, username=None):
+        """Create an email foe the abstract and the user using subclass suffix."""
+        if not username:
+            username = self.username or self.user.username
+        return slugify(username, allow_unicode=False).replace("-", "") + self.EMAIL_SUFFIX
+
+    def mk_username(self, first=None, last=None, middle=None, unique=True):
+        """Defaut to make a user name.  Should be overridend by subclasses."""
+        return mk_username(
+            self.first_name if not first else first,
+            self.last_name if not last else last,
+            middle="" if not middle else middle,
+            unique=unique,
+        )
 
     def _mk_id(self) -> str:
         """Build an ID incrementing the user_id depending on its class."""
@@ -147,6 +189,8 @@ class AbstractPerson(StatusableMixin, models.Model):
             object.__setattr__(self, self.ID_FIELD, new_id)  # type: ignore[arg-type]
 
         self._ensure_long_name()
+        self._ensure_email()
+        self._ensure_username()
         super().save(*args, **kwargs)
 
     @classmethod
