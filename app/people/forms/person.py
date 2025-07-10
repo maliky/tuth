@@ -1,12 +1,10 @@
 """Defines model forms for the people module."""
 
-import pdb
-from typing import Any
 from app.people.forms.base import PersonFormMixin
 from app.people.models.donor import Donor
 from app.people.models.staffs import Staff
-from django.contrib.auth.models import User
 from app.people.models.student import Student
+from app.shared.types import FieldT
 from django import forms
 
 
@@ -14,7 +12,7 @@ class DonorForm(PersonFormMixin, forms.ModelForm):
 
     class Meta:
         model = Donor
-        fields = []
+        fields: FieldT = []
 
 
 # class FacultyFrom(forms.ModelForm):
@@ -24,16 +22,16 @@ class DonorForm(PersonFormMixin, forms.ModelForm):
 
 
 class StaffForm(PersonFormMixin, forms.ModelForm):
-    SPECIFIC_FIELDS = ["division", "department", "position", "employment_date"]
+    SPECIFIC_FIELDS = ("division", "department", "position", "employment_date")
 
     class Meta:
         model = Staff
-        fields = []
+        fields: FieldT = []
 
 
 class StudentForm(PersonFormMixin, forms.ModelForm):
-    SPECIFIC_FIELDS = ["date_of_birth", "bio", "photo"]
+    SPECIFIC_FIELDS = ("date_of_birth", "bio", "photo")
 
     class Meta:
         model = Student
-        fields = []
+        fields: FieldT = []

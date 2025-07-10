@@ -22,7 +22,7 @@ class PeopleRepository:
         """Return an existing or new Faculty for the given name and college."""
 
         _, first, _, last, _ = split_name(name)
-        username = mk_username(first, last, exclude=False, prefix_len=2)
+        username = mk_username(first, last, prefix_len=2)
 
         user, user_created = User.objects.get_or_create(
             username=username,

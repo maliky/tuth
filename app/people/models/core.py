@@ -51,7 +51,9 @@ class AbstractPerson(StatusableMixin, models.Model):
     date_of_birth = models.DateField(_("date of birth"), null=True, blank=True)
 
     phone_number = PhoneNumberField(help_text="A Liberian phone number", blank=True)
-    physical_address = models.TextField(help_text="eg. Tubman Town, Harper, Maryland", blank=True)
+    physical_address = models.TextField(
+        help_text="eg. Tubman Town, Harper, Maryland", blank=True
+    )
 
     # --- misc ---
     bio = models.TextField(blank=True)

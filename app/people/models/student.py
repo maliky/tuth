@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-from app.people.utils import mk_username
 from django.db import models
 
 from app.academics.models.course import Course

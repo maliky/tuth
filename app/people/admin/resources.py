@@ -40,13 +40,17 @@ class DirectoryContactResource(resources.ModelResource):
         """Get the faculty name and populate the username if empty."""
         raw_name = (row.get("faculty") or row.get("name") or "").strip()
         prefix, first, middle, last, suffix = split_name(raw_name)
-        row["name_prefix"] = prefix
-        row["first_name"] = first
-        row["middle_name"] = middle
-        row["last_name"] = last
-        row["name_suffix"] = suffix
+        row.update(
+            {
+                "name_prefix": prefix,
+                "first_name": first,
+                "middle_name": middle,
+                "last_name": last,
+                "name_suffix": suffix,
+            }
+        )
         if not row.get("username"):
-            row["username"] = mk_username(first, last, exclude=True)
+            row["username"] = mk_username(first, last, unique=True)
 
 
 class FacultyResource(resources.ModelResource):
@@ -75,9 +79,9 @@ class FacultyResource(resources.ModelResource):
         if kwargs.get("dry_run"):
             return
 
-        user = instance.staff_profile.user
+        _user = instance.staff_profile.user
         group, _ = Group.objects.get_or_create(name=UserRole.FACULTY.label)
-        user.groups.add(group)
+        _user.groups.add(group)
 
 
 class StudentResource(resources.ModelResource):

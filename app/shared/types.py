@@ -16,3 +16,11 @@ SectionQuery: TypeAlias = QuerySet["Section"]
 CourseQuery: TypeAlias = QuerySet["Course"]
 StudentProfileQuery: TypeAlias = QuerySet["StudentProfile"]
 RegistrationQuery: TypeAlias = QuerySet["Registration"]
+
+FieldT: TypeAlias = (
+    list[str | list[str] | tuple[str, ...] | tuple[()]]
+    | tuple[str | list[str] | tuple[str, ...] | tuple[()], ...]
+    | tuple[()]
+)
+# PersonT = TypeVar("PersonT")  # ? what is this.
+# PersonT = TypeAlias = Donor|Staff| Student| Faculty

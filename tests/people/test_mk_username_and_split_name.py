@@ -22,8 +22,8 @@ def test_mk_username_default(first, last, username):
 
 
 @pytest.mark.django_db(transaction=True)
-def test_mk_username_uniquess(user_factory):
-    """Check if the username stay uniq increased by number."""
+def test_mk_username_uniqness(user_factory):
+    """Check if the username stay uniq with an increased by number."""
     un1 = mk_username("Esop", "Thot", prefix_len=2)  # esthot
     u1 = user_factory(username=un1)
 
@@ -34,13 +34,14 @@ def test_mk_username_uniquess(user_factory):
             _ = user_factory(username=un2)
             # should through UNIQUE constraint failed: auth_user.username
 
-    un3 = mk_username("Esai", "Thot", exclude=True, prefix_len=2)  # esthot1
+    un3 = mk_username("Esai", "Thot", unique=True, prefix_len=2)  # esthot2, not esthot1
     u3 = user_factory(username=un3)
 
-    assert un1 == "esthot", f"{un1}"
-    assert un3 == "esthot1", f"{un2}"
-    assert u1.username == "esthot", f"{u1.username}"
-    assert u3.username == "esthot1", f"{u3.username}"
+    assert un1 == "esthot", f"un1={un1}"
+    assert un2 == "esthot", f"un2={un2}"    
+    assert un3 == "esthot2", f"un3={un3}"
+    assert u1.username == "esthot", f"u1.username={u1.username}"
+    assert u3.username == "esthot2", f"u3.username={u3.username}"
 
 
 # Doit tester la création d'un staff d'un student d'un donor vérifier les ID

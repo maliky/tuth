@@ -1,14 +1,11 @@
 """The base form to manipulate users in Admin."""
 
 from __future__ import annotations
-import pdb
-from typing import Any, Dict, TypeVar
+from typing import Any, Dict
+from app.shared.types import FieldT
 from django import forms
-from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.contrib.auth.models import User
-
-PersonT = TypeVar("PersonT")  # ? what is this.
 
 
 class PersonFormMixin(forms.ModelForm):
@@ -18,14 +15,14 @@ class PersonFormMixin(forms.ModelForm):
     Set constantes to be display on the admin interface.
     """
 
-    USER_FIELDS = ["first_name", "last_name", "username", "email"]
-    STANDARD_USER_FIELDS = [
+    USER_FIELDS = ("first_name", "last_name", "username", "email")
+    STANDARD_USER_FIELDS = (
         "middle_name",
         "name_prefix",
         "name_suffix",
         "phone_number",
         "physical_address",
-    ]
+    )
 
     first_name = forms.CharField(label="first_name", required=True)
     last_name = forms.CharField(label="last_name", required=True)
@@ -39,9 +36,11 @@ class PersonFormMixin(forms.ModelForm):
         """
         super().__init_subclass__(**kwargs)
         specific = getattr(cls, "SPECIFIC_FIELDS", [])
-        cls.Meta.fields = cls.STANDARD_USER_FIELDS + cls.USER_FIELDS + specific
+        cls.Meta.fields = (
+            list(cls.STANDARD_USER_FIELDS) + list(cls.USER_FIELDS) + list(specific)
+        )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the form."""
         super().__init__(*args, **kwargs)
 
@@ -62,16 +61,19 @@ class PersonFormMixin(forms.ModelForm):
         """Check the data entered in the form and update the user accordingly."""
 
         cd = super().clean()  # -> cleaned_data
+        if not cd:
+            return {"": None}
+
         person = self.instance
 
         # we check if a field used to create the underlining user has changed.
         if {"first_name", "middle_name", "last_name"} & set(self.changed_data):
             cd["username"] = person.mk_username(
-                first=cd["first_name"],
-                last=cd["last_name"],
-                middle=cd["middle_name"],
+                first=cd.get("first_name", ""),
+                last=cd.get("last_name", ""),
+                middle=cd.get("middle_name", ""),
             )
-            cd["email"] = person.mk_email(cd["username"])
+            cd["email"] = person.mk_email(cd.get("username", ""))
 
             # we update the user early.
             # if person.user_id:
@@ -82,9 +84,9 @@ class PersonFormMixin(forms.ModelForm):
         return cd
 
     @transaction.atomic
-    def save(self, commit=True) -> PersonT:
+    def save(self, commit=True):
         """Save the data on in DB creating the user on the fly."""
-        person: PersonT = super().save(commit=False)  # save person only fields first
+        person = super().save(commit=False)  # save person only fields first
         cd = self.cleaned_data
 
         _user, user_created = User.objects.update_or_create(
@@ -101,3 +103,7 @@ class PersonFormMixin(forms.ModelForm):
         person.save()
 
         return person
+
+    class Meta:
+        # just a place holder for override
+        fields: FieldT = []
