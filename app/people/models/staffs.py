@@ -35,7 +35,7 @@ class Staff(AbstractPerson):
     """
 
     ID_FIELD = "staff_id"
-    ID_PREFIX = "TU_STF"
+    ID_PREFIX = "TU-STF"
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     # ~~~~ Auto-filled ~~~~ /     # ~~~~ Read-only ~~~~

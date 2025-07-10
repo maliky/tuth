@@ -1,15 +1,21 @@
 """Core module."""
 
-from app.people.admin.resources import FacultyResource
-from app.people.forms import StudentFrom
-from app.people.models.student import Student
-from app.people.models.donor import Donor
-from app.people.models.staffs import Faculty, Staff
-from app.timetable.admin.inlines import SectionInline
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
+
+from app.people.admin.resources import FacultyResource
+from app.people.forms.base import PersonFormMixin
+from app.people.forms.person import (
+    DonorForm,
+    StaffForm,
+    StudentForm,
+)
+from app.people.models.donor import Donor
+from app.people.models.staffs import Faculty, Staff
+from app.people.models.student import Student
 from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
+from app.timetable.admin.inlines import SectionInline
 
 
 @admin.register(Faculty)
@@ -20,6 +26,7 @@ class FacultyAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelA
     resource is used for import/export operations.
     """
 
+    # form =
     resource_class = FacultyResource
     fields = (
         "staff_profile",
@@ -55,14 +62,24 @@ class DonorAdmin(GuardedModelAdmin):
     Shows each donor's user and ID with autocomplete for the user relation.
     """
 
+    form = DonorForm
     list_display = ("user", "donor_id")
-    search_fields = (
-        "donor_id",
-        "user__username",
-        "user__first_name",
-        "user__last_name",
-    )
-    autocomplete_fields = ("user",)
+    search_fields = ("donor_id", "user__long_name")
+    readonly_fields = ("donor_id",)
+    fieldsets = [
+        (
+            "User Account",
+            {
+                "classes": ["collapse"],
+                "fields": PersonFormMixin.USER_FIELDS,
+                "description": (
+                    "Username / e-mail are auto-generated from the name fields. "
+                    "To change the password you need to open the user box."
+                ),
+            },
+        ),
+        (None, {"fields": PersonFormMixin.STANDARD_USER_FIELDS}),
+    ]
 
 
 @admin.register(Staff)
@@ -73,29 +90,30 @@ class StaffAdmin(DepartmentRestrictedAdmin, GuardedModelAdmin):
     fields like staff_id are read-only to avoid accidental edits.
     """
 
-    fields = (
-        "user",
-        "staff_id",
-        "photo",
-        "name_prefix",
-        "middle_name",
-        "name_suffix",
-        "phone_number",
-        "physical_address",
-        "date_of_birth",
-        "bio",
-        "employment_date",
-        "division",
-        "department",
-        "position",
-    )
-    list_display = (
-        "long_name",
-        "staff_id",
-    )
-    search_fields = ("staff_id",)
-    autocomplete_fields = ("user",)
-    readonly_fields = ("staff_id", "age")
+    form = StaffForm
+    list_display = ("long_name", "staff_id", "department")
+    search_fields = ("staff_id", "username", "long_name", "department")
+    readonly_fields = ("staff_id",)
+    fieldsets = [
+        (
+            "User Account",
+            {
+                "fields": PersonFormMixin.USER_FIELDS,
+                "description": (
+                    "Username / e-mail are auto-generated from the name fields. "
+                    "To change the password you need to open the user box."
+                ),
+            },
+        ),
+        (None, {"fields": PersonFormMixin.STANDARD_USER_FIELDS}),
+        (
+            "Personal details",
+            {
+                "classes": ["collapse"],
+                "fields": StaffForm.SPECIFIC_FIELDS,
+            },
+        ),
+    ]
 
 
 @admin.register(Student)
@@ -106,40 +124,30 @@ class StudentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     on both fields. Import/export is supported via ImportExportModelAdmin.
     """
 
-    form = StudentFrom
+    form = StudentForm
     list_display = ("long_name", "student_id", "date_of_birth")
     search_fields = ("student_id", "username", "long_name")
-    fieldsets = (
+    fieldsets = [
         (
-            "Personal details",
+            "User Account",
             {
-                "fields": (
-                    "name_prefix",
-                    "first_name",
-                    "middle_name",
-                    "last_name",
-                    "name_suffix",
-                    "date_of_birth",
-                    "phone_number",
-                    "physical_address",
-                    "bio",
-                    "photo",
-                    "curriculum",
-                )
-            },
-        ),
-        (
-            "Account (username & password)",
-            {
-                "fields": ("username", "email", "user"),  # , "password1", "password2"),
+                "classes": ["collapse"],
+                "fields": PersonFormMixin.USER_FIELDS,
                 "description": (
                     "Username / e-mail are auto-generated from the name fields. "
-                    "Provide a password only when you want to change it."
+                    "To change the password you need to open the user box."
                 ),
             },
         ),
-    )
-    # readonly_fields = ("username", "email")
+        (None, {"fields": PersonFormMixin.STANDARD_USER_FIELDS}),
+        (
+            "Personal details",
+            {
+                "classes": ["collapse"],
+                "fields": StudentForm.SPECIFIC_FIELDS,
+            },
+        ),
+    ]
 
     # -------------- helpers for readonly panel --------------
     def save_model(self, request, obj, form, change):

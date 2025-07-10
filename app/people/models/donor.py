@@ -21,7 +21,7 @@ class Donor(AbstractPerson):
     """
 
     ID_FIELD = "donor_id"
-    ID_PREFIX = "TU_DNR"
+    ID_PREFIX = "TU-DNR"
 
     # ~~~~ Read-only ~~~~
     donor_id = models.CharField(max_length=13, unique=True, editable=False, blank=False)

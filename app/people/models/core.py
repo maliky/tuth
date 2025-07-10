@@ -5,8 +5,9 @@ from datetime import date
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils.translation import gettext_lazy as _
 from django.utils.text import slugify
+from django.utils.translation import gettext_lazy as _
+from phonenumber_field.modelfields import PhoneNumberField
 
 from app.people.utils import extract_id_num, mk_username, photo_upload_to
 from app.shared.status.mixins import StatusableMixin
@@ -44,12 +45,13 @@ class AbstractPerson(StatusableMixin, models.Model):
     email = models.EmailField(editable=True)
     # ~~~~~~~~ Optional ~~~~~~~~
     # # need to define a list of choice well structured
-    name_prefix = models.CharField(blank=True)
-    name_suffix = models.CharField(blank=True)
     middle_name = models.CharField(blank=True)
+    name_prefix = models.CharField(help_text="eg. 'Miss.'", blank=True)
+    name_suffix = models.CharField(help_text="eg. 'Phd.'", blank=True)
     date_of_birth = models.DateField(_("date of birth"), null=True, blank=True)
-    phone_number = models.CharField(max_length=15, blank=True)
-    physical_address = models.CharField(blank=True)
+
+    phone_number = PhoneNumberField(help_text="A Liberian phone number", blank=True)
+    physical_address = models.TextField(help_text="eg. Tubman Town, Harper, Maryland", blank=True)
 
     # --- misc ---
     bio = models.TextField(blank=True)
@@ -57,7 +59,7 @@ class AbstractPerson(StatusableMixin, models.Model):
 
     # convenience for admin lists / logs
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.long_name}"
+        return f"{self.long_name} ({self.obj_id})"
 
     @property
     def age(self) -> int | None:
@@ -154,8 +156,8 @@ class AbstractPerson(StatusableMixin, models.Model):
     def mk_username(self, first=None, last=None, middle=None, unique=True):
         """Defaut to make a user name.  Should be overridend by subclasses."""
         return mk_username(
-            self.first_name if not first else first,
-            self.last_name if not last else last,
+            self.user.first_name if not first else first,
+            self.user.last_name if not last else last,
             middle="" if not middle else middle,
             unique=unique,
         )
