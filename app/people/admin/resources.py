@@ -77,11 +77,11 @@ class FacultyResource(resources.ModelResource):
     def after_save_instance(self, instance, row, **kwargs) -> None:
         """Assign the faculty group to the related user."""
         if kwargs.get("dry_run"):
-            return
+            return None
 
-        _user = instance.staff_profile.user
+        user = instance.staff_profile.user
         group, _ = Group.objects.get_or_create(name=UserRole.FACULTY.label)
-        _user.groups.add(group)
+        user.groups.add(group)
 
 
 class StudentResource(resources.ModelResource):

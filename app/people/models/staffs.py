@@ -125,6 +125,14 @@ class Faculty(StatusableMixin, models.Model):
         """Get the staff id."""
         return self.staff_profile.staff_id
 
+    def get_division(self):
+        """Returns the faculty division."""
+        return self.staff_profile.division
+
+    def get_department(self):
+        """Returns the faculty division."""
+        return self.staff_profile.department
+
     def _ensure_college(self):
         """Make sure we have a college."""
         if not self.college_id:

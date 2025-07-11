@@ -18,14 +18,14 @@ def test_student_import_assigns_student_group(curriculum):
     name = "Alice Example"
     _, first, middle, last, _ = split_name(name)
     username = mk_username(first, last, middle)
-    
+
     ds.append(["ST1", name, curriculum.pk])
 
     res = StudentResource().import_data(ds, dry_run=False)
 
     assert not res.has_errors(), res.row_errors()
     user = User.objects.get(username=username)
-    
+
     assert user.groups.filter(name=UserRole.STUDENT.label).exists()
 
 
@@ -35,7 +35,7 @@ def test_faculty_import_assigns_faculty_group(college):
     ds.headers = ["faculty"]
     name = "Bob Teaches"
     _, first, middle, last, _ = split_name(name)
-    username = mk_username(first, last, middle,prefix_len=2)
+    username = mk_username(first, last, middle, prefix_len=2)
 
     ds.append([name])
     res = FacultyResource().import_data(ds, dry_run=False, raise_errors=True)

@@ -6,6 +6,7 @@ from import_export.admin import ImportExportModelAdmin
 
 from app.people.admin.resources import FacultyResource
 from app.people.forms.base import PersonFormMixin
+from app.people.forms.faculty import FacultyForm
 from app.people.forms.person import (
     DonorForm,
     StaffForm,
@@ -28,21 +29,39 @@ class FacultyAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelA
 
     # form =
     resource_class = FacultyResource
-    fields = (
-        "staff_profile",
-        "college",
-        "academic_rank",
-        "google_profile",
-        "personal_website",
-    )
+    form = FacultyForm
+
     list_display = (
         "faculty_name",
         "faculty_staff_id",
+        "academic_rank",
+        "get_division",
+        "get_department",
     )
     list_filter = ("college",)
-    search_fields = ("faculty_staff_id", "faculty_name")
-    autocomplete_fields = ("staff_profile",)
+    search_fields = ("faculty_staff_id", "faculty_name", "faculty_academic_rank")
+    autocomplete_fields = ("staff_profile", "college")
     inlines = [SectionInline]
+    fieldsets = [
+        (
+            "User Information",
+            {
+                "fields": FacultyForm.USER_FIELDS,
+                "description": (
+                    "Username / e-mail are auto-generated from the name fields. "
+                    "To change the password you need to open the user box."
+                ),
+            },
+        ),
+        ("Faculty Information", {"fields": FacultyForm.FACULTY_FIELDS}),
+        (
+            "Work Information",
+            {
+                "classes": ["collapse"],
+                "fields": FacultyForm.STAFF_FIELDS,
+            },
+        ),
+    ]
 
     @admin.display(description="Long Name", ordering="staff_profile__user__first_name")
     def faculty_name(self, obj):
@@ -91,8 +110,9 @@ class StaffAdmin(DepartmentRestrictedAdmin, GuardedModelAdmin):
     """
 
     form = StaffForm
-    list_display = ("long_name", "staff_id", "department")
+    list_display = ("long_name", "staff_id", "position", "roles")
     search_fields = ("staff_id", "username", "long_name", "department")
+    list_filter = ("department",)
     readonly_fields = ("staff_id",)
     fieldsets = [
         (
@@ -105,9 +125,9 @@ class StaffAdmin(DepartmentRestrictedAdmin, GuardedModelAdmin):
                 ),
             },
         ),
-        (None, {"fields": PersonFormMixin.STANDARD_USER_FIELDS}),
+        ("Personal Details", {"fields": PersonFormMixin.STANDARD_USER_FIELDS}),
         (
-            "Personal details",
+            "Work Information",
             {
                 "classes": ["collapse"],
                 "fields": StaffForm.SPECIFIC_FIELDS,
@@ -127,7 +147,14 @@ class StudentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     form = StudentForm
     list_display = ("long_name", "student_id", "date_of_birth")
     search_fields = ("student_id", "username", "long_name")
+    readonly_fields=('student_id',)
     fieldsets = [
+        (
+            "Student Informations",
+            {
+                "fields": StudentForm.SPECIFIC_FIELDS,
+            },
+        ),
         (
             "User Account",
             {
@@ -139,14 +166,9 @@ class StudentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
                 ),
             },
         ),
-        (None, {"fields": PersonFormMixin.STANDARD_USER_FIELDS}),
-        (
-            "Personal details",
-            {
-                "classes": ["collapse"],
-                "fields": StudentForm.SPECIFIC_FIELDS,
-            },
-        ),
+        ("User Details", {
+            "classes": ["collapse"],
+            "fields": PersonFormMixin.STANDARD_USER_FIELDS}),
     ]
 
     # -------------- helpers for readonly panel --------------

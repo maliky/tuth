@@ -38,7 +38,7 @@ def test_mk_username_uniqness(user_factory):
     u3 = user_factory(username=un3)
 
     assert un1 == "esthot", f"un1={un1}"
-    assert un2 == "esthot", f"un2={un2}"    
+    assert un2 == "esthot", f"un2={un2}"
     assert un3 == "esthot2", f"un3={un3}"
     assert u1.username == "esthot", f"u1.username={u1.username}"
     assert u3.username == "esthot2", f"u3.username={u3.username}"

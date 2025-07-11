@@ -186,6 +186,11 @@ class AbstractPerson(StatusableMixin, models.Model):
 
         return int(obj_no_str) if obj_no_str else 0
 
+    def roles(self) -> str:
+        """Returns the list of the user's groups."""
+        names = self.user.groups.values_list("name", flat=True)
+        return ", ".join(names) if names else ""
+
     def save(self, *args, **kwargs):
         """Create an ID and saves it for each model using _mk_id and ID_FIELD."""
         if not self.obj_id:

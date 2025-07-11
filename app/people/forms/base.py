@@ -16,14 +16,17 @@ class PersonFormMixin(forms.ModelForm):
     """
 
     USER_FIELDS = ("first_name", "last_name", "username", "email")
+
     STANDARD_USER_FIELDS = (
         "middle_name",
         "name_prefix",
         "name_suffix",
         "phone_number",
         "physical_address",
+        "date_of_birth",
+        "bio",
+        "photo",
     )
-
     first_name = forms.CharField(label="first_name", required=True)
     last_name = forms.CharField(label="last_name", required=True)
     username = forms.CharField(label="username", required=False, disabled=True)
@@ -74,12 +77,6 @@ class PersonFormMixin(forms.ModelForm):
                 middle=cd.get("middle_name", ""),
             )
             cd["email"] = person.mk_email(cd.get("username", ""))
-
-            # we update the user early.
-            # if person.user_id:
-            #     for f in self.USER_FIELDS:
-            #         setattr(person.user, f, cd[f])
-            #     person.user.save()
 
         return cd
 
