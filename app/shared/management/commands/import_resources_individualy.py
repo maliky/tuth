@@ -39,6 +39,7 @@ class Command(BaseCommand):
     FILEMAP: dict[str, Tuple[str, type[resources.ModelResource]]] = {
         "student.csv": ("Student", StudentResource),
         "faculty.csv": ("Faculty", FacultyResource),
+        # Staff
         "room.csv": ("Room", RoomResource),  # + Space
         "schedule.csv": ("Schedule", ScheduleResource),
         "course.csv": ("Course", CourseResource),  # + College
@@ -46,6 +47,7 @@ class Command(BaseCommand):
         "program.csv": ("Program", ProgramResource),
         "section.csv": ("Section", SectionResource),
         "session.csv": ("Session", SessionResource),  # + Faculty / Room
+        # Grades  # new and old ie with history tracking.
     }
 
     def _load_csv(self, csv_path: Path, label=None) -> Dataset | None:
@@ -98,7 +100,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "-d",
             "--dir",
-            default="../Seed_Data/Individual_models",
+            default="../../Data/Individual_datum",
             help="Directory containing the per-resource CSV files.",
         )
 

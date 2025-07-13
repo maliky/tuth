@@ -20,6 +20,8 @@ class Curriculum(StatusableMixin, models.Model):
 
     We use a default curriculum encompassing all courses when none is specified;
     otherwise the student is limited to the courses listed in their curriculum.
+
+    Concerning credit hours, usualy between 120-128 (GE 30-40, Major/Specific 30-60, Minor/elective (rest))
     """
 
     # ~~~~~~~~ Mandatory ~~~~~~~~

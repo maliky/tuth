@@ -147,7 +147,7 @@ class StudentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
     form = StudentForm
     list_display = ("long_name", "student_id", "date_of_birth")
     search_fields = ("student_id", "username", "long_name")
-    readonly_fields=('student_id',)
+    readonly_fields = ("student_id",)
     fieldsets = [
         (
             "Student Informations",
@@ -166,9 +166,10 @@ class StudentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
                 ),
             },
         ),
-        ("User Details", {
-            "classes": ["collapse"],
-            "fields": PersonFormMixin.STANDARD_USER_FIELDS}),
+        (
+            "User Details",
+            {"classes": ["collapse"], "fields": PersonFormMixin.STANDARD_USER_FIELDS},
+        ),
     ]
 
     # -------------- helpers for readonly panel --------------

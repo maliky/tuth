@@ -30,7 +30,12 @@ class StaffForm(PersonFormMixin, forms.ModelForm):
 
 
 class StudentForm(PersonFormMixin, forms.ModelForm):
-    SPECIFIC_FIELDS = ("student_id", "curriculum", "current_enroled_semester", "first_enrollement_date" )
+    SPECIFIC_FIELDS = (
+        "student_id",
+        "curriculum",
+        "current_enroled_semester",
+        "first_enrollement_date",
+    )
 
     class Meta:
         model = Student

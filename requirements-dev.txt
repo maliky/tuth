@@ -40,3 +40,4 @@ ipdb
 # profilers
 pygraphviz
 
+pydot
