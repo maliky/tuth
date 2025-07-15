@@ -2,8 +2,35 @@
 
 import pytest
 from django.db import IntegrityError, transaction
+import pandas as pd
 
-from app.people.utils import extract_id_num, mk_username, split_name
+from app.people.utils import (
+    extract_id_num,
+    mk_username,
+    split_name,
+    ensure_unique_usernames,
+)
+
+
+@pytest.mark.parametrize(
+    "raw, expected",
+    [
+        # no duplicates → unchanged
+        (["alice", "bob", "charlie"], ["alice", "bob", "charlie"]),
+        # one duplicate → numbered starting at 2
+        (["alice", "bob", "alice"], ["alice", "bob", "alice2"]),
+        # two duplicates of same name
+        (["x", "x", "x"], ["x", "x2", "x3"]),
+        # mixed-case duplicates should still collide
+        (["Foo", "foo", "Foo"], ["Foo", "foo2", "Foo3"]),
+        # non-consecutive duplicates
+        (["jan", "feb", "jan", "mar", "jan"], ["jan", "feb", "jan2", "mar", "jan3"]),
+    ],
+)
+def test_ensure_unique_usernames(raw, expected):
+    """Ensure `ensure_unique_usernames` appends numeric suffixes starting at 2."""
+    result = ensure_unique_usernames(pd.Series(raw)).tolist()
+    assert result == expected, f"{raw!r} → {result!r} (expected {expected!r})"
 
 
 @pytest.mark.parametrize(
