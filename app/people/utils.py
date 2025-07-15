@@ -228,7 +228,7 @@ def mk_username(
     return username
 
 
-def ensure_unique_usernames(names):
+def ensure_unique_usernames(names) -> list:
     """Given a list of usernames. add a number starting at 2 to duplicates."""
     counts = {}
     out = []

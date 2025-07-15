@@ -28,9 +28,9 @@ from app.people.utils import (
     ],
 )
 def test_ensure_unique_usernames(raw, expected):
-    """Ensure `ensure_unique_usernames` appends numeric suffixes starting at 2."""
-    result = ensure_unique_usernames(pd.Series(raw)).tolist()
-    assert result == expected, f"{raw!r} → {result!r} (expected {expected!r})"
+    """Ensure ensure_unique_usernames appends numeric suffixes starting at 2."""
+    result = ensure_unique_usernames(raw)
+    assert result == expected, f"{raw!r} -> {result!r} (expected {expected!r})"
 
 
 @pytest.mark.parametrize(
