@@ -2,7 +2,6 @@
 
 import pytest
 from django.db import IntegrityError, transaction
-import pandas as pd
 
 from app.people.utils import (
     extract_id_num,

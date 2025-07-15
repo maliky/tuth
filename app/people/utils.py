@@ -25,7 +25,7 @@ from typing import Optional
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from pandas import Series
+
 
 User = get_user_model()
 
@@ -228,16 +228,15 @@ def mk_username(
     return username
 
 
-def ensure_unique_usernames(names) -> list:
+def ensure_unique_usernames(names: list[str]) -> list:
     """Given a list of usernames. add a number starting at 2 to duplicates."""
-    counts = {}
+    counts: dict[str, int] = {}
     out = []
     for name in names:
         key = name.lower()
-        counts[key] = counts.get(key,0) + 1
+        counts[key] = counts.get(key, 0) + 1
         out.append(name if counts[key] == 1 else f"{name}{counts[key]}")
     return out
-
 
 
 def extract_id_num(user_id: str) -> int:
