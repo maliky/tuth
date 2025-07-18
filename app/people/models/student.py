@@ -4,11 +4,13 @@
 
 from __future__ import annotations
 
+from django.contrib.auth.models import Group
 from django.db import models
 
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.people.models.core import AbstractPerson
+from app.people.choices import UserRole
 from app.shared.types import CourseQuery
 from app.timetable.models.semester import Semester
 
@@ -87,6 +89,11 @@ class Student(AbstractPerson):
         if not self.curriculum_id:
             self.curriculum = Curriculum.get_default()
         super().save(*args, **kwargs)
+        if self.user_id:
+            group, _ = Group.objects.get_or_create(name=UserRole.STUDENT.label)
+            self.user.groups.add(group)
+            self.user.is_staff = False
+            self.user.save(update_fields=["is_staff"])
 
     class Meta:
         constraints = [
