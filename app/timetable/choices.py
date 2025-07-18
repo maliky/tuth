@@ -4,10 +4,10 @@ from django.db.models import IntegerChoices
 
 
 class SEMESTER_NUMBER(IntegerChoices):
-    FIRST = 1, "First"
-    SECOND = 2, "Second"
-    VACATION = 3, "Vacation"
-    REMEDIAL = 4, "Remedial"
+    FIRST = 1, "First (1)"
+    SECOND = 2, "Second (2)"
+    VACATION = 3, "Vacation (3)"
+    REMEDIAL = 4, "Remedial (4)"
 
 
 class TERM_NUMBER(IntegerChoices):

@@ -42,6 +42,9 @@ INSTALLED_APPS = [
     "import_export",
     "phonenumber_field",
     "guardian",
+    "admin_searchable_dropdown",
+    "simple_history",
+    # django
     "django_extensions",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -50,7 +53,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # my apps
-    "admin_searchable_dropdown",
     "app.academics",
     "app.finance",
     "app.people",
@@ -62,6 +64,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "simple_history.middleware.HistoryRequestMiddleware",
+    # standard
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",

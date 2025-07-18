@@ -1,7 +1,30 @@
 """Filters module."""
 
+from admin_searchable_dropdown.filters import (
+    AutocompleteFilterFactory,
+    AutocompleteFilter,
+)
 from django.contrib import admin
 from django.db.models import Count
+
+CurriculumFilterAutocomplete = AutocompleteFilterFactory(
+    "Curriculum",  # title
+    "program__curriculum",  # look-up path ( → cuccirulm )
+    # use_pk_exact=False
+)
+
+
+class CurriBySemFilterAc(AutocompleteFilter):
+    """Returns the curriculum having section for a specific semester."""
+
+    title = "Curriculum"
+    field_name = "program__curriculum"
+
+    def get_autocomplete_url(self, request, model_admin):
+        """Get the urls registered in SectionAdmin.get_urls."""
+        base = reverse("admin:curri_by_sem_ac")
+        # semester_id = request.GET.get("semester")
+        return base
 
 
 class CurriculumFilter(admin.SimpleListFilter):

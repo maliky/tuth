@@ -8,14 +8,13 @@ from app.people.models.student import Student
 from app.registry.admin.filters import GradeSectionFilter
 
 #from app.registry.admin.views import SectionBySemesterAutocomplete
-from app.registry.models.class_roster import ClassRoster
 from app.registry.models.grade import Grade, GradeType
 from app.registry.models.registration import Registration
 from app.shared.mixins import HistoricalAccessMixin
 from app.timetable.admin.filters import (
     SectionBySemesterFilter,
     SemesterFilter,
-    SemesterFilterAutocomplete,
+    SemFilterAc,
 )
 from app.timetable.admin.views import SectionBySemesterAutocomplete
 from app.timetable.models.section import Section
@@ -40,6 +39,7 @@ class GradeAdmin(HistoricalAccessMixin, ImportExportModelAdmin, admin.ModelAdmin
     lookups for student and section.
     """
 
+    date_hiearchy = "grade_on"
     list_display = (
         "student",
         "grade",
@@ -48,7 +48,7 @@ class GradeAdmin(HistoricalAccessMixin, ImportExportModelAdmin, admin.ModelAdmin
         "graded_on",
     )
     # list_filter = ['section__semester', GradeSectionFilter]
-    list_filter = [SemesterFilterAutocomplete, SectionBySemesterFilter]
+    list_filter = [SemFilterAc, SectionBySemesterFilter]
     search_fields = ("student__student_id", "section__semester")
 
     def get_urls(self):
@@ -64,29 +64,6 @@ class GradeAdmin(HistoricalAccessMixin, ImportExportModelAdmin, admin.ModelAdmin
             )
         ]
         return custom + urls
-
-
-@admin.register(ClassRoster)
-class ClassRosterAdmin(ImportExportModelAdmin, HistoricalAccessMixin, admin.ModelAdmin):
-    """Admin interface for :class:~app.registry.models.ClassRoster.
-
-    Displays the section and counts enrolled students via student_count.
-    The section foreign key is autocompleted for convenience.
-    """
-
-    list_display = ("section", "student_count", "last_updated")
-    list_filter = (SemesterFilter,)
-    search_fields = (
-        "section__course__code",
-        "section__number",
-        "section__semester__code",
-    )
-    autocomplete_fields = ("section",)
-
-    @admin.display(description="Students")
-    def student_count(self, obj: ClassRoster) -> int:
-        """Return number of students enrolled in this roster."""
-        return obj.students.count()
 
 
 @admin.register(Registration)

@@ -36,7 +36,7 @@ class Section(models.Model):
     program = models.ForeignKey(
         "academics.Program", on_delete=models.CASCADE, related_name="sections"
     )
-    number = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
+    number = models.PositiveIntegerField("Section #", default=1, validators=[MinValueValidator(1)])
 
     # ~~~~~~~~ Optional ~~~~~~~~
     faculty = models.ForeignKey(

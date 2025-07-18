@@ -1,5 +1,7 @@
 """app.timetable.admin.registers.section module."""
 
+from app.academics.admin.filters import CurriBySemFilterAc
+from app.timetable.admin.filters import SemFilterAc
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
@@ -24,17 +26,18 @@ class SectionAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelA
     resource_class = SectionResource
     college_field = "program__curriculum__college"
     list_display = (
-        "semester",
         "program",
         "number",
+        "semester",
         "faculty",
         "available_seats",
         "space_codes",
         "session_count",
         "credit_hours",
+        "program__curriculum",        
     )
     inlines = [SessionInline, GradeInline]
-    list_filter = ("program__curriculum",)
+    list_filter = [SemFilterAc]  #, CurriBySemFilterAc]  #("program__curriculum",)
     autocomplete_fields = (
         "semester",
         "faculty",

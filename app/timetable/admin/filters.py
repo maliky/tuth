@@ -1,6 +1,7 @@
 """Filters for the registry models in Admin."""
 
 from admin_searchable_dropdown.filters import AutocompleteFilterFactory, AutocompleteFilter
+from app.timetable.models.semester import Semester
 from django.contrib import admin
 from django.urls import reverse
 from urllib.parse import urlencode
@@ -18,9 +19,15 @@ class SectionBySemesterFilter(AutocompleteFilter):
         return f"{base}?{urlencode({'section__semester': semester_id})}" if semester_id else base
 
 
-SemesterFilterAutocomplete = AutocompleteFilterFactory(
+SemFilterAc = AutocompleteFilterFactory(
     'Semester',                # title
     'section__semester',        # look-up path (Grade → Section → Semester)
+    use_pk_exact=False
+)
+
+SemFilterAc = AutocompleteFilterFactory(
+    'Semester',                # title
+    'semester',        # look-up path (Grade → Section → Semester)
     use_pk_exact=False
 )
 
