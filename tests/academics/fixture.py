@@ -11,6 +11,7 @@ from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.academics.models.program import Program
+from app.academics.models.concentration import Major, Minor
 
 CollegeFactory: TypeAlias = Callable[[str], College]
 CourseFactory: TypeAlias = Callable[[str], Course]
@@ -88,3 +89,15 @@ def program_factory(course_factory, curriculum_factory) -> ProgramFactory:
         return Program(course=course, curriculum=curriculum)
 
     return _make
+
+
+@pytest.fixture
+def major() -> Major:
+    """Default major with one program."""
+    return Major.get_default()
+
+
+@pytest.fixture
+def minor() -> Minor:
+    """Default minor with one program."""
+    return Minor.get_default()
