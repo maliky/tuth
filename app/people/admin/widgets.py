@@ -118,8 +118,9 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         stdid = row.get("student_id")
         # in case we get same f, l & m name for different id, this will
         # create a new username because the default one will be in _exclude
+        # ! What needs to be decided here is the prefix_len for students to avoid to much duplicates
         username = self._cache.get(
-            stdid, mk_username(first, last, middle, exclude=self._exclude)
+            stdid, mk_username(first, last, middle, exclude=self._exclude, prefix_len=3)
         )
         self._cache[stdid] = username
         self._exclude |= {username}

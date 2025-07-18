@@ -1,19 +1,39 @@
 """Admin configuration for registry models."""
 
-from app.people.models.student import Student
-from app.registry.models.registration import Registration
-from app.timetable.models.section import Section
 from django.contrib import admin
+from django.urls import path, reverse
+from import_export.admin import ImportExportModelAdmin
 
-from app.shared.mixins import HistoricalAccessMixin
-from app.shared.admin import SemesterFilter
+from app.people.models.student import Student
+from app.registry.admin.filters import GradeSectionFilter
 
+#from app.registry.admin.views import SectionBySemesterAutocomplete
 from app.registry.models.class_roster import ClassRoster
-from app.registry.models.grade import Grade
+from app.registry.models.grade import Grade, GradeType
+from app.registry.models.registration import Registration
+from app.shared.mixins import HistoricalAccessMixin
+from app.timetable.admin.filters import (
+    SectionBySemesterFilter,
+    SemesterFilter,
+    SemesterFilterAutocomplete,
+)
+from app.timetable.admin.views import SectionBySemesterAutocomplete
+from app.timetable.models.section import Section
+
+
+@admin.register(GradeType)
+class GradeTypeAdmin(HistoricalAccessMixin, ImportExportModelAdmin, admin.ModelAdmin):
+    """Admin interface for registry.models.GradeTypes.
+
+    Describe the different grades types
+    """
+
+    list_display = ("number", "code", "description")
+    search_fields = ("code", "description")
 
 
 @admin.register(Grade)
-class GradeAdmin(HistoricalAccessMixin, admin.ModelAdmin):
+class GradeAdmin(HistoricalAccessMixin, ImportExportModelAdmin, admin.ModelAdmin):
     """Admin interface for :class:~app.registry.models.Grade.
 
     Shows student, section and grade fields in the list view with autocomplete
@@ -22,25 +42,32 @@ class GradeAdmin(HistoricalAccessMixin, admin.ModelAdmin):
 
     list_display = (
         "student",
+        "grade",
         "section",
-        "letter_grade",
-        "numeric_grade",
+        "section__semester",
         "graded_on",
     )
-    search_fields = (
-        "student__student_id",
-        "student__user__username",
-        "student__user__first_name",
-        "student__user__last_name",
-        "section__course__code",
-        "section__number",
-    )
-    autocomplete_fields = ("student", "section")
-    list_filter = (SemesterFilter,)
+    # list_filter = ['section__semester', GradeSectionFilter]
+    list_filter = [SemesterFilterAutocomplete, SectionBySemesterFilter]
+    search_fields = ("student__student_id",)
+
+    def get_urls(self):
+        """Returns urls."""
+        urls = super().get_urls()
+        custom = [
+            path(
+                "section_by_semester_autocomplete/",
+                self.admin_site.admin_view(
+                    SectionBySemesterAutocomplete.as_view(model_admin=self)
+                ),
+                name="section_by_semester_autocomplete",
+            )
+        ]
+        return custom + urls
 
 
 @admin.register(ClassRoster)
-class ClassRosterAdmin(admin.ModelAdmin):
+class ClassRosterAdmin(ImportExportModelAdmin, HistoricalAccessMixin, admin.ModelAdmin):
     """Admin interface for :class:~app.registry.models.ClassRoster.
 
     Displays the section and counts enrolled students via student_count.
@@ -63,17 +90,17 @@ class ClassRosterAdmin(admin.ModelAdmin):
 
 
 @admin.register(Registration)
-class RegistrationAdmin(HistoricalAccessMixin, admin.ModelAdmin):
+class RegistrationAdmin(ImportExportModelAdmin, HistoricalAccessMixin, admin.ModelAdmin):
     """Allow students to register only for eligible sections."""
 
     list_display = ("student", "section", "status", "date_registered")
-    list_filter = (SemesterFilter,)
     autocomplete_fields = ("student", "section")
     search_fields = (
         "student__student_id",
         "section__program__course__code",
         "section__number",
     )
+    list_filter = (SemesterFilter,)
 
     def get_queryset(self, request):
         """Override the Set of object returned for tis page.

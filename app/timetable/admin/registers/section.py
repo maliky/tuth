@@ -17,7 +17,8 @@ class SectionAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelA
     """Admin interface for Section.
 
     list_display includes semester, course and faculty information while
-    inlines manage sessions. Filtering by curriculum is available through list_filter.
+    inlines manage sessions and grade.
+    Filtering by curriculum is available through list_filter.
     """
 
     resource_class = SectionResource
@@ -34,12 +35,15 @@ class SectionAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelA
     )
     inlines = [SessionInline, GradeInline]
     list_filter = ("program__curriculum",)
-    autocomplete_fields = ("semester", "faculty")
+    autocomplete_fields = (
+        "semester",
+        "faculty",
+    )
 
     # Join related tables to reduce queries when pulling sections.
     list_select_related = ("program", "semester", "faculty")
 
-    search_fields = ("^program__course__code",)  # fast starts-with on indexed code
+    search_fields = ("^program__course__short_code",)  # fast starts-with on indexed code
 
     def get_queryset(self, request):
         """Prefetch sessions and limit sections to the current faculty."""

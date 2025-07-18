@@ -1,6 +1,12 @@
 """Initialization for the registry admin package."""
 
-from .core import GradeAdmin, ClassRosterAdmin
+from .core import ClassRosterAdmin, GradeAdmin
+from .filters import GradeSectionFilter
 from .inlines import GradeInline
 
-__all__ = ["GradeAdmin", "ClassRosterAdmin", "GradeInline"]
+__all__ = [
+    "ClassRosterAdmin",
+    "GradeAdmin",
+    "GradeInline",
+    "GradeSectionFilter",
+]

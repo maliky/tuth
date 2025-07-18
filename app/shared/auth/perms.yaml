@@ -7,7 +7,8 @@ model_app:
   department:       academics
   course:           academics
   curriculum:       academics
-  concentration:    academics
+  major:            academics
+  minor:            academics  
   program:          academics
   prerequisite:     academics
 
@@ -72,12 +73,18 @@ object_perm_matrix:
     change: [dean, vpaa]
     delete: [vpaa]
 
-  concentration:
-    view:   [dean, chair, vpaa,  registrar, faculty]
+  major:
+    view:   [dean, chair, vpaa,  registrar, faculty, student]
     add:    [dean, vpaa]
     change: [dean, vpaa]
     delete: [vpaa]
 
+  minor:
+    view:   [dean, chair, vpaa,  registrar, faculty, student]
+    add:    [dean, vpaa]
+    change: [dean, vpaa]
+    delete: [dean, vpaa]
+    
   program:
     view:   [dean, chair, vpaa,  registrar, faculty, student]
     add:    [chair, dean, vpaa]

@@ -1,10 +1,9 @@
 """Choices module for academic package."""
 
-from django.db import models
-from django.db.models import IntegerChoices
+from django.db.models import IntegerChoices, TextChoices
 
 
-class DepartmentShortNameChoice(models.TextChoices):
+class DepartmentShortNameChoice(TextChoices):
     ACCT = "ACCT", "ACCT"
     AGR = "AGR", "AGR"
     BFIN = "BFIN", "BFIN"
@@ -46,7 +45,7 @@ class DepartmentShortNameChoice(models.TextChoices):
     DEFT = "DEFT", "DEFT"  # Default
 
 
-class DepartmentLongNameChoice(models.TextChoices):
+class DepartmentLongNameChoice(TextChoices):
     ACCT = "acct_long_name", "Accounting Department"
     AGR = "agr_long_name", "Agriculture Department"
     BFIN = "bfin_long_name", "Fincance Department"
@@ -88,7 +87,7 @@ class DepartmentLongNameChoice(models.TextChoices):
     DEFT = "deft_long_name", "Default Department"  # default
 
 
-class CollegeCodeChoices(models.TextChoices):
+class CollegeCodeChoices(TextChoices):
     COHS = "COHS", "COHS"
     COAS = "COAS", "COAS"
     COED = "COED", "COED"
@@ -99,7 +98,7 @@ class CollegeCodeChoices(models.TextChoices):
     TEST = "TEST", "TEST"  # for test purposes
 
 
-class CollegeLongNameChoices(models.TextChoices):
+class CollegeLongNameChoices(TextChoices):
     COHS = "cohs_long_name", "College of Health Sciences"
     COAS = "coas_long_name", "College of Arts and Sciences"
     COED = "coed_long_name", "College of Education"
@@ -113,7 +112,7 @@ class CollegeLongNameChoices(models.TextChoices):
     TEST = "test_long_name", "College used for Test purposes"  # for test purposes
 
 
-class StatusCurriculum(models.TextChoices):
+class StatusCurriculum(TextChoices):
     PENDING = "pending", "Pending"
     APPROVED = "approved", "Approved"
     NEEDS_REVISION = "needs_revision", "Needs Revision"

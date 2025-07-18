@@ -1,4 +1,4 @@
-"""Concentration module."""
+"""Concentration module that is Minor and Major."""
 
 from __future__ import annotations
 

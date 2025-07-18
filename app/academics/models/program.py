@@ -40,15 +40,6 @@ class Program(models.Model):
         help_text="Credits to be used in this curriculum for this course",
         default=CREDIT_NUMBER.THREE,
     )
-    # # ~~~~ Optional ~~~~
-    # # concentration or Minor
-    # concentration = models.ForeignKey(
-    #     "academics.Concentration",
-    #     on_delete=models.CASCADE,
-    #     related_name="programs",
-    #     null=True,
-    #     blank=True,
-    # )
 
     def __str__(self) -> str:  # pragma: no cover
         """Return Curriculum <-> Course for readability."""

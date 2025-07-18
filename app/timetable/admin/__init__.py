@@ -1,24 +1,26 @@
 """Initialization for the admin package."""
 
-from app.timetable.admin.registers.core import (
-    AcademicYearAdmin,
-    SemesterAdmin,
-)
-from app.timetable.admin.registers.section import SectionAdmin
-from app.timetable.admin.registers.session import SessionAdmin
-from app.timetable.admin.resources.core import AcademicYearResource, SemesterResource
-from app.timetable.admin.resources.section import SectionResource
-
+from .filters import SectionBySemesterFilter, SemesterFilter, SemesterFilterAutocomplete
 from .inlines import SectionInline, SemesterInline
+from .registers.core import AcademicYearAdmin, SemesterAdmin
+from .registers.section import SectionAdmin
+from .registers.session import SessionAdmin
+from .resources.core import AcademicYearResource, SemesterResource
+from .resources.section import SectionResource
+from .views import SectionBySemesterAutocomplete
 
 __all__ = [
     "AcademicYearAdmin",
-    "SemesterAdmin",
+    "AcademicYearResource",
     "SectionAdmin",
-    "SemesterInline",
+    "SectionBySemesterAutocomplete",
+    "SectionBySemesterFilter",
+    "SemesterFilterAutocomplete",
+    "SemesterFilter",
     "SectionInline",
     "SectionResource",
-    "AcademicYearResource",
+    "SemesterAdmin",
+    "SemesterInline",
     "SemesterResource",
     "SessionAdmin",
 ]

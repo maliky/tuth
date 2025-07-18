@@ -2,15 +2,12 @@
 
 from django.contrib import admin
 
-from app.shared.admin import SemesterFilter
-
+from app.finance.models.financial_record import FinancialRecord
 from app.finance.models.payment import Payment
-
 from app.finance.models.payment_history import PaymentHistory
 from app.finance.models.scholarship import Scholarship
-from app.finance.models.financial_record import FinancialRecord
-
 from app.shared.mixins import HistoricalAccessMixin
+from app.timetable.admin.filters import SemesterFilter
 
 
 @admin.register(Payment)

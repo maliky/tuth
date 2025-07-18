@@ -47,7 +47,7 @@ class Student(AbstractPerson):
         """Show the student id, name and user name."""
         ret = f"{self.student_id}"
         if self.user:
-            ret += f": {self.long_name} ({self.username})"
+            ret = f"{self.long_name} ({self.username})"
         return ret
 
     # > need to create a method to compute le level of the student based on the

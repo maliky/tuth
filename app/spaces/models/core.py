@@ -60,7 +60,7 @@ class Room(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         """Full room identifier combining space short name and code."""
-        if self.space_id:
+        if self.space_id and self.space != self.code:
             return f"{self.space}-{self.code}"
         else:
             return f"{self.code} (Space)"

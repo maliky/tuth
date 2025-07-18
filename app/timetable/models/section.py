@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Set
 
 from app.academics.models.curriculum import Curriculum
 from django.core.exceptions import ValidationError
@@ -57,7 +57,7 @@ class Section(models.Model):
     max_seats = models.PositiveIntegerField(default=30, validators=[MinValueValidator(3)])
 
     def __str__(self) -> str:  # pragma: no cover
-        """Return a human readable identifier with allocated rooms."""
+        """Return a human readable identifier for the section, with allocated rooms."""
         return f"{self.short_code} | {self.space_codes}"
 
     @property
@@ -78,9 +78,9 @@ class Section(models.Model):
         return curriculum
 
     @property
-    def spaces(self) -> List[Room]:
+    def spaces(self) -> Set[Room]:
         """Return a list of all Room instances in which this section meets."""
-        return [s.room for s in self.sessions.all() if s.room]
+        return {s.room for s in self.sessions.all() if s.room}
 
     @property
     def space_codes(self) -> str:
@@ -90,7 +90,7 @@ class Section(models.Model):
     @property
     def short_code(self) -> str:
         """Shorthand used for slugging the section in URLs or logs."""
-        return f"{self.course.code}:s{self.number}"
+        return f"{self.course.short_code}:s{self.number}"
 
     @property
     def long_code(self) -> str:

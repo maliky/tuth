@@ -10,7 +10,6 @@ from .program import Program
 
 __all__ = [
     "College",
-    "Concentration",
     "Course",
     "Curriculum",
     "Department",
