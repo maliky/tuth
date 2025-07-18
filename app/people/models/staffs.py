@@ -7,6 +7,7 @@ from itertools import count
 from typing import Self
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import QuerySet
@@ -15,6 +16,7 @@ from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.people.models.core import AbstractPerson
+from app.people.choices import UserRole
 from app.people.utils import get_default_user
 from app.shared.status.mixins import StatusableMixin
 
@@ -72,6 +74,13 @@ class Staff(AbstractPerson):
     def get_unique_default(cls) -> Self:
         """Return a unique default Staff."""
         return cls.get_default(staff_id=next(DEFAULT_STAFF_ID))
+
+    def save(self, *args, **kwargs):
+        """Mark associated user as staff."""
+        super().save(*args, **kwargs)
+        if self.user_id:
+            self.user.is_staff = True
+            self.user.save(update_fields=["is_staff"])
 
     class Meta:
         constraints = [
@@ -145,6 +154,11 @@ class Faculty(StatusableMixin, models.Model):
 
         self._ensure_college()
         super().save(*args, **kwargs)
+        user = self.staff_profile.user
+        group, _ = Group.objects.get_or_create(name=UserRole.FACULTY.label)
+        user.groups.add(group)
+        user.is_staff = True
+        user.save(update_fields=["is_staff"])
 
     def _delegate_user(self):
         """Return the User instance we should forward to."""

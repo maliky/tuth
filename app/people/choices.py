@@ -13,6 +13,7 @@ class UserRole(models.TextChoices):
     FINANCEOFFICER = "finance_officer", "Finance Officer"
     REGISTRAR_CLERC = "registrar_clerc", "Registrar Clerc"
     REGISTRAR_OFFICER = "registrar", "Registrar"
+    DONOR = "donor", "Donor"
     STUDENT = "student", "Student"
     STUDENT_PROSPECTING = "student_prospecting", "Student Prospecting"
     VPAA = "vpaa", "Vice President Academic Affairs"
