@@ -49,7 +49,7 @@ class GradeAdmin(HistoricalAccessMixin, ImportExportModelAdmin, admin.ModelAdmin
     )
     # list_filter = ['section__semester', GradeSectionFilter]
     list_filter = [SemesterFilterAutocomplete, SectionBySemesterFilter]
-    search_fields = ("student__student_id",)
+    search_fields = ("student__student_id", "section__semester")
 
     def get_urls(self):
         """Returns urls."""

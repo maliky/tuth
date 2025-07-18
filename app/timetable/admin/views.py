@@ -28,4 +28,4 @@ class SectionBySemesterAutocomplete(AutocompleteJsonView):
         if not semester_id:
             return qs
         
-        return qs.filter(semester_id=semester_id).order_by("program__course_code")
+        return qs.filter(semester_id=semester_id).order_by("program__course__code")
