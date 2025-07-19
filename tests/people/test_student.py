@@ -7,7 +7,7 @@ from app.academics.models.department import Department
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.program import Program
 from app.people.models.student import Student
-from app.registry.models.grade import Grade
+from app.registry.models.grade import Grade, GradeType
 from app.timetable.models.section import Section
 
 
@@ -39,9 +39,8 @@ def test_allowed_courses(student: Student, semester):
 
     assert course_a in allowed_initial
 
-    Grade.objects.create(
-        student=student, section=sec_a, letter_grade="A", numeric_grade=90
-    )
+    grade_type = GradeType.objects.create(code="A")
+    Grade.objects.create(student=student, section=sec_a, grade=grade_type)
 
     allowed = list(student.allowed_courses())
 

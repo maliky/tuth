@@ -10,12 +10,12 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from app.registry.choices import DocumentType, StatusRegistration
-from app.registry.models import ClassRoster, Document, Grade, Registration
+from app.registry.models import Document, Grade, Registration
+from app.registry.models.grade import GradeType
 
 RegistrationFactory: TypeAlias = Callable[[str, str, str, str], Registration]
 GradeFactory: TypeAlias = Callable[[str, str, str, str, Decimal], Grade]
 DocumentFactory: TypeAlias = Callable[[str, str], Document]
-ClassRosterFactory: TypeAlias = Callable[[str, str], ClassRoster]
 
 DECIMAL_90 = Decimal("90")
 
@@ -31,11 +31,11 @@ def registration(student, section) -> Registration:
 def grade(student, section) -> Grade:
     """Default grade for a student in a section."""
 
+    grade_type = GradeType.objects.create(code="A")
     return Grade.objects.create(
         student=student,
         section=section,
-        letter_grade="A",
-        numeric_grade=Decimal("90"),
+        grade=grade_type,
     )
 
 
@@ -53,11 +53,6 @@ def document(student) -> Document:
     )
 
 
-@pytest.fixture
-def class_roster(section) -> ClassRoster:
-    """Default class roster for a section."""
-
-    return ClassRoster.objects.create(section=section)
 
 
 # ─── factory fixtures ──────────────────────────────────────────────────────
@@ -95,11 +90,11 @@ def grade_factory(student_factory, section_factory) -> GradeFactory:
         numeric: Decimal = DECIMAL_90,
     ) -> Grade:
 
+        grade_type, _ = GradeType.objects.get_or_create(code=letter)
         return Grade.objects.create(
             student=student_factory(student_uname, curri_short_name),
             section=section_factory(course_number, curri_short_name),
-            letter_grade=letter,
-            numeric_grade=numeric,
+            grade=grade_type,
         )
 
     return _make
@@ -123,13 +118,3 @@ def document_factory(student_factory) -> DocumentFactory:
     return _make
 
 
-@pytest.fixture
-def class_roster_factory(section_factory) -> ClassRosterFactory:
-    """Return a callable to build class rosters."""
-
-    def _make(course_number: str, curri_short_name: str) -> ClassRoster:
-        return ClassRoster.objects.create(
-            section=section_factory(course_number, curri_short_name)
-        )
-
-    return _make
