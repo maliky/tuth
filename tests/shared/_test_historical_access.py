@@ -11,7 +11,7 @@ from app.finance.admin.core import FinancialRecordAdmin, PaymentHistoryAdmin
 from app.finance.models import FinancialRecord, PaymentHistory
 from app.people.models.student import Student
 from app.registry.admin.core import GradeAdmin, RegistrationAdmin
-from app.registry.models import Grade, Registration
+from app.registry.models import Grade, GradeType, Registration
 from app.timetable.models.section import Section
 from app.academics.models.program import Program
 
@@ -45,12 +45,10 @@ def setup_records(
         current_enroled_semester=past_sem,
     )
 
-    Grade.objects.create(
-        student=stud_current, section=sec_current, letter_grade="A", numeric_grade=90
-    )
-    Grade.objects.create(
-        student=stud_past, section=sec_past, letter_grade="B", numeric_grade=80
-    )
+    grade_a = GradeType.objects.create(code="A")
+    grade_b = GradeType.objects.create(code="B")
+    Grade.objects.create(student=stud_current, section=sec_current, grade=grade_a)
+    Grade.objects.create(student=stud_past, section=sec_past, grade=grade_b)
 
     Registration.objects.create(student=stud_current, section=sec_current)
     Registration.objects.create(student=stud_past, section=sec_past)

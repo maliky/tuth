@@ -65,7 +65,8 @@ class Student(AbstractPerson):
         """Return courses the student completed with a passing grade."""
         return Course.objects.filter(
             in_programs__sections__grade__student=self,
-            in_programs__sections__grade__numeric_grade__gte=60,
+            # GradeType.number >= 1 == passing grade
+            in_programs__sections__grade__grade__number__gte=1,
         ).distinct()
 
     def allowed_courses(self) -> CourseQuery:
