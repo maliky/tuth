@@ -3,6 +3,7 @@
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
+from simple_history.admin import SimpleHistoryAdmin
 
 from app.people.admin.resources import FacultyResource
 from app.people.forms.base import PersonFormMixin
@@ -20,7 +21,7 @@ from app.timetable.admin.inlines import SectionInline
 
 
 @admin.register(Faculty)
-class FacultyAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelAdmin):
+class FacultyAdmin(CollegeRestrictedAdmin):
     """Admin options for :class:~app.people.models.Faculty.
 
     Displays the staff profile with optional filtering by college. The faculty
@@ -75,7 +76,7 @@ class FacultyAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelA
 
 
 @admin.register(Donor)
-class DonorAdmin(GuardedModelAdmin):
+class DonorAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin management for :class:~app.people.models.Donor.
 
     Shows each donor's user and ID with autocomplete for the user relation.
@@ -102,7 +103,7 @@ class DonorAdmin(GuardedModelAdmin):
 
 
 @admin.register(Staff)
-class StaffAdmin(DepartmentRestrictedAdmin, GuardedModelAdmin):
+class StaffAdmin(DepartmentRestrictedAdmin):
     """Admin management for :class:~app.people.models.Staff.
 
     Provides detailed fieldsets for personal and work information. Important
@@ -137,7 +138,7 @@ class StaffAdmin(DepartmentRestrictedAdmin, GuardedModelAdmin):
 
 
 @admin.register(Student)
-class StudentAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+class StudentAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Admin interface for :class:~app.people.models.Student.
 
     list_display shows the related user and student ID with search enabled

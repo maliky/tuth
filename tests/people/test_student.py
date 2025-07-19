@@ -1,6 +1,7 @@
 """Test student people module."""
 
 import pytest
+from django.contrib.auth.models import User
 
 from app.academics.models.course import Course
 from app.academics.models.department import Department
@@ -47,3 +48,12 @@ def test_allowed_courses(student: Student, semester):
 
     assert course_b in allowed
     assert course_a not in allowed
+
+
+@pytest.mark.django_db
+def test_student_save_assigns_group(curriculum):
+    """Saving a Student shoul add the user to the student group."""
+    user = User.objects.create_user(username="newstud")
+    stud = Student.objects.create(user=user, curriculum=curriculum)
+
+    assert user.groups.filter(name=Student.GROUP).exists()

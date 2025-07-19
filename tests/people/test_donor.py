@@ -13,3 +13,4 @@ def test_donor_profile_creation():
     donor = Donor.objects.create(user=user)
 
     assert donor.donor_id == f"{Donor.ID_PREFIX}00001"
+    assert user.group.filter(name=Donor.GROUP).exists()

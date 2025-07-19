@@ -7,6 +7,7 @@ class UserRole(models.TextChoices):
     CASHIER = "cashier", "Cashier"
     CHAIR = "chair", "Chair"
     DEAN = "dean", "Dean"
+    DONOR = "donor", "Donor"
     ENROLLMENT_CLERC = "enrollment_clerc", "Enrollment Clerc"
     ENROLLMENT_OFFICER = "enrollment_officer", "Enrollment Officer"
     FACULTY = "faculty", "Faculty"

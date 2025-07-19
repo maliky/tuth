@@ -6,6 +6,7 @@ from itertools import count
 from typing import Self
 
 from django.db import models
+from simple_history.models import HistoricalRecords
 
 # Reside only on module reload (so could stay in memory for long on prod)
 DEFAULT_ROOM_CODE = count(start=1, step=1)
@@ -21,6 +22,8 @@ class Space(models.Model):
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     code = models.CharField(max_length=15, unique=True, db_index=True)
+    # ~~~~ Auto-filled ~~~~
+    history = HistoricalRecords()
 
     # ~~~~~~~~ Optional ~~~~~~~~
     # replace this to long name
@@ -57,6 +60,7 @@ class Room(models.Model):
     space = models.ForeignKey(Space, on_delete=models.PROTECT, related_name="rooms")
     standard_capacity = models.PositiveIntegerField(default=45)
     exam_capacity = models.PositiveIntegerField(default=30)
+    history = HistoricalRecords()
 
     def __str__(self) -> str:  # pragma: no cover
         """Full room identifier combining space short name and code."""

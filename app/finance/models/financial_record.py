@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from django.db import models
+from simple_history.models import HistoricalRecords
 
 from app.finance.choices import FeeType, StatusClearance
 
@@ -43,6 +44,7 @@ class FinancialRecord(models.Model):
         default=StatusClearance.PENDING,
     )
     last_updated = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
 
     # ~~~~~~~~ Optional ~~~~~~~~
     verified_by = models.ForeignKey(
@@ -75,3 +77,5 @@ class SectionFee(models.Model):
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)
     fee_type = models.CharField(max_length=50, choices=FeeType.choices)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    # ~~~~ Auto-filled ~~~~
+    history = HistoricalRecords()

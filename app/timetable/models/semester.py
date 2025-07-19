@@ -1,7 +1,10 @@
 """Semester module."""
 
 from __future__ import annotations
+
 from django.db import models
+from simple_history.models import HistoricalRecords
+
 from app.timetable.choices import SEMESTER_NUMBER
 from app.timetable.utils import validate_subperiod
 
@@ -18,6 +21,8 @@ class Semester(models.Model):
     number = models.PositiveSmallIntegerField(
         choices=SEMESTER_NUMBER.choices, help_text="Semester number"
     )
+    # ~~~~ Auto-filled ~~~~
+    history = HistoricalRecords()
 
     # ~~~~~~~~ Optional ~~~~~~~~
     # > Could be interesting to set this to the academic_year start date automatically on save

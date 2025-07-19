@@ -1,10 +1,13 @@
 """Department model."""
 
 from __future__ import annotations
+
 from typing import Self
 
-from app.academics.models.college import College
 from django.db import models
+from simple_history.models import HistoricalRecords
+
+from app.academics.models.college import College
 
 
 class Department(models.Model):
@@ -30,6 +33,7 @@ class Department(models.Model):
         related_name="departments",
     )
     long_name = models.CharField(max_length=128, blank=True)
+    history = HistoricalRecords()
 
     # ~~~~ Read-only ~~~~
     code = models.CharField(max_length=50, unique=True, editable=False)

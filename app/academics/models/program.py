@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Optional, Self
 
 from django.db import models
+from simple_history.models import HistoricalRecords
 
 from app.academics.choices import CREDIT_NUMBER
 from app.academics.models.course import Course
@@ -33,7 +34,7 @@ class Program(models.Model):
     # ~~~~ Auto-filled ~~~~
     is_required = models.BooleanField(default=False)  # for required general courses
     is_elective = models.BooleanField(default=False)
-
+    history = HistoricalRecords()
     # credit hours depend on the curricula not the Course
     credit_hours = models.PositiveSmallIntegerField(
         choices=CREDIT_NUMBER.choices,

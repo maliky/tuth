@@ -6,6 +6,7 @@ from typing import Optional, Self, cast
 
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.db import models
+from simple_history.models import HistoricalRecords
 
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.program import Program
@@ -126,8 +127,11 @@ class Minor(ConcentrationMixin):
 class MajorProgram(models.Model):
     """A table joining the Major table with the program table."""
 
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     major = models.ForeignKey("Major", on_delete=models.CASCADE)
     program = models.ForeignKey("Program", on_delete=models.CASCADE)
+    # ~~~~ Auto-filled ~~~~
+    history = HistoricalRecords()
 
     class Meta:
         constraints = [
@@ -141,8 +145,11 @@ class MajorProgram(models.Model):
 class MinorProgram(models.Model):
     """A table joining the Major table with the program table."""
 
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     minor = models.ForeignKey("Minor", on_delete=models.CASCADE)
     program = models.ForeignKey("Program", on_delete=models.CASCADE)
+    # ~~~~ Auto-filled ~~~~
+    history = HistoricalRecords()
 
     class Meta:
         constraints = [

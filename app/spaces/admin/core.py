@@ -1,16 +1,18 @@
 """Core module."""
 
-from app.timetable.admin.inlines import SessionInline
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
+from simple_history.admin import SimpleHistoryAdmin
+
+from app.spaces.models import Room, Space
+from app.timetable.admin.inlines import SessionInline
 
 from .resources import RoomResource
-from app.spaces.models import Space, Room
 
 
 @admin.register(Space)
-class SpaceAdmin(GuardedModelAdmin):
+class  SpaceAdmin(SimpleHistoryAdmin,GuardedModelAdmin):
     """Admin management for :class:~app.spaces.models.Space.
 
     Exposes basic listing and search over the space code and name.
@@ -37,7 +39,7 @@ class SpaceAdmin(GuardedModelAdmin):
 
 
 @admin.register(Room)
-class RoomAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+class RoomAdmin(SimpleHistoryAdmin,ImportExportModelAdmin, GuardedModelAdmin):
     """Admin configuration for :class:~app.spaces.models.Room.
 
     list_display shows the room code and capacities. Sessions are edited via

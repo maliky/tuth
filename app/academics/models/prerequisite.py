@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from simple_history.models import HistoricalRecords
 
 
 class Prerequisite(models.Model):
@@ -23,6 +24,8 @@ class Prerequisite(models.Model):
     prerequisite_course = models.ForeignKey(
         "academics.Course", related_name="required_for_edges", on_delete=models.CASCADE
     )
+    # ~~~~ Auto-filled ~~~~
+    history = HistoricalRecords()
 
     # ~~~~~~~~ Optional ~~~~~~~~
     curriculum = models.ForeignKey(

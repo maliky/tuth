@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from django.db import models
+from simple_history.models import HistoricalRecords
 
 from app.registry.choices import StatusRegistration
 from app.shared.status.mixins import StatusableMixin
@@ -39,6 +40,7 @@ class Registration(StatusableMixin, models.Model):
         default=StatusRegistration.PENDING,
     )
     date_registered = models.DateTimeField(auto_now_add=True)
+    history = HistoricalRecords()
 
     class Meta:
         constraints = [

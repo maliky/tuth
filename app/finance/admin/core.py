@@ -1,17 +1,18 @@
 """Core module."""
 
 from django.contrib import admin
+from guardian.admin import GuardedModelAdmin
+from simple_history.admin import SimpleHistoryAdmin
 
 from app.finance.models.financial_record import FinancialRecord
 from app.finance.models.payment import Payment
 from app.finance.models.payment_history import PaymentHistory
 from app.finance.models.scholarship import Scholarship
-from app.shared.mixins import HistoricalAccessMixin
 from app.timetable.admin.filters import SemesterFilter
 
 
 @admin.register(Payment)
-class PaymentAdmin(admin.ModelAdmin):
+class PaymentAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin settings for Payment."""
 
     list_display = ("__str__", "method", "recorded_by")
@@ -20,7 +21,7 @@ class PaymentAdmin(admin.ModelAdmin):
 
 
 @admin.register(FinancialRecord)
-class FinancialRecordAdmin(HistoricalAccessMixin, admin.ModelAdmin):
+class FinancialRecordAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin interface for :class:`~app.finance.models.FinancialRecord`."""
 
     list_display = ("student", "total_due", "total_paid", "clearance_status")
@@ -28,7 +29,7 @@ class FinancialRecordAdmin(HistoricalAccessMixin, admin.ModelAdmin):
 
 
 @admin.register(Scholarship)
-class ScholarshipAdmin(admin.ModelAdmin):
+class ScholarshipAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin interface forScholarship.
 
     Autocomplete is enabled for donor and student foreign keys and key fields
@@ -40,7 +41,7 @@ class ScholarshipAdmin(admin.ModelAdmin):
 
 
 @admin.register(PaymentHistory)
-class PaymentHistoryAdmin(HistoricalAccessMixin, admin.ModelAdmin):
+class PaymentHistoryAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin interface for :class:~app.finance.models.PaymentHistory.
 
     Shows a summary string along with the record, payment method and user.

@@ -4,14 +4,17 @@ from __future__ import annotations
 
 from typing import Optional, cast
 
+from django.contrib import admin
+from guardian.admin import GuardedModelAdmin
+from import_export.admin import ImportExportModelAdmin
+from simple_history.admin import SimpleHistoryAdmin
+
 from app.academics.models.college import College
 from app.academics.models.department import Department
-from django.contrib import admin
-
 from app.people.models.staffs import Faculty, Staff
 
 
-class CollegeRestrictedAdmin(admin.ModelAdmin):
+class CollegeRestrictedAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Limit queryset to objects within the user's college."""
 
     college_field: str = "college"
@@ -35,7 +38,7 @@ class CollegeRestrictedAdmin(admin.ModelAdmin):
         return qs.filter(**{self.college_field: college})
 
 
-class DepartmentRestrictedAdmin(admin.ModelAdmin):
+class DepartmentRestrictedAdmin(SimpleHistoryAdmin,ImportExportModelAdmin, GuardedModelAdmin):
     """Limit queryset to objects within the user's department."""
 
     department_field: str = "department"

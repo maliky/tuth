@@ -1,9 +1,10 @@
 """Core module."""
 
+from app.academics.admin.views import CurriculumBySemester
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
-from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
+from simple_history.admin import SimpleHistoryAdmin
 
 from app.academics.admin.actions import update_curriculum
 from app.academics.models.college import College
@@ -12,12 +13,13 @@ from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.program import Program
+from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
 
 from .filters import CurriculumFilter
 from .inlines import (
-    PrerequisiteInline,
     CourseProgramInline,
     CurriculumProgramInline,
+    PrerequisiteInline,
     RequiresInline,
 )
 from .resources import (
@@ -31,7 +33,7 @@ from .resources import (
 
 
 @admin.register(College)
-class CollegeAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+class CollegeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Admin settings for :class:~app.academics.models.College.
 
     Displays the college code and name and provides search capability on both
@@ -44,7 +46,7 @@ class CollegeAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 
 @admin.register(Course)
-class CourseAdmin(DepartmentRestrictedAdmin, ImportExportModelAdmin, GuardedModelAdmin):
+class CourseAdmin(DepartmentRestrictedAdmin):
     """Admin interface for Course.
 
     Provides course management with extra tools:
@@ -75,7 +77,7 @@ class CourseAdmin(DepartmentRestrictedAdmin, ImportExportModelAdmin, GuardedMode
 
 
 @admin.register(Curriculum)
-class CurriculumAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelAdmin):
+class CurriculumAdmin(CollegeRestrictedAdmin):
     """Admin options for Curriculum.
 
     Key features:
@@ -87,7 +89,7 @@ class CurriculumAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedMod
     resource_class = CurriculumResource
     # add the action button on the import form
     list_display = ("short_name", "long_name", "college", "is_active", "status")
-    list_filter = ("college",)
+    list_filter = "college"
     autocomplete_fields = ("college",)
     inlines = [CurriculumProgramInline]
 
@@ -95,9 +97,23 @@ class CurriculumAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedMod
     list_select_related = ("college",)
     search_fields = ("short_name", "long_name")
 
+    def get_urls(self):
+        """Returns urls."""
+        urls = super().get_urls()
+        custom = [
+            path(
+                "curriculum_by_semester_ac/",
+                self.admin_site.admin_view(
+                    CurriculumBySemester.as_view(model_admin=self)
+                ),
+                name="curriculum_by_semester_ac",
+            )
+        ]
+        return custom + urls
+
 
 @admin.register(Department)
-class DepartmentAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelAdmin):
+class DepartmentAdmin(CollegeRestrictedAdmin):
     """Admin interface for :class:~app.academics.models.Department.
 
     Shows department code, name and college. autocomplete_fields speeds up
@@ -111,7 +127,7 @@ class DepartmentAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedMod
 
 
 @admin.register(Prerequisite)
-class PrerequisiteAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+class PrerequisiteAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Admin interface for :class:~app.academics.models.Prerequisite.
 
     Options configured:
@@ -133,7 +149,7 @@ class PrerequisiteAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 
 @admin.register(Program)
-class ProgramAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelAdmin):
+class ProgramAdmin(CollegeRestrictedAdmin):
     """Admin screen for :class:~app.academics.models.Program.
 
     list_display shows the curriculum and related course while

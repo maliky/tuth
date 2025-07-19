@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from app.people.choices import UserRole
 from django.db import models
 
 from app.academics.models.course import Course
@@ -28,6 +29,7 @@ class Student(AbstractPerson):
     ID_FIELD = "student_id"
     ID_PREFIX = "TU-STD"
     EMAIL_SUFFIX = ".stud@tubmanu.edu.lr"
+    GROUP = UserRole.STUDENT.label
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     curriculum = models.ForeignKey("academics.Curriculum", on_delete=models.CASCADE)

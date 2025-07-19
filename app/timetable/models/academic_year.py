@@ -7,6 +7,7 @@ from datetime import timedelta
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.functions import ExtractYear
+from simple_history.models import HistoricalRecords
 
 
 class AcademicYear(models.Model):
@@ -22,6 +23,8 @@ class AcademicYear(models.Model):
     # ~~~~~~~~ Mandatory ~~~~~~~~
     start_date = models.DateField(unique=True)
     end_date = models.DateField(unique=True)
+    # ~~~~ Auto-filled ~~~~
+    history = HistoricalRecords()
 
     # ~~~~ Read-only ~~~~
     code = models.CharField(max_length=5, editable=False, unique=True)

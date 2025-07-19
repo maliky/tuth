@@ -7,10 +7,10 @@ from typing import Optional, cast
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-
+from simple_history.models import HistoricalRecords
 
 from app.registry.choices import DocumentType, StatusDocument
-from app.shared.status.mixins import StatusHistory, StatusableMixin
+from app.shared.status.mixins import StatusableMixin, StatusHistory
 
 
 class Document(StatusableMixin, models.Model):
@@ -39,13 +39,13 @@ class Document(StatusableMixin, models.Model):
     profile = GenericForeignKey("profile_type", "profile_id")
     data_file = models.FileField(upload_to="documents/")
     document_type = models.CharField(max_length=50, choices=DocumentType.choices)
-
     # ~~~~ Auto-filled ~~~~
     status = models.CharField(
         max_length=30,
         choices=StatusDocument.choices,
         default=StatusDocument.PENDING,
     )
+    history = HistoricalRecords()
 
     def current_status(self) -> Optional[StatusHistory]:
         """Return the most recent status entry or None if empty."""

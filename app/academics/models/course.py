@@ -6,11 +6,12 @@ from itertools import count
 from typing import Self
 
 from django.db import models
+from simple_history.models import HistoricalRecords
 
 from app.academics.choices import LEVEL_NUMBER
 from app.academics.models.department import Department
-from app.shared.utils import make_course_code
 from app.shared.types import CourseQuery
+from app.shared.utils import make_course_code
 
 DEFAULT_COURSE_NO = count(start=1, step=1)
 
@@ -36,7 +37,7 @@ class Course(models.Model):
         on_delete=models.CASCADE,
         related_name="courses",
     )
-
+    history = HistoricalRecords()
     # ~~~~ Read-only ~~~~
     code = models.CharField(max_length=20, editable=False)
 

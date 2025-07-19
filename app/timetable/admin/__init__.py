@@ -1,6 +1,6 @@
 """Initialization for the admin package."""
 
-from .filters import SectionBySemesterFilter, SemesterFilter, SemFilterAc
+from .filters import SectionBySemesterFilter, SemesterFilter, SectionSemesterFilterAc, GradeSemesterFilterAc
 from .inlines import SectionInline, SemesterInline
 from .registers.core import AcademicYearAdmin, SemesterAdmin
 from .registers.section import SectionAdmin
@@ -15,12 +15,13 @@ __all__ = [
     "SectionAdmin",
     "SectionBySemesterAutocom",
     "SectionBySemesterFilter",
-    "SemFilterAc",
+    "SectionSemesterFilterAc",
+    "GradeSemesterFilterAc",    
     "SemesterFilter",
     "SectionInline",
     "SectionResource",
     "SemesterAdmin",
-    "SemFilterAc",
+    "SectionSemesterFilterAc",
     "SemesterInline",
     "SemesterResource",
     "SessionAdmin",

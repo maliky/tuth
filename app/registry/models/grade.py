@@ -1,8 +1,11 @@
 """Grade records for completed course sections."""
 
 from typing import Self
-from app.registry.constants import GRADES_DESCRIPTION, GRADES_NUM
+
 from django.db import models
+from simple_history.models import HistoricalRecords
+
+from app.registry.constants import GRADES_DESCRIPTION, GRADES_NUM
 
 
 class GradeType(models.Model):
@@ -15,6 +18,7 @@ class GradeType(models.Model):
     description = models.CharField(
         max_length=60, null=True, default=GRADES_DESCRIPTION["IP"]
     )
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.code
@@ -64,6 +68,7 @@ class Grade(models.Model):
 
     # ~~~~ Auto-filled ~~~~
     graded_on = models.DateField(auto_now_add=True)
+    history = HistoricalRecords()
 
     class Meta:
         unique_together = ("student", "section")

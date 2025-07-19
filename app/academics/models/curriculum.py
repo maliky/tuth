@@ -1,13 +1,15 @@
 """Curriculum module."""
 
 from __future__ import annotations
+
 from datetime import date
 from typing import Self
 
+from django.db import models
+from simple_history.models import HistoricalRecords
+
 from app.academics.choices import StatusCurriculum
 from app.academics.models.college import College
-from django.db import models
-
 from app.shared.status.mixins import StatusableMixin
 
 
@@ -38,6 +40,7 @@ class Curriculum(StatusableMixin, models.Model):
         choices=StatusCurriculum.choices,
         default=StatusCurriculum.PENDING,
     )
+    history = HistoricalRecords()
 
     # ~~~~~~~~ Optional ~~~~~~~~
     long_name = models.CharField(max_length=255, blank=True, null=True)

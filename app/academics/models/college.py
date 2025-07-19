@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from django.db import models
+from simple_history.models import HistoricalRecords
 
 from app.academics.choices import CollegeCodeChoices, CollegeLongNameChoices
 
@@ -29,7 +30,8 @@ class College(models.Model):
         # choices=CollegeLongNameChoices.choices,
         blank=True,
     )
-
+    history = HistoricalRecords()
+    
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.code}"
 

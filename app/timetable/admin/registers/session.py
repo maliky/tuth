@@ -1,17 +1,18 @@
 """Session admin module."""
 
-from app.timetable.admin.inlines import SessionInline
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
+from simple_history.admin import SimpleHistoryAdmin
 
+from app.timetable.admin.inlines import SessionInline
 from app.timetable.admin.resources.session import ScheduleResource, SessionResource
 from app.timetable.models.schedule import Schedule
 from app.timetable.models.session import Session
 
 
 @admin.register(Session)
-class SessionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+class SessionAdmin( SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Admin configuration for Session.
 
     list_display exposes schedule, room and related section details. The
@@ -45,7 +46,7 @@ class SessionAdmin(ImportExportModelAdmin, GuardedModelAdmin):
 
 
 @admin.register(Schedule)
-class ScheduleAdmin(ImportExportModelAdmin, GuardedModelAdmin):
+class ScheduleAdmin(SimpleHistoryAdmin, ImportExportModelAdmin,  GuardedModelAdmin):
     """Admin interface for :class:~app.timetable.models.Schedule.
 
     Allows filtering by weekday and supports import/export operations.

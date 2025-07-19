@@ -14,7 +14,7 @@ CurriculumFilterAutocomplete = AutocompleteFilterFactory(
 )
 
 
-class CurriBySemFilterAc(AutocompleteFilter):
+class CurriculumBySemesterFilterAc(AutocompleteFilter):
     """Returns the curriculum having section for a specific semester."""
 
     title = "Curriculum"
@@ -22,7 +22,7 @@ class CurriBySemFilterAc(AutocompleteFilter):
 
     def get_autocomplete_url(self, request, model_admin):
         """Get the urls registered in SectionAdmin.get_urls."""
-        base = reverse("admin:curri_by_sem_ac")
+        base = reverse("admin:curriculum_by_semester_ac")
         # semester_id = request.GET.get("semester")
         return base
 

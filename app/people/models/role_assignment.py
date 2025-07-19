@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from django.contrib.auth import get_user_model
 from django.db import models
+from simple_history.models import HistoricalRecords
 
 from app.people.choices import UserRole
 
@@ -30,6 +31,8 @@ class RoleAssignment(models.Model):
     )
     role = models.CharField(max_length=40, choices=UserRole.choices)
     start_date = models.DateField()
+    # ~~~~ Auto-filled ~~~~
+    history = HistoricalRecords()
 
     # ~~~~~~~~ Optional ~~~~~~~~
     college = models.ForeignKey(

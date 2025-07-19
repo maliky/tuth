@@ -1,7 +1,7 @@
 """Scholarship module."""
 
 from __future__ import annotations
-
+from simple_history.models import HistoricalRecords
 from django.db import models
 
 
@@ -44,6 +44,8 @@ class Scholarship(models.Model):
     )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     start_date = models.DateField()
+    # ~~~~ Auto-filled ~~~~
+    history = HistoricalRecords()
 
     # ~~~~~~~~ Optional ~~~~~~~~
     end_date = models.DateField(null=True, blank=True)

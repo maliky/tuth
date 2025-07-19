@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Set
 
-from app.academics.models.curriculum import Curriculum
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
+from simple_history.models import HistoricalRecords
 
 from app.academics.models.course import Course
+from app.academics.models.curriculum import Curriculum
 
 if TYPE_CHECKING:
     from app.spaces.models.core import Room
@@ -37,6 +38,8 @@ class Section(models.Model):
         "academics.Program", on_delete=models.CASCADE, related_name="sections"
     )
     number = models.PositiveIntegerField("Section #", default=1, validators=[MinValueValidator(1)])
+    # ~~~~ Auto-filled ~~~~
+    history = HistoricalRecords()
 
     # ~~~~~~~~ Optional ~~~~~~~~
     faculty = models.ForeignKey(

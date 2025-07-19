@@ -9,6 +9,7 @@ from datetime import datetime, time, timedelta
 from typing import Self
 
 from django.db import models, transaction
+from simple_history.models import HistoricalRecords
 
 from app.timetable.choices import WEEKDAYS_NUMBER
 
@@ -36,6 +37,8 @@ class Schedule(models.Model):
         default=WEEKDAYS_NUMBER.TBA,
     )
     start_time = models.TimeField()
+    # ~~~~ Auto-filled ~~~~
+    history = HistoricalRecords()
 
     # ~~~~~~~~ Optional ~~~~~~~~
     end_time = models.TimeField(null=True, blank=True)

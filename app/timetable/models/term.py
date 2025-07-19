@@ -1,7 +1,9 @@
 """Term module."""
 
 from __future__ import annotations
+
 from django.db import models
+from simple_history.models import HistoricalRecords
 
 from app.timetable.choices import TERM_NUMBER
 from app.timetable.utils import validate_subperiod
@@ -21,6 +23,8 @@ class Term(models.Model):
     number = models.PositiveSmallIntegerField(
         choices=TERM_NUMBER.choices, help_text="Term number"
     )
+    # ~~~~ Auto-filled ~~~~
+    history = HistoricalRecords()
 
     # ~~~~~~~~ Optional ~~~~~~~~
     start_date = models.DateField(null=True, blank=True)

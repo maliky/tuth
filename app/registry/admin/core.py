@@ -7,21 +7,22 @@ from import_export.admin import ImportExportModelAdmin
 from app.people.models.student import Student
 from app.registry.admin.filters import GradeSectionFilter
 
-#from app.registry.admin.views import SectionBySemesterAutocomplete
+# from app.registry.admin.views import SectionBySemesterAutocomplete
 from app.registry.models.grade import Grade, GradeType
 from app.registry.models.registration import Registration
-from app.shared.mixins import HistoricalAccessMixin
 from app.timetable.admin.filters import (
+    GradeSemesterFilterAc,
     SectionBySemesterFilter,
     SemesterFilter,
-    SemFilterAc,
 )
 from app.timetable.admin.views import SectionBySemesterAutocomplete
 from app.timetable.models.section import Section
+from simple_history.admin import SimpleHistoryAdmin
+from guardian.admin import GuardedModelAdmin
 
 
 @admin.register(GradeType)
-class GradeTypeAdmin(HistoricalAccessMixin, ImportExportModelAdmin, admin.ModelAdmin):
+class GradeTypeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Admin interface for registry.models.GradeTypes.
 
     Describe the different grades types
@@ -32,7 +33,7 @@ class GradeTypeAdmin(HistoricalAccessMixin, ImportExportModelAdmin, admin.ModelA
 
 
 @admin.register(Grade)
-class GradeAdmin(HistoricalAccessMixin, ImportExportModelAdmin, admin.ModelAdmin):
+class GradeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Admin interface for :class:~app.registry.models.Grade.
 
     Shows student, section and grade fields in the list view with autocomplete
@@ -48,7 +49,7 @@ class GradeAdmin(HistoricalAccessMixin, ImportExportModelAdmin, admin.ModelAdmin
         "graded_on",
     )
     # list_filter = ['section__semester', GradeSectionFilter]
-    list_filter = [SemFilterAc, SectionBySemesterFilter]
+    list_filter = [GradeSemesterFilterAc, SectionBySemesterFilter]
     search_fields = ("student__student_id", "section__semester")
 
     def get_urls(self):
@@ -67,7 +68,7 @@ class GradeAdmin(HistoricalAccessMixin, ImportExportModelAdmin, admin.ModelAdmin
 
 
 @admin.register(Registration)
-class RegistrationAdmin(ImportExportModelAdmin, HistoricalAccessMixin, admin.ModelAdmin):
+class RegistrationAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Allow students to register only for eligible sections."""
 
     list_display = ("student", "section", "status", "date_registered")
@@ -79,20 +80,6 @@ class RegistrationAdmin(ImportExportModelAdmin, HistoricalAccessMixin, admin.Mod
     )
     list_filter = (SemesterFilter,)
 
-    def get_queryset(self, request):
-        """Override the Set of object returned for tis page.
-
-        Limit the registration to those of the student consulting the page.
-        """
-        qs = super().get_queryset(request)
-        if request.user.is_superuser or self.has_historical_access(request.user):
-            return self.get_historical_queryset(request)
-        try:
-            student = request.user.student
-        except Student.DoesNotExist:
-            return qs.none()
-        qs = qs.filter(student=student)
-        return self.filter_current_semester(qs)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Probably orverriding the default form for the model.

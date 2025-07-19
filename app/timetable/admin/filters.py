@@ -1,10 +1,14 @@
 """Filters for the registry models in Admin."""
 
-from admin_searchable_dropdown.filters import AutocompleteFilterFactory, AutocompleteFilter
+from admin_searchable_dropdown.filters import (
+    AutocompleteFilterFactory,
+    AutocompleteFilter,
+)
 from app.timetable.models.semester import Semester
 from django.contrib import admin
 from django.urls import reverse
 from urllib.parse import urlencode
+
 
 class SectionBySemesterFilter(AutocompleteFilter):
     """Dropdow for Section dependings on Semester filter."""
@@ -16,19 +20,23 @@ class SectionBySemesterFilter(AutocompleteFilter):
         """Get the url registered in GradeAdmin.get_urls."""
         base = reverse("admin:section_by_semester_autocomplete")
         semester_id = request.GET.get("section__semester")
-        return f"{base}?{urlencode({'section__semester': semester_id})}" if semester_id else base
+        return (
+            f"{base}?{urlencode({'section__semester': semester_id})}"
+            if semester_id
+            else base
+        )
 
 
-SemFilterAc = AutocompleteFilterFactory(
-    'Semester',                # title
-    'section__semester',        # look-up path (Grade → Section → Semester)
-    use_pk_exact=False
+GradeSemesterFilterAc = AutocompleteFilterFactory(
+    "Semester",  # title
+    "section__semester",  # look-up path (Grade → Section → Semester)
+    use_pk_exact=False,
 )
 
-SemFilterAc = AutocompleteFilterFactory(
-    'Semester',                # title
-    'semester',        # look-up path (Grade → Section → Semester)
-    use_pk_exact=False
+SectionSemesterFilterAc = AutocompleteFilterFactory(
+    "Semester",  # title
+    "semester",  # look-up path (Grade → Section → Semester)
+    use_pk_exact=False,
 )
 
 

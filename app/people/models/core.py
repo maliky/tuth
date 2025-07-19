@@ -8,6 +8,7 @@ from django.db import models
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
+from simple_history.models import HistoricalRecords
 
 from app.people.utils import extract_id_num, mk_username, photo_upload_to
 from app.shared.status.mixins import StatusableMixin
@@ -30,6 +31,8 @@ class AbstractPerson(StatusableMixin, models.Model):
     ID_FIELD: str | None = None
     ID_PREFIX: str = "TU-"
     EMAIL_SUFFIX: str = "@tubmanu.edu.lr"
+    GROUP: str | None = None
+    STAFF_STATUS: str | None = None
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     # ~~~~ Autofilled ~~~~
@@ -43,6 +46,7 @@ class AbstractPerson(StatusableMixin, models.Model):
     long_name = models.CharField(editable=False)
     username = models.CharField(editable=True)
     email = models.EmailField(editable=True)
+
     # ~~~~~~~~ Optional ~~~~~~~~
     # # need to define a list of choice well structured
     middle_name = models.CharField(blank=True)
@@ -201,6 +205,15 @@ class AbstractPerson(StatusableMixin, models.Model):
         self._ensure_email()
         self._ensure_username()
         super().save(*args, **kwargs)
+
+        if self.user_id:
+            if self.GROUP:
+                group, _ = Group.objects.get_or_create(name=self.GROUP)
+                self.user.groups.add(group)
+
+            if self.STAFF_STATUS is not None:
+                self.user.is_staff = self.STAFF_STATUS
+                self.user.save(update_fields=["is_staff"])
 
     @classmethod
     def get_existing_id(cls) -> list[int]:

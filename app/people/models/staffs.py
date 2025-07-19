@@ -6,10 +6,12 @@ from datetime import date
 from itertools import count
 from typing import Self
 
+from app.people.choices import UserRole
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import QuerySet
+from simple_history.models import HistoricalRecords
 
 from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
@@ -36,7 +38,8 @@ class Staff(AbstractPerson):
 
     ID_FIELD = "staff_id"
     ID_PREFIX = "TU-STF"
-
+    GROUP = UserRole.STAFF.label
+    STAFF_STATUS = True
     # ~~~~~~~~ Mandatory ~~~~~~~~
     # ~~~~ Auto-filled ~~~~ /     # ~~~~ Read-only ~~~~
     staff_id = models.CharField(max_length=13, unique=True, editable=False)
@@ -89,9 +92,12 @@ class Faculty(StatusableMixin, models.Model):
     Side Effects:
         save() assigns the default college when none is set.
     """
+    GROUP = UserRole.FACULTY.label
 
-    # ~~~~ Mandatory ~~~~
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     staff_profile = models.OneToOneField("people.Staff", on_delete=models.CASCADE)
+    # ~~~~ Auto-filled ~~~~
+    history = HistoricalRecords()
 
     # ~~~~ Optional ~~~~
     # Main college for the faculty (Could be a department also)

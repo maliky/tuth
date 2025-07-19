@@ -1,21 +1,22 @@
 """app.timetable.admin.registers.section module."""
 
-from app.academics.admin.filters import CurriBySemFilterAc
-from app.timetable.admin.filters import SemFilterAc
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
-from app.shared.admin.mixins import CollegeRestrictedAdmin
+from simple_history.admin import SimpleHistoryAdmin
 
+from app.academics.admin.filters import CurriculumBySemesterFilterAc
 from app.people.models.staffs import Faculty
 from app.registry.admin.inlines import GradeInline
+from app.shared.admin.mixins import CollegeRestrictedAdmin
+from app.timetable.admin.filters import SectionSemesterFilterAc
 from app.timetable.admin.inlines import SessionInline
 from app.timetable.admin.resources.section import SectionResource
 from app.timetable.models.section import Section
 
 
 @admin.register(Section)
-class SectionAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelAdmin):
+class SectionAdmin(CollegeRestrictedAdmin):
     """Admin interface for Section.
 
     list_display includes semester, course and faculty information while
@@ -34,10 +35,10 @@ class SectionAdmin(CollegeRestrictedAdmin, ImportExportModelAdmin, GuardedModelA
         "space_codes",
         "session_count",
         "credit_hours",
-        "program__curriculum",        
+        "program__curriculum",
     )
     inlines = [SessionInline, GradeInline]
-    list_filter = [SemFilterAc]  #, CurriBySemFilterAc]  #("program__curriculum",)
+    list_filter = [SectionSemesterFilterAc]  # , CurriBySemFilterAc]  #("program__curriculum",)
     autocomplete_fields = (
         "semester",
         "faculty",

@@ -5,11 +5,12 @@ from __future__ import annotations
 from datetime import time
 from typing import Optional
 
-from app.timetable.models.schedule import Schedule
 from django.db import models
 from django.forms import ValidationError
+from simple_history.models import HistoricalRecords
 
 from app.timetable.choices import WEEKDAYS_NUMBER
+from app.timetable.models.schedule import Schedule
 
 
 class Session(models.Model):
@@ -26,6 +27,8 @@ class Session(models.Model):
         on_delete=models.CASCADE,
         related_name="sessions",
     )
+    # ~~~~ Auto-filled ~~~~
+    history = HistoricalRecords()
 
     # ~~~~~~~~ Optional ~~~~~~~~
     # ! be carreful with TBA schedules
