@@ -5,7 +5,7 @@ import pytest
 from tablib import Dataset
 from django.contrib.auth import get_user_model
 from app.people.admin.resources import StudentResource, FacultyResource
-from app.people.choices import UserRole
+from app.shared.auth.perms import UserRole
 from app.people.utils import mk_username, split_name
 
 User = get_user_model()

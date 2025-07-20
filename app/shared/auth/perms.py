@@ -1,5 +1,12 @@
 """Authentication constants used during data population."""
 
+from dataclasses import dataclass
+from enum import Enum
+
+from typing import Enum, Type
+from django.apps import apps
+from django.db.models import Model
+
 TEST_PW = "test"
 
 
@@ -15,216 +22,245 @@ DEFAULT_ROLE_TO_COLLEGE = {
     "faculty": "COAS",
 }
 
-from dataclasses import dataclass
-from enum import Enum
-
-from app.people.models import Faculty, Staff, Student, Donor
-
 
 @dataclass(frozen=True)
 class RoleInfo:
     """Metadata attached to each user role."""
 
     label: str
-    model: type | None
+    code: str
+    model_path: type
     default_college: str | None = None
 
+    @property
+    def model(self) -> Type[Model]:
+        """Get the model avoiding circular imports. """
+        app_label, model_name = self.model_path.split(".")
+        return apps.get_model(f"app.{app_label}", model_name)
 
-class Role(Enum):
+
+class UserRole(Enum):
     """Self-describing user roles used throughout the app."""
 
-    CASHIER = RoleInfo("Cashier", Staff)
-    CHAIR = RoleInfo("Chair", Faculty, "COAS")
-    DEAN = RoleInfo("Dean", Faculty, "COAS")
-    DONOR = RoleInfo("Donor", Donor)
-    ENROLLMENT_CLERC = RoleInfo("Enrollment Clerc", Staff)
-    ENROLLMENT_OFFICER = RoleInfo("Enrollment Officer", Staff)
-    FACULTY = RoleInfo("Faculty", Faculty, "COAS")
-    FINANCEOFFICER = RoleInfo("Finance Officer", Staff)
-    REGISTRAR_CLERC = RoleInfo("Registrar Clerc", Staff)
-    REGISTRAR_OFFICER = RoleInfo("Registrar", Staff)
-    STUDENT = RoleInfo("Student", Student)
-    STUDENT_PROSPECTING = RoleInfo("Student Prospecting", Student)
-    VPAA = RoleInfo("Vice President Academic Affairs", Staff)
-    ADMINISTRATOR = RoleInfo("Administrator", Staff)
-    STAFF = RoleInfo("Staff", Staff)
-    IT_OFFICER = RoleInfo("It Officer", Staff)
+    DONOR = RoleInfo("Donor", "donor", "people.Donor")
+    STUDENT = RoleInfo("Student", "student", "people.Student")
+    PROSPECTING_STUDENT = RoleInfo(
+        "Prospecting Student", "prospecting_student", "people.Student"
+    )
+
+    STAFF = RoleInfo("Staff", "staff", "people.Staff")
+    FACULTY = RoleInfo("Faculty", "faculty", "people.Faculty", "COAS")
+    CHAIR = RoleInfo("Chair", "chair", "people.Faculty", "COAS")
+    DEAN = RoleInfo("Dean", "dean", "people.Faculty", "COAS")
+    VPAA = RoleInfo("Vice President Academic Affairs", "vpaa", "people.Staff")
+
+    ENROLLMENT = RoleInfo("Enrollment", "enrollment", "people.Staff")
+    ENROLLMENT_OFFICER = RoleInfo(
+        "Enrollment Officer", "enrollment_officer", "people.Staff"
+    )
+    FINANCE = RoleInfo("Finance", "finance", "people.Staff")
+    FINANCE_OFFICER = RoleInfo("Finance Officer", "finance_officer", "people.Staff")
+    REGISTRAR = RoleInfo("Registrar", "registrar", "people.Staff")
+    REGISTRAR_OFFICER = RoleInfo("Registrar Officer", "registrar_officer", "people.Staff")
+    IT = RoleInfo("It", "it", "people.Staff")
 
 
 PERMISSION_MATRIX = {
-    'college': {
-        'view': ['dean', 'chair', 'vpaa', 'registrar', 'student', 'student_prospecting'],
-        'add': ['vpaa'],
-        'change': ['vpaa', 'dean'],
-        'delete': ['vpaa'],
+    "college": {
+        "view": ["dean", "chair", "vpaa", "registrar", "student", "prospecting_student"],
+        "add": ["vpaa"],
+        "change": ["vpaa", "dean"],
+        "delete": ["vpaa"],
     },
-    'department': {
-        'view': ['dean', 'chair', 'vpaa', 'registrar', 'faculty'],
-        'add': ['dean', 'vpaa'],
-        'change': ['dean', 'vpaa'],
-        'delete': ['vpaa'],
+    "department": {
+        "view": ["dean", "chair", "vpaa", "registrar", "faculty"],
+        "add": ["dean", "vpaa"],
+        "change": ["dean", "vpaa"],
+        "delete": ["vpaa"],
     },
-    'course': {
-        'view': ['dean', 'chair', 'faculty', 'registrar', 'vpaa', 'student', 'student_prospecting'],
-        'add': ['chair', 'dean', 'vpaa'],
-        'change': ['chair', 'dean', 'vpaa'],
-        'delete': ['vpaa'],
+    "course": {
+        "view": [
+            "dean",
+            "chair",
+            "faculty",
+            "registrar",
+            "vpaa",
+            "student",
+            "prospecting_student",
+        ],
+        "add": ["chair", "dean", "vpaa"],
+        "change": ["chair", "dean", "vpaa"],
+        "delete": ["vpaa"],
     },
-    'curriculum': {
-        'view': ['dean', 'chair', 'faculty', 'registrar', 'vpaa', 'student', 'student_prospecting'],
-        'add': ['dean', 'vpaa'],
-        'change': ['dean', 'vpaa'],
-        'delete': ['vpaa'],
+    "curriculum": {
+        "view": [
+            "dean",
+            "chair",
+            "faculty",
+            "registrar",
+            "vpaa",
+            "student",
+            "prospecting_student",
+        ],
+        "add": ["dean", "vpaa"],
+        "change": ["dean", "vpaa"],
+        "delete": ["vpaa"],
     },
-    'major': {
-        'view': ['dean', 'chair', 'vpaa', 'registrar', 'faculty', 'student'],
-        'add': ['dean', 'vpaa'],
-        'change': ['dean', 'vpaa'],
-        'delete': ['vpaa'],
+    "major": {
+        "view": ["dean", "chair", "vpaa", "registrar", "faculty", "student"],
+        "add": ["dean", "vpaa"],
+        "change": ["dean", "vpaa"],
+        "delete": ["vpaa"],
     },
-    'minor': {
-        'view': ['dean', 'chair', 'vpaa', 'registrar', 'faculty', 'student'],
-        'add': ['dean', 'vpaa'],
-        'change': ['dean', 'vpaa'],
-        'delete': ['dean', 'vpaa'],
+    "minor": {
+        "view": ["dean", "chair", "vpaa", "registrar", "faculty", "student"],
+        "add": ["dean", "vpaa"],
+        "change": ["dean", "vpaa"],
+        "delete": ["dean", "vpaa"],
     },
-    'program': {
-        'view': ['dean', 'chair', 'vpaa', 'registrar', 'faculty', 'student'],
-        'add': ['chair', 'dean', 'vpaa'],
-        'change': ['chair', 'dean', 'vpaa'],
-        'delete': ['vpaa'],
+    "program": {
+        "view": ["dean", "chair", "vpaa", "registrar", "faculty", "student"],
+        "add": ["chair", "dean", "vpaa"],
+        "change": ["chair", "dean", "vpaa"],
+        "delete": ["vpaa"],
     },
-    'prerequisite': {
-        'view': ['dean', 'chair', 'registrar', 'vpaa'],
-        'add': ['dean', 'registrar', 'vpaa'],
-        'change': ['dean', 'registrar', 'vpaa'],
-        'delete': ['vpaa'],
+    "prerequisite": {
+        "view": ["dean", "chair", "registrar", "vpaa"],
+        "add": ["dean", "registrar", "vpaa"],
+        "change": ["dean", "registrar", "vpaa"],
+        "delete": ["vpaa"],
     },
-    'student': {
-        'view': ['registrar', 'faculty', 'finance_officer', 'vpaa', 'student'],
-        'add': ['enrollment_officer'],
-        'change': ['enrollment_officer', 'registrar'],
-        'delete': ['registrar'],
+    "student": {
+        "view": ["registrar", "faculty", "finance_officer", "vpaa", "student"],
+        "add": ["enrollment_officer"],
+        "change": ["enrollment_officer", "registrar"],
+        "delete": ["registrar"],
     },
-    'faculty': {
-        'view': ['dean', 'chair', 'vpaa', 'registrar', 'faculty'],
-        'add': ['vpaa'],
-        'change': ['vpaa'],
-        'delete': ['vpaa'],
+    "faculty": {
+        "view": ["dean", "chair", "vpaa", "registrar", "faculty"],
+        "add": ["vpaa"],
+        "change": ["vpaa"],
+        "delete": ["vpaa"],
     },
-    'staff': {
-        'view': ['vpaa', 'registrar'],
-        'add': ['vpaa'],
-        'change': ['vpaa'],
-        'delete': ['vpaa'],
+    "staff": {
+        "view": ["vpaa", "registrar"],
+        "add": ["vpaa"],
+        "change": ["vpaa"],
+        "delete": ["vpaa"],
     },
-    'donor': {
-        'view': ['finance_officer', 'vpaa'],
-        'add': ['finance_officer'],
-        'change': ['finance_officer'],
-        'delete': ['finance_officer'],
+    "donor": {
+        "view": ["finance_officer", "vpaa"],
+        "add": ["finance_officer"],
+        "change": ["finance_officer"],
+        "delete": ["finance_officer"],
     },
-    'space': {
-        'view': ['registrar', 'vpaa', 'dean', 'chair', 'student', 'student_prospecting'],
-        'add': ['registrar', 'vpaa'],
-        'change': ['registrar'],
-        'delete': ['vpaa'],
+    "space": {
+        "view": ["registrar", "vpaa", "dean", "chair", "student", "prospecting_student"],
+        "add": ["registrar", "vpaa"],
+        "change": ["registrar"],
+        "delete": ["vpaa"],
     },
-    'room': {
-        'view': ['registrar', 'vpaa', 'dean', 'chair', 'student', 'student_prospecting'],
-        'add': ['registrar'],
-        'change': ['registrar'],
-        'delete': ['registrar'],
+    "room": {
+        "view": ["registrar", "vpaa", "dean", "chair", "student", "prospecting_student"],
+        "add": ["registrar"],
+        "change": ["registrar"],
+        "delete": ["registrar"],
     },
-    'academicyear': {
-        'view': ['vpaa', 'registrar', 'dean', 'chair', 'student', 'student_prospecting'],
-        'add': ['vpaa'],
-        'change': ['vpaa'],
-        'delete': ['vpaa'],
+    "academicyear": {
+        "view": ["vpaa", "registrar", "dean", "chair", "student", "prospecting_student"],
+        "add": ["vpaa"],
+        "change": ["vpaa"],
+        "delete": ["vpaa"],
     },
-    'semester': {
-        'view': ['vpaa', 'registrar', 'dean', 'chair', 'student', 'student_prospecting'],
-        'add': ['registrar', 'vpaa'],
-        'change': ['vpaa', 'registrar'],
-        'delete': ['vpaa'],
+    "semester": {
+        "view": ["vpaa", "registrar", "dean", "chair", "student", "prospecting_student"],
+        "add": ["registrar", "vpaa"],
+        "change": ["vpaa", "registrar"],
+        "delete": ["vpaa"],
     },
-    'term': {
-        'view': ['vpaa', 'registrar', 'dean', 'chair', 'student', 'student_prospecting'],
-        'add': ['registrar', 'vpaa'],
-        'change': ['vpaa', 'registrar'],
-        'delete': ['vpaa'],
+    "term": {
+        "view": ["vpaa", "registrar", "dean", "chair", "student", "prospecting_student"],
+        "add": ["registrar", "vpaa"],
+        "change": ["vpaa", "registrar"],
+        "delete": ["vpaa"],
     },
-    'schedule': {
-        'view': ['registrar', 'faculty', 'vpaa', 'student'],
-        'add': ['registrar'],
-        'change': ['registrar', 'vpaa'],
-        'delete': ['registrar'],
+    "schedule": {
+        "view": ["registrar", "faculty", "vpaa", "student"],
+        "add": ["registrar"],
+        "change": ["registrar", "vpaa"],
+        "delete": ["registrar"],
     },
-    'session': {
-        'view': ['registrar', 'faculty', 'vpaa', 'student'],
-        'add': ['registrar'],
-        'change': ['registrar', 'vpaa'],
-        'delete': ['registrar'],
+    "session": {
+        "view": ["registrar", "faculty", "vpaa", "student"],
+        "add": ["registrar"],
+        "change": ["registrar", "vpaa"],
+        "delete": ["registrar"],
     },
-    'section': {
-        'view': ['dean', 'chair', 'faculty', 'registrar', 'vpaa', 'student'],
-        'add': ['registrar', 'chair', 'dean'],
-        'change': ['registrar', 'chair', 'dean', 'vpaa'],
-        'delete': ['registrar'],
+    "section": {
+        "view": ["dean", "chair", "faculty", "registrar", "vpaa", "student"],
+        "add": ["registrar", "chair", "dean"],
+        "change": ["registrar", "chair", "dean", "vpaa"],
+        "delete": ["registrar"],
     },
-    'document': {
-        'view': ['registrar', 'finance_officer', 'enrollment_officer', 'vpaa', 'student', 'student_prospecting'],
-        'add': ['registrar', 'enrollment_officer', 'student', 'student_prospecting'],
-        'change': ['registrar'],
-        'delete': ['registrar'],
+    "document": {
+        "view": [
+            "registrar",
+            "finance_officer",
+            "enrollment_officer",
+            "vpaa",
+            "student",
+            "prospecting_student",
+        ],
+        "add": ["registrar", "enrollment_officer", "student", "prospecting_student"],
+        "change": ["registrar"],
+        "delete": ["registrar"],
     },
-    'registration': {
-        'view': ['registrar', 'enrollment_officer', 'vpaa', 'student'],
-        'add': ['registrar', 'enrollment_officer', 'student'],
-        'change': ['registrar', 'enrollment_officer'],
-        'delete': ['registrar'],
+    "registration": {
+        "view": ["registrar", "enrollment_officer", "vpaa", "student"],
+        "add": ["registrar", "enrollment_officer", "student"],
+        "change": ["registrar", "enrollment_officer"],
+        "delete": ["registrar"],
     },
-    'classroster': {
-        'view': ['registrar', 'vpaa', 'dean', 'chair', 'faculty'],
-        'add': ['registrar'],
-        'change': ['registrar'],
-        'delete': ['registrar'],
+    "classroster": {
+        "view": ["registrar", "vpaa", "dean", "chair", "faculty"],
+        "add": ["registrar"],
+        "change": ["registrar"],
+        "delete": ["registrar"],
     },
-    'grade': {
-        'view': ['registrar', 'faculty', 'vpaa', 'student'],
-        'add': ['faculty'],
-        'change': ['registrar'],
-        'delete': ['registrar'],
+    "grade": {
+        "view": ["registrar", "faculty", "vpaa", "student"],
+        "add": ["faculty"],
+        "change": ["registrar"],
+        "delete": ["registrar"],
     },
-    'financialrecord': {
-        'view': ['finance_officer', 'registrar', 'vpaa', 'student'],
-        'add': ['finance_officer'],
-        'change': ['finance_officer'],
-        'delete': [],
+    "financialrecord": {
+        "view": ["finance_officer", "registrar", "vpaa", "student"],
+        "add": ["finance_officer"],
+        "change": ["finance_officer"],
+        "delete": [],
     },
-    'payment': {
-        'view': ['cashier', 'finance_officer', 'registrar', 'vpaa', 'student'],
-        'add': ['cashier'],
-        'change': ['finance_officer', 'vpaa'],
-        'delete': ['finance_officer'],
+    "payment": {
+        "view": ["cashier", "finance_officer", "registrar", "vpaa", "student"],
+        "add": ["cashier"],
+        "change": ["finance_officer", "vpaa"],
+        "delete": ["finance_officer"],
     },
-    'paymenthistory': {
-        'view': ['cashier', 'finance_officer', 'registrar', 'vpaa', 'student'],
-        'add': ['cashier'],
-        'change': ['finance_officer'],
-        'delete': [],
+    "paymenthistory": {
+        "view": ["cashier", "finance_officer", "registrar", "vpaa", "student"],
+        "add": ["cashier"],
+        "change": ["finance_officer"],
+        "delete": [],
     },
-    'scholarship': {
-        'view': ['finance_officer', 'registrar', 'vpaa', 'student'],
-        'add': ['finance_officer'],
-        'change': ['finance_officer', 'vpaa'],
-        'delete': ['finance_officer'],
+    "scholarship": {
+        "view": ["finance_officer", "registrar", "vpaa", "student"],
+        "add": ["finance_officer"],
+        "change": ["finance_officer", "vpaa"],
+        "delete": ["finance_officer"],
     },
-    'sectionfee': {
-        'view': ['finance_officer', 'registrar', 'vpaa'],
-        'add': ['finance_officer'],
-        'change': ['finance_officer', 'vpaa'],
-        'delete': ['finance_officer'],
+    "sectionfee": {
+        "view": ["finance_officer", "registrar", "vpaa"],
+        "add": ["finance_officer"],
+        "change": ["finance_officer", "vpaa"],
+        "delete": ["finance_officer"],
     },
 }
-

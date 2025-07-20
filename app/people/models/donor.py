@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from django.db import models
-from app.people.choices import UserRole
+from app.shared.auth.perms import UserRole
 from app.people.models.core import AbstractPerson
 
 
@@ -22,7 +22,8 @@ class Donor(AbstractPerson):
 
     ID_FIELD = "donor_id"
     ID_PREFIX = "TU-DNR"
-    GROUP = UserRole.DONOR.label
+    GROUP = "donor"
+    STAFF_STATUS = False
 
     # ~~~~ Read-only ~~~~
     donor_id = models.CharField(max_length=13, unique=True, editable=False, blank=False)

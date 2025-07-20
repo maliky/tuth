@@ -3,7 +3,7 @@
 from app.shared.auth.helpers import ensure_superuser
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User, Group
-from app.people.choices import UserRole
+from app.shared.auth.perms import UserRole
 
 
 class Command(BaseCommand):
@@ -19,22 +19,23 @@ class Command(BaseCommand):
 
         ensure_superuser(self)
         
-        for role in UserRole:
-            username = f"test_{role.value}"
-            user, was_created = User.objects.get_or_create(
+        for userrole in UserRole:
+            username = f"test_{userrole.value.code}"
+            Person = userrole.value.model
+            person, was_created = Person.objects.get_or_create(
                 username=username,
                 defaults={
-                    "first_name": role.label,
-                    "last_name": "Test",
-                    "password": "test",
-                    "email": f"{username}.test@tubmanu.edu.lr",
+                    "first_name": userrole.value.label,
+                    "last_name": "Person",
+                    "password": self.TEST_PASSWORD,
+                    "email": f"{username}@tubmanu.edu.lr",
                 },
             )
             user.set_password(self.TEST_PASSWORD)
             user.save()
 
             # Assign group  to user
-            group, _ = Group.objects.get_or_create(name=role.label)
+            group, _ = Group.objects.get_or_create(name=userrole.value.code)
             user.groups.add(group)
 
             created.append((user.username, group.name, was_created))

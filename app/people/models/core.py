@@ -16,20 +16,20 @@ from app.shared.status.mixins import StatusableMixin
 
 User = get_user_model()
 
-USER_KWARGS = {
-    "username",
-    "password",
-    "email",
-    "first_name",
-    "last_name",
-    "is_staff",
-    "is_superuser",
-    "is_active",
-}
-
 
 class PersonManager(models.Manager):
-    """User creation Management."""
+    """Custom creation Management."""
+
+    USER_KWARGS = {
+        "username",
+        "password",
+        "email",
+        "first_name",
+        "last_name",
+        "is_staff",
+        "is_superuser",
+        "is_active",
+    }
 
     def _split_kwargs(
         self, kwargs: Dict[str, Any]
@@ -66,7 +66,8 @@ class PersonManager(models.Manager):
         defaults = defaults or {}
         user_kwargs, person_kwargs = self._split_kwargs({**kwargs, **defaults})
         user = self._get_or_create_user(**user_kwargs)
-        return super().get_or_create(user=user, defaults=person_kwargs)    
+        return super().get_or_create(user=user, defaults=person_kwargs)
+
 
 class AbstractPerson(StatusableMixin, models.Model):
     """Base information shared by all people profiles.
@@ -86,7 +87,10 @@ class AbstractPerson(StatusableMixin, models.Model):
     GROUP: str | None = None
     STAFF_STATUS: bool = False
 
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
+    objects = PersonManager()
+    
     # ~~~~ Autofilled ~~~~
     user = models.OneToOneField(
         User,

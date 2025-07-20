@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from app.people.choices import UserRole
+from app.shared.auth.perms import UserRole
 from django.db import models
 
 from app.academics.models.course import Course
@@ -29,8 +29,9 @@ class Student(AbstractPerson):
     ID_FIELD = "student_id"
     ID_PREFIX = "TU-STD"
     EMAIL_SUFFIX = ".stud@tubmanu.edu.lr"
-    GROUP = UserRole.STUDENT.label
-
+    GROUP = "prospective_student"
+    STAFF_STATUS = False
+    
     # ~~~~~~~~ Mandatory ~~~~~~~~
     curriculum = models.ForeignKey("academics.Curriculum", on_delete=models.CASCADE)
 

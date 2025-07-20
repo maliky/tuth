@@ -17,7 +17,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand, CommandError
 
-from app.people.choices import UserRole  # authoritative list of roles
+from app.shared.auth.perms import UserRole  # authoritative list of roles
 
 
 class Command(BaseCommand):

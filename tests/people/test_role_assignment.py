@@ -6,7 +6,7 @@ import pytest
 from django.db import transaction, IntegrityError
 
 from app.people.models.role_assignment import RoleAssignment
-from app.people.choices import UserRole
+from app.shared.auth.perms import UserRole
 
 pytestmark = pytest.mark.django_db
 

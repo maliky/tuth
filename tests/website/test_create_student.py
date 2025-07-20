@@ -4,7 +4,7 @@ import pytest
 from django.urls import reverse
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
-from app.people.choices import UserRole
+from app.shared.auth.perms import UserRole
 from app.people.models.student import Student
 
 

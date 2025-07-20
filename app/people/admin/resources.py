@@ -2,7 +2,7 @@
 
 from import_export import fields, resources
 from django.contrib.auth.models import Group
-from app.people.choices import UserRole
+from app.shared.auth.perms import UserRole
 
 from app.people.admin.widgets import StaffProfileWidget, StudentUserWidget
 from app.people.models.staffs import Faculty, Staff

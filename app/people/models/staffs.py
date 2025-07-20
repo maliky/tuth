@@ -6,7 +6,7 @@ from datetime import date
 from itertools import count
 from typing import Self
 
-from app.people.choices import UserRole
+from app.shared.auth.perms import UserRole
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -38,8 +38,9 @@ class Staff(AbstractPerson):
 
     ID_FIELD = "staff_id"
     ID_PREFIX = "TU-STF"
-    GROUP = UserRole.STAFF.label
+    GROUP = "staff"
     STAFF_STATUS = True
+    
     # ~~~~~~~~ Mandatory ~~~~~~~~
     # ~~~~ Auto-filled ~~~~ /     # ~~~~ Read-only ~~~~
     staff_id = models.CharField(max_length=13, unique=True, editable=False)
@@ -93,7 +94,8 @@ class Faculty(StatusableMixin, models.Model):
         save() assigns the default college when none is set.
     """
 
-    GROUP = UserRole.FACULTY.label
+    GROUP = "faculty"
+    STAFF_STATUS = True
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     staff_profile = models.OneToOneField("people.Staff", on_delete=models.CASCADE)

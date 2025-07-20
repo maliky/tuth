@@ -9,7 +9,7 @@ from django.contrib.contenttypes.models import ContentType
 from guardian.shortcuts import assign_perm
 
 from app.academics.models.college import College
-from app.people.choices import UserRole
+from app.shared.auth.perms import UserRole
 from app.people.models.role_assignment import RoleAssignment
 
 RoleUserFactory: TypeAlias = Callable[[UserRole], User]

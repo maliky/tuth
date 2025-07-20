@@ -5,6 +5,9 @@ from __future__ import annotations
 from itertools import count
 from typing import Self
 
+from app.people.models.staffs import Faculty
+from app.people.models.student import Student
+from app.timetable.utils import get_current_semester
 from django.db import models
 from simple_history.models import HistoricalRecords
 
@@ -83,8 +86,26 @@ class Course(models.Model):
         if not self.department_id:
             self.department = Department.get_default()
 
-    # > TODO: get the list of teachers for this course.sections during the current semester.
-    # > TODO: get the list of student enrolled in this course.sections during the current semester.
+    # > TODO: ADD return hint for methods
+    # > TODO: create tests for the next 2 methods.
+    def current_faculty(self):
+        """Get the list of faculty teaching this course in the current semester."""
+        semester = get_current_semester()
+        if semester is None:
+            return Faculty.objects.none()
+        return Facutly.objects.filter(
+            section__semester=semester, section__programm__course=self
+        ).distinct()
+
+    def current_students(self):
+        """Returns the list of student taking this course during the current semester."""
+        semester = get_current_semester()
+        if semester is None:
+            return Student.objects.none()
+        return Student.objects.filter(
+            student_registrations__section__semester=semester,
+            student_registrations__section__programm__course=self,
+        ).distinct()
 
     # ---------- hooks ----------
     def save(self, *args, **kwargs) -> None:
