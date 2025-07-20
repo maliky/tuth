@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import cast
 
 from django.contrib import messages
+from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import AnonymousUser, User
 from django.core.exceptions import PermissionDenied
 from django.db import connection
@@ -16,6 +17,7 @@ from app.registry.choices import StatusRegistration
 from app.registry.models.registration import Registration
 from app.shared.status import StatusHistory
 from app.timetable.models.section import Section
+from app.people.forms.person import StudentForm
 
 
 def landing_page(request: HttpRequest) -> HttpResponse:
@@ -83,3 +85,19 @@ def course_dashboard(request: HttpRequest) -> HttpResponse:
     }
 
     return render(request, "website/course_dashboard.html", context)
+
+
+@permission_required("people.add_student", raise_exception=True)
+def create_student(request: HttpRequest) -> HttpResponse:
+    """Allow enrollment officers to create a new student profile."""
+
+    if request.method == "POST":
+        form = StudentForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Student created successfully.")
+            return redirect("create_student")
+    else:
+        form = StudentForm()
+
+    return render(request, "website/create_student.html", {"form": form})
