@@ -16,7 +16,7 @@ from tests.academics.fixture import ProgramFactory
 
 AcademicYearFactory: TypeAlias = Callable[[datetime], AcademicYear]
 SemesterFactory: TypeAlias = Callable[[int], Semester]
-SectionFactory: TypeAlias = Callable[[str, str, int], Section]
+SectionFactory: TypeAlias = Callable[[str, str, int, int], Section]
 SecSessionFactory: TypeAlias = Callable[[str, str, str], SecSession]
 
 DEF_DATE = datetime(2010, 9, 1)
@@ -84,8 +84,9 @@ def section_factory(
         course_number: str = "111",
         curriculum_short_name: str = "CURRI_TEST",
         number: int = 1,
+        semester_number: int = 1,
     ) -> Section:
-        semester = semester_factory(1)
+        semester = semester_factory(semester_number)
         program = program_factory(course_number, curriculum_short_name)
         return Section.objects.create(program=program, semester=semester, number=number)
 

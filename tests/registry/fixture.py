@@ -13,7 +13,7 @@ from app.registry.choices import DocumentType, StatusRegistration
 from app.registry.models import Document, Grade, Registration
 from app.registry.models.grade import GradeValue
 
-RegistrationFactory: TypeAlias = Callable[[str, str, str, str], Registration]
+RegistrationFactory: TypeAlias = Callable[[str, str, str, str, int], Registration]
 GradeFactory: TypeAlias = Callable[[str, str, str, str, Decimal], Grade]
 DocumentFactory: TypeAlias = Callable[[str, str], Document]
 
@@ -62,18 +62,20 @@ def document(student_factory) -> Document:
 
 @pytest.fixture
 def registration_factory(student_factory, section_factory) -> RegistrationFactory:
-    """Return a callable to build registrations."""
+    """Return a callable to build registrations.
 
-    #    TODO
+    Parameters allow customizing the semester of the created section.
+    """
     def _make(
         student_uname: str,
         curri_short_name: str,
         course_number: str,
         status: str = StatusRegistration.PENDING,
+        semester_number: int = 1,
     ) -> Registration:
         return Registration.objects.create(
             student=student_factory(student_uname, curri_short_name),
-            section=section_factory(course_number, curri_short_name),
+            section=section_factory(course_number, curri_short_name, 1, semester_number),
             status=status,
         )
 
