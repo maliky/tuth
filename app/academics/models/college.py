@@ -31,7 +31,7 @@ class College(models.Model):
         blank=True,
     )
     history = HistoricalRecords()
-    
+
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.code}"
 

@@ -2,17 +2,18 @@
 
 from typing import Self
 
+from app.registry.choices import GradeChoice
 from django.db import models
 from simple_history.models import HistoricalRecords
 
 from app.registry.constants import GRADES_DESCRIPTION, GRADES_NUM
 
 
-class GradeType(models.Model):
+class GradeValue(models.Model):
     """A class to define the different Grade types."""
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
-    code = models.CharField(max_length=2, default="IP")
+    code = models.CharField(choices=GradeChoice.choices, default=GradeChoice.IP)
     # ~~~~ Auto-filled ~~~~
     number = models.PositiveSmallIntegerField(null=True, default=GRADES_NUM["IP"])
     description = models.CharField(
@@ -64,7 +65,7 @@ class Grade(models.Model):
     # ~~~~~~~~ Mandatory ~~~~~~~~
     student = models.ForeignKey("people.Student", on_delete=models.CASCADE)
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)
-    grade = models.ForeignKey("registry.GradeType", on_delete=models.CASCADE, null=True)
+    value = models.ForeignKey("registry.GradeValue", on_delete=models.CASCADE, null=True)
 
     # ~~~~ Auto-filled ~~~~
     graded_on = models.DateField(auto_now_add=True)
@@ -75,12 +76,14 @@ class Grade(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         """Human readable representation used in admin lists."""
-        return f"{self.student} – {self.section}: {self.grade}"
+        return f"{self.student} – {self.section}: {self.value}"
 
     def number(self):
         """Return the grade number."""
-        return self.grade.number
+        if self.value:
+            return self.value.number
 
     def code(self):
         """Return the grade code or letter."""
-        return self.grade.code
+        if self.value:
+            return self.value.code

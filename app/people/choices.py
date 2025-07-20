@@ -18,6 +18,7 @@ class UserRole(models.TextChoices):
     STUDENT_PROSPECTING = "student_prospecting", "Student Prospecting"
     VPAA = "vpaa", "Vice President Academic Affairs"
     ADMINISTRATOR = "administrator", "Administrator"
+    STAFF = "staff", "Staff"
     IT_OFFICER = (
         "it_officer",
         "It Officer",

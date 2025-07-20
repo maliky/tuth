@@ -31,7 +31,8 @@ class Document(StatusableMixin, models.Model):
         Status changes are tracked via status_history.
     """
 
-    # ! the folowing 2 are not too clear. needs clarifications
+    # We have to use content type because we cannot create a many2many relation
+    # to the abstractPerson class
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     profile_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)

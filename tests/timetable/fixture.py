@@ -11,13 +11,13 @@ from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.schedule import Schedule
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
-from app.timetable.models.session import Session
+from app.timetable.models.session import SecSession
 from tests.academics.fixture import ProgramFactory
 
 AcademicYearFactory: TypeAlias = Callable[[datetime], AcademicYear]
 SemesterFactory: TypeAlias = Callable[[int], Semester]
 SectionFactory: TypeAlias = Callable[[str, str, int], Section]
-SessionFactory: TypeAlias = Callable[[str, str, str], Session]
+SecSessionFactory: TypeAlias = Callable[[str, str, str], SecSession]
 
 DEF_DATE = datetime(2010, 9, 1)
 
@@ -48,8 +48,8 @@ def section(semester, program) -> Section:
 
 
 @pytest.fixture
-def session(section, room) -> Session:
-    return Session.objects.create(room=room, section=section)
+def session(section, room) -> SecSession:
+    return SecSession.objects.create(room=room, section=section)
 
 
 # ~~~~~~~~~~~~~~~~ DB Constraints ~~~~~~~~~~~~~~~~
@@ -80,7 +80,11 @@ def semester_factory(academic_year_factory: AcademicYearFactory) -> SemesterFact
 def section_factory(
     semester_factory: SemesterFactory, program_factory: ProgramFactory
 ) -> SectionFactory:
-    def _make(course_number: str, curriculum_short_name: str, number: int = 1) -> Section:
+    def _make(
+        course_number: str = "111",
+            curriculum_short_name: str = "CURRI_TEST",
+        number: int = 1,
+    ) -> Section:
         semester = semester_factory(1)
         program = program_factory(course_number, curriculum_short_name)
         return Section.objects.create(program=program, semester=semester, number=number)
@@ -89,10 +93,12 @@ def section_factory(
 
 
 @pytest.fixture
-def session_factory(section_factory: SectionFactory, room_factory) -> SessionFactory:
-    def _make(room_code: str, course_number: str, curriculum_short_name: str) -> Session:
+def session_factory(section_factory: SectionFactory, room_factory) -> SecSessionFactory:
+    def _make(
+        room_code: str, course_number: str, curriculum_short_name: str
+    ) -> SecSession:
         room = room_factory(room_code="007")
         section = section_factory(course_number, curriculum_short_name, 1)
-        return Session.objects.create(section=section, room=room)
+        return SecSession.objects.create(section=section, room=room)
 
     return _make

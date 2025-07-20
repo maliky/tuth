@@ -4,7 +4,7 @@ from django.contrib import admin
 
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
-from app.timetable.models.session import Session
+from app.timetable.models.session import SecSession
 
 
 class SemesterInline(admin.TabularInline):
@@ -17,10 +17,10 @@ class SemesterInline(admin.TabularInline):
     ordering = ("start_date",)
 
 
-class SessionInline(admin.TabularInline):
-    """Inline editor for Session rows."""
+class SecSessionInline(admin.TabularInline):
+    """Inline editor for SecSession rows."""
 
-    model = Session
+    model = SecSession
     extra = 0
     fields = (
         "section",

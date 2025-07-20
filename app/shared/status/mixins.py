@@ -7,7 +7,6 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
-from simple_history.models import HistoricalRecords
 
 from app.registry.constants import STATUS_CHOICES
 

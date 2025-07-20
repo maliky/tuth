@@ -5,8 +5,7 @@
 from __future__ import annotations
 
 from django.db import models
-from django.contrib.auth.models import Group
-from app.people.choices import UserRoe
+from app.people.choices import UserRole
 from app.people.models.core import AbstractPerson
 
 
@@ -23,11 +22,11 @@ class Donor(AbstractPerson):
 
     ID_FIELD = "donor_id"
     ID_PREFIX = "TU-DNR"
+    GROUP = UserRole.DONOR.label
 
     # ~~~~ Read-only ~~~~
     donor_id = models.CharField(max_length=13, unique=True, editable=False, blank=False)
 
-    def save(self, )
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=["user"], name="uniq_donor_per_user"),

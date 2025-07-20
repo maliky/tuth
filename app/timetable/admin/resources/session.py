@@ -7,7 +7,7 @@ from app.spaces.admin.widgets import RoomWidget
 from app.timetable.admin.widgets.section import SectionWidget
 from app.timetable.admin.widgets.session import ScheduleWidget, WeekdayWidget
 from app.timetable.models.schedule import Schedule
-from app.timetable.models.session import Session
+from app.timetable.models.session import SecSession
 
 
 class ScheduleResource(resources.ModelResource):
@@ -33,7 +33,7 @@ class ScheduleResource(resources.ModelResource):
         import_id_fields = ("weekday", "start_time", "end_time")
 
 
-class SessionResource(resources.ModelResource):
+class SecSessionResource(resources.ModelResource):
     room = fields.Field(
         column_name="room",
         attribute="room",
@@ -49,6 +49,6 @@ class SessionResource(resources.ModelResource):
     )
 
     class Meta:
-        model = Session
+        model = SecSession
         import_id_fields = ("room", "schedule", "section")
         fields = ("room", "schedule", "section")

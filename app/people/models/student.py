@@ -66,7 +66,7 @@ class Student(AbstractPerson):
         return Course.objects.filter(
             in_programs__sections__grade__student=self,
             # GradeType.number >= 1 == passing grade
-            in_programs__sections__grade__grade__number__gte=1,
+            in_programs__sections__grade__value__number__gte=1,
         ).distinct()
 
     def allowed_courses(self) -> CourseQuery:
@@ -83,6 +83,24 @@ class Student(AbstractPerson):
             if all(req_id in passed_ids for req_id in req_ids):
                 allowed_ids.append(course.id)
         return Course.objects.filter(id__in=allowed_ids)
+
+    @classmethod
+    def mk_username(
+        cls,
+        first,
+        last,
+        middle=None,
+        unique=None,
+        exclude=None,
+        prefix_len=None,
+    ):
+        """Define the standard way to create student username.
+
+        The difference with other username is that we take in account,
+        the middle name inital and use the first 3 letters of the first name.
+        As usual should be unique
+        """
+        return super().mk_username(first, last, middle, exclude=exclude, prefix_len=3)
 
     def save(self, *args, **kwargs):
         """Make sure we have a curriculum for all students."""

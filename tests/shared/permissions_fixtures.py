@@ -25,7 +25,7 @@ def _group_name(role: UserRole) -> str:
 def role_user_factory(college_factory, user_factory, group_factory) -> RoleUserFactory:
     """Return a callable creating a user, group, and role assignment.
 
-    Returns the user in a group and with the permission to view_college.
+    Returns the user in a group, with permission to view a college.
     """
 
     def _make(role: UserRole) -> User:
@@ -79,14 +79,14 @@ def finance_officer(role_user_factory) -> User:
 @pytest.fixture
 def dean_user(role_user_factory) -> User:
     """Return a Dean."""
-    dean_user: User = role_user_factory(UserRole.FACULTY)
+    dean_user: User = role_user_factory(UserRole.DEAN)
     return dean_user
 
 
 @pytest.fixture
 def chair_user(role_user_factory) -> User:
     """Return a User with role (group) Chair."""
-    chair_user: User = role_user_factory(UserRole.FACULTY)
+    chair_user: User = role_user_factory(UserRole.CHAIR)
     return chair_user
 
 

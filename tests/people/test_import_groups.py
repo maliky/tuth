@@ -1,5 +1,6 @@
 """Tests for importing users and assigning groups to them."""
 
+from app.people.models.student import Student
 import pytest
 from tablib import Dataset
 from django.contrib.auth import get_user_model
@@ -17,7 +18,8 @@ def test_student_import_assigns_student_group(curriculum):
 
     name = "Alice Example"
     _, first, middle, last, _ = split_name(name)
-    username = mk_username(first, last, middle)
+
+    username = Student.mk_username(first, last, middle)
 
     ds.append(["ST1", name, curriculum.pk])
 

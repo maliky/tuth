@@ -7,6 +7,7 @@ from django.db import models
 from app.finance.choices import PaymentMethod
 from simple_history.models import HistoricalRecords
 
+
 class Payment(models.Model):
     """Payment made for a program.
 

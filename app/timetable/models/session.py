@@ -1,4 +1,4 @@
-"""Session module."""
+"""SecSession module."""
 
 from __future__ import annotations
 
@@ -13,11 +13,11 @@ from app.timetable.choices import WEEKDAYS_NUMBER
 from app.timetable.models.schedule import Schedule
 
 
-class Session(models.Model):
+class SecSession(models.Model):
     """A meeting slot for a Section.
 
     Example:
-        >>> Session.objects.create(room=room, schedule=schedule, section=section)
+        >>> SecSession.objects.create(room=room, schedule=schedule, section=section)
     """
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
@@ -87,7 +87,7 @@ class Session(models.Model):
         weekday = getattr(self.schedule, "weekday", WEEKDAYS_NUMBER.TBA)
 
         if start and end:
-            clash = Session.objects.filter(
+            clash = SecSession.objects.filter(
                 room=self.room,
                 schedule__weekday=weekday,
                 schedule__start_time__lt=end,

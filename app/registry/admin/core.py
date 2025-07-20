@@ -1,14 +1,14 @@
 """Admin configuration for registry models."""
 
 from django.contrib import admin
-from django.urls import path, reverse
+from django.urls import path
 from import_export.admin import ImportExportModelAdmin
 
 from app.people.models.student import Student
-from app.registry.admin.filters import GradeSectionFilter
 
-# from app.registry.admin.views import SectionBySemesterAutocomplete
-from app.registry.models.grade import Grade, GradeType
+# from app.registry.admin.filters import GradeSectionFilter
+# from app.registry.admin.views import SectioGradeValueerAutocomplete
+from app.registry.models.grade import Grade, GradeValue
 from app.registry.models.registration import Registration
 from app.timetable.admin.filters import (
     GradeSemesterFilterAc,
@@ -20,10 +20,12 @@ from app.timetable.models.section import Section
 from simple_history.admin import SimpleHistoryAdmin
 from guardian.admin import GuardedModelAdmin
 
+GradeValue
 
-@admin.register(GradeType)
-class GradeTypeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin interface for registry.models.GradeTypes.
+
+@admin.register(GradeValue)
+class GradeValueAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
+    """Admin interface for registry.models.GradeValues.
 
     Describe the different grades types
     """
@@ -43,7 +45,7 @@ class GradeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     date_hiearchy = "grade_on"
     list_display = (
         "student",
-        "grade",
+        "value",
         "section",
         "section__semester",
         "graded_on",
@@ -79,7 +81,6 @@ class RegistrationAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModel
         "section__number",
     )
     list_filter = (SemesterFilter,)
-
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Probably orverriding the default form for the model.

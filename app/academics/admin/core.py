@@ -1,12 +1,14 @@
 """Core module."""
 
-from app.academics.admin.views import CurriculumBySemester
+from django.urls import path
+
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from app.academics.admin.actions import update_curriculum
+from app.academics.admin.views import CurriculumBySemester
 from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
@@ -89,7 +91,7 @@ class CurriculumAdmin(CollegeRestrictedAdmin):
     resource_class = CurriculumResource
     # add the action button on the import form
     list_display = ("short_name", "long_name", "college", "is_active", "status")
-    list_filter = "college"
+    list_filter = ("college",)
     autocomplete_fields = ("college",)
     inlines = [CurriculumProgramInline]
 

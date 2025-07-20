@@ -6,13 +6,13 @@ from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from app.spaces.models import Room, Space
-from app.timetable.admin.inlines import SessionInline
+from app.timetable.admin.inlines import SecSessionInline
 
 from .resources import RoomResource
 
 
 @admin.register(Space)
-class  SpaceAdmin(SimpleHistoryAdmin,GuardedModelAdmin):
+class SpaceAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin management for :class:~app.spaces.models.Space.
 
     Exposes basic listing and search over the space code and name.
@@ -39,11 +39,11 @@ class  SpaceAdmin(SimpleHistoryAdmin,GuardedModelAdmin):
 
 
 @admin.register(Room)
-class RoomAdmin(SimpleHistoryAdmin,ImportExportModelAdmin, GuardedModelAdmin):
+class RoomAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Admin configuration for :class:~app.spaces.models.Room.
 
-    list_display shows the room code and capacities. Sessions are edited via
-    SessionInline. The full_code field is read‑only and the space
+    list_display shows the room code and capacities. SecSessions are edited via
+    SecSessionInline. The full_code field is read‑only and the space
     relation uses autocomplete.
     """
 
@@ -58,4 +58,4 @@ class RoomAdmin(SimpleHistoryAdmin,ImportExportModelAdmin, GuardedModelAdmin):
     list_filter = ("space",)
     search_fields = ("space__code", "code")
     autocomplete_fields = ["space"]
-    inlines = [SessionInline]
+    inlines = [SecSessionInline]

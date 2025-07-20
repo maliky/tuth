@@ -28,6 +28,20 @@ class DocumentType(TextChoices):
     PUBLIC = "public", "Public_signature"
 
 
+class GradeChoice(TextChoices):
+    A = "a", "A"
+    AB = "ab", "AB"
+    B = "b", "B"
+    C = "c", "C"
+    D = "d", "D"
+    DR = "dr", "DR"
+    F = "f", "F"
+    I = "i", "I"
+    IP = "ip", "IP"
+    NG = "ng", "NG"
+    W = "w", "W"
+
+
 class StatusRegistration(TextChoices):
     PENDING = "pending payment", "Pending Payment"
     FINANCIALLY_CLEARED = "financially_cleared", "Financially_Cleared"

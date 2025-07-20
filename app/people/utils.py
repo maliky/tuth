@@ -192,7 +192,7 @@ def mk_username(
     first: str,
     last: str,
     middle: str = "",
-    unique=False,
+    unique: Optional[bool] = False,
     exclude: Optional[set[str]] = None,
     prefix_len: Optional[int] = None,
 ) -> str:

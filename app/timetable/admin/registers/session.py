@@ -1,25 +1,25 @@
-"""Session admin module."""
+"""SecSession admin module."""
 
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
-from app.timetable.admin.inlines import SessionInline
-from app.timetable.admin.resources.session import ScheduleResource, SessionResource
+from app.timetable.admin.inlines import SecSessionInline
+from app.timetable.admin.resources.session import ScheduleResource, SecSessionResource
 from app.timetable.models.schedule import Schedule
-from app.timetable.models.session import Session
+from app.timetable.models.session import SecSession
 
 
-@admin.register(Session)
-class SessionAdmin( SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin configuration for Session.
+@admin.register(SecSession)
+class SecSessionAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
+    """Admin configuration for SecSession.
 
     list_display exposes schedule, room and related section details. The
     list can be filtered by weekday or space.
     """
 
-    resource_class = SessionResource
+    resource_class = SecSessionResource
     list_display = (
         "schedule",
         "room",
@@ -46,7 +46,7 @@ class SessionAdmin( SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
 
 
 @admin.register(Schedule)
-class ScheduleAdmin(SimpleHistoryAdmin, ImportExportModelAdmin,  GuardedModelAdmin):
+class ScheduleAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Admin interface for :class:~app.timetable.models.Schedule.
 
     Allows filtering by weekday and supports import/export operations.
@@ -56,4 +56,4 @@ class ScheduleAdmin(SimpleHistoryAdmin, ImportExportModelAdmin,  GuardedModelAdm
     list_display = ("weekday", "start_time", "end_time")
     list_filter = ("weekday",)
     search_fields = ("weekday",)
-    inlines = [SessionInline]
+    inlines = [SecSessionInline]

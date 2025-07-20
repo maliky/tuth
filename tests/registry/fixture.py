@@ -11,7 +11,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from app.registry.choices import DocumentType, StatusRegistration
 from app.registry.models import Document, Grade, Registration
-from app.registry.models.grade import GradeType
+from app.registry.models.grade import GradeValue
 
 RegistrationFactory: TypeAlias = Callable[[str, str, str, str], Registration]
 GradeFactory: TypeAlias = Callable[[str, str, str, str, Decimal], Grade]
@@ -21,27 +21,31 @@ DECIMAL_90 = Decimal("90")
 
 
 @pytest.fixture
-def registration(student, section) -> Registration:
+def registration(student_factory, section_factory) -> Registration:
     """Default registration for a student."""
-
+    student = student_factory("Regina Stud", "Bsc. REGULAR")
+    section = section_factory("007", "Bsc. REGULAR", 1)
     return Registration.objects.create(student=student, section=section)
 
 
 @pytest.fixture
-def grade(student, section) -> Grade:
+def grade(student_factory, section_factory) -> Grade:
     """Default grade for a student in a section."""
+    student = student_factory("Regina Stud", "Bsc. REGULAR")
+    section = section_factory("007", "Bsc. REGULAR", 1)
 
-    grade_type = GradeType.objects.create(code="A")
+    grade_value = GradeValue.objects.create(code="A")
     return Grade.objects.create(
         student=student,
         section=section,
-        grade=grade_type,
+        value=grade_value,
     )
 
 
 @pytest.fixture
-def document(student) -> Document:
+def document(student_factory) -> Document:
     """Default document attached to a student."""
+    student = student_factory("Regina Stud", "Bsc. REGULAR")
 
     ct = ContentType.objects.get_for_model(student)
     file_data = SimpleUploadedFile("doc.txt", b"data")
@@ -51,8 +55,6 @@ def document(student) -> Document:
         data_file=file_data,
         document_type=DocumentType.WAEC,
     )
-
-
 
 
 # ─── factory fixtures ──────────────────────────────────────────────────────
@@ -90,11 +92,11 @@ def grade_factory(student_factory, section_factory) -> GradeFactory:
         numeric: Decimal = DECIMAL_90,
     ) -> Grade:
 
-        grade_type, _ = GradeType.objects.get_or_create(code=letter)
+        grade_value, _ = GradeValue.objects.get_or_create(code=letter)
         return Grade.objects.create(
             student=student_factory(student_uname, curri_short_name),
             section=section_factory(course_number, curri_short_name),
-            grade=grade_type,
+            value=grade_value,
         )
 
     return _make
@@ -116,5 +118,3 @@ def document_factory(student_factory) -> DocumentFactory:
         )
 
     return _make
-
-

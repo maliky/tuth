@@ -76,7 +76,8 @@ def curriculum_factory() -> CurriculumFactory:
 @pytest.fixture
 def course_factory() -> CourseFactory:
     def _make(number: str = "101") -> Course:
-        return Course.get_default(number)
+        course = Course.get_default(number)
+        return course
 
     return _make
 
@@ -86,7 +87,8 @@ def program_factory(course_factory, curriculum_factory) -> ProgramFactory:
     def _make(course_num="111", curriculum_short_name: str = "CURRI_TEST") -> Program:
         course = course_factory(course_num)
         curriculum = curriculum_factory(curriculum_short_name)
-        return Program(course=course, curriculum=curriculum)
+        program, _ = Program.objects.get_or_create(course=course, curriculum=curriculum)
+        return program
 
     return _make
 

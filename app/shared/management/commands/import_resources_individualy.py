@@ -27,7 +27,7 @@ from app.timetable.admin.resources.core import SemesterResource  # noqa: F401
 from app.timetable.admin.resources.section import SectionResource
 from app.timetable.admin.resources.session import (
     ScheduleResource,
-    SessionResource,
+    SecSessionResource,
 )  # noqa: F401
 
 
@@ -46,7 +46,7 @@ class Command(BaseCommand):
         "semester.csv": ("Semester", SemesterResource),  # + AcademicYear
         "program.csv": ("Program", ProgramResource),
         "section.csv": ("Section", SectionResource),
-        "session.csv": ("Session", SessionResource),  # + Faculty / Room
+        "session.csv": ("SecSession", SecSessionResource),  # + Faculty / Room
         # Grades  # new and old ie with history tracking.
     }
 

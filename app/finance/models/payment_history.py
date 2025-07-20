@@ -5,6 +5,7 @@ from __future__ import annotations  # to postpone evaluation of type hints
 from django.db import models
 from simple_history.models import HistoricalRecords
 
+
 class PaymentHistory(models.Model):
     """Record of a payment against a financial record.
 

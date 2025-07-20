@@ -27,7 +27,7 @@ class AcademicYearAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
 
 
 @admin.register(Semester)
-class SemesterAdmin( SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
+class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Admin configuration for :class:~app.timetable.models.Semester.
 
     Provides import/export support and filters semesters by academic year.

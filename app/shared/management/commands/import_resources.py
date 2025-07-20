@@ -31,7 +31,7 @@ from app.timetable.admin.resources.core import SemesterResource  # noqa: F401
 from app.timetable.admin.resources.section import SectionResource
 from app.timetable.admin.resources.session import (
     ScheduleResource,
-    SessionResource,
+    SecSessionResource,
 )  # noqa: F401
 
 # manage the permissions
@@ -81,7 +81,7 @@ class Command(BaseCommand):
             ("semester", SemesterResource),  # and Academic year
             ("Program", ProgramResource),
             ("Section", SectionResource),
-            ("Session", SessionResource),  # and Faculty, Room and Space
+            ("SecSession", SecSessionResource),  # and Faculty, Room and Space
         ]
 
         for key, ResourceClass in RESOURCES_MAP:

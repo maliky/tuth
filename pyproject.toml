@@ -27,6 +27,7 @@ ignore = [
   "D401",  # first line should be in imperative mood
   "E203",  # whitespace before ':'
   "E501",  # line too long
+  "E741",  # ambiguous variable name
   "W503",  # line break before binary operator
   "W605",  # invalid escape sequence
 ]

@@ -36,6 +36,7 @@ class Curriculum(StatusableMixin, models.Model):
     creation_date = models.DateField(default=date.today)
     is_active = models.BooleanField(default=False)
     status = models.CharField(
+        "Validation Status",
         max_length=30,
         choices=StatusCurriculum.choices,
         default=StatusCurriculum.PENDING,
@@ -44,6 +45,11 @@ class Curriculum(StatusableMixin, models.Model):
 
     # ~~~~~~~~ Optional ~~~~~~~~
     long_name = models.CharField(max_length=255, blank=True, null=True)
+    # this is a shortcut from curriculum <- programs . course
+    # The idea is to have a catalogue C of curriculum course been authorative
+    # the list of programs.course should be included in C.
+    # can a course be not offered  in any curricula ?
+    # needs clarification...
     courses = models.ManyToManyField(
         "academics.Course",
         through="academics.Program",

@@ -8,7 +8,7 @@ from app.academics.models.department import Department
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.program import Program
 from app.people.models.student import Student
-from app.registry.models.grade import Grade, GradeType
+from app.registry.models.grade import Grade, GradeValue
 from app.timetable.models.section import Section
 
 
@@ -40,8 +40,8 @@ def test_allowed_courses(student: Student, semester):
 
     assert course_a in allowed_initial
 
-    grade_type = GradeType.objects.create(code="A")
-    Grade.objects.create(student=student, section=sec_a, grade=grade_type)
+    grade_value = GradeValue.objects.create(code="A")
+    Grade.objects.create(student=student, section=sec_a, value=grade_value)
 
     allowed = list(student.allowed_courses())
 
@@ -55,4 +55,4 @@ def test_student_save_assigns_group(curriculum):
     user = User.objects.create_user(username="newstud")
     stud = Student.objects.create(user=user, curriculum=curriculum)
 
-    assert user.groups.filter(name=Student.GROUP).exists()
+    assert user.groups.filter(name=stud.GROUP).exists()

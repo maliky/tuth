@@ -1,16 +1,12 @@
 """app.timetable.admin.registers.section module."""
 
 from django.contrib import admin
-from guardian.admin import GuardedModelAdmin
-from import_export.admin import ImportExportModelAdmin
-from simple_history.admin import SimpleHistoryAdmin
 
-from app.academics.admin.filters import CurriculumBySemesterFilterAc
 from app.people.models.staffs import Faculty
 from app.registry.admin.inlines import GradeInline
 from app.shared.admin.mixins import CollegeRestrictedAdmin
 from app.timetable.admin.filters import SectionSemesterFilterAc
-from app.timetable.admin.inlines import SessionInline
+from app.timetable.admin.inlines import SecSessionInline
 from app.timetable.admin.resources.section import SectionResource
 from app.timetable.models.section import Section
 
@@ -37,8 +33,10 @@ class SectionAdmin(CollegeRestrictedAdmin):
         "credit_hours",
         "program__curriculum",
     )
-    inlines = [SessionInline, GradeInline]
-    list_filter = [SectionSemesterFilterAc]  # , CurriBySemFilterAc]  #("program__curriculum",)
+    inlines = [SecSessionInline, GradeInline]
+    list_filter = [
+        SectionSemesterFilterAc
+    ]  # , CurriBySemFilterAc]  #("program__curriculum",)
     autocomplete_fields = (
         "semester",
         "faculty",
@@ -60,7 +58,7 @@ class SectionAdmin(CollegeRestrictedAdmin):
             return qs.none()
         return qs.filter(faculty=faculty)
 
-    @admin.display(description="Sessions")
+    @admin.display(description="SecSessions")
     def all_sessions(self, obj: Section) -> str:
         """Return a human-readable summary of this Section’s sessions.
 
@@ -72,7 +70,7 @@ class SectionAdmin(CollegeRestrictedAdmin):
 
         return "; ".join(slots) or "--"
 
-    @admin.display(description="# Sessions")
+    @admin.display(description="# SecSessions")
     def session_count(self, obj: Section) -> int:
         """Return the number of sessions attached to this section."""
         return obj.sessions.count()

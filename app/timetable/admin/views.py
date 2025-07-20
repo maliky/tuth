@@ -21,10 +21,10 @@ class SectionBySemesterAutocomplete(AutocompleteJsonView):
         semester_id = (
             self.request.GET.get("section__semester")
             or self.request.GET.get("section__semester__pk__exact")
-            # or self.request.GET.get("semester")            
+            # or self.request.GET.get("semester")
         )
-        
+
         if not semester_id:
             return qs
-        
+
         return qs.filter(semester_id=semester_id).order_by("program__course__code")

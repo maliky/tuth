@@ -1,11 +1,12 @@
 """Filters module."""
 
 from admin_searchable_dropdown.filters import (
-    AutocompleteFilterFactory,
     AutocompleteFilter,
+    AutocompleteFilterFactory,
 )
 from django.contrib import admin
 from django.db.models import Count
+from django.urls import reverse
 
 CurriculumFilterAutocomplete = AutocompleteFilterFactory(
     "Curriculum",  # title

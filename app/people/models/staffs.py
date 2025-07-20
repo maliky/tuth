@@ -92,6 +92,7 @@ class Faculty(StatusableMixin, models.Model):
     Side Effects:
         save() assigns the default college when none is set.
     """
+
     GROUP = UserRole.FACULTY.label
 
     # ~~~~~~~~ Mandatory ~~~~~~~~

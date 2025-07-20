@@ -12,5 +12,3 @@ def get_current_semester() -> Semester | None:
     if sem:
         return sem
     return Semester.objects.order_by("-start_date").first()
-
-

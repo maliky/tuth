@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Optional, Self, cast
+from typing import Self, cast
 
-from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.exceptions import ValidationError
 from django.db import models
 from simple_history.models import HistoricalRecords
 
@@ -21,7 +21,6 @@ class ConcentrationMixin(models.Model):
     # to be overrided
     RELATED_NAME: str = "concentration"  # no plural
     DEFAULT_CH: int = 40
-    THROUGH: Optional[str] = None
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     name = models.CharField(max_length=60, unique=True)
@@ -33,30 +32,6 @@ class ConcentrationMixin(models.Model):
         default=DEFAULT_CH,
         blank=True,
     )
-
-    def __init_subclass__(cls, **kwargs) -> None:
-        """Do the subclass init."""
-        super().__init_subclass__()
-        # ! not sure about the following. Explain !
-        if cls._meta.abstract:
-            return
-        through = getattr(cls, "THROUGH", None)
-        related_name = getattr(cls, "RELATED_NAME", None)
-
-        if not through or not related_name:
-            raise ImproperlyConfigured(
-                f"{cls.__name__} must define THROUGH and RELATED_NAME class attrs."
-            )
-
-        m2m_field = models.ManyToManyField(  # type: ignore[var-annotated]
-            "academics.Program", through=through, related_name=f"{related_name}s"
-        )
-        cls.add_to_class("programs", m2m_field)
-
-        # _meta is the only way to get to the class fields,
-        # getattr make assignement more robust
-        field = cast(models.PositiveIntegerField, cls._meta.get_field("max_credit_hours"))
-        field.default = getattr(cls, "DEFAULT_CH", 40)
 
     def __str__(self) -> str:  # pragma: no cover
         """Return the name and associated curriculum."""
@@ -111,19 +86,25 @@ class ConcentrationMixin(models.Model):
 class Major(ConcentrationMixin):
     """Represent a group of courses of the curriculum making the major."""
 
-    THROUGH = "MajorProgram"
-    RELATED_NAME = "major"  # keep singular
-    DEFAULT_CH = 50
+    RELATED_NAME: str = "major"
+
+    programs = models.ManyToManyField(
+        "academics.Program", through="academics.MajorProgram", related_name="majors"
+    )
+    max_credit_hours = models.PositiveIntegerField(default=50)
 
 
 class Minor(ConcentrationMixin):
     """Represent a group of courses of the curriculum making the major."""
 
-    THROUGH = "MinorProgram"
-    RELATED_NAME = "minor"
-    DEFAULT_CH = 20
+    RELATED_NAME: str = "minro"
+    programs = models.ManyToManyField(
+        "academics.Program", through="academics.MinorProgram", related_name="minors"
+    )
+    max_credit_hours = models.PositiveIntegerField(default=20)
 
 
+# ##  TODO make sure Minor program can be in several curriculms?
 class MajorProgram(models.Model):
     """A table joining the Major table with the program table."""
 

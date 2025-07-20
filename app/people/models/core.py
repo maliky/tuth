@@ -3,12 +3,12 @@
 from datetime import date
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
-from simple_history.models import HistoricalRecords
 
 from app.people.utils import extract_id_num, mk_username, photo_upload_to
 from app.shared.status.mixins import StatusableMixin
@@ -32,7 +32,7 @@ class AbstractPerson(StatusableMixin, models.Model):
     ID_PREFIX: str = "TU-"
     EMAIL_SUFFIX: str = "@tubmanu.edu.lr"
     GROUP: str | None = None
-    STAFF_STATUS: str | None = None
+    STAFF_STATUS: bool = False
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     # ~~~~ Autofilled ~~~~
@@ -159,15 +159,6 @@ class AbstractPerson(StatusableMixin, models.Model):
             username = self.username or self.user.username
         return slugify(username, allow_unicode=False).replace("-", "") + self.EMAIL_SUFFIX
 
-    def mk_username(self, first=None, last=None, middle=None, unique=True):
-        """Defaut to make a user name.  Should be overridend by subclasses."""
-        return mk_username(
-            self.user.first_name if not first else first,
-            self.user.last_name if not last else last,
-            middle="" if not middle else middle,
-            unique=unique,
-        )
-
     def _mk_id(self) -> str:
         """Build an ID incrementing the user_id depending on its class."""
         existing_ids = self.get_existing_id()
@@ -214,6 +205,26 @@ class AbstractPerson(StatusableMixin, models.Model):
             if self.STAFF_STATUS is not None:
                 self.user.is_staff = self.STAFF_STATUS
                 self.user.save(update_fields=["is_staff"])
+
+    @classmethod
+    def mk_username(
+        cls,
+        first,
+        last,
+        middle=None,
+        unique=True,
+        exclude=None,
+        prefix_len=None,
+    ):
+        """Defaut to make a user name.  Should be overridend by subclasses."""
+        return mk_username(
+            first,
+            last,
+            middle=middle if middle else "",
+            exclude=exclude,
+            unique=unique,
+            prefix_len=prefix_len,
+        )
 
     @classmethod
     def get_existing_id(cls) -> list[int]:

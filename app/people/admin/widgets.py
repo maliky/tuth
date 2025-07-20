@@ -8,6 +8,7 @@ Usage::
     >>> print(staff.long_name)
 """
 
+from app.people.models.student import Student
 from django.contrib.auth.models import User
 from import_export import widgets
 
@@ -116,11 +117,10 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
 
         assert "student_id" in row
         stdid = row.get("student_id")
-        # in case we get same f, l & m name for different id, this will
-        # create a new username because the default one will be in _exclude
-        # ! What needs to be decided here is the prefix_len for students to avoid to much duplicates
+        # in case we get same first, last & middle name for different id,
+        # we create a new username because the previous one will be in _exclude
         username = self._cache.get(
-            stdid, mk_username(first, last, middle, exclude=self._exclude, prefix_len=3)
+            stdid, Student.mk_username(first, last, middle, exclude=self._exclude)
         )
         self._cache[stdid] = username
         self._exclude |= {username}

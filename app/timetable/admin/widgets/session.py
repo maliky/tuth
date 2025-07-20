@@ -5,18 +5,18 @@ from import_export import widgets
 from app.spaces.admin.widgets import RoomCodeWidget
 from app.timetable.choices import WEEKDAYS_NUMBER
 from app.timetable.models.schedule import Schedule
-from app.timetable.models.session import Session
+from app.timetable.models.session import SecSession
 
 
-class SessionWidget(widgets.ForeignKeyWidget):
-    """Create a :class:Session from room and schedule data."""
+class SecSessionWidget(widgets.ForeignKeyWidget):
+    """Create a :class:SecSession from room and schedule data."""
 
     def __init__(self):
-        super().__init__(Session)  # va exporter session.pk
+        super().__init__(SecSession)  # va exporter session.pk
         self.room_w = RoomCodeWidget()
         self.schedule_w = ScheduleWidget()
 
-    def clean(self, value, row=None, *args, **kwargs) -> Session | None:
+    def clean(self, value, row=None, *args, **kwargs) -> SecSession | None:
         """Value should be the room?"""
         if not value:
             return None
@@ -26,7 +26,7 @@ class SessionWidget(widgets.ForeignKeyWidget):
         weekday_value = row.get("weekday", "").strip()
         schedule = self.schedule_w.clean(value=weekday_value, row=row)
 
-        session, _ = Session.objects.get_or_create(
+        session, _ = SecSession.objects.get_or_create(
             room=room,
             schedule=schedule,
         )
