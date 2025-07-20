@@ -7,6 +7,7 @@ from __future__ import annotations
 from app.shared.auth.perms import UserRole
 from django.db import models
 
+from app.academics.choices import LEVEL_NUMBER
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.people.models.core import AbstractPerson
@@ -69,6 +70,30 @@ class Student(AbstractPerson):
             # GradeType.number >= 1 == passing grade
             in_programs__sections__grade__value__number__gte=1,
         ).distinct()
+
+    @property
+    def completed_credits(self) -> int:
+        """Return sum of credit hours successfully completed."""
+        from django.db.models import Sum
+        from app.academics.models.program import Program
+
+        passed_ids = self.passed_courses().values_list("id", flat=True)
+        agg = Program.objects.filter(
+            curriculum=self.curriculum, course_id__in=passed_ids
+        ).aggregate(total=Sum("credit_hours"))
+        return agg.get("total") or 0
+
+    @property
+    def class_level(self) -> str:
+        """Return student level computed from completed credits."""
+        credits = self.completed_credits
+        if credits <= 36:
+            return LEVEL_NUMBER.ONE.label
+        if credits <= 72:
+            return LEVEL_NUMBER.TWO.label
+        if credits <= 108:
+            return LEVEL_NUMBER.THREE.label
+        return LEVEL_NUMBER.FOUR.label
 
     def allowed_courses(self) -> CourseQuery:
         """Return courses available for registration based on prerequisites."""
