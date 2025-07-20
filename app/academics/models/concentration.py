@@ -97,7 +97,7 @@ class Major(ConcentrationMixin):
 class Minor(ConcentrationMixin):
     """Represent a group of courses of the curriculum making the major."""
 
-    RELATED_NAME: str = "minro"
+    RELATED_NAME: str = "minor"
     programs = models.ManyToManyField(
         "academics.Program", through="academics.MinorProgram", related_name="minors"
     )

@@ -99,11 +99,6 @@ class AbstractPerson(StatusableMixin, models.Model):
         self._ensure_username()
         self.email = self.mk_email()
 
-    def _update_username(self) -> None:
-        """Update the user username."""
-        self._ensure_username()
-        self.email = self.mk_email()
-
     def _update_long_name(self) -> None:
         """Update the long name."""
         self.long_name = " ".join(
