@@ -2,14 +2,16 @@
 
 import pytest
 from django.urls import reverse
-from django.contrib.auth.models import Permission, ContentType
-
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from app.people.choices import UserRole
 from app.people.models.student import Student
 
 
 @pytest.mark.django_db
-def test_enrollment_officer_can_create_student(client, role_user_factory, curriculum, semester):
+def test_enrollment_officer_can_create_student(
+    client, role_user_factory, curriculum, semester
+):
     """Enrollment officers can access the form and create a student."""
     officer = role_user_factory(UserRole.ENROLLMENT_OFFICER)
     ct = ContentType.objects.get_for_model(Student)
@@ -31,7 +33,9 @@ def test_enrollment_officer_can_create_student(client, role_user_factory, curric
 
     response = client.post(url, data)
     assert response.status_code == 302
-    assert Student.objects.filter(user__first_name="Alice", user__last_name="Smith").exists()
+    assert Student.objects.filter(
+        user__first_name="Alice", user__last_name="Smith"
+    ).exists()
 
 
 @pytest.mark.django_db

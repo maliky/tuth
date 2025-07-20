@@ -82,7 +82,7 @@ def section_factory(
 ) -> SectionFactory:
     def _make(
         course_number: str = "111",
-            curriculum_short_name: str = "CURRI_TEST",
+        curriculum_short_name: str = "CURRI_TEST",
         number: int = 1,
     ) -> Section:
         semester = semester_factory(1)

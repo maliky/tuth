@@ -24,8 +24,7 @@ def _check_all_visible(user, college, college_other):
     assert set(objs) == {college, college_other}
 
 
-
-# TO REVIEW    
+# TO REVIEW
 # def test_object_level_access_restricted(
 #     dean_user, chair_user, faculty_user, student_user, college, college_other
 # ):
