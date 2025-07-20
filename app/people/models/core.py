@@ -1,6 +1,7 @@
 """Core module for people."""
 
-from datetime import date
+from datetime import date, timezone
+from typing import Any, Dict, Tuple
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -15,6 +16,57 @@ from app.shared.status.mixins import StatusableMixin
 
 User = get_user_model()
 
+USER_KWARGS = {
+    "username",
+    "password",
+    "email",
+    "first_name",
+    "last_name",
+    "is_staff",
+    "is_superuser",
+    "is_active",
+}
+
+
+class PersonManager(models.Manager):
+    """User creation Management."""
+
+    def _split_kwargs(
+        self, kwargs: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        """Returns user_kwargs, person_kwargs."""
+        user_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in USER_KWARGS}
+        return user_kwargs, kwargs
+
+    def _get_or_create_user(self, **user_kwargs) -> User:
+        """Create or get the User and set /update password."""
+        username = user_kwargs.pop("username")
+        password = user_kwargs.pop("password", None)
+
+        user, created = User.objects.get_or_create(username, defaults=user_kwargs)
+        if created:
+            if password:
+                user.set_password(password)  # to make sure it is hashed
+            user.date_joined = timezone.now()
+            user.save()
+        elif password:
+            user.set_password(password)  # to make sure it is hashed
+            user.save(update_fields=["password"])
+        return user
+
+    # public API ----------------------------------------------------
+    def create(self, **kwargs):
+        """Create a user and the person."""
+        user_kwargs, person_kwargs = self._split_kwargs(kwargs)
+        user = self._get_or_create_user(**user_kwargs)
+        return super().create(user=user, **person_kwargs)
+
+    def get_or_create(self, defaults=None, **kwargs):
+        """Get or Create the user and the person."""
+        defaults = defaults or {}
+        user_kwargs, person_kwargs = self._split_kwargs({**kwargs, **defaults})
+        user = self._get_or_create_user(**user_kwargs)
+        return super().get_or_create(user=user, defaults=person_kwargs)    
 
 class AbstractPerson(StatusableMixin, models.Model):
     """Base information shared by all people profiles.
