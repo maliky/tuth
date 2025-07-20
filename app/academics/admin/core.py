@@ -43,7 +43,15 @@ class CollegeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
     """
 
     resource_class = CollegeResource
-    list_display = ("code", "long_name")
+    list_display = (
+        "code",
+        "long_name",
+        "faculty_count",
+        "course_count",
+        "curricula_names",
+        "department_chairs",
+        "student_counts_by_level",
+    )
     search_fields = ("code", "long_name")
 
 
