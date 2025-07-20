@@ -1,5 +1,6 @@
 """App/shared/management/commands/create_test_users.py."""
 
+from app.shared.auth.helpers import ensure_superuser
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User, Group
 from app.people.choices import UserRole
@@ -15,6 +16,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """Command managing the import."""
         created = []
+
+        ensure_superuser(self)
+        
         for role in UserRole:
             username = f"test_{role.value}"
             user, was_created = User.objects.get_or_create(
@@ -23,14 +27,13 @@ class Command(BaseCommand):
                     "first_name": role.label,
                     "last_name": "Test",
                     "password": "test",
-                    "email": f"{username}@tubmanu.edu.lr",
+                    "email": f"{username}.test@tubmanu.edu.lr",
                 },
             )
             user.set_password(self.TEST_PASSWORD)
-            user.is_staff = True
             user.save()
 
-            # Assign user to correct group
+            # Assign group  to user
             group, _ = Group.objects.get_or_create(name=role.label)
             user.groups.add(group)
 

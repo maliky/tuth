@@ -12,6 +12,7 @@ Example:
         python manage.py populate_initial_data
 """
 
+from app.shared.auth.helpers import ensure_superuser
 from django.core.management.base import BaseCommand
 from django.db import connection
 
@@ -49,3 +50,5 @@ class Command(BaseCommand):
             )
 
         self.stdout.write(self.style.SUCCESS("Database reset successfully."))
+        
+        ensure_superuser(self)

@@ -1,25 +1,58 @@
 """Module for choices constants used for people."""
 
+from app.people.models.staffs import Faculty, Staff
+from app.people.models.student import Student
 from django.db import models
 
 
 class UserRole(models.TextChoices):
-    CASHIER = "cashier", "Cashier"
+    # ~~~~~~~~ Academics ~~~~~~~~
+    TEACHING_ASSISTANT = "ta", "Teaching Assistant"
+    FACULTY = "faculty", "Faculty"
     CHAIR = "chair", "Chair"
     DEAN = "dean", "Dean"
-    DONOR = "donor", "Donor"
-    ENROLLMENT_CLERC = "enrollment_clerc", "Enrollment Clerc"
-    ENROLLMENT_OFFICER = "enrollment_officer", "Enrollment Officer"
-    FACULTY = "faculty", "Faculty"
-    FINANCEOFFICER = "finance_officer", "Finance Officer"
-    REGISTRAR_CLERC = "registrar_clerc", "Registrar Clerc"
-    REGISTRAR_OFFICER = "registrar", "Registrar"
-    STUDENT = "student", "Student"
-    STUDENT_PROSPECTING = "student_prospecting", "Student Prospecting"
     VPAA = "vpaa", "Vice President Academic Affairs"
-    ADMINISTRATOR = "administrator", "Administrator"
+    # ~~~~ Students ~~~~
+    PROSPECTING_STUDENT = "prospecting_student", "Prospecting Student"
+    STUDENT = "student", "Student"
+    # ~~~~~~~~ Administration ~~~~~~~~
     STAFF = "staff", "Staff"
-    IT_OFFICER = (
-        "it_officer",
-        "It Officer",
-    )
+    # ~~~~ Regular User ~~~~
+    ENROLLMENT = "enrollment", "Enrollment Staff"
+    ENROLLMENT_OFFICER = "enrollment_officer", "Enrollment Officer"
+    FINANCE = "finance", "Finance Staff"
+    FINANCE_OFFICER = "finance_officer", "Finance Officer"
+    REGISTRAR = "registrar", "Registrar Staff"
+    REGISTRAR_OFFICER = "registrar_officer", "Registrar Officer"
+    # ~~~~ Occasional users ~~~~
+    IT_OFFICER = "it_officer", "IT Officer"
+    VPA = "vpa", "Vice President for Administration"
+    # ~~~~~~~~ Others ~~~~~~~~
+    DONOR = "donor", "Donor"
+
+
+USER_CLASS = {
+    # ~~~~~~~~ Academics ~~~~~~~~
+    "ta": Faculty,
+    "faculty": Faculty,
+    "chair": Faculty,
+    "dean": Faculty,
+    "vpaa": Faculty,
+    # ~~~~ Students ~~~~
+    "prospecting_student": Student,
+    "student": Student,
+    # ~~~~~~~~ Administration ~~~~~~~~
+    # ~~~~ Regular User ~~~~
+    "enrollment": Staff,
+    "enrollment_officer": Staff,
+    "finance": Staff,
+    "finance_officer": Staff,
+    "registrar": Staff,
+    "registrar_officer": Staff,
+    # ~~~~ Occasional users ~~~~
+    "it_officer": Staff,
+    "staff": Staff,
+    "vpa": Staff,
+    # ~~~~~~~~ Others ~~~~~~~~
+    "donor": Donor,
+}

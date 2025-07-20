@@ -34,8 +34,9 @@ model_app:
   # registry -----------------------------------------------------------
   document:         registry
   registration:     registry
-  classroster:      registry
+  #classroster:      registry
   grade:            registry
+  gradevalue:       registry  
 
   # finance ------------------------------------------------------------
   financialrecord:  finance
@@ -50,7 +51,7 @@ model_app:
 # ---------------------------------------------------------------------
 object_perm_matrix:
   college:
-    view:   [dean, chair, vpaa,  registrar, student, student_prospecting]
+    view:   [dean, chair, vpaa, registrar, student, student_prospecting]
     add:    [vpaa]
     change: [vpaa, dean]
     delete: [vpaa]
@@ -179,12 +180,6 @@ object_perm_matrix:
     view:   [registrar, enrollment_officer, vpaa,  student]
     add:    [registrar, enrollment_officer, student]
     change: [registrar, enrollment_officer]
-    delete: [registrar]
-
-  classroster:
-    view:   [registrar, vpaa,  dean, chair, faculty]
-    add:    [registrar]
-    change: [registrar]
     delete: [registrar]
 
   grade:

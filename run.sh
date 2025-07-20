@@ -58,8 +58,9 @@ if $RUN_MIGRATIONS; then
     echo ">> Running makemigrations and migrate <<"
     # should makemigraton for all discovered apps
     python manage.py makemigrations
-    python manage.py makemigrations registry spaces academics timetable people finance shared
-    python manage.py migrate 
+    python manage.py makemigrations registry spaces academics timetable people finance shared website
+    python manage.py migrate
+    python manage.py create_test_users
 fi
 
 # ---- static & server -------------------------------------------------------
