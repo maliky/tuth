@@ -36,16 +36,13 @@ def test_college_computed_fields():
         for n in ["101", "102", "201", "202"]
     ]
     programs = [
-        Program.objects.create(
-            course=c, curriculum=curr1, credit_hours=CREDIT_NUMBER.TEN
-        )
+        Program.objects.create(course=c, curriculum=curr1, credit_hours=CREDIT_NUMBER.TEN)
         for c in courses
     ]
     year = AcademicYear.objects.create(start_date=date(2024, 9, 1))
     sem = Semester.objects.create(academic_year=year, number=1)
     sections = [
-        Section.objects.create(program=p, semester=sem, number=1)
-        for p in programs
+        Section.objects.create(program=p, semester=sem, number=1) for p in programs
     ]
 
     staff = Staff.objects.create(user=User.objects.create(username="fac"))

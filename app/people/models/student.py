@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-from app.shared.auth.perms import UserRole
 from django.db import models
 
 from app.academics.choices import LEVEL_NUMBER
@@ -32,7 +31,7 @@ class Student(AbstractPerson):
     EMAIL_SUFFIX = ".stud@tubmanu.edu.lr"
     GROUP = "prospective_student"
     STAFF_STATUS = False
-    
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     curriculum = models.ForeignKey("academics.Curriculum", on_delete=models.CASCADE)
 
@@ -75,6 +74,7 @@ class Student(AbstractPerson):
     def completed_credits(self) -> int:
         """Return sum of credit hours successfully completed."""
         from django.db.models import Sum
+
         from app.academics.models.program import Program
 
         passed_ids = self.passed_courses().values_list("id", flat=True)

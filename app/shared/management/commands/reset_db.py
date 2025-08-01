@@ -50,5 +50,5 @@ class Command(BaseCommand):
             )
 
         self.stdout.write(self.style.SUCCESS("Database reset successfully."))
-        
+
         ensure_superuser(self)

@@ -6,7 +6,6 @@ from datetime import date
 from itertools import count
 from typing import Self
 
-from app.shared.auth.perms import UserRole
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -40,7 +39,7 @@ class Staff(AbstractPerson):
     ID_PREFIX = "TU-STF"
     GROUP = "staff"
     STAFF_STATUS = True
-    
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     # ~~~~ Auto-filled ~~~~ /     # ~~~~ Read-only ~~~~
     staff_id = models.CharField(max_length=13, unique=True, editable=False)

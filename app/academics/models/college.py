@@ -2,22 +2,16 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
+from django.apps import apps
 from django.db import models
 from simple_history.models import HistoricalRecords
 
 from app.academics.choices import (
+    LEVEL_NUMBER,
     CollegeCodeChoices,
     CollegeLongNameChoices,
-    LEVEL_NUMBER,
 )
-
-if TYPE_CHECKING:  # pragma: no cover - avoid circular imports at runtime
-    from app.academics.models import Course, Curriculum, Department
-    from app.people.models.student import Student
-    from app.people.models.staffs import Faculty
-    from app.people.models.role_assignment import RoleAssignment
+from app.shared.auth.perms import UserRole
 
 
 class College(models.Model):
@@ -47,13 +41,6 @@ class College(models.Model):
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.code}"
 
-    # > TODO get some properties to list the number of unique enrolled students per
-    # level freshman, sophomore, junior, senior
-    # the name of the departments (with name of chairs)
-    # the name of the curriculum
-    # the number of faculties
-    # the number of unique courses offered by that college.
-
     @classmethod
     def get_default(cls) -> College:
         """Return the default college ie. COAS."""
@@ -78,16 +65,16 @@ class College(models.Model):
     @property
     def student_counts_by_level(self) -> str:
         """Return number of students grouped by class level."""
-        from app.people.models.student import Student
+        Student = apps.get_model("people", "Student")
 
         counts = {lv.label: 0 for lv in LEVEL_NUMBER}
         for stud in Student.objects.filter(curriculum__college=self):
-            credits = stud.completed_credits
-            if credits <= 36:
+            _credits = stud.completed_credits
+            if _credits <= 36:
                 level = LEVEL_NUMBER.ONE.label
-            elif credits <= 72:
+            elif _credits <= 72:
                 level = LEVEL_NUMBER.TWO.label
-            elif credits <= 108:
+            elif _credits <= 108:
                 level = LEVEL_NUMBER.THREE.label
             else:
                 level = LEVEL_NUMBER.FOUR.label
@@ -97,9 +84,7 @@ class College(models.Model):
     @property
     def department_chairs(self) -> str:
         """Return departments with their current chair names."""
-        from app.people.choices import UserRole
-        from app.people.models.role_assignment import RoleAssignment
-
+        RoleAssignment = apps.get_model("people", "RoleAssignment")
         result: list[str] = []
         for dept in self.departments.all():
             chair = (
@@ -124,16 +109,26 @@ class College(models.Model):
     @property
     def faculty_count(self) -> int:
         """Return number of faculty members in the college."""
-        from app.people.models.staffs import Faculty
-
+        Faculty = apps.get_model("people", "Faculty")
         return Faculty.objects.filter(college=self).count()
 
     @property
     def course_count(self) -> int:
         """Return number of distinct courses offered."""
-        from app.academics.models.course import Course
+        return len(self.get_courses)
 
-        return Course.objects.filter(department__college=self).distinct().count()
+    def get_courses(self) -> models.QuerySet:
+        """Return the list of distinc courses for this college.
+
+        could be done with a loop on dept and dept.get_courses
+        but not too efficient.
+        """
+        Course = apps.get_model("academics", "Course")
+        return (
+            Course.objects.filter(department__in=self.departments.all())
+            .distinct()
+            .order_by("number")
+        )
 
     class Meta:
         constraints = [

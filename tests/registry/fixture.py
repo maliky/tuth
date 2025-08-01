@@ -66,6 +66,7 @@ def registration_factory(student_factory, section_factory) -> RegistrationFactor
 
     Parameters allow customizing the semester of the created section.
     """
+
     def _make(
         student_uname: str,
         curri_short_name: str,

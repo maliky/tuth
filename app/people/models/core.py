@@ -35,7 +35,7 @@ class PersonManager(models.Manager):
         self, kwargs: Dict[str, Any]
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """Returns user_kwargs, person_kwargs."""
-        user_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in USER_KWARGS}
+        user_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in self.USER_KWARGS}
         return user_kwargs, kwargs
 
     def _get_or_create_user(self, **user_kwargs) -> User:
@@ -87,10 +87,9 @@ class AbstractPerson(StatusableMixin, models.Model):
     GROUP: str | None = None
     STAFF_STATUS: bool = False
 
-
     # ~~~~~~~~ Mandatory ~~~~~~~~
     objects = PersonManager()
-    
+
     # ~~~~ Autofilled ~~~~
     user = models.OneToOneField(
         User,
@@ -131,7 +130,7 @@ class AbstractPerson(StatusableMixin, models.Model):
             return (
                 today.year
                 - self.date_of_birth.year
-                # moins 1 ou 0, si l'anniversaire est passé cette année.
+                # moins 1 ou 0, si the birthday has passed this year.
                 - (
                     (today.month, today.day)
                     < (self.date_of_birth.month, self.date_of_birth.day)

@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from typing import Enum, Type
+from typing import Type
 from django.apps import apps
 from django.db.models import Model
 
@@ -34,7 +34,7 @@ class RoleInfo:
 
     @property
     def model(self) -> Type[Model]:
-        """Get the model avoiding circular imports. """
+        """Get the model avoiding circular imports."""
         app_label, model_name = self.model_path.split(".")
         return apps.get_model(f"app.{app_label}", model_name)
 

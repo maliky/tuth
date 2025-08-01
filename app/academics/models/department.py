@@ -57,6 +57,14 @@ class Department(models.Model):
         if not self.long_name:
             self.long_name = f"{self.short_name} department of {self.college}"
 
+    def get_courses(self) -> models.QuerySet:
+        """Return all the courses for this department."""
+        return self.courses.all().order_by("number")
+
+    def course_count(self) -> int:
+        """Count the number of courses for this department."""
+        return self.courses.count()
+
     def save(self, *args, **kwargs) -> None:
         """Save the Department making sure the code is set."""
         self._ensure_code()

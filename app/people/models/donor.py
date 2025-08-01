@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 from django.db import models
-from app.shared.auth.perms import UserRole
 from app.people.models.core import AbstractPerson
 
 

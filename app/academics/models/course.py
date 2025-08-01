@@ -5,16 +5,15 @@ from __future__ import annotations
 from itertools import count
 from typing import Self
 
-from app.people.models.staffs import Faculty
-from app.people.models.student import Student
-from app.timetable.utils import get_current_semester
 from django.db import models
+from django.apps import apps
 from simple_history.models import HistoricalRecords
 
 from app.academics.choices import LEVEL_NUMBER
 from app.academics.models.department import Department
 from app.shared.types import CourseQuery
 from app.shared.utils import make_course_code
+from app.timetable.utils import get_current_semester
 
 DEFAULT_COURSE_NO = count(start=1, step=1)
 
@@ -90,15 +89,19 @@ class Course(models.Model):
     # > TODO: create tests for the next 2 methods.
     def current_faculty(self):
         """Get the list of faculty teaching this course in the current semester."""
+        Faculty = apps.get_model("people", "Faculty")
+
         semester = get_current_semester()
         if semester is None:
             return Faculty.objects.none()
-        return Facutly.objects.filter(
+        return Faculty.objects.filter(
             section__semester=semester, section__programm__course=self
         ).distinct()
 
     def current_students(self):
         """Returns the list of student taking this course during the current semester."""
+        Student = apps.get_model("people", "Student")
+
         semester = get_current_semester()
         if semester is None:
             return Student.objects.none()
