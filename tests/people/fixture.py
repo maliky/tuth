@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, TypeAlias
+from typing import Callable, TypeAlias, cast
 
 import pytest
 from django.contrib.auth.models import User, Group
@@ -38,7 +38,7 @@ def staff(user_factory: UserFactory) -> Staff:
     """A staff."""
     # Staff requires staff_id
     staff_u = user_factory("mboulot")
-    return Staff.objects.create(user=staff_u, staff_id="ST123")
+    return cast(Staff, Staff.objects.create(user=staff_u, staff_id="ST123"))
 
 
 @pytest.fixture
@@ -51,14 +51,17 @@ def faculty(staff_factory: StaffFactory) -> Faculty:
 @pytest.fixture
 def donor(user_factory: UserFactory) -> Donor:
     user = user_factory("donorlegenereux")
-    return Donor.objects.create(user=user)
+    return cast(Donor, Donor.objects.create(user=user))
 
 
 @pytest.fixture
 def student(user_factory: UserFactory, semester, curriculum) -> Student:
     user = user_factory("letudiant")
-    return Student.objects.create(
-        user=user, curriculum=curriculum, current_enroled_semester=semester
+    return cast(
+        Student,
+        Student.objects.create(
+            user=user, curriculum=curriculum, current_enroled_semester=semester
+        ),
     )
 
 
@@ -94,7 +97,7 @@ def staff_factory(user_factory: UserFactory) -> StaffFactory:
 
     def _make(staff_uname: str) -> Staff:
 
-        return Staff.objects.create(user=user_factory(staff_uname))
+        return cast(Staff, Staff.objects.create(user=user_factory(staff_uname)))
 
     return _make
 
@@ -109,9 +112,12 @@ def student_factory(
     """
 
     def _make(uname: str, curri_short_name: str) -> Student:
-        return Student.objects.create(
-            user=user_factory(uname),
-            curriculum=curriculum_factory(curri_short_name),
+        return cast(
+            Student,
+            Student.objects.create(
+                user=user_factory(uname),
+                curriculum=curriculum_factory(curri_short_name),
+            ),
         )
 
     return _make
@@ -122,8 +128,11 @@ def donor_factory(user_factory: UserFactory) -> DonorFactory:
     """Return a callable for making extra Donoro objects on demand."""
 
     def _make(uname: str) -> Donor:
-        return Donor.objects.create(
-            user=user_factory(uname),
+        return cast(
+            Donor,
+            Donor.objects.create(
+                user=user_factory(uname),
+            ),
         )
 
     return _make

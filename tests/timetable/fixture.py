@@ -99,7 +99,7 @@ def session_factory(section_factory: SectionFactory, room_factory) -> SecSession
         room_code: str, course_number: str, curriculum_short_name: str
     ) -> SecSession:
         room = room_factory(room_code="007")
-        section = section_factory(course_number, curriculum_short_name, 1)
+        section = section_factory(course_number, curriculum_short_name, 1, 1)
         return SecSession.objects.create(section=section, room=room)
 
     return _make

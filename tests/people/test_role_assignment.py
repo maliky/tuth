@@ -14,9 +14,10 @@ pytestmark = pytest.mark.django_db
 def test_unique_role_per_period(user, college, department):
     """Check that there only one person with the role officer in a periode."""
     start = date.today()
+    role_registrar = UserRole.REGISTRAR_OFFICER.value.code
     RoleAssignment.objects.create(
         user=user,
-        role=UserRole.REGISTRAR_OFFICER,
+        role=role_registrar,
         college=college,
         department=department,
         start_date=start,
@@ -25,7 +26,7 @@ def test_unique_role_per_period(user, college, department):
         with transaction.atomic():
             RoleAssignment.objects.create(
                 user=user,
-                role=UserRole.REGISTRAR_OFFICER,
+                role=role_registrar,
                 college=college,
                 department=department,
                 start_date=start,

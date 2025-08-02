@@ -110,14 +110,14 @@ class College(models.Model):
     def faculty_count(self) -> int:
         """Return number of faculty members in the college."""
         Faculty = apps.get_model("people", "Faculty")
-        return Faculty.objects.filter(college=self).count()
+        return int(Faculty.objects.filter(college=self).count())
 
     @property
     def course_count(self) -> int:
         """Return number of distinct courses offered."""
-        return len(self.get_courses)
+        return int(self.get_courses().count())
 
-    def get_courses(self) -> models.QuerySet:
+    def get_courses(self):
         """Return the list of distinc courses for this college.
 
         could be done with a loop on dept and dept.get_courses

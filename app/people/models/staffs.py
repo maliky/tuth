@@ -4,7 +4,7 @@
 
 from datetime import date
 from itertools import count
-from typing import Self
+from typing import Self, cast
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -69,7 +69,7 @@ class Staff(AbstractPerson):
             department=Department.get_default(),
             position=f"Joker {staff_id:04d}",
         )
-        return dft_staff
+        return cast(Self, dft_staff)
 
     @classmethod
     def get_unique_default(cls) -> Self:

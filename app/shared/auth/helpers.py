@@ -29,8 +29,8 @@ def ensure_role_groups() -> Dict[str, Group]:
     """Create missing Group objects for each user role."""
 
     return {
-        role: Group.objects.get_or_create(name=role.capitalize())[0]
-        for role, label in UserRole
+        user_role.value.code: Group.objects.get_or_create(name=user_role.value.label)[0]
+        for user_role in UserRole
     }
 
 
@@ -39,7 +39,8 @@ def upsert_test_users_and_roles(
 ) -> None:
     """Create test users for each role and associate default colleges."""
 
-    for role, _ in UserRole:
+    for user_role in UserRole:
+        role = user_role.value.code
         user, _ = User.objects.get_or_create(username=f"test_{role}")
         user.is_staff = True
         user.set_password(TEST_PW)
@@ -47,6 +48,7 @@ def upsert_test_users_and_roles(
         user.groups.add(groups[role])
 
         college = colleges.get(DEFAULT_ROLE_TO_COLLEGE.get(role, ""))
+
         RoleAssignment.objects.update_or_create(
             user=user,
             role=role,

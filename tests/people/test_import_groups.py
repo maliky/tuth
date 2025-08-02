@@ -28,7 +28,7 @@ def test_student_import_assigns_student_group(curriculum):
     assert not res.has_errors(), res.row_errors()
     user = User.objects.get(username=username)
 
-    assert user.groups.filter(name=UserRole.STUDENT.label).exists()
+    assert user.groups.filter(name=UserRole.STUDENT.value.label).exists()
 
 
 @pytest.mark.django_db
@@ -44,4 +44,4 @@ def test_faculty_import_assigns_faculty_group(college):
     assert not res.has_errors()
 
     user = User.objects.get(username=username)
-    assert user.groups.filter(name=UserRole.FACULTY.label).exists()
+    assert user.groups.filter(name=UserRole.FACULTY.value.label).exists()

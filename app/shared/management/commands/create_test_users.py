@@ -22,7 +22,7 @@ class Command(BaseCommand):
         for user_role in UserRole:
             username = f"test_{user_role.value.code}"
             Person = user_role.value.model
-            person, was_created = Person.objects.get_or_create(
+            person, was_created = Person.objects.get_or_create(  # type: ignore[attr-defined]
                 username=username,
                 defaults={
                     "first_name": user_role.value.label,
@@ -38,7 +38,7 @@ class Command(BaseCommand):
             group, _ = Group.objects.get_or_create(name=user_role.value.code)
             person.groups.add(group)
 
-            created.append((Person.username, group.name, was_created))
+            created.append((Person.username, group.name, was_created))  # type: ignore[attr-defined]
 
         # nicely report results
         self.stdout.write(self.style.SUCCESS("Test users created or updated:"))

@@ -38,7 +38,7 @@ class Command(BaseCommand):
         """Read YAML, validate, wipe current grants and recreate them."""
         path = Path("app/shared/auth/perms.yaml")
         self.spec = yaml.safe_load(path.read_text())
-        self.roles_defined = {role.value for role in UserRole}
+        self.roles_defined = {ur.value.code for ur in UserRole}
 
         # ---------- 1. fail-hard validation ---------------------------
         # ensure every role / model mentioned in YAML truly exists

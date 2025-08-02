@@ -29,7 +29,9 @@ class RoleAssignment(models.Model):
     user = models.ForeignKey(
         "auth.User", on_delete=models.CASCADE, related_name="role_assignments"
     )
-    role = models.CharField(max_length=40, choices=UserRole)
+    role = models.CharField(
+        max_length=40, choices={(ur.value.code, ur.value.label) for ur in UserRole}
+    )
     start_date = models.DateField()
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()

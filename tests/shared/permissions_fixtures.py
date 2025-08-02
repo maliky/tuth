@@ -18,7 +18,8 @@ RoleUserFactory: TypeAlias = Callable[[UserRole], User]
 def _group_name(role: UserRole) -> str:
     """Return the default group name for a role."""
 
-    return " ".join(part.capitalize() for part in role.value.split("_"))
+    # Im' not sure abou the groupe name is it Finance Officer or finance_officer
+    return role.value.label
 
 
 @pytest.fixture
@@ -28,11 +29,11 @@ def role_user_factory(college_factory, user_factory, group_factory) -> RoleUserF
     Returns the user in a group, with permission to view a college.
     """
 
-    def _make(role: UserRole) -> User:
+    def _make(ur: UserRole) -> User:
         college = college_factory()
-        user: User = user_factory(username=f"{role.value}_user")
+        user: User = user_factory(username=f"{ur.value.code}_tuser")
 
-        group = group_factory(name=_group_name(role))
+        group = group_factory(name=_group_name(ur))
         ct = ContentType.objects.get_for_model(College)
         perm = Permission.objects.get(codename="view_college", content_type=ct)
 
@@ -41,7 +42,7 @@ def role_user_factory(college_factory, user_factory, group_factory) -> RoleUserF
 
         RoleAssignment.objects.create(
             user=user,
-            role=role,
+            role=ur.value.code,
             college=college,
             start_date=datetime.date.today(),
         )
@@ -63,7 +64,7 @@ def registrar_officer(role_user_factory) -> User:
 @pytest.fixture
 def finance_officer(role_user_factory) -> User:
     """Return a User with role (group) finaance officer."""
-    finance_officer: User = role_user_factory(UserRole.FINANCEOFFICER)
+    finance_officer: User = role_user_factory(UserRole.FINANCE_OFFICER)
     return finance_officer
 
 

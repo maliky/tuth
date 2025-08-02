@@ -29,7 +29,7 @@ class RoleInfo:
 
     label: str
     code: str
-    model_path: type
+    model_path: str
     default_college: str | None = None
 
     @property

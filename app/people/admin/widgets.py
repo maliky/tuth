@@ -8,6 +8,7 @@ Usage::
     >>> print(staff.long_name)
 """
 
+from typing import cast
 from app.people.models.student import Student
 from django.contrib.auth.models import User
 from import_export import widgets
@@ -54,7 +55,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
                 "name_suffix": suffix,
             },
         )
-        return staff
+        return cast(Staff, staff)
 
     def render(self, value, obj=None) -> str:
         """For the value (staff) for export."""

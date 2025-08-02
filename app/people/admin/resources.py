@@ -80,7 +80,7 @@ class FacultyResource(resources.ModelResource):
             return None
 
         user = instance.staff_profile.user
-        group, _ = Group.objects.get_or_create(name=UserRole.FACULTY.label)
+        group, _ = Group.objects.get_or_create(name=UserRole.FACULTY.value.label)
         user.groups.add(group)
 
 
@@ -114,7 +114,7 @@ class StudentResource(resources.ModelResource):
         if kwargs.get("dry_run") or instance.user is None:
             return
 
-        group, _ = Group.objects.get_or_create(name=UserRole.STUDENT.label)
+        group, _ = Group.objects.get_or_create(name=UserRole.STUDENT.value.label)
         instance.user.groups.add(group)
 
 

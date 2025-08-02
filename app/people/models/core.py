@@ -1,20 +1,18 @@
 """Core module for people."""
 
-from datetime import date, timezone
+from datetime import date
 from typing import Any, Dict, Tuple
 
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
 
 from app.people.utils import extract_id_num, mk_username, photo_upload_to
 from app.shared.status.mixins import StatusableMixin
-
-User = get_user_model()
 
 
 class PersonManager(models.Manager):
@@ -40,10 +38,10 @@ class PersonManager(models.Manager):
 
     def _get_or_create_user(self, **user_kwargs) -> User:
         """Create or get the User and set /update password."""
-        username = user_kwargs.pop("username")
+        # username = user_kwargs.pop("username")
         password = user_kwargs.pop("password", None)
 
-        user, created = User.objects.get_or_create(username, defaults=user_kwargs)
+        user, created = User.objects.get_or_create(defaults=user_kwargs)
         if created:
             if password:
                 user.set_password(password)  # to make sure it is hashed
@@ -279,7 +277,7 @@ class AbstractPerson(StatusableMixin, models.Model):
     @classmethod
     def get_existing_id(cls) -> list[int]:
         """Returns the list of all existing number in the (class) ids field."""
-        user_ids_str = cls.objects.values_list(cls.ID_FIELD, flat=True)  # type: ignore[attr-defined]
+        user_ids_str = cls.objects.values_list(cls.ID_FIELD or "", flat=True)  # type: ignore[attr-type]
         user_ids = [extract_id_num(v) for v in user_ids_str]
         return user_ids
 
