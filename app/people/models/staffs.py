@@ -4,7 +4,7 @@
 
 from datetime import date
 from itertools import count
-from typing import Self, cast
+from typing import Self, cast, Dict, Any, Tuple
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -81,6 +81,44 @@ class Staff(AbstractPerson):
             models.UniqueConstraint(fields=["user"], name="uniq_staff_per_user"),
         ]
 
+class FacultyManager(models.Manager):
+    """Custom creation Management."""
+
+    STAFF_KWARGS = {
+        # ~~~~ Staff.Userfields ~~~~
+        "username",
+        "password",
+        "email",
+        "first_name",
+        "last_name",
+        "is_staff",
+        "is_superuser",
+        "is_active",
+        # ~~~~ Staff only fields ~~~~
+        "staff_profile",
+        "history",
+        "college",
+        "google_profile",
+        "personal_website",
+        "academic_rank",
+    }
+
+    def _split_kwargs(
+        self, kwargs: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        """Returns staff_kwargs, faculty_kwargs."""
+        staff_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in self.STAFF_KWARGS}
+        return staff_kwargs, kwargs
+
+    # public API ----------------------------------------------------
+    def get_or_create(self, defaults=None, **kwargs):
+        """Get or Create the Faculty and create the Staff if id does not exists."""
+        defaults = defaults or {}
+        username = kwargs.pop("username")
+        staff_kwargs, faculty_kwargs = self._split_kwargs({**kwargs, **defaults})
+        staff_profile, _ = Staff.objects.get_or_create(username=username, **staff_kwargs)
+        return super().get_or_create(staff_profile=staff_profile, defaults=faculty_kwargs)
+        
 
 class Faculty(StatusableMixin, models.Model):
     """Teaching staff profile linked to a :class:Staff record.
@@ -100,7 +138,8 @@ class Faculty(StatusableMixin, models.Model):
     staff_profile = models.OneToOneField("people.Staff", on_delete=models.CASCADE)
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()
-
+    objects = FacultyManager()  # manage queries
+    
     # ~~~~ Optional ~~~~
     # Main college for the faculty (Could be a department also)
     # just for administrative convieniance
@@ -141,6 +180,10 @@ class Faculty(StatusableMixin, models.Model):
         """Returns the faculty division."""
         return self.staff_profile.department
 
+    def username(self):
+        """Returns the username attached to the staff_profile."""
+        return self.staff_profile.username
+    
     def _ensure_college(self):
         """Make sure we have a college."""
         if not self.college_id:
@@ -176,3 +219,5 @@ class Faculty(StatusableMixin, models.Model):
     class Meta:
         verbose_name = "Faculty"
         verbose_name_plural = "Faculty profiles"
+
+

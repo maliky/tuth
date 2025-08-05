@@ -36,12 +36,13 @@ class PersonManager(models.Manager):
         user_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in self.USER_KWARGS}
         return user_kwargs, kwargs
 
-    def _get_or_create_user(self, **user_kwargs) -> User:
+    def _get_or_create_user(self, username, **user_kwargs) -> User:
         """Create or get the User and set /update password."""
         # username = user_kwargs.pop("username")
         password = user_kwargs.pop("password", None)
-
-        user, created = User.objects.get_or_create(defaults=user_kwargs)
+        user, created = User.objects.get_or_create(
+            username=username, defaults=user_kwargs
+        )
         if created:
             if password:
                 user.set_password(password)  # to make sure it is hashed
@@ -51,6 +52,12 @@ class PersonManager(models.Manager):
             user.set_password(password)  # to make sure it is hashed
             user.save(update_fields=["password"])
         return user
+
+    def _get_username(self, kwargs):
+        """look into the kwargs for elements to build the username."""
+        first = kwargs.get("first_name", "")
+        last = kwargs.get("last_name", "")
+        return mk_username(first, last, prefix_len=2)
 
     # public API ----------------------------------------------------
     def create(self, **kwargs):
@@ -62,8 +69,12 @@ class PersonManager(models.Manager):
     def get_or_create(self, defaults=None, **kwargs):
         """Get or Create the user and the person."""
         defaults = defaults or {}
+        username = kwargs.pop("username", "") or defaults.pop("username")
+        # we create a user name by default
+        if not username:
+            username = self._get_username({**defaults, **kwargs})
         user_kwargs, person_kwargs = self._split_kwargs({**kwargs, **defaults})
-        user = self._get_or_create_user(**user_kwargs)
+        user = self._get_or_create_user(username=username, **user_kwargs)
         return super().get_or_create(user=user, defaults=person_kwargs)
 
 
@@ -87,8 +98,6 @@ class AbstractPerson(StatusableMixin, models.Model):
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     objects = PersonManager()
-
-    # ~~~~ Autofilled ~~~~
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
@@ -96,6 +105,8 @@ class AbstractPerson(StatusableMixin, models.Model):
         related_query_name="%(class)s",
         blank=True,
     )
+
+    # ~~~~ Autofilled ~~~~
     long_name = models.CharField(editable=False)
     username = models.CharField(editable=True)
     email = models.EmailField(editable=True)
@@ -151,6 +162,8 @@ class AbstractPerson(StatusableMixin, models.Model):
         """Update the user email."""
         self._ensure_username()
         self.email = self.mk_email()
+        self.user.email = self.email
+        self.user.save(update_fields=['email'])
 
     def _update_long_name(self) -> None:
         """Update the long name."""
@@ -200,6 +213,12 @@ class AbstractPerson(StatusableMixin, models.Model):
             self.email = self.user.email
         else:
             self.mk_email(self.username)
+
+    def set_password(self, password):
+        """Setting password for the attached user."""
+        self._ensure_user()
+        self.user.set_password(password)
+        self.user.save()
 
     def mk_email(self, username=None):
         """Create an email foe the abstract and the user using subclass suffix."""

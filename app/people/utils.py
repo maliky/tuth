@@ -204,8 +204,9 @@ def mk_username(
     When the middle name is give, take 2 char from it.
     exclude permits to generate a username not in the list
     """
-    middle_initial = re.sub(r"\.| ", "", middle)[:1]
-    first = re.sub(r"\.| ", "", first)
+    middle_initial = re.sub(r"\.| |-", "", middle)[:1]
+    first = re.sub(r"-|\.| ", "", first)
+    last = re.sub(r"-|\.| ", "", last)
     baseusername = (first[:prefix_len] + middle_initial + last).lower()
     # import pdb; pdb.set_trace()
 

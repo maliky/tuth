@@ -11,6 +11,6 @@ class GradeInline(admin.TabularInline):
     model = Grade
     fk_name = "section"
     extra = 0
-    fields = ("student", "grade", "graded_on")
+    fields = ("student", "value", "graded_on")
     readonly_fields = ("graded_on",)
     autocomplete_fields = ("student",)

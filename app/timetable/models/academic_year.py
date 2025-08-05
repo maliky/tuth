@@ -22,7 +22,7 @@ class AcademicYear(models.Model):
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     start_date = models.DateField(unique=True)
-    end_date = models.DateField(unique=True)
+    end_date = models.DateField(unique=True, blank=True)
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()
 
@@ -35,11 +35,16 @@ class AcademicYear(models.Model):
 
     def clean(self) -> None:
         """Ensure start and end dates form a valid academic year."""
-        if self.start_date.month not in (7, 8, 9, 10):
+        st = self.start_date
+
+        if st.month not in (7, 8, 9, 10):
             raise ValidationError("Start date must be in July–October.")
-        if self.start_date:
-            if self.end_date:
-                assert self.end_date.year > self.start_date.year
+
+        if self.end_date:
+            assert self.end_date.year > st.year
+        else:
+            # the day *before* next academic year starts
+            self.end_date = self.start_date.replace(year=st.year + 1) - timedelta(days=1)
 
     def save(self, *args, **kwargs) -> None:
         """Populate derived fields long_name and code before saving."""

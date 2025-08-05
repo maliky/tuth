@@ -36,7 +36,7 @@ class RoleInfo:
     def model(self) -> Type[Model]:
         """Get the model avoiding circular imports."""
         app_label, model_name = self.model_path.split(".")
-        return apps.get_model(f"app.{app_label}", model_name)
+        return apps.get_model(app_label, model_name)
 
 
 class UserRole(Enum):

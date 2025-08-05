@@ -1,10 +1,12 @@
 """The form to manipulate faculty in the Admin."""
 
 from __future__ import annotations, division
+import pdb
 from typing import Any, Dict
 
 from app.academics.models.department import Department
 from app.people.models.staffs import Staff
+from app.people.utils import mk_username
 from app.shared.types import FieldT
 from django import forms
 from django.db import transaction
@@ -32,22 +34,27 @@ class FacultyForm(forms.ModelForm):
     )
     position = forms.CharField(label="position", required=False)
 
-    FACULTY_FIELDS = ("academic_rank", "college", "google_profile", "personal_website")
     USER_FIELDS = ("first_name", "last_name", "username", "email")
     STAFF_FIELDS = ("staff_id", "employment_date", "division", "department", "position")
+    FACULTY_FIELDS = ("academic_rank", "college", "google_profile", "personal_website")
+    US_FIELDS = tuple(set(USER_FIELDS) | set(STAFF_FIELDS))
 
     def _get_initial_field_values(self) -> Dict[str, str]:
         """Returns the existing attribute for the user and staff used to initialise the form."""
-        fields = list(self.USER_FIELDS) + list(self.STAFF_FIELDS)
-        if self.instance and self.instance.pk:
+        user_fields = {}
+        if self.instance.pk:
             _staff = self.instance.staff_profile
+            staff_fields = {f: getattr(_staff, f, "") for f in self.STAFF_FIELDS}
             _user = _staff.user
-            return {f: getattr(_user, f, "") for f in fields}
+            user_fields = {f: getattr(_user, f, "") for f in self.USER_FIELDS}
+            return {**user_fields, **staff_fields}
 
-        return {f: "" for f in fields}
+        return {f: "" for f in self.US_FIELDS}
 
     def __init__(self, *args, **kwargs) -> None:
-        """We set initial values to all fields."""
+        """We set initial values to all fields.
+
+        By default, the super init will do it for the field of the instance."""
         super().__init__(*args, **kwargs)
 
         self.initial.update(self._get_initial_field_values().items())
@@ -66,38 +73,36 @@ class FacultyForm(forms.ModelForm):
         faculty = self.instance
 
         # we check if a field used to create the underlining user has changed.
-        if {"first_name", "middle_name", "last_name"} & set(self.changed_data):
-            cd["username"] = faculty.staff_profile.mk_username(
-                first=cd.get("first_name", ""),
-                last=cd.get("last_name", ""),
-                middle=cd.get("middle_name", ""),
-            )
-            cd["email"] = faculty.staff_profile.mk_email(cd.get("username", ""))
+        if faculty.staff_profile_id:
+            if {"first_name", "middle_name", "last_name"} & set(self.changed_data):
+                cd["username"] = faculty.staff_profile.mk_username(
+                    first=cd.get("first_name", ""),
+                    last=cd.get("last_name", ""),
+                    middle=cd.get("middle_name", ""),
+                )
+                cd["email"] = faculty.staff_profile.mk_email(cd.get("username", ""))
 
         return cd
 
     @transaction.atomic
     def save(self, commit=True):
-        """Save the data on in DB creating the user on the fly."""
+        """Save the data  in DB creating the user on the fly."""
         cd = self.cleaned_data
 
         faculty = super().save(commit=False)  # save person only fields first
 
-        if faculty.pk:
-            _staff = faculty.staff_profile
-            _user_id = _staff.user_id
-        else:
-            _user_id = None
+        _staff_id = None
+        _user_id = None
 
-        _user, _ = User.objects.update_or_create(
-            pk=_user_id, defaults={f: cd.get(f, None) for f in self.USER_FIELDS}
+        staff, _ = Staff.objects.get_or_create(
+            defaults={f: cd.get(f, None) for f in self.US_FIELDS}
         )
-        staff, _ = Staff.objects.update_or_create(
-            pk=_staff.pk, defaults={f: cd.get(f, None) for f in self.STAFF_FIELDS}
-        )
+        import pdb
 
-        staff.user = _user
+        pdb.set_trace()
         staff._update_long_name()
+        staff._update_email()
+        staff.save(update_fields=["long_name", "email"])
         faculty.staff_profile = staff
         faculty.save()
 

@@ -13,7 +13,7 @@ class GradeValue(models.Model):
     """A class to define the different Grade types."""
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
-    code = models.CharField(choices=GradeChoice.choices, default=GradeChoice.IP)
+    code = models.CharField(choices=GradeChoice.choices, default=GradeChoice.IP, unique=True)
     # ~~~~ Auto-filled ~~~~
     number = models.PositiveSmallIntegerField(null=True, default=GRADES_NUM["IP"])
     description = models.CharField(
@@ -27,7 +27,7 @@ class GradeValue(models.Model):
     def _ensure_number(self):
         """Make sure a number is defined for a Grade."""
         if not self.number:
-            self.number = GRADES_NUM[self.code]
+            self.number = GRADES_NUM[self.code.upper()]
 
     def _ensure_description(self):
         """Make sure a number is defined for a Grade."""

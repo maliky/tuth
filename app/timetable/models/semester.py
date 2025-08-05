@@ -23,15 +23,18 @@ class Semester(models.Model):
     )
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()
+    start_date = models.DateField(null=True, blank=True)
 
     # ~~~~~~~~ Optional ~~~~~~~~
     # > Could be interesting to set this to the academic_year start date automatically on save
     # > and force non null values.
-    start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
 
     def clean(self) -> None:
         """Checking that the start and end date of the Semester are within the ay dates."""
+        if not self.start_date:
+            self.start_date = self.academic_year.start_date
+
         # Semester.clean() and Term.clean() call validate_subperiod() but not
         # full_clean() on related objects. In admin workflows the parent may still
         # carry invalid dates. Consider a parent-before-child save order or
