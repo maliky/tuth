@@ -81,6 +81,7 @@ class Staff(AbstractPerson):
             models.UniqueConstraint(fields=["user"], name="uniq_staff_per_user"),
         ]
 
+
 class FacultyManager(models.Manager):
     """Custom creation Management."""
 
@@ -118,7 +119,7 @@ class FacultyManager(models.Manager):
         staff_kwargs, faculty_kwargs = self._split_kwargs({**kwargs, **defaults})
         staff_profile, _ = Staff.objects.get_or_create(username=username, **staff_kwargs)
         return super().get_or_create(staff_profile=staff_profile, defaults=faculty_kwargs)
-        
+
 
 class Faculty(StatusableMixin, models.Model):
     """Teaching staff profile linked to a :class:Staff record.
@@ -139,7 +140,7 @@ class Faculty(StatusableMixin, models.Model):
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()
     objects = FacultyManager()  # manage queries
-    
+
     # ~~~~ Optional ~~~~
     # Main college for the faculty (Could be a department also)
     # just for administrative convieniance
@@ -183,7 +184,7 @@ class Faculty(StatusableMixin, models.Model):
     def username(self):
         """Returns the username attached to the staff_profile."""
         return self.staff_profile.username
-    
+
     def _ensure_college(self):
         """Make sure we have a college."""
         if not self.college_id:
@@ -208,7 +209,8 @@ class Faculty(StatusableMixin, models.Model):
             profile = Staff.get_default()
         college = College.get_default()
         dft_faculty, _ = cls.objects.get_or_create(staff_profile=profile, college=college)
-        return dft_faculty
+
+        return cast(Self, dft_faculty)
 
     @classmethod
     def get_unique_default(cls) -> Self:
@@ -219,5 +221,3 @@ class Faculty(StatusableMixin, models.Model):
     class Meta:
         verbose_name = "Faculty"
         verbose_name_plural = "Faculty profiles"
-
-

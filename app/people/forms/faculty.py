@@ -1,16 +1,13 @@
 """The form to manipulate faculty in the Admin."""
 
 from __future__ import annotations, division
-import pdb
 from typing import Any, Dict
 
 from app.academics.models.department import Department
 from app.people.models.staffs import Staff
-from app.people.utils import mk_username
 from app.shared.types import FieldT
 from django import forms
 from django.db import transaction
-from django.contrib.auth.models import User
 
 
 class FacultyForm(forms.ModelForm):
@@ -54,7 +51,8 @@ class FacultyForm(forms.ModelForm):
     def __init__(self, *args, **kwargs) -> None:
         """We set initial values to all fields.
 
-        By default, the super init will do it for the field of the instance."""
+        By default, the super init will do it for the field of the instance.
+        """
         super().__init__(*args, **kwargs)
 
         self.initial.update(self._get_initial_field_values().items())
@@ -91,15 +89,10 @@ class FacultyForm(forms.ModelForm):
 
         faculty = super().save(commit=False)  # save person only fields first
 
-        _staff_id = None
-        _user_id = None
-
         staff, _ = Staff.objects.get_or_create(
             defaults={f: cd.get(f, None) for f in self.US_FIELDS}
         )
-        import pdb
 
-        pdb.set_trace()
         staff._update_long_name()
         staff._update_email()
         staff.save(update_fields=["long_name", "email"])

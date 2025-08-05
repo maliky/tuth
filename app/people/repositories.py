@@ -1,6 +1,7 @@
 """Data access helpers for the people app."""
 
 from __future__ import annotations
+from typing import cast
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -47,4 +48,4 @@ class PeopleRepository:
             faculty.college = college
             faculty.save()
 
-        return faculty
+        return cast(Faculty, faculty)

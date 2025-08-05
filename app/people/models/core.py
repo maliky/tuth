@@ -54,7 +54,7 @@ class PersonManager(models.Manager):
         return user
 
     def _get_username(self, kwargs):
-        """look into the kwargs for elements to build the username."""
+        """Look into the kwargs for elements to build the username."""
         first = kwargs.get("first_name", "")
         last = kwargs.get("last_name", "")
         return mk_username(first, last, prefix_len=2)
@@ -163,7 +163,7 @@ class AbstractPerson(StatusableMixin, models.Model):
         self._ensure_username()
         self.email = self.mk_email()
         self.user.email = self.email
-        self.user.save(update_fields=['email'])
+        self.user.save(update_fields=["email"])
 
     def _update_long_name(self) -> None:
         """Update the long name."""

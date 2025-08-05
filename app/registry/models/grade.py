@@ -13,7 +13,9 @@ class GradeValue(models.Model):
     """A class to define the different Grade types."""
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
-    code = models.CharField(choices=GradeChoice.choices, default=GradeChoice.IP, unique=True)
+    code = models.CharField(
+        choices=GradeChoice.choices, default=GradeChoice.IP, unique=True
+    )
     # ~~~~ Auto-filled ~~~~
     number = models.PositiveSmallIntegerField(null=True, default=GRADES_NUM["IP"])
     description = models.CharField(

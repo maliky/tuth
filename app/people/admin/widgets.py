@@ -90,7 +90,7 @@ class FacultyWidget(widgets.ForeignKeyWidget):
         faculty, _ = Faculty.objects.get_or_create(
             staff_profile=staff,
         )
-        return faculty
+        return cast(Faculty, faculty)
 
 
 class StudentUserWidget(widgets.ForeignKeyWidget):
