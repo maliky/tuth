@@ -28,8 +28,6 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
 
         The widget splits the name, creates and the corresponding User if
         needed.  It returns or creates the linked Staff profile.
-
-        If no value, create a new unique staff.
         """
 
         if not value:
@@ -48,7 +46,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         )
 
         staff, _ = Staff.objects.get_or_create(
-            user=user,
+            username=username,
             defaults={
                 "name_prefix": prefix,
                 "middle_name": middle,

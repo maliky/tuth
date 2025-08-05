@@ -4,6 +4,7 @@
 
 from datetime import date
 from itertools import count
+import pdb
 from typing import Self, cast, Dict, Any, Tuple
 
 from django.contrib.auth import get_user_model
@@ -29,7 +30,7 @@ class Staff(AbstractPerson):
     """Base class for Staffs.
 
     Example:
-        >>> Staff.objects.create(user=user, staff_id="ST01", department=dept)
+        >>> Staff.objects.create(username=username, staff_id="ST01", department=dept)
         >>> staff_profile  # from tests.conftest
     Side Effects:
         save() from :class:AbstractPerson sets staff_id.
@@ -98,7 +99,6 @@ class FacultyManager(models.Manager):
         # ~~~~ Staff only fields ~~~~
         "staff_profile",
         "history",
-        "college",
         "google_profile",
         "personal_website",
         "academic_rank",

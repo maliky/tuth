@@ -1,6 +1,7 @@
 """Core module for people."""
 
 from datetime import date
+import pdb
 from typing import Any, Dict, Tuple
 
 from django.contrib.auth.models import User, Group
@@ -19,6 +20,7 @@ class PersonManager(models.Manager):
     """Custom creation Management."""
 
     USER_KWARGS = {
+        "user",
         "username",
         "password",
         "email",
@@ -36,10 +38,11 @@ class PersonManager(models.Manager):
         user_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in self.USER_KWARGS}
         return user_kwargs, kwargs
 
-    def _get_or_create_user(self, username, **user_kwargs) -> User:
+    def _get_or_create_user(self, **user_kwargs) -> User:
         """Create or get the User and set /update password."""
-        # username = user_kwargs.pop("username")
         password = user_kwargs.pop("password", None)
+        username = user_kwargs.pop("username", "") or user_kwargs.pop("user").username
+
         user, created = User.objects.get_or_create(
             username=username, defaults=user_kwargs
         )
@@ -74,7 +77,7 @@ class PersonManager(models.Manager):
         if not username:
             username = self._get_username({**defaults, **kwargs})
         user_kwargs, person_kwargs = self._split_kwargs({**kwargs, **defaults})
-        user = self._get_or_create_user(username=username, **user_kwargs)
+        user = self._get_or_create_user(username= username, **user_kwargs)
         return super().get_or_create(user=user, defaults=person_kwargs)
 
 

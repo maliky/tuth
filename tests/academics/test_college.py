@@ -18,7 +18,7 @@ from app.academics.choices import CREDIT_NUMBER
 from app.people.models.staffs import Staff, Faculty
 from app.people.models.student import Student
 from app.people.models.role_assignment import RoleAssignment
-from app.people.choices import UserRole
+from app.shared.auth.perms import UserRole
 
 
 pytestmark = pytest.mark.django_db

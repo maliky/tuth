@@ -13,7 +13,7 @@ class Donor(AbstractPerson):
 
     Example:
         >>> user = User.objects.create_user(username="donor")
-        >>> Donor.objects.create(user=user, donor_id="DN001")
+        >>> Donor.objects.create(username=username, donor_id="DN001")
 
     Side Effects:
         save() from :class:AbstractPerson populates donor_id.

@@ -25,27 +25,9 @@ class PeopleRepository:
         _, first, _, last, _ = split_name(name)
         username = mk_username(first, last, prefix_len=2)
 
-        user, user_created = User.objects.get_or_create(
-            username=username,
-            defaults={"first_name": first, "last_name": last},
-        )
-
-        if user_created:
-            user.set_password(TEST_PW)
-            user.save()
-            staff, _ = Staff.objects.get_or_create(user=user)
-            faculty = Faculty.objects.create(staff_profile=staff, college=college)
-            return faculty
-
-        staff, _ = Staff.objects.get_or_create(user=user)
-
         faculty, _ = Faculty.objects.get_or_create(
-            staff_profile=staff,
-            defaults={"college": college},
+            username=username,
+            defaults={"college": college, "first_name": first, "last_name": last},
         )
-
-        if faculty.college != college:
-            faculty.college = college
-            faculty.save()
 
         return cast(Faculty, faculty)

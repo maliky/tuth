@@ -19,7 +19,7 @@ class Student(AbstractPerson):
 
     Example:
         >>> user = User.objects.create_user(username="stud")
-        >>> s = Student.objects.create(user=user, current_enroled_semester=semester)
+        >>> s = Student.objects.create(username=username, current_enroled_semester=semester)
         >>> s.student_id  # auto-set from user id
         'TU_STD0001'
     Side Effects:

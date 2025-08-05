@@ -17,6 +17,7 @@ GRADES_NUM = {
     "F": 0,
     "I": 0,
     "IP": 0,
+    "IP_UPD": 0,     # for test purposes
     "NG": 0,
     "W": 0,
 }

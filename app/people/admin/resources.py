@@ -63,14 +63,14 @@ class FacultyResource(resources.ModelResource):
 
     staff_profile = fields.Field(
         attribute="staff_profile",
-        column_name="faculty",
+        column_name="staff_profile",
         widget=StaffProfileWidget(),
     )
 
     class Meta:
         model = Faculty
         import_id_fields = ("staff_profile",)
-        fields = "staff_profile"
+        fields = ("staff_profile",)
         skip_unchanged = True
         report_skipped = False
 
