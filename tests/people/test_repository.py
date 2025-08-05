@@ -18,7 +18,7 @@ def test_get_or_create_faculty_idempotent(college):
 # def test_get_or_create_faculty_updates_college(college_factory):
 #     """Test the update of the faculty through a get or create."""
 
-    
+
 #     college_a = college_factory(code="COAS")
 #     college_b = college_factory(code="COBA")
 

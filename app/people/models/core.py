@@ -1,7 +1,6 @@
 """Core module for people."""
 
 from datetime import date
-import pdb
 from typing import Any, Dict, Tuple
 
 from django.contrib.auth.models import User, Group
@@ -77,7 +76,7 @@ class PersonManager(models.Manager):
         if not username:
             username = self._get_username({**defaults, **kwargs})
         user_kwargs, person_kwargs = self._split_kwargs({**kwargs, **defaults})
-        user = self._get_or_create_user(username= username, **user_kwargs)
+        user = self._get_or_create_user(username=username, **user_kwargs)
         return super().get_or_create(user=user, defaults=person_kwargs)
 
 

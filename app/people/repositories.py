@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 
 from app.academics.models.college import College
-from app.people.models.staffs import Faculty, Staff
+from app.people.models.staffs import Faculty
 from app.people.utils import mk_username, split_name
 from app.shared.auth.perms import TEST_PW
 
@@ -27,7 +27,12 @@ class PeopleRepository:
 
         faculty, _ = Faculty.objects.get_or_create(
             username=username,
-            defaults={"college": college, "first_name": first, "last_name": last},
+            defaults={
+                "college": college,
+                "first_name": first,
+                "last_name": last,
+                "password": TEST_PW,
+            },
         )
 
         return cast(Faculty, faculty)

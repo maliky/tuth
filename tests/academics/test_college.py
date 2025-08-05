@@ -51,7 +51,7 @@ def test_college_computed_fields():
     chair_user = User.objects.create(username="chair", first_name="C", last_name="H")
     RoleAssignment.objects.create(
         user=chair_user,
-        role=UserRole.CHAIR,
+        role=UserRole.CHAIR.value.code,
         college=college,
         department=dept,
         start_date=date.today(),

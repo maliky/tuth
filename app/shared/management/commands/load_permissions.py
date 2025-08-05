@@ -8,16 +8,18 @@ ships with a coherent permission matrix.
 """
 
 import logging
-from pathlib import Path
 from typing import Any
 
-import yaml
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand, CommandError
 
-from app.shared.auth.perms import UserRole  # authoritative list of roles
+from app.shared.auth.perms import (
+    APP_MODELS,
+    PERMISSION_MATRIX,
+    UserRole,
+)  # authoritative list of roles
 
 
 class Command(BaseCommand):
@@ -36,8 +38,9 @@ class Command(BaseCommand):
     # > what's this *_ and **__ ?
     def handle(self, *_, **__) -> None:
         """Read YAML, validate, wipe current grants and recreate them."""
-        path = Path("app/shared/auth/perms.yaml")
-        self.spec = yaml.safe_load(path.read_text())
+        # path = Path("app/shared/auth/perms.yaml")
+        # self.spec = yaml.safe_load(path.read_text())
+        self.spec = PERMISSION_MATRIX
         self.roles_defined = {ur.value.code for ur in UserRole}
 
         # ---------- 1. fail-hard validation ---------------------------
@@ -56,41 +59,38 @@ class Command(BaseCommand):
         # ---------- 3. rebuild model-level perms ---------------------
         ct_cache: dict[str, ContentType] = {}  # memo-ise ContentType look-ups
 
-        # walk over every model described in perms.yaml
-        for model, acts in self.spec["object_perm_matrix"].items():
+        for app_label, models in APP_MODELS.items():
+            for model in models:
+                my_model = apps.get_model(app_label, model)
 
-            # Get the class and the model
-            app_label = self.spec["model_app"][model]
-            my_models = apps.get_model(app_label, model)
+                _ct = ContentType.objects.get_for_model(my_model)
+                # return _ct if model is not a key of the dict & insert it.
+                # else return the value of the model key
+                ct = ct_cache.setdefault(model, _ct)
 
-            _ct = ContentType.objects.get_for_model(my_models)
-            # return _ct if model is not a key of the dict & insert it.
-            # else return the value of the model key
-            ct = ct_cache.setdefault(model, _ct)
-
-            # Iterate create, read, update, delete actions
-            for action, role_list in acts.items():
-                # Django auto-creates permissions named "<action>_<model>"
-                # e.g.  view_course, change_course …
-                perm, _created = Permission.objects.get_or_create(
-                    codename=f"{action}_{model}", content_type=ct
-                )
-
-                #  Attach that permission to every group listed in role_list
-                for role in role_list:
-                    grp, _created = Group.objects.get_or_create(
-                        name=" ".join([r.capitalize() for r in role.split("_")])
+                # Iterate create, read, update, delete actions
+                for action, role_list in PERMISSION_MATRIX.get(model, {}).items():
+                    # Django auto-creates permissions named "<action>_<model>"
+                    # e.g.  view_course, change_course …
+                    perm, _created = Permission.objects.get_or_create(
+                        codename=f"{action}_{model}", content_type=ct
                     )
-                    grp.permissions.add(perm)  # final grant
 
-        logging.info("✔ permissions rebuilt from perms.yaml")
+                    #  Attach that permission to every group listed in role_list
+                    for role in role_list:
+                        grp, _created = Group.objects.get_or_create(
+                            name=" ".join([r.capitalize() for r in role.split("_")])
+                        )
+                        grp.permissions.add(perm)  # final grant
+
+        logging.info("✔ permissions rebuilt")
 
     def get_unknown_roles(self):
         """Return the unknow roles from the YAML file."""
         return {
             role
-            for perms in self.spec["object_perm_matrix"].values()  # models
-            for acts in perms.values()  # actions (view, add...)
+            for models in PERMISSION_MATRIX  # models
+            for acts in models  # actions (view, add...)
             for role in acts  # roles for each actions (dean, chair...)
             if role not in self.roles_defined
         }

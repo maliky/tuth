@@ -22,6 +22,39 @@ DEFAULT_ROLE_TO_COLLEGE = {
     "faculty": "COAS",
 }
 
+APP_MODELS = {
+    "academics": [
+        "college",
+        "department",
+        "course",
+        "curriculum",
+        "major",
+        "minor",
+        "majorprogram",
+        "minorprogram",
+        "program",
+        "prerequisite",
+    ],
+    "people": ["student", "faculty", "staff", "donor", "roleassignment"],
+    "spaces": ["space", "room"],
+    "timetable": [
+        "academicyear",
+        "semester",
+        "term",
+        "schedule",
+        "secsession",
+        "section",
+    ],
+    "registry": ["document", "registration", "grade", "gradevalue"],
+    "finance": [
+        "financialrecord",
+        "payment",
+        "paymenthistory",
+        "scholarship",
+        "sectionfee",
+    ],
+}
+
 
 @dataclass(frozen=True)
 class RoleInfo:
