@@ -53,7 +53,7 @@ class Student(AbstractPerson):
     mother_name = models.CharField(blank=True)
     mother_address = models.CharField(blank=True)
     emergency_contact = models.CharField(blank=True)
-    
+
     # ~~~~~~~~~~~~~~~~ Reverse ~~~~~~~~~~~~~~~~
     # Document.student_set ?
 
