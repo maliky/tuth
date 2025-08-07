@@ -60,7 +60,7 @@ def student(user_factory: UserFactory, semester, curriculum) -> Student:
     return cast(
         Student,
         Student.objects.create(
-            user=user, curriculum=curriculum, current_enroled_semester=semester
+            user=user, curriculum=curriculum, current_enrolled_semester=semester
         ),
     )
 

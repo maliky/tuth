@@ -61,27 +61,23 @@ def test_student_save_assigns_group(curriculum):
 
 
 @pytest.mark.django_db
-def test_first_enrollement_date_set_on_confirmation(
-    user_factory, curriculum, semester
-):
+def test_first_enrollment_date_set_on_confirmation(user_factory, curriculum, semester):
     """Saving after confirming enrollment sets the first date."""
     student = Student.objects.create(user=user_factory("fresh"), curriculum=curriculum)
-    assert student.first_enrollement_date is None
+    assert student.first_enrollment_date is None
 
-    student.current_enroled_semester = semester
+    student.current_enrolled_semester = semester
     student.save()
 
-    assert student.first_enrollement_date == timezone.localdate()
+    assert student.first_enrollment_date == timezone.localdate()
 
 
 @pytest.mark.django_db
-def test_first_enrollement_date_not_overwritten(
-    student: Student, semester_factory
-):
+def test_first_enrollment_date_not_overwritten(student: Student, semester_factory):
     """Updating enrollment later should keep the original date."""
-    original_date = student.first_enrollement_date
-    new_semester = semester_factory(2, datetime(2011, 9, 1))
-    student.current_enroled_semester = new_semester
+    original_date = student.first_enrollment_date
+    new_semester = semester_factory(2, datetime(2031, 9, 1))
+    student.current_enrolled_semester = new_semester
     student.save()
 
-    assert student.first_enrollement_date == original_date
+    assert student.first_enrollment_date == original_date

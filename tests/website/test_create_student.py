@@ -28,7 +28,7 @@ def test_enrollment_officer_can_create_student(
         "first_name": "Alice",
         "last_name": "Smith",
         "curriculum": curriculum.id,
-        "current_enroled_semester": semester.id,
+        "current_enrolled_semester": semester.id,
     }
 
     response = client.post(url, data)

@@ -19,7 +19,7 @@ def test_scholarship_links_donor_student(semester):
     donor = Donor.objects.create(user=d_user)
     student = Student.objects.create(
         user=s_user,
-        current_enroled_semester=semester,
+        current_enrolled_semester=semester,
     )
 
     scholarship = Scholarship.objects.create(

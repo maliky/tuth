@@ -5,8 +5,8 @@ from __future__ import annotations
 from itertools import count
 from typing import Self
 
-from django.db import models
 from django.apps import apps
+from django.db import models
 from simple_history.models import HistoricalRecords
 
 from app.academics.choices import LEVEL_NUMBER
@@ -85,11 +85,13 @@ class Course(models.Model):
         if not self.department_id:
             self.department = Department.get_default()
 
-    # > TODO: ADD return hint for methods
-    # > TODO: create tests for the next 2 methods.
     def current_faculty(self):
         """Get the list of faculty teaching this course in the current semester."""
         Faculty = apps.get_model("people", "Faculty")
+
+        # Returning Any from function declared to return "QuerySet[Faculty, Faculty] | None"  [no-any-return]
+        # when adding the  type hint  '-> FacultyQuery | None:'
+        # >TODO Try to fix this and add StudentQuery type hint to the next method too.
 
         semester = get_current_semester()
         if semester is None:

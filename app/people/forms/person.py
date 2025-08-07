@@ -33,9 +33,9 @@ class StudentForm(PersonFormMixin, forms.ModelForm):
     SPECIFIC_FIELDS = (
         "student_id",
         "curriculum",
-        "current_enroled_semester",
-        "first_enrollement_date",
-        "last_scholl_attended",
+        "current_enrolled_semester",
+        "first_enrollment_date",
+        "last_school_attended",
         "reason_for_leaving",
         "father_name",
         "father_address",

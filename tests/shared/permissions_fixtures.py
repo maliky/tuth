@@ -72,7 +72,7 @@ def finance_officer(role_user_factory) -> User:
 # def basic_user(user_factory, curriculum, semester):
 #     user = user_factory("plain")
 #     Student.objects.create(
-#         user=user, curriculum=curriculum, current_enroled_semester=semester
+#         user=user, curriculum=curriculum, current_enrolled_semester=semester
 #     )
 #     return user
 

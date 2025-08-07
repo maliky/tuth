@@ -99,7 +99,7 @@ class UserRole(Enum):
 
 
 ROLE_MATRIX = {
-    "Donor":{"view": ["student", "donor"]},
+    "Donor": {"view": ["student", "donor"]},
     "cashier": {
         "add": ["payment", "paymenthistory"],
         "view": ["payment", "paymenthistory"],

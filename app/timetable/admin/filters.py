@@ -87,8 +87,8 @@ class SemesterFilter(admin.SimpleListFilter):
             return qs.filter(program__sections__semester_id=semester_id).distinct()
         if "financial_record" in field_names:
             return qs.filter(
-                financial_record__student__current_enroled_semester_id=semester_id
+                financial_record__student__current_enrolled_semester_id=semester_id
             )
         if "student" in field_names:
-            return qs.filter(student__current_enroled_semester_id=semester_id)
+            return qs.filter(student__current_enrolled_semester_id=semester_id)
         return qs

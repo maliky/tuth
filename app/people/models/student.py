@@ -20,7 +20,7 @@ class Student(AbstractPerson):
 
     Example:
         >>> user = User.objects.create_user(username="stud")
-        >>> s = Student.objects.create(username=username, current_enroled_semester=semester)
+        >>> s = Student.objects.create(username=username, current_enrolled_semester=semester)
         >>> s.student_id  # auto-set from user id
         'TU_STD0001'
     Side Effects:
@@ -39,15 +39,15 @@ class Student(AbstractPerson):
     # ~~~~ Auto-filled ~~~~
     student_id = models.CharField(max_length=20, unique=True, blank=True)
     # The date the student first enrolled; auto-set on initial confirmation.
-    first_enrollement_date = models.DateField(null=True, blank=True)
+    first_enrollment_date = models.DateField(null=True, blank=True)
 
     # ~~~~~~~~ Optional ~~~~~~~~
-    current_enroled_semester = models.ForeignKey(
+    current_enrolled_semester = models.ForeignKey(
         Semester,
         on_delete=models.PROTECT,
         null=True,
     )
-    last_scholl_attended = models.CharField(blank=True)
+    last_school_attended = models.CharField(blank=True)
     reason_for_leaving = models.CharField(blank=True)
     father_name = models.CharField(blank=True)
     father_address = models.CharField(blank=True)
@@ -144,15 +144,15 @@ class Student(AbstractPerson):
         """Make sure we have a curriculum for all students.
 
         When a student's enrollment is confirmed for the first time
-        (i.e., ``current_enroled_semester`` is set) and the
-        ``first_enrollement_date`` is empty, record today's date.
+        (i.e., ``current_enrolled_semester`` is set) and the
+        ``first_enrollment_date`` is empty, record today's date.
         """
 
         if not self.curriculum_id:
             self.curriculum = Curriculum.get_default()
-        if self.current_enroled_semester_id and not self.first_enrollement_date:
+        if self.current_enrolled_semester_id and not self.first_enrollment_date:
             # Capture the first day the student is officially enrolled.
-            self.first_enrollement_date = timezone.localdate()
+            self.first_enrollment_date = timezone.localdate()
         super().save(*args, **kwargs)
 
     class Meta:

@@ -92,8 +92,8 @@ class StudentResource(resources.ModelResource):
         attribute="user", column_name="student_name", widget=StudentUserWidget()
     )
 
-    current_enroled_semester = fields.Field(
-        attribute="current_enroled_semester",
+    current_enrolled_semester = fields.Field(
+        attribute="current_enrolled_semester",
         column_name="semester_no",
         widget=SemesterWidget(),
     )
@@ -105,8 +105,8 @@ class StudentResource(resources.ModelResource):
             "student_id",
             "user",
             "curriculum",
-            "current_enroled_semester",
-            "first_enrollement_date",
+            "current_enrolled_semester",
+            "first_enrollment_date",
         )
 
     def after_save_instance(self, instance, row, **kwargs) -> None:
