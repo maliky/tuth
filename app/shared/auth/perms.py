@@ -169,7 +169,13 @@ ROLE_MATRIX = {
     "enrollment_officer": {
         "add": ["student", "document", "registration"],
         "change": ["student", "registration"],
-        "view": ["document", "registration"],
+        "view": ["student", "document", "registration"],
+        "delete": ["student", "document", "registration"],        
+    },
+    "enrollment": {
+        "add": ["student", "document", "registration"],
+        "change": ["student", "registration"],
+        "view": ["student", "document", "registration"],
     },
     "faculty": {
         "add": ["grade"],
