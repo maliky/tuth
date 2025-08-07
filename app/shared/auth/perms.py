@@ -170,7 +170,7 @@ ROLE_MATRIX = {
         "add": ["student", "document", "registration"],
         "change": ["student", "registration"],
         "view": ["student", "document", "registration"],
-        "delete": ["student", "document", "registration"],        
+        "delete": ["student", "document", "registration"],
     },
     "enrollment": {
         "add": ["student", "document", "registration"],

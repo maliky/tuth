@@ -10,5 +10,8 @@ urlpatterns = [
     # “admin:login” is provided by Django’s admin site
     path("", TemplateView.as_view(template_name="website/landing.html"), name="landing"),
     path("courses/", views.course_dashboard, name="course_dashboard"),
+    path("students/", views.student_list, name="student_list"),
+    path("students/<int:pk>", views.student_detail, name="student_detail"),
+    path("students/<int:pk>/delete/", views.student_delete, name="student_delete"),
     path("students/new/", views.create_student, name="create_student"),
 ]

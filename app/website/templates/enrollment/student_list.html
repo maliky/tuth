@@ -1,0 +1,24 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Students</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet" />
+  </head>
+  <body class="p-4">
+    <h1 class="mb-4">Students</h1>
+    <form method="get" class="mb-3">
+      <input type="text" name="q" value="{{ query }}" placeholder="Search" class="form-control" />
+    </form>
+    <ul class="list-group">
+      {% for student in students %}
+      <li class="list-group-item">
+        <a href="{% url 'student_detail' student.pk %}">{{ student.long_name }} ({{ student.student_id }})</a>
+      </li>
+      {% empty %}
+      <li class="list-group-item">No students found.</li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>

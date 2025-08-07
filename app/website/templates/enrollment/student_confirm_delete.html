@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>Delete {{ student }}</h1>
+    <p>Are you sure you want to delete this student?</p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit">Confirm</button>
+    </form>
+  </body>
+</html>
