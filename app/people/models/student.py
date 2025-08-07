@@ -37,6 +37,8 @@ class Student(AbstractPerson):
 
     # ~~~~ Auto-filled ~~~~
     student_id = models.CharField(max_length=20, unique=True, blank=True)
+    # > TODO, populate this when the student enrollement is confirmed the first time.
+    first_enrollement_date = models.DateField(null=True, blank=True)
 
     # ~~~~~~~~ Optional ~~~~~~~~
     current_enroled_semester = models.ForeignKey(
@@ -44,7 +46,16 @@ class Student(AbstractPerson):
         on_delete=models.PROTECT,
         null=True,
     )
-    first_enrollement_date = models.DateField(null=True, blank=True)
+    last_scholl_attended = models.CharField(blank=True)
+    reason_for_leaving = models.CharField(blank=True)
+    father_name = models.CharField(blank=True)
+    father_address = models.CharField(blank=True)
+    mother_name = models.CharField(blank=True)
+    mother_address = models.CharField(blank=True)
+    emergency_contact = models.CharField(blank=True)
+    
+    # ~~~~~~~~~~~~~~~~ Reverse ~~~~~~~~~~~~~~~~
+    # Document.student_set ?
 
     def __str__(self):
         """Show the student id, name and user name."""

@@ -6,7 +6,6 @@ from typing import Any, Dict, Tuple
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils import timezone
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
@@ -39,20 +38,21 @@ class PersonManager(models.Manager):
 
     def _get_or_create_user(self, **user_kwargs) -> User:
         """Create or get the User and set /update password."""
-        password = user_kwargs.pop("password", None)
+        # password = user_kwargs.pop("password", None)
         username = user_kwargs.pop("username", "") or user_kwargs.pop("user").username
 
         user, created = User.objects.get_or_create(
             username=username, defaults=user_kwargs
         )
-        if created:
-            if password:
-                user.set_password(password)  # to make sure it is hashed
-            user.date_joined = timezone.now()
-            user.save()
-        elif password:
-            user.set_password(password)  # to make sure it is hashed
-            user.save(update_fields=["password"])
+        # there some loop hole here
+        # if created:
+        #     if password:
+        #         user.set_password(password)  # to make sure it is hashed
+        #     user.date_joined = timezone.now()
+        #     user.save()
+        # elif password:
+        #     user.set_password(password)  # to make sure it is hashed
+        #     user.save(update_fields=["password"])
         return user
 
     def _get_username(self, kwargs):
@@ -119,6 +119,8 @@ class AbstractPerson(StatusableMixin, models.Model):
     name_prefix = models.CharField(help_text="eg. 'Miss.'", blank=True)
     name_suffix = models.CharField(help_text="eg. 'Phd.'", blank=True)
     date_of_birth = models.DateField(_("date of birth"), null=True, blank=True)
+    place_of_birth = models.CharField(blank=True)
+    genre = models.CharField(choices=[("f", "Woman"), ("m", "Man")], blank=True)
 
     phone_number = PhoneNumberField(help_text="A Liberian phone number", blank=True)
     physical_address = models.TextField(
@@ -126,8 +128,13 @@ class AbstractPerson(StatusableMixin, models.Model):
     )
 
     # --- misc ---
+    father_address = models.CharField(blank=True)
+    father_name = models.CharField(blank=True)
+    nationality = models.CharField(blank=True)
+    origin = models.CharField(help_text="eg. Maryland, Nigeria", blank=True)
     bio = models.TextField(blank=True)
     photo = models.ImageField(upload_to=photo_upload_to, null=True, blank=True)
+    marital_status = models.CharField(blank=True)
 
     # convenience for admin lists / logs
     def __str__(self) -> str:  # pragma: no cover

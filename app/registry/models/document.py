@@ -13,6 +13,44 @@ from app.registry.choices import DocumentType, StatusDocument
 from app.shared.status.mixins import StatusableMixin, StatusHistory
 
 
+# class StudentDocument(StatusableMixin, models.Model):
+#     """Store the students documents."""
+
+#     # ~~~~~~~~ Mandatory ~~~~~~~~
+#     owner = models.ForeignKey(
+#         "people.Student",
+#         on_delete=models.CASCADE,
+#         related_name="documents",
+#     )
+#     data_file = models.FileField(upload_to="documents/")
+#     document_type = models.CharField(max_length=50, choices=DocumentType.choices)
+#     # ~~~~ Auto-filled ~~~~
+#     status = models.CharField(
+#         max_length=30,
+#         choices=StatusDocument.choices,
+#         default=StatusDocument.PENDING,
+#     )
+#     history = HistoricalRecords()
+
+#     def current_status(self) -> Optional[StatusHistory]:
+#         """Return the most recent status entry or None if empty."""
+
+#         return cast(Optional[StatusHistory], self.status_history.first())
+
+#     def clean(self) -> None:
+#         """Validating the change of DocumentStatus."""
+#         super().clean()
+#         self.validate_status(StatusDocument)
+
+#     class Meta:
+#         """Model metadata."""
+
+#         # Index both components of the generic relation to speed up lookups
+#         indexes = [
+#             models.Index(fields=["profile_type", "profile_id"]),
+#         ]
+
+
 class Document(StatusableMixin, models.Model):
     """File uploaded to support a user profile.
 

@@ -13,7 +13,7 @@ from typing import Any
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import Group, Permission
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 from app.shared.auth.perms import (
     APP_MODELS,
@@ -45,12 +45,12 @@ class Command(BaseCommand):
 
         # ---------- 1. fail-hard validation ---------------------------
         # ensure every role / model mentioned in YAML truly exists
-        unknown_roles = self.get_unknown_roles()
-        unknown_models = self.get_unknow_models()
-        if unknown_roles or unknown_models:
-            raise CommandError(
-                f"✖ unknown roles: {unknown_roles} | unknown models: {unknown_models}"
-            )
+        # unknown_roles = self.get_unknown_roles()
+        # unknown_models = self.get_unknow_models()
+        # if unknown_roles or unknown_models:
+        #     raise CommandError(
+        #         f"✖ unknown roles: {unknown_roles} | unknown models: {unknown_models}"
+        #     )
 
         # ---------- 2. purge existing relations ----------------------
         # bulk-clear permissions; guardian object-perms are untouched
@@ -99,6 +99,6 @@ class Command(BaseCommand):
         """Return the unknow models from the YAML file."""
         return {
             model
-            for model in self.spec["model_app"]
+            for model in PERMISSION_MATRIX.values()
             if not apps.is_installed(f"app.{self.spec['model_app'][model]}")
         }

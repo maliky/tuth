@@ -34,7 +34,7 @@ def test_student_import_assigns_student_group(curriculum):
 @pytest.mark.django_db
 def test_faculty_import_assigns_faculty_group(college):
     ds = Dataset()
-    ds.headers = ["staff_profile"]
+    ds.headers = ["faculty"]
     name = "Bob Teaches"
     _, first, middle, last, _ = split_name(name)
     username = mk_username(first, last, middle, prefix_len=2)

@@ -63,7 +63,7 @@ class FacultyResource(resources.ModelResource):
 
     staff_profile = fields.Field(
         attribute="staff_profile",
-        column_name="staff_profile",
+        column_name="faculty",
         widget=StaffProfileWidget(),
     )
 

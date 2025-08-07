@@ -36,18 +36,12 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         prefix, first, middle, last, suffix = split_name(value)
         username = mk_username(first, last, prefix_len=2)
 
-        user, _ = User.objects.get_or_create(
+        staff, _ = Staff.objects.get_or_create(
             username=username,
             defaults={
                 "first_name": first.capitalize(),
                 "last_name": last.capitalize(),
                 "password": TEST_PW,
-            },
-        )
-
-        staff, _ = Staff.objects.get_or_create(
-            username=username,
-            defaults={
                 "name_prefix": prefix,
                 "middle_name": middle,
                 "name_suffix": suffix,
@@ -81,12 +75,23 @@ class FacultyWidget(widgets.ForeignKeyWidget):
         if not value:
             return Faculty.get_unique_default()
 
+        prefix, first, middle, last, suffix = split_name(value)
+        username = mk_username(first, last, prefix_len=2)
+
         # ? Should I use Peoplerepository.get_or_create_faculty?
         # ... Not obvious as I would need to pass the whole row.
-        staff = StaffProfileWidget().clean(value, row, *args, **kwargs)
+        # staff = StaffProfileWidget().clean(value, row, *args, **kwargs)
 
         faculty, _ = Faculty.objects.get_or_create(
-            staff_profile=staff,
+            username=username,
+            defaults={
+                "first_name": first.capitalize(),
+                "last_name": last.capitalize(),
+                "password": TEST_PW,
+                "name_prefix": prefix,
+                "middle_name": middle,
+                "name_suffix": suffix,
+            },
         )
         return cast(Faculty, faculty)
 

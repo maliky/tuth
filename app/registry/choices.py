@@ -21,13 +21,6 @@ from django.db.models import TextChoices
 #     W = "w", "W"  # " (Semester Withdraw)"
 
 
-class DocumentType(TextChoices):
-    WAEC = "waec", "Waec"
-    BILL = "bill", "Bill"
-    TRANSCRIPT = "transcript", "Transcript"
-    PUBLIC = "public", "Public_signature"
-
-
 class GradeChoice(TextChoices):
     A = "a", "A"
     AB = "ab", "AB"
@@ -40,6 +33,20 @@ class GradeChoice(TextChoices):
     IP = "ip", "IP"
     NG = "ng", "NG"
     W = "w", "W"
+
+
+class DocumentType(TextChoices):
+    PHOTO = "photo", "Photo"
+    APPLET = "applet", "Application Letter"
+    RECLS = "recls", "Recommandation Last School"
+    RECCOM = "reccom", "Recommandation Community"
+    RECREL = "recrel", "Recommandation Relgious Leaders"
+    MEDCERT = "medcert", "Medical Certificat"
+    REPCARD = "repcard", "Report Card"
+    WAEC = "waec", "Waec"
+    BILL = "bill", "Bill"
+    TRANSCRIPT = "transcript", "Transcript"
+    PUBLIC = "public", "Public_signature"
 
 
 class StatusRegistration(TextChoices):
