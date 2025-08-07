@@ -95,7 +95,7 @@ class Course(models.Model):
         if semester is None:
             return Faculty.objects.none()
         return Faculty.objects.filter(
-            section__semester=semester, section__programm__course=self
+            section__semester=semester, section__program__course=self
         ).distinct()
 
     def current_students(self):
@@ -107,7 +107,7 @@ class Course(models.Model):
             return Student.objects.none()
         return Student.objects.filter(
             student_registrations__section__semester=semester,
-            student_registrations__section__programm__course=self,
+            student_registrations__section__program__course=self,
         ).distinct()
 
     # ---------- hooks ----------
