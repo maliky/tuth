@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from django.db import models
+from django.utils import timezone
 
 from app.academics.choices import LEVEL_NUMBER
 from app.academics.models.course import Course
@@ -37,7 +38,7 @@ class Student(AbstractPerson):
 
     # ~~~~ Auto-filled ~~~~
     student_id = models.CharField(max_length=20, unique=True, blank=True)
-    # > TODO, populate this when the student enrollement is confirmed the first time.
+    # The date the student first enrolled; auto-set on initial confirmation.
     first_enrollement_date = models.DateField(null=True, blank=True)
 
     # ~~~~~~~~ Optional ~~~~~~~~
@@ -140,10 +141,18 @@ class Student(AbstractPerson):
         return super().mk_username(first, last, middle, exclude=exclude, prefix_len=3)
 
     def save(self, *args, **kwargs):
-        """Make sure we have a curriculum for all students."""
+        """Make sure we have a curriculum for all students.
+
+        When a student's enrollment is confirmed for the first time
+        (i.e., ``current_enroled_semester`` is set) and the
+        ``first_enrollement_date`` is empty, record today's date.
+        """
 
         if not self.curriculum_id:
             self.curriculum = Curriculum.get_default()
+        if self.current_enroled_semester_id and not self.first_enrollement_date:
+            # Capture the first day the student is officially enrolled.
+            self.first_enrollement_date = timezone.localdate()
         super().save(*args, **kwargs)
 
     class Meta:

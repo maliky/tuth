@@ -2,6 +2,8 @@
 
 import pytest
 from django.contrib.auth.models import User
+from django.utils import timezone
+from datetime import datetime
 
 from app.academics.models.course import Course
 from app.academics.models.department import Department
@@ -56,3 +58,30 @@ def test_student_save_assigns_group(curriculum):
     stud = Student.objects.create(user=user, curriculum=curriculum)
 
     assert user.groups.filter(name=stud.GROUP).exists()
+
+
+@pytest.mark.django_db
+def test_first_enrollement_date_set_on_confirmation(
+    user_factory, curriculum, semester
+):
+    """Saving after confirming enrollment sets the first date."""
+    student = Student.objects.create(user=user_factory("fresh"), curriculum=curriculum)
+    assert student.first_enrollement_date is None
+
+    student.current_enroled_semester = semester
+    student.save()
+
+    assert student.first_enrollement_date == timezone.localdate()
+
+
+@pytest.mark.django_db
+def test_first_enrollement_date_not_overwritten(
+    student: Student, semester_factory
+):
+    """Updating enrollment later should keep the original date."""
+    original_date = student.first_enrollement_date
+    new_semester = semester_factory(2, datetime(2011, 9, 1))
+    student.current_enroled_semester = new_semester
+    student.save()
+
+    assert student.first_enrollement_date == original_date
