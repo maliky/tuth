@@ -599,5 +599,3 @@ def expand_model_list(models: list[str]) -> list[str]:
             expanded += [item]
 
     return expanded
-
-
