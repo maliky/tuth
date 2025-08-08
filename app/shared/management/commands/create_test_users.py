@@ -10,7 +10,7 @@ from django.core.management.base import BaseCommand
 from app.people.models.role_assignment import RoleAssignment
 from app.people.models.staffs import Faculty
 from app.shared.auth.helpers import ensure_superuser
-from app.shared.auth.perms import APP_MODELS, TEST_PW, UserRole
+from app.shared.auth.perms import APP_MODELS, TEST_PW, UserRole, expand_role_model
 
 
 class Command(BaseCommand):
@@ -76,7 +76,7 @@ def sync_role_group(role_code: str, rights: dict[str, list[str]]) -> Group:
     perms = []
 
     for action, models in rights.items():
-        for model in models:
+        for model in expand_role_model(models):
             app_label = get_app_label(model)
             model_cls = apps.get_model(app_label, model)
             ct = ContentType.objects.get_for_model(model_cls)

@@ -15,6 +15,7 @@ from django.core.management.base import BaseCommand
 from app.shared.auth.perms import (
     APP_MODELS,
     ROLE_MATRIX,
+    expand_role_model,
 )
 
 
@@ -52,7 +53,7 @@ def sync_role_group(role_code: str, rights: dict[str, list[str]]) -> Group:
     perms = []
 
     for action, models in rights.items():
-        for model in models:
+        for model in expand_role_model(models):
             app_label = get_app_label(model)
             model_cls = apps.get_model(app_label, model)
             ct = ContentType.objects.get_for_model(model_cls)
