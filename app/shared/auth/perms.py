@@ -47,8 +47,8 @@ APP_MODELS = {
 class RoleInfo:
     """Metadata attached to each user role."""
 
-    label: str
     code: str
+    label: str
     model_path: str
     default_college: str | None = None
 
@@ -62,36 +62,37 @@ class RoleInfo:
     def group(self) -> str:
         """Standardize the group name."""
         return self.code.capitalize()
-    
+
     @property
     def rights(self) -> dict[str, list[str]]:
         """Returns the rights for a user_role"""
         return ROLE_MATRIX.get(self.code, {})
 
+
 class UserRole(Enum):
     """Self-describing user roles used throughout the app."""
 
-    DONOR = RoleInfo("Donor", "donor", "people.Donor")
-    STUDENT = RoleInfo("Student", "student", "people.Student")
+    DONOR = RoleInfo("donor", "Donor", "people.Donor")
+    STUDENT = RoleInfo("student", "Student", "people.Student")
     PROSPECTING_STUDENT = RoleInfo(
-        "Prospecting Student", "prospecting_student", "people.Student"
+        "prospecting_student", "Prospecting Student", "people.Student"
     )
 
-    STAFF = RoleInfo("Staff", "staff", "people.Staff")
-    FACULTY = RoleInfo("Faculty", "faculty", "people.Faculty", "COAS")
-    CHAIR = RoleInfo("Chair", "chair", "people.Faculty", "COAS")
-    DEAN = RoleInfo("Dean", "dean", "people.Faculty", "COAS")
-    VPAA = RoleInfo("Vice President Academic Affairs", "vpaa", "people.Staff")
+    STAFF = RoleInfo("staff", "Staff", "people.Staff")
+    FACULTY = RoleInfo("faculty", "Faculty", "people.Faculty", "COAS")
+    CHAIR = RoleInfo("chair", "Chair", "people.Faculty", "COAS")
+    DEAN = RoleInfo("dean", "Dean", "people.Faculty", "COAS")
+    VPAA = RoleInfo("vpaa", "Vice President Academic Affairs", "people.Staff")
 
-    ENROLLMENT = RoleInfo("Enrollment", "enrollment", "people.Staff")
+    ENROLLMENT = RoleInfo("enrollment", "Enrollment", "people.Staff")
     ENROLLMENT_OFFICER = RoleInfo(
-        "Enrollment Officer", "enrollment_officer", "people.Staff"
+        "enrollment_officer", "Enrollment Officer", "people.Staff"
     )
-    FINANCE = RoleInfo("Finance", "finance", "people.Staff")
-    FINANCE_OFFICER = RoleInfo("Finance Officer", "finance_officer", "people.Staff")
-    REGISTRAR = RoleInfo("Registrar", "registrar", "people.Staff")
-    REGISTRAR_OFFICER = RoleInfo("Registrar Officer", "registrar_officer", "people.Staff")
-    IT = RoleInfo("It", "it", "people.Staff")
+    FINANCE = RoleInfo("finance", "Finance", "people.Staff")
+    FINANCE_OFFICER = RoleInfo("finance_officer", "Finance Officer", "people.Staff")
+    REGISTRAR = RoleInfo("registrar", "Registrar", "people.Staff")
+    REGISTRAR_OFFICER = RoleInfo("registrar_officer", "Registrar Officer", "people.Staff")
+    IT = RoleInfo("it", "It", "people.Staff")
 
 
 ROLE_MATRIX = {
