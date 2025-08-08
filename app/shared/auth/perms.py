@@ -572,3 +572,32 @@ def validate_role_matrix() -> set[str]:
         logger.error(msg)
         raise ValueError(msg)
     return only_in_rm | only_in_ur
+
+
+def expand_model_list(models: list[str]) -> list[str]:
+    """Expand shorthand model tokens to explicit model names.
+
+    A capitalized application name, e.g. ``Academics``, expands to all models
+    defined for that app in :data:`APP_MODELS`.
+
+    An Application named suffixed by ``-model`` means exclusions,
+    e.g. ``Academics-college``, expands to all models for ``academics`` except
+    ``college``.
+    """
+
+    expanded: list[str] = []
+    for item in models:
+        if not item:
+            continue
+
+        if item[0].isupper():
+            parts = item.split("-")
+            app_label = parts[0].lower()
+            exclusions = set(parts[1:])
+            expanded += [m for m in APP_MODELS.get(app_label, []) if m not in exclusions]
+        else:
+            expanded += [item]
+
+    return expanded
+
+
