@@ -59,6 +59,11 @@ class RoleInfo:
         return apps.get_model(app_label, model_name)
 
     @property
+    def group(self) -> str:
+        """Standardize the group name."""
+        return self.code.capitalize()
+    
+    @property
     def rights(self) -> dict[str, list[str]]:
         """Returns the rights for a user_role"""
         return ROLE_MATRIX.get(self.code, {})
