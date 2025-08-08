@@ -1,20 +1,22 @@
 """App/shared/management/commands/create_test_users.py."""
 
 from datetime import date
+
+from django.apps import apps
+from django.contrib.auth.models import Group, Permission
+from django.contrib.contenttypes.models import ContentType
+from django.core.management.base import BaseCommand
+
 from app.people.models.role_assignment import RoleAssignment
 from app.people.models.staffs import Faculty
 from app.shared.auth.helpers import ensure_superuser
-from django.core.management.base import BaseCommand
-from django.contrib.auth.models import Group
-from app.shared.auth.perms import TEST_PW, UserRole
+from app.shared.auth.perms import APP_MODELS, TEST_PW, UserRole
 
 
 class Command(BaseCommand):
     """Create test users using the UserRole."""
 
     help = "Create test users and assign them to role groups."
-
-    TEST_PASSWORD = "test"
 
     def handle(self, *args, **options):
         """Command managing the import."""
@@ -45,9 +47,9 @@ class Command(BaseCommand):
             _user.groups.add(group)
             RoleAssignment.objects.get_or_create(
                 user=_user,
-                role=user_role.group,
+                role=user_role.value.group,
                 start_date=date.today(),
-                college=user_role.value.college,
+                college=user_role.value.default_college,
             )
 
             created.append((person.username, group.name, was_created))  # type: ignore[attr-defined]

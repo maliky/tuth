@@ -5,12 +5,8 @@ from typing import Dict
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 
-from app.academics.models.college import College
 from app.shared.auth.perms import UserRole
-from app.people.models.role_assignment import RoleAssignment
-from app.shared.auth.perms import TEST_PW
 from app.shared.csv.utils import log
 
 User = get_user_model()
@@ -32,4 +28,3 @@ def ensure_role_groups() -> Dict[str, Group]:
         user_role.value.code: Group.objects.get_or_create(name=user_role.value.label)[0]
         for user_role in UserRole
     }
-

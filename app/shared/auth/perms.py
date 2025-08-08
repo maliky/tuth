@@ -2,10 +2,12 @@
 
 from dataclasses import dataclass
 from enum import Enum
-
+import logging
 from typing import Type
 from django.apps import apps
 from django.db.models import Model
+
+logger = logging.getLogger(__name__)
 
 TEST_PW = "test"
 
@@ -65,7 +67,7 @@ class RoleInfo:
 
     @property
     def rights(self) -> dict[str, list[str]]:
-        """Returns the rights for a user_role"""
+        """Returns the rights for a user_role."""
         return ROLE_MATRIX.get(self.code, {})
 
 
@@ -73,6 +75,7 @@ class UserRole(Enum):
     """Self-describing user roles used throughout the app."""
 
     DONOR = RoleInfo("donor", "Donor", "people.Donor")
+    CASHIER = RoleInfo("cashier", "Cashier", "people.Staff")
     STUDENT = RoleInfo("student", "Student", "people.Student")
     PROSPECTING_STUDENT = RoleInfo(
         "prospecting_student", "Prospecting Student", "people.Student"
@@ -96,6 +99,7 @@ class UserRole(Enum):
 
 
 ROLE_MATRIX = {
+    "staff": {"view": ["student"]},
     "donor": {"view": ["student", "donor"]},
     "cashier": {
         "add": ["payment", "paymenthistory"],
@@ -213,6 +217,28 @@ ROLE_MATRIX = {
             "sectionfee",
         ],
     },
+    "finance": {
+        "add": ["donor", "financialrecord", "scholarship", "sectionfee"],
+        "change": [
+            "donor",
+            "financialrecord",
+            "payment",
+            "paymenthistory",
+            "scholarship",
+            "sectionfee",
+        ],
+        "delete": ["donor", "payment", "scholarship", "sectionfee"],
+        "view": [
+            "student",
+            "donor",
+            "document",
+            "financialrecord",
+            "payment",
+            "paymenthistory",
+            "scholarship",
+            "sectionfee",
+        ],
+    },
     "prospecting_student": {
         "add": ["document"],
         "view": [
@@ -228,6 +254,46 @@ ROLE_MATRIX = {
         ],
     },
     "registrar": {
+        "add": ["schedule", "secsession", "section", "registration", "grade"],
+        "change": [
+            "student",
+            "schedule",
+            "secsession",
+            "section",
+            "registration",
+            "grade",
+        ],
+        "view": [
+            "college",
+            "department",
+            "course",
+            "curriculum",
+            "major",
+            "minor",
+            "program",
+            "prerequisite",
+            "student",
+            "faculty",
+            "staff",
+            "space",
+            "room",
+            "academicyear",
+            "semester",
+            "term",
+            "schedule",
+            "secsession",
+            "section",
+            "document",
+            "registration",
+            "grade",
+            "financialrecord",
+            "payment",
+            "paymenthistory",
+            "scholarship",
+            "sectionfee",
+        ],
+    },
+    "registrar_officer": {
         "add": [
             "prerequisite",
             "space",
@@ -406,4 +472,103 @@ ROLE_MATRIX = {
             "sectionfee",
         ],
     },
+    "it": {
+        "add": [
+            "college",
+            "department",
+            "course",
+            "curriculum",
+            "major",
+            "minor",
+            "program",
+            "prerequisite",
+            "faculty",
+            "staff",
+            "space",
+            "academicyear",
+            "semester",
+            "term",
+        ],
+        "change": [
+            "college",
+            "department",
+            "course",
+            "curriculum",
+            "major",
+            "minor",
+            "program",
+            "prerequisite",
+            "faculty",
+            "staff",
+            "academicyear",
+            "semester",
+            "term",
+            "schedule",
+            "secsession",
+            "section",
+            "payment",
+            "scholarship",
+            "sectionfee",
+        ],
+        "delete": [
+            "college",
+            "department",
+            "course",
+            "curriculum",
+            "major",
+            "minor",
+            "program",
+            "prerequisite",
+            "faculty",
+            "staff",
+            "space",
+            "academicyear",
+            "semester",
+            "term",
+        ],
+        "view": [
+            "college",
+            "department",
+            "course",
+            "curriculum",
+            "major",
+            "minor",
+            "program",
+            "prerequisite",
+            "student",
+            "faculty",
+            "staff",
+            "donor",
+            "space",
+            "room",
+            "academicyear",
+            "semester",
+            "term",
+            "schedule",
+            "secsession",
+            "section",
+            "document",
+            "registration",
+            "grade",
+            "financialrecord",
+            "payment",
+            "paymenthistory",
+            "scholarship",
+            "sectionfee",
+        ],
+    },
 }
+
+
+def validate_role_matrix() -> set[str]:
+    """Ensure Userrole codes match role_matrix keys."""
+    ur = {ur.value.code for ur in UserRole}
+    rm = set(ROLE_MATRIX.keys())
+    only_in_ur = ur - rm
+    only_in_rm = rm - ur
+    msg = f"{only_in_rm} only in ROLLE MATRIX. " if only_in_rm else ""
+    msg += f"{only_in_ur} only in UserRole. " if only_in_ur else ""
+    if msg:
+        logger.error(msg)
+        raise ValueError(msg)
+    return only_in_rm | only_in_ur

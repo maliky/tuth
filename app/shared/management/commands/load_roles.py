@@ -34,7 +34,6 @@ class Command(BaseCommand):
             grp = sync_role_group(role_code, rights)
             self.stdout.write(self.style.NOTICE(f"Permissions for {grp} added."))
 
-
         self.stdout.write(self.style.SUCCESS("Permissions rebuilt!"))
 
 
