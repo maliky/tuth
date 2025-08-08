@@ -10,7 +10,7 @@ from django.utils import timezone
 from app.academics.models.college import College
 from app.shared.auth.perms import UserRole
 from app.people.models.role_assignment import RoleAssignment
-from app.shared.auth.perms import DEFAULT_ROLE_TO_COLLEGE, TEST_PW
+from app.shared.auth.perms import TEST_PW
 from app.shared.csv.utils import log
 
 User = get_user_model()
@@ -33,30 +33,3 @@ def ensure_role_groups() -> Dict[str, Group]:
         for user_role in UserRole
     }
 
-
-def upsert_test_users_and_roles(
-    cmd: BaseCommand, colleges: Dict[str, College], groups: Dict[str, Group]
-) -> None:
-    """Create test users for each role and associate default colleges."""
-
-    for user_role in UserRole:
-        role = user_role.value.code
-        user, _ = User.objects.get_or_create(username=f"test_{role}")
-        user.is_staff = True
-        user.set_password(TEST_PW)
-        user.save()
-        user.groups.add(groups[role])
-
-        college = colleges.get(DEFAULT_ROLE_TO_COLLEGE.get(role, ""))
-
-        RoleAssignment.objects.update_or_create(
-            user=user,
-            role=role,
-            college=college,
-            defaults={
-                "start_date": timezone.now().date(),
-                "end_date": None,
-                "department": None,
-            },
-        )
-        log(cmd, f"  ↳ {user.username} ({role})")

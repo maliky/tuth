@@ -9,19 +9,6 @@ from django.db.models import Model
 
 TEST_PW = "test"
 
-
-DEFAULT_ROLE_TO_COLLEGE = {
-    "dean": "COAS",  # map role → default college code
-    "chair": "COAS",
-    "lecturer": "COAS",
-    "assistant_professor": "COAS",
-    "associate_professor": "COAS",
-    "professor": "COAS",
-    "technician": "COAS",
-    "lab_technician": "COAS",
-    "faculty": "COAS",
-}
-
 APP_MODELS = {
     "academics": [
         "college",
@@ -71,6 +58,10 @@ class RoleInfo:
         app_label, model_name = self.model_path.split(".")
         return apps.get_model(app_label, model_name)
 
+    @property
+    def rights(self) -> dict[str, list[str]]:
+        """Returns the rights for a user_role"""
+        return ROLE_MATRIX.get(self.code, {})
 
 class UserRole(Enum):
     """Self-describing user roles used throughout the app."""
@@ -99,7 +90,7 @@ class UserRole(Enum):
 
 
 ROLE_MATRIX = {
-    "Donor": {"view": ["student", "donor"]},
+    "donor": {"view": ["student", "donor"]},
     "cashier": {
         "add": ["payment", "paymenthistory"],
         "view": ["payment", "paymenthistory"],
