@@ -6,7 +6,6 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from simple_history.models import HistoricalRecords
 
-from app.shared.auth.perms import UserRole
 
 User = get_user_model()
 
@@ -17,7 +16,7 @@ class RoleAssignment(models.Model):
     Example:
         >>> RoleAssignment.objects.create(
         ...     user=user,
-        ...     role=UserRole.REGISTRAR,
+        ...     roles=Group.objects.get(name=UserRole.REGISTRAR.group),
         ...     start_date=date.today(),
         ... )
 
@@ -29,9 +28,9 @@ class RoleAssignment(models.Model):
     user = models.ForeignKey(
         "auth.User", on_delete=models.CASCADE, related_name="role_assignments"
     )
-    role = models.CharField(
-        max_length=40, choices={(ur.value.code, ur.value.group) for ur in UserRole}
-    )
+    # may not be necessary. could override set, get attr("group") pointing
+    # to user groups.
+    role = models.ForeignKey("auth.Group", on_delete=models.CASCADE, related_name="roles")
     start_date = models.DateField()
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()

@@ -25,6 +25,6 @@ def ensure_role_groups() -> Dict[str, Group]:
     """Create missing Group objects for each user role."""
 
     return {
-        user_role.value.code: Group.objects.get_or_create(name=user_role.value.label)[0]
+        user_role.value.code: Group.objects.get_or_create(name=user_role.value.group)[0]
         for user_role in UserRole
     }

@@ -47,7 +47,7 @@ class Command(BaseCommand):
             _user.groups.add(group)
             RoleAssignment.objects.get_or_create(
                 user=_user,
-                role=user_role.value.group,
+                role=group,
                 start_date=date.today(),
                 college=user_role.value.default_college,
             )

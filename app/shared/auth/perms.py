@@ -63,12 +63,13 @@ class RoleInfo:
     @property
     def group(self) -> str:
         """Standardize the group name."""
-        return self.code.capitalize()
+        return self.label
 
     @property
     def rights(self) -> dict[str, list[str]]:
         """Returns the rights for a user_role."""
-        return ROLE_MATRIX.get(self.code, {})
+        rights = ROLE_MATRIX.get(self.code, {})
+        return {actions: expand_role_model(models) for actions, models in rights.items()}
 
 
 class UserRole(Enum):
@@ -574,7 +575,7 @@ def validate_role_matrix() -> set[str]:
     return only_in_rm | only_in_ur
 
 
-def expand_model_list(models: list[str]) -> list[str]:
+def expand_role_model(models: list[str]) -> list[str]:
     """Expand shorthand model tokens to explicit model names.
 
     A capitalized application name, e.g. ``Academics``, expands to all models

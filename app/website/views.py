@@ -29,7 +29,7 @@ def landing_page(request: HttpRequest) -> HttpResponse:
 def _require_student(user: User | AnonymousUser) -> Student:
     """Return the related Student or abort early."""
     student = getattr(user, "student", None)
-    if student is None:
+    if student is None and not user.is_superuser:
         raise PermissionDenied("User has no Student profile.")
     return cast(Student, student)  # <— only cast once, in one place
 

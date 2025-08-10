@@ -4,7 +4,7 @@ import datetime
 from typing import Callable, TypeAlias
 
 import pytest
-from django.contrib.auth.models import Permission, User
+from django.contrib.auth.models import Permission, User, Group
 from django.contrib.contenttypes.models import ContentType
 from guardian.shortcuts import assign_perm
 
@@ -18,8 +18,7 @@ RoleUserFactory: TypeAlias = Callable[[UserRole], User]
 def _group_name(role: UserRole) -> str:
     """Return the default group name for a role."""
 
-    # Im' not sure abou the groupe name is it Finance Officer or finance_officer
-    return role.value.label
+    return role.value.group
 
 
 @pytest.fixture
@@ -29,20 +28,21 @@ def role_user_factory(college_factory, user_factory, group_factory) -> RoleUserF
     Returns the user in a group, with permission to view a college.
     """
 
-    def _make(ur: UserRole) -> User:
+    def _make(user_role: UserRole) -> User:
         college = college_factory()
-        user: User = user_factory(username=f"{ur.value.code}_tuser")
+        user: User = user_factory(username=f"{user_role.value.code}_tuser")
 
-        group = group_factory(name=_group_name(ur))
+        group = group_factory(name=_group_name(user_role))
         ct = ContentType.objects.get_for_model(College)
         perm = Permission.objects.get(codename="view_college", content_type=ct)
 
         group.permissions.add(perm)
         user.groups.add(group)
+        group_role = Group.objects.create(name=user_role.value.group)
 
         RoleAssignment.objects.create(
             user=user,
-            role=ur.value.code,
+            role=group_role,
             college=college,
             start_date=datetime.date.today(),
         )
