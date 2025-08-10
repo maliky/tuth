@@ -1,5 +1,6 @@
 """Core module."""
 
+from app.people.models.role_assignment import RoleAssignment
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
@@ -178,3 +179,8 @@ class StudentAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
         """Save the model."""
         # The form.save() handles creating and linking the User.
         obj.save()
+
+
+@admin.register(RoleAssignment)
+class RoleAssignmentAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
+    list_display = ("user", "role", "start_date")

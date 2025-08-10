@@ -41,14 +41,14 @@ class RoleAssignment(models.Model):
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name="role_assignments",
+        related_name="roles",
     )
     department = models.ForeignKey(
         "academics.Department",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name="role_assignments",
+        related_name="roles",
     )
     end_date = models.DateField(null=True, blank=True)
 

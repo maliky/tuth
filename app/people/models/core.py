@@ -38,21 +38,15 @@ class PersonManager(models.Manager):
 
     def _get_or_create_user(self, **user_kwargs) -> User:
         """Create or get the User and set /update password."""
-        # password = user_kwargs.pop("password", None)
+        password = user_kwargs.pop("password", None)
         username = user_kwargs.pop("username", "") or user_kwargs.pop("user").username
 
-        user, created = User.objects.get_or_create(
-            username=username, defaults=user_kwargs
-        )
+        user, created = User.objects.get_or_create(username=username, **user_kwargs)
         # there some loop hole here
-        # if created:
-        #     if password:
-        #         user.set_password(password)  # to make sure it is hashed
-        #     user.date_joined = timezone.now()
-        #     user.save()
-        # elif password:
-        #     user.set_password(password)  # to make sure it is hashed
-        #     user.save(update_fields=["password"])
+        if password:
+            user.set_password(password)  # to make sure it is hashed
+            user.save(update_fields=["password"])
+            
         return user
 
     def _get_username(self, kwargs):

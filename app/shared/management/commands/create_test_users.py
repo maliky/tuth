@@ -2,6 +2,7 @@
 
 from datetime import date
 
+from app.academics.models.college import College
 from django.apps import apps
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
@@ -38,7 +39,12 @@ class Command(BaseCommand):
             )
 
             # Assign group to user and role assignment
-            group, _ = Group.objects.get_or_create(name=user_role.value.group)
+            group = None            
+            if user_role.value.group:
+                group, _ = Group.objects.get_or_create(name=user_role.value.group)
+
+                
+            college, _ = College.objects.get_or_create(code=user_role.value.college)
             if isinstance(person, Faculty):
                 _user = person.staff_profile.user
             else:
@@ -46,10 +52,7 @@ class Command(BaseCommand):
 
             _user.groups.add(group)
             RoleAssignment.objects.get_or_create(
-                user=_user,
-                role=group,
-                start_date=date.today(),
-                college=user_role.value.default_college,
+                user=_user, role=group, start_date=date.today(), college=college
             )
 
             created.append((person.username, group.name, was_created))  # type: ignore[attr-defined]

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from enum import Enum
 import logging
 from typing import Type
+from app.academics.choices import CollegeCodeChoices
 from django.apps import apps
 from django.db.models import Model
 
@@ -70,6 +71,11 @@ class RoleInfo:
         """Returns the rights for a user_role."""
         rights = ROLE_MATRIX.get(self.code, {})
         return {actions: expand_role_model(models) for actions, models in rights.items()}
+
+    @property
+    def college(self) -> str:
+        return self.default_college or CollegeCodeChoices.DEFT
+        
 
 
 class UserRole(Enum):
