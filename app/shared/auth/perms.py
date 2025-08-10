@@ -169,15 +169,15 @@ ROLE_MATRIX = {
         ],
     },
     "enrollment_officer": {
-        "add": ["student", "document", "registration"],
-        "change": ["student", "registration"],
-        "view": ["student", "document", "registration"],
-        "delete": ["student", "document", "registration"],
+        "view": ["student", "document", "registration", "semester", "curriculum"],
+        "add": ["student", "document",  "curriculum"],
+        "change": ["student", "registration", "curriculum", "document"],
+        "delete": ["student", "document"],
     },
     "enrollment": {
-        "add": ["student", "document", "registration"],
-        "change": ["student", "registration"],
-        "view": ["student", "document", "registration"],
+        "view": ["student", "document", "registration", "semester", "curriculum"],
+        "add": ["student", "document"],
+        "change": ["student", "registration", "document"],
     },
     "faculty": {
         "add": ["grade"],
