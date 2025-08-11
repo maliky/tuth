@@ -3,8 +3,8 @@
 from datetime import date
 
 import pytest
-from django.db import transaction, IntegrityError
-from django.contrib.auth.models import Group
+from django.core.management import call_command
+from django.db import IntegrityError, transaction
 
 from app.people.models.role_assignment import RoleAssignment
 from app.shared.auth.perms import UserRole
@@ -15,10 +15,10 @@ pytestmark = pytest.mark.django_db
 def test_unique_role_per_period(user, college, department):
     """Check that there only one person with the role officer in a periode."""
     start = date.today()
-    group_registrar = Group.objects.create(name=UserRole.REGISTRAR_OFFICER.value.group)
+    group_registrar = UserRole.REGISTRAR_OFFICER.value.group
     RoleAssignment.objects.create(
         user=user,
-        role=group_registrar,
+        group=group_registrar,
         college=college,
         department=department,
         start_date=start,
@@ -27,8 +27,17 @@ def test_unique_role_per_period(user, college, department):
         with transaction.atomic():
             RoleAssignment.objects.create(
                 user=user,
-                role=group_registrar,
+                group=group_registrar,
                 college=college,
                 department=department,
                 start_date=start,
             )
+
+
+def test_enrollment_officer_group_has_permissions():
+    """load_roles creates Enrollment Officer group with student perms."""
+    call_command("load_roles")
+    grp = UserRole.ENROLLMENT_OFFICER.value.group
+    codenames = set(grp.permissions.values_list("codename", flat=True))
+    assert "view_student" in codenames
+    assert "add_student" in codenames

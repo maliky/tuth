@@ -1,7 +1,6 @@
 """Resources module."""
 
 from import_export import fields, resources
-from django.contrib.auth.models import Group
 from app.shared.auth.perms import UserRole
 
 from app.people.admin.widgets import StaffProfileWidget, StudentUserWidget
@@ -80,7 +79,7 @@ class FacultyResource(resources.ModelResource):
             return None
 
         user = instance.staff_profile.user
-        group, _ = Group.objects.get_or_create(name=UserRole.FACULTY.value.label)
+        group = UserRole.FACULTY.value.group
         user.groups.add(group)
 
 
@@ -114,7 +113,7 @@ class StudentResource(resources.ModelResource):
         if kwargs.get("dry_run") or instance.user is None:
             return
 
-        group, _ = Group.objects.get_or_create(name=UserRole.STUDENT.value.label)
+        group = UserRole.STUDENT.value.group
         instance.user.groups.add(group)
 
 

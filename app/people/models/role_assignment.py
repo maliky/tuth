@@ -16,7 +16,7 @@ class RoleAssignment(models.Model):
     Example:
         >>> RoleAssignment.objects.create(
         ...     user=user,
-        ...     roles=Group.objects.get(name=UserRole.REGISTRAR.group),
+        ...     group=UserRole.REGISTRAR.value.group,
         ...     start_date=date.today(),
         ... )
 
@@ -30,7 +30,9 @@ class RoleAssignment(models.Model):
     )
     # may not be necessary. could override set, get attr("group") pointing
     # to user groups.
-    role = models.ForeignKey("auth.Group", on_delete=models.CASCADE, related_name="roles")
+    group = models.ForeignKey(
+        "auth.Group", on_delete=models.CASCADE, related_name="roles"
+    )
     start_date = models.DateField()
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()
@@ -53,15 +55,15 @@ class RoleAssignment(models.Model):
     end_date = models.DateField(null=True, blank=True)
 
     def __str__(self) -> str:
-        return f"{self.user} -> {self.role} ({self.start_date})"
+        return f"{self.user} -> {self.group} ({self.start_date})"
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["user", "role", "college", "department", "start_date"],
+                fields=["user", "group", "college", "department", "start_date"],
                 name="unique_role_per_period",
             )
         ]
         indexes = [
-            models.Index(fields=["role", "college", "department", "end_date"]),
+            models.Index(fields=["group", "college", "department", "end_date"]),
         ]

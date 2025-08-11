@@ -3,7 +3,7 @@
 from datetime import date
 
 import pytest
-from django.contrib.auth.models import Group, User
+from django.contrib.auth.models import User
 
 from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
@@ -49,10 +49,10 @@ def test_college_computed_fields():
     Faculty.objects.create(staff_profile=staff, college=college)
 
     chair_user = User.objects.create(username="chair", first_name="C", last_name="H")
-    chair_group = Group.objects.create(name=UserRole.CHAIR.value.group)
+
     RoleAssignment.objects.create(
         user=chair_user,
-        role=chair_group,
+        group=UserRole.CHAIR.value.group,
         college=college,
         department=dept,
         start_date=date.today(),

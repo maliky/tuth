@@ -90,7 +90,7 @@ class College(models.Model):
             chair = (
                 RoleAssignment.objects.filter(
                     department=dept,
-                    role=UserRole.CHAIR,
+                    group=UserRole.CHAIR.value.group,
                     end_date__isnull=True,
                 )
                 .select_related("user")

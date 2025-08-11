@@ -46,7 +46,7 @@ class PersonManager(models.Manager):
         if password:
             user.set_password(password)  # to make sure it is hashed
             user.save(update_fields=["password"])
-            
+
         return user
 
     def _get_username(self, kwargs):

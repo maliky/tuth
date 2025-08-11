@@ -4,7 +4,7 @@ from datetime import date
 
 from app.academics.models.college import College
 from django.apps import apps
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
 
@@ -22,6 +22,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """Command managing the import."""
         created = []
+        User.objects.filter(username__startswith="test_").delete()
 
         ensure_superuser(self)
 
@@ -38,30 +39,28 @@ class Command(BaseCommand):
                 username=username,
             )
 
-            # Assign group to user and role assignment
-            group = None            
-            if user_role.value.group:
-                group, _ = Group.objects.get_or_create(name=user_role.value.group)
-
-                
-            college, _ = College.objects.get_or_create(code=user_role.value.college)
-            if isinstance(person, Faculty):
-                _user = person.staff_profile.user
-            else:
-                _user = person.user
-
-            _user.groups.add(group)
-            RoleAssignment.objects.get_or_create(
-                user=_user, role=group, start_date=date.today(), college=college
+            _user = (
+                person.staff_profile.user if isinstance(person, Faculty) else person.user
             )
 
+            college = None
+            if user_role.value.default_college:
+                college, _ = College.objects.get_or_create(
+                    code=user_role.value.default_college
+                )
+
+            group = user_role.value.group
+            _user.groups.add(group)
+            RoleAssignment.objects.get_or_create(
+                user=_user, gropu=group, start_date=date.today(), college=college
+            )
             created.append((person.username, group.name, was_created))  # type: ignore[attr-defined]
+            # log
+            status = "Created" if was_created else "Updated"
+            self.stdout.write(f" - {_user} ({group}): {status}")
 
         # nicely report results
         self.stdout.write(self.style.SUCCESS("Test users created or updated:"))
-        for username, group.name, was_created in created:
-            status = "Created" if was_created else "Updated"
-            self.stdout.write(f" - {username} ({group.name}): {status}")
 
 
 def get_app_label(model):

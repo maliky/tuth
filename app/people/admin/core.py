@@ -183,4 +183,4 @@ class StudentAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
 
 @admin.register(RoleAssignment)
 class RoleAssignmentAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
-    list_display = ("user", "role", "start_date")
+    list_display = ("user", "group", "start_date")

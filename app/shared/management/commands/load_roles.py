@@ -15,6 +15,7 @@ from django.core.management.base import BaseCommand
 from app.shared.auth.perms import (
     APP_MODELS,
     ROLE_MATRIX,
+    UserRole,
 )
 
 
@@ -48,7 +49,7 @@ def get_app_label(model):
 
 def sync_role_group(role_code: str, rights: dict[str, list[str]]) -> Group:
     """Ensure a Django group exists for this role and sync its permissions."""
-    grp, _ = Group.objects.get_or_create(name=role_code.capitalize())
+    grp = UserRole[role_code.upper()].value.group
     perms = []
 
     for action, models in rights.items():

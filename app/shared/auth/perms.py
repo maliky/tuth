@@ -1,12 +1,15 @@
 """Authentication constants used during data population."""
 
+import logging
 from dataclasses import dataclass
 from enum import Enum
-import logging
 from typing import Type
-from app.academics.choices import CollegeCodeChoices
+
 from django.apps import apps
+from django.contrib.auth.models import Group
 from django.db.models import Model
+
+from app.academics.choices import CollegeCodeChoices
 
 logger = logging.getLogger(__name__)
 
@@ -62,9 +65,10 @@ class RoleInfo:
         return apps.get_model(app_label, model_name)
 
     @property
-    def group(self) -> str:
-        """Standardize the group name."""
-        return self.label
+    def group(self) -> Group:
+        """Return a or the Group(s)."""
+        gp, _ = Group.objects.get_or_create(name=self.label)
+        return gp
 
     @property
     def rights(self) -> dict[str, list[str]]:
@@ -74,8 +78,8 @@ class RoleInfo:
 
     @property
     def college(self) -> str:
+        """Return the default college."""
         return self.default_college or CollegeCodeChoices.DEFT
-        
 
 
 class UserRole(Enum):
@@ -176,7 +180,7 @@ ROLE_MATRIX = {
     },
     "enrollment_officer": {
         "view": ["student", "document", "registration", "semester", "curriculum"],
-        "add": ["student", "document",  "curriculum"],
+        "add": ["student", "document", "curriculum"],
         "change": ["student", "registration", "curriculum", "document"],
         "delete": ["student", "document"],
     },
