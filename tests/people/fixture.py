@@ -38,7 +38,9 @@ def user() -> User:
 @pytest.fixture
 def staff() -> Staff:
     """A staff."""
-    return cast(Staff, Staff.objects.create(user=User(username="mboulot"), staff_id="ST123"))
+    return cast(
+        Staff, Staff.objects.create(user=User(username="mboulot"), staff_id="ST123")
+    )
 
 
 @pytest.fixture
@@ -46,7 +48,7 @@ def faculty(staff: Staff) -> Faculty:
     """Default Faculty."""
     fac = Faculty(staff_profile=staff)
     fac.save()
-    return cast(Faculty, fac)
+    return fac
 
 
 @pytest.fixture

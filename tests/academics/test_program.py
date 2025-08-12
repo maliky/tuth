@@ -21,6 +21,4 @@ def test_program_unique_course_per_curriculum(program):
 
     with pytest.raises(IntegrityError):
         with transaction.atomic():
-            Program.objects.create(
-                curriculum=program.curriculum, course=program.course
-            )
+            Program.objects.create(curriculum=program.curriculum, course=program.course)
