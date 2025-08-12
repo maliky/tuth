@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 
 from app.academics.models.college import College
-from app.people.models.staffs import Faculty
+from app.people.models.faculty import Faculty
 from app.people.utils import mk_username, split_name
 from app.shared.auth.perms import TEST_PW
 

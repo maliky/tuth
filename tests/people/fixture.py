@@ -8,7 +8,8 @@ import pytest
 from django.contrib.auth.models import User, Group
 
 from app.people.models.donor import Donor
-from app.people.models.staffs import Faculty, Staff
+from app.people.models.staffs import Staff
+from app.people.models.faculty import Faculty
 from app.people.models.student import Student
 from tests.academics.fixture import CurriculumFactory
 

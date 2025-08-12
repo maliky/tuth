@@ -11,7 +11,8 @@ from simple_history.admin import SimpleHistoryAdmin
 
 from app.academics.models.college import College
 from app.academics.models.department import Department
-from app.people.models.staffs import Faculty, Staff
+from app.people.models.staffs import Staff
+from app.people.models.faculty import Faculty
 
 
 class CollegeRestrictedAdmin(

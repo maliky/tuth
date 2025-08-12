@@ -15,7 +15,8 @@ from app.people.forms.person import (
     StudentForm,
 )
 from app.people.models.donor import Donor
-from app.people.models.staffs import Faculty, Staff
+from app.people.models.staffs import Staff
+from app.people.models.faculty import Faculty
 from app.people.models.student import Student
 from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
 from app.timetable.admin.inlines import SectionInline

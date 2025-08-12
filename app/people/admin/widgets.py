@@ -13,7 +13,8 @@ from app.people.models.student import Student
 from django.contrib.auth.models import User
 from import_export import widgets
 
-from app.people.models.staffs import Faculty, Staff
+from app.people.models.staffs import Staff
+from app.people.models.faculty import Faculty
 from app.people.utils import mk_username, split_name
 from app.shared.auth.perms import TEST_PW
 
@@ -52,7 +53,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
             ),
         )
 
-        return cast(Staff, staff)
+        return staff
 
     def render(self, value, obj=None) -> str:
         """For the value (staff) for export."""
@@ -87,6 +88,9 @@ class FacultyWidget(widgets.ForeignKeyWidget):
         # ? Should I use Peoplerepository.get_or_create_faculty?
         # ... Not obvious as I would need to pass the whole row.
         # staff = StaffProfileWidget().clean(value, row, *args, **kwargs)
+        import pdb
+
+        pdb.set_trace()
 
         faculty, _ = self._cache_faculty.setdefault(
             username,
@@ -121,7 +125,7 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         self._exclude_username = set()
         self._cache_student: dict[str, tuple[Student, bool]] = dict()
 
-    def clean(self, value: str, row=None, *args, **kwargs) -> User | None:
+    def clean(self, value: str, row=None, *args, **kwargs) -> Student | None:
         """From the student name (and an id), gets a Student object.
 
         Create user and student objects if necessary.
@@ -148,7 +152,7 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
 
         user, _ = self._cache_student.setdefault(
             username,
-            User.objects.get_or_create(
+            Student.objects.get_or_create(
                 username=username,
                 defaults={
                     "first_name": first.capitalize(),

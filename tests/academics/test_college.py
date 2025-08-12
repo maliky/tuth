@@ -15,7 +15,8 @@ from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester
 from app.timetable.models.section import Section
 from app.academics.choices import CREDIT_NUMBER
-from app.people.models.staffs import Staff, Faculty
+from app.people.models.staffs import Staff
+from app.people.models.faculty import Faculty
 from app.people.models.student import Student
 from app.people.models.role_assignment import RoleAssignment
 from app.shared.auth.perms import UserRole

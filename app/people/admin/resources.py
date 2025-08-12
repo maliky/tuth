@@ -4,7 +4,8 @@ from import_export import fields, resources
 from app.shared.auth.perms import UserRole
 
 from app.people.admin.widgets import StaffProfileWidget, StudentUserWidget
-from app.people.models.staffs import Faculty, Staff
+from app.people.models.staffs import Staff
+from app.people.models.faculty import Faculty
 from app.people.models.student import Student
 from app.people.utils import mk_username, split_name
 from app.registry.models.registration import Registration

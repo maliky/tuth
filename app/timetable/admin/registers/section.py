@@ -2,7 +2,7 @@
 
 from django.contrib import admin
 
-from app.people.models.staffs import Faculty
+from app.people.models.faculty import Faculty
 from app.registry.admin.inlines import GradeInline
 from app.shared.admin.mixins import CollegeRestrictedAdmin
 from app.timetable.admin.filters import SectionSemesterFilterAc

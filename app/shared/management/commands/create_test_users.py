@@ -9,7 +9,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
 
 from app.people.models.role_assignment import RoleAssignment
-from app.people.models.staffs import Faculty
+from app.people.models.faculty import Faculty
 from app.shared.auth.helpers import ensure_superuser
 from app.shared.auth.perms import APP_MODELS, TEST_PW, UserRole
 
