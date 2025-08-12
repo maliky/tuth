@@ -46,6 +46,7 @@ APP_MODELS = {
         "scholarship",
         "sectionfee",
     ],
+    "auth": ["user", "group"],
 }
 
 
@@ -72,9 +73,11 @@ class RoleInfo:
 
     @property
     def rights(self) -> dict[str, list[str]]:
-        """Returns the rights for a user_role."""
-        rights = ROLE_MATRIX.get(self.code, {})
-        return {actions: expand_role_model(models) for actions, models in rights.items()}
+        """Return the expanded list of rights for the user_role"""
+        return {
+            actions: expand_rights(models)
+            for actions, models in ROLE_MATRIX.get(self.code, {}).items()
+        }
 
     @property
     def college(self) -> str:
@@ -184,12 +187,19 @@ ROLE_MATRIX = {
             "document",
             "registration",
             "semester",
-            "curriculum",
-            "college",
+            "Academics",
+            "user",
         ],
         "add": ["student", "document", "curriculum"],
-        "change": ["student", "registration", "curriculum", "document"],
-        "delete": ["student", "document"],
+        "change": [
+            "student",
+            "registration",
+            "curriculum",
+            "document",
+            "department",
+            "user",
+        ],
+        "delete": ["student", "document", "curriculum"],
     },
     "enrollment": {
         "view": [
@@ -199,6 +209,7 @@ ROLE_MATRIX = {
             "semester",
             "curriculum",
             "college",
+            "department",
         ],
         "add": ["student", "document"],
         "change": ["student", "registration", "document"],
@@ -599,7 +610,7 @@ def validate_role_matrix() -> set[str]:
     return only_in_rm | only_in_ur
 
 
-def expand_role_model(models: list[str]) -> list[str]:
+def expand_rights(models: list[str]) -> list[str]:
     """Expand shorthand model tokens to explicit model names.
 
     A capitalized application name, e.g. ``Academics``, expands to all models

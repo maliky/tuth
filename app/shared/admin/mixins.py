@@ -32,12 +32,10 @@ class CollegeRestrictedAdmin(
     def get_queryset(self, request):
         """Returns a filtered query set if a college is linked to the user making the request."""
         qs = super().get_queryset(request)
-        if request.user.is_superuser:
+        college = self.get_user_college(request)
+        if request.user.is_superuser or college is None:
             return qs
 
-        college = self.get_user_college(request)
-        if college is None:
-            return qs.none()
         return qs.filter(**{self.college_field: college})
 
 
@@ -58,9 +56,9 @@ class DepartmentRestrictedAdmin(
     def get_queryset(self, request):
         """Returns the query limited to the user's department if any."""
         qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
         dept = self.get_user_department(request)
-        if dept is None:
-            return qs.none()
+
+        if request.user.is_superuser or dept is None:
+            return qs
+
         return qs.filter(**{self.department_field: dept})

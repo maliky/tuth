@@ -18,6 +18,7 @@ GroupFactory: TypeAlias = Callable[[str], Group]
 StaffFactory: TypeAlias = Callable[[str], Staff]
 StudentFactory: TypeAlias = Callable[[str, str], Student]
 DonorFactory: TypeAlias = Callable[[str], Donor]
+FacultyFactory: TypeAlias = Callable[[str], Faculty]
 
 
 @pytest.fixture
@@ -99,6 +100,20 @@ def staff_factory(user_factory: UserFactory) -> StaffFactory:
     def _make(staff_uname: str) -> Staff:
 
         return cast(Staff, Staff.objects.create(user=user_factory(staff_uname)))
+
+    return _make
+
+
+@pytest.fixture
+def faculty_factory(user_factory: UserFactory) -> Faculty:
+    """Return a callable for making extra Faculty objects on demand.
+
+    my_faculty = faculty_factory("joe", some_department)
+    """
+
+    def _make(faculty_uname: str) -> Staff:
+
+        return cast(Faculty, Faculty.objects.create(user=user_factory(faculty_uname)))
 
     return _make
 
