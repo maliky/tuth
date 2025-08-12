@@ -73,7 +73,7 @@ class RoleInfo:
 
     @property
     def rights(self) -> dict[str, list[str]]:
-        """Return the expanded list of rights for the user_role"""
+        """Return the expanded list of rights for the user_role."""
         return {
             actions: expand_rights(models)
             for actions, models in ROLE_MATRIX.get(self.code, {}).items()

@@ -8,7 +8,6 @@ Usage::
     >>> print(staff.long_name)
 """
 
-from typing import cast
 from app.people.models.student import Student
 from django.contrib.auth.models import User
 from import_export import widgets
@@ -22,7 +21,7 @@ from app.shared.auth.perms import TEST_PW
 class StaffProfileWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
-        self._cache_staff: dict[str, tuple[Staff, bool]] = dict()
+        self._cache_staff: dict[str, Staff] = dict()
         super().__init__(Staff, field="staff_id")
 
     def clean(self, value, row=None, *args, **kwargs) -> Staff:
@@ -38,9 +37,10 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         prefix, first, middle, last, suffix = split_name(value)
         username = mk_username(first, last, prefix_len=2)
 
-        staff, _ = self._cache_staff.setdefault(
-            username,
-            Staff.objects.get_or_create(
+        # cannot use set_default because in python args are evaluated
+        # before the method (no lazyness)
+        if username not in self._cache_staff:
+            staff, _ = Staff.objects.get_or_create(
                 username=username,
                 defaults={
                     "first_name": first.capitalize(),
@@ -50,10 +50,11 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
                     "middle_name": middle,
                     "name_suffix": suffix,
                 },
-            ),
-        )
+            )
 
-        return staff
+            self._cache_staff[username] = staff
+
+        return self._cache_staff[username]
 
     def render(self, value, obj=None) -> str:
         """For the value (staff) for export."""
@@ -70,7 +71,7 @@ class FacultyWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
         # field is "id" by default
-        self._cache_faculty: dict[str, tuple[Staff, bool]] = dict()
+        self._cache_faculty: dict[str, Faculty] = dict()
         super().__init__(Faculty)
 
     def clean(self, value: str, row=None, *args, **kwargs) -> Faculty:
@@ -88,13 +89,9 @@ class FacultyWidget(widgets.ForeignKeyWidget):
         # ? Should I use Peoplerepository.get_or_create_faculty?
         # ... Not obvious as I would need to pass the whole row.
         # staff = StaffProfileWidget().clean(value, row, *args, **kwargs)
-        import pdb
 
-        pdb.set_trace()
-
-        faculty, _ = self._cache_faculty.setdefault(
-            username,
-            Faculty.objects.get_or_create(
+        if username not in self._cache_faculty:
+            faculty, _ = Faculty.objects.get_or_create(
                 username=username,
                 defaults={
                     "first_name": first.capitalize(),
@@ -104,10 +101,10 @@ class FacultyWidget(widgets.ForeignKeyWidget):
                     "middle_name": middle,
                     "name_suffix": suffix,
                 },
-            ),
-        )
+            )
+            self._cache_faculty[username] = faculty
 
-        return cast(Faculty, faculty)
+        return self._cache_faculty[username]
 
     def after_import(self, dataset, result, **kwargs):
         """Remove any cache which may be present after import."""
@@ -123,7 +120,7 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         super().__init__(User)
         self._cache_username: dict[str, str] = dict()
         self._exclude_username = set()
-        self._cache_student: dict[str, tuple[Student, bool]] = dict()
+        self._cache_student: dict[str, Student] = dict()
 
     def clean(self, value: str, row=None, *args, **kwargs) -> Student | None:
         """From the student name (and an id), gets a Student object.
@@ -143,25 +140,24 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         stdid = row.get("student_id")
         # in case we get same first, last & middle name for different id,
         # we create a new username because the previous one will be in _exclude
-        username = self._cache_username.get(
-            stdid,
-            Student.mk_username(first, last, middle, exclude=self._exclude_username),
-        )
-        self._cache_username[stdid] = username
-        self._exclude_username |= {username}
+        if stdid not in self._cache_student:
+            username = Student.mk_username(
+                first, last, middle, exclude=self._exclude_username
+            )
+            self._cache_username[stdid] = username
+            self._exclude_username |= {username}
 
-        user, _ = self._cache_student.setdefault(
-            username,
-            Student.objects.get_or_create(
+            student, _ = Student.objects.get_or_create(
                 username=username,
                 defaults={
                     "first_name": first.capitalize(),
                     "last_name": last.capitalize(),
                     "password": TEST_PW,
                 },
-            ),
-        )
-        return user
+            )
+            self._cache_student[stdid] = student
+
+        return self._cache_student[stdid]
 
     def after_import(self, dataset, result, **kwargs):
         """Remove any cache which may be present after import."""

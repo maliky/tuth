@@ -34,7 +34,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("Permissions rebuilt!"))
 
 
-def sync_role_group(ur_group: str, x_rights: dict[str, list[str]]) -> Group:
+def sync_role_group(ur_group: Group, x_rights: dict[str, list[str]]) -> Group:
     """Ensure a Django group exists for this role and sync its permissions."""
     perms = []
 

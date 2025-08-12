@@ -41,6 +41,12 @@ class FacultyManager(models.Manager):
         return staff_kwargs, kwargs
 
     # public API ----------------------------------------------------
+    def create(self, **kwargs):
+        """Create a staff and the faculty."""
+        staff_kwargs, faculty_kwargs = self._split_kwargs(kwargs)
+        staff_profile = Staff.objects.create(**staff_kwargs)
+        return super().create(staff_profile=staff_profile, **faculty_kwargs)
+
     def get_or_create(self, defaults=None, **kwargs):
         """Get or Create the Faculty and create the Staff if id does not exists."""
         defaults = defaults or {}
