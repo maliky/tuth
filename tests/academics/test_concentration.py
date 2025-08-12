@@ -10,7 +10,6 @@ from app.academics.models.concentration import (
     Minor,
     MinorProgram,
 )
-from app.academics.models.curriculum import Curriculum
 from app.academics.models.program import Program
 
 pytestmark = pytest.mark.django_db
@@ -45,10 +44,10 @@ def test_total_credit_hours_sums_programs(major):
     assert major.total_credit_hours() == total
 
 
-def test_major_clean_requires_program():
+def test_major_clean_requires_program(curriculum_factory):
     """clean() should fail if no program is attached."""
 
-    curri = Curriculum.get_default("TEST_CURRI")
+    curri = curriculum_factory("TEST_CURRI")
     new_major = Major.objects.create(name="NO_PROG", curriculum=curri)
 
     with pytest.raises(ValidationError):
@@ -68,11 +67,13 @@ def test_major_clean_credit_limit_exceeded(major):
         major.clean()
 
 
-def test_majorprogram_unique_program_per_major():
+def test_majorprogram_unique_program_per_major(curriculum_factory, program_factory):
     """(major, program) pairs must be unique."""
 
-    major = Major.objects.create(name="M_TEST", curriculum=Curriculum.get_default())
-    program = Program.get_unique_default()
+    major = Major.objects.create(
+        name="M_TEST", curriculum=curriculum_factory("M_TEST_CURRI")
+    )
+    program = program_factory()
 
     MajorProgram.objects.create(major=major, program=program)
 
@@ -81,11 +82,13 @@ def test_majorprogram_unique_program_per_major():
             MajorProgram.objects.create(major=major, program=program)
 
 
-def test_minorprogram_unique_program_per_minor():
+def test_minorprogram_unique_program_per_minor(curriculum_factory, program_factory):
     """(minor, program) pairs must be unique."""
 
-    minor = Minor.objects.create(name="MNR_TEST", curriculum=Curriculum.get_default())
-    program = Program.get_unique_default()
+    minor = Minor.objects.create(
+        name="MNR_TEST", curriculum=curriculum_factory("MNR_TEST_CURRI")
+    )
+    program = program_factory()
 
     MinorProgram.objects.create(minor=minor, program=program)
 

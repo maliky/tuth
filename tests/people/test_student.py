@@ -1,42 +1,31 @@
 """Test student people module."""
 
 import pytest
-from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import datetime
 
-from app.academics.models.course import Course
-from app.academics.models.department import Department
 from app.academics.models.prerequisite import Prerequisite
-from app.academics.models.program import Program
 from app.people.models.student import Student
 from app.registry.models.grade import Grade, GradeValue
 from app.timetable.models.section import Section
 
 
 @pytest.mark.django_db
-def test_allowed_courses(student: Student, semester):
+def test_allowed_courses(student: Student, semester, program_factory):
     """We test that if a course A is a prerequisite to course B.
 
     then A must be passed to see B in allowed courses for the student.
     """
-    course_a = Course.objects.create(
-        number="101", department=Department.get_default("D1")
-    )
-    course_b = Course.objects.create(
-        number="102", department=Department.get_default("D2")
-    )
-
-    Program.objects.create(curriculum=student.curriculum, course=course_a)
-    Program.objects.create(curriculum=student.curriculum, course=course_b)
+    program_a = program_factory("101", student.curriculum.short_name)
+    program_b = program_factory("102", student.curriculum.short_name)
+    course_a = program_a.course
+    course_b = program_b.course
 
     Prerequisite.objects.create(
         course=course_b, prerequisite_course=course_a, curriculum=student.curriculum
     )
 
-    prog_a = Program.objects.get(course=course_a, curriculum=student.curriculum)
-
-    sec_a = Section.objects.create(program=prog_a, semester=semester, number=1)
+    sec_a = Section.objects.create(program=program_a, semester=semester, number=1)
 
     allowed_initial = list(student.allowed_courses())
 
@@ -52,18 +41,17 @@ def test_allowed_courses(student: Student, semester):
 
 
 @pytest.mark.django_db
-def test_student_save_assigns_group(curriculum):
+def test_student_save_assigns_group(curriculum, student_factory):
     """Saving a Student shoul add the user to the student group."""
-    user = User.objects.create_user(username="newstud")
-    stud = Student.objects.create(user=user, curriculum=curriculum)
+    stud = student_factory("newstud", curriculum.short_name)
 
-    assert user.groups.filter(name=stud.GROUP).exists()
+    assert stud.user.groups.filter(name=stud.GROUP).exists()
 
 
 @pytest.mark.django_db
-def test_first_enrollment_date_set_on_confirmation(user_factory, curriculum, semester):
+def test_first_enrollment_date_set_on_confirmation(student_factory, curriculum, semester):
     """Saving after confirming enrollment sets the first date."""
-    student = Student.objects.create(user=user_factory("fresh"), curriculum=curriculum)
+    student = student_factory("fresh", curriculum.short_name)
     assert student.first_enrollment_date is None
 
     student.current_enrolled_semester = semester
