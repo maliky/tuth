@@ -21,6 +21,7 @@ from app.shared.auth.perms import TEST_PW
 class StaffProfileWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
+        self._cache_staff: dict[str, tuple[Staff, bool]] = dict()
         super().__init__(Staff, field="staff_id")
 
     def clean(self, value, row=None, *args, **kwargs) -> Staff:
@@ -36,17 +37,21 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         prefix, first, middle, last, suffix = split_name(value)
         username = mk_username(first, last, prefix_len=2)
 
-        staff, _ = Staff.objects.get_or_create(
-            username=username,
-            defaults={
-                "first_name": first.capitalize(),
-                "last_name": last.capitalize(),
-                "password": TEST_PW,
-                "name_prefix": prefix,
-                "middle_name": middle,
-                "name_suffix": suffix,
-            },
+        staff, _ = self._cache_staff.setdefault(
+            username,
+            Staff.objects.get_or_create(
+                username=username,
+                defaults={
+                    "first_name": first.capitalize(),
+                    "last_name": last.capitalize(),
+                    "password": TEST_PW,
+                    "name_prefix": prefix,
+                    "middle_name": middle,
+                    "name_suffix": suffix,
+                },
+            ),
         )
+
         return cast(Staff, staff)
 
     def render(self, value, obj=None) -> str:
@@ -56,7 +61,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
     def after_import(self, dataset, result, **kwargs):
         """Remove any cache which may be present after import."""
         if kwargs.get("dry_run", False):
-            self._cache.clear()
+            self._cache_staff = dict()
 
 
 class FacultyWidget(widgets.ForeignKeyWidget):
@@ -64,6 +69,7 @@ class FacultyWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
         # field is "id" by default
+        self._cache_faculty: dict[str, tuple[Staff, bool]] = dict()
         super().__init__(Faculty)
 
     def clean(self, value: str, row=None, *args, **kwargs) -> Faculty:
@@ -82,18 +88,27 @@ class FacultyWidget(widgets.ForeignKeyWidget):
         # ... Not obvious as I would need to pass the whole row.
         # staff = StaffProfileWidget().clean(value, row, *args, **kwargs)
 
-        faculty, _ = Faculty.objects.get_or_create(
-            username=username,
-            defaults={
-                "first_name": first.capitalize(),
-                "last_name": last.capitalize(),
-                "password": TEST_PW,
-                "name_prefix": prefix,
-                "middle_name": middle,
-                "name_suffix": suffix,
-            },
+        faculty, _ = self._cache_faculty.setdefault(
+            username,
+            Faculty.objects.get_or_create(
+                username=username,
+                defaults={
+                    "first_name": first.capitalize(),
+                    "last_name": last.capitalize(),
+                    "password": TEST_PW,
+                    "name_prefix": prefix,
+                    "middle_name": middle,
+                    "name_suffix": suffix,
+                },
+            ),
         )
+
         return cast(Faculty, faculty)
+
+    def after_import(self, dataset, result, **kwargs):
+        """Remove any cache which may be present after import."""
+        if kwargs.get("dry_run", False):
+            self.cache_faculty = dict()
 
 
 class StudentUserWidget(widgets.ForeignKeyWidget):
@@ -102,8 +117,9 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
     def __init__(self):
         # field is "id" by default
         super().__init__(User)
-        self._cache: dict[str, str] = dict()
-        self._exclude = set()
+        self._cache_username: dict[str, str] = dict()
+        self._exclude_username = set()
+        self._cache_student: dict[str, tuple[Student, bool]] = dict()
 
     def clean(self, value: str, row=None, *args, **kwargs) -> User | None:
         """From the student name (and an id), gets a Student object.
@@ -123,23 +139,29 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         stdid = row.get("student_id")
         # in case we get same first, last & middle name for different id,
         # we create a new username because the previous one will be in _exclude
-        username = self._cache.get(
-            stdid, Student.mk_username(first, last, middle, exclude=self._exclude)
+        username = self._cache_username.get(
+            stdid,
+            Student.mk_username(first, last, middle, exclude=self._exclude_username),
         )
-        self._cache[stdid] = username
-        self._exclude |= {username}
+        self._cache_username[stdid] = username
+        self._exclude_username |= {username}
 
-        user, _ = User.objects.get_or_create(
-            username=username,
-            defaults={
-                "first_name": first.capitalize(),
-                "last_name": last.capitalize(),
-                "password": TEST_PW,
-            },
+        user, _ = self._cache_student.setdefault(
+            username,
+            User.objects.get_or_create(
+                username=username,
+                defaults={
+                    "first_name": first.capitalize(),
+                    "last_name": last.capitalize(),
+                    "password": TEST_PW,
+                },
+            ),
         )
         return user
 
     def after_import(self, dataset, result, **kwargs):
         """Remove any cache which may be present after import."""
-        self._exclude = set()
-        self.cache = dict()
+        if kwargs.get("dry_run", False):
+            self._exclude_username = set()
+            self.cache_username = dict()
+            self.cache_student = dict()

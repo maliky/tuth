@@ -86,7 +86,7 @@ class FacultyResource(resources.ModelResource):
 class StudentResource(resources.ModelResource):
     """Resource for bulk importing Student rows."""
 
-    # should populate the pk field directly
+    # Should populate the pk field directly
     user = fields.Field(
         attribute="user", column_name="student_name", widget=StudentUserWidget()
     )

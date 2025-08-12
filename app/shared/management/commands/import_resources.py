@@ -23,9 +23,7 @@ from app.academics.admin.resources import (  # noqa: F401
 )
 from app.academics.models.college import College  # noqa: F401
 from app.people.admin.resources import FacultyResource, StudentResource
-from app.shared.auth.helpers import (  # noqa: F401
-    ensure_superuser,
-)
+from app.shared.auth.helpers import ensure_superuser  # noqa: F401
 from app.spaces.admin.resources import RoomResource  # noqa: F401
 from app.timetable.admin.resources.core import SemesterResource  # noqa: F401
 from app.timetable.admin.resources.section import SectionResource
@@ -35,7 +33,6 @@ from app.timetable.admin.resources.session import (
 )  # noqa: F401
 
 # manage the permissions
-call_command("load_permissions", verbosity=0)
 
 
 class Command(BaseCommand):
@@ -64,6 +61,7 @@ class Command(BaseCommand):
         """Validate and import each resource from the provided CSV."""
 
         ensure_superuser(self)
+        call_command("load_roles", verbosity=0)
 
         path = Path(options["file_path"])
         if not path.exists():
@@ -73,15 +71,15 @@ class Command(BaseCommand):
         dataset = self.clean_column_headers(dataset)
 
         RESOURCES_MAP: list[tuple[str, type[resources.ModelResource]]] = [
-            ("Student", StudentResource),
+            # ("Student", StudentResource),
             ("Faculty", FacultyResource),  # and College
-            ("Room", RoomResource),  # and Space
-            ("Schedule", ScheduleResource),
-            ("Course", CourseResource),  # and College
-            ("semester", SemesterResource),  # and Academic year
-            ("Program", ProgramResource),
-            ("Section", SectionResource),
-            ("SecSession", SecSessionResource),  # and Faculty, Room and Space
+            # ("Room", RoomResource),  # and Space
+            # ("Schedule", ScheduleResource),
+            # ("Course", CourseResource),  # and College
+            # ("semester", SemesterResource),  # and Academic year
+            # ("Program", ProgramResource),
+            # ("Section", SectionResource),
+            # ("SecSession", SecSessionResource),  # and Faculty, Room and Space
         ]
 
         for key, ResourceClass in RESOURCES_MAP:

@@ -5,6 +5,8 @@
 from __future__ import annotations
 
 from django.db import models
+from simple_history.models import HistoricalRecords
+
 from app.people.models.core import AbstractPerson
 
 
@@ -26,6 +28,8 @@ class Donor(AbstractPerson):
 
     # ~~~~ Read-only ~~~~
     donor_id = models.CharField(max_length=13, unique=True, editable=False, blank=False)
+    # ~~~~ Autofilled ~~~~
+    history = HistoricalRecords()
 
     class Meta:
         constraints = [

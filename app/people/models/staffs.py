@@ -1,4 +1,4 @@
-"""staffs module."""
+"""Staffs module."""
 
 # app/people/models/staffs.py
 
@@ -116,7 +116,9 @@ class FacultyManager(models.Manager):
         defaults = defaults or {}
         username = kwargs.pop("username")
         staff_kwargs, faculty_kwargs = self._split_kwargs({**kwargs, **defaults})
-        staff_profile, _ = Staff.objects.get_or_create(username=username, **staff_kwargs)
+        staff_profile, _ = Staff.objects.get_or_create(
+            username=username, defaults=staff_kwargs
+        )
         return super().get_or_create(staff_profile=staff_profile, defaults=faculty_kwargs)
 
 

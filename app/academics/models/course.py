@@ -57,7 +57,8 @@ class Course(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         """Return the CODE - Title representation."""
-        return f"{self.short_code} - {self.title}"
+        title = f" - {self.title}" if self.title else ""
+        return f"{self.short_code}{self.number}{title}"
 
     @property
     def level(self) -> str:

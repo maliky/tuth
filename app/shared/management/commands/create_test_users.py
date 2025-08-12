@@ -52,7 +52,7 @@ class Command(BaseCommand):
             group = user_role.value.group
             _user.groups.add(group)
             RoleAssignment.objects.get_or_create(
-                user=_user, gropu=group, start_date=date.today(), college=college
+                user=_user, group=group, start_date=date.today(), college=college
             )
             created.append((person.username, group.name, was_created))  # type: ignore[attr-defined]
             # log
