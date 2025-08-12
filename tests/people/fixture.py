@@ -36,18 +36,17 @@ def user() -> User:
 
 
 @pytest.fixture
-def staff(user_factory: UserFactory) -> Staff:
+def staff() -> Staff:
     """A staff."""
-    # Staff requires staff_id
-    staff_u = user_factory("mboulot")
-    return cast(Staff, Staff.objects.create(user=staff_u, staff_id="ST123"))
+    return cast(Staff, Staff.objects.create(user=User(username="mboulot"), staff_id="ST123"))
 
 
 @pytest.fixture
-def faculty(staff_factory: StaffFactory) -> Faculty:
+def faculty(staff: Staff) -> Faculty:
     """Default Faculty."""
-    staff = staff_factory("elprofessor")
-    return cast(Faculty, Faculty.objects.create(staff_profile=staff))
+    fac = Faculty(staff_profile=staff)
+    fac.save()
+    return cast(Faculty, fac)
 
 
 @pytest.fixture
@@ -57,12 +56,13 @@ def donor(user_factory: UserFactory) -> Donor:
 
 
 @pytest.fixture
-def student(user_factory: UserFactory, semester, curriculum) -> Student:
-    user = user_factory("letudiant")
+def student(semester, curriculum) -> Student:
     return cast(
         Student,
         Student.objects.create(
-            user=user, curriculum=curriculum, current_enrolled_semester=semester
+            user=User(username="letudiant"),
+            curriculum=curriculum,
+            current_enrolled_semester=semester,
         ),
     )
 
@@ -91,36 +91,34 @@ def user_factory() -> UserFactory:
 
 
 @pytest.fixture
-def staff_factory(user_factory: UserFactory) -> StaffFactory:
+def staff_factory() -> StaffFactory:
     """Return a callable for making extra Staff objects on demand.
 
     my_staff = staff_factory("joe", some_department)
     """
 
     def _make(staff_uname: str) -> Staff:
-
-        return cast(Staff, Staff.objects.create(user=user_factory(staff_uname)))
+        return cast(Staff, Staff.objects.create(user=User(username=staff_uname)))
 
     return _make
 
 
 @pytest.fixture
-def faculty_factory(user_factory: UserFactory) -> FacultyFactory:
+def faculty_factory() -> FacultyFactory:
     """Return a callable for making extra Faculty objects on demand.
 
     my_faculty = faculty_factory("joe", some_department)
     """
 
     def _make(faculty_uname: str) -> Faculty:
-
-        return cast(Faculty, Faculty.objects.create(user=user_factory(faculty_uname)))
+        return cast(Faculty, Faculty.objects.create(username=faculty_uname))
 
     return _make
 
 
 @pytest.fixture
 def student_factory(
-    user_factory: UserFactory, curriculum_factory: CurriculumFactory
+    curriculum_factory: CurriculumFactory,
 ) -> StudentFactory:
     """Return a callable for making extra Student objects on demand.
 
@@ -131,7 +129,7 @@ def student_factory(
         return cast(
             Student,
             Student.objects.create(
-                user=user_factory(uname),
+                user=User(username=uname),
                 curriculum=curriculum_factory(curri_short_name),
             ),
         )
@@ -140,14 +138,14 @@ def student_factory(
 
 
 @pytest.fixture
-def donor_factory(user_factory: UserFactory) -> DonorFactory:
+def donor_factory() -> DonorFactory:
     """Return a callable for making extra Donoro objects on demand."""
 
     def _make(uname: str) -> Donor:
         return cast(
             Donor,
             Donor.objects.create(
-                user=user_factory(uname),
+                user=User(username=uname),
             ),
         )
 

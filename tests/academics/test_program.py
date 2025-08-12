@@ -11,16 +11,16 @@ pytestmark = pytest.mark.django_db
 # ~~~~~~~~~~~~~~~~ DB Constraints ~~~~~~~~~~~~~~~~
 
 
-def test_program_unique_course_per_curriculum(course, curriculum):
-    """In a program  binomes (course, curriculum) should be unique.
+def test_program_unique_course_per_curriculum(program):
+    """In a program binomes (course, curriculum) should be unique.
 
     I can have a course A in several curriculum
-    and a curriculm C can have serveral courses.
+    and a curriculm C can have serveral courses,
     but only one line of course A curriculum C should be in program.
     """
 
-    Program.objects.create(curriculum=curriculum, course=course)
-
     with pytest.raises(IntegrityError):
         with transaction.atomic():
-            Program.objects.create(curriculum=curriculum, course=course)
+            Program.objects.create(
+                curriculum=program.curriculum, course=program.course
+            )

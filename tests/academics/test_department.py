@@ -11,10 +11,10 @@ pytestmark = pytest.mark.django_db
 # ~~~~~~~~~~~~~~~~ DB Constraints ~~~~~~~~~~~~~~~~
 
 
-def test_department_unique_short_name_in_college(college):
+def test_department_unique_short_name_in_college(college, department_factory):
     """In a College a department short_name should be unique."""
 
-    Department.objects.create(short_name="GEN", college=college)
+    department_factory("GEN")
 
     with pytest.raises(IntegrityError):
         with transaction.atomic():
