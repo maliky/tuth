@@ -53,7 +53,7 @@ class AbstractPerson(StatusableMixin, models.Model):
     name_suffix = models.CharField(help_text="eg. 'Phd.'", blank=True)
     date_of_birth = models.DateField(_("date of birth"), null=True, blank=True)
     place_of_birth = models.CharField(blank=True)
-    genre = models.CharField(choices=[("f", "Woman"), ("m", "Man")], blank=True)
+    gender = models.CharField(choices=[("f", "Woman"), ("m", "Man")], blank=True)
 
     phone_number = PhoneNumberField(help_text="A Liberian phone number", blank=True)
     physical_address = models.TextField(

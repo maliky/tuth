@@ -16,6 +16,7 @@ from django.core.management.base import BaseCommand, CommandParser
 from django.db import transaction
 from import_export import resources
 from tablib import Dataset
+from tqdm import tqdm
 
 from app.academics.admin.resources import (  # noqa: F401
     CourseResource,
@@ -31,8 +32,6 @@ from app.timetable.admin.resources.session import (
     ScheduleResource,
     SecSessionResource,
 )  # noqa: F401
-
-# manage the permissions
 
 
 class Command(BaseCommand):
@@ -85,30 +84,31 @@ class Command(BaseCommand):
         for key, ResourceClass in RESOURCES_MAP:
 
             resource: resources.ModelResource = ResourceClass()
-            # import ipdb; ipdb.set_trace()
+            instance_loader = resource._meta.instance_loader_class(resource, dataset)
+            total_rows = dataset.height
 
-            validation: resources.Result = resource.import_data(dataset, dry_run=True)
+            # validation: resources.Result = resource.import_data(dataset, dry_run=True)
 
-            if validation.has_errors():
-                self.stdout.write(self.style.ERROR(f"'{key}': validation errors:"))
+            # if validation.has_errors():
+            #     self.stdout.write(self.style.ERROR(f"'{key}': validation errors:"))
 
-                if validation.row_errors():
-                    row_index, row_err = validation.row_errors()[0]
-                    self.stdout.write(f"  row {row_index}: {row_err[0]}")
-                if validation.base_errors:
-                    self.stdout.write(f"   {validation.base_errors[0]}")
+            #     if validation.row_errors():
+            #         row_index, row_err = validation.row_errors()[0]
+            #         self.stdout.write(f"  row {row_index}: {row_err[0]}")
+            #     if validation.base_errors:
+            #         self.stdout.write(f"   {validation.base_errors[0]}")
 
-                continue
+            #     continue
 
             # real import
-            try:
-                with transaction.atomic():
-                    resource.import_data(dataset, dry_run=False)
-            except Exception as exc:
-                self.stdout.write(self.style.ERROR(f"{key} import failed: {exc}"))
-                continue
+            with transaction.atomic():
+                for row in tqdm(dataset.dict, total=total_rows, desc=f"Importing {key}"):
+                    try:
+                        # import ipdb; ipdb.set_trace()
+
+                        resource.import_row(row, instance_loader, dry_run=False)
+                    except Exception as exc:
+                        self.stdout.write(self.style.ERROR(f"{key} import failed: {exc}"))
+                        raise(exc)
 
             self.stdout.write(self.style.SUCCESS(f"{key} import completed."))
-        # groups = ensure_role_groups()  # returns {"student": Group, …}
-        # colleges = {c.code: c for c in College.objects.all()}
-        # upsert_test_users_and_roles(self, colleges, groups)

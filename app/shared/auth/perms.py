@@ -13,7 +13,7 @@ from app.academics.choices import CollegeCodeChoices
 
 logger = logging.getLogger(__name__)
 
-TEST_PW = "test"
+TEST_PW = "test2Façil007!"
 
 APP_MODELS = {
     "academics": [

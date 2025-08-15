@@ -37,31 +37,32 @@ class PersonManager(Manager):
             username=username, password=password, **user_kwargs
         )
         # there some loop hole here
-        if password:
-            user.set_password(password)  # to make sure it is hashed
+        # if password:
+        #     user.set_password(password)  # to make sure it is hashed
 
         return user
 
     def _get_or_create(self, username, **user_kwargs) -> User:
         """Create or get the User and set /update password."""
-        password = user_kwargs.pop("password", None)
+        _ = user_kwargs.pop("password", None)
         user, _ = User.objects.get_or_create(username=username, defaults=user_kwargs)
         # there some loop hole here
-        if password:
-            user.set_password(password)  # to make sure it is hashed
+        # if password:
+        #     # can I pass a hashed value directly to the password field of the user ?
+        #     user.set_password(password)  # to make sure it is hashed
 
         return user
 
     def _update_or_create(self, username, **user_kwargs) -> User:
         """Create or get the User and set /update password."""
-        password = user_kwargs.pop("password", None)
+        _ = user_kwargs.pop("password", None)
 
         user, created = User.objects.update_or_create(
             username=username, defaults=user_kwargs
         )
         # there some loop hole here
-        if password:
-            user.set_password(password)  # to make sure it is hashed
+        # if password:
+        #     user.set_password(password)  # to make sure it is hashed
 
         return user
 
@@ -102,5 +103,4 @@ class PersonManager(Manager):
         user_kwargs, person_kwargs = self._split_kwargs({**kwargs, **defaults})
 
         user = self._get_or_create(username=username, **user_kwargs)
-        user.save()
         return super().get_or_create(user=user, defaults=person_kwargs)

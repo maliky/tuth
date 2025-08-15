@@ -3,11 +3,7 @@
 from datetime import date
 
 import pytest
-from django.contrib.auth import get_user_model
-
 from app.finance.models import Scholarship
-from app.people.models.donor import Donor
-from app.people.models.student import Student
 
 
 @pytest.mark.django_db
@@ -28,4 +24,4 @@ def test_scholarship_links_donor_student(donor_factory, student_factory):
     assert scholarship.student == student
 
 
-#>TODO would be good to test the reverse relations.  donor.scholarships and student_scholarships
+# >TODO would be good to test the reverse relations.  donor.scholarships and student_scholarships

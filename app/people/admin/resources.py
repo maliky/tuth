@@ -3,7 +3,7 @@
 from import_export import fields, resources
 from app.shared.auth.perms import UserRole
 
-from app.people.admin.widgets import StaffProfileWidget, StudentUserWidget
+from app.people.admin.widgets import StaffProfileWidget, UserStudentWidget
 from app.people.models.staffs import Staff
 from app.people.models.faculty import Faculty
 from app.people.models.student import Student
@@ -73,6 +73,7 @@ class FacultyResource(resources.ModelResource):
         fields = ("staff_profile",)
         skip_unchanged = True
         report_skipped = False
+        use_bulk = True
 
     def after_save_instance(self, instance, row, **kwargs) -> None:
         """Assign the faculty group to the related user."""
@@ -83,13 +84,16 @@ class FacultyResource(resources.ModelResource):
         group = UserRole.FACULTY.value.group
         user.groups.add(group)
 
+        return super().after_save_instance(instance, row, **kwargs)
+
 
 class StudentResource(resources.ModelResource):
     """Resource for bulk importing Student rows."""
 
+    # I only see Long_name student ID and date of birth
     # Should populate the pk field directly
     user = fields.Field(
-        attribute="user", column_name="student_name", widget=StudentUserWidget()
+        attribute="user", column_name="student_name", widget=UserStudentWidget()
     )
 
     current_enrolled_semester = fields.Field(
@@ -108,6 +112,9 @@ class StudentResource(resources.ModelResource):
             "current_enrolled_semester",
             "first_enrollment_date",
         )
+        skip_unchanged = True
+        report_skipped = False
+        use_bulk = True  # do not use because ressources is donw row by row
 
     def after_save_instance(self, instance, row, **kwargs) -> None:
         """Assign the student group to the user when importing."""

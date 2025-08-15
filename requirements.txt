@@ -12,3 +12,4 @@ openpyxl==3.1.5
 django-phonenumber-field[phonenumberslite]
 django-admin-searchable-dropdown
 django-simple-history
+tqdm

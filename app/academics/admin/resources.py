@@ -146,7 +146,7 @@ class CourseResource(resources.ModelResource):
             "prerequisite_f",
         )
         skip_unchanged = True  # do not rewrite identical rows
-        report_skipped = True  # include skipped-row info in the Result
+        report_skipped = False  # include skipped-row info in the Result
 
 
 class PrerequisiteResource(resources.ModelResource):

@@ -26,11 +26,14 @@ class FacultyManager(models.Manager):
         "is_superuser",
         "is_active",
         # ~~~~ Staff only fields ~~~~
-        "staff_profile",
+        # "staff_profile",
         "history",
         "google_profile",
         "personal_website",
         "academic_rank",
+        "middle_name",
+        "name_prefix",
+        "name_suffix",
     }
 
     def _split_kwargs(

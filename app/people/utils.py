@@ -272,3 +272,10 @@ def photo_upload_to(instance, filename: str) -> str:
     """Store uploads under photos/<model>/<user-id>/<filename>."""
     _class = instance.__class__.__name__.lower()
     return str(Path("photos") / _class / str(instance.user_id) / filename)
+
+
+def mk_password(first: str, last: str) -> str:
+    """Make a very simple password from the first and last name of a user."""
+    A = "A" if not first else first[0].upper()
+    B = "B" if not last else last[0].upper()
+    return f"{A}-pass-{B}!"

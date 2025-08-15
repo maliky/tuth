@@ -3,6 +3,7 @@
 from datetime import date
 
 from app.academics.models.college import College
+from app.people.utils import mk_password
 from django.apps import apps
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
@@ -33,16 +34,16 @@ class Command(BaseCommand):
                 defaults={
                     "first_name": user_role.value.label,
                     "last_name": "Person",
-                    "password": TEST_PW,
                     "email": f"{username}@tubmanu.edu.lr",
                 },
                 username=username,
             )
-
             _user = (
                 person.staff_profile.user if isinstance(person, Faculty) else person.user
             )
 
+            _user.set_password(mk_password(_user.first_name, _user.last_name))
+            _user.save(update_fields=["password"])
             college = None
             if user_role.value.default_college:
                 college, _ = College.objects.get_or_create(
