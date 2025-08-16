@@ -11,6 +11,7 @@ from app.academics.models.concentration import (
     MinorProgram,
 )
 from app.academics.models.program import Program
+from app.academics.models import CreditHour
 
 pytestmark = pytest.mark.django_db
 
@@ -35,11 +36,11 @@ def test_total_credit_hours_sums_programs(major):
     """total_credit_hours should add all attached program credits."""
 
     pg = Program.get_unique_default()
-    pg.credit_hours = 4
+    pg.credit_hours = CreditHour.objects.get(code=4)
     pg.save()
     major.programs.add(pg)
 
-    total = sum(p.credit_hours for p in major.programs.all())
+    total = sum(p.credit_hours_id for p in major.programs.all())
 
     assert major.total_credit_hours() == total
 
@@ -58,7 +59,7 @@ def test_major_clean_credit_limit_exceeded(major):
     """clean() should detect credit hour overflow."""
 
     pg = Program.get_unique_default()
-    pg.credit_hours = 10
+    pg.credit_hours = CreditHour.objects.get(code=10)
     pg.save()
     major.programs.add(pg)
     major.max_credit_hours = 5

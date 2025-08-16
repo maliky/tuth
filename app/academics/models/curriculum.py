@@ -8,8 +8,8 @@ from typing import Self
 from django.db import models
 from simple_history.models import HistoricalRecords
 
-from app.academics.choices import StatusCurriculum
 from app.academics.models.college import College
+from app.academics.models.curriculum_status import CurriculumStatus
 from app.shared.status.mixins import StatusableMixin
 
 
@@ -35,11 +35,12 @@ class Curriculum(StatusableMixin, models.Model):
     )
     creation_date = models.DateField(default=date.today)
     is_active = models.BooleanField(default=False)
-    status = models.CharField(
-        "Validation Status",
-        max_length=30,
-        choices=StatusCurriculum.choices,
-        default=StatusCurriculum.PENDING,
+    status = models.ForeignKey(
+        "academics.CurriculumStatus",
+        on_delete=models.PROTECT,
+        default="pending",
+        related_name="curricula",
+        verbose_name="Validation Status",
     )
     history = HistoricalRecords()
 
@@ -76,20 +77,22 @@ class Curriculum(StatusableMixin, models.Model):
         """Make sure than only an aproved curriculum can be active."""
         # > TODO would be good to bubble up a warning message to inform user
         # of the change.
-        if self.status != StatusCurriculum.APPROVED:
+        if self.status_id != "approved":
             self.is_active = False
 
     def save(self, *args, **kwargs):
         """Save a curriculum instance while setting defaults."""
         if not self.college_id:
             self.college = College.get_default()
+        if not self.status_id:
+            self.status_id = "pending"
         self._ensure_activity()
         super().save(*args, **kwargs)
 
     def clean(self) -> None:
         """Validate the curriculum and its current status."""
         super().clean()
-        self.validate_status(StatusCurriculum)
+        self.validate_status(CurriculumStatus.objects.all())
 
     class Meta:
         ordering = ["college", "short_name"]

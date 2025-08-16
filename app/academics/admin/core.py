@@ -12,6 +12,8 @@ from app.academics.admin.views import CurriculumBySemester
 from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
+from app.academics.models.curriculum_status import CurriculumStatus
+from app.academics.models.credit_hour import CreditHour
 from app.academics.models.department import Department
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.program import Program
@@ -86,6 +88,22 @@ class CourseAdmin(DepartmentRestrictedAdmin):
     fields = ("short_code", "department", "number", "title", "description")
 
 
+@admin.register(CurriculumStatus)
+class CurriculumStatusAdmin(admin.ModelAdmin):
+    """Lookup admin for CurriculumStatus."""
+
+    search_fields = ("code", "label")
+    list_display = ("code", "label")
+
+
+@admin.register(CreditHour)
+class CreditHourAdmin(admin.ModelAdmin):
+    """Lookup admin for CreditHour."""
+
+    search_fields = ("code", "label")
+    list_display = ("code", "label")
+
+
 @admin.register(Curriculum)
 class CurriculumAdmin(CollegeRestrictedAdmin):
     """Admin options for Curriculum.
@@ -100,7 +118,7 @@ class CurriculumAdmin(CollegeRestrictedAdmin):
     # add the action button on the import form
     list_display = ("short_name", "long_name", "college", "is_active", "status")
     list_filter = ("college",)
-    autocomplete_fields = ("college",)
+    autocomplete_fields = ("college", "status")
     inlines = [CurriculumProgramInline]
 
     # list_selected_relate reduces the number of queries in db
@@ -172,7 +190,7 @@ class ProgramAdmin(CollegeRestrictedAdmin):
     list_display = ("course", "curriculum")
     # need to order the filter by curriculum_college
     list_filter = ("curriculum",)
-    autocomplete_fields = ("curriculum", "course")
+    autocomplete_fields = ("curriculum", "course", "credit_hours")
     list_select_related = ("curriculum", "course")
     search_fields = ("curriculum__short_name", "course__code")
     # inlines = [CourseProgramInline]

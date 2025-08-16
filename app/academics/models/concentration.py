@@ -59,7 +59,11 @@ class ConcentrationMixin(models.Model):
         """Return the sum of credit hours for every program attached to this concentration."""
         # will return 0 if the object is not saved.
         self._ensure_saved()
-        return self.programs.aggregate(total=models.Sum("credit_hours")).get("total") or 0  # type: ignore[attr-defined]
+        return (
+            self.programs.aggregate(total=models.Sum("credit_hours"))
+            .get("total")
+            or 0
+        )  # type: ignore[attr-defined]
 
     def exceeds_credit_limit(self):
         """True if the total credit hours >  max_credit_hours."""
