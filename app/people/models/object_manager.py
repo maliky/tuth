@@ -103,4 +103,5 @@ class PersonManager(Manager):
         user_kwargs, person_kwargs = self._split_kwargs({**kwargs, **defaults})
 
         user = self._get_or_create(username=username, **user_kwargs)
+
         return super().get_or_create(user=user, defaults=person_kwargs)

@@ -1,11 +1,27 @@
 """Lookup tables for different status."""
 
+from django.db import models
 from app.shared.mixins import StatusMixin
+
+
+class CreditHourManager(models.Manager):
+    """Automatically create credit hours on demand."""
+
+    def get(self, *args, **kwargs):  # type: ignore[override]
+        """Return existing credit hour or create it if missing."""
+        try:
+            return super().get(*args, **kwargs)
+        except self.model.DoesNotExist:
+            code = kwargs.get("code")
+            if code is None:
+                raise
+            # Use the numeric code as the human-readable label
+            return super().create(code=code, label=str(code))
 
 
 class CreditHour(StatusMixin):
     """Map numeric credit hour codes to labels."""
-
+    objects = CreditHourManager()
     # class CREDIT_NUMBER(IntegerChoices):
     # ZERO = 0, "0"
     # ONE = 1, "1"

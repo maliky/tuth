@@ -86,16 +86,26 @@ class Curriculum(StatusableMixin, models.Model):
         """Make sure than only an aproved curriculum can be active."""
         # > TODO would be good to bubble up a warning message to inform user
         # of the change.
-        if self.status != "approved":
+        if self.status_id != "approved":
             self.is_active = False
+
+    def _ensure_status(self):
+        """Make sure the curriculum has a status set."""
+        if not self.status_id:
+            # >? given that id is no different from code is it necessary to use _id ? oui si on veux pas
+            # faire self.status.code
+            self.status_id = "pending"
+        # just to make sure it is created.
+        CurriculumStatus.objects.get_or_create(
+            code=self.status_id,
+            defaults={"label": self.status_id.replace("_", " ").title()},
+        )
 
     def save(self, *args, **kwargs):
         """Save a curriculum instance while setting defaults."""
         if not self.college_id:
             self.college = College.get_default()
-        if not self.status_id:
-            # >? given that id is no different from code is it necessary to use _id ?
-            self.status_id = "pending"
+        self._ensure_status()
         self._ensure_activity()
         super().save(*args, **kwargs)
 

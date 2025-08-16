@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Optional, Self
 
+from app.shared.models import CreditHour
 from django.db import models
 from simple_history.models import HistoricalRecords
 
@@ -51,11 +52,13 @@ class Program(models.Model):
         """Make sure the credit_hours is set."""
         if not self.credit_hours_id:
             self.credit_hours_id = "3"
+        CreditHour.objects.get_or_create(
+            code=self.credit_hours_id, defaults={"label": str(self.credit_hours_id)}
+        )
 
     def save(self, *args, **kwargs):
         """Make sure we set default before saving."""
-        if not self.credit_hours_id:
-            self._ensure_credit_hours()
+        self._ensure_credit_hours()
         super().save(*args, **kwargs)
 
     @classmethod

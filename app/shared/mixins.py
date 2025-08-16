@@ -6,7 +6,7 @@ from django.db import models
 class StatusMixin(models.Model):
     """Keep possible statuses for uploaded documents."""
 
-    class meta:
+    class Meta:
         abstract = True
         ordering = ["code"]
 

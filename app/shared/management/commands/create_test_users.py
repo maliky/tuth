@@ -30,6 +30,7 @@ class Command(BaseCommand):
         for user_role in UserRole:
             username = f"test_{user_role.value.code}"
             Person = user_role.value.model
+
             person, was_created = Person.objects.get_or_create(  # type: ignore[attr-defined]
                 defaults={
                     "first_name": user_role.value.label,
