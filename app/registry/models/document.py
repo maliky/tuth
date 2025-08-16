@@ -93,3 +93,12 @@ class DocumentStaff(AbstractDocument):
     document_type = models.CharField(max_length=50, choices=DocumentType.choices)
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()
+
+
+class DocumentStatus(models.Model):
+    """Keep possible statuses for uploaded documents."""
+
+    code = models.CharField(max_lenght=30, primary_key=True)
+    label = models.CharField(max_lenght=60)
+
+    

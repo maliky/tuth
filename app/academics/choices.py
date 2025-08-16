@@ -119,10 +119,6 @@ COLLEGE_LONG_NAME = {
 }
 
 
-class StatusCurriculum(TextChoices):
-    PENDING = "pending", "Pending"
-    APPROVED = "approved", "Approved"
-    NEEDS_REVISION = "needs_revision", "Needs Revision"
 
 
 class CREDIT_NUMBER(IntegerChoices):
