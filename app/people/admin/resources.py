@@ -76,7 +76,7 @@ class FacultyResource(resources.ModelResource):
         report_skipped = False
         use_bulk = True
 
-    def after_save_instance(self, instance, row, **kwargs) -> None:
+    def after_save_instance(self, instance, row, **kwargs):
         """Assign the faculty group to the related user."""
         if kwargs.get("dry_run"):
             return None

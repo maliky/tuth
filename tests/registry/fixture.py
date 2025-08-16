@@ -21,8 +21,8 @@ from app.registry.models.grade import GradeValue
 RegistrationFactory: TypeAlias = Callable[[str, str, str, str, int], Registration]
 GradeFactory: TypeAlias = Callable[[str, str, str, str, Decimal], Grade]
 DocumentStudentFactory: TypeAlias = Callable[[str, str], DocumentStudent]
-DocumentStaffFactory: TypeAlias = Callable[[str, str], DocumentStaff]
-DocumentDonorFactory: TypeAlias = Callable[[str, str], DocumentDonor]
+DocumentStaffFactory: TypeAlias = Callable[[str], DocumentStaff]
+DocumentDonorFactory: TypeAlias = Callable[[str], DocumentDonor]
 
 DECIMAL_90 = Decimal("90")
 

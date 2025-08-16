@@ -44,7 +44,7 @@ class College(models.Model):
         """Set the long name base on the college code if none where provided."""
         # this is tricky if no CollegeLongnamechoices
         if not self.long_name:
-            self.long_name = COLLEGE_LONG_NAME.get(self.code.lower())
+            self.long_name = COLLEGE_LONG_NAME.get(self.code.lower(), "")
 
     def save(self, *args, **kwargs) -> None:
         """Ensure long_name matches the selected code before saving."""
