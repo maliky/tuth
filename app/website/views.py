@@ -8,15 +8,14 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import AnonymousUser, User
 from django.core.exceptions import PermissionDenied
-from django.db import connection
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from app.people.models.student import Student
 from app.registry.choices import StatusRegistration
 from app.registry.models.registration import Registration
-from app.shared.status import StatusHistory
 from app.timetable.models.section import Section
+from app.finance.models.financial_record import SectionFee
 from app.people.forms.person import StudentForm
 
 
@@ -33,58 +32,69 @@ def _require_student(user: User | AnonymousUser) -> Student:
     return cast(Student, student)  # <— only cast once, in one place
 
 
-def course_dashboard(request: HttpRequest) -> HttpResponse:
-    """Allow a student to manage their course registrations."""
+def registration_dashboard(request: HttpRequest) -> HttpResponse:
+    """Display and manage course section reservations for the student."""
+
     # rely on the authenticated user's Student profile
     student = _require_student(request.user)
+
     if request.method == "POST":
         action = request.POST.get("action")
+        selected = request.POST.getlist("sections")
 
-        if action == "add":
-            section_id = request.POST.get("section_id")
-            section = get_object_or_404(Section, pk=section_id)
-            Registration.objects.create(student=student, section=section)
-            messages.success(request, "Course added successfully.")
-            return redirect("course_dashboard")
-
-        if action == "remove":
-            reg_id = request.POST.get("registration_id")
-            reg = get_object_or_404(Registration, pk=reg_id, student=student)
-            # record the change before deleting the registration
-            tables = connection.introspection.table_names()
-            if StatusHistory._meta.db_table in tables:
-                reg.status_history.create(
-                    status=StatusRegistration.REMOVE,
-                    author=request.user,
+        if action == "reserve":
+            for sec_id in selected:
+                section = get_object_or_404(Section, pk=sec_id)
+                # create or update registration with pending status
+                Registration.objects.update_or_create(
+                    student=student,
+                    section=section,
+                    defaults={"status": StatusRegistration.PENDING},
                 )
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    "DELETE FROM registry_registration WHERE id = %s",
-                    [reg_id],
-                )
-            messages.success(request, "Registration removed.")
-            return redirect("course_dashboard")
+            messages.success(request, "Reservation saved.")
+            return redirect("registration_dashboard")
 
-        if action == "update":
-            reg_id = request.POST.get("registration_id")
-            reg = get_object_or_404(Registration, pk=reg_id, student=student)
-            reg.status = request.POST.get("status")  # type: ignore[assignment]
-            reg.save()
-            messages.success(request, "Registration updated.")
-            return redirect("course_dashboard")
+        if action == "cancel":
+            regs = Registration.objects.filter(
+                student=student, section_id__in=selected
+            )
+            regs.delete()
+            messages.success(request, "Reservation cancelled.")
+            return redirect("registration_dashboard")
 
-    registrations = Registration.objects.filter(student=student)
-    available_sections = Section.objects.exclude(
-        id__in=registrations.values_list("section_id", flat=True)
+    courses = student.allowed_courses()
+    sections = (
+        Section.objects.filter(program__course__in=courses)
+        .select_related("program__course")
+        .prefetch_related("sessions__schedule")
+    )
+
+    # gather any additional fees per section for quick lookup
+    fees = {
+        fee.section_id: fee.amount
+        for fee in SectionFee.objects.filter(section__in=sections)
+    }
+
+    sections_by_course: dict = {}
+    for sec in sections:
+        course = sec.program.course
+        # attach fee amount so templates can calculate totals
+        sec.fee_amount = fees.get(sec.id, 0)
+        sections_by_course.setdefault(course, []).append(sec)
+
+    existing = set(
+        Registration.objects.filter(student=student).values_list(
+            "section_id", flat=True
+        )
     )
 
     context = {
-        "registrations": registrations,
-        "available_sections": available_sections,
-        "statuses": StatusRegistration.choices,
+        "sections_by_course": sections_by_course,
+        "existing": existing,
+        "fees": fees,
     }
 
-    return render(request, "website/course_dashboard.html", context)
+    return render(request, "website/registration_dashboard.html", context)
 
 
 @permission_required("people.add_student", raise_exception=True)
