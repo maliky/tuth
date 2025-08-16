@@ -241,7 +241,7 @@ ROLE_MATRIX = {
     },
     "finance_officer": {
         "add": [
-            "documentsdonor",
+            "documentdonor",
             "documentstaff",
             "donor",
             "financialrecord",
@@ -249,7 +249,8 @@ ROLE_MATRIX = {
             "sectionfee",
         ],
         "change": [
-            "documentdonor" "financialrecord",
+            "documentdonor",
+            "financialrecord",
             "documentstaff",
             "donor",
             "payment",
@@ -304,7 +305,7 @@ ROLE_MATRIX = {
     "prospecting_student": {
         "add": ["documentstudent"],
         "delete": ["documentstudent"],
-        "change": ["documentstudent"],                
+        "change": ["documentstudent"],
         "view": [
             "academicyear",
             "college",
@@ -315,7 +316,7 @@ ROLE_MATRIX = {
             "semester",
             "space",
             "term",
-"documentstudent"
+            "documentstudent",
         ],
     },
     "registrar": {

@@ -204,7 +204,7 @@ class ProgramResource(resources.ModelResource):
         widget=CourseWidget(),
     )
     credit_hours_f = fields.Field(
-        attribute="credit_hours", column_name="credit_hours", default="3"
+        attribute="credit_hours", column_name="credit_hours", default=3
     )
 
     class Meta:

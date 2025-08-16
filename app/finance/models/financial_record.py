@@ -40,6 +40,7 @@ class FinancialRecord(models.Model):
         "finance.ClearanceStatus",
         on_delete=models.PROTECT,
         related_name="financial_records",
+        default="pending",
     )
 
     last_updated = models.DateTimeField(auto_now=True)
@@ -50,7 +51,7 @@ class FinancialRecord(models.Model):
         "people.Staff",
         null=True,
         on_delete=models.SET_NULL,
-        related_name="financial_records_verified",
+        related_name="financial_records_checked",
     )
 
 
@@ -75,7 +76,10 @@ class SectionFee(models.Model):
     # ~~~~~~~~ Mandatory ~~~~~~~~
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)
     fee_type = models.ForeignKey(
-        "finance.FeeType", on_delete=models.CASCADE, related_name="sections_fees"
+        "finance.FeeType",
+        on_delete=models.CASCADE,
+        related_name="sections_fees",
+        default="other",
     )
 
     amount = models.DecimalField(max_digits=10, decimal_places=2)

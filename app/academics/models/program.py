@@ -39,7 +39,7 @@ class Program(models.Model):
     credit_hours = models.ForeignKey(
         "shared.CreditHour",
         on_delete=models.PROTECT,
-        default="3",
+        default=3,
         help_text="Credits to be used in this curriculum for this course",
         related_name="programs",
     )
@@ -51,7 +51,7 @@ class Program(models.Model):
     def _ensure_credit_hours(self):
         """Make sure the credit_hours is set."""
         if not self.credit_hours_id:
-            self.credit_hours_id = "3"
+            self.credit_hours_id = 3
         CreditHour.objects.get_or_create(
             code=self.credit_hours_id, defaults={"label": str(self.credit_hours_id)}
         )

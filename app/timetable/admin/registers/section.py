@@ -76,6 +76,6 @@ class SectionAdmin(CollegeRestrictedAdmin):
         return obj.sessions.count()
 
     @admin.display(description="Credits")
-    def credit_hours(self, obj: Section) -> str:
+    def credit_hours(self, obj: Section) -> int:
         """Return credit hours for this section's program."""
-        return obj.program.credit_hours_id or ""
+        return obj.program.credit_hours_id or 3
