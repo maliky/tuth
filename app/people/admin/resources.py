@@ -124,7 +124,7 @@ class StudentResource(resources.ModelResource):
         skip_unchanged = True
         report_skipped = False
         use_bulk = False  # do not use because ressources is down row by row
-        
+
     def do_instance_save(self, instance, is_create) -> None:
         """Overide the instance save operation."""
         instance.save()

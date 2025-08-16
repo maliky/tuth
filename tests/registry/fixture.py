@@ -6,7 +6,6 @@ from decimal import Decimal
 from typing import Callable, TypeAlias
 
 import pytest
-from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from app.registry.choices import DocumentType, StatusRegistration
@@ -134,7 +133,7 @@ def documentstudent_factory(student_factory) -> DocumentStudentFactory:
 
     def _make(student_uname: str, curri_short_name: str) -> DocumentStudent:
         student = student_factory(student_uname, curri_short_name)
-        return Document.objects.create(
+        return DocumentStudent.objects.create(
             person=student,
             data_file=SimpleUploadedFile("doc.txt", b"data"),
             document_type=DocumentType.WAEC,
@@ -149,7 +148,7 @@ def documentdonor_factory(donor_factory) -> DocumentDonorFactory:
 
     def _make(donor_uname: str) -> DocumentDonor:
         donor = donor_factory(donor_uname)
-        return Document.objects.create(
+        return DocumentDonor.objects.create(
             person=donor,
             data_file=SimpleUploadedFile("doc.txt", b"data"),
             document_type=DocumentType.WAEC,
@@ -163,8 +162,8 @@ def documentstaff_factory(staff_factory) -> DocumentStaffFactory:
     """Return a callable to build documents for Staff."""
 
     def _make(staff_uname: str) -> DocumentStaff:
-        staff = staff_factory(staff_uname, curri_short_name)
-        return Document.objects.create(
+        staff = staff_factory(staff_uname)
+        return DocumentStaff.objects.create(
             person=staff,
             data_file=SimpleUploadedFile("doc.txt", b"data"),
             document_type=DocumentType.WAEC,

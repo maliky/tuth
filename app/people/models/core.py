@@ -25,6 +25,7 @@ class AbstractPerson(StatusableMixin, models.Model):
     # https://docs.djangoproject.com/en/5.2/topics/auth/customizing/#django.contrib.auth.models.AbstractUser
 
     """
+
     class Meta:
         abstract = True
         ordering = ["user__first_name", "user__last_name"]
@@ -248,4 +249,3 @@ class AbstractPerson(StatusableMixin, models.Model):
         user_ids_str = cls.objects.values_list(cls.ID_FIELD or "", flat=True)  # type: ignore[attr-type]
         user_ids = [extract_id_num(v) for v in user_ids_str]
         return user_ids
-

@@ -17,13 +17,16 @@ class GradeInline(admin.TabularInline):
     autocomplete_fields = ("student",)
 
 
-class DocumentStaffInline(admin.TabularInline):  #StackedInline
+class DocumentStaffInline(admin.TabularInline):  # StackedInline
     model = DocumentStaff
     can_delete = True
 
-class DocumentDonorInline(admin.TabularInline):  #StackedInline
+
+class DocumentStudentInline(admin.TabularInline):  # StackedInline
+    model = DocumentStudent
+    can_delete = True
+
+
+class DocumentDonorInline(admin.TabularInline):  # StackedInline
     model = DocumentDonor
     can_delete = True
-    
-    
-    

@@ -152,7 +152,7 @@ class StudentAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
     list_display = ("long_name", "student_id", "birth_date")
     search_fields = ("student_id", "username", "long_name")
     readonly_fields = ("student_id",)
-    inlines = [DocumentStudentInline]    
+    inlines = [DocumentStudentInline]
     fieldsets = [
         (
             "Student Informations",

@@ -5,9 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional, cast
 
-from app.people.models.core import AbstractPerson
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
+
 from django.db import models
 from simple_history.models import HistoricalRecords
 
@@ -49,7 +47,7 @@ class AbstractDocument(StatusableMixin, models.Model):
         super().clean()
 
     class Meta:
-        meta = True
+        abstract = True
         """Model metadata."""
 
 
