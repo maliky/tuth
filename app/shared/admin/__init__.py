@@ -2,6 +2,7 @@
 
 from app.shared.admin.core import get_current_semester
 from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
+
 # register customized Group admin
 from app.shared.admin.group import GroupAdmin
 

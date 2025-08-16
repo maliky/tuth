@@ -1,7 +1,7 @@
 """Core module."""
 
 from app.people.models.role_assignment import RoleAssignment
-from app.registry.admin.inlines import DocumentStudentInline
+from app.registry.admin.inlines import DocumentStaffInline, DocumentStudentInline
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
@@ -118,6 +118,7 @@ class StaffAdmin(DepartmentRestrictedAdmin):
     search_fields = ("staff_id", "username", "long_name", "department")
     list_filter = ("department",)
     readonly_fields = ("staff_id",)
+    inlines = [DocumentStaffInline]
     fieldsets = [
         (
             "User Account",

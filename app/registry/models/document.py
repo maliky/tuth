@@ -13,13 +13,13 @@ from app.registry.choices import DocumentType, StatusDocument
 from app.shared.status.mixins import StatusableMixin, StatusHistory
 
 
-def set_document_path(instance, filename):
+def set_document_path(instance, filename: str) -> str:
     """Set the directory where to save the filename.
 
     MEDIA_ROOT/<instance_name>/<instance.person>
     """
     instance_name = instance.__class__.__name__.lower()
-    return str(Path(instance_name) / instance.person / filename)
+    return str(Path(instance_name) / str(instance.person) / filename)
 
 
 class AbstractDocument(StatusableMixin, models.Model):

@@ -12,6 +12,7 @@ from app.academics.models.curriculum import Curriculum
 from app.people.models.core import AbstractPerson
 from app.shared.types import CourseQuery
 from app.timetable.models.semester import Semester
+from simple_history.models import HistoricalRecords
 
 
 class Student(AbstractPerson):
@@ -34,6 +35,7 @@ class Student(AbstractPerson):
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     curriculum = models.ForeignKey("academics.Curriculum", on_delete=models.CASCADE)
+    history = HistoricalRecords()
 
     # ~~~~ Auto-filled ~~~~
     student_id = models.CharField(max_length=20, unique=True, blank=True)
