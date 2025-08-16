@@ -11,7 +11,7 @@ from app.academics.admin.actions import update_curriculum
 from app.academics.admin.views import CurriculumBySemester
 from app.academics.models.college import College
 from app.academics.models.course import Course
-from app.academics.models.curriculum import Curriculum
+from app.academics.models.curriculum import Curriculum, CurriculumStatus
 from app.academics.models.department import Department
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.program import Program
@@ -177,3 +177,11 @@ class ProgramAdmin(CollegeRestrictedAdmin):
     search_fields = ("curriculum__short_name", "course__code")
     # inlines = [CourseProgramInline]
     # > Add the list all curriculum having this particular program, CurriculumInline
+
+
+@admin.register(CurriculumStatus)
+class CurriculumStatusAdmin(admin.ModelAdmin):
+    """Lookup admin for CurriculumStatus."""
+
+    search_fields = ("code", "label")
+    list_display = ("code", "label")

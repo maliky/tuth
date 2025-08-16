@@ -5,8 +5,6 @@ from __future__ import annotations
 from django.db import models
 from simple_history.models import HistoricalRecords
 
-from app.finance.choices import FeeType, StatusClearance
-
 
 class FinancialRecord(models.Model):
     """Financial snapshot for a student.
@@ -38,11 +36,12 @@ class FinancialRecord(models.Model):
 
     # ~~~~ Auto-filled ~~~~
     total_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    clearance_status = models.CharField(
-        max_length=50,
-        choices=StatusClearance.choices,
-        default=StatusClearance.PENDING,
+    clearance_status = models.ForeignKey(
+        "finance.ClearanceStatus",
+        on_delete=models.PROTECT,
+        related_name="financial_records",
     )
+
     last_updated = models.DateTimeField(auto_now=True)
     history = HistoricalRecords()
 
@@ -67,7 +66,7 @@ class SectionFee(models.Model):
         >>> from decimal import Decimal
         >>> SectionFee.objects.create(
         ...     section=section,
-        ...     fee_type=FeeType.LAB,
+        ...     fee_type=FeeType.objects.get(code='lab'),
         ...     amount=Decimal("25.00"),
         ... )
         >>> SectionFee.objects.create(section=section, fee_type=FeeType.LAB, amount=50)
@@ -75,7 +74,10 @@ class SectionFee(models.Model):
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)
-    fee_type = models.CharField(max_length=50, choices=FeeType.choices)
+    fee_type = models.ForeignKey(
+        "finance.FeeType", on_delete=models.CASCADE, related_name="sections_fees"
+    )
+
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()

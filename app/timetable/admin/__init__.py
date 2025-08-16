@@ -7,7 +7,7 @@ from .filters import (
     GradeSemesterFilterAc,
 )
 from .inlines import SectionInline, SemesterInline
-from .registers.core import AcademicYearAdmin, SemesterAdmin
+from .registers.core import AcademicYearAdmin, SemesterAdmin, TermAdmin
 from .registers.section import SectionAdmin
 from .registers.session import SecSessionAdmin
 from .resources.core import AcademicYearResource, SemesterResource
@@ -15,6 +15,7 @@ from .resources.section import SectionResource
 from .views import SectionBySemesterAutocomplete
 
 __all__ = [
+    "TermAdmin",
     "AcademicYearAdmin",
     "AcademicYearResource",
     "SectionAdmin",

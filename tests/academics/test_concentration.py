@@ -3,6 +3,7 @@
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
+from app.shared.models import CreditHour
 
 from app.academics.models.concentration import (
     Major,
@@ -35,11 +36,11 @@ def test_total_credit_hours_sums_programs(major):
     """total_credit_hours should add all attached program credits."""
 
     pg = Program.get_unique_default()
-    pg.credit_hours = 4
+    pg.credit_hours = CreditHour.objects.get(code=4)
     pg.save()
     major.programs.add(pg)
 
-    total = sum(p.credit_hours for p in major.programs.all())
+    total = sum(p.credit_hours_id for p in major.programs.all())
 
     assert major.total_credit_hours() == total
 
@@ -58,7 +59,7 @@ def test_major_clean_credit_limit_exceeded(major):
     """clean() should detect credit hour overflow."""
 
     pg = Program.get_unique_default()
-    pg.credit_hours = 10
+    pg.credit_hours = CreditHour.objects.get(code=10)
     pg.save()
     major.programs.add(pg)
     major.max_credit_hours = 5

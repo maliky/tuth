@@ -44,9 +44,9 @@ def financial_record(student) -> FinancialRecord:
 @pytest.fixture
 def payment(financial_record, staff, program) -> Payment:
     """Default payment record for a program."""
-
+    cash, _ = PaymentMethod.objects.get_or_create(code="cash")
     return Payment.objects.create(
-        program=program, amount=DECIMAL_1, method=PaymentMethod.CASH, recorded_by=staff
+        program=program, amount=DECIMAL_1, method=cash, recorded_by=staff
     )
 
 
@@ -97,10 +97,11 @@ def payment_factory(
         staff_uname: str,
         amount: Decimal = DECIMAL_1,
     ) -> Payment:
+        cash, _ = PaymentMethod.objects.get_or_create(code="cash")
         return Payment.objects.create(
             program=program_factory(course_no, curri_short_name),
             amount=amount,
-            method=PaymentMethod.CASH,
+            method=cash,
             recorded_by=staff_factory(staff_uname),
         )
 

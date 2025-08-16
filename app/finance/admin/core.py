@@ -1,5 +1,6 @@
 """Core module."""
 
+from app.finance.choices import FeeType, PaymentMethod, ClearanceStatus
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
@@ -52,3 +53,10 @@ class PaymentHistoryAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     list_display = ("__str__", "financial_record", "method", "recorded_by")
     list_filter = (SemesterFilter,)
     readonly_fields = ("payment_date",)
+
+
+@admin.register(ClearanceStatus, FeeType, PaymentMethod)
+class LookupAdmin(admin.ModelAdmin):
+    """Basic admin for finance lookup tables."""
+
+    search_fields = ("code", "label")

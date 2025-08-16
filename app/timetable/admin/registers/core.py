@@ -9,6 +9,7 @@ from app.timetable.admin.inlines import SemesterInline
 from app.timetable.admin.resources.core import SemesterResource
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester
+from app.timetable.models.term import Term
 
 
 @admin.register(AcademicYear)
@@ -38,3 +39,17 @@ class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
     list_display = ("academic_year", "number", "start_date", "end_date")
     list_filter = ("academic_year",)
     search_fields = ("academic_year__code", "academic_year__long_name")
+
+
+@admin.register(Term)
+class TermAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
+    """Admin configuration for :class:`~app.timetable.models.Term`.
+
+    Mirrors :class:`SemesterAdmin` by listing each term's parent semester,
+    number and date range. The ``number`` foreign key uses autocomplete to
+    simplify selection.
+    """
+
+    list_display = ("semester", "number", "start_date", "end_date")
+    list_filter = ("semester",)
+    autocomplete_fields = ("semester",)

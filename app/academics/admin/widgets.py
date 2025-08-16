@@ -10,6 +10,7 @@ from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.academics.models.program import Program
+from app.shared.models import CreditHour
 from app.shared.utils import expand_course_code, get_in_row
 
 
@@ -38,11 +39,14 @@ class ProgramWidget(widgets.ForeignKeyWidget):
             else Curriculum.get_default()
         )
 
+        credit_hours, _ = CreditHour.objects.get_or_create(
+            code=get_in_row("credit_hours", row)
+        )
         program, _ = Program.objects.get_or_create(
             curriculum=curriculum,
             course=course,
             defaults={
-                "credit_hours": get_in_row("credit_hours", row),
+                "credit_hours": credit_hours,
                 "is_required": get_in_row("is_required", row),
             },
         )

@@ -1,18 +1,21 @@
 """Lookup tables for different status."""
 
-from abc import abstractclassmethod
-from django.db import models
+from app.shared.mixins import StatusMixin
 
-class AbstractStatus(models.Model):
-    """Keep possible statuses for uploaded documents."""
 
-    class meta:
-        abstract = True
-        ordering = ["code"]
-        
-    code = models.CharField(max_lenght=30, primary_key=True)
-    label = models.CharField(max_lenght=60)
+class CreditHour(StatusMixin):
+    """Map numeric credit hour codes to labels."""
 
-    def __str__(self) -> str:
-        """Return human readable label."""
-        return self.label
+    # class CREDIT_NUMBER(IntegerChoices):
+    # ZERO = 0, "0"
+    # ONE = 1, "1"
+    # TWO = 2, "2"
+    # THREE = 3, "3"
+    # FOUR = 4, "4"
+    # FIVE = 5, "5"
+    # SIX = 6, "6"
+    # SEVEN = 7, "7"
+    # EIGHT = 8, "8"
+    # NINE = 9, "9"
+    # TEN = 10, "10"
+    # TBA = 99, "99"  # to be attributed

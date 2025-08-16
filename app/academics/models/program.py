@@ -7,7 +7,6 @@ from typing import Optional, Self
 from django.db import models
 from simple_history.models import HistoricalRecords
 
-from app.academics.choices import CREDIT_NUMBER
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 
@@ -36,10 +35,12 @@ class Program(models.Model):
     is_elective = models.BooleanField(default=False)
     history = HistoricalRecords()
     # credit hours depend on the curricula not the Course
-    credit_hours = models.PositiveSmallIntegerField(
-        choices=CREDIT_NUMBER.choices,
+    credit_hours = models.ForeignKey(
+        "shared.CreditHour",
+        on_delete=models.PROTECT,
+        default="3",
         help_text="Credits to be used in this curriculum for this course",
-        default=CREDIT_NUMBER.THREE,
+        related_name="programs",
     )
 
     def __str__(self) -> str:  # pragma: no cover
@@ -48,12 +49,12 @@ class Program(models.Model):
 
     def _ensure_credit_hours(self):
         """Make sure the credit_hours is set."""
-        if not self.credit_hours:
-            self.credit_hours = CREDIT_NUMBER.THREE
+        if not self.credit_hours_id:
+            self.credit_hours_id = "3"
 
     def save(self, *args, **kwargs):
         """Make sure we set default before saving."""
-        if not self.credit_hours:
+        if not self.credit_hours_id:
             self._ensure_credit_hours()
         super().save(*args, **kwargs)
 

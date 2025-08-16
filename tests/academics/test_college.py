@@ -9,7 +9,7 @@ from app.timetable.models.semester import Semester
 from app.timetable.models.section import Section
 from app.people.models.role_assignment import RoleAssignment
 from app.shared.auth.perms import UserRole
-from app.academics.choices import CREDIT_NUMBER
+from app.shared.models import CreditHour
 
 
 pytestmark = pytest.mark.django_db
@@ -33,7 +33,7 @@ def test_college_computed_fields(
         program_factory(str(n), curr1.short_name) for n in ["101", "102", "201", "202"]
     ]
     for p in programs:
-        p.credit_hours = CREDIT_NUMBER.TEN
+        p.credit_hours = CreditHour.objects.get(code=10)
         p.save()
     year = AcademicYear.objects.create(start_date=date(2024, 9, 1))
     sem = Semester.objects.create(academic_year=year, number=1)

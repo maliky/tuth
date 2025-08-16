@@ -5,19 +5,20 @@ from __future__ import annotations
 from datetime import date
 from typing import Self
 
-from app.shared.models.status import AbstractStatus
+from app.shared.mixins import StatusMixin
 from django.db import models
 from simple_history.models import HistoricalRecords
-
 from app.academics.models.college import College
 from app.shared.status.mixins import StatusableMixin
 
 
-class CurriculumStatus(AbstractStatus):
+class CurriculumStatus(StatusMixin):
     """Code/label paris for curriculum validation status."""
+
     # PENDING = "pending", "Pending"
     # APPROVED = "approved", "Approved"
     # NEEDS_REVISION = "needs_revision", "Needs Revision"
+
 
 # need to update the docs
 class Curriculum(StatusableMixin, models.Model):
@@ -93,15 +94,15 @@ class Curriculum(StatusableMixin, models.Model):
         if not self.college_id:
             self.college = College.get_default()
         if not self.status_id:
-             #>? given that id is no different from code is it necessary to use _id ?
-            self.status_id ="pending" 
+            # >? given that id is no different from code is it necessary to use _id ?
+            self.status_id = "pending"
         self._ensure_activity()
         super().save(*args, **kwargs)
 
     def clean(self) -> None:
         """Validate the curriculum and its current status."""
         super().clean()
-        self.validate_status(StatusCurriculum.objects.all())
+        self.validate_status(CurriculumStatus.objects.all())
 
     class Meta:
         ordering = ["college", "short_name"]

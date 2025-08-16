@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Optional, cast
 
 
+from app.shared.mixins import StatusMixin
 from django.db import models
 from simple_history.models import HistoricalRecords
 
@@ -95,10 +96,5 @@ class DocumentStaff(AbstractDocument):
     history = HistoricalRecords()
 
 
-class DocumentStatus(models.Model):
+class DocumentStatus(StatusMixin):
     """Keep possible statuses for uploaded documents."""
-
-    code = models.CharField(max_lenght=30, primary_key=True)
-    label = models.CharField(max_lenght=60)
-
-    

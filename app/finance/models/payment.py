@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from django.db import models
 
-from app.finance.choices import PaymentMethod
 from simple_history.models import HistoricalRecords
 
 
@@ -22,8 +21,8 @@ class Payment(models.Model):
         >>> from decimal import Decimal
         >>> Payment.objects.create(
         ...     program=program,
-        ...     amount=Decimal("50.00"),
-        ...     method=PaymentMethod.CASH,
+        ...     amount=Decimal("50.00")
+        ...     method=PaymentMethod.CASH,    # a revoir
         ...     recorded_by=staff,
         >>> Payment.objects.create(
         ...     program=program,
@@ -35,7 +34,9 @@ class Payment(models.Model):
     # ~~~~~~~~ Mandatory ~~~~~~~~
     program = models.OneToOneField("academics.Program", on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=8, decimal_places=2)
-    method = models.CharField(max_length=20, choices=PaymentMethod.choices)
+    method = models.ForeignKey(
+        "finance.PaymentMethod", on_delete=models.PROTECT, related_name="payments"
+    )
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()
 
