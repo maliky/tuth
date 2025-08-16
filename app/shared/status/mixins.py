@@ -106,14 +106,17 @@ class StatusableMixin(models.Model):
         """Ensure self.status is an allowed one.
 
         Accept list of tuple or list of str
+        Status should be a StatusMixin with code and label
         """
-
-        status = getattr(self, "status", None)
+        # > this need to be handle without braking the whole code.
+        # > maybe bubble up the error and catch it at the interface to prpose a fix, a messages
+        # > proposing to go to the related model and add the status or check the entry.
+        status_id = getattr(self, "status_id", None)
         allowed = {a.value if hasattr(a, "value") else a for a in allowed}
 
-        if status not in allowed:
+        if status_id not in allowed:
             raise ValidationError(
-                f"Invalid state '{status}'. Allowed states: {', '.join(allowed)}."
+                f"Invalid state '{status_id}'. Allowed states: {', '.join(allowed)}."
             )
 
     class Meta:

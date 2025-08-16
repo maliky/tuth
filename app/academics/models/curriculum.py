@@ -13,7 +13,7 @@ from app.shared.status.mixins import StatusableMixin
 
 
 class CurriculumStatus(StatusMixin):
-    """Code/label paris for curriculum validation status."""
+    """Code/label pairs for curriculum validation status."""
 
     # PENDING = "pending", "Pending"
     # APPROVED = "approved", "Approved"
