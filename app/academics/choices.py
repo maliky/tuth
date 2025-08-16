@@ -98,7 +98,7 @@ COLLEGE_CODE = {
     "coab": "COBA",
     "deft": "DEFT",
     "test": "TEST",
-    "":"DEFT",
+    "": "DEFT",
     # legacy
     "cba": "COBA",
     "chs": "COHS",

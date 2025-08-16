@@ -58,4 +58,4 @@ class RoomAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     list_filter = ("space",)
     search_fields = ("space__code", "code")
     autocomplete_fields = ["space"]
-    inlines = [SecSessionInline]
+    inlines = [SecSessionInline] # 

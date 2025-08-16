@@ -1,6 +1,7 @@
 """Core module."""
 
 from app.people.models.role_assignment import RoleAssignment
+from app.registry.admin.inlines import DocumentStudentInline
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
@@ -151,6 +152,7 @@ class StudentAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
     list_display = ("long_name", "student_id", "birth_date")
     search_fields = ("student_id", "username", "long_name")
     readonly_fields = ("student_id",)
+    inlines = [DocumentStudentInline]    
     fieldsets = [
         (
             "Student Informations",

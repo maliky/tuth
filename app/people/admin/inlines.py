@@ -1,5 +1,6 @@
 """Inlines forms for the admin interface of people."""
 
+from app.registry.models.document import DocumentStudent
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
@@ -11,3 +12,4 @@ class UserInline(admin.StackedInline):
     can_delete = False
     verbose_name_plural = "User"
     fields = ("username", "first_name", "last_name", "email", "password1", "password2")
+

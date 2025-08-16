@@ -220,9 +220,8 @@ class CollegeWidget(widgets.ForeignKeyWidget):
         """
         code = COLLEGE_CODE.get((value or "").strip().lower(), "DEFT")
         college, _ = College.objects.get_or_create(
-            code=code, defaults={"long_name": COLLEGE_LONG_NAME.get(code.lower(),"deft")}
+            code=code, defaults={"long_name": COLLEGE_LONG_NAME.get(code.lower(), "deft")}
         )
-
 
         return college
 

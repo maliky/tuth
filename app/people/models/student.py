@@ -4,8 +4,6 @@
 
 from __future__ import annotations
 
-import ipdb
-
 from django.db import models
 
 from app.academics.choices import LEVEL_NUMBER

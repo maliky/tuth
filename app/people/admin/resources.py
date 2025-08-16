@@ -124,17 +124,24 @@ class StudentResource(resources.ModelResource):
         skip_unchanged = True
         report_skipped = False
         use_bulk = False  # do not use because ressources is down row by row
-
-    def before_save_instance(self, instance, row,**kwargs) ->None:
-        import ipdb; ipdb.set_trace()
-
         
+    def do_instance_save(self, instance, is_create) -> None:
+        """Overide the instance save operation."""
+        instance.save()
+        pass
+
+    def before_save_instance(self, instance, row, **kwargs) -> None:
+        """Overide operation juste before save."""
+        # import ipdb; ipdb.set_trace()
+        pass
+
     def after_save_instance(self, instance, row, **kwargs) -> None:
         """Assign the student group to the user when importing."""
         if kwargs.get("dry_run") or instance.user is None:
             return
-        group = UserRole.STUDENT.value.group
-        instance.user.groups.add(group)
+        # group = UserRole.STUDENT.value.group
+        # instance.user.groups.add(group)
+        # import ipdb; ipdb.set_trace()
 
 
 class RegistrationResource(resources.ModelResource):

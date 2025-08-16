@@ -2,8 +2,6 @@
 
 from datetime import date
 
-import ipdb
-
 from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -27,6 +25,9 @@ class AbstractPerson(StatusableMixin, models.Model):
     # https://docs.djangoproject.com/en/5.2/topics/auth/customizing/#django.contrib.auth.models.AbstractUser
 
     """
+    class Meta:
+        abstract = True
+        ordering = ["user__first_name", "user__last_name"]
 
     ID_FIELD: str | None = None
     ID_PREFIX: str = "TU-"
@@ -156,7 +157,9 @@ class AbstractPerson(StatusableMixin, models.Model):
         if self.user.email:
             self.email = self.user.email
         else:
-            self.mk_email(self.username)
+            self.email = self.mk_email()
+            self.user.email = self.email
+            self.user.save(update_fields=["email"])
 
     def set_password(self, password):
         """Setting password for the attached user."""
@@ -199,7 +202,6 @@ class AbstractPerson(StatusableMixin, models.Model):
 
     def save(self, *args, **kwargs):
         """Create an ID and saves it for each model using _mk_id and ID_FIELD."""
-        import ipdb; ipdb.set_trace()
 
         if not self.obj_id:
             new_id = self._mk_id()
@@ -216,7 +218,7 @@ class AbstractPerson(StatusableMixin, models.Model):
                 group, _ = Group.objects.get_or_create(name=self.GROUP)
                 self.user.groups.add(group)
 
-            if self.STAFF_STATUS is not None:
+            if self.STAFF_STATUS:
                 self.user.is_staff = self.STAFF_STATUS
                 self.user.save(update_fields=["is_staff"])
 
@@ -247,6 +249,3 @@ class AbstractPerson(StatusableMixin, models.Model):
         user_ids = [extract_id_num(v) for v in user_ids_str]
         return user_ids
 
-    class Meta:
-        abstract = True
-        ordering = ["user__first_name", "user__last_name"]

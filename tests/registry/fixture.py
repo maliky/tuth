@@ -10,12 +10,20 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from app.registry.choices import DocumentType, StatusRegistration
-from app.registry.models import Document, Grade, Registration
+from app.registry.models import (
+    DocumentStudent,
+    DocumentStaff,
+    DocumentDonor,
+    Grade,
+    Registration,
+)
 from app.registry.models.grade import GradeValue
 
 RegistrationFactory: TypeAlias = Callable[[str, str, str, str, int], Registration]
 GradeFactory: TypeAlias = Callable[[str, str, str, str, Decimal], Grade]
-DocumentFactory: TypeAlias = Callable[[str, str], Document]
+DocumentStudentFactory: TypeAlias = Callable[[str, str], DocumentStudent]
+DocumentStaffFactory: TypeAlias = Callable[[str, str], DocumentStaff]
+DocumentDonorFactory: TypeAlias = Callable[[str, str], DocumentDonor]
 
 DECIMAL_90 = Decimal("90")
 
@@ -43,17 +51,32 @@ def grade(student_factory, section_factory) -> Grade:
 
 
 @pytest.fixture
-def document(student_factory) -> Document:
+def documentStudent(student_factory) -> DocumentStudent:
     """Default document attached to a student."""
-    student = student_factory("Regina Stud", "Bsc. REGULAR")
-
-    ct = ContentType.objects.get_for_model(student)
-    file_data = SimpleUploadedFile("doc.txt", b"data")
-    return Document.objects.create(
-        profile_type=ct,
-        profile_id=student.id,
-        data_file=file_data,
+    return DocumentStudent.objects.create(
+        person=student_factory("Regina Stud", "Bsc. REGULAR"),
+        data_file=SimpleUploadedFile("doc.txt", b"data"),
         document_type=DocumentType.WAEC,
+    )
+
+
+@pytest.fixture
+def documentDonor(donor_factory) -> DocumentDonor:
+    """Default document attached to a student."""
+    return DocumentDonor.objects.create(
+        person=donor_factory("Generous Donor"),
+        data_file=SimpleUploadedFile("doc.txt", b"data"),
+        document_type=DocumentType.RECCOM,
+    )
+
+
+@pytest.fixture
+def documentStaff(staff_factory) -> DocumentStaff:
+    """Default document attached to a student."""
+    return DocumentStaff.objects.create(
+        person=staff_factory("Stiff Staff"),
+        data_file=SimpleUploadedFile("doc.txt", b"data"),
+        document_type=DocumentType.APPLET,
     )
 
 
@@ -106,17 +129,44 @@ def grade_factory(student_factory, section_factory) -> GradeFactory:
 
 
 @pytest.fixture
-def document_factory(student_factory) -> DocumentFactory:
-    """Return a callable to build documents."""
+def documentstudent_factory(student_factory) -> DocumentStudentFactory:
+    """Return a callable to build documents for Students."""
 
-    def _make(student_uname: str, curri_short_name: str) -> Document:
+    def _make(student_uname: str, curri_short_name: str) -> DocumentStudent:
         student = student_factory(student_uname, curri_short_name)
-        ct = ContentType.objects.get_for_model(student)
-        file_data = SimpleUploadedFile("doc.txt", b"data")
         return Document.objects.create(
-            profile_type=ct,
-            profile_id=student.id,
-            data_file=file_data,
+            person=student,
+            data_file=SimpleUploadedFile("doc.txt", b"data"),
+            document_type=DocumentType.WAEC,
+        )
+
+    return _make
+
+
+@pytest.fixture
+def documentdonor_factory(donor_factory) -> DocumentDonorFactory:
+    """Return a callable to build documents for donors."""
+
+    def _make(donor_uname: str) -> DocumentDonor:
+        donor = donor_factory(donor_uname)
+        return Document.objects.create(
+            person=donor,
+            data_file=SimpleUploadedFile("doc.txt", b"data"),
+            document_type=DocumentType.WAEC,
+        )
+
+    return _make
+
+
+@pytest.fixture
+def documentstaff_factory(staff_factory) -> DocumentStaffFactory:
+    """Return a callable to build documents for Staff."""
+
+    def _make(staff_uname: str) -> DocumentStaff:
+        staff = staff_factory(staff_uname, curri_short_name)
+        return Document.objects.create(
+            person=staff,
+            data_file=SimpleUploadedFile("doc.txt", b"data"),
             document_type=DocumentType.WAEC,
         )
 

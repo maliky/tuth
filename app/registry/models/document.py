@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Optional, cast
 
+from app.people.models.core import AbstractPerson
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -13,78 +15,29 @@ from app.registry.choices import DocumentType, StatusDocument
 from app.shared.status.mixins import StatusableMixin, StatusHistory
 
 
-# class StudentDocument(StatusableMixin, models.Model):
-#     """Store the students documents."""
+def set_document_path(instance, filename):
+    """Set the directory where to save the filename.
 
-#     # ~~~~~~~~ Mandatory ~~~~~~~~
-#     owner = models.ForeignKey(
-#         "people.Student",
-#         on_delete=models.CASCADE,
-#         related_name="documents",
-#     )
-#     data_file = models.FileField(upload_to="documents/")
-#     document_type = models.CharField(max_length=50, choices=DocumentType.choices)
-#     # ~~~~ Auto-filled ~~~~
-#     status = models.CharField(
-#         max_length=30,
-#         choices=StatusDocument.choices,
-#         default=StatusDocument.PENDING,
-#     )
-#     history = HistoricalRecords()
-
-#     def current_status(self) -> Optional[StatusHistory]:
-#         """Return the most recent status entry or None if empty."""
-
-#         return cast(Optional[StatusHistory], self.status_history.first())
-
-#     def clean(self) -> None:
-#         """Validating the change of DocumentStatus."""
-#         super().clean()
-#         self.validate_status(StatusDocument)
-
-#     class Meta:
-#         """Model metadata."""
-
-#         # Index both components of the generic relation to speed up lookups
-#         indexes = [
-#             models.Index(fields=["profile_type", "profile_id"]),
-#         ]
+    MEDIA_ROOT/<instance_name>/<instance.person>
+    """
+    instance_name = instance.__class__.__name__.lower()
+    return str(Path(instance_name) / instance.person / filename)
 
 
-class Document(StatusableMixin, models.Model):
-    """File uploaded to support a user profile.
+class AbstractDocument(StatusableMixin, models.Model):
+    """Abstract / factorize some of the documents common methods.
 
-    The profile generic relation allows attaching documents to different
-    profile models (students, staff, etc.).
-
-    Example:
-        >>> from app.registry.models.documnets import Document
-        >>> doc = Document.objects.create(
-        ...     profile=student_profile,
-        ...     file="id.pdf",
-        ...     document_type=DocumentType.ID_CARD,
-        ... )
-        >>> doc.set_pending(author=None)
-    Side Effects:
-        Status changes are tracked via status_history.
+    I'm not abstracting all because historicalRecords need concreet class.
     """
 
-    # We have to use content type because we cannot create a many2many relation
-    # to the abstractPerson class
-
     # ~~~~~~~~ Mandatory ~~~~~~~~
-    profile_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    profile_id = models.PositiveIntegerField()
-    profile = GenericForeignKey("profile_type", "profile_id")
-    data_file = models.FileField(upload_to="documents/")
-    document_type = models.CharField(max_length=50, choices=DocumentType.choices)
     # ~~~~ Auto-filled ~~~~
+    data_file = models.FileField(upload_to=set_document_path)
     status = models.CharField(
         max_length=30,
         choices=StatusDocument.choices,
         default=StatusDocument.PENDING,
     )
-    history = HistoricalRecords()
 
     def current_status(self) -> Optional[StatusHistory]:
         """Return the most recent status entry or None if empty."""
@@ -94,12 +47,51 @@ class Document(StatusableMixin, models.Model):
     def clean(self) -> None:
         """Validating the change of DocumentStatus."""
         super().clean()
-        self.validate_status(StatusDocument)
 
     class Meta:
+        meta = True
         """Model metadata."""
 
-        # Index both components of the generic relation to speed up lookups
-        indexes = [
-            models.Index(fields=["profile_type", "profile_id"]),
-        ]
+
+class DocumentStudent(AbstractDocument):
+    """Store the students documents."""
+
+    # ~~~~~~~~ Mandatory ~~~~~~~~
+    person = models.ForeignKey(
+        "people.Student",
+        on_delete=models.CASCADE,
+        related_name="documents",
+    )
+
+    # may update this to document type for student, donor and staff
+    document_type = models.CharField(max_length=50, choices=DocumentType.choices)
+    # ~~~~ Auto-filled ~~~~
+    history = HistoricalRecords()
+
+
+class DocumentDonor(AbstractDocument):
+    """Store the donors documents."""
+
+    # ~~~~~~~~ Mandatory ~~~~~~~~
+    person = models.ForeignKey(
+        "people.Donor",
+        on_delete=models.CASCADE,
+        related_name="documents",
+    )
+    document_type = models.CharField(max_length=50, choices=DocumentType.choices)
+    # ~~~~ Auto-filled ~~~~
+    history = HistoricalRecords()
+
+
+class DocumentStaff(AbstractDocument):
+    """Store the staffs documents."""
+
+    # ~~~~~~~~ Mandatory ~~~~~~~~
+    person = models.ForeignKey(
+        "people.Staff",
+        on_delete=models.CASCADE,
+        related_name="documents",
+    )
+    document_type = models.CharField(max_length=50, choices=DocumentType.choices)
+    # ~~~~ Auto-filled ~~~~
+    history = HistoricalRecords()
