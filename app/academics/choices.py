@@ -87,29 +87,36 @@ class DepartmentLongNameChoice(TextChoices):
     DEFT = "deft_long_name", "Default Department"  # default
 
 
-class CollegeCodeChoices(TextChoices):
-    COHS = "COHS", "COHS"
-    COAS = "COAS", "COAS"
-    COED = "COED", "COED"
-    CAFS = "CAFS", "CAFS"
-    COET = "COET", "COET"
-    COBA = "COBA", "COBA"
-    DEFT = "DEFT", "DEFT"  # default
-    TEST = "TEST", "TEST"  # for test purposes
+COLLEGE_CODE = {
+    # standard
+    "cohs": "COHS",
+    "coas": "COAS",
+    "coed": "COED",
+    "cafs": "CAFS",
+    "coet": "COET",
+    "coba": "COBA",
+    "coab": "COBA",
+    "deft": "DEFT",
+    "test": "TEST",
+    "":"DEFT",
+    # legacy
+    "cba": "COBA",
+    "chs": "COHS",
+    "edrce": "COED",
+    "cet": "COET",
+    "cas": "COAS",
+}
 
-
-class CollegeLongNameChoices(TextChoices):
-    COHS = "cohs_long_name", "College of Health Sciences"
-    COAS = "coas_long_name", "College of Arts and Sciences"
-    COED = "coed_long_name", "College of Education"
-    CAFS = "cafs_long_name", "College of Agriculture and Food Sciences"
-    COET = "coet_long_name", "College of Engineering and Technology"
-    COBA = "coba_long_name", "College of Business Administration"
-    DEFT = (
-        "deft_long_name",
-        "College of default when no other college is chosen.",
-    )  # default
-    TEST = "test_long_name", "College used for Test purposes"  # for test purposes
+COLLEGE_LONG_NAME = {
+    "cohs": "College of Health Sciences",
+    "coas": "College of Arts and Sciences",
+    "coed": "College of Education",
+    "cafs": "College of Agriculture and Food Sciences",
+    "coet": "College of Engineering and Technology",
+    "coba": "College of Business Administration",
+    "deft": "College of default when no other college is chosen.",
+    "test": "College used for Test purposes",  # for test purposes,
+}
 
 
 class StatusCurriculum(TextChoices):

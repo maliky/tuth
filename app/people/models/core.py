@@ -2,6 +2,8 @@
 
 from datetime import date
 
+import ipdb
+
 from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -51,9 +53,9 @@ class AbstractPerson(StatusableMixin, models.Model):
     middle_name = models.CharField(blank=True)
     name_prefix = models.CharField(help_text="eg. 'Miss.'", blank=True)
     name_suffix = models.CharField(help_text="eg. 'Phd.'", blank=True)
-    date_of_birth = models.DateField(_("date of birth"), null=True, blank=True)
-    place_of_birth = models.CharField(blank=True)
-    gender = models.CharField(choices=[("f", "Woman"), ("m", "Man")], blank=True)
+    birth_date = models.DateField(_("date of birth"), null=True, blank=True)
+    birth_place = models.CharField(blank=True)
+    gender = models.CharField(choices=[("f", "Female"), ("m", "Male")], blank=True)
 
     phone_number = PhoneNumberField(help_text="A Liberian phone number", blank=True)
     physical_address = models.TextField(
@@ -64,7 +66,7 @@ class AbstractPerson(StatusableMixin, models.Model):
     father_address = models.CharField(blank=True)
     father_name = models.CharField(blank=True)
     nationality = models.CharField(blank=True)
-    origin = models.CharField(help_text="eg. Maryland, Nigeria", blank=True)
+    origin_county = models.CharField(help_text="eg. Maryland, Nigeria", blank=True)
     bio = models.TextField(blank=True)
     photo = models.ImageField(upload_to=photo_upload_to, null=True, blank=True)
     marital_status = models.CharField(blank=True)
@@ -76,15 +78,15 @@ class AbstractPerson(StatusableMixin, models.Model):
     @property
     def age(self) -> int | None:
         """Compute and returns the age of the abstract user."""
-        if self.date_of_birth:
+        if self.birth_date:
             today = date.today()
             return (
                 today.year
-                - self.date_of_birth.year
+                - self.birth_date.year
                 # moins 1 ou 0, si the birthday has passed this year.
                 - (
                     (today.month, today.day)
-                    < (self.date_of_birth.month, self.date_of_birth.day)
+                    < (self.birth_date.month, self.birth_date.day)
                 )
             )
         return None
@@ -197,6 +199,8 @@ class AbstractPerson(StatusableMixin, models.Model):
 
     def save(self, *args, **kwargs):
         """Create an ID and saves it for each model using _mk_id and ID_FIELD."""
+        import ipdb; ipdb.set_trace()
+
         if not self.obj_id:
             new_id = self._mk_id()
             object.__setattr__(self, self.ID_FIELD, new_id)  # type: ignore[arg-type]
@@ -206,8 +210,9 @@ class AbstractPerson(StatusableMixin, models.Model):
         self._ensure_username()
         super().save(*args, **kwargs)
 
+        # handling groups
         if self.user_id:
-            if self.GROUP:
+            if self.GROUP:  # each person is part of a GROUP
                 group, _ = Group.objects.get_or_create(name=self.GROUP)
                 self.user.groups.add(group)
 

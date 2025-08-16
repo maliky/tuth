@@ -72,7 +72,7 @@ class Faculty(StatusableMixin, models.Model):
         save() assigns the default college when none is set.
     """
 
-    GROUP = "faculty"
+    GROUP = "Faculty"
     STAFF_STATUS = True
 
     # ~~~~~~~~ Mandatory ~~~~~~~~

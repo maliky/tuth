@@ -9,7 +9,7 @@ from django.apps import apps
 from django.contrib.auth.models import Group
 from django.db.models import Model
 
-from app.academics.choices import CollegeCodeChoices
+from app.academics.choices import COLLEGE_CODE
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +82,7 @@ class RoleInfo:
     @property
     def college(self) -> str:
         """Return the default college."""
-        return self.default_college or CollegeCodeChoices.DEFT
+        return self.default_college or COLLEGE_CODE["deft"]
 
 
 class UserRole(Enum):

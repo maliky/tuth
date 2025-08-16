@@ -177,7 +177,9 @@ class PrerequisiteResource(resources.ModelResource):
 class CollegeResource(resources.ModelResource):
     """Simple import-export resource for College."""
 
-    college_f = fields.Field(attribute="code", column_name="college_code")
+    college_f = fields.Field(
+        attribute="code", column_name="college_code", widget=CollegeWidget()
+    )
 
     class Meta:
         model = College

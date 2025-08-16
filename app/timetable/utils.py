@@ -71,3 +71,16 @@ def get_current_semester(today: Optional[date] = None):
         .order_by("start_date")
         .first()
     )
+
+
+def mk_semester_code(year: str, sem_no: float | int) -> str:
+    r"""Given a year in format YYYY/YYYY and a sem no return the semester code.
+
+    The code is \r'^(?P<year>\\d{2}-\\d{2})_Sem(?P<num>\\d+)$'.
+    """
+    if not year or not sem_no:
+        return ""
+    ya, yb = year.split("/")
+    if isinstance(sem_no, float):
+        sem_no = int(sem_no)
+    return f"{ya[2:]}-{yb[2:]}-Sem{sem_no}"

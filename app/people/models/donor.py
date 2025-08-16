@@ -23,7 +23,7 @@ class Donor(AbstractPerson):
 
     ID_FIELD = "donor_id"
     ID_PREFIX = "TU-DNR"
-    GROUP = "donor"
+    GROUP = "Donor"
     STAFF_STATUS = False
 
     # ~~~~ Read-only ~~~~

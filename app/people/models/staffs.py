@@ -31,7 +31,7 @@ class Staff(AbstractPerson):
 
     ID_FIELD = "staff_id"
     ID_PREFIX = "TU-STF"
-    GROUP = "staff"
+    GROUP = "Staff"
     STAFF_STATUS = True
 
     # ~~~~~~~~ Mandatory ~~~~~~~~

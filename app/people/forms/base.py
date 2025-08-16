@@ -23,7 +23,7 @@ class PersonFormMixin(forms.ModelForm):
         "name_suffix",
         "phone_number",
         "physical_address",
-        "date_of_birth",
+        "birth_date",
         "bio",
         "photo",
     )

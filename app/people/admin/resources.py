@@ -1,6 +1,7 @@
 """Resources module."""
 
 from import_export import fields, resources
+from app.academics.admin.widgets import CurriculumWidget
 from app.shared.auth.perms import UserRole
 
 from app.people.admin.widgets import StaffProfileWidget, UserStudentWidget
@@ -9,7 +10,7 @@ from app.people.models.faculty import Faculty
 from app.people.models.student import Student
 from app.people.utils import mk_username, split_name
 from app.registry.models.registration import Registration
-from app.timetable.admin.widgets.core import SemesterWidget
+from app.timetable.admin.widgets.core import SemesterCodeWidget
 
 
 class DirectoryContactResource(resources.ModelResource):
@@ -98,8 +99,16 @@ class StudentResource(resources.ModelResource):
 
     current_enrolled_semester = fields.Field(
         attribute="current_enrolled_semester",
-        column_name="semester_no",
-        widget=SemesterWidget(),
+        column_name="current_enrolled_sem",
+        widget=SemesterCodeWidget(),
+    )
+    entry_semester = fields.Field(
+        attribute="entry_semester",
+        column_name="entry_semester",
+        widget=SemesterCodeWidget(),
+    )
+    curriculum = fields.Field(
+        attribute="curriculum", column_name="curriculum", widget=CurriculumWidget()
     )
 
     class Meta:
@@ -110,17 +119,20 @@ class StudentResource(resources.ModelResource):
             "user",
             "curriculum",
             "current_enrolled_semester",
-            "first_enrollment_date",
+            "entry_semester",
         )
         skip_unchanged = True
         report_skipped = False
-        use_bulk = True  # do not use because ressources is donw row by row
+        use_bulk = False  # do not use because ressources is down row by row
 
+    def before_save_instance(self, instance, row,**kwargs) ->None:
+        import ipdb; ipdb.set_trace()
+
+        
     def after_save_instance(self, instance, row, **kwargs) -> None:
         """Assign the student group to the user when importing."""
         if kwargs.get("dry_run") or instance.user is None:
             return
-
         group = UserRole.STUDENT.value.group
         instance.user.groups.add(group)
 

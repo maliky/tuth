@@ -6,11 +6,7 @@ from django.apps import apps
 from django.db import models
 from simple_history.models import HistoricalRecords
 
-from app.academics.choices import (
-    LEVEL_NUMBER,
-    CollegeCodeChoices,
-    CollegeLongNameChoices,
-)
+from app.academics.choices import LEVEL_NUMBER, COLLEGE_LONG_NAME
 from app.shared.auth.perms import UserRole
 
 
@@ -24,13 +20,9 @@ class College(models.Model):
     """
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
-    code = models.CharField(
-        max_length=4,
-        choices=CollegeCodeChoices.choices,
-        default=CollegeCodeChoices.COAS,
-    )
+    code = models.CharField(default="deft")
 
-    # ~~~~ Auto-filled ~~~~
+    # ~~~~ auto-filled ~~~~
     long_name = models.CharField(
         max_length=50,
         # choices=CollegeLongNameChoices.choices,
@@ -45,13 +37,14 @@ class College(models.Model):
     def get_default(cls) -> College:
         """Return the default college ie. COAS."""
         # will set the long_name by default on save
-        def_clg, _ = cls.objects.get_or_create(code=CollegeCodeChoices.DEFT)
+        def_clg, _ = cls.objects.get_or_create(code="DEFT")
         return def_clg
 
     def _ensure_long_name(self) -> None:
         """Set the long name base on the college code if none where provided."""
+        # this is tricky if no CollegeLongnamechoices
         if not self.long_name:
-            self.long_name = CollegeLongNameChoices[self.code.upper()].label
+            self.long_name = COLLEGE_LONG_NAME.get(self.code.lower())
 
     def save(self, *args, **kwargs) -> None:
         """Ensure long_name matches the selected code before saving."""

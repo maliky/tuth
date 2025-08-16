@@ -34,7 +34,7 @@ class StudentForm(PersonFormMixin, forms.ModelForm):
         "student_id",
         "curriculum",
         "current_enrolled_semester",
-        "first_enrollment_date",
+        "entry_semester",
         "last_school_attended",
         "reason_for_leaving",
         "father_name",

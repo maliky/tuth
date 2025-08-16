@@ -54,7 +54,7 @@ class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
 
 
 class SemesterWidget(widgets.ForeignKeyWidget):
-    """Build a :class:Semester from its number and academic year."""
+    """Build a Semester from its number and academic year."""
 
     def __init__(self):
         super().__init__(Semester)  # using pk until start_date can be proven to be uniq

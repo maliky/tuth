@@ -15,7 +15,6 @@ from import_export import widgets
 from app.people.models.staffs import Staff
 from app.people.models.faculty import Faculty
 from app.people.utils import mk_username, split_name, mk_password
-from app.shared.auth.perms import TEST_PW
 
 
 class StaffProfileWidget(widgets.ForeignKeyWidget):
@@ -173,7 +172,7 @@ class UserStudentWidget(widgets.ForeignKeyWidget):
         super().__init__(User)
         self._cache_username: dict[str, str] = dict()
         self._exclude_username = set()
-        self._cache_user: dict[str, Student] = dict()
+        self._cache_user: dict[str, User] = dict()
 
     def clean(self, value: str, row=None, *args, **kwargs) -> User | None:
         """From the student name (and an id), gets a Student object."""

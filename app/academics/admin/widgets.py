@@ -4,6 +4,7 @@ from typing import Any, Optional
 
 from import_export import widgets
 
+from app.academics.choices import COLLEGE_CODE, COLLEGE_LONG_NAME
 from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
@@ -56,6 +57,7 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
     """
 
     def __init__(self):
+        # set the look_up field to uniquely identify the Curriculum to short_name.
         super().__init__(Curriculum, field="short_name")
         self.college_w = CollegeWidget()
 
@@ -213,12 +215,14 @@ class CollegeWidget(widgets.ForeignKeyWidget):
         """Return or create the College referenced by college_code.
 
         Defaults to COAS.
+        Accept 'CBA', 'CAFS', '', 'CHS', 'EDRCE', 'CET', 'CAS' and COAS, COED
+        COET COBA but normalise the code to 4 letters
         """
-        code = (value or "").strip().upper()
-        if not code:
-            return College.get_default()
+        code = COLLEGE_CODE.get((value or "").strip().lower(), "DEFT")
+        college, _ = College.objects.get_or_create(
+            code=code, defaults={"long_name": COLLEGE_LONG_NAME.get(code.lower(),"deft")}
+        )
 
-        college, _ = College.objects.get_or_create(code=code)
 
         return college
 

@@ -4,8 +4,9 @@
 
 from __future__ import annotations
 
+import ipdb
+
 from django.db import models
-from django.utils import timezone
 
 from app.academics.choices import LEVEL_NUMBER
 from app.academics.models.course import Course
@@ -30,7 +31,7 @@ class Student(AbstractPerson):
     ID_FIELD = "student_id"
     ID_PREFIX = "TU-STD"
     EMAIL_SUFFIX = ".stud@tubmanu.edu.lr"
-    GROUP = "prospective_student"
+    GROUP = "Student"  # must match the UserRole Groups
     STAFF_STATUS = False
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
@@ -39,13 +40,19 @@ class Student(AbstractPerson):
     # ~~~~ Auto-filled ~~~~
     student_id = models.CharField(max_length=20, unique=True, blank=True)
     # The date the student first enrolled; auto-set on initial confirmation.
-    first_enrollment_date = models.DateField(null=True, blank=True)
 
     # ~~~~~~~~ Optional ~~~~~~~~
     current_enrolled_semester = models.ForeignKey(
         Semester,
         on_delete=models.PROTECT,
         null=True,
+        related_name="current_students",
+    )
+    entry_semester = models.ForeignKey(
+        Semester,
+        on_delete=models.PROTECT,
+        null=True,
+        related_name="students_entered",
     )
     last_school_attended = models.CharField(blank=True)
     reason_for_leaving = models.CharField(blank=True)
@@ -145,14 +152,12 @@ class Student(AbstractPerson):
 
         When a student's enrollment is confirmed for the first time
         (i.e., ``current_enrolled_semester`` is set) and the
-        ``first_enrollment_date`` is empty, record today's date.
+        ``entry_semester`` is empty, record today's date.
         """
 
         if not self.curriculum_id:
             self.curriculum = Curriculum.get_default()
-        if self.current_enrolled_semester_id and not self.first_enrollment_date:
-            # Capture the first day the student is officially enrolled.
-            self.first_enrollment_date = timezone.localdate()
+
         super().save(*args, **kwargs)
 
     class Meta:
