@@ -15,8 +15,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from app.people.forms.person import StudentForm
 from app.people.models.student import Student
-from app.registry.choices import StatusRegistration
-from app.registry.models.registration import Registration
+from app.registry.models.registration import Registration, RegistrationStatus
 from app.shared.status import StatusHistory
 from app.timetable.models.section import Section
 
@@ -55,7 +54,7 @@ def course_dashboard(request: HttpRequest) -> HttpResponse:
             tables = connection.introspection.table_names()
             if StatusHistory._meta.db_table in tables:
                 reg.status_history.create(
-                    status=StatusRegistration.REMOVE,
+                    status="remove",
                     author=request.user,
                 )
             with connection.cursor() as cursor:
@@ -82,7 +81,7 @@ def course_dashboard(request: HttpRequest) -> HttpResponse:
     context = {
         "registrations": registrations,
         "available_sections": available_sections,
-        "statuses": StatusRegistration.choices,
+        "statuses": RegistrationStatus.objects.all(),
     }
 
     return render(request, "website/course_dashboard.html", context)

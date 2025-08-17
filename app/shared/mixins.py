@@ -1,5 +1,6 @@
 """Shared mixins for admin and views."""
 
+from app.shared.utils import as_title
 from django.db import models
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -16,38 +17,54 @@ class SimpleTableMixinManager(models.Manager):
             if code is None:
                 raise
             # Use the numeric code as the human-readable label
-            return super().create(code=code, label=code.replace("_", " ").title())
+            return super().create(code=code, label=as_title(code))
 
 
 class SimpleTableMixin(models.Model):
-    """Keep possible statuses for uploaded documents."""
+    """Keep possible statuses for uploaded documents.
+
+    code is a primary str key
+    label is the long format for display usage.
+    """
 
     class Meta:
         abstract = True
         ordering = ["code"]
 
-    TABLE_DEFAULT_VALUES: list[str] = []
+    DEFAULT_VALUES: list[str] = []
+
+    # ~~~~~~~~ Mandatory ~~~~~~~~
     code = models.CharField(max_length=30, primary_key=True)
+
+    # ~~~~ Auto-filled ~~~~
     label = models.CharField(max_length=60)
 
+    # This object manager should be temporary only to create the necessary data
+    # before exporting and reimporting it.
     objects = SimpleTableMixinManager()
 
-    # not sure about class method in abstract classes
-    # @classmethod
-    # def _populate_attibutes_and_db(cls):
-    #     """Create a row for each var in TABLE_DEFAULT_VALUES and populate the core attributes."""
-    #     # Would be good to have a list of variables (v)
-    #     # and for each create / populate the table code/label (v.title())
-    #     # and set them are class attributes
-
-    #     for val in cls.TABLE_DEFAULT_VALUES:
-    #         obj, _ = cls.objects.get_or_create(code=val, label=cls.clean(val))
-    #         # set variable like PENDING = 'pending', 'Pending'
-    #         object.__setattr__(cls, val.upper(), (val, cls._clean(val)))
-
-    def _clean(self, value):
-        return value.replace("_", " ").title()
+    @classmethod
+    def _populate_attibutes_and_db(cls):
+        """Create a row for each var in DEFAULT_VALUES and create subclass attributes."""
+        # This method is temporary
+        for val in cls.DEFAULT_VALUES:
+            obj, _ = cls.objects.get_or_create(
+                code=val, defaults={"label": as_title(val)}
+            )
+            # set variable like PENDING = 'pending', 'Pending'
+            # why this ? for transition but soon obsolete
+            object.__setattr__(cls, val.upper(), (val, as_title(val)))
 
     def __str__(self) -> str:
         """Return human readable label."""
         return self.label
+
+    def _ensure_label(self):
+        """Ensure we have a label."""
+        if not self.label:
+            self.label = as_title(self.code)
+
+    def save(self, *args, **kwargs):
+        """Fill empty values before save."""
+        self._ensure_label()
+        return super().save(*args, **kwargs)

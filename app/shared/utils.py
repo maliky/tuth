@@ -64,3 +64,8 @@ def get_in_row(key: str, row: Optional[dict[str, str | None]]) -> str:
     """
 
     return ((row or {}).get(key) or "").strip()
+
+
+def as_title(value: str) -> str:
+    """Utility to clean a strip _ from a str and capitalize its words."""
+    return value.replace("_", " ").title()

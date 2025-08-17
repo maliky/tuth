@@ -9,7 +9,7 @@ class Scholarship(models.Model):
     """Financial aid linking a donor to a student.
 
     Scholarships can reduce a student's balance in their
-    :class:~app.finance.models.FinancialRecord through custom business logic.
+    :class:~app.finance.models.Payment through custom business logic.
     No signals are attached by default.
 
     Attributes:

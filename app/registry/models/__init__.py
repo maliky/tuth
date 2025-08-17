@@ -9,7 +9,7 @@ from .document import (
     DocumentType,
 )
 from .grade import Grade, GradeValue
-from .registration import Registration
+from .registration import Registration, RegistrationStatus
 
 __all__ = [
     "DocumentStaff",
@@ -18,6 +18,7 @@ __all__ = [
     "DocumentDonor",
     "DocumentStudent",
     "Registration",
+    "RegistrationStatus",
     "Grade",
     "GradeValue",
 ]

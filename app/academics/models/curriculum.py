@@ -6,6 +6,7 @@ from datetime import date
 from typing import Self
 
 from app.shared.mixins import SimpleTableMixin
+from app.shared.utils import as_title
 from django.db import models
 from simple_history.models import HistoricalRecords
 from app.academics.models.college import College
@@ -98,7 +99,7 @@ class Curriculum(StatusableMixin, models.Model):
         # just to make sure it is created.
         CurriculumStatus.objects.get_or_create(
             code=self.status_id,
-            defaults={"label": self.status_id.replace("_", " ").title()},
+            defaults={"label": as_title(self.status_id)},
         )
 
     def save(self, *args, **kwargs):

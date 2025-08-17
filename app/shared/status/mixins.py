@@ -49,25 +49,18 @@ class StatusableMixin(models.Model):
 
     Inherit from this mixin before the concrete model class.  It injects a
     status_history generic relation along with helpers that create
-    :class:StatusHistory entries (set_pending, set_approved …).  Your
-    model is expected to declare a status field storing its current state.
+    :class:StatusHistory entries (set_pending, set_approved …).
+    ! The model is expected to declare a status field storing its current state
+     as a SimpleTableMixin
 
     Example:
         >>> class MyModel(StatusableMixin, models.Model):
-        ...     status = models.CharField(max_length=30, choices=STATUS_CHOICES)
-        ...
-        ...     class Meta:
-        ...         app_label = "myapp"
-
-        >>> obj = MyModel.objects.create()
-        >>> obj.set_pending(author=None)
-        >>> obj.current_status().status
-        'pending'
-
-    Side Effects:
-        Creating a status entry may trigger post_save receivers tied to
-        :class:StatusHistory.
+        ...     status = models.ClearanceStatus(code="pending")
     """
+
+    # > ! note this class may not be necessary with Simplehistory.  Needs testing.
+    class Meta:
+        abstract = True
 
     status_history = GenericRelation(
         StatusHistory, related_query_name="%(app_label)s_%(class)s"
@@ -75,7 +68,7 @@ class StatusableMixin(models.Model):
 
     # ─── helpers ──────────────────────────────────────────────
     def _add_status(self, status: str, author: Optional[User]) -> StatusHistory:
-        """Helper to append a new status entry."""
+        """Helper to append a new status entry in the table StatusHistory."""
         return cast(
             StatusHistory, self.status_history.create(status=status, author=author)
         )
@@ -103,15 +96,15 @@ class StatusableMixin(models.Model):
     def validate_status(self, allowed: Iterable[Any]) -> None:
         """Ensure self.status is an allowed one.
 
+        To be overrident with allowed states
         Accept list of tuple or list of str
         Status should be a StatusMixin / SimpleTableMixin with code and label
         """
-        # > this need to be handle without braking the whole code.
-        # > maybe bubble up the error and catch it at the interface to prpose a fix, a messages
+        # > maybe need to bubble up the error and catch it at the interface to prpose a fix, a messages
         # > proposing to go to the related model and add the status or check the entry.
 
         # >! mandatory the subclass needs a status field
-        status_id = getattr(self, "status_id", None)
+        status_id = self._get_status_id()
         allowed = {a.value if hasattr(a, "value") else a for a in allowed}
 
         if status_id not in allowed:
@@ -119,5 +112,16 @@ class StatusableMixin(models.Model):
                 f"Invalid state '{status_id}'. Allowed states: {', '.join(allowed)}."
             )
 
-    class Meta:
-        abstract = True
+    def _get_status_id(self):
+        """Return the status field of the subclass."""
+        return getattr(self, "status_id", None)
+
+    def _ensure_status(self):
+        """Ensure we have a status field in the subclass."""
+        if not self._get_status_id():
+            raise ValidationError(f"A status field need to be declared for {self}")
+
+    def save(self, *args, **kwargs):
+        """Do some check before saving."""
+        self._ensure_status()
+        return super().save(*args, **kwargs)

@@ -1,37 +1,32 @@
 """Core module."""
 
-from app.finance.choices import FeeType, PaymentMethod, ClearanceStatus
+from app.finance.models.payment import FeeType, PaymentMethod, ClearanceStatus
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
-from app.finance.models.financial_record import FinancialRecord
-from app.finance.models.payment import Invoice
-from app.finance.models.payment_history import PaymentHistory
+from app.finance.models.payment import Payment
+from app.finance.models.invoice import Invoice
 from app.finance.models.scholarship import Scholarship
 from app.timetable.admin.filters import SemesterFilter
 
 
 @admin.register(Invoice)
-class PaymentAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
+class InvoiceAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin settings for Payment."""
 
-    list_display = ("__str__", "method", "recorded_by")
+    list_display = ("__str__", "recorded_by")
     list_filter = (SemesterFilter,)
     readonly_fields = ("created_at",)
+    search_fields = ("program", "student", "semester")
 
 
-@admin.register(FinancialRecord)
-class FinancialRecordAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
-    """Admin interface for :class:`~app.finance.models.FinancialRecord`."""
+@admin.register(Payment)
+class PaymentAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
+    """Admin interface for :class:`~app.finance.models.Payment`."""
 
-    list_display = (
-        "student",
-        "amount_due",
-        "amount_paid",
-        "clearance_status",
-    )
-    autocomplete_fields = ("student", "verified_by")
+    list_display = ("invoice", "amount_paid", "payment_method", "status", "recorded_by")
+    autocomplete_fields = ("recorded_by", "payment_method", "invoice", "status")
 
 
 @admin.register(Scholarship)
@@ -44,26 +39,6 @@ class ScholarshipAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
 
     list_display = ("student", "donor", "amount", "start_date", "end_date")
     autocomplete_fields = ("donor", "student")
-
-
-@admin.register(PaymentHistory)
-class PaymentHistoryAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
-    """Admin interface for :class:~app.finance.models.PaymentHistory.
-
-    Shows a summary string along with the record, payment method and user.
-    Payment date is shown but cannot be edited.
-    """
-
-    # Shows summary string plus related info
-    list_display = (
-        "__str__",
-        "financial_record",
-        "amount_paid",
-        "payment_method",
-        "recorded_by",
-    )
-    list_filter = (SemesterFilter,)
-    readonly_fields = ("payment_date",)
 
 
 @admin.register(ClearanceStatus, FeeType, PaymentMethod)

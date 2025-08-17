@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, TypeAlias, cast
+from typing import Callable, Generator, TypeAlias, cast
 
 import pytest
 from django.contrib.auth.models import User, Group
@@ -29,10 +29,12 @@ def superuser() -> User:
 
 
 @pytest.fixture
-def user() -> User:
-    return User.objects.create_user(
+def user() -> Generator[User]:
+    _user = User.objects.create_user(
         username="user_default", email="default@koba.sarl", password="zyx987"
     )
+    yield _user
+    _user.delete()
 
 
 @pytest.fixture

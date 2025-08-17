@@ -35,7 +35,7 @@ class DocumentType(SimpleTableMixin):
     TRANSCRIPT = "transcript", "Transcript"
     PUBLIC = "public", "Public_signature"
     OTHER = "other", "Other Document"
-    TABLE_DEFAULT_VALUES = [
+    DEFAULT_VALUES = [
         "public",
         "transcript",
         "bill",
@@ -51,7 +51,7 @@ class DocumentType(SimpleTableMixin):
     @classmethod
     def get_default(cls) -> Self:
         """Returns the default FeeType."""
-        deft, _ = cls.objects.get_or_create(code=cls.OTHER[0], label=cls.OTHER[1])
+        deft, _ = cls.objects.get_or_create(code="other", label="Other Document")
         return deft
 
 
@@ -60,7 +60,7 @@ class DocumentStatus(SimpleTableMixin):
     APPROVED = "approved", "Approved"
     ADJUSTMENTS_REQUIRED = "adjustments_required", "Adjustments Required"
     REJECTED = "rejected", "Rejected"
-    TABLE_DEFAULT_VALUES = [
+    DEFAULT_VALUES = [
         "rejected",
         "adjustments_required",
         "approved",
@@ -90,14 +90,16 @@ class AbstractDocument(StatusableMixin, models.Model):
     status = models.ForeignKey(
         "registry.DocumentStatus",
         on_delete=models.PROTECT,
-        related_name="documents",
+        related_name="%(class)s",
+        related_query_name="%(class)s",
         verbose_name="Validation Status",
     )
 
     document_type = models.ForeignKey(
         "registry.DocumentType",
         on_delete=models.PROTECT,
-        related_name="document_types",
+        related_name="%(class)s",
+        related_query_name="%(class)s",
         verbose_name="Document Types",
     )
 
@@ -121,7 +123,7 @@ class AbstractDocument(StatusableMixin, models.Model):
             self.document_type = DocumentType.get_default()
 
     # need to set a default for status when saving.
-    def save(self, *args, **kwargs) -> None:
+    def save(self, *args, **kwargs):
         """Set default before save."""
         self._ensure_document_status()
         self._ensure_document_type()
@@ -138,7 +140,7 @@ class DocumentStudent(AbstractDocument):
     person = models.ForeignKey(
         "people.Student",
         on_delete=models.CASCADE,
-        related_name="documents",
+        related_name="student_docs",
     )
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()
@@ -151,7 +153,7 @@ class DocumentDonor(AbstractDocument):
     person = models.ForeignKey(
         "people.Donor",
         on_delete=models.CASCADE,
-        related_name="documents",
+        related_name="donor_docs",
     )
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()
@@ -164,7 +166,7 @@ class DocumentStaff(AbstractDocument):
     person = models.ForeignKey(
         "people.Staff",
         on_delete=models.CASCADE,
-        related_name="documents",
+        related_name="staff_docs",
     )
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()
