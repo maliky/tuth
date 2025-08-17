@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from app.finance.models import scholarship
 from django.db import models
 
 from simple_history.models import HistoricalRecords
@@ -38,6 +39,7 @@ class Invoice(models.Model):
 
     # ~~~~~~~~ Optional ~~~~~~~~
     recorded_by = models.ForeignKey("people.Staff", null=True, on_delete=models.SET_NULL)
+    scholarship = models.ForeignKey("finance.scholarship", on_delete=models.PROTECT, null=True)
 
     def __str__(self) -> str:  # pragma: no cover
         """Return a concise representation of the payment."""
