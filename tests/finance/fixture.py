@@ -14,7 +14,7 @@ import pytest
 from app.finance.choices import PaymentMethod
 from app.finance.models import (
     FinancialRecord,
-    Payment,
+    Invoice,
     PaymentHistory,
     Scholarship,
 )
@@ -22,7 +22,7 @@ from tests.academics.fixture import ProgramFactory
 from tests.people.fixture import StaffFactory
 
 FinancialRecordFactory: TypeAlias = Callable[[str, str, Decimal], FinancialRecord]
-PaymentFactory: TypeAlias = Callable[[str, str, str, Decimal], Payment]
+PaymentFactory: TypeAlias = Callable[[str, str, str, Decimal], Invoice]
 PaymentHistoryFactory: TypeAlias = Callable[
     [str, str, str, Decimal, Decimal], PaymentHistory
 ]
@@ -42,9 +42,9 @@ def financial_record(student) -> FinancialRecord:
 
 
 @pytest.fixture
-def payment(financial_record, staff, program) -> Payment:
+def payment(financial_record, staff, program) -> Invoice:
     """Default payment record for a program."""
-    return Payment.objects.create(
+    return Invoice.objects.create(
         program=program,
         amount=DECIMAL_1,
         method=PaymentMethod.get_default(),
@@ -98,8 +98,8 @@ def payment_factory(
         curri_short_name: str,
         staff_uname: str,
         amount: Decimal = DECIMAL_1,
-    ) -> Payment:
-        return Payment.objects.create(
+    ) -> Invoice:
+        return Invoice.objects.create(
             program=program_factory(course_no, curri_short_name),
             amount=amount,
             method=PaymentMethod.get_default(),

@@ -6,13 +6,13 @@ from guardian.admin import GuardedModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from app.finance.models.financial_record import FinancialRecord
-from app.finance.models.payment import Payment
+from app.finance.models.payment import Invoice
 from app.finance.models.payment_history import PaymentHistory
 from app.finance.models.scholarship import Scholarship
 from app.timetable.admin.filters import SemesterFilter
 
 
-@admin.register(Payment)
+@admin.register(Invoice)
 class PaymentAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin settings for Payment."""
 

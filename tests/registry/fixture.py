@@ -8,7 +8,8 @@ from typing import Callable, TypeAlias
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from app.registry.choices import DocumentType, StatusRegistration
+from app.registry.models.document import DocumentType
+from app.registry.models.registration import RegistrationStatus
 from app.registry.models import (
     DocumentStudent,
     DocumentStaff,
@@ -93,7 +94,7 @@ def registration_factory(student_factory, section_factory) -> RegistrationFactor
         student_uname: str,
         curri_short_name: str,
         course_number: str,
-        status: str = StatusRegistration.PENDING,
+        status: str = RegistrationStatus.PENDING,
         semester_number: int = 1,
     ) -> Registration:
         return Registration.objects.create(

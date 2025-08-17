@@ -83,7 +83,7 @@ class FinancialRecord(models.Model):
         self._ensure_amount_balance()
         self._ensure_clearance_status()
         self._ensure_concordance_clearance_balance()
-
+        return super().save(*args, **kwargs)
 
 class SectionFee(models.Model):
     """Additional fee charged for a specific course section.
@@ -119,3 +119,4 @@ class SectionFee(models.Model):
     def save(self, *args, **kwargs):
         """Ensure the status exist befor saving."""
         FeeType.objects.get_or_create(code=self.fee_type_id)
+        return super().save(*args, **kwargs)

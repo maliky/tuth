@@ -4,7 +4,7 @@ import pytest
 from django.urls import reverse
 
 from app.registry.models.registration import Registration
-from app.registry.choices import StatusRegistration
+from app.registry.choices import RegistrationStatus
 from app.shared.status import StatusHistory
 from django.contrib.contenttypes.models import ContentType
 from django.db import connection
@@ -61,6 +61,6 @@ def test_course_dashboard_add_update_remove(client, student, semester):
     if StatusHistory._meta.db_table in tables:
         ct = ContentType.objects.get_for_model(Registration)
         history_exists = StatusHistory.objects.filter(
-            content_type=ct, object_id=reg.id, status=StatusRegistration.REMOVE
+            content_type=ct, object_id=reg.id, status=RegistrationStatus.REMOVE
         ).exists()
         assert history_exists
