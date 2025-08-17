@@ -8,8 +8,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from app.registry.constants import STATUS_CHOICES
-
 
 class StatusHistory(models.Model):
     """Single entry in the status timeline of another model.
@@ -34,7 +32,7 @@ class StatusHistory(models.Model):
         null=True,
         related_name="statuses_authored",
     )
-    status = models.CharField(max_length=30, choices=STATUS_CHOICES)
+    status = models.CharField(max_length=30)
 
     # --- generic link ---
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
@@ -106,11 +104,13 @@ class StatusableMixin(models.Model):
         """Ensure self.status is an allowed one.
 
         Accept list of tuple or list of str
-        Status should be a StatusMixin with code and label
+        Status should be a StatusMixin / SimpleTableMixin with code and label
         """
         # > this need to be handle without braking the whole code.
         # > maybe bubble up the error and catch it at the interface to prpose a fix, a messages
         # > proposing to go to the related model and add the status or check the entry.
+
+        # >! mandatory the subclass needs a status field
         status_id = getattr(self, "status_id", None)
         allowed = {a.value if hasattr(a, "value") else a for a in allowed}
 

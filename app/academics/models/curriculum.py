@@ -5,19 +5,19 @@ from __future__ import annotations
 from datetime import date
 from typing import Self
 
-from app.shared.mixins import StatusMixin
+from app.shared.mixins import SimpleTableMixin
 from django.db import models
 from simple_history.models import HistoricalRecords
 from app.academics.models.college import College
 from app.shared.status.mixins import StatusableMixin
 
 
-class CurriculumStatus(StatusMixin):
+class CurriculumStatus(SimpleTableMixin):
     """Code/label pairs for curriculum validation status."""
 
-    # PENDING = "pending", "Pending"
-    # APPROVED = "approved", "Approved"
-    # NEEDS_REVISION = "needs_revision", "Needs Revision"
+    PENDING = "pending", "Pending"
+    APPROVED = "approved", "Approved"
+    NEEDS_REVISION = "needs_revision", "Needs Revision"
 
 
 # need to update the docs

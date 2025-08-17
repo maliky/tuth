@@ -9,7 +9,6 @@ from django.db.models import QuerySet
 from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
 from app.people.models.staffs import Staff
-from app.shared.status.mixins import StatusableMixin
 
 
 class FacultyManager(models.Manager):
@@ -61,7 +60,7 @@ class FacultyManager(models.Manager):
         return super().get_or_create(staff_profile=staff_profile, defaults=faculty_kwargs)
 
 
-class Faculty(StatusableMixin, models.Model):
+class Faculty(models.Model):
     """Teaching staff profile linked to a :class:Staff record.
 
     Example:

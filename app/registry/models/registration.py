@@ -2,11 +2,35 @@
 
 from __future__ import annotations
 
+from app.shared.mixins import SimpleTableMixin
 from django.db import models
 from simple_history.models import HistoricalRecords
+from typing import Self
 
-from app.registry.choices import StatusRegistration
 from app.shared.status.mixins import StatusableMixin
+
+
+class RegistrationStatus(SimpleTableMixin):
+    PENDING = "pending", "Pending Payment"
+    FINANCIALLY_CLEARED = "financially_cleared", "Financially_Cleared"
+    COMPLETED = "completed", "Completed"
+    CANCEL = "cancel", "Cancel"
+    REMOVE = "remove", "Remove"
+    APPROVED = "approved", "Approved"
+    TABLE_DEFAULT_VALUES = [
+        "approved",
+        "remove",
+        "cancel",
+        "completed",
+        "financially_cleared",
+        "pending payment",
+    ]
+
+    @classmethod
+    def get_default(cls) -> Self:
+        """Returns the default FeeType."""
+        deft, _ = cls.objects.get_or_create(code=cls.PENDING[0], label=cls.PENDING[1])
+        return deft
 
 
 class Registration(StatusableMixin, models.Model):
@@ -34,10 +58,10 @@ class Registration(StatusableMixin, models.Model):
 
     # ~~~~ Auto-filled ~~~~
     # this is optional and I could get it through the SatusableMixin
-    status = models.CharField(
-        max_length=30,
-        choices=StatusRegistration.choices,
-        default=StatusRegistration.PENDING,
+    status = models.ForeignKey(
+        "registry.RegistrationStatus",
+        on_delete=models.PROTECT,
+        related_name="registrations",
     )
     date_registered = models.DateTimeField(auto_now_add=True)
     history = HistoricalRecords()
@@ -52,3 +76,13 @@ class Registration(StatusableMixin, models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.student} – {self.section} -  {self.status}"
+
+    def _ensure_registration_status(self):
+        """Ensure a clearance status is set."""
+        if not self.status_id:
+            self.status = RegistrationStatus.get_default()
+
+    def save(self, *args, **kwargs):
+        """Check model before save."""
+        self._ensure_registration_status()
+        return super().save(*args, **kwargs)

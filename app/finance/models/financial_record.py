@@ -39,7 +39,7 @@ class FinancialRecord(models.Model):
     # ~~~~ Auto-filled ~~~~
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     amount_balance = models.DecimalField(max_digits=10, decimal_places=2, null=True)
-    clearance_status = models.ForeignKey(
+    status = models.ForeignKey(
         "finance.ClearanceStatus",
         on_delete=models.PROTECT,
         related_name="financial_records",
@@ -59,8 +59,8 @@ class FinancialRecord(models.Model):
 
     def _ensure_clearance_status(self):
         """Ensure a clearance status is set."""
-        if not self.clearance_status_id:
-            self.clearance_status = ClearanceStatus.get_default()
+        if not self.status_id:
+            self.status = ClearanceStatus.get_default()
 
     def _ensure_amount_balance(self):
         """Compute the balance amount for this payement."""
@@ -69,19 +69,13 @@ class FinancialRecord(models.Model):
 
     def _ensure_concordance_clearance_balance(self):
         """Make sure the payment is cleared if balance is 0 and vice versa."""
-        if (
-            self.amount_balance == 0
-            and self.clearance_status != ClearanceStatus.cleared()
-        ):
+        if self.amount_balance == 0 and self.status != ClearanceStatus.CLEARED:
             raise ValidationError(
-                f"clearance_status ({self.clearance_status}) should be {ClearanceStatus.cleared()} when amount_balance is {self.amount_balance}"
+                f"clearance_status ({self.status}) should be {ClearanceStatus.CLEARED} when amount_balance is {self.amount_balance}"
             )
-        if (
-            self.clearance_status == ClearanceStatus.cleared()
-            and self.amount_balance == 0
-        ):
+        if self.status == ClearanceStatus.CLEARED and self.amount_balance == 0:
             raise ValidationError(
-                f"Amount_balance ({self.amount_balance}) should be 0 when clearance status is  {self.clearance_status}"
+                f"Amount_balance ({self.amount_balance}) should be 0 when clearance status is  {self.status}"
             )
 
     def save(self, *args, **kwargs):

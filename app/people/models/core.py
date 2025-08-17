@@ -11,10 +11,9 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 from app.people.models.object_manager import PersonManager
 from app.people.utils import extract_id_num, mk_username, photo_upload_to
-from app.shared.status.mixins import StatusableMixin
 
 
-class AbstractPerson(StatusableMixin, models.Model):
+class AbstractPerson(models.Model):
     """Base information shared by all people profiles.
 
     Student, Donor, Staff->Facutly

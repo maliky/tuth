@@ -39,7 +39,6 @@ class PaymentHistory(models.Model):
     payment_date = models.DateTimeField(auto_now_add=True)
     payment_method = models.ForeignKey(
         "finance.PaymentMethod",
-        default=PaymentMethod.get_default(),
         on_delete=models.PROTECT,
         related_name="payments_recorded",
     )
@@ -56,6 +55,11 @@ class PaymentHistory(models.Model):
     def __str__(self) -> str:  # pragma: no cover
         """Return "amount on date for student" for admin readability."""
         return f"{self.amount_paid} on {self.payment_date_str} for {self.financial_record.student}"
+
+    def save(self, *arg, **kwargs) -> None:
+        """Set default before saving."""
+        if not self.payment_method_id:
+            self.payment_method = PaymentMethod.get_default()
 
     @property
     def payment_date_str(self) -> str:
