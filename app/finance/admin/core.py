@@ -25,7 +25,12 @@ class PaymentAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
 class FinancialRecordAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin interface for :class:`~app.finance.models.FinancialRecord`."""
 
-    list_display = ("student", "total_due", "total_paid", "clearance_status")
+    list_display = (
+        "student",
+        "amount_due",
+        "amount_paid",
+        "clearance_status",
+    )
     autocomplete_fields = ("student", "verified_by")
 
 
@@ -50,7 +55,13 @@ class PaymentHistoryAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """
 
     # Shows summary string plus related info
-    list_display = ("__str__", "financial_record", "method", "recorded_by")
+    list_display = (
+        "__str__",
+        "financial_record",
+        "amount_paid",
+        "payment_method",
+        "recorded_by",
+    )
     list_filter = (SemesterFilter,)
     readonly_fields = ("payment_date",)
 
@@ -60,4 +71,3 @@ class LookupAdmin(admin.ModelAdmin):
     """Basic admin for finance lookup tables."""
 
     search_fields = ("code", "label")
-

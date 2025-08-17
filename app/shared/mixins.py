@@ -3,6 +3,7 @@
 from django.db import models
 from django.core.exceptions import ObjectDoesNotExist
 
+
 class StatusManager(models.Manager):
     """Automatically create status on demand."""
 
@@ -16,7 +17,7 @@ class StatusManager(models.Manager):
                 raise
             # Use the numeric code as the human-readable label
             return super().create(code=code, label=str(code))
-    
+
 
 class StatusMixin(models.Model):
     """Keep possible statuses for uploaded documents."""
@@ -29,8 +30,7 @@ class StatusMixin(models.Model):
     label = models.CharField(max_length=60)
 
     objects = StatusManager()
-    
+
     def __str__(self) -> str:
         """Return human readable label."""
         return self.label
-

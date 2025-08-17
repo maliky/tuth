@@ -8,17 +8,14 @@ from decimal import Decimal
 
 import pytest
 
-from app.finance.models.financial_record import FinancialRecord
 from app.finance.models.payment_history import PaymentHistory
-
-# from tests.fixtures.people import staff_profile, student_profile
 
 
 @pytest.mark.django_db
-def test_payment_history_str(student, staff):
-    fr = FinancialRecord.objects.create(student=student, total_due=Decimal("0"))
+def test_payment_history_str(student, staff, financial_record):
+    """Test the string representation of the financial record payment history."""
     ph = PaymentHistory.objects.create(
-        financial_record=fr, amount=Decimal("25.00"), recorded_by=staff
+        financial_record=financial_record, amount=Decimal("25.00"), recorded_by=staff
     )
     assert (
         str(ph)
@@ -27,11 +24,10 @@ def test_payment_history_str(student, staff):
 
 
 @pytest.mark.django_db
-def test_payment_date_str_returns_non_empty_string(student, staff):
-    """payment_date_str should always return a non-empty string."""
-    fr = FinancialRecord.objects.create(student=student, total_due=Decimal("0"))
+def test_payment_date_str_returns_non_empty_string(student, staff, financial_record):
+    """Payment_date_str should always return a non-empty string."""
     ph = PaymentHistory.objects.create(
-        financial_record=fr, amount=Decimal("25.00"), recorded_by=staff
+        financial_record=financial_record, amount=Decimal("25.00"), recorded_by=staff
     )
     assert isinstance(ph.payment_date_str, str)
     assert ph.payment_date_str != ""

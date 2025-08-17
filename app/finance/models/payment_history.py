@@ -2,6 +2,7 @@
 
 from __future__ import annotations  # to postpone evaluation of type hints
 
+from app.finance.choices import PaymentMethod
 from django.db import models
 from simple_history.models import HistoricalRecords
 
@@ -22,9 +23,9 @@ class PaymentHistory(models.Model):
     Example:
         >>> from decimal import Decimal
         >>> PaymentHistory.objects.create(
-        ...     financial_record=record,
+        ...     financial_record=PaymentRecord.get_default(),
         ...     amount=Decimal("25.00"),
-        ...     method="cash",
+        ...     method=P"cash",
         ... )
     """
 
@@ -32,14 +33,19 @@ class PaymentHistory(models.Model):
     financial_record = models.ForeignKey(
         "finance.FinancialRecord", related_name="payments", on_delete=models.CASCADE
     )
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2)
 
     # ~~~~ Auto-filled ~~~~
     payment_date = models.DateTimeField(auto_now_add=True)
+    payment_method = models.ForeignKey(
+        "finance.PaymentMethod",
+        default=PaymentMethod.get_default(),
+        on_delete=models.PROTECT,
+        related_name="payments_recorded",
+    )
     history = HistoricalRecords()
 
     # ~~~~~~~~ Optional ~~~~~~~~
-    method = models.CharField(max_length=50, blank=True)  # cash, bank, mobile …
     recorded_by = models.ForeignKey(
         "people.Staff",
         null=True,
@@ -49,7 +55,7 @@ class PaymentHistory(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         """Return "amount on date for student" for admin readability."""
-        return f"{self.amount} on {self.payment_date_str} for {self.financial_record.student}"
+        return f"{self.amount_paid} on {self.payment_date_str} for {self.financial_record.student}"
 
     @property
     def payment_date_str(self) -> str:

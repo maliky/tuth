@@ -38,15 +38,17 @@ TODAY = date.today()
 def financial_record(student) -> FinancialRecord:
     """Default financial record for a student."""
 
-    return FinancialRecord.objects.create(student=student, total_due=DECIMAL_0)
+    return FinancialRecord.objects.create(student=student, amount_due=DECIMAL_10)
 
 
 @pytest.fixture
 def payment(financial_record, staff, program) -> Payment:
     """Default payment record for a program."""
-    cash, _ = PaymentMethod.objects.get_or_create(code="cash")
     return Payment.objects.create(
-        program=program, amount=DECIMAL_1, method=cash, recorded_by=staff
+        program=program,
+        amount=DECIMAL_1,
+        method=PaymentMethod.get_default(),
+        recorded_by=staff,
     )
 
 
@@ -75,11 +77,11 @@ def financial_record_factory(student_factory) -> FinancialRecordFactory:
     """Return a callable to build financial records."""
 
     def _make(
-        student_uname: str, curri_short_name: str, total_due: Decimal = DECIMAL_0
+        student_uname: str, curri_short_name: str, amount_due: Decimal = DECIMAL_0
     ) -> FinancialRecord:
         return FinancialRecord.objects.create(
             student=student_factory(student_uname, curri_short_name),
-            total_due=total_due,
+            amount_due=amount_due,
         )
 
     return _make
@@ -97,11 +99,10 @@ def payment_factory(
         staff_uname: str,
         amount: Decimal = DECIMAL_1,
     ) -> Payment:
-        cash, _ = PaymentMethod.objects.get_or_create(code="cash")
         return Payment.objects.create(
             program=program_factory(course_no, curri_short_name),
             amount=amount,
-            method=cash,
+            method=PaymentMethod.get_default(),
             recorded_by=staff_factory(staff_uname),
         )
 
@@ -119,11 +120,11 @@ def payment_history_factory(
         curri_short_name: str,
         staff_uname: str,
         amount_paid: Decimal = DECIMAL_1,
-        total_due: Decimal = DECIMAL_10,
+        amount_due: Decimal = DECIMAL_10,
     ) -> PaymentHistory:
         staff = staff_factory(staff_uname)
         financial_record = financial_record_factory(
-            stud_uname, curri_short_name, total_due=total_due
+            stud_uname, curri_short_name, amount_due=amount_due
         )
 
         return PaymentHistory.objects.create(
