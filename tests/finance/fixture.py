@@ -19,7 +19,7 @@ Factories return callables for creating additional objects on demand.
 #     PaymentHistory,
 #     Scholarship,
 # )
-# from tests.academics.fixture import ProgramFactory
+# from tests.academics.fixture import CurriculumCourseFactory
 # from tests.people.fixture import StaffFactory
 
 # PaymentFactory: TypeAlias = Callable[[str, str, Decimal], Payment]
@@ -43,10 +43,10 @@ Factories return callables for creating additional objects on demand.
 
 
 # @pytest.fixture
-# def payment(payment, staff, program) -> Invoice:
-#     """Default payment record for a program."""
+# def payment(payment, staff, curriculum_course) -> Invoice:
+#     """Default payment record for a curriculum_course."""
 #     return Invoice.objects.create(
-#         program=program,
+#         curriculum_course=curriculum_course,
 #         amount=DECIMAL_1,
 #         method=PaymentMethod.get_default(),
 #         recorded_by=staff,
@@ -81,7 +81,7 @@ Factories return callables for creating additional objects on demand.
 
 # @pytest.fixture
 # def payment_factory(
-#     program_factory: ProgramFactory, staff_factory: StaffFactory
+#     curriculum_course_factory: CurriculumCourseFactory, staff_factory: StaffFactory
 # ) -> PaymentFactory:
 #     """Return a callable to build payment records."""
 
@@ -92,7 +92,7 @@ Factories return callables for creating additional objects on demand.
 #         amount: Decimal = DECIMAL_1,
 #     ) -> Invoice:
 #         return Invoice.objects.create(
-#             program=program_factory(course_no, curri_short_name),
+#             curriculum_course=curriculum_course_factory(course_no, curri_short_name),
 #             amount=amount,
 #             method=PaymentMethod.get_default(),
 #             recorded_by=staff_factory(staff_uname),

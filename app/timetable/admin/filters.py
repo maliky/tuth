@@ -83,8 +83,10 @@ class SemesterFilter(admin.SimpleListFilter):
             return qs.filter(semester_id=semester_id)
         if "section" in field_names:
             return qs.filter(section__semester_id=semester_id)
-        if "program" in field_names:
-            return qs.filter(program__sections__semester_id=semester_id).distinct()
+        if "curriculum_course" in field_names:
+            return qs.filter(
+                curriculum_course__sections__semester_id=semester_id
+            ).distinct()
         if "payment" in field_names:
             return qs.filter(payment__student__current_enrolled_semester_id=semester_id)
         if "student" in field_names:

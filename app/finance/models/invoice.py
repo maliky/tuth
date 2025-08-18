@@ -2,34 +2,35 @@
 
 from __future__ import annotations
 
-from app.finance.models import scholarship
 from django.db import models
 
 from simple_history.models import HistoricalRecords
 
 
 class Invoice(models.Model):
-    """Invoice for a program.
+    """Invoice for a curriculum_course.
 
     Attributes:
-        program (academics.Program): A Course in a Curriculum being paid for.
+        curriculum_course (academics.CurriculumCourse): A Course in a Curriculum being paid for.
         amount_due (Decimal): Value of the transaction.
         method (str): Payment method from :class:PaymentMethod.
         recorded_by (people.Staff): Staff member who logged the payment.
         created_at (datetime): Timestamp when the record was created.
 
-    A student can pay twice for the same program if he fail and has to take it again.
+    A student can pay twice for the same curriculum_course if he fail and has to take it again.
     but the semester will be different.
     Example:
         >>> Payment.objects.create(
-        ...     program=program,
+        ...     curriculum_course=curriculum_course,
         ...     amount_due=Decimal("10.00"),
 
         ... )
     """
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
-    program = models.OneToOneField("academics.Program", on_delete=models.CASCADE)
+    curriculum_course = models.OneToOneField(
+        "academics.CurriculumCourse", on_delete=models.CASCADE
+    )
     student = models.ForeignKey("people.Student", on_delete=models.PROTECT)
     semester = models.ForeignKey("timetable.Semester", on_delete=models.PROTECT)
     amount_due = models.DecimalField(max_digits=8, decimal_places=2)
@@ -39,8 +40,10 @@ class Invoice(models.Model):
 
     # ~~~~~~~~ Optional ~~~~~~~~
     recorded_by = models.ForeignKey("people.Staff", null=True, on_delete=models.SET_NULL)
-    scholarship = models.ForeignKey("finance.scholarship", on_delete=models.PROTECT, null=True)
+    scholarship = models.ForeignKey(
+        "finance.scholarship", on_delete=models.PROTECT, null=True
+    )
 
     def __str__(self) -> str:  # pragma: no cover
         """Return a concise representation of the payment."""
-        return f"{self.program} - {self.amount_due}"
+        return f"{self.curriculum_course} - {self.amount_due}"

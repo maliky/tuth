@@ -34,8 +34,8 @@ class Section(models.Model):
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     semester = models.ForeignKey("timetable.Semester", on_delete=models.PROTECT)
-    program = models.ForeignKey(
-        "academics.Program", on_delete=models.CASCADE, related_name="sections"
+    curriculum_course = models.ForeignKey(
+        "academics.CurriculumCourse", on_delete=models.CASCADE, related_name="sections"
     )
     number = models.PositiveIntegerField(
         "Section #", default=1, validators=[MinValueValidator(1)]
@@ -67,16 +67,16 @@ class Section(models.Model):
 
     @property
     def course(self) -> Course:
-        """Return the Course associated with the program of this section."""
-        course = self.program.course
+        """Return the Course associated with the curriculum_course of this section."""
+        course = self.curriculum_course.course
         if not course.id:
             raise ValidationError("Course must be set for this property.")
         return course
 
     @property
     def curriculum(self) -> Curriculum:
-        """Return the Curriculum associated with the program of this section."""
-        curriculum = self.program.curriculum
+        """Return the Curriculum associated with the curriculum_course of this section."""
+        curriculum = self.curriculum_course.curriculum
         if not curriculum.id:
             raise ValidationError("Curriculum must be set for this property.")
 
@@ -122,15 +122,15 @@ class Section(models.Model):
                 assert self.start_date < self.end_date
 
     class Meta:
-        # May Move this to manual in Save check because does not hold for default programs
+        # May Move this to manual in Save check because does not hold for default curriculum_courses
         constraints = [
             models.UniqueConstraint(
-                fields=["semester", "program", "number"],
-                name="uniq_section_per_program",
+                fields=["semester", "curriculum_course", "number"],
+                name="uniq_section_per_curriculum_course",
             )
         ]
         indexes = [
-            models.Index(fields=["semester", "program"]),
-            models.Index(fields=["semester", "program", "number"]),
+            models.Index(fields=["semester", "curriculum_course"]),
+            models.Index(fields=["semester", "curriculum_course", "number"]),
         ]
-        ordering = ["semester", "program", "number"]
+        ordering = ["semester", "curriculum_course", "number"]

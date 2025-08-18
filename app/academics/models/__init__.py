@@ -1,12 +1,11 @@
 """Initialization for the models package."""
 
 from .college import College
-from .concentration import Major, Minor, MajorProgram, MinorProgram
-from .course import Course
+from .concentration import Major, Minor, MajorCurriculumCourse, MinorCurriculumCourse
+from .course import Course, CurriculumCourse
 from .curriculum import Curriculum, CurriculumStatus
 from .department import Department
 from .prerequisite import Prerequisite
-from .program import Program
 
 __all__ = [
     "CurriculumStatus",
@@ -15,9 +14,9 @@ __all__ = [
     "Curriculum",
     "Department",
     "Major",
-    "MajorProgram",
+    "MajorCurriculumCourse",
     "Minor",
-    "MinorProgram",
+    "MinorCurriculumCourse",
     "Prerequisite",
-    "Program",
+    "CurriculumCourse",
 ]

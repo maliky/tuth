@@ -10,7 +10,7 @@ from django.urls import reverse
 
 CurriculumFilterAutocomplete = AutocompleteFilterFactory(
     "Curriculum",  # title
-    "program__curriculum",  # look-up path ( → cuccirulm )
+    "curriculum_course__curriculum",  # look-up path ( → cuccirulm )
     # use_pk_exact=False
 )
 
@@ -19,7 +19,7 @@ class CurriculumBySemesterFilterAc(AutocompleteFilter):
     """Returns the curriculum having section for a specific semester."""
 
     title = "Curriculum"
-    field_name = "program__curriculum"
+    field_name = "curriculum_course__curriculum"
 
     def get_autocomplete_url(self, request, model_admin):
         """Get the urls registered in SectionAdmin.get_urls."""

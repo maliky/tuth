@@ -21,4 +21,6 @@ class CurriculumBySemester(AutocompleteJsonView):
         if not semester_id:
             return Curriculum.objects.all()
 
-        return Curriculum.objects.filter(programs__sections__semester_id=semester_id)
+        return Curriculum.objects.filter(
+            curriculum_course__sections__semester_id=semester_id
+        )

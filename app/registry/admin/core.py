@@ -77,7 +77,7 @@ class RegistrationAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModel
     autocomplete_fields = ("student", "section")
     search_fields = (
         "student__student_id",
-        "section__program__course__code",
+        "section__curriculum_course__course__code",
         "section__number",
     )
     list_filter = (SemesterFilter,)
@@ -85,7 +85,7 @@ class RegistrationAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModel
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Probably orverriding the default form for the model.
 
-        List the program (course <-> curriculum) in which the student is enrolled.
+        List the curriculum_course (course <-> curriculum) in which the student is enrolled.
         """
         if db_field.name == "section" and not request.user.is_superuser:
             try:
@@ -94,6 +94,6 @@ class RegistrationAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModel
                 kwargs["queryset"] = Section.objects.none()
             else:
                 kwargs["queryset"] = Section.objects.filter(
-                    program__course__in=student.allowed_courses()
+                    curriculum_course__course__in=student.allowed_courses()
                 )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)

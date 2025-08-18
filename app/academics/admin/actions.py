@@ -24,7 +24,7 @@ def update_curriculum(modeladmin, request, queryset):
 
         The form keeps the primary keys of the selected prerequisites in
         _selected_action and exposes a curriculum field for the admin
-        user to pick the destination programme.
+        user to pick the destination curriculum_course.
         """
 
         _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)

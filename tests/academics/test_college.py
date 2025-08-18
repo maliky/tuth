@@ -18,7 +18,7 @@ pytestmark = pytest.mark.django_db
 def test_college_computed_fields(
     department_factory,
     curriculum_factory,
-    program_factory,
+    curriculum_course_factory,
     faculty,
     user_factory,
     student_factory,
@@ -29,16 +29,18 @@ def test_college_computed_fields(
     college = dept.college
     curr1 = curriculum_factory("CUR1")
     curriculum_factory("CUR2")
-    programs = [
-        program_factory(str(n), curr1.short_name) for n in ["101", "102", "201", "202"]
+    curriculum_courses = [
+        curriculum_course_factory(str(n), curr1.short_name)
+        for n in ["101", "102", "201", "202"]
     ]
-    for p in programs:
+    for p in curriculum_courses:
         p.credit_hours = CreditHour.objects.get(code=10)
         p.save()
     year = AcademicYear.objects.create(start_date=date(2024, 9, 1))
     sem = Semester.objects.create(academic_year=year, number=1)
     sections = [
-        Section.objects.create(program=p, semester=sem, number=1) for p in programs
+        Section.objects.create(curriculum_course=p, semester=sem, number=1)
+        for p in curriculum_courses
     ]
 
     faculty.college = college

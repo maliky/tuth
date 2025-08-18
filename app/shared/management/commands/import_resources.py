@@ -20,7 +20,7 @@ from tqdm import tqdm
 
 from app.academics.admin.resources import (  # noqa: F401
     CourseResource,
-    ProgramResource,
+    CurriculumCourseResource,
 )
 from app.academics.models.college import College  # noqa: F401
 from app.people.admin.resources import FacultyResource, StudentResource
@@ -76,7 +76,7 @@ class Command(BaseCommand):
             ("Schedule", ScheduleResource),
             ("Course", CourseResource),  # and College
             ("semester", SemesterResource),  # and Academic year
-            ("Program", ProgramResource),
+            ("CurriculumCourse", CurriculumCourseResource),
             ("Section", SectionResource),
             ("SecSession", SecSessionResource),  # and Faculty, Room and Space
         ]

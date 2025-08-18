@@ -17,7 +17,7 @@ class SectionBySemesterAutocomplete(AutocompleteJsonView):
     def get_queryset(self):
         """Returns a Filtered queryset using the semester_id present in the url."""
         # ! line below not clear. Needs epxlainations.
-        qs = Section.objects.select_related("program__course", "semester")
+        qs = Section.objects.select_related("curriculum_course__course", "semester")
         semester_id = (
             self.request.GET.get("section__semester")
             or self.request.GET.get("section__semester__pk__exact")
@@ -27,4 +27,6 @@ class SectionBySemesterAutocomplete(AutocompleteJsonView):
         if not semester_id:
             return qs
 
-        return qs.filter(semester_id=semester_id).order_by("program__course__code")
+        return qs.filter(semester_id=semester_id).order_by(
+            "curriculum_course__course__code"
+        )

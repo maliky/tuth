@@ -86,7 +86,7 @@ class Faculty(models.Model):
     college = models.ForeignKey(
         "academics.College", on_delete=models.CASCADE, null=True, blank=True
     )
-    # We can get all the colleges of the facutly via section->Program->..
+    # We can get all the colleges of the facutly via section->CurriculumCourse->..
     google_profile = models.URLField(blank=True)
     personal_website = models.URLField(blank=True)
     academic_rank = models.CharField(max_length=50, null=True, blank=True)
@@ -101,10 +101,10 @@ class Faculty(models.Model):
     def curricula(self) -> QuerySet[Curriculum]:
         """Return all Curriculum instances in which this faculty is teaching.
 
-        Traverses: Curriculum → courses → sections → session → faculty
+        Traverses: Curriculum → courses → sections  → faculty
         """
         return Curriculum.objects.filter(
-            courses__sections__session__faculty=self
+            curriculum_course__sections__faculty=self
         ).distinct()
 
     @property

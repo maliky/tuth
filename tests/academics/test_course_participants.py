@@ -12,7 +12,7 @@ from app.registry.models.registration import Registration
 pytestmark = pytest.mark.django_db
 
 
-def _setup_course_env(faculty, student_factory, program_factory):
+def _setup_course_env(faculty, student_factory, curriculum_course_factory):
     """Create a course with a section in the current semester."""
     today = date.today()
     start = date(today.year, 8, 1)
@@ -23,21 +23,31 @@ def _setup_course_env(faculty, student_factory, program_factory):
         start_date=today - timedelta(days=1),
         end_date=today + timedelta(days=1),
     )
-    program = program_factory()
-    course = program.course
-    section = Section.objects.create(semester=semester, program=program, faculty=faculty)
-    student = student_factory("stud1", program.curriculum.short_name)
+    curriculum_course = curriculum_course_factory()
+    course = curriculum_course.course
+    section = Section.objects.create(
+        semester=semester, curriculum_course=curriculum_course, faculty=faculty
+    )
+    student = student_factory("stud1", curriculum_course.curriculum.short_name)
     Registration.objects.create(student=student, section=section)
     return course, faculty, student
 
 
-def test_current_faculty_returns_faculty(faculty, student_factory, program_factory):
+def test_current_faculty_returns_faculty(
+    faculty, student_factory, curriculum_course_factory
+):
     """Course.current_faculty returns faculty for the active semester."""
-    course, fac, _student = _setup_course_env(faculty, student_factory, program_factory)
+    course, fac, _student = _setup_course_env(
+        faculty, student_factory, curriculum_course_factory
+    )
     assert list(course.current_faculty()) == [fac]
 
 
-def test_current_students_returns_students(faculty, student_factory, program_factory):
+def test_current_students_returns_students(
+    faculty, student_factory, curriculum_course_factory
+):
     """Course.current_students returns students for the active semester."""
-    course, _fac, stud = _setup_course_env(faculty, student_factory, program_factory)
+    course, _fac, stud = _setup_course_env(
+        faculty, student_factory, curriculum_course_factory
+    )
     assert list(course.current_students()) == [stud]

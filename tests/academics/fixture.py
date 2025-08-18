@@ -10,14 +10,14 @@ from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
-from app.academics.models.program import Program
+from app.academics.models.course import CurriculumCourse
 from app.academics.models.concentration import Major, Minor
 
 CollegeFactory: TypeAlias = Callable[[str], College]
 CourseFactory: TypeAlias = Callable[[str], Course]
 CurriculumFactory: TypeAlias = Callable[[str], Curriculum]
 DepartmentFactory: TypeAlias = Callable[[str], Department]
-ProgramFactory: TypeAlias = Callable[[str, str], Program]
+CurriculumCourseFactory: TypeAlias = Callable[[str, str], CurriculumCourse]
 
 
 @pytest.fixture
@@ -41,8 +41,8 @@ def department() -> Department:
 
 
 @pytest.fixture
-def program() -> Program:
-    return Program.get_default()
+def curriculum_course() -> CurriculumCourse:
+    return CurriculumCourse.get_default()
 
 
 # ~~~~~~~~~~~~~~~~ DB Constraints  ~~~~~~~~~~~~~~~~
@@ -83,23 +83,29 @@ def course_factory() -> CourseFactory:
 
 
 @pytest.fixture
-def program_factory(course_factory, curriculum_factory) -> ProgramFactory:
-    def _make(course_num="111", curriculum_short_name: str = "CURRI_TEST") -> Program:
+def curriculum_course_factory(
+    course_factory, curriculum_factory
+) -> CurriculumCourseFactory:
+    def _make(
+        course_num="111", curriculum_short_name: str = "CURRI_TEST"
+    ) -> CurriculumCourse:
         course = course_factory(course_num)
         curriculum = curriculum_factory(curriculum_short_name)
-        program, _ = Program.objects.get_or_create(course=course, curriculum=curriculum)
-        return program
+        curriculum_course, _ = CurriculumCourse.objects.get_or_create(
+            course=course, curriculum=curriculum
+        )
+        return curriculum_course
 
     return _make
 
 
 @pytest.fixture
 def major() -> Major:
-    """Default major with one program."""
+    """Default major with one curriculum_course."""
     return Major.get_default()
 
 
 @pytest.fixture
 def minor() -> Minor:
-    """Default minor with one program."""
+    """Default minor with one curriculum_course."""
     return Minor.get_default()

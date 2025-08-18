@@ -12,7 +12,7 @@ from app.timetable.models.schedule import Schedule
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
 from app.timetable.models.session import SecSession
-from tests.academics.fixture import ProgramFactory
+from tests.academics.fixture import CurriculumCourseFactory
 
 AcademicYearFactory: TypeAlias = Callable[[datetime], AcademicYear]
 SemesterFactory: TypeAlias = Callable[[int], Semester]
@@ -43,8 +43,10 @@ def semester(academic_year_factory: AcademicYearFactory) -> Semester:
 
 
 @pytest.fixture
-def section(semester, program) -> Section:
-    return Section.objects.create(semester=semester, program=program, number=1)
+def section(semester, curriculum_course) -> Section:
+    return Section.objects.create(
+        semester=semester, curriculum_course=curriculum_course, number=1
+    )
 
 
 @pytest.fixture
@@ -78,7 +80,7 @@ def semester_factory(academic_year_factory: AcademicYearFactory) -> SemesterFact
 
 @pytest.fixture
 def section_factory(
-    semester_factory: SemesterFactory, program_factory: ProgramFactory
+    semester_factory: SemesterFactory, curriculum_course_factory: CurriculumCourseFactory
 ) -> SectionFactory:
     def _make(
         course_number: str = "111",
@@ -87,8 +89,12 @@ def section_factory(
         semester_number: int = 1,
     ) -> Section:
         semester = semester_factory(semester_number)
-        program = program_factory(course_number, curriculum_short_name)
-        return Section.objects.create(program=program, semester=semester, number=number)
+        curriculum_course = curriculum_course_factory(
+            course_number, curriculum_short_name
+        )
+        return Section.objects.create(
+            curriculum_course=curriculum_course, semester=semester, number=number
+        )
 
     return _make
 

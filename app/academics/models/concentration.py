@@ -9,7 +9,7 @@ from django.db import models
 from simple_history.models import HistoricalRecords
 
 from app.academics.models.curriculum import Curriculum
-from app.academics.models.program import Program
+from app.academics.models.course import CurriculumCourse
 
 
 class ConcentrationMixin(models.Model):
@@ -43,11 +43,11 @@ class ConcentrationMixin(models.Model):
             self.save()
 
     def clean(self):
-        """Check that at least one program exists."""
+        """Check that at least one curriculum_course exists."""
         super().clean()
-        if self.pk and not self.programs.exists():  # type: ignore[attr-defined]
+        if self.pk and not self.curriculum_courses.exists():  # type: ignore[attr-defined]
             raise ValidationError(
-                f"{self.RELATED_NAME} must reference at least one program."
+                f"{self.RELATED_NAME} must reference at least one curriculum_course."
             )
         if self.exceeds_credit_limit():
             raise ValidationError(
@@ -56,10 +56,10 @@ class ConcentrationMixin(models.Model):
             )
 
     def total_credit_hours(self) -> int:
-        """Return the sum of credit hours for every program attached to this concentration."""
+        """Return the sum of credit hours for every curriculum_course attached to this concentration."""
         # will return 0 if the object is not saved.
         self._ensure_saved()
-        return self.programs.aggregate(total=models.Sum("credit_hours")).get("total") or 0  # type: ignore[attr-defined]
+        return self.curriculum_courses.aggregate(total=models.Sum("credit_hours")).get("total") or 0  # type: ignore[attr-defined]
 
     def exceeds_credit_limit(self):
         """True if the total credit hours >  max_credit_hours."""
@@ -67,14 +67,14 @@ class ConcentrationMixin(models.Model):
 
     @classmethod
     def get_default(cls) -> Self:
-        """Return a default concentration (Major or Minor) with one program."""
+        """Return a default concentration (Major or Minor) with one curriculum_course."""
         dft_concentration, _ = cls.objects.get_or_create(  # type: ignore[attr-defined]
             name=f"DFT {cls.RELATED_NAME}",
             curriculum=Curriculum.get_default(),
             description=f"This is a default {cls.RELATED_NAME}",
         )
-        pg = Program.get_default()
-        dft_concentration.programs.add(pg)
+        pg = CurriculumCourse.get_default()
+        dft_concentration.curriculum_courses.add(pg)
         dft_concentration.save()  # ? is the save necessary
 
         return cast(Self, dft_concentration)
@@ -88,8 +88,10 @@ class Major(ConcentrationMixin):
 
     RELATED_NAME: str = "major"
 
-    programs = models.ManyToManyField(
-        "academics.Program", through="academics.MajorProgram", related_name="majors"
+    curriculum_courses = models.ManyToManyField(
+        "academics.CurriculumCourse",
+        through="academics.MajorCurriculumCourse",
+        related_name="majors",
     )
     max_credit_hours = models.PositiveIntegerField(default=50)
 
@@ -98,44 +100,46 @@ class Minor(ConcentrationMixin):
     """Represent a group of courses of the curriculum making the major."""
 
     RELATED_NAME: str = "minor"
-    programs = models.ManyToManyField(
-        "academics.Program", through="academics.MinorProgram", related_name="minors"
+    curriculum_courses = models.ManyToManyField(
+        "academics.CurriculumCourse",
+        through="academics.MinorCurriculumCourse",
+        related_name="minors",
     )
     max_credit_hours = models.PositiveIntegerField(default=20)
 
 
-# ##  TODO make sure Minor program can be in several curriculms?
-class MajorProgram(models.Model):
-    """A table joining the Major table with the program table."""
+# ##  TODO make sure Minor curriculum_course can be in several curriculms?
+class MajorCurriculumCourse(models.Model):
+    """A table joining the Major table with the curriculum_course table."""
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     major = models.ForeignKey("Major", on_delete=models.CASCADE)
-    program = models.ForeignKey("Program", on_delete=models.CASCADE)
+    curriculum_course = models.ForeignKey("CurriculumCourse", on_delete=models.CASCADE)
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["major", "program"],
-                name="uniq_program_per_major",
+                fields=["major", "curriculum_course"],
+                name="uniq_curriculum_course_per_major",
             ),
         ]
 
 
-class MinorProgram(models.Model):
-    """A table joining the Major table with the program table."""
+class MinorCurriculumCourse(models.Model):
+    """A table joining the Major table with the curriculum_course table."""
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     minor = models.ForeignKey("Minor", on_delete=models.CASCADE)
-    program = models.ForeignKey("Program", on_delete=models.CASCADE)
+    curriculum_course = models.ForeignKey("CurriculumCourse", on_delete=models.CASCADE)
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["minor", "program"],
-                name="uniq_program_per_minor",
+                fields=["minor", "curriculum_course"],
+                name="uniq_curriculum_course_per_minor",
             ),
         ]

@@ -14,13 +14,13 @@ from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum, CurriculumStatus
 from app.academics.models.department import Department
 from app.academics.models.prerequisite import Prerequisite
-from app.academics.models.program import Program
+from app.academics.models.course import CurriculumCourse
 from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
 
 from .filters import CurriculumFilter
 from .inlines import (
-    CourseProgramInline,
-    CurriculumProgramInline,
+    CurriculumCourseInline,
+    CourseCurriculumInline,
     PrerequisiteInline,
     RequiresInline,
 )
@@ -30,7 +30,7 @@ from .resources import (
     CurriculumResource,
     DepartmentResource,
     PrerequisiteResource,
-    ProgramResource,
+    CurriculumCourseResource,
 )
 
 
@@ -79,7 +79,7 @@ class CourseAdmin(DepartmentRestrictedAdmin):
     list_filter = ("department__college",)
     autocomplete_fields = ("curricula",)
     # > TODO: Add the list of student enrolled in this course the current semester.
-    inlines = [PrerequisiteInline, RequiresInline, CourseProgramInline]
+    inlines = [PrerequisiteInline, RequiresInline, CourseCurriculumInline]
     list_select_related = ("department",)
 
     search_fields = ("short_code", "department__code", "title")
@@ -101,7 +101,7 @@ class CurriculumAdmin(CollegeRestrictedAdmin):
     list_display = ("short_name", "long_name", "college", "is_active", "status")
     list_filter = ("college",)
     autocomplete_fields = ("college",)
-    inlines = [CurriculumProgramInline]
+    inlines = [CurriculumCourseInline]
 
     # list_selected_relate reduces the number of queries in db
     list_select_related = ("college",)
@@ -158,16 +158,16 @@ class PrerequisiteAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModel
     # search_fields = ("course", "prerequisite_course", "curriculum")
 
 
-@admin.register(Program)
-class ProgramAdmin(CollegeRestrictedAdmin):
-    """Admin screen for :class:~app.academics.models.Program.
+@admin.register(CurriculumCourse)
+class CurriculumCourseAdmin(CollegeRestrictedAdmin):
+    """Admin screen for :class:~app.academics.models.CurriculumCourse.
 
     list_display shows the curriculum and related course while
     autocomplete_fields make lookups faster. list_select_related joins
     both relations for efficient queries.
     """
 
-    resource_class = ProgramResource
+    resource_class = CurriculumCourseResource
     college_field = "curriculum__college"
     list_display = ("course", "curriculum")
     # need to order the filter by curriculum_college
@@ -175,8 +175,8 @@ class ProgramAdmin(CollegeRestrictedAdmin):
     autocomplete_fields = ("curriculum", "course")
     list_select_related = ("curriculum", "course")
     search_fields = ("curriculum__short_name", "course__code")
-    # inlines = [CourseProgramInline]
-    # > Add the list all curriculum having this particular program, CurriculumInline
+    # inlines = [CurriculumCourseInline]
+    # > Add the list all curriculum having this particular curriculum_course, CurriculumInline
 
 
 @admin.register(CurriculumStatus)

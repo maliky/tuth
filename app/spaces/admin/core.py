@@ -32,7 +32,7 @@ class SpaceAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
         sections = (
             Section.objects.filter(semester=semester, sessions__room__space=obj)
             .distinct()
-            .order_by("program__course__code", "number")
+            .order_by("curriculum_course__course__code", "number")
         )
         codes = [s.short_code for s in sections]
         return ", ".join(codes) if codes else "--"

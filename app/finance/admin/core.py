@@ -18,7 +18,7 @@ class InvoiceAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     list_display = ("__str__", "recorded_by")
     list_filter = (SemesterFilter,)
     readonly_fields = ("created_at",)
-    search_fields = ("program", "student", "semester")
+    search_fields = ("curriculum_course", "student", "semester")
 
 
 @admin.register(Payment)

@@ -84,9 +84,9 @@ class Student(AbstractPerson):
     def passed_courses(self) -> CourseQuery:
         """Return courses the student completed with a passing grade."""
         return Course.objects.filter(
-            in_programs__sections__grade__student=self,
+            in_curriculum_courses__sections__grade__student=self,
             # GradeType.number >= 1 == passing grade
-            in_programs__sections__grade__value__number__gte=1,
+            in_curriculum_courses__sections__grade__value__number__gte=1,
         ).distinct()
 
     @property
@@ -94,10 +94,10 @@ class Student(AbstractPerson):
         """Return sum of credit hours successfully completed."""
         from django.db.models import Sum
 
-        from app.academics.models.program import Program
+        from app.academics.models.course import CurriculumCourse
 
         passed_ids = self.passed_courses().values_list("id", flat=True)
-        agg = Program.objects.filter(
+        agg = CurriculumCourse.objects.filter(
             curriculum=self.curriculum, course_id__in=passed_ids
         ).aggregate(total=Sum("credit_hours"))
         return agg.get("total") or 0

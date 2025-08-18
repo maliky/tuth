@@ -9,21 +9,23 @@ from app.timetable.models.section import Section
 
 
 @pytest.mark.django_db
-def test_allowed_courses(student: Student, semester, program_factory):
+def test_allowed_courses(student: Student, semester, curriculum_course_factory):
     """We test that if a course A is a prerequisite to course B.
 
     then A must be passed to see B in allowed courses for the student.
     """
-    program_a = program_factory("101", student.curriculum.short_name)
-    program_b = program_factory("102", student.curriculum.short_name)
-    course_a = program_a.course
-    course_b = program_b.course
+    curriculum_course_a = curriculum_course_factory("101", student.curriculum.short_name)
+    curriculum_course_b = curriculum_course_factory("102", student.curriculum.short_name)
+    course_a = curriculum_course_a.course
+    course_b = curriculum_course_b.course
 
     Prerequisite.objects.create(
         course=course_b, prerequisite_course=course_a, curriculum=student.curriculum
     )
 
-    sec_a = Section.objects.create(program=program_a, semester=semester, number=1)
+    sec_a = Section.objects.create(
+        curriculum_course=curriculum_course_a, semester=semester, number=1
+    )
 
     allowed_initial = list(student.allowed_courses())
 

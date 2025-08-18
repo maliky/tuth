@@ -23,13 +23,13 @@ class CurriculumStatus(SimpleTableMixin):
 
 # need to update the docs
 class Curriculum(StatusableMixin, models.Model):
-    """Set of courses that make up a degree programme within a college.
+    """Set of courses that make up a degree Curriculu/program within a college.
 
     Example:
         >>> col = College.objects.create(code="COAS", long_name="Arts and Sciences")
         >>> Curriculum.objects.create(short_name="BSCS", college=col)
 
-    We use a default curriculum encompassing all courses when none is specified;
+    We use a default curriculum encompassing all curriculum_courses when none is specified;
     otherwise the student is limited to the courses listed in their curriculum.
 
     Concerning credit hours, usualy between 120-128 (GE 30-40, Major/Specific 30-60, Minor/elective (rest))
@@ -56,14 +56,14 @@ class Curriculum(StatusableMixin, models.Model):
 
     # ~~~~~~~~ Optional ~~~~~~~~
     long_name = models.CharField(max_length=255, blank=True, null=True)
-    # this is a shortcut from curriculum <- programs . course
+    # this is a shortcut from curriculum <- curriculum_courses . course
     # The idea is to have a catalogue C of curriculum course been authorative
-    # the list of programs.course should be included in C.
+    # the list of curriculum_courses.course should be included in C.
     # can a course be not offered  in any curricula ?
     # needs clarification...
-    courses = models.ManyToManyField(
+    curriculum_course = models.ManyToManyField(
         "academics.Course",
-        through="academics.Program",
+        through="academics.CurriculumCourse",
         related_name="curricula",  # <-- reverse accessor course.curricula
         blank=True,
     )

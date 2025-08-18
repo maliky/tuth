@@ -4,7 +4,7 @@ from typing import Optional, cast
 
 from import_export import widgets
 
-from app.academics.admin.widgets import CourseWidget, ProgramWidget
+from app.academics.admin.widgets import CourseWidget, CurriculumCourseWidget
 from app.people.admin.widgets import FacultyWidget
 from app.timetable.admin.widgets.core import SemesterWidget
 from app.timetable.models.section import Section
@@ -15,7 +15,7 @@ class SectionWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
         super().__init__(Section)  # using pk until export is done
-        self.program_w = ProgramWidget()
+        self.curriculum_course_w = CurriculumCourseWidget()
         self.sem_w = SemesterWidget()
         self.faculty_w = FacultyWidget()
 
@@ -26,7 +26,9 @@ class SectionWidget(widgets.ForeignKeyWidget):
             raise ValueError("Row context required")
 
         curriculum_value = (row.get("curriculum") or "").strip()
-        program = self.program_w.clean(value=curriculum_value, row=row)
+        curriculum_course = self.curriculum_course_w.clean(
+            value=curriculum_value, row=row
+        )
 
         semester_no = (row.get("semester_no") or "").strip()
         semester = self.sem_w.clean(value=semester_no, row=row)
@@ -42,7 +44,10 @@ class SectionWidget(widgets.ForeignKeyWidget):
             number = 0
 
         section, _ = Section.objects.get_or_create(
-            semester=semester, program=program, number=number, faculty=faculty
+            semester=semester,
+            curriculum_course=curriculum_course,
+            number=number,
+            faculty=faculty,
         )
         return cast(Optional[Section], section)
 

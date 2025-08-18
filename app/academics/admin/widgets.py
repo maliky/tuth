@@ -9,25 +9,25 @@ from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
-from app.academics.models.program import Program
+from app.academics.models.course import CurriculumCourse
 from app.shared.models import CreditHour
 from app.shared.utils import expand_course_code, get_in_row
 
 
-class ProgramWidget(widgets.ForeignKeyWidget):
-    """Create or Program from CSV rows.
+class CurriculumCourseWidget(widgets.ForeignKeyWidget):
+    """Create or CurriculumCourse from CSV rows.
 
     Use the curriculum_short name as the 'value'.
     The widget delegates curriculum parsing to CurriculumWidget and course parsing
-    to CourseWidget then assembles a Program object from the results.
+    to CourseWidget then assembles a CurriculumCourse object from the results.
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(Program)
+        super().__init__(CurriculumCourse)
         self.curriculum_w = CurriculumWidget()
         self.course_w = CourseWidget()
 
-    def clean(self, value, row=None, *args, **kwargs) -> Program:
+    def clean(self, value, row=None, *args, **kwargs) -> CurriculumCourse:
         """Assemble course_dept, curriculum and course to return a curriculum course."""
 
         # we don't use value.  We always get a course back
@@ -42,7 +42,7 @@ class ProgramWidget(widgets.ForeignKeyWidget):
         credit_hours, _ = CreditHour.objects.get_or_create(
             code=get_in_row("credit_hours", row)
         )
-        program, _ = Program.objects.get_or_create(
+        curriculum_course, _ = CurriculumCourse.objects.get_or_create(
             curriculum=curriculum,
             course=course,
             defaults={
@@ -50,7 +50,7 @@ class ProgramWidget(widgets.ForeignKeyWidget):
                 "is_required": get_in_row("is_required", row),
             },
         )
-        return program
+        return curriculum_course
 
 
 class CurriculumWidget(widgets.ForeignKeyWidget):

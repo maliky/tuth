@@ -14,7 +14,7 @@ from app.academics.admin.widgets import (
 from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
-from app.academics.models.program import Program
+from app.academics.models.course import CurriculumCourse
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.department import Department
 
@@ -189,8 +189,8 @@ class CollegeResource(resources.ModelResource):
         )
 
 
-class ProgramResource(resources.ModelResource):
-    """Import a program  curriculum name and course no and dept."""
+class CurriculumCourseResource(resources.ModelResource):
+    """Import a curriculum_course  curriculum name and course no and dept."""
 
     curriculum_f = fields.Field(
         attribute="curriculum",
@@ -208,7 +208,7 @@ class ProgramResource(resources.ModelResource):
     )
 
     class Meta:
-        model = Program
+        model = CurriculumCourse
         import_id_fields = (
             "curriculum_f",
             "course_f",

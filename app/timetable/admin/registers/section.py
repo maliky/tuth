@@ -21,9 +21,9 @@ class SectionAdmin(CollegeRestrictedAdmin):
     """
 
     resource_class = SectionResource
-    college_field = "program__curriculum__college"
+    college_field = "curriculum_course__curriculum__college"
     list_display = (
-        "program",
+        "curriculum_course",
         "number",
         "semester",
         "faculty",
@@ -31,21 +31,23 @@ class SectionAdmin(CollegeRestrictedAdmin):
         "space_codes",
         "session_count",
         "credit_hours",
-        "program__curriculum",
+        "curriculum_course__curriculum",
     )
     inlines = [SecSessionInline, GradeInline]
     list_filter = [
         SectionSemesterFilterAc
-    ]  # , CurriBySemFilterAc]  #("program__curriculum",)
+    ]  # , CurriBySemFilterAc]  #("curriculum_course__curriculum",)
     autocomplete_fields = (
         "semester",
         "faculty",
     )
 
     # Join related tables to reduce queries when pulling sections.
-    list_select_related = ("program", "semester", "faculty")
+    list_select_related = ("curriculum_course", "semester", "faculty")
 
-    search_fields = ("^program__course__short_code",)  # fast starts-with on indexed code
+    search_fields = (
+        "^curriculum_course__course__short_code",
+    )  # fast starts-with on indexed code
 
     def get_queryset(self, request):
         """Prefetch sessions and limit sections to the current faculty."""
@@ -77,5 +79,5 @@ class SectionAdmin(CollegeRestrictedAdmin):
 
     @admin.display(description="Credits")
     def credit_hours(self, obj: Section) -> int:
-        """Return credit hours for this section's program."""
-        return obj.program.credit_hours_id or 3
+        """Return credit hours for this section's curriculum_course."""
+        return obj.curriculum_course.credit_hours_id or 3
