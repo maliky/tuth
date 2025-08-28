@@ -80,7 +80,8 @@ def semester_factory(academic_year_factory: AcademicYearFactory) -> SemesterFact
 
 @pytest.fixture
 def section_factory(
-    semester_factory: SemesterFactory, curriculum_course_factory: CurriculumCourseFactory
+    semester_factory: SemesterFactory,
+    curriculum_course_factory: CurriculumCourseFactory,
 ) -> SectionFactory:
     def _make(
         course_number: str = "111",

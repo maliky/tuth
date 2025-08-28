@@ -44,7 +44,8 @@ SUFFIX_PATTERNS = [
 
 # prefix if followed by a dot then has a space just after
 PREFIX_PATTERN = re.compile(
-    r"(\b(?:Doc|Dr|Mme|Mrs?|Ms|Prof|Rev|Sr|Fr)(?P<dot>\.)?(?(dot)\s*|\b))+", re.IGNORECASE
+    r"(\b(?:Doc|Dr|Mme|Mrs?|Ms|Prof|Rev|Sr|Fr)(?P<dot>\.)?(?(dot)\s*|\b))+",
+    re.IGNORECASE,
 )
 # A single letter folowed by a dot and a space or a word separatore '\b'
 FULL_INITIAL_PATTERN = re.compile(r"\b([A-Z])(?P<dot>\.)?(?(dot)\s*|\b)")
