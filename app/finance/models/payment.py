@@ -14,11 +14,15 @@ from app.shared.mixins import SimpleTableMixin
 class ClearanceStatus(SimpleTableMixin):
     """Clearance Statuses."""
 
-    # PENDING = "pending", "Pending"
-    # CLEARED = "cleared", "Cleared"
-    # BLOCKED = "blocked", "Blocked"
+    DEFAULT_VALUES = [
+        ("pending", "Pending"),
+        ("cleared", "Cleared"),
+        ("blocked", "Blocked"),
+    ]
 
-    DEFAULT_VALUES = ["pending", "cleared", "blocked"]
+    class Meta:
+        verbose_name = "Clearance Status"
+        verbose_name_plural = "Clearance Status"
 
     @classmethod
     def get_default(cls) -> Self:
@@ -31,33 +35,31 @@ class ClearanceStatus(SimpleTableMixin):
 class PaymentMethod(SimpleTableMixin):
     """Payment method statuses."""
 
-    # CASH = "cash", "Cash"
-    # CRYPTO = "crypto", "Crypto (ADA)"
-    # MOBILE_MONEY = "mobile_money", "Mobile Money"
-    # WIRE = "wire", "Wire"
-    DEFAULT_VALUES = ["wire", "mobile Money", "crypto_ada", "cash"]
+    DEFAULT_VALUES = [
+        ("wire", "Wire"),
+        ("mobile", "Mobile Money"),
+        ("crypto_ada", "Crypto Ada"),
+        ("cash", "Cash"),
+    ]
 
     @classmethod
     def get_default(cls) -> Self:
         """Returns the default PaymentMethod."""
-        deft, _ = cls.objects.get_or_create(code="cash")
+        deft, _ = cls.objects.get_or_create(
+            code="cash",
+        )
         return deft
 
 
 class FeeType(SimpleTableMixin):
     """Enumeration of fee types."""
 
-    # CREDIT_HOUR_FEE = "CREDIT_HOUR_FEE", "Credit Hour Fee"
-    # LAB = "lab", "Lab"
-    # OTHER = "other", "Other"
-    # RESEARCH = "research", "Research"
-    # TUITION = "tuition", "Tuition"
     DEFAULT_VALUES = [
-        "tuition",
-        "research",
-        "other",
-        "lab",
-        "credit_hour_fee",
+        ("tuition", "Tuition"),
+        ("research", "Research"),
+        ("other", "Other"),
+        ("lab", "Laboratory"),
+        ("credit_hour_fee", "Credit Hour Fee"),
     ]
 
     @classmethod

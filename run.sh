@@ -62,6 +62,7 @@ if $RUN_MIGRATIONS; then
     python manage.py migrate
     python manage.py create_test_users
     python manage.py load_roles
+    python manage.py create_states
 fi
 
 # ---- static & server -------------------------------------------------------

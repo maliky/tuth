@@ -23,54 +23,46 @@ def set_document_path(instance, filename: str) -> str:
 
 
 class DocumentType(SimpleTableMixin):
-    PHOTO = "photo", "Photo"
-    APPLET = "applet", "Application Letter"
-    RECLS = "recls", "Recommandation Last School"
-    RECCOM = "reccom", "Recommandation Community"
-    RECREL = "recrel", "Recommandation Relgious Leaders"
-    MEDCERT = "medcert", "Medical Certificat"
-    REPCARD = "repcard", "Report Card"
-    WAEC = "waec", "Waec"
-    BILL = "bill", "Bill"
-    TRANSCRIPT = "transcript", "Transcript"
-    PUBLIC = "public", "Public_signature"
-    OTHER = "other", "Other Document"
+
     DEFAULT_VALUES = [
-        "public",
-        "transcript",
-        "bill",
-        "waec",
-        "repcard",
-        "medcert",
-        "recrel" "recls",
-        "reccom",
-        "applet",
-        "photo",
+        ("photo", "Photo"),
+        ("applet", "Application Letter"),
+        ("recls", "Recommandation Last School"),
+        ("reccom", "Recommandation Community"),
+        ("recrel", "Recommandation Relgious Leaders"),
+        ("medcert", "Medical Certificat"),
+        ("repcard", "Report Card"),
+        ("waec", "Waec"),
+        ("bill", "Bill"),
+        ("transcript", "Transcript"),
+        ("public", "Public_signature"),
+        ("other", "Other Document"),
     ]
 
     @classmethod
     def get_default(cls) -> Self:
         """Returns the default FeeType."""
-        deft, _ = cls.objects.get_or_create(code="other", label="Other Document")
+        deft, _ = cls.objects.get_or_create(
+            code="other", defaults={"label": "Other Document"}
+        )
         return deft
 
 
 class DocumentStatus(SimpleTableMixin):
-    PENDING = "pending", "Pending"
-    APPROVED = "approved", "Approved"
-    ADJUSTMENTS_REQUIRED = "adjustments_required", "Adjustments Required"
-    REJECTED = "rejected", "Rejected"
     DEFAULT_VALUES = [
-        "rejected",
-        "adjustments_required",
-        "approved",
-        "pending",
+        ("pending", "Pending"),
+        ("approved", "Approved"),
+        ("adjustments_required", "Adjustments Required"),
+        ("rejected", "Rejected"),
     ]
+
+    class Meta:
+        verbose_name_plural = "Document Status"
 
     @classmethod
     def get_default(cls) -> Self:
         """Returns the default FeeType."""
-        deft, _ = cls.objects.get_or_create(code=cls.PENDING[0], label=cls.PENDING[1])
+        deft, _ = cls.objects.get_or_create(code="pending", defaults={"label": "Pending"})
         return deft
 
 

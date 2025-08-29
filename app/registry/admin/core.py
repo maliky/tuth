@@ -1,5 +1,6 @@
 """Admin configuration for registry models."""
 
+from app.registry.models.document import DocumentStatus, DocumentType
 from django.contrib import admin
 from django.urls import path
 from import_export.admin import ImportExportModelAdmin
@@ -9,7 +10,7 @@ from app.people.models.student import Student
 # from app.registry.admin.filters import GradeSectionFilter
 # from app.registry.admin.views import SectioGradeValueerAutocomplete
 from app.registry.models.grade import Grade, GradeValue
-from app.registry.models.registration import Registration
+from app.registry.models.registration import Registration, RegistrationStatus
 from app.timetable.admin.filters import (
     GradeSemesterFilterAc,
     SectionBySemesterFilter,
@@ -97,3 +98,11 @@ class RegistrationAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModel
                     curriculum_course__course__in=student.allowed_courses()
                 )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
+@admin.register(DocumentStatus, DocumentType, RegistrationStatus)
+class CurriculumStatusAdmin(admin.ModelAdmin):
+    """Lookup admin for CurriculumStatus."""
+
+    search_fields = ("code", "label")
+    list_display = ("label",)

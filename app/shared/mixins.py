@@ -31,7 +31,7 @@ class SimpleTableMixin(models.Model):
         abstract = True
         ordering = ["code"]
 
-    DEFAULT_VALUES: list[str] = []
+    DEFAULT_VALUES: list[tuple[str, str]] = []
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     code = models.CharField(max_length=30, primary_key=True)
@@ -44,16 +44,14 @@ class SimpleTableMixin(models.Model):
     objects = SimpleTableMixinManager()
 
     @classmethod
-    def _populate_attibutes_and_db(cls):
+    def _populate_attributes_and_db(cls):
         """Create a row for each var in DEFAULT_VALUES and create subclass attributes."""
         # This method is temporary
-        for val in cls.DEFAULT_VALUES:
-            obj, _ = cls.objects.get_or_create(
-                code=val, defaults={"label": as_title(val)}
-            )
+        for val, lbl in cls.DEFAULT_VALUES:
+            obj, _ = cls.objects.get_or_create(code=val, defaults={"label": lbl})
             # set variable like PENDING = 'pending', 'Pending'
-            # why this ? for transition but soon obsolete
-            object.__setattr__(cls, val.upper(), (val, as_title(val)))
+            # this for transition but soon obsolete
+            # object.__setattr__(cls, val.upper(), (val, as_title(val)))
 
     def __str__(self) -> str:
         """Return human readable label."""

@@ -40,7 +40,7 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
         )
 
         credit_hours, _ = CreditHour.objects.get_or_create(
-            code=get_in_row("credit_hours", row)
+            code=get_in_row("credit_hours", row) or 3
         )
         curriculum_course, _ = CurriculumCourse.objects.get_or_create(
             curriculum=curriculum,

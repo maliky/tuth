@@ -14,7 +14,7 @@ from app.timetable.models.schedule import Schedule
 
 
 class SecSession(models.Model):
-    """A meeting slot for a Section.
+    """Previous Sesion.  A meeting slot for a Section.
 
     Example:
         >>> SecSession.objects.create(room=room, schedule=schedule, section=section)
@@ -59,18 +59,6 @@ class SecSession(models.Model):
         """Shortcut to the schedule's ending time."""
         return getattr(self.schedule, "end_time", None)
 
-    # No constraints for now. because how to handle TBA
-    # class Meta:
-    #     constraints = [
-    #         models.UniqueConstraint(
-    #             fields=["room", "schedule"],
-    #             name="uniq_schedule_per_room",
-    #         )
-    #     ]
-    #     indexes = [
-    #         models.Index(fields=["room", "schedule"]),
-    #     ]
-
     def clean(self) -> None:
         """Ensure no overlapping session exists for the same room."""
         super().clean()
@@ -105,16 +93,5 @@ class SecSession(models.Model):
             )
         ]
         indexes = [models.Index(fields=["section", "schedule"])]
-
-        # #### for overlap ####
-        # constraints = [
-        #     ExclusionConstraint(
-        #         name="no_time_overlap_per_section",
-        #         expressions=[
-        #             ("section",          RangeOperators.EQUAL),     # same section
-        #             (Func(F("start_time"), F("end_time"),
-        #                   function="timerange"), RangeOperators.OVERLAPS),
-        #         ],
-        #     ),
-        # ]
-        # indexes = [GistIndex(fields=["section", "start_time", "end_time"])]
+        verbose_name = "Session"
+        verbose_name_plural = "Sessions"

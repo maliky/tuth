@@ -2,7 +2,8 @@
 
 from decimal import Decimal
 
-from app.finance.constants import TUITION_RATE_PER_CREDIT
+
+TUITION_RATE_PER_CREDIT = Decimal("5.00")
 
 
 def tuition_for(course, credit_hours: int) -> Decimal:

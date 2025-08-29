@@ -29,7 +29,7 @@ class Command(BaseCommand):
         # Iterate create, read, update, delete actions
         for ur in UserRole:
             grp = sync_role_group(ur_group=ur.value.group, x_rights=ur.value.rights)
-            self.stdout.write(self.style.NOTICE(f"Permissions for {grp} added."))
+            self.stdout.write(f" - Permissions for {grp} added.")
 
         self.stdout.write(self.style.SUCCESS("Permissions rebuilt!"))
 

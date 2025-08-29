@@ -11,25 +11,24 @@ from app.shared.status.mixins import StatusableMixin
 
 
 class RegistrationStatus(SimpleTableMixin):
-    PENDING = "pending", "Pending Payment"
-    FINANCIALLY_CLEARED = "financially_cleared", "Financially_Cleared"
-    COMPLETED = "completed", "Completed"
-    CANCEL = "cancel", "Cancel"
-    REMOVE = "remove", "Remove"
-    APPROVED = "approved", "Approved"
     TABLE_DEFAULT_VALUES = [
-        "approved",
-        "remove",
-        "cancel",
-        "completed",
-        "financially_cleared",
-        "pending payment",
+        ("approved", "Approved"),
+        ("removed", "Remove"),
+        ("canceled", "Canceled"),
+        ("completed", "Completed"),
+        ("cleared", "Financially Cleared"),
+        ("pending", "Pending Payment"),
     ]
+
+    class Meta:
+        verbose_name_plural = "Registration Status"
 
     @classmethod
     def get_default(cls) -> Self:
         """Returns the default FeeType."""
-        deft, _ = cls.objects.get_or_create(code=cls.PENDING[0], label=cls.PENDING[1])
+        deft, _ = cls.objects.get_or_create(
+            code="pending", defaults={"label": "Pending Payment"}
+        )
         return deft
 
 

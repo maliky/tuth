@@ -43,7 +43,8 @@ class Command(BaseCommand):
                 person.staff_profile.user if isinstance(person, Faculty) else person.user
             )
 
-            _user.set_password(mk_password(_user.first_name, _user.last_name))
+            pwd = mk_password(_user.first_name, _user.last_name)
+            _user.set_password(pwd)
             _user.save(update_fields=["password"])
             college = None
             if user_role.value.default_college:
@@ -59,7 +60,7 @@ class Command(BaseCommand):
             created.append((person.username, group.name, was_created))  # type: ignore[attr-defined]
             # log
             status = "Created" if was_created else "Updated"
-            self.stdout.write(f" - {_user} ({group}): {status}")
+            self.stdout.write(f" - {_user} ({group}): {status} with pwd {pwd}")
 
         # nicely report results
         self.stdout.write(self.style.SUCCESS("Test users created or updated:"))

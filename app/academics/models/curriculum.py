@@ -16,14 +16,20 @@ from app.shared.status.mixins import StatusableMixin
 class CurriculumStatus(SimpleTableMixin):
     """Code/label pairs for curriculum validation status."""
 
-    PENDING = "pending", "Pending"
-    APPROVED = "approved", "Approved"
-    NEEDS_REVISION = "needs_revision", "Needs Revision"
+    DEFAULT_VALUES = [
+        ("pending", "Pending"),
+        ("approved", "Approved"),
+        ("needs_revision", "Needs Revision"),
+    ]
+
+    class Meta:
+        verbose_name = "Curriculum Status"
+        verbose_name_plural = "Curriculum Status"
 
 
 # need to update the docs
 class Curriculum(StatusableMixin, models.Model):
-    """Set of courses that make up a degree Curriculu/program within a college.
+    """Set of courses that make up a degree Curriculum/program within a college.
 
     Example:
         >>> col = College.objects.create(code="COAS", long_name="Arts and Sciences")

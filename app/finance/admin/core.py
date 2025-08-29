@@ -46,3 +46,4 @@ class LookupAdmin(admin.ModelAdmin):
     """Basic admin for finance lookup tables."""
 
     search_fields = ("code", "label")
+    list_display = ("label",)
