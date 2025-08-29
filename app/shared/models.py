@@ -29,7 +29,7 @@ class CreditHour(models.Model):
     class Meta:
         ordering = ["code"]
 
-    DEFAULT_VALUES: list[tuple[str, str]] = [
+    DEFAULT_VALUES: list[tuple[int, str]] = [
         (0, "0"),
         (1, "1"),
         (2, "2"),

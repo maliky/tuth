@@ -25,10 +25,11 @@ class Command(BaseCommand):
             ("DocumentType", DocumentType),
             ("PaymentMethod", PaymentMethod),
             ("FeeType", FeeType),
-            ("CreditHour", CreditHour),
         ]
 
         for name, cls in CLASS_MAP:
             cls()._populate_attributes_and_db()
             self.stdout.write((f" - Defaults for {name} Created"))
+        CreditHour._populate_attributes_and_db()("Student", StudentResource),
+
         self.stdout.write(self.style.SUCCESS("Defaults states and status Created"))
