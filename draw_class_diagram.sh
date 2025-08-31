@@ -1,29 +1,21 @@
-#!/bin/bash
-set -euo pipefail  # e exit immediatly if error, -u unset var are error -o pipefail forward errors
+#!/usr/bin/env bash
+set -euo pipefail
 
-printusage() {
-    cat >&2 <<EOF
-Usage: $(basename "$0") [-o | --ofile] 
-
-Draw the class diagram of TUSIS in the -ofile
-Options
-  arg1    Destination of the graph def. "../Docs/Archi/all_models.png"
+usage() {
+  cat >&2 <<EOF
+Usage: $(basename "$0") [OUTPUT_PNG]
+Draw the TUSIS class diagram to OUTPUT_PNG (default: ../Docs/Archi/all_models.png)
 EOF
 }
 
-# unbound variable
-if [[ -z "$1" ]] || [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]];
-then
-    printusage
-    exit 1
+first="${1-}"  # safe with set -u
+
+if [[ "${first:-}" == "-h" || "${first:-}" == "--help" ]]; then
+  usage; exit 0
 fi
 
-if [[ -z "$1" ]];
-then
-    ofile="../Docs/Archi/all_models.png";
-else
-    ofile="$1";
-fi
+ofile="${first:-../Docs/Archi/all_models.png}"
+mkdir -p "$(dirname "$ofile")"
 
 python manage.py graph_models\
        --exclude-models "./models_to_exclude.txt" \
@@ -31,4 +23,4 @@ python manage.py graph_models\
        --rankdir LR\
        --all-applications\
        --group-models\
-       --output "$1"
+       --output "$ofile"

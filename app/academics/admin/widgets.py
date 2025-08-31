@@ -6,6 +6,7 @@ from import_export import widgets
 
 from app.academics.choices import COLLEGE_CODE, COLLEGE_LONG_NAME
 from app.academics.models.college import College
+from app.academics.models.concentration import Major
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
@@ -74,10 +75,16 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
 
         Automatically creates curriculum with today's date.
         """
+
+        major_name = get_in_row("major", row)
         if not value:
-            return Curriculum.get_default()
+            if major_name:
+                value = major_name
+            else:
+                return Curriculum.get_default()
 
         short_name = value.strip()
+
 
         college_code = get_in_row("college_code", row)
         college = self.college_w.clean(college_code)
@@ -89,6 +96,10 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
                 "college": college,
             },
         )
+
+        # add the major if there
+        if major_name:
+            major, _ = Major.objects.get_or_create(name=major_name, curriculum=curriculum)
 
         return curriculum
 

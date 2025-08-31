@@ -60,7 +60,7 @@ def make_course_code(dept: Department, number: str, short=False) -> str:
 def get_in_row(key: str, row: Optional[dict[str, str | None]]) -> str:
     """Return a value from the row which is a dict of str and optional None.
 
-    Does so safly always returning something even if None is in the row.
+    Does so safely always returning something even if None is in the row.
     """
 
     return ((row or {}).get(key) or "").strip()
