@@ -10,6 +10,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Tuple
 
+from tqdm import tqdm
+
+from app.shared.utils import clean_column_headers
 from django.core.management.base import BaseCommand, CommandParser
 from django.db import transaction
 from import_export import resources
@@ -37,85 +40,99 @@ class Command(BaseCommand):
     help = "Import resources from individual CSV files found in a directory."
     #: Mapping filename → (label, ResourceClass)
     FILEMAP: dict[str, Tuple[str, type[resources.ModelResource]]] = {
-        "student.csv": ("Student", StudentResource),
-        "faculty.csv": ("Faculty", FacultyResource),
-        # Staff
-        "room.csv": ("Room", RoomResource),  # + Space
-        "schedule.csv": ("Schedule", ScheduleResource),
-        "course.csv": ("Course", CourseResource),  # + College
-        "semester.csv": ("Semester", SemesterResource),  # + AcademicYear
-        "curriculum_course.csv": ("CurriculumCourse", CurriculumCourseResource),
-        "section.csv": ("Section", SectionResource),
-        "session.csv": ("SecSession", SecSessionResource),  # + Faculty / Room
+        "um_students.csv": ("Student", StudentResource),
+        # "student.csv": ("Student", StudentResource),
+        # "faculty.csv": ("Faculty", FacultyResource),
+        # # Staff
+        # "room.csv": ("Room", RoomResource),  # + Space
+        # "schedule.csv": ("Schedule", ScheduleResource),
+        # "course.csv": ("Course", CourseResource),  # + College
+        # "semester.csv": ("Semester", SemesterResource),  # + AcademicYear
+        # "curriculum_course.csv": ("CurriculumCourse", CurriculumCourseResource),
+        # "section.csv": ("Section", SectionResource),
+        # "session.csv": ("SecSession", SecSessionResource),  # + Faculty / Room
         # Grades  # new and old ie with history tracking.
     }
-
-    def _load_csv(self, csv_path: Path, label=None) -> Dataset | None:
-        """Read path and return a sanitised tablib.Dataset."""
-        if not csv_path.exists():
-            self.stdout.write(
-                self.style.WARNING(f"↷ skipping {label}: {csv_path.name} missing")
-            )
-            return None
-
-        ds = Dataset().load(csv_path.read_text(), format="csv")
-        ds.headers = [(h or "").strip() for h in ds.headers]  # strip blanks
-        return ds
-
-    def _import_one(
-        self,
-        cmd: BaseCommand,
-        ds: Dataset,
-        name: str,
-        resource_cls: type[resources.ModelResource],
-    ) -> None:
-        """Run validation + import for a single resource inside its own Tx."""
-        rsrc: resources.ModelResource = resource_cls()
-
-        # ── dry-run validation ─────────────────────────────────────────────────
-        result = rsrc.import_data(ds, dry_run=True)
-        if result.has_errors():
-            cmd.stdout.write(cmd.style.ERROR(f"✖ {name}: validation errors"))
-            if result.row_errors():
-                row_i, errs = result.row_errors()[0]
-                cmd.stdout.write(f"    row {row_i}: {errs[0]}")
-            if result.base_errors:
-                cmd.stdout.write(f"    {result.base_errors[0]}")
-            return
-
-        # ── real import, isolated ──────────────────────────────────────────────
-        try:
-            with transaction.atomic():
-                rsrc.import_data(ds, dry_run=False)
-        except Exception as exc:
-            cmd.stdout.write(cmd.style.ERROR(f"✖ {name} import failed: {exc}"))
-            return
-
-        cmd.stdout.write(cmd.style.SUCCESS(f"✔ {name} import completed."))
-
-    # ------------------------------------------------------------------ args
     def add_arguments(self, parser: CommandParser) -> None:
         """Add the --dir option pointing to the directory of CSV files."""
 
         parser.add_argument(
             "-d",
             "--dir",
-            default="../../Data/Individual_datum",
+            default="./Seed_data/",
             help="Directory containing the per-resource CSV files.",
         )
 
+        parser.add_argument(
+            "-f",
+            "--format",
+            default="cs",
+            help="Directory containing the per-resource CSV files.",
+        )
+        
     # ---------------------------------------------------------------- handle
-    def handle(self, args: Any, opts: Any) -> None:
+
+    def _load_data(self, csv_path: Path, fmt:str, label=None) -> Dataset | None:
+        """Read path and return a sanitised tablib.Dataset."""
+        if not csv_path.exists():
+            self.stdout.write(
+                self.style.WARNING(f"↷ skipping {label}: {csv_path.name} missing")
+            )
+            return None
+        
+        dataset = Dataset().load(open(csv_path).read(), format=fmt)
+        dataset = clean_column_headers(dataset)
+        
+        return dataset
+
+    def _import_one(
+        self,
+        cmd: BaseCommand,
+        dataset: Dataset,
+        name: str,
+        resource_cls: type[resources.ModelResource],
+    ) -> None:
+        """Run validation + import for a single resource inside its own Tx."""
+        resource: resources.ModelResource = resource_cls()
+
+        # ── dry-run validation ─────────────────────────────────────────────────
+        # validation = resource.import_data(dataset, dry_run=True)
+        # if validation.has_errors():
+        #     cmd.stdout.write(cmd.style.ERROR(f"✖ {name}: validation errors"))
+        #     if validation.row_errors():
+        #         row_i, errs = validation.row_errors()[0]
+        #         cmd.stdout.write(f"    row {row_i}: {errs[0]}")
+        #     if validation.base_errors:
+        #         cmd.stdout.write(f"    {validation.base_errors[0]}")
+        #     return
+
+        # ── real import, isolated ──────────────────────────────────────────────
+        instance_loader = resource._meta.instance_loader_class(resource, dataset)
+        total_rows = dataset.height
+        with transaction.atomic():
+            for row in tqdm(dataset.dict, total=total_rows, desc=f"Importing {name}"):
+                try:
+                    resource.import_row(row, instance_loader, dry_run=False)
+                except Exception as exc:
+                    cmd.stdout.write(cmd.style.ERROR(f"✖ {name} import failed: {exc}"))
+                    return
+
+        cmd.stdout.write(cmd.style.SUCCESS(f"✔ {name} import completed."))
+
+    # ------------------------------------------------------------------ args
+    def handle(self, *args: Any, **options: Any) -> None:
         """Execute the import for every known CSV file in the directory."""
 
         ensure_superuser(self)
 
-        base_path: Path = Path(opts["dir"]).expanduser().resolve()
-        if not base_path.is_dir():
-            raise FileNotFoundError(str(base_path))
+        directory: Path = Path(options["dir"]).expanduser().resolve()
+        fmt: str = options["format"]
+        
+        if not directory.is_dir():
+            raise FileNotFoundError(str(directory))
 
         for filename, (label, resource_cls) in self.FILEMAP.items():
-            csv_path = base_path / filename  # add /filname to base
-            ds = self._load_csv(csv_path, label)
-            if ds:
-                self._import_one(self, ds, label, resource_cls)
+            csv_path = directory / filename  # add /filname to base
+            dataset = self._load_data(csv_path, fmt, label)
+            if dataset:
+                self._import_one(self, dataset, label, resource_cls)

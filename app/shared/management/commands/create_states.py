@@ -2,6 +2,7 @@
 
 from app.academics.models.curriculum import CurriculumStatus
 from app.finance.models.payment import ClearanceStatus, FeeType, PaymentMethod
+from app.people.admin.resources import StudentResource
 from app.registry.models.document import DocumentStatus, DocumentType
 from app.registry.models.registration import RegistrationStatus
 from app.shared.models import CreditHour
@@ -30,6 +31,7 @@ class Command(BaseCommand):
         for name, cls in CLASS_MAP:
             cls()._populate_attributes_and_db()
             self.stdout.write((f" - Defaults for {name} Created"))
-        CreditHour._populate_attributes_and_db()("Student", StudentResource),
+
+        CreditHour._populate_attributes_and_db()("Student", StudentResource)
 
         self.stdout.write(self.style.SUCCESS("Defaults states and status Created"))

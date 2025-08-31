@@ -11,6 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from app.shared.utils import clean_column_headers
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandParser
 from django.db import transaction
@@ -50,12 +51,6 @@ class Command(BaseCommand):
             help="Path to CSV file with resources data",
         )
 
-    def clean_column_headers(self, dataset):
-        """Strip blank headers that may appear due to trailing commas."""
-        # sanitize column headers: strip whitespace and drop empties
-        dataset.headers = [(header or "").strip() for header in dataset.headers]
-        return dataset
-
     def handle(self, *args: Any, **options: Any) -> None:
         """Validate and import each resource from the provided CSV."""
 
@@ -67,7 +62,7 @@ class Command(BaseCommand):
             raise FileNotFoundError(str(path))
 
         dataset: Dataset = Dataset().load(open(path).read(), format="csv")
-        dataset = self.clean_column_headers(dataset)
+        dataset = clean_column_headers(dataset)
 
         RESOURCES_MAP: list[tuple[str, type[resources.ModelResource]]] = [
             ("Student", StudentResource),

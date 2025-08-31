@@ -69,3 +69,10 @@ def get_in_row(key: str, row: Optional[dict[str, str | None]]) -> str:
 def as_title(value: str) -> str:
     """Utility to clean a strip _ from a str and capitalize its words."""
     return value.replace("_", " ").title()
+
+
+def clean_column_headers(dataset):
+    """Strip blank headers that may appear due to trailing commas."""
+    # sanitize column headers: strip whitespace and drop empties
+    dataset.headers = [(header or "").strip() for header in dataset.headers]
+    return dataset
