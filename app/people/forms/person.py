@@ -42,6 +42,10 @@ class StudentForm(PersonFormMixin, forms.ModelForm):
         "mother_name",
         "mother_address",
         "emergency_contact",
+        "nationality",
+        "origin_county",
+        "marital_status",
+        "gender",
     )
 
     class Meta:

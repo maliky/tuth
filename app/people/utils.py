@@ -260,7 +260,7 @@ def get_default_user():
         username="default_user",
         defaults={
             "first_name": "Kemyt",
-            "last_name": "Tuth",
+            "last_name": "Tusis",
             "password": None,
         },
     )

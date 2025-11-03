@@ -1,6 +1,7 @@
 """Resources module."""
 
 from import_export import fields, resources
+from import_export.widgets import DateTimeWidget
 from app.academics.admin.widgets import CurriculumWidget
 from app.shared.auth.perms import UserRole
 
@@ -108,8 +109,15 @@ class StudentResource(resources.ModelResource):
         widget=SemesterCodeWidget(),
     )
     curriculum = fields.Field(
-        attribute="curriculum", column_name="curriculum", widget=CurriculumWidget()
+        attribute="curriculum", column_name="major", widget=CurriculumWidget()
     )
+
+    # ~~~~~~~~~~~~~~~~ demographic fields ~~~~~~~~~~~~~~~~~
+
+    birth_date = fields.Field(attribute="birth_date", column_name="birth_date", widget=DateTimeWidget("%Y-%m-%d %H:%M:%S"))
+    # marital_status = fields.Field(attribute="marital_status", column_name="marital_status")
+    # nationality = fields.Field(attribute="nationality", column_name="nationality")
+    # gender = fields.Field(attribute="gender", column_name="gender")
 
     class Meta:
         model = Student
@@ -120,6 +128,10 @@ class StudentResource(resources.ModelResource):
             "curriculum",
             "current_enrolled_semester",
             "entry_semester",
+            "nationality",
+            "birth_date",
+            "marital_status",
+            "gender"
         )
         skip_unchanged = True
         report_skipped = False

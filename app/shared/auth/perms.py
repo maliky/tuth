@@ -364,6 +364,7 @@ ROLE_MATRIX = {
     },
     "registrar_officer": {
         "add": [
+            "grade",
             "documents",
             "prerequisite",
             "registration",

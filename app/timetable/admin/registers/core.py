@@ -39,7 +39,9 @@ class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
     list_display = ("academic_year", "number", "start_date", "end_date")
     list_filter = ("academic_year",)
     search_fields = ("academic_year__code", "academic_year__long_name")
-
+    ordering = ("academic_year", "number")
+    # need to list student in this academic semester
+    
 
 @admin.register(Term)
 class TermAdmin(SimpleHistoryAdmin, GuardedModelAdmin):

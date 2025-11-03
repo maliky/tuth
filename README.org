@@ -1,17 +1,17 @@
-#+TITLE: Tuth program
+#+TITLE: Tusis program
 
-* Tuth Application — Quickstart Guide
+* Tusis Application — Quickstart Guide
 
-** Tuth Application Overview
+** Tusis Application Overview
 
-Tuth is a student information and academic management system designed to streamline administrative tasks at the university. It manages student profiles, curricula, courses, registrations, class schedules, financial transactions, and role-based permissions, all through Django's admin interface.
+Tusis is a student information and academic management system designed to streamline administrative tasks at the university. It manages student profiles, curricula, courses, registrations, class schedules, financial transactions, and role-based permissions, all through Django's admin interface.
 
-This document summarizes how to run and test the Tuth application in different environments.
+This document summarizes how to run and test the Tusis application in different environments.
 ** Getting the Code
 Clone the repository and enter its directory:
 #+BEGIN_SRC bash
 git clone <repository-url>
-cd tuth
+cd tusis
 #+END_SRC
 ** The apps
 Here are the different applications you will find in this directory:
@@ -39,10 +39,10 @@ Open http://127.0.0.1:8000 in your browser.
 ** Development Environment
 To make changes :
 The repo includes a ~.python-version~ file which instructs *pyenv* to use a
-virtual environment named ~tuth~. You can create it with:
+virtual environment named ~tusis~. You can create it with:
 #+BEGIN_SRC bash
-pyenv virtualenv 3.12.0 tuth
-pyenv local tuth
+pyenv virtualenv 3.12.0 tusis
+pyenv local tusis
 #+END_SRC
 If you prefer not to use ~pyenv virtualenv~, replace the file content with a
 supported Python version such as ~3.12~.
@@ -148,7 +148,7 @@ docker-compose -f docker-compose-prod.yml up --build -d
 
 - Ensure that your production `.env-prod` file is configured and secure.
 
-Access the application via your production URL (e.g., [[https://tuth.koba.sarl][https://tuth.koba.sarl]]).
+Access the application via your production URL (e.g., [[https://tuth.koba.sarl][https://tusis.koba.sarl]]).
 
 ** Data Import/Export
 

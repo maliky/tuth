@@ -43,7 +43,7 @@ class GradeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     lookups for student and section.
     """
 
-    date_hiearchy = "grade_on"
+    date_hierachy = "grade_on"
     list_display = (
         "student",
         "value",

@@ -8,7 +8,7 @@ python_files = ["tests.py", "test_*.py", "*_tests.py"]
 
 [tool.black]
 line-length = 90
-target-version = ["py312"]
+target-version = ["py313"]
 
 [tool.flake8]
 per-file-ignores = ["__init__.py:F401"]
@@ -37,7 +37,7 @@ docstring-convention = "google"
 
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 check_untyped_defs = true
 ignore_missing_imports = true
 follow_imports = "silent"

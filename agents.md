@@ -1,6 +1,6 @@
 # Contributor Guide
 
-Welcome — and thanks for helping grow **Tuth**, Tubman University’s information system.  
+Welcome — and thanks for helping grow **Tusis**, Tubman University’s information system.
 This guide explains how to spin up the development stack, run checks, write tests, and craft pull requests.
 
 ---
