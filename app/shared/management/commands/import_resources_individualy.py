@@ -53,6 +53,7 @@ class Command(BaseCommand):
         # "session.csv": ("SecSession", SecSessionResource),  # + Faculty / Room
         # Grades  # new and old ie with history tracking.
     }
+
     def add_arguments(self, parser: CommandParser) -> None:
         """Add the --dir option pointing to the directory of CSV files."""
 
@@ -69,20 +70,20 @@ class Command(BaseCommand):
             default="cs",
             help="Directory containing the per-resource CSV files.",
         )
-        
+
     # ---------------------------------------------------------------- handle
 
-    def _load_data(self, csv_path: Path, fmt:str, label=None) -> Dataset | None:
+    def _load_data(self, csv_path: Path, fmt: str, label=None) -> Dataset | None:
         """Read path and return a sanitised tablib.Dataset."""
         if not csv_path.exists():
             self.stdout.write(
                 self.style.WARNING(f"↷ skipping {label}: {csv_path.name} missing")
             )
             return None
-        
+
         dataset = Dataset().load(open(csv_path).read(), format=fmt)
         dataset = clean_column_headers(dataset)
-        
+
         return dataset
 
     def _import_one(
@@ -127,7 +128,7 @@ class Command(BaseCommand):
 
         directory: Path = Path(options["dir"]).expanduser().resolve()
         fmt: str = options["format"]
-        
+
         if not directory.is_dir():
             raise FileNotFoundError(str(directory))
 

@@ -1,3 +1,4 @@
+*.png
 media/
 test_import.py
 *#*

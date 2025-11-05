@@ -114,7 +114,11 @@ class StudentResource(resources.ModelResource):
 
     # ~~~~~~~~~~~~~~~~ demographic fields ~~~~~~~~~~~~~~~~~
 
-    birth_date = fields.Field(attribute="birth_date", column_name="birth_date", widget=DateTimeWidget("%Y-%m-%d %H:%M:%S"))
+    birth_date = fields.Field(
+        attribute="birth_date",
+        column_name="birth_date",
+        widget=DateTimeWidget("%Y-%m-%d %H:%M:%S"),
+    )
     # marital_status = fields.Field(attribute="marital_status", column_name="marital_status")
     # nationality = fields.Field(attribute="nationality", column_name="nationality")
     # gender = fields.Field(attribute="gender", column_name="gender")
@@ -131,7 +135,7 @@ class StudentResource(resources.ModelResource):
             "nationality",
             "birth_date",
             "marital_status",
-            "gender"
+            "gender",
         )
         skip_unchanged = True
         report_skipped = False

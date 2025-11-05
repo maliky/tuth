@@ -6,10 +6,13 @@
   <form method="post">
     {% csrf_token %}
 
+    <input type="hidden" name="action" value="update_curriculum">
+
     {{ form.as_p }}
 
-    {% for item in items %}
-      <input type="hidden" name="_selected_action" value="{{ item.pk }}">
+    {% for cc in courses %}
+    <!-- <input type="hidden" name="_selected_action" value="{{ course.pk }}"> -->
+    <li>{{ cc.course.short_code }} -- {{cc.course.title}} -- {{cc.curriculum}}</li>    
     {% endfor %}
 
     <button class="default" type="submit" name="apply" value="yes">

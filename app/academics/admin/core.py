@@ -1,36 +1,46 @@
 """Core module."""
 
-from django.urls import path
+from django.urls import path, reverse
+from django.utils.html import format_html
 
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
-from app.academics.admin.actions import update_curriculum
+from app.academics.admin.actions import update_curriculum, update_department
+from app.academics.admin.filters import (
+    CurriculumFilterAc,
+    # CollegeChoicesFilter,
+    DepartmentFilterAc,
+    ProgramFilterAc,
+)
+
+# https://pypi.org/project/django-more-admin-filters/
+# from more_admin_filters import MultiSelectFilter
 from app.academics.admin.views import CurriculumBySemester
 from app.academics.models.college import College
-from app.academics.models.course import Course
+from app.academics.models.course import Course, CurriculumCourse
 from app.academics.models.curriculum import Curriculum, CurriculumStatus
 from app.academics.models.department import Department
 from app.academics.models.prerequisite import Prerequisite
-from app.academics.models.course import CurriculumCourse
 from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
 
 from .filters import CurriculumFilter
 from .inlines import (
-    CurriculumCourseInline,
     CourseCurriculumInline,
+    CurriculumCourseInline,
+    DepartmentCourseInline,
     PrerequisiteInline,
     RequiresInline,
 )
 from .resources import (
     CollegeResource,
     CourseResource,
+    CurriculumCourseResource,
     CurriculumResource,
     DepartmentResource,
     PrerequisiteResource,
-    CurriculumCourseResource,
 )
 
 
@@ -75,15 +85,25 @@ class CourseAdmin(DepartmentRestrictedAdmin):
         "short_code",
         "title",
         "department",
+        "list_curricula_str",
     )
-    list_filter = ("department__college",)
     autocomplete_fields = ("curricula",)
     # > TODO: Add the list of student enrolled in this course the current semester.
-    inlines = [PrerequisiteInline, RequiresInline, CourseCurriculumInline]
+    inlines = [RequiresInline, PrerequisiteInline, CourseCurriculumInline]
     list_select_related = ("department",)
+    list_editable = ("department",)
+    list_filter = (
+        ProgramFilterAc,
+        "department__college",
+        "department",
+    )
 
-    search_fields = ("short_code", "department__code", "title")
+    list_per_page = 100
+    list_max_show_all = 500
+
+    search_fields = ("short_code", "department__short_name", "title")
     fields = ("short_code", "department", "number", "title", "description")
+    actions = [update_department]
 
 
 @admin.register(Curriculum)
@@ -98,7 +118,15 @@ class CurriculumAdmin(CollegeRestrictedAdmin):
 
     resource_class = CurriculumResource
     # add the action button on the import form
-    list_display = ("short_name", "long_name", "college", "is_active", "status")
+    list_display = (
+        "short_name",
+        "long_name",
+        "college",
+        "is_active",
+        "status",
+        "course_count",
+        "student_count",
+    )
     list_filter = ("college",)
     autocomplete_fields = ("college",)
     inlines = [CurriculumCourseInline]
@@ -121,6 +149,10 @@ class CurriculumAdmin(CollegeRestrictedAdmin):
         ]
         return custom + urls
 
+    def student_count(self, obj):
+        """Adding a link to the student number."""
+        return obj.current_student_count()
+
 
 @admin.register(Department)
 class DepartmentAdmin(CollegeRestrictedAdmin):
@@ -131,9 +163,24 @@ class DepartmentAdmin(CollegeRestrictedAdmin):
     """
 
     resource_class = DepartmentResource
-    list_display = ("short_name", "long_name", "college")
-    list_filter = ("college",)
+    list_display = ("short_name", "long_name", "college", "course_count_link")
+    list_filter = [
+        "college",
+    ]
     search_fields = ("short_name", "long_name", "college")
+    inlines = [DepartmentCourseInline]
+
+    def course_count_link(self, obj):
+        """Adding a link to the course number."""
+        count = obj.courses.count()
+        url = (
+            reverse("admin:academics_course_changelist")
+            + f"?department__id__exact={obj.id}"
+        )
+        return format_html('<a href="{}">{}</a>', url, count)
+
+    course_count_link.short_description = "Courses"
+    course_count_link.admin_order_field = "course"
 
 
 @admin.register(Prerequisite)
@@ -169,14 +216,21 @@ class CurriculumCourseAdmin(CollegeRestrictedAdmin):
 
     resource_class = CurriculumCourseResource
     college_field = "curriculum__college"
-    list_display = ("course", "curriculum")
-    # need to order the filter by curriculum_college
-    list_filter = ("curriculum",)
+    list_display = ("course", "course__short_code", "curriculum", "course__department")
+    list_editable = ("curriculum",)
+    list_filter = ("curriculum__college", CurriculumFilterAc, DepartmentFilterAc)
+
     autocomplete_fields = ("curriculum", "course")
     list_select_related = ("curriculum", "course")
     search_fields = ("curriculum__short_name", "course__code")
-    # inlines = [CurriculumCourseInline]
+    list_per_page = 100
+    list_max_show_all = 500
+
     # > Add the list all curriculum having this particular curriculum_course, CurriculumInline
+    # inlines = [CurriculumCourseInline]
+
+    ordering = ("course__short_code",)
+    actions = [update_curriculum]
 
 
 @admin.register(CurriculumStatus)

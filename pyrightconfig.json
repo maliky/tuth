@@ -1,0 +1,11 @@
+{
+  "include": ["app", "tests"],
+  "venvPath": "/home/mlk/.pyenv/versions/",
+  "venv": "tusis",
+  "pythonVersion": "3.13",
+  "pythonPlatform": "Linux",
+  "typeCheckingMode": "basic",
+  "reportMissingImports": true,
+  "reportUnusedImport": true,
+  "reportUndefinedVariable": true
+}

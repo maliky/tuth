@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     "phonenumber_field",
     "guardian",
     "admin_searchable_dropdown",
+    "django_admin_filters",
+    "more_admin_filters",
     "simple_history",
     # django
     "django_extensions",

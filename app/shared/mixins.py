@@ -21,8 +21,9 @@ class SimpleTableMixinManager(models.Manager):
 
 
 class SimpleTableMixin(models.Model):
-    """Keep possible statuses for uploaded documents.
+    """Keep possible statuses for different classes
 
+    documents, curriculum ...
     code is a primary str key
     label is the long format for display usage.
     """

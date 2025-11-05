@@ -11,5 +11,7 @@ pillow==11.2.1
 openpyxl==3.1.5
 django-phonenumber-field[phonenumberslite]
 django-admin-searchable-dropdown
+django-admin-list-filters
+django-more-admin-filters
 django-simple-history
 tqdm

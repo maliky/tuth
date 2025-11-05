@@ -1,0 +1,23 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+  <h2>{% trans "Update Department for Selected Courses" %}</h2>
+  <form method="post">
+    {% csrf_token %}
+
+    <input type="hidden" name="action" value="update_department">
+    <input type="hidden" name="select_across" value="0">
+    {{ form.as_p }}
+
+    {% for course in courses %}
+    <input type="hidden" name="{{ action_checkbox_name}}" value="{{ course.pk }}">
+    <li>{{ course.short_code }} -- {{course.title}} -- {{course.department}}</li>
+    {% endfor %}
+
+    <button class="button default" type="submit" name="apply" value="yes">
+      {% trans "Apply" %}
+    </button>
+    <a href=".." class="button cancel-link">{% trans "Cancel" %}</a>
+  </form>
+{% endblock %}

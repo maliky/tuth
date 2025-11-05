@@ -4,14 +4,36 @@ from admin_searchable_dropdown.filters import (
     AutocompleteFilter,
     AutocompleteFilterFactory,
 )
+# https://pypi.org/project/django-admin-list-filters/
+from django_admin_filters import MultiChoice  
 from django.contrib import admin
 from django.db.models import Count
 from django.urls import reverse
 
-CurriculumFilterAutocomplete = AutocompleteFilterFactory(
+
+# class CollegeChoicesFilter(MultiChoice):
+#     FILTER_LABEL = "College"
+#     BUTTON_LABEL = "Filter"
+    
+CurriculumCourseFilterAc = AutocompleteFilterFactory(
     "Curriculum",  # title
     "curriculum_course__curriculum",  # look-up path ( → cuccirulm )
     # use_pk_exact=False
+)
+
+ProgramFilterAc = AutocompleteFilterFactory(
+    "Curriculum",  # title
+    "in_curriculum_courses__curriculum",  # look-up path ( → cuccirulm )
+    # use_pk_exact=False
+)
+
+DepartmentFilterAc = AutocompleteFilterFactory(
+    "Department",  # title
+    "course__department",
+)
+CurriculumFilterAc = AutocompleteFilterFactory(
+    "Curriculum",  # title
+    "curriculum",
 )
 
 
@@ -33,7 +55,7 @@ class CurriculumFilter(admin.SimpleListFilter):
     parameter_name = "curriculum"
 
     def lookups(self, request, model_admin):
-        """Update the filter so only curricula of the already selecte college show."""
+        """Update the filter so only curricula of the already selected college show."""
         qs = model_admin.get_queryset(request)
         college_id = request.GET.get("college__id__exact")
 

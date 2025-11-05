@@ -115,6 +115,15 @@ class Course(models.Model):
             student_registrations__section__curriculum_course__course=self,
         ).distinct()
 
+    def list_curricula_str(self, sep: str = ", ") -> str:
+        """Return the list of curricula including this course."""
+        curricula = (
+            self.in_curriculum_courses.select_related("curriculum")  # <- efficiency
+            .values_list("curriculum__short_name", flat=True)  # <- this is getting the value
+            .order_by("curriculum__short_name")
+        )
+        return sep.join(curricula)
+
     # ---------- hooks ----------
     def save(self, *args, **kwargs) -> None:
         """Populate code from department short_name and number before saving."""
@@ -146,8 +155,8 @@ class Course(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["department", "number"],
-                name="uniq_course_number_per_department",
+                fields=["department", "code", "number"],
+                name="uniq_course_codenumber_per_department",
             ),
         ]
 
@@ -156,6 +165,7 @@ class Course(models.Model):
 class CurriculumCourse(models.Model):
     """Map Curriculum instances to their constituent courses.
 
+    It kind of a program
     Example:
         >>> CurriculumCourse.objects.create(curriculum=curriculum, course=course)
 
@@ -217,6 +227,18 @@ class CurriculumCourse(models.Model):
         u_course = Course.get_unique_default()
         return cls.get_default(_course=u_course)
 
+    def current_students(self):
+        """Students enrolled in this curriculum course during the current semester."""
+        Student = apps.get_model("people", "Student")
+        semester = get_current_semester()
+        if semester is None:
+            return Student.objects.none()
+
+        return Student.objects.filter(
+            # student_registrations__section__semester=semester,
+            student_registrations__section__curriculum_course=self,
+        ).distinct()
+    
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -224,3 +246,5 @@ class CurriculumCourse(models.Model):
             )
         ]
         ordering = ["curriculum"]
+        verbose_name = "Program"
+        verbose_name_plural = "Programs"

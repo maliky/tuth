@@ -100,16 +100,15 @@ class StatusableMixin(models.Model):
         Accept list of tuple or list of str
         Status should be a StatusMixin / SimpleTableMixin with code and label
         """
-        # > maybe need to bubble up the error and catch it at the interface to prpose a fix, a messages
+        # > maybe need to bubble up the error and catch it at the interface to propose a fix, a messages
         # > proposing to go to the related model and add the status or check the entry.
 
         # >! mandatory the subclass needs a status field
-        status_id = self._get_status_id()
-        allowed = {a.value if hasattr(a, "value") else a for a in allowed}
+        # _allowed = {a.value if hasattr(a, "value") else a for a in allowed}
 
-        if status_id not in allowed:
+        if self.status not in allowed:
             raise ValidationError(
-                f"Invalid state '{status_id}'. Allowed states: {', '.join(allowed)}."
+                f"Invalid state '{status}'. Allowed states: {', '.join(allowed)}."
             )
 
     def _get_status_id(self):

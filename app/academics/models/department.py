@@ -39,13 +39,13 @@ class Department(models.Model):
     code = models.CharField(max_length=50, unique=True, editable=False)
 
     def __str__(self) -> str:  # pragma: no cover
-        """The Department common representaion. ! This is not unique."""
-        return self.code
+        """The Department common representation. ! This is not unique."""
+        return f"{self.college.code}-{self.short_name}"
 
     def _ensure_code(self) -> None:
         """Build a unique department code from short_name and college."""
         if not self.code:
-            self.code = f"{self.short_name}-{self.college.code}"
+            self.code = f"{self.college.code}-{self.short_name}"
 
     def _ensure_college(self) -> None:
         """Make sure to have a college for the department."""
@@ -83,7 +83,7 @@ class Department(models.Model):
         return default_dept
 
     class Meta:
-        ordering = ["code"]
+        ordering = ["short_name"]
         constraints = [
             models.UniqueConstraint(
                 fields=["short_name", "college"],
