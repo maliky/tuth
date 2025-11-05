@@ -54,7 +54,7 @@ def make_course_code(dept: Department, number: str, short=False) -> str:
     if short == True use dept.short_name (without college info)
     """
     _dept_code = dept.short_name if short else dept.code
-    return f"{_dept_code}{number}".upper()
+    return f"{_dept_code}-{number}".upper()
 
 
 def get_in_row(key: str, row: Optional[dict[str, str | None]]) -> str:
