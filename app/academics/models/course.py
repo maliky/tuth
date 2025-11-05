@@ -159,7 +159,7 @@ class Course(models.Model):
                 name="uniq_course_codenumber_per_department",
             ),
         ]
-
+        ordering = ["short_code"]
 
 # to be renamed CurriculumCourse
 class CurriculumCourse(models.Model):
@@ -246,5 +246,5 @@ class CurriculumCourse(models.Model):
             )
         ]
         ordering = ["curriculum"]
-        verbose_name = "Program"
-        verbose_name_plural = "Programs"
+        verbose_name = "Programmed Course"
+        verbose_name_plural = "Programmed Courses"

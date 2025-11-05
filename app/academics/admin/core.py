@@ -105,6 +105,15 @@ class CourseAdmin(DepartmentRestrictedAdmin):
     fields = ("short_code", "department", "number", "title", "description")
     actions = [update_department]
 
+    def get_form(self, request, obj=None, **kwargs):
+        """Return the admin form with dep ordered by their short_name."""
+        form = super().get_form(request, obj, **kwargs)
+        department_field = form.base_fields.get("department")
+
+        if department_field is not None:
+            department_field.queryset = department_field.queryset.order_by("short_name")
+        return form
+
 
 @admin.register(Curriculum)
 class CurriculumAdmin(CollegeRestrictedAdmin):

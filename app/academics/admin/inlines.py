@@ -54,5 +54,5 @@ class DepartmentCourseInline(admin.TabularInline):
     verbose_name_plural = "Courses offered by this department "
     extra = 0
     autocomplet_fields = ("course",)
-    fields = ("number", "title")
-    ordering =("code",)
+    fields = ("short_code", "number", "title")
+    ordering =("short_code",)
