@@ -17,7 +17,7 @@ class Department(models.Model):
     """
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
-    short_name = models.CharField(max_length=6)
+    short_name = models.CharField(max_length=8)
     # would be good to restric this to a few dept.
     # but it is also here that I should set the Truth
     # short_name = models.CharField(
@@ -40,7 +40,7 @@ class Department(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         """The Department common representation. ! This is not unique."""
-        return f"{self.college.code}-{self.short_name}"
+        return f"({self.college.code}) {self.short_name}"
 
     def _ensure_code(self) -> None:
         """Build a unique department code from short_name and college."""
@@ -83,7 +83,7 @@ class Department(models.Model):
         return default_dept
 
     class Meta:
-        ordering = ["short_name"]
+        ordering = ["college__code", "short_name"]
         constraints = [
             models.UniqueConstraint(
                 fields=["short_name", "college"],

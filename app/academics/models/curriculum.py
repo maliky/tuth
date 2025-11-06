@@ -114,6 +114,9 @@ class Curriculum(StatusableMixin, models.Model):
         """Count hown many courses attached to this curriculum."""
         return self.curriculum_course.count()
 
+    def student_count(self):
+        """Count the number of student who selected this curriculum."""
+        return self.students.count()
     def current_student_count(self):
         """Total number of students currently enrolled in courses of this curriculum."""
         Student = apps.get_model("people", "Student")

@@ -2,7 +2,9 @@
 
 from django.urls import path, reverse
 from django.utils.html import format_html
+from django.db.models import Count
 
+from app.academics.models.concentration import Major, MajorCurriculumCourse, Minor, MinorCurriculumCourse
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
@@ -111,8 +113,28 @@ class CourseAdmin(DepartmentRestrictedAdmin):
         department_field = form.base_fields.get("department")
 
         if department_field is not None:
-            department_field.queryset = department_field.queryset.order_by("short_name")
+            department_field.queryset = department_field.queryset.select_related(
+                "college"
+            ).order_by("college__code", "short_name")
         return form
+
+
+@admin.register(Major)
+class MajorAdmin(admin.ModelAdmin):
+    """Admin options for Major."""
+
+@admin.register(Minor)
+class MajorAdmin(admin.ModelAdmin):
+    """Admin options for Minor."""
+
+@admin.register(MajorCurriculumCourse)
+class MajorCurriculumAdmin(admin.ModelAdmin):
+    """Admin options for MajorCurriculumCourse."""
+
+@admin.register(MinorCurriculumCourse)
+class MinorCurriculumCourseAdmin(admin.ModelAdmin):
+    """Admin options for MinorCurriculumCourse."""
+
 
 
 @admin.register(Curriculum)
@@ -144,74 +166,28 @@ class CurriculumAdmin(CollegeRestrictedAdmin):
     list_select_related = ("college",)
     search_fields = ("short_name", "long_name")
 
-    def get_urls(self):
-        """Returns urls."""
-        urls = super().get_urls()
-        custom = [
-            path(
-                "curriculum_by_semester_ac/",
-                self.admin_site.admin_view(
-                    CurriculumBySemester.as_view(model_admin=self)
-                ),
-                name="curriculum_by_semester_ac",
-            )
-        ]
-        return custom + urls
+    # def get_urls(self):
+    #     """Returns urls."""
+    #     urls = super().get_urls()
+    #     custom = [
+    #         path(
+    #             "curriculum_by_semester_ac/",
+    #             self.admin_site.admin_view(
+    #                 CurriculumBySemester.as_view(model_admin=self)
+    #             ),
+    #             name="curriculum_by_semester_ac",
+    #         )
+    #     ]
+    #     return custom + urls
 
     def student_count(self, obj):
         """Adding a link to the student number."""
-        return obj.current_student_count()
-
-
-@admin.register(Department)
-class DepartmentAdmin(CollegeRestrictedAdmin):
-    """Admin interface for :class:~app.academics.models.Department.
-
-    Shows department code, name and college. autocomplete_fields speeds up
-    college selection when editing a department.
-    """
-
-    resource_class = DepartmentResource
-    list_display = ("short_name", "long_name", "college", "course_count_link")
-    list_filter = [
-        "college",
-    ]
-    search_fields = ("short_name", "long_name", "college")
-    inlines = [DepartmentCourseInline]
-
-    def course_count_link(self, obj):
-        """Adding a link to the course number."""
-        count = obj.courses.count()
+        count = obj.student_count()
         url = (
-            reverse("admin:academics_course_changelist")
-            + f"?department__id__exact={obj.id}"
+            reverse("admin:people_student_changelist")
+            + f"?curriculum__id__exact={obj.id}"
         )
         return format_html('<a href="{}">{}</a>', url, count)
-
-    course_count_link.short_description = "Courses"
-    course_count_link.admin_order_field = "course"
-
-
-@admin.register(Prerequisite)
-class PrerequisiteAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
-    """Admin interface for :class:~app.academics.models.Prerequisite.
-
-    Options configured:
-    - list_display shows the course, the prerequisite and the curriculum.
-    - list_filter uses :class:CurriculumFilter to narrow by curriculum.
-    - actions provides update_curriculum for bulk updates.
-
-    Example:
-        On the prerequisites list page, select rows and run
-        Attach / update curriculum to set a curriculum for them.
-    """
-
-    resource_class = PrerequisiteResource
-    actions = [update_curriculum]
-    list_display = ("course", "prerequisite_course", "curriculum")
-    autocomplete_fields = ("course", "prerequisite_course", "curriculum")
-    list_filter = (CurriculumFilter,)
-    # search_fields = ("course", "prerequisite_course", "curriculum")
 
 
 @admin.register(CurriculumCourse)
@@ -248,3 +224,63 @@ class CurriculumStatusAdmin(admin.ModelAdmin):
 
     search_fields = ("code", "label")
     list_display = ("code", "label")
+
+
+@admin.register(Department)
+class DepartmentAdmin(CollegeRestrictedAdmin):
+    """Admin interface for :class:~app.academics.models.Department.
+
+    Shows department code, name and college. autocomplete_fields speeds up
+    college selection when editing a department.
+    """
+
+    resource_class = DepartmentResource
+    list_display = ("short_name", "long_name", "college", "course_count_link")
+    list_filter = [
+        "college",
+    ]
+    search_fields = ("short_name", "long_name", "college")
+    inlines = [DepartmentCourseInline]
+
+    def get_queryset(self, request):
+        # > explain the djangonic logic here
+        qs = super().get_queryset(request)
+        return qs.annotate(course_count=Count("courses", distinct=True))
+
+    def course_count_link(self, obj):
+        """Adding a link to the course number."""
+        count = getattr(obj, "course_count", None)
+        if count is None:
+            count = obj.courses.count()
+        url = (
+            reverse("admin:academics_course_changelist")
+            + f"?department__id__exact={obj.id}"
+        )
+        return format_html('<a href="{}">{}</a>', url, count)
+
+    course_count_link.short_description = "Courses"
+    course_count_link.admin_order_field = "course_count"
+
+
+@admin.register(Prerequisite)
+class PrerequisiteAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
+    """Admin interface for :class:~app.academics.models.Prerequisite.
+
+    Options configured:
+    - list_display shows the course, the prerequisite and the curriculum.
+    - list_filter uses :class:CurriculumFilter to narrow by curriculum.
+    - actions provides update_curriculum for bulk updates.
+
+    Example:
+        On the prerequisites list page, select rows and run
+        Attach / update curriculum to set a curriculum for them.
+    """
+
+    resource_class = PrerequisiteResource
+    actions = [update_curriculum]
+
+    # search_fields = ("course", "prerequisite_course") # not permitted no search of fk
+    list_display = ("course", "prerequisite_course", "curriculum")
+    autocomplete_fields = ("course", "prerequisite_course", "curriculum")
+    list_filter = (CurriculumFilter,)
+    # search_fields = ("course", "prerequisite_course", "curriculum")

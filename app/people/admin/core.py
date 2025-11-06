@@ -150,8 +150,10 @@ class StudentAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
     """
 
     form = StudentForm
-    list_display = ("long_name", "student_id", "birth_date")
+    list_display = ("long_name", "student_id", "birth_date", "curriculum", "entry_semester")
     search_fields = ("student_id", "username", "long_name")
+    list_editable = ("curriculum",)
+    list_filter = ('curriculum',)
     readonly_fields = ("student_id",)
     inlines = [DocumentStudentInline]
     fieldsets = [

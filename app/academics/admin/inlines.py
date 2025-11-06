@@ -43,7 +43,7 @@ class CurriculumCourseInline(admin.TabularInline):
     fk_name = "curriculum"
     verbose_name_plural = "Courses in this curriculum."
     extra = 0
-    autocomplete_fields = ("course",)
+    autocomplete_fields = ("course","curriculum")
     ordering =("course",)
     
 class DepartmentCourseInline(admin.TabularInline):

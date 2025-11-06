@@ -5,14 +5,15 @@
 from __future__ import annotations
 
 from django.db import models
+from django.db.models import Sum
+from simple_history.models import HistoricalRecords
 
 from app.academics.choices import LEVEL_NUMBER
-from app.academics.models.course import Course
+from app.academics.models.course import Course, CurriculumCourse
 from app.academics.models.curriculum import Curriculum
 from app.people.models.core import AbstractPerson
 from app.shared.types import CourseQuery
 from app.timetable.models.semester import Semester
-from simple_history.models import HistoricalRecords
 
 
 class Student(AbstractPerson):
@@ -34,7 +35,9 @@ class Student(AbstractPerson):
     STAFF_STATUS = False
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
-    curriculum = models.ForeignKey("academics.Curriculum", on_delete=models.CASCADE)
+    curriculum = models.ForeignKey(
+        "academics.Curriculum", on_delete=models.CASCADE, related_name="students"
+    )
     history = HistoricalRecords()
 
     # ~~~~ Auto-filled ~~~~
@@ -92,10 +95,6 @@ class Student(AbstractPerson):
     @property
     def completed_credits(self) -> int:
         """Return sum of credit hours successfully completed."""
-        from django.db.models import Sum
-
-        from app.academics.models.course import CurriculumCourse
-
         passed_ids = self.passed_courses().values_list("id", flat=True)
         agg = CurriculumCourse.objects.filter(
             curriculum=self.curriculum, course_id__in=passed_ids
