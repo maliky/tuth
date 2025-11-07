@@ -29,7 +29,8 @@ class CurriculumResource(resources.ModelResource):
         self._merged: set[str] = set()
         self._replaced: set[str] = set()
         self._new_colleges: set[str] = set()
-        self.fields["college"].widget._resource = self
+        if "college_f" in self.fields:
+            self.fields["college_f"].widget._resource = self
 
     def _action(self) -> str:
         """Merge (default) or 'replace'  — read once from the import form."""

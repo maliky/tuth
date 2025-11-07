@@ -123,12 +123,13 @@ By default the tests spin up a headless Chrome instance via =webdriver-manager=.
 - ~SELENIUM_BROWSER~: `chrome` (default) or `firefox`
 - ~SELENIUM_HEADLESS~: set to `0` to watch the browser
 - ~SELENIUM_IMPLICIT_WAIT~: seconds to wait for DOM queries
-- ~SELENIUM_REMOTE_URL~: point to a Selenium Grid/Standalone server, for example:
+example:
 #+BEGIN_SRC bash
 docker run -d --rm -p 4444:4444 -p 7900:7900 selenium/standalone-chrome:126.0
 SELENIUM_REMOTE_URL=http://127.0.0.1:4444/wd/hub pytest -m selenium tests/selenium
 #+END_SRC
 When the variable is set the suite connects to the remote browser instead of starting a local one.
+If the runtime disallows opening localhost sockets (some secure sandboxes do), the tests will be auto-skipped with a clear reason.
 
 *** Restart from a clean state
 #+BEGIN_SRC bash term2

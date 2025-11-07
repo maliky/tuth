@@ -2,16 +2,40 @@
 
 from __future__ import annotations
 
+import socket
+
 import pytest
 from django.urls import reverse
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+
+def _can_bind_localhost() -> bool:
+    """Best-effort probe to verify the sandbox allows opening sockets."""
+    sock: socket.socket | None = None
+    try:
+        sock = socket.socket()
+        sock.bind(("127.0.0.1", 0))
+    except OSError:
+        return False
+    finally:
+        if sock:
+            sock.close()
+    return True
+
+
 pytestmark = [
     pytest.mark.django_db(transaction=True),
     pytest.mark.selenium,
 ]
+
+if not _can_bind_localhost():
+    pytestmark.append(
+        pytest.mark.skip(
+            reason="Selenium tests require permission to bind localhost sockets."
+        )
+    )
 
 
 def test_landing_page_renders_with_hero(live_server, selenium_driver) -> None:
@@ -39,4 +63,3 @@ def test_tusis_button_routes_to_admin_login(live_server, selenium_driver) -> Non
     WebDriverWait(selenium_driver, 10).until(EC.title_contains("Log in"))
     assert "Log in" in selenium_driver.title
     assert "Django administration" in selenium_driver.page_source
-
