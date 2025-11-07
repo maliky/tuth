@@ -1,6 +1,9 @@
 [tool.pytest.ini_options]
 addopts = "-p no:cacheprovider --assert=plain --strict-markers"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
+markers = [
+  "selenium: browser-facing end-to-end tests powered by Selenium",
+]
 
 # [build-system]
 # requires = ["setuptools>=42", "wheel"]

@@ -4,7 +4,12 @@ from django.urls import path, reverse
 from django.utils.html import format_html
 from django.db.models import Count
 
-from app.academics.models.concentration import Major, MajorCurriculumCourse, Minor, MinorCurriculumCourse
+from app.academics.models.concentration import (
+    Major,
+    MajorCurriculumCourse,
+    Minor,
+    MinorCurriculumCourse,
+)
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
@@ -123,18 +128,28 @@ class CourseAdmin(DepartmentRestrictedAdmin):
 class MajorAdmin(admin.ModelAdmin):
     """Admin options for Major."""
 
+    list_display = ("name", "course_count")
+
+
 @admin.register(Minor)
-class MajorAdmin(admin.ModelAdmin):
+class MinorAdmin(admin.ModelAdmin):
     """Admin options for Minor."""
+
+    list_display = ("name", "course_count")
+
 
 @admin.register(MajorCurriculumCourse)
 class MajorCurriculumAdmin(admin.ModelAdmin):
     """Admin options for MajorCurriculumCourse."""
 
+    list_display = ("major", "curriculum_course")
+
+
 @admin.register(MinorCurriculumCourse)
 class MinorCurriculumCourseAdmin(admin.ModelAdmin):
     """Admin options for MinorCurriculumCourse."""
 
+    list_display = ("minor", "curriculum_course")
 
 
 @admin.register(Curriculum)

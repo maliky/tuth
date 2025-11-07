@@ -1,103 +1,291 @@
+{% extends "website/student_portal_base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Student Dashboard</title>
-    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet" />
-  </head>
-  <body class="p-4">
-    <h1 class="mb-4">Student Dashboard</h1>
-    {% if messages %}
-    <div class="mb-3">
-      {% for message in messages %}
-        <div class="alert alert-info">{{ message }}</div>
+
+{% block page_title %}Student Dashboard · Tusis{% endblock %}
+{% block header_title %}Student Dashboard{% endblock %}
+
+{% block content %}
+  <section id="student-snapshot" class="mb-4">
+    <div class="row g-3 align-items-center">
+      <div class="col-lg-6">
+        <div class="p-3 rounded-3 bg-white shadow-sm h-100">
+          <p class="text-uppercase text-muted small mb-2">Profile</p>
+          <h2 class="h4 mb-1">{{ student_profile.name }}</h2>
+          <p class="mb-0 text-muted">
+            {{ student_profile.student_id }} · {{ student_profile.academic_year }}
+          </p>
+          <span class="badge bg-light text-dark mt-3">
+            {{ student_profile.curriculum }}
+          </span>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="p-3 rounded-3 bg-white shadow-sm h-100">
+          <p class="text-uppercase text-muted small mb-2">Announcements</p>
+          <ul class="mb-0 ps-3">
+            {% for announcement in announcements %}
+              <li>{{ announcement }}</li>
+            {% empty %}
+              <li>No announcements yet.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="kpi-grid mb-4">
+    <article class="kpi-card">
+      <p class="text-muted text-uppercase small mb-1">Credits completed</p>
+      <div class="kpi-value">
+        {{ credit_summary.completed }}/{{ credit_summary.required }}
+      </div>
+      <p class="mb-0 text-muted">{{ credit_summary.remaining }} credits remaining</p>
+    </article>
+    <article class="kpi-card">
+      <p class="text-muted text-uppercase small mb-1">Cumulative GPA</p>
+      <div class="kpi-value">{{ credit_summary.gpa }}</div>
+      <p class="mb-0 text-muted">Good standing</p>
+    </article>
+    <article class="kpi-card">
+      <p class="text-muted text-uppercase small mb-1">Outstanding balance</p>
+      <div class="kpi-value">
+        {{ financial_summary.currency }} {{ financial_summary.balance|floatformat:2 }}
+      </div>
+      <p class="mb-0 text-muted">Last payment: {{ financial_summary.last_payment }}</p>
+    </article>
+  </section>
+
+  <section id="courses" class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <div>
+        <p class="text-uppercase small text-muted mb-1">Course tracking</p>
+        <h2 class="h4 mb-0">Current and past courses</h2>
+      </div>
+      <div class="filters">
+        {% for filter in course_filters %}
+          <button type="button" class="{% if filter.active %}active{% endif %}">
+            {{ filter.label }}{% if filter.count is not None %} ({{ filter.count }}){% endif %}
+          </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="course-table table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Course</th>
+            <th>Status</th>
+            <th>Credits</th>
+            <th>Semester</th>
+            <th>Updated</th>
+            <th class="text-end">Fee</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in course_status_rows %}
+            <tr>
+              <td>
+                <strong>{{ row.code }}</strong><br/>
+                <span class="text-muted">{{ row.title }}</span>
+              </td>
+              <td>
+                <span class="status-badge status-{{ row.status }}">
+                  {{ row.status_label }}
+                </span>
+              </td>
+              <td>{{ row.credits }}</td>
+              <td>{{ row.semester }}</td>
+              <td>{{ row.last_update }}</td>
+              <td class="text-end">
+                {% if row.fee %}
+                  {{ financial_summary.currency }} {{ row.fee|floatformat:2 }}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4">
+                No course records found.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="registration-layout mb-5">
+    <div>
+      <header class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <p class="text-uppercase small text-muted mb-1">Course registration</p>
+          <h2 class="h4 mb-0">Available this semester</h2>
+        </div>
+        <span class="badge bg-light text-dark">
+          Showing {{ available_courses|length }} courses
+        </span>
+      </header>
+
+      {% for course in available_courses %}
+        <article class="course-card {% if not course.eligible %}disabled{% endif %}">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div>
+              <h3 class="h5 mb-1">{{ course.title }}</h3>
+              <p class="mb-1 text-muted">
+                {{ course.code }} · {{ course.credits }} credits
+                {% if course.elective %}
+                  · <span class="badge bg-warning-subtle text-dark">Elective</span>
+                {% endif %}
+              </p>
+              <div class="course-meta">
+                {% for prereq in course.prerequisites %}
+                  <span class="prereq-chip {% if prereq.met %}met{% else %}missing{% endif %}">
+                    {{ prereq.label }}
+                  </span>
+                {% empty %}
+                  <span class="text-muted small">No prerequisites</span>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="text-end">
+              {% if course.eligible %}
+                <span class="badge bg-success-subtle text-success">Available</span>
+              {% else %}
+                <span class="badge bg-secondary">Locked</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="mt-3">
+            <label class="form-label">Select a section to reserve</label>
+            <select
+              class="form-select section-picker"
+              data-course-code="{{ course.code }}"
+              data-course-title="{{ course.title }}"
+              data-credits="{{ course.credits }}"
+              {% if not course.eligible %}disabled{% endif %}
+            >
+              <option value="">Choose section</option>
+              {% for section in course.sections %}
+                <option
+                  value="{{ section.id }}"
+                  data-section-label="{{ section.label }}"
+                  data-schedule="{{ section.schedule }}"
+                  data-seats-total="{{ section.seats_total }}"
+                  data-seats-remaining="{{ section.seats_remaining }}"
+                  data-fee="{{ section.fee }}"
+                >
+                  {{ section.label }} · {{ section.schedule }} ·
+                  {{ section.seats_remaining }}/{{ section.seats_total }} seats ·
+                  {{ financial_summary.currency }} {{ section.fee|floatformat:2 }}
+                </option>
+              {% endfor %}
+            </select>
+            {% if course.reason %}
+              <small class="text-danger d-block mt-1">{{ course.reason }}</small>
+            {% endif %}
+          </div>
+        </article>
+      {% empty %}
+        <div class="alert alert-light">No available courses.</div>
       {% endfor %}
     </div>
-    {% endif %}
 
-    <h2>Available Sections</h2>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Section</th>
-          <th>Seats Left</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for sec in available_sections %}
-        <tr>
-          <td>{{ sec }}</td>
-          <td>{{ sec.seats_left }}</td>
-          <td>
-            <form method="post" class="m-0">
-              {% csrf_token %}
-              <input type="hidden" name="section_id" value="{{ sec.id }}" />
-              <button type="submit" class="btn btn-primary btn-sm">Reserve</button>
-            </form>
-          </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="3">No available sections.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <aside>
+      <div
+        class="cart-panel"
+        data-cart-list
+        data-credits-remaining="{{ registration_limits.credits_remaining }}"
+        data-currency="{{ registration_limits.currency }}"
+        data-balance="{{ registration_limits.balance }}"
+      >
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <strong>Registration cart</strong>
+          <span class="badge bg-info-subtle text-info">Seat held 48h</span>
+        </div>
+        <p class="text-muted small mb-3">
+          Seats become guaranteed once payment is received.
+        </p>
+        <div class="cart-items" data-cart-items>
+          <p class="text-muted small mb-0">Select a section to start.</p>
+        </div>
+        <footer>
+          <div class="d-flex justify-content-between">
+            <span class="text-muted">Credits remaining</span>
+            <strong><span data-credit-remaining>{{ registration_limits.credits_remaining }}</span></strong>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span class="text-muted">Fee estimate</span>
+            <strong>
+              {{ registration_limits.currency }}
+              <span data-fee-estimate>0</span>
+            </strong>
+          </div>
+          <div class="d-grid gap-2 mt-3">
+            <button class="btn btn-success">Save reservation</button>
+            <button class="btn btn-outline-dark">Proceed to payment</button>
+          </div>
+        </footer>
+      </div>
+    </aside>
+  </section>
 
-    <h2>Current Reservations</h2>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Section</th>
-          <th>Status</th>
-          <th>Fee</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in reservations %}
-        <tr>
-          <td>{{ r.section }}</td>
-          <td>{{ r.get_status_display }}</td>
-          <td>{{ r.fee_total }}</td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="3">No reservations.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <section id="records" class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <p class="text-uppercase small text-muted mb-1">Completed work</p>
+        <h2 class="h4 mb-0">Courses & grades</h2>
+      </div>
+    </div>
 
-    <h2>Registered Courses</h2>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Course</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for reg in registrations %}
-        <tr>
-          <td>{{ reg.section }}</td>
-          <td>{{ reg.get_status_display }}</td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="2">No registrations.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="table-responsive bg-white rounded-3 shadow-sm">
+      <table class="table mb-0 align-middle">
+        <thead>
+          <tr>
+            <th>Course</th>
+            <th>Credits</th>
+            <th>Grade</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for course in completed_courses %}
+            <tr>
+              <td>
+                <strong>{{ course.code }}</strong><br/>
+                <span class="text-muted">{{ course.title }}</span>
+              </td>
+              <td>{{ course.credits }}</td>
+              <td>{{ course.grade }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="3" class="text-center text-muted py-4">
+                No completed courses yet.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
 
-    <h2>Past Grades</h2>
-    {% if past_grades %}
-    <ul>
-      {% for g in past_grades %}
-        <li>{{ g }}</li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <p>No grades available.</p>
-    {% endif %}
+  <section id="support" class="action-list">
+    {% for action in advisor_actions %}
+      <article class="action-card">
+        <h3 class="h5">{{ action.title }}</h3>
+        <p class="text-muted">{{ action.description }}</p>
+        <a class="btn btn-link p-0" href="{{ action.cta }}">Open</a>
+      </article>
+    {% empty %}
+      <p class="text-muted">No quick actions defined.</p>
+    {% endfor %}
+  </section>
+{% endblock %}
 
-    <h2>Outstanding Fees</h2>
-    <p>{{ outstanding_fees }}</p>
-  </body>
-</html>
+{% block extra_js %}
+  <script src="{% static 'js/student_dashboard.js' %}"></script>
+{% endblock %}

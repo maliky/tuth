@@ -1,0 +1,79 @@
+
+* Main redirection from same login page 
+
+** Student
+   Wha is proposed is acceptable
+
+** Financial Services
+Can consult the financial status of any student,
+They can clear a student payment
+They keep track of atttachement justifying payments
+They validate the payement so the student can proceed to registration
+
+** Registration
+They print class roster
+They open /close grade input timeframe for faculty
+They can edit any grades
+They print grade sheets
+They validated the registration of student to section (before they appear on official class roster or can receive a grade for the section)
+
+** Enrollment
+They create students
+   
+** Faculties
+
+** Admin (VPAA, President)
+
+* The student_dashboard preview is good connect it to the backend.
+
+* We need to add a link for a student to print / display his grade sheet for the current semester.
+  
+* Login in with a testest student user in django admin
+** TODO redirect to the student dashboard directly not to django admin
+
+* About some rights for users
+** test_enrollment_officer
+Curriculum
+Current enrolled semester should be the same with entry semester
+test_student
+testest -> T-pass-T!  : tusistusis : ?
+
+** student
+   a student should not be able to see all Academics
+nor the list of all students or registration...  it should not be a staff
+
+in the url courses for a student x, following the curriculum BBA Banking and Finance, we should list only the courses from his curriculum, and eventualy electives preselected by the college or curriculum head.   This electives will be marked as elective courses in the curriculum. Should be listed only courses respecting for which the studen has fullfilled the prerequisites (nb credit hours, completed previous courses...)
+
+students listing should not be accessible a a student.
+
+*** action
+When loggin in an identified student should reach his dashboard
+new enrolled student
+- showing basic info for the student (name, id, academic year, curriculum)
+menu entries on the left hand side
+**** Course Registeration
+- been show a list of course with  status
+- should be in the form of a table or well aligned
+  course shortname/code ; course title; status (registered, pending, completed, abandoned ) with date of last status change or date ofr completion grade if applicable, credit hours and semester.
+- Another menu should bring the form to register a new course
+in that form a summary of the student information related to the registrationm
+a list of course code previsouly completedm a field shoing the number of credit hours completedm at the bottom o fthe page an image or a link to the curriculum plan
+in the middle the form where the student can selecte in a drop down list a course from the curriculum.
+it is supposed that this course has already been schedule so the schedule should be displayed also... Another way and better ui would be to displya the list of available courses to the student drwn from the curriculum, each with a checkbox inf front for slection, and a few important detila to help the slection process.  A ligne should have course title, code, credit hoursm scheldule and a check box to be selected. It would be ok also to have the other courses of the curriculum listed but grayed out with a reminder of the prerequisites.  and I am forgetting to also list the fee attached toeach course (only for available courses as courses price will vary from one semester to another)  .
+
+As the student selects courses to regsiterm I want the his credit hours blaance to diminish accordingly and also the finalcnial balance to be updated.
+
+It should be clear that the student is making a reservation for the course and the his place will be garentied once the payment has been received.  That reminds me that in each line their should be a number for the number of seat avaialbel lein total and remaining.  I said course but it is rather in front o each section.
+
+In fact I see the course listed in plain and then for each a drop down list with the sections schedule and the available seats next to it.  The stduent slecte the section is ithis is taken as chekcing the box for a registration. so remove the registration checkbox...
+
+*** Student dashboard UX
+- `website/student_portal_base.html` + `student_dashboard.html` power the new layout; styling/JS live in `student_portal.css` and `student_dashboard.js`.
+- `/student/dashboard/` (view: `student_dashboard` in `app/website/views.py`) now pulls real student data: registrations, curriculum courses, sections, prereq checks, credit math, invoices/payments, and grades.
+- Credit/fee counters update live from actual seat selections; seat counts and section schedules reflect `Section` + `SecSession` records.
+- Next: hook the “Save reservation” and “Proceed to payment” buttons to real workflows and enforce role-based access before launch.
+   
+* About the website
+I want to personnalize the django admin/login form
+depending on the username I want to redirect to either normal admin, or to student
+I also want to change the them of the admin login form, change the title

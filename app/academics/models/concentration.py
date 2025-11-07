@@ -95,6 +95,10 @@ class Major(ConcentrationMixin):
     )
     max_credit_hours = models.PositiveIntegerField(default=50)
 
+    def course_count(self):
+        """Count the number of courses in this concentration."""
+        return self.curriculum_courses.count()
+
 
 class Minor(ConcentrationMixin):
     """Represent a group of courses of the curriculum making the major."""
@@ -107,14 +111,22 @@ class Minor(ConcentrationMixin):
     )
     max_credit_hours = models.PositiveIntegerField(default=20)
 
+    def course_count(self):
+        """Count the number of courses in this concentration."""
+        return self.curriculum_courses.count()
+
 
 # ##  TODO make sure Minor curriculum_course can be in several curriculms?
 class MajorCurriculumCourse(models.Model):
     """A table joining the Major table with the curriculum_course table."""
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
-    major = models.ForeignKey("Major", on_delete=models.CASCADE)
-    curriculum_course = models.ForeignKey("CurriculumCourse", on_delete=models.CASCADE)
+    major = models.ForeignKey(
+        "Major", on_delete=models.CASCADE, related_name="courses"
+    )
+    curriculum_course = models.ForeignKey(
+        "academics.CurriculumCourse", on_delete=models.CASCADE, related_name="major_link"
+    )
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()
 
@@ -131,8 +143,12 @@ class MinorCurriculumCourse(models.Model):
     """A table joining the Major table with the curriculum_course table."""
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
-    minor = models.ForeignKey("Minor", on_delete=models.CASCADE)
-    curriculum_course = models.ForeignKey("CurriculumCourse", on_delete=models.CASCADE)
+    minor = models.ForeignKey(
+        "Minor", on_delete=models.CASCADE, related_name="courses"
+    )
+    curriculum_course = models.ForeignKey(
+        "academics.CurriculumCourse", on_delete=models.CASCADE, related_name="minor_links"
+    )
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()
 

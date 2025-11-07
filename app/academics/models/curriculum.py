@@ -79,7 +79,7 @@ class Curriculum(StatusableMixin, models.Model):
     def __str__(self) -> str:  # pragma: no cover
         """Return the college (if set): & curriculum short name."""
         _prefix = f"({self.college}) " if self.college_id else ""
-        return _prefix + self.short_name 
+        return _prefix + self.short_name
 
     @classmethod
     def get_default(cls, short_name="DFT_CUR") -> Self:
@@ -117,6 +117,7 @@ class Curriculum(StatusableMixin, models.Model):
     def student_count(self):
         """Count the number of student who selected this curriculum."""
         return self.students.count()
+
     def current_student_count(self):
         """Total number of students currently enrolled in courses of this curriculum."""
         Student = apps.get_model("people", "Student")
@@ -126,7 +127,8 @@ class Curriculum(StatusableMixin, models.Model):
             )
             .distinct()
             .count()
-        )    
+        )
+
     def save(self, *args, **kwargs):
         """Save a curriculum instance while setting defaults."""
         if not self.college_id:

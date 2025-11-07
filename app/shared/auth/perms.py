@@ -193,7 +193,7 @@ ROLE_MATRIX = {
     },
     "enrollment_officer": {
         "view": [
-            "Academics",
+            "curriculum",
             "documentstudent",
             "registration",
             "semester",

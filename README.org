@@ -114,6 +114,22 @@ export $(grep -v '^#' .env | xargs)  # load variables
 pytest tests/
 #+END_SRC
 
+**** Browser UI smoke tests
+The Selenium suite exercises the public landing page and any future UI flows that require a real browser. Install the dev requirements, then run:
+#+BEGIN_SRC bash
+pytest -m selenium tests/selenium
+#+END_SRC
+By default the tests spin up a headless Chrome instance via =webdriver-manager=. You can tweak the driver with environment variables:
+- ~SELENIUM_BROWSER~: `chrome` (default) or `firefox`
+- ~SELENIUM_HEADLESS~: set to `0` to watch the browser
+- ~SELENIUM_IMPLICIT_WAIT~: seconds to wait for DOM queries
+- ~SELENIUM_REMOTE_URL~: point to a Selenium Grid/Standalone server, for example:
+#+BEGIN_SRC bash
+docker run -d --rm -p 4444:4444 -p 7900:7900 selenium/standalone-chrome:126.0
+SELENIUM_REMOTE_URL=http://127.0.0.1:4444/wd/hub pytest -m selenium tests/selenium
+#+END_SRC
+When the variable is set the suite connects to the remote browser instead of starting a local one.
+
 *** Restart from a clean state
 #+BEGIN_SRC bash term2
   docker-compose -f docker-compose-dev.yml down -v
@@ -132,7 +148,24 @@ In another terminal,
 #+END_SRC
 
 
-
+*** Passwords
+ - test_donor (Donor): Created with pwd D-pass-P!
+ - test_cashier (Cashier): Created with pwd C-pass-P!
+ - test_student (Student): Created with pwd S-pass-P!
+ - test_prospecting_student (Prospecting Student): Created with pwd P-pass-P!
+ - test_staff (Staff): Created with pwd S-pass-P!
+ - test_faculty (Faculty): Created with pwd F-pass-P!
+ - test_chair (Chair): Created with pwd C-pass-P!
+ - test_dean (Dean): Created with pwd D-pass-P!
+ - test_vpaa (Vice President Academic Affairs): Created with pwd V-pass-P!
+ - test_enrollment (Enrollment): Created with pwd E-pass-P!
+ - test_enrollment_officer (Enrollment Officer): Created with pwd E-pass-P!
+ - test_finance (Finance): Created with pwd F-pass-P!
+ - test_finance_officer (Finance Officer): Created with pwd F-pass-P!
+ - test_registrar (Registrar): Created with pwd R-pass-P!
+ - test_registrar_officer (Registrar Officer): Created with pwd R-pass-P!
+ - test_it (It): Created with pwd I-pass-P!
+    
 ** Production Environment
 
 Build and launch the production environment:

@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{% block page_title %}Tusis Student Portal{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/student_portal.css' %}" />
+    {% block extra_css %}{% endblock %}
+  </head>
+  <body class="portal-body">
+    <div class="portal-shell">
+      <aside class="portal-sidebar">
+        <div class="student-chip">
+          <div class="student-avatar">
+            {% if student_profile.avatar %}
+              <img src="{{ student_profile.avatar }}" alt="{{ student_profile.name }}" />
+            {% else %}
+              <span>{{ student_profile.name|default:"TU"|slice:":1" }}</span>
+            {% endif %}
+          </div>
+          <div>
+            <p class="student-name mb-0">{{ student_profile.name|default:"Student" }}</p>
+            <p class="student-id mb-0">{{ student_profile.student_id|default:"ID TBD" }}</p>
+          </div>
+        </div>
+
+        <nav class="portal-nav">
+          <span class="nav-label">Navigation</span>
+          <ul>
+            {% for link in sidebar_links %}
+              <li>
+                <a class="{% if link.active %}active{% endif %}" href="{{ link.href }}">
+                  {{ link.label }}
+                </a>
+              </li>
+            {% empty %}
+              <li><span class="text-muted">No links configured</span></li>
+            {% endfor %}
+          </ul>
+        </nav>
+
+        <div class="sidebar-footer">
+          <p class="mb-1 text-uppercase small text-muted">Need help?</p>
+          <p class="mb-0 text-white-50">advising@tusis.edu</p>
+        </div>
+      </aside>
+
+      <main class="portal-content">
+        <header class="portal-header">
+          <div>
+            <p class="eyebrow mb-1 text-uppercase">Welcome back</p>
+            <h1 class="mb-0">{% block header_title %}Student Dashboard{% endblock %}</h1>
+          </div>
+          <div class="header-actions">
+            <button class="btn btn-outline-light btn-sm">Support</button>
+            <button class="btn btn-warning btn-sm">Log out</button>
+          </div>
+        </header>
+
+        <section class="portal-inner">
+          {% block content %}{% endblock %}
+        </section>
+      </main>
+    </div>
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>
