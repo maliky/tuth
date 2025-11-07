@@ -76,6 +76,19 @@ class Curriculum(StatusableMixin, models.Model):
         blank=True,
     )
 
+    @property
+    def courses(self):
+        """Backward-compatible alias using the historical field name."""
+        return self.curriculum_course
+
+    @courses.setter
+    def courses(self, value):
+        """Allow assignments from import/export to update the through relation."""
+        if value is None:
+            self.curriculum_course.clear()
+        else:
+            self.curriculum_course.set(value)
+
     def __str__(self) -> str:  # pragma: no cover
         """Return the college (if set): & curriculum short name."""
         _prefix = f"({self.college}) " if self.college_id else ""

@@ -161,7 +161,7 @@ class CourseManyWidget(widgets.ManyToManyWidget):
             return []
 
         courses = []
-        for token in value.split(self.separator):
+        for token in str(value).split(self.separator):
             token = token.strip()
             if token:
                 # Delegate to CourseCodeWidget to parse/create individual course
@@ -170,6 +170,19 @@ class CourseManyWidget(widgets.ManyToManyWidget):
                     courses.append(course)
 
         return courses
+
+    def render(self, value, obj=None, **kwargs):
+        """Return course codes joined with ':' for exports."""
+        if not value:
+            return ""
+
+        if hasattr(value, "all"):
+            iterable = value.all()
+        else:
+            iterable = value
+
+        codes = [getattr(course, self.field) for course in iterable if course]
+        return self.separator.join(codes)
 
 
 class CourseCodeWidget(widgets.ForeignKeyWidget):
