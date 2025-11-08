@@ -5,11 +5,27 @@ from __future__ import annotations
 from django.db import models
 from simple_history.models import HistoricalRecords
 
+from app.shared.mixins import SimpleTableMixin
+from app.shared.status.mixins import StatusableMixin
 from app.timetable.choices import SEMESTER_NUMBER
 from app.timetable.utils import validate_subperiod
 
 
-class Semester(models.Model):
+class SemesterStatus(SimpleTableMixin):
+    """Track the lifecycle of a semester (planning, registration, locked)."""
+
+    DEFAULT_VALUES = [
+        ("planning", "Planning"),
+        ("registration", "Registration Open"),
+        ("locked", "Locked"),
+    ]
+
+    class Meta:
+        verbose_name = "Semester Status"
+        verbose_name_plural = "Semester Statuses"
+
+
+class Semester(StatusableMixin, models.Model):
     """Major section of academic year (e.g. semester 1, 2 or 3 vacations).
 
     Example:
@@ -21,6 +37,13 @@ class Semester(models.Model):
     number = models.PositiveSmallIntegerField(
         choices=SEMESTER_NUMBER.choices, help_text="Semester number"
     )
+    status = models.ForeignKey(
+        "timetable.SemesterStatus",
+        on_delete=models.PROTECT,
+        related_name="semesters",
+        default="planning",
+    )
+
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()
     start_date = models.DateField(null=True, blank=True)
@@ -29,6 +52,8 @@ class Semester(models.Model):
     # > Could be interesting to set this to the academic_year start date automatically on save
     # > and force non null values.
     end_date = models.DateField(null=True, blank=True)
+
+    REGISTRATION_OPEN_CODES = {"registration"}
 
     def clean(self) -> None:
         """Checking that the start and end date of the Semester are within the ay dates."""
@@ -50,6 +75,19 @@ class Semester(models.Model):
             overlap_message="Overlapping Semesters in the same academic year.",
             label="semester",
         )
+        self.validate_status(SemesterStatus.objects.all())
+
+    def _ensure_status(self):
+        if not self.status_id:
+            self.status_id = "planning"
+
+    def save(self, *args, **kwargs):
+        self._ensure_status()
+        return super().save(*args, **kwargs)
+
+    def is_registration_open(self) -> bool:
+        """Return True when the semester is open for course selection."""
+        return self.status_id in self.REGISTRATION_OPEN_CODES
 
     class Meta:
         constraints = [

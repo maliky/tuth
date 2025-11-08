@@ -97,11 +97,19 @@ class Command(BaseCommand):
 
             # real import
             with transaction.atomic():
-                for row in tqdm(dataset.dict, total=total_rows, desc=f"Importing {key}"):
+                for row_number, row in enumerate(
+                    tqdm(dataset.dict, total=total_rows, desc=f"Importing {key}"),
+                    start=1,
+                ):
                     try:
                         # import ipdb; ipdb.set_trace()
 
-                        resource.import_row(row, instance_loader, dry_run=False)
+                        resource.import_row(
+                            row,
+                            instance_loader,
+                            dry_run=False,
+                            row_number=row_number,
+                        )
                     except Exception as exc:
                         self.stdout.write(self.style.ERROR(f"{key} import failed: {exc}"))
                         raise (exc)

@@ -88,13 +88,26 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
         college_code = get_in_row("college_code", row)
         college = self.college_w.clean(college_code)
 
-        curriculum, _ = Curriculum.objects.get_or_create(
-            short_name=short_name,
-            defaults={
-                "long_name": short_name,
-                "college": college,
-            },
-        )
+        lookup = {"short_name": short_name}
+        if college:
+            lookup["college"] = college
+
+        try:
+            curriculum, _ = Curriculum.objects.get_or_create(
+                defaults={
+                    "long_name": short_name,
+                    "college": college,
+                },
+                **lookup,
+            )
+        except Curriculum.MultipleObjectsReturned:
+            curriculum = (
+                Curriculum.objects.filter(**lookup)
+                .order_by("-is_active", "-creation_date")
+                .first()
+            )
+            if curriculum is None:
+                raise
 
         # add the major if there
         if major_name:

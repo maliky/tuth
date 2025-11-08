@@ -123,15 +123,41 @@
       <header class="d-flex justify-content-between align-items-center mb-3">
         <div>
           <p class="text-uppercase small text-muted mb-1">Course registration</p>
-          <h2 class="h4 mb-0">Available this semester</h2>
+          <h2 class="h4 mb-0">
+            {% if current_semester %}{{ current_semester }}{% else %}Semester TBD{% endif %}
+          </h2>
         </div>
-        <span class="badge bg-light text-dark">
-          Showing {{ available_courses|length }} courses
-        </span>
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <span class="badge bg-light text-dark">
+            {{ available_courses|length }} available course{% if available_courses|length != 1 %}s{% endif %}
+          </span>
+          {% if semester_options %}
+            <form method="get" class="d-flex align-items-center gap-2">
+              <label class="text-muted small mb-0" for="semester-picker">Semester</label>
+              <select
+                id="semester-picker"
+                name="semester"
+                class="form-select form-select-sm"
+                onchange="this.form.submit()"
+              >
+                {% for option in semester_options %}
+                  <option value="{{ option.id }}" {% if option.active %}selected{% endif %}>
+                    {{ option.label }}
+                  </option>
+                {% endfor %}
+              </select>
+            </form>
+          {% endif %}
+          {% if registration_open %}
+            <span class="badge bg-success-subtle text-success">Registration open</span>
+          {% else %}
+            <span class="badge bg-danger-subtle text-danger">Registration closed</span>
+          {% endif %}
+        </div>
       </header>
 
       {% for course in available_courses %}
-        <article class="course-card {% if not course.eligible %}disabled{% endif %}">
+        <article class="course-card">
           <div class="d-flex justify-content-between align-items-start gap-2">
             <div>
               <h3 class="h5 mb-1">{{ course.title }}</h3>
@@ -193,6 +219,54 @@
       {% empty %}
         <div class="alert alert-light">No available courses.</div>
       {% endfor %}
+
+      {% if locked_courses %}
+        <div class="mt-4">
+          <button
+            class="btn btn-outline-secondary d-flex align-items-center gap-2"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#locked-courses"
+            aria-expanded="false"
+            aria-controls="locked-courses"
+          >
+            Locked / not yet available courses
+            <span class="badge bg-secondary">{{ locked_courses|length }}</span>
+          </button>
+          <div class="collapse mt-3" id="locked-courses">
+            {% for course in locked_courses %}
+              <article class="course-card disabled">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                  <div>
+                    <h3 class="h5 mb-1">{{ course.title }}</h3>
+                    <p class="mb-1 text-muted">
+                      {{ course.code }} · {{ course.credits }} credits
+                      {% if course.elective %}
+                        · <span class="badge bg-warning-subtle text-dark">Elective</span>
+                      {% endif %}
+                    </p>
+                    <div class="course-meta">
+                      {% for prereq in course.prerequisites %}
+                        <span class="prereq-chip {% if prereq.met %}met{% else %}missing{% endif %}">
+                          {{ prereq.label }}
+                        </span>
+                      {% empty %}
+                        <span class="text-muted small">No prerequisites</span>
+                      {% endfor %}
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    <span class="badge bg-secondary">Locked</span>
+                  </div>
+                </div>
+                <div class="mt-3">
+                  <small class="text-danger d-block">{{ course.reason }}</small>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
     </div>
 
     <aside>

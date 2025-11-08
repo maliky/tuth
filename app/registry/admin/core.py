@@ -106,3 +106,4 @@ class CurriculumStatusAdmin(admin.ModelAdmin):
 
     search_fields = ("code", "label")
     list_display = ("label",)
+

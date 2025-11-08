@@ -77,3 +77,33 @@ In fact I see the course listed in plain and then for each a drop down list with
 I want to personnalize the django admin/login form
 depending on the username I want to redirect to either normal admin, or to student
 I also want to change the them of the admin login form, change the title
+
+* 2025
+
+** 2025-11 novembre
+
+*** 2025-11-08 samedi
+**** DONE for the semester registration opening
+     CLOSED: [2025-11-08 sam. 00:39]
+     :PROPERTIES:
+     :age:      [2025-11-08 sam. 00:15]
+     :origin:   [[file:/mnt/backup/Jobs/TU/DRID/TII-Technics-Innovations/Tusis/Tusis_app/app/timetable/models/semester.py::"""Semester module."""]]
+     :END:
+
+It would be better to add a status in the semester model using existing mixing and leveraging constructed used in other files to manage status, status validation and tracking of historical changes.  Remove the class that you added, implement the strategy I propose and make sure the code is cohernet witht the proposed changes.
+**** TODO student dashboard ux
+     :PROPERTIES:
+     :age:      [2025-11-08 sam. 00:37]
+     :origin:   [[file:/mnt/backup/Jobs/TU/DRID/TII-Technics-Innovations/Tusis/Tusis_app/TODO.org::*for the semester registration opening][for the semester registration opening]]
+     :END:
+
+in the list of courses order the one available to the student at the top of the list, the other should be under a colapsed title called somehting like locked courses, or not yet available courses.     
+**** TODO Add columns to the semester admin table 
+     :PROPERTIES:
+     :age:      [2025-11-08 sam. 00:42]
+     :origin:   [[file:/mnt/backup/Jobs/TU/DRID/TII-Technics-Innovations/Tusis/Tusis_app/app/timetable/admin/registers/core.py::"""timetable.Core module."""]]
+     :END:
+
+On column should indicate the number of students enrolled in that semester.
+Another should indicate the number of sections in that semester
+for both the number should be clickable and take the user 1 to the list of students, 2 to the list of sections for that semesters

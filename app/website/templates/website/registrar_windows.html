@@ -1,0 +1,89 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Registrar · Course Windows</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}" />
+  </head>
+  <body class="bg-light">
+    <div class="container py-5">
+      <header class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <p class="text-uppercase text-muted small mb-1">Registrar tools</p>
+          <h1 class="h3 mb-0">Course selection windows</h1>
+        </div>
+        <a href="{% url 'admin:index' %}" class="btn btn-outline-secondary btn-sm">
+          Django admin
+        </a>
+      </header>
+
+      {% if messages %}
+        <div class="mb-3">
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} mb-2" role="alert">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="card shadow-sm">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Semester</th>
+                  <th>Current status</th>
+                  <th class="text-end">Change status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for semester in semesters %}
+                  <tr>
+                    <td>
+                      <strong>{{ semester }}</strong><br />
+                      <small class="text-muted">
+                        {{ semester.academic_year.code }} · Semester {{ semester.number }}
+                      </small>
+                    </td>
+                    <td>
+                      <span class="badge {% if semester.is_registration_open %}bg-success{% else %}bg-secondary{% endif %}">
+                        {{ semester.status.label }}
+                      </span>
+                    </td>
+                    <td class="text-end">
+                      <form method="post" class="d-inline-flex align-items-center gap-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="semester_id" value="{{ semester.id }}" />
+                        <select name="status_code" class="form-select form-select-sm">
+                          {% for status in statuses %}
+                            <option value="{{ status.code }}" {% if semester.status_id == status.code %}selected{% endif %}>
+                              {{ status.label }}
+                            </option>
+                          {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                          Update
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="3" class="text-center text-muted py-4">
+                      No semesters defined yet.
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+  </body>
+</html>

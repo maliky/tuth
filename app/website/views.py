@@ -28,6 +28,7 @@ from app.registry.models.grade import Grade
 from app.registry.models.registration import Registration, RegistrationStatus
 from app.shared.status import StatusHistory
 from app.timetable.choices import WEEKDAYS_NUMBER
+from app.timetable.models.semester import Semester, SemesterStatus
 from app.timetable.models.section import Section
 from app.timetable.utils import get_current_semester
 
@@ -43,6 +44,30 @@ def _require_student(user: User | AnonymousUser) -> Student:
     if student is None and not user.is_superuser:
         raise PermissionDenied("User has no Student profile.")
     return cast(Student, student)  # <— only cast once, in one place
+
+
+def _resolve_semester(student: Student, requested_semester_id: str | None):
+    """Return the semester that should drive course availability."""
+    open_semesters = (
+        Semester.objects.filter(status_id__in=Semester.REGISTRATION_OPEN_CODES)
+        .select_related("academic_year", "status")
+        .order_by("academic_year__start_date", "number")
+    )
+    semester: Semester | None = None
+    if requested_semester_id:
+        semester = next(
+            (
+                sem
+                for sem in open_semesters
+                if str(sem.id) == str(requested_semester_id)
+            ),
+            None,
+        )
+    if semester is None and open_semesters:
+        semester = open_semesters.first()
+    if semester is None:
+        semester = student.current_enrolled_semester or get_current_semester()
+    return semester, list(open_semesters)
 
 
 def course_dashboard(request: HttpRequest) -> HttpResponse:
@@ -103,7 +128,8 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:
     """Render the redesigned dashboard backed with live student data."""
 
     student = _require_student(request.user)
-    semester = student.current_enrolled_semester or get_current_semester()
+    semester, open_semesters = _resolve_semester(student, request.GET.get("semester"))
+    registration_open = bool(semester and semester.is_registration_open())
 
     def _format_semester_label() -> str:
         if semester:
@@ -249,16 +275,21 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:
             }
         )
 
-    available_courses = []
+    available_courses: list[dict[str, object]] = []
+    locked_courses: list[dict[str, object]] = []
     for cc in curriculum_courses:
         course = cc.course
         course_sections = sections_by_course.get(course.id, [])
         prereq_data = prereq_map.get(course.id, [])
-        is_eligible = course.id in allowed_course_ids and bool(course_sections)
+        is_eligible = (
+            registration_open and course.id in allowed_course_ids and bool(course_sections)
+        )
 
         missing = [p["label"] for p in prereq_data if not p["met"]]
         reason = ""
-        if missing:
+        if not registration_open:
+            reason = "Registration window is closed."
+        elif missing:
             reason = f"Complete {', '.join(missing)} first."
         elif not course_sections:
             reason = "No scheduled section this semester."
@@ -277,18 +308,20 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:
             for section in course_sections
         ]
 
-        available_courses.append(
-            {
-                "code": course.short_code or course.code,
-                "title": course.title or "",
-                "credits": cc.credit_hours.code,
-                "elective": cc.is_elective,
-                "eligible": is_eligible,
-                "reason": reason,
-                "prerequisites": prereq_data,
-                "sections": serialized_sections,
-            }
-        )
+        course_payload = {
+            "code": course.short_code or course.code,
+            "title": course.title or "",
+            "credits": cc.credit_hours.code,
+            "elective": cc.is_elective,
+            "eligible": is_eligible,
+            "reason": reason,
+            "prerequisites": prereq_data,
+            "sections": serialized_sections,
+        }
+        if is_eligible:
+            available_courses.append(course_payload)
+        else:
+            locked_courses.append(course_payload)
 
     completed_credits = student.completed_credits
     required_credits = (
@@ -354,7 +387,9 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:
             f"Outstanding balance: {currency} {outstanding:.2f}. Complete payment to finalize registrations."
         )
     if semester:
-        announcements.append(f"Current semester: {semester}")
+        announcements.append(f"Selected semester: {semester}")
+    if not registration_open:
+        announcements.append("Registration window is currently closed.")
     if not announcements:
         announcements.append("You are all set for the semester.")
 
@@ -391,6 +426,15 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:
         {"label": "Support", "href": "#support", "active": False},
     ]
 
+    semester_options = [
+        {
+            "id": sem.id,
+            "label": f"{sem.academic_year.code} · Semester {sem.number}",
+            "active": semester and sem.id == semester.id,
+        }
+        for sem in open_semesters
+    ]
+
     context = {
         "student_profile": student_profile,
         "sidebar_links": sidebar_links,
@@ -403,9 +447,46 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:
         "completed_courses": completed_courses,
         "advisor_actions": advisor_actions,
         "announcements": announcements,
+        "current_semester": semester,
+        "registration_open": registration_open,
+        "semester_options": semester_options,
+        "locked_courses": locked_courses,
     }
 
     return render(request, "website/student_dashboard.html", context)
+
+
+@permission_required("timetable.change_semester", raise_exception=True)
+def registrar_course_windows(request: HttpRequest) -> HttpResponse:
+    """Allow registrar staff to manage semester statuses."""
+
+    semesters = (
+        Semester.objects.select_related("academic_year", "status")
+        .order_by("-academic_year__start_date", "-number")
+        .all()
+    )
+    statuses = SemesterStatus.objects.all().order_by("code")
+
+    if request.method == "POST":
+        semester_id = request.POST.get("semester_id")
+        status_code = request.POST.get("status_code")
+        semester = get_object_or_404(Semester, pk=semester_id)
+        if status_code not in {status.code for status in statuses}:
+            messages.error(request, "Unknown status.")
+            return redirect("registrar_course_windows")
+        semester.status_id = status_code
+        semester.save(update_fields=["status"])
+        messages.success(
+            request,
+            f"{semester} status updated to {semester.status.label}.",
+        )
+        return redirect("registrar_course_windows")
+
+    return render(
+        request,
+        "website/registrar_windows.html",
+        {"semesters": semesters, "statuses": statuses},
+    )
 
 
 @permission_required("people.add_student", raise_exception=True)
