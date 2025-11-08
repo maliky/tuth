@@ -1,0 +1,489 @@
+# need to update this sot the validation of the registered courses is done at the chair level.
+
+* Detailed Minimal Working Example (MWE) for Tuth System
+** Dean Uploads or Creates Curriculum (with Prerequisites)
+:PROPERTIES:
+:PRIMARY_ACTOR: Dean
+:SCOPE: Curriculum Management Module
+:LEVEL: User-goal level
+:END:
+
+*** Preconditions
+- Dean logged into Tuth system.
+- Curriculum creation window open.
+
+*** Success Guarantee
+- Curriculum successfully created and pending validation by VPAA.
+
+*** Main Success Scenario
+1. Dean logs into the curriculum management interface.
+2. System verifies Dean's identity and permissions.
+3. Dean selects "Upload/Create Curriculum."
+4. Dean inputs course details, prerequisites, and credit hours.
+5. Dean reviews the entered data and submits the curriculum.
+6. System validates curriculum data format and completeness.
+7. System stores the curriculum securely and flags it for VPAA review.
+8. System confirms successful submission to the Dean.
+
+*** Extensions (Alternative scenarios)
+- 6a. Invalid or incomplete curriculum data:
+  1. System alerts Dean to the specific error.
+  2. Dean corrects and resubmits the curriculum.
+
+- 7a. System fails during curriculum storage:
+  1. System notifies Dean of an internal error.
+  2. Dean retries submission or contacts IT support.
+
+*** Postconditions
+- Curriculum available for VPAA validation.
+- Dean receives confirmation of curriculum submission.
+
+** VPAA Validates Curriculum
+:PROPERTIES:
+:PRIMARY_ACTOR: VPAA
+:SCOPE: Academic Management Module
+:LEVEL: User-goal level
+:END:
+
+*** Preconditions
+- VPAA logged into Tuth system.
+- Curriculum submitted by Dean ready for review.
+
+*** Success Guarantee
+- Curriculum validated and officially approved for academic use.
+
+*** Main Success Scenario
+1. VPAA logs into the academic management interface.
+2. System verifies VPAA's identity and permissions.
+3. VPAA selects "Review Curriculum Proposals."
+4. System presents proposed curriculum submitted by Dean.
+5. VPAA reviews curriculum details, prerequisites, credits, and overall coherence.
+6. VPAA approves the curriculum.
+7. System updates curriculum status to "approved" and stores the decision.
+8. System confirms successful approval to VPAA and Dean.
+
+*** Extensions (Alternative scenarios)
+- 6a. VPAA requests adjustments or corrections:
+  1. VPAA records required adjustments with explanatory notes.
+  2. System returns curriculum to Dean for revision.
+
+- 7a. System error during curriculum update:
+  1. System notifies VPAA of internal error.
+  2. VPAA retries approval or contacts IT support.
+
+*** Postconditions
+- Approved curriculum available for student registration.
+- Dean informed of the approval status.
+
+** Freshman Student Enrollment
+:PROPERTIES:
+:PRIMARY_ACTOR: Enrollment Officer / Student
+:SCOPE: Enrollment Module
+:LEVEL: User-goal level
+:END:
+
+*** Preconditions
+- Enrollment Officer or Student logged into Tuth system.
+- Enrollment period open.
+
+*** Success Guarantee
+- Freshman student successfully enrolled and eligible for course selection.
+
+*** Main Success Scenario
+1. Student or Enrollment Officer logs into the enrollment module.
+2. System verifies identity and permissions.
+3. Freshman student completes enrollment forms.
+4. Student uploads necessary enrollment documents (e.g., ID, transcripts).
+5. System validates completeness and accuracy of submitted forms and documents.
+6. System confirms successful enrollment and marks student as eligible for course selection.
+
+*** Extensions (Alternative scenarios)
+- 5a. Enrollment documents incomplete or invalid:
+  1. System alerts user to specific issues.
+  2. Student or Enrollment Officer corrects the issues and resubmits.
+
+- 6a. Technical issue during enrollment processing:
+  1. System notifies the user of internal error.
+  2. User retries enrollment or contacts IT support.
+
+*** Postconditions
+- Student enrolled and status updated in Tuth system.
+- Student eligible for course pre-registration.
+
+** Freshman Student Course Selection (Pre-registration)
+:PROPERTIES:
+:PRIMARY_ACTOR: Student
+:SCOPE: Course Registration Module
+:LEVEL: User-goal level
+:END:
+
+*** Preconditions
+- Student logged into Tuth system.
+- Student enrollment verified.
+
+*** Success Guarantee
+- Courses pre-registered successfully, pending financial clearance.
+
+*** Main Success Scenario
+1. Student logs into the course registration interface.
+2. System verifies student's identity and enrollment status.
+3. System displays courses available to freshmen based on validated curriculum.
+4. Student selects desired courses.
+5. Student confirms course selections.
+6. System validates selections for conflicts or prerequisite issues.
+7. System saves pre-registration selections and marks them pending financial clearance.
+8. System confirms successful pre-registration.
+
+*** Extensions (Alternative scenarios)
+- 6a. Course selection conflicts identified:
+  1. System alerts student to specific conflicts (schedule or prerequisites).
+  2. Student revises course selections accordingly.
+
+- 7a. Technical issue during saving of course selections:
+  1. System notifies student of internal error.
+  2. Student retries selection or contacts IT support.
+
+*** Postconditions
+- Student’s courses pre-registered, awaiting financial clearance.
+- Student notified of successful course pre-registration.
+
+** Financial Clearance by Financial Officer
+:PROPERTIES:
+:PRIMARY_ACTOR: Financial Officer
+:SCOPE: Financial Management Module
+:LEVEL: User-goal level
+:END:
+
+*** Preconditions
+- Financial Officer logged into Tuth system.
+- Student payment records available.
+
+*** Success Guarantee
+- Student financially cleared, enabling finalization of course enrollment.
+
+*** Main Success Scenario
+1. Financial Officer logs into the financial interface.
+2. System verifies Financial Officer’s identity.
+3. Officer retrieves freshman student's financial records.
+4. Student pays tuition and provides proof of payment.
+5. Financial Officer verifies payment and clears the student financially.
+6. System updates the student's financial clearance status.
+7. System confirms successful clearance to Financial Officer and student.
+
+*** Extensions (Alternative scenarios)
+- 5a. Payment verification unsuccessful:
+  1. System alerts Financial Officer of payment issue.
+  2. Financial Officer notifies student for resolution.
+
+- 6a. Technical issue updating financial status:
+  1. System notifies Financial Officer of internal error.
+  2. Officer retries clearance or contacts IT support.
+
+*** Postconditions
+- Student’s financial status cleared and updated.
+- Student eligible for final course enrollment.
+
+** Registrar Validates Courses and Updates Roster
+:PROPERTIES:
+:PRIMARY_ACTOR: Registrar
+:SCOPE: Academic Administration Module
+:LEVEL: User-goal level
+:END:
+
+*** Preconditions
+- Registrar logged into Tuth system.
+- Financially cleared student pre-registered for courses.
+
+*** Success Guarantee
+- Student officially enrolled in courses, class rosters accurately updated.
+
+*** Main Success Scenario
+1. Registrar logs into the academic administration interface.
+2. System verifies Registrar's identity and permissions.
+3. Registrar retrieves financially cleared students' pre-registrations.
+4. System validates courses against approved curriculum and prerequisites.
+5. Registrar confirms course registrations officially.
+6. System updates class rosters with new student enrollment.
+7. System notifies student and relevant faculty of confirmed enrollment.
+
+*** Extensions (Alternative scenarios)
+- 4a. Issues identified in course validation (prerequisites, curriculum mismatch):
+  1. System alerts Registrar of specific issues.
+  2. Registrar resolves issues directly or requests student adjustments.
+
+- 6a. System error updating rosters:
+  1. System notifies Registrar of internal error.
+  2. Registrar retries roster update or escalates to IT support.
+
+*** Postconditions
+- Student course registration finalized.
+- Accurate rosters available to faculty and students clearly informed.
+
+* Student Enrollment Workflow
+:PROPERTIES:
+:AUTHOR: Tuth Project
+:DATE: 2025-05-15
+:END:
+
+** Overview
+    This document outlines the student enrollment workflow, starting from placement exams to final validation of course registration and payment.
+
+** Enrollment Process Workflow
+    The workflow captures the complete student journey through Tuth.
+
+#+BEGIN_SRC plantuml :file ../Exports/enrollment_workflow.png
+@startuml
+title Student Enrollment Workflow
+
+participant Candidate
+participant EnrollmentClerk as "Enrollment Clerk"
+participant FinanceOffice as "Finance Office"
+participant TuthSystem as "Tuth Platform"
+participant VPAA
+
+Candidate -> EnrollmentClerk: Presents documents (Invitation Letter, IDs)
+EnrollmentClerk --> TuthSystem: Validates documents, creates Student ID
+TuthSystem --> Candidate: Enrollment complete (Student ID)
+
+Candidate -> TuthSystem: Logs in to select courses
+TuthSystem --> Candidate: Displays available courses/sessions
+
+Candidate -> TuthSystem: Selects courses & reserves sessions
+TuthSystem --> Candidate: Displays total payment required
+
+Candidate -> FinanceOffice: Pays and shows proof of payment
+FinanceOffice --> TuthSystem: Validates payment, confirms reservation
+
+alt Session full
+TuthSystem -> VPAA: Requests approval for new session
+alt VPAA authorizes new session
+VPAA --> TuthSystem: Approval granted
+TuthSystem --> Candidate: Assigned to new session
+else VPAA declines
+VPAA --> TuthSystem: Decline creation of new session
+TuthSystem --> FinanceOffice: Informs session unavailable
+FinanceOffice --> Candidate: Proposes refund
+end
+else Session available
+TuthSystem --> Candidate: Final confirmation of enrollment
+end
+@enduml
+#+END_SRC
+
+#+RESULTS:
+[[file:../Exports/enrollment_workflow.png]]
+
+** Clarifications & Ambiguities
+- /Document Validation/: What specific documents are mandatory? (e.g., invitation letter, IDs, proof of address?)
+- /Session Reservation Logic/: What specific rules apply when a session is filled? Does VPAA approve each session individually or per course globally?
+- /Refund Process/: Is there an established formal procedure for issuing refunds? What is the timeline?
+*** Questions for Further Clarification
+- Are placement exam results linked directly to course suggestions in the system?
+> no  
+- Does the Enrollment Clerk manually verify each document? Are there any automated checks planned?
+> manualy  
+- Are session capacities fixed by default or can they dynamically adjust based on real-time approvals?
+> can be dynamically adjusted  
+
+- Consider having automated notifications to VPAA for session capacity constraints.
+> Yes  
+- Clearly define a structured refund policy integrated into the Finance Office process.
+> Will be done  
+- Automate the document submission and verification process online to reduce workload on Enrollment Clerk.
+> Yes, will be done  
+
+*** State Diagram of Enrollment Status
+To track the status clearly in Tuth:
+
+#+BEGIN_SRC plantuml :file ../Exports/enrollment_status_states.png
+@startuml
+title Enrollment Status State Diagram
+
+[*] --> Invited
+Invited --> DocumentsSubmitted: "Documents Presented"
+DocumentsSubmitted --> Enrolled: "Documents Validated"
+Enrolled --> CoursesSelected: "Courses Selected"
+CoursesSelected --> AwaitingPayment: "Session Reserved"
+AwaitingPayment --> EnrolledConfirmed: "Payment Validated, Session Confirmed"
+
+AwaitingPayment --> SessionFull: "Session Full"
+SessionFull --> AwaitingVPAAApproval: "Request VPAA Approval"
+AwaitingVPAAApproval --> EnrolledConfirmed: "VPAA Approval Granted"
+AwaitingVPAAApproval --> RefundProposed: "VPAA Approval Denied"
+
+RefundProposed --> [*]
+
+@enduml
+#+END_SRC
+
+#+RESULTS:
+[[file:../Exports/enrollment_status_states.png]]
+
+* Diagrams – TU MIS reservation feature
+** Class diagram – core data model
+#+BEGIN_SRC plantuml :file Plantuml/tuth_classes_with_reservation.png :results file link
+@startuml
+title Tuth MIS – Class model (incl. Reservation)
+
+/'  USER MANAGEMENT '/
+class User
+class StudentProfile {
+  student_id
+  level
+}
+User "1" *-- "1" StudentProfile : has_profile
+
+/'  ACADEMICS '/
+class College
+class Curriculum
+class Course {
+  credit_hours
+}
+class Section {
+  max_seats
+  enrolled_count()
+}
+class Semester
+class AcademicYear
+
+College "1" o-- "*" Curriculum
+Curriculum "*" o-- "*" Course
+Course "1" o-- "*" Section
+Section "*" --> "1" Semester
+Semester "*" --> "1" AcademicYear
+
+/'  FINANCE '/
+class FinancialRecord {
+  total_due
+  total_paid
+  clearance_status
+}
+class PaymentHistory {
+  amount
+  payment_date
+}
+StudentProfile "1" *-- "1" FinancialRecord
+FinancialRecord "*" o-- "*" PaymentHistory
+
+/'  REGISTRATION + NEW RESERVATION '/
+class Registration {
+  status
+  date_confirmed
+}
+class Reservation {
+  status
+  reserved_at
+  expires_at
+}
+StudentProfile "1" --> "*" Reservation : makes
+Reservation "*" --> "1" Section : for
+Reservation "0..1" --> "1" Registration : ↪ creates
+
+@enduml
+#+END_SRC
+
+#+RESULTS:
+[[file:Plantuml/tuth_classes_with_reservation.png]]
+
+** Use-case diagram – who does what
+#+BEGIN_SRC plantuml :file Plantuml/tuth_use_cases.png :results file link
+@startuml
+left to right direction
+actor Student
+actor "Finance Clerk" as Clerk
+actor Registrar
+
+rectangle "TU MIS" {
+  usecase "Browse\navailable sections" as UC1
+  usecase "Reserve section(s)" as UC2
+  usecase "Pay fees" as UC3
+  usecase "Confirm\nreservation" as UC4
+  usecase "Validate & print\nregistrations" as UC5
+}
+
+Student  --> UC1
+Student  --> UC2
+Student  --> UC3
+Clerk    --> UC4
+Registrar --> UC5
+@enduml
+#+END_SRC
+
+#+RESULTS:
+[[file:Plantuml/tuth_use_cases.png]]
+
+** Swim-lane flowchart – reservation life-cycle
+#+BEGIN_SRC plantuml :file Plantuml/tuth_reservation_flow.png :results file link
+  @startuml
+  |Student|
+  start
+  :Select section(s);
+  |System|
+  :Check seats & credit-limit;
+  |System|
+  if (OK?) then (yes)
+    :Create *Reservation* (status=active,\nexpires_at = +48h);
+    |Student|
+    :Displays “pending payment”\nmessage & invoice;
+  else (no)
+    |Student|
+    :Show error\n(max seats / credits);
+    stop
+  endif
+
+  |Finance Clerk|
+  :Receive payment;
+  |System|
+  :Record *PaymentHistory* & update\nFinancialRecord;
+  :Update Reservation → confirmed;
+  |Registrar|
+  :Review confirmed reservations;
+  :Generate *Registration* row;
+  :Print / export roster;
+  stop
+  @enduml
+#+END_SRC
+
+#+RESULTS:
+[[file:Plantuml/tuth_reservation_flow.png]]
+
+* <2025-06-27 Fri>
+
+I'm going to give a demonstration of the Tuth software, the computer system for managing administration, or rather, managing student registration at our university. The Django base is already good, as you can see from your memory. Now, it's about working with a program like OpenAI's Codex to generate minimal working examples for the following cases. The goal is to restrict object access for different users, so I'd like it to suggest access restrictions for the registrar, who manages the databases containing student grades. I'd also like proposals for restrictions on staff involved in enrollment, meaning student registrations. These staff members create student profiles after verifying their documents, allowing the creation of new student objects. There is the head of the Enrollment department, who must be able to modify permissions for employees. I can already see several roles here: registrar, enrollment head, and enrollment staff. Of course, there's also the student role.
+
+I also want to add a particular role related to finance or the finance department. That's the cashier, the person to whom students deposit money, who can send a message to the financial officer confirming that a particular student has deposited a certain amount of money for one of the student's registrations.
+
+In this Minimal Working Example, a student comes to the enrollment office; we create their profile, assign their program, after which the student can view courses available in their program and register according to Business Rules that I'll present later.
+
+There's a maximum number of credits that a student can take. This maximum number of credits must be modifiable by the VPA for the entire university. Additionally, each student has a per-semester credit limit that can be modified by the DEAN. Again, these are additional roles we need to identify.
+
+For our example, we'll assume the maximum credit load is 12. Courses typically have 3 credits, so the student can select up to 4 courses during registration. What's important is to accurately calculate the number of credits chosen by a student.
+
+Thus, depending on the number of credits—we'll call this the student's credit load at instant T—we can display additional courses from their program for which they can register. Registering for a course is equivalent to creating a new line in the student's registration table.
+
+For this minimal working example, we'll assume we have two students. One is making their selections—they're both freshman students—and when the second student makes their selection, they actually see some courses as already full. That's another business logic we must implement: courses have a limited number of seats. Therefore, for this minimal working example, we'll have courses with only one seat left so we can see what happens when a course fills up. Such a course should not appear on another student's registration dashboard. We must be very cautious of concurrent writes because during the registration period, many students might attempt to register for the same course simultaneously. Therefore, the database must be locked, accepting only the first student's write.
+
+Once a student completes their registration, they can see their bill updated in real-time automatically or when they access that part of their dashboard. These bills are calculated based on the sections chosen. Each section has an independent fee structure. Options include lab courses or non-lab courses, first course of the semester—or more precisely, of the year—or others, such as Physical Education (PE) courses, which might incur additional costs at the year's start for items like T-shirts and other equipment.
+
+Students can therefore view the total amount they owe the finance office. When computing these bills, we must also consider any scholarships students may have. This is managed by the scholarship office, another role we must account for.
+
+The scholarship office should be able to import into our system a list of students, donors, and the support provided to each student by each donor.I'm going to give a demonstration of the Tuth software, the computer system for managing administration, or rather, managing student registration at our university. The Django base is already good, as you can see from your memory. Now, it's about working with a program like OpenAI's Codex to generate minimal working examples for the following cases. The goal is to restrict object access for different users, so I'd like it to suggest access restrictions for the registrar, who manages the databases containing student grades. I'd also like proposals for restrictions on staff involved in enrollment, meaning student registrations. These staff members create student profiles after verifying their documents, allowing the creation of new student objects. There is the head of the Enrollment department, who must be able to modify permissions for employees. I can already see several roles here: registrar, enrollment head, and enrollment staff. Of course, there's also the student role.
+
+I also want to add a particular role related to finance or the finance department. That's the cashier, the person to whom students deposit money, who can send a message to the financial officer confirming that a particular student has deposited a certain amount of money for one of the student's registrations.
+
+In this Minimal Working Example, a student comes to the enrollment office; we create their profile, assign their program, after which the student can view courses available in their program and register according to Business Rules that I'll present later.
+
+There's a maximum number of credits that a student can take. This maximum number of credits must be modifiable by the VPA for the entire university. Additionally, each student has a per-semester credit limit that can be modified by the DEAN. Again, these are additional roles we need to identify.
+
+For our example, we'll assume the maximum credit load is 12. Courses typically have 3 credits, so the student can select up to 4 courses during registration. What's important is to accurately calculate the number of credits chosen by a student.
+
+Thus, depending on the number of credits—we'll call this the student's credit load at instant T—we can display additional courses from their program for which they can register. Registering for a course is equivalent to creating a new line in the student's registration table.
+
+For this minimal working example, we'll assume we have two students. One is making their selections—they're both freshman students—and when the second student makes their selection, they actually see some courses as already full. That's another business logic we must implement: courses have a limited number of seats. Therefore, for this minimal working example, we'll have courses with only one seat left so we can see what happens when a course fills up. Such a course should not appear on another student's registration dashboard. We must be very cautious of concurrent writes because during the registration period, many students might attempt to register for the same course simultaneously. Therefore, the database must be locked, accepting only the first student's write.
+
+Once a student completes their registration, they can see their bill updated in real-time automatically or when they access that part of their dashboard. These bills are calculated based on the sections chosen. Each section has an independent fee structure. Options include lab courses or non-lab courses, first course of the semester—or more precisely, of the year—or others, such as Physical Education (PE) courses, which might incur additional costs at the year's start for items like T-shirts and other equipment.
+
+Students can therefore view the total amount they owe the finance office. When computing these bills, we must also consider any scholarships students may have. This is managed by the scholarship office, another role we must account for.
+
+The scholarship office should be able to import into our system a list of students, donors, and the support provided to each student by each donor.
+
