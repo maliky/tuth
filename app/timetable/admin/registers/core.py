@@ -1,6 +1,9 @@
 """timetable.Core module."""
 
 from django.contrib import admin
+from django.db.models import Count
+from django.urls import reverse
+from django.utils.html import format_html
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
@@ -36,11 +39,50 @@ class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
     """
 
     resource_class = SemesterResource
-    list_display = ("academic_year", "number", "start_date", "end_date")
+    list_display = (
+        "academic_year",
+        "number",
+        "start_date",
+        "end_date",
+        "section_count_link",
+        "student_count_link",
+    )
     list_filter = ("academic_year",)
     search_fields = ("academic_year__code", "academic_year__long_name")
     ordering = ("academic_year", "number")
-    # need to list student in this academic semester
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.annotate(
+            section_total=Count("section", distinct=True),
+            student_total=Count("current_students", distinct=True),
+        )
+
+    def section_count_link(self, semester):
+        count = getattr(semester, "section_total", None)
+        if count is None:
+            count = semester.sections.count()
+        url = (
+            reverse("admin:timetable_section_changelist")
+            + f"?semester__id__exact={semester.id}"
+        )
+        return format_html('<a href="{}">{}</a>', url, count)
+
+    section_count_link.short_description = "Sections"
+    section_count_link.admin_order_field = "section_total"
+
+    def student_count_link(self, semester):
+        count = getattr(semester, "student_total", None)
+        if count is None:
+            count = semester.current_students.count()
+        url = (
+            reverse("admin:people_student_changelist")
+            + f"?current_enrolled_semester__id__exact={semester.id}"
+        )
+        return format_html('<a href="{}">{}</a>', url, count)
+
+    student_count_link.short_description = "Students"
+    student_count_link.admin_order_field = "student_total"
 
 
 @admin.register(Term)
