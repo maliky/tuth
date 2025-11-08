@@ -107,3 +107,29 @@ in the list of courses order the one available to the student at the top of the 
 On column should indicate the number of students enrolled in that semester.
 Another should indicate the number of sections in that semester
 for both the number should be clickable and take the user 1 to the list of students, 2 to the list of sections for that semesters
+**** TODO implementing Reservation
+     :PROPERTIES:
+     :age:      [2025-11-08 sam. 01:00]
+     :origin:
+     :END:
+
+The idea is to use the registration status workflow from
+Pendingm financialy clearedm registrar cleared.  but detail of the workflow can be found in mwe.org file.
+
+In this task you should implement the action when the student clics on reservation after selecting a few courses.
+**** TODO Extending tests with course registration
+     :PROPERTIES:
+     :age:      [2025-11-08 sam. 01:03]
+     :origin:   [[file:/mnt/backup/Jobs/TU/DRID/TII-Technics-Innovations/Tusis/Tusis_app/app/timetable/admin/registers/core.py::url = (]]
+     :END:
+
+Extend the mockup test and aat bu generating more profile of student.
+you will need to generate an student with a history of 2 or 4 semester behind him to be able to test complex prerequisits.
+**** TODO Extending tests of students
+     :PROPERTIES:
+     :age:      [2025-11-08 sam. 01:05]
+     :origin:   [[file:/mnt/backup/Jobs/TU/DRID/TII-Technics-Innovations/Tusis/Tusis_app/app/timetable/admin/registers/core.py::url = (]]
+     :END:
+
+make sure that if a student select courses totalying more than his aloowed creditm they he cannot make the reservations.
+Also is the reservation is canceld (he should be able to cancel a reseravation meaning that while prpendingm the studnet should still this the course and have the possibilityh oto cancel the resravation) in taht case the credit and money should be resaured as expected .

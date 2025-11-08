@@ -201,3 +201,27 @@ Use ``import_workbook`` to load an Excel file containing
 python manage.py import_workbook myfile.xlsx --dry-run
 # +end_src
 Run the command without ``--dry-run`` to persist changes.
+
+* COMMENT
+Installing nodes
+Installing pyenv
+Installing python 3.13
+#+BEGIN_SRC bash  -i
+pyenv install 3.13
+pyenv virtualenv 3.13 tusis
+pyenv local tusis
+#+END_SRC
+Installing librairies
+** special lib
+
+*** pygraphviz
+#+BEGIN_SRC bash  -i
+sudo apt-get install graphviz graphviz-dev
+pip install pygraphviz
+#+END_SRC
+
+pip install -r requirements-dev
+
+Installing webdriver
+Installing DB posgresql
+Installing IDE / codex
