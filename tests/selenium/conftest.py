@@ -64,7 +64,8 @@ def _build_chromium(headless: bool, remote_url: str | None) -> WebDriver:
         return webdriver.Remote(command_executor=remote_url, options=options)
 
     version = os.getenv("CHROMEDRIVER_VERSION")
-    service = ChromeService(ChromeDriverManager(version=version).install())
+    manager_kwargs = {"driver_version": version} if version else {}
+    service = ChromeService(ChromeDriverManager(**manager_kwargs).install())
     return webdriver.Chrome(service=service, options=options)
 
 
