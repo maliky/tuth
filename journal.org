@@ -1,4 +1,23 @@
-* codex
+* The scenario narrative is solid, but “ready to run” depends on whether each step already has backing data, permissions, and UI hooks in the codebase:
+
+  - Dean → VPAA workflow: 
+# > But for me the Dean can create a curriculum using the admin interface and event import a curriculum and prerequisits using the import-export extention.
+
+  - Enrollment officer & student onboarding: 
+# >  the way I see that above is the enrollement staff creating the student profil using the admin interface directly.
+
+  - Student pre-registration:
+# > Ok so except data, what is missing here concretely to make it work ?
+    
+  - Financial clearance: 
+# > Well we can do that right ? it does not cost much doesn't it ?
+
+  - Registrar validation: 
+# > lets hold on this one for now.
+
+
+
+* codex tips
   
   / for commands                          ctrl + j for newline
   @ for file paths                        ctrl + v to paste images
