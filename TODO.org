@@ -1,5 +1,4 @@
 * Main redirection from same login page 
-
 ** Student
    Wha is proposed is acceptable
 
@@ -23,27 +22,30 @@ They create students
 
 ** Admin (VPAA, President)
 
-* The student_dashboard preview is good connect it to the backend.
+* DONE The student_dashboard preview is good connect it to the backend.
+  CLOSED: [2025-11-09 Sun 22:11]
 
-* We need to add a link for a student to print / display his grade sheet for the current semester.
-  
-* Login in with a testest student user in django admin
-** TODO redirect to the student dashboard directly not to django admin
+* TODO We need to add a link for a student to print / display his grade sheet for the current semester.
+* DONE Login in with a testest student user in django admin
+  CLOSED: [2025-11-09 Sun 22:13]
+** DONE redirect to the student dashboard directly not to django admin
+   CLOSED: [2025-11-09 Sun 22:12]
 
 * About some rights for users
 ** test_enrollment_officer
 Curriculum
 Current enrolled semester should be the same with entry semester
-test_student
-testest -> T-pass-T!  : tusistusis : ?
 
 ** student
-   a student should not be able to see all Academics
+a student should not be able to see all Academics
 nor the list of all students or registration...  it should not be a staff
 
 in the url courses for a student x, following the curriculum BBA Banking and Finance, we should list only the courses from his curriculum, and eventualy electives preselected by the college or curriculum head.   This electives will be marked as elective courses in the curriculum. Should be listed only courses respecting for which the studen has fullfilled the prerequisites (nb credit hours, completed previous courses...)
 
 students listing should not be accessible a a student.
+
+test_student
+testest -> T-pass-T!  : tusistusis : ?
 
 *** action
 When loggin in an identified student should reach his dashboard
@@ -72,13 +74,13 @@ In fact I see the course listed in plain and then for each a drop down list with
 - Credit/fee counters update live from actual seat selections; seat counts and section schedules reflect `Section` + `SecSession` records.
 - Next: hook the “Save reservation” and “Proceed to payment” buttons to real workflows and enforce role-based access before launch.
    
-* About the website
+* DONE About the website
+  CLOSED: [2025-11-09 Sun 22:13]
 I want to personnalize the django admin/login form
 depending on the username I want to redirect to either normal admin, or to student
 I also want to change the them of the admin login form, change the title
  
 * 2025
- 
 ** 2025-11 novembre
 
 *** 2025-11-08 samedi
@@ -131,7 +133,6 @@ you will need to generate an student with a history of 2 or 4 semester behind hi
      :END:
 
 *** 2025-11-09 dimanche
-**** 
 **** DONE improve login page
      CLOSED: [2025-11-09 Sun 13:54]
      :PROPERTIES:
@@ -154,10 +155,8 @@ Answers:
    u.save()
    ```
    Ensure the user is `is_active=True` and not locked by login throttling. If login still fails, check the server logs for auth backends or group-based redirects denying access.
-
-
-** 2025-11 November
-
+**** DONE student dashboar
+     CLOSED: [2025-11-09 Sun 22:14]
 make sure that if a student select courses totalying more than his aloowed creditm they he cannot make the reservations.
 Also is the reservation is canceld (he should be able to cancel a reseravation meaning that while prpendingm the studnet should still this the course and have the possibilityh oto cancel the resravation) in taht case the credit and money should be resaured as expected .
 
@@ -213,7 +212,7 @@ Implementation plan:
 5. Implement Selenium suite covering login, redirect, dashboard key elements, and logout for each persona.
 # > ok   
 
-** Progress 2025-11-09:
-- Added workload snapshots, approval queue, transcript requests, scholarship templates/snapshots, and document attachments (generic FK) so each dashboard has the required data sources.
-- Staff dashboards now live at `/staff/<role>/` with builders for instructor, chair, dean, VPAA, registrar, scholarship, finance, plus a general fallback.
-- Selenium suite `tests/selenium/test_portal_roles.py` logs in as every persona (student + all staff roles), asserts the expected heading, and verifies the logout redirect to `/auth/login/`.
+**** Progress 2025-11-09:
+  - Added workload snapshots, approval queue, transcript requests, scholarship templates/snapshots, and document attachments (generic FK) so each dashboard has the required data sources.
+  - Staff dashboards now live at `/staff/<role>/` with builders for instructor, chair, dean, VPAA, registrar, scholarship, finance, plus a general fallback.
+  - Selenium suite `tests/selenium/test_portal_roles.py` logs in as every persona (student + all staff roles), asserts the expected heading, and verifies the logout redirect to `/auth/login/`.

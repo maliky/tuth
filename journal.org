@@ -5,6 +5,93 @@
   esc esc to edit previous message        ctrl + c to exit
                                           ctrl + t to view transcript
 
+** UX Surface Map (2025-11-09)
+
+#+BEGIN_SRC plantuml :results file link :file ../Plantuml/ux_surface_map.png
+@startuml
+skinparam actorStyle awesome
+left to right direction
+
+actor Applicant
+actor Student
+actor Instructor
+actor Chair
+actor Dean
+actor VPAA
+actor Registrar
+actor "Financial Officer" as Finance
+actor "Scholarship Officer" as Scholarship
+
+rectangle "Applicant Portal" {
+  [Landing Page\n(/)] as Landing
+  [Apply + Upload Docs] as Apply
+  [Status Tracker] as Status
+  Applicant --> Landing
+  Landing --> Apply
+  Apply --> Status
+}
+
+rectangle "Unified Access" as Portal {
+  [Portal Login\n(/auth/login/)]
+  [Role Router\n(/portal/)]
+}
+
+rectangle "Student Experience" {
+  [Student Dashboard\n(/student/dashboard/)] as StuDash
+  [Course Registration\n(/courses/)] as Courses
+  [Financial Status] as StuFin
+  [Schedule & Grades] as StuSched
+  [Documents Upload] as StuDocs
+
+  Student --> StuDash
+  StuDash --> Courses
+  StuDash --> StuFin
+  StuDash --> StuSched
+  StuDash --> StuDocs
+}
+
+rectangle "Faculty / Staff Console\n(/staff/<role>/)" {
+  [Instruction Hub\n(Instructor)] as Instr
+  [Chair Curriculum Center] as ChairDash
+  [Dean Oversight Page] as DeanDash
+  [VPAA Approval Hub] as VPaaDash
+  [Registrar Lifecycle Ops] as RegDash
+  [Finance & Holds] as FinDash
+  [Scholarship Office] as SchDash
+
+  Instructor --> Instr
+  Chair --> ChairDash
+  ChairDash --> DeanDash
+  DeanDash --> VPaaDash
+  Dean --> DeanDash
+  VPAA --> VPaaDash
+  Registrar --> RegDash
+  Finance --> FinDash
+  Scholarship --> SchDash
+}
+
+Portal --> StuDash
+Portal --> Instr
+Portal --> ChairDash
+Portal --> DeanDash
+Portal --> VPaaDash
+Portal --> RegDash
+Portal --> FinDash
+Portal --> SchDash
+
+Courses --> RegDash : Registrations/holds
+StuDash --> FinDash : Balances & payments
+SchDash --> FinDash : Donor letters & compliance
+RegDash --> VPaaDash : Overloads / approvals
+ChairDash --> DeanDash
+DeanDash --> VPaaDash
+
+@enduml
+#+END_SRC
+
+#+RESULTS:
+[[file:../Plantuml/ux_surface_map.png]]
+
   /model      choose what model and reasoning effort to use
   /approvals  choose what Codex can do without approval
   /review     review my current changes and find issues

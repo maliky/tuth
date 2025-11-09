@@ -55,15 +55,24 @@ class PersonManager(Manager):
 
     def _update_or_create(self, username, **user_kwargs) -> User:
         """Create or get the User and set /update password."""
-        _ = user_kwargs.pop("password", None)
+        password = user_kwargs.pop("password", None)
+        existing_user = user_kwargs.pop("user", None)
 
-        user, created = User.objects.update_or_create(
+        if existing_user:
+            existing_user.username = username
+            for field, value in user_kwargs.items():
+                setattr(existing_user, field, value)
+            if password:
+                existing_user.set_password(password)
+            existing_user.save()
+            return existing_user
+
+        user, _ = User.objects.update_or_create(
             username=username, defaults=user_kwargs
         )
-        # there some loop hole here
-        # if password:
-        #     user.set_password(password)  # to make sure it is hashed
-
+        if password:
+            user.set_password(password)
+            user.save(update_fields=["password"])
         return user
 
     def _get_username(self, **kwargs) -> str:
