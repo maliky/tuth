@@ -148,7 +148,6 @@ In another terminal,
     docker-compose -f docker-compose-dev.yml exec web python manage.py populate_initial_data
 #+END_SRC
 
-
 *** Passwords
  - test_donor (Donor): Created with pwd D-pass-P!
  - test_cashier (Cashier): Created with pwd C-pass-P!
@@ -166,7 +165,7 @@ In another terminal,
  - test_registrar (Registrar): Created with pwd R-pass-P!
  - test_registrar_officer (Registrar Officer): Created with pwd R-pass-P!
  - test_it (It): Created with pwd I-pass-P!
-    
+ - testest (Student)   - T-pass-T!
 ** Production Environment
 
 Build and launch the production environment:

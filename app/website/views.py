@@ -8,7 +8,8 @@ from typing import cast
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.models import AnonymousUser, User
 from django.core.exceptions import PermissionDenied
 from django.db import connection
@@ -454,6 +455,186 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:
     }
 
     return render(request, "website/student_dashboard.html", context)
+
+
+ADMIN_PORTAL_GROUPS = {"System Administrator", "IT Support"}
+
+STAFF_DASHBOARD_CARDS = [
+    {
+        "key": "registrar",
+        "title": "Registrar Operations",
+        "summary": "Manage grade windows, transcripts, and enrollment anomalies.",
+        "kpis": [
+            {"label": "Open grade windows", "value": 3},
+            {"label": "Pending transcript requests", "value": 12},
+        ],
+        "actions": [
+            {"label": "Grade window console", "href": "#"},
+            {"label": "Transcript queue", "href": "#"},
+            {"label": "Enrollment anomalies", "href": "#"},
+        ],
+        "groups": {"Registrar"},
+    },
+    {
+        "key": "chair",
+        "title": "Chair Curriculum Center",
+        "summary": "Propose faculty assignments, manage curricula, and monitor misbehavior reports.",
+        "kpis": [
+            {"label": "Draft curricula", "value": 2},
+            {"label": "Pending misbehavior reports", "value": 1},
+        ],
+        "actions": [
+            {"label": "Curriculum workspace", "href": "#"},
+            {"label": "Faculty assignment queue", "href": "#"},
+            {"label": "Department enrollment snapshot", "href": "#"},
+        ],
+        "groups": {"Chair"},
+    },
+    {
+        "key": "dean",
+        "title": "Dean Oversight",
+        "summary": "Review overloads, curricula imports, and department performance.",
+        "kpis": [
+            {"label": "Overload proposals", "value": 4},
+            {"label": "Curriculum imports pending", "value": 1},
+        ],
+        "actions": [
+            {"label": "Overload desk", "href": "#"},
+            {"label": "Curriculum import hub", "href": "#"},
+            {"label": "College health dashboard", "href": "#"},
+        ],
+        "groups": {"Dean"},
+    },
+    {
+        "key": "vpaa",
+        "title": "VPAA Approval Hub",
+        "summary": "Validate faculty assignments, overloads, and policy changes.",
+        "kpis": [
+            {"label": "Assignments awaiting sign-off", "value": 6},
+            {"label": "Policy updates queued", "value": 2},
+        ],
+        "actions": [
+            {"label": "Faculty assignments", "href": "#"},
+            {"label": "Overload approvals", "href": "#"},
+            {"label": "Prerequisite changes", "href": "#"},
+        ],
+        "groups": {"VPAA"},
+    },
+    {
+        "key": "finance",
+        "title": "Finance & Bursar",
+        "summary": "Track payment plans, financial holds, and scholarship invoices.",
+        "kpis": [
+            {"label": "New payment alerts", "value": 8},
+            {"label": "Holds to review", "value": 14},
+        ],
+        "actions": [
+            {"label": "Payment center", "href": "#"},
+            {"label": "Scholarship billing", "href": "#"},
+            {"label": "Waiver requests", "href": "#"},
+        ],
+        "groups": {"Financial Officer", "Cashier"},
+    },
+    {
+        "key": "scholarship",
+        "title": "Scholarship Office",
+        "summary": "Generate donor letters and GPA compliance reports.",
+        "kpis": [
+            {"label": "Letters to issue today", "value": 15},
+            {"label": "GPA reviews pending", "value": 5},
+        ],
+        "actions": [
+            {"label": "Donor letter studio", "href": "#"},
+            {"label": "Beneficiary roster", "href": "#"},
+            {"label": "Compliance exports", "href": "#"},
+        ],
+        "groups": {"Scholarship Officer"},
+    },
+    {
+        "key": "qa",
+        "title": "Quality Assurance",
+        "summary": "Define evaluation windows and review aggregated results.",
+        "kpis": [
+            {"label": "Upcoming evaluation windows", "value": 2},
+            {"label": "Reports awaiting review", "value": 3},
+        ],
+        "actions": [
+            {"label": "Evaluation calendar", "href": "#"},
+            {"label": "Aggregated results", "href": "#"},
+            {"label": "Action tracker", "href": "#"},
+        ],
+        "groups": {"Quality Officer"},
+    },
+    {
+        "key": "student_services",
+        "title": "Student Services",
+        "summary": "Clinic, counseling, and admissions insights in one glance.",
+        "kpis": [
+            {"label": "Health incidents this week", "value": 4},
+            {"label": "Counseling sessions logged", "value": 9},
+        ],
+        "actions": [
+            {"label": "Clinic reporting", "href": "#"},
+            {"label": "Counseling notes", "href": "#"},
+            {"label": "Admissions status board", "href": "#"},
+        ],
+        "groups": {"Clinic Manager", "Counselor", "Admission Officer", "Admission Clerk"},
+    },
+]
+
+
+@login_required
+def portal_redirect(request: HttpRequest) -> HttpResponse:
+    """Central landing after authentication; route users by role."""
+    user = request.user
+    user_groups = set(user.groups.values_list("name", flat=True))
+
+    if user.is_superuser or user_groups.intersection(ADMIN_PORTAL_GROUPS):
+        return redirect("admin:index")
+
+    if getattr(user, "student", None):
+        return redirect("student_dashboard")
+
+    return redirect("staff_dashboard")
+
+
+@login_required
+def staff_dashboard(request: HttpRequest) -> HttpResponse:
+    """Mock staff dashboard composed of role-specific cards."""
+
+    user_groups = set(request.user.groups.values_list("name", flat=True))
+    visible_cards = []
+
+    for card in STAFF_DASHBOARD_CARDS:
+        groups = card.get("groups")
+        if not groups or user_groups.intersection(groups) or request.user.is_superuser:
+            visible_cards.append(card)
+
+    if not visible_cards:
+        visible_cards = STAFF_DASHBOARD_CARDS
+
+    context = {
+        "cards": visible_cards,
+        "user_groups": sorted(user_groups),
+        "title": "Staff workspace",
+    }
+    return render(request, "website/staff_dashboard.html", context)
+
+
+class PortalLoginView(LoginView):
+    """Allow any active user to sign in, then hand off to portal redirect."""
+
+    template_name = "website/portal_login.html"
+
+    def get_success_url(self):
+        return reverse("portal_redirect")
+
+
+class PortalLogoutView(LogoutView):
+    """Permit GET/POST logout and send users back to the unified login."""
+
+    next_page = "portal_login"
+    http_method_names = ["get", "post", "head", "options"]
 
 
 @permission_required("timetable.change_semester", raise_exception=True)

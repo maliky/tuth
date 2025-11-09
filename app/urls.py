@@ -20,5 +20,6 @@ from django.urls import path, include
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("impersonate/", include("impersonate.urls")),
     path("", include("app.website.urls")),  # this points to your landing page
 ]

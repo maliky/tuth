@@ -1,0 +1,26 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+
+{% block title %}
+  {% trans "Tusis administration" %}
+{% endblock %}
+
+{% block branding %}
+  <h1 id="site-name">{% trans "Tusis administration" %}</h1>
+{% endblock %}
+
+{% block nav-global %}
+  {{ block.super }}
+  {% if request.user.is_staff %}
+    <div class="impersonate-links">
+      {% if request.impersonator %}
+        <span>
+          {% trans "Impersonating" %} {{ request.user.get_username }}
+        </span>
+        <a href="{% url 'impersonate-stop' %}">{% trans "Stop" %}</a>
+      {% else %}
+        <a href="{% url 'impersonate-list' %}">{% trans "Impersonate a user" %}</a>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endblock %}

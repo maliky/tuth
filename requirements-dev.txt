@@ -43,3 +43,5 @@ ipdb
 pygraphviz
 
 pydot
+pandas
+xlrd

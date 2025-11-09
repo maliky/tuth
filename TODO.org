@@ -1,4 +1,3 @@
-
 * Main redirection from same login page 
 
 ** Student
@@ -77,9 +76,9 @@ In fact I see the course listed in plain and then for each a drop down list with
 I want to personnalize the django admin/login form
 depending on the username I want to redirect to either normal admin, or to student
 I also want to change the them of the admin login form, change the title
-
+ 
 * 2025
-
+ 
 ** 2025-11 novembre
 
 *** 2025-11-08 samedi
@@ -131,5 +130,85 @@ you will need to generate an student with a history of 2 or 4 semester behind hi
      :origin:   [[file:/mnt/backup/Jobs/TU/DRID/TII-Technics-Innovations/Tusis/Tusis_app/app/timetable/admin/registers/core.py::url = (]]
      :END:
 
+*** 2025-11-09 dimanche
+**** 
+**** DONE improve login page
+     CLOSED: [2025-11-09 Sun 13:54]
+     :PROPERTIES:
+     :age:      [2025-11-09 dim. 13:42]
+     :origin:   [[file:/mnt/backup/Prog/Python/Crypto/kolaBiBot/JOURNAL.org::*<2025-11-09 dim.> This is some infromation for codex.][<2025-11-09 dim.> This is some infromation for codex.]]
+     :END:
+Explain:
+1. the left side page in login page
+2. Why option for different surface? Student dashboard, Staff workspace, Administrator console if redirection when connected ?
+3. how to test a username passord for one of my test student testest I've reset it password but i cannot connect still ? Do I need to restart the server ? strange..
+
+Answers:
+2. The quick links are still helpful because the page can be bookmarked or reached when users are already authenticated; if the redirect target cannot be derived (e.g., group misconfiguration) the buttons offer manual navigation. They also help UX reviewers confirm each surface exists during mock testing.
+3. Password resets do not require a server restart. To guarantee a known credential for `testest`, run `python manage.py changepassword testest` or use the shell:
+   ```python
+   from django.contrib.auth import get_user_model
+   User = get_user_model()
+   u = User.objects.get(username="testest")
+   u.set_password("T-pass-T!")
+   u.save()
+   ```
+   Ensure the user is `is_active=True` and not locked by login throttling. If login still fails, check the server logs for auth backends or group-based redirects denying access.
+
+
+** 2025-11 November
+
 make sure that if a student select courses totalying more than his aloowed creditm they he cannot make the reservations.
 Also is the reservation is canceld (he should be able to cancel a reseravation meaning that while prpendingm the studnet should still this the course and have the possibilityh oto cancel the resravation) in taht case the credit and money should be resaured as expected .
+
+Explain:
+1. the left side page with a filter in login page
+
+Answer:
+- The tinted left panel is just a hero card that frames the unified login as a campus-wide entry point. It holds future announcements, highlights, or help text while visually separating the credential form. There’s no extra logic tied to it—purely presentational to keep the experience branded and welcoming.
+
+- After logout fall back always to `/auth/login/`.
+- Remove the student/staff shortcuts from the portal header once automatic redirects cover all personas.
+
+*** Role dashboards & required data (2025-11-09)
+- Applicant landing: pulls `app.people.models.Applicant` (bio, contact, status) + `ApplicationDocument`. Needs a `status_history` table to show review milestones.
+- Student dashboard: already wired to `Student`, `Registration`, `Section`, `Invoice`, `Payment`, `Grade`. Outstanding data: seat counts per section (expose `Section.capacity` + `Registration.status` filter), doc-upload audit trail.
+- Instructor workspace: needs `Section` + `Grade` records scoped to `section.faculty`. Missing: explicit `FacultyProfile` (table?) linking `User` to `Instructor`.
+# > For FacultyProfile lookin @people/models/faculty.py
+- Chair curriculum console: relies on `Curriculum`, `CurriculumCourse`, `Prerequisite`, `FacultyAssignment`. Missing: workload metrics per faculty and misbehavior reports table.
+# > Do not add a misbehavior yet will be handeled manualy
+# > for workload metrics do add a table for historical audit reason too.  I mean to check who has been working extra in the past semester for example
+- Dean oversight: needs curriculum imports (`import_export` logs), overload proposals (`WorkloadRequest` model TBD), department KPIs (aggregated registrations/payments).
+# > ignore deparment KPI for now,  or let just a dean have his information page visible by all his faculties / students
+
+- VPAA approvals hub: consumes overloads, prerequisite changes, and policy updates. Requires `ApprovalQueue` table capturing request type, payload, state transitions.
+# > implement this approvalQueue
+
+- Registrar lifecycle ops: data from `Registration`, `Grade`, `TranscriptRequest`, `Semester`, `StatusHistory`. Need `TranscriptRequest` model and registration anomaly flags.
+# > implement TranscriptRequest
+# > registration anomales should only be flagged on the fly on his dashboard, no table
+- Scholarship office: `Donor`, `ScholarshipAward`, `ScholarshipLetter`, `Invoice`. Need GPA snapshots per term plus template metadata for mail merges.
+# > make a proposal for this  
+- Financial officer: `Invoice`, `Payment`, `FinancialHold`, `ScholarshipAward`. Need `Attachment` model for payment proofs and `HoldAudit`.
+# >  the attachment can probably be integrated with the registry/models/document.py class
+
+Dashboards to build after login:
+1. Applicant portal (existing public pages).
+2. Student dashboard (already prototyped).
+3. Instructor, Chair, Dean, VPAA, Registrar, Scholarship Officer, Financial Officer cards -> dedicated `/staff/<role>/` screens.
+# > yes do all of the above
+
+Selenium smoke test idea:
+- Script logs in (parameterized users), waits for redirect, asserts role-specific hero text/cards, tests logout, repeats for each role.
+- Use `pytest-selenium` + fixtures that create fake users/groups + factories for required models.
+# > implement the above  
+
+Implementation plan:
+1. Finalize data gaps (create missing models: `FacultyProfile`, `ApprovalQueue`, `ScholarshipLetterTemplate`, etc.).
+2. Add staff router view that picks template based on highest-priority role.
+3. Build templated dashboards incrementally (start with Registrar, Finance, Scholarship, Instructor) using shared card components.
+# > agree for the above   
+4. Seed sample data fixtures for Selenium tests; wire into CI.
+# > We have real data in the DB for pass semester but we are missing a lot of data.  need to mockup upcomming semester data, reconduct curriculum and schedules
+5. Implement Selenium suite covering login, redirect, dashboard key elements, and logout for each persona.
+# > ok   

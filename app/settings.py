@@ -39,6 +39,7 @@ CSRF_TRUSTED_ORIGINS = os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
 
 INSTALLED_APPS = [
     # third partie apps
+    "impersonate",
     "import_export",
     "phonenumber_field",
     "guardian",
@@ -73,6 +74,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "impersonate.middleware.ImpersonateMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -91,7 +93,7 @@ ROOT_URLCONF = "app.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -206,4 +208,11 @@ LOGGING = {
         "handlers": ["actions", "stdout"],
         "level": "INFO",
     },
+}
+
+LOGIN_REDIRECT_URL = "/portal/"
+LOGIN_URL = "/auth/login/"
+
+IMPERSONATE = {
+    "CUSTOM_USER_QUERYSET": "app.people.impersonation.get_role_representatives",
 }
