@@ -21,6 +21,7 @@ actor VPAA
 actor Registrar
 actor "Financial Officer" as Finance
 actor "Scholarship Officer" as Scholarship
+actor "Enrollment Officer" as EnrollOfficer
 
 rectangle "Applicant Portal" {
   [Landing Page\n(/)] as Landing
@@ -58,6 +59,7 @@ rectangle "Faculty / Staff Console\n(/staff/<role>/)" {
   [Registrar Lifecycle Ops] as RegDash
   [Finance & Holds] as FinDash
   [Scholarship Office] as SchDash
+  [Enrollment Operations] as EnrollDash
 
   Instructor --> Instr
   Chair --> ChairDash
@@ -68,6 +70,7 @@ rectangle "Faculty / Staff Console\n(/staff/<role>/)" {
   Registrar --> RegDash
   Finance --> FinDash
   Scholarship --> SchDash
+  EnrollOfficer --> EnrollDash
 }
 
 Portal --> StuDash
@@ -82,6 +85,8 @@ Portal --> SchDash
 Courses --> RegDash : Registrations/holds
 StuDash --> FinDash : Balances & payments
 SchDash --> FinDash : Donor letters & compliance
+Apply --> EnrollDash : Document review / profile creation
+Status --> EnrollDash : Candidate updates
 RegDash --> VPaaDash : Overloads / approvals
 ChairDash --> DeanDash
 DeanDash --> VPaaDash
