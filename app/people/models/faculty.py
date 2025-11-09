@@ -9,6 +9,7 @@ from django.db.models import QuerySet
 from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
 from app.people.models.staffs import Staff
+from app.timetable.models.semester import Semester
 
 
 class FacultyManager(models.Manager):
@@ -160,3 +161,33 @@ class Faculty(models.Model):
     class Meta:
         verbose_name = "Faculty"
         verbose_name_plural = "Faculty profiles"
+
+
+class FacultyWorkloadSnapshot(models.Model):
+    """Historical workload metrics captured per semester for auditing overloads."""
+
+    faculty = models.ForeignKey(
+        "people.Faculty",
+        on_delete=models.CASCADE,
+        related_name="workload_snapshots",
+    )
+    semester = models.ForeignKey(
+        "timetable.Semester",
+        on_delete=models.CASCADE,
+        related_name="faculty_workloads",
+    )
+    credit_hours_assigned = models.DecimalField(max_digits=5, decimal_places=2)
+    credit_hours_delivered = models.DecimalField(max_digits=5, decimal_places=2)
+    overload_flag = models.BooleanField(default=False)
+    notes = models.TextField(blank=True)
+    recorded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-recorded_at"]
+        unique_together = ("faculty", "semester")
+
+    def __str__(self) -> str:  # pragma: no cover
+        return (
+            f"{self.faculty.staff_profile} · {self.semester} "
+            f"({self.credit_hours_delivered} ch)"
+        )

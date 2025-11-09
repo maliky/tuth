@@ -1,0 +1,55 @@
+{% extends "website/base.html" %}
+{% block title %}{{ title }} · Tusis{% endblock %}
+
+{% block content %}
+<section class="container py-5">
+  <header class="mb-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+    <div>
+      <p class="text-uppercase text-muted small mb-1">{{ role_slug|title }}</p>
+      <h1 class="h3 mb-2">{{ title }}</h1>
+      <p class="text-muted mb-0">{{ summary }}</p>
+    </div>
+    <a class="btn btn-outline-secondary btn-sm mt-3 mt-md-0" href="{% url 'portal_logout' %}">Log out</a>
+  </header>
+
+  {% if metrics %}
+    <div class="row g-3 mb-4">
+      {% for metric in metrics %}
+        <div class="col-md-3 col-sm-6">
+          <div class="border rounded-3 p-3 bg-white shadow-sm h-100">
+            <p class="text-uppercase text-muted small mb-1">{{ metric.label }}</p>
+            <p class="h4 mb-0">{{ metric.value }}</p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="row g-4">
+    {% for panel in panels %}
+      <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <h2 class="h5">{{ panel.title }}</h2>
+            <ul class="list-unstyled mt-3 mb-0">
+              {% for item in panel.items %}
+                <li class="mb-3 pb-3 border-bottom">
+                  <div class="d-flex justify-content-between">
+                    <strong>{{ item.label }}</strong>
+                    <span>{{ item.value }}</span>
+                  </div>
+                  {% if item.meta %}
+                    <small class="text-muted">{{ item.meta }}</small>
+                  {% endif %}
+                </li>
+              {% empty %}
+                <li class="text-muted">No data available.</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

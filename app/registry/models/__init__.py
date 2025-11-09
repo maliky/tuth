@@ -10,6 +10,7 @@ from .document import (
 )
 from .grade import Grade, GradeValue
 from .registration import Registration, RegistrationStatus
+from .transcript import TranscriptRequest, TranscriptRequestStatus
 
 __all__ = [
     "DocumentStaff",
@@ -21,4 +22,6 @@ __all__ = [
     "RegistrationStatus",
     "Grade",
     "GradeValue",
+    "TranscriptRequest",
+    "TranscriptRequestStatus",
 ]

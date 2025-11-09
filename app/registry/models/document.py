@@ -5,10 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional, cast, Self
 
-
-from app.shared.mixins import SimpleTableMixin
 from django.db import models
 from simple_history.models import HistoricalRecords
+
+from app.shared.mixins import SimpleTableMixin
 
 from app.shared.status.mixins import StatusableMixin, StatusHistory
 
@@ -94,7 +94,6 @@ class AbstractDocument(StatusableMixin, models.Model):
         related_query_name="%(class)s",
         verbose_name="Document Types",
     )
-
     def current_status(self) -> Optional[StatusHistory]:
         """Return the most recent status entry or None if empty."""
 
@@ -162,3 +161,19 @@ class DocumentStaff(AbstractDocument):
     )
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()
+
+
+class DocumentPayment(AbstractDocument):
+    """Store attachments related to finance payments."""
+
+    payment = models.ForeignKey(
+        "finance.Payment",
+        on_delete=models.CASCADE,
+        related_name="payment_docs",
+    )
+    history = HistoricalRecords()
+
+    @property
+    def person(self):
+        """Compatibility shim for storage helper."""
+        return self.payment

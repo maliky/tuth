@@ -212,3 +212,8 @@ Implementation plan:
 # > We have real data in the DB for pass semester but we are missing a lot of data.  need to mockup upcomming semester data, reconduct curriculum and schedules
 5. Implement Selenium suite covering login, redirect, dashboard key elements, and logout for each persona.
 # > ok   
+
+** Progress 2025-11-09:
+- Added workload snapshots, approval queue, transcript requests, scholarship templates/snapshots, and document attachments (generic FK) so each dashboard has the required data sources.
+- Staff dashboards now live at `/staff/<role>/` with builders for instructor, chair, dean, VPAA, registrar, scholarship, finance, plus a general fallback.
+- Selenium suite `tests/selenium/test_portal_roles.py` logs in as every persona (student + all staff roles), asserts the expected heading, and verifies the logout redirect to `/auth/login/`.

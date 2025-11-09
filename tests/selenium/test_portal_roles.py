@@ -1,0 +1,121 @@
+"""Role-based portal smoke tests."""
+
+from __future__ import annotations
+
+from datetime import date
+
+import pytest
+from django.contrib.auth.models import Group, User
+from django.urls import reverse
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
+from app.academics.models.curriculum import Curriculum
+from app.people.models.student import Student
+from app.timetable.models.academic_year import AcademicYear
+from app.timetable.models.semester import Semester
+from tests.selenium.test_landing_page import _can_bind_localhost
+
+TEST_PASSWORD = "Passw0rd!"
+
+ROLE_CASES = [
+    ("student_user", {"student": True, "groups": []}, "Student Dashboard"),
+    ("instructor_user", {"groups": ["Instructor"]}, "Instruction Hub"),
+    ("chair_user", {"groups": ["Chair"]}, "Chair Curriculum Center"),
+    ("dean_user", {"groups": ["Dean"]}, "Dean Oversight"),
+    ("vpaa_user", {"groups": ["VPAA"]}, "VPAA Approval Hub"),
+    ("registrar_user", {"groups": ["Registrar"]}, "Registrar Lifecycle Ops"),
+    (
+        "scholarship_user",
+        {"groups": ["Scholarship Officer"]},
+        "Scholarship Office",
+    ),
+    ("finance_user", {"groups": ["Financial Officer"]}, "Finance & Holds"),
+]
+
+
+pytestmark = [
+    pytest.mark.django_db(transaction=True),
+    pytest.mark.selenium,
+]
+
+if not _can_bind_localhost():
+    pytestmark.append(
+        pytest.mark.skip(
+            reason="Selenium tests require permission to bind localhost sockets."
+        )
+    )
+
+
+@pytest.fixture
+def semester() -> Semester:
+    """Ensure an academic year and semester exist for student dashboards."""
+    ay, _ = AcademicYear.objects.get_or_create(
+        start_date=date(2025, 1, 1),
+        defaults={"end_date": date(2025, 12, 31)},
+    )
+    semester, _ = Semester.objects.get_or_create(
+        academic_year=ay,
+        number=1,
+        defaults={"start_date": ay.start_date, "end_date": ay.end_date},
+    )
+    return semester
+
+
+@pytest.fixture
+def portal_user_factory(semester):
+    """Create portal users with optional student profile and group assignments."""
+
+    def _build(username: str, *, groups: list[str] | None = None, student: bool = False):
+        user = User.objects.create_user(
+            username=username,
+            password=TEST_PASSWORD,
+            first_name="Test",
+            last_name=username.replace("_", " ").title(),
+        )
+        for group_name in groups or []:
+            group, _ = Group.objects.get_or_create(name=group_name)
+            user.groups.add(group)
+        if student:
+            Student.objects.create(
+                user=user,
+                curriculum=Curriculum.get_default(),
+                entry_semester=semester,
+                current_enrolled_semester=semester,
+            )
+        return user
+
+    return _build
+
+
+@pytest.mark.parametrize("username,config,expected_heading", ROLE_CASES)
+def test_role_dashboards(
+    live_server,
+    selenium_driver,
+    portal_user_factory,
+    username,
+    config,
+    expected_heading,
+):
+    """Each persona lands on the appropriate dashboard after login."""
+
+    portal_user_factory(username, **config)
+    login_url = f"{live_server.url}{reverse('portal_login')}"
+    selenium_driver.get(login_url)
+
+    selenium_driver.find_element(By.ID, "id_username").send_keys(username)
+    selenium_driver.find_element(By.ID, "id_password").send_keys(TEST_PASSWORD)
+    selenium_driver.find_element(By.CSS_SELECTOR, "button[type=submit]").click()
+
+    WebDriverWait(selenium_driver, 10).until(
+        EC.text_to_be_present_in_element((By.TAG_NAME, "h1"), expected_heading)
+    )
+
+    WebDriverWait(selenium_driver, 10).until(
+        EC.element_to_be_clickable((By.LINK_TEXT, "Log out"))
+    ).click()
+
+    WebDriverWait(selenium_driver, 10).until(
+        EC.url_contains(reverse("portal_login"))
+    )

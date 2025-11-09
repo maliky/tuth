@@ -2,7 +2,6 @@
 
 from django.urls import path
 from django.views.generic import TemplateView
-from django.contrib.auth.views import LogoutView
 
 from . import views
 
@@ -12,6 +11,7 @@ urlpatterns = [
     path("", TemplateView.as_view(template_name="website/landing.html"), name="landing"),
     path("student/dashboard/", views.student_dashboard, name="student_dashboard"),
     path("staff/dashboard/", views.staff_dashboard, name="staff_dashboard"),
+    path("staff/<slug:role>/", views.staff_role_dashboard, name="staff_role_dashboard"),
     path("portal/", views.portal_redirect, name="portal_redirect"),
     path("auth/login/", views.PortalLoginView.as_view(), name="portal_login"),
     path("auth/logout/", views.PortalLogoutView.as_view(), name="portal_logout"),
