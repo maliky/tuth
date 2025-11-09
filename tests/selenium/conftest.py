@@ -1,4 +1,4 @@
-"""Shared Selenium fixtures (Brave-only)."""
+"""Shared Selenium fixtures (Chromium/Chrome)."""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ from typing import Generator
 
 import pytest
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options as BraveOptions
-from selenium.webdriver.chrome.service import Service as BraveService
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.remote.webdriver import WebDriver
 from webdriver_manager.chrome import ChromeDriverManager
 
@@ -31,10 +31,29 @@ def _implicit_wait_seconds(raw_value: str | None) -> int:
     return seconds if seconds > 0 else _DEFAULT_IMPLICIT_WAIT
 
 
-def _build_brave(headless: bool, remote_url: str | None) -> WebDriver:
-    """Create a Brave WebDriver instance."""
-    options = BraveOptions()
-    options.binary_location = "/usr/bin/brave-browser" 
+def _resolve_chrome_binary() -> str | None:
+    """Return the first available browser binary."""
+    candidates = [
+        os.getenv("CHROME_BINARY"),
+        "/usr/bin/chromium-browser",
+        "/usr/bin/chromium",
+        "/usr/bin/google-chrome",
+        "/usr/bin/google-chrome-stable",
+        "/usr/bin/brave-browser",
+        "/usr/bin/brave",
+    ]
+    for candidate in candidates:
+        if candidate and os.path.exists(candidate):
+            return candidate
+    return None
+
+
+def _build_chromium(headless: bool, remote_url: str | None) -> WebDriver:
+    """Create a Chromium/WebDriver instance."""
+    options = ChromeOptions()
+    binary_path = _resolve_chrome_binary()
+    if binary_path:
+        options.binary_location = binary_path
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--no-sandbox")
     options.add_argument("--window-size=1400,900")
@@ -44,7 +63,8 @@ def _build_brave(headless: bool, remote_url: str | None) -> WebDriver:
     if remote_url:
         return webdriver.Remote(command_executor=remote_url, options=options)
 
-    service = BraveService(ChromeDriverManager().install())
+    version = os.getenv("CHROMEDRIVER_VERSION")
+    service = ChromeService(ChromeDriverManager(version=version).install())
     return webdriver.Chrome(service=service, options=options)
 
 
@@ -52,7 +72,7 @@ def _create_driver() -> WebDriver:
     """Return a configured Brave WebDriver."""
     remote_url = os.getenv("SELENIUM_REMOTE_URL")
     headless = _bool_flag(os.getenv("SELENIUM_HEADLESS"), default=True)
-    return _build_brave(headless=headless, remote_url=remote_url)
+    return _build_chromium(headless=headless, remote_url=remote_url)
 
 
 @pytest.fixture(scope="session")
