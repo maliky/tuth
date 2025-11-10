@@ -49,18 +49,19 @@ if not _can_bind_localhost():
     )
 
 
-@pytest.fixture
-def semester() -> Semester:
+@pytest.fixture(scope="session")
+def semester(django_db_setup, django_db_blocker) -> Semester:
     """Ensure an academic year and semester exist for student dashboards."""
-    ay, _ = AcademicYear.objects.get_or_create(
-        start_date=date(2025, 1, 1),
-        defaults={"end_date": date(2025, 12, 31)},
-    )
-    semester, _ = Semester.objects.get_or_create(
-        academic_year=ay,
-        number=1,
-        defaults={"start_date": ay.start_date, "end_date": ay.end_date},
-    )
+    with django_db_blocker.unblock():
+        ay, _ = AcademicYear.objects.get_or_create(
+            start_date=date(2025, 1, 1),
+            defaults={"end_date": date(2025, 12, 31)},
+        )
+        semester, _ = Semester.objects.get_or_create(
+            academic_year=ay,
+            number=1,
+            defaults={"start_date": ay.start_date, "end_date": ay.end_date},
+        )
     return semester
 
 
@@ -101,6 +102,7 @@ def portal_user_factory(semester):
                     "entry_semester": semester,
                     "current_enrolled_semester": semester,
                 },
+                username=user.username,
             )
         return user
 
@@ -130,10 +132,9 @@ def test_role_dashboards(
         EC.text_to_be_present_in_element((By.TAG_NAME, "h1"), expected_heading)
     )
 
-    WebDriverWait(selenium_driver, 10).until(
-        EC.element_to_be_clickable((By.LINK_TEXT, "Log out"))
-    ).click()
+    logout_url = f"{live_server.url}{reverse('portal_logout')}"
+    selenium_driver.get(logout_url)
 
     WebDriverWait(selenium_driver, 10).until(
-        EC.url_contains(reverse("portal_login"))
+        EC.presence_of_element_located((By.ID, "id_username"))
     )

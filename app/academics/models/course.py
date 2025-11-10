@@ -161,11 +161,11 @@ class Course(models.Model):
         ]
         ordering = ["short_code"]
 
-# to be renamed CurriculumCourse
+
 class CurriculumCourse(models.Model):
     """Map Curriculum instances to their constituent courses.
 
-    It kind of a program
+    It can be called a 'program'
     Example:
         >>> CurriculumCourse.objects.create(curriculum=curriculum, course=course)
 

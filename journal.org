@@ -1,4 +1,48 @@
-* The scenario narrative is solid, but “ready to run” depends on whether each step already has backing data, permissions, and UI hooks in the codebase:
+
+* 
+
+* <2025-11-10 Mon 04:35>  Updated implementation plan
+** Curriculum creation & approval
+ - Keep using Django admin/import-export for deans to create curricula + prerequisites (already works).
+ - Wire the existing ApprovalQueue to the admin save hook so any curriculum marked “pending” automatically creates a queue item for VPAA review, and add a simple admin action (“Approve via VPAA”) that flips status + closes the queue entry. No new UI needed beyond admin extensions.
+# > For this I am cautious about adding queue item for VPAA.  I think it introduce complexity.  It would be better to simply use exiting state tracking classes and expose that field as editable to the VPAA when he list the curriculum.  I think there's already a bool actualy doing that job of flagging the curriculum as validated or pending. Why didn't you like that simple option ?
+
+** Enrollment officer workflow
+- Continue letting enrollment staff create student profiles directly in admin.To support document uploads, expose the registry.DocumentStudent inline and add an admin filter showing “missing required docs” so officers can confirm completeness before flipping a student to “eligible.” (No separate front-end yet.)
+# > That's ok you can make the change for that
+
+** Student pre-registration (what’s still missing)
+- Data: need at least one active semester with sections, plus RegistrationStatus entries (pending, cleared, etc.)—once seeded, the current views can render.
+# > Sections are there. What is missing are registrationstatus entries. Can you mock them up ?
+- Functionality: implement POST handlers on /courses/ to:
+# > are you sure this should be on courses and not on reservation ?  
+  - enforce seat counts (Section.current_registrations updates)
+  - attach a Registration.status = pending
+# > Do not mixe Course and CurriculumCourse, Sections and SecSession.  seat counts is linked to Section not Course
+# > What we will need to add in the future is the possibility for a Dean a associated facutlies with courses they can potentialy teach.
+    
+  - block courses where prerequisites or schedule conflicts fail (validation logic largely exists but must be applied server-side).
+# > The scheduling checks should not be done now. For creating the schedule I will use an external application  such ad FET. But it is true that my app should check on input for time, room, faculty, or student conflicts although this should have been done in creating the schedule for the different sessions.
+# > What can happen since we give the choice to student of different SecSession is that they selected conflicting session. This should be flagged at reservation level.
+
+  - Add a “Reservations” list and cancel action so students can withdraw before finance clears them.
+# > This is already implemented in the cards of the student UX. Why do you propose it again ?
+  - Hook status changes into StatusHistory so we can audit transitions.
+# > Which status changes are you talking about?  We do not need to audit change to the status tables
+** Financial clearance
+- Build a minimal finance UI (or admin action) that lists Registration rows with status = pending and lets a finance officer trigger “clear” (set status to cleared, maybe attach DocumentPayment for proof).
+# > you can impmelent this. The attachement of a payment proof is important but not mandatory.  We can trust the finance officer that he file the proof outside of the system.  
+- Tie receipts/payments to Invoice and expose a button “Mark cleared” that simply changes the registration status; this is low-cost because the backend already has models.
+# > This should be very similare to an admin table listing invoices with and editable boolean field 'payment cleared'. 
+** Registrar validation
+- Per your note, defer new registrar features for now. Once the earlier steps
+are stable, we can revisit the registrar dashboard to add actions that convert
+cleared registrations into official roster entries.
+# > yes. confirmed. defer for now.
+
+
+* DONE The scenario narrative is solid, but “ready to run” depends on whether each step already has backing data, permissions, and UI hooks in the codebase:
+  CLOSED: [2025-11-10 Mon 05:19]
 
   - Dean → VPAA workflow: 
 # > But for me the Dean can create a curriculum using the admin interface and event import a curriculum and prerequisits using the import-export extention.

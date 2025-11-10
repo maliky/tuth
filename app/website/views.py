@@ -9,7 +9,8 @@ from typing import cast
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth import logout
+from django.contrib.auth.views import LoginView
 from django.contrib.auth.models import AnonymousUser, User
 from django.core.exceptions import PermissionDenied
 from django.db import connection
@@ -17,7 +18,8 @@ from django.db.models import Avg, DecimalField, Prefetch, Q, Sum, Value, Count
 from django.db.models.functions import Coalesce
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
+from django.views import View
 
 from app.academics.models.course import CurriculumCourse
 from app.academics.models.curriculum import Curriculum
@@ -867,11 +869,17 @@ class PortalLoginView(LoginView):
         return reverse("portal_redirect")
 
 
-class PortalLogoutView(LogoutView):
-    """Permit GET/POST logout and send users back to the unified login."""
+class PortalLogoutView(View):
+    """Explicit logout that always redirects to the unified login."""
 
-    next_page = "portal_login"
     http_method_names = ["get", "post", "head", "options"]
+
+    def post(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        logout(request)
+        return redirect("portal_login")
+
+    def get(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        return self.post(request, *args, **kwargs)
 
 
 @permission_required("timetable.change_semester", raise_exception=True)
