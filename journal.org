@@ -1,6 +1,4 @@
 
-* 
-
 * <2025-11-10 Mon 04:35>  Updated implementation plan
 ** Curriculum creation & approval
  - Keep using Django admin/import-export for deans to create curricula + prerequisites (already works).

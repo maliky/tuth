@@ -1,6 +1,6 @@
 * Main redirection from same login page 
 ** Student
-   Wha is proposed is acceptable
+   What is proposed is acceptable
 
 ** Financial Services
 Can consult the financial status of any student,
