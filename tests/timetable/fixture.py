@@ -10,7 +10,7 @@ import pytest
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.schedule import Schedule
 from app.timetable.models.section import Section
-from app.timetable.models.semester import Semester
+from app.timetable.models.semester import Semester, SemesterStatus
 from app.timetable.models.session import SecSession
 from tests.academics.fixture import CurriculumCourseFactory
 
@@ -35,9 +35,15 @@ def schedule() -> Schedule:
     return Schedule.get_default(day=1)
 
 
+def _ensure_semester_statuses() -> None:
+    """Make sure default semester statuses exist before creating semesters."""
+    SemesterStatus._populate_attributes_and_db()
+
+
 @pytest.fixture
 def semester(academic_year_factory: AcademicYearFactory) -> Semester:
     """Get a Semester object for a specific academic year."""
+    _ensure_semester_statuses()
     ay = academic_year_factory(DEF_DATE)
     return Semester.objects.create(academic_year=ay, number=1)
 
@@ -70,6 +76,8 @@ def academic_year_factory() -> AcademicYearFactory:
 @pytest.fixture
 def semester_factory(academic_year_factory: AcademicYearFactory) -> SemesterFactory:
     def _make(number: int, ay_start_date: datetime = DEF_DATE) -> Semester:
+
+        _ensure_semester_statuses()
 
         ay = academic_year_factory(ay_start_date)
 

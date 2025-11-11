@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import date
-
 import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -14,8 +12,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from app.academics.models.curriculum import Curriculum
 from app.people.models.student import Student
-from app.timetable.models.academic_year import AcademicYear
-from app.timetable.models.semester import Semester, SemesterStatus
+from app.timetable.models.semester import Semester
 from tests.selenium.test_landing_page import _can_bind_localhost
 
 TEST_PASSWORD = "Passw0rd!"
@@ -47,22 +44,6 @@ if not _can_bind_localhost():
             reason="Selenium tests require permission to bind localhost sockets."
         )
     )
-
-
-@pytest.fixture
-def semester(db) -> Semester:
-    """Ensure an academic year and semester exist for student dashboards."""
-    SemesterStatus._populate_attributes_and_db()
-    ay, _ = AcademicYear.objects.get_or_create(
-        start_date=date(2025, 1, 1),
-        defaults={"end_date": date(2025, 12, 31)},
-    )
-    semester, _ = Semester.objects.get_or_create(
-        academic_year=ay,
-        number=1,
-        defaults={"start_date": ay.start_date, "end_date": ay.end_date},
-    )
-    return semester
 
 
 @pytest.fixture
