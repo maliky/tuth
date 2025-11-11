@@ -16,6 +16,10 @@ This guide explains how to spin up the development stack, run checks, write test
 | Apply all migrations          | `docker-compose -f docker-compose-dev.yml exec web python manage.py migrate`                                                                  |
 | Seed the DB with initial data | `docker-compose -f docker-compose-dev.yml exec web python manage.py populate_initial_data`                                                    |
 
+### Selenium driver pin
+
+- Use the system `chromedriver` (currently 142.x) when running Selenium. The fixtures look for `/usr/bin/chromedriver` first; do not downgrade to the webdriver-manager default (114) because it breaks local browsers.
+
 
 ---
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 from typing import Generator
 
 import pytest
@@ -13,6 +14,7 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from webdriver_manager.chrome import ChromeDriverManager
 
 _DEFAULT_IMPLICIT_WAIT = 5
+_PREFERRED_DRIVER_VERSION = "142.0.7444.61"
 
 
 def _bool_flag(value: str | None, default: bool = True) -> bool:
@@ -48,6 +50,19 @@ def _resolve_chrome_binary() -> str | None:
     return None
 
 
+def _resolve_chromedriver_path() -> str | None:
+    """Return the chromedriver binary path if already installed on the system."""
+    candidates = [
+        os.getenv("CHROMEDRIVER_PATH"),
+        shutil.which("chromedriver"),
+        "/usr/bin/chromedriver",
+    ]
+    for candidate in candidates:
+        if candidate and os.path.exists(candidate):
+            return candidate
+    return None
+
+
 def _build_chromium(headless: bool, remote_url: str | None) -> WebDriver:
     """Create a Chromium/WebDriver instance."""
     options = ChromeOptions()
@@ -63,10 +78,13 @@ def _build_chromium(headless: bool, remote_url: str | None) -> WebDriver:
     if remote_url:
         return webdriver.Remote(command_executor=remote_url, options=options)
 
-    version = os.getenv("CHROMEDRIVER_VERSION")
-    if version:
+    driver_path = _resolve_chromedriver_path()
+    if driver_path:
+        service = ChromeService(executable_path=driver_path)
+    else:
+        version = os.getenv("CHROMEDRIVER_VERSION") or _PREFERRED_DRIVER_VERSION
         os.environ["WDM_CHROMEDRIVER_VERSION"] = version
-    service = ChromeService(ChromeDriverManager().install())
+        service = ChromeService(ChromeDriverManager(version=version).install())
     return webdriver.Chrome(service=service, options=options)
 
 
