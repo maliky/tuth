@@ -1,5 +1,4 @@
 """Shared Selenium fixtures (Chromium/Chrome)."""
-
 from __future__ import annotations
 
 import os
@@ -64,8 +63,9 @@ def _build_chromium(headless: bool, remote_url: str | None) -> WebDriver:
         return webdriver.Remote(command_executor=remote_url, options=options)
 
     version = os.getenv("CHROMEDRIVER_VERSION")
-    manager_kwargs = {"driver_version": version} if version else {}
-    service = ChromeService(ChromeDriverManager(**manager_kwargs).install())
+    if version:
+        os.environ["WDM_CHROMEDRIVER_VERSION"] = version
+    service = ChromeService(ChromeDriverManager().install())
     return webdriver.Chrome(service=service, options=options)
 
 

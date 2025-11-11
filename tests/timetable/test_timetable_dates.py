@@ -1,5 +1,4 @@
 """Test timetable dates module."""
-
 from datetime import date
 
 import pytest
@@ -19,7 +18,6 @@ def make_semester(
     year: AcademicYear | None = None,
 ) -> tuple[AcademicYear, Semester]:
     """Return (year, semester) helper."""
-
     ay = year or AcademicYear.objects.create(start_date=ay_start)
     sem = Semester.objects.create(
         academic_year=ay, number=sem_number, start_date=sem_start, end_date=sem_end
@@ -31,7 +29,6 @@ def make_term(
     sem: Semester, start: date, end: date, number: int = 1, *, persist: bool = False
 ) -> Term:
     """Return a term instance bound to sem."""
-
     term = Term(semester=sem, number=number, start_date=start, end_date=end)
     if persist:
         term.save()

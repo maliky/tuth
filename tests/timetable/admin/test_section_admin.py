@@ -1,5 +1,4 @@
 """Test the admin app for finance."""
-
 import pytest
 from django.contrib import admin
 

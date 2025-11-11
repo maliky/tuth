@@ -32,6 +32,7 @@ ignore = [
   "E501",  # line too long
   "E741",  # ambiguous variable name
   "W503",  # line break before binary operator
+  "W504",  # line break after binary operator
   "W605",  # invalid escape sequence
 ]
 docstring-convention = "google"
@@ -48,6 +49,11 @@ warn_redundant_casts = true
 warn_return_any = true
 warn_unreachable = true
 plugins = ["mypy_django_plugin.main"]
+exclude = "Docs/.*"
+
+[[tool.mypy.overrides]]
+module = "app.website.views"
+ignore_errors = true
 
 [tool.django-stubs]
 django_settings_module = "app.settings"

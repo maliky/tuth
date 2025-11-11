@@ -1,5 +1,4 @@
 """Mixins module."""
-
 from typing import Any, Iterable, Optional, cast
 
 from django.contrib.auth.models import User
@@ -24,7 +23,6 @@ class StatusHistory(models.Model):
         ...     author=user,
         ... )
     """
-
     created_at = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(
         "auth.User",
@@ -57,7 +55,6 @@ class StatusableMixin(models.Model):
         >>> class MyModel(StatusableMixin, models.Model):
         ...     status = models.ClearanceStatus(code="pending")
     """
-
     # > ! note this class may not be necessary with Simplehistory.  Needs testing.
     class Meta:
         abstract = True
@@ -100,15 +97,18 @@ class StatusableMixin(models.Model):
         Accept list of tuple or list of str
         Status should be a StatusMixin / SimpleTableMixin with code and label
         """
-        # > maybe need to bubble up the error and catch it at the interface to propose a fix, a messages
-        # > proposing to go to the related model and add the status or check the entry.
+        # Maybe bubble up the error and catch it at the interface to propose a fix.
+        # We could direct users to the related model to add the status or check entries.
 
         # >! mandatory the subclass needs a status field
         # _allowed = {a.value if hasattr(a, "value") else a for a in allowed}
 
-        if self.status not in allowed:
+        status_value = getattr(self, "status", None)
+        allowed_values = list(allowed)
+        if status_value not in allowed_values:
+            allowed_labels = ", ".join(str(option) for option in allowed_values)
             raise ValidationError(
-                f"Invalid state '{status}'. Allowed states: {', '.join(allowed)}."
+                f"Invalid state '{status_value}'. Allowed states: {allowed_labels}."
             )
 
     def _get_status_id(self):

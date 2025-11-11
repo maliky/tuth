@@ -1,5 +1,4 @@
 """General utility helpers shared between apps."""
-
 from typing import Mapping, Optional, Tuple
 
 from app.academics.constants import COURSE_PATTERN
@@ -26,7 +25,6 @@ def expand_course_code(
     tuple[str, str, str]
         The department code, course number and college code.
     """
-
     assert "/" not in code
 
     match = COURSE_PATTERN.search(code.strip().upper())
@@ -62,7 +60,6 @@ def get_in_row(key: str, row: Optional[dict[str, str | None]]) -> str:
 
     Does so safely always returning something even if None is in the row.
     """
-
     return ((row or {}).get(key) or "").strip()
 
 

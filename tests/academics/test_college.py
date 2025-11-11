@@ -1,5 +1,4 @@
 """Tests for the academic :class:`College` model."""
-
 from datetime import date
 
 import pytest
@@ -24,7 +23,6 @@ def test_college_computed_fields(
     student_factory,
 ):
     """College properties return expected aggregate information."""
-
     dept = department_factory("SCI")
     college = dept.college
     curr1 = curriculum_factory("CUR1")

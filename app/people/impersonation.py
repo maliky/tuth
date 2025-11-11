@@ -1,5 +1,4 @@
 """Helpers for django-impersonate integration."""
-
 from __future__ import annotations
 
 from typing import Iterable
@@ -10,15 +9,14 @@ from django.contrib.auth.models import Group
 UserModel = get_user_model()
 
 
-def get_role_representatives(request):  # pragma: no cover - thin wrapper
+def get_role_representatives(request):
     """Limit impersonation targets to a single active user per group.
 
     Groups are treated as the role definition inside Tusis. To keep the
     impersonation feature manageable we only show the first active member of
     each group, skipping duplicates across groups.
     """
-
-    representative_ids = []
+    representative_ids: list[int] = []
     groups: Iterable[Group] = (
         Group.objects.prefetch_related("user_set").order_by("name").all()
     )

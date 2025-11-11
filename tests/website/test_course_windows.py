@@ -1,5 +1,4 @@
 """Tests for course selection windows and student dashboard behavior."""
-
 from datetime import date
 
 import pytest
@@ -8,7 +7,12 @@ from django.urls import reverse
 from model_bakery import baker
 
 from app.shared.models import CreditHour
-from app.timetable.models.semester import SemesterStatus
+from app.timetable.models.academic_year import AcademicYear
+from app.timetable.models.semester import Semester, SemesterStatus
+from app.academics.models.college import College
+from app.academics.models.course import Course, CurriculumCourse
+from app.academics.models.curriculum import Curriculum
+from app.academics.models.department import Department
 
 
 def _ensure_semester_statuses():
@@ -24,33 +28,36 @@ def _ensure_semester_statuses():
 @pytest.mark.django_db
 def test_student_dashboard_prefers_open_semester(client):
     """Student dashboard should show the semester with an open status."""
-
     _ensure_semester_statuses()
 
-    academic_year = baker.make(
+    academic_year: AcademicYear = baker.make(
         "timetable.AcademicYear",
         start_date=date(2025, 7, 1),
         end_date=date(2026, 6, 30),
     )
-    current_sem = baker.make("timetable.Semester", academic_year=academic_year, number=1)
-    next_sem = baker.make("timetable.Semester", academic_year=academic_year, number=2)
+    current_sem: Semester = baker.make(
+        "timetable.Semester", academic_year=academic_year, number=1
+    )
+    next_sem: Semester = baker.make(
+        "timetable.Semester", academic_year=academic_year, number=2
+    )
 
-    college = baker.make("academics.College")
-    department = baker.make("academics.Department", college=college)
-    curriculum = baker.make(
+    college: College = baker.make("academics.College")
+    department: Department = baker.make("academics.Department", college=college)
+    curriculum: Curriculum = baker.make(
         "academics.Curriculum",
         college=college,
         short_name="BBA",
         long_name="BBA Accounting",
     )
-    course = baker.make(
+    course: Course = baker.make(
         "academics.Course",
         department=department,
         number="201",
         title="Principles of Accounting",
     )
     credit_hours, _ = CreditHour.objects.get_or_create(code=3, defaults={"label": "3"})
-    curriculum_course = baker.make(
+    curriculum_course: CurriculumCourse = baker.make(
         "academics.CurriculumCourse",
         curriculum=curriculum,
         course=course,
@@ -84,15 +91,16 @@ def test_student_dashboard_prefers_open_semester(client):
 @pytest.mark.django_db
 def test_registrar_dashboard_toggles_window(client):
     """Registrar dashboard should update semester status."""
-
     _ensure_semester_statuses()
 
-    academic_year = baker.make(
+    academic_year: AcademicYear = baker.make(
         "timetable.AcademicYear",
         start_date=date(2025, 7, 1),
         end_date=date(2026, 6, 30),
     )
-    semester = baker.make("timetable.Semester", academic_year=academic_year, number=1)
+    semester: Semester = baker.make(
+        "timetable.Semester", academic_year=academic_year, number=1
+    )
 
     registrar = baker.make(User, username="registrar")
     perm = Permission.objects.get(codename="change_semester")

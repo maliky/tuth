@@ -1,5 +1,4 @@
 """timetable.admin.widgets.session module."""
-
 from import_export import widgets
 
 from app.spaces.admin.widgets import RoomCodeWidget
@@ -10,7 +9,6 @@ from app.timetable.models.session import SecSession
 
 class SecSessionWidget(widgets.ForeignKeyWidget):
     """Create a :class:SecSession from room and schedule data."""
-
     def __init__(self):
         super().__init__(SecSession)  # va exporter session.pk
         self.room_w = RoomCodeWidget()
@@ -35,14 +33,12 @@ class SecSessionWidget(widgets.ForeignKeyWidget):
 
 class ScheduleWidget(widgets.ForeignKeyWidget):
     """Return a :class:Schedule based on weekday and times."""
-
     def __init__(self):
         super().__init__(Schedule)
         self.weekday_w = WeekdayWidget()
 
     def clean(self, value, row=None, *args, **kwargs) -> Schedule | None:
         """Return an existing Schedule using data from the import row."""
-
         weekday: int | None = self.weekday_w.clean(value=value)
         if weekday is None:
             return None
@@ -61,7 +57,6 @@ class ScheduleWidget(widgets.ForeignKeyWidget):
 
 class WeekdayWidget(widgets.IntegerWidget):
     """Accept either the integer 1-7 or the English weekday name."""
-
     def clean(self, value, row=None, *args, **kwargs) -> int | None:
         """Accept either the integer 1-7 or the English weekday name."""
         if not value:

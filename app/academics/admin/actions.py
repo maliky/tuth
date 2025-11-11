@@ -1,5 +1,4 @@
 """Actions module."""
-
 # app/academics/admin/actions.py
 from django import forms
 from django.contrib import admin, messages
@@ -14,10 +13,8 @@ from app.academics.models.department import Department
 @admin.action(description="Bulk update departments")
 def update_department(modeladmin, request, queryset):
     """Bulk-update the Department of selected courses."""
-
     class _DepartmentUpdateForm(forms.Form):
         """The Department for a bulk action."""
-
         dept = forms.ModelChoiceField(
             queryset=Department.objects.all().order_by("short_name"),
             label="Departement to be updated to",
@@ -58,7 +55,6 @@ def update_curriculum(modeladmin, request, queryset):
       1. GET  → show a tiny form asking for the Curriculum.
       2. POST → apply it and send a flash message.
     """
-
     class HiddenIdListField(forms.MultipleChoiceField):
         def validate(self, value):
             pass  # allow any IDs
@@ -70,7 +66,6 @@ def update_curriculum(modeladmin, request, queryset):
         _selected_item and exposes a curriculum field for the admin
         user to pick the destination curriculum_course.
         """
-
         _selected_action = HiddenIdListField(widget=forms.MultipleHiddenInput)
         curriculum = forms.ModelChoiceField(
             queryset=Curriculum.objects.all(),
@@ -112,7 +107,6 @@ def update_curriculum(modeladmin, request, queryset):
 @admin.action(description="Attach / update college on selected courses")
 def update_college(modeladmin, request, queryset):
     """Bulk-set the college FK on Course rows."""
-
     class _CollegeForm(forms.Form):
         """Collect the target college for the bulk update.
 
@@ -120,7 +114,6 @@ def update_college(modeladmin, request, queryset):
         _selected_action so the action can update the chosen course rows on
         submission.
         """
-
         _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
         college = forms.ModelChoiceField(
             queryset=College.objects.all(),

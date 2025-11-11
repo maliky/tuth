@@ -1,5 +1,4 @@
 """Semester module."""
-
 from __future__ import annotations
 
 from django.db import models
@@ -13,7 +12,6 @@ from app.timetable.utils import validate_subperiod
 
 class SemesterStatus(SimpleTableMixin):
     """Track the lifecycle of a semester (planning, registration, locked)."""
-
     DEFAULT_VALUES = [
         ("planning", "Planning"),
         ("registration", "Registration Open"),
@@ -31,7 +29,6 @@ class Semester(StatusableMixin, models.Model):
     Example:
         >>> Semester.objects.create(academic_year=year, number=1)
     """
-
     # ~~~~~~~~ Mandatory ~~~~~~~~
     academic_year = models.ForeignKey("timetable.AcademicYear", on_delete=models.PROTECT)
     number = models.PositiveSmallIntegerField(
@@ -49,14 +46,14 @@ class Semester(StatusableMixin, models.Model):
     start_date = models.DateField(null=True, blank=True)
 
     # ~~~~~~~~ Optional ~~~~~~~~
-    # > Could be interesting to set this to the academic_year start date automatically on save
-    # > and force non null values.
+    # Could set this to academic_year.start_date automatically on save
+    # and force non-null values.
     end_date = models.DateField(null=True, blank=True)
 
     REGISTRATION_OPEN_CODES = {"registration"}
 
     def clean(self) -> None:
-        """Checking that the start and end date of the Semester are within the ay dates."""
+        """Ensure semester dates stay within the academic year boundaries."""
         if not self.start_date:
             self.start_date = self.academic_year.start_date
 

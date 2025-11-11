@@ -1,5 +1,4 @@
 """Test fixtures of spaces."""
-
 from __future__ import annotations
 from typing import Callable, TypeAlias
 

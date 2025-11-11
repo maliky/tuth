@@ -1,5 +1,4 @@
 """Resources module."""
-
 from import_export import fields, resources
 from import_export.widgets import DateTimeWidget
 from app.academics.admin.widgets import CurriculumWidget
@@ -16,7 +15,6 @@ from app.timetable.admin.widgets.core import SemesterCodeWidget
 
 class DirectoryContactResource(resources.ModelResource):
     """Import staff directory rows and create/update Staff profiles."""
-
     username = fields.Field(column_name="username", attribute="user__username")
     first_name = fields.Field(column_name="first_name", attribute="user__first_name")
     last_name = fields.Field(column_name="last_name", attribute="user__last_name")
@@ -62,7 +60,6 @@ class FacultyResource(resources.ModelResource):
     faculty        :long display name (“Dr. Jane A. Doe PhD”…)
     college_code   :optional – defaults to “COAS”
     """
-
     staff_profile = fields.Field(
         attribute="staff_profile",
         column_name="faculty",
@@ -91,7 +88,6 @@ class FacultyResource(resources.ModelResource):
 
 class StudentResource(resources.ModelResource):
     """Resource for bulk importing Student rows."""
-
     # I only see Long_name student ID and date of birth
     # Should populate the pk field directly
     user = fields.Field(
@@ -119,7 +115,10 @@ class StudentResource(resources.ModelResource):
         column_name="birth_date",
         widget=DateTimeWidget("%Y-%m-%d %H:%M:%S"),
     )
-    # marital_status = fields.Field(attribute="marital_status", column_name="marital_status")
+    # marital_status = fields.Field(
+    #     attribute="marital_status",
+    #     column_name="marital_status",
+    # )
     # nationality = fields.Field(attribute="nationality", column_name="nationality")
     # gender = fields.Field(attribute="gender", column_name="gender")
 
@@ -162,7 +161,6 @@ class StudentResource(resources.ModelResource):
 
 class RegistrationResource(resources.ModelResource):
     """Resource for bulk importing :class:Registration rows."""
-
     class Meta:
         model = Registration
         import_id_fields = ("student", "section")

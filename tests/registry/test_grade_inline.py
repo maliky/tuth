@@ -1,5 +1,4 @@
 """Tests for grade entry inline."""
-
 import pytest
 
 # from django.urls import reverse
@@ -22,7 +21,11 @@ def test_section_admin_has_grade_inline():
 
 # # Where is the admin_client coming from?
 # @pytest.mark.django_db
-# def test_grade_inline_visible(admin_client, curriculum_course_factory, semester_factory):
+# def test_grade_inline_visible(
+#     admin_client,
+#     curriculum_course_factory,
+#     semester_factory,
+# ):
 
 #     curriculum_course = curriculum_course_factory()
 #     semester = semester_factory()

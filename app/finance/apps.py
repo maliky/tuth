@@ -1,5 +1,4 @@
 """Apps module."""
-
 # app/finance/apps.py
 from django.apps import AppConfig
 

@@ -1,11 +1,10 @@
 """Registration module."""
-
 from __future__ import annotations
 
 from app.shared.mixins import SimpleTableMixin
 from django.db import models
 from simple_history.models import HistoricalRecords
-from typing import Self
+from typing import Self, cast
 
 from app.shared.status.mixins import StatusableMixin
 
@@ -29,7 +28,7 @@ class RegistrationStatus(SimpleTableMixin):
         deft, _ = cls.objects.get_or_create(
             code="pending", defaults={"label": "Pending Payment"}
         )
-        return deft
+        return cast(Self, deft)
 
 
 class Registration(StatusableMixin, models.Model):
@@ -42,7 +41,6 @@ class Registration(StatusableMixin, models.Model):
         ...     section=section_factory(1),
         ... )
     """
-
     # ~~~~~~~~ Mandatory ~~~~~~~~
     student = models.ForeignKey(
         "people.Student",

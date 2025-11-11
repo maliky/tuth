@@ -1,5 +1,4 @@
 """people Student module."""
-
 # app/people/models/student.py
 
 from __future__ import annotations
@@ -21,13 +20,15 @@ class Student(AbstractPerson):
 
     Example:
         >>> user = User.objects.create_user(username="stud")
-        >>> s = Student.objects.create(username=username, current_enrolled_semester=semester)
+        >>> s = Student.objects.create(
+        ...     username=username,
+        ...     current_enrolled_semester=semester,
+        ... )
         >>> s.student_id  # auto-set from user id
         'TU_STD0001'
     Side Effects:
         save() from :class:AbstractPerson populates student_id.
     """
-
     ID_FIELD = "student_id"
     ID_PREFIX = "TU-STD"
     EMAIL_SUFFIX = ".stud@tubmanu.edu.lr"
@@ -153,7 +154,6 @@ class Student(AbstractPerson):
         (i.e., ``current_enrolled_semester`` is set) and the
         ``entry_semester`` is empty, record today's date.
         """
-
         if not self.curriculum_id:
             self.curriculum = Curriculum.get_default()
 

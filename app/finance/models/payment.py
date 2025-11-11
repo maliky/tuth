@@ -1,8 +1,7 @@
 """Financial record module."""
-
 from __future__ import annotations
 
-from typing import Self
+from typing import Self, cast
 
 from app.shared.status.mixins import StatusableMixin
 from django.db import models
@@ -13,7 +12,6 @@ from app.shared.mixins import SimpleTableMixin
 
 class ClearanceStatus(SimpleTableMixin):
     """Clearance Statuses."""
-
     DEFAULT_VALUES = [
         ("pending", "Pending"),
         ("cleared", "Cleared"),
@@ -27,14 +25,12 @@ class ClearanceStatus(SimpleTableMixin):
     @classmethod
     def get_default(cls) -> Self:
         """Returns the default ClearanceStatus."""
-
         deft, _ = cls.objects.get_or_create(code="pending")
-        return deft
+        return cast(Self, deft)
 
 
 class PaymentMethod(SimpleTableMixin):
     """Payment method statuses."""
-
     DEFAULT_VALUES = [
         ("wire", "Wire"),
         ("mobile", "Mobile Money"),
@@ -48,12 +44,11 @@ class PaymentMethod(SimpleTableMixin):
         deft, _ = cls.objects.get_or_create(
             code="cash",
         )
-        return deft
+        return cast(Self, deft)
 
 
 class FeeType(SimpleTableMixin):
     """Enumeration of fee types."""
-
     DEFAULT_VALUES = [
         ("tuition", "Tuition"),
         ("research", "Research"),
@@ -66,7 +61,7 @@ class FeeType(SimpleTableMixin):
     def get_default(cls) -> Self:
         """Returns the default FeeType."""
         deft, _ = cls.objects.get_or_create(code="other")
-        return deft
+        return cast(Self, deft)
 
 
 class Payment(StatusableMixin, models.Model):
@@ -94,7 +89,6 @@ class Payment(StatusableMixin, models.Model):
         ... )
         >>> Payment.objects.create(student=student_profile, total_due=0)
     """
-
     # ~~~~~~~~ Mandatory ~~~~~~~~
     invoice = models.ForeignKey(
         "finance.Invoice",
@@ -164,7 +158,6 @@ class SectionFee(models.Model):
         ... )
         >>> SectionFee.objects.create(section=section, fee_type=FeeType.LAB, amount=50)
     """
-
     # ~~~~~~~~ Mandatory ~~~~~~~~
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)
     fee_type = models.ForeignKey(

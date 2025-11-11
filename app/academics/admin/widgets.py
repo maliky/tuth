@@ -1,5 +1,4 @@
 """Widgets module."""
-
 from typing import Any, Optional
 
 from import_export import widgets
@@ -22,7 +21,6 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
     The widget delegates curriculum parsing to CurriculumWidget and course parsing
     to CourseWidget then assembles a CurriculumCourse object from the results.
     """
-
     def __init__(self, *args, **kwargs):
         super().__init__(CurriculumCourse)
         self.curriculum_w = CurriculumWidget()
@@ -30,7 +28,6 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
 
     def clean(self, value, row=None, *args, **kwargs) -> CurriculumCourse:
         """Assemble course_dept, curriculum and course to return a curriculum course."""
-
         # we don't use value.  We always get a course back
         course = self.course_w.clean(value=None, row=row)
 
@@ -60,7 +57,6 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
     The associated college is determined from row['college_code'] when
     present. Missing curricula are created automatically.
     """
-
     def __init__(self):
         # set the look_up field to uniquely identify the Curriculum to short_name.
         super().__init__(Curriculum, field="short_name")
@@ -75,7 +71,6 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
 
         Automatically creates curriculum with today's date.
         """
-
         major_name = get_in_row("major", row)
         if not value:
             if major_name:
@@ -101,13 +96,14 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
                 **lookup,
             )
         except Curriculum.MultipleObjectsReturned:
-            curriculum = (
+            fallback = (
                 Curriculum.objects.filter(**lookup)
                 .order_by("-is_active", "-creation_date")
                 .first()
             )
-            if curriculum is None:
+            if fallback is None:
                 raise
+            curriculum = fallback
 
         # add the major if there
         if major_name:
@@ -123,7 +119,6 @@ class CourseWidget(widgets.ForeignKeyWidget):
     optional and defaults to "COAS". Results are cached to avoid duplicate
     queries when several rows reference the same course.
     """
-
     def __init__(self):
         super().__init__(Course, field="code")
         self.department_w = DepartmentWidget()
@@ -160,7 +155,6 @@ class CourseManyWidget(widgets.ManyToManyWidget):
     The widget splits the CSV column on ; and delegates parsing of each
     token to CourseWidget, creating courses on the fly when needed.
     """
-
     def __init__(self):
         super().__init__(Course, separator=";", field="code")
         self.course_w = CourseWidget()
@@ -203,7 +197,6 @@ class CourseCodeWidget(widgets.ForeignKeyWidget):
 
     A Course code is <college_code>-<dept_code><course_no>.
     """
-
     def __init__(self):
         super().__init__(Course, field="code")
         self.department_w = DepartmentWidget()
@@ -245,7 +238,6 @@ class CourseCodeWidget(widgets.ForeignKeyWidget):
 
 class CollegeWidget(widgets.ForeignKeyWidget):
     """Return or create the College referenced by college_code."""
-
     def __init__(self):
         # field is a Model attribute used to identify uniquely the instances.
         # if not set then default to pk
@@ -268,7 +260,6 @@ class CollegeWidget(widgets.ForeignKeyWidget):
 
 class DepartmentWidget(widgets.ForeignKeyWidget):
     """Return or create the Department referenced by course_dept and college_code."""
-
     def __init__(self):
         super().__init__(Department, field="code")
         self.college_w = CollegeWidget()

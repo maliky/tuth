@@ -1,5 +1,4 @@
 """SecSession module."""
-
 from __future__ import annotations
 
 from datetime import time
@@ -19,7 +18,6 @@ class SecSession(models.Model):
     Example:
         >>> SecSession.objects.create(room=room, schedule=schedule, section=section)
     """
-
     # ~~~~~~~~ Mandatory ~~~~~~~~
     room = models.ForeignKey("spaces.Room", on_delete=models.PROTECT)
     section = models.ForeignKey(

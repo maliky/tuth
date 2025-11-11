@@ -1,5 +1,4 @@
 """Test module for Academic Prerequisite."""
-
 import pytest
 from django.db import IntegrityError, transaction
 
@@ -13,7 +12,6 @@ pytestmark = pytest.mark.django_db
 
 def test_prerequisite_unique_per_curriculum(course_factory, curriculum):
     """A prerequisite binome (ordered) exists only once as a prerequisite."""
-
     course_a = course_factory("101")
     course_b = course_factory("202")
 
@@ -30,7 +28,6 @@ def test_prerequisite_unique_per_curriculum(course_factory, curriculum):
 
 def test_prerequisite_no_self(course, curriculum):
     """A course cannot be a prerequisite to itself."""
-
     with pytest.raises(IntegrityError):
         with transaction.atomic():
             Prerequisite.objects.create(

@@ -1,5 +1,4 @@
 """Resources module."""
-
 from django.contrib import messages
 from import_export import fields, resources
 
@@ -21,7 +20,6 @@ from app.academics.models.department import Department
 
 class CurriculumResource(resources.ModelResource):
     """Columns expected in the CSV: short_name, title, college, list_courses."""
-
     def __init__(self, *args, **kwargs):
         """For keeping track of what is been added or replaced."""
         super().__init__(*args, **kwargs)
@@ -116,7 +114,6 @@ class CourseResource(resources.ModelResource):
 
     Additional: course_title, prerequisites
     """
-
     number_f = fields.Field(attribute="number", column_name="course_no")  # 121
     title_f = fields.Field(attribute="title", column_name="course_title")
 
@@ -176,7 +173,6 @@ class PrerequisiteResource(resources.ModelResource):
 
 class CollegeResource(resources.ModelResource):
     """Simple import-export resource for College."""
-
     college_f = fields.Field(
         attribute="code", column_name="college_code", widget=CollegeWidget()
     )
@@ -192,7 +188,6 @@ class CollegeResource(resources.ModelResource):
 
 class CurriculumCourseResource(resources.ModelResource):
     """Import a curriculum_course  curriculum name and course no and dept."""
-
     curriculum_f = fields.Field(
         attribute="curriculum",
         column_name="curriculum",
@@ -226,7 +221,6 @@ class CurriculumCourseResource(resources.ModelResource):
 
 class DepartmentResource(resources.ModelResource):
     """Resource for Department."""
-
     dept_f = fields.Field(
         attribute="short_name", column_name="course_dept", widget=DepartmentWidget()
     )

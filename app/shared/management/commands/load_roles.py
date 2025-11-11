@@ -6,7 +6,6 @@ $ python manage.py load_permissions
 is automatically invoked by *import_resources* so a fresh dataset always
 ships with a coherent permission matrix.
 """
-
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import Group, Permission
@@ -17,13 +16,11 @@ from app.shared.auth.perms import APP_MODELS, UserRole
 
 class Command(BaseCommand):
     """CLI helper available as manage.py load_permissions."""
-
     help = "Load perms.yaml and rebuild Group → Permission relations."
 
     # > what's this *_ and **__ ?
     def handle(self, *args, **kwargs) -> None:
         """Read YAML, validate, wipe current grants and recreate them."""
-
         Group.permissions.through.objects.all().delete()
 
         # Iterate create, read, update, delete actions
@@ -53,7 +50,6 @@ def sync_role_group(ur_group: Group, x_rights: dict[str, list[str]]) -> Group:
 
 def get_app_label(model):
     """Return the app label for the model based on perms.APP_MODELS."""
-
     for app_label, models in APP_MODELS.items():
         if model in models:
             return app_label

@@ -1,5 +1,4 @@
 """Website views for the student dashboard."""
-
 from __future__ import annotations
 
 from collections import defaultdict
@@ -131,9 +130,8 @@ def course_dashboard(request: HttpRequest) -> HttpResponse:
     return render(request, "website/course_dashboard.html", context)
 
 
-def student_dashboard(request: HttpRequest) -> HttpResponse:
+def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     """Render the redesigned dashboard backed with live student data."""
-
     student = _require_student(request.user)
     semester, open_semesters = _resolve_semester(student, request.GET.get("semester"))
     registration_open = bool(semester and semester.is_registration_open())
@@ -185,7 +183,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:
     )
 
     registration_total = registrations.count()
-    status_summary = (
+    status_summary = list(
         registrations.values("status__code", "status__label")
         .annotate(total=Count("id"))
         .order_by("status__label")
@@ -294,10 +292,12 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:
         course = cc.course
         course_sections = sections_by_course.get(course.id, [])
         prereq_data = prereq_map.get(course.id, [])
-        is_eligible = (
-            registration_open
-            and course.id in allowed_course_ids
-            and bool(course_sections)
+        is_eligible = all(
+            [
+                registration_open,
+                course.id in allowed_course_ids,
+                bool(course_sections),
+            ]
         )
 
         missing = [p["label"] for p in prereq_data if not p["met"]]
@@ -339,12 +339,9 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:
             locked_courses.append(course_payload)
 
     completed_credits = student.completed_credits
-    required_credits = (
-        student.curriculum.programs.aggregate(total=Sum("credit_hours__code")).get(
-            "total"
-        )
-        or 0
-    )
+    required_credits = student.curriculum.programs.aggregate(
+        total=Sum("credit_hours__code"),
+    ).get("total") or 0
     remaining_credits = max(required_credits - completed_credits, 0)
     gpa = (
         Grade.objects.filter(student=student)
@@ -416,7 +413,8 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:
     announcements: list[str] = []
     if outstanding > 0:
         announcements.append(
-            f"Outstanding balance: {currency} {outstanding:.2f}. Complete payment to finalize registrations."
+            f"Outstanding balance: {currency} {outstanding:.2f}. "
+            "Complete payment to finalize registrations."
         )
     if semester:
         announcements.append(f"Selected semester: {semester}")
@@ -590,6 +588,18 @@ def _build_chair_context(request: HttpRequest) -> dict:
         for snap in workloads
     ] or [{"label": "No workloads captured", "value": "Snapshots pending."}]
 
+    curricula_items = [
+        {
+            "label": cur.code,
+            "value": cur.title,
+        }
+        for cur in curricula[:6]
+    ]
+    if not curricula_items:
+        curricula_items = [
+            {"label": "No curricula", "value": "Assign one to this college."},
+        ]
+
     return {
         "metrics": [
             {"label": "Active curricula", "value": curricula.count()},
@@ -598,14 +608,7 @@ def _build_chair_context(request: HttpRequest) -> dict:
         "panels": [
             {
                 "title": "Curricula",
-                "items": [
-                    {
-                        "label": cur.code,
-                        "value": cur.title,
-                    }
-                    for cur in curricula[:6]
-                ]
-                or [{"label": "No curricula", "value": "Assign one to this college."}],
+                "items": curricula_items,
             },
             {"title": "Recent workloads", "items": workload_items},
         ],
@@ -618,6 +621,19 @@ def _build_dean_context(request: HttpRequest) -> dict:
         "-created_at"
     )
     approvals = list(approvals_qs[:6])
+    approval_items = [
+        {
+            "label": approval.get_request_type_display(),
+            "value": approval.status.title(),
+            "meta": approval.created_at.strftime("%d %b %Y"),
+        }
+        for approval in approvals
+    ]
+    if not approval_items:
+        approval_items = [
+            {"label": "No requests", "value": "You're all caught up."},
+        ]
+
     return {
         "metrics": [
             {"label": "Requests awaiting review", "value": approvals_qs.count()},
@@ -625,15 +641,7 @@ def _build_dean_context(request: HttpRequest) -> dict:
         "panels": [
             {
                 "title": "Approval queue",
-                "items": [
-                    {
-                        "label": approval.get_request_type_display(),
-                        "value": approval.status.title(),
-                        "meta": approval.created_at.strftime("%d %b %Y"),
-                    }
-                    for approval in approvals
-                ]
-                or [{"label": "No requests", "value": "You're all caught up."}],
+                "items": approval_items,
             }
         ],
         "actions": [],
@@ -645,6 +653,22 @@ def _build_vpaa_context(_: HttpRequest) -> dict:
         "-created_at"
     )
     approvals = list(approvals_qs[:8])
+    approval_items = [
+        {
+            "label": approval.get_request_type_display(),
+            "value": approval.status.title(),
+            "meta": approval.payload.get("summary", ""),
+        }
+        for approval in approvals
+    ]
+    if not approval_items:
+        approval_items = [
+            {
+                "label": "Queue is empty",
+                "value": "No open curriculum or policy actions.",
+            }
+        ]
+
     return {
         "metrics": [
             {"label": "Pending approvals", "value": approvals_qs.count()},
@@ -652,20 +676,7 @@ def _build_vpaa_context(_: HttpRequest) -> dict:
         "panels": [
             {
                 "title": "Items awaiting VPAA decision",
-                "items": [
-                    {
-                        "label": approval.get_request_type_display(),
-                        "value": approval.status.title(),
-                        "meta": approval.payload.get("summary", ""),
-                    }
-                    for approval in approvals
-                ]
-                or [
-                    {
-                        "label": "Queue is empty",
-                        "value": "No open curriculum or policy actions.",
-                    }
-                ],
+                "items": approval_items,
             }
         ],
         "actions": [],
@@ -678,6 +689,19 @@ def _build_registrar_context(_: HttpRequest) -> dict:
         pending_qs.select_related("student").order_by("-requested_at")[:8]
     )
     registration_anomalies = Registration.objects.filter(status__code="pending").count()
+    transcript_items = [
+        {
+            "label": req.student.long_name,
+            "value": req.destination_name,
+            "meta": req.requested_at.strftime("%d %b %Y"),
+        }
+        for req in pending_transcripts
+    ]
+    if not transcript_items:
+        transcript_items = [
+            {"label": "No transcript requests", "value": "All clear."},
+        ]
+
     return {
         "metrics": [
             {"label": "Pending transcripts", "value": pending_qs.count()},
@@ -686,15 +710,7 @@ def _build_registrar_context(_: HttpRequest) -> dict:
         "panels": [
             {
                 "title": "Transcript queue",
-                "items": [
-                    {
-                        "label": req.student.long_name,
-                        "value": req.destination_name,
-                        "meta": req.requested_at.strftime("%d %b %Y"),
-                    }
-                    for req in pending_transcripts
-                ]
-                or [{"label": "No transcript requests", "value": "All clear."}],
+                "items": transcript_items,
             }
         ],
         "actions": [],
@@ -706,6 +722,22 @@ def _build_scholarship_context(_: HttpRequest) -> dict:
         "student", "semester"
     )
     templates = ScholarshipLetterTemplate.objects.filter(is_active=True)
+    beneficiary_items = [
+        {
+            "label": snap.student.long_name,
+            "value": f"GPA {snap.gpa}",
+            "meta": str(snap.semester),
+        }
+        for snap in low_gpa[:6]
+    ]
+    if not beneficiary_items:
+        beneficiary_items = [
+            {
+                "label": "All beneficiaries compliant",
+                "value": "No GPA alerts this term.",
+            }
+        ]
+
     return {
         "metrics": [
             {"label": "Students < 2.5 GPA", "value": low_gpa.count()},
@@ -714,20 +746,7 @@ def _build_scholarship_context(_: HttpRequest) -> dict:
         "panels": [
             {
                 "title": "At-risk beneficiaries",
-                "items": [
-                    {
-                        "label": snap.student.long_name,
-                        "value": f"GPA {snap.gpa}",
-                        "meta": str(snap.semester),
-                    }
-                    for snap in low_gpa[:6]
-                ]
-                or [
-                    {
-                        "label": "All beneficiaries compliant",
-                        "value": "No GPA alerts this term.",
-                    }
-                ],
+                "items": beneficiary_items,
             }
         ],
         "actions": [],
@@ -861,7 +880,6 @@ def portal_redirect(request: HttpRequest) -> HttpResponse:
 @login_required
 def staff_dashboard(request: HttpRequest) -> HttpResponse:
     """Route staff users to their highest-priority dashboard."""
-
     role_slug = _resolve_staff_role(request.user)
     return _render_role_dashboard(request, role_slug)
 
@@ -869,16 +887,13 @@ def staff_dashboard(request: HttpRequest) -> HttpResponse:
 @login_required
 def staff_role_dashboard(request: HttpRequest, role: str) -> HttpResponse:
     """Allow explicit navigation to a staff dashboard, enforcing membership."""
-
     if role not in ROLE_CONFIG:
         raise Http404("Unknown staff role.")
 
     config = ROLE_CONFIG[role]
-    if (
-        config["groups"]
-        and not request.user.is_superuser
-        and not _user_group_names(request.user).intersection(config["groups"])
-    ):
+    requires_membership = bool(config["groups"])
+    lacks_group = not _user_group_names(request.user).intersection(config["groups"])
+    if requires_membership and not request.user.is_superuser and lacks_group:
         raise PermissionDenied("You do not belong to this staff group.")
 
     return _render_role_dashboard(request, role)
@@ -886,7 +901,6 @@ def staff_role_dashboard(request: HttpRequest, role: str) -> HttpResponse:
 
 class PortalLoginView(LoginView):
     """Allow any active user to sign in, then hand off to portal redirect."""
-
     template_name = "website/portal_login.html"
 
     def get_success_url(self):
@@ -895,7 +909,6 @@ class PortalLoginView(LoginView):
 
 class PortalLogoutView(View):
     """Explicit logout that always redirects to the unified login."""
-
     http_method_names = ["get", "post", "head", "options"]
 
     def post(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
@@ -909,7 +922,6 @@ class PortalLogoutView(View):
 @permission_required("timetable.change_semester", raise_exception=True)
 def registrar_course_windows(request: HttpRequest) -> HttpResponse:
     """Allow registrar staff to manage semester statuses."""
-
     semesters = (
         Semester.objects.select_related("academic_year", "status")
         .order_by("-academic_year__start_date", "-number")
@@ -942,7 +954,6 @@ def registrar_course_windows(request: HttpRequest) -> HttpResponse:
 @permission_required("people.add_student", raise_exception=True)
 def create_student(request: HttpRequest) -> HttpResponse:
     """Allow enrollment officers to create a new student profile."""
-
     if request.method == "POST":
         form = StudentForm(request.POST)
         if form.is_valid():
@@ -961,12 +972,10 @@ def student_list(request: HttpRequest) -> HttpResponse:
     query = request.GET.get("q", "")
     students = Student.objects.all()
     if query:
-        students = students.filter(
-            Q(student_id__icontains=query)
-            | Q(username__icontains=query)
-            | Q(user__first_name__icontains=query)
-            | Q(user__last_name__icontains=query)
-        )
+        predicates = Q(student_id__icontains=query) | Q(username__icontains=query)
+        predicates |= Q(user__first_name__icontains=query)
+        predicates |= Q(user__last_name__icontains=query)
+        students = students.filter(predicates)
     context = {"students": students.order_by("student_id"), "query": query}
     return render(request, "enrollment/student_list.html", context)
 

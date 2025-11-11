@@ -1,5 +1,4 @@
 """Utility helpers for the timetable app."""
-
 from datetime import date
 from typing import Optional
 

@@ -1,5 +1,4 @@
 """app.timetable.admin.registers.section module."""
-
 from django.contrib import admin
 
 from app.people.models.faculty import Faculty
@@ -19,7 +18,6 @@ class SectionAdmin(CollegeRestrictedAdmin):
     inlines manage sessions and grade.
     Filtering by curriculum is available through list_filter.
     """
-
     resource_class = SectionResource
     college_field = "curriculum_course__curriculum__college"
     list_display = (

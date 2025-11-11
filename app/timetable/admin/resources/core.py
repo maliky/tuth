@@ -1,5 +1,4 @@
 """Import/export resources for timetable models. (Semester & AcademicYear)."""
-
 from import_export import fields, resources
 
 from app.timetable.admin.widgets.core import AcademicYearCodeWidget

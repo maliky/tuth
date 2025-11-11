@@ -1,9 +1,8 @@
 """Course module."""
-
 from __future__ import annotations
 
 from itertools import count
-from typing import Optional, Self
+from typing import Optional, Self, cast
 
 from django.apps import apps
 from django.db import models
@@ -25,13 +24,20 @@ class Course(models.Model):
 
     Example:
         >>> COAS = College.get_default()
-        >>> MATH = Departement.objects.create(code="COAS", long_name="College of Arts and Sciences")
-        >>> Course.objects.create(name="MATH", number="101", title="Algebra", college=coas)
+        >>> MATH = Departement.objects.create(
+        ...     code="COAS",
+        ...     long_name="College of Arts and Sciences",
+        ... )
+        >>> Course.objects.create(
+        ...     name="MATH",
+        ...     number="101",
+        ...     title="Algebra",
+        ...     college=coas,
+        ... )
 
     Side Effects:
         save() populates code from name and number.
     """
-
     # ~~~~~~~~ Mandatory ~~~~~~~~
     number = models.CharField(max_length=10)  # e.g. 101
 
@@ -92,9 +98,10 @@ class Course(models.Model):
         """Get the list of faculty teaching this course in the current semester."""
         Faculty = apps.get_model("people", "Faculty")
 
-        # Returning Any from function declared to return "QuerySet[Faculty, Faculty] | None"  [no-any-return]
-        # when adding the  type hint  '-> FacultyQuery | None:'
-        # >TODO Try to fix this and add StudentQuery type hint to the next method too.
+        # Returning Any from function declared to return
+        # "QuerySet[Faculty, Faculty] | None"  [no-any-return]
+        # when adding the type hint  '-> FacultyQuery | None:'.
+        # TODO: Try to fix this and add StudentQuery type hint to the next method.
 
         semester = get_current_semester()
         if semester is None:
@@ -104,7 +111,7 @@ class Course(models.Model):
         ).distinct()
 
     def current_students(self):
-        """Returns the list of student taking this course during the current semester."""
+        """Return students taking this course during the current semester."""
         Student = apps.get_model("people", "Student")
 
         semester = get_current_semester()
@@ -146,7 +153,7 @@ class Course(models.Model):
             number=number,
             title=f"Default Course {number}",
         )
-        return def_crs
+        return cast(Self, def_crs)
 
     @classmethod
     def get_unique_default(cls) -> Self:
@@ -174,7 +181,6 @@ class CurriculumCourse(models.Model):
     Side Effects:
         save() defaults credit_hours to the course value when missing.
     """
-
     # ~~~~ Mandatory ~~~~
     # curriculum or major
     curriculum = models.ForeignKey(
@@ -221,7 +227,7 @@ class CurriculumCourse(models.Model):
             curriculum=Curriculum.get_default(),
             course=(_course or Course.get_default()),
         )
-        return def_pg
+        return cast(Self, def_pg)
 
     @classmethod
     def get_unique_default(cls) -> Self:

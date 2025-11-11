@@ -1,5 +1,4 @@
 """Initialization for the models package."""
-
 # app/registry/models/__init__.py
 from .document import (
     DocumentStaff,

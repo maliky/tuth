@@ -1,5 +1,4 @@
 """Test fixtures for the permissions module."""
-
 import datetime
 from typing import Callable, TypeAlias
 
@@ -21,7 +20,6 @@ def role_user_factory(college_factory, user_factory) -> RoleUserFactory:
 
     Returns the user in a group, with permission to view a college.
     """
-
     def _make(user_role: UserRole) -> User:
         user: User = user_factory(username=f"{user_role.value.code}_tuser")
 
@@ -103,5 +101,4 @@ def student_user(role_user_factory) -> User:
 @pytest.fixture
 def college_other(college_factory):
     """Secondary college for permission checks."""
-
     return college_factory(code="COBA")

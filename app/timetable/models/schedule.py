@@ -2,11 +2,10 @@
 
 It defines on moment on campus.  So we can visualize what it happening at that time.
 """
-
 from __future__ import annotations
 
 from datetime import datetime, time, timedelta
-from typing import Self
+from typing import Self, cast
 
 from django.db import models, transaction
 from simple_history.models import HistoricalRecords
@@ -23,7 +22,6 @@ class Schedule(models.Model):
     It's possible to have several session for the same schedule but it cannot be
     session of the same section (course).
     """
-
     # a ref date for the time
     REF_DATE = datetime(2009, 9, 1)
     # a time of ref for the start of the day
@@ -114,8 +112,9 @@ class Schedule(models.Model):
         1) ensure we always have a weekday.
         2) if no start_time, find the first free 5-minute slot >= 01:00
         """
-        if self.start_time is None:
-            self.start_time = self._find_next_free_slot(self.weekday)  # type: ignore[unreachable]
+        start_time_value: time | None = getattr(self, "start_time", None)
+        if start_time_value is None:
+            self.start_time = self._find_next_free_slot(self.weekday)
 
         super().save(*args, **kwargs)
 
@@ -124,8 +123,9 @@ class Schedule(models.Model):
         weekday_set = self.weekday != WEEKDAYS_NUMBER.TBA
 
         # we suppose that all unassigned time are before the ref_dat_start_time
-        start_time_set = self.start_time < self.REF_TIME
-        end_time_set = self.start_time is not None
+        current_start: time | None = getattr(self, "start_time", None)
+        start_time_set = current_start is not None and current_start < self.REF_TIME
+        end_time_set = self.end_time is not None
 
         return weekday_set and start_time_set and end_time_set
 
@@ -137,7 +137,7 @@ class Schedule(models.Model):
             start_time=cls.REF_TIME,
         )
 
-        return def_schedule
+        return cast(Self, def_schedule)
 
     @classmethod
     def get_uniq_default(cls, day=WEEKDAYS_NUMBER.TBA) -> Self:
@@ -155,7 +155,7 @@ class Schedule(models.Model):
             start_time=start_time,
         )
 
-        return def_schedule
+        return cast(Self, def_schedule)
 
     class Meta:
         ordering = ["weekday", "start_time", "end_time"]

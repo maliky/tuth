@@ -1,6 +1,5 @@
 """Lookup tables and governance helpers shared across apps."""
-
-from typing import Self
+from typing import Self, cast
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
@@ -12,7 +11,6 @@ from app.shared.status.mixins import StatusHistory
 
 class CreditHourManager(models.Manager):
     """Automatically create credit hours on demand."""
-
     def get(self, *args, **kwargs):  # type: ignore[override]
         """Return existing credit hour or create it if missing."""
         try:
@@ -30,7 +28,6 @@ class CreditHour(models.Model):
 
     The idea is to controle the type of credit a course can have.
     """
-
     class Meta:
         ordering = ["code"]
 
@@ -64,9 +61,8 @@ class CreditHour(models.Model):
     @classmethod
     def get_default(cls) -> Self:
         """Return the default credit hours."""
-
         def_ch, _ = cls.objects.get_or_create(code=3)
-        return def_ch
+        return cast(Self, def_ch)
 
     def __str__(self) -> str:
         """Return human readable label."""
@@ -75,7 +71,6 @@ class CreditHour(models.Model):
 
 class ApprovalQueue(models.Model):
     """Centralized approval queue used by Deans and VPAA."""
-
     REQUEST_TYPES = [
         ("curriculum_activation", "Curriculum activation"),
         ("overload_proposal", "Faculty overload proposal"),
@@ -137,4 +132,5 @@ class ApprovalQueue(models.Model):
         """Append a status entry and update the current status."""
         self.status = status
         self.save(update_fields=["status", "updated_at"])
-        return self.status_history.create(status=status, author=author)
+        history_entry = self.status_history.create(status=status, author=author)
+        return cast(StatusHistory, history_entry)

@@ -1,5 +1,4 @@
 """The form to manipulate faculty in the Admin."""
-
 from __future__ import annotations, division
 from typing import Any, Dict
 
@@ -12,7 +11,6 @@ from django.db import transaction
 
 class FacultyForm(forms.ModelForm):
     """Provide the form for editing a faculty user and the attached staff & user."""
-
     first_name = forms.CharField(label="first_name", required=True)
     last_name = forms.CharField(label="last_name", required=True)
 
@@ -37,7 +35,7 @@ class FacultyForm(forms.ModelForm):
     US_FIELDS = tuple(set(USER_FIELDS) | set(STAFF_FIELDS))
 
     def _get_initial_field_values(self) -> Dict[str, str]:
-        """Returns the existing attribute for the user and staff used to initialise the form."""
+        """Return saved user/staff attributes used to initialize the form."""
         user_fields = {}
         if self.instance.pk:
             _staff = self.instance.staff_profile
@@ -55,7 +53,9 @@ class FacultyForm(forms.ModelForm):
         """
         super().__init__(*args, **kwargs)
 
-        self.initial.update(self._get_initial_field_values().items())
+        initial_data = dict(self.initial)
+        initial_data.update(self._get_initial_field_values())
+        self.initial = initial_data
 
         self.fields["username"].widget.attrs["readonly"] = True
         self.fields["email"].widget.attrs["readonly"] = True
@@ -63,7 +63,6 @@ class FacultyForm(forms.ModelForm):
 
     def clean(self) -> dict[str, Any]:
         """Check the data entered in the form and update the user accordingly."""
-
         cd = super().clean()  # -> cleaned_data
         if not cd:
             return {"": None}

@@ -1,5 +1,4 @@
 """Academic year module."""
-
 from __future__ import annotations
 
 from datetime import timedelta
@@ -19,7 +18,6 @@ class AcademicYear(models.Model):
     Side Effects:
         save() computes code and long_name.
     """
-
     # ~~~~~~~~ Mandatory ~~~~~~~~
     start_date = models.DateField(unique=True)
     end_date = models.DateField(unique=True, blank=True)
@@ -48,7 +46,6 @@ class AcademicYear(models.Model):
 
     def save(self, *args, **kwargs) -> None:
         """Populate derived fields long_name and code before saving."""
-
         # setting a default for the end_year
         ys = self.start_date.year
 

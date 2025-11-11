@@ -1,8 +1,7 @@
 """Concentration module that is Minor and Major."""
-
 from __future__ import annotations
 
-from typing import Self, cast
+from typing import TYPE_CHECKING, Self, cast
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -17,7 +16,6 @@ class ConcentrationMixin(models.Model):
 
     It generalized and Should be inherited by Major and Minor.
     """
-
     # to be overrided
     RELATED_NAME: str = "concentration"  # no plural
     DEFAULT_CH: int = 40
@@ -56,10 +54,17 @@ class ConcentrationMixin(models.Model):
             )
 
     def total_credit_hours(self) -> int:
-        """Return the sum of credit hours for every curriculum_course attached to this concentration."""
+        """Return the total credit hours across all curriculum courses."""
         # will return 0 if the object is not saved.
         self._ensure_saved()
-        return self.curriculum_courses.aggregate(total=models.Sum("credit_hours")).get("total") or 0  # type: ignore[attr-defined]
+        courses = cast(
+            "models.Manager[CurriculumCourse]",
+            getattr(self, "curriculum_courses"),
+        )
+        total = courses.aggregate(
+            total=models.Sum("credit_hours"),
+        ).get("total")
+        return total or 0  # type: ignore[attr-defined]
 
     def exceeds_credit_limit(self):
         """True if the total credit hours >  max_credit_hours."""
@@ -85,7 +90,6 @@ class ConcentrationMixin(models.Model):
 
 class Major(ConcentrationMixin):
     """Represent a group of courses of the curriculum making the major."""
-
     RELATED_NAME: str = "major"
 
     curriculum_courses = models.ManyToManyField(
@@ -102,7 +106,6 @@ class Major(ConcentrationMixin):
 
 class Minor(ConcentrationMixin):
     """Represent a group of courses of the curriculum making the major."""
-
     RELATED_NAME: str = "minor"
     curriculum_courses = models.ManyToManyField(
         "academics.CurriculumCourse",
@@ -119,7 +122,6 @@ class Minor(ConcentrationMixin):
 # ##  TODO make sure Minor curriculum_course can be in several curriculms?
 class MajorCurriculumCourse(models.Model):
     """A table joining the Major table with the curriculum_course table."""
-
     # ~~~~~~~~ Mandatory ~~~~~~~~
     major = models.ForeignKey("Major", on_delete=models.CASCADE, related_name="courses")
     curriculum_course = models.ForeignKey(
@@ -139,7 +141,6 @@ class MajorCurriculumCourse(models.Model):
 
 class MinorCurriculumCourse(models.Model):
     """A table joining the Major table with the curriculum_course table."""
-
     # ~~~~~~~~ Mandatory ~~~~~~~~
     minor = models.ForeignKey("Minor", on_delete=models.CASCADE, related_name="courses")
     curriculum_course = models.ForeignKey(

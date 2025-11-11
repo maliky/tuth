@@ -1,5 +1,4 @@
 """Tests the Course model."""
-
 import pytest
 from django.db import IntegrityError, transaction
 
@@ -13,7 +12,6 @@ pytestmark = pytest.mark.django_db
 
 def test_course_number_per_department(course_factory):
     """In a department a course number should be unique."""
-
     course = course_factory("101")
 
     with pytest.raises(IntegrityError):

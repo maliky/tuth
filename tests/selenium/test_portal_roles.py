@@ -1,5 +1,4 @@
 """Role-based portal smoke tests."""
-
 from __future__ import annotations
 
 import pytest
@@ -49,7 +48,6 @@ if not _can_bind_localhost():
 @pytest.fixture
 def portal_user_factory(semester):
     """Create portal users with optional student profile and group assignments."""
-
     UserModel = get_user_model()
 
     def _build(username: str, *, groups: list[str] | None = None, student: bool = False):
@@ -100,7 +98,6 @@ def test_role_dashboards(
     expected_heading,
 ):
     """Each person lands on the appropriate dashboard after login."""
-
     portal_user_factory(username, **config)
     login_url = f"{live_server.url}{reverse('portal_login')}"
     selenium_driver.get(login_url)

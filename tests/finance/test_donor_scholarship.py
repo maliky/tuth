@@ -1,5 +1,4 @@
 """Test donor scholarship module."""
-
 # from datetime import date
 
 # import pytest
@@ -24,4 +23,4 @@
 #     assert scholarship.student == student
 
 
-# >TODO would be good to test the reverse relations.  donor.scholarships and student_scholarships
+# TODO: add reverse relation tests for donor.scholarships and student_scholarships.

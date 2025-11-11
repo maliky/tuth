@@ -1,11 +1,10 @@
 """Curriculum module."""
-
 from __future__ import annotations
 from django.db.models import Count
 
 from django.apps import apps
 from datetime import date
-from typing import Self
+from typing import Self, cast
 
 from app.shared.mixins import SimpleTableMixin
 from app.shared.utils import as_title
@@ -17,7 +16,6 @@ from app.shared.status.mixins import StatusableMixin
 
 class CurriculumStatus(SimpleTableMixin):
     """Code/label pairs for curriculum validation status."""
-
     DEFAULT_VALUES = [
         ("pending", "Pending"),
         ("approved", "Approved"),
@@ -31,18 +29,19 @@ class CurriculumStatus(SimpleTableMixin):
 
 # need to update the docs
 class Curriculum(StatusableMixin, models.Model):
-    """Set of courses that make up a degree Curriculum/program within a college.
+    """Set of courses that make up a degree curriculum/program within a college.
 
     Example:
         >>> col = College.objects.create(code="COAS", long_name="Arts and Sciences")
         >>> Curriculum.objects.create(short_name="BSCS", college=col)
 
-    We use a default curriculum encompassing all curriculum_courses when none is specified;
-    otherwise the student is limited to the courses listed in their curriculum.
+    We use a default curriculum encompassing all curriculum_courses when none is
+    specified; otherwise the student is limited to the courses listed in their
+    curriculum.
 
-    Concerning credit hours, usualy between 120-128 (GE 30-40, Major/Specific 30-60, Minor/elective (rest))
+    Credit hours usually total 120-128 (GE 30-40, Major/Specific 30-60,
+    Minor/elective fills the remainder).
     """
-
     # ~~~~~~~~ Mandatory ~~~~~~~~
     short_name = models.CharField(max_length=40)
 
@@ -102,7 +101,7 @@ class Curriculum(StatusableMixin, models.Model):
             long_name="Default Curriculum",
             college=College.get_default(),
         )
-        return def_curriculum
+        return cast(Self, def_curriculum)
 
     def _ensure_activity(self):
         """Make sure than only an aproved curriculum can be active."""
@@ -114,8 +113,8 @@ class Curriculum(StatusableMixin, models.Model):
     def _ensure_status(self):
         """Make sure the curriculum has a status set."""
         if not self.status_id:
-            # >? given that id is no different from code is it necessary to use _id ? oui si on veux pas
-            # faire self.status.code
+            # >? given that id is no different from code is it necessary to use _id ?
+            # oui si on veux pas faire self.status.code
             self.status_id = "pending"
         # just to make sure it is created.
         CurriculumStatus.objects.get_or_create(

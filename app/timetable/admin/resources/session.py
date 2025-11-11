@@ -1,5 +1,4 @@
 """Import/export resources for timetable sessions models."""
-
 from import_export import fields, resources
 from import_export.widgets import TimeWidget
 

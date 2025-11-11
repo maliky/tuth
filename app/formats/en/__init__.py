@@ -2,7 +2,6 @@
 
 Any directive allowed by Django’s date template filter is valid.
 """
-
 # ─── app/formats/en/formats.py ──────────────────────────────────────────────
 
 TIME_FORMAT = "H:i"  # 14:05

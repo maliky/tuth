@@ -1,5 +1,4 @@
 """Core module."""
-
 from app.finance.models.payment import FeeType, PaymentMethod, ClearanceStatus
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
@@ -14,7 +13,6 @@ from app.timetable.admin.filters import SemesterFilter
 @admin.register(Invoice)
 class InvoiceAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin settings for Payment."""
-
     list_display = ("__str__", "recorded_by")
     list_filter = (SemesterFilter,)
     readonly_fields = ("created_at",)
@@ -24,7 +22,6 @@ class InvoiceAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
 @admin.register(Payment)
 class PaymentAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin interface for :class:`~app.finance.models.Payment`."""
-
     list_display = ("invoice", "amount_paid", "payment_method", "status", "recorded_by")
     autocomplete_fields = ("recorded_by", "payment_method", "invoice", "status")
 
@@ -36,7 +33,6 @@ class ScholarshipAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     Autocomplete is enabled for donor and student foreign keys and key fields
     are displayed in the list view.
     """
-
     list_display = ("student", "donor", "amount", "start_date", "end_date")
     autocomplete_fields = ("donor", "student")
 
@@ -44,6 +40,5 @@ class ScholarshipAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
 @admin.register(ClearanceStatus, FeeType, PaymentMethod)
 class LookupAdmin(admin.ModelAdmin):
     """Basic admin for finance lookup tables."""
-
     search_fields = ("code", "label")
     list_display = ("label",)

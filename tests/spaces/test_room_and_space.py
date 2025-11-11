@@ -1,5 +1,4 @@
 """Verify Room / Space unique-constraint and default-room logic."""
-
 import pytest
 from django.db import transaction, IntegrityError
 
@@ -20,7 +19,9 @@ def test_unique_room_per_space():
 
 @pytest.mark.django_db(transaction=True)  # needed for the transaction=True
 def test_default_room_conflict():
-    """When code and space are blank the save() hook defaults to (space='TBA', code='TBA').
+    """Default blank rooms to TBA values.
+
+    When code and space are blank the save() hook defaults to (space='TBA', code='TBA').
 
     Saving a second empty room violates the composite unique key.
     """

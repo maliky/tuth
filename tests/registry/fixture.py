@@ -1,5 +1,4 @@
 """Test fixtures for the registry app."""
-
 from __future__ import annotations
 
 from decimal import Decimal
@@ -35,7 +34,7 @@ def data_file():
 
 
 @pytest.fixture
-def registration(student, section) -> Generator[Registration]:
+def registration(student, section) -> Generator[Registration, None, None]:
     """Default registration for a student."""
     reg = Registration.objects.create(student=student, section=section)
     yield reg
@@ -54,7 +53,7 @@ def grade(student, section, grade_value) -> Grade:
 
 
 @pytest.fixture
-def documentType() -> Generator[DocumentType]:
+def documentType() -> Generator[DocumentType, None, None]:
     """Return a default documentType."""
     _doc_type = DocumentType.get_default()
     yield _doc_type
@@ -64,7 +63,7 @@ def documentType() -> Generator[DocumentType]:
 @pytest.fixture
 def documentStudent(
     student, data_file, documenttype_factory
-) -> Generator[DocumentStudent]:
+) -> Generator[DocumentStudent, None, None]:
     """Default document attached to a student."""
     waec = documenttype_factory("waec")
 
@@ -76,7 +75,9 @@ def documentStudent(
 
 
 @pytest.fixture
-def documentDonor(donor, data_file, documenttype_factory) -> Generator[DocumentDonor]:
+def documentDonor(
+    donor, data_file, documenttype_factory
+) -> Generator[DocumentDonor, None, None]:
     """Default document attached to a student."""
     acc_letter = documenttype_factory("letter_of_accredidation")
     _doc_donor = DocumentDonor.objects.create(
@@ -87,7 +88,9 @@ def documentDonor(donor, data_file, documenttype_factory) -> Generator[DocumentD
 
 
 @pytest.fixture
-def documentStaff(staff, data_file, documenttype_factory) -> Generator[DocumentStaff]:
+def documentStaff(
+    staff, data_file, documenttype_factory
+) -> Generator[DocumentStaff, None, None]:
     """Default document attached to a student."""
     ref_letter = documenttype_factory("letter_of_reference")
     _doc_staff = DocumentStaff.objects.create(
@@ -106,7 +109,6 @@ def registration_factory(student_factory, section_factory) -> RegistrationFactor
 
     Parameters allow customizing the semester of the created section.
     """
-
     def _make(
         student_uname: str,
         curri_short_name: str,
@@ -123,7 +125,6 @@ def registration_factory(student_factory, section_factory) -> RegistrationFactor
 @pytest.fixture
 def grade_factory(student_factory, section_factory) -> GradeFactory:
     """Return a callable to build grades."""
-
     def _make(
         student_uname: str,
         curri_short_name: str,
@@ -145,8 +146,7 @@ def grade_factory(student_factory, section_factory) -> GradeFactory:
 @pytest.fixture
 def documenttype_factory() -> DocumentTypeFactory:
     """Return a callable to build document type."""
-
-    def _make(code="other") -> Generator[DocumentType]:
+    def _make(code="other") -> Generator[DocumentType, None, None]:
         _doc_type = DocumentType.objects.create(code=code)
         yield _doc_type
         _doc_type.delete()
@@ -159,7 +159,6 @@ def documentstudent_factory(
     student_factory, documenttype_factory, data_file
 ) -> DocumentStudentFactory:
     """Return a callable to build documents for Students."""
-
     def _make(student_uname: str, curri_short_name: str) -> DocumentStudent:
         student = student_factory(student_uname, curri_short_name)
         waec = documenttype_factory("waec")
@@ -178,7 +177,6 @@ def documentdonor_factory(
     donor_factory, documenttype_factory, data_file
 ) -> DocumentDonorFactory:
     """Return a callable to build documents for donors."""
-
     def _make(donor_uname: str) -> DocumentDonor:
         donor = donor_factory(donor_uname)
         acc_letter = documenttype_factory("letter_of_accreditation")
@@ -195,7 +193,6 @@ def documentstaff_factory(
     staff_factory, documenttype_factory, data_file
 ) -> DocumentStaffFactory:
     """Return a callable to build documents for Staff."""
-
     def _make(staff_uname: str) -> DocumentStaff:
         staff = staff_factory(staff_uname)
         ref_letter = documenttype_factory("letter_of_reference")

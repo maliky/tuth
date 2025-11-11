@@ -1,5 +1,4 @@
 """Tests for the Academic Department module."""
-
 import pytest
 from django.db import IntegrityError, transaction
 
@@ -13,7 +12,6 @@ pytestmark = pytest.mark.django_db
 
 def test_department_unique_short_name_in_college(college, department_factory):
     """In a College a department short_name should be unique."""
-
     department_factory("GEN")
 
     with pytest.raises(IntegrityError):

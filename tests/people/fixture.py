@@ -1,5 +1,4 @@
 """Test fixtures of people."""
-
 from __future__ import annotations
 
 from typing import Callable, Generator, TypeAlias, cast
@@ -29,7 +28,7 @@ def superuser() -> User:
 
 
 @pytest.fixture
-def user() -> Generator[User]:
+def user() -> Generator[User, None, None]:
     _user = User.objects.create_user(
         username="user_default", email="default@koba.sarl", password="zyx987"
     )
@@ -77,7 +76,6 @@ def student(semester, curriculum) -> Student:
 @pytest.fixture
 def group_factory() -> GroupFactory:
     """Returns a function to create a group."""
-
     def _make(name: str) -> Group:
         return Group.objects.create(name=name)
 
@@ -87,7 +85,6 @@ def group_factory() -> GroupFactory:
 @pytest.fixture
 def user_factory() -> UserFactory:
     """Returns a function to create a user."""
-
     def _make(username: str) -> User:
         return User.objects.create_user(username=username)
 
@@ -100,7 +97,6 @@ def staff_factory() -> StaffFactory:
 
     my_staff = staff_factory("joe", some_department)
     """
-
     def _make(staff_uname: str) -> Staff:
         return cast(Staff, Staff.objects.create(user=User(username=staff_uname)))
 
@@ -113,7 +109,6 @@ def faculty_factory() -> FacultyFactory:
 
     my_faculty = faculty_factory("joe", some_department)
     """
-
     def _make(faculty_uname: str) -> Faculty:
         return cast(Faculty, Faculty.objects.create(username=faculty_uname))
 
@@ -128,7 +123,6 @@ def student_factory(
 
     my_student = student_factory("joe", some_curriculum short name)
     """
-
     def _make(uname: str, curri_short_name: str) -> Student:
         return cast(
             Student,
@@ -144,7 +138,6 @@ def student_factory(
 @pytest.fixture
 def donor_factory() -> DonorFactory:
     """Return a callable for making extra Donoro objects on demand."""
-
     def _make(uname: str) -> Donor:
         return cast(
             Donor,

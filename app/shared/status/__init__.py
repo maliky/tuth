@@ -1,5 +1,4 @@
 """Status tracking helpers."""
-
 from .forms import StatusHistoryForm
 from .mixins import StatusHistory, StatusableMixin
 

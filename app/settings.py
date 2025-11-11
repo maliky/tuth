@@ -8,7 +8,6 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
 from pathlib import Path
 import os
 import sys
@@ -29,7 +28,8 @@ except ImportError as ie:
 
 DEBUG = os.getenv("DJANGO_DEBUG") == "True"
 
-# python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
+# python -c 'from django.core.management.utils import get_random_secret_key;
+# print(get_random_secret_key())'
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",")
@@ -113,7 +113,10 @@ WSGI_APPLICATION = "app.wsgi.application"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "UserAttributeSimilarityValidator"
+        ),
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",

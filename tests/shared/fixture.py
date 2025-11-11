@@ -1,5 +1,4 @@
 """Test fixtures of the shared module."""
-
 from __future__ import annotations
 
 from typing import Callable, TypeAlias
@@ -17,7 +16,6 @@ StatusHistoryFactory: TypeAlias = Callable[[Student, str], StatusHistory]
 
 def _ensure_table() -> None:
     """Create the status history table if absent."""
-
     table = StatusHistory._meta.db_table
     with connection.cursor() as cursor:
         try:
@@ -30,7 +28,6 @@ def _ensure_table() -> None:
 @pytest.fixture(scope="session", autouse=True)
 def _status_history_table(django_db_setup, django_db_blocker) -> None:
     """Ensure the StatusHistory table exists for all tests."""
-
     with django_db_blocker.unblock():
         _ensure_table()
 
@@ -38,7 +35,6 @@ def _status_history_table(django_db_setup, django_db_blocker) -> None:
 @pytest.fixture
 def status_history(student: Student) -> StatusHistory:
     """Default status history attached to a student."""
-
     _ensure_table()
     ct = ContentType.objects.get_for_model(student)
     return StatusHistory.objects.create(
@@ -51,7 +47,6 @@ def status_history(student: Student) -> StatusHistory:
 @pytest.fixture
 def status_history_factory() -> StatusHistoryFactory:
     """Return a callable to build status history entries."""
-
     def _make(student: Student, status: str = "pending") -> StatusHistory:
         _ensure_table()
         ct = ContentType.objects.get_for_model(student)

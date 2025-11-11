@@ -1,5 +1,4 @@
 """Constants for scheduling."""
-
 from django.db.models import IntegerChoices
 
 
@@ -17,7 +16,6 @@ class TERM_NUMBER(IntegerChoices):
 
 class WEEKDAYS_NUMBER(IntegerChoices):
     """Integer representation of weekdays."""
-
     TBA = 0, "TBA"
     MONDAY = 1, "Monday"
     TUESDAY = 2, "Tuesday"

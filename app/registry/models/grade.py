@@ -1,6 +1,5 @@
 """Grade records for completed course sections."""
-
-from typing import Self
+from typing import Self, cast
 
 from app.registry.choices import GradeChoice
 from django.db import models
@@ -11,7 +10,6 @@ from app.registry.constants import GRADES_DESCRIPTION, GRADES_NUM
 
 class GradeValue(models.Model):
     """A class to define the different Grade types."""
-
     # ~~~~~~~~ Mandatory ~~~~~~~~
     code = models.CharField(
         choices=GradeChoice.choices, default=GradeChoice.IP, unique=True
@@ -46,7 +44,7 @@ class GradeValue(models.Model):
     def get_default(cls) -> Self:
         """Return a default Grade, IP."""
         def_grd, _ = cls.objects.get_or_create(code="IP")
-        return def_grd
+        return cast(Self, def_grd)
 
     class Meta:
         ordering = ["-number", "code"]
@@ -63,7 +61,6 @@ class Grade(models.Model):
         ...     grade="A",
         ... )
     """
-
     # ~~~~~~~~ Mandatory ~~~~~~~~
     student = models.ForeignKey("people.Student", on_delete=models.CASCADE)
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)

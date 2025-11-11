@@ -3,7 +3,6 @@
 This module enumerates document types that can be uploaded by students as
 well as the possible statuses for both registrations and documents.
 """
-
 from django.db.models import TextChoices
 
 
@@ -15,7 +14,7 @@ class GradeChoice(TextChoices):
     D = "d", "D"
     DR = "dr", "DR"
     F = "f", "F"
-    I = "i", "I"
+    I = "i", "I"  # noqa: E741 ambiguous letter name required by grading scale
     IP = "ip", "IP"
     NG = "ng", "NG"
     W = "w", "W"

@@ -1,5 +1,4 @@
 """The base form to manipulate users in Admin."""
-
 from __future__ import annotations
 from typing import Any, Dict
 from app.shared.types import FieldT
@@ -14,7 +13,6 @@ class PersonFormMixin(forms.ModelForm):
     Add four fields to update or create the user on the fly.
     Set constantes to be display on the admin interface.
     """
-
     USER_FIELDS = ("first_name", "last_name", "username", "email")
 
     STANDARD_USER_FIELDS = (
@@ -62,7 +60,6 @@ class PersonFormMixin(forms.ModelForm):
 
     def clean(self) -> dict[str, Any]:
         """Check the data entered in the form and update the user accordingly."""
-
         cd = super().clean()  # -> cleaned_data
         if not cd:
             return {"": None}

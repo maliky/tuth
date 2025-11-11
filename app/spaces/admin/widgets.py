@@ -1,5 +1,4 @@
 """Widgets module."""
-
 from import_export import widgets
 
 from app.spaces.models.core import Room, Space
@@ -34,7 +33,6 @@ class SpaceWidget(widgets.ForeignKeyWidget):
 
 class RoomWidget(widgets.ForeignKeyWidget):
     """Resolve or create a :class:Room using room_code and space."""
-
     def __init__(self):
         super().__init__(Room, field="code")
         self.space_w = SpaceWidget()
@@ -47,7 +45,6 @@ class RoomWidget(widgets.ForeignKeyWidget):
         **kwargs,
     ) -> Room:
         """Using the room no, and the space code, returns a Room (eventualy)."""
-
         room_code = (value or "").strip()
         space_code = ((row or {}).get("space") or "<TBA>").strip()
 
@@ -61,7 +58,6 @@ class RoomWidget(widgets.ForeignKeyWidget):
 
 class RoomCodeWidget(widgets.ForeignKeyWidget):
     """Create a :class:Room from values like "AA-01"."""
-
     def __init__(self):
         super().__init__(Room, field="code")
         self.space_w = SpaceWidget()

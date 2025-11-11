@@ -1,5 +1,4 @@
 """Initialization for the admin package."""
-
 from .filters import (
     SectionBySemesterFilter,
     SemesterFilter,

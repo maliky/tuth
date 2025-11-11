@@ -1,5 +1,4 @@
 """app.timetable.Inlines modules."""
-
 from django.contrib import admin
 
 from app.timetable.models.section import Section
@@ -9,7 +8,6 @@ from app.timetable.models.session import SecSession
 
 class SemesterInline(admin.TabularInline):
     """Inline for managing Semester rows."""
-
     model = Semester
     extra = 0
     max_num = 3
@@ -19,7 +17,6 @@ class SemesterInline(admin.TabularInline):
 
 class SecSessionInline(admin.TabularInline):
     """Inline editor for SecSession rows."""
-
     model = SecSession
     extra = 0
     fields = (
@@ -36,7 +33,6 @@ class SecSessionInline(admin.TabularInline):
 
 class SectionInline(admin.TabularInline):
     """Inline for creating Section rows."""
-
     model = Section
     extra = 0
     fields = (

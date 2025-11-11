@@ -1,5 +1,4 @@
 """Section module."""
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Set
@@ -31,7 +30,6 @@ class Section(models.Model):
     Side Effects:
         Section numbers auto-increment
     """
-
     # ~~~~~~~~ Mandatory ~~~~~~~~
     semester = models.ForeignKey("timetable.Semester", on_delete=models.PROTECT)
     curriculum_course = models.ForeignKey(
@@ -122,7 +120,7 @@ class Section(models.Model):
                 assert self.start_date < self.end_date
 
     class Meta:
-        # May Move this to manual in Save check because does not hold for default curriculum_courses
+        # Consider moving this to save() because it fails for default curriculum_courses.
         constraints = [
             models.UniqueConstraint(
                 fields=["semester", "curriculum_course", "number"],

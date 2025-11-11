@@ -1,5 +1,4 @@
 """Initialization for the models package."""
-
 from .academic_year import AcademicYear
 from .schedule import Schedule
 from .section import Section

@@ -1,5 +1,4 @@
 """Payment module."""
-
 from __future__ import annotations
 
 from django.db import models
@@ -11,14 +10,15 @@ class Invoice(models.Model):
     """Invoice for a curriculum_course.
 
     Attributes:
-        curriculum_course (academics.CurriculumCourse): A Course in a Curriculum being paid for.
+        curriculum_course (academics.CurriculumCourse): Course in a curriculum
+            being paid for.
         amount_due (Decimal): Value of the transaction.
         method (str): Payment method from :class:PaymentMethod.
         recorded_by (people.Staff): Staff member who logged the payment.
         created_at (datetime): Timestamp when the record was created.
 
-    A student can pay twice for the same curriculum_course if he fail and has to take it again.
-    but the semester will be different.
+    A student can pay twice for the same curriculum_course if they fail and need
+    to retake it, but the semester will differ.
     Example:
         >>> Payment.objects.create(
         ...     curriculum_course=curriculum_course,
@@ -26,7 +26,6 @@ class Invoice(models.Model):
 
         ... )
     """
-
     # ~~~~~~~~ Mandatory ~~~~~~~~
     curriculum_course = models.OneToOneField(
         "academics.CurriculumCourse", on_delete=models.CASCADE
@@ -39,7 +38,11 @@ class Invoice(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     # ~~~~~~~~ Optional ~~~~~~~~
-    recorded_by = models.ForeignKey("people.Staff", null=True, on_delete=models.SET_NULL)
+    recorded_by = models.ForeignKey(
+        "people.Staff",
+        null=True,
+        on_delete=models.SET_NULL,
+    )
     scholarship = models.ForeignKey(
         "finance.scholarship", on_delete=models.PROTECT, null=True
     )

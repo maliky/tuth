@@ -1,5 +1,4 @@
 """Admin configuration for registry models."""
-
 from app.registry.models.document import DocumentStatus, DocumentType
 from django.contrib import admin
 from django.urls import path
@@ -30,7 +29,6 @@ class GradeValueAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAd
 
     Describe the different grades types
     """
-
     list_display = ("number", "code", "description")
     search_fields = ("code", "description")
 
@@ -42,7 +40,6 @@ class GradeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     Shows student, section and grade fields in the list view with autocomplete
     lookups for student and section.
     """
-
     date_hierachy = "grade_on"
     list_display = (
         "student",
@@ -73,7 +70,6 @@ class GradeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
 @admin.register(Registration)
 class RegistrationAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Allow students to register only for eligible sections."""
-
     list_display = ("student", "section", "status", "date_registered")
     autocomplete_fields = ("student", "section")
     search_fields = (
@@ -84,10 +80,7 @@ class RegistrationAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModel
     list_filter = (SemesterFilter,)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        """Probably orverriding the default form for the model.
-
-        List the curriculum_course (course <-> curriculum) in which the student is enrolled.
-        """
+        """Override the form to limit sections to the student's curriculum_course."""
         if db_field.name == "section" and not request.user.is_superuser:
             try:
                 student = request.user.student
@@ -103,6 +96,5 @@ class RegistrationAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModel
 @admin.register(DocumentStatus, DocumentType, RegistrationStatus)
 class CurriculumStatusAdmin(admin.ModelAdmin):
     """Lookup admin for CurriculumStatus."""
-
     search_fields = ("code", "label")
     list_display = ("label",)

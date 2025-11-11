@@ -1,5 +1,4 @@
 """Permission retrieval tests using django-guardian."""
-
 from guardian.shortcuts import get_objects_for_user
 import pytest
 

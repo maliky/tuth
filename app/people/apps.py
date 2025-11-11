@@ -1,5 +1,4 @@
 """Apps module."""
-
 # app/people/apps.py
 from django.apps import AppConfig
 

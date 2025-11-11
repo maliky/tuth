@@ -1,6 +1,6 @@
 """App/shared/management/commands/create_test_users.py."""
-
 from datetime import date
+from typing import Any, cast
 
 from app.academics.models.college import College
 from app.people.utils import mk_password
@@ -8,6 +8,7 @@ from django.apps import apps
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
+from django.db import models as django_models
 
 from app.people.models.role_assignment import RoleAssignment
 from app.people.models.faculty import Faculty
@@ -17,7 +18,6 @@ from app.shared.auth.perms import APP_MODELS, UserRole
 
 class Command(BaseCommand):
     """Create test users using the UserRole."""
-
     help = "Create test users and assign them to role groups."
 
     def handle(self, *args, **options):
@@ -29,16 +29,16 @@ class Command(BaseCommand):
 
         for user_role in UserRole:
             username = f"test_{user_role.value.code}"
-            Person = user_role.value.model
+            person_model = cast(Any, user_role.value.model)
 
-            person, was_created = Person.objects.get_or_create(  # type: ignore[attr-defined]
+            person, was_created = person_model.objects.get_or_create(
                 defaults={
                     "first_name": user_role.value.label,
                     "last_name": "Person",
                     "email": f"{username}@tubmanu.edu.lr",
                 },
                 username=username,
-            )
+            )  # type: ignore[attr-defined]
             _user = (
                 person.staff_profile.user if isinstance(person, Faculty) else person.user
             )
@@ -57,7 +57,9 @@ class Command(BaseCommand):
             RoleAssignment.objects.get_or_create(
                 user=_user, group=group, start_date=date.today(), college=college
             )
-            created.append((person.username, group.name, was_created))  # type: ignore[attr-defined]
+            created.append(
+                (person.username, group.name, was_created)
+            )  # type: ignore[attr-defined]
             # log
             status = "Created" if was_created else "Updated"
             self.stdout.write(f" - {_user} ({group}): {status} with pwd {pwd}")
@@ -68,7 +70,6 @@ class Command(BaseCommand):
 
 def get_app_label(model):
     """Return the app label for the model based on perms.APP_MODELS."""
-
     for app_label, models in APP_MODELS.items():
         if model in models:
             return app_label

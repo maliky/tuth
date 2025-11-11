@@ -1,5 +1,4 @@
 """Utility helpers used in the finance app."""
-
 from decimal import Decimal
 
 

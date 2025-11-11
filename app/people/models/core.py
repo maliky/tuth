@@ -1,5 +1,4 @@
 """Core module for people."""
-
 from datetime import date
 
 from django.contrib.auth.models import Group, User
@@ -24,7 +23,6 @@ class AbstractPerson(models.Model):
     # https://docs.djangoproject.com/en/5.2/topics/auth/customizing/#django.contrib.auth.models.AbstractUser
 
     """
-
     class Meta:
         abstract = True
         ordering = ["user__first_name", "user__last_name"]
@@ -79,18 +77,14 @@ class AbstractPerson(models.Model):
     @property
     def age(self) -> int | None:
         """Compute and returns the age of the abstract user."""
-        if self.birth_date:
-            today = date.today()
-            return (
-                today.year
-                - self.birth_date.year
-                # moins 1 ou 0, si the birthday has passed this year.
-                - (
-                    (today.month, today.day)
-                    < (self.birth_date.month, self.birth_date.day)
-                )
-            )
-        return None
+        if not self.birth_date:
+            return None
+        today = date.today()
+        has_had_birthday = (today.month, today.day) >= (
+            self.birth_date.month,
+            self.birth_date.day,
+        )
+        return today.year - self.birth_date.year - (0 if has_had_birthday else 1)
 
     @property
     def obj_id(self) -> str:
@@ -202,7 +196,6 @@ class AbstractPerson(models.Model):
 
     def save(self, *args, **kwargs):
         """Create an ID and saves it for each model using _mk_id and ID_FIELD."""
-
         if not self.obj_id:
             new_id = self._mk_id()
             object.__setattr__(self, self.ID_FIELD, new_id)  # type: ignore[arg-type]
@@ -245,6 +238,9 @@ class AbstractPerson(models.Model):
     @classmethod
     def get_existing_id(cls) -> list[int]:
         """Returns the list of all existing number in the (class) ids field."""
-        user_ids_str = cls.objects.values_list(cls.ID_FIELD or "", flat=True)  # type: ignore[attr-type]
+        user_ids_str = cls.objects.values_list(
+            cls.ID_FIELD or "",
+            flat=True,
+        )  # type: ignore[attr-type]
         user_ids = [extract_id_num(v) for v in user_ids_str]
         return user_ids

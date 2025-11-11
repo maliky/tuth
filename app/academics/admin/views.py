@@ -1,12 +1,10 @@
 """Views for the academics admin."""
-
 from admin_searchable_dropdown.views import AutocompleteJsonView
 from app.academics.models import Curriculum
 
 
 class CurriculumBySemester(AutocompleteJsonView):
     """Returns the curriculums with section offered during a specific semester."""
-
     model_admin = None
 
     @staticmethod
@@ -16,7 +14,6 @@ class CurriculumBySemester(AutocompleteJsonView):
 
     def get_queryset(self):
         """Returns the filter queryset using semeter id passed in the url."""
-
         semester_id = self.request.GET.get("semester")
         if not semester_id:
             return Curriculum.objects.all()

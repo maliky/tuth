@@ -1,5 +1,4 @@
 """Test for the curriculum_course model of academics."""
-
 import pytest
 from django.db import IntegrityError, transaction
 
@@ -18,7 +17,6 @@ def test_curriculum_course_unique_course_per_curriculum(curriculum_course):
     and a curriculm C can have serveral courses,
     but only one line of course A curriculum C should be in curriculum_course.
     """
-
     with pytest.raises(IntegrityError):
         with transaction.atomic():
             CurriculumCourse.objects.create(

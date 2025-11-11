@@ -1,5 +1,4 @@
 """CSV related utilities."""
-
 from .sections import parse_int
 from .utils import log
 

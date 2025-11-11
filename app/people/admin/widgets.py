@@ -7,7 +7,6 @@ Usage::
     >>> staff = widget.clean("Dr. Jane Doe")
     >>> print(staff.long_name)
 """
-
 from app.people.models.student import Student
 from django.contrib.auth.models import User
 from import_export import widgets
@@ -29,7 +28,6 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         The widget splits the name, creates the corresponding User if
         needed.  It return or creates a Staff.
         """
-
         if not value:
             return Staff.get_unique_default()
 
@@ -66,7 +64,6 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
 
 class FacultyWidget(widgets.ForeignKeyWidget):
     """Ensure a Faculty entry exists for the given staff name."""
-
     def __init__(self):
         # field is "id" by default
         self._cache_faculty: dict[str, Faculty] = dict()
@@ -112,7 +109,6 @@ class FacultyWidget(widgets.ForeignKeyWidget):
 
 class StudentUserWidget(widgets.ForeignKeyWidget):
     """Ensure a Student User exists."""
-
     def __init__(self):
         # field is "id" by default
         super().__init__(User)
@@ -127,7 +123,6 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         Use the extra column student_id to desambiguate sames names
         and create uniq username.
         """
-
         if not value:
             return None
 
@@ -166,7 +161,6 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
 
 class UserStudentWidget(widgets.ForeignKeyWidget):
     """Import a User for a student exists."""
-
     def __init__(self):
         # field is "id" by default
         super().__init__(User)
@@ -176,7 +170,6 @@ class UserStudentWidget(widgets.ForeignKeyWidget):
 
     def clean(self, value: str, row=None, *args, **kwargs) -> User | None:
         """From the student name (and an id), gets a Student object."""
-
         if not value:
             return None
 

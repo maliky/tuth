@@ -1,6 +1,5 @@
 """Object Manger for People classes."""
-
-from typing import Any, Dict, Mapping, Tuple
+from typing import Any, Dict, Mapping, Optional, Tuple, cast
 from app.people.utils import mk_username
 from django.db.models import Manager
 from django.contrib.auth.models import User
@@ -8,7 +7,6 @@ from django.contrib.auth.models import User
 
 class PersonManager(Manager):
     """Custom creation Management."""
-
     USER_KWARGS = {
         "user",
         # "username",
@@ -28,10 +26,13 @@ class PersonManager(Manager):
         user_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in self.USER_KWARGS}
         return user_kwargs, kwargs
 
-    def _create_user(self, **user_kwargs) -> User:
+    def _create_user(self, **user_kwargs: Any) -> User:
         """Create or get the User and set /update password."""
         password = user_kwargs.pop("password", None)
-        username = user_kwargs.pop("username", "") or user_kwargs.pop("user").username
+        existing_user = cast(Optional[User], user_kwargs.pop("user", None))
+        username = user_kwargs.pop("username", "")
+        if not username and existing_user:
+            username = existing_user.username
 
         user = User.objects.create_user(
             username=username, password=password, **user_kwargs
@@ -42,7 +43,7 @@ class PersonManager(Manager):
 
         return user
 
-    def _get_or_create(self, username, **user_kwargs) -> User:
+    def _get_or_create(self, username: str, **user_kwargs: Any) -> User:
         """Create or get the User and set /update password."""
         _ = user_kwargs.pop("password", None)
         user, _ = User.objects.get_or_create(username=username, defaults=user_kwargs)
@@ -53,10 +54,10 @@ class PersonManager(Manager):
 
         return user
 
-    def _update_or_create(self, username, **user_kwargs) -> User:
+    def _update_or_create(self, username: str, **user_kwargs: Any) -> User:
         """Create or get the User and set /update password."""
         password = user_kwargs.pop("password", None)
-        existing_user = user_kwargs.pop("user", None)
+        existing_user = cast(Optional[User], user_kwargs.pop("user", None))
 
         if existing_user:
             existing_user.username = username

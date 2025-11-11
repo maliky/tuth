@@ -1,9 +1,8 @@
 """Space module."""
-
 from __future__ import annotations
 
 from itertools import count
-from typing import Self
+from typing import Self, cast
 
 from django.db import models
 from simple_history.models import HistoricalRecords
@@ -19,7 +18,6 @@ class Space(models.Model):
         >>> from app.spaces.models.core import Space
         >>> Space.objects.create(code="AA", full_name="Academic Annex")
     """
-
     # ~~~~~~~~ Mandatory ~~~~~~~~
     code = models.CharField(max_length=15, unique=True, db_index=True)
     # ~~~~ Auto-filled ~~~~
@@ -38,7 +36,7 @@ class Space(models.Model):
         tba_space, _ = cls.objects.get_or_create(
             code="TBA", defaults={"full_name": "Undefined space (TBA)"}
         )
-        return tba_space
+        return cast(Self, tba_space)
 
     class Meta:
         verbose_name = "Space / Building"
@@ -52,7 +50,6 @@ class Room(models.Model):
         >>> from app.spaces.models.core import Room
         >>> Room.objects.create(code="101", space=space)
     """
-
     # ~~~~~~~~ Mandatory ~~~~~~~~
     code = models.CharField(max_length=30)
 
@@ -88,7 +85,7 @@ class Room(models.Model):
         """Returns a default Room."""
         tba_space = Space.get_default()
         dft_room, _ = cls.objects.get_or_create(code=f"TBA{code:04d}", space=tba_space)
-        return dft_room
+        return cast(Self, dft_room)
 
     @classmethod
     def get_unique_default(cls) -> Self:

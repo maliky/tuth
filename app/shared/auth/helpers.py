@@ -1,5 +1,4 @@
 """Helpers to create demo users and roles during data population."""
-
 from typing import Dict
 
 from django.contrib.auth import get_user_model
@@ -14,7 +13,6 @@ User = get_user_model()
 
 def ensure_superuser(cmd: BaseCommand) -> None:
     """Recreate the default development superuser."""
-
     su = dict(username="dev", email="dev@tu.koba.sarl", password="dev")
     User.objects.filter(username=su["username"]).delete()
     User.objects.create_superuser(**su)
@@ -23,5 +21,4 @@ def ensure_superuser(cmd: BaseCommand) -> None:
 
 def ensure_role_groups() -> Dict[str, Group]:
     """Create missing Group objects for each user role."""
-
     return {user_role.value.code: user_role.value.group for user_role in UserRole}

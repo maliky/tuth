@@ -1,5 +1,4 @@
 """timetable.Core module."""
-
 from django.contrib import admin
 from django.db.models import Count
 from django.urls import reverse
@@ -23,7 +22,6 @@ class AcademicYearAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     SemesterInline. The listing is ordered by start date in descending
     order and grouped by the start date hierarchy.
     """
-
     list_display = ("long_name", "start_date", "end_date", "code")
     date_hierarchy = "start_date"
     inlines = [SemesterInline]
@@ -37,7 +35,6 @@ class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
     Provides import/export support and filters semesters by academic year.
     list_display shows the academic year, number and date range.
     """
-
     resource_class = SemesterResource
     list_display = (
         "academic_year",
@@ -58,31 +55,25 @@ class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
             student_total=Count("current_students", distinct=True),
         )
 
+    @admin.display(description="Sections", ordering="section_total")
     def section_count_link(self, semester):
         count = getattr(semester, "section_total", None)
         if count is None:
             count = semester.sections.count()
-        url = (
-            reverse("admin:timetable_section_changelist")
-            + f"?semester__id__exact={semester.id}"
+        url = reverse("admin:timetable_section_changelist") + (
+            f"?semester__id__exact={semester.id}"
         )
         return format_html('<a href="{}">{}</a>', url, count)
 
-    section_count_link.short_description = "Sections"
-    section_count_link.admin_order_field = "section_total"
-
+    @admin.display(description="Students", ordering="student_total")
     def student_count_link(self, semester):
         count = getattr(semester, "student_total", None)
         if count is None:
             count = semester.current_students.count()
-        url = (
-            reverse("admin:people_student_changelist")
-            + f"?current_enrolled_semester__id__exact={semester.id}"
+        url = reverse("admin:people_student_changelist") + (
+            f"?current_enrolled_semester__id__exact={semester.id}"
         )
         return format_html('<a href="{}">{}</a>', url, count)
-
-    student_count_link.short_description = "Students"
-    student_count_link.admin_order_field = "student_total"
 
 
 @admin.register(Term)
@@ -93,7 +84,6 @@ class TermAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     number and date range. The ``number`` foreign key uses autocomplete to
     simplify selection.
     """
-
     list_display = ("semester", "number", "start_date", "end_date")
     list_filter = ("semester",)
     autocomplete_fields = ("semester",)

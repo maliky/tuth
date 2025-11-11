@@ -1,5 +1,4 @@
 """People donor module."""
-
 # app/people/models/donor.py
 
 from __future__ import annotations
@@ -20,7 +19,6 @@ class Donor(AbstractPerson):
     Side Effects:
         save() from :class:AbstractPerson populates donor_id.
     """
-
     ID_FIELD = "donor_id"
     ID_PREFIX = "TU-DNR"
     GROUP = "Donor"

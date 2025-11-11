@@ -1,8 +1,7 @@
 """Department model."""
-
 from __future__ import annotations
 
-from typing import Self
+from typing import Self, cast
 
 from django.db import models
 from simple_history.models import HistoricalRecords
@@ -15,7 +14,6 @@ class Department(models.Model):
 
     Example: see get_default()
     """
-
     # ~~~~~~~~ Mandatory ~~~~~~~~
     short_name = models.CharField(max_length=8)
     # would be good to restric this to a few dept.
@@ -80,7 +78,7 @@ class Department(models.Model):
             long_name=f"Department of {short_name}",
             college=College.get_default(),
         )
-        return default_dept
+        return cast(Self, default_dept)
 
     class Meta:
         ordering = ["college__code", "short_name"]

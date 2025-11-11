@@ -1,8 +1,7 @@
 """Personal Types."""
-
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING, TypeAlias, Union
 
 from django.db.models import QuerySet
 
@@ -19,10 +18,10 @@ FacultyQuery: TypeAlias = QuerySet["Faculty"]
 StudentQuery: TypeAlias = QuerySet["Student"]
 RegistrationQuery: TypeAlias = QuerySet["Registration"]
 
-FieldT: TypeAlias = (
-    list[str | list[str] | tuple[str, ...] | tuple[()]]
-    | tuple[str | list[str] | tuple[str, ...] | tuple[()], ...]
-    | tuple[()]
-)
+FieldT: TypeAlias = Union[
+    list[str | list[str] | tuple[str, ...] | tuple[()]],
+    tuple[str | list[str] | tuple[str, ...] | tuple[()], ...],
+    tuple[()],
+]
 # PersonT = TypeVar("PersonT")  # ? what is this.
 # PersonT = TypeAlias = Donor|Staff| Student| Faculty

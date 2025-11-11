@@ -17,7 +17,6 @@ Functions:
     mk_username(first, last, unique=False, length=13): Create a standard
         username from the provided names.
 """
-
 # regex patterns to pull suffixes, prefixes, initials, etc.
 import re
 from pathlib import Path
@@ -50,7 +49,7 @@ PREFIX_PATTERN = re.compile(
 # A single letter folowed by a dot and a space or a word separatore '\b'
 FULL_INITIAL_PATTERN = re.compile(r"\b([A-Z])(?P<dot>\.)?(?(dot)\s*|\b)")
 
-# A sequence of small letters and cap optionaly separated with dots at the start of a string
+# A sequence of letters optionally separated with dots at the start of a string
 FIRST_PATTERN = re.compile(r"^([A-Za-z-]+|[A-Za-z-]\.?)")
 
 # At least one letter small or cap at the end of the string
@@ -130,7 +129,7 @@ def extract_firstnlast(raw_name: str) -> tuple[str, str, str]:
     if m:
         # ? why group(1) and not group(0). investigate and clarify even if no diff.
         first_name = m.group(1)
-        raw_name = raw_name[len(first_name) :].strip()
+        raw_name = raw_name[len(first_name):].strip()
 
     m = re.search(LAST_PATTERN, raw_name)
     if m:
@@ -177,7 +176,8 @@ def split_name(name: str) -> tuple[str, str, str, str, str]:
 
     # Restore dots to single letters only
     first_name, middle_name, last_name = [
-        re.sub(INITIAL_PATTERN, r"\1.", n) for n in [first_name, middle_name, last_name]
+        re.sub(INITIAL_PATTERN, r"\1.", n)
+        for n in [first_name, middle_name, last_name]
     ]
 
     # Restore dots on prefixes

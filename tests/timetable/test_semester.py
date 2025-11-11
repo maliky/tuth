@@ -1,5 +1,4 @@
 """Tests for timetable semester model."""
-
 import pytest
 from django.db import IntegrityError, transaction
 

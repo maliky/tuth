@@ -1,5 +1,4 @@
 """College module."""
-
 from __future__ import annotations
 
 from django.apps import apps
@@ -18,7 +17,6 @@ class College(models.Model):
     Side Effects:
         save() sets long_name based on code.
     """
-
     # ~~~~~~~~ Mandatory ~~~~~~~~
     code = models.CharField(default="deft")
 
