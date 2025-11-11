@@ -53,6 +53,7 @@ class Semester(StatusableMixin, models.Model):
     # and force non-null values.
     end_date = models.DateField(null=True, blank=True)
 
+    # > this is not clear. Why do we need that ? why a set ? or dict ?
     REGISTRATION_OPEN_CODES = {"registration"}
 
     def clean(self) -> None:

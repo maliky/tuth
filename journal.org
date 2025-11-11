@@ -166,3 +166,80 @@ DeanDash --> VPaaDash
   /compact    summarize conversation to prevent hitting the context limit
   /undo       ask Codex to undo a turn
   /diff       show git diff (including untracked files)
+
+
+* <2025-11-11 Tue 17:09> View routing map
+Split `app/website/views.py` into modular chunks and documented how different user roles traverse the portal.
+
+#+BEGIN_SRC plantuml :results file link :file ../Plantuml/view_routing_map.png
+@startuml
+skinparam actorStyle awesome
+left to right direction
+
+actor Visitor
+actor Student
+actor "Staff User" as Staff
+actor "Enrollment Officer" as Enroll
+actor Registrar
+
+rectangle "Public Entry" {
+  [Landing\n(/)] as Landing
+}
+
+rectangle "Portal Access" {
+  [Login\n(/auth/login/)] as Login
+  [Router\n(/portal/)] as Router
+  [Logout\n(/auth/logout/)] as Logout
+}
+
+rectangle "Student Views" {
+  [Student Dashboard\n(/student/dashboard/)] as StuDash
+  [Course Dashboard\n(/courses/)] as Courses
+}
+
+rectangle "Staff Views" {
+  [Staff Hub\n(/staff/dashboard/)] as StaffHub
+  [Role Dashboard\n(/staff/<role>/)] as StaffRole
+}
+
+rectangle "Registrar Tools" {
+  [Course Windows\n(/registrar/course-windows/)] as RegWin
+}
+
+rectangle "Enrollment Tools" {
+  [Student List\n(/students/)] as StuList
+  [Student Detail\n(/students/<pk>)] as StuDetail
+  [Create Student\n(/students/new/)] as StuNew
+  [Delete Student\n(/students/<pk>/delete/)] as StuDelete
+}
+
+rectangle "Admin" {
+  [Django Admin\n(/admin/)] as Admin
+}
+
+Visitor --> Landing
+Landing --> Login
+Student --> Login
+Staff --> Login
+Enroll --> Login
+Registrar --> Login
+
+Login --> Router
+Router --> StuDash : student profile
+Router --> StaffHub : staff profile
+Router --> Admin : admin or support
+StuDash --> Courses
+StaffHub --> StaffRole
+StaffRole --> RegWin : Registrar group
+StaffRole --> StuList : Enrollment group
+StaffRole --> StuNew
+StuList --> StuDetail
+StuDetail --> StuDelete
+
+Student --> Logout
+Staff --> Logout
+Enroll --> Logout
+Registrar --> Logout
+
+@enduml
+#+END_SRC
