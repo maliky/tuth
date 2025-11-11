@@ -1,4 +1,5 @@
 """Test fixtures of the shared module."""
+
 from __future__ import annotations
 
 from typing import Callable, TypeAlias
@@ -47,6 +48,7 @@ def status_history(student: Student) -> StatusHistory:
 @pytest.fixture
 def status_history_factory() -> StatusHistoryFactory:
     """Return a callable to build status history entries."""
+
     def _make(student: Student, status: str = "pending") -> StatusHistory:
         _ensure_table()
         ct = ContentType.objects.get_for_model(student)

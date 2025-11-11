@@ -1,4 +1,5 @@
 """Registration module."""
+
 from __future__ import annotations
 
 from app.shared.mixins import SimpleTableMixin
@@ -41,6 +42,7 @@ class Registration(StatusableMixin, models.Model):
         ...     section=section_factory(1),
         ... )
     """
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     student = models.ForeignKey(
         "people.Student",

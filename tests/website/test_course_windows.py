@@ -1,4 +1,5 @@
 """Tests for course selection windows and student dashboard behavior."""
+
 from datetime import date
 
 import pytest

@@ -1,4 +1,5 @@
 """Semester module."""
+
 from __future__ import annotations
 
 from django.db import models
@@ -12,6 +13,7 @@ from app.timetable.utils import validate_subperiod
 
 class SemesterStatus(SimpleTableMixin):
     """Track the lifecycle of a semester (planning, registration, locked)."""
+
     DEFAULT_VALUES = [
         ("planning", "Planning"),
         ("registration", "Registration Open"),
@@ -29,6 +31,7 @@ class Semester(StatusableMixin, models.Model):
     Example:
         >>> Semester.objects.create(academic_year=year, number=1)
     """
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     academic_year = models.ForeignKey("timetable.AcademicYear", on_delete=models.PROTECT)
     number = models.PositiveSmallIntegerField(

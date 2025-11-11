@@ -1,4 +1,5 @@
 """Tests for the Academic Department module."""
+
 import pytest
 from django.db import IntegrityError, transaction
 

@@ -1,4 +1,5 @@
 """Payment module."""
+
 from __future__ import annotations
 
 from django.db import models
@@ -26,6 +27,7 @@ class Invoice(models.Model):
 
         ... )
     """
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     curriculum_course = models.OneToOneField(
         "academics.CurriculumCourse", on_delete=models.CASCADE

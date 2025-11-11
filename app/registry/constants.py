@@ -1,4 +1,5 @@
 """Constants used by the registry module."""
+
 GRADES_NUM = {
     "A": 4,
     "AB": 0,

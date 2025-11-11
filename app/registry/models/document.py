@@ -1,4 +1,5 @@
 """Document module."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -61,9 +62,7 @@ class DocumentStatus(SimpleTableMixin):
     @classmethod
     def get_default(cls) -> Self:
         """Returns the default FeeType."""
-        deft, _ = cls.objects.get_or_create(
-            code="pending", defaults={"label": "Pending"}
-        )
+        deft, _ = cls.objects.get_or_create(code="pending", defaults={"label": "Pending"})
         return cast(Self, deft)
 
 
@@ -72,6 +71,7 @@ class AbstractDocument(StatusableMixin, models.Model):
 
     I'm not abstracting all because historicalRecords need concreet class.
     """
+
     class Meta:
         abstract = True
         """Model metadata."""
@@ -126,6 +126,7 @@ class AbstractDocument(StatusableMixin, models.Model):
 
 class DocumentStudent(AbstractDocument):
     """Store the students documents."""
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     person = models.ForeignKey(
         "people.Student",
@@ -138,6 +139,7 @@ class DocumentStudent(AbstractDocument):
 
 class DocumentDonor(AbstractDocument):
     """Store the donors documents."""
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     person = models.ForeignKey(
         "people.Donor",
@@ -150,6 +152,7 @@ class DocumentDonor(AbstractDocument):
 
 class DocumentStaff(AbstractDocument):
     """Store the staffs documents."""
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     person = models.ForeignKey(
         "people.Staff",
@@ -162,6 +165,7 @@ class DocumentStaff(AbstractDocument):
 
 class DocumentPayment(AbstractDocument):
     """Store attachments related to finance payments."""
+
     payment = models.ForeignKey(
         "finance.Payment",
         on_delete=models.CASCADE,

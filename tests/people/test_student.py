@@ -1,4 +1,5 @@
 """Test student people module."""
+
 import pytest
 
 from app.academics.models.prerequisite import Prerequisite

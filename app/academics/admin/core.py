@@ -1,4 +1,5 @@
 """Core module."""
+
 from django.urls import path, reverse
 from django.utils.html import format_html
 from django.db.models import Count
@@ -57,6 +58,7 @@ class CollegeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
     Displays the college code and name and provides search capability on both
     fields via list_display and search_fields.
     """
+
     resource_class = CollegeResource
     list_display = (
         "code",
@@ -84,6 +86,7 @@ class CourseAdmin(DepartmentRestrictedAdmin):
         Select multiple courses and choose Update college from the actions
         dropdown to assign them all to a different college.
     """
+
     resource_class = CourseResource
     list_display = (
         "short_code",
@@ -124,24 +127,28 @@ class CourseAdmin(DepartmentRestrictedAdmin):
 @admin.register(Major)
 class MajorAdmin(admin.ModelAdmin):
     """Admin options for Major."""
+
     list_display = ("name", "course_count")
 
 
 @admin.register(Minor)
 class MinorAdmin(admin.ModelAdmin):
     """Admin options for Minor."""
+
     list_display = ("name", "course_count")
 
 
 @admin.register(MajorCurriculumCourse)
 class MajorCurriculumAdmin(admin.ModelAdmin):
     """Admin options for MajorCurriculumCourse."""
+
     list_display = ("major", "curriculum_course")
 
 
 @admin.register(MinorCurriculumCourse)
 class MinorCurriculumCourseAdmin(admin.ModelAdmin):
     """Admin options for MinorCurriculumCourse."""
+
     list_display = ("minor", "curriculum_course")
 
 
@@ -154,6 +161,7 @@ class CurriculumAdmin(CollegeRestrictedAdmin):
     - list_display includes short and long names with the college.
     - list_filter allows filtering by college and active state.
     """
+
     resource_class = CurriculumResource
     # add the action button on the import form
     list_display = (
@@ -204,6 +212,7 @@ class CurriculumCourseAdmin(CollegeRestrictedAdmin):
     autocomplete_fields make lookups faster. list_select_related joins
     both relations for efficient queries.
     """
+
     resource_class = CurriculumCourseResource
     college_field = "curriculum__college"
     list_display = (
@@ -231,6 +240,7 @@ class CurriculumCourseAdmin(CollegeRestrictedAdmin):
 @admin.register(CurriculumStatus)
 class CurriculumStatusAdmin(admin.ModelAdmin):
     """Lookup admin for CurriculumStatus."""
+
     search_fields = ("code", "label")
     list_display = ("code", "label")
 
@@ -242,6 +252,7 @@ class DepartmentAdmin(CollegeRestrictedAdmin):
     Shows department code, name and college. autocomplete_fields speeds up
     college selection when editing a department.
     """
+
     resource_class = DepartmentResource
     list_display = ("short_name", "long_name", "college", "course_count_link")
     list_filter = [
@@ -266,6 +277,7 @@ class DepartmentAdmin(CollegeRestrictedAdmin):
         )
         return format_html('<a href="{}">{}</a>', url, count)
 
+
 @admin.register(Prerequisite)
 class PrerequisiteAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Admin interface for :class:~app.academics.models.Prerequisite.
@@ -279,6 +291,7 @@ class PrerequisiteAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModel
         On the prerequisites list page, select rows and run
         Attach / update curriculum to set a curriculum for them.
     """
+
     resource_class = PrerequisiteResource
     actions = [update_curriculum]
 

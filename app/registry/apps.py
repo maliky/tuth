@@ -1,4 +1,5 @@
 """Apps module."""
+
 # app/registry/apps.py
 from django.apps import AppConfig
 

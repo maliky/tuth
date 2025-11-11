@@ -1,4 +1,5 @@
 """Test fixtures for the registry app."""
+
 from __future__ import annotations
 
 from decimal import Decimal
@@ -109,6 +110,7 @@ def registration_factory(student_factory, section_factory) -> RegistrationFactor
 
     Parameters allow customizing the semester of the created section.
     """
+
     def _make(
         student_uname: str,
         curri_short_name: str,
@@ -125,6 +127,7 @@ def registration_factory(student_factory, section_factory) -> RegistrationFactor
 @pytest.fixture
 def grade_factory(student_factory, section_factory) -> GradeFactory:
     """Return a callable to build grades."""
+
     def _make(
         student_uname: str,
         curri_short_name: str,
@@ -146,6 +149,7 @@ def grade_factory(student_factory, section_factory) -> GradeFactory:
 @pytest.fixture
 def documenttype_factory() -> DocumentTypeFactory:
     """Return a callable to build document type."""
+
     def _make(code="other") -> Generator[DocumentType, None, None]:
         _doc_type = DocumentType.objects.create(code=code)
         yield _doc_type
@@ -159,6 +163,7 @@ def documentstudent_factory(
     student_factory, documenttype_factory, data_file
 ) -> DocumentStudentFactory:
     """Return a callable to build documents for Students."""
+
     def _make(student_uname: str, curri_short_name: str) -> DocumentStudent:
         student = student_factory(student_uname, curri_short_name)
         waec = documenttype_factory("waec")
@@ -177,6 +182,7 @@ def documentdonor_factory(
     donor_factory, documenttype_factory, data_file
 ) -> DocumentDonorFactory:
     """Return a callable to build documents for donors."""
+
     def _make(donor_uname: str) -> DocumentDonor:
         donor = donor_factory(donor_uname)
         acc_letter = documenttype_factory("letter_of_accreditation")
@@ -193,6 +199,7 @@ def documentstaff_factory(
     staff_factory, documenttype_factory, data_file
 ) -> DocumentStaffFactory:
     """Return a callable to build documents for Staff."""
+
     def _make(staff_uname: str) -> DocumentStaff:
         staff = staff_factory(staff_uname)
         ref_letter = documenttype_factory("letter_of_reference")

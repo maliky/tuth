@@ -1,4 +1,5 @@
 """Core module."""
+
 from app.people.models.role_assignment import RoleAssignment
 from app.registry.admin.inlines import DocumentStaffInline, DocumentStudentInline
 from django.contrib import admin
@@ -29,6 +30,7 @@ class FacultyAdmin(CollegeRestrictedAdmin):
     Displays the staff profile with optional filtering by college. The faculty
     resource is used for import/export operations.
     """
+
     # form =
     resource_class = FacultyResource
     form = FacultyForm
@@ -82,6 +84,7 @@ class DonorAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
 
     Shows each donor's user and ID with autocomplete for the user relation.
     """
+
     form = DonorForm
     list_display = ("user", "donor_id")
     search_fields = ("donor_id", "user__long_name")
@@ -109,6 +112,7 @@ class StaffAdmin(DepartmentRestrictedAdmin):
     Provides detailed fieldsets for personal and work information. Important
     fields like staff_id are read-only to avoid accidental edits.
     """
+
     form = StaffForm
     list_display = ("long_name", "staff_id", "position", "roles")
     search_fields = ("staff_id", "username", "long_name", "department")
@@ -144,6 +148,7 @@ class StudentAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
     list_display shows the related user and student ID with search enabled
     on both fields. Import/export is supported via ImportExportModelAdmin.
     """
+
     form = StudentForm
     list_display = (
         "long_name",

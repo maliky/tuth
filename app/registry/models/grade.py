@@ -1,4 +1,5 @@
 """Grade records for completed course sections."""
+
 from typing import Self, cast
 
 from app.registry.choices import GradeChoice
@@ -10,6 +11,7 @@ from app.registry.constants import GRADES_DESCRIPTION, GRADES_NUM
 
 class GradeValue(models.Model):
     """A class to define the different Grade types."""
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     code = models.CharField(
         choices=GradeChoice.choices, default=GradeChoice.IP, unique=True
@@ -61,6 +63,7 @@ class Grade(models.Model):
         ...     grade="A",
         ... )
     """
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     student = models.ForeignKey("people.Student", on_delete=models.CASCADE)
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)

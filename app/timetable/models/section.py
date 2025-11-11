@@ -1,4 +1,5 @@
 """Section module."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Set
@@ -30,6 +31,7 @@ class Section(models.Model):
     Side Effects:
         Section numbers auto-increment
     """
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     semester = models.ForeignKey("timetable.Semester", on_delete=models.PROTECT)
     curriculum_course = models.ForeignKey(

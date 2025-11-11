@@ -1,4 +1,5 @@
 """Staffs module."""
+
 from datetime import date
 from itertools import count
 from typing import Self, cast
@@ -27,6 +28,7 @@ class Staff(AbstractPerson):
     Side Effects:
         save() from :class:AbstractPerson sets staff_id.
     """
+
     ID_FIELD = "staff_id"
     ID_PREFIX = "TU-STF"
     GROUP = "Staff"

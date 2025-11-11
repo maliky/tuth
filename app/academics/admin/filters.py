@@ -1,4 +1,5 @@
 """Filters module."""
+
 from admin_searchable_dropdown.filters import (
     AutocompleteFilter,
     AutocompleteFilterFactory,
@@ -39,6 +40,7 @@ CurriculumFilterAc = AutocompleteFilterFactory(
 
 class CurriculumBySemesterFilterAc(AutocompleteFilter):
     """Returns the curriculum having section for a specific semester."""
+
     title = "Curriculum"
     field_name = "curriculum_course__curriculum"
 

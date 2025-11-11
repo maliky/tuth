@@ -1,4 +1,5 @@
 """Financial record module."""
+
 from __future__ import annotations
 
 from typing import Self, cast
@@ -12,6 +13,7 @@ from app.shared.mixins import SimpleTableMixin
 
 class ClearanceStatus(SimpleTableMixin):
     """Clearance Statuses."""
+
     DEFAULT_VALUES = [
         ("pending", "Pending"),
         ("cleared", "Cleared"),
@@ -31,6 +33,7 @@ class ClearanceStatus(SimpleTableMixin):
 
 class PaymentMethod(SimpleTableMixin):
     """Payment method statuses."""
+
     DEFAULT_VALUES = [
         ("wire", "Wire"),
         ("mobile", "Mobile Money"),
@@ -49,6 +52,7 @@ class PaymentMethod(SimpleTableMixin):
 
 class FeeType(SimpleTableMixin):
     """Enumeration of fee types."""
+
     DEFAULT_VALUES = [
         ("tuition", "Tuition"),
         ("research", "Research"),
@@ -89,6 +93,7 @@ class Payment(StatusableMixin, models.Model):
         ... )
         >>> Payment.objects.create(student=student_profile, total_due=0)
     """
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     invoice = models.ForeignKey(
         "finance.Invoice",
@@ -158,6 +163,7 @@ class SectionFee(models.Model):
         ... )
         >>> SectionFee.objects.create(section=section, fee_type=FeeType.LAB, amount=50)
     """
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)
     fee_type = models.ForeignKey(

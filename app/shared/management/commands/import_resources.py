@@ -5,6 +5,7 @@ models such as faculty, rooms and timetable elements. It ensures a superuser
 account exists and then creates or updates database records via the admin
 resources for each model.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -36,6 +37,7 @@ from app.timetable.admin.resources.session import (
 
 class Command(BaseCommand):
     """Load sections and sessions from cleaned_tscc.csv or provided file."""
+
     help = "Import resources from a CSV file"
 
     def add_arguments(self, parser: CommandParser) -> None:

@@ -1,4 +1,5 @@
 """Scholarship module."""
+
 from __future__ import annotations
 
 from django.db import models
@@ -13,6 +14,7 @@ def template_upload_path(instance, filename):
 
 class ScholarshipLetterTemplate(models.Model):
     """Reusable document templates for donor letters."""
+
     donor = models.ForeignKey(
         "people.Donor",
         on_delete=models.SET_NULL,
@@ -60,6 +62,7 @@ class Scholarship(models.Model):
         ...     start_date=date.today(),
         ... )
     """
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     donor = models.ForeignKey(
         "people.Donor",
@@ -94,6 +97,7 @@ class Scholarship(models.Model):
 
 class ScholarshipTermSnapshot(models.Model):
     """Stores per-semester GPA data used for scholarship compliance."""
+
     student = models.ForeignKey(
         "people.Student",
         on_delete=models.CASCADE,

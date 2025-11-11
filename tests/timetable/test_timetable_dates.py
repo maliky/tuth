@@ -1,4 +1,5 @@
 """Test timetable dates module."""
+
 from datetime import date
 
 import pytest

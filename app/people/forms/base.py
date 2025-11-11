@@ -1,4 +1,5 @@
 """The base form to manipulate users in Admin."""
+
 from __future__ import annotations
 from typing import Any, Dict
 from app.shared.types import FieldT
@@ -13,6 +14,7 @@ class PersonFormMixin(forms.ModelForm):
     Add four fields to update or create the user on the fly.
     Set constantes to be display on the admin interface.
     """
+
     USER_FIELDS = ("first_name", "last_name", "username", "email")
 
     STANDARD_USER_FIELDS = (

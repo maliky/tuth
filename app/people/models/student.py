@@ -1,4 +1,5 @@
 """people Student module."""
+
 # app/people/models/student.py
 
 from __future__ import annotations
@@ -29,6 +30,7 @@ class Student(AbstractPerson):
     Side Effects:
         save() from :class:AbstractPerson populates student_id.
     """
+
     ID_FIELD = "student_id"
     ID_PREFIX = "TU-STD"
     EMAIL_SUFFIX = ".stud@tubmanu.edu.lr"

@@ -1,4 +1,5 @@
 """Test donor people module."""
+
 import pytest
 
 from app.people.models.donor import Donor

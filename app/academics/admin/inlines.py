@@ -1,4 +1,5 @@
 """Inlines module."""
+
 from django.contrib import admin
 
 from app.academics.models.prerequisite import Prerequisite
@@ -7,6 +8,7 @@ from app.academics.models.course import CurriculumCourse, Course
 
 class RequiresInline(admin.TabularInline):
     """Inline editor for Prerequisite needed by a course."""
+
     model = Prerequisite
     fk_name = "course"
     verbose_name_plural = "Prerequisites this course needs"
@@ -17,6 +19,7 @@ class RequiresInline(admin.TabularInline):
 
 class PrerequisiteInline(admin.TabularInline):
     """Inline showing courses that depend on the current course."""
+
     model = Prerequisite
     fk_name = "prerequisite_course"
     verbose_name_plural = "Courses that require this course"
@@ -27,6 +30,7 @@ class PrerequisiteInline(admin.TabularInline):
 
 class CourseCurriculumInline(admin.TabularInline):
     """Inline for linking  curriculum to course."""
+
     model = CurriculumCourse
     fk_name = "course"
     verbose_name_plural = "Curricula with this course."
@@ -37,6 +41,7 @@ class CourseCurriculumInline(admin.TabularInline):
 
 class CurriculumCourseInline(admin.TabularInline):
     """Inline for linking courses to a curriculum."""
+
     model = CurriculumCourse
     fk_name = "curriculum"
     verbose_name_plural = "Courses in this curriculum."
@@ -47,6 +52,7 @@ class CurriculumCourseInline(admin.TabularInline):
 
 class DepartmentCourseInline(admin.TabularInline):
     """Inline courses of a department."""
+
     model = Course
     fk_name = "department"
     verbose_name_plural = "Courses offered by this department "

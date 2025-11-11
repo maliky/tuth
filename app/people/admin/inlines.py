@@ -1,4 +1,5 @@
 """Inlines forms for the admin interface of people."""
+
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm

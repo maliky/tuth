@@ -1,4 +1,5 @@
 """Import/export resources for section models."""
+
 from import_export import fields, resources
 
 from app.academics.admin.widgets import CurriculumCourseWidget

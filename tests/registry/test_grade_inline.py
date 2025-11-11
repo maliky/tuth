@@ -1,4 +1,5 @@
 """Tests for grade entry inline."""
+
 import pytest
 
 # from django.urls import reverse

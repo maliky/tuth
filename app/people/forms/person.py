@@ -1,4 +1,5 @@
 """Defines model forms for the people module."""
+
 from app.people.forms.base import PersonFormMixin
 from app.people.models.donor import Donor
 from app.people.models.staffs import Staff

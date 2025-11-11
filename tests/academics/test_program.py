@@ -1,4 +1,5 @@
 """Test for the curriculum_course model of academics."""
+
 import pytest
 from django.db import IntegrityError, transaction
 

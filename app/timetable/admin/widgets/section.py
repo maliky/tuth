@@ -1,4 +1,5 @@
 """timetable.admin.widgets.section module."""
+
 from typing import Optional, cast
 
 from import_export import widgets
@@ -11,6 +12,7 @@ from app.timetable.models.section import Section
 
 class SectionWidget(widgets.ForeignKeyWidget):
     """Create a Section from multiple CSV columns."""
+
     def __init__(self):
         super().__init__(Section)  # using pk until export is done
         self.curriculum_course_w = CurriculumCourseWidget()
@@ -58,6 +60,7 @@ class SectionWidget(widgets.ForeignKeyWidget):
 
 class SectionCodeWidget(widgets.Widget):
     """Resolve YY-YY_SemN:sec_no codes into :class:Section objects."""
+
     def __init__(self) -> None:
         super().__init__(Section)
         self.sem_w = SemesterWidget()

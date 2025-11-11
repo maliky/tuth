@@ -1,4 +1,5 @@
 """Tests for importing users and assigning groups to them."""
+
 from app.people.models.student import Student
 import pytest
 from tablib import Dataset

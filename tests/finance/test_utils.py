@@ -1,4 +1,5 @@
 """Tests for finance utility functions."""
+
 from decimal import Decimal
 
 import pytest

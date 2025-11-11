@@ -1,4 +1,5 @@
 """Tests for Course participant querysets."""
+
 from datetime import date, timedelta
 
 import pytest

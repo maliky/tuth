@@ -1,4 +1,5 @@
 """Filters for the registry models in Admin."""
+
 from admin_searchable_dropdown.filters import (
     AutocompleteFilterFactory,
     AutocompleteFilter,
@@ -11,6 +12,7 @@ from urllib.parse import urlencode
 
 class SectionBySemesterFilter(AutocompleteFilter):
     """Dropdow for Section dependings on Semester filter."""
+
     title = "Section"
     field_name = "section"
 
@@ -40,6 +42,7 @@ SectionSemesterFilterAc = AutocompleteFilterFactory(
 
 class SemesterFilter(admin.SimpleListFilter):
     """Filter queryset by semester with a current semester default."""
+
     title = "semester"
     parameter_name = "semester"
 

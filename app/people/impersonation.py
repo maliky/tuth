@@ -1,4 +1,5 @@
 """Helpers for django-impersonate integration."""
+
 from __future__ import annotations
 
 from typing import Iterable

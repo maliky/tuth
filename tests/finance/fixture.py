@@ -2,6 +2,7 @@
 
 Factories return callables for creating additional objects on demand.
 """
+
 # >! TO REVIEW after modification of finance module models
 # from __future__ import annotations
 

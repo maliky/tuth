@@ -1,4 +1,5 @@
 """Test module for Academic Prerequisite."""
+
 import pytest
 from django.db import IntegrityError, transaction
 

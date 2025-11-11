@@ -1,4 +1,5 @@
 """Tests for the Group admin customization."""
+
 import pytest
 from django.urls import reverse
 

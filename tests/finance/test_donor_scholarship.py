@@ -1,4 +1,5 @@
 """Test donor scholarship module."""
+
 # from datetime import date
 
 # import pytest

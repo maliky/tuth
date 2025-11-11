@@ -11,6 +11,7 @@ Example:
         python manage.py migrate
         python manage.py populate_initial_data
 """
+
 from app.shared.auth.helpers import ensure_superuser
 from django.core.management.base import BaseCommand
 from django.db import connection
@@ -27,6 +28,7 @@ class Command(BaseCommand):
         This operation is destructive and should never be executed on a
         production database.
     """
+
     help = "Completely resets the database by dropping all tables."
 
     def handle(self, *args, **options):

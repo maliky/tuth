@@ -1,4 +1,5 @@
 """Faculty class."""
+
 from typing import Any, Dict, Self, Tuple, cast
 
 from django.core.exceptions import ValidationError
@@ -13,6 +14,7 @@ from app.timetable.models.semester import Semester
 
 class FacultyManager(models.Manager):
     """Custom creation Management."""
+
     STAFF_KWARGS = {
         # ~~~~ Staff.Userfields ~~~~
         "username",
@@ -69,6 +71,7 @@ class Faculty(models.Model):
     Side Effects:
         save() assigns the default college when none is set.
     """
+
     GROUP = "Faculty"
     STAFF_STATUS = True
 
@@ -162,6 +165,7 @@ class Faculty(models.Model):
 
 class FacultyWorkloadSnapshot(models.Model):
     """Historical workload metrics captured per semester for auditing overloads."""
+
     faculty = models.ForeignKey(
         "people.Faculty",
         on_delete=models.CASCADE,

@@ -4,6 +4,7 @@ Each file is mapped to a ModelResource class used for validation and
 insertion. Running this command requires a superuser and results in database
 records being created or updated for each resource type found.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -35,6 +36,7 @@ from app.timetable.admin.resources.session import (
 
 class Command(BaseCommand):
     """Import data dumps produced by the split-csv notebook / script."""
+
     help = "Import resources from individual CSV files found in a directory."
     #: Mapping filename → (label, ResourceClass)
     FILEMAP: dict[str, Tuple[str, type[resources.ModelResource]]] = {

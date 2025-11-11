@@ -6,6 +6,7 @@ $ python manage.py load_permissions
 is automatically invoked by *import_resources* so a fresh dataset always
 ships with a coherent permission matrix.
 """
+
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import Group, Permission
@@ -16,6 +17,7 @@ from app.shared.auth.perms import APP_MODELS, UserRole
 
 class Command(BaseCommand):
     """CLI helper available as manage.py load_permissions."""
+
     help = "Load perms.yaml and rebuild Group → Permission relations."
 
     # > what's this *_ and **__ ?

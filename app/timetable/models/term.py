@@ -1,4 +1,5 @@
 """Term module."""
+
 from __future__ import annotations
 
 from django.db import models
@@ -14,6 +15,7 @@ class Term(models.Model):
     Example:
         >>> Term.objects.create(semester=semester, number=1)
     """
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     semester = models.ForeignKey(
         "timetable.Semester", on_delete=models.PROTECT, related_name="terms"

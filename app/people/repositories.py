@@ -1,4 +1,5 @@
 """Data access helpers for the people app."""
+
 from __future__ import annotations
 from typing import cast
 
@@ -15,6 +16,7 @@ User = get_user_model()
 
 class PeopleRepository:
     """Encapsulate common atomic operations."""
+
     @staticmethod
     @transaction.atomic
     def get_or_create_faculty(name: str, college: College) -> Faculty:

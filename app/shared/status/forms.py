@@ -1,4 +1,5 @@
 """Utility forms shared across the project."""
+
 from django import forms
 from django.core.exceptions import FieldDoesNotExist
 from django.forms import ChoiceField
@@ -12,6 +13,7 @@ class StatusHistoryForm(forms.ModelForm):
     The form limits the status choices to those defined on the related
     model so only valid transitions are offered.
     """
+
     class Meta:
         model = StatusHistory
         fields = ["status", "author"]

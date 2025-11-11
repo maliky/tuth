@@ -1,4 +1,5 @@
 """Test shared utils module."""
+
 from typing import Any
 from app.academics.models.college import College
 import pytest

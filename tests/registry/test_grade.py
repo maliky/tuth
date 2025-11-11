@@ -1,4 +1,5 @@
 """Tests for registry grade model."""
+
 from app.registry.models.grade import Grade, GradeValue
 import pytest
 from django.db import IntegrityError, transaction

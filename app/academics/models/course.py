@@ -1,4 +1,5 @@
 """Course module."""
+
 from __future__ import annotations
 
 from itertools import count
@@ -38,6 +39,7 @@ class Course(models.Model):
     Side Effects:
         save() populates code from name and number.
     """
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     number = models.CharField(max_length=10)  # e.g. 101
 
@@ -181,6 +183,7 @@ class CurriculumCourse(models.Model):
     Side Effects:
         save() defaults credit_hours to the course value when missing.
     """
+
     # ~~~~ Mandatory ~~~~
     # curriculum or major
     curriculum = models.ForeignKey(

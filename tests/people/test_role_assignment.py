@@ -1,4 +1,5 @@
 """Tests for unique constraints on RoleAssignment model."""
+
 from datetime import date
 
 import pytest

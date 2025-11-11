@@ -1,4 +1,5 @@
 """timetable.Core module."""
+
 from django.contrib import admin
 from django.db.models import Count
 from django.urls import reverse
@@ -22,6 +23,7 @@ class AcademicYearAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     SemesterInline. The listing is ordered by start date in descending
     order and grouped by the start date hierarchy.
     """
+
     list_display = ("long_name", "start_date", "end_date", "code")
     date_hierarchy = "start_date"
     inlines = [SemesterInline]
@@ -35,6 +37,7 @@ class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
     Provides import/export support and filters semesters by academic year.
     list_display shows the academic year, number and date range.
     """
+
     resource_class = SemesterResource
     list_display = (
         "academic_year",
@@ -84,6 +87,7 @@ class TermAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     number and date range. The ``number`` foreign key uses autocomplete to
     simplify selection.
     """
+
     list_display = ("semester", "number", "start_date", "end_date")
     list_filter = ("semester",)
     autocomplete_fields = ("semester",)

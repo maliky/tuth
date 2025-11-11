@@ -7,6 +7,7 @@ Usage::
     >>> staff = widget.clean("Dr. Jane Doe")
     >>> print(staff.long_name)
 """
+
 from app.people.models.student import Student
 from django.contrib.auth.models import User
 from import_export import widgets
@@ -64,6 +65,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
 
 class FacultyWidget(widgets.ForeignKeyWidget):
     """Ensure a Faculty entry exists for the given staff name."""
+
     def __init__(self):
         # field is "id" by default
         self._cache_faculty: dict[str, Faculty] = dict()
@@ -109,6 +111,7 @@ class FacultyWidget(widgets.ForeignKeyWidget):
 
 class StudentUserWidget(widgets.ForeignKeyWidget):
     """Ensure a Student User exists."""
+
     def __init__(self):
         # field is "id" by default
         super().__init__(User)
@@ -161,6 +164,7 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
 
 class UserStudentWidget(widgets.ForeignKeyWidget):
     """Import a User for a student exists."""
+
     def __init__(self):
         # field is "id" by default
         super().__init__(User)

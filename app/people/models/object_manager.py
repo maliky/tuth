@@ -1,4 +1,5 @@
 """Object Manger for People classes."""
+
 from typing import Any, Dict, Mapping, Optional, Tuple, cast
 from app.people.utils import mk_username
 from django.db.models import Manager
@@ -7,6 +8,7 @@ from django.contrib.auth.models import User
 
 class PersonManager(Manager):
     """Custom creation Management."""
+
     USER_KWARGS = {
         "user",
         # "username",

@@ -1,4 +1,5 @@
 """Smoke tests for the public landing page."""
+
 from __future__ import annotations
 
 import socket

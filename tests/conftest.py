@@ -2,6 +2,7 @@
 
 pytest auto-discover it.
 """
+
 from __future__ import annotations
 
 pytest_plugins = [

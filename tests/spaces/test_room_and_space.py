@@ -1,4 +1,5 @@
 """Verify Room / Space unique-constraint and default-room logic."""
+
 import pytest
 from django.db import transaction, IntegrityError
 

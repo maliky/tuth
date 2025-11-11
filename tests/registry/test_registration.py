@@ -1,4 +1,5 @@
 """Tests for registry registration model."""
+
 import pytest
 from django.db import IntegrityError, transaction
 

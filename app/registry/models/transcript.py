@@ -1,4 +1,5 @@
 """Transcript request tracking for the Registrar dashboard."""
+
 from __future__ import annotations
 
 from django.db import models
@@ -9,6 +10,7 @@ from app.shared.status.mixins import StatusableMixin
 
 class TranscriptRequestStatus(SimpleTableMixin):
     """Lookup table storing allowed states for transcript requests."""
+
     DEFAULT_VALUES = [
         ("pending", "Pending"),
         ("processing", "Processing"),
@@ -27,6 +29,7 @@ class TranscriptRequestStatus(SimpleTableMixin):
 
 class TranscriptRequest(StatusableMixin, models.Model):
     """Records a student's transcript request and its fulfillment status."""
+
     DELIVERY_CHOICES = [
         ("pickup", "Pick up at registrar"),
         ("email", "Email"),

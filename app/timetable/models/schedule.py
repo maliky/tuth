@@ -2,6 +2,7 @@
 
 It defines on moment on campus.  So we can visualize what it happening at that time.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, time, timedelta
@@ -22,6 +23,7 @@ class Schedule(models.Model):
     It's possible to have several session for the same schedule but it cannot be
     session of the same section (course).
     """
+
     # a ref date for the time
     REF_DATE = datetime(2009, 9, 1)
     # a time of ref for the start of the day

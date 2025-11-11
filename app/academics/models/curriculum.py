@@ -1,4 +1,5 @@
 """Curriculum module."""
+
 from __future__ import annotations
 from django.db.models import Count
 
@@ -16,6 +17,7 @@ from app.shared.status.mixins import StatusableMixin
 
 class CurriculumStatus(SimpleTableMixin):
     """Code/label pairs for curriculum validation status."""
+
     DEFAULT_VALUES = [
         ("pending", "Pending"),
         ("approved", "Approved"),
@@ -42,6 +44,7 @@ class Curriculum(StatusableMixin, models.Model):
     Credit hours usually total 120-128 (GE 30-40, Major/Specific 30-60,
     Minor/elective fills the remainder).
     """
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     short_name = models.CharField(max_length=40)
 

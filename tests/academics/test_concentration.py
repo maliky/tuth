@@ -1,4 +1,5 @@
 """Tests for the Academic Concentration model."""
+
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction

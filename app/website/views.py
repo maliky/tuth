@@ -1,4 +1,5 @@
 """Website views for the student dashboard."""
+
 from __future__ import annotations
 
 from collections import defaultdict
@@ -339,9 +340,12 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             locked_courses.append(course_payload)
 
     completed_credits = student.completed_credits
-    required_credits = student.curriculum.programs.aggregate(
-        total=Sum("credit_hours__code"),
-    ).get("total") or 0
+    required_credits = (
+        student.curriculum.programs.aggregate(
+            total=Sum("credit_hours__code"),
+        ).get("total")
+        or 0
+    )
     remaining_credits = max(required_credits - completed_credits, 0)
     gpa = (
         Grade.objects.filter(student=student)
@@ -901,6 +905,7 @@ def staff_role_dashboard(request: HttpRequest, role: str) -> HttpResponse:
 
 class PortalLoginView(LoginView):
     """Allow any active user to sign in, then hand off to portal redirect."""
+
     template_name = "website/portal_login.html"
 
     def get_success_url(self):
@@ -909,6 +914,7 @@ class PortalLoginView(LoginView):
 
 class PortalLogoutView(View):
     """Explicit logout that always redirects to the unified login."""
+
     http_method_names = ["get", "post", "head", "options"]
 
     def post(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:

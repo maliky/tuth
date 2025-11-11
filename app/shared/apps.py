@@ -1,4 +1,5 @@
 """Apps module."""
+
 # app/shared/apps.py
 from django.apps import AppConfig
 

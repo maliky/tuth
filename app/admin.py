@@ -1,4 +1,5 @@
 """Add the ability to handle user from the groupadmin view."""
+
 # admin.py
 from django import forms
 from django.contrib import admin

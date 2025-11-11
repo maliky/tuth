@@ -1,4 +1,5 @@
 """General utility helpers shared between apps."""
+
 from typing import Mapping, Optional, Tuple
 
 from app.academics.constants import COURSE_PATTERN

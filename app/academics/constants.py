@@ -4,6 +4,7 @@ It exposes the COURSE_PATTERN regular expression, maximum
 credit load for a student and enumerations for colleges and curriculum
 statuses.
 """
+
 import re
 
 MAX_STUDENT_CREDITS = 18

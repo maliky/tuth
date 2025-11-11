@@ -1,4 +1,5 @@
 """The form to manipulate faculty in the Admin."""
+
 from __future__ import annotations, division
 from typing import Any, Dict
 
@@ -11,6 +12,7 @@ from django.db import transaction
 
 class FacultyForm(forms.ModelForm):
     """Provide the form for editing a faculty user and the attached staff & user."""
+
     first_name = forms.CharField(label="first_name", required=True)
     last_name = forms.CharField(label="last_name", required=True)
 

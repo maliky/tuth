@@ -1,4 +1,5 @@
 """Role assignment module."""
+
 from __future__ import annotations
 
 from django.contrib.auth import get_user_model
@@ -22,6 +23,7 @@ class RoleAssignment(models.Model):
     The optional ``department`` field further scopes a role within a
     specific academic department, similar to ``college``.
     """
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     user = models.ForeignKey(
         "auth.User", on_delete=models.CASCADE, related_name="role_assignments"

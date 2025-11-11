@@ -1,4 +1,5 @@
 """Helpers to create demo users and roles during data population."""
+
 from typing import Dict
 
 from django.contrib.auth import get_user_model

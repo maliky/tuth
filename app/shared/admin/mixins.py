@@ -1,4 +1,5 @@
 """Admin mixins for object filtering by user affiliation."""
+
 from __future__ import annotations
 
 from typing import Optional, cast
@@ -18,6 +19,7 @@ class CollegeRestrictedAdmin(
     SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
 ):
     """Limit queryset to objects within the user's college."""
+
     college_field: str = "college"
 
     def get_user_college(self, request) -> Optional["College"]:
@@ -41,6 +43,7 @@ class DepartmentRestrictedAdmin(
     SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
 ):
     """Limit queryset to objects within the user's department."""
+
     department_field: str = "department"
 
     def get_user_department(self, request) -> Optional["Department"]:

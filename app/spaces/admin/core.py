@@ -1,4 +1,5 @@
 """Core module."""
+
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
@@ -16,6 +17,7 @@ class SpaceAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
 
     Exposes basic listing and search over the space code and name.
     """
+
     search_fields = ("code", "full_name")
     list_display = ("code", "full_name", "current_sections")
 
@@ -44,6 +46,7 @@ class RoomAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     SecSessionInline. The full_code field is read‑only and the space
     relation uses autocomplete.
     """
+
     resource_class = RoomResource
     fields = (
         "code",

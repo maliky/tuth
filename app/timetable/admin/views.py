@@ -1,10 +1,12 @@
 """Views for the  admin timetable module."""
+
 from admin_searchable_dropdown.views import AutocompleteJsonView
 from app.timetable.models import Section
 
 
 class SectionBySemesterAutocomplete(AutocompleteJsonView):
     """Returns the sections belonging to the semester passed in the query."""
+
     model_admin = None
 
     @staticmethod

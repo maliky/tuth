@@ -1,4 +1,5 @@
 """Test weekdays enum module."""
+
 from app.timetable.choices import WEEKDAYS_NUMBER
 
 

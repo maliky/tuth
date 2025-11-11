@@ -1,4 +1,5 @@
 """Module to test some function of the people app."""
+
 import pytest
 from django.db import IntegrityError, transaction
 

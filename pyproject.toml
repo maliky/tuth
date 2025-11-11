@@ -20,8 +20,10 @@ max-complexity = 15
 max-line-length = 90
 # The old ignore list: C901,W605,E203,D401,W503,D101,D107,D103,E501
 ignore = [
+  "B009",
   "C901",  # 'func' is too complex
   "D101",  # missing docstring in public class
+  "D102",
   "D103",  # missing docstring in public function/class
   "D105",  # Missing docstring in magic method  
   "D106",  # Missing docstring in public nested class
@@ -31,6 +33,7 @@ ignore = [
   "E203",  # whitespace before ':'
   "E501",  # line too long
   "E741",  # ambiguous variable name
+  "F401",
   "W503",  # line break before binary operator
   "W504",  # line break after binary operator
   "W605",  # invalid escape sequence

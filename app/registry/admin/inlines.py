@@ -1,4 +1,5 @@
 """Inlines for the registry admin interface."""
+
 from app.registry.models.document import DocumentStudent, DocumentStaff, DocumentDonor
 from django.contrib import admin
 
@@ -7,6 +8,7 @@ from app.registry.models.grade import Grade
 
 class GradeInline(admin.TabularInline):
     """Inline editor for Grade records in a section."""
+
     model = Grade
     fk_name = "section"
     extra = 0

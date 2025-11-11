@@ -1,4 +1,5 @@
 """Academic year module."""
+
 from __future__ import annotations
 
 from datetime import timedelta
@@ -18,6 +19,7 @@ class AcademicYear(models.Model):
     Side Effects:
         save() computes code and long_name.
     """
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     start_date = models.DateField(unique=True)
     end_date = models.DateField(unique=True, blank=True)

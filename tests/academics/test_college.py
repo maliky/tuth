@@ -1,4 +1,5 @@
 """Tests for the academic :class:`College` model."""
+
 from datetime import date
 
 import pytest

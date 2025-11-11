@@ -1,4 +1,5 @@
 """Core module for people."""
+
 from datetime import date
 
 from django.contrib.auth.models import Group, User
@@ -23,6 +24,7 @@ class AbstractPerson(models.Model):
     # https://docs.djangoproject.com/en/5.2/topics/auth/customizing/#django.contrib.auth.models.AbstractUser
 
     """
+
     class Meta:
         abstract = True
         ordering = ["user__first_name", "user__last_name"]

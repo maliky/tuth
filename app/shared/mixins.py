@@ -1,4 +1,5 @@
 """Shared mixins for admin and views."""
+
 from app.shared.utils import as_title
 from django.db import models
 from django.core.exceptions import ObjectDoesNotExist
@@ -6,6 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 class SimpleTableMixinManager(models.Manager):
     """Automatically create status on demand."""
+
     def get(self, *args, **kwargs):  # type: ignore[override]
         """Return existing credit hour or create it if missing."""
         try:
@@ -24,6 +26,7 @@ class SimpleTableMixin(models.Model):
     Documents, curriculum, etc. Code is a primary str key and label is the
     long format for display usage.
     """
+
     class Meta:
         abstract = True
         ordering = ["code"]

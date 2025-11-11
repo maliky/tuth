@@ -1,4 +1,5 @@
 """SecSession admin module."""
+
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
@@ -17,6 +18,7 @@ class SecSessionAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAd
     list_display exposes schedule, room and related section details. The
     list can be filtered by weekday or space.
     """
+
     resource_class = SecSessionResource
     list_display = (
         "schedule",
@@ -49,6 +51,7 @@ class ScheduleAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
 
     Allows filtering by weekday and supports import/export operations.
     """
+
     resource_class = ScheduleResource
     list_display = ("weekday", "start_time", "end_time")
     list_filter = ("weekday",)

@@ -1,4 +1,5 @@
 """Prerequisite module."""
+
 from __future__ import annotations
 
 from django.core.exceptions import ValidationError
@@ -15,6 +16,7 @@ class Prerequisite(models.Model):
     Side Effects:
         clean() prevents circular dependencies.
     """
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     course = models.ForeignKey(
         "academics.Course", related_name="course_prereq_edges", on_delete=models.CASCADE

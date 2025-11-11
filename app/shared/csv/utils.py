@@ -1,4 +1,5 @@
 """Utility helpers for management commands."""
+
 from django.core.management.base import BaseCommand
 
 from app.shared.constants import STYLE_DEFAULT

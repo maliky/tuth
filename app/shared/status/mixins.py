@@ -1,4 +1,5 @@
 """Mixins module."""
+
 from typing import Any, Iterable, Optional, cast
 
 from django.contrib.auth.models import User
@@ -23,6 +24,7 @@ class StatusHistory(models.Model):
         ...     author=user,
         ... )
     """
+
     created_at = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(
         "auth.User",
@@ -55,6 +57,7 @@ class StatusableMixin(models.Model):
         >>> class MyModel(StatusableMixin, models.Model):
         ...     status = models.ClearanceStatus(code="pending")
     """
+
     # > ! note this class may not be necessary with Simplehistory.  Needs testing.
     class Meta:
         abstract = True

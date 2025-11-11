@@ -1,4 +1,5 @@
 """Initialization for the models package."""
+
 from app.people.models.donor import Donor
 from app.people.models.student import Student
 from app.people.models.staffs import Staff

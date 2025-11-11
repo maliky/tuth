@@ -1,4 +1,5 @@
 """App/shared/management/commands/create_test_users.py."""
+
 from datetime import date
 from typing import Any, cast
 
@@ -18,6 +19,7 @@ from app.shared.auth.perms import APP_MODELS, UserRole
 
 class Command(BaseCommand):
     """Create test users using the UserRole."""
+
     help = "Create test users and assign them to role groups."
 
     def handle(self, *args, **options):

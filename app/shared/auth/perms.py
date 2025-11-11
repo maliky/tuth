@@ -1,4 +1,5 @@
 """Authentication constants used during data population."""
+
 import logging
 from dataclasses import dataclass
 from enum import Enum
@@ -62,6 +63,7 @@ APP_MODELS = {
 @dataclass(frozen=True)
 class RoleInfo:
     """Metadata attached to each user role."""
+
     code: str
     label: str
     model_path: str
@@ -95,6 +97,7 @@ class RoleInfo:
 
 class UserRole(Enum):
     """Self-describing user roles used throughout the app."""
+
     DONOR = RoleInfo("donor", "Donor", "people.Donor")
     CASHIER = RoleInfo("cashier", "Cashier", "people.Staff")
     STUDENT = RoleInfo("student", "Student", "people.Student")

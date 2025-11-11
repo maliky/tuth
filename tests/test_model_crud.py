@@ -1,4 +1,5 @@
 """CRUD smoke test for all registered models."""
+
 import pytest
 from django.apps import apps
 from model_bakery import baker
@@ -15,9 +16,14 @@ def _is_skippable(model):
 def _touch(model_instance):
     """Modify a text field to trigger an update."""
     for field in model_instance._meta.fields:
-        if field.editable and not field.primary_key and field.get_internal_type() in (
-            "CharField",
-            "TextField",
+        if (
+            field.editable
+            and not field.primary_key
+            and field.get_internal_type()
+            in (
+                "CharField",
+                "TextField",
+            )
         ):
             val = getattr(model_instance, field.name) or ""
             setattr(model_instance, field.name, f"{val}_upd")

@@ -1,4 +1,5 @@
 """Department model."""
+
 from __future__ import annotations
 
 from typing import Self, cast
@@ -14,6 +15,7 @@ class Department(models.Model):
 
     Example: see get_default()
     """
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     short_name = models.CharField(max_length=8)
     # would be good to restric this to a few dept.

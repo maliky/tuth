@@ -1,4 +1,5 @@
 """Tests for Space.get_default()."""
+
 import pytest
 
 from app.spaces.models.core import Space
