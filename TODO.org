@@ -1,7 +1,21 @@
 
+* <2025-11-11 mar. 22:52> Charting preferences
+ Important note. I am confortable with vega, vega-lite and d3js, so you I prefere those js librairy for charting when necessary
+
+* <2025-11-11 mar.> Enrollement Officer
+  You can remove the search and filter accross cohort as a link to the django admin exists and permits this already.  keep the Create student but reorder the fields in a more natural order marking the mandatory one with a red star and not forgetting the attachement, photo,
+At the creation of a student it's password should be his newly generated student id. but in the backend, create the student and then update his password to his student id.
+
+Look at the 
+  
+
+* <2025-11-11 mar. 22:26>  Registrar Officer
+  The links to the django Admin from the registrar officer is very good but we should have a like bringing him back to his dashboard.
+
+  
 * DONE <2025-11-11 mar. 22:14> change password for test_users
   CLOSED: [2025-11-11 mar. 22:20]
-  Passw0rd!
+  Passw0rd! or PassW0rd!
 
 * Need to work on data wrangling <2025-11-11 mar. 21:33>
 
@@ -25,9 +39,9 @@ you have full acces to run selenium test.  The issue you get is because somehow 
 * <2025-11-11 mar. 18:36>
  finaly connect the urls of enrollements tools and registrar tool into there respective dashboard.
 
-* <2025-11-11 mar. 18:37> harmozize design
- look at  [[file:Docs/tu-web-design-guide.org][Tusis Web Design Guide]] to propose an admin dashboard following same general theme.  Propose a color variation to mark that we are in the admin and only keep the mobile-first approach for the sutdent dashboard not for the staff dashboards.
-  Add you style guide propositions for student and staff dashboar below in tu-web-design-guide.org
+* <2025-11-11 mar. 18:37> harmonise design
+ Look at  [[file:Docs/tu-web-design-guide.org][Tusis Web Design Guide]] to propose Staff/django dashboard following same general theme and styles.  Propose a color variation to mark that we are in the admin but  keep the mobile-first approach for the student dashboard.  You should drop that constraint for staff dashboards.
+Add your style guideline for the student and the staff dashboard  in 2 new entries in tu-web-design-guide.org
   
 * Main redirection from same login page 
 ** Student
