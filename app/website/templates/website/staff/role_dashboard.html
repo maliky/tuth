@@ -12,6 +12,25 @@
     <a class="btn btn-outline-secondary btn-sm mt-3 mt-md-0" href="{% url 'portal_logout' %}">Log out</a>
   </header>
 
+  {% if actions %}
+    <div class="row g-3 mb-4">
+      {% for action in actions %}
+        <div class="col-md-4 col-sm-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex flex-column">
+              {% if action.description %}
+                <p class="small text-muted mb-2">{{ action.description }}</p>
+              {% endif %}
+              <a class="btn btn-{{ action.variant|default:'primary' }} mt-auto" href="{{ action.href }}">
+                {{ action.label }}
+              </a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
   {% if metrics %}
     <div class="row g-3 mb-4">
       {% for metric in metrics %}

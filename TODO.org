@@ -1,3 +1,13 @@
+* <2025-11-11 mar. 18:36> adding dashboard for roles
+  I logged in as a registrar and go to the staff/dashboard but showing the registrar dashboard. that is ok.  I then tried to acces http://127.0.0.1:8000/registrar/course-windows I was denied access. This is ok because a simple registrar must not have autorisation to change the semester.  But you need to create the dashboard for all the roles present in app/shared/auth/perms.py
+  You should use role hiearchy,  officer / non officer to build  dashboard functionalities for non officer that can be accessed by officer by not vice versa.  keep the separation for faculty chair dean vpaa for usability concerns.  finance and cashier are both under finance officer, staff is the most basic role. it can acces his own information and update it if necessary.
+* <2025-11-11 mar. 18:36>
+ finaly connect the urls of enrollements tools and registrar tool into there respective dashboard.
+
+* <2025-11-11 mar. 18:37> harmozize design
+  look at [[file:journal.org::*Tusis Web Design Guide]] to propose an admin dashboard following same general theme.  Propose a color variation to mark that we are in the admin and only keep the mobile-first approach for the sutdent dashboard not for the staff dashboards.
+  Insert you style guide propositions for student and staff below
+  
 * Main redirection from same login page 
 ** Student
    What is proposed is acceptable

@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
+from django.urls import NoReverseMatch, reverse
 
 from app.academics.models.curriculum import Curriculum
 from app.finance.models.invoice import Invoice
@@ -15,6 +16,8 @@ from app.finance.models.scholarship import (
     ScholarshipTermSnapshot,
 )
 from app.people.models.faculty import Faculty, FacultyWorkloadSnapshot
+from app.people.models.student import Student
+from app.registry.models.document import DocumentStudent
 from app.registry.models.grade import Grade
 from app.registry.models.registration import Registration
 from app.registry.models.transcript import TranscriptRequest
@@ -26,11 +29,18 @@ ADMIN_PORTAL_GROUPS = {"System Administrator", "IT Support"}
 ROLE_PRIORITY = [
     "vpaa",
     "dean",
-    "registrar",
-    "scholarship",
-    "finance",
     "chair",
-    "instructor",
+    "faculty",
+    "registrar_officer",
+    "registrar",
+    "enrollment_officer",
+    "enrollment",
+    "finance_officer",
+    "finance",
+    "cashier",
+    "scholarship",
+    "it",
+    "staff",
     "general",
 ]
 
@@ -67,7 +77,75 @@ def _empty_role_context(message: str) -> dict[str, list]:
     }
 
 
-def _build_instructor_context(request: HttpRequest) -> dict:
+def _maybe_reverse(name: str, args: list | tuple | None = None, kwargs: dict | None = None) -> str:
+    try:
+        return reverse(name, args=args, kwargs=kwargs)
+    except NoReverseMatch:
+        return ""
+
+
+def _with_actions(context: dict, extra: list[dict]) -> dict:
+    merged = dict(context)
+    merged_actions = list(context.get("actions", []))
+    merged_actions.extend(extra)
+    merged["actions"] = merged_actions
+    return merged
+
+
+def _build_staff_context(request: HttpRequest) -> dict:
+    staff_profile = getattr(request.user, "staff", None)
+    metrics = [{"label": "Username", "value": request.user.username}]
+    if staff_profile and staff_profile.employment_date:
+        metrics.append(
+            {
+                "label": "Employment start",
+                "value": staff_profile.employment_date.strftime("%b %d, %Y"),
+            }
+        )
+
+    profile_items = [
+        {
+            "label": "Staff ID",
+            "value": staff_profile.staff_id,
+            "meta": staff_profile.position or "",
+        },
+        {
+            "label": "Department",
+            "value": str(staff_profile.department or "Unassigned"),
+            "meta": staff_profile.division or "",
+        },
+        {
+            "label": "Contact email",
+            "value": request.user.email or "Not set",
+        },
+    ] if staff_profile else [
+        {
+            "label": "No staff profile",
+            "value": "Ask HR to complete your onboarding record.",
+        }
+    ]
+
+    actions = []
+    if staff_profile:
+        edit_url = _maybe_reverse("admin:people_staff_change", args=[staff_profile.pk])
+        if edit_url:
+            actions.append(
+                {
+                    "label": "Edit my staff profile",
+                    "href": edit_url,
+                    "description": "Update contact information or department details.",
+                    "variant": "outline-primary",
+                }
+            )
+
+    return {
+        "metrics": metrics,
+        "panels": [{"title": "Profile", "items": profile_items}],
+        "actions": actions,
+    }
+
+
+def _build_faculty_context(request: HttpRequest) -> dict:
     faculty = _get_faculty_profile(request.user)
     if not faculty:
         return _empty_role_context("No faculty profile linked to this account yet.")
@@ -218,6 +296,73 @@ def _build_vpaa_context(_: HttpRequest) -> dict:
     }
 
 
+def _build_enrollment_context(_: HttpRequest) -> dict:
+    students_qs = Student.objects.select_related("curriculum")
+    total_students = students_qs.count()
+    onboarding = students_qs.filter(current_enrolled_semester__isnull=True).count()
+    pending_docs = DocumentStudent.objects.filter(status__code="pending").count()
+    recent_students = list(students_qs.order_by("-id")[:6])
+    student_items = [
+        {
+            "label": student.long_name,
+            "value": student.curriculum.short_name if student.curriculum else "--",
+            "meta": student.student_id,
+        }
+        for student in recent_students
+    ] or [
+        {
+            "label": "No students yet",
+            "value": "Add your first profile to get started.",
+        }
+    ]
+
+    actions = [
+        {
+            "label": "Open student directory",
+            "href": reverse("student_list"),
+            "description": "Search and filter records across cohorts.",
+            "variant": "outline-primary",
+        },
+        {
+            "label": "Create student",
+            "href": reverse("create_student"),
+            "description": "Register a new student profile from admissions paperwork.",
+            "variant": "primary",
+        },
+    ]
+
+    return {
+        "metrics": [
+            {"label": "Total students", "value": total_students},
+            {"label": "Awaiting enrollment", "value": onboarding},
+            {"label": "Docs pending", "value": pending_docs},
+        ],
+        "panels": [
+            {
+                "title": "Recently created",
+                "items": student_items,
+            }
+        ],
+        "actions": actions,
+    }
+
+
+def _build_enrollment_officer_context(request: HttpRequest) -> dict:
+    context = _build_enrollment_context(request)
+    bulk_url = _maybe_reverse("admin:people_student_changelist")
+    extras = []
+    if bulk_url:
+        extras.append(
+            {
+                "label": "Bulk edit students",
+                "href": bulk_url,
+                "description": "Jump to Django admin for mass updates.",
+                "variant": "outline-secondary",
+            }
+        )
+    return _with_actions(context, extras)
+
+
 def _build_registrar_context(_: HttpRequest) -> dict:
     pending_qs = TranscriptRequest.objects.filter(status__code="pending")
     pending_transcripts = list(
@@ -240,7 +385,10 @@ def _build_registrar_context(_: HttpRequest) -> dict:
     return {
         "metrics": [
             {"label": "Pending transcripts", "value": pending_qs.count()},
-            {"label": "Registrations pending clearance", "value": registration_anomalies},
+            {
+                "label": "Registrations pending clearance",
+                "value": registration_anomalies,
+            },
         ],
         "panels": [
             {
@@ -250,6 +398,29 @@ def _build_registrar_context(_: HttpRequest) -> dict:
         ],
         "actions": [],
     }
+
+
+def _build_registrar_officer_context(request: HttpRequest) -> dict:
+    base = _build_registrar_context(request)
+    extras = [
+        {
+            "label": "Manage semester windows",
+            "href": reverse("registrar_course_windows"),
+            "description": "Open or close registration and grading periods.",
+            "variant": "warning",
+        }
+    ]
+    admin_url = _maybe_reverse("admin:timetable_semester_changelist")
+    if admin_url:
+        extras.append(
+            {
+                "label": "Review semester setup",
+                "href": admin_url,
+                "description": "Audit statuses directly in Django admin.",
+                "variant": "outline-secondary",
+            }
+        )
+    return _with_actions(base, extras)
 
 
 def _build_scholarship_context(_: HttpRequest) -> dict:
@@ -291,6 +462,27 @@ def _build_scholarship_context(_: HttpRequest) -> dict:
 def _build_finance_context(_: HttpRequest) -> dict:
     pending_payments = Payment.objects.filter(status__code="pending").count()
     invoice_count = Invoice.objects.count()
+    actions = []
+    invoice_admin = _maybe_reverse("admin:finance_invoice_changelist")
+    if invoice_admin:
+        actions.append(
+            {
+                "label": "Review invoices",
+                "href": invoice_admin,
+                "description": "Open the finance register filtered by status.",
+                "variant": "outline-primary",
+            }
+        )
+    payment_admin = _maybe_reverse("admin:finance_payment_changelist")
+    if payment_admin:
+        actions.append(
+            {
+                "label": "Validate payments",
+                "href": payment_admin,
+                "description": "Confirm proof of payment submissions.",
+                "variant": "primary",
+            }
+        )
     return {
         "metrics": [
             {"label": "Outstanding invoices", "value": invoice_count},
@@ -308,8 +500,46 @@ def _build_finance_context(_: HttpRequest) -> dict:
                 ],
             }
         ],
-        "actions": [],
+        "actions": actions,
     }
+
+
+def _build_cashier_context(request: HttpRequest) -> dict:
+    base = _build_finance_context(request)
+    quick_entry = _maybe_reverse("admin:finance_payment_add")
+    extras: list[dict] = []
+    if quick_entry:
+        extras.append(
+            {
+                "label": "Record payment",
+                "href": quick_entry,
+                "description": "Jump straight to the cashier form in admin.",
+                "variant": "success",
+            }
+        )
+    return _with_actions(base, extras)
+
+
+def _build_finance_officer_context(request: HttpRequest) -> dict:
+    base = _build_finance_context(request)
+    scholarship_admin = _maybe_reverse("admin:finance_scholarship_changelist")
+    extras = []
+    if scholarship_admin:
+        extras.append(
+            {
+                "label": "Manage scholarships",
+                "href": scholarship_admin,
+                "description": "Adjust donor awards and compliance snapshots.",
+                "variant": "outline-secondary",
+            }
+        )
+    return _with_actions(base, extras)
+
+
+def _build_it_context(_: HttpRequest) -> dict:
+    return _empty_role_context(
+        "IT support tasks live in the Django admin and infrastructure tools."
+    )
 
 
 def _build_general_context(_: HttpRequest) -> dict:
@@ -317,11 +547,17 @@ def _build_general_context(_: HttpRequest) -> dict:
 
 
 ROLE_CONFIG = {
-    "instructor": {
-        "groups": {"Instructor"},
+    "staff": {
+        "groups": {"Staff"},
+        "title": "My Staff Workspace",
+        "summary": "Personal contact info and HR shortcuts.",
+        "builder": _build_staff_context,
+    },
+    "faculty": {
+        "groups": {"Faculty", "Instructor"},
         "title": "Instruction Hub",
         "summary": "Teaching schedule and grading tasks.",
-        "builder": _build_instructor_context,
+        "builder": _build_faculty_context,
     },
     "chair": {
         "groups": {"Chair"},
@@ -336,7 +572,7 @@ ROLE_CONFIG = {
         "builder": _build_dean_context,
     },
     "vpaa": {
-        "groups": {"VPAA"},
+        "groups": {"VPAA", "Vice President Academic Affairs"},
         "title": "VPAA Approval Hub",
         "summary": "Centralized decisions for overloads and policies.",
         "builder": _build_vpaa_context,
@@ -347,17 +583,53 @@ ROLE_CONFIG = {
         "summary": "Transcript fulfillment and live enrollment checks.",
         "builder": _build_registrar_context,
     },
+    "registrar_officer": {
+        "groups": {"Registrar Officer"},
+        "title": "Registrar Officer Console",
+        "summary": "Semester windows and official roster controls.",
+        "builder": _build_registrar_officer_context,
+    },
+    "enrollment": {
+        "groups": {"Enrollment"},
+        "title": "Enrollment Desk",
+        "summary": "Student onboarding and document tracking.",
+        "builder": _build_enrollment_context,
+    },
+    "enrollment_officer": {
+        "groups": {"Enrollment Officer"},
+        "title": "Enrollment Officer Desk",
+        "summary": "Supervise onboarding workflows and mass updates.",
+        "builder": _build_enrollment_officer_context,
+    },
+    "finance": {
+        "groups": {"Finance"},
+        "title": "Finance & Holds",
+        "summary": "Invoice tracking and payment validation.",
+        "builder": _build_finance_context,
+    },
+    "cashier": {
+        "groups": {"Cashier"},
+        "title": "Cashier Station",
+        "summary": "Capture walk-in payments and receipt uploads.",
+        "builder": _build_cashier_context,
+    },
+    "finance_officer": {
+        "groups": {"Finance Officer"},
+        "title": "Finance Officer Control",
+        "summary": "Oversee scholarships, invoices, and payment proofs.",
+        "builder": _build_finance_officer_context,
+    },
     "scholarship": {
         "groups": {"Scholarship Officer"},
         "title": "Scholarship Office",
         "summary": "Donor letters and GPA compliance snapshots.",
         "builder": _build_scholarship_context,
     },
-    "finance": {
-        "groups": {"Financial Officer", "Cashier"},
-        "title": "Finance & Holds",
-        "summary": "Invoice tracking and payment validation.",
-        "builder": _build_finance_context,
+    "it": {
+        "groups": {"IT", "IT Support"},
+        "title": "IT Support",
+        "summary": "Infrastructure, monitoring, and admin tooling.",
+        "builder": _build_it_context,
     },
     "general": {
         "groups": set(),
@@ -371,7 +643,10 @@ ROLE_CONFIG = {
 def _resolve_staff_role(user) -> str:
     group_names = _user_group_names(user)
     for slug in ROLE_PRIORITY:
-        config_groups = ROLE_CONFIG[slug]["groups"]
+        config = ROLE_CONFIG.get(slug)
+        if not config:
+            continue
+        config_groups = config["groups"]
         if not config_groups and slug == "general":
             continue
         if group_names.intersection(config_groups):
