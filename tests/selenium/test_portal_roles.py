@@ -16,7 +16,7 @@ from app.people.models.student import Student
 from app.timetable.models.semester import Semester
 from tests.selenium.test_landing_page import _can_bind_localhost
 
-TEST_PASSWORD = "Passw0rd!"
+TEST_PASSWORD = "PassW0rd!"
 
 ROLE_CASES = [
     ("instructor_user", {"groups": ["Instructor"]}, "Instruction Hub"),
