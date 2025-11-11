@@ -21,8 +21,8 @@ from tests.selenium.test_landing_page import _can_bind_localhost
 TEST_PASSWORD = "Passw0rd!"
 
 ROLE_CASES = [
-    ("student_user", {"student": True, "groups": []}, "Student Dashboard"),
     ("instructor_user", {"groups": ["Instructor"]}, "Instruction Hub"),
+    ("student_user", {"student": True, "groups": []}, "Student Dashboard"),
     ("chair_user", {"groups": ["Chair"]}, "Chair Curriculum Center"),
     ("dean_user", {"groups": ["Dean"]}, "Dean Oversight"),
     ("vpaa_user", {"groups": ["VPAA"]}, "VPAA Approval Hub"),
@@ -118,7 +118,7 @@ def test_role_dashboards(
     config,
     expected_heading,
 ):
-    """Each persona lands on the appropriate dashboard after login."""
+    """Each person lands on the appropriate dashboard after login."""
 
     portal_user_factory(username, **config)
     login_url = f"{live_server.url}{reverse('portal_login')}"

@@ -12,7 +12,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 
 def _can_bind_localhost() -> bool:
-    """Best-effort probe to verify the sandbox allows opening sockets."""
+    """Best-effort probe to verify the codex sandbox allows opening sockets."""
     sock: socket.socket | None = None
     try:
         sock = socket.socket()
@@ -50,8 +50,8 @@ def test_landing_page_renders_with_hero(live_server, selenium_driver) -> None:
     assert "mock-up landing page" in mockup_banner.text
 
 
-def test_tusis_button_routes_to_admin_login(live_server, selenium_driver) -> None:
-    """Validate that the Tusis CTA links to Django’s admin login."""
+def test_tusis_button_routes_to_portal_login(live_server, selenium_driver) -> None:
+    """Validate that the Tusis CTA links to the unified portal login."""
     url = f"{live_server.url}{reverse('landing')}"
     selenium_driver.get(url)
 
@@ -60,6 +60,7 @@ def test_tusis_button_routes_to_admin_login(live_server, selenium_driver) -> Non
     )
     tusis_button.click()
 
-    WebDriverWait(selenium_driver, 10).until(EC.title_contains("Log in"))
-    assert "Log in" in selenium_driver.title
-    assert "Django administration" in selenium_driver.page_source
+    WebDriverWait(selenium_driver, 10).until(
+        EC.presence_of_element_located((By.ID, "id_username"))
+    )
+    assert "Sign in" in selenium_driver.page_source
