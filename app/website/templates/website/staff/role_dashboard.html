@@ -1,74 +1,93 @@
 {% extends "website/base.html" %}
+{% load static %}
 {% block title %}{{ title }} · Tusis{% endblock %}
+{% block body_class %}staff-dashboard-body{% endblock %}
+{% block head_extra %}
+  <link rel="stylesheet" href="{% static 'css/staff-dashboard.css' %}">
+{% endblock %}
 
 {% block content %}
-<section class="container py-5">
-  <header class="mb-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+<section class="staff-dashboard container-xxl py-5">
+  <header class="staff-dashboard__header">
     <div>
-      <p class="text-uppercase text-muted small mb-1">{{ role_slug|title }}</p>
-      <h1 class="h3 mb-2">{{ title }}</h1>
-      <p class="text-muted mb-0">{{ summary }}</p>
+      <p class="staff-dashboard__eyebrow">{{ role_slug|title }}</p>
+      <h1 class="staff-dashboard__title">{{ title }}</h1>
+      <p class="staff-dashboard__summary">{{ summary }}</p>
     </div>
-    <a class="btn btn-outline-secondary btn-sm mt-3 mt-md-0" href="{% url 'portal_logout' %}">Log out</a>
+    <a class="staff-dashboard__logout" href="{% url 'portal_logout' %}">Log out</a>
   </header>
 
-  {% if actions %}
-    <div class="row g-3 mb-4">
-      {% for action in actions %}
-        <div class="col-md-4 col-sm-6">
-          <div class="card border-0 shadow-sm h-100">
-            <div class="card-body d-flex flex-column">
-              {% if action.description %}
-                <p class="small text-muted mb-2">{{ action.description }}</p>
+  <div class="staff-dashboard__grid">
+    <div class="staff-dashboard__primary">
+      {% if metrics %}
+        <div class="staff-dashboard__metrics">
+          {% for metric in metrics %}
+            <article class="metric-card">
+              <p class="metric-card__label">{{ metric.label }}</p>
+              <p class="metric-card__value">{{ metric.value }}</p>
+            </article>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% for panel in panels %}
+        <article class="panel-card">
+          <div class="panel-card__stripe"></div>
+          <div class="panel-card__body">
+            <div class="panel-card__head">
+              <h2>{{ panel.title }}</h2>
+              {% if panel.subtitle %}
+                <p class="panel-card__subtitle">{{ panel.subtitle }}</p>
               {% endif %}
-              <a class="btn btn-{{ action.variant|default:'primary' }} mt-auto" href="{{ action.href }}">
-                {{ action.label }}
-              </a>
             </div>
-          </div>
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
-
-  {% if metrics %}
-    <div class="row g-3 mb-4">
-      {% for metric in metrics %}
-        <div class="col-md-3 col-sm-6">
-          <div class="border rounded-3 p-3 bg-white shadow-sm h-100">
-            <p class="text-uppercase text-muted small mb-1">{{ metric.label }}</p>
-            <p class="h4 mb-0">{{ metric.value }}</p>
-          </div>
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
-
-  <div class="row g-4">
-    {% for panel in panels %}
-      <div class="col-md-6">
-        <div class="card border-0 shadow-sm h-100">
-          <div class="card-body">
-            <h2 class="h5">{{ panel.title }}</h2>
-            <ul class="list-unstyled mt-3 mb-0">
+            <ul class="panel-card__list">
               {% for item in panel.items %}
-                <li class="mb-3 pb-3 border-bottom">
-                  <div class="d-flex justify-content-between">
+                <li>
+                  <div>
                     <strong>{{ item.label }}</strong>
-                    <span>{{ item.value }}</span>
+                    {% if item.value %}
+                      <span class="panel-card__value">{{ item.value }}</span>
+                    {% endif %}
                   </div>
                   {% if item.meta %}
-                    <small class="text-muted">{{ item.meta }}</small>
+                    <small>{{ item.meta }}</small>
                   {% endif %}
                 </li>
               {% empty %}
-                <li class="text-muted">No data available.</li>
+                <li><span class="text-muted">No data available.</span></li>
               {% endfor %}
             </ul>
           </div>
+        </article>
+      {% empty %}
+        <article class="panel-card">
+          <div class="panel-card__stripe"></div>
+          <div class="panel-card__body">
+            <h2>Nothing to show yet</h2>
+            <p class="panel-card__subtitle">As soon as data streams in, this dashboard will populate.</p>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+
+    <aside class="staff-dashboard__secondary">
+      {% if actions %}
+        <div class="action-stack">
+          {% for action in actions %}
+            <article class="action-card">
+              <p class="action-card__label">{{ action.description }}</p>
+              <a class="btn btn-outline-light w-100" href="{{ action.href }}">
+                {{ action.label }}
+              </a>
+            </article>
+          {% endfor %}
         </div>
-      </div>
-    {% endfor %}
+      {% else %}
+        <article class="action-card action-card--empty">
+          <p>No quick actions right now.</p>
+        </article>
+      {% endif %}
+    </aside>
   </div>
 </section>
 {% endblock %}
