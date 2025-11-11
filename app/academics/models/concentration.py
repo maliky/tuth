@@ -121,9 +121,7 @@ class MajorCurriculumCourse(models.Model):
     """A table joining the Major table with the curriculum_course table."""
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
-    major = models.ForeignKey(
-        "Major", on_delete=models.CASCADE, related_name="courses"
-    )
+    major = models.ForeignKey("Major", on_delete=models.CASCADE, related_name="courses")
     curriculum_course = models.ForeignKey(
         "academics.CurriculumCourse", on_delete=models.CASCADE, related_name="major_link"
     )
@@ -143,9 +141,7 @@ class MinorCurriculumCourse(models.Model):
     """A table joining the Major table with the curriculum_course table."""
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
-    minor = models.ForeignKey(
-        "Minor", on_delete=models.CASCADE, related_name="courses"
-    )
+    minor = models.ForeignKey("Minor", on_delete=models.CASCADE, related_name="courses")
     curriculum_course = models.ForeignKey(
         "academics.CurriculumCourse", on_delete=models.CASCADE, related_name="minor_links"
     )

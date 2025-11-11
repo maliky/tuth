@@ -67,11 +67,7 @@ def _resolve_semester(student: Student, requested_semester_id: str | None):
     semester: Semester | None = None
     if requested_semester_id:
         semester = next(
-            (
-                sem
-                for sem in open_semesters
-                if str(sem.id) == str(requested_semester_id)
-            ),
+            (sem for sem in open_semesters if str(sem.id) == str(requested_semester_id)),
             None,
         )
     if semester is None and open_semesters:
@@ -164,9 +160,15 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:
                 except ValueError:
                     weekday_label = "TBA"
             start = (
-                schedule.start_time.strftime("%H:%M") if schedule and schedule.start_time else "—"
+                schedule.start_time.strftime("%H:%M")
+                if schedule and schedule.start_time
+                else "—"
             )
-            end = schedule.end_time.strftime("%H:%M") if schedule and schedule.end_time else "—"
+            end = (
+                schedule.end_time.strftime("%H:%M")
+                if schedule and schedule.end_time
+                else "—"
+            )
             slots.append(f"{weekday_label} {start}–{end}")
         return " · ".join(slots) if slots else "Schedule TBA"
 
@@ -293,7 +295,9 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:
         course_sections = sections_by_course.get(course.id, [])
         prereq_data = prereq_map.get(course.id, [])
         is_eligible = (
-            registration_open and course.id in allowed_course_ids and bool(course_sections)
+            registration_open
+            and course.id in allowed_course_ids
+            and bool(course_sections)
         )
 
         missing = [p["label"] for p in prereq_data if not p["met"]]
@@ -336,15 +340,26 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:
 
     completed_credits = student.completed_credits
     required_credits = (
-        student.curriculum.programs.aggregate(total=Sum("credit_hours__code")).get("total") or 0
+        student.curriculum.programs.aggregate(total=Sum("credit_hours__code")).get(
+            "total"
+        )
+        or 0
     )
     remaining_credits = max(required_credits - completed_credits, 0)
-    gpa = Grade.objects.filter(student=student).aggregate(value=Avg("value__number")).get("value")
+    gpa = (
+        Grade.objects.filter(student=student)
+        .aggregate(value=Avg("value__number"))
+        .get("value")
+    )
 
     invoices = Invoice.objects.filter(student=student)
-    total_due = invoices.aggregate(total=Sum("amount_due")).get("total") or Decimal("0.00")
+    total_due = invoices.aggregate(total=Sum("amount_due")).get("total") or Decimal(
+        "0.00"
+    )
     payments = Payment.objects.filter(invoice__student=student)
-    total_paid = payments.aggregate(total=Sum("amount_paid")).get("total") or Decimal("0.00")
+    total_paid = payments.aggregate(total=Sum("amount_paid")).get("total") or Decimal(
+        "0.00"
+    )
     outstanding = max(total_due - total_paid, Decimal("0.00"))
     last_payment = payments.order_by("-id").select_related("invoice").first()
     if last_payment and hasattr(last_payment.invoice, "created_at"):
@@ -372,13 +387,19 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:
         "student_id": student.student_id or "Pending ID",
         "academic_year": _format_semester_label(),
         "curriculum": student.curriculum.long_name or student.curriculum.short_name,
-        "avatar": student.photo.url if getattr(student, "photo", None) and student.photo else "",
+        "avatar": (
+            student.photo.url if getattr(student, "photo", None) and student.photo else ""
+        ),
     }
 
     completed_courses = []
     grades = (
         Grade.objects.filter(student=student)
-        .select_related("section__curriculum_course__course", "section__curriculum_course__credit_hours", "value")
+        .select_related(
+            "section__curriculum_course__course",
+            "section__curriculum_course__credit_hours",
+            "value",
+        )
         .order_by("-graded_on")
     )
     for grade in grades:
@@ -725,7 +746,10 @@ def _build_finance_context(_: HttpRequest) -> dict:
             {
                 "title": "Next steps",
                 "items": [
-                    {"label": "Reconcile proofs", "value": "Verify supporting documents."},
+                    {
+                        "label": "Reconcile proofs",
+                        "value": "Verify supporting documents.",
+                    },
                     {"label": "Release cleared holds", "value": "Unblock students."},
                 ],
             }

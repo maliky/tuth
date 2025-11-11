@@ -67,9 +67,7 @@ class PersonManager(Manager):
             existing_user.save()
             return existing_user
 
-        user, _ = User.objects.update_or_create(
-            username=username, defaults=user_kwargs
-        )
+        user, _ = User.objects.update_or_create(username=username, defaults=user_kwargs)
         if password:
             user.set_password(password)
             user.save(update_fields=["password"])

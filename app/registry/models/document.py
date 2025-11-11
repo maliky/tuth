@@ -94,6 +94,7 @@ class AbstractDocument(StatusableMixin, models.Model):
         related_query_name="%(class)s",
         verbose_name="Document Types",
     )
+
     def current_status(self) -> Optional[StatusHistory]:
         """Return the most recent status entry or None if empty."""
 

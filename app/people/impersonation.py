@@ -20,9 +20,7 @@ def get_role_representatives(request):  # pragma: no cover - thin wrapper
 
     representative_ids = []
     groups: Iterable[Group] = (
-        Group.objects.prefetch_related("user_set")
-        .order_by("name")
-        .all()
+        Group.objects.prefetch_related("user_set").order_by("name").all()
     )
 
     for group in groups:

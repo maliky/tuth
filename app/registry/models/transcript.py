@@ -21,7 +21,9 @@ class TranscriptRequestStatus(SimpleTableMixin):
     @classmethod
     def get_default(cls):
         """Return the default status."""
-        default, _ = cls.objects.get_or_create(code="pending", defaults={"label": "Pending"})
+        default, _ = cls.objects.get_or_create(
+            code="pending", defaults={"label": "Pending"}
+        )
         return default
 
 

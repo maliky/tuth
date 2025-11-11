@@ -119,7 +119,9 @@ class Course(models.Model):
         """Return the list of curricula including this course."""
         curricula = (
             self.in_curriculum_courses.select_related("curriculum")  # <- efficiency
-            .values_list("curriculum__short_name", flat=True)  # <- this is getting the value
+            .values_list(
+                "curriculum__short_name", flat=True
+            )  # <- this is getting the value
             .order_by("curriculum__short_name")
         )
         return sep.join(curricula)
@@ -238,7 +240,7 @@ class CurriculumCourse(models.Model):
             # student_registrations__section__semester=semester,
             student_registrations__section__curriculum_course=self,
         ).distinct()
-    
+
     class Meta:
         constraints = [
             models.UniqueConstraint(

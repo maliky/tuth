@@ -4,8 +4,9 @@ from admin_searchable_dropdown.filters import (
     AutocompleteFilter,
     AutocompleteFilterFactory,
 )
+
 # https://pypi.org/project/django-admin-list-filters/
-from django_admin_filters import MultiChoice  
+from django_admin_filters import MultiChoice
 from django.contrib import admin
 from django.db.models import Count
 from django.urls import reverse
@@ -14,7 +15,7 @@ from django.urls import reverse
 # class CollegeChoicesFilter(MultiChoice):
 #     FILTER_LABEL = "College"
 #     BUTTON_LABEL = "Filter"
-    
+
 CurriculumCourseFilterAc = AutocompleteFilterFactory(
     "Curriculum",  # title
     "curriculum_course__curriculum",  # look-up path ( → cuccirulm )

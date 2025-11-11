@@ -58,6 +58,7 @@ def update_curriculum(modeladmin, request, queryset):
       1. GET  → show a tiny form asking for the Curriculum.
       2. POST → apply it and send a flash message.
     """
+
     class HiddenIdListField(forms.MultipleChoiceField):
         def validate(self, value):
             pass  # allow any IDs
@@ -74,7 +75,7 @@ def update_curriculum(modeladmin, request, queryset):
         curriculum = forms.ModelChoiceField(
             queryset=Curriculum.objects.all(),
             label="Curriculum to apply",
-        )            
+        )
 
     if "apply" in request.POST:
         form = _CurriculumForm(request.POST)

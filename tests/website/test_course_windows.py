@@ -56,7 +56,9 @@ def test_student_dashboard_prefers_open_semester(client):
         course=course,
         credit_hours=credit_hours,
     )
-    baker.make("timetable.Section", semester=next_sem, curriculum_course=curriculum_course)
+    baker.make(
+        "timetable.Section", semester=next_sem, curriculum_course=curriculum_course
+    )
 
     student_user = baker.make(User, username="stud1")
     baker.make(
