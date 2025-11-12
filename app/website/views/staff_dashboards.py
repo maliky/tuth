@@ -687,6 +687,33 @@ def _render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse
     }
     base.update(context)
     template_name = config.get("template", "website/staff/role_dashboard.html")
+
+    sidebar_links = [
+        {
+            "label": "Dashboard",
+            "href": reverse("staff_dashboard"),
+            "active": role_slug == "general",
+            "icon": "bi-speedometer2",
+        },
+        {
+            "label": "Roles",
+            "href": reverse("staff_role_dashboard", args=[role_slug]),
+            "active": role_slug != "general",
+            "icon": "bi-people",
+        },
+        {
+            "label": "Tools",
+            "href": "#staff-tools",
+            "active": False,
+            "icon": "bi-wrench",
+        },
+    ]
+    breadcrumbs = [
+        {"label": "Staff Workspace", "href": reverse("staff_dashboard")},
+        {"label": config["title"], "href": ""},
+    ]
+
+    base.update({"sidebar_links": sidebar_links, "breadcrumbs": breadcrumbs})
     return render(request, template_name, base)
 
 
