@@ -39,10 +39,12 @@ cleared registrations into official roster entries.
 # > yes. confirmed. defer for now.
 
 
-* DONE <2025-11-11 Tue 17:09> View routing map
-  CLOSED: [2025-11-11 mar. 21:25]
-Split `app/website/views.py` into modular chunks and documented how different user roles traverse the portal.
-#+BEGIN_SRC plantuml :results file link :file Docs/view_routing_map.png
+* TODO <2025-11-11 Tue 17:09> View routing map
+
+ CLOSED: [2025-11-11 mar. 21:25]
+<2025-11-12 mer. 14:04> Getting there :
+Enrollement Desk create sutdent/news/ students/  should be removed to point direclty to the Adminj jump
+ #+BEGIN_SRC plantuml :results file link :file Docs/view_routing_map2.png
 @startuml
 skinparam actorStyle awesome
 left to right direction
@@ -131,6 +133,9 @@ Staff --> Logout
 
 @enduml
 #+END_SRC
+
+#+RESULTS:
+[[file:Docs/view_routing_map2.png]]
 
 
 * DONE <2025-11-11 Tue 19:59> Role hierarchy sketch
