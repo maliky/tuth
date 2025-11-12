@@ -1,21 +1,25 @@
 
 * <2025-11-12 mer. 14:23>
-  › expand the view routing map2 in journal with explicitly showing user with the exact
-  same role_name as in the perms.py file.  if possible find a way to show the
-  hiaerachy of some roles among the users.  I understand that all the staf roles have
-  now acces to admin
 
+  Hierachy of roles through academic standing.
+  Faculty teach courses own by a department and exceptionaly by a college directly.  A faculty can be working in several department. The model need to be update to take this in account.
 
- should Dean have access to chair dashboard a list of their chairs ?
+  A chair is a normal faculty but been part of the chair group.  A chair is assigned to one department therefore a chair can list the faculty giving course in his department.  He could have acces to the dashboard of this faculties for the courses pertaining to his departement, but let's leave that for now.  The structure between dean and chair is cleaner or between dean and VPAA.  In any case this role hierchy and dashboard access is not a priority. so let's drop it for now.   Identify in the rest of the prompt what can be done that isnt linked to that. hiearchy role
+  
+Expand the view_routing_map2 as view_routing_map3 in journal explicitly showing the role_name found in the perms file.  Find a way to display the hierachy structure of roles among the users.  All the staff roles have now acces to /admin/ do not clutter the graph with too many arrows, but it should be clear that they all have access to this screen (what's the correct technical name?)  Is is possible to concentrate the arrows into one or to make the arrow go from the emcopassing rectangle grouping several screen to show that all can go to that other screen ?
 
- In the error page remove the link back to login. replace it with landing
+ Dean should have access to their chair dashboard a be able to list there chairs.
+ Department Chairs shold be able to access their faculty dashboard and list them also.
+ Let the rule be that a higer role can access the dashboard of the directly lower role but not more, and that he should be able to list all the dashboard he can have access too.
 
- I do not see the difference between staff/dashboard and staff/<role> ?
+In the error page remove the link going back to login. Replace it with a link to the Landing.
 
- The enrollement officer can see the enrollment dashboard maybe the choice of other dashboar should be what is shown in staff/dashboardS and the user own live under staff/<role>. there is redundency to remove here.
+I do not see the difference between staff/dashboard and staff/<role> ?
+Isn't there some redunduncy there ?
+
 *** Enrollement
-    Pick an ID and Tusis will send you straight to the admin edit screen.
-- The form should show directly in the little card, do use an intermediary screen.  The form should be a search field filtering down id based on characters types,  the search field should also be id and full name of the students.
+- The card (what is the actual professional UX name?) enabeling to edit a specify student should incorporate an autocomplet search field enabling direct selection of the student to dive into without passing through a intermediary scree.  The autocomplet search form should use student id and name as search keys. Since this is enrollement it should exclude student who have graduated already.
+  
   
 
 * <2025-11-12 mer. 14:12> Admin functionnalities

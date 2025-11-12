@@ -3,76 +3,187 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>William V. S. Tubman University – mock-up</title>
-
-    <!-- 1-file Bootstrap 5 CDN – keeps things tiny -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tusis · William V. S. Tubman University</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="{% static 'css/bootstrap.min.css' %}"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <style>
-      /* 1-liner brand colours */
-      :root { --tu-green:#134529; --tu-gold:#ffc107; }
-      .navbar, footer{ background:var(--tu-green);}
-      .navbar a, footer, footer a{ color:#fff !important; }
-      .carousel-item img{ object-fit:cover; height:70vh; }
-      #tuth-btn{ background:#c00; color:#fff; }
-    </style>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet" />
+    <link href="{% static 'css/landing.css' %}" rel="stylesheet" />
   </head>
 
-  <body class="d-flex flex-column min-vh-100">
+  <body class="landing-shell d-flex flex-column min-vh-100">
+    <a class="skip-link" href="#main">Skip to main content</a>
 
-    <!-- ============= HEADER ============== -->
-    <nav class="navbar navbar-expand-lg">
-      <div class="container-fluid justify-content-between">
-        <a class="navbar-brand d-flex align-items-center gap-2" href="#">
-          <img src="{% static 'img/tulogo.png' %}"
-               style="height:46px" alt="logo">
-          <span class="fw-semibold">William V.S. Tubman University</span>
+    <nav class="landing-nav navbar navbar-expand-lg py-3" role="navigation">
+      <div class="container d-flex justify-content-between align-items-center">
+        <a class="navbar-brand d-flex align-items-center text-white" href="{% url 'landing' %}">
+          <img src="{% static 'img/tulogo.png' %}" alt="Tusis logo" width="56" height="56" />
+          <div class="ms-3">
+            <span class="d-block">Tusis portal</span>
+            <small class="text-white-50">William V. S. Tubman University</small>
+          </div>
         </a>
-
-        <!-- ---- “Tusis” button ---- -->
-        <a id="tusis-btn" class="btn btn-sm"
-           href="{% url 'portal_login' %}">
-           Tusis
-        </a>
+        <div class="d-flex gap-2">
+          <a class="btn btn-outline-light btn-sm" href="#features">Explore surfaces</a>
+          <a id="tusis-btn" class="btn btn-danger btn-sm" href="{% url 'portal_login' %}">Open Tusis</a>
+        </div>
       </div>
     </nav>
 
-    <!-- ============= HERO / CAROUSEL ============== -->
-    <div id="hero" class="carousel slide" data-bs-ride="carousel">
-      <div class="carousel-inner">
-        <div class="carousel-item active">
-          <img class="w-100" src="{% static 'img/hero.jpg' %}" alt="" />
-          <div class="carousel-caption">
-            <h2 class="fw-bold">Build Your Career At WVSTU</h2>
-            <p>Future Innovators in Action: Empowering Minds…</p>
+    <header class="landing-hero" role="banner">
+      <div class="container landing-hero__content text-center text-lg-start">
+        <span class="landing-hero__badge" aria-label="Unified access badge">One login • All services</span>
+        <h1 id="landing-hero-title">
+          Tusis connects students, staff, and partners to WVSTU in one secure, mobile-ready portal.
+        </h1>
+        <p class="lead">
+          Manage registration, approvals, finance holds, and student services from a single dashboard that adapts to your role and keeps data flowing without friction.
+        </p>
+        <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center justify-content-lg-start">
+          <a class="landing-primary-cta" href="{% url 'portal_login' %}">Enter Tusis</a>
+          <a class="btn btn-outline-light landing-hero-secondary" href="#stats">See impact</a>
+        </div>
+      </div>
+      <div class="landing-carousel-caption carousel-caption">
+        <h2>Build Your Career at WVSTU with Tusis.</h2>
+      </div>
+    </header>
+
+    <main id="main" class="flex-grow-1">
+      <section id="features" class="landing-section container">
+        <h3 class="text-center text-muted mb-4">This is only the mock-up landing page.</h3>
+        <div class="row g-4">
+          <div class="col-lg-4">
+            <article class="landing-card h-100">
+              <span class="landing-card__icon" aria-hidden="true">🎓</span>
+              <h3>Student surface</h3>
+              <p>
+                View schedules, complete registrations, and monitor financial holds. The student dashboard keeps updates centralized so learners never miss a deadline.
+              </p>
+              <p class="text-muted small">Path: /student/dashboard/</p>
+            </article>
+          </div>
+          <div class="col-lg-4">
+            <article class="landing-card h-100">
+              <span class="landing-card__icon" aria-hidden="true">👩‍🏫</span>
+              <h3>Staff workspaces</h3>
+              <p>
+                Every role—from Enrollment Officer to IT Support—lands on a tailored dashboard. Dashboards cascade logically so higher roles can review lower-tier workspaces without extra navigation.
+              </p>
+              <p class="text-muted small">Path: /staff/&lt;role&gt;/</p>
+            </article>
+          </div>
+          <div class="col-lg-4">
+            <article class="landing-card h-100">
+              <span class="landing-card__icon" aria-hidden="true">🛠️</span>
+              <h3>Admin & support</h3>
+              <p>
+                Tusis links directly to Django admin for deep edits while keeping role-based access intact; clickable shortcuts keep workflows within reach.
+              </p>
+              <p class="text-muted small">Admin CTA visible on every staff page</p>
+            </article>
           </div>
         </div>
+      </section>
 
-        <!-- drop extra slides here if you want a gallery effect -->
-      </div>
+      <section class="landing-section landing-section--alt">
+        <div class="container">
+          <div class="row align-items-center gy-4">
+            <div class="col-lg-6">
+              <h2>Role-aware access, harmonized navigation</h2>
+              <p>
+                The portal respects the academic hierarchy: VPAA approves requests from Deans, Deans monitor Chairs, and Chairs keep tabs on their Faculties. Each level can view dashboards directly below them and discover the resources they can reach.
+              </p>
+              <ul class="landing-list">
+                <li>Single portal login routes you to the right surface automatically.</li>
+                <li>Higher roles can access only the next subordinate dashboard to preserve focus.</li>
+                <li>Accessible dashboard list highlights every view you can open.</li>
+              </ul>
+            </div>
+            <div class="col-lg-5 offset-lg-1">
+              <article class="landing-card">
+                <h3>Why Tusis?</h3>
+                <p>
+                  Built with WVSTU’s Evergreen + Phoenix Gold palette, Tusis embraces mobile-first accessibility, minimal motion, and lightweight layouts so every campus device stays speedy.
+                </p>
+                <a class="landing-primary-cta" href="{% url 'portal_login' %}">Launch the portal</a>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <button class="carousel-control-prev" data-bs-target="#hero" data-bs-slide="prev">
-        <span class="carousel-control-prev-icon"></span>
-      </button>
-      <button class="carousel-control-next" data-bs-target="#hero" data-bs-slide="next">
-        <span class="carousel-control-next-icon"></span>
-      </button>
-    </div>
+      <section id="stats" class="landing-section container">
+        <div class="landing-stats">
+          <dl>
+            <div>
+              <dt>Active surfaces</dt>
+              <dd>14</dd>
+            </div>
+            <div>
+              <dt>Students served</dt>
+              <dd>12K+</dd>
+            </div>
+            <div>
+              <dt>Staff dashboards</dt>
+              <dd>85</dd>
+            </div>
+            <div>
+              <dt>Uptime</dt>
+              <dd>99.9%</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
 
-    <!-- ============= MAIN (you can copy more sections later) ============== -->
-    <main class="flex-grow-1 py-5">
-      <div class="container text-center">
-        <h3 class="mb-4">This is only the mock-up landing page.</h3>
-      </div>
+      <section class="landing-section container">
+        <div class="landing-cta-grid">
+          <article class="landing-cta-card">
+            <h4>Tusis portal</h4>
+            <p>Central entry for every role. Login once, access everything.</p>
+            <a class="btn landing-primary-cta" href="{% url 'portal_login' %}">Portal login</a>
+          </article>
+          <article class="landing-cta-card">
+            <h4>Django admin</h4>
+            <p>Deep configuration, student administration, and document uploads live here for privileged roles.</p>
+            <a class="btn btn-outline-secondary" href="{% url 'admin:login' %}">Open admin</a>
+          </article>
+          <article class="landing-cta-card">
+            <h4>IT support</h4>
+            <p>Questions? tusis-support@tusis.edu connects you to the campus help desk.</p>
+            <a class="btn btn-outline-secondary" href="mailto:tusis-support@tusis.edu">Email support</a>
+          </article>
+        </div>
+      </section>
     </main>
 
-    <!-- ============= FOOTER ============== -->
-    <footer class="py-3">
-      <div class="container d-flex flex-wrap justify-content-between">
-        <span>&copy; {{ now|date:"Y" }} William V. S. Tubman University</span>
-        <a href="{% url 'admin:login' %}" class="text-decoration-none">Django admin</a>
+    <footer class="landing-footer mt-auto">
+      <div class="container">
+        <div class="row gy-4">
+          <div class="col-md-4">
+            <p class="footer-title">About</p>
+            <p>
+              Tusis is Tubman University’s unified information system. It keeps students, staff, and administrators aligned with streamlined workflows and the WVSTU brand.
+            </p>
+          </div>
+          <div class="col-md-4">
+            <p class="footer-title">Quick links</p>
+            <ul class="list-unstyled">
+              <li><a href="{% url 'portal_login' %}">Portal login</a></li>
+              <li><a href="{% url 'student_list' %}">Student snapshot</a></li>
+              <li><a href="{% url 'student_admin_edit' %}">Edit student</a></li>
+            </ul>
+          </div>
+          <div class="col-md-4">
+            <p class="footer-title">Contact</p>
+            <p class="mb-1">Email: <a href="mailto:tusis-support@tusis.edu">tusis-support@tusis.edu</a></p>
+            <p>Phone: +231 555 0123</p>
+          </div>
+        </div>
       </div>
     </footer>
 

@@ -77,6 +77,29 @@
     </div>
 
     <aside class="staff-dashboard__secondary">
+      {% if accessible_dashboards %}
+        <article class="action-card">
+          <p class="action-card__label">Accessible dashboards</p>
+          <div class="accessible-list">
+            {% for dash in accessible_dashboards %}
+              <a
+                href="{{ dash.href }}"
+                class="accessible-list__item {% if dash.active %}is-active{% endif %}"
+              >
+                <div>
+                  <strong>{{ dash.label }}</strong>
+                  {% if dash.summary %}
+                    <p class="text-muted mb-0 small">{{ dash.summary }}</p>
+                  {% endif %}
+                </div>
+                {% if dash.active %}
+                  <span class="badge bg-success ms-2">Current</span>
+                {% endif %}
+              </a>
+            {% endfor %}
+          </div>
+        </article>
+      {% endif %}
       {% if actions %}
         {% for action in actions %}
           <article class="action-card">

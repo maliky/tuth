@@ -9,26 +9,47 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
-from django.http import HttpRequest, HttpResponse
+from django.db.models import Q
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from app.people.models.student import Student
 
 
-class StudentChoiceField(forms.ModelChoiceField):
-    def label_from_instance(self, obj):
-        return f"{obj.student_id} — {obj.long_name}"
-
-
 class StudentAdminLookupForm(forms.Form):
     """Small helper form that jumps to the Django admin edit screen."""
 
-    student = StudentChoiceField(
-        queryset=Student.objects.order_by("student_id"),
-        label="Student ID",
-        widget=forms.Select(attrs={"class": "form-select"}),
+    student = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+    student_query = forms.CharField(
+        label="Student ID or name",
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Start typing a student ID or name...",
+                "autocomplete": "off",
+            }
+        ),
     )
+
+    def clean(self) -> dict[str, object]:
+        cleaned = super().clean()
+        if cleaned.get("student"):
+            return cleaned
+        query = (cleaned.get("student_query") or "").strip()
+        if not query:
+            raise forms.ValidationError("Select a student from the search results.")
+
+        student = (
+            Student.objects.filter(current_enrolled_semester__isnull=False)
+            .filter(Q(student_id__iexact=query) | Q(long_name__iexact=query))
+            .order_by("student_id")
+            .first()
+        )
+        if not student:
+            raise forms.ValidationError("Select a student from the autocomplete list.")
+        cleaned["student"] = student.pk
+        return cleaned
 
 
 def _staff_breadcrumb(label: str) -> list[dict[str, str]]:
@@ -105,7 +126,8 @@ def student_admin_edit(request: HttpRequest) -> HttpResponse:
     """Provide a simple selector that jumps to the Django admin edit form."""
     form = StudentAdminLookupForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        student = form.cleaned_data["student"]
+        student_pk = form.cleaned_data["student"]
+        student = get_object_or_404(Student, pk=student_pk)
         return redirect(reverse("admin:people_student_change", args=[student.pk]))
 
     context = {
@@ -113,5 +135,30 @@ def student_admin_edit(request: HttpRequest) -> HttpResponse:
         "page_title": "Edit student in admin",
         "page_summary": "Pick an ID and Tusis will open the Django admin edit form in a new tab.",
         "breadcrumbs": _staff_breadcrumb("Edit student"),
+        "autocomplete_url": reverse("student_autocomplete"),
     }
     return render(request, "enrollment/student_admin_edit.html", context)
+
+
+@permission_required("people.view_student", raise_exception=True)
+def student_autocomplete(request: HttpRequest) -> HttpResponse:
+    """Provide JSON suggestions for the student lookup."""
+    query = (request.GET.get("q") or "").strip()
+    students = Student.objects.filter(current_enrolled_semester__isnull=False)
+    if query:
+        students = students.filter(
+            Q(student_id__icontains=query) | Q(long_name__icontains=query)
+        )
+    else:
+        students = students.none()
+    suggestions = students.order_by("student_id")[:15]
+    results = [
+        {
+            "pk": student.pk,
+            "label": f"{student.student_id} — {student.long_name}",
+            "student_id": student.student_id,
+            "curriculum": student.curriculum.short_name if student.curriculum else "",
+        }
+        for student in suggestions
+    ]
+    return JsonResponse({"results": results})

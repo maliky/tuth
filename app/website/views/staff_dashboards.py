@@ -24,6 +24,7 @@ from app.registry.models.document import DocumentStudent
 from app.registry.models.grade import Grade
 from app.registry.models.registration import Registration
 from app.registry.models.transcript import TranscriptRequest
+from app.shared.auth.perms import UserRole
 from app.shared.models import ApprovalQueue
 from app.timetable.models.section import Section
 
@@ -234,23 +235,63 @@ def _build_chair_context(request: HttpRequest) -> dict:
             {"label": "No curricula", "value": "Assign one to this college."},
         ]
 
+    department = faculty.staff_profile.department
+    department_faculty_items: list[dict[str, str]] = []
+    if department:
+        department_faculty = (
+            Faculty.objects.filter(staff_profile__department=department)
+            .exclude(staff_profile=faculty.staff_profile)
+            .select_related("staff_profile__department")
+            .order_by("staff_profile__user__last_name")
+        )
+        for member in department_faculty[:6]:
+            department_faculty_items.append(
+                {
+                    "label": member.staff_profile.long_name,
+                    "value": member.staff_profile.position or "Faculty",
+                    "meta": str(member.staff_profile.department or "Department"),
+                }
+            )
+        if not department_faculty_items:
+            department_faculty_items = [
+                {
+                    "label": "No other faculty yet",
+                    "value": "Invite colleagues to teach for this department.",
+                }
+            ]
+    else:
+        department_faculty_items = [
+            {
+                "label": "Department not assigned",
+                "value": "Ask HR to link your profile to a department first.",
+            }
+        ]
+
+    panels = [
+        {
+            "title": "Curricula",
+            "items": curricula_items,
+        },
+        {"title": "Recent workloads", "items": workload_items},
+        {
+            "title": "Department faculty",
+            "items": department_faculty_items,
+        },
+    ]
+
     return {
         "metrics": [
             {"label": "Active curricula", "value": curricula.count()},
             {"label": "Faculty snapshots", "value": len(workload_items)},
         ],
-        "panels": [
-            {
-                "title": "Curricula",
-                "items": curricula_items,
-            },
-            {"title": "Recent workloads", "items": workload_items},
-        ],
+        "panels": panels,
         "actions": [],
     }
 
 
 def _build_dean_context(request: HttpRequest) -> dict:
+    faculty_profile = _get_faculty_profile(_as_user(request.user))
+    college = faculty_profile.college if faculty_profile else None
     approvals_qs = ApprovalQueue.objects.filter(target_role="dean").order_by(
         "-created_at"
     )
@@ -268,6 +309,35 @@ def _build_dean_context(request: HttpRequest) -> dict:
             {"label": "No requests", "value": "You're all caught up."},
         ]
 
+    chairs_items: list[dict[str, str]] = []
+    if college:
+        chairs = (
+            Faculty.objects.filter(
+                college=college,
+                staff_profile__user__groups__name=UserRole.CHAIR.value.label,
+            )
+            .select_related("staff_profile__department")
+            .order_by(
+                "staff_profile__department__short_name",
+                "staff_profile__user__last_name",
+            )
+        )
+        for chair in chairs[:6]:
+            chairs_items.append(
+                {
+                    "label": chair.staff_profile.long_name,
+                    "value": chair.staff_profile.position or "Chair",
+                    "meta": str(chair.staff_profile.department or "Department"),
+                }
+            )
+    if not chairs_items:
+        chairs_items = [
+            {
+                "label": "No chairs assigned",
+                "value": "Ask HR to appoint department chairs for your college.",
+            }
+        ]
+
     return {
         "metrics": [
             {"label": "Requests awaiting review", "value": approvals_qs.count()},
@@ -276,7 +346,11 @@ def _build_dean_context(request: HttpRequest) -> dict:
             {
                 "title": "Approval queue",
                 "items": approval_items,
-            }
+            },
+            {
+                "title": "Chairs in my college",
+                "items": chairs_items,
+            },
         ],
         "actions": [],
     }
@@ -672,6 +746,59 @@ for slug in ROLE_CONFIG:
         base = slug[: -len("_officer")]
         ROLE_INHERITANCE.setdefault(base, set()).add(slug)
 
+ROLE_INHERITANCE.setdefault("chair", set()).add("dean")
+ROLE_INHERITANCE.setdefault("faculty", set()).add("chair")
+ROLE_INHERITANCE.setdefault("dean", set()).add("vpaa")
+
+ROLE_ORDER: dict[str, int] = {slug: idx for idx, slug in enumerate(ROLE_PRIORITY)}
+
+
+def _user_membership_slugs(user: User) -> set[str]:
+    return {
+        slug
+        for slug, config in ROLE_CONFIG.items()
+        if config["groups"] and _user_has_membership(user, slug)
+    }
+
+
+def _direct_subordinates(role_slug: str) -> set[str]:
+    return {slug for slug, parents in ROLE_INHERITANCE.items() if role_slug in parents}
+
+
+def _accessible_role_slugs(user: User) -> set[str]:
+    if user.is_superuser:
+        return set(ROLE_CONFIG.keys())
+    membership = _user_membership_slugs(user)
+    inherited = {slug for slug in ROLE_CONFIG if _user_inherits_role(user, slug)}
+    direct_lower: set[str] = set()
+    for slug in membership | inherited:
+        direct_lower.update(_direct_subordinates(slug))
+    return {"general"} | membership | inherited | direct_lower
+
+
+def _build_accessible_dashboard_links(user: User, active_slug: str) -> list[dict[str, Any]]:
+    slugs = _accessible_role_slugs(user)
+    ordered = sorted(slugs, key=lambda slug: ROLE_ORDER.get(slug, len(ROLE_PRIORITY)))
+    links: list[dict[str, Any]] = []
+    for slug in ordered:
+        config = ROLE_CONFIG.get(slug)
+        if not config:
+            continue
+        if slug == "general":
+            href = reverse("staff_dashboard")
+        else:
+            href = reverse("staff_role_dashboard", args=[slug])
+        links.append(
+            {
+                "label": config.get("title", slug.replace("_", " ").title()),
+                "summary": config.get("summary", ""),
+                "href": href,
+                "active": slug == active_slug,
+                "slug": slug,
+            }
+        )
+    return links
+
 
 def _user_has_membership(user: User, role_slug: str) -> bool:
     config = ROLE_CONFIG.get(role_slug)
@@ -704,6 +831,9 @@ def _render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse
     if not config:
         raise Http404("Unknown staff dashboard.")
     context = config["builder"](request)
+    accessible_links = _build_accessible_dashboard_links(
+        _as_user(request.user), role_slug
+    )
     base: dict[str, Any] = {
         "title": config["title"],
         "summary": config["summary"],
@@ -713,6 +843,7 @@ def _render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse
         "eyebrow": role_slug.replace("_", " ").title(),
     }
     base.update(context)
+    base["accessible_dashboards"] = accessible_links
     template_name = config.get("template", "website/staff/role_dashboard.html")
 
     sidebar_links = [

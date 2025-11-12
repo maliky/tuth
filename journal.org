@@ -44,22 +44,22 @@ cleared registrations into official roster entries.
  CLOSED: [2025-11-11 mar. 21:25]
 <2025-11-12 mer. 14:04> Getting there :
 Enrollement Desk create sutdent/news/ students/  should be removed to point direclty to the Adminj jump
- #+BEGIN_SRC plantuml :results file link :file Docs/view_routing_map2.png
+ #+BEGIN_SRC plantuml :results file link :file Docs/view_routing_map3.png
 @startuml
 skinparam actorStyle awesome
 left to right direction
 
 actor Visitor
 actor Student
-actor "Faculty/Staff" as Staff
+actor "Faculty & Staff" as Staff
 
 rectangle "Public Entry" {
   [Landing\n(/)] as Landing
 }
 
 rectangle "Unified Portal" {
-  [Login\n(/auth/login/)] as Login
-  [Router\n(/portal/)] as Router
+  [Portal Login\n(/auth/login/)] as Login
+  [Role Router\n(/portal/)] as Router
   [Logout\n(/auth/logout/)] as Logout
 }
 
@@ -68,21 +68,21 @@ rectangle "Student Surface" {
   [Course Dashboard\n(/courses/)] as Courses
 }
 
-rectangle "Staff Dashboards\n(/staff/<role>/)" {
-  [General Workspace] as StaffGeneral
-  [Faculty Hub] as StaffFaculty
-  [Chair Dashboard] as StaffChair
-  [Dean Oversight] as StaffDean
-  [VPAA Approval Hub] as StaffVPAA
-  [Registrar Lifecycle Ops] as StaffRegistrar
-  [Registrar Officer Console] as StaffRegistrarOfficer
-  [Enrollment Desk] as StaffEnroll
-  [Enrollment Officer Desk] as StaffEnrollOfficer
-  [Finance & Holds] as StaffFinance
-  [Finance Officer Control] as StaffFinanceOfficer
-  [Cashier Station] as StaffCashier
-  [Scholarship Office] as StaffScholarship
-  [IT Support] as StaffIT
+rectangle "Staff Dashboards\n(/staff/<role>/)" as StaffDashboards {
+  [VPAA Approval Hub\nrole=vpaa] as StaffVPAA
+  [Dean Oversight\nrole=dean] as StaffDean
+  [Chair Curriculum Center\nrole=chair] as StaffChair
+  [Instruction Hub\nrole=faculty] as StaffFaculty
+  [Registrar Officer Console\nrole=registrar_officer] as StaffRegistrarOfficer
+  [Registrar Lifecycle Ops\nrole=registrar] as StaffRegistrar
+  [Enrollment Officer Desk\nrole=enrollment_officer] as StaffEnrollOfficer
+  [Enrollment Desk\nrole=enrollment] as StaffEnroll
+  [Finance Officer Control\nrole=finance_officer] as StaffFinanceOfficer
+  [Finance & Holds\nrole=finance] as StaffFinance
+  [Cashier Station\nrole=cashier] as StaffCashier
+  [Scholarship Office\nrole=scholarship] as StaffScholarship
+  [IT Support\nrole=it] as StaffIT
+  [Staff Workspace\nrole=staff] as StaffGeneral
 }
 
 rectangle "Enrollment Tools" {
@@ -112,9 +112,18 @@ Router --> StaffGeneral
 Router --> AdminPage
 
 StuDash --> Courses
+
 StaffGeneral --> StaffFaculty
 StaffGeneral --> StaffRegistrar
 StaffGeneral --> StaffFinance
+
+StaffVPAA --> StaffDean
+StaffDean --> StaffChair
+StaffChair --> StaffFaculty
+
+StaffRegistrarOfficer --> StaffRegistrar
+StaffEnrollOfficer --> StaffEnroll
+StaffFinanceOfficer --> StaffFinance
 
 StaffRegistrar --> RegWin
 StaffRegistrarOfficer --> RegWin
@@ -124,6 +133,7 @@ StaffEnroll --> StuNew
 StuList --> StuDetail
 StuDetail --> StuDelete
 
+StaffDashboards --> AdminPage : Admin CTA (shared)
 StaffFinance --> AdminPage : Audit invoices
 StaffFinanceOfficer --> AdminPage
 AdminPage --> StaffGeneral : “Back to dashboard” link
@@ -135,7 +145,7 @@ Staff --> Logout
 #+END_SRC
 
 #+RESULTS:
-[[file:Docs/view_routing_map2.png]]
+[[file:Docs/view_routing_map3.png]]
 
 
 * DONE <2025-11-11 Tue 19:59> Role hierarchy sketch
