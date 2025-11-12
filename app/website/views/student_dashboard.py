@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from collections import defaultdict
 from decimal import Decimal
+from typing import Any, Iterable, cast
 
 from django.conf import settings
-from django.db.models import Avg, Count, DecimalField, Q, Sum, Value
+from django.db.models import Avg, DecimalField, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -77,10 +78,17 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     )
 
     registration_total = registrations.count()
-    status_summary = list(
-        registrations.values("status__code", "status__label")
-        .annotate(total=Count("id"))
-        .order_by("status__label")
+    summary_lookup: dict[str, dict[str, Any]] = {}
+    for reg in registrations:
+        code = reg.status.code if reg.status else reg.status_id
+        label = reg.status.label if reg.status else reg.status_id
+        entry = summary_lookup.setdefault(
+            code,
+            {"status__code": code, "status__label": label, "total": 0},
+        )
+        entry["total"] += 1
+    status_summary: list[dict[str, Any]] = sorted(
+        summary_lookup.values(), key=lambda item: item["status__label"] or ""
     )
     course_filters = [
         {
@@ -130,26 +138,27 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     course_ids = [cc.course_id for cc in curriculum_courses]
 
     if curriculum_course_ids:
-        sections = (
-            Section.objects.filter(curriculum_course_id__in=curriculum_course_ids)
-            .select_related(
-                "curriculum_course__course",
-                "curriculum_course__credit_hours",
-                "semester",
-            )
-            .prefetch_related("sessions__schedule")
-            .annotate(
-                fee_total=Coalesce(
-                    Sum("sectionfee__amount"),
-                    Value(
-                        Decimal("0.00"),
-                        output_field=DecimalField(max_digits=10, decimal_places=2),
-                    ),
-                )
+        sections_qs: Any = Section.objects.filter(
+            curriculum_course_id__in=curriculum_course_ids
+        )
+        sections_qs = sections_qs.select_related(
+            "curriculum_course__course",
+            "curriculum_course__credit_hours",
+            "semester",
+        )
+        sections_qs = sections_qs.prefetch_related("sessions__schedule")
+        sections_qs = sections_qs.annotate(
+            fee_total=Coalesce(
+                Sum("sectionfee__amount"),
+                Value(
+                    Decimal("0.00"),
+                    output_field=DecimalField(max_digits=10, decimal_places=2),
+                ),
             )
         )
         if semester:
-            sections = sections.filter(semester=semester)
+            sections_qs = sections_qs.filter(semester=semester)
+        sections = sections_qs
     else:
         sections = Section.objects.none()
 
@@ -159,7 +168,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
 
     passed_course_ids = set(student.passed_courses().values_list("id", flat=True))
     allowed_course_ids = set(student.allowed_courses().values_list("id", flat=True))
-    prereqs = []
+    prereqs: Iterable[Prerequisite] = []
     if course_ids:
         prereqs = (
             Prerequisite.objects.filter(
@@ -194,7 +203,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             ]
         )
 
-        missing = [p["label"] for p in prereq_data if not p["met"]]
+        missing = [cast(str, p["label"]) for p in prereq_data if not p["met"]]
         reason = ""
         if not registration_open:
             reason = "Registration window is closed."

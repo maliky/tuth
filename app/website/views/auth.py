@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
@@ -16,7 +19,7 @@ from .staff_dashboards import ADMIN_PORTAL_GROUPS
 @login_required
 def portal_redirect(request: HttpRequest) -> HttpResponse:
     """Central landing after authentication; route users by role."""
-    user = request.user
+    user = cast(User, request.user)
     user_groups = set(user.groups.values_list("name", flat=True))
 
     if user.is_superuser or user_groups.intersection(ADMIN_PORTAL_GROUPS):

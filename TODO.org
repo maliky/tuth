@@ -1,18 +1,35 @@
 
-* <2025-11-11 mar. 22:52> Charting preferences
- Important note. I am confortable with vega, vega-lite and d3js, so you I prefere those js librairy for charting when necessary
+* <2025-11-12 mer. 10:43> UX work
+- in /auth/login  Write a less technical campus brief
+   remove the different surface it is not necessary
+- update the view_routing_map in journal.org give it a different name eg view_routing_mapv2
+
+- the staff dashboard for registrar is very dull, it looked better with cards.    
+
+* <2025-11-11 mar. 23:03>  The student entry in the system
+When a potential candidate wants to enter WVSTU it first need to pay some fees for the entrance exams.  This is recorded at the finance office.  When it is recorded the finance creates a student with minal information.  Full name and date of birth.  this should be enought to distinguish student.  The system creates the student id and student object, set the default password (student id).
+
+The student then goes to the enrollement who add some other information including, curriculum, college, school attended ect... and a photo enabeling to print a small passport with name and photo to take the entrance exam.
+
+Until the student succeed his entrance exams he cannot obviously register for courses. but he can acces his dashboard where his profil should be accessible in case of correction or to enrich it with non mandatory informations.
+
+  
 
 * <2025-11-11 mar.> Enrollement Officer
-  You can remove the search and filter accross cohort as a link to the django admin exists and permits this already.  keep the Create student but reorder the fields in a more natural order marking the mandatory one with a red star and not forgetting the attachement, photo,
+You can remove the search and filter accross cohort because a link to the django admin exists and permits this filtering already.  Keep the create student action but reorder the fields in its form in a more natural order marking the mandatory one with a red star and not forgetting the attachement and optional photo,
 At the creation of a student it's password should be his newly generated student id. but in the backend, create the student and then update his password to his student id.
 
 Look at the 
   
 
 * <2025-11-11 mar. 22:26>  Registrar Officer
-  The links to the django Admin from the registrar officer is very good but we should have a like bringing him back to his dashboard.
+ The links to the django Admin from the registrar officer is very good but we should have a like bringing him back to his dashboard.
 
   
+* DONE <2025-11-11 mar. 22:52> Charting preferences
+  CLOSED: [2025-11-11 mar. 23:02]
+ Important note. I am confortable with vega, vega-lite and d3js, so you I prefere those js librairy for charting when necessary
+
 * DONE <2025-11-11 mar. 22:14> change password for test_users
   CLOSED: [2025-11-11 mar. 22:20]
   Passw0rd! or PassW0rd!
@@ -29,7 +46,7 @@ What is the exact nature of the arrows ? if it is hiearchy then VPAA should inhe
 - In PlantUML each box is just a node; I used [Label] (plain rectangles) rather than rectangle "…" { … } groups. We can adopt consistent wording like “Role Node” or convert to package/rectangle blocks if you prefer a more obvious legend.
 - The arrows were meant to show “has access to” / “inherits workspace from” rather than org-chart reporting. So VPAA’s arrow to “Staff (base)” gestured to “VPAA users also get the standard staff workspace,” and the arrows from Staff to other entries hinted that the base workspace sits alongside those role-specific ones. If you’d rather show a strict hierarchy, we can switch to UML generalization (triangle arrowheads) or rework the diagram to separate capability inheritance from reporting lines—just let me know which visual style you want.
 
-*** Need to be reworked  
+*** TODO Need to be reworked  
 * DONE <2025-11-11 mar. 20:58> correct dashboard test
   CLOSED: [2025-11-11 mar. 21:20]
 you have full acces to run selenium test.  The issue you get is because somehow you introduce code that use wbm 114 driver which is not compatible with my browser version.  the version 142... is also installe on the system and should always be used.  update the code to do that and add a note maybe in AGENTS to avoid code regression later.
@@ -39,7 +56,7 @@ you have full acces to run selenium test.  The issue you get is because somehow 
 * <2025-11-11 mar. 18:36>
  finaly connect the urls of enrollements tools and registrar tool into there respective dashboard.
 
-* <2025-11-11 mar. 18:37> harmonise design
+* TODO <2025-11-11 mar. 18:37> harmonise design
  Look at  [[file:Docs/tu-web-design-guide.org][Tusis Web Design Guide]] to propose Staff/django dashboard following same general theme and styles.  Propose a color variation to mark that we are in the admin but  keep the mobile-first approach for the student dashboard.  You should drop that constraint for staff dashboards.
 Add your style guideline for the student and the staff dashboard  in 2 new entries in tu-web-design-guide.org
   

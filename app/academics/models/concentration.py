@@ -61,7 +61,9 @@ class ConcentrationMixin(models.Model):
         self._ensure_saved()
         courses = cast(
             "models.Manager[CurriculumCourse]",
-            getattr(self, "curriculum_courses"),  # Check if curriculum_courses is attribute of ContentrationMixing
+            getattr(
+                self, "curriculum_courses"
+            ),  # Check if curriculum_courses is attribute of ContentrationMixing
         )
         total = courses.aggregate(
             total=models.Sum("credit_hours"),

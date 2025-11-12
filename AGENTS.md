@@ -20,6 +20,11 @@ This guide explains how to spin up the development stack, run checks, write test
 
 - Use the system `chromedriver` (currently 142.x) when running Selenium. The fixtures look for `/usr/bin/chromedriver` first; do not downgrade to the webdriver-manager default (114) because it breaks local browsers.
 
+### Files to leave untouched unless asked
+- `TODO.org`
+- `journal.org`
+- Any file explicitly flagged by the user in a conversation
+
 
 ---
 

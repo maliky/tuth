@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from typing import Any, Callable, TypedDict, cast
+
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import AnonymousUser, User
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -26,7 +29,7 @@ from app.timetable.models.section import Section
 
 ADMIN_PORTAL_GROUPS = {"System Administrator", "IT Support"}
 
-ROLE_PRIORITY = [
+ROLE_PRIORITY: list[str] = [
     "vpaa",
     "dean",
     "chair",
@@ -45,16 +48,29 @@ ROLE_PRIORITY = [
 ]
 
 
-def _user_group_names(user) -> set[str]:
+class RoleConfig(TypedDict, total=False):
+    groups: set[str]
+    title: str
+    summary: str
+    builder: Callable[[HttpRequest], dict[str, Any]]
+    template: str
+
+
+def _as_user(user: User | AnonymousUser) -> User:
+    """Narrow request.user to the concrete User type."""
+    return cast(User, user)
+
+
+def _user_group_names(user: User) -> set[str]:
     return set(user.groups.values_list("name", flat=True))
 
 
-def _get_faculty_profile(user) -> Faculty | None:
+def _get_faculty_profile(user: User) -> Faculty | None:
     staff = getattr(user, "staff", None)
     if not staff:
         return None
     try:
-        return staff.faculty
+        return cast(Faculty, staff.faculty)
     except Faculty.DoesNotExist:
         return None
 
@@ -77,24 +93,27 @@ def _empty_role_context(message: str) -> dict[str, list]:
     }
 
 
-def _maybe_reverse(name: str, args: list | tuple | None = None, kwargs: dict | None = None) -> str:
+def _maybe_reverse(
+    name: str, args: list | tuple | None = None, kwargs: dict | None = None
+) -> str:
     try:
         return reverse(name, args=args, kwargs=kwargs)
     except NoReverseMatch:
         return ""
 
 
-def _with_actions(context: dict, extra: list[dict]) -> dict:
+def _with_actions(context: dict[str, Any], extra: list[dict[str, Any]]) -> dict[str, Any]:
     merged = dict(context)
-    merged_actions = list(context.get("actions", []))
+    merged_actions = list(context.get("actions", []))  # type: ignore[arg-type]
     merged_actions.extend(extra)
     merged["actions"] = merged_actions
     return merged
 
 
 def _build_staff_context(request: HttpRequest) -> dict:
-    staff_profile = getattr(request.user, "staff", None)
-    metrics = [{"label": "Username", "value": request.user.username}]
+    user = _as_user(request.user)
+    staff_profile = getattr(user, "staff", None)
+    metrics = [{"label": "Username", "value": user.username}]
     if staff_profile and staff_profile.employment_date:
         metrics.append(
             {
@@ -103,27 +122,28 @@ def _build_staff_context(request: HttpRequest) -> dict:
             }
         )
 
-    profile_items = [
-        {
-            "label": "Staff ID",
-            "value": staff_profile.staff_id,
-            "meta": staff_profile.position or "",
-        },
-        {
-            "label": "Department",
-            "value": str(staff_profile.department or "Unassigned"),
-            "meta": staff_profile.division or "",
-        },
-        {
-            "label": "Contact email",
-            "value": request.user.email or "Not set",
-        },
-    ] if staff_profile else [
-        {
-            "label": "No staff profile",
-            "value": "Ask HR to complete your onboarding record.",
-        }
-    ]
+    profile_items = (
+        [
+            {
+                "label": "Staff ID",
+                "value": staff_profile.staff_id,
+                "meta": staff_profile.position or "",
+            },
+            {
+                "label": "Department",
+                "value": str(staff_profile.department or "Unassigned"),
+                "meta": staff_profile.division or "",
+            },
+            {"label": "Contact email", "value": user.email or "Not set"},
+        ]
+        if staff_profile
+        else [
+            {
+                "label": "No staff profile",
+                "value": "Ask HR to complete your onboarding record.",
+            }
+        ]
+    )
 
     actions = []
     if staff_profile:
@@ -146,7 +166,7 @@ def _build_staff_context(request: HttpRequest) -> dict:
 
 
 def _build_faculty_context(request: HttpRequest) -> dict:
-    faculty = _get_faculty_profile(request.user)
+    faculty = _get_faculty_profile(_as_user(request.user))
     if not faculty:
         return _empty_role_context("No faculty profile linked to this account yet.")
 
@@ -182,7 +202,7 @@ def _build_faculty_context(request: HttpRequest) -> dict:
 
 
 def _build_chair_context(request: HttpRequest) -> dict:
-    faculty = _get_faculty_profile(request.user)
+    faculty = _get_faculty_profile(_as_user(request.user))
     if not faculty or not faculty.college:
         return _empty_role_context("No college associated to this chair account.")
 
@@ -201,13 +221,14 @@ def _build_chair_context(request: HttpRequest) -> dict:
         for snap in workloads
     ] or [{"label": "No workloads captured", "value": "Snapshots pending."}]
 
-    curricula_items = [
-        {
-            "label": cur.code,
-            "value": cur.title,
-        }
-        for cur in curricula[:6]
-    ]
+    curricula_items = []
+    for cur in curricula[:6]:
+        curricula_items.append(
+            {
+                "label": cur.short_name,
+                "value": cur.long_name or cur.short_name,
+            }
+        )
     if not curricula_items:
         curricula_items = [
             {"label": "No curricula", "value": "Assign one to this college."},
@@ -546,7 +567,7 @@ def _build_general_context(_: HttpRequest) -> dict:
     return _empty_role_context("No specific dashboard is associated with this account.")
 
 
-ROLE_CONFIG = {
+ROLE_CONFIG: dict[str, RoleConfig] = {
     "staff": {
         "groups": {"Staff"},
         "title": "My Staff Workspace",
@@ -640,7 +661,7 @@ ROLE_CONFIG = {
 }
 
 
-def _resolve_staff_role(user) -> str:
+def _resolve_staff_role(user: User) -> str:
     group_names = _user_group_names(user)
     for slug in ROLE_PRIORITY:
         config = ROLE_CONFIG.get(slug)
@@ -672,7 +693,7 @@ def _render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse
 @login_required
 def staff_dashboard(request: HttpRequest) -> HttpResponse:
     """Route staff users to their highest-priority dashboard."""
-    role_slug = _resolve_staff_role(request.user)
+    role_slug = _resolve_staff_role(_as_user(request.user))
     return _render_role_dashboard(request, role_slug)
 
 
@@ -684,7 +705,9 @@ def staff_role_dashboard(request: HttpRequest, role: str) -> HttpResponse:
 
     config = ROLE_CONFIG[role]
     requires_membership = bool(config["groups"])
-    lacks_group = not _user_group_names(request.user).intersection(config["groups"])
+    lacks_group = not _user_group_names(_as_user(request.user)).intersection(
+        config["groups"]
+    )
     if requires_membership and not request.user.is_superuser and lacks_group:
         raise PermissionDenied("You do not belong to this staff group.")
 

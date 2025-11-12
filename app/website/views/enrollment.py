@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from django.contrib import messages
+from typing import cast
+
 from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import HttpRequest, HttpResponse
@@ -56,7 +59,8 @@ def student_detail(request: HttpRequest, pk: int) -> HttpResponse:
 @permission_required("people.delete_student", raise_exception=True)
 def student_delete(request: HttpRequest, pk: int) -> HttpResponse:
     """Delete a student after confirmation."""
-    if not request.user.groups.filter(name="Enrollment Officer").exists():
+    user = cast(User, request.user)
+    if not user.groups.filter(name="Enrollment Officer").exists():
         raise PermissionDenied("Only officers may delete students.")
 
     student = get_object_or_404(Student, pk=pk)

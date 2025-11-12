@@ -35,9 +35,17 @@ ROLE_CASES = [
 ]
 
 ACTION_CASES = [
-    ("registrar_officer_user", {"groups": ["Registrar Officer"]}, ["registrar_course_windows"]),
+    (
+        "registrar_officer_user",
+        {"groups": ["Registrar Officer"]},
+        ["registrar_course_windows"],
+    ),
     ("enrollment_user", {"groups": ["Enrollment"]}, ["student_list", "create_student"]),
-    ("enrollment_officer_user", {"groups": ["Enrollment Officer"]}, ["student_list", "create_student"]),
+    (
+        "enrollment_officer_user",
+        {"groups": ["Enrollment Officer"]},
+        ["student_list", "create_student"],
+    ),
 ]
 
 
@@ -178,9 +186,7 @@ def test_registrar_cannot_manage_semester_windows(
     _login_to_portal(selenium_driver, live_server, username)
 
     WebDriverWait(selenium_driver, 10).until(
-        EC.text_to_be_present_in_element(
-            (By.TAG_NAME, "h1"), "Registrar Lifecycle Ops"
-        )
+        EC.text_to_be_present_in_element((By.TAG_NAME, "h1"), "Registrar Lifecycle Ops")
     )
 
     action_paths = _action_paths(selenium_driver)
