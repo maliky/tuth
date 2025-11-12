@@ -7,6 +7,40 @@ Propose a detailed plan to cover the elements below. I will give you full access
 4. On all staff dashboard there should be a button to go to django admin interface (like in registrar/course-windows/ and staff/registrar_officer/ ) and the django admin interface a button to go the the role dashboard (if available). I appreciate the 'Audit statuses directly in Django admin'. Apply the same patern in other similar places.
 5. in /auth/login  Write a less technical campus brief
 6. remove the links to different surfaces
+** • Implemented the full UX revamp across staff and portal surfaces.
+  - Introduced a shared light-theme staff shell (app/website/templates/website/staff/
+    base.html + app/website/static/css/staff-dashboard.css) and rebuilt every staff
+    dashboard (app/website/templates/website/staff/role_dashboard.html) plus registrar/
+    enrollment screens to match the WVSTU style, complete with admin CTA in the header
+    and breadcrumb/navigation chips (e.g., app/website/templates/enrollment/*.html,
+    app/website/templates/website/registrar_windows.html). All enrollment flows now
+    push officers into Django admin via new action cards and the student_admin_edit
+    helper view (app/website/views/enrollment.py, app/website/templates/enrollment/
+    student_admin_edit.html, app/website/urls.py).
+  - Added a friendly error system with templates/services for 400/401/403/404/408/429
+    (app/website/views/errors.py, app/website/templates/errors/generic.html) and wired
+    the handlers in app/urls.py.
+  - Updated staff routing logic so officer roles inherit access to their base dashboards    and added admin ↔ dashboard shortcuts via a templated button (templates/admin/
+    base_site.html, app/website/templatetags/staff_extras.py, app/website/views/
+    staff_dashboards.py). Enrollment/finance action cards were refreshed to reference
+    admin workflows instead of in-app forms.
+  - Gave /auth/login and admin login a campus-friendly brief and removed the “different
+    surface” links (app/website/templates/website/portal_login.html, templates/admin/
+    login.html). The journal.org routing map now lists every role/screen combination.
+  - Added regression tests covering the new error handlers, officer access, and the
+    Selenium smoke suite for the updated dashboards (tests/website/test_error_pages.py,
+    tests/website/test_staff_permissions.py, tests/selenium/test_portal_roles.py).
+
+  Tests run
+
+  black ./
+  flake8 ./
+  mypy ./
+  DJANGO_SETTINGS_MODULE=app.settings pytest
+
+  Everything is green end-to-end, including the Selenium flows with the pinned
+  ChromeDriver. Let me know if you’d like mockups or copy tweaks for the new staff
+  shell.   
 7. <2025-11-11 mar.> Enrollement Officer UX
    - You can remove the search and filter accross cohort. A link to the django admin exists and permits this filtering already.
    - Remove the "create student action" form, just link to django admin student creation.

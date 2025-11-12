@@ -1,11 +1,18 @@
-<!DOCTYPE html>
-<html>
-  <body>
-    <h1>Delete {{ student }}</h1>
-    <p>Are you sure you want to delete this student?</p>
-    <form method="post">
-      {% csrf_token %}
-      <button type="submit">Confirm</button>
-    </form>
-  </body>
-</html>
+{% extends "website/staff/base.html" %}
+
+{% block header_actions %}
+  <a class="btn btn-outline-secondary btn-sm" href="{% url 'student_detail' student.pk %}">
+    Cancel
+  </a>
+{% endblock %}
+
+{% block staff_content %}
+  <div class="alert alert-danger mb-4">
+    Deleting {{ student.long_name }} will remove their profile from Tusis. This cannot be undone.
+  </div>
+  <form method="post" class="card shadow-sm p-4">
+    {% csrf_token %}
+    <p class="mb-4">Are you sure you want to continue?</p>
+    <button type="submit" class="btn btn-danger">Delete student</button>
+  </form>
+{% endblock %}

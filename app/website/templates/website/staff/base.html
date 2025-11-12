@@ -1,0 +1,51 @@
+{% extends "website/base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title|default:"Staff workspace" }} · Tusis{% endblock %}
+{% block head_extra %}
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+  />
+  <link rel="stylesheet" href="{% static 'css/staff-dashboard.css' %}" />
+{% endblock %}
+{% block body_class %}staff-light-body{% endblock %}
+
+{% block content %}
+  <div class="staff-shell container-xl py-5">
+    <header class="staff-shell__header">
+      <div>
+        <p class="staff-shell__eyebrow">
+          {{ eyebrow|default:"Staff workspace" }}
+        </p>
+        <h1 class="staff-shell__title">{{ page_title|default:"Staff workspace" }}</h1>
+        {% if page_summary %}
+          <p class="staff-shell__summary text-muted">{{ page_summary }}</p>
+        {% endif %}
+      </div>
+      <div class="staff-shell__actions">
+        {% block header_actions %}{% endblock %}
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'admin:index' %}">
+          Django admin
+        </a>
+      </div>
+    </header>
+
+    {% if breadcrumbs %}
+      <nav class="staff-shell__breadcrumbs">
+        {% for crumb in breadcrumbs %}
+          {% if crumb.href %}
+            <a href="{{ crumb.href }}">{{ crumb.label }}</a>
+          {% else %}
+            <span>{{ crumb.label }}</span>
+          {% endif %}
+          {% if not forloop.last %}
+            <span class="divider">/</span>
+          {% endif %}
+        {% endfor %}
+      </nav>
+    {% endif %}
+
+    {% block staff_content %}{% endblock %}
+  </div>
+{% endblock %}

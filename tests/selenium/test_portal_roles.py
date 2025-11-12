@@ -40,11 +40,20 @@ ACTION_CASES = [
         {"groups": ["Registrar Officer"]},
         ["registrar_course_windows"],
     ),
-    ("enrollment_user", {"groups": ["Enrollment"]}, ["student_list", "create_student"]),
+    (
+        "enrollment_user",
+        {"groups": ["Enrollment"]},
+        ["student_list", "admin:people_student_add", "student_admin_edit"],
+    ),
     (
         "enrollment_officer_user",
         {"groups": ["Enrollment Officer"]},
-        ["student_list", "create_student"],
+        [
+            "student_list",
+            "admin:people_student_add",
+            "student_admin_edit",
+            "admin:people_student_changelist",
+        ],
     ),
 ]
 
@@ -115,7 +124,7 @@ def _login_to_portal(driver, live_server, username):
 
 def _action_paths(driver) -> set[str]:
     """Return the set of action button href paths on the dashboard."""
-    links = driver.find_elements(By.CSS_SELECTOR, "section.container .card a.btn")
+    links = driver.find_elements(By.CSS_SELECTOR, ".action-card a.btn")
     paths: set[str] = set()
     for link in links:
         href = link.get_attribute("href")

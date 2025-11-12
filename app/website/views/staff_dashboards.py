@@ -339,16 +339,22 @@ def _build_enrollment_context(_: HttpRequest) -> dict:
 
     actions = [
         {
-            "label": "Open student directory",
+            "label": "Student snapshot",
             "href": reverse("student_list"),
-            "description": "Search and filter records across cohorts.",
+            "description": "Review the latest arrivals without leaving Tusis.",
             "variant": "outline-primary",
         },
         {
-            "label": "Create student",
-            "href": reverse("create_student"),
-            "description": "Register a new student profile from admissions paperwork.",
+            "label": "Create student in admin",
+            "href": reverse("admin:people_student_add"),
+            "description": "Open the official admissions form with attachments and history.",
             "variant": "primary",
+        },
+        {
+            "label": "Edit student in admin",
+            "href": reverse("student_admin_edit"),
+            "description": "Pick an ID and Tusis will send you straight to the admin edit screen.",
+            "variant": "outline-secondary",
         },
     ]
 
@@ -375,9 +381,9 @@ def _build_enrollment_officer_context(request: HttpRequest) -> dict:
     if bulk_url:
         extras.append(
             {
-                "label": "Bulk edit students",
+                "label": "Open admin directory",
                 "href": bulk_url,
-                "description": "Jump to Django admin for mass updates.",
+                "description": "Search, filter, and export from Django admin.",
                 "variant": "outline-secondary",
             }
         )
@@ -660,6 +666,24 @@ ROLE_CONFIG: dict[str, RoleConfig] = {
     },
 }
 
+ROLE_INHERITANCE: dict[str, set[str]] = {}
+for slug in ROLE_CONFIG:
+    if slug.endswith("_officer"):
+        base = slug[: -len("_officer")]
+        ROLE_INHERITANCE.setdefault(base, set()).add(slug)
+
+
+def _user_has_membership(user: User, role_slug: str) -> bool:
+    config = ROLE_CONFIG.get(role_slug)
+    if not config or not config["groups"]:
+        return False
+    return bool(_user_group_names(user).intersection(config["groups"]))
+
+
+def _user_inherits_role(user: User, role_slug: str) -> bool:
+    inherited = ROLE_INHERITANCE.get(role_slug, set())
+    return any(_user_has_membership(user, slug) for slug in inherited)
+
 
 def _resolve_staff_role(user: User) -> str:
     group_names = _user_group_names(user)
@@ -680,10 +704,13 @@ def _render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse
     if not config:
         raise Http404("Unknown staff dashboard.")
     context = config["builder"](request)
-    base = {
+    base: dict[str, Any] = {
         "title": config["title"],
         "summary": config["summary"],
         "role_slug": role_slug,
+        "page_title": config["title"],
+        "page_summary": config["summary"],
+        "eyebrow": role_slug.replace("_", " ").title(),
     }
     base.update(context)
     template_name = config.get("template", "website/staff/role_dashboard.html")
@@ -700,12 +727,6 @@ def _render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse
             "href": reverse("staff_role_dashboard", args=[role_slug]),
             "active": role_slug != "general",
             "icon": "bi-people",
-        },
-        {
-            "label": "Tools",
-            "href": "#staff-tools",
-            "active": False,
-            "icon": "bi-wrench",
         },
     ]
     breadcrumbs = [
@@ -730,12 +751,16 @@ def staff_role_dashboard(request: HttpRequest, role: str) -> HttpResponse:
     if role not in ROLE_CONFIG:
         raise Http404("Unknown staff role.")
 
+    user = _as_user(request.user)
     config = ROLE_CONFIG[role]
     requires_membership = bool(config["groups"])
-    lacks_group = not _user_group_names(_as_user(request.user)).intersection(
-        config["groups"]
+    has_access = (
+        user.is_superuser
+        or not requires_membership
+        or _user_has_membership(user, role)
+        or _user_inherits_role(user, role)
     )
-    if requires_membership and not request.user.is_superuser and lacks_group:
+    if not has_access:
         raise PermissionDenied("You do not belong to this staff group.")
 
     return _render_role_dashboard(request, role)

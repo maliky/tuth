@@ -1,72 +1,41 @@
-{% extends "website/base.html" %}
-{% load static %}
-{% block title %}{{ title }} · Tusis{% endblock %}
-{% block body_class %}staff-dashboard-body{% endblock %}
-{% block head_extra %}
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="{% static 'css/staff-dashboard.css' %}">
+{% extends "website/staff/base.html" %}
+
+{% block header_actions %}
+  <a class="btn btn-outline-secondary btn-sm" href="{% url 'portal_logout' %}">
+    Logout
+  </a>
 {% endblock %}
 
-{% block content %}
-<section class="staff-dashboard container-fluid py-5">
-  <div class="staff-dashboard__layout">
-    <aside class="staff-dashboard__sidebar">
-      <div class="staff-dashboard__brand">
-        <span class="staff-dashboard__logo">Tusis Admin</span>
-        <a class="staff-dashboard__logout" href="{% url 'portal_logout' %}">Logout</a>
-      </div>
-      <nav class="staff-dashboard__nav">
-        {% for link in sidebar_links %}
-          <a
-            href="{{ link.href }}"
-            class="staff-dashboard__nav-link {% if link.active %}is-active{% endif %}"
-          >
-            {% if link.icon %}
-              <i class="bi {{ link.icon }}"></i>
-            {% endif %}
-            <span>{{ link.label }}</span>
-          </a>
-        {% endfor %}
-      </nav>
-    </aside>
+{% block staff_content %}
+  {% if sidebar_links %}
+    <div class="staff-dashboard__navchips mb-4">
+      {% for link in sidebar_links %}
+        <a
+          href="{{ link.href }}"
+          class="navchip {% if link.active %}is-active{% endif %}"
+        >
+          {% if link.icon %}<i class="bi {{ link.icon }}"></i>{% endif %}
+          {{ link.label }}
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
 
-    <div class="staff-dashboard__content">
-      <header class="staff-dashboard__header">
-        <div>
-          <p class="staff-dashboard__eyebrow">{{ role_slug|title }}</p>
-          <h1 class="staff-dashboard__title">{{ title }}</h1>
-          <p class="staff-dashboard__summary">{{ summary }}</p>
-        </div>
-      </header>
-
-      <nav class="staff-dashboard__breadcrumbs">
-        {% for crumb in breadcrumbs %}
-          {% if crumb.href %}
-            <a href="{{ crumb.href }}">{{ crumb.label }}</a>
-          {% else %}
-            <span>{{ crumb.label }}</span>
-          {% endif %}
-          {% if not forloop.last %}
-            <span class="divider">/</span>
-          {% endif %}
-        {% endfor %}
-      </nav>
-
-      <div class="staff-dashboard__grid">
-        <div class="staff-dashboard__primary">
-          {% if metrics %}
-            <div class="staff-dashboard__metrics">
-              {% for metric in metrics %}
-                <article class="metric-card">
-                  <p class="metric-card__label">{{ metric.label }}</p>
+  <div class="staff-dashboard__grid">
+    <div class="staff-dashboard__primary">
+      {% if metrics %}
+        <div class="staff-dashboard__metrics">
+          {% for metric in metrics %}
+            <article class="metric-card">
+              <p class="metric-card__label">{{ metric.label }}</p>
               <p class="metric-card__value">{{ metric.value }}</p>
             </article>
           {% endfor %}
-            </div>
-          {% endif %}
+        </div>
+      {% endif %}
 
-          {% for panel in panels %}
-            <article class="panel-card">
+      {% for panel in panels %}
+        <article class="panel-card">
           <div class="panel-card__stripe"></div>
           <div class="panel-card__body">
             <div class="panel-card__head">
@@ -99,7 +68,9 @@
           <div class="panel-card__stripe"></div>
           <div class="panel-card__body">
             <h2>Nothing to show yet</h2>
-            <p class="panel-card__subtitle">As soon as data streams in, this dashboard will populate.</p>
+            <p class="panel-card__subtitle">
+              As soon as data streams in, this dashboard will populate.
+            </p>
           </div>
         </article>
       {% endfor %}
@@ -107,22 +78,19 @@
 
     <aside class="staff-dashboard__secondary">
       {% if actions %}
-        <div class="action-stack">
-          {% for action in actions %}
-            <article class="action-card">
-              <p class="action-card__label">{{ action.description }}</p>
-              <a class="btn btn-outline-light w-100" href="{{ action.href }}">
-                {{ action.label }}
-              </a>
-            </article>
-          {% endfor %}
-        </div>
+        {% for action in actions %}
+          <article class="action-card">
+            <p class="action-card__label">{{ action.description }}</p>
+            <a class="btn btn-outline-secondary w-100" href="{{ action.href }}">
+              {{ action.label }}
+            </a>
+          </article>
+        {% endfor %}
       {% else %}
         <article class="action-card action-card--empty">
           <p>No quick actions right now.</p>
         </article>
       {% endif %}
-    </div>
+    </aside>
   </div>
-</section>
 {% endblock %}

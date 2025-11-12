@@ -1,0 +1,31 @@
+{% extends "website/staff/base.html" %}
+
+{% block header_actions %}
+  <a class="btn btn-outline-secondary btn-sm" href="{% url 'student_list' %}">
+    Back to snapshot
+  </a>
+{% endblock %}
+
+{% block staff_content %}
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h2 class="h5 mb-3">Jump to Django admin</h2>
+      <p class="text-muted">
+        Pick a student ID and Tusis will open the Django admin edit form in a new tab.
+      </p>
+      <form method="post" class="row g-3">
+        {% csrf_token %}
+        <div class="col-md-8">
+          {{ form.student.label_tag }}
+          {{ form.student }}
+          {% if form.student.errors %}
+            <div class="text-danger small">{{ form.student.errors }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary w-100">Open in admin</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

@@ -1,24 +1,21 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Create Student</title>
-    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet" />
-  </head>
-  <body class="p-4">
-    <h1 class="mb-4">Create Student</h1>
-    {% if messages %}
-    <div class="mb-3">
-      {% for message in messages %}
-        <div class="alert alert-info">{{ message }}</div>
-      {% endfor %}
+{% extends "website/staff/base.html" %}
+
+{% block header_actions %}
+  <a class="btn btn-outline-secondary btn-sm" href="{% url 'portal_logout' %}">
+    Logout
+  </a>
+{% endblock %}
+
+{% block staff_content %}
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h2 class="h5">Create student in Django admin</h2>
+      <p class="text-muted">
+        The admissions workflow now lives entirely in the Django admin. Click the button below to open the official creation form with validation, attachments, and history tracking.
+      </p>
+      <a class="btn btn-primary" href="{% url 'admin:people_student_add' %}">
+        Open admin form
+      </a>
     </div>
-    {% endif %}
-    <form method="post">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit" class="btn btn-primary">Save</button>
-    </form>
-  </body>
-</html>
+  </div>
+{% endblock %}

@@ -23,3 +23,10 @@ urlpatterns = [
     path("impersonate/", include("impersonate.urls")),
     path("", include("app.website.urls")),  # this points to your landing page
 ]
+
+handler400 = "app.website.views.errors.bad_request"
+handler401 = "app.website.views.errors.unauthorized"
+handler403 = "app.website.views.errors.forbidden"
+handler404 = "app.website.views.errors.not_found"
+handler408 = "app.website.views.errors.request_timeout"
+handler429 = "app.website.views.errors.too_many_requests"

@@ -49,39 +49,50 @@ left to right direction
 
 actor Visitor
 actor Student
-actor "Staff User" as Staff
-actor "Enrollment Officer" as Enroll
-actor Registrar
+actor "Faculty/Staff" as Staff
 
 rectangle "Public Entry" {
   [Landing\n(/)] as Landing
 }
 
-rectangle "Portal Access" {
+rectangle "Unified Portal" {
   [Login\n(/auth/login/)] as Login
   [Router\n(/portal/)] as Router
   [Logout\n(/auth/logout/)] as Logout
 }
 
-rectangle "Student Views" {
+rectangle "Student Surface" {
   [Student Dashboard\n(/student/dashboard/)] as StuDash
   [Course Dashboard\n(/courses/)] as Courses
 }
 
-rectangle "Staff Views" {
-  [Staff Hub\n(/staff/dashboard/)] as StaffHub
-  [Role Dashboard\n(/staff/<role>/)] as StaffRole
+rectangle "Staff Dashboards\n(/staff/<role>/)" {
+  [General Workspace] as StaffGeneral
+  [Faculty Hub] as StaffFaculty
+  [Chair Dashboard] as StaffChair
+  [Dean Oversight] as StaffDean
+  [VPAA Approval Hub] as StaffVPAA
+  [Registrar Lifecycle Ops] as StaffRegistrar
+  [Registrar Officer Console] as StaffRegistrarOfficer
+  [Enrollment Desk] as StaffEnroll
+  [Enrollment Officer Desk] as StaffEnrollOfficer
+  [Finance & Holds] as StaffFinance
+  [Finance Officer Control] as StaffFinanceOfficer
+  [Cashier Station] as StaffCashier
+  [Scholarship Office] as StaffScholarship
+  [IT Support] as StaffIT
+}
+
+rectangle "Enrollment Tools" {
+  [Student Snapshot\n(/students/)] as StuList
+  [Student Detail\n(/students/<pk>)] as StuDetail
+  [Admin Jump\n(/students/admin-edit/)] as AdminJump
+  [Create Student CTA\n(/students/new/)] as StuNew
+  [Delete Student\n(/students/<pk>/delete/)] as StuDelete
 }
 
 rectangle "Registrar Tools" {
   [Course Windows\n(/registrar/course-windows/)] as RegWin
-}
-
-rectangle "Enrollment Tools" {
-  [Student List\n(/students/)] as StuList
-  [Student Detail\n(/students/<pk>)] as StuDetail
-  [Create Student\n(/students/new/)] as StuNew
-  [Delete Student\n(/students/<pk>/delete/)] as StuDelete
 }
 
 rectangle "Admin" {
@@ -92,25 +103,31 @@ Visitor --> Landing
 Landing --> Login
 Student --> Login
 Staff --> Login
-Enroll --> Login
-Registrar --> Login
 
 Login --> Router
-Router --> StuDash : student profile
-Router --> StaffHub : staff profile
-Router --> AdminPage : admin or support
+Router --> StuDash
+Router --> StaffGeneral
+Router --> AdminPage
+
 StuDash --> Courses
-StaffHub --> StaffRole
-StaffRole --> RegWin : Registrar group
-StaffRole --> StuList : Enrollment group
-StaffRole --> StuNew
+StaffGeneral --> StaffFaculty
+StaffGeneral --> StaffRegistrar
+StaffGeneral --> StaffFinance
+
+StaffRegistrar --> RegWin
+StaffRegistrarOfficer --> RegWin
+StaffEnroll --> StuList
+StaffEnroll --> AdminJump
+StaffEnroll --> StuNew
 StuList --> StuDetail
 StuDetail --> StuDelete
 
+StaffFinance --> AdminPage : Audit invoices
+StaffFinanceOfficer --> AdminPage
+AdminPage --> StaffGeneral : “Back to dashboard” link
+
 Student --> Logout
 Staff --> Logout
-Enroll --> Logout
-Registrar --> Logout
 
 @enduml
 #+END_SRC
@@ -306,4 +323,3 @@ DeanDash --> VPaaDash
   @ for file paths                        ctrl + v to paste images
   esc esc to edit previous message        ctrl + c to exit
                                           ctrl + t to view transcript
-

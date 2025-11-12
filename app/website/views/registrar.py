@@ -35,8 +35,13 @@ def registrar_course_windows(request: HttpRequest) -> HttpResponse:
         )
         return redirect("registrar_course_windows")
 
-    return render(
-        request,
-        "website/registrar_windows.html",
-        {"semesters": semesters, "statuses": statuses},
-    )
+    context = {
+        "semesters": semesters,
+        "statuses": statuses,
+        "page_title": "Course selection windows",
+        "page_summary": "Open or close registration periods directly from Tusis.",
+        "breadcrumbs": [
+            {"label": "Registrar desk", "href": ""},
+        ],
+    }
+    return render(request, "website/registrar_windows.html", context)

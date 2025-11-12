@@ -3,6 +3,7 @@
 from .auth import PortalLoginView, PortalLogoutView, portal_redirect
 from .enrollment import (
     create_student,
+    student_admin_edit,
     student_delete,
     student_detail,
     student_list,
@@ -23,6 +24,7 @@ __all__ = [
     "staff_dashboard",
     "staff_role_dashboard",
     "student_dashboard",
+    "student_admin_edit",
     "student_delete",
     "student_detail",
     "student_list",
