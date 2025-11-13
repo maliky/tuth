@@ -166,6 +166,27 @@ docker-compose -f docker-compose-prod.yml up --build -d
 
 Access the application via your production URL (e.g., [[https://tuth.koba.sarl][https://tusis.koba.sarl]]).
 
+** Pre-production Deployment (Docker)
+Use the dedicated stack in =docker-compose-preprod.yml= when you need PostgreSQL + Gunicorn + Nginx with HTTP Basic Auth on a single pre-prod host.
+
+1. **Prepare secrets**
+   - Copy the sample env file: ~cp .env-preprod.example .env-preprod~ and edit the values (secret key, hostnames, DB creds, gunicorn sizing).
+   - Generate the Basic Auth file that replaces Apache's =.htaccess=: ~htpasswd -c infra/preprod/nginx/htpasswd admin~ (install ~apache2-utils~ or run it from a short-lived ~httpd:alpine~ container). The committed ~infra/preprod/nginx/htpasswd.example~ shows the expected format; never keep the real file under version control.
+2. **Build the stack**
+   - From the repo root: ~docker-compose -f docker-compose-preprod.yml up -d --build~.
+   - The =deploy/preprod/entrypoint.sh= script waits for PostgreSQL, runs migrations, collects static files into the shared volume, then launches Gunicorn on a Unix socket under =/run/gunicorn.sock=.
+3. **Smoke-test**
+   - Confirm the services are healthy: ~docker-compose -f docker-compose-preprod.yml ps~ and ~docker-compose -f docker-compose-preprod.yml logs -f web nginx~.
+   - Hit the health endpoint with your Basic Auth credentials: ~curl -u admin:password http://<server-ip>/healthz~. Nginx will prompt for the password before proxying requests.
+4. **Manage the release**
+   - Run Django management commands inside the container, e.g. ~docker-compose -f docker-compose-preprod.yml exec web python manage.py populate_initial_data~ or ~createsuperuser~.
+   - Back up the DB via ~docker-compose -f docker-compose-preprod.yml exec db pg_dump -U $POSTGRES_USER $POSTGRES_DB > tusis-preprod-$(date +%F).sql~.
+   - To pull new code, ~git pull~, rebuild (~--build~), then ~docker-compose ... up -d~; the entrypoint reapplies migrations automatically.
+5. **Optional TLS**
+   - Add your cert/key pair inside =infra/preprod/nginx/= (the folder’s =.gitignore= keeps secrets out of git), update =conf.d/tusis.conf= to ~listen 443 ssl;~ and point to the cert paths, then ~docker-compose -f docker-compose-preprod.yml restart nginx~.
+
+Nginx enforces Basic Auth before serving static assets or proxying Django, giving you the locked-down “.htaccess” style gate on pre-production.
+
 ** Data Import/Export
 
 Several admin screens expose Import and Export buttons powered by
@@ -207,5 +228,3 @@ pip install -r requirements-dev
 Installing webdriver
 Installing DB posgresql
 Installing IDE / codex
-
-
