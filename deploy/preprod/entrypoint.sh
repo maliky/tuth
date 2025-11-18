@@ -15,9 +15,9 @@ log "Collecting static assets"
 python manage.py collectstatic --noinput
 
 log "Starting Gunicorn"
-mkdir -p /run
+BIND_ADDRESS="0.0.0.0:${GUNICORN_PORT:-8000}"
 exec gunicorn app.wsgi:application \
-    --bind unix:/run/gunicorn.sock \
+    --bind "${BIND_ADDRESS}" \
     --workers "${GUNICORN_WORKERS:-4}" \
     --timeout "${GUNICORN_TIMEOUT:-60}" \
     --access-logfile - \

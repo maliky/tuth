@@ -1,3 +1,35 @@
+* <2025-11-18 mar. 19:19> native nginx, dockerized django and  docker
+What you did is very good, but I only want the posgresql DB and the django engine to be dockerized. I have already a native nginx that I want to use.  So review your proposition. I have have created already the htpasswd in /etc/nginx I only need a clean tusis.koba.sarl.conf file for nginx beside teh deployment file for docker compose
+
+** • Changes
+
+  - Reworked the pre-prod compose stack so it now runs only PostgreSQL and the
+    Django/Gunicorn app, mounts the repo’s static/ + media/ directories, and
+    publishes the backend as 127.0.0.1:18000 for native Nginx (docker-compose-
+    preprod.yml:7).
+  - Updated the entrypoint to wait for Postgres, collect static assets, and
+    bind Gunicorn to 0.0.0.0:${GUNICORN_PORT:-8000} instead of a Unix socket,
+    plus added the new port option in .env-preprod.example (deploy/preprod/
+    entrypoint.sh:8, .env-preprod.example:1).
+  - Added a drop-in site file for the host’s Nginx that enforces Basic Auth, serves
+    static/media from /home/jil/Tusis/Tusis_app, and proxies to the containerised
+    backend (infra/nginx/tusis.koba.sarl.conf:1) while removing the old dockerised
+    Nginx assets (infra/preprod/nginx/*).
+  - Rewrote the README pre-prod section with step-by-step guidance for this split
+    setup (Dockerised DB/app + native Nginx) and the new health-check/log/backup
+    commands (README.org:169).
+
+  Tests
+
+  - Not run (deployment/configuration changes only).
+
+  Next steps
+
+  1. cp .env-preprod.example .env-preprod, fill real secrets, and run docker-compose     -f docker-compose-preprod.yml up -d --build.
+  2. Copy infra/nginx/tusis.koba.sarl.conf into /etc/nginx/sites-available/, adjust
+     certificate paths if needed, enable it, and reload Nginx so it proxies to
+     127.0.0.1:18000.
+
 * DONE <2025-11-12 mer. 23:55> Dev to prod
 CLOSED: [2025-11-13 jeu. 00:19]
 You are on a pre-prod env.  and I want to use postgresql here, things that is not possible on my local dev env.  I also want to serve the website using nginx but behind a .htaccess taht I know will block the access to the pages at server level unless the password is known.  I know that is is slightly risqu but no other software runs on this preprod and I a ready to move on with this setup.
