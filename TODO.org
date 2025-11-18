@@ -4,28 +4,19 @@ You are on a pre-prod env.  and I want to use postgresql here, things that is no
 
 Can you give me a plan of action and deployment.
 Will I gain a lot in efficiency if I use native postgresql / nginx compared to dockerized versions ? if not propose some docker-compose for the pre-prod.
-** • Preprod Stack
+** Preprod Stack
 
-  - Added a dedicated Docker stack that wires Postgres, the Django/Gunicorn app, and    an Nginx reverse proxy with shared volumes plus env-file anchoring in docker-
-    compose-preprod.yml:1.
-  - Created the deploy/preprod/entrypoint.sh:1 bootstrap script so the web container    waits for Postgres, runs migrate, collects static files, and exposes Gunicorn
-    via a Unix socket.
-  - Defined the locked-down Nginx layer (static/media aliases, /healthz, and HTTP
-    Basic Auth) in infra/preprod/nginx/conf.d/tusis.conf:1, plus an ignored htpasswd    placeholder to mimic the requested “.htaccess” gate in infra/preprod/nginx/
-    htpasswd.example:1.
-  - Published a .env-preprod.example:1 template that carries all Django and database    settings along with Gunicorn tunables used by the new stack.
-  - Documented the full pre-prod rollout steps (secrets, htpasswd generation, stack
-    bring-up, smoke tests, maintenance, optional TLS) in README.org:169.
-  - Tests: not run (not requested).
+- Added a dedicated Docker stack that wires Postgres, the Django/Gunicorn app, and an Nginx reverse proxy with shared volumes plus env-file anchoring in docker-compose-preprod.yml:1.
+- Created the deploy/preprod/entrypoint.sh:1 bootstrap script so the web container waits for Postgres, runs migrate, collects static files, and exposes Gunicorn via a Unix socket.
+- Defined the locked-down Nginx layer (static/media aliases, /healthz, and HTTP Basic Auth) in infra/preprod/nginx/conf.d/tusis.conf:1, plus an ignored htpasswd   placeholder to mimic the requested “.htaccess” gate in infra/preprod/nginx/htpasswd.example:1.
+- Published a .env-preprod.example:1 template that carries all Django and database settings along with Gunicorn tunables used by the new stack.
+- Documented the full pre-prod rollout steps (secrets, htpasswd generation, stack bring-up, smoke tests, maintenance, optional TLS) in README.org:169.
+- Tests: not run (not requested).
 
-  Next Steps
-
-  1. Copy .env-preprod.example to .env-preprod, fill in real secrets/hosts, and keep     it off git.
-  2. Generate infra/preprod/nginx/htpasswd with htpasswd -c … (or similar) so Nginx
-     can enforce the password gate.
-  3. Run docker-compose -f docker-compose-preprod.yml up -d --build, tail docker-
-     compose … logs -f web nginx, and hit http://<host>/healthz with your
-     credentials to verify before handing out access.
+** Next Steps
+1. Copy .env-preprod.example to .env-preprod, fill in real secrets/hosts, and keep it off git.
+2. Generate infra/preprod/nginx/htpasswd with htpasswd -c … (or similar) so Nginx can enforce the password gate.
+3. Run docker-compose -f docker-compose-preprod.yml up -d --build, tail docker-compose … logs -f web nginx, and hit http://<host>/healthz with your credentials to verify before handing out access.
 
 
 * <2025-11-12 mer. 14:23>
