@@ -1,3 +1,4 @@
+.python-version
 Docs
 *.png
 media/
@@ -9,14 +10,12 @@ test_import.py
 *~
 .env*
 .htpasswd
-
 *cache*
 *migrations*
 Seed*
 _test.repl.org
 db.sqlite3
 db_test*
-
 .git/*
 codo-tuth-env/
 logs/*
