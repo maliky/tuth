@@ -10,6 +10,8 @@ The goal of the task is to identify one or several (not more than 10) effective(
 I will then do some data wrangling to massage the sources files into the identified structures that can be imported using existing or enhanced command line management scripts
 
 
+* <2025-11-19 mer. 10:36> updating readme
+  
 * [2025-11-19 mer. 09:44] fixed basic deployment
 • Preprod Fixes
 
