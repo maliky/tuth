@@ -28,3 +28,4 @@ static/*
 
 !.env-dev.example
 !.env-prod.example
+Seed_data
