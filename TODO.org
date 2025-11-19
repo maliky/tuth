@@ -9,6 +9,101 @@ Look at app/shared/management/commands/ import_resources . See how I use the imp
 The goal of the task is to identify one or several (not more than 10) effective(s) csv or tsv structures to populate the database given sources in mixed format.  The later will discribed later.
 I will then do some data wrangling to massage the sources files into the identified structures that can be imported using existing or enhanced command line management scripts
 
+** Import-Friendly Schemas
+
+  Below are nine CSV/TSV layouts (≤10 as requested) that align with the existing
+  django-import-export resources and cover academics, people, spaces, timetable,
+  registry, and finance. Each file can be produced from mixed upstream sources,
+  then loaded with the current management commands (create_states, load_roles,
+  create_test_users, import_resources / import_resources_individualy) or thin
+  wrappers around those resources.
+
+  1. academics_colleges_departments.csv
+      - Targets: CollegeResource, DepartmentResource (app/academics/admin/
+        resources.py:86).
+      - Columns: college_code, college_long_name, course_dept, department_title.
+      - Load order: import colleges first (dedupe on college_code), then departments        referencing the same rows (department → college). Works well when extracted
+        from a campus ERP or accreditation catalog.
+  2. academics_courses.csv
+      - Targets: CourseResource (app/academics/admin/resources.py:119).
+      - Columns: course_dept, course_no, course_title, prerequisites (comma-
+        separated course codes).
+      - Ensures every course exists before linking curricula/sections.
+  3. academics_curricula.csv
+      - Targets: CurriculumResource (app/academics/admin/resources.py:19).
+      - Columns: curriculum (short name), title, college_code, list_courses
+        (semicolon-separated course codes).
+      - Supports merge/replace semantics already built into the resource for easy
+        revisions.
+  4. academics_curriculum_courses.csv
+      - Targets: CurriculumCourseResource (app/academics/admin/resources.py:167).
+      - Columns: curriculum, course_dept, course_no, credit_hours.
+      - Optional but handy when credit hours differ from the catalog default; use
+        after importing base curricula.
+  5. people_directory_faculty.csv
+      - Targets: DirectoryContactResource + FacultyResource (app/people/admin/
+        resources.py:14).
+      - Columns: faculty (full name), username, email, college_code, title.
+      - Produces Staff + Faculty records and auto-assigns the faculty group/role via        UserRole logic.
+  6. people_students.csv
+      - Targets: StudentResource (app/people/admin/resources.py:64).
+      - Columns: student_id, student_name (or split name fields), major (curriculum
+        code), entry_semester, current_enrolled_sem, birth_date (YYYY-MM-DD
+        HH:MM:SS), nationality, marital_status, gender.
+      - Works in tandem with SemesterResource so the semester widgets resolve;
+        include student_email if you’d like to extend UserStudentWidget.
+  7. spaces_rooms.csv
+      - Targets: RoomResource (app/spaces/admin/resources.py:7).
+      - Columns: space (building code), room, standard_capacity, exam_capacity.
+      - Use this once per physical inventory extract; spaces auto-created by the
+        widget.
+  8. timetable_semesters_sections.csv
+      - Targets: SemesterResource (app/timetable/admin/resources/core.py:9) followed        by SectionResource (app/timetable/admin/resources/section.py:8).
+      - Semesters columns: academic_year (e.g., 25-26), semester_no, start_date,
+        end_date.
+      - Sections columns: academic_year, semester_no, curriculum, course_dept,
+        course_no, section_no, faculty.
+      - Keep in one sheet with two tabs or two CSVs; import semesters first so the
+        SemesterWidget resolves.
+  9. timetable_sessions.csv
+      - Targets: ScheduleResource + SecSessionResource (app/timetable/admin/
+        resources/session.py:8).
+      - Columns: section_no, weekday, start_time (HH:MM), end_time, room.
+      - Optionally add schedule_code if you want to re-use identical meetings for
+        multiple sections.
+  10. registry_finance_registrations.tsv (TSV recommended because it often mixes
+     numeric IDs with text containing commas)
+      - Targets: RegistrationResource (app/people/admin/resources.py:106) and
+        finance models (app/finance/models/payment.py:1).
+      - Columns: record_type (registration or payment), student_id, section_no,
+        status (for registrations), or invoice_number, amount_paid, payment_method,
+        clearance_status, recorded_by_username (for payments).
+      - A simple loader can split the TSV into two tablib datasets: registrations
+        feed import_resources, payments call a small helper that creates/updates
+        Invoice/Payment rows after create_states populates FeeType, PaymentMethod,
+        etc.
+
+  Execution Flow
+
+  1. Run python manage.py create_states, load_roles, and (optionally)
+     create_test_users so enumerations, Guardian roles, and sample accounts exist
+     (app/shared/management/commands/*.py).
+  2. Import foundation tables in dependency order: colleges/departments → courses →
+     curricula → curriculum_courses.
+  3. Load people (people_directory_faculty.csv, people_students.csv) so references
+     in sections and payments resolve.
+  4. Seed spaces, semesters, sections, sessions.
+  5. Finish with transactional data (registry_finance_registrations.tsv), leveragin
+     import_resources for the tablib datasets (the command already loops over
+     Student, Faculty, Room, Schedule, Course, Semester, CurriculumCourse, Section,
+     SecSession per app/shared/management/commands/import_resources.py:32).
+
+  This set keeps the number of files small, mirrors the existing admin resources,
+  and lets you massage any upstream spreadsheets into predictable shapes for
+  automated imports.
+
+
+
 
 * [2025-11-19 mer. 09:44] fixed basic deployment
 • Preprod Fixes
