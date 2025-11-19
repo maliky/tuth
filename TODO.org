@@ -1,4 +1,15 @@
 
+* [2025-11-19 mer. 09:56] Preparing import data
+: Context :
+Scan attentively the models of academics finance people registry shared spaces and timetable.
+Look at app/shared/management/commands create_states, create_test_users, load_roles,  run them
+Look at app/shared/management/commands/ import_resources . See how I use the import-export module to populate the db.
+
+: Goal :
+The goal of the task is to identify one or several (not more than 10) effective(s) csv or tsv structures to populate the database given sources in mixed format.  The later will discribed later.
+I will then do some data wrangling to massage the sources files into the identified structures that can be imported using existing or enhanced command line management scripts
+
+
 * [2025-11-19 mer. 09:44] fixed basic deployment
 • Preprod Fixes
 
