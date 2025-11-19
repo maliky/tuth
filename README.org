@@ -60,10 +60,11 @@ black app/ && flake8 app/ && mypy app/
 *** Tests
 Install dependencies from `requirements-dev.txt` and `requirements-test.txt` before running tests.
 You can run `./run.sh -m` to start a fresh test on the local machine.
-In a second terminal populate your DB with a file having this structure:
-#+BEGIN_VERBATIM
+
+You can copy the reusable template stored at `Seed_data/db_seed_example.txt` or  populate your DB with a file having this structure:
+#+BEGIN_SRC
 academic_year: 25-26
-semester: 1 
+semester: 1
 college: CAFS
 course_code: AGR
 course_no: 121
@@ -80,6 +81,7 @@ weekday: Friday
 start_time: 9:00
 end_time: 10:00
 #+END_VERBATIM
+
 Check the `run.sh` script to see where to put the file.
 
 Before starting the stack, copy the sample environment file:
@@ -164,7 +166,7 @@ docker-compose -f docker-compose-prod.yml up --build -d
 
 - Ensure that your production `.env-prod` file is configured and secure.
 
-Access the application via your production URL (e.g., [[https://tuth.koba.sarl][https://tusis.koba.sarl]]).
+Access the application via your production URL (e.g., [[https://tuth.babao.rhum][https://tusis.babao.rhum]]).
 
 ** Pre-production Deployment (Docker + native Nginx)
 This tier runs PostgreSQL and Django/Gunicorn in Docker, while the host’s native Nginx (already secured with your =htpasswd= in =/etc/nginx=) serves static/media files and proxies to the containerised app.
@@ -176,11 +178,11 @@ This tier runs PostgreSQL and Django/Gunicorn in Docker, while the host’s nati
    - The =deploy/preprod/entrypoint.sh= script blocks until Postgres is reachable, runs migrations, calls =collectstatic= (writing to the repo’s ~static/~ path), and starts Gunicorn bound to ~0.0.0.0:${GUNICORN_PORT:-8000}~. The compose file publishes that container port as ~127.0.0.1:18000~ on the host, so only the local Nginx can reach it.
    - Inspect status/logs with ~docker-compose -f docker-compose-preprod.yml ps~ and ~docker-compose -f docker-compose-preprod.yml logs -f web db~.
 3. **Wire native Nginx**
-   - Copy =infra/nginx/tusis.koba.sarl.conf= into =/etc/nginx/sites-available/=, tweak the TLS certificate paths (Let’s Encrypt shown as an example), and update the =auth_basic_user_file= path if your ~htpasswd~ lives somewhere else.
-   - Symlink it into =sites-enabled/= (~sudo ln -s /etc/nginx/sites-available/tusis.koba.sarl.conf /etc/nginx/sites-enabled/~), then reload nginx (~sudo systemctl reload nginx~).
+   - Copy =infra/nginx/tusis.babao.rhum.conf= into =/etc/nginx/sites-available/=, tweak the TLS certificate paths (Let’s Encrypt shown as an example), and update the =auth_basic_user_file= path if your ~htpasswd~ lives somewhere else.
+   - Symlink it into =sites-enabled/= (~sudo ln -s /etc/nginx/sites-available/tusis.babao.rhum.conf /etc/nginx/sites-enabled/~), then reload nginx (~sudo systemctl reload nginx~).
    - The config aliases static/media to =~/Tusis/Tusis_app/static= and =media=, so each deploy should include ~python manage.py collectstatic --noinput~ which the entrypoint already runs.
 4. **Smoke-test**
-   - Hit the local health check through Nginx: ~curl -u <user>:<pass> https://tusis.koba.sarl/healthz~ (expect =ok=). Without creds you should receive a 401 challenge from Basic Auth.
+   - Hit the local health check through Nginx: ~curl -u <user>:<pass> https://tusis.babao.rhum/healthz~ (expect =ok=). Without creds you should receive a 401 challenge from Basic Auth.
 5. **Operate & back up**
    - Run management commands via ~docker-compose -f docker-compose-preprod.yml exec web python manage.py <command>~ (e.g., ~createsuperuser~, ~populate_initial_data~).
    - Capture database dumps from the db service: ~docker-compose -f docker-compose-preprod.yml exec db pg_dump -U $POSTGRES_USER $POSTGRES_DB > tusis-preprod-$(date +%F).sql~.
