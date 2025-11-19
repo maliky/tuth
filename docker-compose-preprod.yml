@@ -29,27 +29,10 @@ services:
       - db
     command: ["/bin/bash", "/code/deploy/preprod/entrypoint.sh"]
     volumes:
-      - staticfiles:/code/static
-      - mediafiles:/code/media
-      - gunicorn-sock:/run
-
-  nginx:
-    image: nginx:1.26
-    restart: unless-stopped
-    depends_on:
-      - web
+      - ./static:/code/static
+      - ./media:/code/media
     ports:
-      - "80:80"
-    volumes:
-      - ./infra/preprod/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./infra/preprod/nginx/conf.d:/etc/nginx/conf.d:ro
-      - ./infra/preprod/nginx/htpasswd:/etc/nginx/htpasswd:ro
-      - staticfiles:/var/www/static:ro
-      - mediafiles:/var/www/media:ro
-      - gunicorn-sock:/run:ro
+      - "127.0.0.1:18000:8000"
 
 volumes:
   preprod_postgres_data:
-  staticfiles:
-  mediafiles:
-  gunicorn-sock:

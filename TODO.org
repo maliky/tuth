@@ -1,3 +1,63 @@
+
+* [2025-11-19 mer. 09:44] fixed basic deployment
+• Preprod Fixes
+
+  - Added the missing website/portal_login.html view template so /auth/login/ no
+    longer raises TemplateDoesNotExist; the page now renders the login form with the    expected copy and inputs (app/website/templates/website/portal_login.html:1).
+  - Allowed local health probes by expanding the host list in .env-preprod to
+    tusis.koba.sarl,127.0.0.1,localhost, preventing the earlier DisallowedHost 400
+    when curling the container directly (.env-preprod:1).
+  - Rebuilt the stack (docker-compose -f docker-compose-preprod.yml up -d --build)
+    so the new template and env tweaks are baked into the running web container;
+    confirmed /auth/login/ now returns HTTP 200 via curl http://127.0.0.1:18000/
+    auth/login/.
+
+  Tests
+
+  - DJANGO_SETTINGS_MODULE=app.settings pytest -m selenium tests/selenium/
+    test_landing_page.py – passed (2 tests, 2.55s).
+  - DJANGO_SETTINGS_MODULE=app.settings pytest -m selenium tests/selenium/
+    test_portal_roles.py – passed (13 tests, 33.63s).
+    These suites spin up Django’s live server locally; they exercise the same code
+    paths as preprod and verified the login link and role dashboards end-to-end.
+
+  Next steps
+
+  1. Hit https://tusis.koba.sarl/auth/login/ (after HTTP Basic auth) to ensure the
+     rendered form matches expectations.
+  2. If you need Selenium to drive the actual preprod URL instead of the built-in
+     live server, we can introduce a configurable base URL in the tests; let me know     and I can adjust the fixtures accordingly.
+
+
+
+* <2025-11-18 mar. 21:46> deployment
+codex resume 019a7a7e-5d92-7453-98a8-28c20b165b2d 
+• Deployment State
+
+  - Updated docker-compose-preprod.yml:7 to only run Postgres + the Django/Gunicorn
+    app, mount host static/ & media/, and expose Gunicorn on 127.0.0.1:18000 for
+    your native Nginx. Removed the old containerized Nginx service.
+  - Added django-extensions==3.2.3 to the production dependencies
+    (requirements.txt:1) so the app boots cleanly with INSTALLED_APPS.
+  - Brought the stack up via newgrp docker docker-compose -f docker-compose-
+    preprod.yml up -d --build --remove-orphans; DB and web containers are now
+    running (see docker-compose … ps above).
+  - Entry-point logs show migrations ran through the auth/admin/guardian apps and
+    collectstatic synced static/ (docker-compose … logs web).
+
+  Next steps
+
+  1. Since newgrp docker was needed to use the daemon, log out/in (or reboot) so the     docker group sticks, otherwise every Docker command must be wrapped in newgrp
+     docker <<'EOF' … EOF.
+  2. Hit the site through native Nginx to confirm proxying + HTTP basic auth: curl
+     -u <user>:<pass> https://tusis.koba.sarl/healthz.
+  3. Tail the web logs when testing (docker-compose -f docker-compose-preprod.yml
+     logs -f web) and use docker-compose … exec web python manage.py createsuperuser     etc. for further setup.
+  4. Keep .env-preprod updated with real secrets/allowed hosts before exposing the
+     site more broadly.
+
+
+
 * <2025-11-18 mar. 19:19> native nginx, dockerized django and  docker
 What you did is very good, but I only want the posgresql DB and the django engine to be dockerized. I have already a native nginx that I want to use.  So review your proposition. I have have created already the htpasswd in /etc/nginx I only need a clean tusis.koba.sarl.conf file for nginx beside teh deployment file for docker compose
 
