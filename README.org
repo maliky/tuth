@@ -60,10 +60,11 @@ black app/ && flake8 app/ && mypy app/
 *** Tests
 Install dependencies from `requirements-dev.txt` and `requirements-test.txt` before running tests.
 You can run `./run.sh -m` to start a fresh test on the local machine.
-In a second terminal populate your DB with a file having this structure:
-#+BEGIN_VERBATIM
+
+You can copy the reusable template stored at `Seed_data/db_seed_example.txt` or  populate your DB with a file having this structure:
+#+BEGIN_SRC
 academic_year: 25-26
-semester: 1 
+semester: 1
 college: CAFS
 course_code: AGR
 course_no: 121
@@ -80,6 +81,7 @@ weekday: Friday
 start_time: 9:00
 end_time: 10:00
 #+END_VERBATIM
+
 Check the `run.sh` script to see where to put the file.
 
 Before starting the stack, copy the sample environment file:

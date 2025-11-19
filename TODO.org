@@ -1,4 +1,6 @@
 
+* <2025-11-19 mer. 10:36> updating readme
+  
 * [2025-11-19 mer. 09:44] fixed basic deployment
 • Preprod Fixes
 
