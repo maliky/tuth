@@ -29,3 +29,5 @@ static/*
 !.env-dev.example
 !.env-prod.example
 Seed_data
+!Seed_data/build_targets
+!Seed_data/README.org
