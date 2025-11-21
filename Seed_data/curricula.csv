@@ -1,3 +1,0 @@
-short_name,title,college,list_courses,action
-BS_ENV,"Environmental Studies (B.Sc.)",COAS,"ENG101;MATH101;BIO101",replace
-BS_CS,,COET,"CSE101 - COET;MATH101",merge
