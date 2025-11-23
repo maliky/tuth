@@ -10,6 +10,7 @@ from app.people.utils import (
     ensure_unique_usernames,
     name_distance,
     names_match,
+    name_similarity_matrix,
 )
 
 
@@ -128,3 +129,12 @@ def test_names_match_threshold():
     """names_match should respect thresholds."""
     assert names_match("Abubarkar Yaradua", "Yaradua Abubarkar")
     assert not names_match("Abraham Gerard", "Virginia Blyee", threshold=0.05)
+
+
+def test_name_similarity_matrix_filters():
+    """Matrix builder should filter pairs beyond max_distance."""
+    left = ["Abraham W. Harmon", "Virginia Blyee"]
+    right = ["Harmon Abraham W", "Anthony Doe"]
+    matrix = name_similarity_matrix(left, right, max_distance=0.3)
+    assert any(row["left"] == "Abraham W. Harmon" for row in matrix)
+    assert all(row["right"] != "Anthony Doe" for row in matrix)
