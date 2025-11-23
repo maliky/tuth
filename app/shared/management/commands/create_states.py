@@ -1,12 +1,14 @@
 """Management command that set create the default status and states tables."""
 
+from django.core.management.base import BaseCommand
+
 from app.academics.models.curriculum import CurriculumStatus
 from app.finance.models.payment import ClearanceStatus, FeeType, PaymentMethod
 from app.people.admin.resources import StudentResource
 from app.registry.models.document import DocumentStatus, DocumentType
 from app.registry.models.registration import RegistrationStatus
 from app.shared.models import CreditHour
-from django.core.management.base import BaseCommand
+from app.timetable.models.semester import SemesterStatus
 
 
 class Command(BaseCommand):
@@ -19,18 +21,18 @@ class Command(BaseCommand):
         """Read YAML, validate, wipe current grants and recreate them."""
         CLASS_MAP = [
             ("DocumentStatus", DocumentStatus),
+            ("SemesterStatus", SemesterStatus),
             ("ClearanceStatus", ClearanceStatus),
             ("CurriculumStatus", CurriculumStatus),
             ("RegistrationStatus", RegistrationStatus),
             ("DocumentType", DocumentType),
             ("PaymentMethod", PaymentMethod),
             ("FeeType", FeeType),
+            ("CreditHour", CreditHour),
         ]
 
         for name, cls in CLASS_MAP:
             cls()._populate_attributes_and_db()
             self.stdout.write((f" - Defaults for {name} Created"))
-
-        CreditHour._populate_attributes_and_db()("Student", StudentResource)
 
         self.stdout.write(self.style.SUCCESS("Defaults states and status Created"))
