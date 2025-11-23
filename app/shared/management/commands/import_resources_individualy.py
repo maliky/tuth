@@ -40,7 +40,7 @@ class Command(BaseCommand):
     help = "Import resources from individual CSV files found in a directory."
     #: Mapping filename → (label, ResourceClass)
     FILEMAP: dict[str, Tuple[str, type[resources.ModelResource]]] = {
-        "um_students.csv": ("Student", StudentResource),
+        # "um_students.csv": ("Student", StudentResource),
         # "student.csv": ("Student", StudentResource),
         # "faculty.csv": ("Faculty", FacultyResource),
         # # Staff

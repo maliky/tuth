@@ -25,6 +25,7 @@ from typing import Optional
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from rapidfuzz.distance import JaroWinkler
 
 
 User = get_user_model()
@@ -280,3 +281,33 @@ def mk_password(first: str, last: str) -> str:
     A = "A" if not first else first[0].upper()
     B = "B" if not last else last[0].upper()
     return f"{A}-pass-{B}!"
+
+
+def canonicalize_name(raw: str) -> str:
+    """Return a canonical username-like representation of a name."""
+    _, first, middle, last, _ = split_name(raw)
+    base_last = last or first or raw
+    base_first = first or last or raw
+    canonical = mk_username(base_first, base_last, middle)
+    return canonical or re.sub(r"\s+", "", raw.lower())
+
+
+def name_similarity(
+    name_a: str,
+    name_b: str,
+    *,
+    prefix_weight: float = 0.1,
+) -> float:
+    """Return a normalized distance (0=identical, 1=different) between two names."""
+    canonical_a = canonicalize_name(name_a)
+    canonical_b = canonicalize_name(name_b)
+    return float(
+        JaroWinkler.normalized_distance(
+            canonical_a, canonical_b, prefix_weight=prefix_weight
+        )
+    )
+
+
+def names_match(name_a: str, name_b: str, *, threshold: float = 0.2, **kwargs) -> bool:
+    """Return True when the distance between two names is within a given threshold."""
+    return name_distance(name_a, name_b, **kwargs) <= threshold

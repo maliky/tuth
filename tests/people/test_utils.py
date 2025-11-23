@@ -8,6 +8,8 @@ from app.people.utils import (
     mk_username,
     split_name,
     ensure_unique_usernames,
+    name_distance,
+    names_match,
 )
 
 
@@ -106,3 +108,23 @@ def test_split_name_initial_patterns(raw, prefix, first, middle, last, suffix):
 def test_extract_id_num(user_id, output):
     res = extract_id_num(user_id)
     assert res == output, f"{res} != {output}"
+
+
+@pytest.mark.parametrize(
+    "left,right,expected",
+    [
+        ("Abraham W. Harmon", "Harmon Abraham W", 0.0),
+        ("Virginia Blyee", "Blyee, Virginia", 0.0),
+        ("Sylvester Nah", "Nah Sylvester", 0.0),
+    ],
+)
+def test_name_distance_symmetry(left, right, expected):
+    """Distance should be near zero for reordered/normalized names."""
+    dist = name_distance(left, right)
+    assert pytest.approx(dist, abs=1e-6) == expected
+
+
+def test_names_match_threshold():
+    """names_match should respect thresholds."""
+    assert names_match("Abubarkar Yaradua", "Yaradua Abubarkar")
+    assert not names_match("Abraham Gerard", "Virginia Blyee", threshold=0.05)

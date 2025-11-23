@@ -1,3 +1,7 @@
+#> update this document
+I don't want dockers
+In the reports I don't need line precision, file precision is enough
+
 # Contributor Guide
 
 Welcome — and thanks for helping grow **Tusis**, Tubman University’s information system.
@@ -40,6 +44,10 @@ Don't change existing variable names
 ### Documentation & comments
 - Comment your additions, especially if removing code
 - Document succintly new class, methods, or functions
+
+### Coding style
+- Prefer functional-style helpers (small pure functions) and reuse existing utilities before adding new logic.
+- Factor common routines rather than duplicating blocks; keep new code composable.
 
 ### Branching
 
