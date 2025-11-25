@@ -1,7 +1,7 @@
 """Convenience exports for finance app models."""
 
 from app.finance.models.invoice import Invoice
-from app.finance.models.payment import FeeType, Payment, SectionFee
+from app.finance.models.payment import FeeType, Payment, SectionFee, AccountChartType, AccountType
 from app.finance.models.scholarship import (
     Scholarship,
     ScholarshipLetterTemplate,
@@ -16,4 +16,6 @@ __all__ = [
     "Scholarship",
     "ScholarshipLetterTemplate",
     "ScholarshipTermSnapshot",
+    "AccountChartType",
+    "AccountType"
 ]

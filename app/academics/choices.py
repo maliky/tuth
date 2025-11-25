@@ -48,7 +48,7 @@ class DepartmentShortNameChoice(TextChoices):
 class DepartmentLongNameChoice(TextChoices):
     ACCT = "acct_long_name", "Accounting Department"
     AGR = "agr_long_name", "Agriculture Department"
-    BFIN = "bfin_long_name", "Fincance Department"
+    BFIN = "bfin_long_name", "Finance Department"
     BIO = "bio_long_name", "Biologie Department"
     BUS = "bus_long_name", "Business Department"
     BUSA = "busa_long_name", "Admninistration Department"

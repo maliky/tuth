@@ -19,7 +19,6 @@ from app.timetable.utils import get_current_semester
 
 DEFAULT_COURSE_NO = count(start=1, step=1)
 
-
 class Course(models.Model):
     """University catalogue entry describing a single course offering.
 

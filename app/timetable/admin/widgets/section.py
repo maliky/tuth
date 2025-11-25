@@ -5,8 +5,8 @@ from typing import Optional, cast
 from import_export import widgets
 
 from app.academics.admin.widgets import CourseWidget, CurriculumCourseWidget
-from app.people.admin.widgets import FacultyWidget
-from app.timetable.admin.widgets.core import SemesterWidget
+from app.people.admin.widgets import FacultyWidget, StudentUserWidget
+from app.timetable.admin.widgets.core import SemesterCodeWidget, SemesterWidget
 from app.timetable.models.section import Section
 
 
@@ -80,6 +80,48 @@ class SectionCodeWidget(widgets.Widget):
         sem_code_value, _, sec_no = [v.strip() for v in value.partition(":")]
 
         semester = self.sem_w.clean(value=sem_code_value, row=row)
+        number = int(sec_no) if sec_no.isdigit() else None
+
+        section, _ = Section.objects.get_or_create(
+            semester=semester, course=course, number=number
+        )
+
+        return section
+
+class SectionShortCodeWidget(widgets.Widget):
+    """
+    Resolve YY-YY_SemN_CourseCodeCourseNum:sec_no codes into
+    Academic Year, Semester, Curriculum, Course, Section  objects.
+    Need Student id to be in the row to manage the Curriculum.
+    eg. 23-24s2_PADM430:1
+    Return a Section and all related items.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(Section)
+        self.sem_w = SemesterCodeWidget()
+        self.crs_w = CourseWidget()
+
+    def clean(
+        self,
+        value: str,
+        row: dict[str, str],
+        *args,
+        **kwargs,
+    ) -> Section | None:
+        """Return the Section identified by the import code string."""
+
+        stid = row.get("student_id", "").strip()
+        ay_course_code, sec_no = value.split(':')
+        ay, sem, course_code=  ay_course_code.split('_')
+
+        semester = self.sem_w.clean(value="_".join([ay,sem]), row=row)
+        
+        course = self.crs_w.clean(value=course_dept_value, row=row)
+
+        sem_code_value, _, sec_no = [v.strip() for v in value.partition(":")]
+
+
         number = int(sec_no) if sec_no.isdigit() else None
 
         section, _ = Section.objects.get_or_create(

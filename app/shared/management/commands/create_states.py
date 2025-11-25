@@ -3,7 +3,13 @@
 from django.core.management.base import BaseCommand
 
 from app.academics.models.curriculum import CurriculumStatus
-from app.finance.models.payment import ClearanceStatus, FeeType, PaymentMethod
+from app.finance.models.payment import (
+    ClearanceStatus,
+    FeeType,
+    PaymentMethod,
+    AccountType,
+    AccountChartType,
+)
 from app.people.admin.resources import StudentResource
 from app.registry.models.document import DocumentStatus, DocumentType
 from app.registry.models.registration import RegistrationStatus
@@ -20,15 +26,17 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs) -> None:
         """Read YAML, validate, wipe current grants and recreate them."""
         CLASS_MAP = [
-            ("DocumentStatus", DocumentStatus),
-            ("SemesterStatus", SemesterStatus),
+            ("AccountType", AccountType),  # before charttype
+            ("AccountChartType", AccountChartType),
             ("ClearanceStatus", ClearanceStatus),
-            ("CurriculumStatus", CurriculumStatus),
-            ("RegistrationStatus", RegistrationStatus),
-            ("DocumentType", DocumentType),
-            ("PaymentMethod", PaymentMethod),
-            ("FeeType", FeeType),
             ("CreditHour", CreditHour),
+            ("CurriculumStatus", CurriculumStatus),
+            ("DocumentStatus", DocumentStatus),
+            ("DocumentType", DocumentType),
+            ("FeeType", FeeType),
+            ("PaymentMethod", PaymentMethod),
+            ("RegistrationStatus", RegistrationStatus),
+            ("SemesterStatus", SemesterStatus),
         ]
 
         for name, cls in CLASS_MAP:
