@@ -2,6 +2,7 @@ from import_export import fields, resources
 from import_export.widgets import ForeignKeyWidget
 
 from app.people.admin.widgets import StudentUserWidget
+from app.timetable.admin.widgets.section import SectionShortCodeWidget
 
 
 class GradeResource(resources.ModelResource):
@@ -28,3 +29,16 @@ class GradeResource(resources.ModelResource):
     class Meta:
         model = Grade
         import_id_fields = ("student_id", "curriculum_short_code", "section_short_code")
+
+
+class RegistrationResource(resources.ModelResource):
+    """Resource for bulk importing :class:Registration rows."""
+
+    class Meta:
+        model = Registration
+        import_id_fields = ("student", "section")
+        fields = (
+            "student",
+            "section",
+            "status",
+        )

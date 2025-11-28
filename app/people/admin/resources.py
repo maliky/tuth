@@ -162,15 +162,3 @@ class StudentResource(resources.ModelResource):
         # instance.user.groups.add(group)
         # import ipdb; ipdb.set_trace()
 
-
-class RegistrationResource(resources.ModelResource):
-    """Resource for bulk importing :class:Registration rows."""
-
-    class Meta:
-        model = Registration
-        import_id_fields = ("student", "section")
-        fields = (
-            "student",
-            "section",
-            "status",
-        )

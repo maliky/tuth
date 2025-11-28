@@ -88,19 +88,19 @@ class SectionCodeWidget(widgets.Widget):
 
         return section
 
+
 class SectionShortCodeWidget(widgets.Widget):
     """
     Resolve YY-YY_SemN_CourseCodeCourseNum:sec_no codes into
     Academic Year, Semester, Curriculum, Course, Section  objects.
-    Need Student id to be in the row to manage the Curriculum.
-    eg. 23-24s2_PADM430:1
+    Need Student also the short name of a curriculum
+
     Return a Section and all related items.
     """
 
     def __init__(self) -> None:
         super().__init__(Section)
-        self.sem_w = SemesterCodeWidget()
-        self.crs_w = CourseWidget()
+        self.sem_w = SemesterCodeWidget(pat="^(?P<year>\d{2}-\d{2})_s(?P<num>\d+)$")
 
     def clean(
         self,
@@ -111,16 +111,20 @@ class SectionShortCodeWidget(widgets.Widget):
     ) -> Section | None:
         """Return the Section identified by the import code string."""
 
-        stid = row.get("student_id", "").strip()
-        ay_course_code, sec_no = value.split(':')
-        ay, sem, course_code=  ay_course_code.split('_')
-
-        semester = self.sem_w.clean(value="_".join([ay,sem]), row=row)
+        if not value:
+            return None
         
+        curriculum_short_code = row.get("curriculum_short_code", "").strip()
+        assert curriculum_short_code, f"Cannot import grade without Curriculum. {row}"
+
+        ay_course_code, sec_no = value.split(":")
+        ay_sem, section_code = ay_course_code.split("_")
+    
+        semester = self.sem_w.clean(value=ay_sem, row=row, sem_pat=self.sem_pat)
+
         course = self.crs_w.clean(value=course_dept_value, row=row)
 
         sem_code_value, _, sec_no = [v.strip() for v in value.partition(":")]
-
 
         number = int(sec_no) if sec_no.isdigit() else None
 

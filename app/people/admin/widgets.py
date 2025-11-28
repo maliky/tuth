@@ -162,8 +162,19 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         self.cache_student = dict()
 
 
+class StudentIDWidget(widgets.ForeignKeyWidget):
+    """Get a Student object from a student ID"""
+    def __init__(self):
+        super().__init__()
+
+    def clean(self, value, row, *args, **kwargs) -> Student | None:
+        """This suppose that the student exists"""
+        if not value:
+            return None
+        
+
 class UserStudentWidget(widgets.ForeignKeyWidget):
-    """Import a User for a student exists."""
+    """Import a User from an existing student."""
 
     def __init__(self):
         # field is "id" by default

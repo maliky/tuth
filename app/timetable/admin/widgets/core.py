@@ -88,9 +88,13 @@ class SemesterWidget(widgets.ForeignKeyWidget):
 class SemesterCodeWidget(widgets.ForeignKeyWidget):
     """Parse YY-YY_SemN strings into :class:Semester objects."""
 
-    def __init__(self):
+    def __init__(self, pat: str | None):
         super().__init__(Semester)
-        self.sem_pat = re.compile(r"^(?P<year>\d{2}-\d{2})_Sem(?P<num>\d+)$")
+        self.sem_pat = (
+            re.compile(r"^(?P<year>\d{2}-\d{2})_Sem(?P<num>\d+)$")
+            if pat is None
+            else re.compile(pat)
+        )
 
     def clean(
         self,
@@ -102,6 +106,9 @@ class SemesterCodeWidget(widgets.ForeignKeyWidget):
         """Get the semester and the ay directly from the fullfledge code."""
         if not value:
             return None
+
+        if sem_pat:
+            self.sem_pat = sem_pat
 
         m = self.sem_pat.match(value)
 

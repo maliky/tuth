@@ -197,6 +197,7 @@ class CourseManyWidget(widgets.ManyToManyWidget):
         return self.separator.join(codes)
 
 
+
 class CourseCodeWidget(widgets.ForeignKeyWidget):
     """Resolve a course code  into a Course.
 
