@@ -173,7 +173,7 @@ class Curriculum(StatusableMixin, models.Model):
         ordering = ["college", "short_name"]
         constraints = [
             models.UniqueConstraint(
-                fields=["college", "short_name"],
+                fields=["short_name"],
                 condition=models.Q(is_active=True),
                 name="uniq_active_curriculum_college",
             )
