@@ -8,6 +8,7 @@ Usage::
     >>> print(staff.long_name)
 """
 
+from app.academics.models.curriculum import Curriculum
 from app.people.models.student import Student
 from django.contrib.auth.models import User
 from import_export import widgets
@@ -162,6 +163,38 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         self.cache_username = dict()
         self.cache_student = dict()
 
+
+class GradeStudentWidget(widgets.ForeignKeyWidget):
+    """Create or resolve a Student using a student_id when missing."""
+
+    def __init__(self):
+        super().__init__(Student, field="student_id")
+        self._cache_student: dict[str, Student] = {}
+
+    def clean(self, value, row=None, *args, **kwargs) -> Student:
+        """Return the Student tied to the identifier, creating one if needed."""
+        student_id = (value or "").strip()
+        if not student_id:
+            return Student.get_default()
+
+        if student_id in self._cache_student:
+            return self._cache_student[student_id]
+
+        defaults = {
+            "first_name": "Student",
+            "last_name": student_id,
+            "curriculum": Curriculum.get_default(),
+            "password": mk_password("Student", student_id),
+        }
+
+        student, _ = Student.objects.get_or_create(
+            student_id=student_id,
+            defaults=defaults,
+        )
+
+        self._cache_student[student_id] = student
+
+        return student
 
 
 class UserStudentWidget(widgets.ForeignKeyWidget):

@@ -3,12 +3,12 @@
 from import_export import fields, resources
 from import_export.widgets import ForeignKeyWidget
 
-from app.people.admin.widgets import StudentUserWidget
+from app.people.admin.widgets import GradeStudentWidget
 from app.people.models.student import Student
-from app.registry.models.grade import Grade
+from app.registry.admin.widgets import GradeValueWidget
+from app.registry.models.grade import Grade, GradeValue
 from app.registry.models.registration import Registration
 from app.timetable.admin.widgets.section import SectionWidget
-from app.timetable.admin.widgets.session import SecSessionWidget
 
 
 class GradeResource(resources.ModelResource):
@@ -22,26 +22,18 @@ class GradeResource(resources.ModelResource):
     student = fields.Field(
         attribute="student",
         column_name="student_id",
-        widget=ForeignKeyWidget(Student, field="StudentID"),
+        widget=GradeStudentWidget(),
     )
     section = fields.Field(
         attribute="section", column_name="section_no", widget=SectionWidget()
     )
-    value = fields.Field(attribute="value", column_name="grade_code")
+    value = fields.Field(
+        attribute="value", column_name="grade_code", widget=GradeValueWidget()
+    )
 
     class Meta:
         model = Grade
-        import_id_fields = (
-            "student_id",
-            "grade_code",
-            "academic_year",
-            "semester_no",
-            "dept_no",
-            "course_no",
-            "credit_hours",
-            "section_no",
-            "curriculum",
-        )
+        import_id_fields = ("student", "section")
 
 
 class RegistrationResource(resources.ModelResource):

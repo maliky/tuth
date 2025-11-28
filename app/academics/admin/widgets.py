@@ -39,9 +39,15 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
             else Curriculum.get_default()
         )
 
-        credit_hours, _ = CreditHour.objects.get_or_create(
-            code=get_in_row("credit_hours", row) or 3
-        )
+        credit_hours_value = get_in_row("credit_hours", row)
+        credit_hours_code = 3
+        if credit_hours_value:
+            try:
+                credit_hours_code = int(float(credit_hours_value))
+            except ValueError:
+                pass
+
+        credit_hours, _ = CreditHour.objects.get_or_create(code=credit_hours_code)
         curriculum_course, _ = CurriculumCourse.objects.get_or_create(
             curriculum=curriculum,
             course=course,
