@@ -10,6 +10,7 @@ from simple_history.models import HistoricalRecords
 
 from app.shared.mixins import SimpleTableMixin
 
+
 class AccountType(SimpleTableMixin):
     """Account Types."""
 
@@ -19,7 +20,7 @@ class AccountType(SimpleTableMixin):
         ("capital", "Capital"),
         ("expense", "Expense"),
         ("income", "Income"),
-        ("unknown", "Unknown"),        
+        ("unknown", "Unknown"),
     ]
 
     class Meta:
@@ -31,7 +32,6 @@ class AccountType(SimpleTableMixin):
         """Returns the default AccountType."""
         deft, _ = cls.objects.get_or_create(code="liability")
         return cast(Self, deft)
-
 
 
 class AccountChartType(SimpleTableMixin):
@@ -49,7 +49,7 @@ class AccountChartType(SimpleTableMixin):
         ("long_term_liability", "Long Term Liability"),
         ("other_current_asset", "Other Current Asset"),
         ("other_current_liability", "Other Current Liability"),
-        ("other", "Other"),        
+        ("other", "Other"),
     ]
     # ~~~~~~~~~~~~~~~~ optional ~~~~~~~~~~~~~~~~
     type = models.ForeignKey(

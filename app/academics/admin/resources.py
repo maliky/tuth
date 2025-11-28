@@ -98,7 +98,7 @@ class CurriculumResource(resources.ModelResource):
 
     class Meta:
         model = Curriculum
-        import_id_fields = ("short_name_f","college_f")
+        import_id_fields = ("short_name_f", "college_f")
         fields = (
             "short_name_f",
             "long_name",
@@ -227,9 +227,10 @@ class CurriculumCourseResource(resources.ModelResource):
 
 class DepartmentResource(resources.ModelResource):
     """Resource for Department."""
+
     class Meta:
         model = Department
-        import_id_fields = ("department_code")
+        import_id_fields = "department_code"
         fields = (
             "college_code",
             "course_dept",

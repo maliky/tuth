@@ -52,7 +52,10 @@ class Command(BaseCommand):
         # "curriculum_course.csv": ("CurriculumCourse", CurriculumCourseResource),
         # "section.csv": ("Section", SectionResource),
         # "session.csv": ("SecSession", SecSessionResource),  # + Faculty / Room
-        "grades-registry.csv": ("Grade", GradeResource)  # new and old ie with history tracking.
+        "grades-registry.csv": (
+            "Grade",
+            GradeResource,
+        )  # new and old ie with history tracking.
     }
 
     def add_arguments(self, parser: CommandParser) -> None:

@@ -161,4 +161,3 @@ class StudentResource(resources.ModelResource):
         # group = UserRole.STUDENT.value.group
         # instance.user.groups.add(group)
         # import ipdb; ipdb.set_trace()
-

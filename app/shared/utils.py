@@ -28,13 +28,13 @@ def expand_course_code(
     """
     assert "/" not in code
 
-    match = COURSE_PATTERN.search(code.strip().upper())
-    assert match is not None, f"Code '{code}' doesn't match expected pattern"
+    _match = COURSE_PATTERN.search(code.strip().upper())
+    assert _match is not None, f"Code '{code}' doesn't match expected pattern"
 
     college_code, dept_short_name, course_no = (
-        match.group("college"),
-        match.group("dept"),
-        match.group("num"),
+        _match.group("college"),
+        _match.group("dept"),
+        _match.group("num"),
     )
 
     if not college_code:

@@ -11,7 +11,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from app.shared.utils import clean_column_headers
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandParser
 from django.db import transaction
@@ -25,7 +24,9 @@ from app.academics.admin.resources import (  # noqa: F401
 )
 from app.academics.models.college import College  # noqa: F401
 from app.people.admin.resources import FacultyResource, StudentResource
+from app.registry.admin.resources import GradeResource
 from app.shared.auth.helpers import ensure_superuser  # noqa: F401
+from app.shared.utils import clean_column_headers
 from app.spaces.admin.resources import RoomResource  # noqa: F401
 from app.timetable.admin.resources.core import SemesterResource  # noqa: F401
 from app.timetable.admin.resources.section import SectionResource
@@ -52,8 +53,8 @@ class Command(BaseCommand):
 
     def handle(self, *args: Any, **options: Any) -> None:
         """Validate and import each resource from the provided CSV."""
-        ensure_superuser(self)
-        call_command("load_roles", verbosity=0)
+        # ensure_superuser(self)
+        # call_command("load_roles", verbosity=0)
 
         path = Path(options["file_path"])
         if not path.exists():
@@ -63,15 +64,16 @@ class Command(BaseCommand):
         dataset = clean_column_headers(dataset)
 
         RESOURCES_MAP: list[tuple[str, type[resources.ModelResource]]] = [
-            ("Student", StudentResource),
-            ("Faculty", FacultyResource),  # and College
-            ("Room", RoomResource),  # and Space
-            ("Schedule", ScheduleResource),
-            ("Course", CourseResource),  # and College
-            ("semester", SemesterResource),  # and Academic year
-            ("CurriculumCourse", CurriculumCourseResource),
-            ("Section", SectionResource),
-            ("SecSession", SecSessionResource),  # and Faculty, Room and Space
+            # ("Student", StudentResource),
+            # ("Faculty", FacultyResource),  # and College
+            # ("Room", RoomResource),  # and Space
+            # ("Schedule", ScheduleResource),
+            # ("Course", CourseResource),  # and College
+            # ("semester", SemesterResource),  # and Academic year
+            # ("CurriculumCourse", CurriculumCourseResource),
+            # ("Section", SectionResource),
+            # ("SecSession", SecSessionResource),  # and Faculty, Room and Space
+            ("Grade", GradeResource), # Student, Semester, CurriculumCourse, grade
         ]
 
         for key, ResourceClass in RESOURCES_MAP:

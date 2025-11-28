@@ -78,7 +78,8 @@ class FacultyWidget(widgets.ForeignKeyWidget):
         if value is '<unique>' create a default unique faculty
         """
         if not value:
-            return Faculty.get_unique_default()
+            # return Faculty.get_unique_default()
+            return Faculty.get_default()
 
         prefix, first, middle, last, suffix = split_name(value)
         username = mk_username(first, last, prefix_len=2)
@@ -162,16 +163,6 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         self.cache_student = dict()
 
 
-class StudentIDWidget(widgets.ForeignKeyWidget):
-    """Get a Student object from a student ID"""
-    def __init__(self):
-        super().__init__()
-
-    def clean(self, value, row, *args, **kwargs) -> Student | None:
-        """This suppose that the student exists"""
-        if not value:
-            return None
-        
 
 class UserStudentWidget(widgets.ForeignKeyWidget):
     """Import a User from an existing student."""

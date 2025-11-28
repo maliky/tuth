@@ -5,6 +5,7 @@ from datetime import date
 
 from import_export import widgets
 
+from app.shared.utils import get_in_row
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester
 
@@ -40,7 +41,7 @@ class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
 
         m = self.ay_pat.match(value)
 
-        assert m, f"Invalid academic year short name, but got {m} for {self.ay_pat}"
+        assert m, f"Invalid academic year short name, got '{m}' for {self.ay_pat}"
 
         start_year = int("20" + m.group(1))
         ay, ay_created = AcademicYear.objects.get_or_create(
@@ -72,7 +73,7 @@ class SemesterWidget(widgets.ForeignKeyWidget):
             return None
 
         sem_no = value.strip()
-        ay_code_value = row.get("academic_year", "").strip()
+        ay_code_value = get_in_row("academic_year", row)
 
         ay = self.ay_w.clean(value=ay_code_value, row=row)
 
@@ -88,7 +89,7 @@ class SemesterWidget(widgets.ForeignKeyWidget):
 class SemesterCodeWidget(widgets.ForeignKeyWidget):
     """Parse YY-YY_SemN strings into :class:Semester objects."""
 
-    def __init__(self, pat: str | None):
+    def __init__(self, pat: str | None = None):
         super().__init__(Semester)
         self.sem_pat = (
             re.compile(r"^(?P<year>\d{2}-\d{2})_Sem(?P<num>\d+)$")
@@ -106,9 +107,6 @@ class SemesterCodeWidget(widgets.ForeignKeyWidget):
         """Get the semester and the ay directly from the fullfledge code."""
         if not value:
             return None
-
-        if sem_pat:
-            self.sem_pat = sem_pat
 
         m = self.sem_pat.match(value)
 

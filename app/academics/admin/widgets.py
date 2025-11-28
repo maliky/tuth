@@ -86,6 +86,7 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
         college_code = get_in_row("college_code", row)
         college = self.college_w.clean(college_code)
 
+        # We create  the lookup used in case of creation fo the curriculum
         lookup = {"short_name": short_name}
         if college:
             lookup["college"] = college
@@ -108,7 +109,7 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
                 raise
             curriculum = fallback
 
-        # add the major if there
+        # add the major if there is
         if major_name:
             major, _ = Major.objects.get_or_create(name=major_name, curriculum=curriculum)
 
@@ -146,6 +147,7 @@ class CourseWidget(widgets.ForeignKeyWidget):
         if not course_no or not course_dept:
             return Course.get_unique_default()
 
+        # department Widget wants college_code
         course, _ = Course.objects.get_or_create(
             number=course_no,
             department=self.department_w.clean(course_dept, row),
@@ -195,7 +197,6 @@ class CourseManyWidget(widgets.ManyToManyWidget):
 
         codes = [getattr(course, self.field) for course in iterable if course]
         return self.separator.join(codes)
-
 
 
 class CourseCodeWidget(widgets.ForeignKeyWidget):

@@ -24,10 +24,9 @@ class SemesterResource(resources.ModelResource):
         fields = (
             "academic_year",
             "number",
-            "status"
-            "start_date",
+            "status" "start_date",
             "end_date",
-            ""
+            "",
         )  # do not remove academic_year
 
 

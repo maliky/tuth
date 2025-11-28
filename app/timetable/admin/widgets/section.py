@@ -1,11 +1,16 @@
-"""timetable.admin.widgets.section module."""
+"""Timetable.admin.widgets.section module."""
 
 from typing import Optional, cast
 
 from import_export import widgets
 
-from app.academics.admin.widgets import CourseWidget, CurriculumCourseWidget
+from app.academics.admin.widgets import (
+    CourseWidget,
+    CurriculumCourseWidget,
+    CurriculumWidget,
+)
 from app.people.admin.widgets import FacultyWidget, StudentUserWidget
+from app.shared.utils import get_in_row
 from app.timetable.admin.widgets.core import SemesterCodeWidget, SemesterWidget
 from app.timetable.models.section import Section
 
@@ -25,18 +30,20 @@ class SectionWidget(widgets.ForeignKeyWidget):
         if row is None:
             raise ValueError("Row context required")
 
-        curriculum_value = (row.get("curriculum") or "").strip()
+        # needs course in context
+        curriculum_value = get_in_row("curriculum", row)
         curriculum_course = self.curriculum_course_w.clean(
             value=curriculum_value, row=row
         )
 
-        semester_no = (row.get("semester_no") or "").strip()
+        # wants academic_year
+        semester_no = get_in_row("semester_no", row)
         semester = self.sem_w.clean(value=semester_no, row=row)
 
-        faculty_value = (row.get("faculty") or "").strip()
+        faculty_value = get_in_row("faculty", row)
         faculty = self.faculty_w.clean(value=faculty_value, row=row)
 
-        sec_no_value = (row.get("section_no") or "0").strip()
+        sec_no_value = get_in_row("section_no", row) or "0"
 
         if sec_no_value.isdigit():
             number = int(sec_no_value)
@@ -49,6 +56,8 @@ class SectionWidget(widgets.ForeignKeyWidget):
             number=number,
             faculty=faculty,
         )
+        import ipdb; ipdb.set_trace()
+
         return cast(Optional[Section], section)
 
     def render(self, value: Section, obj=None):
@@ -80,52 +89,6 @@ class SectionCodeWidget(widgets.Widget):
         sem_code_value, _, sec_no = [v.strip() for v in value.partition(":")]
 
         semester = self.sem_w.clean(value=sem_code_value, row=row)
-        number = int(sec_no) if sec_no.isdigit() else None
-
-        section, _ = Section.objects.get_or_create(
-            semester=semester, course=course, number=number
-        )
-
-        return section
-
-
-class SectionShortCodeWidget(widgets.Widget):
-    """
-    Resolve YY-YY_SemN_CourseCodeCourseNum:sec_no codes into
-    Academic Year, Semester, Curriculum, Course, Section  objects.
-    Need Student also the short name of a curriculum
-
-    Return a Section and all related items.
-    """
-
-    def __init__(self) -> None:
-        super().__init__(Section)
-        self.sem_w = SemesterCodeWidget(pat="^(?P<year>\d{2}-\d{2})_s(?P<num>\d+)$")
-
-    def clean(
-        self,
-        value: str,
-        row: dict[str, str],
-        *args,
-        **kwargs,
-    ) -> Section | None:
-        """Return the Section identified by the import code string."""
-
-        if not value:
-            return None
-        
-        curriculum_short_code = row.get("curriculum_short_code", "").strip()
-        assert curriculum_short_code, f"Cannot import grade without Curriculum. {row}"
-
-        ay_course_code, sec_no = value.split(":")
-        ay_sem, section_code = ay_course_code.split("_")
-    
-        semester = self.sem_w.clean(value=ay_sem, row=row, sem_pat=self.sem_pat)
-
-        course = self.crs_w.clean(value=course_dept_value, row=row)
-
-        sem_code_value, _, sec_no = [v.strip() for v in value.partition(":")]
-
         number = int(sec_no) if sec_no.isdigit() else None
 
         section, _ = Section.objects.get_or_create(
