@@ -106,7 +106,6 @@ class CurriculumResource(resources.ModelResource):
             "status",
             "list_courses_f",
         )
-        list_editable =("status",)
         skip_unchanged = True
         report_skipped = True
 
