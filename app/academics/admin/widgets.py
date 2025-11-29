@@ -48,12 +48,20 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
                 pass
 
         credit_hours, _ = CreditHour.objects.get_or_create(code=credit_hours_code)
+        is_required_raw = get_in_row("is_required", row).lower()
+        if is_required_raw in {"1", "true", "yes", "required"}:
+            is_required = True
+        elif is_required_raw in {"0", "false", "no"}:
+            is_required = False
+        else:
+            is_required = False
+
         curriculum_course, _ = CurriculumCourse.objects.get_or_create(
             curriculum=curriculum,
             course=course,
             defaults={
                 "credit_hours": credit_hours,
-                "is_required": get_in_row("is_required", row),
+                "is_required": is_required,
             },
         )
         return curriculum_course
