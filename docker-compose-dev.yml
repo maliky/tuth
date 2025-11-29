@@ -14,6 +14,7 @@ services:
     working_dir: /code
     volumes:
       - .:/code
+      - ./Seed_data:/Seed_data
     command: bash -c "./run.sh -d" #pytest --reuse-db -q
     env_file:
       - .env-dev

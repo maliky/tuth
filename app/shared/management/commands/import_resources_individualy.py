@@ -45,42 +45,29 @@ class Command(BaseCommand):
     help = "Import resources from individual CSV files found in a directory."
     #: Mapping filename → (label, ResourceClass)
     FILEMAP: dict[str, Tuple[str, type[resources.ModelResource]]] = {
-        # "um_students.csv": ("Student", StudentResource),
-        # "student.csv": ("Student", StudentResource),
-        # "faculty.csv": ("Faculty", FacultyResource),
-        # # Staff
-        # "room.csv": ("Room", RoomResource),  # + Space
+        "people_students.head.csv": ("Student", StudentResource),
+        "people_instructors.csv": ("Faculty", FacultyResource),
+        # Staff
+        "space_room.csv": ("Room", RoomResource),  # + Space
         # "schedule.csv": ("Schedule", ScheduleResource),
-        # "course.csv": ("Course", CourseResource),  # + College
-        # "semester.csv": ("Semester", SemesterResource),  # + AcademicYear
-        # "curriculum_course.csv": ("CurriculumCourse", CurriculumCourseResource),
+        "academic_course.csv": ("Course", CourseResource),  # + College
+        "academic_semester.csv": ("Semester", SemesterResource),  # + AcademicYear
+        "academic_curriculum_course.csv": ("CurriculumCourse", CurriculumCourseResource),
         # "section.csv": ("Section", SectionResource),
         # "session.csv": ("SecSession", SecSessionResource),  # + Faculty / Room
-        "grades-registry.csv": (
-            "Grade",
-            GradeResource,
-        ),  # new and old ie with history tracking.
-        "registry_gradeSheets.csv": ("LegacyGrade", LegacyGradeSheetResource),
+        # "registry_gradeSheets.csv": (
+        #     "Grade",
+        #     GradeResource,
+        # ),
         "registry_gradeSheets.head.csv": ("LegacyGrade", LegacyGradeSheetResource),
-        "gradesheets.csv": ("LegacyGrade", LegacyGradeSheetResource),
         "gradesheets.head.csv": ("LegacyGrade", LegacyGradeSheetResource),
-        "oldgrades.csv": ("LegacyGrade", LegacyGradeSheetResource),
         "oldgrades.head.csv": ("LegacyGrade", LegacyGradeSheetResource),
-        "UM_GradeSheet.csv": ("LegacyGrade", LegacyGradeSheetResource),
-        "UM_GradeSheet.head.csv": ("LegacyGrade", LegacyGradeSheetResource),
-        "UM_TransferGrades.csv": ("LegacyGrade", LegacyGradeSheetResource),
         "UM_TransferGrades.head.csv": ("LegacyGrade", LegacyGradeSheetResource),
-        "registry_registration.csv": (
-            "LegacyRegistration",
-            LegacyRegistrationResource,
-        ),
         "registry_registration.head.csv": (
             "LegacyRegistration",
             LegacyRegistrationResource,
         ),
-        "studentcourses.csv": ("LegacyRegistration", LegacyRegistrationResource),
         "studentcourses.head.csv": ("LegacyRegistration", LegacyRegistrationResource),
-        "UM_StudentsCourses.csv": ("LegacyRegistration", LegacyRegistrationResource),
         "UM_StudentsCourses.head.csv": (
             "LegacyRegistration",
             LegacyRegistrationResource,
