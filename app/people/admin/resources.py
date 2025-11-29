@@ -1,7 +1,13 @@
 """Resources module."""
 
+from __future__ import annotations
+
+import json
+import re
+
 from import_export import fields, resources
-from import_export.widgets import DateTimeWidget
+from import_export.widgets import DateTimeWidget, Widget
+
 from app.academics.admin.widgets import CurriculumWidget
 from app.shared.auth.perms import UserRole
 
@@ -11,7 +17,11 @@ from app.people.models.faculty import Faculty
 from app.people.models.student import Student
 from app.people.utils import mk_username, split_name
 from app.registry.models.registration import Registration
-from app.timetable.admin.widgets.core import SemesterCodeWidget
+from app.timetable.admin.widgets.core import (
+    SemesterCodeWidget,
+    ensure_academic_year_code,
+)
+from app.timetable.models.semester import Semester
 
 
 class DirectoryContactResource(resources.ModelResource):
@@ -89,6 +99,63 @@ class FacultyResource(resources.ModelResource):
         return super().after_save_instance(instance, row, **kwargs)
 
 
+class StudentInfoTermWidget(Widget):
+    """Parse StudentInfo term strings (e.g. '2022/2023, 2nd Semes')."""
+
+    term_pattern = re.compile(
+        r"(?P<start>\d{4})/(?P<end>\d{4}),\s*(?P<label>[A-Za-z0-9\s/]+)", re.IGNORECASE
+    )
+
+    def __init__(self, fallback_column: str | None = None) -> None:
+        super().__init__()
+        self.fallback_column = fallback_column
+        self.legacy_widget = SemesterCodeWidget()
+
+    def clean(self, value, row=None, *args, **kwargs):
+        semester = self._parse_student_info_term(value)
+        if semester:
+            return semester
+
+        if self.fallback_column and row:
+            legacy_value = row.get(self.fallback_column)
+            if legacy_value:
+                return self.legacy_widget.clean(
+                    legacy_value,
+                    row=row,
+                    *args,
+                    **kwargs,
+                )
+
+        return None
+
+    def _parse_student_info_term(self, raw_value: str | None) -> Semester | None:
+        if not raw_value:
+            return None
+
+        _match = self.term_pattern.match(raw_value.strip())
+        if not _match:
+            return None
+
+        label = _match.group("label").lower()
+
+        if "1st" in label or "first" in label:
+            sem_no = 1
+        elif "2nd" in label or "second" in label:
+            sem_no = 2
+        elif "vac" in label:
+            sem_no = 3
+        else:
+            return None
+
+        code = f"{_match.group('start')[-2:]}-{_match.group('end')[-2:]}"
+        academic_year = ensure_academic_year_code(code)
+        semester, _ = Semester.objects.get_or_create(
+            academic_year=academic_year,
+            number=sem_no,
+        )
+        return semester
+
+
 class StudentResource(resources.ModelResource):
     """Resource for bulk importing Student rows."""
 
@@ -100,17 +167,18 @@ class StudentResource(resources.ModelResource):
 
     current_enrolled_semester = fields.Field(
         attribute="current_enrolled_semester",
-        column_name="current_enrolled_sem",
-        widget=SemesterCodeWidget(),
+        column_name="TermLastEnrolled",
+        widget=StudentInfoTermWidget(fallback_column="current_enrolled_sem"),
     )
     entry_semester = fields.Field(
         attribute="entry_semester",
-        column_name="entry_semester",
-        widget=SemesterCodeWidget(),
+        column_name="TermFirstEntered",
+        widget=StudentInfoTermWidget(fallback_column="entry_semester"),
     )
     curriculum = fields.Field(
         attribute="curriculum", column_name="major", widget=CurriculumWidget()
     )
+    bio = fields.Field(attribute="bio", column_name="bio")
 
     # ~~~~~~~~~~~~~~~~ demographic fields ~~~~~~~~~~~~~~~~~
 
@@ -139,10 +207,70 @@ class StudentResource(resources.ModelResource):
             "birth_date",
             "marital_status",
             "gender",
+            "bio",
         )
         skip_unchanged = True
         report_skipped = False
         use_bulk = False  # do not use because ressources is down row by row
+
+    METRIC_COLUMNS = [
+        "CumAttemptedHours",
+        "CumRetainedHours",
+        "CumEarnedHours",
+        "CumQualityHours",
+        "CumQualityPoints",
+        "CumGPA",
+        "CumAttemptedHoursLocal",
+        "CumRetainedHoursLocal",
+        "CumEarnedHoursLocal",
+        "CumQualityHoursLocal",
+        "CumQualityPointsLocal",
+        "CumGPALocal",
+        "ClassLevel",
+        "EnrollmentStatusID",
+        "HomeCountry",
+        "TermFirstEntered",
+        "TermLastEnrolled",
+        "NumDependents",
+        "ConfidentialInfoFlag",
+        "PENVerified",
+        "DisableWebConnectPortal",
+        "VeteranStatusID",
+        "TimeCreated",
+        "TimeModified",
+    ]
+
+    def before_import_row(self, row, **kwargs):
+        """Inject derived columns to capture StudentInfo data."""
+        account_id = row.get("AccountID")
+        if account_id and not row.get("student_id"):
+            row["student_id"] = account_id
+
+        home_country = row.get("HomeCountry")
+        if home_country:
+            row.setdefault("nationality", home_country)
+
+        if account_id and not row.get("student_name"):
+            existing_student = Student.objects.filter(student_id=account_id).first()
+            if existing_student:
+                row["student_name"] = existing_student.long_name
+
+        # ensure legacy columns receive a value for backward compatibility
+        if row.get("current_enrolled_sem") and not row.get("TermLastEnrolled"):
+            row["TermLastEnrolled"] = row["current_enrolled_sem"]
+        if row.get("entry_semester") and not row.get("TermFirstEntered"):
+            row["TermFirstEntered"] = row["entry_semester"]
+
+        metrics = {}
+        for column in self.METRIC_COLUMNS:
+            value = row.get(column)
+            if value not in (None, ""):
+                metrics[column] = value
+
+        if metrics:
+            row["bio"] = json.dumps(metrics)
+
+        return super().before_import_row(row, **kwargs)
 
     def do_instance_save(self, instance, is_create) -> None:
         """Overide the instance save operation."""
