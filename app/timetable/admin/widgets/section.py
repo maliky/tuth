@@ -9,7 +9,7 @@ from app.academics.admin.widgets import (
     CurriculumCourseWidget,
     CurriculumWidget,
 )
-from app.people.admin.widgets import FacultyWidget, StudentUserWidget
+from app.people.admin.widgets import FacultyWidget
 from app.shared.utils import get_in_row
 from app.timetable.admin.widgets.core import SemesterCodeWidget, SemesterWidget
 from app.timetable.models.section import Section
@@ -56,7 +56,6 @@ class SectionWidget(widgets.ForeignKeyWidget):
             number=number,
             faculty=faculty,
         )
-        import ipdb; ipdb.set_trace()
 
         return cast(Optional[Section], section)
 

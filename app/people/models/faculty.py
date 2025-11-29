@@ -148,9 +148,17 @@ class Faculty(models.Model):
         if not profile:
             profile = Staff.get_default()
         college = College.get_default()
-        dft_faculty, _ = cls.objects.get_or_create(staff_profile=profile, college=college)
 
-        return cast(Self, dft_faculty)
+        # The existing construct will silently handle
+        # may objects when get_or_create will raise 'MultipleObjectsReturned'
+        existing = cls.objects.filter(staff_profile=profile, college=college).first()
+        if existing:
+            return cast(Self, existing)
+
+        faculty = cls(staff_profile=profile, college=college)
+        faculty.save()
+
+        return cast(Self, faculty)
 
     @classmethod
     def get_unique_default(cls) -> Self:

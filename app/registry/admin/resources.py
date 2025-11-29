@@ -1,10 +1,8 @@
 """Resource module for the registry."""
 
 from import_export import fields, resources
-from import_export.widgets import ForeignKeyWidget
 
 from app.people.admin.widgets import GradeStudentWidget
-from app.people.models.student import Student
 from app.registry.admin.widgets import GradeValueWidget
 from app.registry.models.grade import Grade, GradeValue
 from app.registry.models.registration import Registration

@@ -10,13 +10,12 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
-
 from django.core.management import call_command
-from django.core.management.base import BaseCommand, CommandParser
-from django.db import transaction
+from django.core.management.base import BaseCommand, CommandError, CommandParser
 from import_export import resources
+from import_export.results import RowResult
 from tablib import Dataset
-from tqdm import tqdm
+# from tqdm import tqdm  # I would like this to be used to show progress
 
 from app.academics.admin.resources import (  # noqa: F401
     CourseResource,
@@ -53,8 +52,8 @@ class Command(BaseCommand):
 
     def handle(self, *args: Any, **options: Any) -> None:
         """Validate and import each resource from the provided CSV."""
-        # ensure_superuser(self)
-        # call_command("load_roles", verbosity=0)
+        ensure_superuser(self)
+        call_command("load_roles", verbosity=0)
 
         path = Path(options["file_path"])
         if not path.exists():
@@ -77,41 +76,35 @@ class Command(BaseCommand):
         ]
 
         for key, ResourceClass in RESOURCES_MAP:
-
             resource: resources.ModelResource = ResourceClass()
-            instance_loader = resource._meta.instance_loader_class(resource, dataset)
-            total_rows = dataset.height
+            self.stdout.write(f"Importing {key}…")
+            result = resource.import_data(dataset, dry_run=False)
 
-            # validation: resources.Result = resource.import_data(dataset, dry_run=True)
+            error_rows = result.totals[RowResult.IMPORT_TYPE_ERROR]
+            invalid_rows = result.totals[RowResult.IMPORT_TYPE_INVALID]
 
-            # if validation.has_errors():
-            #     self.stdout.write(self.style.ERROR(f"'{key}': validation errors:"))
-
-            #     if validation.row_errors():
-            #         row_index, row_err = validation.row_errors()[0]
-            #         self.stdout.write(f"  row {row_index}: {row_err[0]}")
-            #     if validation.base_errors:
-            #         self.stdout.write(f"   {validation.base_errors[0]}")
-
-            #     continue
-
-            # real import
-            with transaction.atomic():
-                for row_number, row in enumerate(
-                    tqdm(dataset.dict, total=total_rows, desc=f"Importing {key}"),
-                    start=1,
-                ):
-                    try:
-                        # import ipdb; ipdb.set_trace()
-
-                        resource.import_row(
-                            row,
-                            instance_loader,
-                            dry_run=False,
-                            row_number=row_number,
+            if error_rows or invalid_rows:
+                for idx, errors in result.row_errors()[:5]:
+                    first = errors[0] if errors else None
+                    if first is not None:
+                        self.stdout.write(
+                            self.style.ERROR(
+                                f"Row {idx} failed: {getattr(first, 'error', first)}"
+                            )
                         )
-                    except Exception as exc:
-                        self.stdout.write(self.style.ERROR(f"{key} import failed: {exc}"))
-                        raise (exc)
+                for invalid in result.invalid_rows[:5]:
+                    self.stdout.write(
+                        self.style.ERROR(f"Row {invalid.number} invalid: {invalid.error}")
+                    )
+                raise CommandError(
+                    f"{key} import failed with {error_rows} errors "
+                    f"and {invalid_rows} invalid rows."
+                )
 
-            self.stdout.write(self.style.SUCCESS(f"{key} import completed."))
+            created = result.totals[RowResult.IMPORT_TYPE_NEW]
+            updated = result.totals[RowResult.IMPORT_TYPE_UPDATE]
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"{key} import completed: {created} created, {updated} updated."
+                )
+            )

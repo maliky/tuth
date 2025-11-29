@@ -257,16 +257,16 @@ def extract_id_num(user_id: str) -> int:
 
 def get_default_user():
     """Returns a dummy User."""
-    d_user, _ = User.objects.get_or_create(
+    d_user, created = User.objects.get_or_create(
         username="default_user",
         defaults={
             "first_name": "Kemyt",
             "last_name": "Tusis",
-            "password": None,
         },
     )
-    d_user.set_unusable_password()
-    d_user.save()
+    if created:
+        d_user.set_unusable_password()
+        d_user.save(update_fields=["password"])
     return d_user
 
 
