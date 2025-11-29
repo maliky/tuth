@@ -96,6 +96,16 @@ docker-compose -f docker-compose-dev.yml up --build
 #+END_SRC
 Once the containers are running, visit [[https://localhost][https://localhost]] to access the app.
 
+*** Running manage.py commands inside Docker
+Run Django management commands from the host by exec-ing into the =web= container:
+#+BEGIN_SRC bash
+# dev stack
+docker-compose -f docker-compose-dev.yml exec web python manage.py createsuperuser
+# pre-prod stack
+docker-compose -f docker-compose-preprod.yml exec web python manage.py create_states
+#+END_SRC
+Replace the command at the end with whatever you need (e.g., =load_roles=, =import_resources=).
+
 *** Running Tests
 **** Using Docker
 

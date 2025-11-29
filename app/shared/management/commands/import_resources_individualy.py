@@ -110,9 +110,17 @@ class Command(BaseCommand):
         instance_loader = resource._meta.instance_loader_class(resource, dataset)
         total_rows = dataset.height
         with transaction.atomic():
-            for row in tqdm(dataset.dict, total=total_rows, desc=f"Importing {name}"):
+            for row_number, row in enumerate(
+                tqdm(dataset.dict, total=total_rows, desc=f"Importing {name}"),
+                start=1,
+            ):
                 try:
-                    resource.import_row(row, instance_loader, dry_run=False)
+                    resource.import_row(
+                        row,
+                        instance_loader,
+                        dry_run=False,
+                        row_number=row_number,
+                    )
                 except Exception as exc:
                     cmd.stdout.write(cmd.style.ERROR(f"✖ {name} import failed: {exc}"))
                     return
