@@ -1,12 +1,17 @@
-"""timetable.admin.widgets.section module."""
+"""Timetable.admin.widgets.section module."""
 
 from typing import Optional, cast
 
 from import_export import widgets
 
-from app.academics.admin.widgets import CourseWidget, CurriculumCourseWidget
+from app.academics.admin.widgets import (
+    CourseWidget,
+    CurriculumCourseWidget,
+    CurriculumWidget,
+)
 from app.people.admin.widgets import FacultyWidget
-from app.timetable.admin.widgets.core import SemesterWidget
+from app.shared.utils import get_in_row
+from app.timetable.admin.widgets.core import SemesterCodeWidget, SemesterWidget
 from app.timetable.models.section import Section
 
 
@@ -25,18 +30,20 @@ class SectionWidget(widgets.ForeignKeyWidget):
         if row is None:
             raise ValueError("Row context required")
 
-        curriculum_value = (row.get("curriculum") or "").strip()
+        # needs course in context
+        curriculum_value = get_in_row("curriculum", row)
         curriculum_course = self.curriculum_course_w.clean(
             value=curriculum_value, row=row
         )
 
-        semester_no = (row.get("semester_no") or "").strip()
+        # wants academic_year
+        semester_no = get_in_row("semester_no", row)
         semester = self.sem_w.clean(value=semester_no, row=row)
 
-        faculty_value = (row.get("faculty") or "").strip()
+        faculty_value = get_in_row("faculty", row)
         faculty = self.faculty_w.clean(value=faculty_value, row=row)
 
-        sec_no_value = (row.get("section_no") or "0").strip()
+        sec_no_value = get_in_row("section_no", row) or "0"
 
         if sec_no_value.isdigit():
             number = int(sec_no_value)
@@ -49,6 +56,7 @@ class SectionWidget(widgets.ForeignKeyWidget):
             number=number,
             faculty=faculty,
         )
+
         return cast(Optional[Section], section)
 
     def render(self, value: Section, obj=None):

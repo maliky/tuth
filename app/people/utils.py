@@ -21,10 +21,11 @@ Functions:
 # regex patterns to pull suffixes, prefixes, initials, etc.
 import re
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Sequence
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from rapidfuzz.distance import JaroWinkler
 
 
 User = get_user_model()
@@ -256,16 +257,16 @@ def extract_id_num(user_id: str) -> int:
 
 def get_default_user():
     """Returns a dummy User."""
-    d_user, _ = User.objects.get_or_create(
+    d_user, created = User.objects.get_or_create(
         username="default_user",
         defaults={
             "first_name": "Kemyt",
             "last_name": "Tusis",
-            "password": None,
         },
     )
-    d_user.set_unusable_password()
-    d_user.save()
+    if created:
+        d_user.set_unusable_password()
+        d_user.save(update_fields=["password"])
     return d_user
 
 
@@ -280,3 +281,50 @@ def mk_password(first: str, last: str) -> str:
     A = "A" if not first else first[0].upper()
     B = "B" if not last else last[0].upper()
     return f"{A}-pass-{B}!"
+
+
+def canonicalize_name(raw: str) -> str:
+    """Return a canonical username-like representation of a name."""
+    prefix, first, middle, last, suffix = split_name(raw)
+    # base_last = last or first or raw
+    # base_first = first or last or raw
+    # canonical = mk_username(base_first, base_last, middle)
+    # return canonical or re.sub(r"\s+", "", raw.lower())
+    return " ".join([prefix, first, middle, last, suffix])
+
+
+def name_distance(name_a: str, name_b: str, *, prefix_weight: float = 0.1) -> float:
+    """Return a normalized distance (0=identical, 1=different) between two names."""
+    canonical_a = canonicalize_name(name_a)
+    canonical_b = canonicalize_name(name_b)
+    # canonical_a = " ".join(split_name(name_a))
+    # canonical_b = " ".join(split_name(name_b))
+    return float(
+        JaroWinkler.normalized_distance(
+            canonical_a, canonical_b, prefix_weight=prefix_weight
+        )
+    )
+
+
+def names_match(name_a: str, name_b: str, *, threshold: float = 0.2, **kwargs) -> bool:
+    """Return True when the distance between two names is within a given threshold."""
+    return name_distance(name_a, name_b, **kwargs) <= threshold
+
+
+def name_similarity_matrix(
+    left_names: Sequence[str],
+    right_names: Sequence[str],
+    *,
+    max_distance: float | None = None,
+    **kwargs,
+) -> list[dict[str, object]]:
+    """Return a list of similarity rows describing pairwise name distances."""
+    # > Can we vectorize this with pandas or numpy built-in methods ?
+    matrix: list[dict[str, object]] = []
+    for left in left_names:
+        for right in right_names:
+            dist = name_distance(left, right, **kwargs)
+            if max_distance is not None and dist > max_distance:
+                continue
+            matrix.append({"left": left, "right": right, "distance": dist})
+    return matrix

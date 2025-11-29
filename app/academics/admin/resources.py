@@ -98,11 +98,12 @@ class CurriculumResource(resources.ModelResource):
 
     class Meta:
         model = Curriculum
-        import_id_fields = ("short_name_f",)
+        import_id_fields = ("short_name_f", "college_f")
         fields = (
             "short_name_f",
-            "title",
+            "long_name",
             "college_f",
+            "status",
             "list_courses_f",
         )
         skip_unchanged = True
@@ -227,17 +228,12 @@ class CurriculumCourseResource(resources.ModelResource):
 class DepartmentResource(resources.ModelResource):
     """Resource for Department."""
 
-    dept_f = fields.Field(
-        attribute="short_name", column_name="course_dept", widget=DepartmentWidget()
-    )
-    college_f = fields.Field(
-        attribute="college", column_name="college_code", widget=CollegeWidget()
-    )
-
     class Meta:
         model = Department
-        import_id_fields = ("dept_f", "college_f")
+        import_id_fields = "department_code"
         fields = (
-            "dept_f",
-            "college_f",
+            "college_code",
+            "course_dept",
+            "department_code",
+            "long_name",
         )

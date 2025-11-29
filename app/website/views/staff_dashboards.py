@@ -776,7 +776,9 @@ def _accessible_role_slugs(user: User) -> set[str]:
     return {"general"} | membership | inherited | direct_lower
 
 
-def _build_accessible_dashboard_links(user: User, active_slug: str) -> list[dict[str, Any]]:
+def _build_accessible_dashboard_links(
+    user: User, active_slug: str
+) -> list[dict[str, Any]]:
     slugs = _accessible_role_slugs(user)
     ordered = sorted(slugs, key=lambda slug: ROLE_ORDER.get(slug, len(ROLE_PRIORITY)))
     links: list[dict[str, Any]] = []

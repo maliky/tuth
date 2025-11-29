@@ -12,6 +12,7 @@ from typing import Any, Tuple
 
 from tqdm import tqdm
 
+from app.registry.admin.resources import GradeResource
 from app.shared.utils import clean_column_headers
 from django.core.management.base import BaseCommand, CommandParser
 from django.db import transaction
@@ -40,7 +41,7 @@ class Command(BaseCommand):
     help = "Import resources from individual CSV files found in a directory."
     #: Mapping filename → (label, ResourceClass)
     FILEMAP: dict[str, Tuple[str, type[resources.ModelResource]]] = {
-        "um_students.csv": ("Student", StudentResource),
+        # "um_students.csv": ("Student", StudentResource),
         # "student.csv": ("Student", StudentResource),
         # "faculty.csv": ("Faculty", FacultyResource),
         # # Staff
@@ -51,7 +52,10 @@ class Command(BaseCommand):
         # "curriculum_course.csv": ("CurriculumCourse", CurriculumCourseResource),
         # "section.csv": ("Section", SectionResource),
         # "session.csv": ("SecSession", SecSessionResource),  # + Faculty / Room
-        # Grades  # new and old ie with history tracking.
+        "grades-registry.csv": (
+            "Grade",
+            GradeResource,
+        )  # new and old ie with history tracking.
     }
 
     def add_arguments(self, parser: CommandParser) -> None:

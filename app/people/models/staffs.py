@@ -56,14 +56,23 @@ class Staff(AbstractPerson):
     @classmethod
     def get_default(cls, staff_id: int = 0) -> Self:
         """Return a default Staff."""
-        dft_staff, _ = cls.objects.get_or_create(
-            staff_id=f"DFT_STF{staff_id:04d}",
-            user=get_default_user(),
+        # Here again this construct whill allow duplicate staff_ids
+        # duplicates have to be handle manualy latter
+        staff_code = f"DFT_STF{staff_id:04d}"
+        default_user = get_default_user()
+        existing = cls.objects.filter(staff_id=staff_code, user=default_user).first()
+        if existing:
+            return cast(Self, existing)
+
+        staff = cls(
+            staff_id=staff_code,
+            user=default_user,
             employment_date=date.today(),
             department=Department.get_default(),
             position=f"Joker {staff_id:04d}",
         )
-        return cast(Self, dft_staff)
+        staff.save()
+        return cast(Self, staff)
 
     @classmethod
     def get_unique_default(cls) -> Self:

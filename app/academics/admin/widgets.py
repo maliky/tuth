@@ -39,15 +39,29 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
             else Curriculum.get_default()
         )
 
-        credit_hours, _ = CreditHour.objects.get_or_create(
-            code=get_in_row("credit_hours", row) or 3
-        )
+        credit_hours_value = get_in_row("credit_hours", row)
+        credit_hours_code = 3
+        if credit_hours_value:
+            try:
+                credit_hours_code = int(float(credit_hours_value))
+            except ValueError:
+                pass
+
+        credit_hours, _ = CreditHour.objects.get_or_create(code=credit_hours_code)
+        is_required_raw = get_in_row("is_required", row).lower()
+        if is_required_raw in {"1", "true", "yes", "required"}:
+            is_required = True
+        elif is_required_raw in {"0", "false", "no"}:
+            is_required = False
+        else:
+            is_required = False
+
         curriculum_course, _ = CurriculumCourse.objects.get_or_create(
             curriculum=curriculum,
             course=course,
             defaults={
                 "credit_hours": credit_hours,
-                "is_required": get_in_row("is_required", row),
+                "is_required": is_required,
             },
         )
         return curriculum_course
@@ -86,6 +100,7 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
         college_code = get_in_row("college_code", row)
         college = self.college_w.clean(college_code)
 
+        # We create  the lookup used in case of creation fo the curriculum
         lookup = {"short_name": short_name}
         if college:
             lookup["college"] = college
@@ -108,7 +123,7 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
                 raise
             curriculum = fallback
 
-        # add the major if there
+        # add the major if there is
         if major_name:
             major, _ = Major.objects.get_or_create(name=major_name, curriculum=curriculum)
 
@@ -146,6 +161,7 @@ class CourseWidget(widgets.ForeignKeyWidget):
         if not course_no or not course_dept:
             return Course.get_unique_default()
 
+        # department Widget wants college_code
         course, _ = Course.objects.get_or_create(
             number=course_no,
             department=self.department_w.clean(course_dept, row),

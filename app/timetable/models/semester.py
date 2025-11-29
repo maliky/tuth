@@ -17,7 +17,8 @@ class SemesterStatus(SimpleTableMixin):
     DEFAULT_VALUES = [
         ("planning", "Planning"),
         ("registration", "Registration Open"),
-        ("locked", "Locked"),
+        ("running", "Registration Closed, Semester running"),
+        ("locked", "Registration Closed, Semester locked"),
     ]
 
     class Meta:

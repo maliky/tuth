@@ -28,13 +28,13 @@ def expand_course_code(
     """
     assert "/" not in code
 
-    match = COURSE_PATTERN.search(code.strip().upper())
-    assert match is not None, f"Code '{code}' doesn't match expected pattern"
+    _match = COURSE_PATTERN.search(code.strip().upper())
+    assert _match is not None, f"Code '{code}' doesn't match expected pattern"
 
     college_code, dept_short_name, course_no = (
-        match.group("college"),
-        match.group("dept"),
-        match.group("num"),
+        _match.group("college"),
+        _match.group("dept"),
+        _match.group("num"),
     )
 
     if not college_code:
@@ -71,6 +71,10 @@ def as_title(value: str) -> str:
 
 def clean_column_headers(dataset):
     """Strip blank headers that may appear due to trailing commas."""
-    # sanitize column headers: strip whitespace and drop empties
-    dataset.headers = [(header or "").strip() for header in dataset.headers]
+    # sanitize column headers: strip whitespace
+    sanitised = [(header or "").strip() for header in dataset.headers]
+    rename_map = {
+        "course_dept_no": "course_dept",
+    }
+    dataset.headers = [rename_map.get(name, name) for name in sanitised]
     return dataset

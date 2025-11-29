@@ -174,6 +174,7 @@ class CurriculumAdmin(CollegeRestrictedAdmin):
         "student_count",
     )
     list_filter = ("college",)
+    # list_editable =("status", "is_active")
     autocomplete_fields = ("college",)
     inlines = [CurriculumCourseInline]
 

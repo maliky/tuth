@@ -8,6 +8,8 @@ Usage::
     >>> print(staff.long_name)
 """
 
+from app.academics.admin.widgets import CurriculumWidget
+from app.academics.models.curriculum import Curriculum
 from app.people.models.student import Student
 from django.contrib.auth.models import User
 from import_export import widgets
@@ -15,6 +17,7 @@ from import_export import widgets
 from app.people.models.staffs import Staff
 from app.people.models.faculty import Faculty
 from app.people.utils import mk_username, split_name, mk_password
+from app.shared.utils import get_in_row
 
 
 class StaffProfileWidget(widgets.ForeignKeyWidget):
@@ -78,7 +81,8 @@ class FacultyWidget(widgets.ForeignKeyWidget):
         if value is '<unique>' create a default unique faculty
         """
         if not value:
-            return Faculty.get_unique_default()
+            # return Faculty.get_unique_default()
+            return Faculty.get_default()
 
         prefix, first, middle, last, suffix = split_name(value)
         username = mk_username(first, last, prefix_len=2)
@@ -162,8 +166,62 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         self.cache_student = dict()
 
 
+class GradeStudentWidget(widgets.ForeignKeyWidget):
+    """Create or resolve a Student using a student_id when missing."""
+
+    def __init__(self):
+        super().__init__(Student, field="student_id")
+        self._cache_student: dict[str, Student] = {}
+        self.curriculum_w = CurriculumWidget()
+
+    def clean(self, value, row=None, *args, **kwargs) -> Student:
+        """Return the Student tied to the identifier, creating it if needed."""
+        student_id = (value or "").strip()
+        if not student_id:
+            return Student.get_default()
+
+        cached = self._cache_student.get(student_id)
+        if cached is not None:
+            return cached
+
+        existing = Student.objects.filter(student_id=student_id).first()
+        if existing:
+            self._cache_student[student_id] = existing
+            return existing
+
+        # Here it means student does not exists and we need to create it
+        
+        curriculum_value = get_in_row("curriculum", row)
+        curriculum = self.curriculum_w.clean(value=curriculum_value, row=row)
+        if curriculum is None:
+            curriculum = Curriculum.get_default()
+
+        first_name = get_in_row("student_first_name", row) or "Student"
+        last_name = get_in_row("student_last_name", row) or student_id
+        
+        username = Student.mk_username(first_name, last_name)
+        password = mk_password(first_name, last_name)
+        user = User.objects.create_user(
+            username=username,
+            first_name=first_name,
+            last_name=last_name,
+            password=password,
+        )
+
+        student = Student(
+            user=user,
+            curriculum=curriculum,
+            student_id=student_id,
+        )
+        student.save()
+
+        self._cache_student[student_id] = student
+
+        return student
+
+
 class UserStudentWidget(widgets.ForeignKeyWidget):
-    """Import a User for a student exists."""
+    """Import a User from an existing student."""
 
     def __init__(self):
         # field is "id" by default

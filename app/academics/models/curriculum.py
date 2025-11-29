@@ -52,6 +52,7 @@ class Curriculum(StatusableMixin, models.Model):
     college = models.ForeignKey(
         "academics.College", on_delete=models.CASCADE, related_name="curricula"
     )
+
     creation_date = models.DateField(default=date.today)
     is_active = models.BooleanField(default=False)
 
@@ -63,6 +64,8 @@ class Curriculum(StatusableMixin, models.Model):
         verbose_name="Validation Status",
     )
     history = HistoricalRecords()
+
+    code = models.CharField(max_length=50, editable=False, default="DFT-CUR")
 
     # ~~~~~~~~ Optional ~~~~~~~~
     long_name = models.CharField(max_length=255, blank=True, null=True)
@@ -113,6 +116,12 @@ class Curriculum(StatusableMixin, models.Model):
         if self.status_id != "approved":
             self.is_active = False
 
+    def _ensure_code(self):
+        """Populate the code field. making it defacto a model key."""
+        if not self.code:
+            _prefix = f"({self.college}) " if self.college_id else ""
+            self.code = _prefix + self.short_name
+
     def _ensure_status(self):
         """Make sure the curriculum has a status set."""
         if not self.status_id:
@@ -150,6 +159,7 @@ class Curriculum(StatusableMixin, models.Model):
             self.college = College.get_default()
         self._ensure_status()
         self._ensure_activity()
+        self._ensure_code()
         super().save(*args, **kwargs)
 
     def clean(self) -> None:
@@ -161,7 +171,7 @@ class Curriculum(StatusableMixin, models.Model):
         ordering = ["college", "short_name"]
         constraints = [
             models.UniqueConstraint(
-                fields=["college", "short_name"],
+                fields=["short_name"],
                 condition=models.Q(is_active=True),
                 name="uniq_active_curriculum_college",
             )

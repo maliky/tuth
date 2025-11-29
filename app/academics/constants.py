@@ -8,6 +8,8 @@ statuses.
 import re
 
 MAX_STUDENT_CREDITS = 18
+
+# This patterns cannot import CENG410A it will ignore it.
 COURSE_PATTERN = re.compile(
     r"(?:(?P<college>[A-Z]{3,4})-)?(?P<dept>[A-Z]{2,4})[_-]?(?P<num>[0-9]{3})"
 )

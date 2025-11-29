@@ -11,6 +11,64 @@ from simple_history.models import HistoricalRecords
 from app.shared.mixins import SimpleTableMixin
 
 
+class AccountType(SimpleTableMixin):
+    """Account Types."""
+
+    default_values = [
+        ("liability", "Liability"),
+        ("asset", "Asset"),
+        ("capital", "Capital"),
+        ("expense", "Expense"),
+        ("income", "Income"),
+        ("unknown", "Unknown"),
+    ]
+
+    class Meta:
+        verbose_name = "Account Type"
+        verbose_name_plural = "Account Types"
+
+    @classmethod
+    def get_default(cls) -> Self:
+        """Returns the default AccountType."""
+        deft, _ = cls.objects.get_or_create(code="liability")
+        return cast(Self, deft)
+
+
+class AccountChartType(SimpleTableMixin):
+    """Account Chart Types."""
+
+    DEFAULT_VALUES = [
+        ("account_payable", "Account Payable"),
+        ("account_receivable", "Account Receivable"),
+        ("Bank", "Bank"),
+        ("Cash", "Cash"),
+        ("Equity", "Equity"),
+        ("Expense", "Expense"),
+        ("fixed_asset", "Fixed Asset"),
+        ("Income", "Income"),
+        ("long_term_liability", "Long Term Liability"),
+        ("other_current_asset", "Other Current Asset"),
+        ("other_current_liability", "Other Current Liability"),
+        ("other", "Other"),
+    ]
+    # ~~~~~~~~~~~~~~~~ optional ~~~~~~~~~~~~~~~~
+    type = models.ForeignKey(
+        "finance.AccountType",
+        on_delete=models.PROTECT,
+        related_name="unknown",
+    )
+
+    class Meta:
+        verbose_name = "Account Type"
+        verbose_name_plural = "Account Types"
+
+    @classmethod
+    def get_default(cls) -> Self:
+        """Returns the default AccountType."""
+        deft, _ = cls.objects.get_or_create(code="other")
+        return cast(Self, deft)
+
+
 class ClearanceStatus(SimpleTableMixin):
     """Clearance Statuses."""
 
@@ -54,11 +112,37 @@ class FeeType(SimpleTableMixin):
     """Enumeration of fee types."""
 
     DEFAULT_VALUES = [
-        ("tuition", "Tuition"),
-        ("research", "Research"),
-        ("other", "Other"),
+        ("activities", "Activities"),
+        ("athletics", "Athletics"),
+        ("biology_lab", "Biology Lab"),
+        ("chemistry_lab", "Chemistry Lab"),
+        ("clinical", "Clinical"),
+        ("credit_hour", "Credit Hour"),
+        ("dormitory", "Dormitory"),
+        ("enterpreneurship", "Enterpreneurship"),
+        ("entrepreneurship_education_i", "Entrepreneurship Education I"),
+        ("entrepreneurship_education_ii", "Entrepreneurship Education II"),
+        ("graduation", "Graduation"),
+        ("id_card", "ID Card"),
         ("lab", "Laboratory"),
-        ("credit_hour_fee", "Credit Hour Fee"),
+        ("late_registration", "Late Registration"),
+        ("library", "Library"),
+        ("maintenance", "Maintenance"),
+        ("medical_surgical_lab", "Medical Surgical Lab"),
+        ("obstetric_nursing_lab", "Obstetric Nursing Lab"),
+        ("other", "Other"),
+        ("pe_tshirt", "P.E. T-Shirt"),
+        ("pediatric_lab", "Pediatric Lab"),
+        ("physics_lab", "Physics Lab"),
+        ("pre-registration_penalty", "Pre-Registration Penalty"),
+        ("re-admission", "Re-Admission"),
+        ("registration", "Registration"),
+        ("research", "Research"),
+        ("science_laboratory", "Science Laboratory"),
+        ("sports", "Sports"),
+        ("technology", "Technology"),
+        ("transcript", "Transcript"),
+        ("tuition", "Tuition"),
     ]
 
     @classmethod
