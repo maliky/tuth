@@ -13,6 +13,10 @@ from typing import Any, Tuple
 from tqdm import tqdm
 
 from app.registry.admin.resources import GradeResource
+from app.registry.admin.resources_legacy import (
+    LegacyGradeSheetResource,
+    LegacyRegistrationResource,
+)
 from app.shared.utils import clean_column_headers
 from django.core.management.base import BaseCommand, CommandParser
 from django.db import transaction
@@ -55,7 +59,32 @@ class Command(BaseCommand):
         "grades-registry.csv": (
             "Grade",
             GradeResource,
-        )  # new and old ie with history tracking.
+        ),  # new and old ie with history tracking.
+        "registry_gradeSheets.csv": ("LegacyGrade", LegacyGradeSheetResource),
+        "registry_gradeSheets.head.csv": ("LegacyGrade", LegacyGradeSheetResource),
+        "gradesheets.csv": ("LegacyGrade", LegacyGradeSheetResource),
+        "gradesheets.head.csv": ("LegacyGrade", LegacyGradeSheetResource),
+        "oldgrades.csv": ("LegacyGrade", LegacyGradeSheetResource),
+        "oldgrades.head.csv": ("LegacyGrade", LegacyGradeSheetResource),
+        "UM_GradeSheet.csv": ("LegacyGrade", LegacyGradeSheetResource),
+        "UM_GradeSheet.head.csv": ("LegacyGrade", LegacyGradeSheetResource),
+        "UM_TransferGrades.csv": ("LegacyGrade", LegacyGradeSheetResource),
+        "UM_TransferGrades.head.csv": ("LegacyGrade", LegacyGradeSheetResource),
+        "registry_registration.csv": (
+            "LegacyRegistration",
+            LegacyRegistrationResource,
+        ),
+        "registry_registration.head.csv": (
+            "LegacyRegistration",
+            LegacyRegistrationResource,
+        ),
+        "studentcourses.csv": ("LegacyRegistration", LegacyRegistrationResource),
+        "studentcourses.head.csv": ("LegacyRegistration", LegacyRegistrationResource),
+        "UM_StudentsCourses.csv": ("LegacyRegistration", LegacyRegistrationResource),
+        "UM_StudentsCourses.head.csv": (
+            "LegacyRegistration",
+            LegacyRegistrationResource,
+        ),
     }
 
     def add_arguments(self, parser: CommandParser) -> None:

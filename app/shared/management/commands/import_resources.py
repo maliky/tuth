@@ -24,6 +24,10 @@ from app.academics.admin.resources import (  # noqa: F401
 from app.academics.models.college import College  # noqa: F401
 from app.people.admin.resources import FacultyResource, StudentResource
 from app.registry.admin.resources import GradeResource
+from app.registry.admin.resources_legacy import (
+    LegacyGradeSheetResource,
+    LegacyRegistrationResource,
+)
 from app.shared.auth.helpers import ensure_superuser  # noqa: F401
 from app.shared.utils import clean_column_headers
 from app.spaces.admin.resources import RoomResource  # noqa: F401
@@ -40,6 +44,23 @@ class Command(BaseCommand):
 
     help = "Import resources from a CSV file"
 
+    RESOURCE_REGISTRY: dict[str, tuple[str, type[resources.ModelResource]]] = {
+        "grade": ("Grade", GradeResource),
+        "legacy_grade": ("LegacyGrade", LegacyGradeSheetResource),
+        "legacy_registration": ("LegacyRegistration", LegacyRegistrationResource),
+        # "student": ("Student", StudentResource),
+        # "faculty": ("Faculty", FacultyResource),  # and College
+        # "room": ("Room", RoomResource),  # and Space
+        # "schedule": ("Schedule", ScheduleResource),
+        # "course": ("Course", CourseResource),  # and College
+        # "semester": ("semester", SemesterResource),  # and Academic year
+        # "curriculumcourse": ("CurriculumCourse", CurriculumCourseResource),
+        # "section": ("Section", SectionResource),
+        # "secsession": ("SecSession", SecSessionResource),  # and Faculty, Room and Space
+        # "grade": ("Grade", GradeResource), # Student, Semester, CurriculumCourse, grade
+        
+    }
+
     def add_arguments(self, parser: CommandParser) -> None:
         """Register --file_path CLI option for the CSV to import."""
         parser.add_argument(
@@ -48,6 +69,13 @@ class Command(BaseCommand):
             nargs="?",
             default="./Seed_data/cleaned_tscc.csv",
             help="Path to CSV file with resources data",
+        )
+        parser.add_argument(
+            "-r",
+            "--resource",
+            action="append",
+            choices=tuple(self.RESOURCE_REGISTRY.keys()),
+            help="Limit import to the selected resource(s). Can be repeated.",
         )
 
     def handle(self, *args: Any, **options: Any) -> None:
@@ -62,22 +90,14 @@ class Command(BaseCommand):
         dataset: Dataset = Dataset().load(open(path).read(), format="csv")
         dataset = clean_column_headers(dataset)
 
-        RESOURCES_MAP: list[tuple[str, type[resources.ModelResource]]] = [
-            # ("Student", StudentResource),
-            # ("Faculty", FacultyResource),  # and College
-            # ("Room", RoomResource),  # and Space
-            # ("Schedule", ScheduleResource),
-            # ("Course", CourseResource),  # and College
-            # ("semester", SemesterResource),  # and Academic year
-            # ("CurriculumCourse", CurriculumCourseResource),
-            # ("Section", SectionResource),
-            # ("SecSession", SecSessionResource),  # and Faculty, Room and Space
-            ("Grade", GradeResource), # Student, Semester, CurriculumCourse, grade
-        ]
+        # Where options comming form ?
+        selected = options.get("resource") or list(self.RESOURCE_REGISTRY.keys())
 
-        for key, ResourceClass in RESOURCES_MAP:
+        
+        for key in selected:
+            label, ResourceClass = self.RESOURCE_REGISTRY[key]
             resource: resources.ModelResource = ResourceClass()
-            self.stdout.write(f"Importing {key}…")
+            self.stdout.write(f"Importing {label}…")
             result = resource.import_data(dataset, dry_run=False)
 
             error_rows = result.totals[RowResult.IMPORT_TYPE_ERROR]
@@ -97,7 +117,7 @@ class Command(BaseCommand):
                         self.style.ERROR(f"Row {invalid.number} invalid: {invalid.error}")
                     )
                 raise CommandError(
-                    f"{key} import failed with {error_rows} errors "
+                    f"{label} import failed with {error_rows} errors "
                     f"and {invalid_rows} invalid rows."
                 )
 
@@ -105,6 +125,6 @@ class Command(BaseCommand):
             updated = result.totals[RowResult.IMPORT_TYPE_UPDATE]
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"{key} import completed: {created} created, {updated} updated."
+                    f"{label} import completed: {created} created, {updated} updated."
                 )
             )
