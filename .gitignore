@@ -12,7 +12,6 @@ test_import.py
 .env*
 .htpasswd
 *cache*
-*migrations*
 Seed*
 _test.repl.org
 db.sqlite3
