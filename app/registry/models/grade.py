@@ -12,16 +12,41 @@ from app.registry.constants import GRADES_DESCRIPTION, GRADES_NUM
 class GradeValue(models.Model):
     """A class to define the different Grade types."""
 
+    DEFAULT_VALUES: list[tuple[int, str]] = [
+        ("ab", 0),
+        ("b", 3),
+        ("c", 2),
+        ("d", 1),
+        ("dr", 0),
+        ("dr", 0),
+        ("e", 0),
+        ("f", 0),
+        ("i", 0),
+        ("ip", 0),
+        ("ng", 0),
+        ("w", 0),
+        ("a", 4),
+    ]
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     code = models.CharField(
         choices=GradeChoice.choices, default=GradeChoice.IP, unique=True
     )
     # ~~~~ Auto-filled ~~~~
-    number = models.PositiveSmallIntegerField(null=True, default=GRADES_NUM["IP"])
+    number = models.PositiveSmallIntegerField(null=True, default=GRADES_NUM["ip"])
     description = models.CharField(
-        max_length=60, null=True, default=GRADES_DESCRIPTION["IP"]
+        max_length=60, null=True, default=GRADES_DESCRIPTION["ip"]
     )
     history = HistoricalRecords()
+
+    @classmethod
+    def _populate_attributes_and_db(cls):
+        """Create a row for each var in DEFAULT_VALUES and create subclass attributes."""
+        # This method is temporary
+        for _code, _num in cls.DEFAULT_VALUES:
+            obj, _ = cls.objects.get_or_create(
+                code=_code, defaults={"description": GRADES_DESCRIPTION[_code]}
+            )
 
     def __str__(self):
         return self.code
