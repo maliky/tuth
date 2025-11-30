@@ -114,7 +114,7 @@ COLLEGE_LONG_NAME = {
     "cafs": "College of Agriculture and Food Sciences",
     "coet": "College of Engineering and Technology",
     "coba": "College of Business Administration",
-    "deft": "College of default when no other college is chosen.",
+    "deft": "Default College",
     "test": "College used for Test purposes",  # for test purposes,
 }
 

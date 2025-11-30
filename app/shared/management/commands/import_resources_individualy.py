@@ -8,6 +8,7 @@ records being created or updated for each resource type found.
 from __future__ import annotations
 
 from pathlib import Path
+from collections import OrderedDict
 from typing import Any, Tuple
 
 from tqdm import tqdm
@@ -44,35 +45,41 @@ class Command(BaseCommand):
 
     help = "Import resources from individual CSV files found in a directory."
     #: Mapping filename → (label, ResourceClass)
-    FILEMAP: dict[str, Tuple[str, type[resources.ModelResource]]] = {
-        "people_students.head.csv": ("Student", StudentResource),
-        "people_instructors.csv": ("Faculty", FacultyResource),
-        # Staff
-        "space_room.csv": ("Room", RoomResource),  # + Space
-        # "schedule.csv": ("Schedule", ScheduleResource),
-        "academic_course.csv": ("Course", CourseResource),  # + College
-        "academic_semester.csv": ("Semester", SemesterResource),  # + AcademicYear
-        "academic_curriculum_course.csv": ("CurriculumCourse", CurriculumCourseResource),
-        # "section.csv": ("Section", SectionResource),
-        # "session.csv": ("SecSession", SecSessionResource),  # + Faculty / Room
-        # "registry_gradeSheets.csv": (
-        #     "Grade",
-        #     GradeResource,
-        # ),
-        "registry_gradeSheets.head.csv": ("LegacyGrade", LegacyGradeSheetResource),
-        "gradesheets.head.csv": ("LegacyGrade", LegacyGradeSheetResource),
-        "oldgrades.head.csv": ("LegacyGrade", LegacyGradeSheetResource),
-        "UM_TransferGrades.head.csv": ("LegacyGrade", LegacyGradeSheetResource),
-        "registry_registration.head.csv": (
-            "LegacyRegistration",
-            LegacyRegistrationResource,
-        ),
-        "studentcourses.head.csv": ("LegacyRegistration", LegacyRegistrationResource),
-        "UM_StudentsCourses.head.csv": (
-            "LegacyRegistration",
-            LegacyRegistrationResource,
-        ),
-    }
+    # > do not add the file withouth the head version.
+    FILEMAP: dict[str, Tuple[str, type[resources.ModelResource]]] = OrderedDict(
+        [
+            ("people_instructors.csv", ("Faculty", FacultyResource)),
+            ("space_room.csv", ("Room", RoomResource)),
+            ("academic_course.csv", ("Course", CourseResource)),
+            (
+                "academic_curriculum_course.csv",
+                ("CurriculumCourse", CurriculumCourseResource),
+            ),
+            ("academicyear_semester.csv", ("Semester", SemesterResource)),
+            ("grades-registry.csv", ("Grade", GradeResource)),
+            ("registry_gradeSheets.csv", ("LegacyGrade", LegacyGradeSheetResource)),
+            (
+                "registry_gradeSheets.head.csv",
+                ("LegacyGrade", LegacyGradeSheetResource),
+            ),
+            ("gradesheets.head.csv", ("LegacyGrade", LegacyGradeSheetResource)),
+            ("oldgrades.head.csv", ("LegacyGrade", LegacyGradeSheetResource)),
+            ("UM_GradeSheet.head.csv", ("LegacyGrade", LegacyGradeSheetResource)),
+            ("UM_TransferGrades.head.csv", ("LegacyGrade", LegacyGradeSheetResource)),
+            (
+                "registry_registration.head.csv",
+                ("LegacyRegistration", LegacyRegistrationResource),
+            ),
+            (
+                "studentcourses.head.csv",
+                ("LegacyRegistration", LegacyRegistrationResource),
+            ),
+            (
+                "UM_StudentsCourses.head.csv",
+                ("LegacyRegistration", LegacyRegistrationResource),
+            ),
+        ]
+    )
 
     def add_arguments(self, parser: CommandParser) -> None:
         """Add the --dir option pointing to the directory of CSV files."""

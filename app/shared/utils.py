@@ -70,11 +70,15 @@ def as_title(value: str) -> str:
 
 
 def clean_column_headers(dataset):
-    """Strip blank headers that may appear due to trailing commas."""
+    """Strip blank headers that may appear due to trailing commas and remap column names."""
     # sanitize column headers: strip whitespace
     sanitised = [(header or "").strip() for header in dataset.headers]
     rename_map = {
         "course_dept_no": "course_dept",
+        "course_name": "course_dept",
+        "dept_code": "course_dept",
+        "Instructor": "faculty",
+        "semester": "semester_no",
     }
     dataset.headers = [rename_map.get(name, name) for name in sanitised]
     return dataset

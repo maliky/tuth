@@ -27,9 +27,11 @@ Do not commit change made to migration files. The will be regenerated with new D
 Don't change existing variable names
 
 ### Documentation & comments
+- Pay close attention to comment using '# >' markers they are for you.
+- When editing code, do not remove commented lines.  Add a comment to explain why you suggest removing them, instead.
 - Comment your additions, especially if removing code
 - Document succintly new class, methods, or functions
-- In the reports I don't need line precision, file precision is enough
+- In the reports, do not ad precision, file precision is enough
 
 ### Coding style
 - Prefer functional-style helpers (small pure functions) and reuse existing utilities before adding new logic.

@@ -2,6 +2,7 @@
 
 from typing import Any, Optional
 
+from django.db import IntegrityError
 from import_export import widgets
 
 from app.academics.choices import COLLEGE_CODE, COLLEGE_LONG_NAME
@@ -125,7 +126,15 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
 
         # add the major if there is
         if major_name:
-            major, _ = Major.objects.get_or_create(name=major_name, curriculum=curriculum)
+            try:
+                major, _ = Major.objects.get_or_create(
+                    name=major_name, defaults={"curriculum": curriculum}
+                )
+            except IntegrityError:
+                major = Major.objects.filter(name=major_name).first()
+                if major and major.curriculum_id != curriculum.id:
+                    major.curriculum = curriculum
+                    major.save(update_fields=["curriculum"])
 
         return curriculum
 

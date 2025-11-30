@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import Sum
 from simple_history.models import HistoricalRecords
@@ -160,6 +161,22 @@ class Student(AbstractPerson):
             self.curriculum = Curriculum.get_default()
 
         super().save(*args, **kwargs)
+
+    @classmethod
+    def get_default(cls) -> "Student":
+        """Return a placeholder Student used for legacy imports."""
+        user, _ = User.objects.get_or_create(
+            username="legacy_student",
+            defaults={"first_name": "Legacy", "last_name": "Student"},
+        )
+        student, _ = cls.objects.get_or_create(
+            user=user,
+            defaults={
+                "student_id": "LEGACY-STUD",
+                "curriculum": Curriculum.get_default(),
+            },
+        )
+        return student
 
     class Meta:
         constraints = [
