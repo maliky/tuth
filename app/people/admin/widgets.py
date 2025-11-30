@@ -11,6 +11,7 @@ Usage::
 from app.academics.admin.widgets import CurriculumWidget
 from app.academics.models.curriculum import Curriculum
 from app.people.models.student import Student
+from app.people.models.donor import Donor
 from django.contrib.auth.models import User
 from import_export import widgets
 
@@ -218,6 +219,43 @@ class GradeStudentWidget(widgets.ForeignKeyWidget):
         self._cache_student[student_id] = student
 
         return student
+
+
+class DonorUserWidget(widgets.ForeignKeyWidget):
+    """Create or resolve a User for Donor imports."""
+
+    def __init__(self):
+        super().__init__(User)
+        self._cache_user: dict[str, User] = {}
+
+    def clean(self, value, row=None, *args, **kwargs) -> User:
+        """Return or create a User from the donor name."""
+        raw_name = (value or "").strip()
+        if not raw_name:
+            return Donor.get_default().user
+
+        cached = self._cache_user.get(raw_name)
+        if cached:
+            return cached
+
+        prefix, first, middle, last, suffix = split_name(raw_name)
+        first = first or raw_name
+        last = last or "Donor"
+        username = mk_username(first, last, unique=True)
+
+        user, created = User.objects.get_or_create(
+            username=username,
+            defaults={
+                "first_name": first.capitalize(),
+                "last_name": last.capitalize(),
+            },
+        )
+        if created:
+            user.set_password(mk_password(first, last))
+            user.save(update_fields=["password"])
+
+        self._cache_user[raw_name] = user
+        return user
 
 
 class UserStudentWidget(widgets.ForeignKeyWidget):

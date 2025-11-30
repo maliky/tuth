@@ -29,7 +29,7 @@ from app.academics.admin.resources import (  # noqa: F401
     CourseResource,
     CurriculumCourseResource,
 )
-from app.people.admin.resources import FacultyResource
+from app.people.admin.resources import FacultyResource, DonorResource
 from app.shared.auth.helpers import ensure_superuser
 from app.spaces.admin.resources import RoomResource  # noqa: F401
 from app.people.admin.resources import StudentResource
@@ -50,6 +50,8 @@ class Command(BaseCommand):
     FILEMAP: dict[str, Tuple[str, type[resources.ModelResource]]] = OrderedDict(
         [
             ("people_instructors.csv", ("Faculty", FacultyResource)),
+            ("people_donors.csv", ("Donor", DonorResource)),
+            ("people_students.csv", ("Student", StudentResource)),
             ("space_room.csv", ("Room", RoomResource)),
             ("academic_course.csv", ("Course", CourseResource)),
             (

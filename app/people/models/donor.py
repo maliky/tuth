@@ -4,10 +4,12 @@
 
 from __future__ import annotations
 
+from django.contrib.auth.models import User
 from django.db import models
 from simple_history.models import HistoricalRecords
 
 from app.people.models.core import AbstractPerson
+from app.people.utils import mk_password
 
 
 class Donor(AbstractPerson):
@@ -35,3 +37,20 @@ class Donor(AbstractPerson):
         constraints = [
             models.UniqueConstraint(fields=["user"], name="uniq_donor_per_user"),
         ]
+
+    @classmethod
+    def get_default(cls) -> "Donor":
+        """Return a placeholder Donor for legacy imports."""
+        user, created = User.objects.get_or_create(
+            username="legacy_donor",
+            defaults={"first_name": "Legacy", "last_name": "Donor"},
+        )
+        if created:
+            user.set_password(mk_password("Legacy", "Donor"))
+            user.save(update_fields=["password"])
+
+        donor, _ = cls.objects.get_or_create(
+            user=user,
+            defaults={"username": user.username},
+        )
+        return donor

@@ -11,10 +11,15 @@ from import_export.widgets import DateTimeWidget, Widget
 from app.academics.admin.widgets import CurriculumWidget
 from app.shared.auth.perms import UserRole
 
-from app.people.admin.widgets import StaffProfileWidget, UserStudentWidget
+from app.people.admin.widgets import (
+    StaffProfileWidget,
+    UserStudentWidget,
+    DonorUserWidget,
+)
 from app.people.models.staffs import Staff
 from app.people.models.faculty import Faculty
 from app.people.models.student import Student
+from app.people.models.donor import Donor
 from app.people.utils import mk_username, split_name
 from app.registry.models.registration import Registration
 from app.timetable.admin.widgets.core import (
@@ -289,3 +294,20 @@ class StudentResource(resources.ModelResource):
         # group = UserRole.STUDENT.value.group
         # instance.user.groups.add(group)
         # import ipdb; ipdb.set_trace()
+
+
+class DonorResource(resources.ModelResource):
+    """Import donors from a simple list of names."""
+
+    user = fields.Field(
+        attribute="user",
+        column_name="donors",
+        widget=DonorUserWidget(),
+    )
+
+    class Meta:
+        model = Donor
+        import_id_fields = ("user",)
+        fields = ("user",)
+        skip_unchanged = True
+        report_skipped = False

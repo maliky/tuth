@@ -23,7 +23,7 @@ from app.academics.admin.resources import (  # noqa: F401
     CurriculumCourseResource,
 )
 from app.academics.models.college import College  # noqa: F401
-from app.people.admin.resources import FacultyResource, StudentResource
+from app.people.admin.resources import FacultyResource, StudentResource, DonorResource
 from app.registry.admin.resources import GradeResource
 from app.registry.admin.resources_legacy import (
     LegacyGradeSheetResource,
@@ -69,6 +69,7 @@ class Command(BaseCommand):
             SemesterResource,
             ("academicyear_semester.csv",),
         ),
+        ("donor", "Donor", DonorResource, ("people_donors.csv",)),
         (
             "student",
             "Student",
