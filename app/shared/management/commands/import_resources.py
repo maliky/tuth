@@ -14,10 +14,12 @@ from typing import Any, Iterable, Sequence
 
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError, CommandParser
+from django.db import transaction
 from import_export import resources
 from import_export.results import RowResult
 from tablib import Dataset
 from tablib.core import InvalidDimensions
+from tqdm import tqdm
 
 from app.academics.admin.resources import (  # noqa: F401
     CourseResource,
@@ -172,34 +174,61 @@ class Command(BaseCommand):
         label: str,
         ResourceClass: type[resources.ModelResource],
     ) -> None:
-        """Execute the import for a dataset/resource pair."""
+        """Execute the import for a dataset/resource pair with progress output."""
         resource: resources.ModelResource = ResourceClass()
-        self.stdout.write(f"Importing {label}…")
-        result = resource.import_data(dataset, dry_run=False)
+        rows = list(dataset.dict)
+        total_rows = len(rows)
+        instance_loader = resource._meta.instance_loader_class(resource, dataset)
+        created = 0
+        updated = 0
+        error_rows: list[tuple[int, list[Exception]]] = []
+        invalid_rows: list[tuple[int, str]] = []
 
-        error_rows = result.totals[RowResult.IMPORT_TYPE_ERROR]
-        invalid_rows = result.totals[RowResult.IMPORT_TYPE_INVALID]
+        with transaction.atomic():
+            for row_number, row in enumerate(
+                tqdm(rows, total=total_rows or None, desc=f"Importing {label}"),
+                start=1,
+            ):
+                try:
+                    row_result = resource.import_row(
+                        row,
+                        instance_loader,
+                        dry_run=False,
+                        row_number=row_number,
+                    )
+                except Exception as exc:
+                    raise CommandError(f"{label} import failed at row {row_number}: {exc}") from exc
+
+                if row_result.import_type == RowResult.IMPORT_TYPE_NEW:
+                    created += 1
+                elif row_result.import_type == RowResult.IMPORT_TYPE_UPDATE:
+                    updated += 1
+                elif row_result.import_type == RowResult.IMPORT_TYPE_INVALID:
+                    invalid_rows.append(
+                        (row_number, getattr(row_result, "error", "Invalid row"))
+                    )
+
+                if row_result.errors:
+                    error_rows.append((row_number, row_result.errors))
 
         if error_rows or invalid_rows:
-            for idx, errors in result.row_errors()[:5]:
+            for row_number, errors in error_rows[:5]:
                 first = errors[0] if errors else None
                 if first is not None:
                     self.stdout.write(
                         self.style.ERROR(
-                            f"Row {idx} failed: {getattr(first, 'error', first)}"
+                            f"Row {row_number} failed: {getattr(first, 'error', first)}"
                         )
                     )
-            for invalid in result.invalid_rows[:5]:
+            for row_number, error in invalid_rows[:5]:
                 self.stdout.write(
-                    self.style.ERROR(f"Row {invalid.number} invalid: {invalid.error}")
+                    self.style.ERROR(f"Row {row_number} invalid: {error}")
                 )
             raise CommandError(
-                f"{label} import failed with {error_rows} errors "
-                f"and {invalid_rows} invalid rows."
+                f"{label} import failed with {len(error_rows)} errors "
+                f"and {len(invalid_rows)} invalid rows."
             )
 
-        created = result.totals[RowResult.IMPORT_TYPE_NEW]
-        updated = result.totals[RowResult.IMPORT_TYPE_UPDATE]
         self.stdout.write(
             self.style.SUCCESS(
                 f"{label} import completed: {created} created, {updated} updated."
