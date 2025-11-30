@@ -16,7 +16,6 @@ class GradeValue(models.Model):
         ("b", 3),
         ("c", 2),
         ("d", 1),
-        ("e", 0),
         ("f", 0),
         ("ip", 0),
         ("dr", 0),
@@ -30,7 +29,6 @@ class GradeValue(models.Model):
         ("d", 1),
         ("dr", 0),
         ("dr", 0),
-        ("e", 0),
         ("f", 0),
         ("i", 0),
         ("ip", 0),
@@ -65,7 +63,7 @@ class GradeValue(models.Model):
     def _ensure_number(self):
         """Make sure a number is defined for a Grade."""
         if not self.number:
-            self.number = GRADES_NUM[self.code.upper()]
+            self.number = GRADES_NUM[self.code]
 
     def _ensure_description(self):
         """Make sure a number is defined for a Grade."""
