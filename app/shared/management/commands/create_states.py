@@ -3,7 +3,13 @@
 from django.core.management.base import BaseCommand
 
 from app.academics.models.curriculum import CurriculumStatus
-from app.finance.models.payment import ClearanceStatus, FeeType, PaymentMethod
+from app.finance.models.payment import (
+    AccountChartType,
+    AccountType,
+    ClearanceStatus,
+    FeeType,
+    PaymentMethod,
+)
 from app.people.admin.resources import StudentResource
 from app.registry.models.document import DocumentStatus, DocumentType
 from app.registry.models.registration import RegistrationStatus
