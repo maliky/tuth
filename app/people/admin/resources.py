@@ -251,6 +251,20 @@ class StudentResource(resources.ModelResource):
         if account_id and not row.get("student_id"):
             row["student_id"] = account_id
 
+        legacy_id = row.get("StudentID") or row.get("studentid")
+        if legacy_id and not row.get("student_id"):
+            row["student_id"] = legacy_id.strip()
+
+        # synthesize student_name when source data provides split columns
+        if not row.get("student_name"):
+            first = row.get("first_name") or row.get("FirstName") or ""
+            middle = row.get("middle_name") or row.get("MiddleName") or ""
+            last = row.get("last_name") or row.get("LastName") or ""
+            parts = [first.strip(), middle.strip(), last.strip()]
+            fullname = " ".join(part for part in parts if part)
+            if fullname:
+                row["student_name"] = fullname
+
         home_country = row.get("HomeCountry")
         if home_country:
             row.setdefault("nationality", home_country)

@@ -68,6 +68,19 @@ class AccountChartType(SimpleTableMixin):
         deft, _ = cls.objects.get_or_create(code="other")
         return cast(Self, deft)
 
+    @classmethod
+    def _populate_attributes_and_db(cls):
+        """Ensure default rows are tied to a valid AccountType."""
+        account_type = AccountType.get_default()
+        for val, lbl in cls.DEFAULT_VALUES:
+            cls.objects.get_or_create(
+                code=val,
+                defaults={
+                    "label": lbl,
+                    "type": account_type,
+                },
+            )
+
 
 class ClearanceStatus(SimpleTableMixin):
     """Clearance Statuses."""

@@ -52,6 +52,7 @@ class Command(BaseCommand):
             return
         call_command(
             "import_resources",
+            "-f",
             str(directory),
             resource=resources,
         )

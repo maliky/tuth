@@ -11,6 +11,17 @@ from app.registry.constants import GRADES_DESCRIPTION, GRADES_NUM
 
 class GradeValue(models.Model):
     """A class to define the different Grade types."""
+    DEFAULT_VALUES: list[tuple[int, str]] = [
+        ("a", 4),
+        ("b", 3),
+        ("c", 2),
+        ("d", 1),
+        ("e", 0),
+        ("f", 0),
+        ("ip", 0),
+        ("dr", 0),
+        ("ng", 0),
+    ]
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     code = models.CharField(

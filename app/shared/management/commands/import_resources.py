@@ -17,6 +17,7 @@ from django.core.management.base import BaseCommand, CommandError, CommandParser
 from import_export import resources
 from import_export.results import RowResult
 from tablib import Dataset
+from tablib.core import InvalidDimensions
 
 from app.academics.admin.resources import (  # noqa: F401
     CourseResource,
@@ -138,6 +139,7 @@ class Command(BaseCommand):
         call_command("load_roles", verbosity=0)
 
         path = Path(options["file_path"])
+        selected = options.get("resource")
         if not path.exists():
             raise FileNotFoundError(str(path))
 
@@ -152,7 +154,7 @@ class Command(BaseCommand):
         dataset = clean_column_headers(dataset)
 
         # > Where is options comming form ?
-        selected_keys = options.get("resource") or list(self.RESOURCE_REGISTRY.keys())
+        selected_keys = selected or list(self.RESOURCE_REGISTRY.keys())
 
         for key in selected_keys:
             if key not in self.RESOURCE_REGISTRY:
@@ -238,6 +240,19 @@ class Command(BaseCommand):
             if not file_path.exists():
                 continue
             contents = read_text_file(file_path)
-            dataset = Dataset().load(contents, format=guess_tabular_format(contents))
+            try:
+                dataset = Dataset().load(contents, format=guess_tabular_format(contents))
+            except InvalidDimensions:
+                if "donor" in name:
+                    dataset = Dataset(headers=["donors"])
+                    rows = [
+                        line.strip()
+                        for line in contents.splitlines()[1:]
+                        if line.strip()
+                    ]
+                    for value in rows:
+                        dataset.append([value])
+                else:
+                    raise
             return clean_column_headers(dataset)
         return None
