@@ -29,9 +29,7 @@ services:
       - db
     command: ["/bin/bash", "/code/deploy/preprod/entrypoint.sh"]
     volumes:
-      - ./static:/code/static
-      - ./media:/code/media
-      - ./Seed_data:/code/Seed_data      
+      - .:/code
     ports:
       - "127.0.0.1:18000:8000"
 

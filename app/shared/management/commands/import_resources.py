@@ -14,7 +14,6 @@ from typing import Any, Iterable, Sequence
 
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError, CommandParser
-from django.db import connection
 from import_export import resources
 from import_export.results import RowResult
 from tablib import Dataset
@@ -31,6 +30,7 @@ from app.registry.admin.resources_legacy import (
     LegacyRegistrationResource,
 )
 from app.shared.auth.helpers import ensure_superuser  # noqa: F401
+from app.shared.file_utils import guess_tabular_format, read_text_file
 from app.shared.utils import clean_column_headers
 from app.spaces.admin.resources import RoomResource  # noqa: F401
 from app.timetable.admin.resources.core import SemesterResource  # noqa: F401
@@ -68,6 +68,15 @@ class Command(BaseCommand):
             "Semester",
             SemesterResource,
             ("academicyear_semester.csv",),
+        ),
+        (
+            "student",
+            "Student",
+            StudentResource,
+            (
+                "people_students.head.csv",
+                "UM_students.head.csv",
+            ),
         ),
     )
     LEGACY_DIRECTORY_RESOURCES: Sequence[
@@ -135,9 +144,9 @@ class Command(BaseCommand):
             self._import_from_directory(path, selected)
             return
 
-        file_contents = self._read_text_file(path)
+        file_contents = read_text_file(path)
         dataset: Dataset = Dataset().load(
-            file_contents, format=self._guess_format(path, file_contents)
+            file_contents, format=guess_tabular_format(file_contents)
         )
         dataset = clean_column_headers(dataset)
 
@@ -227,21 +236,7 @@ class Command(BaseCommand):
             file_path = directory / name
             if not file_path.exists():
                 continue
-            contents = self._read_text_file(file_path)
-            dataset = Dataset().load(contents, format=self._guess_format(file_path, contents))
+            contents = read_text_file(file_path)
+            dataset = Dataset().load(contents, format=guess_tabular_format(contents))
             return clean_column_headers(dataset)
         return None
-
-    def _read_text_file(self, path: Path) -> str:
-        """Return file contents using a tolerant encoding strategy."""
-        try:
-            return path.read_text(encoding="utf-8-sig")
-        except UnicodeDecodeError:
-            return path.read_text(encoding="utf-16")
-
-    def _guess_format(self, path: Path, contents: str | None = None) -> str:
-        """Heuristically pick csv vs tsv based on the header row."""
-        text = contents if contents is not None else self._read_text_file(path)
-        header = text.splitlines()[0] if text else ""
-        return "tsv" if "\t" in header else "csv"
-

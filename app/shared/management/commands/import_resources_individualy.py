@@ -18,6 +18,7 @@ from app.registry.admin.resources_legacy import (
     LegacyGradeSheetResource,
     LegacyRegistrationResource,
 )
+from app.shared.file_utils import guess_tabular_format, read_text_file
 from app.shared.utils import clean_column_headers
 from django.core.management.base import BaseCommand, CommandParser
 from django.db import transaction
@@ -93,8 +94,8 @@ class Command(BaseCommand):
         parser.add_argument(
             "-f",
             "--format",
-            default="cs",
-            help="Directory containing the per-resource CSV files.",
+            default="auto",
+            help="Format of the CSV files (csv, tsv or auto).",
         )
 
     # ---------------------------------------------------------------- handle
@@ -107,7 +108,9 @@ class Command(BaseCommand):
             )
             return None
 
-        dataset = Dataset().load(open(csv_path).read(), format=fmt)
+        contents = read_text_file(csv_path)
+        file_format = fmt if fmt not in {"", "auto"} else guess_tabular_format(contents)
+        dataset = Dataset().load(contents, format=file_format)
         dataset = clean_column_headers(dataset)
 
         return dataset
