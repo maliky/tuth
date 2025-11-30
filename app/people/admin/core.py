@@ -86,7 +86,7 @@ class DonorAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """
 
     form = DonorForm
-    list_display = ("user", "donor_id")
+    list_display = ("long_name", "donor_id", "username")
     search_fields = ("donor_id", "user__long_name")
     readonly_fields = ("donor_id",)
     fieldsets = [

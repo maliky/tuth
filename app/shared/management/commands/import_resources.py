@@ -150,9 +150,15 @@ class Command(BaseCommand):
             return
 
         file_contents = read_text_file(path)
-        dataset: Dataset = Dataset().load(
-            file_contents, format=guess_tabular_format(file_contents)
-        )
+        try:
+            dataset: Dataset = Dataset().load(
+                file_contents, format=guess_tabular_format(file_contents)
+            )
+        except InvalidDimensions:
+            if selected and len(selected) == 1 and selected[0] == "donor":
+                dataset = self._build_donor_dataset(file_contents)
+            else:
+                raise
         dataset = clean_column_headers(dataset)
 
         # > Where is options comming form ?
@@ -272,16 +278,18 @@ class Command(BaseCommand):
             try:
                 dataset = Dataset().load(contents, format=guess_tabular_format(contents))
             except InvalidDimensions:
-                if "donor" in name:
-                    dataset = Dataset(headers=["donors"])
-                    rows = [
-                        line.strip()
-                        for line in contents.splitlines()[1:]
-                        if line.strip()
-                    ]
-                    for value in rows:
-                        dataset.append([value])
-                else:
-                    raise
+                dataset = self._build_donor_dataset(contents)
             return clean_column_headers(dataset)
         return None
+
+    def _build_donor_dataset(self, text: str) -> Dataset:
+        """Create a single-column dataset from donor CSV text."""
+        dataset = Dataset(headers=["donors"])
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        if lines and lines[0].lower().startswith("donor"):
+            lines = lines[1:]
+        for value in lines:
+            cleaned = value.strip().strip('"')
+            if cleaned:
+                dataset.append([cleaned])
+        return dataset
