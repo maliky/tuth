@@ -191,7 +191,7 @@ class GradeStudentWidget(widgets.ForeignKeyWidget):
             return existing
 
         # Here it means student does not exists and we need to create it
-        
+
         curriculum_value = get_in_row("curriculum", row)
         curriculum = self.curriculum_w.clean(value=curriculum_value, row=row)
         if curriculum is None:
@@ -199,7 +199,7 @@ class GradeStudentWidget(widgets.ForeignKeyWidget):
 
         first_name = get_in_row("student_first_name", row) or "Student"
         last_name = get_in_row("student_last_name", row) or student_id
-        
+
         username = Student.mk_username(first_name, last_name)
         password = mk_password(first_name, last_name)
         user = User.objects.create_user(

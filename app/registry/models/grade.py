@@ -11,6 +11,7 @@ from app.registry.constants import GRADES_DESCRIPTION, GRADES_NUM
 
 class GradeValue(models.Model):
     """A class to define the different Grade types."""
+
     DEFAULT_VALUES: list[tuple[int, str]] = [
         ("a", 4),
         ("b", 3),

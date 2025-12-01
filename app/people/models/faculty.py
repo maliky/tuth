@@ -134,14 +134,18 @@ class Faculty(models.Model):
                 "curriculum_course__course__department__college__code",
             )
             .annotate(section_total=Count("id"))
-            .order_by("-section_total", "curriculum_course__course__department__short_name")
+            .order_by(
+                "-section_total", "curriculum_course__course__department__short_name"
+            )
             .first()
         )
         if not sections:
             return ""
 
         dept = sections.get("curriculum_course__course__department__short_name") or ""
-        college = sections.get("curriculum_course__course__department__college__code") or ""
+        college = (
+            sections.get("curriculum_course__course__department__college__code") or ""
+        )
 
         if dept and college:
             return f"{dept} ({college})"

@@ -35,7 +35,9 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("✔ states ready"))
 
         self.stdout.write("⇒ Importing academic fundamentals (rooms/courses/semesters)…")
-        self._import_resources(csv_dir, ["room", "course", "curriculum_course", "semester"])
+        self._import_resources(
+            csv_dir, ["room", "course", "curriculum_course", "semester"]
+        )
 
         self.stdout.write("⇒ Importing people profiles (faculty/donors/students)…")
         self._import_resources(csv_dir, ["faculty", "donor", "student"])

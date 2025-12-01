@@ -125,10 +125,11 @@ class StudentInfoTermWidget(Widget):
         if self.fallback_column and row:
             legacy_value = row.get(self.fallback_column)
             if legacy_value:
+                extra_args = args or ()
                 return self.legacy_widget.clean(
                     legacy_value,
+                    *extra_args,
                     row=row,
-                    *args,
                     **kwargs,
                 )
 
@@ -185,9 +186,7 @@ class StudentResource(resources.ModelResource):
         attribute="curriculum", column_name="major", widget=CurriculumWidget()
     )
     bio = fields.Field(attribute="bio", column_name="bio")
-    origin_county = fields.Field(
-        attribute="origin_county", column_name="origin_county"
-    )
+    origin_county = fields.Field(attribute="origin_county", column_name="origin_county")
     birth_place = fields.Field(attribute="birth_place", column_name="birth_place")
     physical_address = fields.Field(attribute="physical_address", column_name="address")
     phone_number = fields.Field(attribute="phone_number", column_name="phone_no")
@@ -198,9 +197,13 @@ class StudentResource(resources.ModelResource):
         attribute="reason_for_leaving", column_name="reason_for_leaving"
     )
     father_name = fields.Field(attribute="father_name", column_name="father_name")
-    father_address = fields.Field(attribute="father_address", column_name="father_address")
+    father_address = fields.Field(
+        attribute="father_address", column_name="father_address"
+    )
     mother_name = fields.Field(attribute="mother_name", column_name="mother_name")
-    mother_address = fields.Field(attribute="mother_address", column_name="mother_address")
+    mother_address = fields.Field(
+        attribute="mother_address", column_name="mother_address"
+    )
     emergency_contact = fields.Field(
         attribute="emergency_contact", column_name="emergency_contact"
     )
@@ -325,13 +328,11 @@ class StudentResource(resources.ModelResource):
             if mapped_gender:
                 row["gender"] = mapped_gender
 
-        enrollment_sem = get_in_row("current_enrolled_sem", row) or get_in_row("enrollement_semester", row)
+        enrollment_sem = get_in_row("current_enrolled_sem", row) or get_in_row(
+            "enrollement_semester", row
+        )
         normalized_year = normalize_academic_year(get_in_row("YearOfEntry", row))
-        if (
-            enrollment_sem
-            and normalized_year
-            and "_Sem" not in str(enrollment_sem)
-        ):
+        if enrollment_sem and normalized_year and "_Sem" not in str(enrollment_sem):
             sem_token = str(enrollment_sem).strip()
             try:
                 sem_number = int(float(sem_token))

@@ -62,9 +62,7 @@ def _extract_course_codes(row: dict[str, str]) -> tuple[str, str]:
 
 
 class LegacyGradeSheetResource(GradeResource):
-    """
-    Import SmartSchool grade sheets while reusing the standard GradeResource widgets.
-    """
+    """Import SmartSchool grade sheets while reusing the standard widgets."""
 
     dataset_headers = {
         "StudentID": "student_id",

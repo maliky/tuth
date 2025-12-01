@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('registry', '0001_initial'),
+        ("registry", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='gradevalue',
-            name='description',
-            field=models.CharField(default='IP - In Progress', max_length=60, null=True),
+            model_name="gradevalue",
+            name="description",
+            field=models.CharField(default="IP - In Progress", max_length=60, null=True),
         ),
         migrations.AlterField(
-            model_name='historicalgradevalue',
-            name='description',
-            field=models.CharField(default='IP - In Progress', max_length=60, null=True),
+            model_name="historicalgradevalue",
+            name="description",
+            field=models.CharField(default="IP - In Progress", max_length=60, null=True),
         ),
     ]

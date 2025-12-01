@@ -216,7 +216,9 @@ class Command(BaseCommand):
                         row_number=row_number,
                     )
                 except Exception as exc:
-                    raise CommandError(f"{label} import failed at row {row_number}: {exc}") from exc
+                    raise CommandError(
+                        f"{label} import failed at row {row_number}: {exc}"
+                    ) from exc
 
                 if row_result.import_type == RowResult.IMPORT_TYPE_NEW:
                     created += 1
@@ -259,9 +261,7 @@ class Command(BaseCommand):
                         )
                     )
             for row_number, error in invalid_rows[:5]:
-                self.stdout.write(
-                    self.style.ERROR(f"Row {row_number} invalid: {error}")
-                )
+                self.stdout.write(self.style.ERROR(f"Row {row_number} invalid: {error}"))
             raise CommandError(
                 f"{label} import failed with {len(error_rows)} errors "
                 f"and {len(invalid_rows)} invalid rows."
@@ -273,9 +273,7 @@ class Command(BaseCommand):
             )
         )
 
-    def _import_from_directory(
-        self, directory: Path, selected: list[str] | None
-    ) -> None:
+    def _import_from_directory(self, directory: Path, selected: list[str] | None) -> None:
         """Load individual CSV files found in a directory."""
         if selected:
             targets = selected
