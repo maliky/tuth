@@ -21,6 +21,7 @@ from app.people.models.faculty import Faculty
 from app.people.models.student import Student
 from app.people.models.donor import Donor
 from app.people.utils import mk_username, split_name
+from app.shared.utils import get_in_row
 from app.registry.models.registration import Registration
 from app.timetable.admin.widgets.core import (
     SemesterCodeWidget,
@@ -318,10 +319,21 @@ class DonorResource(resources.ModelResource):
         column_name="donors",
         widget=DonorUserWidget(),
     )
+    bio = fields.Field(
+        attribute="bio",
+        column_name="bio",
+    )
 
     class Meta:
         model = Donor
         import_id_fields = ("user",)
-        fields = ("user",)
+        fields = ("user", "bio")
         skip_unchanged = True
         report_skipped = False
+
+    def before_import_row(self, row, **kwargs):
+        """Keep the original donor column content for auditing."""
+        raw_value = get_in_row("donors",row)
+        if raw_value:
+            row["bio"] = raw_value
+        return super().before_import_row(row, **kwargs)

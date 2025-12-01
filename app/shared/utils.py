@@ -78,6 +78,11 @@ def clean_column_headers(dataset):
         "course_name": "course_dept",
         "dept_code": "course_dept",
         "Instructor": "faculty",
+        "nameprefix": "name_prefix",
+        "firstname": "first_name",
+        "middlename": "middle_name",
+        "lastname": "last_name",
+        "namesuffix": "name_suffix",
         "semester": "semester_no",
     }
     dataset.headers = [rename_map.get(name, name) for name in sanitised]
