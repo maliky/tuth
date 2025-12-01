@@ -39,6 +39,7 @@ class FacultyAdmin(CollegeRestrictedAdmin):
         "faculty_name",
         "faculty_staff_id",
         "academic_rank",
+        "primary_assignment",
         "get_division",
         "get_department",
     )
@@ -77,6 +78,11 @@ class FacultyAdmin(CollegeRestrictedAdmin):
         """Add the long name to the admin."""
         return obj.staff_profile.staff_id
 
+    @admin.display(description="Primary Assignment")
+    def primary_assignment(self, obj):
+        """Show the department/college that receives most sections for the faculty."""
+        return obj.primarly_assignment_label or "-"
+
 
 @admin.register(Donor)
 class DonorAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
@@ -86,7 +92,7 @@ class DonorAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """
 
     form = DonorForm
-    list_display = ("long_name", "donor_id", "username")
+    list_display = ("long_name", "donor_id", "username", "donor_bio")
     search_fields = ("donor_id", "user__long_name")
     readonly_fields = ("donor_id",)
     fieldsets = [
@@ -103,6 +109,13 @@ class DonorAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
         ),
         (None, {"fields": PersonFormMixin.STANDARD_USER_FIELDS}),
     ]
+
+    @admin.display(description="Bio")
+    def donor_bio(self, obj):
+        """Show a short excerpt of the donor bio column."""
+        if not obj.bio:
+            return ""
+        return obj.bio if len(obj.bio) <= 80 else f"{obj.bio[:77]}…"
 
 
 @admin.register(Staff)

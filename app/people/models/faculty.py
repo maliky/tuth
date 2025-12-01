@@ -4,7 +4,7 @@ from typing import Any, Dict, Self, Tuple, cast
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import QuerySet
+from django.db.models import Count, QuerySet
 
 from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
@@ -124,6 +124,28 @@ class Faculty(models.Model):
     def username(self):
         """Returns the username attached to the staff_profile."""
         return self.staff_profile.username
+
+    @property
+    def primary_assignment_label(self) -> str:
+        """Return the department/college where the faculty teaches the most sections."""
+        sections = (
+            self.section_set.values(
+                "curriculum_course__course__department__short_name",
+                "curriculum_course__course__department__college__code",
+            )
+            .annotate(section_total=Count("id"))
+            .order_by("-section_total", "curriculum_course__course__department__short_name")
+            .first()
+        )
+        if not sections:
+            return ""
+
+        dept = sections.get("curriculum_course__course__department__short_name") or ""
+        college = sections.get("curriculum_course__course__department__college__code") or ""
+
+        if dept and college:
+            return f"{dept} ({college})"
+        return dept or college
 
     def _ensure_college(self):
         """Make sure we have a college."""
