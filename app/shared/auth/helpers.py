@@ -7,7 +7,7 @@ from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 
 from app.shared.auth.perms import UserRole
-from app.shared.csv.utils import log
+from app.shared.utils import log
 
 User = get_user_model()
 

@@ -2,9 +2,12 @@
 
 from typing import Mapping, Optional, Tuple
 
+from django.core.management.base import BaseCommand
+
 from app.academics.constants import COURSE_PATTERN
 from app.academics.models.college import College
 from app.academics.models.department import Department
+from app.shared.constants import STYLE_DEFAULT
 
 
 def expand_course_code(
@@ -86,6 +89,46 @@ def clean_column_headers(dataset):
         "semester": "semester_no",
         "grade": "grade_code",
         "Grade": "grade_code",
+        "CountyOfOrigin": "origin_county",
+        "PlaceOfBirth": "birth_place",
+        "Address": "address",
+        "PhoneNumber": "phone_no",
+        "Phone": "phone_no",
+        "PhoneNo": "phone_no",
+        "LastSchoolAttended": "last_school_attended",
+        "ReasonForLeaving": "reason_for_leaving",
+        "FatherName": "father_name",
+        "FatherAddress": "father_address",
+        "MotherName": "mother_name",
+        "MotherAddress": "mother_address",
+        "EmergencyContact": "emergency_contact",
+        "Nationality": "nationality",
+        "DateOfBirth": "birth_date",
+        "MaritalStatus": "marital_status",
+        "Gender": "gender",
+        "curriculum_short_name": "major",
+        "enrollement_semester": "current_enrolled_sem",
     }
     dataset.headers = [rename_map.get(name, name) for name in sanitised]
     return dataset
+
+
+def parse_int(value: str | None) -> int | None:
+    """Safely convert arbitrary strings to integers."""
+    if value is None:
+        return None
+
+    token = str(value).strip()
+    if not token:
+        return None
+
+    try:
+        return int(float(token))
+    except ValueError:
+        return None
+
+
+def log(cmd: BaseCommand, msg: str, style: str = STYLE_DEFAULT) -> None:
+    """Write a styled message to the management command output."""
+    style_obj = getattr(cmd.style, style, cmd.style.NOTICE)
+    cmd.stdout.write(style_obj(msg))

@@ -185,6 +185,25 @@ class StudentResource(resources.ModelResource):
         attribute="curriculum", column_name="major", widget=CurriculumWidget()
     )
     bio = fields.Field(attribute="bio", column_name="bio")
+    origin_county = fields.Field(
+        attribute="origin_county", column_name="origin_county"
+    )
+    birth_place = fields.Field(attribute="birth_place", column_name="birth_place")
+    physical_address = fields.Field(attribute="physical_address", column_name="address")
+    phone_number = fields.Field(attribute="phone_number", column_name="phone_no")
+    last_school_attended = fields.Field(
+        attribute="last_school_attended", column_name="last_school_attended"
+    )
+    reason_for_leaving = fields.Field(
+        attribute="reason_for_leaving", column_name="reason_for_leaving"
+    )
+    father_name = fields.Field(attribute="father_name", column_name="father_name")
+    father_address = fields.Field(attribute="father_address", column_name="father_address")
+    mother_name = fields.Field(attribute="mother_name", column_name="mother_name")
+    mother_address = fields.Field(attribute="mother_address", column_name="mother_address")
+    emergency_contact = fields.Field(
+        attribute="emergency_contact", column_name="emergency_contact"
+    )
 
     # ~~~~~~~~~~~~~~~~ demographic fields ~~~~~~~~~~~~~~~~~
 
@@ -213,6 +232,17 @@ class StudentResource(resources.ModelResource):
             "birth_date",
             "marital_status",
             "gender",
+            "origin_county",
+            "birth_place",
+            "physical_address",
+            "phone_number",
+            "last_school_attended",
+            "reason_for_leaving",
+            "father_name",
+            "father_address",
+            "mother_name",
+            "mother_address",
+            "emergency_contact",
             "bio",
         )
         skip_unchanged = True
@@ -245,6 +275,12 @@ class StudentResource(resources.ModelResource):
         "TimeCreated",
         "TimeModified",
     ]
+    GENDER_MAP = {
+        "male": "m",
+        "m": "m",
+        "female": "f",
+        "f": "f",
+    }
 
     def before_import_row(self, row, **kwargs):
         """Inject derived columns to capture StudentInfo data."""
@@ -275,6 +311,34 @@ class StudentResource(resources.ModelResource):
             if existing_student:
                 row["student_name"] = existing_student.long_name
 
+        if not row.get("major"):
+            row["major"] = row.get("ProgramID") or row.get("curriculum_short_name") or ""
+
+        gender_raw = get_in_row("gender",row).lower()
+        if gender_raw:
+            mapped_gender = self.GENDER_MAP.get(gender_raw)
+            if mapped_gender:
+                row["gender"] = mapped_gender
+
+        enrollment_sem = row.get("current_enrolled_sem") or row.get(
+            "enrollement_semester"
+        )
+        normalized_year = self._normalize_year(row.get("YearOfEntry"))
+        if (
+            enrollment_sem
+            and normalized_year
+            and "_Sem" not in str(enrollment_sem)
+        ):
+            sem_token = str(enrollment_sem).strip()
+            try:
+                sem_number = int(float(sem_token))
+            except ValueError:
+                sem_number = None
+            if sem_number:
+                formatted = f"{normalized_year}_Sem{sem_number}"
+                row["current_enrolled_sem"] = formatted
+                row.setdefault("entry_semester", formatted)
+
         # ensure legacy columns receive a value for backward compatibility
         if row.get("current_enrolled_sem") and not row.get("TermLastEnrolled"):
             row["TermLastEnrolled"] = row["current_enrolled_sem"]
@@ -291,6 +355,18 @@ class StudentResource(resources.ModelResource):
             row["bio"] = json.dumps(metrics)
 
         return super().before_import_row(row, **kwargs)
+
+    @staticmethod
+    def _normalize_year(raw: str | None) -> str | None:
+        """Return a YY-YY code from incoming academic year strings."""
+        if not raw:
+            return None
+        token = raw.strip().replace(" ", "").replace("/", "-")
+        if len(token) == 9 and token[4] == "-":
+            return f"{token[2:4]}-{token[7:9]}"
+        if len(token) == 7 and token[2] == "-":
+            return token
+        return None
 
     def do_instance_save(self, instance, is_create) -> None:
         """Overide the instance save operation."""
@@ -333,7 +409,7 @@ class DonorResource(resources.ModelResource):
 
     def before_import_row(self, row, **kwargs):
         """Keep the original donor column content for auditing."""
-        raw_value = get_in_row("donors",row)
+        raw_value = get_in_row("donors", row)
         if raw_value:
             row["bio"] = raw_value
         return super().before_import_row(row, **kwargs)

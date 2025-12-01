@@ -109,8 +109,8 @@ class SemesterCodeWidget(widgets.ForeignKeyWidget):
             return None
 
         m = self.sem_pat.match(value)
-
-        assert m, f"Invalid semester format, got {m} for {self.sem_pat}"
+        if not m:
+            return None
 
         ay_short = m.group("year")
         sem_no = int(m.group("num"))

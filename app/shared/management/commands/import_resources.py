@@ -84,6 +84,15 @@ class Command(BaseCommand):
                 "UM_students.head.csv",
             ),
         ),
+        (
+            "grade",
+            "Grade",
+            GradeResource,
+            (
+                "registry_gradeSheets.head.csv",
+                "gradesheets.head.csv",
+            ),
+        ),
     )
     LEGACY_DIRECTORY_RESOURCES: Sequence[
         tuple[str, str, type[resources.ModelResource], tuple[str, ...]]
@@ -139,6 +148,8 @@ class Command(BaseCommand):
 
     def handle(self, *args: Any, **options: Any) -> None:
         """Validate and import each resource from the provided CSV."""
+        call_command("migrate", interactive=False, verbosity=0)
+        call_command("create_states")
         ensure_superuser(self)
         call_command("load_roles", verbosity=0)
 

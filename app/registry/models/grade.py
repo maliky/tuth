@@ -58,7 +58,7 @@ class GradeValue(models.Model):
             )
 
     def __str__(self):
-        return self.code
+        return self.code.upper()
 
     def _ensure_number(self):
         """Make sure a number is defined for a Grade."""
