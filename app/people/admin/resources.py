@@ -21,7 +21,7 @@ from app.people.models.faculty import Faculty
 from app.people.models.student import Student
 from app.people.models.donor import Donor
 from app.people.utils import mk_username, split_name
-from app.shared.utils import get_in_row
+from app.shared.utils import get_in_row, normalize_academic_year
 from app.registry.models.registration import Registration
 from app.timetable.admin.widgets.core import (
     SemesterCodeWidget,
@@ -284,25 +284,25 @@ class StudentResource(resources.ModelResource):
 
     def before_import_row(self, row, **kwargs):
         """Inject derived columns to capture StudentInfo data."""
-        account_id = row.get("AccountID")
+        account_id = get_in_row("AccountID", row)
         if account_id and not row.get("student_id"):
             row["student_id"] = account_id
 
-        legacy_id = row.get("StudentID") or row.get("studentid")
+        legacy_id = get_in_row("StudentID", row) or get_in_row("studentid", row)
         if legacy_id and not row.get("student_id"):
-            row["student_id"] = legacy_id.strip()
+            row["student_id"] = legacy_id
 
         # synthesize student_name when source data provides split columns
         if not row.get("student_name"):
-            first = row.get("first_name") or row.get("FirstName") or ""
-            middle = row.get("middle_name") or row.get("MiddleName") or ""
-            last = row.get("last_name") or row.get("LastName") or ""
+            first = get_in_row("first_name", row) or get_in_row("FirstName", row)
+            middle = get_in_row("middle_name", row) or get_in_row("MiddleName", row)
+            last = get_in_row("last_name", row) or get_in_row("LastName", row)
             parts = [first.strip(), middle.strip(), last.strip()]
             fullname = " ".join(part for part in parts if part)
             if fullname:
                 row["student_name"] = fullname
 
-        home_country = row.get("HomeCountry")
+        home_country = get_in_row("HomeCountry", row) or get_in_row("nationality", row)
         if home_country:
             row.setdefault("nationality", home_country)
 
@@ -311,19 +311,22 @@ class StudentResource(resources.ModelResource):
             if existing_student:
                 row["student_name"] = existing_student.long_name
 
-        if not row.get("major"):
-            row["major"] = row.get("ProgramID") or row.get("curriculum_short_name") or ""
+        major_value = (
+            get_in_row("major", row)
+            or get_in_row("curriculum_short_name", row)
+            or get_in_row("ProgramID", row)
+        )
+        if major_value:
+            row["major"] = major_value[:40]
 
-        gender_raw = get_in_row("gender",row).lower()
+        gender_raw = get_in_row("gender", row).lower()
         if gender_raw:
             mapped_gender = self.GENDER_MAP.get(gender_raw)
             if mapped_gender:
                 row["gender"] = mapped_gender
 
-        enrollment_sem = row.get("current_enrolled_sem") or row.get(
-            "enrollement_semester"
-        )
-        normalized_year = self._normalize_year(row.get("YearOfEntry"))
+        enrollment_sem = get_in_row("current_enrolled_sem", row) or get_in_row("enrollement_semester", row)
+        normalized_year = normalize_academic_year(get_in_row("YearOfEntry", row))
         if (
             enrollment_sem
             and normalized_year
@@ -355,18 +358,6 @@ class StudentResource(resources.ModelResource):
             row["bio"] = json.dumps(metrics)
 
         return super().before_import_row(row, **kwargs)
-
-    @staticmethod
-    def _normalize_year(raw: str | None) -> str | None:
-        """Return a YY-YY code from incoming academic year strings."""
-        if not raw:
-            return None
-        token = raw.strip().replace(" ", "").replace("/", "-")
-        if len(token) == 9 and token[4] == "-":
-            return f"{token[2:4]}-{token[7:9]}"
-        if len(token) == 7 and token[2] == "-":
-            return token
-        return None
 
     def do_instance_save(self, instance, is_create) -> None:
         """Overide the instance save operation."""

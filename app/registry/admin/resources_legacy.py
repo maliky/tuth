@@ -10,7 +10,7 @@ from app.people.admin.widgets import GradeStudentWidget
 from app.registry.admin.resources import GradeResource, RegistrationResource
 from app.registry.models.registration import RegistrationStatus
 from app.shared.data import legacy_registration_rows
-from app.shared.utils import expand_course_code, get_in_row
+from app.shared.utils import expand_course_code, get_in_row, normalize_academic_year
 from app.timetable.admin.widgets.section import SectionWidget
 
 SEM_MAP = {
@@ -22,25 +22,6 @@ SEM_MAP = {
     "VAC": "3",
     "3": "3",
 }
-
-
-def normalize_year(raw: str | None) -> str:
-    """Return a YY-YY academic year code from common SmartSchool formats."""
-    text = (raw or "").strip().replace(" ", "").replace("/", "-")
-    if not text:
-        return ""
-
-    if len(text) == 9 and text[4] == "-":  # 2019-2020
-        return f"{text[2:4]}-{text[7:9]}"
-
-    if len(text) == 4 and text.isdigit():  # 2019
-        yy = text[2:4]
-        return f"{yy}-{int(yy) + 1:02d}"
-
-    if len(text) == 7 and text[2] == "-":  # 19-20
-        return text
-
-    return text.upper()
 
 
 def normalize_semester(raw: str | None) -> str:
@@ -110,7 +91,7 @@ class LegacyGradeSheetResource(GradeResource):
             student_id = get_in_row("student_id", row) or get_in_row("StudentID", row)
             if not student_id:
                 continue
-            year = normalize_year(
+            year = normalize_academic_year(
                 get_in_row("academic_year", row) or get_in_row("AcademicYear", row)
             )
             sem = normalize_semester(
@@ -129,7 +110,7 @@ class LegacyGradeSheetResource(GradeResource):
         _rename_headers(row, self.dataset_headers)
 
         row["student_id"] = get_in_row("student_id", row)
-        row["academic_year"] = normalize_year(row.get("academic_year"))
+        row["academic_year"] = normalize_academic_year(row.get("academic_year"))
         row["semester_no"] = normalize_semester(row.get("semester_no"))
         row["section_no"] = get_in_row("section_no", row)
         row["course_no"] = get_in_row("course_no", row)
@@ -198,7 +179,7 @@ class LegacyRegistrationResource(RegistrationResource):
         _rename_headers(row, self.dataset_headers)
 
         row["student_id"] = get_in_row("student_id", row)
-        row["academic_year"] = normalize_year(row.get("academic_year"))
+        row["academic_year"] = normalize_academic_year(row.get("academic_year"))
         row["semester_no"] = normalize_semester(row.get("semester_no"))
         row["section_no"] = get_in_row("section_no", row)
         row["course_no"] = get_in_row("course_no", row)

@@ -113,6 +113,23 @@ def clean_column_headers(dataset):
     return dataset
 
 
+def normalize_academic_year(raw: str | None) -> str:
+    """Convert various academic year labels to the canonical YY-YY format."""
+    text = (raw or "").strip()
+    if not text:
+        return ""
+
+    token = text.replace(" ", "").replace("/", "-")
+    if len(token) == 9 and token[4] == "-":  # 2019-2020
+        return f"{token[2:4]}-{token[7:9]}"
+    if len(token) == 4 and token.isdigit():  # 2019
+        yy = token[2:4]
+        return f"{yy}-{int(yy) + 1:02d}"
+    if len(token) == 5 and token[2] == "-":  # 19-20
+        return token
+    return token
+
+
 def parse_int(value: str | None) -> int | None:
     """Safely convert arbitrary strings to integers."""
     if value is None:
