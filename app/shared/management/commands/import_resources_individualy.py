@@ -49,7 +49,7 @@ class Command(BaseCommand):
     # > do not add the file withouth the head version.
     FILEMAP: dict[str, Tuple[str, type[resources.ModelResource]]] = OrderedDict(
         [
-            ("people_instructors.csv", ("Faculty", FacultyResource)),
+            ("people_instructors.head.csv", ("Faculty", FacultyResource)),
             ("people_donors.csv", ("Donor", DonorResource)),
             ("people_students.csv", ("Student", StudentResource)),
             ("space_room.csv", ("Room", RoomResource)),

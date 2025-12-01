@@ -91,7 +91,7 @@ class FacultyResource(resources.ModelResource):
         fields = ("staff_profile",)
         skip_unchanged = True
         report_skipped = False
-        use_bulk = True
+        use_bulk = False
 
     def after_save_instance(self, instance, row, **kwargs):
         """Assign the faculty group to the related user."""

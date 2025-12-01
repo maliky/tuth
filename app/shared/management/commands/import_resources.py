@@ -54,10 +54,12 @@ class Command(BaseCommand):
         "legacy_grade": ("LegacyGrade", LegacyGradeSheetResource),
         "legacy_registration": ("LegacyRegistration", LegacyRegistrationResource),
     }
+    # > There is an extrat level here.  no need to hav lower case Modelname as key
+    # > coulde use the Model Name directly
     DIRECTORY_RESOURCES: Sequence[
         tuple[str, str, type[resources.ModelResource], tuple[str, ...]]
     ] = (
-        ("faculty", "Faculty", FacultyResource, ("people_instructors.csv",)),
+        ("faculty", "Faculty", FacultyResource, ("people_instructors.head.csv",)),
         ("room", "Room", RoomResource, ("space_room.csv",)),
         ("course", "Course", CourseResource, ("academic_course.csv",)),
         (
@@ -216,6 +218,25 @@ class Command(BaseCommand):
 
                 if row_result.errors:
                     error_rows.append((row_number, row_result.errors))
+
+            # > Explain the code below.  How does it not delete everything
+            # > on each pass ?
+            if resource._meta.use_bulk:
+                resource.bulk_create(
+                    using_transactions=True,
+                    dry_run=False,
+                    raise_errors=True,
+                )
+                resource.bulk_update(
+                    using_transactions=True,
+                    dry_run=False,
+                    raise_errors=True,
+                )
+                resource.bulk_delete(
+                    using_transactions=True,
+                    dry_run=False,
+                    raise_errors=True,
+                )
 
         if error_rows or invalid_rows:
             for row_number, errors in error_rows[:5]:
