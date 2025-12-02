@@ -43,11 +43,12 @@ class GradeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     lookups for student and section.
     """
 
-    date_hierachy = "grade_on"
+    date_hierarchy = "graded_on"
     list_display = (
         "student",
-        "value",
+        "grade_code",
         "section",
+        "value__description",
         "section__semester",
         "graded_on",
     )
@@ -69,6 +70,10 @@ class GradeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
         ]
         return custom + urls
 
+    @admin.display(description="Code")
+    def grade_code(self, obj):
+        """Display the letter grade in uppercase."""
+        return (obj.value.code if obj.value else "").upper()
 
 @admin.register(Registration)
 class RegistrationAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):

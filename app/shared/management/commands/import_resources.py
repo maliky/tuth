@@ -59,7 +59,7 @@ class Command(BaseCommand):
     DIRECTORY_RESOURCES: Sequence[
         tuple[str, str, type[resources.ModelResource], tuple[str, ...]]
     ] = (
-        ("faculty", "Faculty", FacultyResource, ("people_instructors.head.csv",)),
+        ("faculty", "Faculty", FacultyResource, ("people_instructors.csv",)),
         ("room", "Room", RoomResource, ("space_room.csv",)),
         ("course", "Course", CourseResource, ("academic_course.csv",)),
         (
@@ -80,8 +80,8 @@ class Command(BaseCommand):
             "Student",
             StudentResource,
             (
-                "people_students.head.csv",
-                "UM_students.head.csv",
+                "people_students.csv",
+                "UM_students.csv",
             ),
         ),
         (
@@ -89,8 +89,8 @@ class Command(BaseCommand):
             "Grade",
             GradeResource,
             (
-                "registry_gradeSheets.head.csv",
-                "gradesheets.head.csv",
+                "registry_gradeSheets.csv",
+                "gradesheets.csv",
             ),
         ),
     )
@@ -103,9 +103,9 @@ class Command(BaseCommand):
             LegacyRegistrationResource,
             (
                 # > do not add the full csv (withouth head)
-                "registry_registration.head.csv",
-                "studentcourses.head.csv",
-                "UM_StudentsCourses.head.csv",
+                "registry_registration.csv",
+                "studentcourses.csv",
+                "UM_StudentsCourses.csv",
             ),
         ),
         (
@@ -113,11 +113,11 @@ class Command(BaseCommand):
             "LegacyGrade",
             LegacyGradeSheetResource,
             (
-                "registry_gradeSheets.head.csv",
-                "gradesheets.head.csv",
-                "oldgrades.head.csv",
-                "UM_GradeSheet.head.csv",
-                "UM_TransferGrades.head.csv",
+                "registry_gradeSheets.csv",
+                "gradesheets.csv",
+                "oldgrades.csv",
+                "UM_GradeSheet.csv",
+                "UM_TransferGrades.csv",
             ),
         ),
     )

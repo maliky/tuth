@@ -300,6 +300,11 @@ class StudentResource(resources.ModelResource):
             first = get_in_row("first_name", row) or get_in_row("FirstName", row)
             middle = get_in_row("middle_name", row) or get_in_row("MiddleName", row)
             last = get_in_row("last_name", row) or get_in_row("LastName", row)
+            if not first and not last:
+                first = "Humpty"
+                last = "Dumpty"
+                row["first_name"] = first
+                row["last_name"] = last
             parts = [first.strip(), middle.strip(), last.strip()]
             fullname = " ".join(part for part in parts if part)
             if fullname:

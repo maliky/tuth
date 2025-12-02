@@ -12,23 +12,11 @@ from app.registry.constants import GRADES_DESCRIPTION, GRADES_NUM
 class GradeValue(models.Model):
     """A class to define the different Grade types."""
 
-    DEFAULT_VALUES: list[tuple[int, str]] = [
-        ("a", 4),
-        ("b", 3),
-        ("c", 2),
-        ("d", 1),
-        ("f", 0),
-        ("ip", 0),
-        ("dr", 0),
-        ("ng", 0),
-    ]
-
-    DEFAULT_VALUES: list[tuple[int, str]] = [
+    DEFAULT_VALUES: list[tuple[str, int]] = [
         ("ab", 0),
         ("b", 3),
         ("c", 2),
         ("d", 1),
-        ("dr", 0),
         ("dr", 0),
         ("f", 0),
         ("i", 0),
@@ -55,11 +43,13 @@ class GradeValue(models.Model):
         # This method is temporary
         for _code, _num in cls.DEFAULT_VALUES:
             obj, _ = cls.objects.get_or_create(
-                code=_code, defaults={"description": GRADES_DESCRIPTION[_code]}
+                code=_code,
+                defaults={"description": GRADES_DESCRIPTION[_code]},
             )
 
     def __str__(self):
-        return self.code.upper()
+        """Return the grade code in uppercase for admin displays."""
+        return (self.code or "").upper()
 
     def _ensure_number(self):
         """Make sure a number is defined for a Grade."""
@@ -80,7 +70,7 @@ class GradeValue(models.Model):
     @classmethod
     def get_default(cls) -> Self:
         """Return a default Grade, IP."""
-        def_grd, _ = cls.objects.get_or_create(code="IP")
+        def_grd, _ = cls.objects.get_or_create(code="ip")
         return cast(Self, def_grd)
 
     class Meta:

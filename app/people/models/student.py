@@ -46,7 +46,6 @@ class Student(AbstractPerson):
 
     # ~~~~ Auto-filled ~~~~
     student_id = models.CharField(max_length=20, unique=True, blank=True)
-    # The date the student first enrolled; auto-set on initial confirmation.
 
     # ~~~~~~~~ Optional ~~~~~~~~
     current_enrolled_semester = models.ForeignKey(
