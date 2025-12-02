@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, TypeAlias, Union
 
 from django.db.models import QuerySet
+from import_export import resources
 
 if TYPE_CHECKING:
     from app.academics.models.course import Course
@@ -23,6 +24,13 @@ FieldT: TypeAlias = Union[
     list[str | list[str] | tuple[str, ...] | tuple[()]],
     tuple[str | list[str] | tuple[str, ...] | tuple[()], ...],
     tuple[()],
+]
+
+ModelResourceType: TypeAlias = type[resources.ModelResource]
+DirectoryResourceEntry: TypeAlias = tuple[
+    str,
+    ModelResourceType,
+    tuple[str, ...],
 ]
 # PersonT = TypeVar("PersonT")  # ? what is this.
 # PersonT = TypeAlias = Donor|Staff| Student| Faculty

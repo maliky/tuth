@@ -34,6 +34,7 @@ from app.registry.admin.resources_legacy import (
 )
 from app.shared.auth.helpers import ensure_superuser  # noqa: F401
 from app.shared.file_utils import guess_tabular_format, read_text_file
+from app.shared.types import DirectoryResourceEntry, ModelResourceType
 from app.shared.utils import clean_column_headers
 from app.spaces.admin.resources import RoomResource  # noqa: F401
 from app.timetable.admin.resources.core import SemesterResource  # noqa: F401
@@ -49,43 +50,36 @@ class Command(BaseCommand):
 
     help = "Import resources from a CSV file"
 
-    RESOURCE_REGISTRY: dict[str, tuple[str, type[resources.ModelResource]]] = {
-        "grade": ("Grade", GradeResource),
-        "legacy_grade": ("LegacyGrade", LegacyGradeSheetResource),
-        "legacy_registration": ("LegacyRegistration", LegacyRegistrationResource),
+    RESOURCE_REGISTRY: dict[str, ModelResourceType] = {
+        "Grade": GradeResource,
+        "LegacyGrade": LegacyGradeSheetResource,
+        "LegacyRegistration": LegacyRegistrationResource,
     }
-    # > There is an extrat level here.  no need to hav lower case Modelname as key
-    # > coulde use the Model Name directly
-    DIRECTORY_RESOURCES: Sequence[
-        tuple[str, str, type[resources.ModelResource], tuple[str, ...]]
-    ] = (
-        ("faculty", "Faculty", FacultyResource, ("people_instructors.csv",)),
-        ("room", "Room", RoomResource, ("space_room.csv",)),
-        ("course", "Course", CourseResource, ("academic_course.csv",)),
+    DIRECTORY_RESOURCES: Sequence[DirectoryResourceEntry] = (
+        ("Faculty", FacultyResource, ("people_instructors.csv",)),
+        ("Room", RoomResource, ("space_room.csv",)),
+        ("Course", CourseResource, ("academic_course.csv",)),
         (
-            "curriculum_course",
             "CurriculumCourse",
             CurriculumCourseResource,
             ("academic_curriculum_course.csv",),
         ),
         (
-            "semester",
             "Semester",
             SemesterResource,
             ("academicyear_semester.csv",),
         ),
-        ("donor", "Donor", DonorResource, ("people_donors.csv",)),
+        ("Donor", DonorResource, ("people_donors.csv",)),
         (
-            "student",
             "Student",
             StudentResource,
             (
+                # StudentInfo.csv  # may  have usefull info
                 "people_students.csv",
                 "UM_students.csv",
             ),
         ),
         (
-            "grade",
             "Grade",
             GradeResource,
             (
@@ -94,22 +88,17 @@ class Command(BaseCommand):
             ),
         ),
     )
-    LEGACY_DIRECTORY_RESOURCES: Sequence[
-        tuple[str, str, type[resources.ModelResource], tuple[str, ...]]
-    ] = (
+    LEGACY_DIRECTORY_RESOURCES: Sequence[DirectoryResourceEntry] = (
         (
-            "legacy_registration",
             "LegacyRegistration",
             LegacyRegistrationResource,
             (
-                # > do not add the full csv (withouth head)
                 "registry_registration.csv",
                 "studentcourses.csv",
                 "UM_StudentsCourses.csv",
             ),
         ),
         (
-            "legacy_grade",
             "LegacyGrade",
             LegacyGradeSheetResource,
             (
@@ -168,7 +157,7 @@ class Command(BaseCommand):
                 file_contents, format=guess_tabular_format(file_contents)
             )
         except InvalidDimensions:
-            if selected and len(selected) == 1 and selected[0] == "donor":
+            if selected and len(selected) == 1 and selected[0] == "Donor":
                 dataset = self._build_donor_dataset(file_contents)
             else:
                 raise
@@ -182,8 +171,8 @@ class Command(BaseCommand):
                 raise CommandError(
                     f"Resource '{key}' is only available when importing from a directory."
                 )
-            label, ResourceClass = self.RESOURCE_REGISTRY[key]
-            self._run_import(dataset, label, ResourceClass)
+            ResourceClass = self.RESOURCE_REGISTRY[key]
+            self._run_import(dataset, key, ResourceClass)
 
     # ------------------------------------------------------------------ helpers
 
@@ -191,7 +180,7 @@ class Command(BaseCommand):
         self,
         dataset: Dataset,
         label: str,
-        ResourceClass: type[resources.ModelResource],
+        ResourceClass: ModelResourceType,
     ) -> None:
         """Execute the import for a dataset/resource pair with progress output."""
         resource: resources.ModelResource = ResourceClass()
@@ -278,23 +267,23 @@ class Command(BaseCommand):
         if selected:
             targets = selected
         else:
-            targets = [key for key, *_ in self.DIRECTORY_RESOURCES]
+            targets = [name for name, *_ in self.DIRECTORY_RESOURCES]
 
         target_set = set(targets)
         ordered = list(self.DIRECTORY_RESOURCES) + list(self.LEGACY_DIRECTORY_RESOURCES)
 
-        for key, label, ResourceClass, filenames in ordered:
-            if key not in target_set:
+        for name, ResourceClass, filenames in ordered:
+            if name not in target_set:
                 continue
 
             dataset = self._load_directory_dataset(directory, filenames)
             if dataset is None:
                 self.stdout.write(
-                    self.style.WARNING(f"↷ skipping {label}: file not found")
+                    self.style.WARNING(f"↷ skipping {name}: file not found")
                 )
                 continue
 
-            self._run_import(dataset, label, ResourceClass)
+            self._run_import(dataset, name, ResourceClass)
 
     def _load_directory_dataset(
         self, directory: Path, filenames: Iterable[str]
