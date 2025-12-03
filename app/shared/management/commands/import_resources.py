@@ -14,7 +14,7 @@ from typing import Any, Iterable, Sequence
 
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError, CommandParser
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from import_export import resources
 from import_export.results import RowResult
 from tablib import Dataset
@@ -196,6 +196,9 @@ class Command(BaseCommand):
                 tqdm(rows, total=total_rows or None, desc=f"Importing {label}"),
                 start=1,
             ):
+                skip_check = getattr(resource, "should_skip_row", None)
+                if skip_check and skip_check(row, row_number, command=self):
+                    continue
                 try:
                     row_result = resource.import_row(
                         row,
@@ -203,6 +206,13 @@ class Command(BaseCommand):
                         dry_run=False,
                         row_number=row_number,
                     )
+                except IntegrityError as exc:
+                    handler = getattr(resource, "handle_integrity_error", None)
+                    if handler and handler(exc, row, row_number, command=self):
+                        continue
+                    raise CommandError(
+                        f"{label} import failed at row {row_number}: {exc}"
+                    ) from exc
                 except Exception as exc:
                     raise CommandError(
                         f"{label} import failed at row {row_number}: {exc}"
@@ -260,6 +270,9 @@ class Command(BaseCommand):
                 f"{label} import completed: {created} created, {updated} updated."
             )
         )
+        reporter = getattr(resource, "post_import_report", None)
+        if reporter:
+            reporter(self)
 
     def _import_from_directory(self, directory: Path, selected: list[str] | None) -> None:
         """Load individual CSV files found in a directory."""
