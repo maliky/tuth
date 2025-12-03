@@ -22,7 +22,7 @@ logs/*
 *log*
 nginx/*
 static/*
-
+*migration*
 *tests/*txt
 
 !.env-dev.example
