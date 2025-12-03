@@ -102,10 +102,9 @@ class Command(BaseCommand):
             "LegacyGrade",
             LegacyGradeSheetResource,
             (
-                "registry_gradeSheets.csv",
-                "gradesheets.csv",
+                # "registry_gradeSheets.csv",
+                # "gradesheets.csv",
                 "oldgrades.csv",
-                "UM_GradeSheet.csv",
                 "UM_TransferGrades.csv",
             ),
         ),
@@ -279,7 +278,7 @@ class Command(BaseCommand):
             dataset = self._load_directory_dataset(directory, filenames)
             if dataset is None:
                 self.stdout.write(
-                    self.style.WARNING(f"↷ skipping {name}: file not found")
+                    self.style.WARNING(f"↷ skipping {name}: {filenames} not found")
                 )
                 continue
 

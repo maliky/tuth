@@ -75,6 +75,8 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
     present. Missing curricula are created automatically.
     """
 
+    SHORT_NAME_MAX = Curriculum._meta.get_field("short_name").max_length
+
     def __init__(self):
         # set the look_up field to uniquely identify the Curriculum to short_name.
         super().__init__(Curriculum, field="short_name")
@@ -96,7 +98,11 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
             else:
                 return Curriculum.get_default()
 
-        short_name = value.strip()
+        raw_label = (value or "").strip()
+        if not raw_label:
+            return Curriculum.get_default()
+        long_name = get_in_row("curriculum_long_name", row) or raw_label
+        short_name = raw_label[: self.SHORT_NAME_MAX]
 
         college_code = get_in_row("college_code", row)
         college = self.college_w.clean(college_code)
@@ -109,7 +115,7 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
         try:
             curriculum, _ = Curriculum.objects.get_or_create(
                 defaults={
-                    "long_name": short_name,
+                    "long_name": long_name or short_name,
                     "college": college,
                 },
                 **lookup,
@@ -123,6 +129,10 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
             if fallback is None:
                 raise
             curriculum = fallback
+        else:
+            if (long_name or short_name) and not curriculum.long_name:
+                curriculum.long_name = long_name or short_name
+                curriculum.save(update_fields=["long_name"])
 
         # add the major if there is
         if major_name:

@@ -48,6 +48,10 @@ class PersonManager(Manager):
     def _get_or_create(self, username: str, **user_kwargs: Any) -> User:
         """Create or get the User and set /update password."""
         _ = user_kwargs.pop("password", None)
+        # > not sure about this line below and the returning existing_user 3/12/25
+        existing_user = cast(Optional[User], user_kwargs.pop("user", None))
+        if existing_user:
+            return existing_user
         user, _ = User.objects.get_or_create(username=username, defaults=user_kwargs)
         # there some loop hole here
         # if password:

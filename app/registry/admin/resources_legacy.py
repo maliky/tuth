@@ -23,6 +23,8 @@ SEM_MAP = {
     "3": "3",
 }
 
+CURRICULUM_MAX_LEN = 40
+
 
 def normalize_semester(raw: str | None) -> str:
     """Collapse textual semester labels to numeric slots."""
@@ -59,6 +61,14 @@ def _extract_course_codes(row: dict[str, str]) -> tuple[str, str]:
             get_in_row("course_dept", row) or "",
         )
     return college_code, dept_code
+
+
+def _truncate_curriculum_label(label: str) -> str:
+    """Clamp curriculum labels to the DB max_length (40 chars)."""
+    text = (label or "").strip()
+    if len(text) > CURRICULUM_MAX_LEN:
+        return text[:CURRICULUM_MAX_LEN]
+    return text
 
 
 class LegacyGradeSheetResource(GradeResource):
@@ -125,8 +135,11 @@ class LegacyGradeSheetResource(GradeResource):
         major, college = self.registration_lookup.get(
             key, ("", row.get("college_code", ""))
         )
-        if not get_in_row("curriculum", row):
-            row["curriculum"] = major or self.fallback_curriculum
+        current_curriculum = get_in_row("curriculum", row)
+        if not current_curriculum:
+            current_curriculum = major or self.fallback_curriculum
+        row["curriculum_long_name"] = current_curriculum
+        row["curriculum"] = _truncate_curriculum_label(current_curriculum)
         if college:
             row["college_code"] = college
 
@@ -185,8 +198,11 @@ class LegacyRegistrationResource(RegistrationResource):
         college_code, dept_code = _extract_course_codes(row)
         row.setdefault("college_code", college_code)
         row.setdefault("course_dept", dept_code)
-        if not get_in_row("curriculum", row):
-            row["curriculum"] = self.fallback_curriculum
+        current_curriculum = get_in_row("curriculum", row)
+        if not current_curriculum:
+            current_curriculum = self.fallback_curriculum
+        row["curriculum_long_name"] = current_curriculum
+        row["curriculum"] = _truncate_curriculum_label(current_curriculum)
         row.setdefault(
             "status",
             get_in_row("status", row) or RegistrationStatus.get_default().code,
