@@ -10,6 +10,12 @@ Usage::
 
 from app.academics.admin.widgets import CurriculumWidget
 from app.academics.models.curriculum import Curriculum
+from app.people.importing import (
+    build_username,
+    cached_entity,
+    default_password,
+    parse_name,
+)
 from app.people.models.student import Student
 from app.people.models.donor import Donor
 from django.contrib.auth.models import User
@@ -17,7 +23,6 @@ from import_export import widgets
 
 from app.people.models.staffs import Staff
 from app.people.models.faculty import Faculty
-from app.people.utils import mk_username, split_name, mk_password
 from app.shared.utils import get_in_row
 
 
@@ -36,27 +41,19 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         if not value:
             return Staff.get_unique_default()
 
-        prefix, first, middle, last, suffix = split_name(value)
-        username = mk_username(first, last, prefix_len=2)
+        parts = parse_name(value)
+        username = build_username(parts.first, parts.last, prefix_len=2)
 
-        # cannot use set_default because in python args are evaluated
-        # before the method (no lazyness)
-        if username not in self._cache_staff:
+        def _create_staff() -> Staff:
             staff, _ = Staff.objects.get_or_create(
                 username=username,
-                defaults={
-                    "first_name": first.capitalize(),
-                    "last_name": last.capitalize(),
-                    "name_prefix": prefix,
-                    "middle_name": middle,
-                    "name_suffix": suffix,
-                },
+                defaults=parts.capitalized_defaults(),
             )
-            staff.user.set_password(mk_password(first, last))
+            staff.user.set_password(default_password(parts.first, parts.last))
             staff.user.save(update_fields=["password"])
-            self._cache_staff[username] = staff
+            return staff
 
-        return self._cache_staff[username]
+        return cached_entity(self._cache_staff, username, _create_staff)
 
     def render(self, value, obj=None) -> str:
         """For the value (staff) for export."""
@@ -85,29 +82,19 @@ class FacultyWidget(widgets.ForeignKeyWidget):
             # return Faculty.get_unique_default()
             return Faculty.get_default()
 
-        prefix, first, middle, last, suffix = split_name(value)
-        username = mk_username(first, last, prefix_len=2)
+        parts = parse_name(value)
+        username = build_username(parts.first, parts.last, prefix_len=2)
 
-        # ? Should I use Peoplerepository.get_or_create_faculty?
-        # ... Not obvious as I would need to pass the whole row.
-        # staff = StaffProfileWidget().clean(value, row, *args, **kwargs)
-
-        if username not in self._cache_faculty:
+        def _create_faculty() -> Faculty:
             faculty, _ = Faculty.objects.get_or_create(
                 username=username,
-                defaults={
-                    "first_name": first.capitalize(),
-                    "last_name": last.capitalize(),
-                    "name_prefix": prefix,
-                    "middle_name": middle,
-                    "name_suffix": suffix,
-                },
+                defaults=parts.capitalized_defaults(),
             )
-            faculty.staff_profile.user.set_password(mk_password(first, last))
+            faculty.staff_profile.user.set_password(default_password(parts.first, parts.last))
             faculty.staff_profile.user.save(update_fields=["password"])
-            self._cache_faculty[username] = faculty
+            return faculty
 
-        return self._cache_faculty[username]
+        return cached_entity(self._cache_faculty, username, _create_faculty)
 
     def after_import(self, dataset, result, **kwargs):
         """Remove any cache which may be present after import."""
@@ -135,7 +122,7 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
             return None
 
         std_fullname = (value or "").strip()
-        prefix, first, middle, last, suffix = split_name(std_fullname)
+        parts = parse_name(std_fullname, fallback_first="Student", fallback_last=std_fullname)
 
         assert "student_id" in row
         stdid = row.get("student_id")
@@ -143,18 +130,18 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         # we create a new username because the previous one will be in _exclude
         if stdid not in self._cache_student:
             username = Student.mk_username(
-                first, last, middle, exclude=self._exclude_username
+                parts.first, parts.last, parts.middle, exclude=self._exclude_username
             )
             self._cache_username[stdid] = username
             self._exclude_username |= {username}
             student, _ = Student.objects.get_or_create(
                 username=username,
                 defaults={
-                    "first_name": first.capitalize(),
-                    "last_name": last.capitalize(),
+                    "first_name": parts.first.capitalize(),
+                    "last_name": parts.last.capitalize(),
                 },
             )
-            student.set_password(mk_password(first, last))
+            student.set_password(default_password(parts.first, parts.last))
             student.save(update_fields=["password"])
             self._cache_student[stdid] = student
 
@@ -197,15 +184,20 @@ class GradeStudentWidget(widgets.ForeignKeyWidget):
         if curriculum is None:
             curriculum = Curriculum.get_default()
 
-        first_name = get_in_row("student_first_name", row) or "Student"
+        first_name = get_in_row("student_first_name", row)
         last_name = get_in_row("student_last_name", row) or student_id
+        parts = parse_name(
+            " ".join(filter(None, [first_name, last_name])).strip(),
+            fallback_first="Student",
+            fallback_last=student_id,
+        )
 
-        username = Student.mk_username(first_name, last_name)
-        password = mk_password(first_name, last_name)
+        username = Student.mk_username(parts.first, parts.last)
+        password = default_password(parts.first, parts.last)
         user = User.objects.create_user(
             username=username,
-            first_name=first_name,
-            last_name=last_name,
+            first_name=parts.first,
+            last_name=parts.last,
             password=password,
         )
 
@@ -238,20 +230,18 @@ class DonorUserWidget(widgets.ForeignKeyWidget):
         if cached:
             return cached
 
-        prefix, first, middle, last, suffix = split_name(raw_name)
-        first = first or raw_name
-        last = last or "Donor"
-        username = mk_username(first, last, unique=True)
+        parts = parse_name(raw_name, fallback_first=raw_name, fallback_last="Donor")
+        username = build_username(parts.first, parts.last, unique=True)
 
         user, created = User.objects.get_or_create(
             username=username,
             defaults={
-                "first_name": first.capitalize(),
-                "last_name": last.capitalize(),
+                "first_name": parts.first.capitalize(),
+                "last_name": parts.last.capitalize(),
             },
         )
         if created:
-            user.set_password(mk_password(first, last))
+            user.set_password(default_password(parts.first, parts.last))
             user.save(update_fields=["password"])
 
         self._cache_user[raw_name] = user
@@ -274,25 +264,25 @@ class UserStudentWidget(widgets.ForeignKeyWidget):
             return None
 
         std_fullname = (value or "").strip()
-        prefix, first, middle, last, suffix = split_name(std_fullname)
+        parts = parse_name(std_fullname, fallback_first="Student", fallback_last=std_fullname)
 
         assert "student_id" in row
         stdid = row.get("student_id")
 
         if stdid not in self._cache_user:
             username = Student.mk_username(
-                first, last, middle, exclude=self._exclude_username
+                parts.first, parts.last, parts.middle, exclude=self._exclude_username
             )
             self._cache_username[stdid] = username
             self._exclude_username |= {username}
             user, _ = User.objects.get_or_create(
                 username=username,
                 defaults={
-                    "first_name": first.capitalize(),
-                    "last_name": last.capitalize(),
+                    "first_name": parts.first.capitalize(),
+                    "last_name": parts.last.capitalize(),
                 },
             )
-            user.set_password(mk_password(first, last))
+            user.set_password(default_password(parts.first, parts.last))
             user.save(update_fields=["password"])
 
             self._cache_user[stdid] = user
