@@ -10,7 +10,10 @@ import pandas as pd
 import phonenumbers
 
 from app.people.importing.names import NameParts, parse_name
+from app.shared.importing.dataframe_utils import drop_constant_columns
 from app.shared.importing.loggers import CsvRowLogger
+from app.shared.importing.logging_utils import get_import_logger
+from app.shared.utils import get_in_row
 
 
 @dataclass
@@ -66,16 +69,21 @@ def tag_legacy(bio_tags: list[str], username: str, email: str) -> list[str]:
 
 def load_directory_rows(path: Path) -> list[DirectoryRow]:
     """Load and normalize rows from a directory CSV/XLSX."""
+    logger = get_import_logger()
     if path.suffix.lower() in {".xlsx", ".xls"}:
         df = pd.read_excel(path)
+        to_drop = df.loc[df.Name.str.contains('Showing')].index
+        df = df.drop(to_drop)
     else:
         df = pd.read_csv(path)
-
+        df.loc[:,'Name'] = df["First Name [Required]"] + df["Last Name [Required]"]
+        df = df.drop(columns=["Last Name [Required]", "First Name [Required]"])
+    df = drop_constant_columns(df, log_fn=lambda msg: logger.info(msg))
     # Harmonize expected columns
     df = df.rename(
         columns={
-            "First Name [Required]": "first_name",
-            "Last Name [Required]": "last_name",
+            # "First Name [Required]": "first_name",
+            # "Last Name [Required]": "last_name",
             "Email Address [Required]": "email",
             "Recovery Email": "recovery_email",
             "Employee Title": "position",
@@ -88,24 +96,16 @@ def load_directory_rows(path: Path) -> list[DirectoryRow]:
         }
     )
 
+
     rows: list[DirectoryRow] = []
     for _, row in df.iterrows():
-        row_dict = row.to_dict() if hasattr(row, "to_dict") else row
+        row_dict = row.to_dict() if hasattr(row, "to_dict") else dict(row)
         email = get_in_row("email", row_dict)
         if not email:
             continue
 
-        # Prefer split components; fall back to a generic full_name when present
-        full_name = " ".join(
-            part
-            for part in [
-                get_in_row("first_name", row_dict),
-                get_in_row("last_name", row_dict),
-                get_in_row("full_name", row_dict),
-            ]
-            if part
-        )
-        name = parse_name(full_name)
+        # Build name from the unified full_name column (first/last already concatenated for CSV)
+        name = parse_name(get_in_row("full_name", row_dict))
 
         position = get_in_row("position", row_dict)
         division = get_in_row("division", row_dict)

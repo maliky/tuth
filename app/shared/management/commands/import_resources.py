@@ -11,6 +11,7 @@ from __future__ import annotations
 from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Iterable, Sequence
+import logging
 
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError, CommandParser
@@ -36,6 +37,7 @@ from app.shared.auth.helpers import ensure_superuser  # noqa: F401
 from app.shared.file_utils import guess_tabular_format, read_text_file
 from app.shared.types import DirectoryResourceEntry, ModelResourceType
 from app.shared.utils import clean_column_headers
+from app.shared.importing.logging_utils import get_import_logger, log_notice
 from app.spaces.admin.resources import RoomResource  # noqa: F401
 from app.timetable.admin.resources.core import SemesterResource  # noqa: F401
 from app.timetable.admin.resources.section import SectionResource
@@ -48,7 +50,20 @@ from app.timetable.admin.resources.session import (
 class Command(BaseCommand):
     """Load sections and sessions from cleaned_tscc.csv or provided file."""
 
-    help = "Import resources from a CSV file"
+    help = (
+        "Import resources from a CSV file or directory.\n\n"
+        "Arguments:\n"
+        "  -f/--file_path: path to a CSV/TSV or a directory containing resource files.\n"
+        "  -r/--resource: optional, one or more resource names to limit the import "
+        "(defaults to all available). Choices include Grade, LegacyGrade, LegacyRegistration "
+        "and directory-scoped resources (Faculty, Room, Course, CurriculumCourse, Semester, "
+        "Donor, Student, Grade, LegacyRegistration, LegacyGrade).\n"
+        "Behavior:\n"
+        "  • Reads tabular data, normalizes headers, and delegates to import-export resources.\n"
+        "  • Emits progress to stdout and logs start/end with counts to the import logger.\n"
+        "  • Skips rows/resources gracefully when hooks are provided (should_skip_row, "
+        "handle_integrity_error, post_import_report).\n"
+    )
 
     RESOURCE_REGISTRY: dict[str, ModelResourceType] = {
         "Grade": GradeResource,
@@ -102,8 +117,6 @@ class Command(BaseCommand):
             "LegacyGrade",
             LegacyGradeSheetResource,
             (
-                # "registry_gradeSheets.csv",
-                # "gradesheets.csv",
                 "oldgrades.csv",
                 "UM_TransferGrades.csv",
             ),
@@ -162,7 +175,6 @@ class Command(BaseCommand):
                 raise
         dataset = clean_column_headers(dataset)
 
-        # > Where is options comming form ?
         selected_keys = selected or list(self.RESOURCE_REGISTRY.keys())
 
         for key in selected_keys:
@@ -183,6 +195,7 @@ class Command(BaseCommand):
     ) -> None:
         """Execute the import for a dataset/resource pair with progress output."""
         resource: resources.ModelResource = ResourceClass()
+        logger = get_import_logger()
         rows = list(dataset.dict)
         total_rows = len(rows)
         instance_loader = resource._meta.instance_loader_class(resource, dataset)
@@ -191,6 +204,7 @@ class Command(BaseCommand):
         error_rows: list[tuple[int, list[Exception]]] = []
         invalid_rows: list[tuple[int, str]] = []
 
+        log_notice(logger, f"Starting import for {label}", extra={"resource": label})
         with transaction.atomic():
             for row_number, row in enumerate(
                 tqdm(rows, total=total_rows or None, desc=f"Importing {label}"),
@@ -273,6 +287,17 @@ class Command(BaseCommand):
         reporter = getattr(resource, "post_import_report", None)
         if reporter:
             reporter(self)
+        log_notice(
+            logger,
+            f"Completed import for {label}",
+            extra={
+                "resource": label,
+                "created": created,
+                "updated": updated,
+                "errors": len(error_rows),
+                "invalid": len(invalid_rows),
+            },
+        )
 
     def _import_from_directory(self, directory: Path, selected: list[str] | None) -> None:
         """Load individual CSV files found in a directory."""

@@ -8,11 +8,10 @@ from typing import Iterable
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 from app.people.importing.directory import DirectoryRow, load_directory_rows
-from app.people.importing.names import build_username
 from app.people.models.faculty import Faculty
 from app.people.models.staffs import Staff
 from app.people.models.student import Student
-from app.people.utils import mk_password
+from app.people.utils import mk_password, mk_username
 from app.shared.importing.loggers import CsvRowLogger
 from app.shared.utils import get_in_row
 
@@ -119,7 +118,7 @@ def _build_bio(entry: DirectoryRow) -> str:
 
 def _upsert_staff(entry: DirectoryRow) -> bool:
     """Create or update a Staff profile."""
-    username = build_username(entry.first_name, entry.last_name, prefix_len=2, unique=True)
+    username = mk_username(entry.first_name, entry.last_name, prefix_len=2, unique=True)
     defaults = {
         "first_name": entry.first_name.capitalize(),
         "last_name": entry.last_name.capitalize(),
@@ -140,7 +139,8 @@ def _upsert_faculty(entry: DirectoryRow) -> bool:
     """Create or update a Faculty (wraps Staff)."""
     # Ensure staff profile first
     created_staff = _upsert_staff(entry)
-    staff = Staff.objects.get(username__iexact=build_username(entry.first_name, entry.last_name, prefix_len=2, unique=True))
+    staff_username = mk_username(entry.first_name, entry.last_name, prefix_len=2, unique=True)
+    staff = Staff.objects.get(username__iexact=staff_username)
     faculty, created = Faculty.objects.get_or_create(staff_profile=staff)
     return created or created_staff
 
