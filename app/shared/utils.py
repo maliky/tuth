@@ -59,8 +59,11 @@ def make_course_code(dept: Department, number: str, short=False) -> str:
     return f"{_dept_code}-{number}".upper()
 
 
-def get_in_row(key: str, row: Optional[dict[str, str | None]]) -> str:
-    """Return a value from the row which is a dict of str and optional None.
+from typing import Mapping
+
+
+def get_in_row(key: str, row: Optional[Mapping[str, str | None]]) -> str:
+    """Return a value from the row (any mapping) safely stripped to a string.
 
     Does so safely always returning something even if None is in the row.
     """
