@@ -18,3 +18,5 @@ django-more-admin-filters
 django-simple-history
 tqdm
 rapidfuzz==3.9.2
+pandas
+xlrd

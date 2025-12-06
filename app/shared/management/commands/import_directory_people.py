@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Iterable
+from tqdm import tqdm
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
@@ -73,7 +74,7 @@ class Command(BaseCommand):
 
         created = updated = skipped = 0
 
-        for entry in rows:
+        for entry in tqdm(rows, desc="Importing directory", total=len(rows) or None):
             if not entry.first_name or not entry.last_name:
                 skipped += 1
                 logger.log(
@@ -174,5 +175,5 @@ def _upsert_student(entry: DirectoryRow) -> bool:
     student, created = Student.objects.update_or_create(username=username, defaults=defaults)
     if created:
         student.set_password(mk_password(entry.first_name, entry.last_name))
-        student.save(update_fields=["password"])
+        student.save()
     return created
