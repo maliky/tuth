@@ -26,8 +26,8 @@ class Command(BaseCommand):
             "-s",
             "--source",
             action="append",
-            default=["Seed_data/Directory/google_users_admin_export_250311.csv"],
-            help="Path(s) to directory CSV/XLSX files.",
+            default=None,
+            help="Path(s) to directory CSV/XLSX files. Defaults to all CSV/XLSX under Seed_data/Directory.",
         )
         parser.add_argument(
             "--role",
@@ -43,6 +43,13 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         sources: list[str] = options["source"]
+        if not sources:
+            directory = Path("Seed_data/Directory")
+            sources = [
+                str(p)
+                for p in directory.iterdir()
+                if p.suffix.lower() in {".csv", ".xlsx", ".xls"}
+            ]
         role: str = options["role"]
         dry_run: bool = options["dry_run"]
 
@@ -79,13 +86,7 @@ class Command(BaseCommand):
                 )
                 continue
 
-            target_role = role
-            if role == "auto":
-                # heuristic: students have @stud in email, staff otherwise
-                if entry.email.endswith(".stud@tubmanu.edu.lr") or "student" in entry.division.lower():
-                    target_role = "student"
-                else:
-                    target_role = "staff"
+            target_role = role if role != "auto" else _deduce_role(entry)
 
             if dry_run:
                 continue
@@ -108,6 +109,21 @@ class Command(BaseCommand):
                 f"Directory import completed: {created} created, {updated} updated, {skipped} skipped."
             )
         )
+
+
+def _deduce_role(entry: DirectoryRow) -> str:
+    """Pick a role based on org unit path and division/email hints."""
+    oup = (entry.org_unit_path or "").lower()
+    division = (entry.division or "").lower()
+    position = (entry.position or "").lower()
+    email = entry.email.lower()
+    if "students" in oup or "student" in division or email.endswith(".stud@tubmanu.edu.lr"):
+        return "student"
+    if "faculty" in oup or "faculty" in division or "professor" in position:
+        return "faculty"
+    if "staff" in oup:
+        return "staff"
+    return "staff"
 
 
 def _build_bio(entry: DirectoryRow) -> str:

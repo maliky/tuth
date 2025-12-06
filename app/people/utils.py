@@ -260,8 +260,8 @@ def get_default_user():
     d_user, created = User.objects.get_or_create(
         username="default_user",
         defaults={
-            "first_name": "Kemyt",
-            "last_name": "Tusis",
+            "first_name": "Default",
+            "last_name": "User",
         },
     )
     if created:

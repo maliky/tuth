@@ -67,7 +67,10 @@ def get_in_row(key: str, row: Optional[Mapping[str, str | None]]) -> str:
 
     Does so safely always returning something even if None is in the row.
     """
-    return ((row or {}).get(key) or "").strip()
+    try:
+        return ((row or {}).get(key) or "").strip()
+    except AttributeError as exc:
+        raise AttributeError(f"Could not access key '{key}' in row {row}") from exc
 
 
 def as_title(value: str) -> str:
