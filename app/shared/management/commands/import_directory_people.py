@@ -41,6 +41,12 @@ class Command(BaseCommand):
             action="store_true",
             help="Parse and report without writing to the database.",
         )
+        parser.add_argument(
+            "--start-row",
+            type=int,
+            default=1,
+            help="Start processing from this 1-based row index in the combined input.",
+        )
 
     def handle(self, *args, **options):
         sources: list[str] = options["source"]
@@ -59,6 +65,7 @@ class Command(BaseCommand):
             path = Path(src)
             if not path.exists():
                 raise CommandError(f"Missing source file: {path}")
+            self.stdout.write(self.style.NOTICE(f"Loading directory data from {path}"))
             rows.extend(load_directory_rows(path))
 
         logger = CsvRowLogger(
@@ -74,7 +81,13 @@ class Command(BaseCommand):
 
         created = updated = skipped = 0
 
-        for entry in tqdm(rows, desc="Importing directory", total=len(rows) or None):
+        start_row: int = options["start_row"]
+        for idx, entry in enumerate(
+            tqdm(rows, desc="Importing directory", total=len(rows) or None),
+            start=1,
+        ):
+            if idx < start_row:
+                continue
             if not entry.first_name or not entry.last_name:
                 skipped += 1
                 logger.log(
@@ -155,10 +168,31 @@ def _upsert_staff(entry: DirectoryRow) -> bool:
 def _upsert_faculty(entry: DirectoryRow) -> bool:
     """Create or update a Faculty (wraps Staff)."""
     # Ensure staff profile first
-    created_staff = _upsert_staff(entry)
     staff_username = mk_username(entry.first_name, entry.last_name, prefix_len=2, unique=True)
-    staff = Staff.objects.get(username__iexact=staff_username)
-    faculty, created = Faculty.objects.get_or_create(staff_profile=staff)
+    staff, created_staff = Staff.objects.update_or_create(
+        username=staff_username,
+        defaults={
+            "first_name": entry.first_name.capitalize(),
+            "last_name": entry.last_name.capitalize(),
+            "email": entry.email,
+            "position": entry.position or "",
+            "division": entry.division or "",
+            "phone_number": entry.phone,
+            "bio": _build_bio(entry),
+        },
+    )
+    if created_staff:
+        staff.user.set_password(mk_password(entry.first_name, entry.last_name))
+        staff.user.save(update_fields=["password"])
+    try:
+        faculty, created = Faculty.objects.get_or_create(
+            username=staff_username, staff_profile=staff
+        )
+    except KeyError as exc:
+        # Log the offending entry for diagnosis
+        raise KeyError(
+            f"Faculty creation failed for staff '{staff_username}' ({entry.full_name}): {exc}"
+        )
     return created or created_staff
 
 
