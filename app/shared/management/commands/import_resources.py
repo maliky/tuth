@@ -292,10 +292,10 @@ class Command(BaseCommand):
             f"Completed import for {label}",
             extra={
                 "resource": label,
-                "created": created,
-                "updated": updated,
-                "errors": len(error_rows),
-                "invalid": len(invalid_rows),
+                "created_count": created,
+                "updated_count": updated,
+                "error_count": len(error_rows),
+                "invalid_count": len(invalid_rows),
             },
         )
 

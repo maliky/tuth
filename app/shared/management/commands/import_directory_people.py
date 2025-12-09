@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Iterable
 from tqdm import tqdm
 
+from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 from app.people.importing.directory import DirectoryRow, load_directory_rows
@@ -15,6 +16,8 @@ from app.people.models.student import Student
 from app.people.utils import mk_password, mk_username
 from app.shared.importing.loggers import CsvRowLogger
 from app.shared.utils import get_in_row
+
+User = get_user_model()
 
 
 class Command(BaseCommand):
@@ -146,15 +149,22 @@ def _build_bio(entry: DirectoryRow) -> str:
     return base
 
 
+def _limit(text: str, max_len: int | None) -> str:
+    """Trim text to a field max length when provided."""
+    if max_len is None:
+        return text
+    return text[:max_len]
+
 def _upsert_staff(entry: DirectoryRow) -> bool:
     """Create or update a Staff profile."""
     username = mk_username(entry.first_name, entry.last_name, prefix_len=2, unique=True)
+    username = _limit(username, User._meta.get_field("username").max_length)
     defaults = {
         "first_name": entry.first_name.capitalize(),
         "last_name": entry.last_name.capitalize(),
         "email": entry.email,
-        "position": entry.position or "",
-        "division": entry.division or "",
+        "position": _limit(entry.position or "", Staff._meta.get_field("position").max_length),
+        "division": _limit(entry.division or "", Staff._meta.get_field("division").max_length),
         "phone_number": entry.phone,
         "bio": _build_bio(entry),
     }
@@ -169,14 +179,15 @@ def _upsert_faculty(entry: DirectoryRow) -> bool:
     """Create or update a Faculty (wraps Staff)."""
     # Ensure staff profile first
     staff_username = mk_username(entry.first_name, entry.last_name, prefix_len=2, unique=True)
+    staff_username = _limit(staff_username, User._meta.get_field("username").max_length)
     staff, created_staff = Staff.objects.update_or_create(
         username=staff_username,
         defaults={
             "first_name": entry.first_name.capitalize(),
             "last_name": entry.last_name.capitalize(),
             "email": entry.email,
-            "position": entry.position or "",
-            "division": entry.division or "",
+            "position": _limit(entry.position or "", Staff._meta.get_field("position").max_length),
+            "division": _limit(entry.division or "", Staff._meta.get_field("division").max_length),
             "phone_number": entry.phone,
             "bio": _build_bio(entry),
         },
@@ -199,6 +210,7 @@ def _upsert_faculty(entry: DirectoryRow) -> bool:
 def _upsert_student(entry: DirectoryRow) -> bool:
     """Create or update a Student profile."""
     username = Student.mk_username(entry.first_name, entry.last_name)
+    username = _limit(username, User._meta.get_field("username").max_length)
     defaults = {
         "first_name": entry.first_name.capitalize(),
         "last_name": entry.last_name.capitalize(),
