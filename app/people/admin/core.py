@@ -48,7 +48,9 @@ class FacultyAdmin(DuplicatePreviewMixin, CollegeRestrictedAdmin):
     list_filter = ("college",)
     search_fields = (
         "staff_profile__staff_id",
-        "staff_profile__user__long_name",
+        "staff_profile__long_name",
+        "staff_profile__user__first_name",
+        "staff_profile__user__last_name",
         "academic_rank",
     )
     autocomplete_fields = ("staff_profile", "college")
@@ -99,7 +101,7 @@ class DonorAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
 
     form = DonorForm
     list_display = ("long_name", "donor_id", "username", "donor_bio")
-    search_fields = ("donor_id", "user__long_name")
+    search_fields = ("donor_id", "long_name", "user__first_name", "user__last_name")
     readonly_fields = ("donor_id",)
     fieldsets = [
         (
@@ -136,8 +138,8 @@ class StaffAdmin(MergePeopleMixin, DuplicatePreviewMixin, DepartmentRestrictedAd
     list_display = ("long_name", "staff_id", "position", "roles", "possible_duplicates")
     search_fields = (
         "staff_id",
+        "long_name",
         "user__username",
-        "user__long_name",
         "user__first_name",
         "user__last_name",
         "department__short_name",
@@ -190,7 +192,13 @@ class StudentAdmin(
         "entry_semester",
         "possible_duplicates",
     )
-    search_fields = ("student_id", "username", "long_name")
+    search_fields = (
+        "student_id",
+        "long_name",
+        "user__username",
+        "user__first_name",
+        "user__last_name",
+    )
     list_editable = ("curriculum",)
     list_filter = ("curriculum",)
     readonly_fields = ("student_id",)
