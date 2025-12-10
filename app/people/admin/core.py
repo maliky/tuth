@@ -81,7 +81,7 @@ class FacultyAdmin(CollegeRestrictedAdmin):
     @admin.display(description="Primary Assignment")
     def primary_assignment(self, obj):
         """Show the department/college that receives most sections for the faculty."""
-        return obj.primarly_assignment_label or "-"
+        return obj.primary_assignment_label or "-"
 
 
 @admin.register(Donor)
