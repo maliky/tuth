@@ -44,7 +44,11 @@ class FacultyAdmin(CollegeRestrictedAdmin):
         "get_department",
     )
     list_filter = ("college",)
-    search_fields = ("faculty_staff_id", "faculty_name", "faculty_academic_rank")
+    search_fields = (
+        "staff_profile__staff_id",
+        "staff_profile__user__long_name",
+        "academic_rank",
+    )
     autocomplete_fields = ("staff_profile", "college")
     inlines = [SectionInline]
     fieldsets = [
