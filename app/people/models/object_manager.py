@@ -1,9 +1,15 @@
 """Object Manger for People classes."""
 
+import logging
 from typing import Any, Dict, Mapping, Optional, Tuple, cast
-from app.people.utils import mk_username
-from django.db.models import Manager
+
 from django.contrib.auth.models import User
+from django.db.models import Manager
+
+from app.people.matching import name_similarity
+from app.people.utils import mk_username
+
+logger = logging.getLogger(__name__)
 
 
 class PersonManager(Manager):
@@ -28,6 +34,58 @@ class PersonManager(Manager):
         user_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in self.USER_KWARGS}
         return user_kwargs, kwargs
 
+    def _find_by_name(self, **user_kwargs: Any) -> Optional[User]:
+        """Return an existing user matched on first/last/middle names (case-insensitive)."""
+        first = (user_kwargs.get("first_name") or "").strip()
+        last = (user_kwargs.get("last_name") or "").strip()
+        middle = (user_kwargs.get("middle_name") or "").strip()
+
+        if not first or not last:
+            return None
+
+        base_name = " ".join([first, middle, last]).strip()
+
+        candidates = self.model.objects.filter(user__last_name__iexact=last)
+        if not candidates.exists():
+            candidates = self.model.objects.filter(user__last_name__istartswith=last[:3])
+
+        best_user: Optional[User] = None
+        best_score = 0.0
+        second_score = 0.0
+
+        for person in candidates:
+            candidate_name = " ".join(
+                [
+                    person.user.first_name or "",
+                    getattr(person, "middle_name", "") or "",
+                    person.user.last_name or "",
+                ]
+            ).strip()
+            score = name_similarity(base_name, candidate_name)
+            if score > best_score:
+                second_score = best_score
+                best_score = score
+                best_user = cast(User, person.user)
+            elif score > second_score:
+                second_score = score
+
+        if best_user and best_score >= 0.92 and (best_score - second_score) >= 0.05:
+            return best_user
+
+        if best_user and best_score >= 0.92 and (best_score - second_score) < 0.05:
+            logger.info(
+                "Ambiguous potential duplicate; skipping auto-merge",
+                extra={
+                    "first_name": first,
+                    "middle_name": middle,
+                    "last_name": last,
+                    "best_score": best_score,
+                    "second_score": second_score,
+                },
+            )
+
+        return None
+
     def _create_user(self, **user_kwargs: Any) -> User:
         """Create or get the User and set /update password."""
         password = user_kwargs.pop("password", None)
@@ -35,6 +93,10 @@ class PersonManager(Manager):
         username = user_kwargs.pop("username", "")
         if not username and existing_user:
             username = existing_user.username
+
+        found_user = self._find_by_name(**user_kwargs)
+        if found_user:
+            return found_user
 
         user = User.objects.create_user(
             username=username, password=password, **user_kwargs
@@ -52,6 +114,11 @@ class PersonManager(Manager):
         existing_user = cast(Optional[User], user_kwargs.pop("user", None))
         if existing_user:
             return existing_user
+
+        found_user = self._find_by_name(**user_kwargs)
+        if found_user:
+            return found_user
+
         user, _ = User.objects.get_or_create(username=username, defaults=user_kwargs)
         # there some loop hole here
         # if password:
@@ -73,6 +140,14 @@ class PersonManager(Manager):
                 existing_user.set_password(password)
             existing_user.save()
             return existing_user
+
+        found_user = self._find_by_name(**user_kwargs)
+        if found_user:
+            user_kwargs.pop("username", None)
+            if password:
+                found_user.set_password(password)
+                found_user.save(update_fields=["password"])
+            return found_user
 
         user, _ = User.objects.update_or_create(username=username, defaults=user_kwargs)
         if password:

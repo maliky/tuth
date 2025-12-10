@@ -7,6 +7,7 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
+from app.people.admin.mixins import DuplicatePreviewMixin, MergePeopleMixin
 from app.people.admin.resources import FacultyResource
 from app.people.forms.base import PersonFormMixin
 from app.people.forms.faculty import FacultyForm
@@ -24,7 +25,7 @@ from app.timetable.admin.inlines import SectionInline
 
 
 @admin.register(Faculty)
-class FacultyAdmin(CollegeRestrictedAdmin):
+class FacultyAdmin(DuplicatePreviewMixin, CollegeRestrictedAdmin):
     """Admin options for :class:~app.people.models.Faculty.
 
     Displays the staff profile with optional filtering by college. The faculty
@@ -42,6 +43,7 @@ class FacultyAdmin(CollegeRestrictedAdmin):
         "primary_assignment",
         "get_division",
         "get_department",
+        "possible_duplicates",
     )
     list_filter = ("college",)
     search_fields = (
@@ -123,7 +125,7 @@ class DonorAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
 
 
 @admin.register(Staff)
-class StaffAdmin(DepartmentRestrictedAdmin):
+class StaffAdmin(MergePeopleMixin, DuplicatePreviewMixin, DepartmentRestrictedAdmin):
     """Admin management for :class:~app.people.models.Staff.
 
     Provides detailed fieldsets for personal and work information. Important
@@ -131,8 +133,15 @@ class StaffAdmin(DepartmentRestrictedAdmin):
     """
 
     form = StaffForm
-    list_display = ("long_name", "staff_id", "position", "roles")
-    search_fields = ("staff_id", "username", "long_name", "department")
+    list_display = ("long_name", "staff_id", "position", "roles", "possible_duplicates")
+    search_fields = (
+        "staff_id",
+        "user__username",
+        "user__long_name",
+        "user__first_name",
+        "user__last_name",
+        "department__short_name",
+    )
     list_filter = ("department",)
     readonly_fields = ("staff_id",)
     inlines = [DocumentStaffInline]
@@ -159,7 +168,13 @@ class StaffAdmin(DepartmentRestrictedAdmin):
 
 
 @admin.register(Student)
-class StudentAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
+class StudentAdmin(
+    MergePeopleMixin,
+    DuplicatePreviewMixin,
+    SimpleHistoryAdmin,
+    ImportExportModelAdmin,
+    GuardedModelAdmin,
+):
     """Admin interface for :class:~app.people.models.Student.
 
     list_display shows the related user and student ID with search enabled
@@ -173,6 +188,7 @@ class StudentAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
         "birth_date",
         "curriculum",
         "entry_semester",
+        "possible_duplicates",
     )
     search_fields = ("student_id", "username", "long_name")
     list_editable = ("curriculum",)
