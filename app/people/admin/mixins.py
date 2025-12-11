@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from django.contrib import messages
 from django.db import transaction
+from django.urls import reverse
+from django.utils.html import format_html_join
 
 from app.people.matching import name_similarity
 from app.people.services.merge_people import merge_people
@@ -63,7 +65,7 @@ class DuplicatePreviewMixin:
             )
         else:
             qs = obj.__class__.objects.none()
-        scores = []
+        rows = []
         for other in qs[:50]:
             other_name = getattr(other, "long_name", "") or getattr(
                 getattr(other, "staff_profile", None), "long_name", ""
@@ -71,7 +73,16 @@ class DuplicatePreviewMixin:
             score = name_similarity(base_name, other_name)
             if score >= self.duplicate_threshold:
                 label = getattr(other, "obj_id", "") or str(other.pk)
-                scores.append(f"{label} ({score:.2f})")
-        return ", ".join(scores[:3]) if scores else ""
+                url = reverse(
+                    f"admin:{other._meta.app_label}_{other._meta.model_name}_change",
+                    args=[other.pk],
+                )
+                rows.append((url, label, score))
+        if not rows:
+            return ""
+        formatted = ", ".join(
+            f'<a href="{url}">{label}</a> ({score:.2f})' for url, label, score in rows[:3]
+        )
+        return formatted
 
     possible_duplicates.short_description = "Possible duplicates"

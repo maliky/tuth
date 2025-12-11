@@ -135,7 +135,13 @@ class StaffAdmin(MergePeopleMixin, DuplicatePreviewMixin, DepartmentRestrictedAd
     """
 
     form = StaffForm
-    list_display = ("long_name", "staff_id", "position", "roles", "possible_duplicates")
+    list_display = (
+        "long_name",
+        "staff_id",
+        "position",
+        "roles",
+        "possible_duplicates",
+    )
     search_fields = (
         "staff_id",
         "long_name",
@@ -144,7 +150,12 @@ class StaffAdmin(MergePeopleMixin, DuplicatePreviewMixin, DepartmentRestrictedAd
         "user__last_name",
         "department__short_name",
     )
-    list_filter = ("department",)
+    list_filter = (
+        "department",
+        "department__college",
+        "user__groups",
+    )
+    ordering = ("staff_id",)
     readonly_fields = ("staff_id",)
     inlines = [DocumentStaffInline]
     fieldsets = [
