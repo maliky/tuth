@@ -195,16 +195,11 @@ def _upsert_faculty(entry: DirectoryRow) -> bool:
     if created_staff:
         staff.user.set_password(mk_password(entry.first_name, entry.last_name))
         staff.user.save(update_fields=["password"])
-    try:
-        faculty, created = Faculty.objects.get_or_create(
-            username=staff_username, staff_profile=staff
-        )
-    except KeyError as exc:
-        # Log the offending entry for diagnosis
-        raise KeyError(
-            f"Faculty creation failed for staff '{staff_username}' ({entry.full_name}): {exc}"
-        )
-    return created or created_staff
+    faculty, created_faculty = Faculty.objects.update_or_create(
+        staff_profile=staff,
+        defaults={},
+    )
+    return created_staff or created_faculty
 
 
 def _upsert_student(entry: DirectoryRow) -> bool:

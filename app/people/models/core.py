@@ -1,6 +1,8 @@
 """Core module for people."""
 
 from datetime import date
+import logging
+from pathlib import Path
 
 from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
@@ -11,6 +13,8 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 from app.people.models.object_manager import PersonManager
 from app.people.utils import extract_id_num, mk_username, photo_upload_to
+
+logger = logging.getLogger(__name__)
 
 
 class AbstractPerson(models.Model):
@@ -240,9 +244,32 @@ class AbstractPerson(models.Model):
     @classmethod
     def get_existing_id(cls) -> list[int]:
         """Returns the list of all existing number in the (class) ids field."""
-        user_ids_str = cls.objects.values_list(
+        user_ids_raw = cls.objects.values_list(
+            "pk",
             cls.ID_FIELD or "",
-            flat=True,
         )  # type: ignore[attr-type]
-        user_ids = [extract_id_num(v) for v in user_ids_str]
+        user_ids: list[int] = []
+        for pk, val in user_ids_raw:
+            try:
+                user_ids.append(extract_id_num(val))
+            except ValidationError:
+                _log_invalid_id(cls.__name__, pk, val)
         return user_ids
+
+
+def _log_invalid_id(model_name: str, pk: int, id_value: str) -> None:
+    """Record an invalid ID in both logs and a sidecar CSV, then continue."""
+    logger.warning(
+        "Skipping invalid ID while computing next ID",
+        extra={"id_value": id_value, "model": model_name, "pk": pk},
+    )
+    tmp_dir = Path("Seed_data/Tmp")
+    tmp_dir.mkdir(parents=True, exist_ok=True)
+    path = tmp_dir / "invalid_ids.csv"
+    header = "model,pk,id_value\n"
+    line = f"{model_name},{pk},{id_value}\n"
+    if not path.exists():
+        path.write_text(header + line, encoding="utf-8")
+    else:
+        with path.open("a", encoding="utf-8") as fh:
+            fh.write(line)
