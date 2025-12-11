@@ -21,7 +21,43 @@ from app.people.models.staffs import Staff
 from app.people.models.faculty import Faculty
 from app.people.models.student import Student
 from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
+from app.shared.admin.filters import (
+    BaseCollegeFilter,
+    BaseDepartmentFilter,
+    CurriculumByCollegeFilter,
+    StudentLevelFilter,
+)
 from app.timetable.admin.inlines import SectionInline
+
+
+class StaffCollegeFilter(BaseCollegeFilter):
+    field_path = "department__college"
+    parameter_name = "department__college__id__exact"
+
+
+class StaffDepartmentFilter(BaseDepartmentFilter):
+    dept_field = "department"
+    college_param = StaffCollegeFilter.parameter_name
+
+
+class FacultyCollegeFilter(BaseCollegeFilter):
+    field_path = "college"
+    parameter_name = "college__id__exact"
+
+
+class FacultyDepartmentFilter(BaseDepartmentFilter):
+    dept_field = "staff_profile__department"
+    college_param = FacultyCollegeFilter.parameter_name
+
+
+class StudentCollegeFilter(BaseCollegeFilter):
+    field_path = "curriculum__college"
+    parameter_name = "curriculum__college__id__exact"
+
+
+class StudentCurriculumFilter(CurriculumByCollegeFilter):
+    curriculum_field = "curriculum"
+    college_param = StudentCollegeFilter.parameter_name
 
 
 @admin.register(Faculty)
@@ -45,7 +81,7 @@ class FacultyAdmin(DuplicatePreviewMixin, CollegeRestrictedAdmin):
         "get_department",
         "possible_duplicates",
     )
-    list_filter = ("college",)
+    list_filter = (FacultyCollegeFilter, FacultyDepartmentFilter, "staff_profile__user__groups")
     search_fields = (
         "staff_profile__staff_id",
         "staff_profile__long_name",
@@ -151,8 +187,8 @@ class StaffAdmin(MergePeopleMixin, DuplicatePreviewMixin, DepartmentRestrictedAd
         "department__short_name",
     )
     list_filter = (
-        "department",
-        "department__college",
+        StaffCollegeFilter,
+        StaffDepartmentFilter,
         "user__groups",
     )
     ordering = ("staff_id",)
@@ -211,7 +247,12 @@ class StudentAdmin(
         "user__last_name",
     )
     list_editable = ("curriculum",)
-    list_filter = ("curriculum",)
+    list_filter = (
+        StudentCollegeFilter,
+        StudentCurriculumFilter,
+        "entry_semester",
+        StudentLevelFilter,
+    )
     readonly_fields = ("student_id",)
     inlines = [DocumentStudentInline]
     fieldsets = [

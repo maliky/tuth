@@ -1,7 +1,7 @@
 """Core module."""
 
 from django.urls import path, reverse
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 from django.db.models import Count
 
 from app.academics.models.concentration import (
@@ -32,6 +32,9 @@ from app.academics.models.curriculum import Curriculum, CurriculumStatus
 from app.academics.models.department import Department
 from app.academics.models.prerequisite import Prerequisite
 from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
+from app.shared.admin.filters import BaseCollegeFilter
+from app.people.models.student import Student
+from app.academics.choices import LEVEL_NUMBER
 
 from .filters import CurriculumFilter
 from .inlines import (
@@ -64,12 +67,44 @@ class CollegeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
         "code",
         "long_name",
         "faculty_count",
-        "course_count",
+        "course_count_link",
         "curricula_names",
         "department_chairs",
-        "student_counts_by_level",
+        "student_counts_by_level_link",
     )
     search_fields = ("code", "long_name")
+
+    @admin.display(description="Courses")
+    def course_count_link(self, obj):
+        """Link to courses for this college."""
+        count = obj.course_count
+        url = reverse("admin:academics_course_changelist") + (
+            f"?department__college__id__exact={obj.id}"
+        )
+        return format_html('<a href="{}">{}</a>', url, count)
+
+    @admin.display(description="Students by level")
+    def student_counts_by_level_link(self, obj):
+        """Show counts by level with links to filtered student lists."""
+        students = list(Student.objects.filter(curriculum__college=obj))
+        rows = []
+        for lv in LEVEL_NUMBER:
+            lvl_label = lv.label
+            count = sum(1 for s in students if s.class_level == lvl_label)
+            url = reverse("admin:people_student_changelist") + (
+                f"?curriculum__college__id__exact={obj.id}&class_level={lvl_label}"
+            )
+            rows.append((url, lvl_label, count))
+        return format_html_join(
+            " | ",
+            '<a href="{}">{}</a>: {}',
+            rows,
+        )
+
+
+class CourseCollegeFilter(BaseCollegeFilter):
+    field_path = "department__college"
+    parameter_name = "department__college__id__exact"
 
 
 @admin.register(Course)
@@ -100,9 +135,9 @@ class CourseAdmin(DepartmentRestrictedAdmin):
     list_select_related = ("department",)
     list_editable = ("department",)
     list_filter = (
-        ProgramFilterAc,
-        "department__college",
+        CourseCollegeFilter,
         "department",
+        ProgramFilterAc,
     )
 
     list_per_page = 100

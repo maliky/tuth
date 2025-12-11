@@ -5,7 +5,7 @@ from __future__ import annotations
 from django.contrib import messages
 from django.db import transaction
 from django.urls import reverse
-from django.utils.html import format_html_join
+from django.utils.html import format_html, format_html_join
 
 from app.people.matching import name_similarity
 from app.people.services.merge_people import merge_people
@@ -80,9 +80,13 @@ class DuplicatePreviewMixin:
                 rows.append((url, label, score))
         if not rows:
             return ""
-        formatted = ", ".join(
-            f'<a href="{url}">{label}</a> ({score:.2f})' for url, label, score in rows[:3]
+        safe_rows = []
+        for url, label, score in rows[:3]:
+            safe_rows.append((url, label, f"{score:.2f}"))
+        return format_html_join(
+            ", ",
+            '<a href="{}">{}</a> ({})',
+            safe_rows,
         )
-        return formatted
 
     possible_duplicates.short_description = "Possible duplicates"
