@@ -1,7 +1,7 @@
 """Core module."""
 
 from django.urls import path, reverse
-from django.utils.html import format_html, format_html_join
+from django.utils.html import format_html
 from django.db.models import Count
 
 from app.academics.models.concentration import (
@@ -33,8 +33,8 @@ from app.academics.models.department import Department
 from app.academics.models.prerequisite import Prerequisite
 from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
 from app.shared.admin.filters import BaseCollegeFilter
-from app.people.models.student import Student
-from app.academics.choices import LEVEL_NUMBER
+from django.contrib import messages
+from django.db import transaction
 
 from .filters import CurriculumFilter
 from .inlines import (
@@ -67,39 +67,41 @@ class CollegeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
         "code",
         "long_name",
         "faculty_count",
-        "course_count_link",
+        "course_count",
         "curricula_names",
         "department_chairs",
-        "student_counts_by_level_link",
+        "student_counts_by_level",
     )
     search_fields = ("code", "long_name")
 
-    @admin.display(description="Courses")
-    def course_count_link(self, obj):
-        """Link to courses for this college."""
-        count = obj.course_count
-        url = reverse("admin:academics_course_changelist") + (
-            f"?department__college__id__exact={obj.id}"
-        )
-        return format_html('<a href="{}">{}</a>', url, count)
 
-    @admin.display(description="Students by level")
-    def student_counts_by_level_link(self, obj):
-        """Show counts by level with links to filtered student lists."""
-        students = list(Student.objects.filter(curriculum__college=obj))
-        rows = []
-        for lv in LEVEL_NUMBER:
-            lvl_label = lv.label
-            count = sum(1 for s in students if s.class_level == lvl_label)
-            url = reverse("admin:people_student_changelist") + (
-                f"?curriculum__college__id__exact={obj.id}&class_level={lvl_label}"
-            )
-            rows.append((url, lvl_label, count))
-        return format_html_join(
-            " | ",
-            '<a href="{}">{}</a>: {}',
-            rows,
-        )
+@transaction.atomic
+def merge_curricula(target: Curriculum, sources):
+    """Merge curricula: move students and curriculum courses to target."""
+    for src in sources:
+        if src.pk == target.pk:
+            continue
+        Student.objects.filter(curriculum=src).update(curriculum=target)
+        for cc in CurriculumCourse.objects.filter(curriculum=src):
+            # Avoid duplicate course entries on the target curriculum
+            existing = CurriculumCourse.objects.filter(
+                curriculum=target, course=cc.course
+            ).first()
+            if existing:
+                continue
+            cc.curriculum = target
+            cc.save()
+        src.delete()
+
+
+@transaction.atomic
+def merge_departments(target: Department, sources):
+    """Merge departments: move courses (and their curricula) to target."""
+    for src in sources:
+        if src.pk == target.pk:
+            continue
+        Course.objects.filter(department=src).update(department=target)
+        Department.objects.filter(pk=src.pk).delete()
 
 
 class CourseCollegeFilter(BaseCollegeFilter):
@@ -145,7 +147,18 @@ class CourseAdmin(DepartmentRestrictedAdmin):
 
     search_fields = ("short_code", "department__short_name", "title")
     fields = ("short_code", "department", "number", "title", "description")
-    actions = [update_department]
+    actions = [update_department, "merge_departments_action"]
+
+    @admin.action(description="Merge selected courses' departments into the first")
+    def merge_departments_action(self, request, queryset):
+        """Merge departments via courses (targets first course's department)."""
+        depts = list({c.department for c in queryset if c.department})
+        if len(depts) < 2:
+            messages.warning(request, "Select courses from at least two departments to merge.")
+            return
+        target = depts[0]
+        merge_departments(target, depts[1:])
+        messages.success(request, f"Merged {len(depts)-1} department(s) into {target.short_name}.")
 
     def get_form(self, request, obj=None, **kwargs):
         """Return the admin form with dep ordered by their short_name."""
@@ -209,13 +222,14 @@ class CurriculumAdmin(CollegeRestrictedAdmin):
         "student_count",
     )
     list_filter = ("college",)
-    # list_editable =("status", "is_active")
+    list_editable =("status", "is_active", "college")
     autocomplete_fields = ("college",)
     inlines = [CurriculumCourseInline]
 
     # list_selected_relate reduces the number of queries in db
     list_select_related = ("college",)
     search_fields = ("short_name", "long_name")
+    actions = ["merge_curricula_action"]
 
     # def get_urls(self):
     #     """Returns urls."""
@@ -238,6 +252,19 @@ class CurriculumAdmin(CollegeRestrictedAdmin):
             f"?curriculum__id__exact={obj.id}"
         )
         return format_html('<a href="{}">{}</a>', url, count)
+
+    @admin.action(description="Merge selected curricula into the first")
+    def merge_curricula_action(self, request, queryset):
+        """Merge curricula, moving students and programmed courses into the first."""
+        if queryset.count() < 2:
+            messages.warning(request, "Select at least two curricula to merge.")
+            return
+        target = queryset.order_by("id").first()
+        merge_curricula(target, queryset.exclude(pk=target.pk))
+        messages.success(
+            request,
+            f"Merged {queryset.count()-1} curricula into {target.short_name}.",
+        )
 
 
 @admin.register(CurriculumCourse)
@@ -294,8 +321,10 @@ class DepartmentAdmin(CollegeRestrictedAdmin):
     list_filter = [
         "college",
     ]
+    list_editable =("college",)
     search_fields = ("short_name", "long_name", "college")
     inlines = [DepartmentCourseInline]
+    actions = ["merge_departments_action"]
 
     def get_queryset(self, request):
         # > explain the djangonic logic here
@@ -312,6 +341,19 @@ class DepartmentAdmin(CollegeRestrictedAdmin):
             f"?department__id__exact={obj.id}"
         )
         return format_html('<a href="{}">{}</a>', url, count)
+
+    @admin.action(description="Merge selected departments into the first")
+    def merge_departments_action(self, request, queryset):
+        """Merge departments: move courses into the first selected department."""
+        if queryset.count() < 2:
+            messages.warning(request, "Select at least two departments to merge.")
+            return
+        target = queryset.order_by("id").first()
+        merge_departments(target, queryset.exclude(pk=target.pk))
+        messages.success(
+            request,
+            f"Merged {queryset.count()-1} department(s) into {target.short_name}.",
+        )
 
 
 @admin.register(Prerequisite)

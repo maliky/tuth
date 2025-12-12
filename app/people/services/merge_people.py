@@ -32,6 +32,33 @@ def _merge_users(target_user: User, source_user: User) -> None:
     target_user.save()
 
 
+@transaction.atomic
+def merge_users(target_user: User, source_user: User) -> User:
+    """Merge auth users and any attached person profiles."""
+    if target_user.pk == source_user.pk:
+        return target_user
+
+    if not target_user.pk:
+        raise ValueError("Target user must be saved before merging.")
+    if not source_user.pk:
+        # Nothing to merge if source isn't saved
+        return target_user
+
+    # Merge linked profiles
+    for attr in ("staff", "student", "donor"):
+        target_profile = getattr(target_user, attr, None)
+        source_profile = getattr(source_user, attr, None)
+        if target_profile and source_profile:
+            merge_people(target_profile, source_profile)
+        elif source_profile and not target_profile:
+            source_profile.user = target_user
+            source_profile.save()
+
+    _merge_users(target_user, source_user)
+    source_user.delete()
+    return target_user
+
+
 def _copy_if_missing(target, source, fields: Iterable[str]) -> None:
     """Copy non-empty source values into empty target fields."""
     for field in fields:
@@ -41,6 +68,9 @@ def _copy_if_missing(target, source, fields: Iterable[str]) -> None:
         source_val = getattr(source, field, None)
         if (not target_val) and source_val:
             setattr(target, field, source_val)
+        elif isinstance(source_val, str) and isinstance(target_val, str):
+            if len(source_val) > len(target_val):
+                setattr(target, field, source_val)
 
 
 @transaction.atomic

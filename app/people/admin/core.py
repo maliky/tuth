@@ -7,7 +7,7 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
-from app.people.admin.mixins import DuplicatePreviewMixin, MergePeopleMixin
+from app.people.admin.mixins import DuplicatePreviewMixin, MergePeopleMixin, MergeUsersMixin
 from app.people.admin.resources import FacultyResource
 from app.people.forms.base import PersonFormMixin
 from app.people.forms.faculty import FacultyForm
@@ -28,7 +28,12 @@ from app.shared.admin.filters import (
     StudentLevelFilter,
 )
 from app.timetable.admin.inlines import SectionInline
+from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin
+from django.contrib import admin as dj_admin
+from app.people.matching import name_similarity
 
+User = get_user_model()
 
 class StaffCollegeFilter(BaseCollegeFilter):
     field_path = "department__college"
@@ -58,6 +63,54 @@ class StudentCollegeFilter(BaseCollegeFilter):
 class StudentCurriculumFilter(CurriculumByCollegeFilter):
     curriculum_field = "curriculum"
     college_param = StudentCollegeFilter.parameter_name
+
+
+# ---- User admin with merge action ----
+
+try:
+    dj_admin.site.unregister(User)
+except dj_admin.sites.NotRegistered:
+    pass
+
+
+@dj_admin.register(User)
+class MergeableUserAdmin(MergeUsersMixin, dj_admin.ModelAdmin):
+    """Lightweight user admin with merge action."""
+
+    list_display = (
+        "username",
+        "first_name",
+        "last_name",
+        "email",
+        "is_active",
+        "possible_duplicates",
+    )
+    search_fields = ("username", "first_name", "last_name", "email")
+
+    def possible_duplicates(self, obj):
+        """Reuse the duplicate preview logic at the user level."""
+        base_name = f"{obj.first_name} {obj.last_name}".strip()
+        qs = User.objects.exclude(pk=obj.pk).filter(last_name__iexact=obj.last_name)
+        rows = []
+        for other in qs[:50]:
+            other_name = f"{other.first_name} {other.last_name}".strip()
+            score = name_similarity(base_name, other_name)
+            if score >= self.duplicate_threshold:
+                url = reverse(
+                    f"admin:{other._meta.app_label}_{other._meta.model_name}_change",
+                    args=[other.pk],
+                )
+                rows.append((url, other.username, score))
+        if not rows:
+            return ""
+        safe_rows = []
+        for url, label, score in rows[:3]:
+            safe_rows.append((url, label, f"{score:.2f}"))
+        return format_html_join(
+            ", ",
+            '<a href="{}">{}</a> ({})',
+            safe_rows,
+        )
 
 
 @admin.register(Faculty)
@@ -246,7 +299,7 @@ class StudentAdmin(
         "user__first_name",
         "user__last_name",
     )
-    list_editable = ("curriculum",)
+    # list_editable = ("curriculum",)
     list_filter = (
         StudentCollegeFilter,
         StudentCurriculumFilter,
