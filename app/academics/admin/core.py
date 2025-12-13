@@ -114,6 +114,7 @@ class CourseAdmin(DepartmentRestrictedAdmin):
     list_filter = (
         CourseCollegeFilter,
         "department",
+        CourseDepartmentFilterAc,
         ProgramFilterAc,
     )
 

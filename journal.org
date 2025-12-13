@@ -1,10 +1,16 @@
 
-* Interface
-** Add a table/model in registry 
+* <2025-12-13 sam. 21:52> Interface continuations
+in /admin/academics/curriculum/
+add a merge action
 
+* DONE Interface
+  CLOSED: [2025-12-13 sam. 21:48]
+** Add a table/model in registry 
+Below is a list of tasks to carry out on the code base.
+you need to be systematic and precise.  first review the task, then plan you actions, collect the necessary information, check for conflicting information, eventual find an alternate plan in case of conflict, and finaly proceed when all seem clear.  report the change made
 ** General guidlines
 - for any department filter user a DepartmentFilterAc or similar
-- for any department filter user a SemesterFilterAc or similar
+- for any Semester filter user a SemesterFilterAc or similar
 - for any section filter user a SectionFilterAc or similar    
 
 ** in admin/academics/college/add/

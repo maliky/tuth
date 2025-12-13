@@ -17,23 +17,27 @@ from django.urls import reverse
 #     BUTTON_LABEL = "Filter"
 
 CurriculumCourseFilterAc = AutocompleteFilterFactory(
-    "Curriculum",  # title
+    "Curriculum",
     "curriculum_course__curriculum",  # look-up path ( → cuccirulm )
     # use_pk_exact=False
 )
 
 ProgramFilterAc = AutocompleteFilterFactory(
-    "Curriculum",  # title
+    "Curriculum",
     "in_curriculum_courses__curriculum",  # look-up path ( → cuccirulm )
     # use_pk_exact=False
 )
 
 DepartmentFilterAc = AutocompleteFilterFactory(
-    "Department",  # title
+    "Department",
     "course__department",
 )
+CourseDepartmentFilterAc = AutocompleteFilterFactory(
+    "Department",
+    "department",
+)
 CurriculumFilterAc = AutocompleteFilterFactory(
-    "Curriculum",  # title
+    "Curriculum",
     "curriculum",
 )
 
