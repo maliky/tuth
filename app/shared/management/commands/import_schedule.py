@@ -17,6 +17,7 @@ from typing import Optional
 import pandas as pd
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import transaction
+from tqdm import tqdm
 
 from app.academics.choices import COLLEGE_CODE, COLLEGE_LONG_NAME
 from app.academics.models.college import College
@@ -104,13 +105,19 @@ class Command(BaseCommand):
         stats = ImportStats()
 
         with transaction.atomic():
-            for idx, raw_row in df.iterrows():
+            for idx, raw_row in tqdm(
+                df.iterrows(),
+                total=len(df),
+                desc="Importing schedule",
+            ):
                 # excel header line counts as row 1 for reporting
                 display_row = idx + 2  # header = 1, dataframe index starts at 0
                 if display_row < start_row:
                     continue
 
-                row = {k: ("" if pd.isna(v) else v) for k, v in raw_row.to_dict().items()}
+                row = {
+                    k: ("" if pd.isna(v) else str(v)) for k, v in raw_row.to_dict().items()
+                }
                 try:
                     self._import_row(row, stats)
                 except ValueError as exc:
@@ -265,7 +272,7 @@ class Command(BaseCommand):
             semester.start_date or semester.academic_year.start_date
         )
         curricula = (
-            Curriculum.objects.filter(college=college, curriculum_course__course=course)
+            Curriculum.objects.filter(college=college, programs__course=course)
             .distinct()
             .order_by("-is_active", "-creation_date")
         )
