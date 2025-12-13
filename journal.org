@@ -1,4 +1,40 @@
 
+* Import review
+  The programmed courses or curriculumcourse import is not correct:
+it needs curriculum_id and course_id and credit hours. or field which can resolve to those ids.
+
+1. curriculum_course_id, or
+   - curriculum_id, or
+     - short_name*
+     - college_id, or
+       - college_name (autofill acceptable)
+     - creation_date (autofill ok)
+     - validation_Status (autofill ok)      
+   - course_id, or
+     - department_id, or
+       - department_short_name*
+       - college_id, or
+         - college_name (autofill acceptable)
+     - course_number*
+   - credit_hours (autofill ok)      
+
+2. section_id, or
+   - semester_id, or
+     - ay_id, or
+       - start_date*
+     - semester_number*
+     - status (autofill ok)
+   - curriculum_course_id -> 1
+   - section_no*
+   - max_seat (autofill ok)
+
+3. session_id,
+   - section_id -> 2
+   - room_id, or
+   - schedule_id, or
+     - weekday* 
+     - start_time*
+  
 * <2025-11-10 Mon 04:35>  Updated implementation plan
 ** Curriculum creation & approval
  - Keep using Django admin/import-export for deans to create curricula + prerequisites (already works).
