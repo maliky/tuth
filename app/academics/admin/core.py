@@ -15,6 +15,7 @@ from app.academics.admin.filters import (
     # CollegeChoicesFilter,
     DepartmentFilterAc,
     ProgramFilterAc,
+    CourseDepartmentFilterAc,
 )
 from app.academics.admin.merges import (
     merge_curricula,
@@ -195,7 +196,7 @@ class CourseAdmin(DepartmentRestrictedAdmin):
     list_editable = ("department",)
     list_filter = (
         CourseCollegeFilter,
-        "department",
+        # "department",
         CourseDepartmentFilterAc,
         ProgramFilterAc,
     )
@@ -205,7 +206,7 @@ class CourseAdmin(DepartmentRestrictedAdmin):
 
     search_fields = ("short_code", "department__short_name", "title")
     fields = ("short_code", "department", "number", "title", "description")
-    actions = [update_department]
+    actions = [update_department, merge_courses_action]
 
     def get_form(self, request, obj=None, **kwargs):
         """Return the admin form with dep ordered by their short_name."""
