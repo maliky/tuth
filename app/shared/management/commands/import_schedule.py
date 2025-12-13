@@ -27,7 +27,7 @@ from app.academics.models.department import Department
 from app.people.models.faculty import Faculty
 from app.people.models.staffs import Staff
 from app.people.utils import mk_username, split_name
-from app.shared.models import CreditHour
+from app.registry.models import CreditHour
 from app.shared.utils import get_in_row, normalize_academic_year, parse_int
 from app.spaces.models.core import Room, Space
 from app.timetable.admin.widgets.core import ensure_academic_year_code
@@ -116,7 +116,8 @@ class Command(BaseCommand):
                     continue
 
                 row = {
-                    k: ("" if pd.isna(v) else str(v)) for k, v in raw_row.to_dict().items()
+                    k: ("" if pd.isna(v) else str(v))
+                    for k, v in raw_row.to_dict().items()
                 }
                 try:
                     self._import_row(row, stats)
@@ -140,10 +141,10 @@ class Command(BaseCommand):
     # ------------------------------------------------------------------ helpers
     def _import_row(self, row: dict[str, object], stats: ImportStats) -> None:
         """Parse a single row and build related records."""
-        dept_code, course_no, section_no = self._parse_cid(get_in_row('cid', row))
+        dept_code, course_no, section_no = self._parse_cid(get_in_row("cid", row))
 
         semester = self._resolve_semester(
-            ay_str=get_in_row('ay', row),
+            ay_str=get_in_row("ay", row),
             semester_str=get_in_row("semester_no", row),
             stats=stats,
         )
@@ -161,7 +162,9 @@ class Command(BaseCommand):
             curriculum, course, credit_hours, stats
         )
 
-        faculty = self._resolve_faculty(get_in_row("instructor", row), department, college, stats)
+        faculty = self._resolve_faculty(
+            get_in_row("instructor", row), department, college, stats
+        )
 
         section = self._resolve_section(
             semester=semester,

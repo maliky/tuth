@@ -93,7 +93,7 @@ COLLEGE_CODE = {
     "coas": "COAS",
     "coed": "COED",
     "cafs": "CAFS",
-    "cfas": "CAFS",    
+    "cfas": "CAFS",
     "coet": "COET",
     "coba": "COBA",
     "coab": "COBA",

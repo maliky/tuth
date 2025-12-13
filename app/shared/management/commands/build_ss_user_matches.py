@@ -122,7 +122,8 @@ class Command(BaseCommand):
                 continue
             matches = best_matches(ss_name, tusis_usernames, top_n=2, max_gap=0.2)
             updated[ss_name] = [
-                {"username": username, "score": round(score, 3)} for username, score in matches
+                {"username": username, "score": round(score, 3)}
+                for username, score in matches
             ]
             new_count += 1
 

@@ -90,7 +90,9 @@ class FacultyWidget(widgets.ForeignKeyWidget):
                 username=username,
                 defaults=parts.capitalized_defaults(),
             )
-            faculty.staff_profile.user.set_password(default_password(parts.first, parts.last))
+            faculty.staff_profile.user.set_password(
+                default_password(parts.first, parts.last)
+            )
             faculty.staff_profile.user.save(update_fields=["password"])
             return faculty
 
@@ -122,7 +124,9 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
             return None
 
         std_fullname = (value or "").strip()
-        parts = parse_name(std_fullname, fallback_first="Student", fallback_last=std_fullname)
+        parts = parse_name(
+            std_fullname, fallback_first="Student", fallback_last=std_fullname
+        )
 
         assert "student_id" in row
         stdid = row.get("student_id")
@@ -264,7 +268,9 @@ class UserStudentWidget(widgets.ForeignKeyWidget):
             return None
 
         std_fullname = (value or "").strip()
-        parts = parse_name(std_fullname, fallback_first="Student", fallback_last=std_fullname)
+        parts = parse_name(
+            std_fullname, fallback_first="Student", fallback_last=std_fullname
+        )
 
         assert "student_id" in row
         stdid = row.get("student_id")

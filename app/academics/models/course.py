@@ -12,7 +12,7 @@ from simple_history.models import HistoricalRecords
 from app.academics.choices import LEVEL_NUMBER
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
-from app.shared.models import CreditHour
+from app.registry.models import CreditHour
 from app.shared.types import CourseQuery
 from app.shared.utils import make_course_code
 from app.timetable.utils import get_current_semester
@@ -199,7 +199,7 @@ class CurriculumCourse(models.Model):
     history = HistoricalRecords()
     # credit hours depend on the curricula not the Course
     credit_hours = models.ForeignKey(
-        "shared.CreditHour",
+        "registry.CreditHour",
         on_delete=models.PROTECT,
         default=3,
         help_text="Credits to be used in this curriculum for this course",

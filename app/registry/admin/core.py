@@ -75,6 +75,7 @@ class GradeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
         """Display the letter grade in uppercase."""
         return (obj.value.code if obj.value else "").upper()
 
+
 @admin.register(Registration)
 class RegistrationAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Allow students to register only for eligible sections."""

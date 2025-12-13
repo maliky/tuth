@@ -14,7 +14,7 @@ from app.people.admin.resources import StudentResource
 from app.registry.models.document import DocumentStatus, DocumentType
 from app.registry.models.grade import GradeValue
 from app.registry.models.registration import RegistrationStatus
-from app.shared.models import CreditHour
+from app.registry.models import CreditHour
 from app.timetable.models.semester import SemesterStatus
 
 

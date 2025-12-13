@@ -10,9 +10,7 @@ from typing import Iterable, Tuple
 def _normalize_tokens(name: str) -> Tuple[str, list[str]]:
     """Return (surname, given_tokens) lowercased and stripped of punctuation."""
     tokens = [
-        re.sub(r"[^A-Za-z]", "", part).lower()
-        for part in name.split()
-        if part.strip()
+        re.sub(r"[^A-Za-z]", "", part).lower() for part in name.split() if part.strip()
     ]
     if not tokens:
         return "", []

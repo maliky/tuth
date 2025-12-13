@@ -59,7 +59,9 @@ def extract_legacy_username(email: str) -> str:
     return email.split("@", 1)[0].strip()
 
 
-def tag_legacy(bio_tags: list[str], full_name:str, username: str, email: str) -> list[str]:
+def tag_legacy(
+    bio_tags: list[str], full_name: str, username: str, email: str
+) -> list[str]:
     """Append legacy tags for username/email when available."""
     tags = list(bio_tags)
     if full_name:
@@ -75,18 +77,20 @@ def load_directory_rows(path: Path) -> list[DirectoryRow]:
     """Load and normalize rows from a directory CSV/XLSX."""
     logger = get_import_logger()
     if path.suffix.lower() in {".xlsx", ".xls"}:
-        df = pd.read_excel(path,dtype='str')
-        to_drop = df.loc[df.Name.str.contains('Showing')].index
+        df = pd.read_excel(path, dtype="str")
+        to_drop = df.loc[df.Name.str.contains("Showing")].index
         df = df.drop(to_drop)
     else:
-        df = pd.read_csv(path,dtype='str')
-        df.loc[:,'Name'] = df["First Name [Required]"] + " " + df["Last Name [Required]"]
+        df = pd.read_csv(path, dtype="str")
+        df.loc[:, "Name"] = df["First Name [Required]"] + " " + df["Last Name [Required]"]
         df = df.drop(columns=["Last Name [Required]", "First Name [Required]"])
-        if 'Org Unit Path [Required]' in df.columns:
-            df.loc[:,'Org Unit Path [Required]'] = df['Org Unit Path [Required]'].str.replace('/','')
+        if "Org Unit Path [Required]" in df.columns:
+            df.loc[:, "Org Unit Path [Required]"] = df[
+                "Org Unit Path [Required]"
+            ].str.replace("/", "")
     df = df.fillna("")
     # Drop sensitive password columns if present
-    pwd_columns = [c for c in df.columns if 'password' in c.lower()]
+    pwd_columns = [c for c in df.columns if "password" in c.lower()]
     df = df.drop(columns=pwd_columns)
     df = drop_constant_columns(df, log_fn=lambda msg: logger.info(msg))
     # Harmonize expected columns
@@ -104,7 +108,6 @@ def load_directory_rows(path: Path) -> list[DirectoryRow]:
             "Name": "full_name",
         }
     )
-
 
     rows: list[DirectoryRow] = []
     for _, row in df.iterrows():
@@ -162,7 +165,9 @@ def load_directory_rows(path: Path) -> list[DirectoryRow]:
             "Home Secondary Email",
             "Work Secondary Email",
         }
-        residual = {k: v for k, v in row_dict.items() if k not in mapped_keys and str(v).strip()}
+        residual = {
+            k: v for k, v in row_dict.items() if k not in mapped_keys and str(v).strip()
+        }
         for key, val in residual.items():
             bio_tags.append(f"{key}: {val}")
 

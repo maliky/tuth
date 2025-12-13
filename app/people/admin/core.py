@@ -1,13 +1,26 @@
 """Core module."""
 
-from app.people.models.role_assignment import RoleAssignment
-from app.registry.admin.inlines import DocumentStaffInline, DocumentStudentInline
 from django.contrib import admin
+from django.contrib import admin as dj_admin
+from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
-from app.people.admin.mixins import DuplicatePreviewMixin, MergePeopleMixin, MergeUsersMixin
+from app.people.admin.filters import (
+    FacultyCollegeFilter,
+    FacultyDepartmentFilter,
+    StaffCollegeFilter,
+    StaffDepartmentFilter,
+    StudentCollegeFilter,
+    StudentCurriculumFilter,
+)
+from app.people.admin.merges import MergeUsersMixin
+from app.people.admin.mixins import (
+    DuplicatePreviewMixin,
+    MergePeopleMixin,
+)
 from app.people.admin.resources import FacultyResource
 from app.people.forms.base import PersonFormMixin
 from app.people.forms.faculty import FacultyForm
@@ -16,53 +29,23 @@ from app.people.forms.person import (
     StaffForm,
     StudentForm,
 )
+from app.people.matching import name_similarity
 from app.people.models.donor import Donor
-from app.people.models.staffs import Staff
 from app.people.models.faculty import Faculty
+from app.people.models.role_assignment import RoleAssignment
+from app.people.models.staffs import Staff
 from app.people.models.student import Student
-from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
+from app.registry.admin.inlines import DocumentStaffInline, DocumentStudentInline
 from app.shared.admin.filters import (
     BaseCollegeFilter,
     BaseDepartmentFilter,
     CurriculumByCollegeFilter,
     StudentLevelFilter,
 )
+from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
 from app.timetable.admin.inlines import SectionInline
-from django.contrib.auth import get_user_model
-from django.contrib.auth.admin import UserAdmin
-from django.contrib import admin as dj_admin
-from app.people.matching import name_similarity
 
 User = get_user_model()
-
-class StaffCollegeFilter(BaseCollegeFilter):
-    field_path = "department__college"
-    parameter_name = "department__college__id__exact"
-
-
-class StaffDepartmentFilter(BaseDepartmentFilter):
-    dept_field = "department"
-    college_param = StaffCollegeFilter.parameter_name
-
-
-class FacultyCollegeFilter(BaseCollegeFilter):
-    field_path = "college"
-    parameter_name = "college__id__exact"
-
-
-class FacultyDepartmentFilter(BaseDepartmentFilter):
-    dept_field = "staff_profile__department"
-    college_param = FacultyCollegeFilter.parameter_name
-
-
-class StudentCollegeFilter(BaseCollegeFilter):
-    field_path = "curriculum__college"
-    parameter_name = "curriculum__college__id__exact"
-
-
-class StudentCurriculumFilter(CurriculumByCollegeFilter):
-    curriculum_field = "curriculum"
-    college_param = StudentCollegeFilter.parameter_name
 
 
 # ---- User admin with merge action ----
@@ -134,7 +117,14 @@ class FacultyAdmin(DuplicatePreviewMixin, CollegeRestrictedAdmin):
         "get_department",
         "possible_duplicates",
     )
-    list_filter = (FacultyCollegeFilter, FacultyDepartmentFilter, "staff_profile__user__groups")
+    list_filter = [
+        FacultyCollegeFilter,
+        FacultyDepartmentFilter,
+        "staff_profile__user__groups",
+        # ('college', admin.RelatedOnlyFieldListFilter),
+        # ('staff_profile__department', admin.RelatedOnlyFieldListFilter)
+    ]
+
     search_fields = (
         "staff_profile__staff_id",
         "staff_profile__long_name",

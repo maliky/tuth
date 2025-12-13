@@ -1,6 +1,5 @@
 """Initialization for the models package."""
 
-# app/registry/models/__init__.py
 from .document import (
     DocumentStaff,
     DocumentDonor,
@@ -11,8 +10,10 @@ from .document import (
 from .grade import Grade, GradeValue
 from .registration import Registration, RegistrationStatus
 from .transcript import TranscriptRequest, TranscriptRequestStatus
+from .credit_hours import CreditHour
 
 __all__ = [
+    "CreditHour",
     "DocumentStaff",
     "DocumentType",
     "DocumentStatus",

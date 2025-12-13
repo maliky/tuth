@@ -29,7 +29,9 @@ class NameParts:
         }
 
 
-def parse_name(raw: str | None, *, fallback_first: str = "", fallback_last: str = "") -> NameParts:
+def parse_name(
+    raw: str | None, *, fallback_first: str = "", fallback_last: str = ""
+) -> NameParts:
     """Split a name and fill sensible defaults for missing parts."""
     prefix, first, middle, last, suffix = split_name(raw or "")
     first = first or fallback_first or "Default"

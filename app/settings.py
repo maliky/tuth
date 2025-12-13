@@ -195,14 +195,14 @@ LOGGING = {
         },
     },
     "handlers": {
-          "file": {
-              "class": "logging.handlers.RotatingFileHandler",
-              "filename": str(LOG_DIR / "django.log"),
-              "maxBytes": 5 * 1024 * 1024,
-              "backupCount": 5,
-              "formatter": "verbose",
-              "level": "INFO",
-          },
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": str(LOG_DIR / "django.log"),
+            "maxBytes": 5 * 1024 * 1024,
+            "backupCount": 5,
+            "formatter": "verbose",
+            "level": "INFO",
+        },
         "actions": {
             "class": "logging.FileHandler",
             "filename": LOG_DIR / "actions.log",

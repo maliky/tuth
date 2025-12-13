@@ -1,5 +1,23 @@
 
-* Import review
+* Interface
+** Add a table/model in registry 
+
+** in admin/academics/college/add/
+- add a view to list all active and inactive  curriculum   of this college
+
+** in admin/academics/college/
+   1. Replace the curricula names columns by the count of the curriculmsn linked to a curriculum view filtered on that college
+   2. link each Faculty count number to a admin view of faculty filtered by this college
+   3. link each Course count number to a admin view of course filtered by this college
+   4. link each department chair to a department view filter on that college. 
+   5. link each number of the student level to an student admin view filter by college and level
+***
+Transform the BaseDepartmentFilter 
+
+** Move credit_
+
+* DONE Import review
+  CLOSED: [2025-12-13 sam. 17:57]
 The programmed courses or curriculumcourse import is not correct:
 it needs curriculum_id and course_id and credit hours. or field which can resolve to those ids.
 

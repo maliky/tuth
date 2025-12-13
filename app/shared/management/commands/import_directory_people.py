@@ -134,7 +134,11 @@ def _deduce_role(entry: DirectoryRow) -> str:
     division = (entry.division or "").lower()
     position = (entry.position or "").lower()
     email = entry.email.lower()
-    if "students" in oup or "student" in division or email.endswith(".stud@tubmanu.edu.lr"):
+    if (
+        "students" in oup
+        or "student" in division
+        or email.endswith(".stud@tubmanu.edu.lr")
+    ):
         return "student"
     if "faculty" in oup or "faculty" in division or "professor" in position:
         return "faculty"
@@ -155,6 +159,7 @@ def _limit(text: str, max_len: int | None) -> str:
         return text
     return text[:max_len]
 
+
 def _upsert_staff(entry: DirectoryRow) -> bool:
     """Create or update a Staff profile."""
     username = mk_username(entry.first_name, entry.last_name, prefix_len=2, unique=True)
@@ -163,8 +168,12 @@ def _upsert_staff(entry: DirectoryRow) -> bool:
         "first_name": entry.first_name.capitalize(),
         "last_name": entry.last_name.capitalize(),
         "email": entry.email,
-        "position": _limit(entry.position or "", Staff._meta.get_field("position").max_length),
-        "division": _limit(entry.division or "", Staff._meta.get_field("division").max_length),
+        "position": _limit(
+            entry.position or "", Staff._meta.get_field("position").max_length
+        ),
+        "division": _limit(
+            entry.division or "", Staff._meta.get_field("division").max_length
+        ),
         "phone_number": entry.phone,
         "bio": _build_bio(entry),
     }
@@ -178,7 +187,9 @@ def _upsert_staff(entry: DirectoryRow) -> bool:
 def _upsert_faculty(entry: DirectoryRow) -> bool:
     """Create or update a Faculty (wraps Staff)."""
     # Ensure staff profile first
-    staff_username = mk_username(entry.first_name, entry.last_name, prefix_len=2, unique=True)
+    staff_username = mk_username(
+        entry.first_name, entry.last_name, prefix_len=2, unique=True
+    )
     staff_username = _limit(staff_username, User._meta.get_field("username").max_length)
     staff, created_staff = Staff.objects.update_or_create(
         username=staff_username,
@@ -186,8 +197,12 @@ def _upsert_faculty(entry: DirectoryRow) -> bool:
             "first_name": entry.first_name.capitalize(),
             "last_name": entry.last_name.capitalize(),
             "email": entry.email,
-            "position": _limit(entry.position or "", Staff._meta.get_field("position").max_length),
-            "division": _limit(entry.division or "", Staff._meta.get_field("division").max_length),
+            "position": _limit(
+                entry.position or "", Staff._meta.get_field("position").max_length
+            ),
+            "division": _limit(
+                entry.division or "", Staff._meta.get_field("division").max_length
+            ),
             "phone_number": entry.phone,
             "bio": _build_bio(entry),
         },
@@ -213,7 +228,9 @@ def _upsert_student(entry: DirectoryRow) -> bool:
         "phone_number": entry.phone,
         "bio": _build_bio(entry),
     }
-    student, created = Student.objects.update_or_create(username=username, defaults=defaults)
+    student, created = Student.objects.update_or_create(
+        username=username, defaults=defaults
+    )
     if created:
         student.set_password(mk_password(entry.first_name, entry.last_name))
         student.save()

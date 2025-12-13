@@ -86,7 +86,7 @@ def clean_column_headers(dataset):
         "countyoforigin": "origin_county",
         "course_dept_no": "course_dept",
         "course_name": "course_dept",
-        "course_title": "title",        
+        "course_title": "title",
         "curriculum_short_name": "major",
         "dateofbirth": "birth_date",
         "dept_code": "course_dept",

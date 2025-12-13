@@ -107,9 +107,7 @@ def merge_people(target: PersonType, source: PersonType) -> PersonType:
         target_faculty = Faculty.objects.filter(staff_profile=target).first()
 
         if source_faculty and target_faculty:
-            Section.objects.filter(faculty=source_faculty).update(
-                faculty=target_faculty
-            )
+            Section.objects.filter(faculty=source_faculty).update(faculty=target_faculty)
             source_faculty.delete()
         elif source_faculty and not target_faculty:
             source_faculty.staff_profile = target
@@ -130,7 +128,9 @@ def merge_people(target: PersonType, source: PersonType) -> PersonType:
     # Append a merge note in bio to keep traceability
     merge_note = f"[merged from {source.pk}/{getattr(source, 'obj_id', '')}]"
     if merge_note not in (target.bio or ""):
-        target.bio = (target.bio or "").rstrip() + (" " if target.bio else "") + merge_note
+        target.bio = (
+            (target.bio or "").rstrip() + (" " if target.bio else "") + merge_note
+        )
 
     target.save()
 

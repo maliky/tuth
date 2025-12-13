@@ -52,6 +52,7 @@ def _truncate_curriculum_label(label: str) -> str:
 
 class LegacyGradeSheetResource(GradeResource):
     """Import SmartSchool grade sheets while reusing the standard widgets."""
+
     dataset_headers = {
         "StudentID": "student_id",
         "Grade": "grade_code",
@@ -280,7 +281,9 @@ class LegacyRegistrationResource(RegistrationResource):
         """Emit a summary when duplicates were encountered."""
         self.duplicate_logger.report(command)
 
-    def _log_duplicate_row(self, row_number: int, row: dict[str, str], error: str) -> None:
+    def _log_duplicate_row(
+        self, row_number: int, row: dict[str, str], error: str
+    ) -> None:
         """Append duplicate registration context to the log file."""
         self.duplicate_logger.log(
             {

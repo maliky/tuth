@@ -1,16 +1,10 @@
-"""Core module."""
+"""Core Admin module for academics."""
 
+from django.contrib import admin, messages
+from django.db import transaction
+from django.db.models import Count
 from django.urls import path, reverse
 from django.utils.html import format_html
-from django.db.models import Count
-
-from app.academics.models.concentration import (
-    Major,
-    MajorCurriculumCourse,
-    Minor,
-    MinorCurriculumCourse,
-)
-from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
@@ -22,19 +16,29 @@ from app.academics.admin.filters import (
     DepartmentFilterAc,
     ProgramFilterAc,
 )
+from app.academics.admin.merges import (
+    merge_curricula,
+    merge_curricula_action,
+    merge_departments,
+    merge_departments_action,
+)
 
 # https://pypi.org/project/django-more-admin-filters/
 # from more_admin_filters import MultiSelectFilter
 from app.academics.models.college import College
+from app.academics.models.concentration import (
+    Major,
+    MajorCurriculumCourse,
+    Minor,
+    MinorCurriculumCourse,
+)
 from app.academics.models.course import Course, CurriculumCourse
 from app.academics.models.curriculum import Curriculum, CurriculumStatus
 from app.academics.models.department import Department
 from app.academics.models.prerequisite import Prerequisite
-from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
-from app.shared.admin.filters import BaseCollegeFilter
 from app.people.models.student import Student
-from django.contrib import messages
-from django.db import transaction
+from app.shared.admin.filters import BaseCollegeFilter
+from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
 
 from .filters import CurriculumFilter
 from .inlines import (
@@ -68,40 +72,11 @@ class CollegeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
         "long_name",
         "faculty_count",
         "course_count",
-        "curricula_names",
-        "department_chairs",
+        "curricula_count",
+        "department_str",
         "student_counts_by_level",
     )
     search_fields = ("code", "long_name")
-
-
-@transaction.atomic
-def merge_curricula(target: Curriculum, sources):
-    """Merge curricula: move students and curriculum courses to target."""
-    for src in sources:
-        if src.pk == target.pk:
-            continue
-        Student.objects.filter(curriculum=src).update(curriculum=target)
-        for cc in CurriculumCourse.objects.filter(curriculum=src):
-            # Avoid duplicate course entries on the target curriculum
-            existing = CurriculumCourse.objects.filter(
-                curriculum=target, course=cc.course
-            ).first()
-            if existing:
-                continue
-            cc.curriculum = target
-            cc.save()
-        src.delete()
-
-
-@transaction.atomic
-def merge_departments(target: Department, sources):
-    """Merge departments: move courses (and their curricula) to target."""
-    for src in sources:
-        if src.pk == target.pk:
-            continue
-        Course.objects.filter(department=src).update(department=target)
-        Department.objects.filter(pk=src.pk).delete()
 
 
 class CourseCollegeFilter(BaseCollegeFilter):
@@ -211,7 +186,7 @@ class CurriculumAdmin(CollegeRestrictedAdmin):
         "student_count",
     )
     list_filter = ("college",)
-    list_editable =("status", "is_active", "college")
+    list_editable = ("status", "is_active", "college")
     autocomplete_fields = ("college",)
     inlines = [CurriculumCourseInline]
 
@@ -220,20 +195,6 @@ class CurriculumAdmin(CollegeRestrictedAdmin):
     search_fields = ("short_name", "long_name")
     actions = ["merge_curricula_action"]
 
-    # def get_urls(self):
-    #     """Returns urls."""
-    #     urls = super().get_urls()
-    #     custom = [
-    #         path(
-    #             "curriculum_by_semester_ac/",
-    #             self.admin_site.admin_view(
-    #                 CurriculumBySemester.as_view(model_admin=self)
-    #             ),
-    #             name="curriculum_by_semester_ac",
-    #         )
-    #     ]
-    #     return custom + urls
-
     def student_count(self, obj):
         """Adding a link to the student number."""
         count = obj.student_count()
@@ -241,19 +202,6 @@ class CurriculumAdmin(CollegeRestrictedAdmin):
             f"?curriculum__id__exact={obj.id}"
         )
         return format_html('<a href="{}">{}</a>', url, count)
-
-    @admin.action(description="Merge selected curricula into the first")
-    def merge_curricula_action(self, request, queryset):
-        """Merge curricula, moving students and programmed courses into the first."""
-        if queryset.count() < 2:
-            messages.warning(request, "Select at least two curricula to merge.")
-            return
-        target = queryset.order_by("id").first()
-        merge_curricula(target, queryset.exclude(pk=target.pk))
-        messages.success(
-            request,
-            f"Merged {queryset.count()-1} curricula into {target.short_name}.",
-        )
 
 
 @admin.register(CurriculumCourse)
@@ -310,7 +258,7 @@ class DepartmentAdmin(CollegeRestrictedAdmin):
     list_filter = [
         "college",
     ]
-    list_editable =("college",)
+    list_editable = ("college",)
     search_fields = ("short_name", "long_name", "college")
     inlines = [DepartmentCourseInline]
     actions = ["merge_departments_action"]
@@ -330,19 +278,6 @@ class DepartmentAdmin(CollegeRestrictedAdmin):
             f"?department__id__exact={obj.id}"
         )
         return format_html('<a href="{}">{}</a>', url, count)
-
-    @admin.action(description="Merge selected departments into the first")
-    def merge_departments_action(self, request, queryset):
-        """Merge departments: move courses into the first selected department."""
-        if queryset.count() < 2:
-            messages.warning(request, "Select at least two departments to merge.")
-            return
-        target = queryset.order_by("id").first()
-        merge_departments(target, queryset.exclude(pk=target.pk))
-        messages.success(
-            request,
-            f"Merged {queryset.count()-1} department(s) into {target.short_name}.",
-        )
 
 
 @admin.register(Prerequisite)

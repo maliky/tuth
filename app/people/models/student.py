@@ -13,6 +13,7 @@ from app.academics.choices import LEVEL_NUMBER
 from app.academics.models.course import Course, CurriculumCourse
 from app.academics.models.curriculum import Curriculum
 from app.people.models.core import AbstractPerson
+from app.shared.mixins import SimpleTableMixin
 from app.shared.types import CourseQuery
 from app.timetable.models.semester import Semester
 
