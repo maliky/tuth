@@ -1,9 +1,10 @@
 
 * Import review
-  The programmed courses or curriculumcourse import is not correct:
+The programmed courses or curriculumcourse import is not correct:
 it needs curriculum_id and course_id and credit hours. or field which can resolve to those ids.
 
-1. curriculum_course_id, or
+
+1. To get a Curriculum_course:    curriculum_course_id, or
    - curriculum_id, or
      - short_name*
      - college_id, or
@@ -18,7 +19,7 @@ it needs curriculum_id and course_id and credit hours. or field which can resolv
      - course_number*
    - credit_hours (autofill ok)      
 
-2. section_id, or
+2. To get a Section: section_id, or
    - semester_id, or
      - ay_id, or
        - start_date*
@@ -28,12 +29,30 @@ it needs curriculum_id and course_id and credit hours. or field which can resolv
    - section_no*
    - max_seat (autofill ok)
 
-3. session_id,
+3. To get a Session: session_id,
    - section_id -> 2
    - room_id, or
    - schedule_id, or
      - weekday* 
      - start_time*
+
+** The data or 'schedule file'
+This file contains rough information for sessions and assigned location.  Below is an excerpt of the data it contains.
+<<DATA
+ instructor	location	weekday	cid	credit	course_title	college	start_time	end_time	ay	semester_no
+ YANCY, George H.	AC-30	Monday	ACCT_102_s1	3	Introduction to Accounting	COBA	08:00	09:30	2025-2026	1
+ YANCY, George H.	AC-30	Tuesday	ACCT_102_s1	3	Introduction to Accounting	COBA	08:00	09:30	2025-2026	1
+ GANDYU, A. S.	AC-31	Wednesday	ACCT_102_s2	3	Introduction to Accounting	COBA	16:20	17:50	2025-2026	1
+ GANDYU, A. S.	AC-31	Thursday	ACCT_102_s2	3	Introduction to Accounting	COBA	16:20	17:50	2025-2026	1
+ MOULBA, Alpha P.	AC-31	Monday	ACCT_102_s3	3	Introduction to Accounting	COBA	09:40	11:10	2025-2026	1
+ MOULBA, Alpha P.	AC-31	Tuesday	ACCT_102_s3	3	Introduction to Accounting	COBA	09:40	11:10	2025-2026	1
+ DATA>>
+
+I want to create a dedicated django  management commant to import that data from @Seed_data/25-26Sem2_cleaned.xlsx.  The import should  get_or_create  Schedule,  Sections, SecSession, Room, Space, Faculties, Colleges, Courses, Curriculum and CurriculumCourses.
+
+*** To import the curriclum from 
+ Need to link course_title + cid (dept_code, course_no, section_no) + semester + college ->  a curriculum.
+ There should be only one college curriculum active for a course no of a departement for a specificy academic semester, if many take the most recent one, if non create the missing link with defaults.
   
 * <2025-11-10 Mon 04:35>  Updated implementation plan
 ** Curriculum creation & approval

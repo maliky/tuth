@@ -2,6 +2,7 @@
 
 from import_export import widgets
 
+from app.shared.utils import get_in_row
 from app.spaces.admin.widgets import RoomCodeWidget
 from app.timetable.choices import WEEKDAYS_NUMBER
 from app.timetable.models.schedule import Schedule
@@ -9,7 +10,7 @@ from app.timetable.models.session import SecSession
 
 
 class SecSessionWidget(widgets.ForeignKeyWidget):
-    """Create a :class:SecSession from room and schedule data."""
+    """Create a :class:SecSession from room and section."""
 
     def __init__(self):
         super().__init__(SecSession)  # va exporter session.pk
@@ -21,11 +22,15 @@ class SecSessionWidget(widgets.ForeignKeyWidget):
         if not value:
             return None
 
-        room = self.room_w.clean(value.strip(), row)
 
-        weekday_value = row.get("weekday", "").strip()
+        # location is a code such as AA-12
+        location = get_in_row('location',row )
+        room=self.room_w.clean(location, row=row)
+        weekday_value = get_in_row('weekday', row)
+        
         schedule = self.schedule_w.clean(value=weekday_value, row=row)
 
+        # > This will break, I need a section id to create a secsession no?
         session, _ = SecSession.objects.get_or_create(
             room=room,
             schedule=schedule,

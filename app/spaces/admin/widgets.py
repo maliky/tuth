@@ -58,7 +58,7 @@ class RoomWidget(widgets.ForeignKeyWidget):
         return room
 
 
-class RoomCodewidget(widgets.ForeignKeyWidget):
+class RoomCodeWidget(widgets.ForeignKeyWidget):
     """Create a :class:Room from values like "AA-01"."""
 
     def __init__(self):
