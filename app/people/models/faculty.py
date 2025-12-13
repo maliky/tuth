@@ -1,6 +1,6 @@
 """Faculty class."""
 
-from typing import Any, Dict, Self, Tuple, cast, no_type_check
+from typing import Any, Dict, Self, Tuple, cast
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -125,9 +125,8 @@ class Faculty(models.Model):
         """Returns the username attached to the staff_profile."""
         return self.staff_profile.username
 
-    @no_type_check
     @property
-    def primary_assignment_label(self) -> str:
+    def primary_assignment_label(self) -> str:  # type: ignore[misc]
         """Return the department/college where the faculty teaches the most sections."""
         sections = (
             self.section_set.values(

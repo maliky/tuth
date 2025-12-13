@@ -60,9 +60,11 @@ class Staff(AbstractPerson):
         # duplicates have to be handle manualy latter
         staff_code = f"DFT_STF{staff_id:04d}"
         default_user = get_default_user()
-        existing = cls.objects.filter(staff_id=staff_code, user=default_user).first()
+        existing = cast(
+            Self, cls.objects.filter(staff_id=staff_code, user=default_user).first()
+        )
         if existing:
-            return cast(Self, existing)
+            return existing
 
         staff = cls(
             staff_id=staff_code,
@@ -72,7 +74,7 @@ class Staff(AbstractPerson):
             position=f"Joker {staff_id:04d}",
         )
         staff.save()
-        return cast(Self, staff)
+        return staff
 
     @classmethod
     def get_unique_default(cls) -> Self:

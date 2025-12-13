@@ -54,13 +54,14 @@ class PersonManager(Manager):
         second_score = 0.0
 
         for person in candidates:
-            user_obj = getattr(person, "user", None)
+            person_any = cast(Any, person)
+            user_obj = getattr(person_any, "user", None)
             if user_obj is None:
                 continue
             candidate_name = " ".join(
                 [
                     user_obj.first_name or "",
-                    getattr(person, "middle_name", "") or "",
+                    getattr(person_any, "middle_name", "") or "",
                     user_obj.last_name or "",
                 ]
             ).strip()
