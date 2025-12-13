@@ -147,18 +147,7 @@ class CourseAdmin(DepartmentRestrictedAdmin):
 
     search_fields = ("short_code", "department__short_name", "title")
     fields = ("short_code", "department", "number", "title", "description")
-    actions = [update_department, "merge_departments_action"]
-
-    @admin.action(description="Merge selected courses' departments into the first")
-    def merge_departments_action(self, request, queryset):
-        """Merge departments via courses (targets first course's department)."""
-        depts = list({c.department for c in queryset if c.department})
-        if len(depts) < 2:
-            messages.warning(request, "Select courses from at least two departments to merge.")
-            return
-        target = depts[0]
-        merge_departments(target, depts[1:])
-        messages.success(request, f"Merged {len(depts)-1} department(s) into {target.short_name}.")
+    actions = [update_department]
 
     def get_form(self, request, obj=None, **kwargs):
         """Return the admin form with dep ordered by their short_name."""
