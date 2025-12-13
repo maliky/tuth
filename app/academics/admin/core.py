@@ -40,7 +40,7 @@ from app.people.models.student import Student
 from app.shared.admin.filters import BaseCollegeFilter
 from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
 
-from .filters import CurriculumFilter
+from .filters import CourseCollegeFilter, CurriculumFilter
 from .inlines import (
     CourseCurriculumInline,
     CurriculumCourseInline,
@@ -164,9 +164,6 @@ class CollegeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
     readonly_fields = ("active_curricula_list", "inactive_curricula_list")
 
 
-class CourseCollegeFilter(BaseCollegeFilter):
-    field_path = "department__college"
-    parameter_name = "department__college__id__exact"
 
 
 @admin.register(Course)

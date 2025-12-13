@@ -11,10 +11,16 @@ from django.contrib import admin
 from django.db.models import Count
 from django.urls import reverse
 
+from app.shared.admin.filters import BaseCollegeFilter
+
 
 # class CollegeChoicesFilter(MultiChoice):
 #     FILTER_LABEL = "College"
 #     BUTTON_LABEL = "Filter"
+
+class CourseCollegeFilter(BaseCollegeFilter):
+    field_path = "department__college"
+    parameter_name = "department__college__id__exact"
 
 CurriculumCourseFilterAc = AutocompleteFilterFactory(
     "Curriculum",
