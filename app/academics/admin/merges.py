@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING
 
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.db import transaction
 
 from app.academics.models.course import Course, CurriculumCourse
@@ -24,7 +24,7 @@ def merge_departments_action(dept_admin: "DepartmentAdmin", request, queryset):
     merge_departments(target, queryset.exclude(pk=target.pk))
     messages.success(
         request,
-        f"Merged {queryset.count()-1} department(s) into {target.short_name}.",
+        f"Merged {queryset.count() - 1} department(s) into {target.short_name}.",
     )
 
 
@@ -38,7 +38,7 @@ def merge_curricula_action(curriculum_admin: "CurriculumAdmin", request, queryse
     merge_curricula(target, queryset.exclude(pk=target.pk))
     messages.success(
         request,
-        f"Merged {queryset.count()-1} curricula into {target.short_name}.",
+        f"Merged {queryset.count() - 1} curricula into {target.short_name}.",
     )
 
 

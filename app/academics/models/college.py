@@ -77,7 +77,6 @@ class College(models.Model):
     @property
     def department_str(self) -> str:
         """Return departments of this college."""
-        result: list[str] = []
         return ", ".join([f"{dept.short_name}" for dept in self.departments.all()])
 
     @property

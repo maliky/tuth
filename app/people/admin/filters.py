@@ -1,3 +1,5 @@
+"""Admin list filters for people app."""
+
 from app.shared.admin.filters import (
     BaseCollegeFilter,
     BaseDepartmentFilter,

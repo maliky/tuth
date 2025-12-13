@@ -59,9 +59,6 @@ def make_course_code(dept: Department, number: str, short=False) -> str:
     return f"{_dept_code}-{number}".upper()
 
 
-from typing import Mapping
-
-
 def get_in_row(key: str, row: Optional[Mapping[str, str | None]]) -> str:
     """Return a value from the row (any mapping) safely stripped to a string.
 
@@ -96,7 +93,6 @@ def clean_column_headers(dataset):
         "fathername": "father_name",
         "firstname": "first_name",
         "gender": "gender",
-        "grade": "grade_code",
         "grade": "grade_code",
         "instructor": "faculty",
         "lastname": "last_name",

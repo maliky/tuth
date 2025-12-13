@@ -1,6 +1,9 @@
 """A module for user mergins actions."""
 
 from django.db import transaction
+from django.contrib import messages
+
+from app.people.services.merge_people import merge_users
 
 
 class MergeUsersMixin:
