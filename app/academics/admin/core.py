@@ -25,7 +25,6 @@ from app.academics.admin.filters import (
 
 # https://pypi.org/project/django-more-admin-filters/
 # from more_admin_filters import MultiSelectFilter
-from app.academics.admin.views import CurriculumBySemester
 from app.academics.models.college import College
 from app.academics.models.course import Course, CurriculumCourse
 from app.academics.models.curriculum import Curriculum, CurriculumStatus
@@ -33,6 +32,7 @@ from app.academics.models.department import Department
 from app.academics.models.prerequisite import Prerequisite
 from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
 from app.shared.admin.filters import BaseCollegeFilter
+from app.people.models.student import Student
 from django.contrib import messages
 from django.db import transaction
 

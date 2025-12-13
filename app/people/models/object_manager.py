@@ -74,14 +74,16 @@ class PersonManager(Manager):
 
         if best_user and best_score >= 0.92 and (best_score - second_score) < 0.05:
             logger.info(
-                "Ambiguous potential duplicate; skipping auto-merge",
-                extra={
-                    "first_name": first,
-                    "middle_name": middle,
-                    "last_name": last,
-                    "best_score": best_score,
-                    "second_score": second_score,
-                },
+                "Ambiguous duplicate for %s '%s %s %s'; best=%s '%s' (%.2f), second=%.50s (%.2f); skipping auto-merge",
+                self.model.__name__,
+                first,
+                middle,
+                last,
+                getattr(best_user, "username", ""),
+                getattr(best_user, "get_full_name", lambda: "")(),
+                best_score,
+                base_name,
+                second_score,
             )
 
         return None

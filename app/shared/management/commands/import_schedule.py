@@ -247,6 +247,15 @@ class Command(BaseCommand):
         title: str,
         stats: ImportStats,
     ) -> Course:
+        candidates = (
+            Course.objects.filter(number=course_no, department=department)
+            .order_by("-id")
+            .all()
+        )
+        if candidates:
+            # reuse the most recently created course when duplicates exist
+            return candidates[0]
+
         course, created = Course.objects.get_or_create(
             number=course_no,
             department=department,
