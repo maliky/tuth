@@ -4,7 +4,7 @@ from django.contrib import admin, messages
 from django.db import transaction
 from django.db.models import Count
 from django.urls import path, reverse
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
@@ -70,13 +70,98 @@ class CollegeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
     list_display = (
         "code",
         "long_name",
-        "faculty_count",
-        "course_count",
-        "curricula_count",
-        "department_str",
-        "student_counts_by_level",
+        "faculty_count_link",
+        "course_count_link",
+        "curriculum_count_link",
+        "department_chair_links",
+        "student_counts_by_level_link",
     )
     search_fields = ("code", "long_name")
+
+    @admin.display(description="Curricula")
+    def curriculum_count_link(self, obj: College):
+        count = obj.curricula.count()
+        url = reverse("admin:academics_curriculum_changelist") + (
+            f"?college__id__exact={obj.id}"
+        )
+        return format_html('<a href="{}">{}</a>', url, count)
+
+    @admin.display(description="Faculty")
+    def faculty_count_link(self, obj: College):
+        count = obj.faculty_count
+        url = reverse("admin:people_faculty_changelist") + (
+            f"?college__id__exact={obj.id}"
+        )
+        return format_html('<a href="{}">{}</a>', url, count)
+
+    @admin.display(description="Courses")
+    def course_count_link(self, obj: College):
+        count = obj.course_count
+        url = reverse("admin:academics_course_changelist") + (
+            f"?department__college__id__exact={obj.id}"
+        )
+        return format_html('<a href="{}">{}</a>', url, count)
+
+    @admin.display(description="Departments")
+    def department_chair_links(self, obj: College):
+        """Link departments filtered by college."""
+        qs = obj.departments.all().order_by("short_name")
+        rows = []
+        for dept in qs:
+            url = reverse("admin:academics_department_changelist") + (
+                f"?college__id__exact={obj.id}&id__exact={dept.id}"
+            )
+            rows.append((url, dept.short_name))
+        if not rows:
+            return ""
+        return format_html_join(", ", '<a href="{}">{}</a>', rows)
+
+    @admin.display(description="Students by level")
+    def student_counts_by_level_link(self, obj: College):
+        """Link to students filtered by college and computed level."""
+        rows = []
+        students = list(Student.objects.filter(curriculum__college=obj))
+        for level in ("Freshman", "Sophomore", "Junior", "Senior"):
+            count = sum(1 for s in students if getattr(s, "class_level", "") == level)
+            url = reverse("admin:people_student_changelist") + (
+                f"?curriculum__college__id__exact={obj.id}&class_level={level}"
+            )
+            rows.append((url, level, count))
+        return format_html_join(" | ", '<a href="{}">{}</a>: {}', rows)
+
+    @admin.display(description="Active curricula")
+    def active_curricula_list(self, obj: College):
+        if not getattr(obj, "pk", None):
+            return "Save the college to view curricula."
+        active = obj.curricula.filter(is_active=True).order_by("short_name")
+        rows = [
+            (
+                reverse("admin:academics_curriculum_change", args=[cur.pk]),
+                cur.short_name,
+            )
+            for cur in active
+        ]
+        if not rows:
+            return "None"
+        return format_html_join(", ", '<a href="{}">{}</a>', rows)
+
+    @admin.display(description="Inactive curricula")
+    def inactive_curricula_list(self, obj: College):
+        if not getattr(obj, "pk", None):
+            return "Save the college to view curricula."
+        inactive = obj.curricula.filter(is_active=False).order_by("short_name")
+        rows = [
+            (
+                reverse("admin:academics_curriculum_change", args=[cur.pk]),
+                cur.short_name,
+            )
+            for cur in inactive
+        ]
+        if not rows:
+            return "None"
+        return format_html_join(", ", '<a href="{}">{}</a>', rows)
+    fields = ("code", "long_name", "active_curricula_list", "inactive_curricula_list")
+    readonly_fields = ("active_curricula_list", "inactive_curricula_list")
 
 
 class CourseCollegeFilter(BaseCollegeFilter):
