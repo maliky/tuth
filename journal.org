@@ -2,6 +2,11 @@
 * Interface
 ** Add a table/model in registry 
 
+** General guidlines
+- for any department filter user a DepartmentFilterAc or similar
+- for any department filter user a SemesterFilterAc or similar
+- for any section filter user a SectionFilterAc or similar    
+
 ** in admin/academics/college/add/
 - add a view to list all active and inactive  curriculum   of this college
 
@@ -14,7 +19,6 @@
 ***
 Transform the BaseDepartmentFilter 
 
-** Move credit_
 
 * DONE Import review
   CLOSED: [2025-12-13 sam. 17:57]
