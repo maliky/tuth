@@ -9,9 +9,11 @@ from app.academics.models.course import Course, CurriculumCourse
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.people.models.student import Student
+from app.timetable.models.section import Section
 
 if TYPE_CHECKING:
     from app.academics.admin.core import CurriculumAdmin, DepartmentAdmin
+    from app.academics.admin.core import CourseAdmin
 
 
 @admin.action(description="Merge selected departments into the first")
@@ -69,3 +71,40 @@ def merge_departments(target: Department, sources):
             continue
         Course.objects.filter(department=src).update(department=target)
         Department.objects.filter(pk=src.pk).delete()
+
+
+@admin.action(description="Merge selected courses into the first")
+def merge_courses_action(course_admin: "CourseAdmin", request, queryset):
+    """Merge courses: move curriculum-course links and sections to the first course."""
+    if queryset.count() < 2:
+        messages.warning(request, "Select at least two courses to merge.")
+        return
+    target = queryset.order_by("id").first()
+    sources = queryset.exclude(pk=target.pk)
+    merge_courses(target, sources)
+    messages.success(
+        request,
+        f"Merged {sources.count()} course(s) into {target.short_code}.",
+    )
+
+
+@transaction.atomic
+def merge_courses(target: Course, sources):
+    """Move sections and curriculum links from sources to target."""
+    for src in sources:
+        if src.pk == target.pk:
+            continue
+        # Move sections
+        Section.objects.filter(curriculum_course__course=src).update(
+            curriculum_course__course=target
+        )
+        # Move curriculum-course links
+        for cc in CurriculumCourse.objects.filter(course=src):
+            existing = CurriculumCourse.objects.filter(
+                course=target, curriculum=cc.curriculum
+            ).first()
+            if existing:
+                continue
+            cc.course = target
+            cc.save()
+        src.delete()
