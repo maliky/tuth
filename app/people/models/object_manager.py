@@ -45,27 +45,30 @@ class PersonManager(Manager):
 
         base_name = " ".join([first, middle, last]).strip()
 
-        candidates = self.model.objects.filter(user__last_name__iexact=last)
+        candidates = self.get_queryset().filter(user__last_name__iexact=last)
         if not candidates.exists():
-            candidates = self.model.objects.filter(user__last_name__istartswith=last[:3])
+            candidates = self.get_queryset().filter(user__last_name__istartswith=last[:3])
 
         best_user: Optional[User] = None
         best_score = 0.0
         second_score = 0.0
 
         for person in candidates:
+            user_obj = getattr(person, "user", None)
+            if user_obj is None:
+                continue
             candidate_name = " ".join(
                 [
-                    person.user.first_name or "",
+                    user_obj.first_name or "",
                     getattr(person, "middle_name", "") or "",
-                    person.user.last_name or "",
+                    user_obj.last_name or "",
                 ]
             ).strip()
             score = name_similarity(base_name, candidate_name)
             if score > best_score:
                 second_score = best_score
                 best_score = score
-                best_user = cast(User, person.user)
+                best_user = cast(User, user_obj)
             elif score > second_score:
                 second_score = score
 

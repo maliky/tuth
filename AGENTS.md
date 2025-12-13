@@ -59,3 +59,4 @@ Use consistent naming:
 ### Linting and checks
 - Check that the code pass 
 black, flake8 and mypy
+- Run `black`, `flake8`, and `mypy` at the end of your edits. Do not run `py_compile`.

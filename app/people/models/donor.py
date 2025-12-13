@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 from django.contrib.auth.models import User
 from django.db import models
 from simple_history.models import HistoricalRecords
@@ -53,4 +55,4 @@ class Donor(AbstractPerson):
             user=user,
             defaults={"username": user.username},
         )
-        return donor
+        return cast("Donor", donor)

@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import Sum
@@ -176,7 +178,7 @@ class Student(AbstractPerson):
                 "curriculum": Curriculum.get_default(),
             },
         )
-        return student
+        return cast("Student", student)
 
     class Meta:
         constraints = [

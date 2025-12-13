@@ -80,9 +80,9 @@ class College(models.Model):
         return ", ".join([f"{dept.short_name}" for dept in self.departments.all()])
 
     @property
-    def curricula_count(self) -> str:
+    def curricula_count(self) -> int:
         """Return number of curricula under this college."""
-        return self.curricula.count()
+        return int(self.curricula.count())
 
     @property
     def faculty_count(self) -> int:
