@@ -63,10 +63,10 @@ class Command(BaseCommand):
 
         call_command("makemigrations", interactive=False, verbosity=1)
         call_command("migrate", interactive=False, verbosity=1)
+        ensure_superuser(self)
 
         if not opts["no_seed"]:
             call_command("create_states")
-            ensure_superuser(self)
             call_command("load_roles", verbosity=0)
 
     def _delete_migrations(self, project_root):
