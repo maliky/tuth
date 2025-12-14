@@ -133,13 +133,18 @@ class Faculty(models.Model):
     def primary_assignment_label(self) -> str:
         """Return the department/college where the faculty teaches the most sections."""
         qs: Any = self.section_set  # noqa: ANN401
-        row = qs.values_list(
-            "curriculum_course__course__department__short_name",
-            "curriculum_course__course__department__college__code",
-        ).annotate(section_total=Count("pk")).order_by(
-            "-section_total",
-            "curriculum_course__course__department__short_name",
-        ).first()
+        row = (
+            qs.values_list(
+                "curriculum_course__course__department__short_name",
+                "curriculum_course__course__department__college__code",
+            )
+            .annotate(section_total=Count("pk"))
+            .order_by(
+                "-section_total",
+                "curriculum_course__course__department__short_name",
+            )
+            .first()
+        )
 
         if not row:
             return ""
@@ -153,7 +158,6 @@ class Faculty(models.Model):
 
         return dept_s or college_s
 
-    
     def _ensure_college(self):
         """Make sure we have a college."""
         if not self.college_id:

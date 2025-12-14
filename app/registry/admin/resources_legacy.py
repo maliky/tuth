@@ -10,8 +10,8 @@ from app.people.admin.widgets import GradeStudentWidget
 from app.registry.admin.resources import GradeResource, RegistrationResource
 from app.registry.models.registration import RegistrationStatus
 from app.shared.data import legacy_registration_rows
-from app.shared.importing.loggers import CsvRowLogger
-from app.shared.importing.rows import (
+from app.shared.importing import (
+    CsvRowLogger,
     coerce_field,
     first_value,
     normalize_field,

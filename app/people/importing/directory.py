@@ -10,9 +10,7 @@ import pandas as pd
 import phonenumbers
 
 from app.people.importing.names import NameParts, parse_name
-from app.shared.importing.dataframe_utils import drop_constant_columns
-from app.shared.importing.loggers import CsvRowLogger
-from app.shared.importing.logging_utils import get_import_logger
+from app.shared.importing import CsvRowLogger, drop_constant_columns, get_import_logger
 from app.shared.utils import get_in_row
 
 
