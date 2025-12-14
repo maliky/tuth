@@ -19,6 +19,7 @@ from app.academics.admin.filters import (
 )
 from app.academics.admin.merges import (
     merge_curricula,
+    merge_courses_action,    
     merge_curricula_action,
     merge_departments,
     merge_departments_action,
