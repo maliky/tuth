@@ -35,7 +35,7 @@ from app.registry.admin import (
 )
 from app.shared.auth.helpers import ensure_superuser  # noqa: F401
 from app.shared.file_utils import guess_tabular_format, read_text_file
-from app.shared.importing.logging_utils import get_import_logger
+from app.shared.importing import get_import_logger
 from app.shared.management import (
     DIRECTORY_RESOURCES,
     LEGACY_DIRECTORY_RESOURCES,
