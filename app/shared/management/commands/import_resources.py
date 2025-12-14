@@ -81,6 +81,12 @@ class Command(BaseCommand):
             help="Path to CSV file with resources data",
         )
         parser.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Parse/import without writing to the database.",
+        )
+
+        parser.add_argument(
             "-r",
             "--resource",
             action="append",
@@ -92,11 +98,12 @@ class Command(BaseCommand):
         """Validate and import each resource from the provided CSV."""
         path = Path(opts["file_path"])
         selected = opts.get("resource")
+        dry_run  = opts.get("dry_run")
         if not path.exists():
             raise FileNotFoundError(str(path))
 
         if path.is_dir():
-            _import_from_directory(self, path, selected)
+            _import_from_directory(self, path, selected, dry_run)
             return
 
         dataset = _load_dataset()
@@ -109,7 +116,7 @@ class Command(BaseCommand):
                     f"Resource '{key}' is only available when importing from a directory."
                 )
             ResourceClass = RESOURCE_REGISTRY[key]
-            _run_import(self, dataset, key, ResourceClass)
+            _run_import(self, dataset, key, ResourceClass, dry_run)
 
 
 # ------------------------------------------------------------------ helpers
@@ -120,6 +127,7 @@ def _run_import(
     dataset: Dataset,
     label: str,
     ResourceClass: ModelResourceType,
+    dry_run:bool=False
 ) -> None:
     """Execute the import for a dataset/resource pair with progress output."""
     resource: resources.ModelResource = ResourceClass()
@@ -145,7 +153,7 @@ def _run_import(
                 row_result = resource.import_row(
                     row,
                     instance_loader,
-                    dry_run=False,
+                    dry_run=dry_run,
                     row_number=row_number,
                 )
             except IntegrityError as exc:
@@ -227,7 +235,7 @@ def _run_import(
     )
 
 
-def _import_from_directory(cmd, directory: Path, selected: list[str] | None) -> None:
+def _import_from_directory(cmd, directory: Path, selected: list[str] | None, dry_run:bool=False) -> None:
     """Load individual CSV files found in a directory."""
     if selected:
         targets = selected
@@ -248,7 +256,7 @@ def _import_from_directory(cmd, directory: Path, selected: list[str] | None) -> 
             )
             continue
 
-        cmd._run_import(dataset, name, ResourceClass)
+        cmd._run_import(dataset, name, ResourceClass, dry_run)
 
 
 def _load_directory_dataset(directory: Path, filenames: Iterable[str]) -> Dataset | None:
