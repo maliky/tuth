@@ -1,0 +1,72 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+<link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+<style>
+  .tusis-login {
+    max-width: 420px;
+    margin: 3rem auto;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 20px 40px rgba(48,56,70,0.12);
+    background: #fff;
+  }
+  body.login #content {
+    padding: 0;
+  }
+  .tusis-login h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+</style>
+{% endblock %}
+
+{% block nav-sidebar %}{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+<div class="tusis-login">
+  <div class="text-center mb-4">
+    <p class="text-uppercase text-muted small mb-1">{% trans "Tusis unified access" %}</p>
+    <h1>{% trans "Sign in" %}</h1>
+    <p class="text-muted mb-0">
+      {% trans "Use your university credentials. Tusis will route you to the right workspace automatically." %}
+    </p>
+  </div>
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger">
+      {{ form.non_field_errors }}
+    </div>
+  {% endif %}
+
+  <form method="post" action="{{ app_path }}">
+    {% csrf_token %}
+    <div class="mb-3">
+      {{ form.username.label_tag }}
+      {{ form.username }}
+      {% if form.username.errors %}
+        <div class="text-danger small">{{ form.username.errors }}</div>
+      {% endif %}
+    </div>
+    <div class="mb-3">
+      {{ form.password.label_tag }}
+      {{ form.password }}
+      {% if form.password.errors %}
+        <div class="text-danger small">{{ form.password.errors }}</div>
+      {% endif %}
+    </div>
+
+    {% if next %}
+      <input type="hidden" name="next" value="{{ next }}">
+    {% endif %}
+
+    <button class="btn btn-primary w-100" type="submit">{% trans "Continue" %}</button>
+  </form>
+
+  <p class="small text-muted mt-3 mb-0">
+    {% trans "Need help? it.support@tusis.edu" %}
+  </p>
+</div>
+{% endblock %}

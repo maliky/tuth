@@ -1,0 +1,65 @@
+{% extends "website/base.html" %}
+
+{% block title %}Sign in · Tusis{% endblock %}
+
+{% block content %}
+<section class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-5">
+      <div class="bg-white shadow-sm rounded-4 p-4">
+        <p class="text-uppercase text-muted small mb-1">Tusis unified access</p>
+        <h1 class="h4 mb-3">Sign in</h1>
+        <p class="text-muted">
+          Sign in once and Tusis routes you to the right workspace automatically—student, faculty, finance, or registrar.
+        </p>
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="mb-3">
+            {{ form.username.label_tag }}
+            {{ form.username }}
+            {% if form.username.errors %}
+              <div class="text-danger small">{{ form.username.errors }}</div>
+            {% endif %}
+          </div>
+          <div class="mb-3">
+            {{ form.password.label_tag }}
+            {{ form.password }}
+            {% if form.password.errors %}
+              <div class="text-danger small">{{ form.password.errors }}</div>
+            {% endif %}
+          </div>
+          {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+          {% endif %}
+          <button class="btn btn-primary w-100" type="submit">Continue</button>
+        </form>
+
+        <p class="small text-muted mt-4 mb-0">
+          Having trouble? it.support@tusis.edu
+        </p>
+      </div>
+    </div>
+    <div class="col-lg-5 d-none d-lg-block">
+      <div class="h-100 rounded-4 bg-dark text-white p-4 d-flex flex-column justify-content-between">
+        <div>
+          <p class="text-uppercase small text-white-50 mb-2">Campus brief</p>
+          <h2 class="h4">Your campus, one portal</h2>
+          <p class="text-white-50">
+            Tusis keeps students connected to advisors, helps faculty manage teaching, and gives staff a single source of truth for every process.
+          </p>
+        </div>
+        <div class="small text-white-50">
+          Problems signing in?
+          <br />
+          it.support@tusis.edu
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
