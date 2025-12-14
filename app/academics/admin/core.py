@@ -9,46 +9,45 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
-from app.academics.admin.actions import update_curriculum, update_department
-from app.academics.admin.filters import (
-    CurriculumFilterAc,
-    # CollegeChoicesFilter,
-    DepartmentFilterAc,
-    ProgramFilterAc,
-    CourseDepartmentFilterAc,
-)
-from app.academics.admin.merges import (
-    merge_curricula,
-    merge_courses_action,    
-    merge_curricula_action,
-    merge_departments,
-    merge_departments_action,
-)
-
-# https://pypi.org/project/django-more-admin-filters/
-# from more_admin_filters import MultiSelectFilter
-from app.academics.models.college import College
-from app.academics.models.concentration import (
+from app.academics.models import (
+    College,
+    Course,
+    Curriculum,
+    CurriculumCourse,
+    CurriculumStatus,
+    Department,
     Major,
     MajorCurriculumCourse,
     Minor,
     MinorCurriculumCourse,
+    Prerequisite,
 )
-from app.academics.models.course import Course, CurriculumCourse
-from app.academics.models.curriculum import Curriculum, CurriculumStatus
-from app.academics.models.department import Department
-from app.academics.models.prerequisite import Prerequisite
 from app.people.models.student import Student
 from app.shared.admin.filters import BaseCollegeFilter
 from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
 
-from .filters import CourseCollegeFilter, CourseDepartmentFilterAc, CurriculumFilter
+from .actions import update_curriculum, update_department
+from .filters import (
+    CourseCollegeFilter,
+    CourseDepartmentFilterAc,
+    CurriculumFilter,
+    CurriculumFilterAc,
+    DepartmentFilterAc,
+    ProgramFilterAc,
+)
 from .inlines import (
     CourseCurriculumInline,
     CurriculumCourseInline,
     DepartmentCourseInline,
     PrerequisiteInline,
     RequiresInline,
+)
+from .merges import (
+    merge_courses_action,
+    merge_curricula,
+    merge_curricula_action,
+    merge_departments,
+    merge_departments_action,
 )
 from .resources import (
     CollegeResource,
@@ -162,10 +161,9 @@ class CollegeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
         if not rows:
             return "None"
         return format_html_join(", ", '<a href="{}">{}</a>', rows)
+
     fields = ("code", "long_name", "active_curricula_list", "inactive_curricula_list")
     readonly_fields = ("active_curricula_list", "inactive_curricula_list")
-
-
 
 
 @admin.register(Course)
