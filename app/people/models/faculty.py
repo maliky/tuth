@@ -131,31 +131,20 @@ class Faculty(models.Model):
 
     @property
     def primary_assignment_label(self) -> str:
-        """
-        Return the department/college where the faculty teaches the most sections.
-        """
-        # DB-efficient: GROUP BY dept + college and COUNT(*) in SQL.
-        # RelatedManager typing is often where mypy/django-stubs gets upset.
-        # Cast it once, then use it as a QuerySet[Section].
-        qs: QuerySet["Section"] =  self.section_set.all()
+        """Return the department/college where the faculty teaches the most sections."""
+        qs: Any = self.section_set  # noqa: ANN401
+        row = qs.values_list(
+            "curriculum_course__course__department__short_name",
+            "curriculum_course__course__department__college__code",
+        ).annotate(section_total=Count("pk")).order_by(
+            "-section_total",
+            "curriculum_course__course__department__short_name",
+        ).first()
 
-        sections = cast(
-            Optional[tuple[Optional[str], Optional[str]]],
-            qs.values(
-                "curriculum_course__course__department__short_name",
-                "curriculum_course__course__department__college__code",
-            )
-            .annotate(section_total=Count("pk"))
-            .order_by(
-                "-section_total",
-                "curriculum_course__course__department__short_name",
-            ).first(),
-        )
-
-        if not sections:
+        if not row:
             return ""
 
-        dept, college = sections
+        dept, college, *_ = row  # type: ignore[misc]
         dept_s = dept or ""
         college_s = college or ""
 
