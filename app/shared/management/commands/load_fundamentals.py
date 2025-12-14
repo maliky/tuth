@@ -20,41 +20,47 @@ class Command(BaseCommand):
         parser.add_argument(
             "-d",
             "--dir",
-            default="./Seed_data/Trimed",
-            help="Directory containing the split CSV files.",
+            default="./Seed_data/",
+            help="Directory containing the data files.",
+        )
+        parser.add_argument(
+            "--no-seed",
+            action="store_true",
+            help="create_states / ensure_superuser / load_roles steps.",
         )
 
-    def handle(self, *args, **options) -> None:
+    def handle(self, *args, **opts) -> None:
         """Run create_states, load fundamentals, people, then grades."""
-        csv_dir = Path(options["dir"]).expanduser().resolve()
+        csv_dir = Path(opts["dir"]).expanduser().resolve()
+
         if not csv_dir.is_dir():
             raise CommandError(f"{csv_dir} is not a directory")
 
-        self.stdout.write("⇒ Creating default states…")
-        call_command("create_states")
-        self.stdout.write(self.style.SUCCESS("✔ states ready"))
+        if not opts["no_seed"]:
+            self.stdout.write("-> Creating default states…")
+            call_command("create_states")
+            self.stdout.write(self.style.SUCCESS("✔ states ready"))
+            call_command("load_roles", verbosity=0)
 
-        self.stdout.write("⇒ Importing academic fundamentals (rooms/courses/semesters)…")
-        self._import_resources(
-            csv_dir, ["room", "course", "curriculum_course", "semester"]
-        )
+        self.stdout.write("-> Importing fundamentals")
+        _import_resources(csv_dir, ["room", "curriculum", "semester"])
 
-        self.stdout.write("⇒ Importing people profiles (faculty/donors/students)…")
-        self._import_resources(csv_dir, ["faculty", "donor", "student"])
+        self.stdout.write("-> Importing people")
+        _import_resources(csv_dir, ["faculty", "donor", "student"])
 
-        self.stdout.write("⇒ Importing legacy registrations and grades…")
-        self._import_resources(csv_dir, ["legacy_registration", "legacy_grade"])
+        self.stdout.write("-> Importing legacy registrations and grades")
+        _import_resources(csv_dir, ["legacy_registration", "legacy_grade"])
+
         self.stdout.write(self.style.SUCCESS("✔ fundamental data load completed"))
 
-    # ------------------------------------------------------------------ helpers
 
-    def _import_resources(self, directory: Path, resources: list[str]) -> None:
-        """Delegate a subset of imports to the import_resources command."""
-        if not resources:
-            return
-        call_command(
-            "import_resources",
-            "-f",
-            str(directory),
-            resource=resources,
-        )
+def _import_resources(directory: Path, resources: list[str]) -> None:
+    """Delegate a subset of imports to the import_resources command."""
+    if not resources:
+        return
+    call_command(
+        "import_resources",
+        "-f",
+        str(directory),
+        resource=resources,
+    )

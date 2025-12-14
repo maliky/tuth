@@ -1,15 +1,19 @@
 """Faculty class."""
 
-from typing import Any, Dict, Self, Tuple, cast
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Dict, Optional, Self, Tuple, cast
 
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Count, QuerySet
 
-from app.academics.models.college import College
-from app.academics.models.curriculum import Curriculum
+from app.academics.models import College, Curriculum
 from app.people.models.staffs import Staff
 from app.timetable.models.semester import Semester
+
+if TYPE_CHECKING:
+    from app.timetable.models import Section
 
 
 class FacultyManager(models.Manager):
@@ -126,31 +130,30 @@ class Faculty(models.Model):
         return self.staff_profile.username
 
     @property
-    def primary_assignment_label(self) -> str:  # type: ignore[misc]
+    def primary_assignment_label(self) -> str:
         """Return the department/college where the faculty teaches the most sections."""
-        sections = (
-            self.section_set.values(
-                "curriculum_course__course__department__short_name",
-                "curriculum_course__course__department__college__code",
-            )
-            .annotate(section_total=Count("id"))
-            .order_by(
-                "-section_total", "curriculum_course__course__department__short_name"
-            )
-            .first()
-        )
-        if not sections:
+        qs: Any = self.section_set  # noqa: ANN401
+        row = qs.values_list(
+            "curriculum_course__course__department__short_name",
+            "curriculum_course__course__department__college__code",
+        ).annotate(section_total=Count("pk")).order_by(
+            "-section_total",
+            "curriculum_course__course__department__short_name",
+        ).first()
+
+        if not row:
             return ""
 
-        dept = sections.get("curriculum_course__course__department__short_name") or ""
-        college = (
-            sections.get("curriculum_course__course__department__college__code") or ""
-        )
+        dept, college, *_ = row  # type: ignore[misc]
+        dept_s = dept or ""
+        college_s = college or ""
 
-        if dept and college:
-            return f"{dept} ({college})"
-        return dept or college
+        if dept_s and college_s:
+            return f"{dept_s} ({college_s})"
 
+        return dept_s or college_s
+
+    
     def _ensure_college(self):
         """Make sure we have a college."""
         if not self.college_id:
@@ -184,7 +187,7 @@ class Faculty(models.Model):
         faculty = cls(staff_profile=profile, college=college)
         faculty.save()
 
-        return cast(Self, faculty)
+        return faculty
 
     @classmethod
     def get_unique_default(cls) -> Self:
