@@ -37,6 +37,7 @@ Don't change existing variable names
 ### Coding style
 - Prefer functional-style helpers (small pure functions) and reuse existing utilities before adding new logic.
 - Factor common routines rather than duplicating blocks; keep new code composable.
+- for app import prefere three level deep.  using __init___ and __all__ in case of deeper nesting.
 
 ### Branching
 

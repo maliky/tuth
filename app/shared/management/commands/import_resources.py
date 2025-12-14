@@ -22,14 +22,14 @@ from tablib import Dataset
 from tablib.core import InvalidDimensions
 from tqdm import tqdm
 
-from app.academics.admin.resources import (  # noqa: F401
+from app.academics.admin import (  # noqa: F401
     CourseResource,
     CurriculumCourseResource,
 )
-from app.academics.models.college import College  # noqa: F401
-from app.people.admin.resources import DonorResource, FacultyResource, StudentResource
-from app.registry.admin.resources import GradeResource
-from app.registry.admin.resources_legacy import (
+from app.academics.models import College  # noqa: F401
+from app.people.admin import DonorResource, FacultyResource, StudentResource
+from app.registry.admin import (
+    GradeResource,
     LegacyGradeSheetResource,
     LegacyRegistrationResource,
 )
@@ -44,12 +44,12 @@ from app.shared.management.resources import (
 )
 from app.shared.types import DirectoryResourceEntry, ModelResourceType
 from app.shared.utils import clean_column_headers
-from app.spaces.admin.resources import RoomResource  # noqa: F401
+from app.spaces.admin import RoomResource  # noqa: F401
 from app.timetable.admin.resources import (
-    SemesterResource,
-    SectionResource,
     ScheduleResource,
     SecSessionResource,
+    SectionResource,
+    SemesterResource,
 )  # noqa: F401
 
 
@@ -98,7 +98,7 @@ class Command(BaseCommand):
         """Validate and import each resource from the provided CSV."""
         path = Path(opts["file_path"])
         selected = opts.get("resource")
-        dry_run  = opts.get("dry_run")
+        dry_run = opts.get("dry_run")
         if not path.exists():
             raise FileNotFoundError(str(path))
 
@@ -106,7 +106,8 @@ class Command(BaseCommand):
             _import_from_directory(self, path, selected, dry_run)
             return
 
-        dataset = _load_dataset()
+        file_contents = read_text_file(path)
+        dataset = _load_dataset(selected, file_contents)
 
         selected_keys = selected or list(RESOURCE_REGISTRY.keys())
 
@@ -127,7 +128,7 @@ def _run_import(
     dataset: Dataset,
     label: str,
     ResourceClass: ModelResourceType,
-    dry_run:bool=False
+    dry_run: bool = False,
 ) -> None:
     """Execute the import for a dataset/resource pair with progress output."""
     resource: resources.ModelResource = ResourceClass()
@@ -182,22 +183,25 @@ def _run_import(
 
         # > Explain the code below.  How does it not delete everything
         # > on each pass ?
-        if resource._meta.use_bulk:
+        if resource._meta.use_bulk and not dry_run:
             resource.bulk_create(
                 using_transactions=True,
-                dry_run=False,
+                dry_run=dry_run,
                 raise_errors=True,
             )
             resource.bulk_update(
                 using_transactions=True,
-                dry_run=False,
+                dry_run=dry_run,
                 raise_errors=True,
             )
             resource.bulk_delete(
                 using_transactions=True,
-                dry_run=False,
+                dry_run=dry_run,
                 raise_errors=True,
             )
+
+        if dry_run:
+            transaction.set_rollback(True)
 
     if error_rows or invalid_rows:
         for row_number, errors in error_rows[:5]:
@@ -217,7 +221,7 @@ def _run_import(
 
     cmd.stdout.write(
         cmd.style.SUCCESS(
-            f"{label} import completed: {created} created, {updated} updated."
+            f"{label} import completed{' (dry-run)' if dry_run else ''}: {created} created, {updated} updated."
         )
     )
     reporter = getattr(resource, "post_import_report", None)
@@ -235,7 +239,9 @@ def _run_import(
     )
 
 
-def _import_from_directory(cmd, directory: Path, selected: list[str] | None, dry_run:bool=False) -> None:
+def _import_from_directory(
+    cmd, directory: Path, selected: list[str] | None, dry_run: bool = False
+) -> None:
     """Load individual CSV files found in a directory."""
     if selected:
         targets = selected
