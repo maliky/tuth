@@ -8,6 +8,7 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
+from app.timetable.admin.filters import SemesterAcademicYearFilterAc
 from app.timetable.admin.inlines import SemesterInline
 from app.timetable.admin.resources.core import SemesterResource
 from app.timetable.models.academic_year import AcademicYear
@@ -42,12 +43,11 @@ class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
     list_display = (
         "academic_year",
         "number",
-        "start_date",
-        "end_date",
         "section_count_link",
         "student_count_link",
     )
-    list_filter = ("academic_year",)
+    list_filter = (SemesterAcademicYearFilterAc,)
+    # Search filter necessary here for termadmin search to complete
     search_fields = ("academic_year__code", "academic_year__long_name")
     ordering = ("academic_year", "number")
 

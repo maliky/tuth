@@ -4,10 +4,41 @@ from admin_searchable_dropdown.filters import (
     AutocompleteFilterFactory,
     AutocompleteFilter,
 )
+from app.shared.admin.filters import BaseCollegeFilter
 from app.timetable.models.semester import Semester
 from django.contrib import admin
 from django.urls import reverse
 from urllib.parse import urlencode
+
+GradeSemesterFilterAc = AutocompleteFilterFactory(
+    "Semester",
+    "section__semester",  # look-up path (Grade → Section → Semester)
+    use_pk_exact=False,
+)
+
+SectionSemesterFilterAc = AutocompleteFilterFactory(
+    "Semester",
+    "semester",
+    use_pk_exact=False,
+)
+
+SemesterAcademicYearFilterAc = AutocompleteFilterFactory(
+    "Academic year",
+    "academic_year",
+    use_pk_exact=False,  # > what advantages is there to use_pk_exact ?
+)
+
+
+class SectionCollegeFilter(BaseCollegeFilter):
+    field_path = "curriculum_course__curriculum__college"
+    parameter_name = "curriculum_course__curriculum__college__id__exact"
+
+
+SectionDepartmentFilterAc = AutocompleteFilterFactory(
+    "Department", "curriculum_course__course__department"
+)
+
+SectionFacultyFilterAc = AutocompleteFilterFactory("Faculty", "faculty")
 
 
 class SectionBySemesterFilter(AutocompleteFilter):
@@ -25,19 +56,6 @@ class SectionBySemesterFilter(AutocompleteFilter):
             if semester_id
             else base
         )
-
-
-GradeSemesterFilterAc = AutocompleteFilterFactory(
-    "Semester",  # title
-    "section__semester",  # look-up path (Grade → Section → Semester)
-    use_pk_exact=False,
-)
-
-SectionSemesterFilterAc = AutocompleteFilterFactory(
-    "Semester",  # title
-    "semester",  # look-up path (Grade → Section → Semester)
-    use_pk_exact=False,
-)
 
 
 class SemesterFilter(admin.SimpleListFilter):

@@ -11,21 +11,6 @@ from app.timetable.choices import SEMESTER_NUMBER
 from app.timetable.utils import validate_subperiod
 
 
-class SemesterStatus(SimpleTableMixin):
-    """Track the lifecycle of a semester (planning, registration, locked)."""
-
-    DEFAULT_VALUES = [
-        ("planning", "Planning"),
-        ("registration", "Registration Open"),
-        ("running", "Registration Closed, Semester running"),
-        ("locked", "Registration Closed, Semester locked"),
-    ]
-
-    class Meta:
-        verbose_name = "Semester Status"
-        verbose_name_plural = "Semester Statuses"
-
-
 class Semester(StatusableMixin, models.Model):
     """Major section of academic year (e.g. semester 1, 2 or 3 vacations).
 
@@ -101,3 +86,18 @@ class Semester(StatusableMixin, models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.academic_year.code}_Sem{self.number}"
+
+
+class SemesterStatus(SimpleTableMixin):
+    """Track the lifecycle of a semester (planning, registration, locked)."""
+
+    DEFAULT_VALUES = [
+        ("planning", "Planning"),
+        ("registration", "Registration Open"),
+        ("running", "Registration Closed, Semester running"),
+        ("locked", "Registration Closed, Semester locked"),
+    ]
+
+    class Meta:
+        verbose_name = "Semester Status"
+        verbose_name_plural = "Semester Statuses"

@@ -18,9 +18,11 @@ from app.shared.admin.filters import BaseCollegeFilter
 #     FILTER_LABEL = "College"
 #     BUTTON_LABEL = "Filter"
 
+
 class CourseCollegeFilter(BaseCollegeFilter):
     field_path = "department__college"
     parameter_name = "department__college__id__exact"
+
 
 CurriculumCourseFilterAc = AutocompleteFilterFactory(
     "Curriculum",

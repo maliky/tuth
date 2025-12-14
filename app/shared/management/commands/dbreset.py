@@ -70,7 +70,7 @@ class Command(BaseCommand):
             call_command("load_roles", verbosity=0)
 
     def _delete_migrations(self, project_root):
-        """Delete unlink the files"""
+        """Delete unlink the files."""
         deleted = []
         for p in iter_migration_files(project_root):
             try:

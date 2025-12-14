@@ -5,7 +5,7 @@ from django.db.models import Count
 
 from django.apps import apps
 from datetime import date
-from typing import Self, cast
+from typing import Optional, Self, cast
 
 from app.shared.mixins import SimpleTableMixin
 from app.shared.utils import as_title
@@ -100,12 +100,13 @@ class Curriculum(StatusableMixin, models.Model):
         return _prefix + self.short_name
 
     @classmethod
-    def get_default(cls, short_name="DFT_CUR") -> Self:
+    def get_default(
+        cls, short_name: str = "DFT_CUR", def_college: Optional[College] = None
+    ) -> Self:
         """Returns a default curriculum."""
+        _college = College.get_default() if def_college is None else def_college
         def_curriculum, _ = cls.objects.get_or_create(
-            short_name=short_name,
-            long_name="Default Curriculum",
-            college=College.get_default(),
+            short_name=short_name, long_name="Default Curriculum", college=_college
         )
         return cast(Self, def_curriculum)
 

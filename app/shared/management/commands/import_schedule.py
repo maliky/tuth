@@ -280,41 +280,25 @@ class Command(BaseCommand):
         title: str,
         stats: ImportStats,
     ) -> Curriculum:
-        sem_start: Optional[date] = (
-            semester.start_date or semester.academic_year.start_date
-        )
+        # sem_start: Optional[date] = (
+        #     semester.start_date or semester.academic_year.start_date
+        # )
         curricula = (
             Curriculum.objects.filter(college=college, programs__course=course)
             .distinct()
             .order_by("-is_active", "-creation_date")
         )
-        if sem_start:
-            curricula = curricula.filter(creation_date__lte=sem_start)
+        # if sem_start:
+        #     curricula = curricula.filter(creation_date__lte=sem_start)
 
         curriculum = curricula.first()
         if curriculum:
             return curriculum
 
-        sem_code = mk_semester_code(semester.academic_year.long_name, semester.number)
-        short_name_parts = [
-            college.code,
-            f"{course.department.short_name}{course.number}",
-            sem_code,
-        ]
-        short_name = "-".join(p for p in short_name_parts if p)
-        short_name = short_name[: Curriculum._meta.get_field("short_name").max_length]
-        long_name = str(title or course.title or short_name)[:255]
-
-        curriculum, created = Curriculum.objects.get_or_create(
-            short_name=short_name,
-            college=college,
-            defaults={
-                "long_name": long_name,
-                "is_active": True,
-            },
-        )
-        if created:
-            stats.curricula += 1
+        # > in case of no curriculum found we need to do a fuzzy search in the college and department
+        # > with a fallback on the college default curriculum in case of no match
+        curriculum = Curriculum.get_default(def_college=college)
+        stats.curricula += 1
         return curriculum
 
     def _resolve_credit_hours(self, raw: object) -> CreditHour:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Iterable
 
 
 def read_text_file(path: Path) -> str:
@@ -17,3 +18,16 @@ def guess_tabular_format(text: str) -> str:
     """Detect whether content is CSV or TSV based on the header row."""
     header = text.splitlines()[0] if text else ""
     return "tsv" if "\t" in header else "csv"
+
+
+def iter_migration_files(project_root: Path) -> Iterable[Path]:
+    """Return py and pyc files inside migrations folders."""
+    # Any app: <app>/migrations/*.py (except __init__.py) and *.pyc
+    for mig_dir in project_root.rglob("migrations"):
+        if not mig_dir.is_dir():
+            continue
+        for p in mig_dir.iterdir():
+            if p.name == "__init__.py":
+                continue
+            if p.suffix in {".py", ".pyc"}:
+                yield p

@@ -4,22 +4,17 @@ from django.contrib import admin
 
 from app.people.models.faculty import Faculty
 from app.registry.admin.inlines import GradeInline
-from app.shared.admin.mixins import CollegeRestrictedAdmin
 from app.shared.admin.filters import BaseCollegeFilter, BaseDepartmentFilter
-from app.timetable.admin.filters import SectionSemesterFilterAc
+from app.shared.admin.mixins import CollegeRestrictedAdmin
+from app.timetable.admin.filters import (
+    SectionCollegeFilter,
+    SectionDepartmentFilterAc,
+    SectionFacultyFilterAc,
+    SectionSemesterFilterAc,
+)
 from app.timetable.admin.inlines import SecSessionInline
 from app.timetable.admin.resources.section import SectionResource
 from app.timetable.models.section import Section
-
-
-class SectionCollegeFilter(BaseCollegeFilter):
-    field_path = "curriculum_course__curriculum__college"
-    parameter_name = "curriculum_course__curriculum__college__id__exact"
-
-
-class SectionDepartmentFilter(BaseDepartmentFilter):
-    dept_field = "curriculum_course__course__department"
-    college_param = SectionCollegeFilter.parameter_name
 
 
 @admin.register(Section)
@@ -46,10 +41,10 @@ class SectionAdmin(CollegeRestrictedAdmin):
     )
     inlines = [SecSessionInline, GradeInline]
     list_filter = [
+        SectionFacultyFilterAc,
+        SectionDepartmentFilterAc,
         SectionSemesterFilterAc,
         SectionCollegeFilter,
-        SectionDepartmentFilter,
-        "faculty",
     ]
     autocomplete_fields = (
         "semester",
