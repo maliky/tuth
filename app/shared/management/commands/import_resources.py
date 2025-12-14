@@ -35,7 +35,7 @@ from app.registry.admin.resources_legacy import (
 )
 from app.shared.auth.helpers import ensure_superuser  # noqa: F401
 from app.shared.file_utils import guess_tabular_format, read_text_file
-from app.shared.importing.logging_utils import get_import_logger, log_notice
+from app.shared.importing.logging_utils import get_import_logger
 from app.shared.management.resources import (
     DIRECTORY_RESOURCES,
     LEGACY_DIRECTORY_RESOURCES,
@@ -99,7 +99,6 @@ class Command(BaseCommand):
             _import_from_directory(self, path, selected)
             return
 
-        file_contents = read_text_file(path)
         dataset = _load_dataset()
 
         selected_keys = selected or list(RESOURCE_REGISTRY.keys())

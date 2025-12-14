@@ -1,3 +1,5 @@
+"""Shared resource registry for import/export commands."""
+
 from typing import Sequence, Tuple
 from collections import OrderedDict
 from app.academics.admin.resources import CourseResource, CurriculumCourseResource
