@@ -42,7 +42,7 @@ from app.people.models.student import Student
 from app.shared.admin.filters import BaseCollegeFilter
 from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
 
-from .filters import CourseCollegeFilter, CurriculumFilter
+from .filters import CourseCollegeFilter, CourseDepartmentFilterAc, CurriculumFilter
 from .inlines import (
     CourseCurriculumInline,
     CurriculumCourseInline,
