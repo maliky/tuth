@@ -59,19 +59,19 @@ class LegacyGradeSheetResource(GradeResource):
     """Import SmartSchool grade sheets while reusing the standard widgets."""
 
     dataset_headers = {
-        "StudentID": "student_id",
-        "Grade": "grade_code",
-        "CourseNo": "course_no",
-        "CourseCode": "course_code",
-        "Section": "section_no",
-        "CrHrs": "credit_hours",
-        "AcademicYear": "academic_year",
-        "Semester": "semester_no",
-        "Major": "curriculum",
-        "College": "college_code",
-        "Instructor": "faculty",
-        "Points": "legacy_points",
-        "Date": "legacy_graded_on",
+        "academicyear": "academic_year",
+        "college": "college_code",
+        "coursecode": "course_code",
+        "courseno": "course_no",
+        "crhrs": "credit_hours",
+        "date": "legacy_graded_on",
+        "grade": "grade_code",
+        "instructor": "faculty",
+        "major": "curriculum",
+        "points": "legacy_points",
+        "section": "section_no",
+        "semester": "semester_no",
+        "studentid": "student_id",
     }
     fallback_curriculum = "Legacy"
 
@@ -95,9 +95,9 @@ class LegacyGradeSheetResource(GradeResource):
 
     def should_skip_row(self, row, row_number, *, command=None) -> bool:
         """Skip empty/invalid rows lacking course or grade data."""
-        course_code = first_value(row, ("course_code", "CourseCode"))
-        course_no = first_value(row, ("course_no", "CourseNo"))
-        grade = first_value(row, ("grade_code", "Grade"))
+        course_code = first_value(row, ("course_code", "coursecode"))
+        course_no = first_value(row, ("course_no", "courseno"))
+        grade = first_value(row, ("grade_code", "grade"))
         reason = ""
         if not grade:
             reason = "missing grade"
@@ -179,12 +179,12 @@ class LegacyGradeSheetResource(GradeResource):
         self.invalid_logger.log(
             {
                 "row_number": str(row_number),
-                "student_id": first_value(row, ("student_id", "StudentID")),
+                "student_id": first_value(row, ("student_id", "studentid")),
                 "academic_year": first_value(row, ("academic_year", "AcademicYear")),
-                "semester_no": first_value(row, ("semester_no", "Semester")),
-                "course_code": first_value(row, ("course_code", "CourseCode")),
-                "course_no": first_value(row, ("course_no", "CourseNo")),
-                "grade_code": first_value(row, ("grade_code", "Grade")),
+                "semester_no": first_value(row, ("semester_no", "semester")),
+                "course_code": first_value(row, ("course_code", "coursecode")),
+                "course_no": first_value(row, ("course_no", "courseno")),
+                "grade_code": first_value(row, ("grade_code", "grade")),
                 "reason": str(reason),
             }
         )
@@ -194,16 +194,16 @@ class LegacyRegistrationResource(RegistrationResource):
     """Load SmartSchool registrations while ensuring statuses and widgets."""
 
     dataset_headers = {
-        "StudentID": "student_id",
-        "AcademicYear": "academic_year",
-        "Semester": "semester_no",
-        "CourseCode": "course_code",
-        "CourseNo": "course_no",
-        "Section": "section_no",
-        "CrHrs": "credit_hours",
-        "Major": "curriculum",
-        "Curriculum": "curriculum",
-        "College": "college_code",
+        "studentid": "student_id",
+        "academicyear": "academic_year",
+        "semester": "semester_no",
+        "coursecode": "course_code",
+        "courseno": "course_no",
+        "section": "section_no",
+        "crhrs": "credit_hours",
+        "major": "curriculum",
+        "curriculum": "curriculum",
+        "college": "college_code",
     }
 
     student = fields.Field(
