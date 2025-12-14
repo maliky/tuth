@@ -76,8 +76,9 @@ def load_directory_rows(path: Path) -> list[DirectoryRow]:
     logger = get_import_logger()
     if path.suffix.lower() in {".xlsx", ".xls"}:
         df = pd.read_excel(path, dtype="str")
-        to_drop = df.loc[df.Name.str.contains("Showing")].index
-        df = df.drop(to_drop)
+        if "Name" in df:
+            to_drop = df.loc[df["Name"].str.contains("Showing")].index
+            df = df.drop(to_drop)
     else:
         df = pd.read_csv(path, dtype="str")
         df.loc[:, "Name"] = df["First Name [Required]"] + " " + df["Last Name [Required]"]

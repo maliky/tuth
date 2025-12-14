@@ -19,6 +19,7 @@ from app.people.importing import (
 from app.people.models.student import Student
 from app.people.models.donor import Donor
 from django.contrib.auth.models import User
+from typing import Hashable, Any, cast
 from import_export import widgets
 
 from app.people.models.staffs import Staff
@@ -29,7 +30,7 @@ from app.shared.utils import get_in_row
 class StaffProfileWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
-        self._cache_staff: dict[str, Staff] = dict()
+        self._cache_staff: dict[Hashable, Staff] = {}
         super().__init__(Staff, field="staff_id")
 
     def clean(self, value, row=None, *args, **kwargs) -> Staff:
@@ -51,9 +52,10 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
             )
             staff.user.set_password(default_password(parts.first, parts.last))
             staff.user.save(update_fields=["password"])
-            return staff
+            return cast(Staff, staff)
 
-        return cached_entity(self._cache_staff, username, _create_staff)
+        staff_obj = cached_entity(self._cache_staff, username, _create_staff)
+        return staff_obj
 
     def render(self, value, obj=None) -> str:
         """For the value (staff) for export."""
@@ -69,7 +71,7 @@ class FacultyWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
         # field is "id" by default
-        self._cache_faculty: dict[str, Faculty] = dict()
+        self._cache_faculty: dict[Hashable, Faculty] = {}
         super().__init__(Faculty)
 
     def clean(self, value: str, row=None, *args, **kwargs) -> Faculty:
@@ -94,9 +96,10 @@ class FacultyWidget(widgets.ForeignKeyWidget):
                 default_password(parts.first, parts.last)
             )
             faculty.staff_profile.user.save(update_fields=["password"])
-            return faculty
+            return cast(Faculty, faculty)
 
-        return cached_entity(self._cache_faculty, username, _create_faculty)
+        faculty_obj = cached_entity(self._cache_faculty, username, _create_faculty)
+        return faculty_obj
 
     def after_import(self, dataset, result, **kwargs):
         """Remove any cache which may be present after import."""
@@ -109,9 +112,9 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
     def __init__(self):
         # field is "id" by default
         super().__init__(User)
-        self._cache_username: dict[str, str] = dict()
+        self._cache_username: dict[str, str] = {}
         self._exclude_username = set()
-        self._cache_student: dict[str, Student] = dict()
+        self._cache_student: dict[str, Student] = {}
 
     def clean(self, value: str, row=None, *args, **kwargs) -> Student | None:
         """From the student name (and an id), gets a Student object.

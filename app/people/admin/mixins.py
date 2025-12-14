@@ -15,10 +15,10 @@ from django.contrib import admin as dj_admin
 User = get_user_model()
 
 
-class MergePeopleMixin:
+class MergePeopleMixin(dj_admin.ModelAdmin):
     """Shared admin action to merge selected people into the first selected."""
 
-    actions = ["merge_people_action"]
+    actions: list[str] = ["merge_people_action"]
 
     def merge_people_action(self, request, queryset):
         count = queryset.count()
@@ -94,4 +94,4 @@ class DuplicatePreviewMixin:
             safe_rows,
         )
 
-    possible_duplicates.short_description = "Possible duplicates"
+    possible_duplicates.short_description = "Possible duplicates"  # type: ignore[attr-defined]

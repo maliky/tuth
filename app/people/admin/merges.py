@@ -2,14 +2,15 @@
 
 from django.db import transaction
 from django.contrib import messages
+from django.contrib import admin as dj_admin
 
 from app.people.services.merge_people import merge_users
 
 
-class MergeUsersMixin:
+class MergeUsersMixin(dj_admin.ModelAdmin):
     """Admin action to merge selected auth users."""
 
-    actions = ["merge_users_action"]
+    actions: list[str] = ["merge_users_action"]
 
     def merge_users_action(self, request, queryset):
         count = queryset.count()

@@ -42,6 +42,11 @@ def normalize_semester(raw: str | None) -> str:
     return SEM_MAP.get(token, "1")
 
 
+def normalize_year(raw: str | None) -> str:
+    """Public alias used in tests; delegate to normalize_academic_year."""
+    return normalize_academic_year(raw)
+
+
 def _truncate_curriculum_label(label: str) -> str:
     """Clamp curriculum labels to the DB max_length (40 chars)."""
     text = (label or "").strip()
@@ -173,14 +178,14 @@ class LegacyGradeSheetResource(GradeResource):
         """Append invalid row context to a CSV log for follow-up."""
         self.invalid_logger.log(
             {
-                "row_number": row_number,
+                "row_number": str(row_number),
                 "student_id": first_value(row, ("student_id", "StudentID")),
                 "academic_year": first_value(row, ("academic_year", "AcademicYear")),
                 "semester_no": first_value(row, ("semester_no", "Semester")),
                 "course_code": first_value(row, ("course_code", "CourseCode")),
                 "course_no": first_value(row, ("course_no", "CourseNo")),
                 "grade_code": first_value(row, ("grade_code", "Grade")),
-                "reason": reason,
+                "reason": str(reason),
             }
         )
 
@@ -287,14 +292,15 @@ class LegacyRegistrationResource(RegistrationResource):
         """Append duplicate registration context to the log file."""
         self.duplicate_logger.log(
             {
-                "row_number": row_number,
-                "student_id": row.get("student_id", ""),
-                "academic_year": row.get("academic_year", ""),
-                "semester_no": row.get("semester_no", ""),
-                "course_code": row.get("course_code") or row.get("course_dept", ""),
-                "course_no": row.get("course_no", ""),
-                "section_no": row.get("section_no", ""),
-                "status": row.get("status", ""),
+                "row_number": str(row_number),
+                "student_id": get_in_row("student_id", row),
+                "academic_year": get_in_row("academic_year", row),
+                "semester_no": get_in_row("semester_no", row),
+                "course_code": get_in_row("course_code", row)
+                or get_in_row("course_dept", row),
+                "course_no": get_in_row("course_no", row),
+                "section_no": get_in_row("section_no", row),
+                "status": get_in_row("status", row),
                 "error": error,
             }
         )

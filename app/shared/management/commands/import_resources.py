@@ -56,6 +56,8 @@ from app.timetable.admin import (
 class Command(BaseCommand):
     """Load sections and sessions from cleaned_tscc.csv or provided file."""
 
+    RESOURCE_CHOICES: Sequence[str] = RESOURCE_CHOICES
+
     help = (
         "Import resources from a CSV file or directory.\n\n"
         "Arguments:\n"
@@ -98,7 +100,7 @@ class Command(BaseCommand):
         """Validate and import each resource from the provided CSV."""
         path = Path(opts["file_path"])
         selected = opts.get("resource")
-        dry_run = opts.get("dry_run")
+        dry_run: bool = bool(opts.get("dry_run"))
         if not path.exists():
             raise FileNotFoundError(str(path))
 
@@ -240,7 +242,7 @@ def _run_import(
 
 
 def _import_from_directory(
-    cmd, directory: Path, selected: list[str] | None, dry_run: bool = False
+    cmd: Command, directory: Path, selected: list[str] | None, dry_run: bool = False
 ) -> None:
     """Load individual CSV files found in a directory."""
     if selected:
@@ -262,7 +264,7 @@ def _import_from_directory(
             )
             continue
 
-        cmd._run_import(dataset, name, ResourceClass, dry_run)
+        _run_import(cmd, dataset, name, ResourceClass, dry_run)
 
 
 def _load_directory_dataset(directory: Path, filenames: Iterable[str]) -> Dataset | None:

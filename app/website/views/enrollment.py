@@ -33,7 +33,7 @@ class StudentAdminLookupForm(forms.Form):
     )
 
     def clean(self) -> dict[str, object]:
-        cleaned = super().clean()
+        cleaned = dict(super().clean() or {})
         if cleaned.get("student"):
             return cleaned
         query = (cleaned.get("student_query") or "").strip()

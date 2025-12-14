@@ -115,8 +115,8 @@ class Command(BaseCommand):
                 if display_row < start_row:
                     continue
 
-                row = {
-                    k: ("" if pd.isna(v) else str(v))
+                row: dict[str, str] = {
+                    str(k): ("" if pd.isna(v) else str(v))
                     for k, v in raw_row.to_dict().items()
                 }
                 try:
@@ -139,7 +139,7 @@ class Command(BaseCommand):
         self._print_summary(stats)
 
     # ------------------------------------------------------------------ helpers
-    def _import_row(self, row: dict[str, object], stats: ImportStats) -> None:
+    def _import_row(self, row: dict[str, str], stats: ImportStats) -> None:
         """Parse a single row and build related records."""
         dept_code, course_no, section_no = self._parse_cid(get_in_row("cid", row))
 
@@ -303,7 +303,7 @@ class Command(BaseCommand):
 
     def _resolve_credit_hours(self, raw: object) -> CreditHour:
         try:
-            hours = int(float(raw))
+            hours = int(float(str(raw)))
         except (TypeError, ValueError):
             hours = 3
         credit_hour, _ = CreditHour.objects.get_or_create(

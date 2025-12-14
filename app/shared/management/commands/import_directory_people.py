@@ -181,7 +181,7 @@ def _upsert_staff(entry: DirectoryRow) -> bool:
     if created:
         staff.user.set_password(mk_password(entry.first_name, entry.last_name))
         staff.user.save(update_fields=["password"])
-    return created
+    return bool(created)
 
 
 def _upsert_faculty(entry: DirectoryRow) -> bool:
@@ -214,7 +214,7 @@ def _upsert_faculty(entry: DirectoryRow) -> bool:
         staff_profile=staff,
         defaults={},
     )
-    return created_staff or created_faculty
+    return bool(created_staff or created_faculty)
 
 
 def _upsert_student(entry: DirectoryRow) -> bool:
@@ -234,4 +234,4 @@ def _upsert_student(entry: DirectoryRow) -> bool:
     if created:
         student.set_password(mk_password(entry.first_name, entry.last_name))
         student.save()
-    return created
+    return bool(created)

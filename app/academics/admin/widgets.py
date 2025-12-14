@@ -135,6 +135,7 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
                 curriculum.save(update_fields=["long_name"])
 
         # add the major if there is
+        major = None
         if major_name:
             try:
                 major, _ = Major.objects.get_or_create(

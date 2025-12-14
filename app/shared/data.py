@@ -27,12 +27,11 @@ def _candidate_paths(source_path: str | Path | None) -> Iterable[Path]:
 
     bases.extend(DEFAULT_REGISTRATION_FILES)
 
+    base_dir = Path(getattr(settings, "BASE_DIR", "."))
     for candidate in bases:
-        if candidate is None:
-            continue
         path = Path(candidate).expanduser()
         if not path.is_absolute():
-            path = Path(settings.BASE_DIR) / path
+            path = base_dir / path
         yield path
 
 

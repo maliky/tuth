@@ -43,7 +43,9 @@ class Command(BaseCommand):
         ]
 
         for name, cls in CLASS_MAP:
-            cls()._populate_attributes_and_db()
+            populate = getattr(cls, "_populate_attributes_and_db", None)
+            if callable(populate):
+                populate()
             self.stdout.write((f" - Defaults for {name} Created"))
 
         self.stdout.write(self.style.SUCCESS("Defaults states and status Created"))

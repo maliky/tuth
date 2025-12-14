@@ -125,13 +125,8 @@ class StudentInfoTermWidget(Widget):
         if self.fallback_column and row:
             legacy_value = row.get(self.fallback_column)
             if legacy_value:
-                extra_args = args or ()
-                return self.legacy_widget.clean(
-                    legacy_value,
-                    *extra_args,
-                    row=row,
-                    **kwargs,
-                )
+                kwargs.pop("row", None)
+                return self.legacy_widget.clean(legacy_value, row=row, **kwargs)
 
         return None
 

@@ -52,9 +52,10 @@ User = get_user_model()
 
 # ---- User admin with merge action ----
 
+
 try:
     dj_admin.site.unregister(User)
-except dj_admin.sites.NotRegistered:
+except Exception:
     pass
 
 
@@ -62,6 +63,7 @@ except dj_admin.sites.NotRegistered:
 class MergeableUserAdmin(MergeUsersMixin, dj_admin.ModelAdmin):
     """Lightweight user admin with merge action."""
 
+    duplicate_threshold = 0.9
     list_display = (
         "username",
         "first_name",

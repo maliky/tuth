@@ -7,6 +7,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
+from app.registry.models.credit_hours import CreditHour
 from app.shared.status.mixins import StatusHistory
 
 
@@ -76,3 +77,6 @@ class ApprovalQueue(models.Model):
         self.save(update_fields=["status", "updated_at"])
         history_entry = self.status_history.create(status=status, author=author)
         return cast(StatusHistory, history_entry)
+
+
+__all__ = ["CreditHour", "ApprovalQueue"]
