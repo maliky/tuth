@@ -13,6 +13,8 @@ from simple_history.admin import SimpleHistoryAdmin
 from app.people.admin.filters import (
     FacultyCollegeFilter,
     FacultyDepartmentFilter,
+    FacultyDepartmentFilterAC,
+    FacultyGroupAC,
     StaffCollegeFilter,
     StaffDepartmentFilter,
     StudentCollegeFilter,
@@ -122,9 +124,10 @@ class FacultyAdmin(DuplicatePreviewMixin, CollegeRestrictedAdmin):
         "possible_duplicates",
     )
     list_filter = [
+        FacultyDepartmentFilterAC,
+        FacultyGroupAC,
         FacultyCollegeFilter,
-        FacultyDepartmentFilter,
-        "staff_profile__user__groups",
+        # "staff_profile__user__groups",
         # ('college', admin.RelatedOnlyFieldListFilter),
         # ('staff_profile__department', admin.RelatedOnlyFieldListFilter)
     ]

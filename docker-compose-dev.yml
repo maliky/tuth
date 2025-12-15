@@ -1,41 +1,25 @@
+x-default-env: &default-env
+  env_file:
+    - .env-pg
 services:
   db:
-    image: postgres:15
-    restart: unless-stopped
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
-    env_file:
-      - .env-dev
-
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile-dev
-    working_dir: /code
-    volumes:
-      - .:/code
-      - ./Seed_data:/Seed_data
-    command: bash -c "./run.sh -d" #pytest --reuse-db -q
-    env_file:
-      - .env-dev
-    depends_on:
-      - db
-    expose:
-      - 8000
-
-  nginx:
-    image: nginx:1.22
+    image: postgres:16
+    container_name: tusis-dev-db
+    <<: *default-env
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
     ports:
-      - "443:443"
+      - "127.0.0.1:5432:5432"
     volumes:
-      - ./static:/static:ro
-      - ./media:/media:ro
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
-      - ./nginx/.htpasswd:/etc/nginx/.htpasswd:ro
-      - ./nginx/selfsigned.crt:/etc/nginx/selfsigned.crt:ro
-      - ./nginx/selfsigned.key:/etc/nginx/selfsigned.key:ro   
-    depends_on:
-      - web
-      
+      - tusis_pgdata:/var/lib/postgresql/data
+    shm_size: "64mb"
+    command: >
+      postgres
+      -c max_connections=30
+      -c shared_buffers=64MB
+      -c work_mem=2MB
+      -c maintenance_work_mem=32MB
+      -c effective_cache_size=256MB
+
 volumes:
-  postgres_data:
+  tusis_pgdata:

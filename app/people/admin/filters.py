@@ -1,5 +1,6 @@
 """Admin list filters for people app."""
 
+from admin_searchable_dropdown.filters import AutocompleteFilterFactory
 from app.shared.admin.filters import (
     BaseCollegeFilter,
     BaseDepartmentFilter,
@@ -35,3 +36,14 @@ class StudentCollegeFilter(BaseCollegeFilter):
 class StudentCurriculumFilter(CurriculumByCollegeFilter):
     curriculum_field = "curriculum"
     college_param = StudentCollegeFilter.parameter_name
+
+
+FacultyDepartmentFilterAC = AutocompleteFilterFactory(
+    "Department",
+    "staff_profile__department",
+)
+
+FacultyGroupAC = AutocompleteFilterFactory(
+    "Group",
+    "staff_profile__user__groups",
+)
