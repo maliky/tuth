@@ -43,3 +43,6 @@ ipdb
 pygraphviz
 
 pydot
+
+# postgresql
+psycopg[binary]
