@@ -87,7 +87,7 @@ class Faculty(models.Model):
 
     # ~~~~ Optional ~~~~
     # Main college for the faculty (Could be a department also)
-    # just for administrative convieniance
+    # just for administrative convenience
     college = models.ForeignKey(
         "academics.College", on_delete=models.CASCADE, null=True, blank=True
     )

@@ -11,16 +11,9 @@ from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from app.people.admin.filters import (
-    FacultyCollegeFilter,
     FacultyDepartmentFAC,
-    FacultyDepartmentFilter,
     FacultyGroupFAC,
-    StaffCollegeFilter,
-    StaffDepartmentFAC,
-    StaffDepartmentFilter,
-    # StudentCollegeFilter,
     StudentCurriculumFAC,
-    # StudentCurriculumFilter,
     StudentEntrySemFAC,
 )
 from app.people.admin.merges import MergeUsersMixin
@@ -129,7 +122,7 @@ class FacultyAdmin(DuplicatePreviewMixin, CollegeRestrictedAdmin):
     list_filter = [
         FacultyDepartmentFAC,
         FacultyGroupFAC,
-        FacultyCollegeFilter,
+        'college',
     ]
 
     search_fields = (
