@@ -33,21 +33,21 @@ class Command(BaseCommand):
         if not csv_dir.is_dir():
             raise CommandError(f"{csv_dir} is not a directory")
 
-        if not opts["no_seed"]:
-            ensure_superuser(self)
-            self.stdout.write("-> Creating default states…")
-            call_command("create_states")
-            self.stdout.write(self.style.SUCCESS("✔ states ready"))
-            call_command("load_roles", verbosity=0)
+        ensure_superuser(self)
+        self.stdout.write("-> Creating default states…")
+        call_command("create_states")
+        self.stdout.write(self.style.SUCCESS("✔ states ready"))
+        call_command("load_roles", verbosity=0)
 
         self.stdout.write("-> Importing fundamentals")
-        _import_resources(csv_dir, ["room", "curriculum", "semester"])
+        # Directory resource labels are capitalized; use the unified registry labels.
+        _import_resources(csv_dir, ["Room", "Course", "CurriculumCourse", "Semester"])
 
         # self.stdout.write("-> Importing people")
-        # _import_resources(csv_dir, ["faculty", "donor", "student"])
+        # _import_resources(csv_dir, ["Faculty", "Donor", "Student"])
 
         # self.stdout.write("-> Importing legacy registrations and grades")
-        # _import_resources(csv_dir, ["legacy_registration", "legacy_grade"])
+        # _import_resources(csv_dir, ["LegacyRegistration", "LegacyGrade"])
 
         self.stdout.write(self.style.SUCCESS("✔ fundamental data load completed"))
 
