@@ -83,9 +83,11 @@ class StudentLevelFilter(admin.SimpleListFilter):
     parameter_name = "class_level"
 
     def lookups(self, request, model_admin):
+        """All available values to filter by."""
         return [(lv.label, lv.label) for lv in LEVEL_NUMBER]
 
     def queryset(self, request, qs):
+        """Describe how to filter the student qs."""
         level = self.value()
         if not level:
             return qs

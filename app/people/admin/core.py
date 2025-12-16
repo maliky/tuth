@@ -12,13 +12,16 @@ from simple_history.admin import SimpleHistoryAdmin
 
 from app.people.admin.filters import (
     FacultyCollegeFilter,
+    FacultyDepartmentFAC,
     FacultyDepartmentFilter,
-    FacultyDepartmentFilterAC,
-    FacultyGroupAC,
+    FacultyGroupFAC,
     StaffCollegeFilter,
+    StaffDepartmentFAC,
     StaffDepartmentFilter,
-    StudentCollegeFilter,
-    StudentCurriculumFilter,
+    # StudentCollegeFilter,
+    StudentCurriculumFAC,
+    # StudentCurriculumFilter,
+    StudentEntrySemFAC,
 )
 from app.people.admin.merges import MergeUsersMixin
 from app.people.admin.mixins import (
@@ -124,12 +127,9 @@ class FacultyAdmin(DuplicatePreviewMixin, CollegeRestrictedAdmin):
         "possible_duplicates",
     )
     list_filter = [
-        FacultyDepartmentFilterAC,
-        FacultyGroupAC,
+        FacultyDepartmentFAC,
+        FacultyGroupFAC,
         FacultyCollegeFilter,
-        # "staff_profile__user__groups",
-        # ('college', admin.RelatedOnlyFieldListFilter),
-        # ('staff_profile__department', admin.RelatedOnlyFieldListFilter)
     ]
 
     search_fields = (
@@ -236,11 +236,7 @@ class StaffAdmin(MergePeopleMixin, DuplicatePreviewMixin, DepartmentRestrictedAd
         "user__last_name",
         "department__short_name",
     )
-    list_filter = (
-        StaffCollegeFilter,
-        StaffDepartmentFilter,
-        "user__groups",
-    )
+    list_filter = ("user__groups",)
     ordering = ("staff_id",)
     readonly_fields = ("staff_id",)
     inlines = [DocumentStaffInline]
@@ -298,10 +294,10 @@ class StudentAdmin(
     )
     # list_editable = ("curriculum",)
     list_filter = (
-        StudentCollegeFilter,
-        StudentCurriculumFilter,
-        "entry_semester",
+        StudentCurriculumFAC,
+        StudentEntrySemFAC,
         StudentLevelFilter,
+        "curriculum__college",
     )
     readonly_fields = ("student_id",)
     inlines = [DocumentStudentInline]
