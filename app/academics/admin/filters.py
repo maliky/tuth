@@ -21,7 +21,7 @@ from app.shared.admin.filters import BaseCollegeFilter
 
 class CourseCollegeFilter(BaseCollegeFilter):
     field_path = "department__college"
-    parameter_name = "department__college__id__exact"
+    parameter_name = "department__college"
 
 
 CurriculumCourseFilterAc = AutocompleteFilterFactory(

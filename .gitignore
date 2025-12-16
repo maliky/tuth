@@ -8,7 +8,6 @@
 *.png
 *.pyc
 *cache*
-*migration*
 *tests/*txt
 *~
 .env*
