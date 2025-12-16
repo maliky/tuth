@@ -22,7 +22,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "-d",
             "--dir",
-            default="./Seed_data/",
+            default="./Seed_data/Fundamentals/",
             help="Directory containing the data files.",
         )
 
