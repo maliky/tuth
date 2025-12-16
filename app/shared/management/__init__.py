@@ -1,15 +1,13 @@
 """Initialization for the management package."""
 
 from .resources import (
-    DIRECTORY_RESOURCES,
-    LEGACY_DIRECTORY_RESOURCES,
+    DIRECTORY_RESOURCE_ENTRIES,
     RESOURCE_CHOICES,
     RESOURCE_REGISTRY,
 )
 
 __all__ = [
-    "DIRECTORY_RESOURCES",
-    "LEGACY_DIRECTORY_RESOURCES",
+    "DIRECTORY_RESOURCE_ENTRIES",
     "RESOURCE_CHOICES",
     "RESOURCE_REGISTRY",
 ]

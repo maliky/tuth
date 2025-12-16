@@ -9,7 +9,6 @@ resources for each model.
 from __future__ import annotations
 
 import logging
-from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Iterable, Sequence
 
@@ -36,9 +35,8 @@ from app.registry.admin import (
 from app.shared.auth.helpers import ensure_superuser  # noqa: F401
 from app.shared.file_utils import guess_tabular_format, read_text_file
 from app.shared.importing import get_import_logger
-from app.shared.management import (
-    DIRECTORY_RESOURCES,
-    LEGACY_DIRECTORY_RESOURCES,
+from app.shared.management.resources import (
+    DIRECTORY_RESOURCE_ENTRIES,
     RESOURCE_CHOICES,
     RESOURCE_REGISTRY,
 )
@@ -245,15 +243,10 @@ def _import_from_directory(
     cmd: Command, directory: Path, selected: list[str] | None, dry_run: bool = False
 ) -> None:
     """Load individual CSV files found in a directory."""
-    if selected:
-        targets = selected
-    else:
-        targets = [name for name, *_ in DIRECTORY_RESOURCES]
-
+    targets = selected or [name for name, *_ in DIRECTORY_RESOURCE_ENTRIES]
     target_set = set(targets)
-    ordered = list(DIRECTORY_RESOURCES) + list(LEGACY_DIRECTORY_RESOURCES)
 
-    for name, ResourceClass, filenames in ordered:
+    for name, ResourceClass, filenames in DIRECTORY_RESOURCE_ENTRIES:
         if name not in target_set:
             continue
 

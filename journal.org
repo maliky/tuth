@@ -1,4 +1,11 @@
 
+* <2025-12-15 lun. 23:53>  running the tests ?
+python pytest 
+* <2025-12-15 lun. 23:53> User, the key should not be the user name but a pk key
+  I want the user name to match closely the first and last name, if it is a key I can hardly change it after an update. but it is important that it is updated when the first or last name change. Therefor we need to make sure the username is updated when the overlying name is updated.  if the username the key for the user ? if so this is a big rewrite, if not it should be trival
+
+* 019b1809-8544-7742-9f25-0c1f412f3aaf
+
 * <2025-12-13 sam. 21:52> Interface continuations
 in /admin/academics/curriculum/
 add a merge action
