@@ -30,3 +30,4 @@ node_modules
 package*json
 static/*
 test_import.py
+tmp.log
