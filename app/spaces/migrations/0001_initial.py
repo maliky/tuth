@@ -16,72 +16,151 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Space',
+            name="Space",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(db_index=True, max_length=15, unique=True)),
-                ('full_name', models.CharField(blank=True, max_length=128)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("code", models.CharField(db_index=True, max_length=15, unique=True)),
+                ("full_name", models.CharField(blank=True, max_length=128)),
             ],
             options={
-                'verbose_name': 'Space / Building',
-                'verbose_name_plural': 'Spaces / Buildings',
+                "verbose_name": "Space / Building",
+                "verbose_name_plural": "Spaces / Buildings",
             },
         ),
         migrations.CreateModel(
-            name='HistoricalSpace',
+            name="HistoricalSpace",
             fields=[
-                ('id', models.BigIntegerField(auto_created=True, blank=True, db_index=True, verbose_name='ID')),
-                ('code', models.CharField(db_index=True, max_length=15)),
-                ('full_name', models.CharField(blank=True, max_length=128)),
-                ('history_id', models.AutoField(primary_key=True, serialize=False)),
-                ('history_date', models.DateTimeField(db_index=True)),
-                ('history_change_reason', models.CharField(max_length=100, null=True)),
-                ('history_type', models.CharField(choices=[('+', 'Created'), ('~', 'Changed'), ('-', 'Deleted')], max_length=1)),
-                ('history_user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigIntegerField(
+                        auto_created=True, blank=True, db_index=True, verbose_name="ID"
+                    ),
+                ),
+                ("code", models.CharField(db_index=True, max_length=15)),
+                ("full_name", models.CharField(blank=True, max_length=128)),
+                ("history_id", models.AutoField(primary_key=True, serialize=False)),
+                ("history_date", models.DateTimeField(db_index=True)),
+                ("history_change_reason", models.CharField(max_length=100, null=True)),
+                (
+                    "history_type",
+                    models.CharField(
+                        choices=[("+", "Created"), ("~", "Changed"), ("-", "Deleted")],
+                        max_length=1,
+                    ),
+                ),
+                (
+                    "history_user",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'historical Space / Building',
-                'verbose_name_plural': 'historical Spaces / Buildings',
-                'ordering': ('-history_date', '-history_id'),
-                'get_latest_by': ('history_date', 'history_id'),
+                "verbose_name": "historical Space / Building",
+                "verbose_name_plural": "historical Spaces / Buildings",
+                "ordering": ("-history_date", "-history_id"),
+                "get_latest_by": ("history_date", "history_id"),
             },
             bases=(simple_history.models.HistoricalChanges, models.Model),
         ),
         migrations.CreateModel(
-            name='HistoricalRoom',
+            name="HistoricalRoom",
             fields=[
-                ('id', models.BigIntegerField(auto_created=True, blank=True, db_index=True, verbose_name='ID')),
-                ('code', models.CharField(max_length=30)),
-                ('standard_capacity', models.PositiveIntegerField(default=45)),
-                ('exam_capacity', models.PositiveIntegerField(default=30)),
-                ('history_id', models.AutoField(primary_key=True, serialize=False)),
-                ('history_date', models.DateTimeField(db_index=True)),
-                ('history_change_reason', models.CharField(max_length=100, null=True)),
-                ('history_type', models.CharField(choices=[('+', 'Created'), ('~', 'Changed'), ('-', 'Deleted')], max_length=1)),
-                ('history_user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to=settings.AUTH_USER_MODEL)),
-                ('space', models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='spaces.space')),
+                (
+                    "id",
+                    models.BigIntegerField(
+                        auto_created=True, blank=True, db_index=True, verbose_name="ID"
+                    ),
+                ),
+                ("code", models.CharField(max_length=30)),
+                ("standard_capacity", models.PositiveIntegerField(default=45)),
+                ("exam_capacity", models.PositiveIntegerField(default=30)),
+                ("history_id", models.AutoField(primary_key=True, serialize=False)),
+                ("history_date", models.DateTimeField(db_index=True)),
+                ("history_change_reason", models.CharField(max_length=100, null=True)),
+                (
+                    "history_type",
+                    models.CharField(
+                        choices=[("+", "Created"), ("~", "Changed"), ("-", "Deleted")],
+                        max_length=1,
+                    ),
+                ),
+                (
+                    "history_user",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "space",
+                    models.ForeignKey(
+                        blank=True,
+                        db_constraint=False,
+                        null=True,
+                        on_delete=django.db.models.deletion.DO_NOTHING,
+                        related_name="+",
+                        to="spaces.space",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'historical room',
-                'verbose_name_plural': 'historical rooms',
-                'ordering': ('-history_date', '-history_id'),
-                'get_latest_by': ('history_date', 'history_id'),
+                "verbose_name": "historical room",
+                "verbose_name_plural": "historical rooms",
+                "ordering": ("-history_date", "-history_id"),
+                "get_latest_by": ("history_date", "history_id"),
             },
             bases=(simple_history.models.HistoricalChanges, models.Model),
         ),
         migrations.CreateModel(
-            name='Room',
+            name="Room",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(max_length=30)),
-                ('standard_capacity', models.PositiveIntegerField(default=45)),
-                ('exam_capacity', models.PositiveIntegerField(default=30)),
-                ('space', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='rooms', to='spaces.space')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("code", models.CharField(max_length=30)),
+                ("standard_capacity", models.PositiveIntegerField(default=45)),
+                ("exam_capacity", models.PositiveIntegerField(default=30)),
+                (
+                    "space",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="rooms",
+                        to="spaces.space",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['space__code', 'code'],
-                'indexes': [models.Index(fields=['space', 'code'], name='spaces_room_space_i_a3c273_idx')],
-                'constraints': [models.UniqueConstraint(fields=('space', 'code'), name='unique_room_per_space')],
+                "ordering": ["space__code", "code"],
+                "indexes": [
+                    models.Index(
+                        fields=["space", "code"], name="spaces_room_space_i_a3c273_idx"
+                    )
+                ],
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("space", "code"), name="unique_room_per_space"
+                    )
+                ],
             },
         ),
     ]

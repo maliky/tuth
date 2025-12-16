@@ -9,30 +9,33 @@ Tusis is a student information and academic management system designed to stream
 This document summarizes how to run and test the Tusis application in different environments.
 ** Getting the Code
 Clone the repository and enter its directory:
+
 #+BEGIN_SRC bash
-git clone <repository-url>
+git clone <repository-url> tusis
 cd tusis
 #+END_SRC
-** The apps
-Here are the different applications you will find in this directory:
-| App Name | Description |
-|------------+-----------------------------------------------------------|
-| Registry | Handles student documents, registrations, and class rosters |
-| Spaces | Manages buildings, rooms, and locations |
-| Academics | Maintains courses, curricula, colleges, and prerequisites |
-| Timetable | Schedules sections, semesters, academic years, and sessions |
-| People | Manages user profiles, roles, and permissions |
-| Finance | Processes payments, financial records, and scholarships |
 
-** Running Locally without Docker
-For a quick local setup using SQLite, run:
+** The apps
+# to be completed   
+Here are the different applications you will find in this directory:
+| App Name  | Description                                                 |
+|-----------+-------------------------------------------------------------|
+| Registry  | Handles student documents, registrations, and class rosters |
+| Spaces    | Manages buildings, rooms, and locations                     |
+| Academics | Maintains courses, curricula, colleges, and prerequisites   |
+| Timetable | Schedules sections, semesters, academic years, and sessions |
+| People    | Manages user profiles, roles, and permissions               |
+| Finance   | Processes payments, financial records, and scholarships     |
+
+** Running Localy 
+You will need postgresql installed, graphviz and other for the dev environment
 #+BEGIN_SRC bash
-python3 -m venv venv
-source venv/bin/activate
+pyenv virtualenv install tusis
+pyenv local tusis
 pip install -r requirements.txt
-cp env-test .env
-./run.sh -m  # check run.sh -h for documentation or look the source
+./run.sh -d  # check run.sh -h for documentation or look the source
 #+END_SRC
+
 Open http://127.0.0.1:8000 in your browser.
 
 
@@ -58,8 +61,8 @@ echo "xyz" > requirements-dev.txt
 black app/ && flake8 app/ && mypy app/
 #+END_SRC
 *** Tests
-Install dependencies from `requirements-dev.txt` and `requirements-test.txt` before running tests.
-You can run `./run.sh -m` to start a fresh test on the local machine.
+Install dependencies from `requirements-dev.txt` before running tests.
+You  run `./run.sh -d` to start a dev env on the local machine.
 
 You can copy the reusable template stored at `Seed_data/db_seed_example.txt` or  populate your DB with a file having this structure:
 #+BEGIN_SRC
@@ -89,37 +92,8 @@ Before starting the stack, copy the sample environment file:
 cp .env-dev.example .env-dev
 #+END_SRC
 
-*** Launch your docker-compose dev environment
-Build and start the dev stack:
-#+BEGIN_SRC bash
-docker-compose -f docker-compose-dev.yml up --build
-#+END_SRC
-Once the containers are running, visit [[https://localhost][https://localhost]] to access the app.
-
-*** Running manage.py commands inside Docker
-Run Django management commands from the host by exec-ing into the =web= container:
-#+BEGIN_SRC bash
-# dev stack
-docker-compose -f docker-compose-dev.yml exec web python manage.py createsuperuser
-# pre-prod stack
-docker-compose -f docker-compose-preprod.yml exec web python manage.py create_states
-#+END_SRC
-Replace the command at the end with whatever you need (e.g., =load_roles=, =import_resources=).
-
 *** Running Tests
-**** Using Docker
-
-Run tests within the dev container:
-
-#+BEGIN_SRC bash
-docker-compose -f docker-compose-dev.yml run --rm web pytest tests/
-#+END_SRC
-
-Access the application at [[https://localhost][https://localhost]]
-
-**** Without Docker (Linux)
-
-Load the environment variables from your local `.env` file, then run pytest:
+Load the environment variables from your local `.env-test` file, then run pytest:
 
 #+BEGIN_SRC bash
 export $(grep -v '^#' .env | xargs)  # load variables
@@ -157,26 +131,8 @@ In another terminal,
 #+BEGIN_SRC bash  term3
     docker-compose -f docker-compose-dev.yml exec web python manage.py makemigrations app
     docker-compose -f docker-compose-dev.yml exec web python manage.py migrate
-    docker-compose -f docker-compose-dev.yml exec web python manage.py populate_initial_data
+    docker-compose -f docker-compose-dev.yml exec web python manage.py load_fundamentals
 #+END_SRC
-
-*** Passwords
-** Production Environment
-
-Build and launch the production environment:
-
-# Copy the sample production environment settings:
-#+BEGIN_SRC bash
-cp .env-prod.example .env-prod
-#+END_SRC
-
-#+begin_src bash
-docker-compose -f docker-compose-prod.yml up --build -d
-#+end_src
-
-- Ensure that your production `.env-prod` file is configured and secure.
-
-Access the application via your production URL (e.g., [[https://tuth.babao.rhum][https://tusis.babao.rhum]]).
 
 ** Pre-production Deployment (Docker + native Nginx)
 This tier runs PostgreSQL and Django/Gunicorn in Docker, while the host’s native Nginx (already secured with your =htpasswd= in =/etc/nginx=) serves static/media files and proxies to the containerised app.
@@ -207,37 +163,3 @@ the =django-import-export= package. Use these buttons to upload CSV
 or XLSX files and to download existing records. Models such as
 Courses, Curricula and Sections already provide corresponding
 resources.
-
-
-** Importing a full workbook
-Use ``import_workbook`` to load an Excel file containing
-``timetable``, ``academics``, ``people`` and ``spaces`` sheets.
-
-# +begin_src bash
-python manage.py import_workbook myfile.xlsx --dry-run
-# +end_src
-Run the command without ``--dry-run`` to persist changes.
-
-* COMMENT
-Installing nodes
-Installing pyenv
-Installing python 3.13
-#+BEGIN_SRC bash  -i
-pyenv install 3.13
-pyenv virtualenv 3.13 tusis
-pyenv local tusis
-#+END_SRC
-Installing librairies
-** special lib
-
-*** pygraphviz
-#+BEGIN_SRC bash  -i
-sudo apt-get install graphviz graphviz-dev
-pip install pygraphviz
-#+END_SRC
-
-pip install -r requirements-dev
-
-Installing webdriver
-Installing DB posgresql
-Installing IDE / codex

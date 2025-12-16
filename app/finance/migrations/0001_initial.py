@@ -12,206 +12,349 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('academics', '0001_initial'),
+        ("academics", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='AccountType',
+            name="AccountType",
             fields=[
-                ('code', models.CharField(max_length=30, primary_key=True, serialize=False)),
-                ('label', models.CharField(max_length=60)),
+                (
+                    "code",
+                    models.CharField(max_length=30, primary_key=True, serialize=False),
+                ),
+                ("label", models.CharField(max_length=60)),
             ],
             options={
-                'verbose_name': 'Account Type',
-                'verbose_name_plural': 'Account Types',
+                "verbose_name": "Account Type",
+                "verbose_name_plural": "Account Types",
             },
         ),
         migrations.CreateModel(
-            name='ClearanceStatus',
+            name="ClearanceStatus",
             fields=[
-                ('code', models.CharField(max_length=30, primary_key=True, serialize=False)),
-                ('label', models.CharField(max_length=60)),
+                (
+                    "code",
+                    models.CharField(max_length=30, primary_key=True, serialize=False),
+                ),
+                ("label", models.CharField(max_length=60)),
             ],
             options={
-                'verbose_name': 'Clearance Status',
-                'verbose_name_plural': 'Clearance Status',
+                "verbose_name": "Clearance Status",
+                "verbose_name_plural": "Clearance Status",
             },
         ),
         migrations.CreateModel(
-            name='FeeType',
+            name="FeeType",
             fields=[
-                ('code', models.CharField(max_length=30, primary_key=True, serialize=False)),
-                ('label', models.CharField(max_length=60)),
+                (
+                    "code",
+                    models.CharField(max_length=30, primary_key=True, serialize=False),
+                ),
+                ("label", models.CharField(max_length=60)),
             ],
             options={
-                'ordering': ['code'],
-                'abstract': False,
+                "ordering": ["code"],
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='HistoricalPayment',
+            name="HistoricalPayment",
             fields=[
-                ('id', models.BigIntegerField(auto_created=True, blank=True, db_index=True, verbose_name='ID')),
-                ('amount_paid', models.DecimalField(decimal_places=2, default=0, max_digits=10)),
-                ('history_id', models.AutoField(primary_key=True, serialize=False)),
-                ('history_date', models.DateTimeField(db_index=True)),
-                ('history_change_reason', models.CharField(max_length=100, null=True)),
-                ('history_type', models.CharField(choices=[('+', 'Created'), ('~', 'Changed'), ('-', 'Deleted')], max_length=1)),
+                (
+                    "id",
+                    models.BigIntegerField(
+                        auto_created=True, blank=True, db_index=True, verbose_name="ID"
+                    ),
+                ),
+                (
+                    "amount_paid",
+                    models.DecimalField(decimal_places=2, default=0, max_digits=10),
+                ),
+                ("history_id", models.AutoField(primary_key=True, serialize=False)),
+                ("history_date", models.DateTimeField(db_index=True)),
+                ("history_change_reason", models.CharField(max_length=100, null=True)),
+                (
+                    "history_type",
+                    models.CharField(
+                        choices=[("+", "Created"), ("~", "Changed"), ("-", "Deleted")],
+                        max_length=1,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'historical payment',
-                'verbose_name_plural': 'historical payments',
-                'ordering': ('-history_date', '-history_id'),
-                'get_latest_by': ('history_date', 'history_id'),
-            },
-            bases=(simple_history.models.HistoricalChanges, models.Model),
-        ),
-        migrations.CreateModel(
-            name='HistoricalScholarship',
-            fields=[
-                ('id', models.BigIntegerField(auto_created=True, blank=True, db_index=True, verbose_name='ID')),
-                ('amount', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('start_date', models.DateField()),
-                ('end_date', models.DateField(blank=True, null=True)),
-                ('conditions', models.TextField(blank=True)),
-                ('history_id', models.AutoField(primary_key=True, serialize=False)),
-                ('history_date', models.DateTimeField(db_index=True)),
-                ('history_change_reason', models.CharField(max_length=100, null=True)),
-                ('history_type', models.CharField(choices=[('+', 'Created'), ('~', 'Changed'), ('-', 'Deleted')], max_length=1)),
-            ],
-            options={
-                'verbose_name': 'historical scholarship',
-                'verbose_name_plural': 'historical scholarships',
-                'ordering': ('-history_date', '-history_id'),
-                'get_latest_by': ('history_date', 'history_id'),
-            },
-            bases=(simple_history.models.HistoricalChanges, models.Model),
-        ),
-        migrations.CreateModel(
-            name='HistoricalSectionFee',
-            fields=[
-                ('id', models.BigIntegerField(auto_created=True, blank=True, db_index=True, verbose_name='ID')),
-                ('amount', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('history_id', models.AutoField(primary_key=True, serialize=False)),
-                ('history_date', models.DateTimeField(db_index=True)),
-                ('history_change_reason', models.CharField(max_length=100, null=True)),
-                ('history_type', models.CharField(choices=[('+', 'Created'), ('~', 'Changed'), ('-', 'Deleted')], max_length=1)),
-            ],
-            options={
-                'verbose_name': 'historical section fee',
-                'verbose_name_plural': 'historical section fees',
-                'ordering': ('-history_date', '-history_id'),
-                'get_latest_by': ('history_date', 'history_id'),
+                "verbose_name": "historical payment",
+                "verbose_name_plural": "historical payments",
+                "ordering": ("-history_date", "-history_id"),
+                "get_latest_by": ("history_date", "history_id"),
             },
             bases=(simple_history.models.HistoricalChanges, models.Model),
         ),
         migrations.CreateModel(
-            name='Invoice',
+            name="HistoricalScholarship",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('amount_due', models.DecimalField(decimal_places=2, max_digits=8)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
+                (
+                    "id",
+                    models.BigIntegerField(
+                        auto_created=True, blank=True, db_index=True, verbose_name="ID"
+                    ),
+                ),
+                ("amount", models.DecimalField(decimal_places=2, max_digits=10)),
+                ("start_date", models.DateField()),
+                ("end_date", models.DateField(blank=True, null=True)),
+                ("conditions", models.TextField(blank=True)),
+                ("history_id", models.AutoField(primary_key=True, serialize=False)),
+                ("history_date", models.DateTimeField(db_index=True)),
+                ("history_change_reason", models.CharField(max_length=100, null=True)),
+                (
+                    "history_type",
+                    models.CharField(
+                        choices=[("+", "Created"), ("~", "Changed"), ("-", "Deleted")],
+                        max_length=1,
+                    ),
+                ),
+            ],
+            options={
+                "verbose_name": "historical scholarship",
+                "verbose_name_plural": "historical scholarships",
+                "ordering": ("-history_date", "-history_id"),
+                "get_latest_by": ("history_date", "history_id"),
+            },
+            bases=(simple_history.models.HistoricalChanges, models.Model),
+        ),
+        migrations.CreateModel(
+            name="HistoricalSectionFee",
+            fields=[
+                (
+                    "id",
+                    models.BigIntegerField(
+                        auto_created=True, blank=True, db_index=True, verbose_name="ID"
+                    ),
+                ),
+                ("amount", models.DecimalField(decimal_places=2, max_digits=10)),
+                ("history_id", models.AutoField(primary_key=True, serialize=False)),
+                ("history_date", models.DateTimeField(db_index=True)),
+                ("history_change_reason", models.CharField(max_length=100, null=True)),
+                (
+                    "history_type",
+                    models.CharField(
+                        choices=[("+", "Created"), ("~", "Changed"), ("-", "Deleted")],
+                        max_length=1,
+                    ),
+                ),
+            ],
+            options={
+                "verbose_name": "historical section fee",
+                "verbose_name_plural": "historical section fees",
+                "ordering": ("-history_date", "-history_id"),
+                "get_latest_by": ("history_date", "history_id"),
+            },
+            bases=(simple_history.models.HistoricalChanges, models.Model),
+        ),
+        migrations.CreateModel(
+            name="Invoice",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("amount_due", models.DecimalField(decimal_places=2, max_digits=8)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
         ),
         migrations.CreateModel(
-            name='Payment',
+            name="Payment",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('amount_paid', models.DecimalField(decimal_places=2, default=0, max_digits=10)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "amount_paid",
+                    models.DecimalField(decimal_places=2, default=0, max_digits=10),
+                ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='PaymentMethod',
+            name="PaymentMethod",
             fields=[
-                ('code', models.CharField(max_length=30, primary_key=True, serialize=False)),
-                ('label', models.CharField(max_length=60)),
+                (
+                    "code",
+                    models.CharField(max_length=30, primary_key=True, serialize=False),
+                ),
+                ("label", models.CharField(max_length=60)),
             ],
             options={
-                'ordering': ['code'],
-                'abstract': False,
+                "ordering": ["code"],
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Scholarship',
+            name="Scholarship",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('amount', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('start_date', models.DateField()),
-                ('end_date', models.DateField(blank=True, null=True)),
-                ('conditions', models.TextField(blank=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("amount", models.DecimalField(decimal_places=2, max_digits=10)),
+                ("start_date", models.DateField()),
+                ("end_date", models.DateField(blank=True, null=True)),
+                ("conditions", models.TextField(blank=True)),
             ],
         ),
         migrations.CreateModel(
-            name='ScholarshipLetterTemplate',
+            name="ScholarshipLetterTemplate",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=120)),
-                ('description', models.TextField(blank=True)),
-                ('template_file', models.FileField(upload_to=app.finance.models.scholarship.template_upload_path)),
-                ('placeholders', models.JSONField(blank=True, default=dict)),
-                ('is_active', models.BooleanField(default=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=120)),
+                ("description", models.TextField(blank=True)),
+                (
+                    "template_file",
+                    models.FileField(
+                        upload_to=app.finance.models.scholarship.template_upload_path
+                    ),
+                ),
+                ("placeholders", models.JSONField(blank=True, default=dict)),
+                ("is_active", models.BooleanField(default=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
             ],
             options={
-                'ordering': ['name'],
+                "ordering": ["name"],
             },
         ),
         migrations.CreateModel(
-            name='ScholarshipTermSnapshot',
+            name="ScholarshipTermSnapshot",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('gpa', models.DecimalField(decimal_places=2, max_digits=4)),
-                ('credits_attempted', models.PositiveSmallIntegerField()),
-                ('credits_completed', models.PositiveSmallIntegerField()),
-                ('awards_summary', models.JSONField(blank=True, default=dict)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("gpa", models.DecimalField(decimal_places=2, max_digits=4)),
+                ("credits_attempted", models.PositiveSmallIntegerField()),
+                ("credits_completed", models.PositiveSmallIntegerField()),
+                ("awards_summary", models.JSONField(blank=True, default=dict)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                'ordering': ['-semester__academic_year__start_date', '-semester__number'],
+                "ordering": ["-semester__academic_year__start_date", "-semester__number"],
             },
         ),
         migrations.CreateModel(
-            name='SectionFee',
+            name="SectionFee",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('amount', models.DecimalField(decimal_places=2, max_digits=10)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("amount", models.DecimalField(decimal_places=2, max_digits=10)),
             ],
         ),
         migrations.CreateModel(
-            name='AccountChartType',
+            name="AccountChartType",
             fields=[
-                ('code', models.CharField(max_length=30, primary_key=True, serialize=False)),
-                ('label', models.CharField(max_length=60)),
-                ('type', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='unknown', to='finance.accounttype')),
+                (
+                    "code",
+                    models.CharField(max_length=30, primary_key=True, serialize=False),
+                ),
+                ("label", models.CharField(max_length=60)),
+                (
+                    "type",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="unknown",
+                        to="finance.accounttype",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Account Type',
-                'verbose_name_plural': 'Account Types',
+                "verbose_name": "Account Type",
+                "verbose_name_plural": "Account Types",
             },
         ),
         migrations.CreateModel(
-            name='HistoricalInvoice',
+            name="HistoricalInvoice",
             fields=[
-                ('id', models.BigIntegerField(auto_created=True, blank=True, db_index=True, verbose_name='ID')),
-                ('amount_due', models.DecimalField(decimal_places=2, max_digits=8)),
-                ('created_at', models.DateTimeField(blank=True, editable=False)),
-                ('history_id', models.AutoField(primary_key=True, serialize=False)),
-                ('history_date', models.DateTimeField(db_index=True)),
-                ('history_change_reason', models.CharField(max_length=100, null=True)),
-                ('history_type', models.CharField(choices=[('+', 'Created'), ('~', 'Changed'), ('-', 'Deleted')], max_length=1)),
-                ('curriculum_course', models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='academics.curriculumcourse')),
-                ('history_user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigIntegerField(
+                        auto_created=True, blank=True, db_index=True, verbose_name="ID"
+                    ),
+                ),
+                ("amount_due", models.DecimalField(decimal_places=2, max_digits=8)),
+                ("created_at", models.DateTimeField(blank=True, editable=False)),
+                ("history_id", models.AutoField(primary_key=True, serialize=False)),
+                ("history_date", models.DateTimeField(db_index=True)),
+                ("history_change_reason", models.CharField(max_length=100, null=True)),
+                (
+                    "history_type",
+                    models.CharField(
+                        choices=[("+", "Created"), ("~", "Changed"), ("-", "Deleted")],
+                        max_length=1,
+                    ),
+                ),
+                (
+                    "curriculum_course",
+                    models.ForeignKey(
+                        blank=True,
+                        db_constraint=False,
+                        null=True,
+                        on_delete=django.db.models.deletion.DO_NOTHING,
+                        related_name="+",
+                        to="academics.curriculumcourse",
+                    ),
+                ),
+                (
+                    "history_user",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'historical invoice',
-                'verbose_name_plural': 'historical invoices',
-                'ordering': ('-history_date', '-history_id'),
-                'get_latest_by': ('history_date', 'history_id'),
+                "verbose_name": "historical invoice",
+                "verbose_name_plural": "historical invoices",
+                "ordering": ("-history_date", "-history_id"),
+                "get_latest_by": ("history_date", "history_id"),
             },
             bases=(simple_history.models.HistoricalChanges, models.Model),
         ),
