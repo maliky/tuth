@@ -80,14 +80,9 @@ RESOURCE_REGISTRY: dict[str, ModelResourceType] = {
 }
 
 
-def get_resource(key: str) -> ModelResourceType | None:
-    """Return the ModelResourceType associated with the key."""
-    return RESOURCE_REGISTRY.get(key)
-
 
 __all__ = [
     "DIRECTORY_RESOURCE_ENTRIES",
     "RESOURCE_CHOICES",
     "RESOURCE_REGISTRY",
-    "get_resource",
 ]

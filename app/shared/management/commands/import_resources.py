@@ -37,8 +37,8 @@ from app.shared.file_utils import guess_tabular_format, read_text_file
 from app.shared.importing import get_import_logger
 from app.shared.management.resources import (
     DIRECTORY_RESOURCE_ENTRIES,
+    RESOURCE_REGISTRY,
     RESOURCE_CHOICES,
-    get_resource,
 )
 from app.shared.types import DirectoryResourceEntry, ModelResourceType
 from app.shared.utils import clean_column_headers
@@ -121,7 +121,7 @@ class Command(BaseCommand):
         dataset = _load_dataset(file_contents)
 
         for key in selected_rsc:
-            ResourceClass = get_resource(key)
+            ResourceClass = RESOURCE_REGISTRY.get(key)
             if ResourceClass is None:
                 raise CommandError(f"Unknown resource: {key}")
             _run_import(self, dataset, key, ResourceClass, dry_run)
