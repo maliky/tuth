@@ -71,19 +71,23 @@ DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
     ),
 )
 
-# Mapping of label -> ResourceClass for single-file imports
-RESOURCE_REGISTRY: dict[str, ModelResourceType] = {
-    "Grade": GradeResource,
-    "LegacyGrade": LegacyGradeSheetResource,
-    "LegacyRegistration": LegacyRegistrationResource,
-}
-
 RESOURCE_CHOICES: Sequence[str] = tuple(
     OrderedDict.fromkeys([name for name, *_ in DIRECTORY_RESOURCE_ENTRIES]).keys()
 )
 
+RESOURCE_REGISTRY: dict[str, ModelResourceType] = {
+    name: resource_cls for name, resource_cls, _ in DIRECTORY_RESOURCE_ENTRIES
+}
+
+
+def get_resource(key: str) -> ModelResourceType | None:
+    """Return the ModelResourceType associated with the key."""
+    return RESOURCE_REGISTRY.get(key)
+
+
 __all__ = [
     "DIRECTORY_RESOURCE_ENTRIES",
-    "RESOURCE_REGISTRY",
     "RESOURCE_CHOICES",
+    "RESOURCE_REGISTRY",
+    "get_resource",
 ]

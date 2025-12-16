@@ -38,7 +38,7 @@ from app.shared.importing import get_import_logger
 from app.shared.management.resources import (
     DIRECTORY_RESOURCE_ENTRIES,
     RESOURCE_CHOICES,
-    RESOURCE_REGISTRY,
+    get_resource,
 )
 from app.shared.types import DirectoryResourceEntry, ModelResourceType
 from app.shared.utils import clean_column_headers
@@ -52,7 +52,7 @@ from app.timetable.admin import (
 
 
 class Command(BaseCommand):
-    """Load sections and sessions from cleaned_tscc.csv or provided file."""
+    """Load data from set of files csv or tsv provided directly or through a directory."""
 
     RESOURCE_CHOICES: Sequence[str] = RESOURCE_CHOICES
 
@@ -90,33 +90,40 @@ class Command(BaseCommand):
             "-r",
             "--resource",
             action="append",
-            choices=self.RESOURCE_CHOICES,
-            help="Limit import to the selected resource(s). Can be repeated.",
+            choices=(*self.RESOURCE_CHOICES, "all"),
+            help=(
+                "Limit import to the selected resource(s). Can be repeated. "
+                "Use 'all' to load every available resource."
+            ),
         )
 
     def handle(self, *args: Any, **opts: Any) -> None:
         """Validate and import each resource from the provided CSV."""
         path = Path(opts["file_path"])
-        selected = opts.get("resource")
+        selected_rsc_raw = opts.get("resource") or []
+        if isinstance(selected_rsc_raw, str):
+            selected_rsc: list[str] = [selected_rsc_raw]
+        else:
+            selected_rsc = list(selected_rsc_raw)
+
+        if not selected_rsc or "all" in selected_rsc:
+            selected_rsc = list(RESOURCE_CHOICES)
+
         dry_run: bool = bool(opts.get("dry_run"))
         if not path.exists():
             raise FileNotFoundError(str(path))
 
         if path.is_dir():
-            _import_from_directory(self, path, selected, dry_run)
+            _import_from_directory(self, path, selected_rsc, dry_run)
             return
 
         file_contents = read_text_file(path)
-        dataset = _load_dataset(selected, file_contents)
+        dataset = _load_dataset(file_contents)
 
-        selected_keys = selected or list(RESOURCE_REGISTRY.keys())
-
-        for key in selected_keys:
-            if key not in RESOURCE_REGISTRY:
-                raise CommandError(
-                    f"Resource '{key}' is only available when importing from a directory."
-                )
-            ResourceClass = RESOURCE_REGISTRY[key]
+        for key in selected_rsc:
+            ResourceClass = get_resource(key)
+            if ResourceClass is None:
+                raise CommandError(f"Unknown resource: {key}")
             _run_import(self, dataset, key, ResourceClass, dry_run)
 
 
@@ -181,30 +188,12 @@ def _run_import(
             if row_result.errors:
                 error_rows.append((row_number, row_result.errors))
 
-        # > Explain the code below.  How does it not delete everything
-        # > on each pass ?
-        if resource._meta.use_bulk and not dry_run:
-            resource.bulk_create(
-                using_transactions=True,
-                dry_run=dry_run,
-                raise_errors=True,
-            )
-            resource.bulk_update(
-                using_transactions=True,
-                dry_run=dry_run,
-                raise_errors=True,
-            )
-            resource.bulk_delete(
-                using_transactions=True,
-                dry_run=dry_run,
-                raise_errors=True,
-            )
-
         if dry_run:
             transaction.set_rollback(True)
 
     if error_rows or invalid_rows:
         for row_number, errors in error_rows[:5]:
+            # > Here there should obviously be errors, what else can we have ?
             first = errors[0] if errors else None
             if first is not None:
                 cmd.stdout.write(
@@ -250,29 +239,48 @@ def _import_from_directory(
         if name not in target_set:
             continue
 
-        dataset = _load_directory_dataset(directory, filenames)
-        if dataset is None:
+        datasets = _load_directory_datasets(directory, filenames)
+        if datasets is None:
             cmd.stdout.write(
                 cmd.style.WARNING(f"↷ skipping {name}: {filenames} not found")
             )
             continue
+        for dataset in datasets:
+            _run_import(cmd, dataset, name, ResourceClass, dry_run)
 
-        _run_import(cmd, dataset, name, ResourceClass, dry_run)
+    return None
 
 
-def _load_directory_dataset(directory: Path, filenames: Iterable[str]) -> Dataset | None:
-    """Return a dataset for the first matching CSV in filenames."""
+def _load_directory_datasets(
+    directory: Path, filenames: Iterable[str]
+) -> Iterable[Dataset] | None:
+    """Return the datasets for the first matching CSV in filenames."""
+    datasets = []
+
     for name in filenames:
         file_path = directory / name
         if not file_path.exists():
             continue
         contents = read_text_file(file_path)
-        try:
-            dataset = Dataset().load(contents, format=guess_tabular_format(contents))
-        except InvalidDimensions:
-            dataset = _build_donor_dataset(contents)
-        return clean_column_headers(dataset)
-    return None
+        dataset = _load_dataset(contents)
+        if dataset:
+            datasets.append(dataset)
+
+    return datasets or None
+
+
+def _load_dataset(file_contents) -> Dataset:
+    """Load the c/tsv file in Dataset handling special Donor case."""
+    try:
+        dataset: Dataset = Dataset().load(
+            file_contents, format=guess_tabular_format(file_contents)
+        )
+    except InvalidDimensions:
+        dataset = _build_donor_dataset(file_contents)
+
+    cleaned_dataset = clean_column_headers(dataset)
+
+    return cleaned_dataset
 
 
 def _build_donor_dataset(text: str) -> Dataset:
@@ -286,20 +294,3 @@ def _build_donor_dataset(text: str) -> Dataset:
         if cleaned:
             dataset.append([cleaned])
     return dataset
-
-
-def _load_dataset(selected, file_contents) -> Dataset:
-    """Load the c/tsv file in Dataset handling special Donor case."""
-    try:
-        dataset: Dataset = Dataset().load(
-            file_contents, format=guess_tabular_format(file_contents)
-        )
-    except InvalidDimensions:
-        if selected and len(selected) == 1 and selected[0] == "Donor":
-            dataset = _build_donor_dataset(file_contents)
-        else:
-            raise
-
-    cleaned_dataset = clean_column_headers(dataset)
-
-    return cleaned_dataset
