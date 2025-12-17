@@ -9,6 +9,8 @@
 *.pyc
 *cache*
 *tests/*txt
+*tmp.org
+*tmp.py
 *~
 .env*
 .git/*
@@ -30,4 +32,3 @@ node_modules
 package*json
 static/*
 test_import.py
-tmp.log

@@ -164,6 +164,9 @@ def _run_import(
                     dry_run=dry_run,
                     row_number=row_number,
                 )
+                import ipdb; ipdb.set_trace()
+
+
             except IntegrityError as exc:
                 handler = getattr(resource, "handle_integrity_error", None)
                 if handler and handler(exc, row, row_number, command=cmd):

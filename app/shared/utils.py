@@ -3,11 +3,12 @@
 from typing import Mapping, Optional, Tuple
 
 from django.core.management.base import BaseCommand
+from tablib import Dataset
 
 from app.academics.constants import COURSE_PATTERN
 from app.academics.models.college import College
 from app.academics.models.department import Department
-from app.shared.constants import STYLE_DEFAULT
+from app.shared.constants import DATA_COLUMN_REMAP, STYLE_DEFAULT
 
 
 def expand_course_code(
@@ -75,42 +76,10 @@ def as_title(value: str) -> str:
     return value.replace("_", " ").title()
 
 
-def clean_column_headers(dataset):
-    """Strip blank headers that may appear due to trailing commas and remap column names."""
-    # get the lower case dataset headers
-    sanitised = [(header or "").strip().lower() for header in dataset.headers]
-    rename_map = {
-        "countyoforigin": "origin_county",
-        "course_dept_no": "course_dept",
-        "course_name": "course_dept",
-        "course_title": "title",
-        "curriculum_short_name": "major",
-        "dateofbirth": "birth_date",
-        "dept_code": "course_dept",
-        "emergencycontact": "emergency_contact",
-        "enrollement_semester": "current_enrolled_sem",
-        "fatheraddress": "father_address",
-        "fathername": "father_name",
-        "firstname": "first_name",
-        "gender": "gender",
-        "grade": "grade_code",
-        "instructor": "faculty",
-        "lastname": "last_name",
-        "lastschoolattended": "last_school_attended",
-        "maritalstatus": "marital_status",
-        "middlename": "middle_name",
-        "motheraddress": "mother_address",
-        "mothername": "mother_name",
-        "nameprefix": "name_prefix",
-        "namesuffix": "name_suffix",
-        "phone": "phone_no",
-        "phoneno": "phone_no",
-        "phonenumber": "phone_no",
-        "placeofbirth": "birth_place",
-        "reasonforleaving": "reason_for_leaving",
-        "semester": "semester_no",
-    }
-    dataset.headers = [rename_map.get(name, name) for name in sanitised]
+def clean_column_headers(dataset) -> Dataset:
+    """Strip blank headers that may appear due to trailing commas."""
+    sanitised = [(header or "").strip() for header in dataset.headers]
+    dataset.headers = sanitised
     return dataset
 
 

@@ -159,22 +159,21 @@ class StudentInfoTermWidget(Widget):
 
 
 class StudentResource(resources.ModelResource):
-    """Resource for bulk importing Student rows."""
-
-    # I only see Long_name student ID and date of birth
-    # Should populate the pk field directly
+    """Resource for importing Student objects from different csv files."""
+    
     user = fields.Field(
         attribute="user", column_name="student_name", widget=UserStudentWidget()
     )
-
+    # to be updated from gp table StudentInfo or registration tables
     current_enrolled_semester = fields.Field(
         attribute="current_enrolled_semester",
-        column_name="TermLastEnrolled",
+        column_name="termlastenrolled",
         widget=StudentInfoTermWidget(fallback_column="current_enrolled_sem"),
     )
+    # to be taken from gp table StudentInfo    
     entry_semester = fields.Field(
         attribute="entry_semester",
-        column_name="TermFirstEntered",
+        column_name="termfirstentered",
         widget=StudentInfoTermWidget(fallback_column="entry_semester"),
     )
     curriculum = fields.Field(
@@ -210,6 +209,7 @@ class StudentResource(resources.ModelResource):
         column_name="birth_date",
         widget=DateTimeWidget("%Y-%m-%d %H:%M:%S"),
     )
+    # to ignore for now 16/12/2025
     # marital_status = fields.Field(
     #     attribute="marital_status",
     #     column_name="marital_status",
@@ -221,32 +221,33 @@ class StudentResource(resources.ModelResource):
         model = Student
         import_id_fields = ("student_id",)
         fields = (
-            "student_id",
-            "user",
-            "curriculum",
-            "current_enrolled_semester",
-            "entry_semester",
-            "nationality",
-            "birth_date",
-            "marital_status",
-            "gender",
-            "origin_county",
-            "birth_place",
-            "physical_address",
-            "phone_number",
-            "last_school_attended",
-            "reason_for_leaving",
-            "father_name",
-            "father_address",
-            "mother_name",
-            "mother_address",
-            "emergency_contact",
             "bio",
+            "birth_date",
+            "birth_place",
+            "current_enrolled_semester",  # ->
+            "curriculum",  # ->
+            "emergency_contact",
+            "entry_semester",  # ->
+            "father_address",
+            "father_name",
+            "gender",
+            "last_school_attended",
+            "marital_status",
+            "mother_address",
+            "mother_name",
+            "nationality",
+            "origin_county",
+            "phone_number",
+            "physical_address",
+            "reason_for_leaving",
+            "student_id",  #
+            "user",  # ->
         )
         skip_unchanged = True
         report_skipped = False
         use_bulk = False  # do not use because ressources is down row by row
 
+    # from studentInfo
     METRIC_COLUMNS = [
         "CumAttemptedHours",
         "CumRetainedHours",
@@ -283,12 +284,9 @@ class StudentResource(resources.ModelResource):
     def before_import_row(self, row, **kwargs):
         """Inject derived columns to capture StudentInfo data."""
         account_id = get_in_row("AccountID", row)
-        if account_id and not row.get("student_id"):
-            row["student_id"] = account_id
-
-        legacy_id = get_in_row("StudentID", row) or get_in_row("studentid", row)
-        if legacy_id and not row.get("student_id"):
-            row["student_id"] = legacy_id
+        legacy_id = get_in_row("StudentID", row)
+        if (account_id or legacy_id) and not row.get("student_id"):
+            row["student_id"] = account_id or legacy_id
 
         # synthesize student_name when source data provides split columns
         if not row.get("student_name"):
@@ -314,6 +312,10 @@ class StudentResource(resources.ModelResource):
             if existing_student:
                 row["student_name"] = existing_student.long_name
 
+        # > I should not allow creation of new major or curriculum
+        # > If a row does not fit because of the major or curriculum, I should log it
+        # > and create manual (eventulay the major or curriculum)
+        # > I should also do a fuzzy search for a matching curriculum
         major_value = (
             get_in_row("major", row)
             or get_in_row("curriculum_short_name", row)
@@ -367,7 +369,6 @@ class StudentResource(resources.ModelResource):
 
     def before_save_instance(self, instance, row, **kwargs) -> None:
         """Overide operation juste before save."""
-        # import ipdb; ipdb.set_trace()
         pass
 
     def after_save_instance(self, instance, row, **kwargs) -> None:

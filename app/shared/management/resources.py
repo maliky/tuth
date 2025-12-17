@@ -39,7 +39,8 @@ DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
         StudentResource,
         (
             "people_students.csv",
-            "UM_students.csv",
+            "UM_students.utf8.csv",
+            "StudentInfo.csv"
         ),
     ),
     (
@@ -47,7 +48,7 @@ DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
         GradeResource,
         (
             "registry_gradeSheets.csv",
-            "gradesheets.csv",
+            "gradesheets.utf8.csv",
         ),
     ),
     (
@@ -63,10 +64,10 @@ DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
         "LegacyGrade",
         LegacyGradeSheetResource,
         (
-            "oldgrades.csv",
+            "oldgrades.utf8.csv",
             "UM_TransferGrades.csv",
             "registry_gradeSheets.csv",
-            "gradesheets.csv",
+            "gradesheets.utf8.csv",
         ),
     ),
 )
