@@ -8,7 +8,7 @@ from simple_history.admin import SimpleHistoryAdmin
 from app.finance.models.payment import Payment
 from app.finance.models.invoice import Invoice
 from app.finance.models.scholarship import Scholarship
-from app.timetable.admin.filters import SemesterFilter
+from app.timetable.admin.filters import SemesterFilterAC
 
 
 @admin.register(Invoice)
@@ -16,7 +16,7 @@ class InvoiceAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin settings for Payment."""
 
     list_display = ("__str__", "recorded_by")
-    list_filter = (SemesterFilter,)
+    list_filter = (SemesterFilterAC,)
     readonly_fields = ("created_at",)
     search_fields = ("curriculum_course", "student", "semester")
 

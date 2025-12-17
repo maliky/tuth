@@ -13,16 +13,13 @@ from app.registry.models.grade import Grade, GradeValue
 from app.registry.models.registration import Registration, RegistrationStatus
 from app.registry.models.transcript import TranscriptRequest, TranscriptRequestStatus
 from app.timetable.admin.filters import (
-    GradeSemesterFilterAc,
     SectionBySemesterFilter,
-    SemesterFilter,
+    SemesterFilterAC,
 )
 from app.timetable.admin.views import SectionBySemesterAutocomplete
 from app.timetable.models.section import Section
 from simple_history.admin import SimpleHistoryAdmin
 from guardian.admin import GuardedModelAdmin
-
-GradeValue
 
 
 @admin.register(GradeValue)
@@ -54,7 +51,7 @@ class GradeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
         "graded_on",
     )
     # list_filter = ['section__semester', GradeSectionFilter]
-    list_filter = [GradeSemesterFilterAc, SectionBySemesterFilter]
+    list_filter = [SemesterFilterAC, SectionBySemesterFilter]
     search_fields = ("student__student_id", "section__semester")
 
     def get_urls(self):
@@ -88,7 +85,7 @@ class RegistrationAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModel
         "section__curriculum_course__course__code",
         "section__number",
     )
-    list_filter = (SemesterFilter,)
+    list_filter = (SemesterFilterAC,)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Override the form to limit sections to the student's curriculum_course."""
@@ -112,7 +109,7 @@ class TranscriptRequestAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     autocomplete_fields = ("student", "status")
     search_fields = ("student", "status")
     # > See how I can make this a AC field and limit the number of semester to the used semesters
-    list_filter = (SemesterFilter,)
+    list_filter = (SemesterFilterAC,)
 
 
 @admin.register(DocumentStatus, DocumentType, RegistrationStatus, TranscriptRequestStatus)

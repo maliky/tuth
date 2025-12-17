@@ -37,11 +37,7 @@ DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
     (
         "Student",
         StudentResource,
-        (
-            "people_students.csv",
-            "UM_students.utf8.csv",
-            "StudentInfo.csv"
-        ),
+        ("people_students.csv", "UM_students.utf8.csv", "StudentInfo.csv"),
     ),
     (
         "Grade",
@@ -79,7 +75,6 @@ RESOURCE_CHOICES: Sequence[str] = tuple(
 RESOURCE_REGISTRY: dict[str, ModelResourceType] = {
     name: resource_cls for name, resource_cls, _ in DIRECTORY_RESOURCE_ENTRIES
 }
-
 
 
 __all__ = [

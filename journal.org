@@ -1,4 +1,19 @@
 
+* <2025-12-17 mer. 11:34>
+In registry app we use a SemesterFilter (app/timetable/admin/filters.py) showing a list of semester.  The positive point is that this filter can addapte to many models
+  
+1. problem it is showing a list of semester even if no elements are shown in the main admin.
+The filter should only show possible candidate given the query set
+2. The semester filter is listing too many semester even if reduce to possible candidate, use filter factory used in acadmics/admin/filters to change the html list to a more concise drop down menu.
+
+In conclusion you are to find a clean, functional, effective way to create a new SemesterFilterAC able to :
+- effectively work with several models
+- display a drop_down list either:
+  - searchable or 
+  - with the reduce list of semesters that are possible candidate for the qs.
+
+  
+
 * <2025-12-16 mar. 20:18> codex resume 019b1809-8544-7742-9f25-0c1f412f3aaf
   - when importing UM_student
     - need to do a proximity check on the curriculum with existing

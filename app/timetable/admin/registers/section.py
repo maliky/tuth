@@ -10,7 +10,7 @@ from app.timetable.admin.filters import (
     SectionCollegeFilter,
     SectionDepartmentFilterAc,
     SectionFacultyFilterAc,
-    SectionSemesterFilterAc,
+    SemesterFilterAC,
 )
 from app.timetable.admin.inlines import SecSessionInline
 from app.timetable.admin.resources.section import SectionResource
@@ -43,7 +43,7 @@ class SectionAdmin(CollegeRestrictedAdmin):
     list_filter = [
         SectionFacultyFilterAc,
         SectionDepartmentFilterAc,
-        SectionSemesterFilterAc,
+        SemesterFilterAC,
         SectionCollegeFilter,
     ]
     autocomplete_fields = (

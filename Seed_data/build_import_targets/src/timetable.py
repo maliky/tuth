@@ -52,9 +52,7 @@ def build_sections_table(
         }
     ).copy()
     sections["academic_year"] = sections["academic_year"].apply(_normalize_ay)
-    sections["course_dept"] = (
-        sections["course_dept"].astype(str).str.strip().str.upper()
-    )
+    sections["course_dept"] = sections["course_dept"].astype(str).str.strip().str.upper()
     sections["course_no"] = sections["course_no"].astype(str).str.strip()
     sections["section_no"] = sections["section_no"].astype(str).str.strip()
     sections["faculty"] = sections["faculty"].astype(str).str.strip()
@@ -101,9 +99,7 @@ def build_sessions_table(
             "ToTime": "end_time",
         }
     ).copy()
-    sessions["course_dept"] = (
-        sessions["course_dept"].astype(str).str.strip().str.upper()
-    )
+    sessions["course_dept"] = sessions["course_dept"].astype(str).str.strip().str.upper()
     sessions["course_no"] = sessions["course_no"].astype(str).str.strip()
     sessions["section_no"] = sessions["section_no"].astype(str).str.strip()
     sessions["section_id"] = sessions.apply(

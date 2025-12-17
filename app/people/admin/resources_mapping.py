@@ -3,7 +3,15 @@
 # UM_STUDENT -> Student
 UM_STUDENT__STUDENT_MAP = {
     # all other fields should go to bio
-    "bio": ["Comments", "Denomination", "EducationLevel", "Occupation", "Scholarship", "Dormitory", "MealType"],
+    "bio": [
+        "Comments",
+        "Denomination",
+        "EducationLevel",
+        "Occupation",
+        "Scholarship",
+        "Dormitory",
+        "MealType",
+    ],
     "birth_date": "DateOfBirth",
     "birth_place": "PlaceOfBirth",
     "current_enrolled_semester": ["YearOfEntry", "SemesterOfEntry"],  # ->

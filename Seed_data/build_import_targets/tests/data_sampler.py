@@ -217,9 +217,7 @@ class SmartSchoolSampler:
         target_df = df[df["_normalized_college"] == self.config.college_code]
         target_df = target_df[target_df["_normalized_student_id"].notna()]
         if target_df.empty:
-            raise SystemExit(
-                f"No students found for college {self.config.college_code}."
-            )
+            raise SystemExit(f"No students found for college {self.config.college_code}.")
         requested = min(self.config.student_count, len(target_df))
         sampled_idx = self._sample_indices(
             target_df, "_level_bucket", requested=requested
@@ -326,18 +324,14 @@ class SmartSchoolSampler:
         self, registrations: pd.DataFrame, student_ids: set[str]
     ) -> pd.DataFrame:
         df = registrations.assign(
-            _normalized_student_id=registrations["StudentID"].apply(
-                normalize_student_id
-            ),
+            _normalized_student_id=registrations["StudentID"].apply(normalize_student_id),
             _year=registrations["AcademicYear"].apply(normalize_token),
             _semester=registrations["Semester"].apply(normalize_token),
         )
         df = df[df["_normalized_student_id"].isin(student_ids)]
         return df.drop(columns=["_normalized_student_id", "_year", "_semester"])
 
-    def filter_roster(
-        self, roster: pd.DataFrame, student_ids: set[str]
-    ) -> pd.DataFrame:
+    def filter_roster(self, roster: pd.DataFrame, student_ids: set[str]) -> pd.DataFrame:
         df = roster.assign(
             _normalized_student_id=roster["StudentID"].apply(normalize_student_id),
             _course_code=roster["CourseCode"].apply(normalize_course_code),
@@ -453,9 +447,9 @@ class SmartSchoolSampler:
             ),
         )
         periods["_key"] = list(zip(periods["_year"], periods["_semester"]))
-        tables["UM_AcademicPeriods"] = periods[
-            periods["_key"].isin(keys.term_keys)
-        ].drop(columns=["_year", "_semester", "_key"])
+        tables["UM_AcademicPeriods"] = periods[periods["_key"].isin(keys.term_keys)].drop(
+            columns=["_year", "_semester", "_key"]
+        )
         return tables
 
     def filter_staff_tables(self, keys: SampleKeys) -> dict[str, pd.DataFrame]:
@@ -624,9 +618,7 @@ class SmartSchoolSampler:
         student_ids.discard(None)
 
         roster = self.filter_roster(self.load_student_courses(), student_ids)
-        registrations = self.filter_registrations(
-            self.load_registrations(), student_ids
-        )
+        registrations = self.filter_registrations(self.load_registrations(), student_ids)
 
         keys = self.build_keys(filtered_students, registrations, roster)
         keys.student_ids = student_ids

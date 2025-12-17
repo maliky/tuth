@@ -160,7 +160,7 @@ class StudentInfoTermWidget(Widget):
 
 class StudentResource(resources.ModelResource):
     """Resource for importing Student objects from different csv files."""
-    
+
     user = fields.Field(
         attribute="user", column_name="student_name", widget=UserStudentWidget()
     )
@@ -170,7 +170,7 @@ class StudentResource(resources.ModelResource):
         column_name="termlastenrolled",
         widget=StudentInfoTermWidget(fallback_column="current_enrolled_sem"),
     )
-    # to be taken from gp table StudentInfo    
+    # to be taken from gp table StudentInfo
     entry_semester = fields.Field(
         attribute="entry_semester",
         column_name="termfirstentered",

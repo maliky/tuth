@@ -3,30 +3,64 @@
 from admin_searchable_dropdown.filters import (
     AutocompleteFilterFactory,
     AutocompleteFilter,
+    _get_rel_model,
 )
 from app.shared.admin.filters import BaseCollegeFilter
+from app.timetable.models import semester
 from app.timetable.models.semester import Semester
 from django.contrib import admin
 from django.urls import reverse
 from urllib.parse import urlencode
 
-GradeSemesterFilterAc = AutocompleteFilterFactory(
-    "Semester",
-    "section__semester",  # look-up path (Grade → Section → Semester)
-    use_pk_exact=False,
-)
+# GradeSemesterFilterAc = AutocompleteFilterFactory(
+#     "Semester",
+#     "section__semester",  # look-up path (Grade → Section → Semester)
+#     use_pk_exact=False,
+# )
 
-SectionSemesterFilterAc = AutocompleteFilterFactory(
-    "Semester",
-    "semester",
-    use_pk_exact=False,
-)
+# SectionSemesterFilterAc = AutocompleteFilterFactory(
+#     "Semester",
+#     "semester",
+#     use_pk_exact=False,
+# )
 
 SemesterAcademicYearFilterAc = AutocompleteFilterFactory(
     "Academic year",
     "academic_year",
     use_pk_exact=False,  # > what advantages is there to use_pk_exact ?
 )
+
+
+SEMESTER_FIELD_LOOKPS = (
+    ("semester", "semester"),
+    ("section", "section__semester"),
+    ("curriculum_course", "curriculum_course__sections__semester"),
+    ("payment", "payment_student__current_enrolled_semester"),
+    ("student", "student__current_enrolled_semester"),
+)
+
+
+def _get_semester_lookup_path(model):
+    """Return the lookup path pointing to a semester for a given model."""
+    field_names = {f.name for f in model._meta.get_fields()}
+    for field_name, lookup_path in SEMESTER_FIELD_LOOKPS:
+        if field_name in field_names:
+            return lookup_path
+
+
+def _semester_qs_from_model_admin(model_admin, request):
+    """Return only semesters that appear in the current changelist queryset."""
+    qs = model_admin.get_queryset(request)
+    lookup_path = _get_semester_lookup_path(qs.model)
+    if not lookup_path:
+        return Semester.objects.none()
+
+    semester_ids = (
+        qs.filter(**{f"{lookup_path}__isnull": False})
+        .values_list(f"{lookup_path}__id", flat=True)
+        .distinct()
+    )
+    return Semester.objects.filter(id__in=semester_ids).order_by("-start_date")
 
 
 class SectionCollegeFilter(BaseCollegeFilter):
@@ -58,11 +92,69 @@ class SectionBySemesterFilter(AutocompleteFilter):
         )
 
 
+class SemesterFilterAC(AutocompleteFilter):
+    title = "semester"
+    parameter_name = "semester"
+    field_name = "semester"
+    use_pk_exact = False
+
+    def __init__(self, request, params, model, model_admin):
+        """Prepare a limited autocomplet filter for semester fields.
+
+        Keyword Arguments:
+        request     --
+        params      --
+        models      --
+        model_admin --
+        """
+        # is model lower case ?
+        self.lookup_path = _get_semester_lookup_path(model)
+        self.parameter_name = self.lookup_path or self.parameter_name
+        self.field_name = (self.lookup_path or self.field_name).split("_")[-1]
+        self.rel_model = (
+            _get_rel_model(model, self.lookup_path) if self.lookup_path else None
+        )
+        self._semester_qs = _semester_qs_from_model_admin(model_admin, request)
+        super().__init__(request, params, model, model_admin)
+        self.title = "semester"
+
+        def get_queryset_for_field(self, model, name):
+            """Limit autocomplete results to semester present in the admin qs."""
+            if name == self.field_name:
+                # this looks like a circular stuff.
+                return self._semester_qs
+            return super().get_queryset_for_field(model, name)
+
+        def queryset(self, request, qs):
+            """Filter the changelist by the selected semester."""
+            filtered_qs = _get_semester_qs(self, request, qs)
+            return filtered_qs
+
+
+def _get_semester_qs(afilter, request, qs):
+    """Return the filtered query set."""
+
+    lookup_path = afilter.lookup_path
+    value = afilter.value()
+    if not lookup_path or not value:
+        return qs
+    try:
+        semester_id = int(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return qs
+    return qs.filter(**{lookup_path: semester_id})
+
+
 class SemesterFilter(admin.SimpleListFilter):
     """Filter queryset by semester with a current semester default."""
 
     title = "semester"
     parameter_name = "semester"
+
+    def __init__(self, request, params, model, model_admin):
+        """Prepare the SimpletList Filter."""
+        self.lookup_path = _get_semester_lookup_path(model)
+        super().__init__(request, params, model, model_admin)
 
     def lookups(self, request, model_admin):
         """Get the semesters order in decreasing age.
@@ -76,7 +168,9 @@ class SemesterFilter(admin.SimpleListFilter):
         See https://docs.djangoproject.com/en/5.2/ref/contrib/admin/filters/
         """
         # Request and mode_admin are not used but it's ok.
-        semesters = Semester.objects.order_by("-start_date")
+        semesters = _semester_qs_from_model_admin(model_admin, request)
+        if not semesters.exists():
+            semesters = Semester.objects.order_by("start_date")
         return [(s.id, str(s)) for s in semesters]
 
     def queryset(self, request, qs):
@@ -86,27 +180,5 @@ class SemesterFilter(admin.SimpleListFilter):
         provided in the query string and retrievable via
         `self.value()`.
         """
-        if self.value() is None:
-            # current = get_current_semester()  # should I default to current
-            # if so the All keyword has no use
-            # if not current:
-            return qs
-            # semester_id = current.id
-        else:
-            semester_id = int(self.value())  # type: ignore[arg-type]
-
-        model = qs.model
-        field_names = {f.name for f in model._meta.get_fields()}
-        if "semester" in field_names:
-            return qs.filter(semester_id=semester_id)
-        if "section" in field_names:
-            return qs.filter(section__semester_id=semester_id)
-        if "curriculum_course" in field_names:
-            return qs.filter(
-                curriculum_course__sections__semester_id=semester_id
-            ).distinct()
-        if "payment" in field_names:
-            return qs.filter(payment__student__current_enrolled_semester_id=semester_id)
-        if "student" in field_names:
-            return qs.filter(student__current_enrolled_semester_id=semester_id)
-        return qs
+        filtered_qs = _get_semester_qs(self, request, qs)
+        return filtered_qs

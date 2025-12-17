@@ -122,7 +122,7 @@ class FacultyAdmin(DuplicatePreviewMixin, CollegeRestrictedAdmin):
     list_filter = [
         FacultyDepartmentFAC,
         FacultyGroupFAC,
-        'college',
+        "college",
     ]
 
     search_fields = (

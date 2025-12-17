@@ -125,9 +125,7 @@ def build_tables(workbook: Path, students_csv: Path, roster_csv: Path) -> None:
     students_df = pd.read_csv(
         students_csv, sep="\t", encoding="utf-16-le", low_memory=False
     )
-    roster_df = pd.read_csv(
-        roster_csv, sep="\t", encoding="utf-16-le", low_memory=False
-    )
+    roster_df = pd.read_csv(roster_csv, sep="\t", encoding="utf-16-le", low_memory=False)
 
     dept_lookup = compute_dept_college_lookup(roster_df, students_df)
 

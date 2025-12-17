@@ -18,9 +18,7 @@ def _normalize_lookup(
     if lookup is None:
         return {}
     if isinstance(lookup, Mapping):
-        return {
-            str(k).strip(): str(v).strip() for k, v in lookup.items() if pd.notna(v)
-        }
+        return {str(k).strip(): str(v).strip() for k, v in lookup.items() if pd.notna(v)}
     if isinstance(lookup, pd.Series):
         return {
             str(idx).strip(): str(val).strip()
@@ -29,9 +27,7 @@ def _normalize_lookup(
         }
     if isinstance(lookup, pd.DataFrame):
         if key not in lookup or value not in lookup:
-            raise KeyError(
-                f"lookup dataframe must contain '{key}' and '{value}' columns"
-            )
+            raise KeyError(f"lookup dataframe must contain '{key}' and '{value}' columns")
         _df = lookup.dropna(subset=[key, value])
         return {
             str(row[key]).strip(): str(row[value]).strip() for _, row in _df.iterrows()
@@ -53,9 +49,7 @@ def build_colleges_table(colleges_df: pd.DataFrame) -> pd.DataFrame:
             .astype(str)
             .str.strip()
             .str.upper(),
-            college_long_name=lambda df: df["college_long_name"]
-            .astype(str)
-            .str.strip(),
+            college_long_name=lambda df: df["college_long_name"].astype(str).str.strip(),
         )
         .sort_values("college_code")
         .reset_index(drop=True)
@@ -86,10 +80,7 @@ def build_departments_table(
     out = (
         departments.merge(dept_titles, how="left", on="course_dept")
         .assign(
-            course_dept=lambda df: df["course_dept"]
-            .astype(str)
-            .str.strip()
-            .str.upper(),
+            course_dept=lambda df: df["course_dept"].astype(str).str.strip().str.upper(),
             department_title=lambda df: df["department_title"]
             .fillna(df["course_dept"])
             .astype(str)
