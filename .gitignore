@@ -2,7 +2,6 @@
 !.env-prod.example
 !Seed_data/README.org
 !Seed_data/build_targets
-!Seed_data/parse_db.org
 *#*
 *.crt
 *.key
