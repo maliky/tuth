@@ -1,4 +1,11 @@
 
+* <2025-12-16 mar. 20:18> codex resume 019b1809-8544-7742-9f25-0c1f412f3aaf
+  - when importing UM_student
+    - need to do a proximity check on the curriculum with existing
+    - need to make sure that all student info is going to the model
+      - eg Aaron collins have middle name jumped, no adress inputed
+    - in the student admin view filter should only list the curriculum, years and college present in the students
+
 * <2025-12-15 lun. 23:53>  running the tests ?
   working
   need to

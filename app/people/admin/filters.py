@@ -14,5 +14,3 @@ FacultyDepartmentFAC = AutocompleteFilterFactory(
     "Department", "staff_profile__department"
 )
 FacultyGroupFAC = AutocompleteFilterFactory("Group", "staff_profile__user__groups")
-
-
