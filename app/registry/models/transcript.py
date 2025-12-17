@@ -17,6 +17,8 @@ class TranscriptRequestStatus(SimpleTableMixin):
         ("completed", "Completed"),
         ("on_hold", "On hold"),
     ]
+    class Meta:
+        verbose_name_plural = "Transcript Request Status"
 
     @classmethod
     def get_default(cls):

@@ -11,6 +11,7 @@ from app.people.models.student import Student
 # from app.registry.admin.views import SectioGradeValueerAutocomplete
 from app.registry.models.grade import Grade, GradeValue
 from app.registry.models.registration import Registration, RegistrationStatus
+from app.registry.models.transcript import TranscriptRequest, TranscriptRequestStatus
 from app.timetable.admin.filters import (
     GradeSemesterFilterAc,
     SectionBySemesterFilter,
@@ -103,7 +104,18 @@ class RegistrationAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModel
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-@admin.register(DocumentStatus, DocumentType, RegistrationStatus)
+@admin.register(TranscriptRequest)
+class TranscriptRequestAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
+    """Allow students to request grade transcripts."""
+
+    list_display = ("student", "status", "requested_at", "purpose")
+    autocomplete_fields = ("student", "status")
+    search_fields = ("student", "status")
+    # > See how I can make this a AC field and limit the number of semester to the used semesters
+    list_filter = (SemesterFilter,)
+
+
+@admin.register(DocumentStatus, DocumentType, RegistrationStatus, TranscriptRequestStatus)
 class CurriculumStatusAdmin(admin.ModelAdmin):
     """Lookup admin for CurriculumStatus."""
 
