@@ -11,6 +11,7 @@
 *tests/*txt
 *tmp.org
 *tmp.py
+*tmp.log
 *~
 .env*
 .git/*
