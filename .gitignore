@@ -1,7 +1,3 @@
-!.env-dev.example
-!.env-prod.example
-!Seed_data/README.org
-!Seed_data/build_targets
 *#*
 *.crt
 *.key
@@ -20,7 +16,7 @@
 .secrets*
 DONE.org*
 Docs
-Seed_data
+Seed_data/*
 TODO.org*
 _test.repl.org*
 codo-tuth-env/
@@ -33,3 +29,8 @@ node_modules
 package*json
 static/*
 test_import.py
+!.env-dev.example
+!.env-prod.example
+!Seed_data/
+!Seed_data/README.org
+!Seed_data/build_import_targets

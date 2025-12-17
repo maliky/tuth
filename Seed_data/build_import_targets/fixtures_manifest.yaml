@@ -1,0 +1,192 @@
+# Fundamental tables (13 outputs grouped)
+- target: fundamentals_academic_terms.csv
+  description: AcademicYear + Semester snapshots.
+  sources:
+    - name: UM_AcademicPeriods
+      fields:
+        [
+          AcademicYear,
+          Semester,
+          SemesterBegins,
+          SemesterEnds,
+          LateRegistrationStarts,
+          LateRegistrationFee,
+        ]
+  keys: [academic_year, semester]
+  dependencies: []
+
+- target: fundamentals_clearance_status.csv
+  description: Clearance statuses for finance/payment workflows.
+  sources:
+    - name: finance_ClearanceStatus.xlsx
+      fields: []
+  keys: [name]
+  dependencies: []
+
+- target: fundamentals_colleges_departments.csv
+  description: College + department lookup.
+  sources:
+    - name: UM_Colleges
+      fields: [CollegeCode, Description]
+    - name: UM_Courses
+      fields: [CourseCode, Course]
+    - name: UM_CoursesLevels
+      fields: [CourseCode]
+  keys: [course_dept]
+  dependencies: []
+
+- target: fundamentals_credit_hours.csv
+  description: Credit-hour catalog.
+  sources:
+    - name: UM_CoursesLevels
+      fields: [CourseCode, CourseNo, CreditHours]
+  keys: [course_dept, course_no]
+  dependencies: []
+
+- target: fundamentals_curriculum_status.csv
+  description: Curriculum status codes.
+  sources:
+    - name: curriculum_status.xlsx
+      fields: []
+  keys: [name]
+  dependencies: []
+
+- target: fundamentals_fee_types.csv
+  description: FeeType definitions for SectionFee.
+  sources:
+    - name: UM_Fees
+      fields: [Fee, AmountToPay]
+  keys: [fee]
+  dependencies: []
+
+- target: fundamentals_payment_methods.csv
+  description: PaymentMethod enumerations.
+  sources:
+    - name: payment_methods.xlsx
+      fields: []
+  keys: [name]
+  dependencies: []
+
+- target: fundamentals_registration_status.csv
+  description: RegistrationStatus enumerations.
+  sources:
+    - name: UM_Registrations
+      fields: [EnrollmentType]
+  keys: [status]
+  dependencies: []
+
+- target: fundamentals_semester_status.csv
+  description: SemesterStatus enumerations.
+  sources:
+    - name: semester_status.xlsx
+      fields: []
+  keys: [name]
+  dependencies: []
+
+- target: fundamentals_spaces_rooms.csv
+  description: Base Space + Room inventory.
+  sources:
+    - name: UM_CoursesSections
+      fields: [Location, Capacity]
+    - name: UM_CoursesSchedule
+      fields: [RoomNo]
+  keys: [space, room]
+  dependencies: []
+
+- target: fundamentals_staff_faculty.csv
+  description: Staff + Faculty lookup.
+  sources:
+    - name: UM_Staff
+      fields: [Staff]
+    - name: Users
+      fields: [UserName, FirstName, MiddleName, LastName]
+  keys: [staff_name]
+  dependencies: []
+
+- target: fundamentals_students.csv
+  description: Minimal Student table (user + curriculum).
+  sources:
+    - name: UM_students
+      fields: [StudentID, Major, Curriculum]
+    - name: Users
+      fields: [UserName]
+  keys: [student_id]
+  dependencies: []
+
+- target: fundamentals_transcript_requests.csv
+  description: TranscriptRequestStatus + TranscriptRequest.
+  sources:
+    - name: transcript_status.xlsx
+      fields: []
+    - name: transcript_requests.csv
+      fields: [StudentID, Status]
+  keys: [request_id]
+  dependencies:
+    - fundamentals_students.csv
+
+# Curriculum + Course stack
+- target: academics_curriculum_course_bundle.csv
+  description: Curriculum, Course, CurriculumCourse in one bundle.
+  sources:
+    - name: UM_Curriculums
+      fields: [Curriculum, College]
+    - name: UM_Courses
+      fields: [CourseCode, Course]
+    - name: UM_CurriculumCourses
+      fields: [Curriculum, CourseCode, CourseNo]
+  keys: [curriculum, course_dept, course_no]
+  dependencies:
+    - fundamentals_colleges_departments.csv
+    - fundamentals_curriculum_status.csv
+
+# Semester + Section + Invoice bundle
+- target: timetable_sections.csv
+  description: Sections with semester context.
+  sources:
+    - name: UM_CoursesSections
+      fields: [AcademicYear, Semester, CourseCode, CourseNo, Section, Instructor, Location]
+  keys: [academic_year, semester, course_code, course_no, section]
+  dependencies:
+    - fundamentals_academic_terms.csv
+    - academics_curriculum_course_bundle.csv
+
+- target: finance_invoice.csv
+  description: Invoices referencing semester + curriculum course.
+  sources:
+    - name: invoices.csv
+      fields: [StudentID, Curriculum, CourseCode, CourseNo, AcademicYear, Semester]
+  keys: [invoice_number]
+  dependencies:
+    - timetable_sections.csv
+
+# Registry + finance mix (3 outputs)
+- target: registry_grades.csv
+  description: Grade rows combining student + section.
+  sources:
+    - name: UM_GradeSheet
+      fields: [StudentID, CourseCode, CourseNo, AcademicYear, Semester, Grade, Section]
+  keys: [student_id, course_dept, course_no, semester_code]
+  dependencies:
+    - fundamentals_students.csv
+    - timetable_sections.csv
+
+- target: registry_registrations.csv
+  description: Registration rows (status + student + section).
+  sources:
+    - name: UM_Registrations
+      fields: [StudentID, AcademicYear, Semester, EnrollmentType, Section]
+  keys: [student_id, section_no, semester_code]
+  dependencies:
+    - fundamentals_registration_status.csv
+    - fundamentals_students.csv
+    - timetable_sections.csv
+
+- target: finance_payments.csv
+  description: Payments referencing invoices and clearance status.
+  sources:
+    - name: dbotransaction.csv
+      fields: [Reference, TransactionType, Memo, Entity]
+  keys: [payment_id]
+  dependencies:
+    - finance_invoice.csv
+    - fundamentals_clearance_status.csv
