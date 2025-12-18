@@ -23,7 +23,7 @@ DEFAULT_COURSE_NO = count(start=1, step=1)
 logger = logging.getLogger(__name__)
 
 
-class CourseManager(models.Manager):
+class CourseManager(models.Manager["Course"]):
     """Manager with fuzzy lookup to avoid near-duplicate courses."""
 
     def _token(self, department: Department, number: str, title: str | None) -> str:
@@ -39,18 +39,18 @@ class CourseManager(models.Manager):
         number: str,
         title: str | None = None,
         threshold: float = 0.9,
-    ) -> Self | None:
+    ) -> Course | None:
         """Return an existing course with a similar identifier/title."""
         token = self._token(department, number, title)
         candidates = self.filter(department=department)
-        best: tuple[Self | None, float] = (None, 0.0)
+        best: tuple[Course | None, float] = (None, 0.0)
         # > We can factor this and the one in curriclum,
-        # > using a function to handle alternate case 
+        # > using a function to handle alternate case
         for course in candidates:
             other_token = self._token(course.department, course.number, course.title)
             score, ok = course_similarity(token, other_token, threshold=threshold)
             if ok and score > best[1]:
-                best = (cast(Self, course), score)
+                best = (course, score)
         return best[0]
 
     def get_or_create_fuzzy(
@@ -60,7 +60,7 @@ class CourseManager(models.Manager):
         number: str,
         title: str | None = None,
         threshold: float = 0.9,
-    ) -> tuple[Self, bool]:
+    ) -> tuple[Course, bool]:
         """Return an existing fuzzy-matched course or create a new one."""
         match = self.find_fuzzy_match(
             department=department, number=number, title=title, threshold=threshold
@@ -80,7 +80,7 @@ class CourseManager(models.Manager):
             department=department,
             defaults={"title": title},
         )
-        return cast(Self, created_course), bool(created)
+        return created_course, bool(created)
 
 
 class Course(models.Model):
@@ -113,7 +113,7 @@ class Course(models.Model):
         related_name="courses",
     )
     history = HistoricalRecords()
-    objects = CourseManager()
+    objects: CourseManager = CourseManager()
     # ~~~~ Read-only ~~~~
     code = models.CharField(max_length=20, editable=False)
 

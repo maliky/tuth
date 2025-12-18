@@ -17,6 +17,7 @@ from typing import Optional
 import pandas as pd
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import transaction
+from django.db.models import QuerySet
 from tqdm import tqdm
 
 from app.academics.choices import COLLEGE_CODE, COLLEGE_LONG_NAME
@@ -283,7 +284,7 @@ class Command(BaseCommand):
         # sem_start: Optional[date] = (
         #     semester.start_date or semester.academic_year.start_date
         # )
-        curricula = (
+        curricula: QuerySet[Curriculum] = (
             Curriculum.objects.filter(college=college, programs__course=course)
             .distinct()
             .order_by("-is_active", "-creation_date")
@@ -291,8 +292,8 @@ class Command(BaseCommand):
         # if sem_start:
         #     curricula = curricula.filter(creation_date__lte=sem_start)
 
-        curriculum = curricula.first()
-        if curriculum:
+        curriculum: Curriculum | None = curricula.first()
+        if curriculum is not None:
             return curriculum
 
         # > in case of no curriculum found we need to do a fuzzy search in the college and department

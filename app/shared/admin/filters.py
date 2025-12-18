@@ -2,18 +2,21 @@
 
 from __future__ import annotations
 
-from typing import Iterable, Sequence
+from typing import Iterable, Sequence, TypeVar, cast
 
 from admin_searchable_dropdown.filters import AutocompleteFilter, _get_rel_model
 from django.contrib import admin
 from django.core.exceptions import FieldError
-from django.db.models import Model, QuerySet
+from django.db.models import Manager, Model, QuerySet
 from django.http import HttpRequest
 
 from app.academics.choices import LEVEL_NUMBER
 from app.academics.models import College, Curriculum, Department
 from app.people.models import Student
 from app.shared.types import LookUpType
+
+
+ModelT = TypeVar("ModelT", bound=Model)
 
 
 def _get_lookup_path(
@@ -30,7 +33,7 @@ def _get_lookup_path(
 def _filter_admin_queryset(
     model_admin: admin.ModelAdmin, request: HttpRequest, ignored_params: Iterable[str]
 ) -> QuerySet:
-    """Apply active filters list from the request to the queryset."""
+    """Apply active filters list (from the request) to the queryset."""
     qs = model_admin.get_queryset(request)
     ignored = set(ignored_params)
     ignored.update({"p", "o", "ot", "q", "_changelist_filters"})
@@ -50,16 +53,17 @@ def _related_qs_for_lookup(
     model_admin: admin.ModelAdmin,
     request: HttpRequest,
     lookup_path: str | None,
-    target_model: type[Model],
-):
+    target_model: type[ModelT],
+) -> QuerySet[ModelT]:
     """Should Return the queryset of related objects constrained by current filters.
 
     The returned queryset only contains objects reachable from the current
     changelist queryset through the provied lookup path. This keeps the
     autocomplet suggestions in sync with other active filters.
     """
+    manager = cast(Manager[ModelT], getattr(target_model, "objects"))
     if not lookup_path:
-        return target_model.objects.none()
+        return manager.none()
 
     qs = _filter_admin_queryset(model_admin, request, lookup_path)
     related_ids = (
@@ -67,12 +71,12 @@ def _related_qs_for_lookup(
         .values_list(f"{lookup_path}__id", flat=True)
         .distinct()
     )
-    return target_model.objects.filter(id__in=related_ids)
+    return manager.filter(id__in=related_ids)
 
 
 def _filter_queryset_by_value(
-    queryset: QuerySet, lookup_path: str | None, raw_value: str | None
-) -> QuerySet:
+    queryset: QuerySet[ModelT], lookup_path: str | None, raw_value: str | None
+) -> QuerySet[ModelT]:
     """Filter a queryset by id when a valide value is provided."""
 
     if not lookup_path or not raw_value:

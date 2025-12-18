@@ -18,14 +18,6 @@ class Department(models.Model):
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     short_name = models.CharField(max_length=8)
-    # would be good to restric this to a few dept.
-    # but it is also here that I should set the Truth
-    # short_name = models.CharField(
-    #     max_length=6,
-    #     choices=DepartmentShortNameChoice.choices,
-    #     default=DepartmentShortNameChoice.DEFT,
-    # )
-
     # ~~~~ Auto-filled ~~~~
     college = models.ForeignKey(
         "academics.College",

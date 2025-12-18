@@ -33,11 +33,11 @@ class CurriculumStatus(SimpleTableMixin):
         verbose_name_plural = "Curriculum Status"
 
 
-class CurriculumManager(models.Manager):
+class CurriculumManager(models.Manager["Curriculum"]):
     """Manager with fuzzy lookup to reduce near-duplicates."""
 
     def _token(self, short_name: str, long_name: str | None) -> str:
-        if long_name  and long_name != short_name:
+        if long_name and long_name != short_name:
             return long_name + " " + short_name
         return short_name
 
@@ -45,13 +45,13 @@ class CurriculumManager(models.Manager):
         self,
         *,
         short_name: str,
-        long_name: str | None, 
+        long_name: str | None,
         college: College,
         threshold: float = 0.9,
-    ) -> Self | None:
+    ) -> Curriculum | None:
         token = self._token(short_name, long_name)
         default_code = College.get_default().code
-        best: tuple[Self | None, float] = (None, 0.0)
+        best: tuple[Curriculum | None, float] = (None, 0.0)
         for cur in self.all():
             # college rule: if both non-default and differ, skip
             if (
@@ -89,7 +89,7 @@ class CurriculumManager(models.Manager):
                     elif cur_default == best_default and cur.id and best[0].id:
                         choose = cur.id < best[0].id
             if choose:
-                best = (cast(Self, cur), score)
+                best = (cur, score)
         return best[0]
 
     def get_or_create_fuzzy(
@@ -100,7 +100,7 @@ class CurriculumManager(models.Manager):
         college: College,
         defaults: dict | None = None,
         threshold: float = 0.9,
-    ) -> tuple[Self, bool]:
+    ) -> tuple[Curriculum, bool]:
         _match = self.find_fuzzy_match(
             short_name=short_name,
             long_name=long_name,
@@ -130,7 +130,7 @@ class CurriculumManager(models.Manager):
             college=college,
             defaults={**defaults, "long_name": long_name or short_name},
         )
-        return cast(Self, created_cur), bool(created)
+        return created_cur, bool(created)
 
 
 class Curriculum(StatusableMixin, models.Model):

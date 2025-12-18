@@ -32,7 +32,7 @@
 }
 #+END_SRC
 ** Academics
-- Colleges  :
+- Colleges 
 - Courses
 - Curriculum Status: automatic
 - Curriculums
@@ -69,9 +69,12 @@
 - Grades
 - Registration Status: automatic
 - Registrations
-** Spaces
-- Rooms
-- Spaces / Buildings
+- Transcript Request Status: automatic
+- Transcript Request
+  
+** Spaces 
+- Rooms: Fundamentals/space_room.csv
+- Spaces / Buildings: Fundamentals/space_room.csv
 ** Timetable
 - Academic years
 - Schedules
