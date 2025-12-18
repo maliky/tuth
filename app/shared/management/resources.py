@@ -44,8 +44,7 @@ DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
         GradeResource,
         (
             "gradesheets.utf8.tsv",
-            "oldgrades.utf8.tsv"
-            "registry_gradeSheets.csv",
+            "oldgrades.utf8.tsv" "registry_gradeSheets.csv",
         ),
     ),
     (
@@ -61,8 +60,8 @@ DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
         "LegacyGrade",
         LegacyGradeSheetResource,
         (
-            # Strange I cannot find the file. Need to look in db archives if it was useful            
-            # "UM_TransferGrades.csv",  
+            # Strange I cannot find the file. Need to look in db archives if it was useful
+            # "UM_TransferGrades.csv",
             "gradesheets.utf8.tsv",
             "oldgrades.utf8.tsv",
             "registry_gradeSheets.csv",
