@@ -224,7 +224,7 @@ class StaffAdmin(MergePeopleMixin, DuplicatePreviewMixin, DepartmentRestrictedAd
         "user__username",
         "user__first_name",
         "user__last_name",
-        "department__short_name",
+        "department__code",
     )
     list_filter = ("user__groups",)
     ordering = ("staff_id",)

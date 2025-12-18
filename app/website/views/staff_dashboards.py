@@ -318,7 +318,7 @@ def _build_dean_context(request: HttpRequest) -> dict:
             )
             .select_related("staff_profile__department")
             .order_by(
-                "staff_profile__department__short_name",
+                "staff_profile__department__code",
                 "staff_profile__user__last_name",
             )
         )

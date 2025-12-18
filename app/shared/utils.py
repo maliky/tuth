@@ -51,12 +51,11 @@ def expand_course_code(
 
 
 def make_course_code(dept: Department, number: str, short=False) -> str:
-    """Return a course code.
-
-    formed from dept.code+course.num
-    if short == True use dept.short_name (without college info)
+    """Return a course code.  dept.shortname+course.num.
+    
+    if short == True use dept.code (without college info)
     """
-    _dept_code = dept.short_name if short else dept.code
+    _dept_code = dept.code if short else dept.shortname
     return f"{_dept_code}-{number}".upper()
 
 

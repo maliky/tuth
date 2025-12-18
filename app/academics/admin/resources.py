@@ -230,10 +230,11 @@ class DepartmentResource(resources.ModelResource):
 
     class Meta:
         model = Department
-        import_id_fields = "department_code"
+        import_id_fields = "department_shortname"
+        # should I have __ instead of _ ?
         fields = (
             "college_code",
             "course_dept",
-            "department_code",
+            "department_shortname",
             "long_name",
         )

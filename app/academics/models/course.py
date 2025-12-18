@@ -27,7 +27,7 @@ class CourseManager(models.Manager["Course"]):
     """Manager with fuzzy lookup to avoid near-duplicate courses."""
 
     def _token(self, department: Department, number: str, title: str | None) -> str:
-        parts = [department.short_name, number or ""]
+        parts = [department.code, number or ""]
         if title:
             parts.append(title)
         return " ".join(p for p in parts if p)
@@ -70,7 +70,7 @@ class CourseManager(models.Manager["Course"]):
                 "Fuzzy course match reused",
                 extra={
                     "course_id": match.id,
-                    "dept": department.short_name,
+                    "dept": department.code,
                     "number": number,
                 },
             )

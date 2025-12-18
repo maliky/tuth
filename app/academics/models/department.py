@@ -17,7 +17,7 @@ class Department(models.Model):
     """
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
-    short_name = models.CharField(max_length=8)
+    code = models.CharField(max_length=8)
     # ~~~~ Auto-filled ~~~~
     college = models.ForeignKey(
         "academics.College",
@@ -28,16 +28,16 @@ class Department(models.Model):
     history = HistoricalRecords()
 
     # ~~~~ Read-only ~~~~
-    code = models.CharField(max_length=50, unique=True, editable=False)
+    shortname = models.CharField(max_length=50, unique=True, editable=False)
 
     def __str__(self) -> str:  # pragma: no cover
         """The Department common representation. ! This is not unique."""
-        return f"({self.college.code}) {self.short_name}"
+        return f"({self.college.code}) {self.code}"
 
     def _ensure_code(self) -> None:
         """Build a unique department code from short_name and college."""
         if not self.code:
-            self.code = f"{self.college.code}-{self.short_name}"
+            self.code = f"{self.college.code}-{self.code}"
 
     def _ensure_college(self) -> None:
         """Make sure to have a college for the department."""
@@ -47,7 +47,7 @@ class Department(models.Model):
     def _ensure_long_name(self) -> None:
         """Make sure a title is set."""
         if not self.long_name:
-            self.long_name = f"{self.short_name} department of {self.college}"
+            self.long_name = f"{self.code} department of {self.college}"
 
     def get_courses(self) -> models.QuerySet:
         """Return all the courses for this department."""

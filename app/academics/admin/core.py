@@ -195,7 +195,7 @@ class CourseAdmin(DepartmentRestrictedAdmin):
     list_per_page = 100
     list_max_show_all = 500
 
-    search_fields = ("short_code", "department__short_name", "title")
+    search_fields = ("short_code", "department__code", "title")
     fields = ("short_code", "department", "number", "title", "description")
     actions = [update_department, merge_courses_action]
 

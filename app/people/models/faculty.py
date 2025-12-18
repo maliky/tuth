@@ -135,13 +135,13 @@ class Faculty(models.Model):
         qs: Any = self.section_set  # noqa: ANN401
         row = (
             qs.values_list(
-                "curriculum_course__course__department__short_name",
+                "curriculum_course__course__department__code",
                 "curriculum_course__course__department__college__code",
             )
             .annotate(section_total=Count("pk"))
             .order_by(
                 "-section_total",
-                "curriculum_course__course__department__short_name",
+                "curriculum_course__course__department__code",
             )
             .first()
         )
