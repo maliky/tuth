@@ -329,12 +329,12 @@ class DepartmentAdmin(CollegeRestrictedAdmin):
     """
 
     resource_class = DepartmentResource
-    list_display = ("short_name", "long_name", "college", "course_count_link")
+    list_display = ("code", "long_name", "college", "course_count_link")
     list_filter = [
         "college",
     ]
     list_editable = ("college",)
-    search_fields = ("short_name", "long_name", "college")
+    search_fields = ("code", "long_name", "college")
     inlines = [DepartmentCourseInline]
     actions = ["merge_departments_action"]
 

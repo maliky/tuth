@@ -302,11 +302,11 @@ class DepartmentWidget(widgets.ForeignKeyWidget):
         if not value:
             return Department.get_default()
 
-        dept_short_name = (value or "").strip().upper()
+        dept_code = (value or "").strip().upper()
 
         college = self.college_w.clean((row.get("college_code") or "").strip())
 
         department, _ = Department.objects.get_or_create(
-            short_name=dept_short_name, college=college
+            code=dept_code, college=college
         )
         return department

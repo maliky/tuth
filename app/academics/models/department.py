@@ -65,20 +65,20 @@ class Department(models.Model):
         super().save(*args, **kwargs)
 
     @classmethod
-    def get_default(cls, short_name="DFT") -> Self:
+    def get_default(cls, code="DFT") -> Self:
         """Return the default Department."""
         default_dept, _ = cls.objects.get_or_create(
-            short_name=short_name,
-            long_name=f"Department of {short_name}",
+            code=code,
+            long_name=f"Department of {code}",
             college=College.get_default(),
         )
         return cast(Self, default_dept)
 
     class Meta:
-        ordering = ["college__code", "short_name"]
+        ordering = ["college__code", "code"]
         constraints = [
             models.UniqueConstraint(
-                fields=["short_name", "college"],
-                name="uniq_department_short_name_per_college",
+                fields=["code", "college"],
+                name="uniq_department_code_per_college",
             ),
         ]

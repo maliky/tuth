@@ -237,7 +237,7 @@ class Command(BaseCommand):
         self, dept_code: str, college: College, stats: ImportStats
     ) -> Department:
         department, created = Department.objects.get_or_create(
-            short_name=dept_code,
+            code=dept_code,
             college=college,
         )
         if created:
