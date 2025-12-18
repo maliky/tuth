@@ -54,6 +54,7 @@ from .resources import (
     DepartmentResource,
     PrerequisiteResource,
 )
+from django.utils.text import Truncator
 
 
 @admin.register(College)
@@ -189,8 +190,8 @@ class CourseAdmin(DepartmentRestrictedAdmin):
     # > TODO: Add the list of student enrolled in this course the current semester.
     inlines = [RequiresInline, PrerequisiteInline, CourseCurriculumInline]
     list_select_related = ("department",)
-    list_editable = ("department",)
-    list_filter = (CourseCollegeFilter, DepartmentFilterAC)
+    # list_editable = ("department",)
+    list_filter = (DepartmentFilterAC, CurriculumFilterAC, CourseCollegeFilter)
 
     list_per_page = 100
     list_max_show_all = 500
@@ -291,12 +292,11 @@ class CurriculumCourseAdmin(CollegeRestrictedAdmin):
     resource_class = CurriculumCourseResource
     college_field = "curriculum__college"
     list_display = (
-        "course",
-        "course__short_code",
+        "course_display",
+        "department_link",
         "curriculum",
-        "course__department",
     )
-    list_editable = ("curriculum",)
+    # list_editable = ("curriculum",)
     list_filter = ("curriculum__college", CurriculumFilterAC, DepartmentFilterAC)
 
     autocomplete_fields = ("curriculum", "course")
@@ -310,6 +310,20 @@ class CurriculumCourseAdmin(CollegeRestrictedAdmin):
 
     ordering = ("course__short_code",)
     actions = [update_curriculum]
+
+    @admin.display(description="Course")
+    def course_display(self, obj: CurriculumCourse) -> str:
+        """Truncate course display to avoid very long values in list view."""
+        return Truncator(str(obj.course)).chars(50)
+
+    @admin.display(description="Department")
+    def department_link(self, obj: CurriculumCourse):
+        """Link to departments filtered to this course's department."""
+        dept = getattr(obj.course, "department", None)
+        if not dept:
+            return "-"
+        url = reverse("admin:academics_course_changelist") + (f"?department={dept.id}")
+        return format_html('<a href="{}">{}</a>', url, dept.code)
 
 
 @admin.register(CurriculumStatus)
