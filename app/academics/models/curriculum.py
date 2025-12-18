@@ -108,15 +108,7 @@ class CurriculumManager(models.Manager["Curriculum"]):
             threshold=threshold,
         )
         if _match:
-            logger.info(
-                "Fuzzy curriculum match reused",
-                extra={
-                    "curriculum_id": _match.id,
-                    "short_name": short_name,
-                    "college": college.code if college else "",
-                },
-            )
-            # optional tag for trace
+            # optionals infos to trace
             # > There is more to save in description in case of fuzzy match all differing information
             # > from one or the other object should to be saved.
             if hasattr(_match, "description") and _match.description is not None:

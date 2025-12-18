@@ -61,7 +61,11 @@ class Command(BaseCommand):
         if not opts["no_migrations_delete"]:
             self._delete_migrations(project_root)
 
-        call_command("makemigrations academics finance people registry shared spaces timetable website", interactive=False, verbosity=1)
+        call_command(
+            "makemigrations academics finance people registry shared spaces timetable website",
+            interactive=False,
+            verbosity=1,
+        )
         call_command("migrate", interactive=False, verbosity=1)
         ensure_superuser(self)
 

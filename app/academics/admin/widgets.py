@@ -306,7 +306,5 @@ class DepartmentWidget(widgets.ForeignKeyWidget):
 
         college = self.college_w.clean((row.get("college_code") or "").strip())
 
-        department, _ = Department.objects.get_or_create(
-            code=dept_code, college=college
-        )
+        department, _ = Department.objects.get_or_create(code=dept_code, college=college)
         return department

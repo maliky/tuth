@@ -94,9 +94,10 @@ class Course(models.Model):
     Side Effects:
         save() populates code from name and number.
     """
+
     objects: CourseManager = CourseManager()
     history = HistoricalRecords()
-    
+
     # ~~~~~~~~ Mandatory ~~~~~~~~
     number = models.CharField(max_length=10)  # e.g. 101
 
