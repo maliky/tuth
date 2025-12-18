@@ -77,10 +77,3 @@ RESOURCE_CHOICES: Sequence[str] = tuple(
 RESOURCE_REGISTRY: dict[str, ModelResourceType] = {
     name: resource_cls for name, resource_cls, _ in DIRECTORY_RESOURCE_ENTRIES
 }
-
-
-__all__ = [
-    "DIRECTORY_RESOURCE_ENTRIES",
-    "RESOURCE_CHOICES",
-    "RESOURCE_REGISTRY",
-]
