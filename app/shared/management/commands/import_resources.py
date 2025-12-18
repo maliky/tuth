@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any, Iterable, Sequence, Tuple
 
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError, CommandParser
@@ -124,7 +124,7 @@ class Command(BaseCommand):
             ResourceClass = RESOURCE_REGISTRY.get(key)
             if ResourceClass is None:
                 raise CommandError(f"Unknown resource: {key}")
-            _run_import(self, dataset, key, ResourceClass, dry_run, path)
+            _run_import(self, dataset, key, ResourceClass, path, dry_run)
 
 
 # ------------------------------------------------------------------ helpers
@@ -135,8 +135,8 @@ def _run_import(
     dataset: Dataset,
     label: str,
     ResourceClass: ModelResourceType,
+    path: Path,
     dry_run: bool = False,
-    path:Path
 ) -> None:
     """Execute the import for a dataset/resource pair with progress output."""
     resource: resources.ModelResource = ResourceClass()
@@ -237,26 +237,26 @@ def _import_from_directory(
                 cmd.style.WARNING(f"↷ skipping {name}: {filenames} not found")
             )
             continue
-        for dataset in datasets:
-            _run_import(cmd, dataset, name, ResourceClass, dry_run)
+        for dataset, file_path in datasets:
+            _run_import(cmd, dataset, name, ResourceClass, file_path, dry_run)
 
     return None
 
 
 def _load_directory_datasets(
     directory: Path, filenames: Iterable[str]
-) -> Iterable[Dataset] | None:
-    """Return the datasets for the first matching CSV in filenames."""
+) -> Iterable[Tuple[Dataset, Path]] | None:
+    """Return the datasets and the file_path each of the matching CSV/TSV."""
     datasets = []
 
-    for name in filenames:
-        file_path = directory / name
+    for filename in filenames:
+        file_path = directory / filename
         if not file_path.exists():
             continue
         contents = read_text_file(file_path)
         dataset = _load_dataset(contents)
         if dataset:
-            datasets.append(dataset)
+            datasets.append((dataset, file_path))
 
     return datasets or None
 

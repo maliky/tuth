@@ -1,4 +1,16 @@
 
+* <2025-12-18 Thu 17:06>
+2025-12-18 17:02:53,324  INFO      tusis.import :: Starting import for LegacyRegistration
+Importing LegacyRegistration: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 8735/8735 [00:01<00:00, 5286.91it/s]
+Row 1 failed: duplicate key value violates unique constraint "people_staff_staff_id_key"
+DETAIL:  Key (staff_id)=(DFT_STF0000) already exists.
+Row 2 failed: An error occurred in the current transaction. You can't execute queries until the end of the 'atomic' block.
+Row 3 failed: An error occurred in the current transaction. You can't execute queries until the end of the 'atomic' block.
+Row 4 failed: An error occurred in the current transaction. You can't execute queries until the end of the 'atomic' block.
+Row 5 failed: An error occurred in the current transaction. You can't execute queries until the end of the 'atomic' block.
+CommandError: LegacyRegistration import failed with 8735 errors and 0 invalid rows.
+(tusis) mlk@r1d05 ~/Tusis/Tusis_app $ 
+
 * <2025-12-17 mer. 17:53>  fuzzy matching for curriculums
 ** You did well but a few observation
 - do not abuse of .strip()  I take care of cleaning the data before reaching this deep in the code.
