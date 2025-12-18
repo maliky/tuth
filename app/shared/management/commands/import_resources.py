@@ -77,7 +77,7 @@ class Command(BaseCommand):
             "-f",
             "--file_path",
             nargs="?",
-            default="./Seed_data/cleaned_tscc.csv",
+            default="./Seed_data/sessions_25-26s1.csv",
             help="Path to CSV file with resources data",
         )
         parser.add_argument(

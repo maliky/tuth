@@ -37,33 +37,35 @@ DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
     (
         "Student",
         StudentResource,
-        ("people_students.csv", "UM_students.utf8.csv", "StudentInfo.csv"),
+        ("people_students.csv", "UM_students.utf8.tsv", "StudentInfo.csv"),
     ),
     (
         "Grade",
         GradeResource,
         (
+            "gradesheets.utf8.tsv",
+            "oldgrades.utf8.tsv"
             "registry_gradeSheets.csv",
-            "gradesheets.utf8.csv",
         ),
     ),
     (
         "LegacyRegistration",
         LegacyRegistrationResource,
         (
+            "UM_StudentsCourses.csv",
             "registry_registration.csv",
             "studentcourses.csv",
-            "UM_StudentsCourses.csv",
         ),
     ),
     (
         "LegacyGrade",
         LegacyGradeSheetResource,
         (
-            "oldgrades.utf8.csv",
-            "UM_TransferGrades.csv",
+            # Strange I cannot find the file. Need to look in db archives if it was useful            
+            # "UM_TransferGrades.csv",  
+            "gradesheets.utf8.tsv",
+            "oldgrades.utf8.tsv",
             "registry_gradeSheets.csv",
-            "gradesheets.utf8.csv",
         ),
     ),
 )

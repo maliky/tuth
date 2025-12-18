@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
+# ! do not delete migrations/__init__.py ... script to update
 sudo find . -path "*migrations*" -type f -delete
 rm db_test
 
