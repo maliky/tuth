@@ -32,12 +32,12 @@ class Department(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         """The Department common representation. ! This is not unique."""
-        return f"({self.college.code}) {self.code}"
+        return self.shortname
 
-    def _ensure_code(self) -> None:
+    def _ensure_shortname(self) -> None:
         """Build a unique department code from short_name and college."""
-        if not self.code:
-            self.code = f"{self.college.code}-{self.code}"
+        if not self.shortname:
+            self.shortname = f"({self.college.code}) {self.code}"
 
     def _ensure_college(self) -> None:
         """Make sure to have a college for the department."""
@@ -59,8 +59,8 @@ class Department(models.Model):
 
     def save(self, *args, **kwargs) -> None:
         """Save the Department making sure the code is set."""
-        self._ensure_code()
         self._ensure_college()
+        self._ensure_shortname()
         self._ensure_long_name()
         super().save(*args, **kwargs)
 
