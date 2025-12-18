@@ -124,7 +124,7 @@ class Command(BaseCommand):
             ResourceClass = RESOURCE_REGISTRY.get(key)
             if ResourceClass is None:
                 raise CommandError(f"Unknown resource: {key}")
-            _run_import(self, dataset, key, ResourceClass, dry_run)
+            _run_import(self, dataset, key, ResourceClass, dry_run, path)
 
 
 # ------------------------------------------------------------------ helpers
@@ -136,6 +136,7 @@ def _run_import(
     label: str,
     ResourceClass: ModelResourceType,
     dry_run: bool = False,
+    path:Path
 ) -> None:
     """Execute the import for a dataset/resource pair with progress output."""
     resource: resources.ModelResource = ResourceClass()
@@ -148,7 +149,7 @@ def _run_import(
     error_rows: list[tuple[int, list[Exception]]] = []
     invalid_rows: list[tuple[int, str]] = []
 
-    logger.info(f"Starting import for {label}", extra={"resource": label})
+    logger.info(f"Starting import for {label}: {path}", extra={"resource": label})
     with transaction.atomic():
         for row_number, row in enumerate(
             tqdm(rows, total=total_rows or None, desc=f"Importing {label}"),
