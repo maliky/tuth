@@ -217,16 +217,6 @@ def _run_import(
     reporter = getattr(resource, "post_import_report", None)
     if reporter:
         reporter(cmd)
-    logger.info(
-        f"Completed import for {label}",
-        extra={
-            "resource": label,
-            "created_count": created,
-            "updated_count": updated,
-            "error_count": len(error_rows),
-            "invalid_count": len(invalid_rows),
-        },
-    )
 
 
 def _import_from_directory(

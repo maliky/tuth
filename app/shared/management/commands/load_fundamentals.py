@@ -28,15 +28,15 @@ class Command(BaseCommand):
 
         parser.add_argument(
             "--people",
-            action='store_true'
+            action="store_true",
             help="load people data.",
         )
         parser.add_argument(
             "--registry",
-            action='store_true'
+            action="store_true",
             help="load registry data.",
         )
-                
+
     def handle(self, *args, **opts) -> None:
         """Run create_states, load fundamentals, people, then grades."""
         csv_dir = Path(opts["dir"]).expanduser().resolve()
@@ -53,11 +53,11 @@ class Command(BaseCommand):
         self.stdout.write("-> Importing fundamentals")
         _import_resources(csv_dir, ["Room", "Course", "CurriculumCourse", "Semester"])
 
-        if opt['people']:
+        if opts["people"]:
             self.stdout.write("-> Importing people")
             _import_resources(csv_dir, ["Faculty", "Donor", "Student"])
 
-        if opt['registry']:
+        if opts["registry"]:
             self.stdout.write("-> Importing legacy registrations and grades")
             _import_resources(csv_dir, ["LegacyRegistration", "LegacyGrade"])
 
