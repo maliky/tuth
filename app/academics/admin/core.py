@@ -29,11 +29,8 @@ from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestricted
 from .actions import update_curriculum, update_department
 from .filters import (
     CourseCollegeFilter,
-    CourseDepartmentFilterAc,
-    CurriculumFilter,
-    CurriculumFilterAc,
-    DepartmentFilterAc,
-    ProgramFilterAc,
+    CurriculumFilterAC,
+    DepartmentFilterAC,
 )
 from .inlines import (
     CourseCurriculumInline,
@@ -193,12 +190,7 @@ class CourseAdmin(DepartmentRestrictedAdmin):
     inlines = [RequiresInline, PrerequisiteInline, CourseCurriculumInline]
     list_select_related = ("department",)
     list_editable = ("department",)
-    list_filter = (
-        CourseCollegeFilter,
-        # "department",
-        CourseDepartmentFilterAc,
-        ProgramFilterAc,
-    )
+    list_filter = (CourseCollegeFilter, DepartmentFilterAC)
 
     list_per_page = 100
     list_max_show_all = 500
@@ -305,7 +297,7 @@ class CurriculumCourseAdmin(CollegeRestrictedAdmin):
         "course__department",
     )
     list_editable = ("curriculum",)
-    list_filter = ("curriculum__college", CurriculumFilterAc, DepartmentFilterAc)
+    list_filter = ("curriculum__college", CurriculumFilterAC, DepartmentFilterAC)
 
     autocomplete_fields = ("curriculum", "course")
     list_select_related = ("curriculum", "course")
@@ -383,5 +375,5 @@ class PrerequisiteAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModel
     # search_fields = ("course", "prerequisite_course") # not permitted no search of fk
     list_display = ("course", "prerequisite_course", "curriculum")
     autocomplete_fields = ("course", "prerequisite_course", "curriculum")
-    list_filter = (CurriculumFilter,)
+    list_filter = (CurriculumFilterAC,)
     # search_fields = ("course", "prerequisite_course", "curriculum")

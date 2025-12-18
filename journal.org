@@ -1,4 +1,14 @@
 
+* <2025-12-17 mer. 21:50> More filters
+  Need filter for Faculty, Sections, SecSessions
+
+pb:  The list of searchable candidates is not constrained by the other filters been applied.
+idea:  get the constraint from the request (here department__college=3) and make sur that we filter down the related_ids by this constrained lookup_path ?
+Should it have been set before ?
+
+The solution might be in get_autocomplet_url from which the AutocompletSelect is seemed to be built. this should return the full changelist with other filters applied.
+
+  
 * <2025-12-17 mer. 17:53>  fuzzy matching for curriculums
 ** Current state
   - People: PersonManager._find_by_name (in app/people/models/object_manager.py) uses name_similarity (rapidfuzz) to avoid duplicates and merges based on name proximity; directory imports log proximity in bio tags.

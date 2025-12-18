@@ -10,10 +10,9 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
+from app.academics.admin.filters import CurriculumFilterAC, DepartmentFilterAC
 from app.people.admin.filters import (
-    FacultyDepartmentFAC,
     FacultyGroupFAC,
-    StudentCurriculumFAC,
     StudentEntrySemFAC,
 )
 from app.people.admin.merges import MergeUsersMixin
@@ -38,8 +37,6 @@ from app.people.models.student import Student
 from app.registry.admin.inlines import DocumentStaffInline, DocumentStudentInline
 from app.shared.admin.filters import (
     BaseCollegeFilter,
-    BaseDepartmentFilter,
-    CurriculumByCollegeFilter,
     StudentLevelFilter,
 )
 from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
@@ -120,7 +117,7 @@ class FacultyAdmin(DuplicatePreviewMixin, CollegeRestrictedAdmin):
         "possible_duplicates",
     )
     list_filter = [
-        FacultyDepartmentFAC,
+        DepartmentFilterAC,
         FacultyGroupFAC,
         "college",
     ]
@@ -287,7 +284,7 @@ class StudentAdmin(
     )
     # list_editable = ("curriculum",)
     list_filter = (
-        StudentCurriculumFAC,
+        CurriculumFilterAC,
         StudentEntrySemFAC,
         StudentLevelFilter,
         "curriculum__college",
