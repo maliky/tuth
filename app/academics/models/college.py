@@ -77,7 +77,7 @@ class College(models.Model):
     @property
     def department_str(self) -> str:
         """Return departments of this college."""
-        return ", ".join([f"{dept.short_name}" for dept in self.departments.all()])
+        return ", ".join([f"{dept.code}" for dept in self.departments.all()])
 
     @property
     def curricula_count(self) -> int:

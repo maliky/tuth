@@ -17,4 +17,4 @@ def test_department_unique_short_name_in_college(college, department_factory):
 
     with pytest.raises(IntegrityError):
         with transaction.atomic():
-            Department.objects.create(short_name="GEN", college=college)
+            Department.objects.create(code="GEN", college=college)

@@ -103,13 +103,13 @@ class CollegeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
     @admin.display(description="Departments")
     def department_chair_links(self, obj: College):
         """Link departments filtered by college."""
-        qs = obj.departments.all().order_by("short_name")
+        qs = obj.departments.all().order_by("shortname")
         rows = []
         for dept in qs:
             url = reverse("admin:academics_department_changelist") + (
                 f"?college__id__exact={obj.id}&id__exact={dept.id}"
             )
-            rows.append((url, dept.short_name))
+            rows.append((url, dept.code))
         if not rows:
             return ""
         return format_html_join(", ", '<a href="{}">{}</a>', rows)
