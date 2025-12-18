@@ -1,5 +1,50 @@
 
-* <2025-12-17 mer. 11:34>
+* <2025-12-17 mer. 17:53>  fuzzy matching for curriculums
+** Current state
+  - People: PersonManager._find_by_name (in app/people/models/object_manager.py) uses name_similarity (rapidfuzz) to avoid duplicates and merges based on name proximity; directory imports log proximity in bio tags.
+# > is it directory import only which logs proximity and bio tags ? if so it is not correct. Any import touching a user instance or Abstract user should log proximity and update bio.
+  - Courses/Curricula/Majors: no fuzzy matching at creation time;
+    Course.objects.get_or_create and Curriculum.objects.get_or_create rely on strict uniqueness and may create near-duplicates.
+
+** Requirements for curricula matching
+  - Compare primarily on short_name and (when different) long_name, plus college.
+  - Rules:
+      - Same college: build comparison tokens C/D = long_name if it differs from short_name, else short_name; compare with fuzzy logic.
+      - Different colleges and both have non-default colleges: treat as different.
+      - If one/both colleges are default: treat like same-college case using fuzzy compare.
+  - Merge preference: keep the instance with long_name set; if neither has a meaningful long_name, keep the one with a non-default college.
+
+** Proposed plan
+   1. Reuse the fuzzy infrastructure:
+       - Use name_similarity (already in app/people/matching) as the scorer.
+# > Try resusing the same name_similarity feature or abstract it to handle any string.
+# > for naming clarity you could make 3 functions calling the abstract function with specific
+# > values name_, curriculum_ and course_similarity, all calling a more abstract fuzzy_string_similarity
+       - Add a small helper to compute the “curriculum comparison token” (long_name if distinct else short_name).
+   2. Add custom managers:
+       - CourseManager and CurriculumManager (optionally MajorManager) with:
+           - _find_fuzzy_match(...) that searches existing rows and returns a best match above a threshold.
+# > use .9 threshold
+           - get_or_create_fuzzy(...) (and use it in an override of get_or_create) that first calls find_fuzzy_match; if found, return it; otherwise create a new one.
+       - For Curriculum fuzzy logic, implement the rules above (college handling, token selection, long_name preference when merging).
+   3. Logging/trace:
+       - Mirror people imports: when a fuzzy match is used, log or tag the decision (e.g., in description field). For imports that build a “bio-like” note, append a tag such as fuzzy_curriculum_match:<matched_id>:<score>.
+   4. Integration points:
+       - Update import code paths that create Courses/Curricula (e.g., admin widgets or import commands) to call the new manager methods.
+       - Keep strict unique constraints intact; the fuzzy step only pre-selects an existing row before creation.
+   5. Thresholds & tie-breakers:
+       - Set a sensible similarity threshold and fall back to creation when ambiguous.
+       - When two candidates tie, prefer one with a meaningful long_name, else one with non-default college, else the earliest id.
+   6. Optional: Major fuzzy
+       - Add a similar token builder for Major names and reuse the same name_similarity.
+
+* DONE <2025-12-17 mer. 17:48>  filters in courses
+  CLOSED: [2025-12-17 mer. 18:31]
+  The way the SemesterFilterAC is done should serve as a modle for other filters, used extensively such as CurriculumFilter DepartmentFilter, in particular in course admin interface.  create a new autcomplet searchable filter for department and curriculum where the possible candidate in the search are filtered down to respect other filters of the page.  document you code.  Take a function approach with typing hints.
+  
+  
+
+* <2025-12-17 mer. 11:34> filtesr for semesters
 In registry app we use a SemesterFilter (app/timetable/admin/filters.py) showing a list of semester.  The positive point is that this filter can addapte to many models
   
 1. problem it is showing a list of semester even if no elements are shown in the main admin.

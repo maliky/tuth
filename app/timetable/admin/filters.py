@@ -48,6 +48,7 @@ def _get_semester_lookup_path(model):
             return lookup_path
 
 
+        
 def _semester_qs_from_model_admin(model_admin, request):
     """Return only semesters that appear in the current changelist queryset."""
     qs = model_admin.get_queryset(request)

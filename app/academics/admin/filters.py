@@ -1,22 +1,37 @@
 """Filters module."""
 
+from __future__ import annotations
+
+from typing import Sequence
+
 from admin_searchable_dropdown.filters import (
     AutocompleteFilter,
     AutocompleteFilterFactory,
+    _get_rel_model,
+)
+from django.contrib import admin
+from django.db.models import Count, Model, QuerySet
+from django.http import HttpRequest
+from django.urls import reverse
+from django_admin_filters import MultiChoice
+
+from app.academics.models.curriculum import Curriculum
+from app.academics.models.department import Department
+from app.shared.admin.filters import BaseCollegeFilter, ScopedAutocompleteFilter
+from app.shared.types import LookUpType
+
+DEPARTMENT_FIELD_LOOKUPS: LookUpType = (
+    ("department", "department"),
+    ("course", "course__department"),
+    ("staff_profile", "staff_profile__department"),
+    ("curriculum_course", "curriculum_course__course__department"),
 )
 
-# https://pypi.org/project/django-admin-list-filters/
-from django_admin_filters import MultiChoice
-from django.contrib import admin
-from django.db.models import Count
-from django.urls import reverse
-
-from app.shared.admin.filters import BaseCollegeFilter
-
-
-# class CollegeChoicesFilter(MultiChoice):
-#     FILTER_LABEL = "College"
-#     BUTTON_LABEL = "Filter"
+CURRICULUM_FIELD_LOOKUPS: LookUpType = (
+    ("curriculum", "curriculum"),
+    ("curriculum_course", "curriculum_course__curriculum"),
+    ("in_curriculum_courses", "in_curriculum_courses__curriculum"),
+)
 
 
 class CourseCollegeFilter(BaseCollegeFilter):
@@ -24,68 +39,21 @@ class CourseCollegeFilter(BaseCollegeFilter):
     parameter_name = "department__college"
 
 
-CurriculumCourseFilterAc = AutocompleteFilterFactory(
-    "Curriculum",
-    "curriculum_course__curriculum",  # look-up path ( → cuccirulm )
-    # use_pk_exact=False
-)
+class DepartmentFilterAC(ScopedAutocompleteFilter):
+    """Autocomplete filter constrained to departments present in the queryset."""
 
-ProgramFilterAc = AutocompleteFilterFactory(
-    "Curriculum",
-    "in_curriculum_courses__curriculum",  # look-up path ( → cuccirulm )
-    # use_pk_exact=False
-)
-
-DepartmentFilterAc = AutocompleteFilterFactory(
-    "Department",
-    "course__department",
-)
-CourseDepartmentFilterAc = AutocompleteFilterFactory(
-    "Department",
-    "department",
-)
-CurriculumFilterAc = AutocompleteFilterFactory(
-    "Curriculum",
-    "curriculum",
-)
+    title = "Department"
+    parameter_name = "department"
+    field_name = "department"
+    lookup_map = DEPARTMENT_FIELD_LOOKUPS
+    target_model = Department
 
 
-class CurriculumBySemesterFilterAc(AutocompleteFilter):
-    """Returns the curriculum having section for a specific semester."""
+class CurriculumFilterAC(ScopedAutocompleteFilter):
+    """Autocomplete filter constrained to curricula present in the queryset."""
 
     title = "Curriculum"
-    field_name = "curriculum_course__curriculum"
-
-    def get_autocomplete_url(self, request, model_admin):
-        """Get the urls registered in SectionAdmin.get_urls."""
-        base = reverse("admin:curriculum_by_semester_ac")
-        # semester_id = request.GET.get("semester")
-        return base
-
-
-class CurriculumFilter(admin.SimpleListFilter):
-    title = "curriculum"
     parameter_name = "curriculum"
-
-    def lookups(self, request, model_admin):
-        """Update the filter so only curricula of the already selected college show."""
-        qs = model_admin.get_queryset(request)
-        college_id = request.GET.get("college__id__exact")
-
-        if college_id:
-            qs = qs.filter(college_id=college_id)
-        curricula = (
-            qs.values("curriculum", "curriculum__short_name")
-            .annotate(count=Count("pk"))
-            .filter(curriculum__isnull=False, count__gt=0)
-            .order_by("curriculum__short_name")
-        )
-
-        return [(c["curriculum"], c["curriculum__short_name"]) for c in curricula]
-
-    def queryset(self, request, qs):
-        """Overide the queryset returning a curriculum."""
-        if self.value():
-            return qs.filter(curriculum_id=self.value())
-
-        return qs
+    field_name = "curriculum"
+    lookup_map = CURRICULUM_FIELD_LOOKUPS
+    target_model = Curriculum

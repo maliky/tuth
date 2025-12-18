@@ -1,18 +1,22 @@
 """Curriculum module."""
 
 from __future__ import annotations
+import logging
 from django.db.models import Count
 
 from django.apps import apps
 from datetime import date
 from typing import Optional, Self, cast
 
+from app.shared.fuzzy import curriculum_similarity
 from app.shared.mixins import SimpleTableMixin
 from app.shared.utils import as_title
 from django.db import models
 from simple_history.models import HistoricalRecords
 from app.academics.models.college import College
 from app.shared.status.mixins import StatusableMixin
+
+logger = logging.getLogger(__name__)
 
 
 class CurriculumStatus(SimpleTableMixin):
@@ -74,12 +78,19 @@ class Curriculum(StatusableMixin, models.Model):
     # the list of curriculum_courses.course should be included in C.
     # can a course be not offered  in any curricula ?
     # needs clarification...
+    # There is a difference between curriculum and Curriculum Course (programmed course)
+    # The curriculum is the set of course
+    # A curriculum course is a matching curriculum <-> course with meta
+
     curriculum_course = models.ManyToManyField(
         "academics.Course",
         through="academics.CurriculumCourse",
         related_name="curricula",  # <-- reverse accessor course.curricula
         blank=True,
     )
+    description = models.TextField(blank=True)
+
+    objects: CurriculumManager = CurriculumManager()
 
     @property
     def courses(self):
