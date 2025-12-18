@@ -77,7 +77,7 @@ class Command(BaseCommand):
             "-f",
             "--file_path",
             nargs="?",
-            default="./Seed_data/sessions_25-26s1.csv",
+            default="./Seed_data/Fundamentals",
             help="Path to CSV file with resources data",
         )
         parser.add_argument(
@@ -99,7 +99,7 @@ class Command(BaseCommand):
 
     def handle(self, *args: Any, **opts: Any) -> None:
         """Validate and import each resource from the provided CSV."""
-        path = Path(opts["file_path"])
+        file_path = Path(opts["file_path"])
         selected_rsc_raw = opts.get("resource") or []
         if isinstance(selected_rsc_raw, str):
             selected_rsc: list[str] = [selected_rsc_raw]
@@ -110,21 +110,21 @@ class Command(BaseCommand):
             selected_rsc = list(RESOURCE_CHOICES)
 
         dry_run: bool = bool(opts.get("dry_run"))
-        if not path.exists():
-            raise FileNotFoundError(str(path))
+        if not file_path.exists():
+            raise FileNotFoundError(str(file_path))
 
-        if path.is_dir():
-            _import_from_directory(self, path, selected_rsc, dry_run)
+        if file_path.is_dir():
+            _import_from_directory(self, file_path, selected_rsc, dry_run)
             return
 
-        file_contents = read_text_file(path)
+        file_contents = read_text_file(file_path)
         dataset = _load_dataset(file_contents)
 
         for key in selected_rsc:
             ResourceClass = RESOURCE_REGISTRY.get(key)
             if ResourceClass is None:
                 raise CommandError(f"Unknown resource: {key}")
-            _run_import(self, dataset, key, ResourceClass, path, dry_run)
+            _run_import(self, dataset, key, ResourceClass, file_path, dry_run)
 
 
 # ------------------------------------------------------------------ helpers
