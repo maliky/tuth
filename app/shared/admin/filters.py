@@ -26,25 +26,25 @@ def _get_lookup_path(
             return lookup_path
     return None
 
+
 def _filter_admin_queryset(
-        model_admin: admin.ModelAdmin,
-        request:HttpRequest,
-        ignored_params:Iterable[str]
-) ->QuerySet:
+    model_admin: admin.ModelAdmin, request: HttpRequest, ignored_params: Iterable[str]
+) -> QuerySet:
     """Apply active filters list from the request to the queryset."""
     qs = model_admin.get_queryset(request)
-    ignored =set(ignored_params)
-    ignored.update({'p','o','ot','q','_changelist_filters'})
+    ignored = set(ignored_params)
+    ignored.update({"p", "o", "ot", "q", "_changelist_filters"})
     for param in request.GET:
-        if param in ignored or param.startswith('_'):
+        if param in ignored or param.startswith("_"):
             continue
-        values = [value for value in request.GET.getlist(param) if value ]
+        values = [value for value in request.GET.getlist(param) if value]
         for value in values:
             try:
-                qs= qs.filter(**{param:value})
+                qs = qs.filter(**{param: value})
             except (FieldError, ValueError, TypeError):
                 continue
     return qs
+
 
 def _related_qs_for_lookup(
     model_admin: admin.ModelAdmin,

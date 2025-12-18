@@ -33,7 +33,106 @@ class CurriculumStatus(SimpleTableMixin):
         verbose_name_plural = "Curriculum Status"
 
 
-# need to update the docs
+class CurriculumManager(models.Manager):
+    """Manager with fuzzy lookup to reduce near-duplicates."""
+
+    def _token(self, short_name: str, long_name: str | None) -> str:
+        if long_name  and long_name != short_name:
+            return long_name + " " + short_name
+        return short_name
+
+    def find_fuzzy_match(
+        self,
+        *,
+        short_name: str,
+        long_name: str | None, 
+        college: College,
+        threshold: float = 0.9,
+    ) -> Self | None:
+        token = self._token(short_name, long_name)
+        default_code = College.get_default().code
+        best: tuple[Self | None, float] = (None, 0.0)
+        for cur in self.all():
+            # college rule: if both non-default and differ, skip
+            if (
+                cur.college
+                and college
+                and cur.college.code != default_code
+                and college.code != default_code
+                and cur.college.code != college.code
+            ):
+                continue
+            other_token = self._token(cur.short_name, cur.long_name)
+            score, ok = curriculum_similarity(token, other_token, threshold=threshold)
+            if not ok:
+                continue
+            choose = False
+            if score > best[1]:
+                choose = True
+            elif score == best[1] and best[0] is not None:
+                # tie-breaker: prefer one with long_name, else non-default college, else lower id
+                has_long = bool(cur.long_name and cur.long_name != cur.short_name)
+                best_long = bool(
+                    best[0].long_name and best[0].long_name != best[0].short_name
+                )
+                if has_long and not best_long:
+                    choose = True
+                elif has_long == best_long:
+                    cur_default = (
+                        cur.college.code == default_code if cur.college else True
+                    )
+                    best_default = (
+                        best[0].college.code == default_code if best[0].college else True
+                    )
+                    if not cur_default and best_default:
+                        choose = True
+                    elif cur_default == best_default and cur.id and best[0].id:
+                        choose = cur.id < best[0].id
+            if choose:
+                best = (cast(Self, cur), score)
+        return best[0]
+
+    def get_or_create_fuzzy(
+        self,
+        *,
+        short_name: str,
+        long_name: str | None,
+        college: College,
+        defaults: dict | None = None,
+        threshold: float = 0.9,
+    ) -> tuple[Self, bool]:
+        _match = self.find_fuzzy_match(
+            short_name=short_name,
+            long_name=long_name,
+            college=college,
+            threshold=threshold,
+        )
+        if _match:
+            logger.info(
+                "Fuzzy curriculum match reused",
+                extra={
+                    "curriculum_id": _match.id,
+                    "short_name": short_name,
+                    "college": college.code if college else "",
+                },
+            )
+            # optional tag for trace
+            # > There is more to save in description in case of fuzzy match all differing information
+            # > from one or the other object should to be saved.
+            if hasattr(_match, "description") and _match.description is not None:
+                if "fuzzy_curriculum_match" not in _match.description:
+                    _match.description += f"\nfuzzy_curriculum_match:{_match.id}"
+                    _match.save(update_fields=["description"])
+            return _match, False
+        defaults = defaults or {}
+        created_cur, created = self.get_or_create(
+            short_name=short_name,
+            college=college,
+            defaults={**defaults, "long_name": long_name or short_name},
+        )
+        return cast(Self, created_cur), bool(created)
+
+
 class Curriculum(StatusableMixin, models.Model):
     """Set of courses that make up a degree curriculum/program within a college.
 

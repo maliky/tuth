@@ -112,27 +112,12 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
         if college:
             lookup["college"] = college
 
-        try:
-            curriculum, _ = Curriculum.objects.get_or_create(
-                defaults={
-                    "long_name": long_name or short_name,
-                    "college": college,
-                },
-                **lookup,
-            )
-        except Curriculum.MultipleObjectsReturned:
-            fallback = (
-                Curriculum.objects.filter(**lookup)
-                .order_by("-is_active", "-creation_date")
-                .first()
-            )
-            if fallback is None:
-                raise
-            curriculum = fallback
-        else:
-            if (long_name or short_name) and not curriculum.long_name:
-                curriculum.long_name = long_name or short_name
-                curriculum.save(update_fields=["long_name"])
+        curriculum, _ = Curriculum.objects.get_or_create_fuzzy(
+            short_name=short_name,
+            long_name=long_name or short_name,
+            college=college,
+            defaults={"long_name": long_name or short_name},
+        )
 
         # add the major if there is
         major = None
@@ -181,10 +166,11 @@ class CourseWidget(widgets.ForeignKeyWidget):
         if not course_no or not course_dept:
             return Course.get_unique_default()
 
-        # department Widget wants college_code
-        course, _ = Course.objects.get_or_create(
+        department = self.department_w.clean(course_dept, row)
+        course, _ = Course.objects.get_or_create_fuzzy(
             number=course_no,
-            department=self.department_w.clean(course_dept, row),
+            department=department,
+            title=row.get("course_title") if row else None,
         )
         return course
 

@@ -2,13 +2,13 @@
 
 from django.contrib import admin
 
+from app.academics.admin.filters import DepartmentFilterAC
 from app.people.models.faculty import Faculty
 from app.registry.admin.inlines import GradeInline
-from app.shared.admin.filters import BaseCollegeFilter, BaseDepartmentFilter
+from app.shared.admin.filters import BaseCollegeFilter
 from app.shared.admin.mixins import CollegeRestrictedAdmin
 from app.timetable.admin.filters import (
     SectionCollegeFilter,
-    SectionDepartmentFilterAc,
     SectionFacultyFilterAc,
     SemesterFilterAC,
 )
@@ -42,7 +42,7 @@ class SectionAdmin(CollegeRestrictedAdmin):
     inlines = [SecSessionInline, GradeInline]
     list_filter = [
         SectionFacultyFilterAc,
-        SectionDepartmentFilterAc,
+        DepartmentFilterAC,
         SemesterFilterAC,
         SectionCollegeFilter,
     ]

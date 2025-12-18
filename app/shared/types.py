@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeAlias, Union
+from typing import TYPE_CHECKING, Sequence, TypeAlias, Union
 
 from django.db.models import QuerySet
 from import_export import resources
@@ -32,5 +32,7 @@ DirectoryResourceEntry: TypeAlias = tuple[
     ModelResourceType,
     tuple[str, ...],
 ]
+
+LookUpType: TypeAlias = Sequence[tuple[str, str]]
 # PersonT = TypeVar("PersonT")  # ? what is this.
 # PersonT = TypeAlias = Donor|Staff| Student| Faculty

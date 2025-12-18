@@ -14,11 +14,73 @@ from app.academics.choices import LEVEL_NUMBER
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.registry.models import CreditHour
+from app.shared.fuzzy import course_similarity
 from app.shared.types import CourseQuery
 from app.shared.utils import make_course_code
 from app.timetable.utils import get_current_semester
 
 DEFAULT_COURSE_NO = count(start=1, step=1)
+logger = logging.getLogger(__name__)
+
+
+class CourseManager(models.Manager):
+    """Manager with fuzzy lookup to avoid near-duplicate courses."""
+
+    def _token(self, department: Department, number: str, title: str | None) -> str:
+        parts = [department.short_name, number or ""]
+        if title:
+            parts.append(title)
+        return " ".join(p for p in parts if p)
+
+    def find_fuzzy_match(
+        self,
+        *,
+        department: Department,
+        number: str,
+        title: str | None = None,
+        threshold: float = 0.9,
+    ) -> Self | None:
+        """Return an existing course with a similar identifier/title."""
+        token = self._token(department, number, title)
+        candidates = self.filter(department=department)
+        best: tuple[Self | None, float] = (None, 0.0)
+        # > We can factor this and the one in curriclum,
+        # > using a function to handle alternate case 
+        for course in candidates:
+            other_token = self._token(course.department, course.number, course.title)
+            score, ok = course_similarity(token, other_token, threshold=threshold)
+            if ok and score > best[1]:
+                best = (cast(Self, course), score)
+        return best[0]
+
+    def get_or_create_fuzzy(
+        self,
+        *,
+        department: Department,
+        number: str,
+        title: str | None = None,
+        threshold: float = 0.9,
+    ) -> tuple[Self, bool]:
+        """Return an existing fuzzy-matched course or create a new one."""
+        match = self.find_fuzzy_match(
+            department=department, number=number, title=title, threshold=threshold
+        )
+        if match:
+            logger.info(
+                "Fuzzy course match reused",
+                extra={
+                    "course_id": match.id,
+                    "dept": department.short_name,
+                    "number": number,
+                },
+            )
+            return match, False
+        created_course, created = self.get_or_create(
+            number=number,
+            department=department,
+            defaults={"title": title},
+        )
+        return cast(Self, created_course), bool(created)
 
 
 class Course(models.Model):
@@ -51,6 +113,7 @@ class Course(models.Model):
         related_name="courses",
     )
     history = HistoricalRecords()
+    objects = CourseManager()
     # ~~~~ Read-only ~~~~
     code = models.CharField(max_length=20, editable=False)
 
