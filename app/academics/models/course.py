@@ -88,21 +88,15 @@ class Course(models.Model):
 
     Example:
         >>> COAS = College.get_default()
-        >>> MATH = Departement.objects.create(
-        ...     code="COAS",
-        ...     long_name="College of Arts and Sciences",
-        ... )
-        >>> Course.objects.create(
-        ...     name="MATH",
-        ...     number="101",
-        ...     title="Algebra",
-        ...     college=coas,
-        ... )
+        >>> MATH = Departement.objects.create(code=MATH,college=COAS)
+        >>> Course.objects.create(department=MATH,number="101",title="Algebra")
 
     Side Effects:
         save() populates code from name and number.
     """
-
+    objects: CourseManager = CourseManager()
+    history = HistoricalRecords()
+    
     # ~~~~~~~~ Mandatory ~~~~~~~~
     number = models.CharField(max_length=10)  # e.g. 101
 
@@ -112,8 +106,6 @@ class Course(models.Model):
         on_delete=models.CASCADE,
         related_name="courses",
     )
-    history = HistoricalRecords()
-    objects: CourseManager = CourseManager()
     # ~~~~ Read-only ~~~~
     code = models.CharField(max_length=20, editable=False)
 
@@ -234,7 +226,7 @@ class Course(models.Model):
                 name="uniq_course_codenumber_per_department",
             ),
         ]
-        ordering = ["short_code"]
+        ordering = ["code"]
 
 
 class CurriculumCourse(models.Model):

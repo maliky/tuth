@@ -40,7 +40,6 @@ class Command(BaseCommand):
         call_command("load_roles", verbosity=0)
 
         self.stdout.write("-> Importing fundamentals")
-        # Directory resource labels are capitalized; use the unified registry labels.
         _import_resources(csv_dir, ["Room", "Course", "CurriculumCourse", "Semester"])
 
         # self.stdout.write("-> Importing people")

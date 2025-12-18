@@ -67,11 +67,8 @@ class Department(models.Model):
     @classmethod
     def get_default(cls, code="DFT") -> Self:
         """Return the default Department."""
-        default_dept, _ = cls.objects.get_or_create(
-            code=code,
-            long_name=f"Department of {code}",
-            college=College.get_default(),
-        )
+        dft_college = College.get_default()
+        default_dept, _ = cls.objects.get_or_create(code=code, college=dft_college)
         return cast(Self, default_dept)
 
     class Meta:

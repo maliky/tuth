@@ -55,8 +55,8 @@ def make_course_code(dept: Department, number: str, short=False) -> str:
 
     if short == True use dept.code (without college info)
     """
-    _dept_code = dept.code if short else dept.shortname
-    return f"{_dept_code}-{number}".upper()
+    _dept_rep = dept.code if short else dept.shortname
+    return f"{_dept_rep}-{number}".upper()
 
 
 def get_in_row(key: str, row: Optional[Mapping[str, str | None]]) -> str:
