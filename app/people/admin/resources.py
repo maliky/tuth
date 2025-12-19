@@ -375,9 +375,9 @@ class StudentResource(resources.ModelResource):
         """Assign the student group to the user when importing."""
         if kwargs.get("dry_run") or instance.user is None:
             return
-        # group = UserRole.STUDENT.value.group
-        # instance.user.groups.add(group)
-        # import ipdb; ipdb.set_trace()
+        group = UserRole.STUDENT.value.group
+        instance.user.groups.add(group)
+        return super().after_save_instance(instance, row, **kwargs)
 
 
 class DonorResource(resources.ModelResource):

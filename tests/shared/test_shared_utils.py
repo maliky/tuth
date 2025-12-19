@@ -48,7 +48,7 @@ def test_expand_code_accepts_underscore(college, department_factory):
     college_code, dept_short_name, num = expand_course_code("ACCT_404")
 
     assert college_code == college.code
-    assert dept_short_name == dept.short_name
+    assert dept_short_name == dept.code
     assert num == "404"
 
 

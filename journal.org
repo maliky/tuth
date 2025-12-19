@@ -1,9 +1,15 @@
+pytest tests/test_model_crud.py -k crud_every_model --maxfail=1
+pytest tests/registry/test_grade.py -q
+pytest tests/people/test_import_groups.py -q
+pytest tests/timetable/test_timetable_dates.py -q
+pytest tests/people/test_student.py -k allowed_courses -q
+pytest tests/shared/test_shared_utils.py -q
 
-<<<<<<< HEAD
+
 * <2025-12-18 jeu. 21:49> Terms for students
   Define a rule to set the terms form the studentinfo import
   something like for oldest for  first TermFirstEntered and newest for TermLastEnrolled
-=======
+
 * <2025-12-19 Fri 16:36> Test correction
   - Confirm full preferred behavior-driven approach before coding fixes.
 • Observed failures fall into a few buckets:

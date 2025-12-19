@@ -5,6 +5,7 @@ import pytest
 from tablib import Dataset
 from django.contrib.auth import get_user_model
 from app.people.admin.resources import StudentResource, FacultyResource
+from app.people.models.faculty import Faculty
 from app.shared.auth.perms import UserRole
 from app.people.utils import mk_username, split_name
 
@@ -28,7 +29,8 @@ def test_student_import_assigns_student_group(curriculum, group_factory):
     res = StudentResource().import_data(ds, dry_run=False)
 
     assert not res.has_errors(), res.row_errors()
-    user = User.objects.get(username=username)
+    student = Student.objects.get(student_id="ST1")
+    user = student.user
 
     assert user.groups.filter(name=UserRole.STUDENT.value.label).exists()
 
@@ -45,5 +47,7 @@ def test_faculty_import_assigns_faculty_group(college):
     res = FacultyResource().import_data(ds, dry_run=False, raise_errors=True)
     assert not res.has_errors()
 
-    user = User.objects.get(username=username)
+    faculty = Faculty.objects.first()
+    assert faculty is not None
+    user = faculty.staff_profile.user
     assert user.groups.filter(name=UserRole.FACULTY.value.label).exists()

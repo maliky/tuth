@@ -8,6 +8,7 @@ from django.db.models import Manager
 
 from app.people.matching import name_similarity
 from app.people.utils import mk_username
+from app.shared.utils import get_in_row
 
 logger = logging.getLogger(__name__)
 
