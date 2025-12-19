@@ -1,4 +1,55 @@
 
+* <2025-12-19 Fri 16:36> Test correction
+  - Confirm full preferred behavior-driven approach before coding fixes.
+• Observed failures fall into a few buckets:
+
+  - Length overflows during _touch updates in tests/test_model_crud.py: many fields exceed max lengths when we append    _upd. Likely need a truncating/tailored _touch helper or factory data respecting field max_length instead of
+    random long strings.
+  - GradeValue creation with code="A" raises KeyError in app/registry/models/grade.py because GRADES_NUM lacks that
+    key; several tests rely on a simple A grade existing.
+  - Import group tests (tests/people/test_import_groups.py) can’t find the expected user—username generation or
+    group/user creation flow changed (e.g., mk_username collisions or suffixing “2”).
+  - Department short_name mismatch in tests/shared/test_shared_utils.py because the model now exposes short_name via
+    alias; tests still expect old attribute.
+  - SemesterStatus missing defaults leads to FK and DoesNotExist errors in timetable tests; likely default statuses
+    aren’t seeded for tests.
+  - Selenium dashboard test times out; page heading may have changed or login redirection differs.
+  - Name distance symmetry asserts zero but now returns small non-zero values; threshold expectations need adjusting
+    or algorithm parity restored.
+
+  Questions to tailor the fix approach:
+
+  1. For CRUD length overflows, do you want the test helper _touch to truncate to max_length, or should we adjust
+     model _ensure_* logic to clamp values? Changing field sizes would be schema-impacting—should we avoid touching
+     migrations?
+
+# > What is the difference between clamping values and truncating them. I do not think that we need to change or model for that.  I am suprised that we use tests with long values needed to be truncated.  Can you show example to me   ?
+
+  2. Should GradeValue accept plain letter grades like “A/B/C” by extending GRADES_NUM, or should tests use existing
+     numeric/letter codes instead?
+# > use the existing model. Plain letter are mainly for display and interface not internal storage.  But note that faculty will be entering grades using A/B/C.. in an imported field or using the interface and a dropdown menu.
+
+  3. For username/group imports, should we match current username generation (with numeric suffixes) or enforce the
+     exact usernames expected in tests? Would adding group creation inside the import routines be acceptable?
+# >  Show me examples of what is been done now and what is expected in the tests.  adding group creation would be acceptable     
+  4. Is it acceptable to expose Department.short_name property (alias to short_name_dpt) to align with tests, or
+     should tests be updated to use code_dpt/short_name_dpt?
+# > There I rename short_name to code and code to shortname
+
+  5. Do you want a test fixture that seeds default SemesterStatus (e.g., “planning”) before timetable validations, or     should the model auto-create missing statuses?
+# > Let's have the model auto-create missing statuses
+
+  6. Selenium: is the expected heading still “Student Dashboard”? If the UI text changed, should we update the test
+     expectation or restore that heading?
+# > What is the current heading now ?     
+  7. Name distance: should we loosen assertions to a small epsilon > 0, or re-tune name_distance to return 0 for
+     reordered names?
+# > What exactly did we do here     
+
+  If you confirm preferences on the above, I’ll draft a correction plan (tests vs code changes) accordingly.
+
+
+›   
 * <2025-12-18 Thu 17:06>
 2025-12-18 17:02:53,324  INFO      tusis.import :: Starting import for LegacyRegistration
 Importing LegacyRegistration: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 8735/8735 [00:01<00:00, 5286.91it/s]
