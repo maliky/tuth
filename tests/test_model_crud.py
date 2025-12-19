@@ -23,7 +23,7 @@ def _touch(model_instance):
             in (
                 "CharField",
                 "TextField",
-            )   
+            )
         ):
             val = getattr(model_instance, field.name) or ""
             setattr(model_instance, field.name, f"{val}_upd")

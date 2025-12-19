@@ -4,7 +4,14 @@ from __future__ import annotations
 
 import re
 from difflib import SequenceMatcher
-from typing import Iterable, Tuple
+from typing import Any, Callable, Iterable, Tuple, TypeVar
+
+_T = TypeVar("_T")
+
+
+def identity(value: Any) -> Any:
+    """Simple identity helper usable as a default token function."""
+    return value
 
 
 def _normalize_tokens(name: str) -> Tuple[str, list[str]]:
@@ -86,3 +93,35 @@ def find_similar_names(
         if score >= threshold:
             results.append((name, score))
     return sorted(results, key=lambda t: t[1], reverse=True)
+
+
+def best_name_match(
+    base: str,
+    candidates: Iterable[_T],
+    token_fn: Callable[[_T], str],
+    threshold: float = 0.9,
+) -> tuple[_T | None, float]:
+    """Return the best candidate and score meeting the threshold."""
+    ranked = top_name_matches(
+        base, candidates, token_fn=token_fn, threshold=threshold, limit=1
+    )
+    return ranked[0] if ranked else (None, 0.0)
+
+
+def top_name_matches(
+    base: str,
+    candidates: Iterable[_T],
+    token_fn: Callable[[_T], str] = identity,
+    threshold: float = 0.9,
+    limit: int = 3,
+) -> list[tuple[_T, float]]:
+    """Return up to 'limit' candidates ordered by similarity >= threshold."""
+    scored: list[tuple[_T, float]] = []
+    for cand in candidates:
+        token = token_fn(cand)
+        score = name_similarity(base, token)
+        if score >= threshold:
+            scored.append((cand, score))
+    scored.sort(key=lambda t: t[1], reverse=True)
+    return scored[:limit]
+

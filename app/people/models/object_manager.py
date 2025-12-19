@@ -6,8 +6,9 @@ from typing import Any, Dict, Mapping, Optional, Tuple, cast
 from django.contrib.auth.models import User
 from django.db.models import Manager
 
-from app.people.matching import name_similarity
+from app.people.matching import top_name_matches
 from app.people.utils import mk_username
+from app.shared.utils import get_in_row
 
 logger = logging.getLogger(__name__)
 
@@ -34,11 +35,21 @@ class PersonManager(Manager):
         user_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in self.USER_KWARGS}
         return user_kwargs, kwargs
 
+    def _get_long_name(self, person: Any) -> str:
+        user_obj = getattr(person, "user", None)
+        return " ".join(
+            [
+                getattr(user_obj, "first_name", "") or "",
+                getattr(person, "middle_name", "") or "",
+                getattr(user_obj, "last_name", "") or "",
+            ]
+        ).strip()
+
     def _find_by_name(self, **user_kwargs: Any) -> Optional[User]:
         """Return an existing user matched on first/last/middle names (case-insensitive)."""
-        first = get_in_row('first_name', user_kwargs)
+        first = get_in_row("first_name", user_kwargs)
         last = get_in_row("last_name", user_kwargs)
-        middle = get_in_row("middle_name",  user_kwargs)
+        middle = get_in_row("middle_name", user_kwargs)
 
         if not first or not last:
             return None
@@ -47,33 +58,21 @@ class PersonManager(Manager):
 
         # iexact : case insensitive
         candidates = self.get_queryset().filter(user__last_name__iexact=last)
-        
+
         if not candidates.exists():
             candidates = self.get_queryset().filter(user__last_name__istartswith=last[:3])
 
-        best_user: Optional[User] = None
-        best_score = 0.0
-        second_score = 0.0
+        ranked_matches = top_name_matches(
+            base_name, candidates, self._get_long_name, threshold=0.9, limit=2
+        )
+        if not ranked_matches:
+            return None
 
-        for person in candidates:
-            person_any = cast(Any, person)
-            user_obj = getattr(person_any, "user", None)
-            if user_obj is None:
-                continue
-            candidate_name = " ".join(
-                [
-                    user_obj.first_name or "",
-                    getattr(person_any, "middle_name", "") or "",
-                    user_obj.last_name or "",
-                ]
-            ).strip()
-            score = name_similarity(base_name, candidate_name)
-            if score > best_score:
-                second_score = best_score
-                best_score = score
-                best_user = cast(User, user_obj)
-            elif score > second_score:
-                second_score = score
+        best_person, best_score = ranked_matches[0]
+        best_user: Optional[User] = cast(
+            Optional[User], getattr(best_person, "user", None)
+        )
+        second_score = ranked_matches[1][1] if len(ranked_matches) > 1 else 0.0
 
         if best_user and best_score >= 0.92:
             if (best_score - second_score) >= 0.05:
@@ -109,9 +108,6 @@ class PersonManager(Manager):
         user = User.objects.create_user(
             username=username, password=password, **user_kwargs
         )
-        # there some loop hole here
-        # if password:
-        #     user.set_password(password)  # to make sure it is hashed
 
         return user
 
