@@ -168,13 +168,13 @@ class Student(AbstractPerson):
     def get_default(cls) -> "Student":
         """Return a placeholder Student used for legacy imports."""
         user, _ = User.objects.get_or_create(
-            username="legacy_student",
-            defaults={"first_name": "Legacy", "last_name": "Student"},
+            username="default_student",
+            defaults={"first_name": "Default", "last_name": "Student"},
         )
         student, _ = cls.objects.get_or_create(
             user=user,
             defaults={
-                "student_id": "LEGACY-STUD",
+                "student_id": "TU-DFT",
                 "curriculum": Curriculum.get_default(),
             },
         )

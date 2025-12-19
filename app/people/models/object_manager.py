@@ -36,16 +36,18 @@ class PersonManager(Manager):
 
     def _find_by_name(self, **user_kwargs: Any) -> Optional[User]:
         """Return an existing user matched on first/last/middle names (case-insensitive)."""
-        first = (user_kwargs.get("first_name") or "").strip()
-        last = (user_kwargs.get("last_name") or "").strip()
-        middle = (user_kwargs.get("middle_name") or "").strip()
+        first = get_in_row('first_name', user_kwargs)
+        last = get_in_row("last_name", user_kwargs)
+        middle = get_in_row("middle_name",  user_kwargs)
 
         if not first or not last:
             return None
 
         base_name = " ".join([first, middle, last]).strip()
 
+        # iexact : case insensitive
         candidates = self.get_queryset().filter(user__last_name__iexact=last)
+        
         if not candidates.exists():
             candidates = self.get_queryset().filter(user__last_name__istartswith=last[:3])
 
@@ -73,22 +75,22 @@ class PersonManager(Manager):
             elif score > second_score:
                 second_score = score
 
-        if best_user and best_score >= 0.92 and (best_score - second_score) >= 0.05:
-            return best_user
-
-        if best_user and best_score >= 0.92 and (best_score - second_score) < 0.05:
-            logger.info(
-                "Ambiguous duplicate for %s '%s %s %s'; best=%s '%s' (%.2f), second=%.50s (%.2f); skipping auto-merge",
-                self.model.__name__,
-                first,
-                middle,
-                last,
-                getattr(best_user, "username", ""),
-                getattr(best_user, "get_full_name", lambda: "")(),
-                best_score,
-                base_name,
-                second_score,
-            )
+        if best_user and best_score >= 0.92:
+            if (best_score - second_score) >= 0.05:
+                return best_user
+            else:
+                logger.info(
+                    "Ambiguous duplicate for %s '%s %s %s'; best=%s '%s' (%.2f), second=%.50s (%.2f); skipping auto-merge",
+                    self.model.__name__,
+                    first,
+                    middle,
+                    last,
+                    getattr(best_user, "username", ""),
+                    getattr(best_user, "get_full_name", lambda: "")(),
+                    best_score,
+                    base_name,
+                    second_score,
+                )
 
         return None
 
@@ -114,9 +116,8 @@ class PersonManager(Manager):
         return user
 
     def _get_or_create(self, username: str, **user_kwargs: Any) -> User:
-        """Create or get the User and set /update password."""
+        """Create or get the User and set/update password."""
         _ = user_kwargs.pop("password", None)
-        # > not sure about this line below and the returning existing_user 3/12/25
         existing_user = cast(Optional[User], user_kwargs.pop("user", None))
         if existing_user:
             return existing_user
