@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any, Iterable, Sequence, Tuple
 
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError, CommandParser
@@ -77,7 +77,7 @@ class Command(BaseCommand):
             "-f",
             "--file_path",
             nargs="?",
-            default="./Seed_data/sessions_25-26s1.csv",
+            default="./Seed_data/Fundamentals",
             help="Path to CSV file with resources data",
         )
         parser.add_argument(
@@ -99,7 +99,7 @@ class Command(BaseCommand):
 
     def handle(self, *args: Any, **opts: Any) -> None:
         """Validate and import each resource from the provided CSV."""
-        path = Path(opts["file_path"])
+        file_path = Path(opts["file_path"])
         selected_rsc_raw = opts.get("resource") or []
         if isinstance(selected_rsc_raw, str):
             selected_rsc: list[str] = [selected_rsc_raw]
@@ -110,21 +110,21 @@ class Command(BaseCommand):
             selected_rsc = list(RESOURCE_CHOICES)
 
         dry_run: bool = bool(opts.get("dry_run"))
-        if not path.exists():
-            raise FileNotFoundError(str(path))
+        if not file_path.exists():
+            raise FileNotFoundError(str(file_path))
 
-        if path.is_dir():
-            _import_from_directory(self, path, selected_rsc, dry_run)
+        if file_path.is_dir():
+            _import_from_directory(self, file_path, selected_rsc, dry_run)
             return
 
-        file_contents = read_text_file(path)
+        file_contents = read_text_file(file_path)
         dataset = _load_dataset(file_contents)
 
         for key in selected_rsc:
             ResourceClass = RESOURCE_REGISTRY.get(key)
             if ResourceClass is None:
                 raise CommandError(f"Unknown resource: {key}")
-            _run_import(self, dataset, key, ResourceClass, dry_run, path)
+            _run_import(self, dataset, key, ResourceClass, file_path, dry_run)
 
 
 # ------------------------------------------------------------------ helpers
@@ -135,8 +135,8 @@ def _run_import(
     dataset: Dataset,
     label: str,
     ResourceClass: ModelResourceType,
+    path: Path,
     dry_run: bool = False,
-    path:Path
 ) -> None:
     """Execute the import for a dataset/resource pair with progress output."""
     resource: resources.ModelResource = ResourceClass()
@@ -237,32 +237,37 @@ def _import_from_directory(
                 cmd.style.WARNING(f"↷ skipping {name}: {filenames} not found")
             )
             continue
-        for dataset in datasets:
-            _run_import(cmd, dataset, name, ResourceClass, dry_run)
+        for dataset, file_path in datasets:
+            _run_import(cmd, dataset, name, ResourceClass, file_path, dry_run)
 
     return None
 
 
 def _load_directory_datasets(
     directory: Path, filenames: Iterable[str]
-) -> Iterable[Dataset] | None:
-    """Return the datasets for the first matching CSV in filenames."""
+) -> Iterable[Tuple[Dataset, Path]] | None:
+    """Return the datasets and the file_path each of the matching CSV/TSV."""
     datasets = []
 
-    for name in filenames:
-        file_path = directory / name
+    for filename in filenames:
+        file_path = directory / filename
         if not file_path.exists():
             continue
         contents = read_text_file(file_path)
         dataset = _load_dataset(contents)
         if dataset:
-            datasets.append(dataset)
+            datasets.append((dataset, file_path))
 
     return datasets or None
 
 
 def _load_dataset(file_contents) -> Dataset:
     """Load the c/tsv file in Dataset handling special Donor case."""
+    import csv
+    try:
+        csv.field_size_limit(10_000_000)
+    except Exception:
+        pass
     try:
         dataset: Dataset = Dataset().load(
             file_contents, format=guess_tabular_format(file_contents)
