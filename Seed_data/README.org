@@ -1,4 +1,26 @@
+* Parsed:
+  Contains files trimed and carefully selected from parsing_db.org
+  people_student_terms.tsv complementary term info for student 
 * <2025-12-17 Wed 10:48> Data File Structuration
+** Academics
+- Colleges 
+  - Departments
+    - Courses
+- Curriculums
+  - Majors  
+    - Minors
+- Prerequisites
+- Programmed Courses
+** Finance
+- Invoices
+- Payments
+- Scholarships
+** People
+*** Donors
+*** Faculty profiles
+*** Role assignments
+*** Staffs
+*** Students
 #+BEGIN_SRC python
 {
     "bio": ["Comments", "Denomination", "EducationLevel", "Occupation", "Scholarship"],
@@ -31,57 +53,45 @@
     "user": ["FirstName", "Lastname", "MiddleName", "Email"],  # ->
 }
 #+END_SRC
-** Academics
-- Colleges 
-- Courses
-- Curriculum Status: automatic
-- Curriculums
-- Departments
-- Major curriculum courses
-- Majors
-- Minor curriculum courses
-- Minors
-- Prerequisites
-- Programmed Courses
-** Authentication and Authorization
-- Groups
-- Users
-** Finance
-- Clearance Status: automatic
-- Fee types: automatic
-- Invoices
-- Payment methods
-- Payments
-- Scholarships
-** Impersonate
-- Impersonation logs
-** People
-- Donors
-- Faculty profiles
-- Role assignments
-- Staffs
-- Students
-** Registry
-- Credit hours
-- Document Status: automatic
-- Document types: automatic
-- Grade values
-- Grades
-- Registration Status: automatic
-- Registrations
-- Transcript Request Status: automatic
-- Transcript Request
   
-** Spaces 
-- Rooms: Fundamentals/space_room.csv
-- Spaces / Buildings: Fundamentals/space_room.csv
-** Timetable
-- Academic years
-- Schedules
+** Registry
+- Grades : ok
+- *Registrations*
+- Transcript Request
+** DONE Timetable
+   CLOSED: [2025-12-18 jeu. 23:28]
+- Schedules : schedules 25-26s2
 - Sections
-- Semesters
 - Sessions
 - Terms
+** DONE Spaces 
+   CLOSED: [2025-12-18 jeu. 23:28]
+- Rooms: Fundamentals/space_room.csv
+- Spaces / Buildings: Fundamentals/space_room.csv
+** DONE Automatic
+   CLOSED: [2025-12-18 jeu. 23:28]
+*** Academic   
+ - Major curriculum courses-
+ - Curriculum Status: automatic
+ - Minor curriculum courses
+*** Finance
+- Payment methods : automatic
+- Clearance Status: automatic
+- Fee types: automatic
+*** Registry
+- Credit hours : automatic
+- Grade values : automatic
+- Registration Status: automatic
+- Document Status: automatic
+- Document types: automatic
+- Transcript Request Status: automatic
+*** Timetable
+- Semesters : Automatic
+- Academic years : Automatic
+    
+*** Authentication and Authorization
+ - Groups
+ - Users
 
 * <2025-12-16 Tue 19:37> dev env set on r1d05
   working on the impots

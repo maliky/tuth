@@ -37,7 +37,8 @@ DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
     (
         "Student",
         StudentResource,
-        ("people_students.csv", "UM_students.utf8.tsv", "StudentInfo.csv"),
+        # "UM_students.utf8.tsv"  #  people_students.csv is a cleaned version of UM
+        ("people_students.csv",  "StudentInfo.csv"),
     ),
     (
         "Grade",
