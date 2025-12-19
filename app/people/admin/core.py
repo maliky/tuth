@@ -71,9 +71,11 @@ class MergeableUserAdmin(MergeUsersMixin, dj_admin.ModelAdmin):
 
     def possible_duplicates(self, obj):
         """Reuse the duplicate preview logic at the user level."""
+        # We are missing the middle name here.
         base_name = f"{obj.first_name} {obj.last_name}".strip()
         qs = User.objects.exclude(pk=obj.pk).filter(last_name__iexact=obj.last_name)
         rows = []
+        # > Why do we limite ourself to the first 50 ?
         for other in qs[:50]:
             other_name = f"{other.first_name} {other.last_name}".strip()
             score = name_similarity(base_name, other_name)

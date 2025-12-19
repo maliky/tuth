@@ -60,7 +60,40 @@ CommandError: LegacyRegistration import failed with 8735 errors and 0 invalid ro
     
 - Do not forget to add documentation even if succint
 - 
-   
+** I want to refactor the usage of name_similarity
+See in this files
+app/people/admin/core.py
+31:from app.people.matching import name_similarity
+79:            score = name_similarity(base_name, other_name)
+app/people/admin/mixins.py
+10:from app.people.matching import name_similarity
+78:            score = name_similarity(base_name, other_name)
+app/people/matching.py
+42:def name_similarity(
+85:        score = name_similarity(base, name)
+app/people/models/object_manager.py
+ 9:from app.people.matching import name_similarity
+68:            score = name_similarity(base_name, candidate_name)
+
+We use a very similar algoritm.
+I want to factor it using a something like below:
+    # create the base name (tokenA)
+    # get candidates
+    # initialize storage
+    # Loop on the candidates
+    #  for each candidate C create the  a comparaison key (tokenB)
+    #  score tokenA -- TokenB distance
+    #  update storage based of threshold
+    # return
+  
+    # vars, a function to get candidates or the candidate them selves
+    # a function to get tokenA or tokenA itself
+    # a function f to get the tokenB : f(C,*args) -> tokenB
+    # thresholds to update storage
+
+or even using the already defined function find_similar_names.
+
+Do your analysis on how we can make our code sweeter.
 
 * <2025-12-16 mar. 20:18> codex resume 019b1809-8544-7742-9f25-0c1f412f3aaf
   - when importing UM_student

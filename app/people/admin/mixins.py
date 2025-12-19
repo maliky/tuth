@@ -49,17 +49,14 @@ class DuplicatePreviewMixin:
     duplicate_threshold = 0.9
     duplicate_field_name = "possible_duplicates"
 
-    def possible_duplicates(self, obj):
-        base_name = getattr(obj, "long_name", "") or getattr(
+    def _get_long_name(obj):
+        """Get the long name of an object if it exists. or the staff_profile.long_name."""
+        return getattr(obj, "long_name", "") or getattr(
             getattr(obj, "staff_profile", None), "long_name", ""
         )
-        # pick a comparable user and last name
-        person_user = getattr(obj, "user", None) or getattr(
-            getattr(obj, "staff_profile", None), "user", None
-        )
-        if not person_user:
-            return ""
 
+    def _get_candidates(obj, person_user):
+        """Get a queryset of user or staff with same last name as person_user."""
         if hasattr(obj, "user"):
             qs = obj.__class__.objects.exclude(pk=obj.pk).filter(
                 user__last_name__iexact=person_user.last_name
@@ -70,11 +67,25 @@ class DuplicatePreviewMixin:
             )
         else:
             qs = obj.__class__.objects.none()
+        return qs
+
+    def possible_duplicates(self, obj):
+        """Return a list of links to possible duplicates based on name similarity."""
+        # > What is missing here is to take in account ambiguous duplicates
+        
+        base_name = _get_long_name(obj)
+
+        # pick a comparable user and last name
+        person_user = getattr(obj, "user", None) or getattr(
+            getattr(obj, "staff_profile", None), "user", None
+        )
+        if not person_user:
+            return ""
+        qs = _get_candidate(obj, person_user)
         rows = []
+
         for other in qs[:50]:
-            other_name = getattr(other, "long_name", "") or getattr(
-                getattr(other, "staff_profile", None), "long_name", ""
-            )
+            other_name = _get_long_name(other)
             score = name_similarity(base_name, other_name)
             if score >= self.duplicate_threshold:
                 label = getattr(other, "obj_id", "") or str(other.pk)
