@@ -263,6 +263,11 @@ def _load_directory_datasets(
 
 def _load_dataset(file_contents) -> Dataset:
     """Load the c/tsv file in Dataset handling special Donor case."""
+    import csv
+    try:
+        csv.field_size_limit(10_000_000)
+    except Exception:
+        pass
     try:
         dataset: Dataset = Dataset().load(
             file_contents, format=guess_tabular_format(file_contents)
