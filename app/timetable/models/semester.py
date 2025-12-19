@@ -65,6 +65,7 @@ class Semester(StatusableMixin, models.Model):
         self.validate_status(SemesterStatus.objects.all())
 
     def _ensure_status(self):
+        SemesterStatus._populate_attributes_and_db()
         if not self.status_id:
             self.status_id = "planning"
 

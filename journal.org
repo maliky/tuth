@@ -1,3 +1,7 @@
+* <2025-12-18 jeu. 21:49> Terms for students
+  Define a rule to set the terms form the studentinfo import
+  something like for oldest for  first TermFirstEntered and newest for TermLastEnrolled
+
 
 * <2025-12-19 Fri 16:36> Test correction
 

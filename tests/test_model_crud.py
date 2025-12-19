@@ -26,7 +26,11 @@ def _touch(model_instance):
             )
         ):
             val = getattr(model_instance, field.name) or ""
-            setattr(model_instance, field.name, f"{val}_upd")
+            new_val = f"{val}_upd"
+            max_len = getattr(field, "max_length", None)
+            if max_len:
+                new_val = new_val[:max_len]
+            setattr(model_instance, field.name, new_val)
             return True
     return False
 

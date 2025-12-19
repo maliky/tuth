@@ -51,6 +51,11 @@ class GradeValue(models.Model):
         """Return the grade code in uppercase for admin displays."""
         return (self.code or "").upper()
 
+    def _normalize_code(self):
+        """Store grade codes in lowercase to match constants/lookups."""
+        if self.code:
+            self.code = self.code.lower()
+
     def _ensure_number(self):
         """Make sure a number is defined for a Grade."""
         if not self.number:
@@ -63,6 +68,7 @@ class GradeValue(models.Model):
 
     def save(self, *args, **kwargs) -> None:
         """Enforcing a number and a description before saving."""
+        self._normalize_code()
         self._ensure_number()
         self._ensure_description()
         super().save(*args, **kwargs)
