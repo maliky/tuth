@@ -57,3 +57,7 @@ Propose consistent naming for git commit but do not commit yourself.
 with black, flake8 and mypy
 - you can run `py_compile`,  `black`, `flake8`, and `mypy` at the end of your edits. 
 
+### Environment notes
+- You may see harmless `pyenv: cannot rehash` warnings in some environments.
+- `rg` (ripgrep) is not always available; fall back to `python`/`grep` when needed.
+- Some sessions can be read-only; if you cannot write files, provide patch instructions instead of applying changes.

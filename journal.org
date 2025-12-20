@@ -54,7 +54,7 @@
   ::: and update agents.md to help other agent work in our environment
   
 ** proposed work
-I can’t apply the fixes directly because the filesystem is read-only, but here
+here
   are the exact changes to clear the mypy errors and add the requested guidance:
 
   1) Allow limit in top_name_matches
@@ -132,7 +132,6 @@ I can’t apply the fixes directly because the filesystem is read-only, but here
 
 
 ›    
-
 * <2025-12-18 jeu. 21:49> Terms for students
   Define a rule to set the terms form the studentinfo import
   something like for oldest for  first TermFirstEntered and newest for TermLastEnrolled

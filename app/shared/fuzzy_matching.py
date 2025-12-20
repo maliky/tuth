@@ -57,8 +57,8 @@ def top_name_matches(
     token_fn: Callable[[_T], str] = identity,
     threshold: float = 0.9,
     top_n: int = 3,
-) -> list[tuple[_T, float]]:
-    """Return up to 'limit' candidates ordered by similarity >= threshold.
+ -> list[tuple[_T, float]]:
+    """Return up to 'top_n' candidates ordered by similarity >= threshold.
 
     token_fn :  is a function taking a candidate and return a str to compare with base.
     """
