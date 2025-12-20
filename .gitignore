@@ -6,7 +6,8 @@
 *cache*
 *tests/*txt
 *tmp.org
-*migration*
+**/migrations/*.py*
+**/migrations/__init__.py
 *tmp.py
 *tmp.log
 *~
