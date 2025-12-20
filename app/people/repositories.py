@@ -29,7 +29,7 @@ class PeopleRepository:
             defaults={
                 "college": college,
                 "first_name": first,
-                "middle_name":middle,
+                "middle_name": middle,
                 "last_name": last,
                 "name_prefix": prefix,
                 "name_suffix": suffix,

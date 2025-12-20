@@ -27,7 +27,6 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from rapidfuzz.distance import JaroWinkler
 
-
 User = get_user_model()
 
 
@@ -289,71 +288,3 @@ def canonicalize_name(raw: str) -> str:
     tokens = [t.lower() for t in (prefix, first, middle, last, suffix) if t]
     # Sort tokens so re-ordered names compare equal.
     return " ".join(sorted(tokens))
-
-
-def name_distance(name_a: str, name_b: str, *, prefix_weight: float = 0.1) -> float:
-    """Return a normalized distance (0=identical, 1=different) between two names."""
-    canonical_a = canonicalize_name(name_a)
-    canonical_b = canonicalize_name(name_b)
-    return float(
-        JaroWinkler.normalized_distance(
-            canonical_a, canonical_b, prefix_weight=prefix_weight
-        )
-    )
-
-
-def names_match(name_a: str, name_b: str, *, threshold: float = 0.2, **kwargs) -> bool:
-    """Return True when the distance between two names is within a given threshold."""
-    return name_distance(name_a, name_b, **kwargs) <= threshold
-
-
-def name_similarity_matrix(
-    left_names: Sequence[str],
-    right_names: Sequence[str],
-    *,
-    max_distance: float | None = None,
-    **kwargs,
-) -> list[dict[str, object]]:
-    """Return a list of similarity rows describing pairwise name distances."""
-    # > Can we vectorize this with pandas or numpy built-in methods ?
-    matrix: list[dict[str, object]] = []
-    for left in left_names:
-        for right in right_names:
-            dist = name_distance(left, right, **kwargs)
-            if max_distance is not None and dist > max_distance:
-                continue
-            matrix.append({"left": left, "right": right, "distance": dist})
-    return matrix
-
-
-
-def name_similarity(
-    name_a: str,
-    name_b: str,
-    sim_threshold: float = 0.8,
-    weight_surname: float = 0.7,
-    length_penalty: float = 0.07,
-) -> float:
-    """Greedy symmetric similarity between two names in [0,1].
-
-    Surnames dominate; given names allow initials/full swaps.
-    """
-
-    surn_a, givens_a = normalize_tokens(canonicalize_name(name_a))
-    surn_b, givens_b = normalize_tokens(canonicalize_name(name_b))
-
-    sim_surname = sim_jarowinkler(surn_a, surn_b)
-
-    if sim_surname < sim_threshold:
-        return sim_surname * 0.2
-
-    if not givens_a and not givens_b:
-        sim_given = 1.0
-    else:
-        given_a = " ".join(givens_a)
-        given_b = " ".join(givens_b)        
-        sim_given = sim_jarowinkler(given_a, given_b)
-
-    sim = weight_surname * sim_surname + (1 - weight_surname) * sim_given
-    return max(0.0, min(1.0, sim))
-

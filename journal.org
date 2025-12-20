@@ -1,15 +1,58 @@
 
 * <2025-12-20 Sat 11:15> Importing matcher
-  › I am noticing that we have unused names_match function in people/utils.py .
-  They overloap with shared/fuzzy_matching.py so let's remove them from people/
-  utils.py  and replace them by the one in shared/fuzzy_matching.py but I am also noticing that or current similarity ratio is less smart than the JaroWinkler distance.  So thisis what needs to be done:
-1. identify what function can be combined/deduplicated and store them in fuzzy_matching.  I am thinking of the canonicalizations of names for example.
-     
-2. I think we can remove name_similarity_matrix or we explore another way of doing the name matching by taking all the names -> normalizing them and using vectorization to build the distance matrices once, store it and use/consulte it when doing the imports.  we have less than 10000 names, this should be tractable.
-   This step would come once before an import requireing fuzzy matching.
 
-3. but for now let's concentrate on deduplication of code. and on second thought, what we have in normalize name tokens is ok for curriculum or course but not for names. so we keep the canonicalize_name function for names and we use it in name_similarity.
+• I dug through the codebase:
 
+  - app/shared/fuzzy_matching.py defines name_similarity, but it currently calls    sim_name_token, which is commented out—so calling this function will raise a    NameError. It also relies on Python’s difflib.SequenceMatcher for both
+    surname and given-name scoring, with custom weighting/penalties.
+  - app/finance/utils.py doesn’t have any name-similarity logic; it only has
+    tuition helpers. The only other name-matching utilities live in app/shared/
+    importing/username_matching.py (Jaro-Winkler similarity for usernames) and
+    app/people/utils.py (name_distance, now order-insensitive and backed by
+    rapidfuzz Jaro-Winkler).
+
+  Given that, I prefer the Jaro-Winkler-based approach (as in people/utils.py or  shared/importing/username_matching.py) because:
+
+  - It uses a well-tested, fast C-backed implementation (rapidfuzz) instead of
+    Python-level SequenceMatcher.
+  - It produces a normalized distance/similarity, is symmetric, and—after
+    canonicalization/sorting tokens—handles name reordering more gracefully.
+  - It doesn’t depend on a missing helper (sim_name_token), so it won’t throw.
+
+  If you want to improve scalability for ~10k×10k name comparisons (100M pairs),  avoid Python loops and leverage vectorized/compiled distance routines:
+
+  - Use rapidfuzz.distance.JaroWinkler.cdist(left_list, right_list, workers=-1)
+    (or process.cdist) to compute a full similarity matrix in C with
+    multithreading. You can then threshold or keep top-k per row without holding    the full matrix by streaming/chunking.
+  - Pre-canonicalize and lowercase all names once; optionally sort tokens to
+    make comparisons order-insensitive as in people/utils.py.
+  - If 100M pairs is still too large to hold, block on simple keys (e.g., first
+    letter(s) of last name) to reduce candidate sets, then run cdist on each
+    block.
+
+  So: fix shared/fuzzy_matching.name_similarity by reinstating or replacing
+  sim_name_token (or swap to rapidfuzz), and for large-scale matching, use
+  rapidfuzz’s cdist/top-k utilities rather than Python loops.
+
+
+
+################
+  app/people/models/object_manager.py:66: error: Unexpected keyword argument
+  "limit" for "top_name_matches"  [call-arg]
+  app/shared/fuzzy_matching.py:54: note: "top_name_matches" defined here
+  app/people/admin/mixins.py:86: error: Unexpected keyword argument "limit" for
+  "top_name_matches"  [call-arg]
+  app/shared/fuzzy_matching.py:54: note: "top_name_matches" defined here
+  tests/people/test_utils.py:6: error: Module "app.people.utils" has no
+  attribute "name_distance"  [attr-defined]
+  tests/people/test_utils.py:6: error: Module "app.people.utils" has no
+  attribute "names_match"  [attr-defined]
+  tests/people/test_utils.py:6: error: Module "app.people.utils" has no
+  attribute "name_similarity_matrix"  [attr-defined]
+  Found 5 errors in 3 files (checked 256 source files)
+  (tusis) mlk@r1d05 ~/Tusis/Tusis_app $
+  ::: and update agents.md to help other agent work in our environment
+  
 * <2025-12-18 jeu. 21:49> Terms for students
   Define a rule to set the terms form the studentinfo import
   something like for oldest for  first TermFirstEntered and newest for TermLastEnrolled
