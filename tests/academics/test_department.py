@@ -12,7 +12,7 @@ pytestmark = pytest.mark.django_db
 
 
 def test_department_unique_short_name_in_college(college, department_factory):
-    """In a College a department short_name should be unique."""
+    """In a College a department shortname should be unique."""
     department_factory("GEN")
 
     with pytest.raises(IntegrityError):
