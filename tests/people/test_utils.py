@@ -106,4 +106,3 @@ def test_split_name_initial_patterns(raw, prefix, first, middle, last, suffix):
 def test_extract_id_num(user_id, output):
     res = extract_id_num(user_id)
     assert res == output, f"{res} != {output}"
-

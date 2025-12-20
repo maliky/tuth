@@ -1,4 +1,78 @@
 
+* <2025-12-20 Sat 15:25> tests
+in   test_faculty_import_assigns_...
+make sure we use an empty db with no existing faculty or students
+
+(tusis) mlk@r1d05 ~/Tusis/Tusis_app $ pytest tests/people/test_import_groups.py 
+========================================================= test session starts =========================================================
+platform linux -- Python 3.13.7, pytest-7.4.2, pluggy-1.6.0
+django: settings: app.settings (from env)
+rootdir: /home/mlk/Tusis/Tusis_app
+configfile: pyproject.toml
+plugins: hypothesis-6.82.7, bdd-8.1.0, django-4.5.2
+collected 2 items                                                                                                                     
+
+tests/people/test_import_groups.py FF                                                                                           [100%]
+
+============================================================== FAILURES ===============================================================
+______________________________________________ test_student_import_assigns_student_group ______________________________________________
+
+curriculum = <Curriculum: (DEFT) DFT_CUR>, group_factory = <function group_factory.<locals>._make at 0x7f4207cfdc60>
+
+    @pytest.mark.django_db
+    def test_student_import_assigns_student_group(curriculum, group_factory):
+        ds = Dataset()
+        ds.headers = ["student_id", "student_name", "curriculum"]
+    
+        name = "Alice Example"
+        _, first, middle, last, _ = split_name(name)
+    
+        username = Student.mk_username(first, last, middle)
+    
+        ds.append(["ST1", name, curriculum.pk])
+    
+        group_factory(UserRole.STUDENT.value.label)
+    
+        res = StudentResource().import_data(ds, dry_run=False)
+    
+        assert not res.has_errors(), res.row_errors()
+        student = Student.objects.get(student_id="ST1")
+        user = student.user
+    
+        assert user.groups.filter(name=UserRole.STUDENT.value.label).exists()
+>       assert user.username == username, f"{user.username}, {username}"
+E       AssertionError: aliceexample2, aliexample
+
+tests/people/test_import_groups.py:37: AssertionError
+______________________________________________ test_faculty_import_assigns_faculty_group ______________________________________________
+
+college = <College: DEFT>
+
+    @pytest.mark.django_db
+    def test_faculty_import_assigns_faculty_group(college):
+        ds = Dataset()
+        ds.headers = ["faculty"]
+        name = "Bob Teaches"
+        _, first, middle, last, _ = split_name(name)
+        username = mk_username(first, last, middle, prefix_len=2)
+    
+        ds.append([name])
+        res = FacultyResource().import_data(ds, dry_run=False, raise_errors=True)
+        assert not res.has_errors()
+    
+        faculty = Faculty.objects.first()
+        assert faculty is not None
+        user = faculty.staff_profile.user
+        assert user.groups.filter(name=UserRole.FACULTY.value.label).exists()
+>       assert user.username == username, f"{user.username}, {username}"
+E       AssertionError: bobteaches2, boteaches
+
+tests/people/test_import_groups.py:56: AssertionError
+======================================================= short test summary info =======================================================
+FAILED tests/people/test_import_groups.py::test_student_import_assigns_student_group - AssertionError: aliceexample2, aliexample
+FAILED tests/people/test_import_groups.py::test_faculty_import_assigns_faculty_group - AssertionError: bobteaches2, boteaches
+
+
 * <2025-12-20 Sat 11:15> Importing matcher
 
 • I dug through the codebase:

@@ -12,6 +12,7 @@ from app.people.utils import mk_username, split_name
 User = get_user_model()
 
 
+# > It would be good to combine those 2 tests together
 @pytest.mark.django_db
 def test_student_import_assigns_student_group(curriculum, group_factory):
     ds = Dataset()
@@ -33,7 +34,7 @@ def test_student_import_assigns_student_group(curriculum, group_factory):
     user = student.user
 
     assert user.groups.filter(name=UserRole.STUDENT.value.label).exists()
-    assert user.username == username
+    assert user.username == username, f"{user.username}, {username}"
 
 
 @pytest.mark.django_db
@@ -52,4 +53,4 @@ def test_faculty_import_assigns_faculty_group(college):
     assert faculty is not None
     user = faculty.staff_profile.user
     assert user.groups.filter(name=UserRole.FACULTY.value.label).exists()
-    assert user.username == username
+    assert user.username == username, f"{user.username}, {username}"

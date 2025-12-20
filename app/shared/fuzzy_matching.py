@@ -8,7 +8,7 @@ from typing import Any, Callable, Iterable, List, Sequence, Tuple, TypeVar
 
 from rapidfuzz.distance import JaroWinkler
 
-from app.people.utils import canonicalize_name
+from app.people.utils import canonicalize_name, split_name
 
 Score = float
 _T = TypeVar("_T")
@@ -27,8 +27,8 @@ def similarity_ratio(a: str, b: str) -> float:
 
 
 def sim_jarowinkler(a: str, b: str, prefix_weight: float = 0.1) -> float:
-    """A fuzzy distance for names."""
-    return float(JaroWinkler.normalized_distance(a, b, prefix_weight=prefix_weight))
+    """A fuzzy similitude for names."""
+    return 1 - float(JaroWinkler.normalized_distance(a, b, prefix_weight=prefix_weight))
 
 
 def token_similarity(
@@ -57,7 +57,7 @@ def top_name_matches(
     token_fn: Callable[[_T], str] = identity,
     threshold: float = 0.9,
     top_n: int = 3,
- -> list[tuple[_T, float]]:
+) -> list[tuple[_T, float]]:
     """Return up to 'top_n' candidates ordered by similarity >= threshold.
 
     token_fn :  is a function taking a candidate and return a str to compare with base.
@@ -124,7 +124,6 @@ def name_similarity(
 
     Surnames dominate; given names allow initials/full swaps.
     """
-
     surn_a, givens_a = normalize_tokens(canonicalize_name(name_a))
     surn_b, givens_b = normalize_tokens(canonicalize_name(name_b))
 

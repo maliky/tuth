@@ -286,5 +286,5 @@ def canonicalize_name(raw: str) -> str:
     """Return a canonical username-like representation of a name."""
     prefix, first, middle, last, suffix = split_name(raw)
     tokens = [t.lower() for t in (prefix, first, middle, last, suffix) if t]
-    # Sort tokens so re-ordered names compare equal.
-    return " ".join(sorted(tokens))
+    # Do not Sort tokens they should already be in order from split_name
+    return " ".join(tokens)
