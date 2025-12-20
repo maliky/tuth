@@ -7,7 +7,7 @@ from django.db import transaction
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 
-from app.people.matching import top_name_matches
+from app.shared.fuzzy_matching import top_name_matches
 from app.people.services.merge_people import merge_people, merge_users
 from django.contrib.auth import get_user_model
 from django.contrib import admin as dj_admin

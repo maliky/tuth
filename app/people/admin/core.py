@@ -28,7 +28,7 @@ from app.people.forms.person import (
     StaffForm,
     StudentForm,
 )
-from app.people.matching import name_similarity
+from app.shared.fuzzy_matching import name_similarity
 from app.people.models.donor import Donor
 from app.people.models.faculty import Faculty
 from app.people.models.role_assignment import RoleAssignment

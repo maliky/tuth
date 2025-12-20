@@ -8,7 +8,7 @@ from django.apps import apps
 from datetime import date
 from typing import Optional, Self, cast
 
-from app.shared.fuzzy import curriculum_similarity
+from app.shared.fuzzy_matching import token_similarity
 from app.shared.mixins import SimpleTableMixin
 from app.shared.utils import as_title
 from django.db import models
@@ -63,7 +63,7 @@ class CurriculumManager(models.Manager["Curriculum"]):
             ):
                 continue
             other_token = self._token(cur.short_name, cur.long_name)
-            score, ok = curriculum_similarity(token, other_token, threshold=threshold)
+            score, ok = token_similarity(token, other_token, threshold=threshold)
             if not ok:
                 continue
             choose = False

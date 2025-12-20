@@ -14,7 +14,7 @@ from app.academics.choices import LEVEL_NUMBER
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.registry.models import CreditHour
-from app.shared.fuzzy import course_similarity
+from app.shared.fuzzy_matching import token_similarity
 from app.shared.types import CourseQuery
 from app.shared.utils import make_course_code
 from app.timetable.utils import get_current_semester
@@ -48,7 +48,7 @@ class CourseManager(models.Manager["Course"]):
         # > using a function to handle alternate case
         for course in candidates:
             other_token = self._token(course.department, course.number, course.title)
-            score, ok = course_similarity(token, other_token, threshold=threshold)
+            score, ok = token_similarity(token, other_token, threshold=threshold)
             if ok and score > best[1]:
                 best = (course, score)
         return best[0]

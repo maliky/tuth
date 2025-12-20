@@ -1,4 +1,4 @@
-"""Name matching utilities to detect potential duplicates."""
+"""Generic fuzzy matching helpers for names, courses, and curricula."""
 
 from __future__ import annotations
 
@@ -14,26 +14,34 @@ def identity(value: Any) -> Any:
     return value
 
 
-def _normalize_tokens(name: str) -> Tuple[str, list[str]]:
-    """Return (surname, given_tokens) lowercased and stripped of punctuation."""
-    tokens = [
-        re.sub(r"[^A-Za-z]", "", part).lower() for part in name.split() if part.strip()
-    ]
-    if not tokens:
-        return "", []
-    surn = tokens[-1]
-    givens = tokens[:-1]
-    return surn, givens
-
-
-def _sim_ratio(a: str, b: str) -> float:
+def similarity_ratio(a: str, b: str) -> float:
     """Lightweight fuzzy ratio in [0,1]."""
     if not a or not b:
         return 0.0
     return SequenceMatcher(None, a, b).ratio()
 
 
-def _sim_token(x: str, y: str) -> float:
+def token_similarity(
+    token_a: str, token_b: str, threshold: float = 0.9
+) -> Tuple[float, bool]:
+    """Return (score, is_match) for course/curriculum-like strings."""
+    score = similarity_ratio(token_a, token_b)
+    return score, score >= threshold
+
+
+# ------- Name-specific similarity -------
+def normalize_name_tokens(name: str) -> Tuple[str, list[str]]:
+    """Return (surname, given_tokens) lowercased and stripped of punctuation."""
+    tokens = [re.sub(r"[^A-Za-z]", "", part).lower() for part in name.split() if part]
+    if not tokens:
+        return "", []
+
+    surn = tokens[-1]
+    givens = tokens[:-1]
+    return surn, givens
+
+
+def sim_name_token(x: str, y: str) -> float:
     """Similarity between two given-name tokens, handling initials."""
     if not x or not y:
         return 0.0
@@ -43,13 +51,13 @@ def _sim_token(x: str, y: str) -> float:
         return 0.9 if x == y[0] else 0.1
     if len(y) == 1 and len(x) > 1:
         return 0.9 if y == x[0] else 0.1
-    return _sim_ratio(x, y)
+    return similarity_ratio(x, y)
 
 
 def name_similarity(
     name_a: str,
     name_b: str,
-    surname_threshold: float = 0.8,
+    sim_threshold: float = 0.8,
     weight_surname: float = 0.6,
     length_penalty: float = 0.07,
 ) -> float:
@@ -57,21 +65,25 @@ def name_similarity(
 
     Surnames dominate; given names allow initials/full swaps.
     """
-    surn_a, givens_a = _normalize_tokens(name_a)
-    surn_b, givens_b = _normalize_tokens(name_b)
 
-    sim_surn = _sim_ratio(surn_a, surn_b)
-    if sim_surn < surname_threshold:
-        return sim_surn * 0.2
+    surn_a, givens_a = normalize_name_tokens(name_a)
+    surn_b, givens_b = normalize_name_tokens(name_b)
+
+    sim_surname = similarity_ratio(surn_a, surn_b)
+
+    # > Why do we reduce the case of low sim_threshold ?
+    # > to make it more apparant that there is not similarity ?
+    if sim_surname < sim_threshold:
+        return sim_surname * 0.2
 
     if not givens_a and not givens_b:
         sim_given = 1.0
     else:
         scores_a = [
-            max((_sim_token(x, y) for y in givens_b), default=0.0) for x in givens_a
+            max((sim_name_token(x, y) for y in givens_b), default=0.0) for x in givens_a
         ]
         scores_b = [
-            max((_sim_token(y, x) for x in givens_a), default=0.0) for y in givens_b
+            max((sim_name_token(y, x) for x in givens_a), default=0.0) for y in givens_b
         ]
         avg_a = sum(scores_a) / len(scores_a) if scores_a else 0.0
         avg_b = sum(scores_b) / len(scores_b) if scores_b else 0.0
@@ -79,33 +91,8 @@ def name_similarity(
         penalty = length_penalty * abs(len(givens_a) - len(givens_b))
         sim_given = max(0.0, sim_given_raw - penalty)
 
-    sim = weight_surname * sim_surn + (1 - weight_surname) * sim_given
+    sim = weight_surname * sim_surname + (1 - weight_surname) * sim_given
     return max(0.0, min(1.0, sim))
-
-
-def find_similar_names(
-    base: str, candidates: Iterable[str], threshold: float = 0.9
-) -> list[Tuple[str, float]]:
-    """Return candidates whose similarity to base meets threshold."""
-    results: list[Tuple[str, float]] = []
-    for name in candidates:
-        score = name_similarity(base, name)
-        if score >= threshold:
-            results.append((name, score))
-    return sorted(results, key=lambda t: t[1], reverse=True)
-
-
-def best_name_match(
-    base: str,
-    candidates: Iterable[_T],
-    token_fn: Callable[[_T], str],
-    threshold: float = 0.9,
-) -> tuple[_T | None, float]:
-    """Return the best candidate and score meeting the threshold."""
-    ranked = top_name_matches(
-        base, candidates, token_fn=token_fn, threshold=threshold, limit=1
-    )
-    return ranked[0] if ranked else (None, 0.0)
 
 
 def top_name_matches(
@@ -125,3 +112,15 @@ def top_name_matches(
     scored.sort(key=lambda t: t[1], reverse=True)
     return scored[:limit]
 
+
+def best_name_match(
+    base: str,
+    candidates: Iterable[_T],
+    token_fn: Callable[[_T], str],
+    threshold: float = 0.9,
+) -> tuple[_T | None, float]:
+    """Return the best candidate and score meeting the threshold."""
+    ranked = top_name_matches(
+        base, candidates, token_fn=token_fn, threshold=threshold, limit=1
+    )
+    return ranked[0] if ranked else (None, 0.0)

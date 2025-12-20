@@ -371,7 +371,7 @@ class StudentResource(resources.ModelResource):
         """Overide operation juste before save."""
         pass
 
-    def after_save_instance(self, instance, row, **kwargs) -> None:
+    def after_save_instance(self, instance, row, **kwargs):
         """Assign the student group to the user when importing."""
         if kwargs.get("dry_run") or instance.user is None:
             return

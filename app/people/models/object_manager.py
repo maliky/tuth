@@ -6,7 +6,7 @@ from typing import Any, Dict, Mapping, Optional, Tuple, cast
 from django.contrib.auth.models import User
 from django.db.models import Manager
 
-from app.people.matching import top_name_matches
+from app.shared.fuzzy_matching import top_name_matches
 from app.people.utils import mk_username
 from app.shared.utils import get_in_row
 
@@ -60,6 +60,7 @@ class PersonManager(Manager):
         candidates = self.get_queryset().filter(user__last_name__iexact=last)
 
         if not candidates.exists():
+            # > the problem here is that we already assum that the first 3 char will be similare
             candidates = self.get_queryset().filter(user__last_name__istartswith=last[:3])
 
         ranked_matches = top_name_matches(
