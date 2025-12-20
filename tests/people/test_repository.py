@@ -7,7 +7,7 @@ from app.people.repositories import PeopleRepository
 
 @pytest.mark.django_db
 def test_get_or_create_faculty_idempotent(college):
-    """When creating to faculty with same name, give the same user."""
+    """When creating two faculties with same name, give the same user."""
     faculty_one = PeopleRepository.get_or_create_faculty("John Doe", college)
     faculty_two = PeopleRepository.get_or_create_faculty("John Doe", college)
     assert faculty_one.pk == faculty_two.pk, f"{faculty_one} {faculty_two}"
