@@ -53,6 +53,86 @@
   (tusis) mlk@r1d05 ~/Tusis/Tusis_app $
   ::: and update agents.md to help other agent work in our environment
   
+** proposed work
+I can’t apply the fixes directly because the filesystem is read-only, but here
+  are the exact changes to clear the mypy errors and add the requested guidance:
+
+  1) Allow limit in top_name_matches
+
+  - File: app/shared/fuzzy_matching.py
+  - Update the signature and slicing:
+
+  def top_name_matches(
+      base: str,
+      candidates: Iterable[_T],
+      token_fn: Callable[[_T], str] = identity,
+      threshold: float = 0.9,
+      top_n: int = 3,
+      limit: int | None = None,
+  ) -> list[tuple[_T, float]]:
+      ...
+      scored.sort(key=lambda t: t[1], reverse=True)
+      n = top_n if limit is None else limit
+      return scored[:n]
+
+  (best_name_match can stay as-is; it already passes top_n=1.)
+
+  2) Restore name-matching helpers in app/people/utils.py
+  Add these near the bottom (after canonicalize_name or grouped with the other
+  helpers):
+
+  def name_distance(name_a: str, name_b: str, *, prefix_weight: float = 0.1) ->
+  float:
+      """Return a normalized distance (0=identical, 1=different) between two
+  names."""
+      canonical_a = canonicalize_name(name_a)
+      canonical_b = canonicalize_name(name_b)
+      return float(
+          JaroWinkler.normalized_distance(
+              canonical_a, canonical_b, prefix_weight=prefix_weight
+          )
+      )
+
+
+  def names_match(name_a: str, name_b: str, *, threshold: float = 0.2, **kwargs)
+  -> bool:
+      """Return True when the distance between two names is within a given
+  threshold."""
+      return name_distance(name_a, name_b, **kwargs) <= threshold
+
+
+  def name_similarity_matrix(
+      left_names: Sequence[str],
+      right_names: Sequence[str],
+      *,
+      max_distance: float | None = None,
+      **kwargs,
+  ) -> list[dict[str, object]]:
+      """Return a list of similarity rows describing pairwise name distances."""
+      matrix: list[dict[str, object]] = []
+      for left in left_names:
+          for right in right_names:
+              dist = name_distance(left, right, **kwargs)
+              if max_distance is not None and dist > max_distance:
+                  continue
+              matrix.append({"left": left, "right": right, "distance": dist})
+      return matrix
+
+  3) Update AGENTS.md to help other agents
+  Add a short note such as:
+
+  - “You’ll see pyenv: cannot rehash warnings in this environment; they are
+    harmless.”
+  - “rg may be unavailable; fall back to python/grep.”
+  - “Filesystem may be read-only in some sessions; be prepared to provide patch
+    instructions instead of applying changes.”
+
+  After applying these, rerun mypy and the errors should disappear. Let me know
+  if you want me to apply the patches once write access is available.
+
+
+›    
+
 * <2025-12-18 jeu. 21:49> Terms for students
   Define a rule to set the terms form the studentinfo import
   something like for oldest for  first TermFirstEntered and newest for TermLastEnrolled
