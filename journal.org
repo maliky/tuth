@@ -1,25 +1,14 @@
 
-* <2025-12-19 Fri 20:35> test
-  tests/people/test_utils.py:125: AssertionError
-============================================== short test summary info ===============================================
-FAILED tests/academics/test_college.py::test_college_computed_fields - AttributeError: 'College' object has no attribute 'curricula_names'. Did you mean: 'curricula_count'?
-FAILED tests/selenium/test_portal_roles.py::test_role_dashboards[student_user-config1-Student Dashboard] - AssertionError
-FAILED tests/selenium/test_portal_roles.py::test_role_dashboards[chair_user-config2-Chair Curriculum Center] - AssertionError
-FAILED tests/selenium/test_portal_roles.py::test_role_dashboards[vpaa_user-config4-VPAA Approval Hub] - AssertionError
-FAILED tests/selenium/test_portal_roles.py::test_role_dashboards[registrar_user-config5-Registrar Lifecycle Ops] - selenium.common.exceptions.StaleElementReferenceException: Message: stale element reference: stale element not found
-FAILED tests/selenium/test_portal_roles.py::test_role_dashboards[scholarship_user-config6-Scholarship Office] - AssertionError
-FAILED tests/selenium/test_portal_roles.py::test_role_dashboards[finance_user-config7-Finance & Holds] - AssertionError
-FAILED tests/selenium/test_portal_roles.py::test_role_dashboards[finance_officer_user-config8-Finance Officer Control] - selenium.common.exceptions.StaleElementReferenceException: Message: stale element reference: stale element not found
-FAILED tests/people/test_utils.py::test_name_distance_symmetry[Abraham W. Harmon-Harmon Abraham W-0.0] - AssertionError
-FAILED tests/people/test_utils.py::test_name_distance_symmetry[Sylvester Nah-Nah Sylvester-0.0] - AssertionError
-==================================== 10 failed, 137 passed, 56 xfailed in 49.40s =====================================
-(tusis) mlk@r1d05 ~/Tusis/Tusis_app $ 
+* <2025-12-20 Sat 11:15> Importing matcher
+  › I am noticing that we have unused names_match function in people/utils.py .
+  They overloap with shared/fuzzy_matching.py so let's remove them from people/
+  utils.py  and replace them by the one in shared/fuzzy_matching.py but I am also noticing that or current similarity ratio is less smart than the JaroWinkler distance.  So thisis what needs to be done:
+1. identify what function can be combined/deduplicated and store them in fuzzy_matching.  I am thinking of the canonicalizations of names for example.
+     
+2. I think we can remove name_similarity_matrix or we explore another way of doing the name matching by taking all the names -> normalizing them and using vectorization to build the distance matrices once, store it and use/consulte it when doing the imports.  we have less than 10000 names, this should be tractable.
+   This step would come once before an import requireing fuzzy matching.
 
-
-* <2025-12-18 jeu. 21:49> Terms for students
-  Define a rule to set the terms form the studentinfo import
-  something like for oldest for  first TermFirstEntered and newest for TermLastEnrolled
-
+3. but for now let's concentrate on deduplication of code. and on second thought, what we have in normalize name tokens is ok for curriculum or course but not for names. so we keep the canonicalize_name function for names and we use it in name_similarity.
 
 * <2025-12-18 jeu. 21:49> Terms for students
   Define a rule to set the terms form the studentinfo import

@@ -91,6 +91,26 @@ class College(models.Model):
         return int(Faculty.objects.filter(college=self).count())
 
     @property
+    def curricula_names(self) -> str:
+        """Return comma-separated curriculum short names for this college."""
+        names = self.curricula.order_by("short_name").values_list("short_name", flat=True)
+        return ", ".join(names)
+
+    @property
+    def department_chairs(self) -> str:
+        """Return comma-separated department codes with assigned chairs."""
+        RoleAssignment = apps.get_model("people", "RoleAssignment")
+        dept_codes = (
+            RoleAssignment.objects.filter(
+                college=self, group__name=UserRole.CHAIR.value.label
+            )
+            .exclude(department__isnull=True)
+            .values_list("department__code", flat=True)
+            .distinct()
+        )
+        return ", ".join(dept_codes)
+
+    @property
     def course_count(self) -> int:
         """Return number of distinct courses offered."""
         return int(self.get_courses().count())

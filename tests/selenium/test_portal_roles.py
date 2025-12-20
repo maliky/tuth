@@ -146,11 +146,14 @@ def test_role_dashboards(
     portal_user_factory(username, **config)
     _login_to_portal(selenium_driver, live_server, username)
 
-    heading_el = WebDriverWait(selenium_driver, 20).until(
-        EC.presence_of_element_located((By.TAG_NAME, "h1"))
-    )
-    heading_text = heading_el.text.strip()
-    assert expected_heading in heading_text
+    def _heading_matches(driver):
+        try:
+            el = driver.find_element(By.TAG_NAME, "h1")
+            return expected_heading in el.text
+        except Exception:
+            return False
+
+    WebDriverWait(selenium_driver, 20).until(_heading_matches)
 
     logout_url = f"{live_server.url}{reverse('portal_logout')}"
     selenium_driver.get(logout_url)

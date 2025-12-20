@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from difflib import SequenceMatcher
 from typing import Any, Callable, Iterable, Tuple, TypeVar
+from app.people.utils import canonicalize_name
 
 _T = TypeVar("_T")
 
@@ -21,6 +22,11 @@ def similarity_ratio(a: str, b: str) -> float:
     return SequenceMatcher(None, a, b).ratio()
 
 
+def sim_jarowinkler(a: str, b: str, prefix_weight: float = 0.1) -> float:
+    """A fuzzy distance for names."""
+    return float(JaroWinkler.normalized_distance(a, b, prefix_weight=prefix_weight))
+
+
 def token_similarity(
     token_a: str, token_b: str, threshold: float = 0.9
 ) -> Tuple[float, bool]:
@@ -30,7 +36,7 @@ def token_similarity(
 
 
 # ------- Name-specific similarity -------
-def normalize_name_tokens(name: str) -> Tuple[str, list[str]]:
+def normalize_tokens(name: str) -> Tuple[str, list[str]]:
     """Return (surname, given_tokens) lowercased and stripped of punctuation."""
     tokens = [re.sub(r"[^A-Za-z]", "", part).lower() for part in name.split() if part]
     if not tokens:
@@ -41,17 +47,17 @@ def normalize_name_tokens(name: str) -> Tuple[str, list[str]]:
     return surn, givens
 
 
-def sim_name_token(x: str, y: str) -> float:
-    """Similarity between two given-name tokens, handling initials."""
-    if not x or not y:
-        return 0.0
-    if len(x) == 1 and len(y) == 1:
-        return 1.0 if x == y else 0.2
-    if len(x) == 1 and len(y) > 1:
-        return 0.9 if x == y[0] else 0.1
-    if len(y) == 1 and len(x) > 1:
-        return 0.9 if y == x[0] else 0.1
-    return similarity_ratio(x, y)
+# def sim_name_token(x: str, y: str) -> float:
+#     """Similarity between two given-name tokens, handling initials."""
+#     if not x or not y:
+#         return 0.0
+#     if len(x) == 1 and len(y) == 1:
+#         return 1.0 if x == y else 0.2
+#     if len(x) == 1 and len(y) > 1:
+#         return 0.9 if x == y[0] else 0.1
+#     if len(y) == 1 and len(x) > 1:
+#         return 0.9 if y == x[0] else 0.1
+#     return similarity_ratio(x, y)
 
 
 def name_similarity(
@@ -66,13 +72,10 @@ def name_similarity(
     Surnames dominate; given names allow initials/full swaps.
     """
 
-    surn_a, givens_a = normalize_name_tokens(name_a)
-    surn_b, givens_b = normalize_name_tokens(name_b)
+    surn_a, givens_a = normalize_tokens(canonicalize_name(name_a))
+    surn_b, givens_b = normalize_tokens(canonicalize_name(name_b))
 
     sim_surname = similarity_ratio(surn_a, surn_b)
-
-    # > Why do we reduce the case of low sim_threshold ?
-    # > to make it more apparant that there is not similarity ?
     if sim_surname < sim_threshold:
         return sim_surname * 0.2
 
