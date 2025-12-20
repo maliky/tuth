@@ -201,14 +201,14 @@ class CourseAdmin(DepartmentRestrictedAdmin):
     actions = [update_department, merge_courses_action]
 
     def get_form(self, request, obj=None, **kwargs):
-        """Return the admin form with dep ordered by their short_name."""
+        """Return the admin form with dep ordered by their shortname."""
         form = super().get_form(request, obj, **kwargs)
         department_field = form.base_fields.get("department")
 
         if department_field is not None:
             department_field.queryset = department_field.queryset.select_related(
                 "college"
-            ).order_by("college__code", "short_name")
+            ).order_by("college__code", "shortname")
         return form
 
 

@@ -45,10 +45,10 @@ def test_expand_code_invalid_format():
 def test_expand_code_accepts_underscore(college, department_factory):
 
     dept = department_factory("ACCT")
-    college_code, dept_short_name, num = expand_course_code("ACCT_404")
+    college_code, dept_shortname, num = expand_course_code("ACCT_404")
 
     assert college_code == college.code
-    assert dept_short_name == dept.code
+    assert dept_shortname == dept.code
     assert num == "404"
 
 

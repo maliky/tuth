@@ -11,7 +11,7 @@ pytestmark = pytest.mark.django_db
 # ~~~~~~~~~~~~~~~~ DB Constraints ~~~~~~~~~~~~~~~~
 
 
-def test_department_unique_short_name_in_college(college, department_factory):
+def test_department_unique_shortname_in_college(college, department_factory):
     """In a College a department shortname should be unique."""
     department_factory("GEN")
 

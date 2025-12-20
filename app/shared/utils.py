@@ -35,7 +35,7 @@ def expand_course_code(
     _match = COURSE_PATTERN.search(code.strip().upper())
     assert _match is not None, f"Code '{code}' doesn't match expected pattern"
 
-    college_code, dept_short_name, course_no = (
+    college_code, dept_shortname, course_no = (
         _match.group("college"),
         _match.group("dept"),
         _match.group("num"),
@@ -47,7 +47,7 @@ def expand_course_code(
         else:
             college_code = College.get_default().code
 
-    return college_code, dept_short_name, course_no
+    return college_code, dept_shortname, course_no
 
 
 def make_course_code(dept: Department, number: str, short=False) -> str:

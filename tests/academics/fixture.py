@@ -59,8 +59,8 @@ def college_factory() -> CollegeFactory:
 
 @pytest.fixture
 def department_factory() -> DepartmentFactory:
-    def _make(short_name: str = "DEPT_TEST") -> Department:
-        return Department.get_default(short_name)
+    def _make(shortname: str = "DEPT_TEST") -> Department:
+        return Department.get_default(shortname)
 
     return _make
 

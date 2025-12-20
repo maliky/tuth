@@ -26,7 +26,7 @@ def merge_departments_action(dept_admin: "DepartmentAdmin", request, queryset):
     merge_departments(target, queryset.exclude(pk=target.pk))
     messages.success(
         request,
-        f"Merged {queryset.count() - 1} department(s) into {target.short_name}.",
+        f"Merged {queryset.count() - 1} department(s) into {target.shortname}.",
     )
 
 

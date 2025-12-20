@@ -35,7 +35,7 @@ class Department(models.Model):
         return self.shortname
 
     def _ensure_shortname(self) -> None:
-        """Build a unique department code from short_name and college."""
+        """Build a unique department code from shortname and college."""
         if not self.shortname:
             self.shortname = f"({self.college.code}) {self.code}"
 

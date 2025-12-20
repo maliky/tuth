@@ -3,46 +3,11 @@
   something like for oldest for  first TermFirstEntered and newest for TermLastEnrolled
 
 
-* <2025-12-19 Fri 16:36> Test correction
-
-  1. For CRUD length overflows, do you want the test helper _touch to truncate to max_length, or should we adjust
-     model _ensure_* logic to clamp values? Changing field sizes would be schema-impacting—should we avoid touching
-     migrations?
-
-# I am suprised that we use tests with long values needed to be truncated.  Can you show example to me   ?
-# depending on the example, we will add some _ensure_ logic in our model to clamp the values or the field size.
-
-  2. Should GradeValue accept plain letter grades like “A/B/C” by extending GRADES_NUM, or should tests use existing
-     numeric/letter codes instead?
-# > use the existing model. Plain letter are mainely for display and interface not internal storage.  Even if faculty enter grades using A/B/C.. in an imported field or using the interface and a dropdown menu we will lowercase them.
-
-  3. For username/group imports, should we match current username generation (with numeric suffixes) or enforce the
-     exact usernames expected in tests? Would adding group creation inside the import routines be acceptable?
-# > lets use the current username generation.  Yes it is acceptable to add group creation inside the import routines especialy if we reuse existing code
-
-  4. Is it acceptable to expose Department.short_name property (alias to short_name_dpt) to align with tests, or
-     should tests be updated to use code_dpt/short_name_dpt?
-
-# > There is not aliase short_name_dpt.  I did rename short_name to code, and code to shortname in the Department class. Update the tests accordingly.
-
-  5. Do you want a test fixture that seeds default SemesterStatus (e.g., “planning”) before timetable validations, or     should the model auto-create missing statuses?
-# > how about using the SimpleTableMixin._populate_attributes_and_db to populate semesterstatus before timetable validations ?
-
-  6. Selenium: is the expected heading still “Student Dashboard”? If the UI text changed, should we update the test
-     expectation or restore that heading?
-# > test expectation should match current state of the website.
-
-  7. Name distance: should we loosen assertions to a small epsilon > 0, or re-tune name_distance to return 0 for
-     reordered names?
-# > What exactly did we do here     
-
-  If you confirm preferences on the above, I’ll draft a correction plan (tests vs code changes) accordingly.
-
 * <2025-12-18 jeu. 21:49> Terms for students
   Define a rule to set the terms form the studentinfo import
   something like for oldest for  first TermFirstEntered and newest for TermLastEnrolled
 
-* <2025-12-18 Thu 17:06>
+* TODO <2025-12-18 Thu 17:06>
 2025-12-18 17:02:53,324  INFO      tusis.import :: Starting import for LegacyRegistration
 Importing LegacyRegistration: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 8735/8735 [00:01<00:00, 5286.91it/s]
 Row 1 failed: duplicate key value violates unique constraint "people_staff_staff_id_key"

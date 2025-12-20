@@ -19,7 +19,7 @@ def update_department(modeladmin, request, queryset):
         """The Department for a bulk action."""
 
         dept = forms.ModelChoiceField(
-            queryset=Department.objects.all().order_by("short_name"),
+            queryset=Department.objects.all().order_by("shortname"),
             label="Departement to be updated to",
         )
         # forms.CharField(label="New Department Code", max_length=20)
