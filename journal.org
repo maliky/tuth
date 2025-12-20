@@ -36,7 +36,7 @@
 
 
 
-################
+** ################
   app/people/models/object_manager.py:66: error: Unexpected keyword argument
   "limit" for "top_name_matches"  [call-arg]
   app/shared/fuzzy_matching.py:54: note: "top_name_matches" defined here
@@ -53,8 +53,9 @@
   (tusis) mlk@r1d05 ~/Tusis/Tusis_app $
   ::: and update agents.md to help other agent work in our environment
   
-** proposed work
-here
+
+*** proposed work
+I can’t apply the fixes directly because the filesystem is read-only, but here
   are the exact changes to clear the mypy errors and add the requested guidance:
 
   1) Allow limit in top_name_matches
@@ -147,8 +148,6 @@ Row 4 failed: An error occurred in the current transaction. You can't execute qu
 Row 5 failed: An error occurred in the current transaction. You can't execute queries until the end of the 'atomic' block.
 CommandError: LegacyRegistration import failed with 8735 errors and 0 invalid rows.
 (tusis) mlk@r1d05 ~/Tusis/Tusis_app $ 
->>>>>>> 20512edc7d3e82d76f0aeae7606209d01d66366f
-
 * <2025-12-17 mer. 17:53>  fuzzy matching for curriculums
 ** You did well but a few observation
 - do not abuse of .strip()  I take care of cleaning the data before reaching this deep in the code.
