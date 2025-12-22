@@ -2393,7 +2393,7 @@ xlss['UM_CurriculumCourses'].iloc[:].to_string()
 
  #+RESULTS:
  :results:
- /tmp/babel-VCSrCl/python-CJ5o6o:5: FutureWarning: Series.__getitem__ treating keys as positions is deprecated. In a future version, integer keys will always be treated as labels (consistent with DataFrame behavior). To access a value by position, use `ser.iloc[pos]`
+ /tmp/babel-VCSrCl/python-NbA3MY:5: FutureWarning: Series.__getitem__ treating keys as positions is deprecated. In a future version, integer keys will always be treated as labels (consistent with DataFrame behavior). To access a value by position, use `ser.iloc[pos]`
    .apply(lambda x: f"{x[0]} -- {x[1]}", axis=1)
  ACCOUNTING -- Accounting 1
  ACCT -- Accounting 1
@@ -3128,10 +3128,10 @@ mcur ={
     'BA-MATHEMATICS': BA - 2ndEd/Math,
     'BA-PRIMARY EDUCATION': BA - Primary Ed,
     'Banking and Finance 1': BBA - Banking & Finance,
-    'Biology 1': BS - Biology,
+    'Biology 1': BS - Biology,   # confusion around Biology 1, EDU CAS ?
     'Business Administration 1': BBA - Management,
     'Certified MidWives 1': BS - Midwifery,
-    'Chemistry 1': BS - Chemistry,   # does this exists or is it a BA
+    'Chemistry 1': BA - 2ndEd/Chemistry,
     'Civil Engineering 1': BS - Civil Eng,
     'Computer Networks and Security Engineering 1': BS - Computer Sci,  # in the curriculum we have 2 but in practice just one BS in Computer Sci
     'Computer Science 1': BS - Computer Sci,
@@ -3141,26 +3141,26 @@ mcur ={
     'Early Childhood Education and Development 4': BA - 2ndEd/Chemistry,
     'Early Childhood Education and Development 5': BA - 2ndEd/Eng Lit,
     'Early Childhood Education and Development 6': BA - 2ndEd/History,
-    'Early Childhood Education and Development 7': BA - 2ndEd/Math,
-    'Early Childhood Education and Development 8': ,
-    'Electrical Engineering 1': ,
-    'English 1': ,
-    'Environmental Science 1': ,
-    'French 1': ,
-    'General Education 1': ,
-    'ME': ,
-    'MIDWifery': ,
-    'Mathematics 1': ,
-    'Mechanical Engineering 1': ,
-    'Nursing 1': ,
-    'Nursing 2': ,
-    'Psychology 1': ,
-    'Public Administration 1': ,
-    'Public Administration': ,
-    'Public Health 1': ,
-    'RN Post Basic 1': ,
-    'Renewable Energy Engineering 1': ,
-    'Soccer Coaching 1': ,
+    'Early Childhood Education and Development 7': BA - 2ndEd/Math,  # by elimination
+    'Early Childhood Education and Development 8': BA - Guidance Counseling,  # by elimination
+    'Electrical Engineering 1': BS - Elec Eng,
+    'English 1': BA - 2ndEd/Eng Lit,
+    'Environmental Science 1': BS - Env Sci,
+    'French 1': WVSTU - GEN,  
+    'General Education 1': WVSTU - GEN,
+    'ME': WVSTU - GEN,
+    'MIDWifery': BS - Midwifery,
+    'Mathematics 1': BA - 2ndEd/Math,
+    'Mechanical Engineering 1': BS - Mech Eng,
+    'Nursing 1': BS - Nursing,
+    'Nursing 2': BS - Nursing,
+    'Psychology 1':  WVSTU - GEN,
+    'Public Administration 1': BPA - Management,
+    'Public Administration': BPA - Management,
+    'Public Health 1': BS - Public Health,
+    'RN Post Basic 1': BS - Nursing,
+    'Renewable Energy Engineering 1': WVSTU - GEN,
+    'Soccer Coaching 1': WVSTU - GEN,
 }  
 #+END_SRC    
 
