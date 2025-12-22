@@ -36,3 +36,4 @@ test_import.py
 !Seed_data/
 !Seed_data/README.org
 !Seed_data/build_import_targets
+!Seed_data/parsing_db.org
