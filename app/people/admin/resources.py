@@ -28,6 +28,7 @@ from app.timetable.admin.widgets.core import (
     ensure_academic_year_code,
 )
 from app.timetable.models.semester import Semester
+from app.people.admin.resources_mapping import FACULTY_COLUMN_MAP
 
 
 class DirectoryContactResource(resources.ModelResource):
@@ -79,6 +80,31 @@ class FacultyResource(resources.ModelResource):
     college_code   :optional – defaults to “COAS”
     """
 
+    # Je ne suis pas sur ici car je ne veux pas de difference entre le username et le staff_profile
+    # username = fields.Field(
+    #     attribute="staff_profile__user__username",
+    #     column_name="username",
+    # )
+    # first_name = fields.Field(
+    #     attribute="staff_profile__user__first_name",
+    #     column_name="first_name",
+    # )
+    # last_name = fields.Field(
+    #     attribute="staff_profile__user__last_name",
+    #     column_name="last_name",
+    # )
+    # middle_name = fields.Field(
+    #     attribute="staff_profile__middle_name",
+    #     column_name="middle_name",
+    # )
+    # name_prefix = fields.Field(
+    #     attribute="staff_profile__name_prefix",
+    #     column_name="name_prefix",
+    # )
+    # name_suffix = fields.Field(
+    #     attribute="staff_profile__name_suffix",
+    #     column_name="name_suffix",
+    # )
     staff_profile = fields.Field(
         attribute="staff_profile",
         column_name="faculty",
@@ -88,10 +114,39 @@ class FacultyResource(resources.ModelResource):
     class Meta:
         model = Faculty
         import_id_fields = ("staff_profile",)
-        fields = ("staff_profile",)
+        fields = (
+            "username",
+            "first_name",
+            "middle_name",
+            "last_name",
+            "name_prefix",
+            "name_suffix",
+            "staff_profile",
+        )
         skip_unchanged = True
         report_skipped = False
         use_bulk = False
+
+    def before_import_row(self, row, **kwargs):
+        """Normalize incoming faculty columns and build a full name."""
+        for incoming, canonical in FACULTY_COLUMN_MAP.items():
+            if incoming in row and canonical not in row:
+                row[canonical] = row.get(incoming, "")
+
+        prefix = get_in_row("name_prefix", row)
+        first = get_in_row("first_name", row)
+        middle = get_in_row("middle_name", row)
+        last = get_in_row("last_name", row)
+        suffix = get_in_row("name_suffix", row)
+
+        tokens = [prefix, first, middle, last, suffix]
+        full_name = " ".join(t for t in tokens if t).strip()
+        if full_name:
+            row["faculty"] = full_name
+
+        # problem if I do updates...
+        # if not get_in_row("username", row):
+        #     row["username"] = mk_username(first, last, middle=middle, unique=True)
 
     def after_save_instance(self, instance, row, **kwargs):
         """Assign the faculty group to the related user."""
