@@ -1,4 +1,7 @@
 
+* <2025-12-27 sam. 18:48> Grades and curriculum DONE
+gds in parsing just need a litter column header harmonizing but it is good for imports
+
 * <2025-12-27 sam. 17:01> Curriculum infos
 ** CFAS
  - General Education : 52 ch
@@ -64,13 +67,6 @@ total 133
 *** BPA
 - 34 + 39 + 36 + 27 = 136
 ** setting curriculums
-I add a column curriculum to gdf.
-for each line of gdf I call function f(x:StudentIDT, y:TermT, z:ShortCodeT , dfa:StrictCurriT,dfb:IDFCurriT) -> CurriT
-it look if the user has leq than 187 -> one curri branch else two curri branch
-for one curri branch:
-check dfa for the higest scoring curriculum and return it, if none return the idfcurri highest scoring curriculum, if none return None
-for two curris branch:
-# The user has more than 2 curriculums and they could have been done simultaneously, therefor we will look at each shortcode and choose among the 2 bests strict curriculums or 2 idf best if not 2 best strict curriculums
    
 * <2025-12-19 Fri 20:35> test
   tests/people/test_utils.py:125: AssertionError

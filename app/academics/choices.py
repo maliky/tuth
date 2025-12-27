@@ -253,7 +253,7 @@ CURRICULUM_MAP = {
     "Environmental Science 1": "BS - Env Sci",
     "French 1": "WVSTU - GEN",
     "General Education 1": "WVSTU - GEN",
-    "ME": "WVSTU - GEN",
+    "ME": "BS - Mech Eng",
     "MIDWifery": "BS - Midwifery",
     "Mathematics 1": "BA - 2ndEd/Math",
     "Mechanical Engineering 1": "BS - Mech Eng",
