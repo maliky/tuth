@@ -2714,9 +2714,9 @@ Ignore UM_Curriculums for now.
       # "filedetail.csv",  # pb
       # "dbotransaction.utf8.tsv",
       # "files.utf8.tsv",+
-      # "oldgrades.utf8.tsv",
+      "oldgrades.utf8.tsv",
       "studentcourses.utf8.tsv",
-      # "gradesheets.utf8.tsv",
+      "gradesheets.utf8.tsv",
       "full_grades.tsv",
       "people_students.csv",      
       "UM_students.utf8.tsv",
@@ -2727,11 +2727,10 @@ Ignore UM_Curriculums for now.
 
 #+begin_src python :results silent
   _std = clean_df_str_cols(csvs["UM_students"])
-  # ods = clean_df_str_cols(csvs["oldgrades"])
-  # ods.loc[:,'StudentID'] = ods.StudentID.str.upper()
-  # gds = clean_df_str_cols(csvs["gradesheets"].drop(columns=["Code","Uploaded"]))
-  # gds.loc[:,'StudentID'] = gds.StudentID.str.upper()
-  gds =  clean_df_str_cols(csvs["full_grades"])
+  ods = clean_df_str_cols(csvs["oldgrades"])
+  ods.loc[:,'StudentID'] = ods.StudentID.str.upper()
+  gds = clean_df_str_cols(csvs["gradesheets"].drop(columns=["Code","Uploaded"]))
+  gds.loc[:,'StudentID'] = gds.StudentID.str.upper()
 #+end_src
 
 
@@ -3486,20 +3485,21 @@ The way to solve this is to get the curriculum from the studentid and the ay.
 or throught the course code
 #+BEGIN_SRC python :results value
   cols = ["AcademicYear","Semester","StudentID","CourseCode","CourseNo","Section","Grade","CrHrs","Points"]
-  gdf = pd.concat([ods,gds])[cols].dropna(how='all').drop_duplicates()
-  gdf.loc[:,'ShortCode'] =  gdf.CourseCode + gdf.CourseNo
+  gdf =  clean_df_str_cols(csvs["full_grades"])
+  # gdf = pd.concat([ods,gds])[cols].dropna(how='all').drop_duplicates()
+  # gdf.loc[:,'ShortCode'] =  gdf.CourseCode + gdf.CourseNo
   
-  # Term label: "23-24s2" from "2023/2024" + semester 2
-  gdf["Term"] = (
-      gdf["AcademicYear"].str.slice(2, 4)
-      + "-"
-      + gdf["AcademicYear"].str.slice(7, 9)
-      + "s"
-      + gdf["Semester"].astype(int).astype(str)
-  )
-  #  gdf = df.drop(columns=['AcademicYear','Semester'])
-  gdf = gdf.drop(index=gdf.index[gdf.StudentID.map(len).eq(0)])
-  gdf = gdf.drop(columns=['AcademicYear','Semester','CourseCode','CourseNo'])
+  # # Term label: "23-24s2" from "2023/2024" + semester 2
+  # gdf["Term"] = (
+  #     gdf["AcademicYear"].str.slice(2, 4)
+  #     + "-"
+  #     + gdf["AcademicYear"].str.slice(7, 9)
+  #     + "s"
+  #     + gdf["Semester"].astype(int).astype(str)
+  # )
+  # #  gdf = df.drop(columns=['AcademicYear','Semester'])
+  # gdf = gdf.drop(index=gdf.index[gdf.StudentID.map(len).eq(0)])
+  # gdf = gdf.drop(columns=['AcademicYear','Semester','CourseCode','CourseNo'])
   
   gdf.head(2), len(gdf)
 #+END_SRC
