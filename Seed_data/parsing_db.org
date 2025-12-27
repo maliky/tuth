@@ -16,10 +16,12 @@
 # run `python manage.py shell -v 2`  to get the updated list
 
 #+BEGIN_SRC python :results value
+  from __future__ import annotations
   import os
   import importlib
   import subprocess
   import re
+  
   os.environ["DJANGO_SECRET_KEY"] = "wsbeb&urgcjbf$9)w=-&c(5pjnnhr=fa*-s5o7vm!@jc(_le98"
   os.environ["DJANGO_DB_ENGINE"] = "django.db.backends.sqlite3"
   os.environ["DJANGO_CSRF_TRUSTED_ORIGINS"] = "https://localhost,https://127.0.0.1"
@@ -31,6 +33,15 @@
   
   django.setup()
   
+  from pathlib import Path
+  from typing import Sequence, Tuple, List, Union, Any, Dict, Set
+  ShortCodeT = str
+  import math
+  import pandas as pd
+  import pprint as pp
+  
+  
+  
   from django.contrib.admin.models import LogEntry
   from django.contrib.auth.models import Group, Permission, User
   from django.contrib.contenttypes.models import ContentType
@@ -39,22 +50,18 @@
   
   import app.academics as ac
   import app.finance as fn
-  import app.people as pp
+  import app.people as pl
   import app.registry as rg
   import app.shared as sh
   import app.spaces as sp
   import app.timetable as tt
-  import pandas as pd
-  from pathlib import Path
-  import pprint as pp
-  from typing import Any
   
   os.sys.executable, os.getcwd()
 #+END_SRC
 
 #+RESULTS:
 :results:
-('/home/mlk/.pyenv/versions/tusis/bin/python', '/home/mlk/Tusis/Tusis_app/Seed_data')
+('/home/mlk/.pyenv/versions/tusis/bin/python', '/mnt/backup/Jobs/TU/DRID/TII-Technics-Innovations/Tusis/Tusis_app/Seed_data')
 :end:
 
 * Loading the DB in Memory
@@ -489,7 +496,7 @@ ZOO -- Introduction to Vertebrate I
 :end:
 
 #+BEGIN_SRC python :results value
-xlss['UM_CurriculumCourses'].iloc[:].to_string()
+  xlss['UM_CurriculumCourses'].iloc[:].to_string()
 #+END_SRC
 
 #+RESULTS:
@@ -1161,7 +1168,7 @@ xlss['UM_CurriculumCourses'].iloc[:].to_string()
 663                           BA-PRIMARY EDUCATION        CSE      102        CSE      101         2       Major      Yes
 664                           BA-PRIMARY EDUCATION        ECD      261       ENGL      101         3       Major      Yes
 665                           BA-PRIMARY EDUCATION        ECD      262       MATH      101         4       Major      Yes
-666                           BA-PRIMARY EDUCATION        ECD      264        ECD      261         4       Major      Yes
+666                           BA-PRIMARY EDUCATION        ECD      264        ECD      261         4UM_Course       Major      Yes
 667                           BA-PRIMARY EDUCATION        ECD      361        BIO      101         5       Major      Yes
 668                           BA-PRIMARY EDUCATION        ECD      363       ENGL      204         5       Major      Yes
 669                           BA-PRIMARY EDUCATION        ECD      365        EDU      254         5       Major      Yes
@@ -2380,20 +2387,20 @@ xlss['UM_CurriculumCourses'].iloc[:].to_string()
 :end:
 **** Registrations
  #+BEGIN_SRC python :results output
-   reg = (
-       xlss["UM_Registrations"]
-       .loc[:, ["Major", "EnrollmentType"]]
+   reg = xlss["UM_Registrations"]
+   regs = (
+       reg.loc[:, ["Major", "EnrollmentType"]]
        .sort_values(by=["EnrollmentType", "Major"])
        .apply(lambda x: f"{x[0]} -- {x[1]}", axis=1)
        .unique()
    )
-   for r in [r for r in reg if r.split(' -- ')[1]]:
+   for r in [r for r in regs if r.split(' -- ')[1]]:
        print(r)
  #+END_SRC
 
  #+RESULTS:
  :results:
- /tmp/babel-VCSrCl/python-NbA3MY:5: FutureWarning: Series.__getitem__ treating keys as positions is deprecated. In a future version, integer keys will always be treated as labels (consistent with DataFrame behavior). To access a value by position, use `ser.iloc[pos]`
+ /tmp/babel-BPx59y/python-uWEN5h:5: FutureWarning: Series.__getitem__ treating keys as positions is deprecated. In a future version, integer keys will always be treated as labels (consistent with DataFrame behavior). To access a value by position, use `ser.iloc[pos]`
    .apply(lambda x: f"{x[0]} -- {x[1]}", axis=1)
  ACCOUNTING -- Accounting 1
  ACCT -- Accounting 1
@@ -2548,10 +2555,39 @@ xlss['UM_CurriculumCourses'].iloc[:].to_string()
  PH -- Public Health 1
  Nursing 2 -- nursing 2
  :end:
+**** get a studentID registration line
+#+BEGIN_SRC python :results value
+  def getXforID(value: str, df: pd.DataFrame, xcol: str = "StudentID"):
+      reg = df
+      f = reg.loc[:, xcol] == value
+      return reg.loc[f, :]
+  
+  
+  def regforid(strid: str):
+      return getXforID(strid, df=xlss["UM_Registrations"])
+
+  def regforid(strid: str):
+      return getXforID(strid, df=xlss["UM_Registrations"])
+
+ #+END_SRC     
+
+ #+RESULTS:
+ :results:
+ :end:
+
+**** Example
+#+BEGIN_SRC python :results value
+regforid('TU-03472')  
+#+END_SRC     
+
+#+RESULTS:
+:results:
+     StudentID AcademicYear  Semester                    Date College                Major EnrollmentType Scholarship  SysRef Meal
+8733  TU-03472    2024/2025         2 2025-02-06 15:11:47.353     CAS  BSc - Environmental                             880745     
+8734  TU-03472    2024/2025         3 2025-06-06 10:43:27.830     CAS  BSc - Environmental                             888281     
+:end:
 
 **** mapping course to tcurriculum
-#+BEGIN_SRC python :results value
-#+END_SRC     
 *** Registration
 
 What Are Major exactly ?  ProgramID ?     CurriculumCourse.Curriculum ?
@@ -2678,7 +2714,7 @@ Ignore UM_Curriculums for now.
   csv_files = [FDIR / f for f in [
       # "filedetail.csv",  # pb
       # "dbotransaction.utf8.tsv",
-      # "files.utf8.tsv",
+      # "files.utf8.tsv",+
       "oldgrades.utf8.tsv",
       "studentcourses.utf8.tsv",
       "gradesheets.utf8.tsv",
@@ -2692,172 +2728,36 @@ Ignore UM_Curriculums for now.
 #+begin_src python :results silent
   _std = clean_df_str_cols(csvs["UM_students"])
   ods = clean_df_str_cols(csvs["oldgrades"])
+  ods.loc[:,'StudentID'] = ods.StudentID.str.upper()
   gds = clean_df_str_cols(csvs["gradesheets"].drop(columns=["Code","Uploaded"]))
+  gds.loc[:,'StudentID'] = gds.StudentID.str.upper()
+
 #+end_src
 
-
 * Fundamental outputs
-** DONE fundamentals_status_type_fees.csv
-   CLOSED: [2025-11-24 Mon 08:13]
-For this model just run create_states
-- ClearanceStatus
-- CreditHour  
-- CurriculumStatus
-- DocumentStatus
-- DocumentType
-- FeeType
-- PaymentMethod
-- RegistrationStatus
-- SemesterStatus  
-** DONE space_rooms.csv
-   CLOSED: [2025-11-24 Mon 08:13]
-Harmonize the room names
-#+BEGIN_SRC python :results value
-  rooms = pd.read_csv(OUTDIR / "space_room.csv").dropna()
-  rooms.head(), len(rooms), rooms.groupby('space').groups.keys()
-#+END_SRC
-
-#+RESULTS:
-:results:
-(   space   room
-0  SAPEC  SAPEC
-2    EBA      6
-3   RSTI   RSTI
-4    EBA      7
-5   RSTI      1, 39, dict_keys(['AA', 'AC', 'EBA', 'OFFICE', 'RSTI', 'SAPEC']))
-:end:
-
-** DONE timetable_semesters
-   CLOSED: [2025-11-24 Mon 08:13]
-
+** TODO people_faculty.csv
 #+BEGIN_SRC python :results silent
-  ay = [f"{y:02}-{y+1}" for y in range(9,26)]
-  sem_num = (1,2,3)
-  from itertools import product
-  df = pd.DataFrame().from_records([i for i in product(ay,sem_num)], columns=['academic_year', 'semester_no'])
-  df.loc[:,'status'] = "locked"
-  df.to_csv(OUTDIR / "academicyear_semester.csv", index=False)  
+  staff = xlss["UM_Staff"].copy()
+  staff["staff_name"] = staff["Staff"].astype(str).str.strip()
+  users = xlss["Users"][["UserName", "FirstName", "MiddleName", "LastName"]].copy()
+  users["user_name"] = users["UserName"].astype(str).str.strip()
+  users["full_name"] = (
+      users[["FirstName", "MiddleName", "LastName"]]
+      .fillna("")
+      .agg(" ".join, axis=1)
+      .str.replace(r"\s+", " ", regex=True)
+      .str.strip()
+  )
+  directory = staff.merge(
+      users[["user_name", "full_name"]],
+      how="left",
+      left_on="staff_name",
+      right_on="full_name",
+  )
+  directory = directory.rename(columns={"user_name": "username"})
+  directory = directory[["staff_name", "username"]].drop_duplicates()
+  directory.to_csv(OUTDIR / "fundamentals_staff_faculty.csv", index=False)
 #+END_SRC
-
-** People
-*** DONE people_students.csv
-    CLOSED: [2025-12-18 jeu. 21:47]
- #+BEGIN_SRC python :results value
-   stid_reg = xlss['UM_Registrations'].StudentID.drop_duplicates()  
-   stid_um = load_csv(FDIR / "UM_students.csv")["StudentID"].drop_duplicates()
-  
-   # Student IDs In one but not the other
-   len(set(stid_reg.values) - set(stid_um.values)),   len(set(stid_um.values) - set(stid_reg.values))
- #+END_SRC
-
- #+RESULTS:
- :results:
- (107, 3514)
- :end:
-
- #+BEGIN_SRC python :results silent
-   students = (
-       load_csv(FDIR / "UM_students.csv")[["StudentID", "Major", "Curriculum"]]
-       .rename(
-           columns={
-               "StudentID": "student_id",
-               "Major": "major",
-           }
-       )
-       .assign(student_username="")
-   )
-   students["student_id"] = students["student_id"].astype(str).str.strip()
-   students["major"] = students["major"].astype(str).str.strip()
-   students["curriculum"] = students["curriculum"].astype(str).str.strip()
-   students.to_csv(OUTDIR / "fundamentals_students.csv", index=False)
- #+END_SRC
-
-**** DONE Students
-     CLOSED: [2025-12-18 jeu. 21:46]
-  #+BEGIN_SRC python :results output
-    _ps = csvs["people_students"].fillna('')
-    _us = csvs["UM_students"].fillna('')
-    print(_ps.columns.values)
-    print(_us.columns.values)
-  #+END_SRC   
-#+RESULTS:
-:results:
-  ['StudentID,"first_name","middle_name","last_name","CountyOfOrigin","curriculum_short_name","gender","college_code","enrollement_semester","YearOfEntry","Nationality","DateOfBirth","address","phone_no","personal_email","marital_status","PlaceOfBirth","EnrollmentType","Scholarship","LastSchoolAttended","LastSchoolType","FatherName","FatherAddress","MotherName","MotherAddress","EmergencyContact","AdmissionStatus","Enrolled","Uploaded","ProgramID"']
-  ['StudentID' 'FirstName' 'MiddleName' 'LastName' 'CountyOfOrigin' 'Major'
-   'Sex' 'College' 'SemesterOfEntry' 'YearOfEntry' 'Nationality'
-   'DateOfBirth' 'AddressLine1' 'AddressLine2' 'AddressLine3'
-   'MaritalStatus' 'PlaceOfBirth' 'EnrollmentType' 'Scholarship'
-   'LastSchoolAttended' 'LastSchoolType' 'ReasonForLeaving' 'FatherName'
-   'FatherAddress' 'MotherName' 'MotherAddress' 'EmergencyContact' 'Photo'
-   'ImageRecomLastSch' 'ImageTranscript' 'ImageMedCertificate'
-   'ImageReportCard' 'ImageRecomComm' 'ImageRecomReli' 'ImageWaecCert'
-   'ImageAppLetter' 'Password' 'Salt' 'AdmissionStatus' 'TotCrHrsComp'
-   'Enrolled' 'Uploaded' 'ProgramID']
-  :end:
-
-**** DONE Studentinfo
-     CLOSED: [2025-12-18 jeu. 21:46]
- #+BEGIN_SRC python :results value
-   _sti = load_csv(FDIR/'StudentInfo.csv',sep=',').dropna(how='all')
-   cols = ['AccountID','TermFirstEntered', 'TermLastEnrolled']
-   csv_save("people_student_terms.tsv", _sti.loc[:,cols])
- #+END_SRC    
-
-
-*** TODO people_faculty.csv
- #+BEGIN_SRC python :results silent
-   staff = xlss["UM_Staff"].copy()
-   staff["staff_name"] = staff["Staff"].astype(str).str.strip()
-   users = xlss["Users"][["UserName", "FirstName", "MiddleName", "LastName"]].copy()
-   users["user_name"] = users["UserName"].astype(str).str.strip()
-   users["full_name"] = (
-       users[["FirstName", "MiddleName", "LastName"]]
-       .fillna("")
-       .agg(" ".join, axis=1)
-       .str.replace(r"\s+", " ", regex=True)
-       .str.strip()
-   )
-   directory = staff.merge(
-       users[["user_name", "full_name"]],
-       how="left",
-       left_on="staff_name",
-       right_on="full_name",
-   )
-   directory = directory.rename(columns={"user_name": "username"})
-   directory = directory[["staff_name", "username"]].drop_duplicates()
-   directory.to_csv(OUTDIR / "fundamentals_staff_faculty.csv", index=False)
- #+END_SRC
-
-** Grades- [ ]student_id :: TU-12345
-  - [ ] <- curriculum_id :: BSc Agri...
-- Section ID :: 24-25s1_MATH101_s1
-  - [ ] semester_id, 24-25s1 ...
-  - Curriculum course
-    - curriculum
-    - [ ] course, MATH101 ...
-  - [ ] Number, s1 ... 
-- [ ] grade_id ::  a ...
-
-The problem is to be sure of the Curriculum because we only have the CourseCode (Dept_code) and CourseNo.
-The way to solve this is to get the curriculum from the studentid and the ay.
-Also the 
-#+BEGIN_SRC python :results value
-  # all_cols = ["AcademicYear","Semester","StudentID","CourseCode","CourseNo","Section","Grade","CrHrs","UserID","Points","Locked","Date","Previousgrades","Code","Code1","Uploaded"
-  # ]
-  cols = ["AcademicYear","Semester","StudentID","CourseCode","CourseNo","Section","Grade","CrHrs","Points"]
-  gda = gds[cols].dropna(how='all')
-  gdb = ods[cols].dropna(how='all')    
-  # grades for 2023/2025
-  gum.groupby('AcademicYear')['StudentID'].agg(len)
-#+END_SRC
-
-#+RESULTS:
-:results:
-AcademicYear
-2023/2024    11558
-2024/2025    18937
-Name: StudentID, dtype: int64
-:end:
 
 ** TODO academics_curricula.csv
    #+BEGIN_SRC python :results value
@@ -2881,95 +2781,7 @@ Name: StudentID, dtype: int64
 *** Get curriculum for each students
 
 #+BEGIN_SRC python :results value
-  mcur = {
-      "": "WVSTU - GEN",  # empty major → default to university-wide general
-      "AA- Applied Science": "WVSTU - GEN",
-      "AA- Applied  Science": "WVSTU - GEN",
-      "AA - Applied  Science": "WVSTU - GEN",      
-      "ACCOUNTING": "BBA - Accounting",
-      "ACCT": "BBA - Accounting",
-      "AGR": "BS - Agro",
-      "Agriculture 1": "BS - Agri",
-      "Agriculture 2": "BS - Agro",
-      "BA - 2ndEd/Biology": "BA - 2ndEd/Biology",
-      "BA - 2ndEd/Chem Phys": "BA - 2ndEd/Chemistry",
-      "BA - 2ndEd/Chemistry": "BA - 2ndEd/Chemistry",
-      "BA - 2ndEd/Eng Lit": "BA - 2ndEd/Eng Lit",
-      "BA - 2ndEd/History": "BA - 2ndEd/History",
-      "BA - 2ndEd/Math": "BA - 2ndEd/Math",
-      "BA - ECD": "BA - Early Child Dev",
-      "BA - Economics": "BS - Economics",
-      "BA - English": "BA - 2ndEd/Eng Lit",
-      "BA - Guidance Coun": "BA - Guidance Counseling",
-      "BA - History": "BA - 2ndEd/History",
-      "BA - Primary Ed": "BA - Primary Ed",
-      "BA - Psychology": "BA - Psychology",
-      "BA-BIOLOGY": "BA - 2ndEd/Biology",
-      "BA-CHEMISTRY": "BA - 2ndEd/Chemistry",
-      "BA-ENGL/LIT": "BA - 2ndEd/Eng Lit",
-      "BA-GUIDANCE/COUNS": "BA - Guidance Counseling",
-      "BA-HISTORY": "BA - 2ndEd/History",
-      "BA-MATHEMATICS": "BA - 2ndEd/Math",
-      "BBA - Accounting": "BBA - Accounting",
-      "BBA - Banking & Fin": "BBA - Banking & Finance",
-      "BBA - Business Admin": "BBA - Management",
-      "BBA Business Admin": "BBA - Management",
-      "BFIN": "BBA - Banking & Finance",
-      "BFN": "BBA - Banking & Finance",
-      "BPA - Public Admin": "BPA - Management",
-      "BSCE - Civil Eng": "BS - Civil Eng",
-      "BSEE - Elec Eng": "BS - Elec Eng",
-      "BSME - Mech Eng": "BS - Mech Eng",
-      "BSN - Nursing": "BS - Nursing",
-      "BSc - Applied Agr": "BS - Applied Agr",
-      "BSc - Bio-Statistics": "BS - Biology",
-      "BSc - Biology": "BS - Biology",
-      "BSc - Chemistry": "BA - 2ndEd/Chemistry",
-      "BSc - Commun Health": "BS - Public Health",
-      "BSc - Computer Sci": "BS - Computer Sci",
-      "BSc - Economics": "BS - Economics",
-      "BSc - Env Sci": "BS - Env Sci",
-      "BSc - Environmental": "BS - Env Sci",
-      "BSc - Epidemiology": "BS - Public Health",
-      "BSc - General Agr": "BS - Agri",
-      "BSc - Mathematics": "BA - 2ndEd/Math",
-      "BSc - Midwifery": "BS - Midwifery",
-      "BSc - Psychology": "BA - Psychology",
-      "BSc - Public Health": "BS - Public Health",
-      "BSc- Agronomy": "BS - Agro",
-      "BUS": "BBA - Management",
-      "BUSA": "BBA - Management",
-      "Biology": "BS - Biology",
-      "CENG": "BS - Civil Eng",
-      "CSENG": "BS - Computer Sci",
-      "Certified MidWives": "BS - Midwifery",
-      "Certified MidWivesrn": "BS - Midwifery",
-      "ECD": "BA - Early Child Dev",
-      "ECON": "BS - Economics",
-      "EEDU": "COBA - GEN",
-      "EENG": "BS - Elec Eng",
-      "ENVS": "BS - Env Sci",
-      "EVS": "BS - Env Sci",
-      "Environmental Science": "BS - Env Sci",
-      "Genera Agriculture": "BS - Agri",
-      "General Agriculture": "BS - Agri",
-      "MENG": "BS - Mech Eng",
-      "MID": "BS - Midwifery",
-      "MIDWifery": "BS - Midwifery",
-      "Machanical": "BS - Mech Eng",
-      "Mechanical Engineering": "BS - Mech Eng",
-      "NUR": "BS - Nursing",
-      "Nurse": "BS - Nursing",
-      "Nursing 2": "BS - Nursing",
-      "Nursing": "BS - Nursing",
-      "PADM": "BPA - Management",
-      "PH": "BS - Public Health",
-      "PSY": "BA - Psychology",
-      "REMEDIAL-ENGL": "WVSTU - GEN",
-      "REMEDIAL-MATH": "WVSTU - GEN",
-      "Undecided": "WVSTU - GEN",
-      "computer science": "BS - Computer Sci",
-  }
+  mcur = ac.choices.CURRICULUM_MAP
   _tmp = pd.DataFrame(data=mcur.values(), index=mcur.keys(), columns=("curriculum",))
   _tmp.index.name = "Major"
   _tmp = _tmp.reset_index().fillna("")
@@ -2978,20 +2790,20 @@ Name: StudentID, dtype: int64
 
 #+RESULTS:
 :results:
-                    Major         curriculum
-0                                WVSTU - GEN
-1     AA- Applied Science        WVSTU - GEN
-2    AA- Applied  Science        WVSTU - GEN
-3   AA - Applied  Science        WVSTU - GEN
-4              ACCOUNTING   BBA - Accounting
-..                    ...                ...
-82                    PSY    BA - Psychology
-83          REMEDIAL-ENGL        WVSTU - GEN
-84          REMEDIAL-MATH        WVSTU - GEN
-85              Undecided        WVSTU - GEN
-86       computer science  BS - Computer Sci
+                              Major          curriculum
+0                                           WVSTU - GEN
+1             AA - Applied  Science         WVSTU - GEN
+2              AA- Applied  Science         WVSTU - GEN
+3               AA- Applied Science         WVSTU - GEN
+4                        ACCOUNTING    BBA - Accounting
+..                              ...                 ...
+118           Public Administration    BPA - Management
+119                 Public Health 1  BS - Public Health
+120                 RN Post Basic 1        BS - Nursing
+121  Renewable Energy Engineering 1         WVSTU - GEN
+122               Soccer Coaching 1         WVSTU - GEN
 
-[87 rows x 2 columns]
+[123 rows x 2 columns]
 :end:
 
 
@@ -3003,178 +2815,28 @@ Name: StudentID, dtype: int64
       left_on="curriculum",
       right_on="curriculum",
   ).fillna("")
-  scur = acur.merge(std, how="outer", left_on="major", right_on="Major")
+  scur = acur.merge(std, how="outer", left_on="Major", right_on="Major")
   idx = scur.index[scur.StudentID.isna()]
   scur = scur.drop(index=idx)
-  
-  
-#+END_SRC
-#+BEGIN_SRC python :results value
-  scur.head()
+  scur.head(4)  
 #+END_SRC
 
 #+RESULTS:
 :results:
-  major   curriculum college_code  ... EnrollmentType AdmissionStatus ProgramID
+  Major   curriculum college_code  ... EnrollmentType AdmissionStatus ProgramID
 0        WVSTU - GEN         DEFT  ...                                         
 1        WVSTU - GEN         DEFT  ...                                         
 2        WVSTU - GEN         DEFT  ...                                         
 3        WVSTU - GEN         DEFT  ...                                         
-4        WVSTU - GEN         DEFT  ...                                         
 
-[5 rows x 10 columns]
+[4 rows x 9 columns]
 :end:
-
-*** Briding UM_CurriculumCourses to tCurriculums
-#+BEGIN_SRC python :results value
-mcur ={
-    "": "WVSTU - GEN",  # empty major → default to university-wide general
-    "AA - Applied  Science": "WVSTU - GEN",      
-    "AA- Applied  Science": "WVSTU - GEN",
-    "AA- Applied Science": "WVSTU - GEN",
-    "ACCOUNTING": "BBA - Accounting",
-    "ACCT": "BBA - Accounting",
-    "AGR": "BS - Agro",
-    "Agriculture 1": "BS - Agri",
-    "Agriculture 2": "BS - Agro",
-    "BA - 2ndEd/Biology": "BA - 2ndEd/Biology",
-    "BA - 2ndEd/Chem Phys": "BA - 2ndEd/Chemistry",
-    "BA - 2ndEd/Chemistry": "BA - 2ndEd/Chemistry",
-    "BA - 2ndEd/Eng Lit": "BA - 2ndEd/Eng Lit",
-    "BA - 2ndEd/History": "BA - 2ndEd/History",
-    "BA - 2ndEd/Math": "BA - 2ndEd/Math",
-    "BA - ECD": "BA - Early Child Dev",
-    "BA - Economics": "BS - Economics",
-    "BA - English": "BA - 2ndEd/Eng Lit",
-    "BA - Guidance Coun": "BA - Guidance Counseling",
-    "BA - History": "BA - 2ndEd/History",
-    "BA - Primary Ed": "BA - Primary Ed",
-    "BA - Psychology": "BA - Psychology",
-    "BA-BIOLOGY": "BA - 2ndEd/Biology",
-    "BA-CHEMISTRY": "BA - 2ndEd/Chemistry",
-    "BA-ENGL/LIT": "BA - 2ndEd/Eng Lit",
-    "BA-GUIDANCE/COUNS": "BA - Guidance Counseling",
-    "BA-HISTORY": "BA - 2ndEd/History",
-    "BA-MATHEMATICS": "BA - 2ndEd/Math",
-    "BBA - Accounting": "BBA - Accounting",
-    "BBA - Banking & Fin": "BBA - Banking & Finance",
-    "BBA - Business Admin": "BBA - Management",
-    "BBA Business Admin": "BBA - Management",
-    "BFIN": "BBA - Banking & Finance",
-    "BFN": "BBA - Banking & Finance",
-    "BPA - Public Admin": "BPA - Management",
-    "BSCE - Civil Eng": "BS - Civil Eng",
-    "BSEE - Elec Eng": "BS - Elec Eng",
-    "BSME - Mech Eng": "BS - Mech Eng",
-    "BSN - Nursing": "BS - Nursing",
-    "BSc - Applied Agr": "BS - Applied Agr",
-    "BSc - Bio-Statistics": "BS - Biology",
-    "BSc - Biology": "BS - Biology",
-    "BSc - Chemistry": "BA - 2ndEd/Chemistry",
-    "BSc - Commun Health": "BS - Public Health",
-    "BSc - Computer Sci": "BS - Computer Sci",
-    "BSc - Economics": "BS - Economics",
-    "BSc - Env Sci": "BS - Env Sci",
-    "BSc - Environmental": "BS - Env Sci",
-    "BSc - Epidemiology": "BS - Public Health",
-    "BSc - General Agr": "BS - Agri",
-    "BSc - Mathematics": "BA - 2ndEd/Math",
-    "BSc - Midwifery": "BS - Midwifery",
-    "BSc - Psychology": "BA - Psychology",
-    "BSc - Public Health": "BS - Public Health",
-    "BSc- Agronomy": "BS - Agro",
-    "BUS": "BBA - Management",
-    "BUSA": "BBA - Management",
-    "Biology": "BS - Biology",
-    "CENG": "BS - Civil Eng",
-    "CSENG": "BS - Computer Sci",
-    "Certified MidWives": "BS - Midwifery",
-    "Certified MidWivesrn": "BS - Midwifery",
-    "ECD": "BA - Early Child Dev",
-    "ECON": "BS - Economics",
-    "EEDU": "COBA - GEN",
-    "EENG": "BS - Elec Eng",
-    "ENVS": "BS - Env Sci",
-    "EVS": "BS - Env Sci",
-    "Environmental Science": "BS - Env Sci",
-    "Genera Agriculture": "BS - Agri",
-    "General Agriculture": "BS - Agri",
-    "MENG": "BS - Mech Eng",
-    "MID": "BS - Midwifery",
-    "MIDWifery": "BS - Midwifery",
-    "Machanical": "BS - Mech Eng",
-    "Mechanical Engineering": "BS - Mech Eng",
-    "NUR": "BS - Nursing",
-    "Nurse": "BS - Nursing",
-    "Nursing 2": "BS - Nursing",
-    "Nursing": "BS - Nursing",
-    "PADM": "BPA - Management",
-    "PH": "BS - Public Health",
-    "PSY": "BA - Psychology",
-    "REMEDIAL-ENGL": "WVSTU - GEN",
-    "REMEDIAL-MATH": "WVSTU - GEN",
-    "Undecided": "WVSTU - GEN",
-    "computer science": "BS - Computer Sci",
-    'Accounting 1': BBA - Accounting,
-    'Agriculture 1': BS - Agri,
-    'Agriculture 2': BS - Agro,
-    'Arts in Economics 1': BS - Economics,
-    'BA-BIOLOGY': BA - 2ndEd/Biology,
-    'BA-CHEMISTRY': BA - 2ndEd/Chemistry,
-    'BA-ECD': BA - Early Child Dev,
-    'BA-ENGL/LIT': BA - 2ndEd/Eng Lit,
-    'BA-GUIDANCE/COUNS': BA - Guidance Counseling,
-    'BA-HISTORY': BA - 2ndEd/History,
-    'BA-MATHEMATICS': BA - 2ndEd/Math,
-    'BA-PRIMARY EDUCATION': BA - Primary Ed,
-    'Banking and Finance 1': BBA - Banking & Finance,
-    'Biology 1': BS - Biology,   # confusion around Biology 1, EDU CAS ?
-    'Business Administration 1': BBA - Management,
-    'Certified MidWives 1': BS - Midwifery,
-    'Chemistry 1': BA - 2ndEd/Chemistry,
-    'Civil Engineering 1': BS - Civil Eng,
-    'Computer Networks and Security Engineering 1': BS - Computer Sci,  # in the curriculum we have 2 but in practice just one BS in Computer Sci
-    'Computer Science 1': BS - Computer Sci,
-    'Early Childhood Education and Development 1': BA - Early Child Dev,  # from UM_Registrations
-    'Early Childhood Education and Development 2': BA - Primary Ed,
-    'Early Childhood Education and Development 3': BA - 2ndEd/Biology,
-    'Early Childhood Education and Development 4': BA - 2ndEd/Chemistry,
-    'Early Childhood Education and Development 5': BA - 2ndEd/Eng Lit,
-    'Early Childhood Education and Development 6': BA - 2ndEd/History,
-    'Early Childhood Education and Development 7': BA - 2ndEd/Math,  # by elimination
-    'Early Childhood Education and Development 8': BA - Guidance Counseling,  # by elimination
-    'Electrical Engineering 1': BS - Elec Eng,
-    'English 1': BA - 2ndEd/Eng Lit,
-    'Environmental Science 1': BS - Env Sci,
-    'French 1': WVSTU - GEN,  
-    'General Education 1': WVSTU - GEN,
-    'ME': WVSTU - GEN,
-    'MIDWifery': BS - Midwifery,
-    'Mathematics 1': BA - 2ndEd/Math,
-    'Mechanical Engineering 1': BS - Mech Eng,
-    'Nursing 1': BS - Nursing,
-    'Nursing 2': BS - Nursing,
-    'Psychology 1':  WVSTU - GEN,
-    'Public Administration 1': BPA - Management,
-    'Public Administration': BPA - Management,
-    'Public Health 1': BS - Public Health,
-    'RN Post Basic 1': BS - Nursing,
-    'Renewable Energy Engineering 1': WVSTU - GEN,
-    'Soccer Coaching 1': WVSTU - GEN,
-}  
-#+END_SRC    
-
-#+RESULTS:
-:results:
-:end:
-
-    
 
 *** Quelles difference y a t il entre ['major','Major','EnrollmentType', 'ProgramID'] ?
 
 #+BEGIN_SRC python :results silent
   # X.loc[:,['major','Major','EnrollmentType', 'ProgramID']]
-  cols = ["Major", "major", "ProgramID", "EnrollmentType"]
+  cols = ["Major", "ProgramID", "EnrollmentType"]
   S = {}
   for i, c in enumerate(cols):
       scur.loc[:, c] = scur.loc[:, c].sort_values()
@@ -3185,57 +2847,42 @@ mcur ={
 
 #+BEGIN_SRC python :results output
   # Major and major  
-  print(set(s0) - set(s1),"\n",set(s1) - set(s0))
+  print(set(scur['Major']) & set(scur['ProgramID']),"\n\n", set(scur['Major']) - set(scur['ProgramID']), "\n\n", set(scur['ProgramID']) - set(scur['Major']))
 #+END_SRC
 
 #+RESULTS:
 :results:
-set() 
- set()
+{'', 'BA-CHEMISTRY', 'BA-HISTORY', 'BA-MATHEMATICS', 'Nursing 2', 'BA-BIOLOGY', 'BA-ENGL/LIT', 'Agriculture 1', 'BA-GUIDANCE/COUNS', 'Agriculture 2', 'MIDWifery'} 
+
+ {'MID', 'CENG', 'Machanical', 'BSc - Mathematics', 'BBA Business Admin', 'computer science', 'Certified MidWives', 'BSc - General Agr', 'BA - 2ndEd/Chemistry', 'BA - 2ndEd/Eng Lit', 'ACCT', 'Environmental Science', 'BSc - Psychology', 'Biology', 'PADM', 'General Agriculture', 'REMEDIAL-ENGL', 'BSc - Bio-Statistics', 'BSc - Economics', 'BBA - Banking & Fin', 'REMEDIAL-MATH', 'BA - History', 'BSc- Agronomy', 'ECD', 'BA - Guidance Coun', 'BSME - Mech Eng', 'ECON', 'BSc - Epidemiology', 'BA - 2ndEd/History', 'BUSA', 'BA - ECD', 'BA - 2ndEd/Math', 'EENG', 'BSc - Biology', 'NUR', 'BSc - Chemistry', 'AA- Applied Science', 'PH', 'Undecided', 'BSc - Public Health', 'BA - 2ndEd/Chem Phys', 'BSc - Applied Agr', 'BUS', 'BSc - Env Sci', 'BSEE - Elec Eng', 'Mechanical Engineering', 'CSENG', 'BPA - Public Admin', 'BSCE - Civil Eng', 'AGR', 'BSc - Commun Health', 'ENVS', 'ACCOUNTING', 'Genera Agriculture', 'BSc - Computer Sci', 'BFIN', 'Certified MidWivesrn', 'Nurse', 'BSc - Environmental', 'PSY', 'BBA - Business Admin', 'BSc - Midwifery', 'BBA - Accounting', 'EVS', 'BFN', 'BA - Primary Ed', 'BA - Psychology', 'Nursing', 'BA - English', 'BA - Economics', 'BA - 2ndEd/Biology', 'BSN - Nursing', 'MENG', 'EEDU'} 
+
+ {'MidWifery', 'Mechanical Engineering 1', 'Environmental Science 1', 'BA-ECD', 'Electrical Engineering 1', 'Early Childhood Education and Development 4', 'Business Administration 1', 'Early Childhood Education and Development 1', 'Nursing 1', 'Public Administration 1', 'Biology 1', 'Computer Science 1', 'Computer Networks and Security Engineering 1', 'Public Health 1', 'Early Childhood Education and Development 5', 'Mathematics 1', 'Early Childhood Education and Development 2', 'Chemistry 1', 'Psychology 1', 'Accounting 1', 'Banking and Finance 1', 'English 1', 'Environmental health', 'Civil Engineering 1', 'BA-PRIMARY EDUCATION', 'Certified MidWives 1', 'Arts in Economics 1', 'Early Childhood Education and Development 7', 'Early Childhood Education and Development 8'}
 :end:
 
 
-s0 and s1 are the same. Let's drop major
+#+BEGIN_SRC python :results output
+  print(set(scur['EnrollmentType']) & set(scur['ProgramID']),"\n\n", set(scur['EnrollmentType']) - set(scur['ProgramID']), "\n\n", set(scur['ProgramID']) - set(scur['EnrollmentType']))
+#+END_SRC
+
+#+RESULTS:
+:results:
+{'', 'Mechanical Engineering 1', 'Environmental Science 1', 'BA-ECD', 'BA-HISTORY', 'Electrical Engineering 1', 'Business Administration 1', 'Nursing 1', 'Public Administration 1', 'BA-MATHEMATICS', 'Biology 1', 'Computer Science 1', 'Computer Networks and Security Engineering 1', 'Public Health 1', 'Mathematics 1', 'Accounting 1', 'Agriculture 1', 'BA-GUIDANCE/COUNS', 'BA-CHEMISTRY', 'Civil Engineering 1', 'BA-PRIMARY EDUCATION', 'BA-BIOLOGY', 'BA-ENGL/LIT'} 
+
+ {'General Education 1'} 
+
+ {'Early Childhood Education and Development 8', 'MidWifery', 'Early Childhood Education and Development 5', 'Environmental health', 'Early Childhood Education and Development 2', 'Chemistry 1', 'Early Childhood Education and Development 4', 'Psychology 1', 'Certified MidWives 1', 'Nursing 2', 'Arts in Economics 1', 'Early Childhood Education and Development 7', 'Early Childhood Education and Development 1', 'Agriculture 2', 'Banking and Finance 1', 'English 1', 'MIDWifery'}
+:end:
+
+
+
+General Education is only in EnrollmentType and not in ProgamID
 #+BEGIN_SRC python :results silent
-  scur = scur.drop(columns='major')
-#+END_SRC
-
-
-#+BEGIN_SRC python :results output
-  # Major and ProgramID
-  print(set(s0) - set(s2),"\n\n", set(s2) - set(s0))
-#+END_SRC
-
-:results:
-{'BSc - Bio-Statistics', 'BSc - Environmental', 'BSc - Applied Agr', 'Nursing', 'BA - Guidance Coun', 'EEDU', 'General Agriculture', 'BA - 2ndEd/History', 'AA- Applied  Science', 'AA- Applied Science', 'Undecided', 'BSc - Epidemiology', 'BA - 2ndEd/Chemistry', 'Machanical', 'BA - Economics', 'Environmental Science', 'EENG', 'BFN', 'ECON', 'Certified MidWivesrn', 'BSc - Psychology', 'Nurse', 'BUS', 'Mechanical Engineering', 'BA - Psychology', 'BSc- Agronomy', 'REMEDIAL-MATH', 'computer science', 'BSCE - Civil Eng', 'BA - ECD', 'BSME - Mech Eng', 'BPA - Public Admin', 'BA - 2ndEd/Math', 'BBA - Accounting', 'MENG', 'BBA - Banking & Fin', 'Biology', 'BA - 2ndEd/Biology', 'CSENG', 'CENG', 'BSc - Mathematics', 'ENVS', 'BBA - Business Admin', 'BSc - Biology', 'ACCOUNTING', 'BSc - Computer Sci', 'ECD', 'BSc - Public Health', 'PADM', 'BSc - Env Sci', 'Certified MidWives', 'MID', 'ACCT', 'BA - History', 'BUSA', 'BBA Business Admin', 'BFIN', 'NUR', 'BSN - Nursing', 'REMEDIAL-ENGL', 'AGR', 'BSc - General Agr', 'BA - 2ndEd/Eng Lit', 'BA - Primary Ed', 'BSEE - Elec Eng', 'BSc - Economics', 'Genera Agriculture', 'EVS', 'PSY', 'BA - English', 'BSc - Midwifery', 'PH', 'BA - 2ndEd/Chem Phys', 'BSc - Chemistry', 'BSc - Commun Health'} 
-
- {'Early Childhood Education and Development 1', 'Banking and Finance 1', 'Public Administration 1', 'Psychology 1', 'Certified MidWives 1', 'BA-PRIMARY EDUCATION', 'Environmental Science 1', 'BA-ECD', 'MidWifery', 'Early Childhood Education and Development 5', 'Biology 1', 'Early Childhood Education and Development 2', 'Civil Engineering 1', 'Public Health 1', 'Early Childhood Education and Development 8', 'Nursing 1', 'Business Administration 1', 'Computer Science 1', 'Arts in Economics 1', 'Chemistry 1', 'Mathematics 1', 'Early Childhood Education and Development 4', 'Electrical Engineering 1', 'English 1', 'Environmental health', 'Mechanical Engineering 1', 'Computer Networks and Security Engineering 1', 'Accounting 1', 'Early Childhood Education and Development 7'}
-:end:
-
-#+BEGIN_SRC python :results output
-  # ProgramID and EnrollmentType    
-  print(set(s2) - set(s3),"\n\n", set(s3) - set(s2))
-#+END_SRC
-
-#+RESULTS:
-:results:
-{'Early Childhood Education and Development 1', 'Chemistry 1', 'MIDWifery', 'Banking and Finance 1', 'MidWifery', 'Early Childhood Education and Development 5', 'Early Childhood Education and Development 4', 'Early Childhood Education and Development 2', 'English 1', 'Nursing 2', 'Agriculture 2', 'Environmental health', 'Early Childhood Education and Development 7', 'Early Childhood Education and Development 8', 'Psychology 1', 'Certified MidWives 1', 'Arts in Economics 1'} 
-
- {'General Education 1'}
-:end:
-
-Only General Education is in EnrollmentType and not in ProgamID
-#+BEGIN_SRC python :results value
   f = scur.EnrollmentType == "General Education 1"
   scur.loc[f, ['ProgramID']] = 'General Education 1'
 #+END_SRC
 
-#+RESULTS:
-:results:
-:end:
 
-
-In conculsion we have 2 listes (Major/major) and (ProgramID/EnrollmentType)
+In conculsion we have 2 listes (Major/major/curriculumns) and (ProgramID/EnrollmentType)
 
 
 Next step :
@@ -3258,11 +2905,6 @@ Compare rows where ProgramID and Major are set.
   # X.loc[f5, ["EnrollmentType","ProgramID"]]
   
 #+END_SRC
-
-#+RESULTS:
-:results:
-:end:
-
 
 
 
@@ -3593,309 +3235,285 @@ WVSTU - GEN, REMEDIAL-MATH, ,
 WVSTU - GEN, Undecided, , 
 BS - Computer Sci, computer science, Arts in Economics 1,
 :end:
-
-
+*** Building a map of curriculum (Major) and ProgramID
 #+BEGIN_SRC python :results value
   scur.loc[scur.ProgramID != '',['curriculum','ProgramID']].apply(lambda x: f"'{x[0]}': '{x[1]}' ,",axis=1).unique()
 #+END_SRC
 
 #+RESULTS:
-
 :results:
-pcur = {'WVSTU - GEN': 'Business Administration 1' ,
-'WVSTU - GEN': 'Public Health 1' ,
-'WVSTU - GEN': 'Arts in Economics 1' ,
-'BBA - Accounting': 'Business Administration 1' ,
-'BBA - Accounting': 'Accounting 1' ,
-'BBA - Accounting': 'Public Administration 1' ,
-'BBA - Accounting': 'Agriculture 1' ,
-'BS - Agro': 'Arts in Economics 1' ,
-'BS - Agri': 'Agriculture 1' ,
-'BS - Agro': 'Agriculture 1' ,
-'BS - Agro': 'Agriculture 2' ,
-'BS - Agro': 'BA-ENGL/LIT' ,
-'BA - 2ndEd/Biology': 'BA-BIOLOGY' ,
-'BA - 2ndEd/Biology': 'Biology 1' ,
-'BA - 2ndEd/Biology': 'BA-CHEMISTRY' ,
-'BA - 2ndEd/Biology': 'BA-MATHEMATICS' ,
-'BA - 2ndEd/Chemistry': 'BA-CHEMISTRY' ,
-'BA - 2ndEd/Chemistry': 'Chemistry 1' ,
-'BA - 2ndEd/Chemistry': 'Nursing 1' ,
-'BA - 2ndEd/Chemistry': 'BA-ENGL/LIT' ,
-'BA - 2ndEd/Eng Lit': 'BA-ENGL/LIT' ,
-'BA - 2ndEd/Eng Lit': 'English 1' ,
-'BA - 2ndEd/Eng Lit': 'Early Childhood Education and Development 5' ,
-'BA - 2ndEd/Eng Lit': 'Mathematics 1' ,
-'BA - 2ndEd/Eng Lit': 'BA-PRIMARY EDUCATION' ,
-'BA - 2ndEd/Eng Lit': 'Public Administration 1' ,
-'BA - 2ndEd/History': 'BA-HISTORY' ,
-'BA - 2ndEd/History': 'BA-PRIMARY EDUCATION' ,
-'BA - 2ndEd/Math': 'Early Childhood Education and Development 7' ,
-'BA - 2ndEd/Math': 'BA-MATHEMATICS' ,
-'BA - 2ndEd/Math': 'BA-ENGL/LIT' ,
-'BA - 2ndEd/Math': 'Agriculture 1' ,
-'BA - 2ndEd/Math': 'Mathematics 1' ,
-'BA - 2ndEd/Math': 'Nursing 1' ,
-'BA - 2ndEd/Math': 'BA-PRIMARY EDUCATION' ,
-'BA - Early Child Dev': 'BA-ECD' ,
-'BA - Early Child Dev': 'Early Childhood Education and Development 1' ,
-'BA - Early Child Dev': 'Civil Engineering 1' ,
-'BA - Early Child Dev': 'BA-GUIDANCE/COUNS' ,
-'BA - Early Child Dev': 'Early Childhood Education and Development 8' ,
-'BS - Economics': 'Computer Science 1' ,
-'BS - Economics': 'Arts in Economics 1' ,
-'BS - Economics': 'Accounting 1' ,
-'BS - Economics': 'BA-ECD' ,
-'BA - Guidance Counseling': 'BA-GUIDANCE/COUNS' ,
-'BA - Guidance Counseling': 'Public Health 1' ,
-'BA - Guidance Counseling': 'BA-MATHEMATICS' ,
-'BA - Guidance Counseling': 'BA-ENGL/LIT' ,
-'BA - Guidance Counseling': 'Early Childhood Education and Development 8' ,
-'BA - Primary Ed': 'BA-PRIMARY EDUCATION' ,
-'BA - Primary Ed': 'BA-ECD' ,
-'BA - Primary Ed': 'Early Childhood Education and Development 2' ,
-'BA - Primary Ed': 'Arts in Economics 1' ,
-'BA - Psychology': 'Psychology 1' ,
-'BA - Psychology': 'Arts in Economics 1' ,
-'BA - Psychology': 'Public Administration 1' ,
-'BA - 2ndEd/Chemistry': 'Early Childhood Education and Development 4' ,
-'BA - 2ndEd/Eng Lit': 'Business Administration 1' ,
-'BA - 2ndEd/History': 'Public Administration 1' ,
-'BA - 2ndEd/History': 'BA-CHEMISTRY' ,
-'BBA - Accounting': 'Banking and Finance 1' ,
-'BBA - Accounting': 'Arts in Economics 1' ,
-'BBA - Accounting': 'Computer Science 1' ,
-'BBA - Banking & Finance': 'Banking and Finance 1' ,
-'BBA - Banking & Finance': 'Business Administration 1' ,
-'BBA - Banking & Finance': 'Accounting 1' ,
-'BBA - Management': 'Business Administration 1' ,
-'BBA - Management': 'Public Administration 1' ,
-'BPA - Management': 'Arts in Economics 1' ,
-'BPA - Management': 'Business Administration 1' ,
-'BPA - Management': 'Chemistry 1' ,
-'BPA - Management': 'Public Administration 1' ,
-'BPA - Management': 'English 1' ,
-'BPA - Management': 'Accounting 1' ,
-'BPA - Management': 'Psychology 1' ,
-'BPA - Management': 'Public Health 1' ,
-'BS - Civil Eng': 'Civil Engineering 1' ,
-'BS - Civil Eng': 'English 1' ,
-'BS - Civil Eng': 'Arts in Economics 1' ,
-'BS - Elec Eng': 'Electrical Engineering 1' ,
-'BS - Elec Eng': 'Civil Engineering 1' ,
-'BS - Elec Eng': 'Accounting 1' ,
-'BS - Mech Eng': 'Mechanical Engineering 1' ,
-'BS - Mech Eng': 'Civil Engineering 1' ,
-'BS - Nursing': 'Public Administration 1' ,
-'BS - Nursing': 'Nursing 1' ,
-'BS - Nursing': 'Public Health 1' ,
-'BS - Nursing': 'Biology 1' ,
-'BS - Nursing': 'Arts in Economics 1' ,
-'BS - Applied Agr': 'Agriculture 1' ,
-'BS - Applied Agr': 'Computer Science 1' ,
-'BS - Biology': 'Biology 1' ,
-'BS - Biology': 'Public Health 1' ,
-'BS - Biology': 'BA-HISTORY' ,
-'BS - Biology': 'Business Administration 1' ,
-'BS - Biology': 'BA-BIOLOGY' ,
-'BS - Biology': 'Arts in Economics 1' ,
-'BS - Biology': 'Nursing 1' ,
-'BA - 2ndEd/Chemistry': 'Public Health 1' ,
-'BS - Public Health': 'Public Health 1' ,
-'BS - Computer Sci': 'Computer Science 1' ,
-'BS - Computer Sci': 'Electrical Engineering 1' ,
-'BS - Computer Sci': 'Nursing 1' ,
-'BS - Computer Sci': 'Mechanical Engineering 1' ,
-'BS - Computer Sci': 'Arts in Economics 1' ,
-'BS - Computer Sci': 'Public Administration 1' ,
-'BS - Computer Sci': 'Computer Networks and Security Engineering 1' ,
-'BS - Economics': 'Agriculture 1' ,
-'BS - Env Sci': 'Environmental Science 1' ,
-'BS - Env Sci': 'Public Health 1' ,
-'BS - Env Sci': 'Civil Engineering 1' ,
-'BS - Env Sci': 'Arts in Economics 1' ,
-'BS - Env Sci': 'Business Administration 1' ,
-'BS - Agri': 'Business Administration 1' ,
-'BS - Agri': 'Public Health 1' ,
-'BS - Agri': 'Biology 1' ,
-'BS - Agri': 'Arts in Economics 1' ,
-'BS - Agri': 'Accounting 1' ,
-'BS - Midwifery': 'Nursing 1' ,
-'BS - Midwifery': 'MIDWifery' ,
-'BA - Psychology': 'Public Health 1' ,
-'BS - Public Health': 'Environmental Science 1' ,
-'BS - Public Health': 'Nursing 1' ,
-'BS - Public Health': 'Business Administration 1' ,
-'BS - Public Health': 'English 1' ,
-'BS - Public Health': 'Environmental health' ,
-'BS - Public Health': 'Arts in Economics 1' ,
-'BBA - Management': 'Civil Engineering 1' ,
-'BBA - Management': 'Nursing 1' ,
-'BBA - Management': 'Accounting 1' ,
-'BBA - Management': 'Biology 1' ,
-'BBA - Management': 'Public Health 1' ,
-'BS - Computer Sci': 'Business Administration 1' ,
-'BS - Computer Sci': 'Civil Engineering 1' ,
-'BS - Midwifery': 'Certified MidWives 1' ,
-'BA - Early Child Dev': 'Environmental Science 1' ,
-'BS - Economics': 'Business Administration 1' ,
-'BS - Economics': 'Public Administration 1' ,
-'COBA - GEN': 'General Education 1' ,
-'BS - Env Sci': 'Biology 1' ,
-'BS - Mech Eng': 'Arts in Economics 1' ,
-'BS - Midwifery': 'Public Health 1' ,
-'BS - Midwifery': 'MidWifery' ,
-"'BS - Nursing': 'Nursing 2'}
+["'WVSTU - GEN': 'Business Administration 1' ,"
+ "'WVSTU - GEN': 'Public Health 1' ,"
+ "'WVSTU - GEN': 'Arts in Economics 1' ,"
+ "'BBA - Accounting': 'Business Administration 1' ,"
+ "'BBA - Accounting': 'Accounting 1' ,"
+ "'BBA - Accounting': 'Public Administration 1' ,"
+ "'BBA - Accounting': 'Agriculture 1' ,"
+ "'BS - Agro': 'Arts in Economics 1' ," "'BS - Agri': 'Agriculture 1' ,"
+ "'BS - Agro': 'Agriculture 1' ," "'BS - Agro': 'Agriculture 2' ,"
+ "'BS - Agro': 'BA-ENGL/LIT' ," "'BA - 2ndEd/Biology': 'BA-BIOLOGY' ,"
+ "'BA - 2ndEd/Biology': 'Biology 1' ,"
+ "'BA - 2ndEd/Biology': 'BA-CHEMISTRY' ,"
+ "'BA - 2ndEd/Biology': 'BA-MATHEMATICS' ,"
+ "'BA - 2ndEd/Chemistry': 'BA-CHEMISTRY' ,"
+ "'BA - 2ndEd/Chemistry': 'Chemistry 1' ,"
+ "'BA - 2ndEd/Chemistry': 'Nursing 1' ,"
+ "'BA - 2ndEd/Chemistry': 'BA-ENGL/LIT' ,"
+ "'BA - 2ndEd/Eng Lit': 'BA-ENGL/LIT' ,"
+ "'BA - 2ndEd/Eng Lit': 'English 1' ,"
+ "'BA - 2ndEd/Eng Lit': 'Early Childhood Education and Development 5' ,"
+ "'BA - 2ndEd/Eng Lit': 'Mathematics 1' ,"
+ "'BA - 2ndEd/Eng Lit': 'BA-PRIMARY EDUCATION' ,"
+ "'BA - 2ndEd/Eng Lit': 'Public Administration 1' ,"
+ "'BA - 2ndEd/History': 'BA-HISTORY' ,"
+ "'BA - 2ndEd/History': 'BA-PRIMARY EDUCATION' ,"
+ "'BA - 2ndEd/Math': 'Early Childhood Education and Development 7' ,"
+ "'BA - 2ndEd/Math': 'BA-MATHEMATICS' ,"
+ "'BA - 2ndEd/Math': 'BA-ENGL/LIT' ,"
+ "'BA - 2ndEd/Math': 'Agriculture 1' ,"
+ "'BA - 2ndEd/Math': 'Mathematics 1' ," "'BA - 2ndEd/Math': 'Nursing 1' ,"
+ "'BA - 2ndEd/Math': 'BA-PRIMARY EDUCATION' ,"
+ "'BA - Early Child Dev': 'BA-ECD' ,"
+ "'BA - Early Child Dev': 'Early Childhood Education and Development 1' ,"
+ "'BA - Early Child Dev': 'Civil Engineering 1' ,"
+ "'BA - Early Child Dev': 'BA-GUIDANCE/COUNS' ,"
+ "'BA - Early Child Dev': 'Early Childhood Education and Development 8' ,"
+ "'BS - Economics': 'Computer Science 1' ,"
+ "'BS - Economics': 'Arts in Economics 1' ,"
+ "'BS - Economics': 'Accounting 1' ," "'BS - Economics': 'BA-ECD' ,"
+ "'BA - Guidance Counseling': 'BA-GUIDANCE/COUNS' ,"
+ "'BA - Guidance Counseling': 'Public Health 1' ,"
+ "'BA - Guidance Counseling': 'BA-MATHEMATICS' ,"
+ "'BA - Guidance Counseling': 'BA-ENGL/LIT' ,"
+ "'BA - Guidance Counseling': 'Early Childhood Education and Development 8' ,"
+ "'BA - Primary Ed': 'BA-PRIMARY EDUCATION' ,"
+ "'BA - Primary Ed': 'BA-ECD' ,"
+ "'BA - Primary Ed': 'Early Childhood Education and Development 2' ,"
+ "'BA - Primary Ed': 'Arts in Economics 1' ,"
+ "'BA - Psychology': 'Psychology 1' ,"
+ "'BA - Psychology': 'Arts in Economics 1' ,"
+ "'BA - Psychology': 'Public Administration 1' ,"
+ "'BA - 2ndEd/Chemistry': 'Early Childhood Education and Development 4' ,"
+ "'BA - 2ndEd/Eng Lit': 'Business Administration 1' ,"
+ "'BA - 2ndEd/History': 'Public Administration 1' ,"
+ "'BA - 2ndEd/History': 'BA-CHEMISTRY' ,"
+ "'BBA - Accounting': 'Banking and Finance 1' ,"
+ "'BBA - Accounting': 'Arts in Economics 1' ,"
+ "'BBA - Accounting': 'Computer Science 1' ,"
+ "'BBA - Banking & Finance': 'Banking and Finance 1' ,"
+ "'BBA - Banking & Finance': 'Business Administration 1' ,"
+ "'BBA - Banking & Finance': 'Accounting 1' ,"
+ "'BBA - Management': 'Business Administration 1' ,"
+ "'BBA - Management': 'Public Administration 1' ,"
+ "'BPA - Management': 'Arts in Economics 1' ,"
+ "'BPA - Management': 'Business Administration 1' ,"
+ "'BPA - Management': 'Chemistry 1' ,"
+ "'BPA - Management': 'Public Administration 1' ,"
+ "'BPA - Management': 'English 1' ,"
+ "'BPA - Management': 'Accounting 1' ,"
+ "'BPA - Management': 'Psychology 1' ,"
+ "'BPA - Management': 'Public Health 1' ,"
+ "'BS - Civil Eng': 'Civil Engineering 1' ,"
+ "'BS - Civil Eng': 'English 1' ,"
+ "'BS - Civil Eng': 'Arts in Economics 1' ,"
+ "'BS - Elec Eng': 'Electrical Engineering 1' ,"
+ "'BS - Elec Eng': 'Civil Engineering 1' ,"
+ "'BS - Elec Eng': 'Accounting 1' ,"
+ "'BS - Mech Eng': 'Mechanical Engineering 1' ,"
+ "'BS - Mech Eng': 'Civil Engineering 1' ,"
+ "'BS - Nursing': 'Public Administration 1' ,"
+ "'BS - Nursing': 'Nursing 1' ," "'BS - Nursing': 'Public Health 1' ,"
+ "'BS - Nursing': 'Biology 1' ," "'BS - Nursing': 'Arts in Economics 1' ,"
+ "'BS - Applied Agr': 'Agriculture 1' ,"
+ "'BS - Applied Agr': 'Computer Science 1' ,"
+ "'BS - Biology': 'Biology 1' ," "'BS - Biology': 'Public Health 1' ,"
+ "'BS - Biology': 'BA-HISTORY' ,"
+ "'BS - Biology': 'Business Administration 1' ,"
+ "'BS - Biology': 'BA-BIOLOGY' ,"
+ "'BS - Biology': 'Arts in Economics 1' ," "'BS - Biology': 'Nursing 1' ,"
+ "'BA - 2ndEd/Chemistry': 'Public Health 1' ,"
+ "'BS - Public Health': 'Public Health 1' ,"
+ "'BS - Computer Sci': 'Computer Science 1' ,"
+ "'BS - Computer Sci': 'Electrical Engineering 1' ,"
+ "'BS - Computer Sci': 'Nursing 1' ,"
+ "'BS - Computer Sci': 'Mechanical Engineering 1' ,"
+ "'BS - Computer Sci': 'Arts in Economics 1' ,"
+ "'BS - Computer Sci': 'Public Administration 1' ,"
+ "'BS - Computer Sci': 'Computer Networks and Security Engineering 1' ,"
+ "'BS - Economics': 'Agriculture 1' ,"
+ "'BS - Env Sci': 'Environmental Science 1' ,"
+ "'BS - Env Sci': 'Public Health 1' ,"
+ "'BS - Env Sci': 'Civil Engineering 1' ,"
+ "'BS - Env Sci': 'Arts in Economics 1' ,"
+ "'BS - Env Sci': 'Business Administration 1' ,"
+ "'BS - Agri': 'Business Administration 1' ,"
+ "'BS - Agri': 'Public Health 1' ," "'BS - Agri': 'Biology 1' ,"
+ "'BS - Agri': 'Arts in Economics 1' ," "'BS - Agri': 'Accounting 1' ,"
+ "'BS - Midwifery': 'Nursing 1' ," "'BS - Midwifery': 'MIDWifery' ,"
+ "'BA - Psychology': 'Public Health 1' ,"
+ "'BS - Public Health': 'Environmental Science 1' ,"
+ "'BS - Public Health': 'Nursing 1' ,"
+ "'BS - Public Health': 'Business Administration 1' ,"
+ "'BS - Public Health': 'English 1' ,"
+ "'BS - Public Health': 'Environmental health' ,"
+ "'BS - Public Health': 'Arts in Economics 1' ,"
+ "'BBA - Management': 'Civil Engineering 1' ,"
+ "'BBA - Management': 'Nursing 1' ,"
+ "'BBA - Management': 'Accounting 1' ,"
+ "'BBA - Management': 'Biology 1' ,"
+ "'BBA - Management': 'Public Health 1' ,"
+ "'BS - Computer Sci': 'Business Administration 1' ,"
+ "'BS - Computer Sci': 'Civil Engineering 1' ,"
+ "'BS - Midwifery': 'Certified MidWives 1' ,"
+ "'BA - Early Child Dev': 'Environmental Science 1' ,"
+ "'BS - Economics': 'Business Administration 1' ,"
+ "'BS - Economics': 'Public Administration 1' ,"
+ "'COBA - GEN': 'General Education 1' ," "'BS - Env Sci': 'Biology 1' ,"
+ "'BS - Mech Eng': 'Arts in Economics 1' ,"
+ "'BS - Midwifery': 'Public Health 1' ," "'BS - Midwifery': 'MidWifery' ,"
+ "'BS - Nursing': 'Nursing 2' ,"]
 :end:
+
 
 #+BEGIN_SRC python
   pcur = {
-      "WVSTU - GEN": "Business Administration 1",
-      "WVSTU - GEN": "Public Health 1",
-      "WVSTU - GEN": "Arts in Economics 1",
-      "BBA - Accounting": "Business Administration 1",
-      "BBA - Accounting": "Accounting 1",
-      "BBA - Accounting": "Public Administration 1",
-      "BBA - Accounting": "Agriculture 1",
-      "BS - Agro": "Arts in Economics 1",
-      "BS - Agri": "Agriculture 1",
-      "BS - Agro": "Agriculture 1",
-      "BS - Agro": "Agriculture 2",
-      "BS - Agro": "BA-ENGL/LIT",
-      "BA - 2ndEd/Biology": "BA-BIOLOGY",
-      "BA - 2ndEd/Biology": "Biology 1",
-      "BA - 2ndEd/Biology": "BA-CHEMISTRY",
-      "BA - 2ndEd/Biology": "BA-MATHEMATICS",
-      "BA - 2ndEd/Chemistry": "BA-CHEMISTRY",
-      "BA - 2ndEd/Chemistry": "Chemistry 1",
-      "BA - 2ndEd/Chemistry": "Nursing 1",
-      "BA - 2ndEd/Chemistry": "BA-ENGL/LIT",
-      "BA - 2ndEd/Eng Lit": "BA-ENGL/LIT",
-      "BA - 2ndEd/Eng Lit": "English 1",
-      "BA - 2ndEd/Eng Lit": "Early Childhood Education and Development 5",
-      "BA - 2ndEd/Eng Lit": "Mathematics 1",
-      "BA - 2ndEd/Eng Lit": "BA-PRIMARY EDUCATION",
-      "BA - 2ndEd/Eng Lit": "Public Administration 1",
-      "BA - 2ndEd/History": "BA-HISTORY",
-      "BA - 2ndEd/History": "BA-PRIMARY EDUCATION",
-      "BA - 2ndEd/Math": "Early Childhood Education and Development 7",
-      "BA - 2ndEd/Math": "BA-MATHEMATICS",
-      "BA - 2ndEd/Math": "BA-ENGL/LIT",
-      "BA - 2ndEd/Math": "Agriculture 1",
-      "BA - 2ndEd/Math": "Mathematics 1",
-      "BA - 2ndEd/Math": "Nursing 1",
-      "BA - 2ndEd/Math": "BA-PRIMARY EDUCATION",
-      "BA - Early Child Dev": "BA-ECD",
-      "BA - Early Child Dev": "Early Childhood Education and Development 1",
-      "BA - Early Child Dev": "Civil Engineering 1",
-      "BA - Early Child Dev": "BA-GUIDANCE/COUNS",
-      "BA - Early Child Dev": "Early Childhood Education and Development 8",
-      "BS - Economics": "Computer Science 1",
-      "BS - Economics": "Arts in Economics 1",
-      "BS - Economics": "Accounting 1",
-      "BS - Economics": "BA-ECD",
-      "BA - Guidance Counseling": "BA-GUIDANCE/COUNS",
-      "BA - Guidance Counseling": "Public Health 1",
-      "BA - Guidance Counseling": "BA-MATHEMATICS",
-      "BA - Guidance Counseling": "BA-ENGL/LIT",
-      "BA - Guidance Counseling": "Early Childhood Education and Development 8",
-      "BA - Primary Ed": "BA-PRIMARY EDUCATION",
-      "BA - Primary Ed": "BA-ECD",
-      "BA - Primary Ed": "Early Childhood Education and Development 2",
-      "BA - Primary Ed": "Arts in Economics 1",
-      "BA - Psychology": "Psychology 1",
-      "BA - Psychology": "Arts in Economics 1",
-      "BA - Psychology": "Public Administration 1",
-      "BA - 2ndEd/Chemistry": "Early Childhood Education and Development 4",
-      "BA - 2ndEd/Eng Lit": "Business Administration 1",
-      "BA - 2ndEd/History": "Public Administration 1",
-      "BA - 2ndEd/History": "BA-CHEMISTRY",
-      "BBA - Accounting": "Banking and Finance 1",
-      "BBA - Accounting": "Arts in Economics 1",
-      "BBA - Accounting": "Computer Science 1",
-      "BBA - Banking & Finance": "Banking and Finance 1",
-      "BBA - Banking & Finance": "Business Administration 1",
-      "BBA - Banking & Finance": "Accounting 1",
-      "BBA - Management": "Business Administration 1",
-      "BBA - Management": "Public Administration 1",
-      "BPA - Management": "Arts in Economics 1",
-      "BPA - Management": "Business Administration 1",
-      "BPA - Management": "Chemistry 1",
-      "BPA - Management": "Public Administration 1",
-      "BPA - Management": "English 1",
-      "BPA - Management": "Accounting 1",
-      "BPA - Management": "Psychology 1",
-      "BPA - Management": "Public Health 1",
-      "BS - Civil Eng": "Civil Engineering 1",
-      "BS - Civil Eng": "English 1",
-      "BS - Civil Eng": "Arts in Economics 1",
-      "BS - Elec Eng": "Electrical Engineering 1",
-      "BS - Elec Eng": "Civil Engineering 1",
-      "BS - Elec Eng": "Accounting 1",
-      "BS - Mech Eng": "Mechanical Engineering 1",
-      "BS - Mech Eng": "Civil Engineering 1",
-      "BS - Nursing": "Public Administration 1",
-      "BS - Nursing": "Nursing 1",
-      "BS - Nursing": "Public Health 1",
-      "BS - Nursing": "Biology 1",
-      "BS - Nursing": "Arts in Economics 1",
-      "BS - Applied Agr": "Agriculture 1",
-      "BS - Applied Agr": "Computer Science 1",
-      "BS - Biology": "Biology 1",
-      "BS - Biology": "Public Health 1",
-      "BS - Biology": "BA-HISTORY",
-      "BS - Biology": "Business Administration 1",
-      "BS - Biology": "BA-BIOLOGY",
-      "BS - Biology": "Arts in Economics 1",
-      "BS - Biology": "Nursing 1",
-      "BA - 2ndEd/Chemistry": "Public Health 1",
-      "BS - Public Health": "Public Health 1",
-      "BS - Computer Sci": "Computer Science 1",
-      "BS - Computer Sci": "Electrical Engineering 1",
-      "BS - Computer Sci": "Nursing 1",
-      "BS - Computer Sci": "Mechanical Engineering 1",
-      "BS - Computer Sci": "Arts in Economics 1",
-      "BS - Computer Sci": "Public Administration 1",
-      "BS - Computer Sci": "Computer Networks and Security Engineering 1",
-      "BS - Economics": "Agriculture 1",
-      "BS - Env Sci": "Environmental Science 1",
-      "BS - Env Sci": "Public Health 1",
-      "BS - Env Sci": "Civil Engineering 1",
-      "BS - Env Sci": "Arts in Economics 1",
-      "BS - Env Sci": "Business Administration 1",
-      "BS - Agri": "Business Administration 1",
-      "BS - Agri": "Public Health 1",
-      "BS - Agri": "Biology 1",
-      "BS - Agri": "Arts in Economics 1",
-      "BS - Agri": "Accounting 1",
-      "BS - Midwifery": "Nursing 1",
-      "BS - Midwifery": "MIDWifery",
-      "BA - Psychology": "Public Health 1",
-      "BS - Public Health": "Environmental Science 1",
-      "BS - Public Health": "Nursing 1",
-      "BS - Public Health": "Business Administration 1",
-      "BS - Public Health": "English 1",
-      "BS - Public Health": "Environmental health",
-      "BS - Public Health": "Arts in Economics 1",
-      "BBA - Management": "Civil Engineering 1",
-      "BBA - Management": "Nursing 1",
-      "BBA - Management": "Accounting 1",
-      "BBA - Management": "Biology 1",
-      "BBA - Management": "Public Health 1",
-      "BS - Computer Sci": "Business Administration 1",
-      "BS - Computer Sci": "Civil Engineering 1",
-      "BS - Midwifery": "Certified MidWives 1",
-      "BA - Early Child Dev": "Environmental Science 1",
-      "BS - Economics": "Business Administration 1",
-      "BS - Economics": "Public Administration 1",
-      "COBA - GEN": "General Education 1",
-      "BS - Env Sci": "Biology 1",
-      "BS - Mech Eng": "Arts in Economics 1",
-      "BS - Midwifery": "Public Health 1",
-      "BS - Midwifery": "MidWifery",
-      "BS - Nursing": "Nursing 2",
+      'BA - 2ndEd/Biology': 'BA-CHEMISTRY' ,
+      'BA - 2ndEd/Biology': 'BA-MATHEMATICS' ,
+      'BA - 2ndEd/Biology': 'Biology 1' ,
+      'BA - 2ndEd/Chemistry': 'BA-CHEMISTRY' ,
+      'BA - 2ndEd/Chemistry': 'BA-ENGL/LIT' ,
+      'BA - 2ndEd/Chemistry': 'Chemistry 1' ,
+      'BA - 2ndEd/Chemistry': 'Early Childhood Education and Development 4' ,
+      'BA - 2ndEd/Chemistry': 'Nursing 1' ,
+      'BA - 2ndEd/Chemistry': 'Public Health 1' ,
+      'BA - 2ndEd/Eng Lit': 'BA-ENGL/LIT' ,
+      'BA - 2ndEd/Eng Lit': 'BA-PRIMARY EDUCATION' ,
+      'BA - 2ndEd/Eng Lit': 'Business Administration 1' ,
+      'BA - 2ndEd/Eng Lit': 'Early Childhood Education and Development 5' ,
+      'BA - 2ndEd/Eng Lit': 'English 1' ,
+      'BA - 2ndEd/Eng Lit': 'Mathematics 1' ,
+      'BA - 2ndEd/Eng Lit': 'Public Administration 1' ,
+      'BA - 2ndEd/History': 'BA-CHEMISTRY' ,
+      'BA - 2ndEd/History': 'BA-HISTORY' ,
+      'BA - 2ndEd/History': 'BA-PRIMARY EDUCATION' ,
+      'BA - 2ndEd/History': 'Public Administration 1' ,
+      'BA - 2ndEd/Math': 'Agriculture 1' ,
+      'BA - 2ndEd/Math': 'BA-ENGL/LIT' ,
+      'BA - 2ndEd/Math': 'BA-MATHEMATICS' ,
+      'BA - 2ndEd/Math': 'BA-PRIMARY EDUCATION' ,
+      'BA - 2ndEd/Math': 'Early Childhood Education and Development 7' ,
+      'BA - 2ndEd/Math': 'Mathematics 1' ," "'BA - 2ndEd/Math': 'Nursing 1' ,
+      'BA - Early Child Dev': 'BA-ECD' ,
+      'BA - Early Child Dev': 'BA-GUIDANCE/COUNS' ,
+      'BA - Early Child Dev': 'Civil Engineering 1' ,
+      'BA - Early Child Dev': 'Early Childhood Education and Development 1' ,
+      'BA - Early Child Dev': 'Early Childhood Education and Development 8' ,
+      'BA - Early Child Dev': 'Environmental Science 1' ,
+      'BA - Guidance Counseling': 'BA-ENGL/LIT' ,
+      'BA - Guidance Counseling': 'BA-GUIDANCE/COUNS' ,
+      'BA - Guidance Counseling': 'BA-MATHEMATICS' ,
+      'BA - Guidance Counseling': 'Early Childhood Education and Development 8' ,
+      'BA - Guidance Counseling': 'Public Health 1' ,
+      'BA - Primary Ed': 'Arts in Economics 1' ,
+      'BA - Primary Ed': 'BA-ECD' ,
+      'BA - Primary Ed': 'BA-PRIMARY EDUCATION' ,
+      'BA - Primary Ed': 'Early Childhood Education and Development 2' ,
+      'BA - Psychology': 'Arts in Economics 1' ,
+      'BA - Psychology': 'Psychology 1' ,
+      'BA - Psychology': 'Public Administration 1' ,
+      'BA - Psychology': 'Public Health 1' ,
+      'BBA - Accounting': 'Accounting 1' ,
+      'BBA - Accounting': 'Agriculture 1' ,
+      'BBA - Accounting': 'Arts in Economics 1' ,
+      'BBA - Accounting': 'Banking and Finance 1' ,
+      'BBA - Accounting': 'Business Administration 1' ,
+      'BBA - Accounting': 'Computer Science 1' ,
+      'BBA - Accounting': 'Public Administration 1' ,
+      'BBA - Banking & Finance': 'Accounting 1' ,
+      'BBA - Banking & Finance': 'Banking and Finance 1' ,
+      'BBA - Banking & Finance': 'Business Administration 1' ,
+      'BBA - Management': 'Accounting 1' ,
+      'BBA - Management': 'Biology 1' ,
+      'BBA - Management': 'Business Administration 1' ,
+      'BBA - Management': 'Civil Engineering 1' ,
+      'BBA - Management': 'Nursing 1' ,
+      'BBA - Management': 'Public Administration 1' ,
+      'BBA - Management': 'Public Health 1' ,
+      'BPA - Management': 'Accounting 1' ,
+      'BPA - Management': 'Arts in Economics 1' ,
+      'BPA - Management': 'Business Administration 1' ,
+      'BPA - Management': 'Chemistry 1' ,
+      'BPA - Management': 'English 1' ,
+      'BPA - Management': 'Psychology 1' ,
+      'BPA - Management': 'Public Administration 1' ,
+      'BPA - Management': 'Public Health 1' ,
+      'BS - Agri': 'Arts in Economics 1' ," "'BS - Agri': 'Accounting 1' ,
+      'BS - Agri': 'Business Administration 1' ,
+      'BS - Agri': 'Public Health 1' ," "'BS - Agri': 'Biology 1' ,
+      'BS - Agro': 'Agriculture 1' ," "'BS - Agro': 'Agriculture 2' ,
+      'BS - Agro': 'Arts in Economics 1' ," "'BS - Agri': 'Agriculture 1' ,
+      'BS - Agro': 'BA-ENGL/LIT' ," "'BA - 2ndEd/Biology': 'BA-BIOLOGY' ,
+      'BS - Applied Agr': 'Agriculture 1' ,
+      'BS - Applied Agr': 'Computer Science 1' ,
+      'BS - Biology': 'Arts in Economics 1' ," "'BS - Biology': 'Nursing 1' ,
+      'BS - Biology': 'BA-BIOLOGY' ,
+      'BS - Biology': 'BA-HISTORY' ,
+      'BS - Biology': 'Biology 1' ," "'BS - Biology': 'Public Health 1' ,
+      'BS - Biology': 'Business Administration 1' ,
+      'BS - Civil Eng': 'Arts in Economics 1' ,
+      'BS - Civil Eng': 'Civil Engineering 1' ,
+      'BS - Civil Eng': 'English 1' ,
+      'BS - Computer Sci': 'Arts in Economics 1' ,
+      'BS - Computer Sci': 'Business Administration 1' ,
+      'BS - Computer Sci': 'Civil Engineering 1' ,
+      'BS - Computer Sci': 'Computer Networks and Security Engineering 1' ,
+      'BS - Computer Sci': 'Computer Science 1' ,
+      'BS - Computer Sci': 'Electrical Engineering 1' ,
+      'BS - Computer Sci': 'Mechanical Engineering 1' ,
+      'BS - Computer Sci': 'Nursing 1' ,
+      'BS - Computer Sci': 'Public Administration 1' ,
+      'BS - Economics': 'Accounting 1' ," "'BS - Economics': 'BA-ECD' ,
+      'BS - Economics': 'Agriculture 1' ,
+      'BS - Economics': 'Arts in Economics 1' ,
+      'BS - Economics': 'Business Administration 1' ,
+      'BS - Economics': 'Computer Science 1' ,
+      'BS - Economics': 'Public Administration 1' ,
+      'BS - Elec Eng': 'Accounting 1' ,
+      'BS - Elec Eng': 'Civil Engineering 1' ,
+      'BS - Elec Eng': 'Electrical Engineering 1' ,
+      'BS - Env Sci': 'Arts in Economics 1' ,
+      'BS - Env Sci': 'Biology 1' ,
+      'BS - Env Sci': 'Business Administration 1' ,
+      'BS - Env Sci': 'Civil Engineering 1' ,
+      'BS - Env Sci': 'Environmental Science 1' ,
+      'BS - Env Sci': 'Public Health 1' ,
+      'BS - Mech Eng': 'Arts in Economics 1' ,
+      'BS - Mech Eng': 'Civil Engineering 1' ,
+      'BS - Mech Eng': 'Mechanical Engineering 1' ,
+      'BS - Midwifery': 'Certified MidWives 1' ,
+      'BS - Midwifery': 'Nursing 1' ," "'BS - Midwifery': 'MIDWifery' ,
+      'BS - Midwifery': 'Public Health 1' ," "'BS - Midwifery': 'MidWifery' ,
+      'BS - Nursing': 'Biology 1' ," "'BS - Nursing': 'Arts in Economics 1' ,
+      'BS - Nursing': 'Nursing 1' ," "'BS - Nursing': 'Public Health 1' ,
+      'BS - Nursing': 'Nursing 2' ,
+      'BS - Nursing': 'Public Administration 1' ,
+      'BS - Public Health': 'Arts in Economics 1' ,
+      'BS - Public Health': 'Business Administration 1' ,
+      'BS - Public Health': 'English 1' ,
+      'BS - Public Health': 'Environmental Science 1' ,
+      'BS - Public Health': 'Environmental health' ,
+      'BS - Public Health': 'Nursing 1' ,
+      'BS - Public Health': 'Public Health 1' ,
+      'COBA - GEN': 'General Education 1' ,
+      'WVSTU - GEN': 'Arts in Economics 1' ,
+      'WVSTU - GEN': 'Business Administration 1' ,
+      'WVSTU - GEN': 'Public Health 1' ,
   }
 #+END_SRC
+
+#+RESULTS:
+:results:
+:end:
 
 #+BEGIN_SRC python :results output
   _store = {}
@@ -3909,181 +3527,42 @@ pcur = {'WVSTU - GEN': 'Business Administration 1' ,
 
 #+RESULTS:
 :results:
-{'Accounting 1': ['BS - Agri', 'BBA - Banking & Finance', 'BS - Elec Eng'],
- 'Arts in Economics 1': ['WVSTU - GEN',
-                         'BA - Primary Ed',
-                         'BS - Civil Eng',
-                         'BS - Mech Eng',
-                         'BS - Public Health'],
- 'BA-CHEMISTRY': ['BA - 2ndEd/History'],
+{'Agriculture 1': [' BS - Agri'],
+ 'Agriculture 2': [' BS - Agro'],
+ 'BA-BIOLOGY': [' BA - 2ndEd/Biology'],
+ 'BA-ECD': [' BS - Economics'],
  'BA-ENGL/LIT': ['BS - Agro'],
- 'BA-MATHEMATICS': ['BA - 2ndEd/Biology'],
- 'BA-PRIMARY EDUCATION': ['BA - 2ndEd/Math'],
- 'Biology 1': ['BS - Env Sci'],
- 'Business Administration 1': ['BA - 2ndEd/Eng Lit'],
- 'Civil Engineering 1': ['BS - Computer Sci'],
- 'Computer Science 1': ['BBA - Accounting', 'BS - Applied Agr'],
- 'Early Childhood Education and Development 8': ['BA - Guidance Counseling'],
+ 'Biology 1': ['BA - 2ndEd/Biology'],
+ 'Business Administration 1': ['BBA - Banking & Finance', 'BS - Biology'],
+ 'Computer Science 1': ['BS - Applied Agr'],
+ 'Early Childhood Education and Development 2': ['BA - Primary Ed'],
+ 'Electrical Engineering 1': ['BS - Elec Eng'],
+ 'English 1': ['BS - Civil Eng'],
  'Environmental Science 1': ['BA - Early Child Dev'],
  'General Education 1': ['COBA - GEN'],
- 'MidWifery': ['BS - Midwifery'],
- 'Nursing 1': ['BS - Biology'],
- 'Nursing 2': ['BS - Nursing'],
- 'Public Administration 1': ['BS - Economics'],
+ 'Mathematics 1': ['BA - 2ndEd/Math'],
+ 'Mechanical Engineering 1': ['BS - Mech Eng'],
+ 'MidWifery': [' BS - Midwifery'],
+ 'Nursing 1': [' BA - 2ndEd/Math'],
+ 'Public Administration 1': ['BA - 2ndEd/Eng Lit',
+                             'BA - 2ndEd/History',
+                             'BBA - Accounting',
+                             'BS - Computer Sci',
+                             'BS - Economics',
+                             'BS - Nursing'],
  'Public Health 1': ['BA - 2ndEd/Chemistry',
+                     'BA - Guidance Counseling',
                      'BA - Psychology',
                      'BBA - Management',
-                     'BPA - Management']}
+                     'BPA - Management',
+                     'BS - Agri',
+                     ' BS - Biology',
+                     'BS - Env Sci',
+                     'BS - Midwifery',
+                     ' BS - Nursing',
+                     'BS - Public Health',
+                     'WVSTU - GEN']}
 :end:
-
-#+BEGIN_SRC python
-  pcur = {
-      "WVSTU - GEN": "Business Administration 1",
-      "WVSTU - GEN": "Public Health 1",
-      "WVSTU - GEN": "Arts in Economics 1",
-      "BBA - Accounting": "Business Administration 1",
-      "BBA - Accounting": "Accounting 1",
-      "BBA - Accounting": "Public Administration 1",
-      "BBA - Accounting": "Agriculture 1",
-      "BS - Agro": "Arts in Economics 1",
-      "BS - Agri": "Agriculture 1",
-      "BS - Agro": "Agriculture 1",
-      "BS - Agro": "Agriculture 2",
-      "BS - Agro": "BA-ENGL/LIT",
-      "BA - 2ndEd/Biology": "BA-BIOLOGY",
-      "BA - 2ndEd/Biology": "Biology 1",
-      "BA - 2ndEd/Biology": "BA-CHEMISTRY",
-      "BA - 2ndEd/Biology": "BA-MATHEMATICS",
-      "BA - 2ndEd/Chemistry": "BA-CHEMISTRY",
-      "BA - 2ndEd/Chemistry": "Chemistry 1",
-      "BA - 2ndEd/Chemistry": "Nursing 1",
-      "BA - 2ndEd/Chemistry": "BA-ENGL/LIT",
-      "BA - 2ndEd/Eng Lit": "BA-ENGL/LIT",
-      "BA - 2ndEd/Eng Lit": "English 1",
-      "BA - 2ndEd/Eng Lit": "Early Childhood Education and Development 5",
-      "BA - 2ndEd/Eng Lit": "Mathematics 1",
-      "BA - 2ndEd/Eng Lit": "BA-PRIMARY EDUCATION",
-      "BA - 2ndEd/Eng Lit": "Public Administration 1",
-      "BA - 2ndEd/History": "BA-HISTORY",
-      "BA - 2ndEd/History": "BA-PRIMARY EDUCATION",
-      "BA - 2ndEd/Math": "Early Childhood Education and Development 7",
-      "BA - 2ndEd/Math": "BA-MATHEMATICS",
-      "BA - 2ndEd/Math": "BA-ENGL/LIT",
-      "BA - 2ndEd/Math": "Agriculture 1",
-      "BA - 2ndEd/Math": "Mathematics 1",
-      "BA - 2ndEd/Math": "Nursing 1",
-      "BA - 2ndEd/Math": "BA-PRIMARY EDUCATION",
-      "BA - Early Child Dev": "BA-ECD",
-      "BA - Early Child Dev": "Early Childhood Education and Development 1",
-      "BA - Early Child Dev": "Civil Engineering 1",
-      "BA - Early Child Dev": "BA-GUIDANCE/COUNS",
-      "BA - Early Child Dev": "Early Childhood Education and Development 8",
-      "BS - Economics": "Computer Science 1",
-      "BS - Economics": "Arts in Economics 1",
-      "BS - Economics": "Accounting 1",
-      "BS - Economics": "BA-ECD",
-      "BA - Guidance Counseling": "BA-GUIDANCE/COUNS",
-      "BA - Guidance Counseling": "Public Health 1",
-      "BA - Guidance Counseling": "BA-MATHEMATICS",
-      "BA - Guidance Counseling": "BA-ENGL/LIT",
-      "BA - Guidance Counseling": "Early Childhood Education and Development 8",
-      "BA - Primary Ed": "BA-PRIMARY EDUCATION",
-      "BA - Primary Ed": "BA-ECD",
-      "BA - Primary Ed": "Early Childhood Education and Development 2",
-      "BA - Primary Ed": "Arts in Economics 1",
-      "BA - Psychology": "Psychology 1",
-      "BA - Psychology": "Arts in Economics 1",
-      "BA - Psychology": "Public Administration 1",
-      "BA - 2ndEd/Chemistry": "Early Childhood Education and Development 4",
-      "BA - 2ndEd/Eng Lit": "Business Administration 1",
-      "BA - 2ndEd/History": "Public Administration 1",
-      "BA - 2ndEd/History": "BA-CHEMISTRY",
-      "BBA - Accounting": "Banking and Finance 1",
-      "BBA - Accounting": "Arts in Economics 1",
-      "BBA - Accounting": "Computer Science 1",
-      "BBA - Banking & Finance": "Banking and Finance 1",
-      "BBA - Banking & Finance": "Business Administration 1",
-      "BBA - Banking & Finance": "Accounting 1",
-      "BBA - Management": "Business Administration 1",
-      "BBA - Management": "Public Administration 1",
-      "BPA - Management": "Arts in Economics 1",
-      "BPA - Management": "Business Administration 1",
-      "BPA - Management": "Chemistry 1",
-      "BPA - Management": "Public Administration 1",
-      "BPA - Management": "English 1",
-      "BPA - Management": "Accounting 1",
-      "BPA - Management": "Psychology 1",
-      "BPA - Management": "Public Health 1",
-      "BS - Civil Eng": "Civil Engineering 1",
-      "BS - Civil Eng": "English 1",
-      "BS - Civil Eng": "Arts in Economics 1",
-      "BS - Elec Eng": "Electrical Engineering 1",
-      "BS - Elec Eng": "Civil Engineering 1",
-      "BS - Elec Eng": "Accounting 1",
-      "BS - Mech Eng": "Mechanical Engineering 1",
-      "BS - Mech Eng": "Civil Engineering 1",
-      "BS - Nursing": "Public Administration 1",
-      "BS - Nursing": "Nursing 1",
-      "BS - Nursing": "Public Health 1",
-      "BS - Nursing": "Biology 1",
-      "BS - Nursing": "Arts in Economics 1",
-      "BS - Applied Agr": "Agriculture 1",
-      "BS - Applied Agr": "Computer Science 1",
-      "BS - Biology": "Biology 1",
-      "BS - Biology": "Public Health 1",
-      "BS - Biology": "BA-HISTORY",
-      "BS - Biology": "Business Administration 1",
-      "BS - Biology": "BA-BIOLOGY",
-      "BS - Biology": "Arts in Economics 1",
-      "BS - Biology": "Nursing 1",
-      "BA - 2ndEd/Chemistry": "Public Health 1",
-      "BS - Public Health": "Public Health 1",
-      "BS - Computer Sci": "Computer Science 1",
-      "BS - Computer Sci": "Electrical Engineering 1",
-      "BS - Computer Sci": "Nursing 1",
-      "BS - Computer Sci": "Mechanical Engineering 1",
-      "BS - Computer Sci": "Arts in Economics 1",
-      "BS - Computer Sci": "Public Administration 1",
-      "BS - Computer Sci": "Computer Networks and Security Engineering 1",
-      "BS - Economics": "Agriculture 1",
-      "BS - Env Sci": "Environmental Science 1",
-      "BS - Env Sci": "Public Health 1",
-      "BS - Env Sci": "Civil Engineering 1",
-      "BS - Env Sci": "Arts in Economics 1",
-      "BS - Env Sci": "Business Administration 1",
-      "BS - Agri": "Business Administration 1",
-      "BS - Agri": "Public Health 1",
-      "BS - Agri": "Biology 1",
-      "BS - Agri": "Arts in Economics 1",
-      "BS - Agri": "Accounting 1",
-      "BS - Midwifery": "Nursing 1",
-      "BS - Midwifery": "MIDWifery",
-      "BA - Psychology": "Public Health 1",
-      "BS - Public Health": "Environmental Science 1",
-      "BS - Public Health": "Nursing 1",
-      "BS - Public Health": "Business Administration 1",
-      "BS - Public Health": "English 1",
-      "BS - Public Health": "Environmental health",
-      "BS - Public Health": "Arts in Economics 1",
-      "BBA - Management": "Civil Engineering 1",
-      "BBA - Management": "Nursing 1",
-      "BBA - Management": "Accounting 1",
-      "BBA - Management": "Biology 1",
-      "BBA - Management": "Public Health 1",
-      "BS - Computer Sci": "Business Administration 1",
-      "BS - Computer Sci": "Civil Engineering 1",
-      "BS - Midwifery": "Certified MidWives 1",
-      "BA - Early Child Dev": "Environmental Science 1",
-      "BS - Economics": "Business Administration 1",
-      "BS - Economics": "Public Administration 1",
-      "COBA - GEN": "General Education 1",
-      "BS - Env Sci": "Biology 1",
-      "BS - Mech Eng": "Arts in Economics 1",
-      "BS - Midwifery": "Public Health 1",
-      "BS - Midwifery": "MidWifery",
-      "BS - Nursing": "Nursing 2",
-  }
-#+END_SRC
 
 *** Student Grades and Curriculum
 #+BEGIN_SRC python :results silent
@@ -4109,9 +3588,1087 @@ pcur = {'WVSTU - GEN': 'Business Administration 1' ,
   rgd.to_csv("../Drafts/grades-registry.csv", index=False)
 #+END_SRC
 
-** College departments Course
+** Grades- [ ]student_id :: TU-12345
+  - [ ] <- curriculum_id :: BSc Agri...
+- Section ID :: 24-25s1_MATH101_s1
+  - [ ] semester_id, 24-25s1 ...
+  - Curriculum course
+    - curriculum
+    - [ ] course, MATH101 ...
+  - [ ] Number, s1 ... 
+- [ ] grade_id ::  a ...
+
+The problem is to be sure of the Curriculum because we only have the CourseCode (Dept_code) and CourseNo.
+The way to solve this is to get the curriculum from the studentid and the ay.
+or throught the course code
+#+BEGIN_SRC python :results value
+  cols = ["AcademicYear","Semester","StudentID","CourseCode","CourseNo","Section","Grade","CrHrs","Points"]
+  gdf = pd.concat([ods,gds])[cols].dropna(how='all').drop_duplicates()
+  # gds = gds[cols].dropna(how='all')
+  # ods = ods[cols].dropna(how='all')    
+  # grades for 2023/2025
+  #gum.groupby('AcademicYear')['StudentID'].agg(len)
+  # print(ods.columns, "\n\n", gds.columns)
+  gdf.head(2), len(gdf)
+#+END_SRC
+
+#+RESULTS:
+:results:
+(  AcademicYear  Semester StudentID CourseCode  ... Section  Grade CrHrs  Points
+0    2014/2015         2     13425       MATH  ...     1.0      C   3.0     2.0
+1    2013/2014         2       921       HIST  ...     1.0      C   3.0     2.0
+
+[2 rows x 9 columns], 198842)
+:end:
 
 
+*** Looking at the grades
+#+BEGIN_SRC python
+  cols = ['AcademicYear','Semester','CourseCode', 'CourseNo','Section','StudentID']
+  print(gdf[:5].loc[:,cols].to_string())
+#+END_SRC
+
+#+RESULTS:
+:results:
+  AcademicYear  Semester CourseCode CourseNo  Section StudentID
+0    2014/2015         2       MATH      101      1.0     13425
+1    2013/2014         2       HIST      102      1.0       921
+2    2012/2013         1       EENG      314      1.0  TU-00002
+3    2010/2011         2        AGR      102      1.0  TU-00007
+4    2009/2010         2        BIO      101      1.0  TU-00014
+:end:
+
+*** Looking for a curriculum for the course_short_code
+#+BEGIN_SRC python :results silent
+  col1 = ['Curriculum','CourseCode','CourseNo']
+  cols = ['Curriculum',"ShortCode"]  
+  col = ['CourseCode', 'CourseNo']
+  
+  curriculums = xlss['UM_CurriculumCourses'].copy()
+  curriculums.loc[:, "ShortCode"] = curriculums.CourseCode + curriculums.CourseNo
+  gdf.loc[:,'ShortCode'] =  gdf.CourseCode + gdf.CourseNo
+  
+#+END_SRC
+
+**** Shortcode to curriculum
+ #+BEGIN_SRC python :results value
+   s2c = curriculums.groupby("ShortCode")["Curriculum"].agg(
+       curriculum=set, ncur="nunique"
+   ).sort_values("ncur")
+   s2c
+ #+END_SRC
+
+ #+RESULTS:
+ :results:
+                                                   curriculum  ncur
+ ShortCode                                                         
+ PH418                                      {Public Health 1}     1
+ ENVS305                            {Environmental Science 1}     1
+ ENVS304                            {Environmental Science 1}     1
+ ENVS303                            {Environmental Science 1}     1
+ ENVS302                            {Environmental Science 1}     1
+ ...                                                      ...   ...
+ PSY101     {Early Childhood Education and Development 8, ...    37
+ CSE101     {Early Childhood Education and Development 8, ...    37
+ MATH102    {Early Childhood Education and Development 8, ...    39
+ ENVS201    {Early Childhood Education and Development 8, ...    39
+ MATH101    {Early Childhood Education and Development 8, ...    42
+
+ [602 rows x 2 columns]
+ :end:
+**** Curriculum to ShortCode
+
+  #+BEGIN_SRC python :results value
+    c2s = curriculums.groupby("Curriculum")["ShortCode"].agg(
+        shortcodes=lambda x: set(x), n_shortcodes=len
+    ).sort_values(by='n_shortcodes',ascending=False)
+    c2s
+  #+END_SRC
+
+  #+RESULTS:
+  :results:
+                                                                                       shortcodes  n_shortcodes
+  Curriculum                                                                                                   
+  Public Administration 1                       {PADM429, ECON303, EED301, BUSA410, FREN202, P...            77
+  Banking and Finance 1                         {ACCT201, BFIN403, ECON201, BIO101, ECON301, P...            75
+  Business Administration 1                     {ACCT201, ECON201, BIO101, ECON301, BUSA415, P...            73
+  Arts in Economics 1                           {ACCT201, ECON201, BIO101, ECON301, SPAN202, B...            73
+  Mechanical Engineering 1                      {GENG304, MENG308, BIO101, MATH202, MENG402, M...            69
+  BA-GUIDANCE/COUNS                             {GCED486, BIO101, ECD364, EDU354, EDU451, EDU4...            68
+  Accounting 1                                  {ACCT201, BFIN403, ECON201, BIO101, PADM306, S...            67
+  BA-PRIMARY EDUCATION                          {BIO101, EDU477, EDU354, EDU475, SPAN202, ENGL...            67
+  BA-ECD                                        {BIO101, EDU477, EDU354, EDU475, SPAN202, ENGL...            67
+  Civil Engineering 1                           {GENG304, BIO101, MATH202, ENGL102, CENG405, E...            66
+  Electrical Engineering 1                      {BIO101, MATH202, ENGL102, GENG101, GENG203, F...            66
+  Computer Science 1                            {CSENG303, BIO101, MATH202, CSENG301, CSENG401...            66
+  Public Health 1                               {BIO101, PH415, PH418, PH409, ENGL102, PH419, ...            59
+  BA-ENGL/LIT                                   {BIO101, EDU354, EDU475, SPAN202, ENGL102, ENG...            57
+  BA-MATHEMATICS                                {BIO101, EDU354, EDU475, SPAN202, ENGL102, MAT...            56
+  BA-BIOLOGY                                    {BIO376, BIO101, BIO471, EDU354, EDU475, SPAN2...            55
+  Agriculture 1                                 {AGR308, BIO101, AGR425, AGR321, AGR434, AGR20...            54
+  BA-CHEMISTRY                                  {BIO101, EDU354, EDU475, SPAN202, ENGL102, CHE...            54
+  BA-HISTORY                                    {HIST372, BIO101, EDU354, EDU475, HIST376, HIS...            54
+  Agriculture 2                                 {AGR308, AGR454, AGR425, AGR321, BIO101, AGR20...            53
+  Nursing 1                                     {NUR403, BIO101, NUR307, NUR303, NUR200, ENGL1...            53
+  Environmental Science 1                       {BIO101, ENVS407, ENVS311, ENGL102, ENVS401, E...            50
+  Biology 1                                     {BIO101, CHEM201, ENGL102, BIO407, BIO308, BIO...            48
+  Psychology 1                                  {SOC101, PSY308, PSY303, ENGL102, PSY402, PSY4...            48
+  RN Post Basic 1                               {NUR403, BIO101, ENGL102, CHEM104, EED301, BIO...            42
+  Nursing 2                                     {NUR403, BIO101, ENGL102, CHEM104, BIO203, BIO...            39
+  MIDWifery                                     {NUR403, MID311, BIO101, ENGL102, EED301, BIO2...            37
+  Certified MidWives 1                          {BIO101, NUR303, NUR200, ENGL102, CHEM104, MID...            35
+  Mathematics 1                                 {PHYS102, MATH202, SOCI101, ENGL102, EED301, F...            27
+  Chemistry 1                                   {MATH202, SOCI101, CHEM201, ENGL102, EED301, M...            26
+  English 1                                     {ENGL102, EED301, FREN201, ENGL201, EED302, EN...            23
+  Renewable Energy Engineering 1                {MATH202, GENG203, EENG301, EENG401, PHIL102, ...            23
+  Soccer Coaching 1                             {FOCO221, FOCO132, FOCO142, SPMT201, FOCO211, ...            21
+  Computer Networks and Security Engineering 1  {MATH202, GENG203, CSE101, MATH201, MATH302, M...            20
+  Early Childhood Education and Development 7   {CSE101, MATH202, MATH204, MATH201, ENGL102, E...            18
+  Early Childhood Education and Development 5   {CSE101, ENGL471, ENGL371, ENGL102, EED302, EE...            15
+  Early Childhood Education and Development 4   {CSE101, CHEM202, CHEM401, CHEM201, ENGL102, E...            14
+  Early Childhood Education and Development 8   {CSE101, GCED243, ENGL102, EED302, EED301, ENG...            13
+  Early Childhood Education and Development 6   {CSE101, ENGL102, EED302, EED301, ENGL202, HIS...            13
+  General Education 1                           {BIO101, MATH208, FREN202, ENGL204, HIST201, S...            10
+  Early Childhood Education and Development 3   {CSE101, BIO101, EED302, EED301, HIST201, MATH...             9
+  Early Childhood Education and Development 2   {CSE101, EED302, EED301, HIST201, MATH101, MAT...             9
+  Early Childhood Education and Development 1   {CSE101, EED302, EED301, HIST201, MATH101, MAT...             9
+  French 1                                                                     {FREN201, FREN202}             2
+  ME                                                                                       {MEME}             1
+  Public Administration                                                                 {HIST101}             1
+  :end:
+**** Curriculum signature
+#+BEGIN_SRC python :results silence
+  def curriculum_signature(course_catalog: Dict[str, Set[ShortCodeT]]) -> Dict[str, Set[ShortCodeT]]:
+      # normalize to sets once
+  
+  
+      df_counts: Dict[ShortCodeT, int] = {}
+      for codeset in course_catalog.values():
+          for code in codeset:
+              df_counts[code] = df_counts.get(code, 0) + 1
+  
+      unique_sig = {cur: {c for c in codeset if df_counts.get(c, 0) == 1}
+                    for cur, codeset in course_catalog.items()}
+      
+      return unique_sig  
+#+END_SRC
+
+#+BEGIN_SRC python :results output
+  course_catalog = c2s.shortcodes.to_dict()
+  curri_sig = curriculum_signature(course_catalog)
+  pp.pprint(curri_sig)
+#+END_SRC 
+
+#+RESULTS:
+:results:
+{'Accounting 1': {'ACCT314',
+                  'ACCT403',
+                  'ACCT404',
+                  'ACCT405',
+                  'ACCT408',
+                  'ACCT429',
+                  'ACCT430'},
+ 'Agriculture 1': {'AGR317',
+                   'AGR327',
+                   'AGR411',
+                   'AGR424',
+                   'AGR433',
+                   'AGR434',
+                   'AGR465'},
+ 'Agriculture 2': {'AGR454', 'AGR453', 'AGR312', 'AGR413', 'AGR455', 'AGR452'},
+ 'Arts in Economics 1': {'ECON102',
+                         'ECON306',
+                         'ECON307',
+                         'ECON405',
+                         'ECON406',
+                         'ECON407',
+                         'ECON408',
+                         'ECON409',
+                         'ECON410',
+                         'ECON412',
+                         'ECON415',
+                         'ECON429',
+                         'ECON430'},
+ 'BA-BIOLOGY': {'BIO371',
+                'BIO373',
+                'BIO375',
+                'BIO376',
+                'BIO377',
+                'BIO378',
+                'BIO471',
+                'BIO472',
+                'BIO475'},
+ 'BA-CHEMISTRY': {'CHEM371',
+                  'CHEM373',
+                  'CHEM375',
+                  'CHEM376',
+                  'CHEM377',
+                  'CHEM378',
+                  'CHEM473',
+                  'CHEM476'},
+ 'BA-ECD': set(),
+ 'BA-ENGL/LIT': {'EDU383',
+                 'ENGL374',
+                 'ENGL376',
+                 'ENGL377',
+                 'ENGL472',
+                 'ENGL474'},
+ 'BA-GUIDANCE/COUNS': {'ECD364',
+                       'EDU357',
+                       'EDU451',
+                       'EDU483',
+                       'EDU484',
+                       'GCED384',
+                       'GCED455',
+                       'GCED458',
+                       'GCED481',
+                       'GCED482',
+                       'GCED485',
+                       'GCED486'},
+ 'BA-HISTORY': {'HIST371',
+                'HIST372',
+                'HIST373',
+                'HIST374',
+                'HIST376',
+                'HIST377',
+                'HIST471',
+                'HIST472'},
+ 'BA-MATHEMATICS': {'EDU382',
+                    'MATH201E',
+                    'MATH371',
+                    'MATH373',
+                    'MATH375',
+                    'MATH376',
+                    'MATH377',
+                    'MATH378',
+                    'MATH471',
+                    'MATH473',
+                    'MATH474',
+                    'MATH476'},
+ 'BA-PRIMARY EDUCATION': set(),
+ 'Banking and Finance 1': {'BFIN201',
+                           'BFIN202',
+                           'BFIN307',
+                           'BFIN312',
+                           'BFIN404',
+                           'BFIN405',
+                           'BFIN407',
+                           'BFIN408',
+                           'BFIN412',
+                           'BFIN429',
+                           'BFIN430'},
+ 'Biology 1': {'BIO202A',
+               'BIO206',
+               'BIO301',
+               'BIO302',
+               'BIO303',
+               'BIO304',
+               'BIO305',
+               'BIO306',
+               'BIO307',
+               'BIO308',
+               'BIO309',
+               'BIO401',
+               'BIO402',
+               'BIO403',
+               'BIO404',
+               'BIO405',
+               'BIO406',
+               'BIO407',
+               'BIO408',
+               'MATH211'},
+ 'Business Administration 1': {'BUSA404',
+                               'BUSA406',
+                               'BUSA411',
+                               'BUSA413',
+                               'BUSA415',
+                               'BUSA429',
+                               'BUSA430'},
+ 'Certified MidWives 1': {'MIDW204',
+                          'MIDW300',
+                          'MIDW305',
+                          'MIDW306',
+                          'MIDW307'},
+ 'Chemistry 1': set(),
+ 'Civil Engineering 1': {'CENG302',
+                         'CENG401A',
+                         'CENG402',
+                         'CENG403',
+                         'CENG405',
+                         'CENG405A',
+                         'CENG406',
+                         'CENG407A',
+                         'CENG408',
+                         'CENG409',
+                         'CENG410',
+                         'CENG501',
+                         'CENG502',
+                         'CENG503',
+                         'CENG504',
+                         'CENG505',
+                         'CENG507',
+                         'CENG508',
+                         'CENG510'},
+ 'Computer Networks and Security Engineering 1': set(),
+ 'Computer Science 1': {'CHN101',
+                        'CHN102',
+                        'CSENG301',
+                        'CSENG302',
+                        'CSENG303',
+                        'CSENG304',
+                        'CSENG305',
+                        'CSENG306',
+                        'CSENG307',
+                        'CSENG308',
+                        'CSENG309',
+                        'CSENG310',
+                        'CSENG401',
+                        'CSENG402',
+                        'CSENG403',
+                        'CSENG404',
+                        'CSENG405',
+                        'CSENG406',
+                        'CSENG407',
+                        'CSENG408',
+                        'CSENG409',
+                        'CSENG410',
+                        'CSENG501',
+                        'CSENG502',
+                        'CSENG503',
+                        'CSENG504',
+                        'CSENG505',
+                        'CSENG506'},
+ 'Early Childhood Education and Development 1': set(),
+ 'Early Childhood Education and Development 2': {'PEDU221'},
+ 'Early Childhood Education and Development 3': {'BIO102'},
+ 'Early Childhood Education and Development 4': set(),
+ 'Early Childhood Education and Development 5': set(),
+ 'Early Childhood Education and Development 6': set(),
+ 'Early Childhood Education and Development 7': set(),
+ 'Early Childhood Education and Development 8': {'GCED243'},
+ 'Electrical Engineering 1': {'EENG302',
+                              'EENG303',
+                              'EENG304',
+                              'EENG308',
+                              'EENG402.',
+                              'EENG403',
+                              'EENG404',
+                              'EENG406',
+                              'EENG407A',
+                              'EENG408',
+                              'EENG409',
+                              'EENG500',
+                              'EENG501',
+                              'EENG502',
+                              'EENG503',
+                              'EENG504',
+                              'EENG505',
+                              'EENG506',
+                              'EENG507',
+                              'EENG508',
+                              'EENG509',
+                              'GENG301A'},
+ 'English 1': {'ENGL104', 'ENGL372', 'ENGL203'},
+ 'Environmental Science 1': {'ENVS202',
+                             'ENVS204',
+                             'ENVS206',
+                             'ENVS208',
+                             'ENVS301',
+                             'ENVS302',
+                             'ENVS303',
+                             'ENVS304',
+                             'ENVS305',
+                             'ENVS306',
+                             'ENVS307',
+                             'ENVS308',
+                             'ENVS309',
+                             'ENVS311',
+                             'ENVS312',
+                             'ENVS318',
+                             'ENVS401',
+                             'ENVS402',
+                             'ENVS403',
+                             'ENVS404',
+                             'ENVS405',
+                             'ENVS406',
+                             'ENVS407',
+                             'ENVS408',
+                             'ENVS419',
+                             'ENVS420',
+                             'EVS411'},
+ 'French 1': set(),
+ 'General Education 1': set(),
+ 'ME': {'MEME'},
+ 'MIDWifery': {'MID204',
+               'MID301',
+               'MID303',
+               'MID304',
+               'MID306',
+               'MID311',
+               'MID402'},
+ 'Mathematics 1': {'PHYS102', 'MATH408'},
+ 'Mechanical Engineering 1': {'GENG302',
+                              'MENG301',
+                              'MENG302',
+                              'MENG308',
+                              'MENG401A',
+                              'MENG402',
+                              'MENG403',
+                              'MENG404',
+                              'MENG405',
+                              'MENG406',
+                              'MENG407',
+                              'MENG408',
+                              'MENG410',
+                              'MENG411',
+                              'MENG500',
+                              'MENG501',
+                              'MENG503',
+                              'MENG504',
+                              'MENG505',
+                              'MENG506',
+                              'MENG507',
+                              'MENG508',
+                              'MENG509',
+                              'MENG510',
+                              'MENG511'},
+ 'Nursing 1': {'NUR201',
+               'NUR202',
+               'NUR204',
+               'NUR301',
+               'NUR305',
+               'NUR306',
+               'NUR307'},
+ 'Nursing 2': {'NUR410'},
+ 'Psychology 1': {'BIOL101',
+                  'CHN201',
+                  'CHN202',
+                  'COM101',
+                  'ENG201',
+                  'ENG204',
+                  'GLEB201',
+                  'GLEB202',
+                  'PED101',
+                  'PED102',
+                  'PSY203',
+                  'PSY204',
+                  'PSY206',
+                  'PSY301',
+                  'PSY302',
+                  'PSY303',
+                  'PSY304',
+                  'PSY305',
+                  'PSY306',
+                  'PSY307',
+                  'PSY308',
+                  'PSY309',
+                  'PSY311',
+                  'PSY312',
+                  'PSY320',
+                  'PSY401',
+                  'PSY402',
+                  'PSY403',
+                  'PSY404',
+                  'PSY405',
+                  'PSY406',
+                  'PSY407',
+                  'PSY408',
+                  'PSY419',
+                  'PSY420',
+                  'PSYC101',
+                  'SOC101'},
+ 'Public Administration': set(),
+ 'Public Administration 1': {'BUSA308',
+                             'BUSA410',
+                             'PADM201',
+                             'PADM304',
+                             'PADM311',
+                             'PADM401',
+                             'PADM402',
+                             'PADM403',
+                             'PADM404',
+                             'PADM405',
+                             'PADM417',
+                             'PADM420',
+                             'PADM429',
+                             'PADM430'},
+ 'Public Health 1': {'PH202',
+                     'PH301',
+                     'PH302',
+                     'PH304',
+                     'PH305',
+                     'PH306',
+                     'PH307',
+                     'PH308',
+                     'PH309',
+                     'PH312',
+                     'PH314',
+                     'PH316',
+                     'PH320',
+                     'PH401',
+                     'PH403',
+                     'PH405',
+                     'PH406',
+                     'PH407',
+                     'PH408',
+                     'PH409',
+                     'PH411',
+                     'PH413',
+                     'PH414A',
+                     'PH415',
+                     'PH416',
+                     'PH417',
+                     'PH418',
+                     'PH419',
+                     'PH421',
+                     'PH423',
+                     'PH425'},
+ 'RN Post Basic 1': {'NUR408'},
+ 'Renewable Energy Engineering 1': {'EENG407', 'EENG402'},
+ 'Soccer Coaching 1': {'FOCO101',
+                       'FOCO102',
+                       'FOCO112',
+                       'FOCO121',
+                       'FOCO122',
+                       'FOCO132',
+                       'FOCO141',
+                       'FOCO142',
+                       'FOCO152',
+                       'FOCO201',
+                       'FOCO202',
+                       'FOCO211',
+                       'FOCO212',
+                       'FOCO221',
+                       'FOCO222',
+                       'FOCO232',
+                       'SPMT201',
+                       'SPMT202',
+                       'SPMT211',
+                       'SPMT300'}}
+:end:
+** Get curriculums for StudentID
+
+*** Get StudentID Courses
+#+BEGIN_SRC python :results value
+  # Term label: "23-24s2" from "2023/2024" + semester 2
+  gdf["Term"] = (
+      gdf["AcademicYear"].str.slice(2, 4)
+      + "-"
+      + gdf["AcademicYear"].str.slice(7, 9)
+      + "s"
+      + gdf["Semester"].astype(int).astype(str)
+  )
+  #  gdf = df.drop(columns=['AcademicYear','Semester'])
+  gdf = gdf.drop(index=gdf.index[gdf.StudentID.map(len).eq(0)])
+  gdf.head(2)
+#+END_SRC    
+
+#+RESULTS:
+:results:
+  AcademicYear  Semester StudentID CourseCode  ... Grade  CrHrs Points     Term
+0    2014/2015         2     13425       MATH  ...     C    3.0    2.0  14-15s2
+1    2013/2014         2       921       HIST  ...     C    3.0    2.0  13-14s2
+
+[2 rows x 10 columns]
+:end:
+
+#+BEGIN_SRC python :results value
+  gss = df.groupby("StudentID").agg(
+      crhs=("CrHrs", "sum"),
+      n_terms=("Term", "nunique"),
+      n_shortcodes=("ShortCode", "nunique"),
+      shortcodes=("ShortCode", lambda s: set(s)),
+      years=("Term", lambda s: set(s)),
+  )
+  
+  cols = ["crhs", "n_terms", "n_shortcodes", "shortcodes"] # , "years"]
+  gss = gss.sort_values(by=["crhs", "n_shortcodes", "n_terms"], ascending=False).loc[
+      :, cols
+  ]
+  gss.head(2)
+#+END_SRC  
+
+#+RESULTS:
+:results:
+            crhs  ...                                         shortcodes
+StudentID         ...                                                   
+TU-00532   266.0  ...  {PADM429, AGR312, EED301, AGR101, AGR302, AGR3...
+TU-00665   254.0  ...  {HIST475, MATH103, EED301, EVS402, FREN202, EN...
+
+[2 rows x 4 columns]
+:end:
+*** For each student get a curriculum
+**** fuzzy matching (idf)
+      #+BEGIN_SRC python :results silent
+    ShortCodeT = str
+  
+  
+    def get_idf_cur(
+        student_shortcodes: Set[ShortCodeT],
+        course_catalog: Dict[str, Set[ShortCodeT]],
+        top_n: int = 2,
+    ) -> List[Tuple[str, float]]:
+        """
+        Return the top_n most likely curricula for this student's courses.
+  
+        Score = IDF-weighted coverage of the student's observed courses:
+            score(cur) = sum(idf(code) for code in student ∩ cur) / sum(idf(code) for code in student)
+  
+        So rare/diagnostic courses count more than common gen-ed courses.
+        top_n: a positive integer
+        course_catalogue: is a Dict with keys curriculum and values set of shortcodes
+        student_shortcodes: a sequence of the student shortcodes
+        """
+        n_cur = len(course_catalog)
+  
+        # Document frequency: in how many curricula does a code appear?
+        df_counts: dict[str, int] = {}
+        for cset in course_catalog.values():
+            for code in cset:
+                df_counts[code] = df_counts.get(code, 0) + 1
+  
+        def idf(code: str) -> float:
+            # IDF, always > 0
+            df = df_counts.get(code, 0)
+            return math.log((n_cur + 1) / (df + 1)) + 1.0
+  
+        denom = sum(idf(code) for code in student_shortcodes)
+        if denom == 0:
+            return []
+  
+        scored: List[Tuple[str, float, int]] = []
+        for cur, course_codes in course_catalog.items():
+            inter = student_shortcodes & course_codes
+            if not inter:
+                continue
+            score = sum(idf(code) for code in inter) / denom
+            scored.append((cur, score, len(inter)))
+  
+        scored.sort(key=lambda t: (-t[1], -t[2], t[0]))
+  
+        return [(cur, round(score, 2)) for (cur, score, _k) in scored[:top_n]]
+  
+  
+    def get_cur_by_signature(
+        student_shortcodes: Set[ShortCodeT],
+        curri_sig: Dict[str, Set[ShortCodeT]],
+        top_n: int = 2,
+    ) -> List[Tuple[str, float]]:
+        """
+        Score = matched_unique / total_unique for that curriculum.
+        If a curriculum has 0 unique codes, its score is 0 (no signal).
+        """
+        scored: List[Tuple[str, float, int, int]] = []
+  
+        for cur, sig in curri_sig.items():
+            if not sig:
+                continue
+            hit = len(sig & student_shortcodes)
+            if hit == 0:
+                continue
+            score = hit / len(sig)
+            scored.append((cur, score, hit, len(sig)))
+  
+        scored.sort(key=lambda t: (-t[1], -t[2], -t[3], t[0]))
+        return [(cur, round(score, 2)) for cur, score, _hit, _tot in scored[:top_n]]
+    #+END_SRC
+
+
+#+BEGIN_SRC python :results value
+  student_id = "TU-00665"
+  student_id1 = "TU-00709"
+  shortcodes = gss.loc[student_id1, "shortcodes"]
+  
+  best = get_idf_cur(
+      student_shortcodes=shortcodes,
+      course_catalog=course_catalog,
+      top_n=5,
+  )
+  best
+#+END_SRC
+
+#+RESULTS:
+:results:
+[('Public Administration 1', 0.35), ('Arts in Economics 1', 0.35), ('Banking and Finance 1', 0.35), ('Business Administration 1', 0.33), ('Accounting 1', 0.31)]
+:end:
+
+Even with many terms and shortcodes it can be difficults to find the curriculum of a student eg. TU-00709. Still the measure seems robust
+
+**** Strict matching
+
+#+BEGIN_SRC python :results silent
+def get_cur_by_unique(
+    student_shortcodes: Set[ShortCodeT],
+    unique_sig: Dict[str, Set[ShortCodeT]],
+    top_n: int = 2,
+) -> List[Tuple[str, float]]:
+    """
+    Score = matched_unique / total_unique for that curriculum.
+    If a curriculum has 0 unique codes, its score is 0 (no signal).
+    """
+    scored: List[Tuple[str, float, int, int]] = []
+
+    for cur, sig in unique_sig.items():
+        if not sig:
+            continue
+        hit = len(sig & student_shortcodes)
+        if hit == 0:
+            continue
+        score = hit / len(sig)
+        scored.append((cur, score, hit, len(sig)))
+
+    scored.sort(key=lambda t: (-t[1], -t[2], -t[3], t[0]))
+    return [(cur, round(score, 2)) for cur, score, _hit, _tot in scored[:top_n]]
+  
+#+END_SRC
+
+  #+BEGIN_SRC python :results value
+    student_id = "TU-00665"
+    student_id1 = 'TU-00709'
+    shortcodes = gss.loc[student_id1, "shortcodes"]
+   
+    get_cur_by_unique(shortcodes, unique_sig, top_n=4)  
+  #+END_SRC
+
+  #+RESULTS:
+  :results:
+  []
+  :end:
+**** How many students with 2 curriculums ?
+ #+BEGIN_SRC python :results silent
+   import numpy as np
+   max_chrs_curri = {
+       "Accounting 1": 133,
+       "Agriculture 1": 135,
+       "Agriculture 2": 135,
+       "Arts in Economics 1": 136,
+       "BA-BIOLOGY": 130,
+       "BA-CHEMISTRY": np.nan,
+       "BA-ECD": 133,
+       "BA-ENGL/LIT": np.nan,
+       "BA-GUIDANCE/COUNS": 138,
+       "BA-HISTORY": np.nan,
+       "BA-MATHEMATICS": np.nan,
+       "BA-PRIMARY EDUCATION": 135,
+       "Banking and Finance 1": 133,
+       "Biology 1": 130,
+       "Business Administration 1": 133,
+       "Certified MidWives 1": np.nan,
+       "Chemistry 1": np.nan,
+       "Civil Engineering 1": 169,
+       "Computer Networks and Security Engineering 1": 187,
+       "Computer Science 1": 181,
+       "Early Childhood Education and Development 1": 133,
+       "Early Childhood Education and Development 2": 133,
+       "Early Childhood Education and Development 3": 133,
+       "Early Childhood Education and Development 4": 133,
+       "Early Childhood Education and Development 5": 133,
+       "Early Childhood Education and Development 6": 133,
+       "Early Childhood Education and Development 7": 133,
+       "Early Childhood Education and Development 8": 133,
+       "Electrical Engineering 1": 168,   # you were unsure 168 vs 172; kept 168 as computed
+       "English 1": np.nan,
+       "Environmental Science 1": 133,
+       "French 1": np.nan,
+       "General Education 1": np.nan,
+       "Mathematics 1": np.nan,
+       "ME": 175, 
+       "Mechanical Engineering 1": 175,
+       "MIDWifery": np.nan,
+       "Nursing 1": 152,
+       "Nursing 2": 152,
+       "Psychology 1": 138,
+       "Public Administration": 136,
+       "Public Administration 1": 136,
+       "Public Health 1": 146,
+       "Renewable Energy Engineering 1": 187,
+       "RN Post Basic 1": np.nan,
+       "Soccer Coaching 1": np.nan,
+   }  
+ #+END_SRC
+
+ #+RESULTS:
+ :results:
+ :end:
+
+ If a student has more that the max credit hours then it did 2 curriculums
+#+BEGIN_SRC python :results value
+  min(max_chrs_curri.values()),  max(max_chrs_curri.values())
+#+END_SRC 
+
+#+RESULTS:
+:results:
+(130, 187)
+:end:
+
+#+BEGIN_SRC python :results value
+  # Credit Hours
+  crhr = (
+      gdf.groupby(["StudentID", "Term", "Grade"])[["CrHrs", "Grade"]]
+      .agg(CrHrs=("CrHrs", "sum"), grd=("Grade", lambda x: "-".join(x)))
+      .reset_index()
+      .drop(columns="Grade")
+  )
+  # remove empty credits
+  idx = crhr.index[crhr.CrHrs == 0]
+  crhr = crhr.drop(index=idx)
+  crhr.head(2)
+#+END_SRC
+
+#+RESULTS:
+:results:
+  StudentID     Term  CrHrs    grd
+3     10041  18-19s1    3.0      A
+4     10041  18-19s1    9.0  B-B-B
+:end:
+*****  Lets get the currriculum for each grade
+I add a column curriculum to gdf.
+for each line of gdf I call function f(x:StudentIDT, y:TermT, z:ShortCodeT , dfa:StrictCurriT,dfb:IDFCurriT) -> CurriT
+it look if the user has leq than 187 -> one curri branch else two curri branch
+for one curri branch:
+check dfa for the higest scoring curriculum and return it, if none return the idfcurri highest scoring curriculum, if none return None
+for two curris branch:
+# The user has more than 2 curriculums and they could have been done simultaneously, therefor we will look at each shortcode and choose among the 2 bests strict curriculums or 2 idf best if not 2 best strict curriculums
+
+
+#+BEGIN_SRC python :results value
+  sthr = crhr.groupby("StudentID").agg(
+      crhr=("CrHrs", "sum"),
+      terms=("Term", lambda x: sorted(set(x))),
+      n_years=("Term", lambda x: round(len(set(x)) / 3)),
+  )
+  sthr[sthr["crhr"].gt(200)].sort_values(by="crhr")
+#+END_SRC      
+
+#+RESULTS:
+:results:
+            crhr                                              terms  n_years
+StudentID                                                                   
+TU-02610   201.0  [17-18s1, 17-18s2, 18-19s1, 18-19s2, 19-20s1, ...        5
+TU-02049   201.0  [16-17s2, 17-18s1, 17-18s2, 18-19s1, 18-19s2, ...        5
+TU-01472   201.0  [15-16s1, 15-16s2, 16-17s1, 16-17s2, 17-18s1, ...        5
+TU-00361   202.0  [09-10s1, 09-10s2, 10-11s1, 10-11s2, 11-12s1, ...        4
+TU-02686   203.0  [17-18s1, 17-18s2, 18-19s1, 18-19s2, 18-19s3, ...        6
+TU-02495   203.0  [16-17s2, 16-17s3, 17-18s1, 17-18s2, 18-19s1, ...        5
+TU-00103   204.0  [09-10s2, 10-11s1, 10-11s2, 11-12s1, 11-12s2, ...        6
+TU-00500   205.0  [10-11s1, 11-12s1, 11-12s2, 12-13s1, 12-13s2, ...        8
+TU-02543   205.0  [16-17s2, 16-17s3, 17-18s1, 17-18s2, 18-19s1, ...        5
+15792      206.0  [18-19s2, 18-19s3, 19-20s1, 19-20s2, 20-21s1, ...        6
+TU-02469   207.0  [16-17s2, 16-17s3, 17-18s1, 17-18s2, 18-19s1, ...        5
+TU-01486   207.0  [15-16s1, 15-16s2, 16-17s1, 16-17s2, 17-18s1, ...        6
+TU-02903   208.0  [17-18s2, 17-18s3, 18-19s1, 18-19s2, 19-20s1, ...        5
+TU-01408   208.0  [14-15s2, 15-16s1, 15-16s2, 15-16s3, 16-17s1, ...        6
+TU-02864   208.0  [17-18s2, 17-18s3, 18-19s1, 18-19s2, 18-19s3, ...        5
+TU-01386   211.0  [14-15s2, 15-16s1, 16-17s1, 16-17s2, 16-17s3, ...        6
+TU-01838   211.0  [15-16s2, 15-16s3, 16-17s1, 16-17s2, 16-17s3, ...        6
+TU-01768   211.0  [16-17s1, 16-17s2, 17-18s1, 17-18s2, 18-19s1, ...        5
+TU-00227   212.0  [09-10s1, 09-10s2, 10-11s1, 10-11s2, 11-12s1, ...        7
+TU-02185   212.0  [16-17s2, 17-18s1, 17-18s2, 18-19s1, 18-19s2, ...        5
+TU-01653   212.0  [15-16s1, 15-16s2, 16-17s1, 16-17s2, 16-17s3, ...        6
+TU-02491   215.0  [16-17s2, 16-17s3, 17-18s1, 17-18s2, 18-19s1, ...        6
+TU-01597   215.0  [15-16s1, 15-16s2, 15-16s3, 16-17s1, 16-17s2, ...        5
+TU-00200   217.0  [10-11s1, 10-11s2, 10-11s3, 11-12s1, 11-12s2, ...        6
+TU-01942   217.0  [16-17s1, 16-17s2, 17-18s1, 17-18s2, 18-19s1, ...        6
+TU-00967   218.0  [12-13s1, 12-13s2, 12-13s3, 13-14s1, 13-14s2, ...        7
+TU-02026   219.0  [16-17s2, 17-18s1, 17-18s2, 18-19s1, 19-20s1, ...        5
+TU-01026   219.0  [12-13s2, 12-13s3, 13-14s1, 13-14s2, 13-14s3, ...        6
+TU-02241   223.0  [16-17s2, 16-17s3, 17-18s1, 17-18s2, 18-19s1, ...        6
+TU-00689   224.0  [11-12s2, 12-13s2, 12-13s3, 13-14s2, 14-15s1, ...        6
+TU-01136   224.0  [13-14s1, 13-14s2, 13-14s3, 14-15s1, 14-15s2, ...        6
+TU-01085   225.0  [13-14s1, 13-14s2, 14-15s1, 14-15s2, 15-16s1, ...        5
+TU-01553   225.0  [15-16s1, 15-16s2, 16-17s1, 16-17s2, 17-18s1, ...        5
+TU-00570   226.0  [10-11s2, 11-12s2, 12-13s1, 13-14s1, 13-14s2, ...        6
+TU-02336   235.0  [16-17s2, 17-18s1, 17-18s2, 17-18s3, 18-19s1, ...        5
+TU-02470   235.0  [17-18s1, 17-18s2, 18-19s1, 18-19s2, 19-20s1, ...        5
+TU-01027   240.0  [12-13s2, 13-14s1, 13-14s2, 14-15s1, 14-15s2, ...        6
+TU-00940   244.0  [12-13s1, 12-13s2, 13-14s1, 13-14s2, 14-15s1, ...        5
+TU-00590   246.0  [10-11s2, 11-12s1, 12-13s1, 12-13s2, 13-14s1, ...        5
+TU-00665   254.0  [11-12s1, 11-12s2, 11-12s3, 12-13s1, 12-13s2, ...        6
+TU-00532   266.0  [10-11s1, 10-11s2, 11-12s1, 11-12s2, 13-14s2, ...        7
+:end:
+
+#+BEGIN_SRC python :results file graphics :file ./tmp/sthr_hist.png :exports results
+import matplotlib
+matplotlib.use("Agg")  # safe for non-interactive org-babel runs
+import matplotlib.pyplot as plt
+
+axes = sthr.hist()  # Series -> Axes ; DataFrame -> ndarray of Axes
+
+if hasattr(axes, "get_figure"):
+    fig = axes.get_figure()
+else:
+    fig = axes.ravel()[0].get_figure()   # pick first subplot's figure
+
+fig.tight_layout()
+fig.savefig("./tmp/sthr_hist.png", dpi=70)
+plt.close(fig)
+
+"./tmp/sthr_hist.png"
+#+END_SRC
+
+#+RESULTS:
+[[file:./tmp/sthr_hist.png]]
+***** Let s check num of curriculums for student with gt max credit
+#+BEGIN_SRC python :results value
+  # big studentent
+  bstudidx = sthr[sthr.gt(200).values].index
+  strict_curri.loc[bstudidx].to_string()
+#+END_SRC      
+
+#+RESULTS:
+:results:
+StudentID
+15792                           [(Civil Engineering 1, 0.84)]
+TU-00103    [(Renewable Energy Engineering 1, 1.0), (Busin...
+TU-00200    [(Early Childhood Education and Development 3,...
+TU-00227    [(Civil Engineering 1, 0.53), (Mathematics 1, ...
+TU-00361    [(Mathematics 1, 0.5), (BA-GUIDANCE/COUNS, 0.17)]
+TU-00500                         [(Computer Science 1, 0.93)]
+TU-00532    [(Public Administration 1, 0.71), (Agriculture...
+TU-00570    [(Public Administration 1, 0.79), (Public Heal...
+TU-00590         [(Public Health 1, 0.55), (English 1, 0.33)]
+TU-00665    [(BA-HISTORY, 1.0), (Environmental Science 1, ...
+TU-00689    [(Public Administration 1, 0.79), (English 1, ...
+TU-00940    [(BA-BIOLOGY, 0.78), (Arts in Economics 1, 0.54)]
+TU-00967                   [(Mechanical Engineering 1, 0.44)]
+TU-01026    [(Public Administration 1, 0.79), (Public Heal...
+TU-01027    [(Early Childhood Education and Development 3,...
+TU-01085    [(Business Administration 1, 1.0), (BA-GUIDANC...
+TU-01136    [(Computer Science 1, 0.79), (Civil Engineerin...
+TU-01386                   [(Mechanical Engineering 1, 0.44)]
+TU-01408    [(Agriculture 1, 0.86), (Business Administrati...
+TU-01472                         [(Computer Science 1, 0.89)]
+TU-01486    [(Electrical Engineering 1, 0.77), (Renewable ...
+TU-01553    [(BA-ENGL/LIT, 1.0), (Public Administration 1,...
+TU-01597    [(Public Health 1, 0.58), (Civil Engineering 1...
+TU-01653    [(Civil Engineering 1, 0.74), (Mechanical Engi...
+TU-01768    [(Civil Engineering 1, 0.84), (Electrical Engi...
+TU-01838    [(Electrical Engineering 1, 0.82), (Renewable ...
+TU-01942    [(Electrical Engineering 1, 0.73), (Renewable ...
+TU-02026      [(Computer Science 1, 0.93), (Nursing 1, 0.14)]
+TU-02049                         [(Computer Science 1, 0.89)]
+TU-02185    [(Civil Engineering 1, 0.84), (Electrical Engi...
+TU-02241    [(Mechanical Engineering 1, 0.6), (Electrical ...
+TU-02336    [(BA-BIOLOGY, 1.0), (Public Administration 1, ...
+TU-02469    [(Electrical Engineering 1, 0.77), (Renewable ...
+TU-02470    [(Civil Engineering 1, 0.95), (Electrical Engi...
+TU-02491    [(Business Administration 1, 1.0), (Public Adm...
+TU-02495                   [(Mechanical Engineering 1, 0.68)]
+TU-02543    [(Mechanical Engineering 1, 0.68), (Electrical...
+TU-02610                         [(Computer Science 1, 0.93)]
+TU-02686                        [(Civil Engineering 1, 0.68)]
+TU-02864    [(Civil Engineering 1, 0.84), (Electrical Engi...
+TU-02903    [(Mechanical Engineering 1, 0.68), (Electrical...
+:end:
+#+BEGIN_SRC python :results value
+  bstudidx = sthr[sthr.gt(220).values].index
+  idf_curri.loc[bstudidx].to_string()
+  
+#+END_SRC
+
+#+RESULTS:
+:results:
+StudentID
+TU-00532    [(Public Administration 1, 0.44), (Business Ad...
+TU-00570    [(Public Administration 1, 0.49), (Public Heal...
+TU-00590    [(Public Health 1, 0.38), (Civil Engineering 1...
+TU-00665    [(Environmental Science 1, 0.38), (BA-HISTORY,...
+TU-00689    [(Public Administration 1, 0.44), (Accounting ...
+TU-00940    [(Arts in Economics 1, 0.41), (BA-BIOLOGY, 0.39)]
+TU-01027               [(Biology 1, 0.43), (Nursing 1, 0.39)]
+TU-01085    [(Business Administration 1, 0.48), (BA-PRIMAR...
+TU-01136    [(Computer Science 1, 0.74), (Civil Engineerin...
+TU-01553    [(Public Administration 1, 0.53), (BA-ENGL/LIT...
+TU-02241    [(Mechanical Engineering 1, 0.72), (Civil Engi...
+TU-02336    [(Public Administration 1, 0.55), (BA-BIOLOGY,...
+TU-02470    [(Civil Engineering 1, 0.75), (Mechanical Engi...
+:end:
+
+***** Let's get the curriculums for all studentID in DB.
+    #+BEGIN_SRC python :results value
+      # let's get a list of student ID and the set of their courses
+      strict_curri = gss.shortcodes.apply(lambda x: get_cur_by_unique(x, unique_sig))
+      gss.loc[:,'strict_curri'] = strict_curri
+      strict_curri.head(2), strict_curri.apply(len).ne(0).sum()
+    #+END_SRC   
+
+    #+RESULTS:
+    :results:
+    (StudentID
+    TU-00532    [(Public Administration 1, 0.71), (Agriculture...
+    TU-00665    [(BA-HISTORY, 1.0), (Environmental Science 1, ...
+    Name: shortcodes, dtype: object, np.int64(3933))
+    :end:
+
+    #+BEGIN_SRC python :results value
+      idf_curri = gss.shortcodes.apply(lambda x: get_idf_cur(x, course_catalog))
+      gss.loc[:,'idf_curri'] = idf_curri
+      idf_curri.head(), idf_curri.apply(len).ne(0).sum()
+    #+END_SRC
+
+    #+RESULTS:
+    :results:
+    (StudentID
+    TU-00532    [(Public Administration 1, 0.44), (Business Ad...
+    TU-00665    [(Environmental Science 1, 0.38), (BA-HISTORY,...
+    TU-00590    [(Public Health 1, 0.38), (Civil Engineering 1...
+    TU-00940    [(Arts in Economics 1, 0.41), (BA-BIOLOGY, 0.39)]
+    TU-01027               [(Biology 1, 0.43), (Nursing 1, 0.39)]
+    Name: shortcodes, dtype: object, np.int64(6268))
+    :end:
+
+******* Comparons le deux predictions de curriculum to flag inconsitencies
+    #+BEGIN_SRC python :results value
+      cols = ['strict_curri','idf_curri']
+      def get_best_curri(x):
+          if len(x)>0:
+              return x[0][0]
+          return []
+  
+      curris = gss[cols].map(get_best_curri)
+      curris.stric_curri == idf_curri
+    #+END_SRC
+
+    #+RESULTS:
+    :results:
+                                              strict_curri                idf_curri
+    StudentID                                                                      
+    TU-00532                       Public Administration 1  Public Administration 1
+    TU-00665                                    BA-HISTORY  Environmental Science 1
+    TU-00590                               Public Health 1          Public Health 1
+    TU-00940                                    BA-BIOLOGY      Arts in Economics 1
+    TU-01027   Early Childhood Education and Development 3                Biology 1
+    ...                                                ...                      ...
+    45641                                               []                       []
+    45674                                               []                       []
+    46359                                               []                       []
+    TU-02987                                            []             Accounting 1
+    TU-03197                                            []             Accounting 1
+
+    [6371 rows x 2 columns]
+    :end:
+
+    J ai la moitie ou ca match
+    #+BEGIN_SRC python :results value
+    (curris.strict_curri == curris.idf_curri).sum()  
+    #+END_SRC
+    mais je ne tiens pas compt des double cursus.
+
+******* Les curris vides
+   #+BEGIN_SRC python :results value
+     curris.loc[:,'main_curri'] = curris.strict_curri
+  
+     f = curris.strict_curri.apply(len).eq(0)
+     curris.loc[f,'main_curri'] = curris.loc[f,'idf_curri']
+     f = curris.idf_curri.apply(len).eq(0)  
+     curris.loc[f,'main_curri'] = curris.loc[f,'strict_curri']    
+   #+END_SRC     
+
+   #+RESULTS:
+   :results:
+   :end:
+
+*** College departments Course
 * dependencies tree
 *** Text manifest (mandatory fields + generation snippets)
 **** College_Department : department.college_id, department.course_dept
@@ -4292,3 +4849,111 @@ Payement <- ClearanceStatus_Invoice
      "timetable.Semester" -> "timetable.Term";
  }
  #+END_SRC
+
+* DONE Tables
+** DONE fundamentals_status_type_fees.csv
+   CLOSED: [2025-11-24 Mon 08:13]
+For this model just run create_states
+- ClearanceStatus
+- CreditHour  
+- CurriculumStatus
+- DocumentStatus
+- DocumentType
+- FeeType
+- PaymentMethod
+- RegistrationStatus
+- SemesterStatus  
+** DONE space_rooms.csv
+   CLOSED: [2025-11-24 Mon 08:13]
+Harmonize the room names
+#+BEGIN_SRC python :results value
+  rooms = pd.read_csv(OUTDIR / "space_room.csv").dropna()
+  rooms.head(), len(rooms), rooms.groupby('space').groups.keys()
+#+END_SRC
+
+#+RESULTS:
+:results:
+(   space   room
+0  SAPEC  SAPEC
+2    EBA      6
+3   RSTI   RSTI
+4    EBA      7
+5   RSTI      1, 39, dict_keys(['AA', 'AC', 'EBA', 'OFFICE', 'RSTI', 'SAPEC']))
+:end:
+
+** DONE timetable_semesters
+   CLOSED: [2025-11-24 Mon 08:13]
+
+#+BEGIN_SRC python :results silent
+  ay = [f"{y:02}-{y+1}" for y in range(9,26)]
+  sem_num = (1,2,3)
+  from itertools import product
+  df = pd.DataFrame().from_records([i for i in product(ay,sem_num)], columns=['academic_year', 'semester_no'])
+  df.loc[:,'status'] = "locked"
+  df.to_csv(OUTDIR / "academicyear_semester.csv", index=False)  
+#+END_SRC
+
+  
+** DONE people_students.csv
+   CLOSED: [2025-12-18 jeu. 21:47]
+#+BEGIN_SRC python :results value
+  stid_reg = xlss['UM_Registrations'].StudentID.drop_duplicates()  
+  stid_um = load_csv(FDIR / "UM_students.csv")["StudentID"].drop_duplicates()
+  
+  # Student IDs In one but not the other
+  len(set(stid_reg.values) - set(stid_um.values)),   len(set(stid_um.values) - set(stid_reg.values))
+#+END_SRC
+
+#+RESULTS:
+:results:
+(107, 3514)
+:end:
+
+#+BEGIN_SRC python :results silent
+  students = (
+      load_csv(FDIR / "UM_students.csv")[["StudentID", "Major", "Curriculum"]]
+      .rename(
+          columns={
+              "StudentID": "student_id",
+              "Major": "major",
+          }
+      )
+      .assign(student_username="")
+  )
+  students["student_id"] = students["student_id"].astype(str).str.strip()
+  students["major"] = students["major"].astype(str).str.strip()
+  students["curriculum"] = students["curriculum"].astype(str).str.strip()
+  students.to_csv(OUTDIR / "fundamentals_students.csv", index=False)
+#+END_SRC
+
+*** DONE Students
+    CLOSED: [2025-12-18 jeu. 21:46]
+  #+BEGIN_SRC python :results output
+    _ps = csvs["people_students"].fillna('')
+    _us = csvs["UM_students"].fillna('')
+    print(_ps.columns.values)
+    print(_us.columns.values)
+  #+END_SRC   
+#+RESULTS:
+:results:
+  ['StudentID,"first_name","middle_name","last_name","CountyOfOrigin","curriculum_short_name","gender","college_code","enrollement_semester","YearOfEntry","Nationality","DateOfBirth","address","phone_no","personal_email","marital_status","PlaceOfBirth","EnrollmentType","Scholarship","LastSchoolAttended","LastSchoolType","FatherName","FatherAddress","MotherName","MotherAddress","EmergencyContact","AdmissionStatus","Enrolled","Uploaded","ProgramID"']
+  ['StudentID' 'FirstName' 'MiddleName' 'LastName' 'CountyOfOrigin' 'Major'
+   'Sex' 'College' 'SemesterOfEntry' 'YearOfEntry' 'Nationality'
+   'DateOfBirth' 'AddressLine1' 'AddressLine2' 'AddressLine3'
+   'MaritalStatus' 'PlaceOfBirth' 'EnrollmentType' 'Scholarship'
+   'LastSchoolAttended' 'LastSchoolType' 'ReasonForLeaving' 'FatherName'
+   'FatherAddress' 'MotherName' 'MotherAddress' 'EmergencyContact' 'Photo'
+   'ImageRecomLastSch' 'ImageTranscript' 'ImageMedCertificate'
+   'ImageReportCard' 'ImageRecomComm' 'ImageRecomReli' 'ImageWaecCert'
+   'ImageAppLetter' 'Password' 'Salt' 'AdmissionStatus' 'TotCrHrsComp'
+   'Enrolled' 'Uploaded' 'ProgramID']
+  :end:
+
+*** DONE Studentinfo
+    CLOSED: [2025-12-18 jeu. 21:46]
+#+BEGIN_SRC python :results value
+  _sti = load_csv(FDIR/'StudentInfo.csv',sep=',').dropna(how='all')
+  cols = ['AccountID','TermFirstEntered', 'TermLastEnrolled']
+  csv_save("people_student_terms.tsv", _sti.loc[:,cols])
+#+END_SRC    
+

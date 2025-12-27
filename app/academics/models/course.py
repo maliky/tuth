@@ -108,9 +108,11 @@ class Course(models.Model):
         related_name="courses",
     )
     # ~~~~ Read-only ~~~~
+    #  Code is uniq include the college code + dep + no
     code = models.CharField(max_length=20, editable=False)
 
     # ~~~~~~~~ Optional ~~~~~~~~
+    # Can have duplicate only include dep + no
     short_code = models.CharField(max_length=20, editable=True, null=True, blank=True)
     title = models.CharField(max_length=255, blank=True, null=True)
     description: models.TextField = models.TextField(blank=True, null=True)

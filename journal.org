@@ -1,4 +1,77 @@
 
+* <2025-12-27 sam. 17:01> Curriculum infos
+** CFAS
+ - General Education : 52 ch
+ - College Specific Required Coruses : 21 ch
+ - Professional Courses : 5 ch
+ - Elective Courses : 6 ch
+ - total : ~135
+** COAS
+*** General Education
+  - 52 ch
+*** BA in Pyschology
+  - 34 + 39 + 35 + 30 = 138
+*** BS in Env
+  - 34 + 35 +34+30 =133
+*** BS in Biology
+  -34 +36 +33+27 =130   
+** COED
+*** ECD
+    - 40+36+34+23=133
+*** B in 2nd Edu
+    - 40+36+35+24 =135
+*** B in Guidance and Counseling
+    - 40+36+34+28 =138
+** COET
+52 general edu courses with  max 167-173 prof courses
+*** BS in E. Engineering
+- 41 + 39 +36 +27+1 =144
+- 144 + 28 = 168  ?? no 172
+*** BS in Civil Engineering
+General 48, Major 31 Concentratio/Technical/Elective 11
+- 41 + 38 +35 +33+1= 148
+- 148+21 = 169
+*** BS in Mechanical Engineering
+- 41+39+32+36+1 =149
+  149 + 26 =175
+*** BS in Renewable Energy Engineering
+- 41 + 39 +30++38+1 +38 =187
+*** BS in Computer Network
+- 41 + 39 +32 +37 +1 +37 =187
+*** BS in Computer Science and Engineering
+- 41 + 39 + 36 + 37 +1 + 17 =    181
+** COHS
+*** BS in Nursing
+- 41 + 7+ 40 + 7+ 37+18 =152
+*** BS in PH
+- 34 + 38 + 7 + 31 + 24= 134
+- 134 + 12 ch concentration = 146
+** COBA
+*** BBA
+General 52
+College specific 21
+Professional Courses 54
+Elective 6
+total 133
+*** BBA - Accounting
+- 34 + 39 +30 + 30 = 133
+*** BBA - Banking and Finance
+- 34+ 39 +33 +27 = 133
+*** BBA - Management
+- 34 + 39 +30 +30 = 133
+*** BA in Economics
+- 34 + 39 +36 + 27 =136
+*** BPA
+- 34 + 39 + 36 + 27 = 136
+** setting curriculums
+I add a column curriculum to gdf.
+for each line of gdf I call function f(x:StudentIDT, y:TermT, z:ShortCodeT , dfa:StrictCurriT,dfb:IDFCurriT) -> CurriT
+it look if the user has leq than 187 -> one curri branch else two curri branch
+for one curri branch:
+check dfa for the higest scoring curriculum and return it, if none return the idfcurri highest scoring curriculum, if none return None
+for two curris branch:
+# The user has more than 2 curriculums and they could have been done simultaneously, therefor we will look at each shortcode and choose among the 2 bests strict curriculums or 2 idf best if not 2 best strict curriculums
+   
 * <2025-12-19 Fri 20:35> test
   tests/people/test_utils.py:125: AssertionError
 ============================================== short test summary info ===============================================
