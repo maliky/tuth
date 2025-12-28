@@ -44,8 +44,10 @@ DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
         "Grade",
         GradeResource,
         (
-            "gradesheets.utf8.tsv",
-            "oldgrades.utf8.tsv" "registry_gradeSheets.csv",
+            # "gradesheets.utf8.tsv",
+            # "oldgrades.utf8.tsv",
+            "full_grade.tsv",  # new file combining gradesheets and oldgrades
+            # "registry_gradeSheets.csv",
         ),
     ),
     (
@@ -57,17 +59,17 @@ DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
             "studentcourses.csv",
         ),
     ),
-    (
-        "LegacyGrade",
-        LegacyGradeSheetResource,
-        (
-            # Strange I cannot find the file. Need to look in db archives if it was useful
-            # "UM_TransferGrades.csv",
-            "gradesheets.utf8.tsv",
-            "oldgrades.utf8.tsv",
-            "registry_gradeSheets.csv",
-        ),
-    ),
+    # (
+    #     "LegacyGrade",
+    #     LegacyGradeSheetResource,
+    #     (
+    #         # Strange I cannot find the file. Need to look in db archives if it was useful
+    #         # "UM_TransferGrades.csv",
+    #         # "gradesheets.utf8.tsv",
+    #         # "oldgrades.utf8.tsv",
+    #         # "registry_gradeSheets.csv",
+    #     ),
+    # ),
 )
 
 RESOURCE_CHOICES: Sequence[str] = tuple(

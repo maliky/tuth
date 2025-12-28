@@ -92,8 +92,8 @@ COLLEGE_CODE = {
     "cohs": "COHS",
     "coas": "COAS",
     "coed": "COED",
-    "cafs": "CAFS",
     "cfas": "CAFS",
+    "cafs": "CAFS",
     "coet": "COET",
     "coba": "COBA",
     "coab": "COBA",
@@ -132,7 +132,7 @@ class LEVEL_NUMBER(IntegerChoices):
 # this translate UM_registrations.Major EnrollmentType? to standard curriculum
 # this translate UM_Courses.CourseCode/Course to a standard curriculum.
 # this translate UM_Registration.Major/Enrollmenttype to a standard curriculum.
-CURRICULUM_MAP = {
+LEGACY_CURRICULUM_MAP = {
     "": "WVSTU - GEN",  # empty major → default to university-wide general
     "AA - Applied  Science": "WVSTU - GEN",
     "AA- Applied  Science": "WVSTU - GEN",
@@ -266,4 +266,38 @@ CURRICULUM_MAP = {
     "RN Post Basic 1": "BS - Nursing",
     "Renewable Energy Engineering 1": "WVSTU - GEN",
     "Soccer Coaching 1": "WVSTU - GEN",
+}
+
+
+COLLEGE_CURRICULUM = {
+    "cohs": ["BS - Nursing", "BS - Public Health", "BS - Midwifery", "COHS - GEN"],
+    "coas": ["BA - Psychology", "BS - Biology", "BS - Env Sci", "COAS - GEN"],
+    "cafs": ["BS - Agro", "BS - Agri", "BS - Applied Agr", "CAFS - GEN"],
+    "coet": [
+        "BS - Civil Eng",
+        "BS - Elec Eng",
+        "BS - Mech Eng",
+        "BS - Computer Sci",
+        "COET - GEN",
+    ],
+    "coed": [
+        "BA - 2ndEd/Biology",
+        "BA - 2ndEd/Chemistry",
+        "BA - 2ndEd/Eng Lit",
+        "BA - 2ndEd/History",
+        "BA - 2ndEd/Math",
+        "BA - Early Child Dev",
+        "BA - Guidance Counseling",
+        "BA - Primary Ed",
+        "COED - GEN",
+    ],
+    "coba": [
+        "BBA - Accounting",
+        "BBA - Banking & Finance",
+        "BBA - Management",
+        "BPA - Management",
+        "BS - Economics",
+        "COBA - GEN",
+    ],
+    "deft": ["WVSTU - GEN"],
 }

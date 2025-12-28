@@ -43,7 +43,7 @@ class SectionWidget(widgets.ForeignKeyWidget):
         faculty_value = get_in_row("faculty", row)
         faculty = self.faculty_w.clean(value=faculty_value, row=row)
 
-        sec_no_value = get_in_row("section_no", row) or "0"
+        sec_no_value = value or "0"
 
         if sec_no_value.isdigit():
             number = int(sec_no_value)
