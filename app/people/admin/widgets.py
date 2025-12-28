@@ -194,6 +194,7 @@ class GradeStudentWidget(widgets.ForeignKeyWidget):
         first_name = get_in_row("student_first_name", row)
         last_name = get_in_row("student_last_name", row) or student_id
         parts = parse_name(
+            # the next return the True objects.
             " ".join(filter(None, [first_name, last_name])).strip(),
             fallback_first="Student",
             fallback_last=student_id,

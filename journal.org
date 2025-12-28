@@ -1,3 +1,5 @@
+* <2025-12-28 dim. 20:27>
+academic_year	semester	student_id	dept_code	course_no	section_no	grade_code	credit_hours	Major	curriculum	college_code
 
 * <2025-12-27 sam. 18:48> Grades and curriculum DONE
 gds in parsing just need a litter column header harmonizing but it is good for imports

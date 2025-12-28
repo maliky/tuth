@@ -2662,7 +2662,7 @@ Ignore UM_Curriculums for now.
   directory.to_csv(OUTDIR / "fundamentals_staff_faculty.csv", index=False)
 #+END_SRC
 
-** TODO academics_curricula.csv
+** academics_curricula.csv
    #+BEGIN_SRC python :results value
      cols = ["StudentID", "Major", "College", "YearOfEntry", "EnrollmentType", "AdmissionStatus", "ProgramID"]
      col = ["StudentID", "Major"]
@@ -2709,7 +2709,7 @@ Ignore UM_Curriculums for now.
 [123 rows x 2 columns]
 :end:
 
-#+BEGIN_SRC python :results value
+#+BEGIN_SRC python :results silent
   def get_college_from_curri(cur):
       "Return the college given the curriculum."
       for college, curs in ac.choices.COLLEGE_CURRICULUM.items():
@@ -2717,10 +2717,6 @@ Ignore UM_Curriculums for now.
               return college
       return "deft"
 #+END_SRC
-
-#+RESULTS:
-:results:
-:end:
 
 #+BEGIN_SRC python :results value
   # Get curriculum and colleges from backup
@@ -2768,6 +2764,7 @@ Ignore UM_Curriculums for now.
 
 [33 rows x 4 columns]
 :end:
+
 #+BEGIN_SRC python :results value
   # refcur.loc[:,'c1'] = refcur.curriculum.apply(get_college_from_curri)
   # refcur.loc[:,'c2'] = refcur.college_code.str.lower().replace(ac.choices.COLLEGE_CODE).str.lower()
@@ -2780,14 +2777,6 @@ Ignore UM_Curriculums for now.
 Empty DataFrame
 Columns: [college_code, c1, c2]
 Index: []
-:end:
-
-#+BEGIN_SRC python :results value
-#  refcur.loc[:, "College"] = refcur.curriculum.apply(get_college_from_curri)
-#+END_SRC
-
-#+RESULTS:
-:results:
 :end:
 
 #+BEGIN_SRC python :results value
@@ -3497,17 +3486,17 @@ or throught the course code
   #  gdf = df.drop(columns=['AcademicYear','Semester'])
   gdf = gdf.drop(index=gdf.index[gdf.StudentID.map(len).eq(0)])
   # gdf = gdf.drop(columns=['AcademicYear','Semester','CourseCode','CourseNo'])
-  
+  gdf = gdf.drop(columns=['Points'])  
   gdf.head(2), len(gdf)
 #+END_SRC
 
 #+RESULTS:
 :results:
-(  AcademicYear  Semester StudentID CourseCode  ... CrHrs  Points ShortCode     Term
-0    2014/2015         2     13425       MATH  ...   3.0     2.0   MATH101  14-15s2
-1    2013/2014         2       921       HIST  ...   3.0     2.0   HIST102  13-14s2
+(  AcademicYear  Semester StudentID CourseCode  ... Grade  CrHrs ShortCode     Term
+0    2014/2015         2     13425       MATH  ...     C    3.0   MATH101  14-15s2
+1    2013/2014         2       921       HIST  ...     C    3.0   HIST102  13-14s2
 
-[2 rows x 11 columns], 198833)
+[2 rows x 10 columns], 198833)
 :end:
 #+BEGIN_SRC python :results value
   # gdf=  gdf.rename(
@@ -3522,7 +3511,7 @@ or throught the course code
   #           "CrHrs": "credit_hours",
   #       }
   #   )
-  gdf = gdf.drop(columns=['Points'])
+
   # ,college_code,curriculum
 #+END_SRC
 
@@ -3558,11 +3547,11 @@ or throught the course code
  ENVS303                            {Environmental Science 1}     1
  ENVS302                            {Environmental Science 1}     1
  ...                                                      ...   ...
- PSY101     {BA-ECD, Arts in Economics 1, General Educatio...    37
- CSE101     {BA-ECD, Arts in Economics 1, Renewable Energy...    37
- MATH102    {BA-ECD, English 1, Arts in Economics 1, Renew...    39
- ENVS201    {BA-ECD, English 1, Arts in Economics 1, Certi...    39
- MATH101    {BA-ECD, English 1, Arts in Economics 1, Renew...    42
+ PSY101     {BA-ENGL/LIT, Early Childhood Education and De...    37
+ CSE101     {BA-ENGL/LIT, Early Childhood Education and De...    37
+ MATH102    {Psychology 1, BA-ENGL/LIT, BA-PRIMARY EDUCATI...    39
+ ENVS201    {Psychology 1, BA-ENGL/LIT, Early Childhood Ed...    39
+ MATH101    {Psychology 1, BA-ENGL/LIT, Early Childhood Ed...    42
 
  [602 rows x 2 columns]
  :end:
@@ -3579,50 +3568,50 @@ or throught the course code
   :results:
                                                                                        shortcodes  n_shortcodes
   Curriculum                                                                                                   
-  Public Administration 1                       {ACCT301, ACCT202, PADM403, PADM417, ECON308, ...            77
-  Banking and Finance 1                         {HIST202, BUSA202, ACCT102, SPAN201, ECON402, ...            75
-  Business Administration 1                     {HIST202, BUSA202, ACCT102, BUSA413, BUSA430, ...            73
-  Arts in Economics 1                           {ECON401, HIST202, BUSA202, ACCT102, SPAN201, ...            73
-  Mechanical Engineering 1                      {MENG503, HIST202, GENG106, MENG501, MENG505, ...            69
-  BA-GUIDANCE/COUNS                             {HIST202, SPAN201, GCED486, EDU458, MATH102, C...            68
-  Accounting 1                                  {HIST202, BUSA202, ACCT102, SPAN201, ACCT402, ...            67
-  BA-PRIMARY EDUCATION                          {HIST202, SPAN201, ECD264, ECD463, EDU458, MAT...            67
-  BA-ECD                                        {HIST202, SPAN201, ECD264, ECD463, EDU458, MAT...            67
-  Civil Engineering 1                           {CENG401A, GENG106, CENG301, CENG503, CENG507,...            66
-  Electrical Engineering 1                      {HIST202, GENG106, CENG301, EENG401, EENG503, ...            66
-  Computer Science 1                            {CSENG304, CSENG506, GENG106, HIST202, CSENG30...            66
-  Public Health 1                               {PH403, PH301, PH306, MATH102, PH411, CSE102, ...            59
-  BA-ENGL/LIT                                   {HIST202, SPAN201, ENGL474, EDU458, MATH102, C...            57
-  BA-MATHEMATICS                                {HIST202, SPAN201, MATH373, EDU458, MATH102, C...            56
-  BA-BIOLOGY                                    {HIST202, BIO375, SPAN201, BIO376, BIO373, EDU...            55
-  Agriculture 1                                 {AGR351, AGR434, CHEM202, MATH102, AGR221, CSE...            54
-  BA-CHEMISTRY                                  {HIST202, CHEM376, CHEM373, SPAN201, EDU458, M...            54
-  BA-HISTORY                                    {HIST377, HIST102, HIST372, SPAN201, HIST471, ...            54
-  Agriculture 2                                 {AGR351, AGR413, CHEM202, MATH102, AGR221, CSE...            53
-  Nursing 1                                     {MATH102, CSE102, NUR403, HSC202, NUR201, EEDU...            53
-  Environmental Science 1                       {ENVS405, ENVS301, ENVS306, ENVS311, ENVS308, ...            50
-  Biology 1                                     {BIO301, HIST202, CHEM202, BIO408, MATH211, MA...            48
-  Psychology 1                                  {PSY307, PSY403, HIST202, PSY308, PSY311, PSY4...            48
-  RN Post Basic 1                               {MATH102, NUR403, EED301, HSC204, NUR406, NUR3...            42
-  Nursing 2                                     {MATH102, CSE102, NUR403, EEDU301, NUR410, NUR...            39
-  MIDWifery                                     {MATH102, CSE102, MID303, NUR403, EED301, MID4...            37
-  Certified MidWives 1                          {MIDW306, MATH102, CSE102, HSC202, MIDW204, MI...            35
-  Mathematics 1                                 {SOCI101, HIST202, MATH307, MATH102, EED301, M...            27
-  Chemistry 1                                   {SOCI101, HIST102, CHEM202, MATH102, CHEM402, ...            26
-  English 1                                     {HIST202, MATH102, EED301, ENGL372, ENGL104, E...            23
-  Renewable Energy Engineering 1                {GENG106, EENG401, MATH102, CSE102, EENG402, M...            23
-  Soccer Coaching 1                             {FOCO122, FOCO112, FOCO132, SPMT201, FOCO102, ...            21
-  Computer Networks and Security Engineering 1  {GENG106, MATH102, CSE102, MATH201, CHEM102, M...            20
-  Early Childhood Education and Development 7   {MATH201, CSE101, EED302, MATH206, MATH307, EN...            18
-  Early Childhood Education and Development 5   {CSE101, EED302, ENGL202, ENGL371, ENGL471, EN...            15
-  Early Childhood Education and Development 4   {CSE101, EED302, CHEM202, CHEM101, MATH101, HI...            14
-  Early Childhood Education and Development 8   {CSE101, EED302, ENGL202, MATH101, HIST201, EN...            13
-  Early Childhood Education and Development 6   {CSE101, HIST202, EED302, ENGL202, MATH101, HI...            13
-  General Education 1                           {FREN201, HIST202, FREN202, SSC101, CHEM101, B...            10
-  Early Childhood Education and Development 3   {CSE101, EED302, BIO101, MATH101, HIST201, ENV...             9
-  Early Childhood Education and Development 2   {PEDU221, CSE101, EED302, MATH101, HIST201, MA...             9
-  Early Childhood Education and Development 1   {CSE101, EED302, SSC101, MATH101, HIST201, MAT...             9
-  French 1                                                                     {FREN201, FREN202}             2
+  Public Administration 1                       {GLE202, BIO101, PADM306, ENGL204, BUSA301, MA...            77
+  Banking and Finance 1                         {ECON401, SPAN201, GLE202, BFIN407, ACCT303, B...            75
+  Business Administration 1                     {ECON411, SPAN201, ECON303, GLE202, ACCT303, B...            73
+  Arts in Economics 1                           {ECON411, ECON401, SPAN201, ECON303, GLE202, A...            73
+  Mechanical Engineering 1                      {MENG500, GENG301, BIO101, GENG308, GLE101, GE...            69
+  BA-GUIDANCE/COUNS                             {SPAN201, GLE202, BIO101, EDU353, EDU484, GCED...            68
+  Accounting 1                                  {SPAN201, GLE202, ACCT303, BIO101, BUSA401, AC...            67
+  BA-PRIMARY EDUCATION                          {SPAN201, GLE202, BIO101, EDU353, ECD466, CHIN...            67
+  BA-ECD                                        {SPAN201, GLE202, BIO101, EDU353, ECD466, EEDU...            67
+  Civil Engineering 1                           {GENG301, CENG405A, BIO101, CENG405, GENG308, ...            66
+  Electrical Engineering 1                      {EENG301, BIO101, EENG505, GLE101, EENG404, GE...            66
+  Computer Science 1                            {CSENG303, GLE202, BIO101, CSENG410, CSENG301,...            66
+  Public Health 1                               {PH413, GLE202, BIO101, PH304, PH401, EEDU302,...            59
+  BA-ENGL/LIT                                   {EDU383, SPAN201, GLE202, BIO101, EDU353, EEDU...            57
+  BA-MATHEMATICS                                {SPAN201, GLE202, MATH201E, BIO101, MATH471, E...            56
+  BA-BIOLOGY                                    {SPAN201, GLE202, BIO101, BIO475, EDU353, EEDU...            55
+  Agriculture 1                                 {GLE202, BIO101, AGR306, AGR204, AGR222, AGR46...            54
+  BA-CHEMISTRY                                  {SPAN201, GLE202, BIO101, EDU353, EEDU302, CHI...            54
+  BA-HISTORY                                    {SPAN201, GLE202, BIO101, EDU353, EEDU302, CHI...            54
+  Agriculture 2                                 {GLE202, BIO101, AGR306, AGR204, AGR222, AGR30...            53
+  Nursing 1                                     {NUR310, GLE202, HSC301, BIO101, NUR302, NUR30...            53
+  Environmental Science 1                       {GLE202, ENVS309, BIO101, ENVS306, ENVS303, EN...            50
+  Biology 1                                     {BIO309, GLE202, BIO101, BIO301, BIO304, BIO40...            48
+  Psychology 1                                  {PSY309, PED101, GLEB202, PSY404, CHN202, PSY3...            48
+  RN Post Basic 1                               {NUR310, GLE202, HSC301, BIO101, HIST101, NUR4...            42
+  Nursing 2                                     {NUR310, GLE202, HSC301, BIO101, EEDU302, NUR4...            39
+  MIDWifery                                     {NUR310, GLE202, HSC301, BIO101, HIST101, MID3...            37
+  Certified MidWives 1                          {GLE202, HSC301, BIO101, NUR302, HIST101, MIDW...            35
+  Mathematics 1                                 {MATH408, MATH208, SSC101, PHYS101, MATH101, M...            27
+  Chemistry 1                                   {GLE202, HIST101, HIST102, MATH208, GLE201, CH...            26
+  English 1                                     {ENGL104, ENGL204, PHYS101, MATH101, ENGL375, ...            23
+  Renewable Energy Engineering 1                {EENG407, EENG301, HIST101, MATH101, CSE102, C...            23
+  Soccer Coaching 1                             {FOCO121, FOCO142, FOCO202, FOCO221, FOCO211, ...            21
+  Computer Networks and Security Engineering 1  {HIST101, GENG403, GENG404, CHEM102, MATH101, ...            20
+  Early Childhood Education and Development 7   {ENVS201, ENGL202, MATH101, ENGL101, PSY101, M...            18
+  Early Childhood Education and Development 5   {ENGL371, ENGL471, ENVS201, ENGL202, MATH101, ...            15
+  Early Childhood Education and Development 4   {CHEM102, ENVS201, MATH101, CSE101, ENGL101, P...            14
+  Early Childhood Education and Development 8   {GCED243, ENVS201, ENGL202, MATH101, ENGL101, ...            13
+  Early Childhood Education and Development 6   {ENVS201, ENGL202, HIST202, MATH101, ENGL101, ...            13
+  General Education 1                           {ENGL204, BIO101, HIST202, PSY101, FREN201, CH...            10
+  Early Childhood Education and Development 3   {BIO101, ENVS201, MATH101, PSY101, BIO102, EED...             9
+  Early Childhood Education and Development 2   {PEDU221, ENVS201, MATH101, PSY101, EED302, MA...             9
+  Early Childhood Education and Development 1   {ENVS201, MATH101, PSY101, EED302, MATH102, EE...             9
+  French 1                                                                     {FREN202, FREN201}             2
   ME                                                                                       {MEME}             1
   Public Administration                                                                 {HIST101}             1
   :end:
@@ -3647,399 +3636,12 @@ or throught the course code
 :results:
 :end:
 
-#+BEGIN_SRC python :results output
+#+BEGIN_SRC python :results silent
   course_catalog = c2s.shortcodes.to_dict()
   curri_sig = curriculum_signature(course_catalog)
   pp.pprint(curri_sig)
 #+END_SRC 
 
-#+RESULTS:
-:results:
-{'Accounting 1': {'ACCT314',
-                  'ACCT403',
-                  'ACCT404',
-                  'ACCT405',
-                  'ACCT408',
-                  'ACCT429',
-                  'ACCT430'},
- 'Agriculture 1': {'AGR317',
-                   'AGR327',
-                   'AGR411',
-                   'AGR424',
-                   'AGR433',
-                   'AGR434',
-                   'AGR465'},
- 'Agriculture 2': {'AGR452', 'AGR312', 'AGR413', 'AGR455', 'AGR453', 'AGR454'},
- 'Arts in Economics 1': {'ECON102',
-                         'ECON306',
-                         'ECON307',
-                         'ECON405',
-                         'ECON406',
-                         'ECON407',
-                         'ECON408',
-                         'ECON409',
-                         'ECON410',
-                         'ECON412',
-                         'ECON415',
-                         'ECON429',
-                         'ECON430'},
- 'BA-BIOLOGY': {'BIO371',
-                'BIO373',
-                'BIO375',
-                'BIO376',
-                'BIO377',
-                'BIO378',
-                'BIO471',
-                'BIO472',
-                'BIO475'},
- 'BA-CHEMISTRY': {'CHEM371',
-                  'CHEM373',
-                  'CHEM375',
-                  'CHEM376',
-                  'CHEM377',
-                  'CHEM378',
-                  'CHEM473',
-                  'CHEM476'},
- 'BA-ECD': set(),
- 'BA-ENGL/LIT': {'EDU383',
-                 'ENGL374',
-                 'ENGL376',
-                 'ENGL377',
-                 'ENGL472',
-                 'ENGL474'},
- 'BA-GUIDANCE/COUNS': {'ECD364',
-                       'EDU357',
-                       'EDU451',
-                       'EDU483',
-                       'EDU484',
-                       'GCED384',
-                       'GCED455',
-                       'GCED458',
-                       'GCED481',
-                       'GCED482',
-                       'GCED485',
-                       'GCED486'},
- 'BA-HISTORY': {'HIST371',
-                'HIST372',
-                'HIST373',
-                'HIST374',
-                'HIST376',
-                'HIST377',
-                'HIST471',
-                'HIST472'},
- 'BA-MATHEMATICS': {'EDU382',
-                    'MATH201E',
-                    'MATH371',
-                    'MATH373',
-                    'MATH375',
-                    'MATH376',
-                    'MATH377',
-                    'MATH378',
-                    'MATH471',
-                    'MATH473',
-                    'MATH474',
-                    'MATH476'},
- 'BA-PRIMARY EDUCATION': set(),
- 'Banking and Finance 1': {'BFIN201',
-                           'BFIN202',
-                           'BFIN307',
-                           'BFIN312',
-                           'BFIN404',
-                           'BFIN405',
-                           'BFIN407',
-                           'BFIN408',
-                           'BFIN412',
-                           'BFIN429',
-                           'BFIN430'},
- 'Biology 1': {'BIO202A',
-               'BIO206',
-               'BIO301',
-               'BIO302',
-               'BIO303',
-               'BIO304',
-               'BIO305',
-               'BIO306',
-               'BIO307',
-               'BIO308',
-               'BIO309',
-               'BIO401',
-               'BIO402',
-               'BIO403',
-               'BIO404',
-               'BIO405',
-               'BIO406',
-               'BIO407',
-               'BIO408',
-               'MATH211'},
- 'Business Administration 1': {'BUSA404',
-                               'BUSA406',
-                               'BUSA411',
-                               'BUSA413',
-                               'BUSA415',
-                               'BUSA429',
-                               'BUSA430'},
- 'Certified MidWives 1': {'MIDW204',
-                          'MIDW300',
-                          'MIDW305',
-                          'MIDW306',
-                          'MIDW307'},
- 'Chemistry 1': set(),
- 'Civil Engineering 1': {'CENG302',
-                         'CENG401A',
-                         'CENG402',
-                         'CENG403',
-                         'CENG405',
-                         'CENG405A',
-                         'CENG406',
-                         'CENG407A',
-                         'CENG408',
-                         'CENG409',
-                         'CENG410',
-                         'CENG501',
-                         'CENG502',
-                         'CENG503',
-                         'CENG504',
-                         'CENG505',
-                         'CENG507',
-                         'CENG508',
-                         'CENG510'},
- 'Computer Networks and Security Engineering 1': set(),
- 'Computer Science 1': {'CHN101',
-                        'CHN102',
-                        'CSENG301',
-                        'CSENG302',
-                        'CSENG303',
-                        'CSENG304',
-                        'CSENG305',
-                        'CSENG306',
-                        'CSENG307',
-                        'CSENG308',
-                        'CSENG309',
-                        'CSENG310',
-                        'CSENG401',
-                        'CSENG402',
-                        'CSENG403',
-                        'CSENG404',
-                        'CSENG405',
-                        'CSENG406',
-                        'CSENG407',
-                        'CSENG408',
-                        'CSENG409',
-                        'CSENG410',
-                        'CSENG501',
-                        'CSENG502',
-                        'CSENG503',
-                        'CSENG504',
-                        'CSENG505',
-                        'CSENG506'},
- 'Early Childhood Education and Development 1': set(),
- 'Early Childhood Education and Development 2': {'PEDU221'},
- 'Early Childhood Education and Development 3': {'BIO102'},
- 'Early Childhood Education and Development 4': set(),
- 'Early Childhood Education and Development 5': set(),
- 'Early Childhood Education and Development 6': set(),
- 'Early Childhood Education and Development 7': set(),
- 'Early Childhood Education and Development 8': {'GCED243'},
- 'Electrical Engineering 1': {'EENG302',
-                              'EENG303',
-                              'EENG304',
-                              'EENG308',
-                              'EENG402.',
-                              'EENG403',
-                              'EENG404',
-                              'EENG406',
-                              'EENG407A',
-                              'EENG408',
-                              'EENG409',
-                              'EENG500',
-                              'EENG501',
-                              'EENG502',
-                              'EENG503',
-                              'EENG504',
-                              'EENG505',
-                              'EENG506',
-                              'EENG507',
-                              'EENG508',
-                              'EENG509',
-                              'GENG301A'},
- 'English 1': {'ENGL203', 'ENGL372', 'ENGL104'},
- 'Environmental Science 1': {'ENVS202',
-                             'ENVS204',
-                             'ENVS206',
-                             'ENVS208',
-                             'ENVS301',
-                             'ENVS302',
-                             'ENVS303',
-                             'ENVS304',
-                             'ENVS305',
-                             'ENVS306',
-                             'ENVS307',
-                             'ENVS308',
-                             'ENVS309',
-                             'ENVS311',
-                             'ENVS312',
-                             'ENVS318',
-                             'ENVS401',
-                             'ENVS402',
-                             'ENVS403',
-                             'ENVS404',
-                             'ENVS405',
-                             'ENVS406',
-                             'ENVS407',
-                             'ENVS408',
-                             'ENVS419',
-                             'ENVS420',
-                             'EVS411'},
- 'French 1': set(),
- 'General Education 1': set(),
- 'ME': {'MEME'},
- 'MIDWifery': {'MID204',
-               'MID301',
-               'MID303',
-               'MID304',
-               'MID306',
-               'MID311',
-               'MID402'},
- 'Mathematics 1': {'MATH408', 'PHYS102'},
- 'Mechanical Engineering 1': {'GENG302',
-                              'MENG301',
-                              'MENG302',
-                              'MENG308',
-                              'MENG401A',
-                              'MENG402',
-                              'MENG403',
-                              'MENG404',
-                              'MENG405',
-                              'MENG406',
-                              'MENG407',
-                              'MENG408',
-                              'MENG410',
-                              'MENG411',
-                              'MENG500',
-                              'MENG501',
-                              'MENG503',
-                              'MENG504',
-                              'MENG505',
-                              'MENG506',
-                              'MENG507',
-                              'MENG508',
-                              'MENG509',
-                              'MENG510',
-                              'MENG511'},
- 'Nursing 1': {'NUR201',
-               'NUR202',
-               'NUR204',
-               'NUR301',
-               'NUR305',
-               'NUR306',
-               'NUR307'},
- 'Nursing 2': {'NUR410'},
- 'Psychology 1': {'BIOL101',
-                  'CHN201',
-                  'CHN202',
-                  'COM101',
-                  'ENG201',
-                  'ENG204',
-                  'GLEB201',
-                  'GLEB202',
-                  'PED101',
-                  'PED102',
-                  'PSY203',
-                  'PSY204',
-                  'PSY206',
-                  'PSY301',
-                  'PSY302',
-                  'PSY303',
-                  'PSY304',
-                  'PSY305',
-                  'PSY306',
-                  'PSY307',
-                  'PSY308',
-                  'PSY309',
-                  'PSY311',
-                  'PSY312',
-                  'PSY320',
-                  'PSY401',
-                  'PSY402',
-                  'PSY403',
-                  'PSY404',
-                  'PSY405',
-                  'PSY406',
-                  'PSY407',
-                  'PSY408',
-                  'PSY419',
-                  'PSY420',
-                  'PSYC101',
-                  'SOC101'},
- 'Public Administration': set(),
- 'Public Administration 1': {'BUSA308',
-                             'BUSA410',
-                             'PADM201',
-                             'PADM304',
-                             'PADM311',
-                             'PADM401',
-                             'PADM402',
-                             'PADM403',
-                             'PADM404',
-                             'PADM405',
-                             'PADM417',
-                             'PADM420',
-                             'PADM429',
-                             'PADM430'},
- 'Public Health 1': {'PH202',
-                     'PH301',
-                     'PH302',
-                     'PH304',
-                     'PH305',
-                     'PH306',
-                     'PH307',
-                     'PH308',
-                     'PH309',
-                     'PH312',
-                     'PH314',
-                     'PH316',
-                     'PH320',
-                     'PH401',
-                     'PH403',
-                     'PH405',
-                     'PH406',
-                     'PH407',
-                     'PH408',
-                     'PH409',
-                     'PH411',
-                     'PH413',
-                     'PH414A',
-                     'PH415',
-                     'PH416',
-                     'PH417',
-                     'PH418',
-                     'PH419',
-                     'PH421',
-                     'PH423',
-                     'PH425'},
- 'RN Post Basic 1': {'NUR408'},
- 'Renewable Energy Engineering 1': {'EENG402', 'EENG407'},
- 'Soccer Coaching 1': {'FOCO101',
-                       'FOCO102',
-                       'FOCO112',
-                       'FOCO121',
-                       'FOCO122',
-                       'FOCO132',
-                       'FOCO141',
-                       'FOCO142',
-                       'FOCO152',
-                       'FOCO201',
-                       'FOCO202',
-                       'FOCO211',
-                       'FOCO212',
-                       'FOCO221',
-                       'FOCO222',
-                       'FOCO232',
-                       'SPMT201',
-                       'SPMT202',
-                       'SPMT211',
-                       'SPMT300'}}
-:end:
 ** Curriculums
 
 *** Get the StudentID of Courses
@@ -4063,8 +3665,8 @@ or throught the course code
 :results:
            crhrs  ...                                         shortcodes
 StudentID         ...                                                   
-TU-00532   266.0  ...  {AGR303, PADM403, ACCT202, AGR409, PADM417, EC...
-TU-00665   254.0  ...  {ENVS301, ENVS306, ENVS311, ENVS308, ENVS208, ...
+TU-00532   266.0  ...  {BIO101, AGR305, PADM306, AGR408, ZOO201, ENGL...
+TU-00665   254.0  ...  {BIO101, EDU353, ENVS303, EDU476, HIST376, ENV...
 
 [2 rows x 4 columns]
 :end:
@@ -4455,79 +4057,17 @@ plt.close(fig)
  mais je ne tiens pas compt des double cursus.
 
 **** Let's check the num of curriculums for a student with gt max credit
-#+BEGIN_SRC python :results value
+#+BEGIN_SRC python :results silent
   # big studentent
   bstudidx = sthr[sthr.crhr.gt(200).values].index
   strict_curri.loc[bstudidx].to_string()
 #+END_SRC      
 
-#+RESULTS:
-:results:
-StudentID
-15792                           [(Civil Engineering 1, 0.84)]
-TU-00103    [(Renewable Energy Engineering 1, 1.0), (Busin...
-TU-00200    [(Early Childhood Education and Development 3,...
-TU-00227    [(Civil Engineering 1, 0.53), (Mathematics 1, ...
-TU-00361    [(Mathematics 1, 0.5), (BA-GUIDANCE/COUNS, 0.17)]
-TU-00500                         [(Computer Science 1, 0.93)]
-TU-00532    [(Public Administration 1, 0.71), (Agriculture...
-TU-00570    [(Public Administration 1, 0.79), (Public Heal...
-TU-00590         [(Public Health 1, 0.55), (English 1, 0.33)]
-TU-00665    [(BA-HISTORY, 1.0), (Environmental Science 1, ...
-TU-00689    [(Public Administration 1, 0.79), (English 1, ...
-TU-00940    [(BA-BIOLOGY, 0.78), (Arts in Economics 1, 0.54)]
-TU-00967                   [(Mechanical Engineering 1, 0.44)]
-TU-01026    [(Public Administration 1, 0.79), (Public Heal...
-TU-01027    [(Early Childhood Education and Development 3,...
-TU-01085    [(Business Administration 1, 1.0), (BA-GUIDANC...
-TU-01136    [(Computer Science 1, 0.79), (Civil Engineerin...
-TU-01386                   [(Mechanical Engineering 1, 0.44)]
-TU-01408    [(Agriculture 1, 0.86), (Business Administrati...
-TU-01472                         [(Computer Science 1, 0.89)]
-TU-01486    [(Electrical Engineering 1, 0.77), (Renewable ...
-TU-01553    [(BA-ENGL/LIT, 1.0), (Public Administration 1,...
-TU-01597    [(Public Health 1, 0.58), (Civil Engineering 1...
-TU-01653    [(Civil Engineering 1, 0.74), (Mechanical Engi...
-TU-01768    [(Civil Engineering 1, 0.84), (Electrical Engi...
-TU-01838    [(Electrical Engineering 1, 0.82), (Renewable ...
-TU-01942    [(Electrical Engineering 1, 0.73), (Renewable ...
-TU-02026      [(Computer Science 1, 0.93), (Nursing 1, 0.14)]
-TU-02049                         [(Computer Science 1, 0.89)]
-TU-02185    [(Civil Engineering 1, 0.84), (Electrical Engi...
-TU-02241    [(Mechanical Engineering 1, 0.6), (Electrical ...
-TU-02336    [(BA-BIOLOGY, 1.0), (Public Administration 1, ...
-TU-02469    [(Electrical Engineering 1, 0.77), (Renewable ...
-TU-02470    [(Civil Engineering 1, 0.95), (Electrical Engi...
-TU-02491    [(Business Administration 1, 1.0), (Public Adm...
-TU-02495                   [(Mechanical Engineering 1, 0.68)]
-TU-02543    [(Mechanical Engineering 1, 0.68), (Electrical...
-TU-02610                         [(Computer Science 1, 0.93)]
-TU-02686                        [(Civil Engineering 1, 0.68)]
-TU-02864    [(Civil Engineering 1, 0.84), (Electrical Engi...
-TU-02903    [(Mechanical Engineering 1, 0.68), (Electrical...
-:end:
-#+BEGIN_SRC python :results value
+
+#+BEGIN_SRC python :results silent
   bstudidx = sthr[sthr.crhr.gt(220).values].index
   idf_curri.loc[bstudidx].to_string()
 #+END_SRC
-
-#+RESULTS:
-:results:
-StudentID
-TU-00532    [(Public Administration 1, 0.44), (Business Ad...
-TU-00570    [(Public Administration 1, 0.49), (Public Heal...
-TU-00590    [(Public Health 1, 0.38), (Civil Engineering 1...
-TU-00665    [(Environmental Science 1, 0.38), (BA-HISTORY,...
-TU-00689    [(Public Administration 1, 0.44), (Accounting ...
-TU-00940    [(Arts in Economics 1, 0.41), (BA-BIOLOGY, 0.39)]
-TU-01027               [(Biology 1, 0.43), (Nursing 1, 0.39)]
-TU-01085    [(Business Administration 1, 0.48), (BA-PRIMAR...
-TU-01136    [(Computer Science 1, 0.74), (Civil Engineerin...
-TU-01553    [(Public Administration 1, 0.53), (BA-ENGL/LIT...
-TU-02241    [(Mechanical Engineering 1, 0.72), (Civil Engi...
-TU-02336    [(Public Administration 1, 0.55), (BA-BIOLOGY,...
-TU-02470    [(Civil Engineering 1, 0.75), (Mechanical Engi...
-:end:
 
 **** Empty Curriculums
 #+BEGIN_SRC python :results value
@@ -4545,7 +4085,7 @@ TU-02470    [(Civil Engineering 1, 0.75), (Mechanical Engi...
 
 
 **** Attach a curriculum to each grade row
-#+BEGIN_SRC python :results value
+#+BEGIN_SRC python :results silence
   from typing import Iterable, Optional, Tuple
   
   # materialize lookups once for apply
@@ -4599,11 +4139,6 @@ TU-02470    [(Civil Engineering 1, 0.75), (Mechanical Engi...
       return candidates[0][0]
   #+END_SRC
 
-  #+RESULTS:
-  :results:
-  :end:
-
-
 #+BEGIN_SRC python :results value
   gdf["Curriculum"] = gdf.apply(
       lambda row: pick_curri_for_grade(
@@ -4647,19 +4182,25 @@ TU-02470    [(Civil Engineering 1, 0.75), (Mechanical Engi...
           "AcademicYear": "academic_year",
           "Semester": "semester",
           "StudentID": "student_id",
-          "CourseCode": "dept_code",
+          "CourseCode": "course_dept",
           "CourseNo": "course_no",
           "Section": "section_no",
           "Grade": "grade_code",
           "CrHrs": "credit_hours",
       }
-  )
+  )    
 #+END_SRC        
 
 **** Saving the full grades
-#+BEGIN_SRC python :results value
+#+BEGIN_SRC python :results silent
 full_gdf.to_csv(FDIR / "full_grades.tsv",sep="\t",index=False)
 #+END_SRC       
+
+#+BEGIN_SRC python :results silent
+  # I am adding student information as it may be necessary to create the student on the fly
+  _merged = full_gdf.merge(_std, how='left', left_on='student_id', right_on='StudentID')
+  _merged.to_csv(FDIR / "full_grades_students.tsv",sep="\t",index=False)
+#+END_SRC
 
 #+RESULTS:
 :results:
@@ -4954,3 +4495,62 @@ Harmonize the room names
   cols = ['AccountID','TermFirstEntered', 'TermLastEnrolled']
   csv_save("people_student_terms.tsv", _sti.loc[:,cols])
 #+END_SRC    
+
+* COMMENT I may have student with no grades
+#+BEGIN_SRC python :results value
+  stdid = set(_std.StudentID)
+  gid = set(full_gdf.student_id)
+  len(gid)
+  # len(stdid - gid), len(stdid), len(gid),   len(gid - stdid)
+#+END_SRC  
+
+#+RESULTS:
+:results:
+6371
+:end:
+
+#+BEGIN_SRC python :results value
+  idx = full_gdf.student_id.map(lambda x: x not in stdid)
+  _std[idx].loc[:,["SemesterOfEntry","YearOfEntry"]]  
+#+END_SRC
+
+#+RESULTS:
+:results:
+      SemesterOfEntry YearOfEntry
+1                 1.0   2019/2020
+4685              1.0            
+4686              1.0            
+4687              1.0            
+4688              1.0            
+...               ...         ...
+5633              1.0            
+5634              1.0            
+5635              1.0            
+5636              1.0            
+5637              1.0            
+
+[63 rows x 2 columns]
+:end:
+
+#+BEGIN_SRC python :results value
+  idx = _std.StudentID.map(lambda x: x not in gid)
+  _std[idx]  
+#+END_SRC
+
+#+RESULTS:
+:results:
+     StudentID  FirstName MiddleName  ... Enrolled Uploaded                  ProgramID
+1        00353  Augustine         B.  ...      Yes      Yes  Business Administration 1
+2        00466   Roseline          L  ...      Yes      Yes  Business Administration 1
+3        00921    Winston     Friday  ...                                             
+4        01590     Prince         N.  ...                          Civil Engineering 1
+5        01610   Mustapha             ...      Yes      Yes                           
+...        ...        ...        ...  ...      ...      ...                        ...
+6577  TU-03475      Annie         B.  ...      Yes      Yes                           
+6578  TU-03476      Edith         B.  ...               Yes                           
+6579  TU-03477       Alex       S.K.  ...               Yes                           
+6580  TU-03478   Levatine         T.  ...      Yes      Yes                           
+6581  TU-03479      Siafa             ...               Yes                           
+
+[234 rows x 43 columns]
+:end:

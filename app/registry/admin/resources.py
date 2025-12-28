@@ -21,7 +21,7 @@ class GradeResource(resources.ModelResource):
     student = fields.Field(
         attribute="student",
         column_name="student_id",
-        widget=GradeStudentWidget(),
+        widget=GradeStudentWidget(),  
     )
     section = fields.Field(
         attribute="section", column_name="section_no", widget=SectionWidget()
