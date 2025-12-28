@@ -47,6 +47,7 @@ DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
             # "gradesheets.utf8.tsv",
             # "oldgrades.utf8.tsv",
             "full_grade.tsv",  # new file combining gradesheets and oldgrades
+            # "full_grades_students.tsv"  # file with student information
             # "registry_gradeSheets.csv",
         ),
     ),

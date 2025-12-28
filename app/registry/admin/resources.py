@@ -39,9 +39,6 @@ class GradeResource(resources.ModelResource):
         academic_year = get_in_row("academic_year", row)
         if academic_year:
             row["academic_year"] = normalize_academic_year(academic_year)
-        semester_value = get_in_row("semester_no", row)
-        if semester_value:
-            row["semester_no"] = semester_value
         return super().before_import_row(row, **kwargs)
 
 
