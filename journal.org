@@ -68,6 +68,16 @@ I traced the current fuzzy flow and the spots we’d need to touch.
 
 
 
+*** <2025-12-29 lun. 13:17>
+1. is ok, the cache will help but be precise with the type signature. it is an area where mypy is quick to complain.
+2. I do not want allow_fuzzy boolean anywhere so remove it if still implemented (it should not) same as get_or_create_fuzzy, should have been removed totaly from the code for Course and Curriculum.
+3. ok, agree
+4. ok
+5. ok
+6. yes
+
+you can proceed and make this code base grow beautifully.   
+
 * DONE <2025-12-28 dim. 20:27> garde import columns
   CLOSED: [2025-12-29 Mon 09:32]
 academic_year	semester	student_id	dept_code	course_no	section_no	grade_code	credit_hours	Major	curriculum	college_code

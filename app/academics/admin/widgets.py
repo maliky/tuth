@@ -1,6 +1,6 @@
 """Widgets module."""
 
-from typing import Any, Optional
+from typing import Any, Optional, Dict, Tuple
 
 from django.db import IntegrityError
 from import_export import widgets
@@ -28,6 +28,7 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
         super().__init__(CurriculumCourse)
         self.curriculum_w = CurriculumWidget()
         self.course_w = CourseWidget()
+        self._cache: Dict[Tuple[int, int], CurriculumCourse] = {}
 
     def clean(self, value, row=None, *args, **kwargs) -> CurriculumCourse:
         """Assemble course_dept, curriculum and course to return a curriculum course."""
@@ -57,6 +58,12 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
         else:
             is_required = False
 
+        if curriculum and course:
+            key = (curriculum.id, course.id)
+            cached = self._cache.get(key)
+            if cached:
+                return cached
+
         curriculum_course, _ = CurriculumCourse.objects.get_or_create(
             curriculum=curriculum,
             course=course,
@@ -65,6 +72,8 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
                 "is_required": is_required,
             },
         )
+        if curriculum and course:
+            self._cache[(curriculum.id, course.id)] = curriculum_course
         return curriculum_course
 
 
@@ -83,7 +92,7 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
         self.college_w = CollegeWidget()
 
     def clean(
-        self, value, row=None, fuzzy_threshold: float = 1, *args, **kwargs
+        self, value, row=None, fuzzy_threshold: float = 1.0, *args, **kwargs
     ) -> Curriculum | None:
         """Returns a Curriculum object matching the provided short_name in value.
 
