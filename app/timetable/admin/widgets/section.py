@@ -18,12 +18,11 @@ from app.timetable.models.section import Section
 class SectionWidget(widgets.ForeignKeyWidget):
     """Create a Section from multiple CSV columns."""
 
-    def __init__(self, *, allow_fuzzy: bool = True):
+    def __init__(self):
         super().__init__(Section)  # using pk until export is done
-        self.curriculum_course_w = CurriculumCourseWidget(allow_fuzzy=allow_fuzzy)
+        self.curriculum_course_w = CurriculumCourseWidget()
         self.sem_w = SemesterWidget()
         self.faculty_w = FacultyWidget()
-        self.allow_fuzzy = allow_fuzzy
 
     # ------------ widget API ------------
     def clean(self, value, row=None, *args, **kwargs) -> Section | None:
@@ -33,6 +32,7 @@ class SectionWidget(widgets.ForeignKeyWidget):
 
         # needs course in context
         curriculum_value = get_in_row("curriculum", row)
+        # We Could add fuzzy_threshold here.
         curriculum_course = self.curriculum_course_w.clean(
             value=curriculum_value, row=row
         )

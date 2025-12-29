@@ -97,6 +97,7 @@ class CourseManager(models.Manager["Course"]):
         )
         return created_course, bool(created)
 
+
 class Course(models.Model):
     """University catalogue entry describing a single course offering.
 
@@ -226,7 +227,7 @@ class Course(models.Model):
         def_crs, _ = cls.objects.get_or_create(
             department=Department.get_default(),
             number=number,
-            defaults={'title':f"Default Course {number}"},
+            defaults={"title": f"Default Course {number}"},
         )
         return cast(Self, def_crs)
 

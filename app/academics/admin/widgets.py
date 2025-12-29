@@ -24,12 +24,12 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
     to CourseWidget then assembles a CurriculumCourse object from the results.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         super().__init__(CurriculumCourse)
         self.curriculum_w = CurriculumWidget()
         self.course_w = CourseWidget()
 
-    def clean(self, value, row=None, *args,**kwargs) -> CurriculumCourse:
+    def clean(self, value, row=None, *args, **kwargs) -> CurriculumCourse:
         """Assemble course_dept, curriculum and course to return a curriculum course."""
         # we don't use value.  We always get a course back
         course = self.course_w.clean(value=None, row=row)
@@ -77,7 +77,7 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
 
     SHORT_NAME_MAX = Curriculum._meta.get_field("short_name").max_length
 
-    def __init__(self, *):
+    def __init__(self):
         # set the look_up field to uniquely identify the Curriculum to short_name.
         super().__init__(Curriculum, field="short_name")
         self.college_w = CollegeWidget()
@@ -145,7 +145,7 @@ class CourseWidget(widgets.ForeignKeyWidget):
     queries when several rows reference the same course.
     """
 
-    def __init__(self, *):
+    def __init__(self):
         super().__init__(Course, field="code")
         self.department_w = DepartmentWidget()
         self.college_w = CollegeWidget()
