@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 from pathlib import Path
+import time
 from typing import Dict, Tuple, Optional
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
@@ -20,6 +21,7 @@ from app.shared.models import CreditHour
 from app.shared.utils import normalize_academic_year
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
+from django.contrib.auth import get_user_model
 
 
 def _norm_course_no(value: str) -> str:
@@ -97,6 +99,8 @@ class Command(BaseCommand):
 
         created_grades_total = 0
         skipped = 0
+        rows_processed = 0
+        batch_commits = 0
 
         # Increase CSV field size limit to avoid errors
         try:
@@ -213,16 +217,32 @@ class Command(BaseCommand):
             existing = students.get(sid)
             if existing:
                 return existing
-            student = Student.objects.create(
+            User = get_user_model()
+            base_username = f"student_{sid}".lower()
+            username = base_username
+            counter = 1
+            while User.objects.filter(username=username).exists():
+                counter += 1
+                username = f"{base_username}{counter}"
+            user = User.objects.create_user(
+                username=username,
+                first_name="Student",
+                last_name=sid,
+            )
+            student = Student(
+                user=user,
                 student_id=sid,
                 curriculum=Curriculum.get_default(),
             )
+            student.save()
             students[sid] = int(student.pk)
             return int(student.pk)
 
         rows_to_create: list[Grade] = []
         # Existing grade pairs to avoid duplicates
         existing_pairs = set(Grade.objects.values_list("student_id", "section_id"))
+
+        start_time = time.time()
 
         with path.open(newline="", encoding="utf-8-sig") as f:
             reader = csv.DictReader(f, delimiter="\t")
@@ -272,6 +292,15 @@ class Command(BaseCommand):
                         )
                     created_grades_total += len(rows_to_create)
                     rows_to_create.clear()
+                    batch_commits += 1
+                    if batch_commits % 5 == 0:
+                        elapsed = time.time() - start_time
+                        rate = rows_processed / elapsed if elapsed else 0
+                        self.stdout.write(
+                            f"Progress: {rows_processed} rows in {elapsed:.1f}s ({rate:.0f} rows/s)"
+                        )
+
+                rows_processed += 1
 
         if rows_to_create:
             with transaction.atomic():
