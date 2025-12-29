@@ -34,11 +34,12 @@ DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
         ("academicyear_semester.csv",),
     ),
     ("Donor", DonorResource, ("people_donors.csv",)),
+    # "UM_students.utf8.tsv"  #  people_students.csv is a cleaned version of UM
+    #  "StudentInfo.csv"
     (
         "Student",
         StudentResource,
-        # "UM_students.utf8.tsv"  #  people_students.csv is a cleaned version of UM
-        ("people_students.csv", "StudentInfo.csv"),
+        ("people_students.csv",),
     ),
     (
         "Grade",
