@@ -64,23 +64,30 @@ class Command(BaseCommand):
         batch_size: int = options["batch_size"]
 
         # Preload caches
-        students: Dict[str, int] = dict(
-            Student.objects.values_list("student_id", "id")
-        )
-        semesters: Dict[Tuple[str, int], int] = dict(
-            Semester.objects.values_list("academic_year__code", "number", "id")
-        )
+        students: Dict[str, int] = dict(Student.objects.values_list("student_id", "id"))
+        semesters: Dict[Tuple[str, int], int] = {}
+        for ay, num, pk in Semester.objects.values_list(
+            "academic_year__code", "number", "id"
+        ):
+            semesters[(ay, num)] = pk
         curricula: Dict[str, int] = {
-            name.lower(): pk for name, pk in Curriculum.objects.values_list("short_name", "id")
+            name.lower(): pk
+            for name, pk in Curriculum.objects.values_list("short_name", "id")
         }
         colleges: Dict[str, int] = {
             code.lower(): pk for code, pk in College.objects.values_list("code", "id")
         }
         departments: Dict[Tuple[str, int], int] = {}  # (dept_code, college_id) -> id
         courses: Dict[Tuple[str, str], int] = {}  # (dept_code, course_no) -> id
-        curriculum_courses: Dict[Tuple[int, int], int] = {}  # (curriculum_id, course_id) -> id
-        sections: Dict[Tuple[int, int, int, Optional[int]], int] = {}  # (sem, curr_course, num, faculty) -> id
-        credit_hours_map: Dict[int, int] = dict(CreditHour.objects.values_list("code", "id"))
+        curriculum_courses: Dict[Tuple[int, int], int] = (
+            {}
+        )  # (curriculum_id, course_id) -> id
+        sections: Dict[Tuple[int, int, int, Optional[int]], int] = (
+            {}
+        )  # (sem, curr_course, num, faculty) -> id
+        credit_hours_map: Dict[int, int] = {
+            code: code for code, in CreditHour.objects.values_list("code")
+        }
         grade_values: Dict[str, int] = {
             code.upper(): pk for code, pk in GradeValue.objects.values_list("code", "id")
         }
@@ -150,7 +157,9 @@ class Command(BaseCommand):
             curricula[key] = cur_obj.id
             return cur_obj.id
 
-        def ensure_curriculum_course(curriculum_id: int, course_id: int, credit_code: int) -> int:
+        def ensure_curriculum_course(
+            curriculum_id: int, course_id: int, credit_code: int
+        ) -> int:
             key = (curriculum_id, course_id)
             existing = curriculum_courses.get(key)
             if existing:
@@ -158,7 +167,7 @@ class Command(BaseCommand):
             credit_id = credit_hours_map.get(credit_code)
             if credit_id is None:
                 credit_obj, _ = CreditHour.objects.get_or_create(code=credit_code)
-                credit_id = credit_obj.id
+                credit_id = int(credit_obj.pk)
                 credit_hours_map[credit_code] = credit_id
             cc_obj, _ = CurriculumCourse.objects.get_or_create(
                 curriculum_id=curriculum_id,
@@ -200,7 +209,7 @@ class Command(BaseCommand):
         def ensure_student(student_id_raw: str) -> int:
             sid = (student_id_raw or "").strip()
             if not sid:
-                return Student.get_default().id
+                return int(Student.get_default().pk)
             existing = students.get(sid)
             if existing:
                 return existing
@@ -208,18 +217,16 @@ class Command(BaseCommand):
                 student_id=sid,
                 curriculum=Curriculum.get_default(),
             )
-            students[sid] = student.id
-            return student.id
+            students[sid] = int(student.pk)
+            return int(student.pk)
 
         rows_to_create: list[Grade] = []
         # Existing grade pairs to avoid duplicates
-        existing_pairs = set(
-            Grade.objects.values_list("student_id", "section_id")
-        )
+        existing_pairs = set(Grade.objects.values_list("student_id", "section_id"))
 
         with path.open(newline="", encoding="utf-8-sig") as f:
             reader = csv.DictReader(f, delimiter="\t")
-            for idx, row in enumerate(reader, start=1):
+            for _, row in enumerate(reader, start=1):
                 student_pk = ensure_student(row.get("student_id", ""))
                 sem_pk = ensure_semester(
                     row.get("academic_year", ""), row.get("semester_no", "")
@@ -229,15 +236,15 @@ class Command(BaseCommand):
                 course_pk = ensure_course(
                     dept_pk, row.get("course_no", ""), row.get("course_title", "") or ""
                 )
-                curriculum_pk = ensure_curriculum(
-                    row.get("curriculum", ""), college_pk
-                )
+                curriculum_pk = ensure_curriculum(row.get("curriculum", ""), college_pk)
                 credit_code = _to_int(row.get("credit_hours", ""), default=3)
                 curr_course_pk = ensure_curriculum_course(
                     curriculum_pk, course_pk, credit_code
                 )
                 sec_no = _to_int(row.get("section_no", ""), default=0)
-                section_pk = ensure_section(sem_pk, curr_course_pk, sec_no, default_faculty_id)
+                section_pk = ensure_section(
+                    sem_pk, curr_course_pk, sec_no, default_faculty_id
+                )
 
                 grade_code = (row.get("grade_code") or "").strip().upper()
                 grade_value_id = grade_values.get(grade_code)
