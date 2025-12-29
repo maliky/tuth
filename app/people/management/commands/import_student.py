@@ -49,8 +49,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         batch_size: int = options["batch_size"]
         sources: list[str] = options["file"] or [
-            "Seed_data/Fundamentals/StudentInfo.csv",
-            "Seed_data/Fundamentals/people_students.csv",
+            "Seed_data/Fundamentals/people_students.csv",            "Seed_data/Fundamentals/StudentInfo.csv",
         ]
 
         paths = [Path(p) for p in sources]

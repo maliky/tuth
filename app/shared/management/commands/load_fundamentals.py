@@ -55,8 +55,9 @@ class Command(BaseCommand):
 
         if opts["people"]:
             self.stdout.write("-> Importing people")
-            _import_resourcerces(csv_dir, ["Faculty", "Donor"])
             call_command("import_student")
+            _import_resources(csv_dir, ["Donor", "Faculty"])
+
 
         if opts["registry"]:
             self.stdout.write("-> Importing legacy registrations and grades")
