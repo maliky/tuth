@@ -5,7 +5,7 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 import time
-from typing import Dict, Tuple, Optional
+from typing import Optional
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import transaction
@@ -20,6 +20,13 @@ from app.registry.models.grade import Grade, GradeValue
 from app.shared.models import CreditHour
 from app.shared.utils import normalize_academic_year
 from app.timetable.models.section import Section
+from app.shared.types import (
+    StrIntMap,
+    TwoStrIntMap,
+    TwoIntIntMap,
+    ThreeIntOptIntMap,
+    IntIntMap,
+)
 from app.timetable.models.semester import Semester
 from django.contrib.auth import get_user_model
 
@@ -66,31 +73,31 @@ class Command(BaseCommand):
         batch_size: int = options["batch_size"]
 
         # Preload caches
-        students: Dict[str, int] = dict(Student.objects.values_list("student_id", "id"))
-        semesters: Dict[Tuple[str, int], int] = {}
+        students: StrIntMap = dict(Student.objects.values_list("student_id", "id"))
+        semesters: TwoStrIntMap = {}
         for ay, num, pk in Semester.objects.values_list(
             "academic_year__code", "number", "id"
         ):
             semesters[(ay, num)] = pk
-        curricula: Dict[str, int] = {
+        curricula: StrIntMap = {
             name.lower(): pk
             for name, pk in Curriculum.objects.values_list("short_name", "id")
         }
-        colleges: Dict[str, int] = {
+        colleges: StrIntMap = {
             code.lower(): pk for code, pk in College.objects.values_list("code", "id")
         }
-        departments: Dict[Tuple[str, int], int] = {}  # (dept_code, college_id) -> id
-        courses: Dict[Tuple[str, str], int] = {}  # (dept_code, course_no) -> id
-        curriculum_courses: Dict[Tuple[int, int], int] = (
+        departments: TwoStrIntMap = {}  # (dept_code, college_id) -> id
+        courses: TwoStrIntMap = {}  # (dept_code, course_no) -> id
+        curriculum_courses: TwoIntIntMap = (
             {}
         )  # (curriculum_id, course_id) -> id
-        sections: Dict[Tuple[int, int, int, Optional[int]], int] = (
+        sections: ThreeIntOptIntMap = (
             {}
         )  # (sem, curr_course, num, faculty) -> id
-        credit_hours_map: Dict[int, int] = {
+        credit_hours_map: IntIntMap = {
             code: code for code, in CreditHour.objects.values_list("code")
         }
-        grade_values: Dict[str, int] = {
+        grade_values: StrIntMap = {
             code.upper(): pk for code, pk in GradeValue.objects.values_list("code", "id")
         }
 

@@ -8,6 +8,9 @@ from django.db.models import QuerySet
 from import_export import resources
 
 if TYPE_CHECKING:
+    from pathlib import Path
+    from typing import Optional
+
     from app.academics.models.course import Course
     from app.people.models.faculty import Faculty
     from app.people.models.student import Student
@@ -36,3 +39,10 @@ DirectoryResourceEntry: TypeAlias = tuple[
 LookUpType: TypeAlias = Sequence[tuple[str, str]]
 # PersonT = TypeVar("PersonT")  # ? what is this.
 # PersonT = TypeAlias = Donor|Staff| Student| Faculty
+
+# Generic mapping aliases used across importers
+StrIntMap: TypeAlias = dict[str, int]
+IntIntMap: TypeAlias = dict[int, int]
+TwoStrIntMap: TypeAlias = dict[tuple[str, str], int]
+TwoIntIntMap: TypeAlias = dict[tuple[int, int], int]
+ThreeIntOptIntMap: TypeAlias = dict[tuple[int, int, int, Optional[int]], int]
