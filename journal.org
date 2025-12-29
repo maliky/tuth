@@ -78,6 +78,18 @@ I traced the current fuzzy flow and the spots we’d need to touch.
 
 you can proceed and make this code base grow beautifully.   
 
+*** Head of  Seed_data/Fundamentals/full_grades.tsv
+academic_year	semester_no	student_id	course_dept	course_no	section_no	grade_code	credit_hours	curriculum	college_code
+2014/2015	2	13425	MATH	101	1.0	C	3.0	BBA - Banking & Finance	coba
+2013/2014	2	921	HIST	102	1.0	C	3.0	BA - 2ndEd/Chemistry	coed
+2012/2013	1	TU-00002	EENG	314	1.0	B	3.0	BS - Mech Eng	coet
+
+this is the file imported.  I am still facing timing issues.  we start the import at 1.4s /iteration like previously this may increase at 2% of the file we were at 10s/it  but the cache should make the loop timing more stable and close to 2s/it.
+
+the objective is to reduce the time below the second for each iteration.
+
+Analyse in detail the code base and propose a plan to significatly decrease the time taken for a iteration.
+
 * DONE <2025-12-28 dim. 20:27> garde import columns
   CLOSED: [2025-12-29 Mon 09:32]
 academic_year	semester	student_id	dept_code	course_no	section_no	grade_code	credit_hours	Major	curriculum	college_code
