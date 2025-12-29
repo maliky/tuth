@@ -20,15 +20,18 @@ from app.registry.models.grade import Grade, GradeValue
 from app.shared.models import CreditHour
 from app.shared.utils import normalize_academic_year
 from app.timetable.models.section import Section
-from app.shared.types import (
-    StrIntMap,
-    TwoStrIntMap,
-    TwoIntIntMap,
-    ThreeIntOptIntMap,
-    IntIntMap,
-)
 from app.timetable.models.semester import Semester
 from django.contrib.auth import get_user_model
+from app.shared.types import (
+    StrIntMapT,
+    TwoStrIntMapT,
+    TwoIntIntMapT,
+    ThreeIntOptIntMapT,
+    IntIntMapT,
+    DeptCollegeMapT,
+    DeptCourseMapT,
+    SectionKeyMapT,
+)
 
 
 def _norm_course_no(value: str) -> str:
@@ -73,31 +76,27 @@ class Command(BaseCommand):
         batch_size: int = options["batch_size"]
 
         # Preload caches
-        students: StrIntMap = dict(Student.objects.values_list("student_id", "id"))
-        semesters: TwoStrIntMap = {}
+        students: StrIntMapT = dict(Student.objects.values_list("student_id", "id"))
+        semesters: TwoStrIntMapT = {}
         for ay, num, pk in Semester.objects.values_list(
             "academic_year__code", "number", "id"
         ):
             semesters[(ay, num)] = pk
-        curricula: StrIntMap = {
+        curricula: StrIntMapT = {
             name.lower(): pk
             for name, pk in Curriculum.objects.values_list("short_name", "id")
         }
-        colleges: StrIntMap = {
+        colleges: StrIntMapT = {
             code.lower(): pk for code, pk in College.objects.values_list("code", "id")
         }
-        departments: TwoStrIntMap = {}  # (dept_code, college_id) -> id
-        courses: TwoStrIntMap = {}  # (dept_code, course_no) -> id
-        curriculum_courses: TwoIntIntMap = (
-            {}
-        )  # (curriculum_id, course_id) -> id
-        sections: ThreeIntOptIntMap = (
-            {}
-        )  # (sem, curr_course, num, faculty) -> id
-        credit_hours_map: IntIntMap = {
+        departments: DeptCollegeMapT = {}  # (dept_code, college_id) -> id
+        courses: DeptCourseMapT = {}  # (dept_id, course_no) -> id
+        curriculum_courses: TwoIntIntMapT = {}  # (curriculum_id, course_id) -> id
+        sections: SectionKeyMapT = {}  # (sem, curr_course, num, faculty) -> id
+        credit_hours_map: IntIntMapT = {
             code: code for code, in CreditHour.objects.values_list("code")
         }
-        grade_values: StrIntMap = {
+        grade_values: StrIntMapT = {
             code.upper(): pk for code, pk in GradeValue.objects.values_list("code", "id")
         }
 
@@ -138,7 +137,7 @@ class Command(BaseCommand):
 
         def ensure_course(dept_id: int, course_no_raw: str, title: str) -> int:
             course_no = _norm_course_no(course_no_raw)
-            key = (str(dept_id), course_no)
+            key = (dept_id, course_no)
             existing = courses.get(key)
             if existing:
                 return existing

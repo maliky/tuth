@@ -38,10 +38,12 @@ Don't change existing variable names
 - In the reports, do not ad precision, file precision is enough
 
 ### Coding style
+- Typing: prefer explicit TypeAliases ending with `T` (e.g., `StrIntMapT`), avoid `Any`, and keep mypy happy (no implicit Optional where a concrete type is expected).
 - Prefer functional-style helpers (small pure functions) and reuse existing utilities before adding new logic.
 - Factor common routines rather than duplicating blocks; keep new code composable.
 - for app import prefere three level deep.  using __init___ and __all__ in case of deeper nesting.
 - Trying python files size uner 300 lines for readability.  They can be combined latter at deployment or production stage.
+- Before finishing a round of edits, run `black .`, `flake8 .`, and `mypy .` to catch formatting/lint/type issues.
 
 ### Branching
 Propose naming below
@@ -56,4 +58,3 @@ Propose consistent naming for git commit but do not commit yourself.
 - Check that the code pass 
 with black, flake8 and mypy
 - you can run `py_compile`,  `black`, `flake8`, and `mypy` at the end of your edits. 
-

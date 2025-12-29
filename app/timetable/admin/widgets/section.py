@@ -10,6 +10,7 @@ from app.academics.admin.widgets import (
     CurriculumWidget,
 )
 from app.people.admin.widgets import FacultyWidget
+from app.timetable.ensures import ensure_semester, ensure_section
 from app.shared.utils import get_in_row
 from app.timetable.admin.widgets.core import SemesterCodeWidget, SemesterWidget
 from app.timetable.models.section import Section
@@ -38,9 +39,9 @@ class SectionWidget(widgets.ForeignKeyWidget):
             value=curriculum_value, row=row
         )
 
-        # wants academic_year
         semester_no = get_in_row("semester_no", row)
-        semester = self.sem_w.clean(value=semester_no, row=row)
+        academic_year = get_in_row("academic_year", row)
+        semester = ensure_semester(academic_year, semester_no)
 
         faculty_value = get_in_row("faculty", row)
         faculty = self.faculty_w.clean(value=faculty_value, row=row)
@@ -62,11 +63,11 @@ class SectionWidget(widgets.ForeignKeyWidget):
         if cached:
             return cached
 
-        section, _ = Section.objects.get_or_create(
+        section = ensure_section(
             semester=semester,
             curriculum_course=curriculum_course,
             number=number,
-            faculty=faculty,
+            faculty_id=faculty.id if faculty else None,
         )
         self._cache[key] = section
 

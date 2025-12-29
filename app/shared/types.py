@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence, TypeAlias, Union
+from typing import TYPE_CHECKING, Sequence, TypeAlias, Union, Optional
 
 from django.db.models import QuerySet
 from import_export import resources
 
 if TYPE_CHECKING:
     from pathlib import Path
-    from typing import Optional
 
     from app.academics.models.course import Course
     from app.people.models.faculty import Faculty
@@ -41,8 +40,14 @@ LookUpType: TypeAlias = Sequence[tuple[str, str]]
 # PersonT = TypeAlias = Donor|Staff| Student| Faculty
 
 # Generic mapping aliases used across importers
-StrIntMap: TypeAlias = dict[str, int]
-IntIntMap: TypeAlias = dict[int, int]
-TwoStrIntMap: TypeAlias = dict[tuple[str, str], int]
-TwoIntIntMap: TypeAlias = dict[tuple[int, int], int]
-ThreeIntOptIntMap: TypeAlias = dict[tuple[int, int, int, Optional[int]], int]
+StrIntMapT: TypeAlias = dict[str, int]
+IntIntMapT: TypeAlias = dict[int, int]
+TwoStrIntMapT: TypeAlias = dict[tuple[str, int], int]
+TwoIntIntMapT: TypeAlias = dict[tuple[int, int], int]
+ThreeIntOptIntMapT: TypeAlias = dict[tuple[int, int, int, Optional[int]], int]
+
+# More explicit map aliases for common keys
+DeptCollegeMapT: TypeAlias = dict[tuple[str, int], int]  # (dept_code, college_id) -> id
+DeptCourseMapT: TypeAlias = dict[tuple[int, str], int]  # (dept_id, course_no) -> id
+CurriculumCourseMapT: TypeAlias = dict[tuple[int, int], int]
+SectionKeyMapT: TypeAlias = dict[tuple[int, int, int, Optional[int]], int]

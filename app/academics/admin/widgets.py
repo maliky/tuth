@@ -1,6 +1,6 @@
 """Widgets module."""
 
-from typing import Any, Optional, Dict, Tuple
+from typing import Any, Optional
 
 from django.db import IntegrityError
 from import_export import widgets
@@ -13,6 +13,13 @@ from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.academics.models.course import CurriculumCourse
 from app.registry.models import CreditHour
+from app.academics.ensures import (
+    ensure_college,
+    ensure_course,
+    ensure_curriculum,
+    ensure_curriculum_course,
+    ensure_department,
+)
 from app.shared.utils import expand_course_code, get_in_row
 
 
@@ -28,7 +35,6 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
         super().__init__(CurriculumCourse)
         self.curriculum_w = CurriculumWidget()
         self.course_w = CourseWidget()
-        self._cache: Dict[Tuple[int, int], CurriculumCourse] = {}
 
     def clean(self, value, row=None, *args, **kwargs) -> CurriculumCourse:
         """Assemble course_dept, curriculum and course to return a curriculum course."""
@@ -58,23 +64,12 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
         else:
             is_required = False
 
-        if curriculum and course:
-            key = (curriculum.id, course.id)
-            cached = self._cache.get(key)
-            if cached:
-                return cached
-
-        curriculum_course, _ = CurriculumCourse.objects.get_or_create(
-            curriculum=curriculum,
+        return ensure_curriculum_course(
+            curriculum=curriculum if curriculum else Curriculum.get_default(),
             course=course,
-            defaults={
-                "credit_hours": credit_hours,
-                "is_required": is_required,
-            },
+            credit_code=credit_hours.code,
+            is_required=is_required,
         )
-        if curriculum and course:
-            self._cache[(curriculum.id, course.id)] = curriculum_course
-        return curriculum_course
 
 
 class CurriculumWidget(widgets.ForeignKeyWidget):
@@ -112,22 +107,12 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
         raw_label = (value or "").strip()
         if not raw_label:
             return Curriculum.get_default()
-        long_name = get_in_row("curriculum_long_name", row) or raw_label
-        short_name = raw_label[: self.SHORT_NAME_MAX]
 
         college_code = get_in_row("college_code", row)
-        college = self.college_w.clean(college_code)
+        college = ensure_college(college_code)
 
-        # We create  the lookup used in case of creation fo the curriculum
-        lookup = {"short_name": short_name}
-        if college:
-            lookup["college"] = college
-
-        curriculum, _ = Curriculum.objects.get_or_create(
-            short_name=short_name,
-            college=college,
-            defaults={"long_name": long_name or short_name},
-            fuzzy_threshold=fuzzy_threshold,
+        curriculum = ensure_curriculum(
+            raw_label, college=college, fuzzy_threshold=fuzzy_threshold
         )
 
         # add the major if there is
@@ -178,19 +163,17 @@ class CourseWidget(widgets.ForeignKeyWidget):
         if not course_no or not course_dept:
             return Course.get_unique_default()
 
-        department = self.department_w.clean(course_dept, row)
+        college_code = (row.get("college_code") or "").strip() if row else ""
+        college = ensure_college(college_code)
+        department = ensure_department(course_dept, college)
         title = row.get("course_title") if row else None
 
-        course, _ = Course.objects.get_or_create(
+        return ensure_course(
             department=department,
-            number=course_no,
-            defaults={"title": title},
+            course_no_raw=course_no,
+            title=title,
             fuzzy_threshold=fuzzy_threshold,
         )
-        if title and course.title != title:
-            course.title = title
-            course.save(update_fields=["title"])
-        return course
 
 
 class CourseManyWidget(widgets.ManyToManyWidget):
