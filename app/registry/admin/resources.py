@@ -36,9 +36,14 @@ class GradeResource(resources.ModelResource):
 
     def before_import_row(self, row, **kwargs):
         """Normalize academic year and semester tokens before widgets run."""
-        academic_year = get_in_row("academic_year", row)
+        # The idea here is to normalize the columns. This should be done in
+        # a more generic way.
+        academic_year = get_in_row("AcademicYear", row)
         if academic_year:
             row["academic_year"] = normalize_academic_year(academic_year)
+        semester_value = get_in_row("Semester", row)
+        if semester_value:
+            row["semester_no"] = semester_value
         return super().before_import_row(row, **kwargs)
 
 
