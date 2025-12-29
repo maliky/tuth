@@ -4180,7 +4180,7 @@ plt.close(fig)
   full_gdf = full_gdf.rename(
       columns={
           "AcademicYear": "academic_year",
-          "Semester": "semester",
+          "Semester": "semester_no",
           "StudentID": "student_id",
           "CourseCode": "course_dept",
           "CourseNo": "course_no",

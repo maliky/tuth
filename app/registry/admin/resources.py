@@ -24,7 +24,9 @@ class GradeResource(resources.ModelResource):
         widget=GradeStudentWidget(),  
     )
     section = fields.Field(
-        attribute="section", column_name="section_no", widget=SectionWidget()
+        attribute="section",
+        column_name="section_no",
+        widget=SectionWidget(allow_fuzzy=False),
     )
     value = fields.Field(
         attribute="value", column_name="grade_code", widget=GradeValueWidget()
