@@ -92,32 +92,35 @@ class CurriculumManager(models.Manager["Curriculum"]):
                 best = (cur, score)
         return best[0]
 
-    def get_or_create_fuzzy(
+    def get_or_create(
         self,
         *,
         short_name: str,
         long_name: str | None,
         college: College,
         defaults: dict | None = None,
-        threshold: float = 0.9,
+        fuzzy_threshold: bool = 1,
     ) -> tuple[Curriculum, bool]:
-        _match = self.find_fuzzy_match(
-            short_name=short_name,
-            long_name=long_name,
-            college=college,
-            threshold=threshold,
-        )
-        if _match:
-            # optionals infos to trace
-            # > There is more to save in description in case of fuzzy match all differing information
-            # > from one or the other object should to be saved.
-            if hasattr(_match, "description") and _match.description is not None:
-                if "fuzzy_curriculum_match" not in _match.description:
-                    _match.description += f"\nfuzzy_curriculum_match:{_match.id}"
-                    _match.save(update_fields=["description"])
-            return _match, False
+        """override the default get_or_create to take include an option fuzzy."""
+        if fuzzy_threshold < 1:
+            _match = self.find_fuzzy_match(
+                short_name=short_name,
+                long_name=long_name,
+                college=college,
+                threshold=fuzzy_threshold,
+            )
+            if _match:
+                # optionals infos to trace
+                # > There is more to save in description in case of fuzzy match all
+                # diff information from one or the other object should to be saved.
+                if hasattr(_match, "description") and _match.description is not None:
+                    if "fuzzy_curriculum_match" not in _match.description:
+                        _match.description += f"\nfuzzy_curriculum_match:{_match.id}"
+                        _match.save(update_fields=["description"])
+                return _match, False
+
         defaults = defaults or {}
-        created_cur, created = self.get_or_create(
+        created_cur, created = super().get_or_create(
             short_name=short_name,
             college=college,
             defaults={**defaults, "long_name": long_name or short_name},

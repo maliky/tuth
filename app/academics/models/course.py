@@ -53,29 +53,30 @@ class CourseManager(models.Manager["Course"]):
                 best = (course, score)
         return best[0]
 
-    def get_or_create_fuzzy(
+    def get_or_create(
         self,
         *,
         department: Department,
         number: str,
         title: str | None = None,
-        threshold: float = 0.9,
+        fuzzy_threshold: float = 1,
     ) -> tuple[Course, bool]:
         """Return an existing fuzzy-matched course or create a new one."""
-        match = self.find_fuzzy_match(
-            department=department, number=number, title=title, threshold=threshold
-        )
-        if match:
-            logger.info(
-                "Fuzzy course match reused",
-                extra={
-                    "course_id": match.id,
-                    "dept": department.code,
-                    "number": number,
-                },
+        if fuzzy_threshold < 1:
+            _match = self.find_fuzzy_match(
+                department=department, number=number, title=title, threshold=fuzzy_threshold
             )
-            return match, False
-        created_course, created = self.get_or_create(
+            if _match:
+                logger.info(
+                    "Fuzzy course match reused",
+                    extra={
+                        "course_id": _match.id,
+                        "dept": department.code,
+                        "number": number,
+                    },
+                )
+                return _match, False
+        created_course, created = super().get_or_create(
             number=number,
             department=department,
             defaults={"title": title},

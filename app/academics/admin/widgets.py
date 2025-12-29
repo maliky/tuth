@@ -84,7 +84,9 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
         self.college_w = CollegeWidget()
         self.allow_fuzzy = allow_fuzzy
 
-    def clean(self, value, row=None, *args, **kwargs) -> Curriculum | None:
+    def clean(
+        self, value, row=None, fuzzy_threshold: float = 1, *args, **kwargs
+    ) -> Curriculum | None:
         """Returns a Curriculum object matching the provided short_name in value.
 
         Example input row:
@@ -114,19 +116,12 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
         if college:
             lookup["college"] = college
 
-        if self.allow_fuzzy:
-            curriculum, _ = Curriculum.objects.get_or_create_fuzzy(
-                short_name=short_name,
-                long_name=long_name or short_name,
-                college=college,
-                defaults={"long_name": long_name or short_name},
-            )
-        else:
-            curriculum, _ = Curriculum.objects.get_or_create(
-                short_name=short_name,
-                college=college,
-                defaults={"long_name": long_name or short_name},
-            )
+        curriculum, _ = Curriculum.objects.get_or_create(
+            short_name=short_name,
+            college=college,
+            defaults={"long_name": long_name or short_name},
+            fuzzy_threshold=fuzzy_threshold,
+        )
 
         # add the major if there is
         major = None
@@ -162,6 +157,7 @@ class CourseWidget(widgets.ForeignKeyWidget):
         self,
         value: Any,
         row: Optional[dict[str, Any]] = None,
+        fuzzy_threshold: float = 1,
         *args: Any,
         **kwargs: Any,
     ) -> Course:
@@ -179,21 +175,15 @@ class CourseWidget(widgets.ForeignKeyWidget):
         department = self.department_w.clean(course_dept, row)
         title = row.get("course_title") if row else None
 
-        if self.allow_fuzzy:
-            course, _ = Course.objects.get_or_create_fuzzy(
-                number=course_no,
-                department=department,
-                title=title,
-            )
-        else:
-            course, _ = Course.objects.get_or_create(
-                number=course_no,
-                department=department,
-                defaults={"title": title},
-            )
-            if title and course.title != title:
-                course.title = title
-                course.save(update_fields=["title"])
+        course, _ = Course.objects.get_or_create(
+            number=course_no,
+            department=department,
+            defaults={"title": title},
+            fuzzy_threshold=fuzzy_threshold,
+        )
+        if title and course.title != title:
+            course.title = title
+            course.save(update_fields=["title"])
         return course
 
 

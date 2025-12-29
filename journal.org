@@ -1,4 +1,75 @@
-* <2025-12-28 dim. 20:27>
+* <2025-12-29 Mon 09:32>  Looking into factorizing the fuzzy creations
+ Implemented the exact-lookup path for Grade imports:
+    - CourseWidget and CurriculumWidget now accept allow_fuzzy (default True);
+  when False they perform exact lookups/creates without fuzzy matching and still
+  update titles.
+    - CurriculumCourseWidget and SectionWidget pass the allow_fuzzy flag down so
+  you can toggle behavior.
+     - GradeResource now uses SectionWidget(allow_fuzzy=False), bypassing fuzzy
+  course/section matching for grade imports.
+  Files touched: app/academics/admin/widgets.py, app/timetable/admin/widgets/
+  section.py, app/registry/admin/resources.py.
+
+  This should speed up the 193K grade import by using exact lookups for course/
+  section while keeping fuzzy matching available elsewhere.
+  ::: the above is implemeted but and it works well but I want to factor the
+  get_or_create_fuzzy into the generic get_or_create for the Course and Curriculum
+  Manager.  The idea is to pass a boolean (fuzzy) to the get_or_create of thoses 2
+  models (and even for the people) if the boolean is true, use the fuzzy matching,
+  and fall back to default if boolean is false.  First step is to check all the
+  files that needs to be touch. do an extensive analysis of the code base then
+  propose you action plan but do not implement it yet.  I want to review.
+
+** proposition
+I traced the current fuzzy flow and the spots we’d need to touch.
+
+  What’s in place now
+
+  - Course/Curriculum managers each expose find_fuzzy_match + get_or_create_fuzzy;
+    regular get_or_create is untouched.
+  - Only call sites for the fuzzy helpers are in app/academics/admin/widgets.py
+    (CourseWidget/CurriculumWidget); allow_fuzzy=False paths use plain
+    get_or_create.
+  - Grade imports: GradeResource uses SectionWidget(allow_fuzzy=False) →
+    CurriculumCourseWidget/CourseWidget/CurriculumWidget accordingly.
+  - Person side: PersonManager has fuzzy name dedupe inside _find_by_name, used by
+    create/update_or_create; get_or_create is still Django default. Staff/Faculty/
+    Student widgets and forms call .get_or_create on those models (staff, faculty,
+    student) without an explicit fuzzy toggle.
+
+  Files likely to change
+
+  - app/academics/models/course.py (CourseManager)
+  - app/academics/models/curriculum.py (CurriculumManager)
+  - app/academics/admin/widgets.py (switch to the new get_or_create(..., fuzzy=...)    API)
+  - app/timetable/admin/widgets/section.py (propagates allow_fuzzy via
+    CurriculumCourseWidget/CourseWidget/CurriculumWidget)
+  - app/registry/admin/resources.py (constructor wiring already passes allow_fuzzy)  - app/people/models/object_manager.py (PersonManager fuzzy toggle)
+  - Call sites that rely on PersonManager’s create/get_or_create/update_or_create:
+    app/people/admin/widgets.py, app/people/forms/faculty.py, app/people/models/
+    faculty.py, any other staff/student creation helpers.
+
+  Proposed plan
+
+  1. Extend CourseManager/CurriculumManager.get_or_create to accept a fuzzy flag
+     (default False to preserve current behavior), reuse existing find_fuzzy_match
+     logic, and keep get_or_create_fuzzy as a thin alias for backward
+     compatibility.
+  2. Update widgets to drop direct get_or_create_fuzzy calls and instead pass
+     fuzzy=self.allow_fuzzy into the unified get_or_create; keep the title-update
+     behavior for non-fuzzy Course creation.
+  3. For PersonManager, add a fuzzy toggle to create/update_or_create/get_or_create     (and underlying _find_by_name) so callers can opt out of name-based dedupe;
+     thread the flag through Staff/Faculty/Student creation helpers where
+     appropriate.
+  4. Audit secondary call sites (import_schedule command, fixtures/tests, staff/
+     faculty forms/widgets) to ensure they either rely on default strict behavior
+     or pass fuzzy=True explicitly where desired.
+  5. Add/adjust tests to cover fuzzy vs strict paths for Course/Curriculum managers     and one PersonManager path, and update docstrings/comments to point to the new     fuzzy parameter.
+
+
+
+* DONE <2025-12-28 dim. 20:27> garde import columns
+  CLOSED: [2025-12-29 Mon 09:32]
 academic_year	semester	student_id	dept_code	course_no	section_no	grade_code	credit_hours	Major	curriculum	college_code
 
 * <2025-12-27 sam. 18:48> Grades and curriculum DONE
@@ -19,7 +90,7 @@ gds in parsing just need a litter column header harmonizing but it is good for i
 *** BS in Env
   - 34 + 35 +34+30 =133
 *** BS in Biology
-  -34 +36 +33+27 =130   
+  -34 +36 +33+27 =130
 ** COED
 *** ECD
     - 40+36+34+23=133
@@ -69,7 +140,7 @@ total 133
 *** BPA
 - 34 + 39 + 36 + 27 = 136
 ** setting curriculums
-   
+
 * <2025-12-19 Fri 20:35> test
   tests/people/test_utils.py:125: AssertionError
 ============================================== short test summary info ===============================================
@@ -84,7 +155,7 @@ FAILED tests/selenium/test_portal_roles.py::test_role_dashboards[finance_officer
 FAILED tests/people/test_utils.py::test_name_distance_symmetry[Abraham W. Harmon-Harmon Abraham W-0.0] - AssertionError
 FAILED tests/people/test_utils.py::test_name_distance_symmetry[Sylvester Nah-Nah Sylvester-0.0] - AssertionError
 ==================================== 10 failed, 137 passed, 56 xfailed in 49.40s =====================================
-(tusis) mlk@r1d05 ~/Tusis/Tusis_app $ 
+(tusis) mlk@r1d05 ~/Tusis/Tusis_app $
 
 
 * <2025-12-18 jeu. 21:49> Terms for students
@@ -106,7 +177,7 @@ Row 3 failed: An error occurred in the current transaction. You can't execute qu
 Row 4 failed: An error occurred in the current transaction. You can't execute queries until the end of the 'atomic' block.
 Row 5 failed: An error occurred in the current transaction. You can't execute queries until the end of the 'atomic' block.
 CommandError: LegacyRegistration import failed with 8735 errors and 0 invalid rows.
-(tusis) mlk@r1d05 ~/Tusis/Tusis_app $ 
+(tusis) mlk@r1d05 ~/Tusis/Tusis_app $
 >>>>>>> 20512edc7d3e82d76f0aeae7606209d01d66366f
 
 * <2025-12-17 mer. 17:53>  fuzzy matching for curriculums
@@ -115,9 +186,9 @@ CommandError: LegacyRegistration import failed with 8735 errors and 0 invalid ro
 - We should be improve the factoring and code  readability (it's already good but...)
   - in curriculum find_fuzzy_match: the sequence in case of tie, could be factored in a function...
   - The idea is to reuse
-    
+
 - Do not forget to add documentation even if succint
-- 
+-
 ** I want to refactor the usage of name_similarity
 See in this files
 app/people/admin/core.py
@@ -143,7 +214,7 @@ I want to factor it using a something like below:
     #  score tokenA -- TokenB distance
     #  update storage based of threshold
     # return
-  
+
     # vars, a function to get candidates or the candidate them selves
     # a function to get tokenA or tokenA itself
     # a function f to get the tokenB : f(C,*args) -> tokenB
@@ -166,8 +237,8 @@ Do your analysis on how we can make our code sweeter.
     Tusis_app $ sudo -u postgres psql -d postgres
     postgres=# grant create on database postgres to tusisuser;
     sudo -u postgres psql -c "ALTER ROLE tusisuser CREATEDB;"
-    
-  
+
+
 
 * TODO <2025-11-11 Tue 17:09> View routing map
 
@@ -276,5 +347,3 @@ Staff --> Logout
 
 #+RESULTS:
 [[file:Docs/view_routing_map3.png]]
-
-
