@@ -49,11 +49,14 @@ class CurriculumManager(models.Manager["Curriculum"]):
         college: College,
         threshold: float = 0.9,
     ) -> Curriculum | None:
+        """Do a fuzzy curriclum search."""
         token = self._token(short_name, long_name)
         default_code = College.get_default().code
+
         best: tuple[Curriculum | None, float] = (None, 0.0)
         for cur in self.all():
             # college rule: if both non-default and differ, skip
+            # we do not match if college differ and is set.
             if (
                 cur.college
                 and college
@@ -62,8 +65,10 @@ class CurriculumManager(models.Manager["Curriculum"]):
                 and cur.college.code != college.code
             ):
                 continue
+
             other_token = self._token(cur.short_name, cur.long_name)
             score, ok = token_similarity(token, other_token, threshold=threshold)
+
             if not ok:
                 continue
             choose = False
@@ -96,17 +101,21 @@ class CurriculumManager(models.Manager["Curriculum"]):
         self,
         *,
         short_name: str,
-        long_name: str | None,
         college: College,
         defaults: dict | None = None,
-        fuzzy_threshold: bool = 1,
-    ) -> tuple[Curriculum, bool]:
-        """override the default get_or_create to take include an option fuzzy."""
+        fuzzy_threshold: float = 1.0,
+    ) -> tuple["Curriculum", bool]:
+        """Override get_or_create to optionally allow fuzzy curriculum reuse."""
+
+        # this work on default and arguments is a bit cumbersom but good practice
+        defaults = defaults.copy() if defaults else {}
+        long_name = defaults.get("long_name")
+
         if fuzzy_threshold < 1:
             _match = self.find_fuzzy_match(
                 short_name=short_name,
-                long_name=long_name,
                 college=college,
+                long_name=long_name,
                 threshold=fuzzy_threshold,
             )
             if _match:
@@ -119,11 +128,10 @@ class CurriculumManager(models.Manager["Curriculum"]):
                         _match.save(update_fields=["description"])
                 return _match, False
 
-        defaults = defaults or {}
         created_cur, created = super().get_or_create(
             short_name=short_name,
             college=college,
-            defaults={**defaults, "long_name": long_name or short_name},
+            defaults=defaults,
         )
         return created_cur, bool(created)
 

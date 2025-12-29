@@ -59,12 +59,19 @@ class CourseManager(models.Manager["Course"]):
         department: Department,
         number: str,
         title: str | None = None,
-        fuzzy_threshold: float = 1,
+        defaults: Optional[dict] = None,
+        fuzzy_threshold: float = 1.0,
     ) -> tuple[Course, bool]:
-        """Return an existing fuzzy-matched course or create a new one."""
+        """Return a course; if fuzzy_threshold < 1 try fuzzy reuse first."""
+        defaults = defaults.copy() if defaults else {}
+        title = title or defaults.get("title")
+
         if fuzzy_threshold < 1:
             _match = self.find_fuzzy_match(
-                department=department, number=number, title=title, threshold=fuzzy_threshold
+                department=department,
+                number=str(number),
+                title=title,
+                threshold=fuzzy_threshold,
             )
             if _match:
                 logger.info(
@@ -75,14 +82,20 @@ class CourseManager(models.Manager["Course"]):
                         "number": number,
                     },
                 )
+                if title and _match.title != title:
+                    _match.title = title
+                    _match.save(update_fields=["title"])
                 return _match, False
+
+        if title and "title" not in defaults:
+            defaults["title"] = title
+
         created_course, created = super().get_or_create(
             number=number,
             department=department,
-            defaults={"title": title},
+            defaults=defaults,
         )
         return created_course, bool(created)
-
 
 class Course(models.Model):
     """University catalogue entry describing a single course offering.
@@ -213,7 +226,7 @@ class Course(models.Model):
         def_crs, _ = cls.objects.get_or_create(
             department=Department.get_default(),
             number=number,
-            title=f"Default Course {number}",
+            defaults={'title':f"Default Course {number}"},
         )
         return cast(Self, def_crs)
 

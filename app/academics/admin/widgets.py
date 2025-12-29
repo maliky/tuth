@@ -24,13 +24,12 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
     to CourseWidget then assembles a CurriculumCourse object from the results.
     """
 
-    def __init__(self, *args, allow_fuzzy: bool = True, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(CurriculumCourse)
-        self.curriculum_w = CurriculumWidget(allow_fuzzy=allow_fuzzy)
-        self.course_w = CourseWidget(allow_fuzzy=allow_fuzzy)
-        self.allow_fuzzy = allow_fuzzy
+        self.curriculum_w = CurriculumWidget()
+        self.course_w = CourseWidget()
 
-    def clean(self, value, row=None, *args, **kwargs) -> CurriculumCourse:
+    def clean(self, value, row=None, *args,**kwargs) -> CurriculumCourse:
         """Assemble course_dept, curriculum and course to return a curriculum course."""
         # we don't use value.  We always get a course back
         course = self.course_w.clean(value=None, row=row)
@@ -78,11 +77,10 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
 
     SHORT_NAME_MAX = Curriculum._meta.get_field("short_name").max_length
 
-    def __init__(self, *, allow_fuzzy: bool = True):
+    def __init__(self, *):
         # set the look_up field to uniquely identify the Curriculum to short_name.
         super().__init__(Curriculum, field="short_name")
         self.college_w = CollegeWidget()
-        self.allow_fuzzy = allow_fuzzy
 
     def clean(
         self, value, row=None, fuzzy_threshold: float = 1, *args, **kwargs
@@ -147,11 +145,10 @@ class CourseWidget(widgets.ForeignKeyWidget):
     queries when several rows reference the same course.
     """
 
-    def __init__(self, *, allow_fuzzy: bool = True):
+    def __init__(self, *):
         super().__init__(Course, field="code")
         self.department_w = DepartmentWidget()
         self.college_w = CollegeWidget()
-        self.allow_fuzzy = allow_fuzzy
 
     def clean(
         self,
@@ -176,8 +173,8 @@ class CourseWidget(widgets.ForeignKeyWidget):
         title = row.get("course_title") if row else None
 
         course, _ = Course.objects.get_or_create(
-            number=course_no,
             department=department,
+            number=course_no,
             defaults={"title": title},
             fuzzy_threshold=fuzzy_threshold,
         )
@@ -265,10 +262,10 @@ class CourseCodeWidget(widgets.ForeignKeyWidget):
 
         course, _ = Course.objects.get_or_create(
             department=dept,
-            course_no=course_no,
+            number=course_no,
         )
         # defaults are ignore in case of existance
-        # since we want to update in all case, just doing it.
+        # since we want to update in all case we do it manualy.
         if title_raw and course.title != title_raw:
             course.title = title_raw
             course.save(update_fields=["title"])
