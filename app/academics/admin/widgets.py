@@ -24,10 +24,11 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
     to CourseWidget then assembles a CurriculumCourse object from the results.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, allow_fuzzy: bool = True, **kwargs):
         super().__init__(CurriculumCourse)
-        self.curriculum_w = CurriculumWidget()
-        self.course_w = CourseWidget()
+        self.curriculum_w = CurriculumWidget(allow_fuzzy=allow_fuzzy)
+        self.course_w = CourseWidget(allow_fuzzy=allow_fuzzy)
+        self.allow_fuzzy = allow_fuzzy
 
     def clean(self, value, row=None, *args, **kwargs) -> CurriculumCourse:
         """Assemble course_dept, curriculum and course to return a curriculum course."""
@@ -77,10 +78,11 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
 
     SHORT_NAME_MAX = Curriculum._meta.get_field("short_name").max_length
 
-    def __init__(self):
+    def __init__(self, *, allow_fuzzy: bool = True):
         # set the look_up field to uniquely identify the Curriculum to short_name.
         super().__init__(Curriculum, field="short_name")
         self.college_w = CollegeWidget()
+        self.allow_fuzzy = allow_fuzzy
 
     def clean(self, value, row=None, *args, **kwargs) -> Curriculum | None:
         """Returns a Curriculum object matching the provided short_name in value.
@@ -112,12 +114,19 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
         if college:
             lookup["college"] = college
 
-        curriculum, _ = Curriculum.objects.get_or_create_fuzzy(
-            short_name=short_name,
-            long_name=long_name or short_name,
-            college=college,
-            defaults={"long_name": long_name or short_name},
-        )
+        if self.allow_fuzzy:
+            curriculum, _ = Curriculum.objects.get_or_create_fuzzy(
+                short_name=short_name,
+                long_name=long_name or short_name,
+                college=college,
+                defaults={"long_name": long_name or short_name},
+            )
+        else:
+            curriculum, _ = Curriculum.objects.get_or_create(
+                short_name=short_name,
+                college=college,
+                defaults={"long_name": long_name or short_name},
+            )
 
         # add the major if there is
         major = None
@@ -143,10 +152,11 @@ class CourseWidget(widgets.ForeignKeyWidget):
     queries when several rows reference the same course.
     """
 
-    def __init__(self):
+    def __init__(self, *, allow_fuzzy: bool = True):
         super().__init__(Course, field="code")
         self.department_w = DepartmentWidget()
         self.college_w = CollegeWidget()
+        self.allow_fuzzy = allow_fuzzy
 
     def clean(
         self,
@@ -167,11 +177,23 @@ class CourseWidget(widgets.ForeignKeyWidget):
             return Course.get_unique_default()
 
         department = self.department_w.clean(course_dept, row)
-        course, _ = Course.objects.get_or_create_fuzzy(
-            number=course_no,
-            department=department,
-            title=row.get("course_title") if row else None,
-        )
+        title = row.get("course_title") if row else None
+
+        if self.allow_fuzzy:
+            course, _ = Course.objects.get_or_create_fuzzy(
+                number=course_no,
+                department=department,
+                title=title,
+            )
+        else:
+            course, _ = Course.objects.get_or_create(
+                number=course_no,
+                department=department,
+                defaults={"title": title},
+            )
+            if title and course.title != title:
+                course.title = title
+                course.save(update_fields=["title"])
         return course
 
 
