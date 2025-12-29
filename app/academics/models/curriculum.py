@@ -6,7 +6,7 @@ from django.db.models import Count
 
 from django.apps import apps
 from datetime import date
-from typing import Optional, Self, cast
+from typing import Optional, Self, cast, Mapping, Any
 
 from app.shared.fuzzy_matching import token_similarity
 from app.shared.mixins import SimpleTableMixin
@@ -99,13 +99,13 @@ class CurriculumManager(models.Manager["Curriculum"]):
 
     def get_or_create(
         self,
-        defaults: dict | None = None,
-        fuzzy_threshold: float = 1.0,
-        **kwargs,
+        defaults: Mapping[str | Any] | None = None,
+        **kwargs: Any,
     ) -> tuple["Curriculum", bool]:
         """Override get_or_create to optionally allow fuzzy curriculum reuse."""
 
         # this work on default and arguments is a bit cumbersom but good practice
+        fuzzy_threshold: float = kwargs.pop("fuzzy_threshold", 1.0)
         defaults = defaults.copy() if defaults else {}
         short_name: str | None = kwargs.get("short_name")
         college: College | None = kwargs.get("college")
