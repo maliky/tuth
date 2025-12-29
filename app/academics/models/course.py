@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from itertools import count
-from typing import Mapping, Optional, Self, cast
+from typing import Optional, Self, cast, Any
 
 from django.apps import apps
 from django.db import models
@@ -55,7 +55,7 @@ class CourseManager(models.Manager["Course"]):
 
     def get_or_create(
         self,
-        defaults: Mapping[str, Any] | None = None,
+        defaults=None,
         **kwargs: Any,
     ) -> tuple[Course, bool]:
         """Return a course; if fuzzy_threshold < 1 try fuzzy reuse first.

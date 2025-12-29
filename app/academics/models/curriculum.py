@@ -99,7 +99,7 @@ class CurriculumManager(models.Manager["Curriculum"]):
 
     def get_or_create(
         self,
-        defaults: Mapping[str | Any] | None = None,
+        defaults=None,
         **kwargs: Any,
     ) -> tuple["Curriculum", bool]:
         """Override get_or_create to optionally allow fuzzy curriculum reuse."""
