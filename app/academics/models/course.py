@@ -55,18 +55,20 @@ class CourseManager(models.Manager["Course"]):
 
     def get_or_create(
         self,
-        *,
-        department: Department,
-        number: str,
-        title: str | None = None,
         defaults: Optional[dict] = None,
         fuzzy_threshold: float = 1.0,
+        **kwargs,
     ) -> tuple[Course, bool]:
-        """Return a course; if fuzzy_threshold < 1 try fuzzy reuse first."""
-        defaults = defaults.copy() if defaults else {}
-        title = title or defaults.get("title")
+        """Return a course; if fuzzy_threshold < 1 try fuzzy reuse first.
 
-        if fuzzy_threshold < 1:
+        Required keys in kwargs: department, number. Optional: title.
+        """
+        defaults = defaults.copy() if defaults else {}
+        department: Department | None = kwargs.get("department")
+        number = kwargs.get("number")
+        title = kwargs.get("title") or defaults.get("title")
+
+        if fuzzy_threshold < 1 and department is not None and number is not None:
             _match = self.find_fuzzy_match(
                 department=department,
                 number=str(number),
@@ -90,11 +92,7 @@ class CourseManager(models.Manager["Course"]):
         if title and "title" not in defaults:
             defaults["title"] = title
 
-        created_course, created = super().get_or_create(
-            number=number,
-            department=department,
-            defaults=defaults,
-        )
+        created_course, created = super().get_or_create(defaults=defaults, **kwargs)
         return created_course, bool(created)
 
 

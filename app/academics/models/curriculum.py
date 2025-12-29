@@ -99,19 +99,19 @@ class CurriculumManager(models.Manager["Curriculum"]):
 
     def get_or_create(
         self,
-        *,
-        short_name: str,
-        college: College,
         defaults: dict | None = None,
         fuzzy_threshold: float = 1.0,
+        **kwargs,
     ) -> tuple["Curriculum", bool]:
         """Override get_or_create to optionally allow fuzzy curriculum reuse."""
 
         # this work on default and arguments is a bit cumbersom but good practice
         defaults = defaults.copy() if defaults else {}
-        long_name = defaults.get("long_name")
+        short_name: str | None = kwargs.get("short_name")
+        college: College | None = kwargs.get("college")
+        long_name = kwargs.get("long_name") or defaults.get("long_name")
 
-        if fuzzy_threshold < 1:
+        if fuzzy_threshold < 1 and short_name and college:
             _match = self.find_fuzzy_match(
                 short_name=short_name,
                 college=college,
@@ -128,11 +128,7 @@ class CurriculumManager(models.Manager["Curriculum"]):
                         _match.save(update_fields=["description"])
                 return _match, False
 
-        created_cur, created = super().get_or_create(
-            short_name=short_name,
-            college=college,
-            defaults=defaults,
-        )
+        created_cur, created = super().get_or_create(defaults=defaults, **kwargs)
         return created_cur, bool(created)
 
 
