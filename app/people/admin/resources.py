@@ -28,7 +28,7 @@ from app.timetable.admin.widgets.core import (
     ensure_academic_year_code,
 )
 from app.timetable.models.semester import Semester
-from app.people.admin.resources_mapping import FACULTY_COLUMN_MAP
+from app.people.admin.resources_mapping import FACULTY_COLUMN_MAP, STUDENT_HEADER_MAP
 
 
 class DirectoryContactResource(resources.ModelResource):
@@ -216,14 +216,9 @@ class StudentInfoTermWidget(Widget):
 class StudentResource(resources.ModelResource):
     """Resource for importing Student objects from different csv files."""
 
+    # columns needs to be created on the fly
     user = fields.Field(
         attribute="user", column_name="student_name", widget=UserStudentWidget()
-    )
-    # to be updated from gp table StudentInfo or registration tables
-    current_enrolled_semester = fields.Field(
-        attribute="current_enrolled_semester",
-        column_name="termlastenrolled",
-        widget=StudentInfoTermWidget(fallback_column="current_enrolled_sem"),
     )
     # to be taken from gp table StudentInfo
     entry_semester = fields.Field(
@@ -264,13 +259,12 @@ class StudentResource(resources.ModelResource):
         column_name="birth_date",
         widget=DateTimeWidget("%Y-%m-%d %H:%M:%S"),
     )
-    # to ignore for now 16/12/2025
-    # marital_status = fields.Field(
-    #     attribute="marital_status",
-    #     column_name="marital_status",
-    # )
-    # nationality = fields.Field(attribute="nationality", column_name="nationality")
-    # gender = fields.Field(attribute="gender", column_name="gender")
+    marital_status = fields.Field(
+        attribute="marital_status",
+        column_name="marital_status",
+    )
+    nationality = fields.Field(attribute="nationality", column_name="nationality")
+    gender = fields.Field(attribute="gender", column_name="gender")
 
     class Meta:
         model = Student
@@ -303,32 +297,6 @@ class StudentResource(resources.ModelResource):
         use_bulk = False  # do not use because ressources is down row by row
 
     # from studentInfo
-    METRIC_COLUMNS = [
-        "CumAttemptedHours",
-        "CumRetainedHours",
-        "CumEarnedHours",
-        "CumQualityHours",
-        "CumQualityPoints",
-        "CumGPA",
-        "CumAttemptedHoursLocal",
-        "CumRetainedHoursLocal",
-        "CumEarnedHoursLocal",
-        "CumQualityHoursLocal",
-        "CumQualityPointsLocal",
-        "CumGPALocal",
-        "ClassLevel",
-        "EnrollmentStatusID",
-        "HomeCountry",
-        "TermFirstEntered",
-        "TermLastEnrolled",
-        "NumDependents",
-        "ConfidentialInfoFlag",
-        "PENVerified",
-        "DisableWebConnectPortal",
-        "VeteranStatusID",
-        "TimeCreated",
-        "TimeModified",
-    ]
     GENDER_MAP = {
         "male": "m",
         "m": "m",
@@ -338,61 +306,48 @@ class StudentResource(resources.ModelResource):
 
     def before_import_row(self, row, **kwargs):
         """Inject derived columns to capture StudentInfo data."""
-        account_id = get_in_row("AccountID", row)
-        legacy_id = get_in_row("StudentID", row)
-        if (account_id or legacy_id) and not row.get("student_id"):
-            row["student_id"] = account_id or legacy_id
+        for legacy_col, canonic_col in STUDENT_HEADER_MAP.items():
+            value = get_in_row(legacy_col, row)
+            if value and not row.get(canonic_col):
+                row[canonic_col] = value
 
-        # synthesize student_name when source data provides split columns
+        # From them on we use canonic_col names
+        # legacy_id = get_in_row("StudentID", row)
+        # if legacy_id and not row.get("student_id"):
+        #     row["student_id"] = account_id or legacy_id
+
+        # Synthesize student_name when source data provides split columns
         if not row.get("student_name"):
-            first = get_in_row("first_name", row) or get_in_row("FirstName", row)
-            middle = get_in_row("middle_name", row) or get_in_row("MiddleName", row)
-            last = get_in_row("last_name", row) or get_in_row("LastName", row)
+            first = get_in_row("first_name", row) 
+            middle = get_in_row("middle_name", row)
+            last = get_in_row("last_name", row)
             if not first and not last:
                 first = "Humpty"
                 last = "Dumpty"
                 row["first_name"] = first
                 row["last_name"] = last
-            parts = [first.strip(), middle.strip(), last.strip()]
-            fullname = " ".join(part for part in parts if part)
+
+            fullname = " ".join([first.strip(), middle.strip(), last.strip()])
             if fullname:
                 row["student_name"] = fullname
-
-        home_country = get_in_row("HomeCountry", row) or get_in_row("nationality", row)
-        if home_country:
-            row.setdefault("nationality", home_country)
-
-        if account_id and not row.get("student_name"):
-            existing_student = Student.objects.filter(student_id=account_id).first()
-            if existing_student:
-                row["student_name"] = existing_student.long_name
 
         # > I should not allow creation of new major or curriculum
         # > If a row does not fit because of the major or curriculum, I should log it
         # > and create manual (eventulay the major or curriculum)
         # > I should also do a fuzzy search for a matching curriculum
-        major_value = (
-            get_in_row("major", row)
-            or get_in_row("curriculum_short_name", row)
-            or get_in_row("ProgramID", row)
-        )
+        major_value = get_in_row("curriculum_short_name", row)
         if major_value:
             row["major"] = major_value[:40]
 
-        gender_raw = get_in_row("gender", row).lower()
-        if gender_raw:
-            mapped_gender = self.GENDER_MAP.get(gender_raw)
-            if mapped_gender:
-                row["gender"] = mapped_gender
+        mapped_gender = self.GENDER_MAP.get(get_in_row("gender", row).lower())
+        if mapped_gender:
+            row["gender"] = mapped_gender
 
-        enrollment_sem = get_in_row("current_enrolled_sem", row) or get_in_row(
-            "enrollement_semester", row
-        )
-        normalized_year = normalize_academic_year(get_in_row("YearOfEntry", row))
-        if enrollment_sem and normalized_year and "_Sem" not in str(enrollment_sem):
-            sem_token = str(enrollment_sem).strip()
+        entry_semester = get_in_row('entry_semester', row)
+        entry_year = normalize_academic_year(get_in_row("entry_year", row))
+        if entry_semester and entry_year:
             try:
-                sem_number = int(float(sem_token))
+                sem_number = int(float(entry_semester))
             except ValueError:
                 sem_number = None
             if sem_number:
@@ -400,20 +355,10 @@ class StudentResource(resources.ModelResource):
                 row["current_enrolled_sem"] = formatted
                 row.setdefault("entry_semester", formatted)
 
-        # ensure legacy columns receive a value for backward compatibility
-        if row.get("current_enrolled_sem") and not row.get("TermLastEnrolled"):
-            row["TermLastEnrolled"] = row["current_enrolled_sem"]
-        if row.get("entry_semester") and not row.get("TermFirstEntered"):
-            row["TermFirstEntered"] = row["entry_semester"]
+        bio_keys = [(k, v) for k, v in STUDENT_HEADER_MAP.items() if "bio_" in v]
+        bio_info = {v: row.get(k) for (k, v) in bio_keys if row.get(k, None) is None}
 
-        metrics = {}
-        for column in self.METRIC_COLUMNS:
-            value = row.get(column)
-            if value not in (None, ""):
-                metrics[column] = value
-
-        if metrics:
-            row["bio"] = json.dumps(metrics)
+        row["bio"] = json.dumps(bio_info)
 
         return super().before_import_row(row, **kwargs)
 

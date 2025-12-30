@@ -68,8 +68,9 @@ class AbstractPerson(models.Model):
     )
 
     # --- misc ---
-    father_address = models.CharField(blank=True)
-    father_name = models.CharField(blank=True)
+    # > Why do I have father adress for an Abstract Person ? already covered by student
+    # father_address = models.CharField(blank=True)
+    # father_name = models.CharField(blank=True)
     nationality = models.CharField(blank=True)
     origin_county = models.CharField(help_text="eg. Maryland, Nigeria", blank=True)
     bio = models.TextField(blank=True)

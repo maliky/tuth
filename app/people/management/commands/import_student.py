@@ -56,10 +56,10 @@ class Command(BaseCommand):
         ]
 
         paths = [Path(p) for p in sources]
-        missing = [p for p in paths if not p.exists()]
+        missing = [p for p in source if not Path(p).exists()]
         if missing:
             raise CommandError(
-                f"Missing source files: {', '.join(str(p) for p in missing)}"
+                f"Missing source files: {', '.join(missing)}"
             )
 
         # Preload caches

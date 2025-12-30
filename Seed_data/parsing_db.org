@@ -2286,7 +2286,7 @@ ZOO -- Introduction to Vertebrate I
 1881                             Soccer Coaching 1       SPMT      300       SMPT      211         2                     
 :end:
 
-**** Registrations
+**** Registrations 23-24/ 24-25 only
  #+BEGIN_SRC python :results output
    reg = xlss["UM_Registrations"]
    regs = (
@@ -2301,7 +2301,7 @@ ZOO -- Introduction to Vertebrate I
 
  #+RESULTS:
  :results:
- /tmp/babel-YRUbnj/python-h0jQwR:5: FutureWarning: Series.__getitem__ treating keys as positions is deprecated. In a future version, integer keys will always be treated as labels (consistent with DataFrame behavior). To access a value by position, use `ser.iloc[pos]`
+ /tmp/babel-O3C0cl/python-aWgB4u:5: FutureWarning: Series.__getitem__ treating keys as positions is deprecated. In a future version, integer keys will always be treated as labels (consistent with DataFrame behavior). To access a value by position, use `ser.iloc[pos]`
    .apply(lambda x: f"{x[0]} -- {x[1]}", axis=1)
  ACCOUNTING -- Accounting 1
  ACCT -- Accounting 1
@@ -2457,7 +2457,7 @@ ZOO -- Introduction to Vertebrate I
  Nursing 2 -- nursing 2
  :end:
 **** get a studentID registration line
-#+BEGIN_SRC python :results value
+#+BEGIN_SRC python :results silent
   def getXforID(value: str, df: pd.DataFrame, xcol: str = "StudentID"):
       reg = df
       f = reg.loc[:, xcol] == value
@@ -2619,11 +2619,12 @@ Ignore UM_Curriculums for now.
       # "dbotransaction.utf8.tsv",
       # "files.utf8.tsv",+
       "oldgrades.utf8.tsv",
-      "studentcourses.utf8.tsv",
       "gradesheets.utf8.tsv",
       "full_grades.tsv",
+      "studentcourses.utf8.tsv",
       "people_students.csv",      
       "UM_students.utf8.tsv",
+      "StudentInfo.csv"
   ]]
   
   csvs = {re.sub(r"(.utf8)?.tsv|.csv",'',f.name): load_csv(f) for f in csv_files}
@@ -4435,9 +4436,12 @@ Harmonize the room names
   
 ** DONE people_students.csv
    CLOSED: [2025-12-18 jeu. 21:47]
+   :PROPERTIES:
+   :ORDERED:  t
+   :END:
 #+BEGIN_SRC python :results value
   stid_reg = xlss['UM_Registrations'].StudentID.drop_duplicates()  
-  stid_um = load_csv(FDIR / "UM_students.csv")["StudentID"].drop_duplicates()
+  stid_um = load_csv(FDIR / "UM_students.utf8.tsvUM_students.csv")["StudentID"].drop_duplicates()
   
   # Student IDs In one but not the other
   len(set(stid_reg.values) - set(stid_um.values)),   len(set(stid_um.values) - set(stid_reg.values))
@@ -4445,12 +4449,11 @@ Harmonize the room names
 
 #+RESULTS:
 :results:
-(107, 3514)
 :end:
 
 #+BEGIN_SRC python :results silent
   students = (
-      load_csv(FDIR / "UM_students.csv")[["StudentID", "Major", "Curriculum"]]
+      load_csv(FDIR / "UM_students.utf8.tsv")[["StudentID", "Major", "Curriculum"]]
       .rename(
           columns={
               "StudentID": "student_id",
@@ -4464,6 +4467,70 @@ Harmonize the room names
   students["curriculum"] = students["curriculum"].astype(str).str.strip()
   students.to_csv(OUTDIR / "fundamentals_students.csv", index=False)
 #+END_SRC
+
+#+BEGIN_SRC python :results value
+  scrs = clean_df_str_cols(csvs["studentcourses"])
+  ps = clean_df_str_cols(load_csv(FDIR / "people_students.csv", sep=","))
+  umstd = clean_df_str_cols(csvs["UM_students"])
+  sti = load_csv(FDIR/'StudentInfo.csv',sep=',').dropna(how='all')
+  len(scrs.StudentID.unique()), len(ps.StudentID.unique()), len(umstd.StudentID.unique()), len(ps.StudentID)
+#+END_SRC
+
+#+RESULTS:
+:results:
+(3251, 6581, 6581, 6582)
+:end:
+people_student and UM_students point to the same students
+may id in studentcourse are not in people_student. probably new students
+#+BEGIN_SRC python :results value
+set(scrs.StudentID.unique()) - set(ps.StudentID.unique())
+  
+#+END_SRC
+
+#+RESULTS:
+:results:
+{'tu-01833', 'Tu-03321', 'tu-03298', 'Tu-03145', 'Tu-03122', 'tu-03299', 'tu-03336', 'tu-03409', 'tu-03288', 'tu-02993', 'tu-03417', 'Tu-03142', '2329', '2', 'tu-03017', 'tu-03428', 'tu-01272', 'tu-02857', 'tu-03261', 'tu-03343', 'tu-03317', 'tu-03435', 'tu-03394', 'tu-03167', 'Tu-03216', 'tu-03283', 'tu-03287', 'tu-03309', 'tu-00949', 'tu-03421', 'Tu-03324', 'tu-03451', 'tu-03432', 'Tu-03453', '20308', 'tu-03268', '1', '23373', 'tu-03339', 'tu-01555', 'Tu-02964', 'tu-03154', 'tu-02943', '43559', '36820', 'fren', 'tu-03346', 'tu-03411', 'tu-03452', 'tu-03333', 'tu-02874', 'tu-03322', '25609', 'tu-03393', 'Tu-03032', 'tu-03385', 'tu-02625', 'tu-03381', 'Tu-03320', 'tu-03395', 'tu-03252', 'Tu-02652', '11389', 'tu-', '39033', 'Tu-03370', 'Tu-03151', 'tu-02907', 'tu-02983', 'tu-03271', 'tu-02367', 'tu-03414', 'Tu-03470', 'tu-01640', 'tu-03101', '27580', 'tu-03446', '13564', 'tu-01059', 'tu-03269', 'tu-03367', '4428', 'tu-03351', 'Tu-03316', 'Tu-03217', 'tu-02108', 'tu-03323', 'Tu-03007', '44935', 'Tu-02976', 'tu-02577', 'Tu-03384', 'tu-03324', 'tu-03390', 'tu-03438', 'tu-03170', 'Tu-03082', 'Tu-03191', 'tu-03217', 'tu-01634', 'tu-03302', 'tu-02864', '25422', 'tu-03258', 'tu-02592', 'tu-03274', 'Tu-03254', 'tu-02816', 'tu-03406', 'tu-03136', 'tu-03205', 'tu-03424', 'tu-02629', 'tu-03242', 'Tu-03418', 'tu-02988', 'tu-02544', 'Tu-02629', '59115', 'tu-03107', '18003', 'Tu-03290', 'Tu-03436', '3062', 'tu-03430', 'tu-02615', 'tu-03035', 'tu-03253', 'Tu-01540', 'tu-03353', 'tu-03328', 'Tu-03312', '42643', '26301', 'tu-03314', 'Tu-02977', 'tu-03227', 'Tu-02996', 'tu-03400', 'tu-03100', 'tu-03066', 'tu-03124', '2489', 'Tu-03086', 'tu-02133', 'tu-03281', 'tu-03334', 'tu-02901', 'tu-02626', 'tu-03010', 'Tu-03139', 'tu-02766', 'tu-03425', 'tu-02113', 'tu-03160', 'tu-03404', 'tu-02244', 'tu-03379', '33995', 'tu-03033', 'Tu-02963', '21270', 'tu-01863', 'tu-02939', 'tu-03266', 'tu-03405', 'tu-00792', 'tu-03142', 'tu-03443'}
+:end:
+
+**** harmonizing all in one column
+#+BEGIN_SRC python :results value
+sorted(set(sti.columns  ))
+#+END_SRC
+
+#+RESULTS:
+:results:
+['AccountID', 'ClassLevel', 'ConfidentialInfoFlag', 'CumAttemptedHours', 'CumAttemptedHoursLocal', 'CumEarnedHours', 'CumEarnedHoursLocal', 'CumGPA', 'CumGPALocal', 'CumQualityHours', 'CumQualityHoursLocal', 'CumQualityPoints', 'CumQualityPointsLocal', 'CumRetainedHours', 'CumRetainedHoursLocal', 'DisableWebConnectPortal', 'EnrollmentStatusID', 'HomeCountry', 'NumDependents', 'PENVerified', 'TermFirstEntered', 'TermLastEnrolled', 'TimeCreated', 'TimeModified', 'VeteranStatusID']
+:end:
+
+     #+BEGIN_SRC python :results value
+  sorted(set(ps.columns)  )
+#+END_SRC     
+
+#+RESULTS:
+:results:
+['AdmissionStatus', 'CountyOfOrigin', 'DateOfBirth', 'EmergencyContact', 'Enrolled', 'EnrollmentType', 'FatherAddress', 'FatherName', 'LastSchoolAttended', 'LastSchoolType', 'MotherAddress', 'MotherName', 'Nationality', 'PlaceOfBirth', 'ProgramID', 'Scholarship', 'StudentID', 'Uploaded', 'YearOfEntry', 'address', 'college_code', 'curriculum_short_name', 'enrollement_semester', 'first_name', 'gender', 'last_name', 'marital_status', 'middle_name', 'personal_email', 'phone_no']
+:end:
+
+#+BEGIN_SRC python :results value
+sorted(set(scrs.columns))
+  
+#+END_SRC     
+
+#+RESULTS:
+:results:
+['AcademicYear', 'Amt', 'CourseCode', 'CourseNo', 'CreditHours', 'Curr', 'Section', 'Semester', 'StudentID', 'Withdrew']
+:end:
+
+#+BEGIN_SRC python :results value
+  scrs[:2].to_string()
+#+END_SRC
+
+#+RESULTS:
+:results:
+  AcademicYear  Semester StudentID CourseCode CourseNo  Section  CreditHours Curr  Amt Withdrew
+0    2023/2024         1     36764       CHEM      101      2.0          4.0  US$  5.0         
+1    2023/2024         1     36764       ENGL      101      2.0          3.0  US$  5.0         
+:end:
 
 *** DONE Students
     CLOSED: [2025-12-18 jeu. 21:46]
