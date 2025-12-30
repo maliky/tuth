@@ -44,6 +44,15 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
 
         parts = parse_name(value)
         username = build_username(parts.first, parts.last, prefix_len=2)
+        found_user = Staff.objects._find_by_name(
+            first_name=parts.first.capitalize(),
+            last_name=parts.last.capitalize(),
+            middle_name=parts.middle,
+        )
+        if found_user:
+            existing_staff = Staff.objects.filter(user=found_user).first()
+            if existing_staff:
+                return existing_staff
 
         def _create_staff() -> Staff:
             staff, _ = Staff.objects.get_or_create(

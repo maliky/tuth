@@ -58,3 +58,16 @@ Propose consistent naming for git commit but do not commit yourself.
 - Check that the code pass 
 with black, flake8 and mypy
 - you can run `py_compile`,  `black`, `flake8`, and `mypy` at the end of your edits. 
+
+## Codebase style snapshot
+- Favor small functional helpers (`ensure_*`, `normalize_*`, `pipeline`, widgets) and `get_or_create`/`update_or_create` patterns with in-memory caches for imports and admin helpers.
+- Commands lean on `transaction.atomic`, emit progress/stats via `stdout`, and write CSV logs for skipped/invalid rows; docstrings are descriptive and comments with `# >` capture intent/TODOs.
+- Typing is generally explicit with ModelResource/widget hooks, but older code mixes `dict` inputs and manual casts; username generators live in multiple helpers/widgets.
+- Default/fallback records are common (`get_default`), and imports normalize tokens (academic years, curriculum codes) before lookups; prefer reuse of shared utilities over bespoke logic.
+
+## Improvement plan (do not implement without request)
+- Consolidate ensure helpers (e.g., semester/user creation) and centralize `get_user_model` typing to avoid command-specific casts.
+- Extract shared merge/dedup services for imports to replace per-command caches; add tests for same-ID/complementary-row merges.
+- Tighten typing (TypeAlias for user model, prefer `Mapping`/`TypedDict`/`dataclass` for row structures) to keep mypy strict without casts.
+- Centralize username collision policy in one helper used by widgets/commands to avoid divergent suffixing.
+- Standardize import logging: consistent CSV paths/messages, counts for skipped/merged rows, and consider structured logs for commands.

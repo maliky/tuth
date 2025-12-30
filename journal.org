@@ -1,3 +1,12 @@
+
+* <2025-12-30 mar. 07:18> improvements
+- Consolidate duplicated “ensure” helpers (semester, user creation) and normalize type handling around get_user_model to avoid repeated casts/mypy friction.
+- Reduce per-command manual deduplication caches by pushing merge/update logic into reusable services or managers; add tests to guard merge behaviors (e.g., ID, complementary rows).
+- Tighten typing around Django models (use TypeAlias for user model, avoid dict[...] where Mapping fits) and prefer TypedDict/dataclass for row structures    to appease mypy.
+- Align username generation across widgets/commands to prevent divergent suffixing rules; centralize in one helper with collision policy.
+- Expand logging/reporting consistency: standardize CSV log paths/messages and include counts for skipped/merged rows; consider structured logs for import commands.
+
+
 * <2025-12-29 Mon 09:32>  Looking into factorizing the fuzzy creations
  Implemented the exact-lookup path for Grade imports:
     - CourseWidget and CurriculumWidget now accept allow_fuzzy (default True);
