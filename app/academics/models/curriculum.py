@@ -214,10 +214,10 @@ class Curriculum(StatusableMixin, models.Model):
     ) -> Self:
         """Returns a default curriculum."""
         _college = College.get_default() if def_college is None else def_college
-        def_curriculum, _ = cls.objects.get_or_create(
+        dft_curriculum, _ = cls.objects.get_or_create(
             short_name=short_name, long_name="Default Curriculum", college=_college
         )
-        return cast(Self, def_curriculum)
+        return cast(Self, dft_curriculum)
 
     def _ensure_activity(self):
         """Make sure than only an aproved curriculum can be active."""

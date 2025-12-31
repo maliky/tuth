@@ -28,7 +28,7 @@ from app.timetable.admin.widgets.core import (
     ensure_academic_year_code,
 )
 from app.timetable.models.semester import Semester
-from app.people.admin.resources_mapping import FACULTY_COLUMN_MAP, STUDENT_HEADER_MAP
+from app.people.admin.resources_mapping import FACULTY_COLUMN_MAP, GENDER_MAP, STUDENT_HEADER_MAP
 
 
 class DirectoryContactResource(resources.ModelResource):
@@ -169,27 +169,13 @@ class StudentInfoTermWidget(Widget):
 
     def __init__(self, fallback_column: str | None = None) -> None:
         super().__init__()
-        self.fallback_column = fallback_column
         self.legacy_widget = SemesterCodeWidget()
 
     def clean(self, value, row=None, *args, **kwargs):
-        semester = self._parse_student_info_term(value)
-        if semester:
-            return semester
-
-        if self.fallback_column and row:
-            legacy_value = row.get(self.fallback_column)
-            if legacy_value:
-                kwargs.pop("row", None)
-                return self.legacy_widget.clean(legacy_value, row=row, **kwargs)
-
-        return None
-
-    def _parse_student_info_term(self, raw_value: str | None) -> Semester | None:
-        if not raw_value:
+        if not value:
             return None
 
-        _match = self.term_pattern.match(raw_value.strip())
+        _match = self.term_pattern.match(value.strip())
         if not _match:
             return None
 
@@ -223,11 +209,13 @@ class StudentResource(resources.ModelResource):
     # to be taken from gp table StudentInfo
     entry_semester = fields.Field(
         attribute="entry_semester",
-        column_name="termfirstentered",
-        widget=StudentInfoTermWidget(fallback_column="entry_semester"),
+        column_name="entry_semester",
+        widget=StudentInfoTermWidget(),
     )
     curriculum = fields.Field(
-        attribute="curriculum", column_name="major", widget=CurriculumWidget()
+        attribute="curriculum",
+        column_name="curriculum_short_name",
+        widget=CurriculumWidget(),
     )
     bio = fields.Field(attribute="bio", column_name="bio")
     origin_county = fields.Field(attribute="origin_county", column_name="origin_county")
@@ -297,12 +285,6 @@ class StudentResource(resources.ModelResource):
         use_bulk = False  # do not use because ressources is down row by row
 
     # from studentInfo
-    GENDER_MAP = {
-        "male": "m",
-        "m": "m",
-        "female": "f",
-        "f": "f",
-    }
 
     def before_import_row(self, row, **kwargs):
         """Inject derived columns to capture StudentInfo data."""
@@ -318,7 +300,7 @@ class StudentResource(resources.ModelResource):
 
         # Synthesize student_name when source data provides split columns
         if not row.get("student_name"):
-            first = get_in_row("first_name", row) 
+            first = get_in_row("first_name", row)
             middle = get_in_row("middle_name", row)
             last = get_in_row("last_name", row)
             if not first and not last:
@@ -327,23 +309,21 @@ class StudentResource(resources.ModelResource):
                 row["first_name"] = first
                 row["last_name"] = last
 
-            fullname = " ".join([first.strip(), middle.strip(), last.strip()])
-            if fullname:
-                row["student_name"] = fullname
+            row["student_name"] = " ".join([first, middle, last])
 
         # > I should not allow creation of new major or curriculum
         # > If a row does not fit because of the major or curriculum, I should log it
         # > and create manual (eventulay the major or curriculum)
         # > I should also do a fuzzy search for a matching curriculum
-        major_value = get_in_row("curriculum_short_name", row)
-        if major_value:
-            row["major"] = major_value[:40]
+        curri_value = get_in_row("curriculum_short_name", row)
+        if len(curri_value) > 40:
+            row["curriculum_short_name"] = curri_value[:40]
 
-        mapped_gender = self.GENDER_MAP.get(get_in_row("gender", row).lower())
+        mapped_gender = GENDER_MAP.get(get_in_row("gender", row).lower())
         if mapped_gender:
             row["gender"] = mapped_gender
 
-        entry_semester = get_in_row('entry_semester', row)
+        entry_semester = get_in_row("entry_semester", row)
         entry_year = normalize_academic_year(get_in_row("entry_year", row))
         if entry_semester and entry_year:
             try:
@@ -351,8 +331,8 @@ class StudentResource(resources.ModelResource):
             except ValueError:
                 sem_number = None
             if sem_number:
-                formatted = f"{normalized_year}_Sem{sem_number}"
-                row["current_enrolled_sem"] = formatted
+                formatted = f"{normalized_}_Sem{sem_number}"
+                row["current_enrolled_semester"] = formatted
                 row.setdefault("entry_semester", formatted)
 
         bio_keys = [(k, v) for k, v in STUDENT_HEADER_MAP.items() if "bio_" in v]

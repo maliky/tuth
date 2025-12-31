@@ -200,7 +200,7 @@ def mk_username(
 ) -> str:
     """Generates a username.
 
-    Takes the initial of first and middle and add them to the last name
+    Takes the initials from first and middle and add them to the last name
     all lowercase.  Can set the prefix_len to reduce the part
     of the first name been chopped.
     When the middle name is give, take 2 char from it.
@@ -231,16 +231,6 @@ def mk_username(
 
     return username
 
-
-def ensure_unique_usernames(names: list[str]) -> list:
-    """Given a list of usernames. add a number starting at 2 to duplicates."""
-    counts: dict[str, int] = {}
-    out = []
-    for name in names:
-        key = name.lower()
-        counts[key] = counts.get(key, 0) + 1
-        out.append(name if counts[key] == 1 else f"{name}{counts[key]}")
-    return out
 
 
 def extract_id_num(user_id: str) -> int:

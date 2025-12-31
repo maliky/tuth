@@ -8,7 +8,7 @@ from tablib import Dataset
 from app.academics.constants import COURSE_PATTERN
 from app.academics.models.college import College
 from app.academics.models.department import Department
-from app.shared.constants import DATA_COLUMN_REMAP, STYLE_DEFAULT
+from app.shared.constants import STYLE_DEFAULT
 
 
 def expand_course_code(

@@ -40,7 +40,7 @@ class Command(BaseCommand):
         ]
 
         paths = [Path(p) for p in sources]
-        missing = [p for p in source if not Path(p).exists()]
+        missing = [p for p in sources if not Path(p).exists()]
         if missing:
             raise CommandError(
                 f"Missing source files: {', '.join(missing)}"

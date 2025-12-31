@@ -81,6 +81,7 @@ class FacultyWidget(widgets.ForeignKeyWidget):
     def __init__(self):
         # field is "id" by default
         self._cache_faculty: dict[Hashable, Faculty] = {}
+        self._cache_exclude_username = set()
         super().__init__(Faculty)
 
     def clean(self, value: str, row=None, *args, **kwargs) -> Faculty:
@@ -94,8 +95,10 @@ class FacultyWidget(widgets.ForeignKeyWidget):
             return Faculty.get_default()
 
         parts = parse_name(value)
-        username = build_username(parts.first, parts.last, prefix_len=2)
-
+        username = Faculty.mk_username(parts.first, parts.last, parts.middle,
+                                       exclude=self._cache_exclude_username)
+        self._cache_exclude_username |= {username}
+        
         def _create_faculty() -> Faculty:
             faculty, _ = Faculty.objects.get_or_create(
                 username=username,
@@ -280,13 +283,14 @@ class UserStudentWidget(widgets.ForeignKeyWidget):
         if not value:
             return None
 
+        stdid = get_in_row("student_id", row)
+        if not stdid:
+            return None
+
         std_fullname = (value or "").strip()
         parts = parse_name(
             std_fullname, fallback_first="Student", fallback_last=std_fullname
         )
-
-        assert "student_id" in row
-        stdid = row.get("student_id")
 
         if stdid not in self._cache_user:
             username = Student.mk_username(

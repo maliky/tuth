@@ -62,7 +62,7 @@ class Command(BaseCommand):
             self._delete_migrations(project_root)
 
         call_command(
-            "makemigrations academics finance people registry shared spaces timetable website",
+            "makemigrations","academics","finance", "people", "registry", "shared", "spaces", "timetable", "website",
             interactive=False,
             verbosity=1,
         )

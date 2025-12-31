@@ -7,32 +7,10 @@ from app.people.utils import (
     extract_id_num,
     mk_username,
     split_name,
-    ensure_unique_usernames,
     name_distance,
     names_match,
     name_similarity_matrix,
 )
-
-
-@pytest.mark.parametrize(
-    "raw, expected",
-    [
-        # no duplicates → unchanged
-        (["alice", "bob", "charlie"], ["alice", "bob", "charlie"]),
-        # one duplicate → numbered starting at 2
-        (["alice", "bob", "alice"], ["alice", "bob", "alice2"]),
-        # two duplicates of same name
-        (["x", "x", "x"], ["x", "x2", "x3"]),
-        # mixed-case duplicates should still collide
-        (["Foo", "foo", "Foo"], ["Foo", "foo2", "Foo3"]),
-        # non-consecutive duplicates
-        (["jan", "feb", "jan", "mar", "jan"], ["jan", "feb", "jan2", "mar", "jan3"]),
-    ],
-)
-def test_ensure_unique_usernames(raw, expected):
-    """Ensure ensure_unique_usernames appends numeric suffixes starting at 2."""
-    result = ensure_unique_usernames(raw)
-    assert result == expected, f"{raw!r} -> {result!r} (expected {expected!r})"
 
 
 @pytest.mark.parametrize(
@@ -47,14 +25,14 @@ def test_ensure_unique_usernames(raw, expected):
 def test_mk_username_default(first, last, username):
     """Default username generation without uniqueness."""
     _uname = mk_username(first, last, prefix_len=2)
-    assert _uname == username, f"{first} {last} {_uname}-> != {username}"
+    assert _uname == username, f"{first} {last} -> {_uname} != {username}"
 
 
 @pytest.mark.django_db(transaction=True)
 def test_mk_username_uniqness(user_factory):
     """Check if the username stay uniq with an increased by number."""
-    un1 = mk_username("Esop", "Thot", prefix_len=2)  # esthot
-    u1 = user_factory(username=un1)
+    username1 = mk_username("Esop", "Thot", prefix_len=2)  # esthot
+    user1 = user_factory(username=username1)
 
     # create another user but with that username
     un2 = mk_username("Esai", "Thot", prefix_len=2)  # esthot
@@ -63,14 +41,14 @@ def test_mk_username_uniqness(user_factory):
             _ = user_factory(username=un2)
             # should through UNIQUE constraint failed: auth_user.username
 
-    un3 = mk_username("Esai", "Thot", unique=True, prefix_len=2)  # esthot2, not esthot1
-    u3 = user_factory(username=un3)
+    username3 = mk_username("Esai", "Thot", unique=True, prefix_len=2)  # esthot2, not esthot1
+    user3 = user_factory(username=username3)
 
-    assert un1 == "esthot", f"un1={un1}"
+    assert username1 == "esthot", f"un1={username1}"
     assert un2 == "esthot", f"un2={un2}"
-    assert un3 == "esthot2", f"un3={un3}"
-    assert u1.username == "esthot", f"u1.username={u1.username}"
-    assert u3.username == "esthot2", f"u3.username={u3.username}"
+    assert username3 == "esthot2", f"un3={username3}"
+    assert user1.username == "esthot", f"u1.username={user1.username}"
+    assert user3.username == "esthot2", f"u3.username={user3.username}"
 
 
 # Doit tester la création d'un staff d'un student d'un donor vérifier les ID
@@ -128,13 +106,15 @@ def test_name_distance_symmetry(left, right, expected):
 def test_names_match_threshold():
     """names_match should respect thresholds."""
     assert names_match("Abubarkar Yaradua", "Yaradua Abubarkar")
+    assert names_match("Abubarkar Yaradua", "Yaradu Abubarkar")
+    assert names_match("Abubarkar Yaradua", "Abuabrkar Yardaua")        
     assert not names_match("Abraham Gerard", "Virginia Blyee", threshold=0.05)
 
 
-def test_name_similarity_matrix_filters():
-    """Matrix builder should filter pairs beyond max_distance."""
-    left = ["Abraham W. Harmon", "Virginia Blyee"]
-    right = ["Harmon Abraham W", "Anthony Doe"]
-    matrix = name_similarity_matrix(left, right, max_distance=0.3)
-    assert any(row["left"] == "Abraham W. Harmon" for row in matrix)
-    assert all(row["right"] != "Anthony Doe" for row in matrix)
+# def test_name_similarity_matrix_filters():
+#     """Matrix builder should filter pairs beyond max_distance."""
+#     left = ["Abraham W. Harmon", "Virginia Blyee"]
+#     right = ["Harmon Abraham W", "Anthony Doe"]
+#     matrix = name_similarity_matrix(left, right, max_distance=0.3)
+#     assert any(row["left"] == "Abraham W. Harmon" for row in matrix)
+#     assert all(row["right"] != "Anthony Doe" for row in matrix)

@@ -81,8 +81,9 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
 
     SHORT_NAME_MAX = Curriculum._meta.get_field("short_name").max_length
 
-    def __init__(self):
+    def __init__(self, fuzzy_threshold: float = 1):
         # set the look_up field to uniquely identify the Curriculum to short_name.
+        self.fuzzy_threshold = fuzzy_threshold
         super().__init__(Curriculum, field="short_name")
         self.college_w = CollegeWidget()
 
@@ -97,36 +98,17 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
 
         Automatically creates curriculum with today's date.
         """
-        major_name = get_in_row("major", row)
-        if not value:
-            if major_name:
-                value = major_name
-            else:
-                return Curriculum.get_default()
-
-        raw_label = (value or "").strip()
-        if not raw_label:
-            return Curriculum.get_default()
+        raw_value = (value or "").strip()
 
         college_code = get_in_row("college_code", row)
         college = ensure_college(college_code)
 
-        curriculum = ensure_curriculum(
-            raw_label, college=college, fuzzy_threshold=fuzzy_threshold
-        )
+        if not raw_value:
+            return Curriculum.get_default(def_college=college)
 
-        # add the major if there is
-        major = None
-        if major_name:
-            try:
-                major, _ = Major.objects.get_or_create(
-                    name=major_name, defaults={"curriculum": curriculum}
-                )
-            except IntegrityError:
-                major = Major.objects.filter(name=major_name).first()
-                if major and major.curriculum_id != curriculum.id:
-                    major.curriculum = curriculum
-                    major.save(update_fields=["curriculum"])
+        curriculum = ensure_curriculum(
+            raw_value, college=college, fuzzy_threshold=fuzzy_threshold
+        )
 
         return curriculum
 
