@@ -82,6 +82,26 @@ class Staff(AbstractPerson):
         """Return a unique default Staff."""
         return cls.get_default(staff_id=next(DEFAULT_STAFF_ID))
 
+    @classmethod
+    def mk_username(
+        cls,
+        first,
+        last,
+        middle=None,
+        unique=True,
+        exclude=None,
+        prefix_len=None,
+    ):
+        """Generate staff usernames using a 2-letter first-name prefix."""
+        return super().mk_username(
+            first,
+            last,
+            middle=middle,
+            unique=unique,
+            exclude=exclude,
+            prefix_len=2 if prefix_len is None else prefix_len,
+        )
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=["user"], name="uniq_staff_per_user"),

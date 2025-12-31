@@ -8,6 +8,7 @@ from app.shared.utils import expand_course_code
 
 # from tests.fixtures.academics import department_factory, college
 
+
 def test_expand_code_explicit_college():
     result = expand_course_code("COET-MATH101", row={"college_code": "COAS"})
     assert result == (

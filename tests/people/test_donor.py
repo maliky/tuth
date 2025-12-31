@@ -12,6 +12,5 @@ def test_donor_profile_creation(donor_factory):
     user = donor.user
 
     assert donor.donor_id == f"{Donor.ID_PREFIX}00001"
-    assert donor.username == username, f"{donor} !={username}"    
+    assert donor.username == username, f"{donor} !={username}"
     assert user.groups.filter(name=Donor.GROUP).exists()
-

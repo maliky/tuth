@@ -41,7 +41,9 @@ def test_mk_username_uniqness(user_factory):
             _ = user_factory(username=un2)
             # should through UNIQUE constraint failed: auth_user.username
 
-    username3 = mk_username("Esai", "Thot", unique=True, prefix_len=2)  # esthot2, not esthot1
+    username3 = mk_username(
+        "Esai", "Thot", unique=True, prefix_len=2
+    )  # esthot2, not esthot1
     user3 = user_factory(username=username3)
 
     assert username1 == "esthot", f"un1={username1}"
@@ -107,7 +109,7 @@ def test_names_match_threshold():
     """names_match should respect thresholds."""
     assert names_match("Abubarkar Yaradua", "Yaradua Abubarkar")
     assert names_match("Abubarkar Yaradua", "Yaradu Abubarkar")
-    assert names_match("Abubarkar Yaradua", "Abuabrkar Yardaua")        
+    assert names_match("Abubarkar Yaradua", "Abuabrkar Yardaua")
     assert not names_match("Abraham Gerard", "Virginia Blyee", threshold=0.05)
 
 

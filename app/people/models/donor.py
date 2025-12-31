@@ -41,6 +41,26 @@ class Donor(AbstractPerson):
         ]
 
     @classmethod
+    def mk_username(
+        cls,
+        first,
+        last,
+        middle=None,
+        unique=True,
+        exclude=None,
+        prefix_len=None,
+    ):
+        """Generate donor usernames with a short first-name prefix."""
+        return super().mk_username(
+            first,
+            last,
+            middle=middle,
+            unique=unique,
+            exclude=exclude,
+            prefix_len=2 if prefix_len is None else prefix_len,
+        )
+
+    @classmethod
     def get_default(cls) -> "Donor":
         """Return a placeholder Donor for legacy imports."""
         user, created = User.objects.get_or_create(

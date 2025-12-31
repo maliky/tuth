@@ -18,7 +18,7 @@ class PersonManager(Manager):
 
     USER_KWARGS = {
         "user",
-        # "username",
+        "username",
         "password",
         "email",
         "first_name",
@@ -60,7 +60,9 @@ class PersonManager(Manager):
         candidates = self.get_queryset().filter(user__last_name__iexact=last)
 
         if not candidates.exists():
-            # > the problem here is that we already assum that the first 3 char will be similare
+            # > the problem here is that we already assume that
+            # the first 3 char will be similare
+            # At the same time we need to filter out some candidates
             candidates = self.get_queryset().filter(user__last_name__istartswith=last[:3])
 
         ranked_matches = top_name_matches(
@@ -97,10 +99,14 @@ class PersonManager(Manager):
     def _create_user(self, **user_kwargs: Any) -> User:
         """Create or get the User and set /update password."""
         password = user_kwargs.pop("password", None)
-        existing_user = cast(Optional[User], user_kwargs.pop("user", None))
         username = user_kwargs.pop("username", "")
-        if not username and existing_user:
-            username = existing_user.username
+        if not username:
+            existing_user = cast(Optional[User], user_kwargs.pop("user", None))
+            username = (
+                existing_user.username
+                if existing_user
+                else self._get_username(**user_kwargs)
+            )
 
         found_user = self._find_by_name(**user_kwargs)
         if found_user:
@@ -165,7 +171,7 @@ class PersonManager(Manager):
         if not username:
             first = kwargs.get("first_name", "")
             last = kwargs.get("last_name", "")
-            username = mk_username(first, last, prefix_len=2)
+            username = mk_username(first, last, prefix_len=2, unique=True)
         return str(username)
 
     # public API ----------------------------------------------------

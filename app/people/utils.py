@@ -232,7 +232,6 @@ def mk_username(
     return username
 
 
-
 def extract_id_num(user_id: str) -> int:
     """Extract the number of an user_id what ever the prefix."""
     # using non greedy start
