@@ -77,9 +77,16 @@ def test_mk_username_uniqness(user_factory):
     ],
 )
 def test_split_name_initial_patterns(raw, prefix, first, middle, last, suffix):
-    res = split_name(raw)
+    name_parts = split_name(raw)
+    parts = (
+        name_parts.prefix,
+        name_parts.first,
+        name_parts.middle,
+        name_parts.last,
+        name_parts.suffix,
+    )
     ref = (prefix, first, middle, last, suffix)
-    assert res == ref, f"{ref} != {res} !"
+    assert parts == ref, f"{parts} != {ref} !"
 
 
 @pytest.mark.parametrize(
@@ -111,12 +118,3 @@ def test_names_match_threshold():
     assert names_match("Abubarkar Yaradua", "Yaradu Abubarkar")
     assert names_match("Abubarkar Yaradua", "Abuabrkar Yardaua")
     assert not names_match("Abraham Gerard", "Virginia Blyee", threshold=0.05)
-
-
-# def test_name_similarity_matrix_filters():
-#     """Matrix builder should filter pairs beyond max_distance."""
-#     left = ["Abraham W. Harmon", "Virginia Blyee"]
-#     right = ["Harmon Abraham W", "Anthony Doe"]
-#     matrix = name_similarity_matrix(left, right, max_distance=0.3)
-#     assert any(row["left"] == "Abraham W. Harmon" for row in matrix)
-#     assert all(row["right"] != "Anthony Doe" for row in matrix)

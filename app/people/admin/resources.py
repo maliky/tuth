@@ -28,7 +28,11 @@ from app.timetable.admin.widgets.core import (
     ensure_academic_year_code,
 )
 from app.timetable.models.semester import Semester
-from app.people.admin.resources_mapping import FACULTY_COLUMN_MAP, GENDER_MAP, STUDENT_HEADER_MAP
+from app.people.admin.resources_mapping import (
+    FACULTY_COLUMN_MAP,
+    GENDER_MAP,
+    STUDENT_HEADER_MAP,
+)
 
 
 class DirectoryContactResource(resources.ModelResource):
@@ -58,18 +62,11 @@ class DirectoryContactResource(resources.ModelResource):
     def before_import_row(self, row, **kwargs):
         """Get the faculty name and populate the username if empty."""
         raw_name = (row.get("faculty") or row.get("name") or "").strip()
-        prefix, first, middle, last, suffix = split_name(raw_name)
-        row.update(
-            {
-                "name_prefix": prefix,
-                "first_name": first,
-                "middle_name": middle,
-                "last_name": last,
-                "name_suffix": suffix,
-            }
-        )
+        n = split_name(raw_name)
+        row.update(n.to_dict())
+
         if not row.get("username"):
-            row["username"] = mk_username(first, last, unique=True)
+            row["username"] = mk_username(n.first, n.last, n.middle, unique=True)
 
 
 class FacultyResource(resources.ModelResource):
@@ -80,49 +77,25 @@ class FacultyResource(resources.ModelResource):
     college_code   :optional – defaults to “COAS”
     """
 
-    # Je ne suis pas sur ici car je ne veux pas de difference entre le username et le staff_profile
-    # username = fields.Field(
-    #     attribute="staff_profile__user__username",
-    #     column_name="username",
-    # )
-    # first_name = fields.Field(
-    #     attribute="staff_profile__user__first_name",
-    #     column_name="first_name",
-    # )
-    # last_name = fields.Field(
-    #     attribute="staff_profile__user__last_name",
-    #     column_name="last_name",
-    # )
-    # middle_name = fields.Field(
-    #     attribute="staff_profile__middle_name",
-    #     column_name="middle_name",
-    # )
-    # name_prefix = fields.Field(
-    #     attribute="staff_profile__name_prefix",
-    #     column_name="name_prefix",
-    # )
-    # name_suffix = fields.Field(
-    #     attribute="staff_profile__name_suffix",
-    #     column_name="name_suffix",
-    # )
     staff_profile = fields.Field(
         attribute="staff_profile",
-        column_name="faculty",
+        column_name="staff_profile",
         widget=StaffProfileWidget(),
     )
 
+    # Instructor, name_prefix,first_n, middle_n, last_n, name_suffix, username
     class Meta:
         model = Faculty
         import_id_fields = ("staff_profile",)
-        fields = (
-            "username",
-            "first_name",
-            "middle_name",
-            "last_name",
-            "name_prefix",
-            "name_suffix",
-            "staff_profile",
-        )
+        # fields = (
+        #     # "username",
+        #     # "first_name",
+        #     # "middle_name",
+        #     # "last_name",
+        #     # "name_prefix",
+        #     # "name_suffix",
+        #     "staff_profile",
+        # )
         skip_unchanged = True
         report_skipped = False
         use_bulk = False
@@ -142,7 +115,7 @@ class FacultyResource(resources.ModelResource):
         tokens = [prefix, first, middle, last, suffix]
         full_name = " ".join(t for t in tokens if t).strip()
         if full_name:
-            row["faculty"] = full_name
+            row["faculty_fullname"] = full_name
 
         # problem if I do updates...
         # if not get_in_row("username", row):
@@ -331,7 +304,7 @@ class StudentResource(resources.ModelResource):
             except ValueError:
                 sem_number = None
             if sem_number:
-                formatted = f"{normalized_}_Sem{sem_number}"
+                formatted = f"{entry_year}_Sem{sem_number}"
                 row["current_enrolled_semester"] = formatted
                 row.setdefault("entry_semester", formatted)
 

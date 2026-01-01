@@ -2,7 +2,7 @@
 
 # Incoming headers -> canonical column names used by FacultyResource
 FACULTY_COLUMN_MAP = {
-    "Instructor": "faculty",
+    "Instructor": "faculty_fullname",
     "name_prefix": "name_prefix",
     "first_n": "first_name",
     "middle_n": "middle_name",
@@ -21,7 +21,7 @@ STUDENT_HEADER_MAP = {
 }
 GENDER_MAP = {
     "M": "m",  # should use lower
-    "F": "f",    # should use lower
+    "F": "f",  # should use lower
     "male": "m",
     "m": "m",
     "female": "f",
@@ -41,7 +41,7 @@ STUDENT_HEADER_MAP = {
     "EnrollmentType": "bio_EnrollmentType",
     "FatherAddress": "father_address",
     "FatherName": "father_name",
-    "HomeCountry": "bio_homecountry",  
+    "HomeCountry": "bio_homecountry",
     "LastSchoolAttended": "last_school_attended",
     "LastSchoolType": "bio_lastschooltype",
     "MotherAddress": "mother_address",
@@ -53,7 +53,7 @@ STUDENT_HEADER_MAP = {
     "Section": "section_no",
     "Semester": "semester_no",
     "StudentID": "student_id",
-    "TermFirstEntered": "bio_termfirstentered", 
+    "TermFirstEntered": "bio_termfirstentered",
     "TimeCreated": "bio_timecreated",
     "VeteranStatusID": "bio_veteranstatusid",
     "YearOfEntry": "entry_year",

@@ -10,6 +10,7 @@ from django.db.models import Count, QuerySet
 
 from app.academics.models import College, Curriculum
 from app.people.models.staffs import Staff
+from app.people.utils import mk_username
 from app.timetable.models.semester import Semester
 
 if TYPE_CHECKING:
@@ -198,6 +199,26 @@ class Faculty(models.Model):
         """Returns a unique default Faculty."""
         unique_profile = Staff.get_unique_default()
         return cls.get_default(unique_profile)
+
+    @classmethod
+    def mk_username(
+        cls,
+        first,
+        last,
+        middle=None,
+        unique=True,
+        exclude=None,
+        prefix_len=None,
+    ):
+        """Generate staff usernames using a 2-letter first-name prefix."""
+        return mk_username(
+            first,
+            last,
+            middle=middle,
+            unique=unique,
+            exclude=exclude,
+            prefix_len=1 if prefix_len is None else prefix_len,
+        )
 
     class Meta:
         verbose_name = "Faculty"

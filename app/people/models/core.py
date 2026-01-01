@@ -145,17 +145,26 @@ class AbstractPerson(models.Model):
     def _ensure_username(self):
         """Create a model field matching the user field for admin."""
         self._ensure_user()
-        desired_username = mk_username(
+        current_username = self.user.username or ""
+        desired_username = current_username or self.mk_username(
             self.user.first_name,
             self.user.last_name,
             middle=self.middle_name,
-            unique=True,
+            unique=False,
         )
-        current_username = self.user.username or ""
-        # Update username when names change (keeping uniqueness)
-        if desired_username and desired_username != current_username:
-            self.user.username = desired_username
+        username = desired_username
+        counter = 1
+        while (
+            username
+            and User.objects.filter(username=username).exclude(pk=self.user.pk).exists()
+        ):
+            counter += 1
+            username = f"{desired_username}{counter}"
+
+        if username and username != current_username:
+            self.user.username = username
             self.user.save(update_fields=["username"])
+
         if not self.user.username:
             raise ValidationError("A username should exists.")
         self.username = self.user.username

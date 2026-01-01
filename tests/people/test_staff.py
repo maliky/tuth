@@ -23,7 +23,6 @@ def test_staff_creation_generates_username_when_missing() -> None:
 
 @pytest.mark.django_db
 def test_staff_creation_can_set_custom_username() -> None:
-    import ipdb; ipdb.set_trace()
     staff = Staff.objects.create(
         username="custom_staff",
         first_name="Tina",
@@ -31,16 +30,18 @@ def test_staff_creation_can_set_custom_username() -> None:
     )
 
     assert staff.user.username == "custom_staff", f"{staff.user.username}"
+    assert staff.user.first_name == "Tina", f"{staff.user.first_name}"
+    assert staff.user.last_name == "Doe", f"{staff.user.last_name}"
 
 
 @pytest.mark.django_db
 def test_staff_creation_ensures_unique_username() -> None:
-    first = Staff.objects.create(first_name="Alex", last_name="Smith")
+    first = Staff.objects.create(first_name="Amaury", last_name="Smith")
     second = Staff.objects.create(first_name="Ambroise", last_name="Smith")
 
-    expected_username = mk_username("Alex", "Smith", prefix_len=2)
-    expected_username2 = mk_username("Ambroise", "Smith", prefix_len=2)
-    assert first.user.username != second.user.username
     assert (
-        expected_username2 == expected_username + "2"
-    ), f"expected_username={expected_username}, expected_username2={expected_username2}"
+        first.user.username != second.user.username
+    ), f"{first.user.username}  {second.user.username}"
+    assert (
+        second.user.username == first.user.username + "2"
+    ), f"second={second.user.username}, first={first.user.username}"

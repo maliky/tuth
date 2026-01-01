@@ -42,14 +42,13 @@ class Command(BaseCommand):
         paths = [Path(p) for p in sources]
         missing = [p for p in sources if not Path(p).exists()]
         if missing:
-            raise CommandError(
-                f"Missing source files: {', '.join(missing)}"
-            )
+            raise CommandError(f"Missing source files: {', '.join(missing)}")
 
         text = read_text_file(paths[0])
         dataset = _load_dataset(text)
         # dataset = _combine_datasets(paths)
         _run_student_import(self, dataset, dry_run=dry_run)
+
 
 def _run_student_import(cmd, dataset: Dataset, *, dry_run: bool = False) -> None:
     """Bulk import students with minimal logging for speed."""

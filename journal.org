@@ -1,4 +1,9 @@
 
+* <2026-01-01 jeu. 09:13> names parts
+  Could harden split_name with NameParts
+Make test for NameParts if I have empty parts.
+empty should be allowed and default to "" every where except in last_name.
+
 * <2025-12-30 mar. 07:18> improvements
 - Consolidate duplicated “ensure” helpers (semester, user creation) and normalize type handling around get_user_model to avoid repeated casts/mypy friction.
 - Reduce per-command manual deduplication caches by pushing merge/update logic into reusable services or managers; add tests to guard merge behaviors (e.g., ID, complementary rows).

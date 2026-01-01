@@ -138,7 +138,8 @@ class PersonManager(Manager):
         return user
 
     def _update_or_create(self, username: str, **user_kwargs: Any) -> User:
-        """Create or get the User and set /update password."""
+        """Get the User from username and set/update password or create it."""
+
         password = user_kwargs.pop("password", None)
         existing_user = cast(Optional[User], user_kwargs.pop("user", None))
 
@@ -190,24 +191,34 @@ class PersonManager(Manager):
         """Update or Create a user and the person."""
         defaults = defaults or {}
         lookup_kwargs = dict(kwargs)
-        username = self._get_username(**defaults, **lookup_kwargs)
 
-        user_lookup_kwargs, person_lookup_kwargs = self._split_kwargs(lookup_kwargs)
+        username = (
+            defaults.pop("username", False) or kwargs.pop("username", False)
+            if "username" in defaults or "username" in kwargs
+            else self._get_username(**defaults, **kwargs)
+        )
 
-        defaults_copy = dict(defaults)
-        user_default_kwargs, person_default_kwargs = self._split_kwargs(defaults_copy)
+        user_kwargs, person_kwargs = self._split_kwargs(lookup_kwargs)
+        user_default, person_default = self._split_kwargs(defaults)
 
-        combined_user_kwargs = {**user_default_kwargs, **user_lookup_kwargs}
-        user = self._update_or_create(username=username, **combined_user_kwargs)
+        combined_kwargs = {**user_default, **user_kwargs}
 
-        merged_person_defaults = {**person_default_kwargs, **person_lookup_kwargs}
+        user = self._update_or_create(username=username, **combined_kwargs)
+
+        merged_person_defaults = {**person_default, **person_kwargs}
 
         return super().update_or_create(user=user, defaults=merged_person_defaults)
 
     def get_or_create(self, defaults: Mapping[str, Any] | None = None, **kwargs):
         """Get or Create the user and the person."""
         defaults = defaults or {}
-        username = self._get_username(**defaults, **kwargs)
+
+        username = (
+            defaults.pop("username", False) or kwargs.pop("username", False)
+            if "username" in defaults or "username" in kwargs
+            else self._get_username(**defaults, **kwargs)
+        )
+
         user_kwargs, person_kwargs = self._split_kwargs({**kwargs, **defaults})
 
         user = self._get_or_create(username=username, **user_kwargs)

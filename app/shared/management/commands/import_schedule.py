@@ -27,7 +27,7 @@ from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.people.models.faculty import Faculty
 from app.people.models.staffs import Staff
-from app.people.utils import mk_username, split_name
+from app.people.utils import mk_username, split_name, parse_name
 from app.registry.models import CreditHour
 from app.shared.utils import get_in_row, normalize_academic_year, parse_int
 from app.spaces.models.core import Room, Space
@@ -338,26 +338,20 @@ class Command(BaseCommand):
         college: College,
         stats: ImportStats,
     ) -> Optional[Faculty]:
-        name = str(raw_name or "").strip()
-        if not name:
+
+        _name = str(raw_name or "").strip()
+        if not _name:
             return None
 
-        prefix, first, middle, last, suffix = split_name(name)
-        first_name = first or last or "Faculty"
-        last_name = last or first or "Member"
-        username = mk_username(first_name, last_name, prefix_len=2, unique=True)
+        name = parse_name(_name)
+        username = mk_username(name.to_dict(), prefix_len=2, unique=True)
 
-        staff_defaults = {
-            "first_name": first_name.capitalize(),
-            "last_name": last_name.capitalize(),
-            "middle_name": middle,
-            "name_prefix": prefix,
-            "name_suffix": suffix,
-            "department": department,
-        }
+        staff_defaults = name.to_dict()
+        staff_defaults["department"] = department
+
         staff, staff_created = Staff.objects.update_or_create(
-            username=username,
             defaults=staff_defaults,
+            username=username,
         )
         faculty, faculty_created = Faculty.objects.update_or_create(
             staff_profile=staff,

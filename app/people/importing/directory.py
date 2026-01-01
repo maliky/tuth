@@ -9,7 +9,7 @@ from typing import Iterable, Optional
 import pandas as pd
 import phonenumbers
 
-from app.people.importing.names import NameParts, parse_name
+from app.people.utils import NameParts, parse_name
 from app.shared.importing import CsvRowLogger, drop_constant_columns, get_import_logger
 from app.shared.utils import get_in_row
 

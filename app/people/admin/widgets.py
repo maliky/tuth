@@ -11,7 +11,6 @@ Usage::
 from app.academics.admin.widgets import CurriculumWidget
 from app.academics.models.curriculum import Curriculum
 from app.people.importing import (
-    build_username,
     cached_entity,
     default_password,
     parse_name,
@@ -42,8 +41,9 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         if not value:
             return Staff.get_unique_default()
 
-        parts = parse_name(value)
-        username = build_username(parts.first, parts.last, prefix_len=2)
+        parts = parse_name(value, fallback_last="Staff")
+        username = Staff.mk_username(parts.to_dict(), prefix_len=2)
+
         found_user = Staff.objects._find_by_name(
             first_name=parts.first.capitalize(),
             last_name=parts.last.capitalize(),
@@ -94,15 +94,16 @@ class FacultyWidget(widgets.ForeignKeyWidget):
             # return Faculty.get_unique_default()
             return Faculty.get_default()
 
-        parts = parse_name(value)
-        username = Faculty.mk_username(parts.first, parts.last, parts.middle,
-                                       exclude=self._cache_exclude_username)
+        parts = parse_name(value, fallback_last="Faculty")
+        username = Faculty.mk_username(
+            parts.to_dict(), exclude=self._cache_exclude_username
+        )
         self._cache_exclude_username |= {username}
-        
+
         def _create_faculty() -> Faculty:
             faculty, _ = Faculty.objects.get_or_create(
                 username=username,
-                defaults=parts.capitalized_defaults(),
+                defaults=parts.to_dict(),
             )
             faculty.staff_profile.user.set_password(
                 default_password(parts.first, parts.last)
@@ -204,7 +205,7 @@ class GradeStudentWidget(widgets.ForeignKeyWidget):
             curriculum = Curriculum.get_default()
 
         first_name = get_in_row("student_first_name", row)
-        last_name = get_in_row("student_last_name", row) or student_id
+        last_name = get_in_row("student_last_name", row)
         parts = parse_name(
             # the next return the True objects.
             " ".join(filter(None, [first_name, last_name])).strip(),
@@ -250,15 +251,11 @@ class DonorUserWidget(widgets.ForeignKeyWidget):
         if cached:
             return cached
 
-        parts = parse_name(raw_name, fallback_first=raw_name, fallback_last="Donor")
-        username = build_username(parts.first, parts.last, unique=True)
+        parts = parse_name(raw_name, fallback_last="Donor")
+        username = Donor.mk_username(parts.to_dict(), unique=True)
 
         user, created = User.objects.get_or_create(
-            username=username,
-            defaults={
-                "first_name": parts.first.capitalize(),
-                "last_name": parts.last.capitalize(),
-            },
+            username=username, defaults=parts.to_dict()
         )
         if created:
             user.set_password(default_password(parts.first, parts.last))

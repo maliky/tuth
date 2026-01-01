@@ -18,9 +18,9 @@ def test_student_import_assigns_student_group(curriculum, group_factory):
     ds.headers = ["student_id", "student_name", "curriculum"]
 
     name = "Alice Example"
-    _, first, middle, last, _ = split_name(name)
+    name_part = split_name(name)
 
-    username = Student.mk_username(first, last, middle)
+    username = Student.mk_username(name_part.first, name_part.last, name_part.middle)
 
     ds.append(["ST1", name, curriculum.pk])
 
@@ -37,19 +37,42 @@ def test_student_import_assigns_student_group(curriculum, group_factory):
 
 
 @pytest.mark.django_db
-def test_faculty_import_assigns_faculty_group(college):
+@pytest.mark.parametrize(
+    "staff_profile,name_prefix,first_n,middle_n,last_n,name_suffix,username",
+    [
+        ("Gandyu A S", "", "A.", "S.", "Gandyu", "", "agandyu"),
+        ("A. Molubah", "", "A.", "", "Molubah", "", "amolubah"),
+        ("Bedell Gabriel", "", "Gabriel", "", "Bedell", "", "gbedell"),
+        ("Gandyu, Alexander S", "", "Alexander", "S.", "Gandyu", "", "agandyu2"),
+        ("Dylan, John A", "", "John", "A.", "Dylan", "", ""),
+    ],
+)
+def test_faculty_import_assigns_faculty_group(
+    staff_profile, name_prefix, first_n, middle_n, last_n, name_suffix, username
+):
+    # FacultyResource expects instructor-style columns; align the fixture accordingly.
     ds = Dataset()
-    ds.headers = ["faculty"]
-    name = "Bob Teaches"
-    _, first, middle, last, _ = split_name(name)
-    username = mk_username(first, last, middle, prefix_len=2)
+    ds.headers = [
+        "staff_profile",
+        "name_prefix",
+        "first_n",
+        "middle_n",
+        "last_n",
+        "name_suffix",
+        "username",
+    ]
+    ds.append(
+        [staff_profile, name_prefix, first_n, middle_n, last_n, name_suffix, username]
+    )
 
-    ds.append([name])
     res = FacultyResource().import_data(ds, dry_run=False, raise_errors=True)
     assert not res.has_errors()
 
     faculty = Faculty.objects.first()
     assert faculty is not None
     user = faculty.staff_profile.user
+
     assert user.groups.filter(name=UserRole.FACULTY.value.label).exists()
-    assert user.username == username
+    if not username:
+        username = Faculty.mk_username(first_n, last_n, middle=middle_n)
+    assert user.username == username, f"{user.username} and {username}"

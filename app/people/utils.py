@@ -61,6 +61,54 @@ LAST_PATTERN = re.compile(r"([A-Za-z-]+)$")
 INITIAL_PATTERN = re.compile(r"\b([A-Z])(?=\s|$|\.)")
 
 
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Callable, Dict, Hashable, TypeVar
+
+from app.people.utils import mk_password, mk_username, split_name
+
+
+@dataclass
+class NameParts:
+    """Parsed representation of a raw name suitable for user defaults."""
+
+    prefix: str
+    first: str
+    middle: str
+    last: str
+    suffix: str
+
+    def to_dict(self) -> dict[str, str]:
+        """Return admin-friendly defaults derived from the parsed name."""
+        return {
+            "first_name": self.first.capitalize(),
+            "last_name": self.last.capitalize(),
+            "name_prefix": self.prefix,
+            "middle_name": self.middle,
+            "name_suffix": self.suffix,
+        }
+
+
+def default_password(first: str, last: str) -> str:
+    """Return the canonical password used when creating new profiles."""
+    return mk_password(first, last)
+
+
+Entity = TypeVar("Entity")
+
+
+def cached_entity(
+    cache: Dict[Hashable, Entity],
+    key: Hashable,
+    factory: Callable[[], Entity],
+) -> Entity:
+    """Return a cached entity, computing it only once per key."""
+    if key not in cache:
+        cache[key] = factory()
+    return cache[key]
+
+
 def extract_suffix(raw_name: str) -> tuple[str, str]:
     """Extract the suffix of a name."""
     name_suffix = ""
@@ -160,7 +208,19 @@ def handle_numbered_name_suffix(last_name, name_suffix):
     return last_name, name_suffix
 
 
-def split_name(name: str) -> tuple[str, str, str, str, str]:
+def parse_name(
+    raw: str | None, *, fallback_first: str = "Default", fallback_last: str = "User"
+) -> NameParts:
+    """Split a name and fill sensible defaults for missing parts."""
+    n = split_name(raw or "")
+    first = n.first or fallback_first
+    last = n.last or fallback_last
+    return NameParts(
+        prefix=n.prefix, first=first, middle=n.middle, last=last, suffix=n.suffix
+    )
+
+
+def split_name(name: str) -> NameParts:
     """Splits a raw_name in prefix, first, middle, last, suffix.
 
     Idealy the name's part are in logical order.
@@ -177,17 +237,17 @@ def split_name(name: str) -> tuple[str, str, str, str, str]:
     ]
 
     # Restore dots to single letters only
-    first_name, middle_name, last_name = [
+    first, middle, last_name = [
         re.sub(INITIAL_PATTERN, r"\1.", n) for n in [first_name, middle_name, last_name]
     ]
 
     # Restore dots on prefixes
-    name_prefix = re.sub(PREFIX_PATTERN, r"\1.", name_prefix)
+    prefix = re.sub(PREFIX_PATTERN, r"\1.", name_prefix)
 
     # special case if the suffix is a number I, II... we append it to the lastname
-    last_name, name_suffix = handle_numbered_name_suffix(last_name, name_suffix)
+    last, suffix = handle_numbered_name_suffix(last_name, name_suffix)
 
-    return name_prefix, first_name, middle_name, last_name, name_suffix
+    return NameParts(prefix=prefix, first=first, middle=middle, last=last, suffix=suffix)
 
 
 def mk_username(
@@ -274,20 +334,14 @@ def mk_password(first: str, last: str) -> str:
 
 def canonicalize_name(raw: str) -> str:
     """Return a canonical username-like representation of a name."""
-    prefix, first, middle, last, suffix = split_name(raw)
-    # base_last = last or first or raw
-    # base_first = first or last or raw
-    # canonical = mk_username(base_first, base_last, middle)
-    # return canonical or re.sub(r"\s+", "", raw.lower())
-    return " ".join([prefix, first, middle, last, suffix])
+    name = split_name(raw)
+    return " ".join([name.prefix, name.first, name.middle, name.last, name.suffix])
 
 
 def name_distance(name_a: str, name_b: str, *, prefix_weight: float = 0.1) -> float:
     """Return a normalized distance (0=identical, 1=different) between two names."""
     canonical_a = canonicalize_name(name_a)
     canonical_b = canonicalize_name(name_b)
-    # canonical_a = " ".join(split_name(name_a))
-    # canonical_b = " ".join(split_name(name_b))
     return float(
         JaroWinkler.normalized_distance(
             canonical_a, canonical_b, prefix_weight=prefix_weight

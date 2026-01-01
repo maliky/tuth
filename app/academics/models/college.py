@@ -20,7 +20,7 @@ class College(models.Model):
     """
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
-    code = models.CharField(default="deft")
+    code = models.CharField(default="DEFT")
 
     # ~~~~ auto-filled ~~~~
     long_name = models.CharField(
