@@ -19,9 +19,12 @@ Functions:
 """
 
 # regex patterns to pull suffixes, prefixes, initials, etc.
+from __future__ import annotations
+
 import re
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Any, Callable, Dict, Hashable, Optional, Sequence, TypeVar
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -59,14 +62,6 @@ LAST_PATTERN = re.compile(r"([A-Za-z-]+)$")
 
 # A single letter follow by a space or the end of a string or a dot
 INITIAL_PATTERN = re.compile(r"\b([A-Z])(?=\s|$|\.)")
-
-
-from __future__ import annotations
-
-from dataclasses import dataclass
-from typing import Callable, Dict, Hashable, TypeVar
-
-from app.people.utils import mk_password, mk_username, split_name
 
 
 @dataclass

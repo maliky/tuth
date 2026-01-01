@@ -172,7 +172,8 @@ class PersonManager(Manager):
         if not username:
             first = kwargs.get("first_name", "")
             last = kwargs.get("last_name", "")
-            username = mk_username(first, last, prefix_len=2, unique=True)
+            middle = kwargs.get("middle_name", "")
+            username = mk_username(first, last, middle, prefix_len=2, unique=True)
         return str(username)
 
     # public API ----------------------------------------------------
@@ -189,13 +190,13 @@ class PersonManager(Manager):
         **kwargs,
     ):
         """Update or Create a user and the person."""
-        defaults = defaults or {}
+        defaults = dict(defaults or {})
         lookup_kwargs = dict(kwargs)
 
         username = (
-            defaults.pop("username", False) or kwargs.pop("username", False)
-            if "username" in defaults or "username" in kwargs
-            else self._get_username(**defaults, **kwargs)
+            defaults.pop("username", False) or lookup_kwargs.pop("username", False)
+            if "username" in defaults or "username" in lookup_kwargs
+            else self._get_username(**defaults, **lookup_kwargs)
         )
 
         user_kwargs, person_kwargs = self._split_kwargs(lookup_kwargs)
@@ -211,7 +212,7 @@ class PersonManager(Manager):
 
     def get_or_create(self, defaults: Mapping[str, Any] | None = None, **kwargs):
         """Get or Create the user and the person."""
-        defaults = defaults or {}
+        defaults = dict(defaults or {})
 
         username = (
             defaults.pop("username", False) or kwargs.pop("username", False)

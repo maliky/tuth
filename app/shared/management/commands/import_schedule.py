@@ -12,7 +12,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, time
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import pandas as pd
 from django.core.management.base import BaseCommand, CommandError, CommandParser
@@ -343,10 +343,10 @@ class Command(BaseCommand):
         if not _name:
             return None
 
-        name = parse_name(_name)
-        username = mk_username(name.to_dict(), prefix_len=2, unique=True)
+        n = parse_name(_name)
+        username = mk_username(n.first, n.last, n.middle, prefix_len=2, unique=True)
 
-        staff_defaults = name.to_dict()
+        staff_defaults: dict[str, Any] = n.to_dict()
         staff_defaults["department"] = department
 
         staff, staff_created = Staff.objects.update_or_create(

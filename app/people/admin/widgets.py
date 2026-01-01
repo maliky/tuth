@@ -8,21 +8,22 @@ Usage::
     >>> print(staff.long_name)
 """
 
+from typing import Any, Hashable, cast
+
+from django.contrib.auth.models import User
+from import_export import widgets
+
 from app.academics.admin.widgets import CurriculumWidget
 from app.academics.models.curriculum import Curriculum
-from app.people.importing import (
+from app.people.models.donor import Donor
+from app.people.models.faculty import Faculty
+from app.people.models.staffs import Staff
+from app.people.models.student import Student
+from app.people.utils import (
     cached_entity,
     default_password,
     parse_name,
 )
-from app.people.models.student import Student
-from app.people.models.donor import Donor
-from django.contrib.auth.models import User
-from typing import Hashable, Any, cast
-from import_export import widgets
-
-from app.people.models.staffs import Staff
-from app.people.models.faculty import Faculty
 from app.shared.utils import get_in_row
 
 
@@ -42,7 +43,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
             return Staff.get_unique_default()
 
         parts = parse_name(value, fallback_last="Staff")
-        username = Staff.mk_username(parts.to_dict(), prefix_len=2)
+        username = Staff.mk_username(**parts.to_dict(), prefix_len=2)
 
         found_user = Staff.objects._find_by_name(
             first_name=parts.first.capitalize(),
@@ -56,8 +57,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
 
         def _create_staff() -> Staff:
             staff, _ = Staff.objects.get_or_create(
-                username=username,
-                defaults=parts.capitalized_defaults(),
+                username=username, defaults=parts.to_dict()
             )
             staff.user.set_password(default_password(parts.first, parts.last))
             staff.user.save(update_fields=["password"])
@@ -96,14 +96,13 @@ class FacultyWidget(widgets.ForeignKeyWidget):
 
         parts = parse_name(value, fallback_last="Faculty")
         username = Faculty.mk_username(
-            parts.to_dict(), exclude=self._cache_exclude_username
+            **parts.to_dict(), exclude=self._cache_exclude_username
         )
         self._cache_exclude_username |= {username}
 
         def _create_faculty() -> Faculty:
             faculty, _ = Faculty.objects.get_or_create(
-                username=username,
-                defaults=parts.to_dict(),
+                username=username, defaults=parts.to_dict()
             )
             faculty.staff_profile.user.set_password(
                 default_password(parts.first, parts.last)
@@ -252,7 +251,7 @@ class DonorUserWidget(widgets.ForeignKeyWidget):
             return cached
 
         parts = parse_name(raw_name, fallback_last="Donor")
-        username = Donor.mk_username(parts.to_dict(), unique=True)
+        username = Donor.mk_username(**parts.to_dict(), unique=True)
 
         user, created = User.objects.get_or_create(
             username=username, defaults=parts.to_dict()
