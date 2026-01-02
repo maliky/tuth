@@ -26,7 +26,7 @@ class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(AcademicYear, field="code")
-        self.ay_pat = re.compile(r"^(\d{2})-(\d{2})$")
+        self.ay_pat = re.compile(r"^(\d{2})(?:[-/])(?:20)?(\d{2})$")
 
     def clean(
         self,
@@ -39,9 +39,10 @@ class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
         if not value:
             return None
 
-        m = self.ay_pat.match(value)
-
-        assert m, f"Invalid academic year short name, got '{m}' for {self.ay_pat}"
+        try:
+            m = self.ay_pat.match(value)
+        except Exception as e:
+            raise (e(f"Invalid academic year short name, got '{m}' for {self.ay_pat}"))
 
         start_year = int("20" + m.group(1))
         ay, ay_created = AcademicYear.objects.get_or_create(
@@ -58,7 +59,8 @@ class SemesterWidget(widgets.ForeignKeyWidget):
     """Build a Semester from its number and academic year."""
 
     def __init__(self):
-        super().__init__(Semester)  # using pk until start_date can be proven to be uniq
+        # using pk until start_date can be proven to be uniq
+        super().__init__(Semester)
         self.ay_w = AcademicYearCodeWidget()
 
     def clean(
@@ -73,7 +75,7 @@ class SemesterWidget(widgets.ForeignKeyWidget):
             return None
 
         sem_no = value.strip()
-        ay_code_value = get_in_row("academic_year", row)
+        ay_code_value = get_in_row("academic_year", row) or get_in_row("entry_year", row)
 
         ay = self.ay_w.clean(value=ay_code_value, row=row)
 

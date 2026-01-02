@@ -51,12 +51,6 @@ class Student(AbstractPerson):
     student_id = models.CharField(max_length=20, unique=True, blank=True)
 
     # ~~~~~~~~ Optional ~~~~~~~~
-    current_enrolled_semester = models.ForeignKey(
-        Semester,
-        on_delete=models.PROTECT,
-        null=True,
-        related_name="current_students",
-    )
     entry_semester = models.ForeignKey(
         Semester,
         on_delete=models.PROTECT,

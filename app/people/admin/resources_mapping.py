@@ -11,14 +11,6 @@ FACULTY_COLUMN_MAP = {
     "username": "username",
 }
 
-STUDENT_HEADER_MAP = {
-    "Student": "student_name",
-    "Dept": "department",
-    "curriculum": "curriculum",
-    "StudentID": "student_id",
-    "DOB": "birth_date",
-    "Mobile": "phone_no",
-}
 GENDER_MAP = {
     "M": "m",  # should use lower
     "F": "f",  # should use lower
@@ -34,7 +26,9 @@ STUDENT_HEADER_MAP = {
     "AdmissionStatus": "bio_admissionstatus",
     "ConfidentialInfoFlag": "bio_confidentialinfoflag",
     "CountyOfOrigin": "origin_county",
+    "DOB": "birth_date",
     "DateOfBirth": "birth_date",
+    "Dept": "department",
     "EmergencyContact": "emergency_contact",
     "Enrolled": "bio_Enrolled",
     "EnrollmentStatusID": "bio_EnrollmentStatusID",
@@ -44,6 +38,7 @@ STUDENT_HEADER_MAP = {
     "HomeCountry": "bio_homecountry",
     "LastSchoolAttended": "last_school_attended",
     "LastSchoolType": "bio_lastschooltype",
+    "Mobile": "phone_number",
     "MotherAddress": "mother_address",
     "MotherName": "mother_name",
     "Nationality": "nationality",
@@ -52,12 +47,14 @@ STUDENT_HEADER_MAP = {
     "Scholarship": "bio_scholarship",
     "Section": "section_no",
     "Semester": "semester_no",
+    "Student": "student_name",
     "StudentID": "student_id",
-    "TermFirstEntered": "bio_termfirstentered",
+    "TermFirstEntered": "entry_semester",
     "TimeCreated": "bio_timecreated",
     "VeteranStatusID": "bio_veteranstatusid",
     "YearOfEntry": "entry_year",
     "address": "physical_address",
+    "curriculum": "curriculum_shortname",
     "enrollement_semester": "entry_semester",
     # "Amt": "Amt",
     # "ClassLevel": "ClassLevel",

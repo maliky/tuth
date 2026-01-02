@@ -15,7 +15,7 @@ from app.shared.file_utils import read_text_file
 
 
 class Command(BaseCommand):
-    """Load students using the existing import-export resource."""
+    """Load students in bulk using the existing import-export resource."""
 
     help = "Import students from CSV/TSV files (defaults: people_students.csv, StudentInfo.csv)."
 
@@ -25,7 +25,7 @@ class Command(BaseCommand):
             "--file",
             action="append",
             default=None,
-            help="Path(s) to CSV/TSV files; defaults to people_students.csv and StudentInfo.csv.",
+            help="Path(s) to CSV/TSV files; defaults to people_students.csv",
         )
         parser.add_argument(
             "--dry-run",
@@ -55,9 +55,10 @@ def _run_student_import(cmd, dataset: Dataset, *, dry_run: bool = False) -> None
     """Bulk import students with minimal logging for speed."""
     # Normalize legacy headers so import_id_fields ('student_id') is present.
     headers = dataset.headers or []
+    
     if headers:
         dataset.headers = [STUDENT_HEADER_MAP.get(h, h) for h in headers]
-
+    
     resource = StudentResource()
     # enable faster bulk operations when available
     if hasattr(resource._meta, "use_bulk"):

@@ -183,49 +183,13 @@ class StudentResource(resources.ModelResource):
     entry_semester = fields.Field(
         attribute="entry_semester",
         column_name="entry_semester",
-        widget=StudentInfoTermWidget(),
+        widget=SemesterWidget(),
     )
     curriculum = fields.Field(
         attribute="curriculum",
-        column_name="curriculum_short_name",
+        column_name="curriculum_shortname",
         widget=CurriculumWidget(),
     )
-    bio = fields.Field(attribute="bio", column_name="bio")
-    origin_county = fields.Field(attribute="origin_county", column_name="origin_county")
-    birth_place = fields.Field(attribute="birth_place", column_name="birth_place")
-    physical_address = fields.Field(attribute="physical_address", column_name="address")
-    phone_number = fields.Field(attribute="phone_number", column_name="phone_no")
-    last_school_attended = fields.Field(
-        attribute="last_school_attended", column_name="last_school_attended"
-    )
-    reason_for_leaving = fields.Field(
-        attribute="reason_for_leaving", column_name="reason_for_leaving"
-    )
-    father_name = fields.Field(attribute="father_name", column_name="father_name")
-    father_address = fields.Field(
-        attribute="father_address", column_name="father_address"
-    )
-    mother_name = fields.Field(attribute="mother_name", column_name="mother_name")
-    mother_address = fields.Field(
-        attribute="mother_address", column_name="mother_address"
-    )
-    emergency_contact = fields.Field(
-        attribute="emergency_contact", column_name="emergency_contact"
-    )
-
-    # ~~~~~~~~~~~~~~~~ demographic fields ~~~~~~~~~~~~~~~~~
-
-    birth_date = fields.Field(
-        attribute="birth_date",
-        column_name="birth_date",
-        widget=DateTimeWidget("%Y-%m-%d %H:%M:%S"),
-    )
-    marital_status = fields.Field(
-        attribute="marital_status",
-        column_name="marital_status",
-    )
-    nationality = fields.Field(attribute="nationality", column_name="nationality")
-    gender = fields.Field(attribute="gender", column_name="gender")
 
     class Meta:
         model = Student
@@ -234,7 +198,6 @@ class StudentResource(resources.ModelResource):
             "bio",
             "birth_date",
             "birth_place",
-            "current_enrolled_semester",  # ->
             "curriculum",  # ->
             "emergency_contact",
             "entry_semester",  # ->
@@ -251,7 +214,6 @@ class StudentResource(resources.ModelResource):
             "physical_address",
             "reason_for_leaving",
             "student_id",  #
-            "user",  # ->
         )
         skip_unchanged = True
         report_skipped = False
