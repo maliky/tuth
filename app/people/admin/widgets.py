@@ -251,7 +251,11 @@ class DonorUserWidget(widgets.ForeignKeyWidget):
         username = Donor.mk_username(n.first, n.last, unique=True)
 
         user, created = User.objects.get_or_create(
-            username=username, defaults=n.to_dict()
+            username=username,
+            defaults={
+                "first_name": n.first.capitalize(),
+                "last_name": n.last.capitalize(),
+            },
         )
         if created:
             user.set_password(default_password(n.first, n.last))

@@ -117,6 +117,8 @@ class FacultyResource(resources.ModelResource):
         full_name = " ".join(t for t in tokens if t).strip()
         if full_name:
             row["faculty_fullname"] = full_name
+            if "staff_profile" not in row:
+                row["staff_profile"] = full_name
         row.pop("faculty", None)
 
     def after_save_instance(self, instance, row, **kwargs):
