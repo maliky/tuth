@@ -205,16 +205,16 @@ class Faculty(models.Model):
         cls,
         first,
         last,
-        middle=None,
+        middle="",
         unique=True,
         exclude=None,
         prefix_len=None,
     ):
-        """Generate staff usernames using a 2-letter first-name prefix."""
+        """Generate staff usernames using 1-letter name prefix and no middle."""
         return mk_username(
             first,
             last,
-            middle=middle,
+            middle="",
             unique=unique,
             exclude=exclude,
             prefix_len=1 if prefix_len is None else prefix_len,

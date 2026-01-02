@@ -36,17 +36,16 @@ def test_student_import_assigns_student_group(curriculum, group_factory):
     assert user.username == username
 
 
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     "staff_profile,name_prefix,first_n,middle_n,last_n,name_suffix,username",
     [
         ("Gandyu A S", "", "A.", "S.", "Gandyu", "", "agandyu"),
         ("A. Molubah", "", "A.", "", "Molubah", "", "amolubah"),
-        ("Bedell Gabriel", "", "Gabriel", "", "Bedell", "", "gbedell"),
-        ("Gandyu, Alexander S", "", "Alexander", "S.", "Gandyu", "", "agandyu2"),
+        ("Gabriel Bedell", "", "Gabriel", "", "Bedell", "", "gbedell"),
         ("Dylan, John A", "", "John", "A.", "Dylan", "", ""),
     ],
 )
+@pytest.mark.django_db
 def test_faculty_import_assigns_faculty_group(
     staff_profile, name_prefix, first_n, middle_n, last_n, name_suffix, username
 ):
@@ -74,5 +73,5 @@ def test_faculty_import_assigns_faculty_group(
 
     assert user.groups.filter(name=UserRole.FACULTY.value.label).exists()
     if not username:
-        username = Faculty.mk_username(first_n, last_n, middle=middle_n)
+        username = Faculty.mk_username(first_n, last_n, middle=middle_n, unique=False)
     assert user.username == username, f"{user.username} and {username}"

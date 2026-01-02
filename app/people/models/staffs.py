@@ -87,19 +87,19 @@ class Staff(AbstractPerson):
         cls,
         first,
         last,
-        middle=None,
+        middle="",
         unique=True,
         exclude=None,
         prefix_len=None,
     ):
-        """Generate staff usernames using a 2-letter first-name prefix."""
+        """Generate staff usernames using a 1-letter name prefix and no middle."""
         return super().mk_username(
             first,
             last,
-            middle=middle,
+            middle="",
             unique=unique,
             exclude=exclude,
-            prefix_len=2 if prefix_len is None else prefix_len,
+            prefix_len=1 if prefix_len is None else prefix_len,
         )
 
     class Meta:

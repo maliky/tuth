@@ -42,13 +42,12 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         if not value:
             return Staff.get_unique_default()
 
-        parts = parse_name(value, fallback_last="Staff")
-        username = Staff.mk_username(**parts.to_dict(), prefix_len=2)
+        _n = parse_name(value, fallback_last="Staff")
+
+        username = Staff.mk_username(_n.first, _n.last)
 
         found_user = Staff.objects._find_by_name(
-            first_name=parts.first.capitalize(),
-            last_name=parts.last.capitalize(),
-            middle_name=parts.middle,
+            first_name=_n.first, last_name=_n.last, middle_name=_n.middle
         )
         if found_user:
             existing_staff = Staff.objects.filter(user=found_user).first()
@@ -57,9 +56,9 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
 
         def _create_staff() -> Staff:
             staff, _ = Staff.objects.get_or_create(
-                username=username, defaults=parts.to_dict()
+                username=username, defaults=_n.to_dict()
             )
-            staff.user.set_password(default_password(parts.first, parts.last))
+            staff.user.set_password(default_password(_n.first, _n.last))
             staff.user.save(update_fields=["password"])
             return cast(Staff, staff)
 
@@ -94,19 +93,17 @@ class FacultyWidget(widgets.ForeignKeyWidget):
             # return Faculty.get_unique_default()
             return Faculty.get_default()
 
-        parts = parse_name(value, fallback_last="Faculty")
+        n = parse_name(value, fallback_last="Faculty")
         username = Faculty.mk_username(
-            **parts.to_dict(), exclude=self._cache_exclude_username
+            n.first, n.last, exclude=self._cache_exclude_username
         )
         self._cache_exclude_username |= {username}
 
         def _create_faculty() -> Faculty:
             faculty, _ = Faculty.objects.get_or_create(
-                username=username, defaults=parts.to_dict()
+                username=username, defaults=n.to_dict()
             )
-            faculty.staff_profile.user.set_password(
-                default_password(parts.first, parts.last)
-            )
+            faculty.staff_profile.user.set_password(default_password(n.first, n.last))
             faculty.staff_profile.user.save(update_fields=["password"])
             return cast(Faculty, faculty)
 
@@ -250,14 +247,14 @@ class DonorUserWidget(widgets.ForeignKeyWidget):
         if cached:
             return cached
 
-        parts = parse_name(raw_name, fallback_last="Donor")
-        username = Donor.mk_username(**parts.to_dict(), unique=True)
+        n = parse_name(raw_name, fallback_last="Donor")
+        username = Donor.mk_username(n.first, n.last, unique=True)
 
         user, created = User.objects.get_or_create(
-            username=username, defaults=parts.to_dict()
+            username=username, defaults=n.to_dict()
         )
         if created:
-            user.set_password(default_password(parts.first, parts.last))
+            user.set_password(default_password(n.first, n.last))
             user.save(update_fields=["password"])
 
         self._cache_user[raw_name] = user

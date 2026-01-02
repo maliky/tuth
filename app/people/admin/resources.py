@@ -105,6 +105,7 @@ class FacultyResource(resources.ModelResource):
         for incoming, canonical in FACULTY_COLUMN_MAP.items():
             if incoming in row and canonical not in row:
                 row[canonical] = row.get(incoming, "")
+                row.pop(incoming, None)
 
         prefix = get_in_row("name_prefix", row)
         first = get_in_row("first_name", row)
@@ -116,10 +117,7 @@ class FacultyResource(resources.ModelResource):
         full_name = " ".join(t for t in tokens if t).strip()
         if full_name:
             row["faculty_fullname"] = full_name
-
-        # problem if I do updates...
-        # if not get_in_row("username", row):
-        #     row["username"] = mk_username(first, last, middle=middle, unique=True)
+        row.pop("faculty", None)
 
     def after_save_instance(self, instance, row, **kwargs):
         """Assign the faculty group to the related user."""

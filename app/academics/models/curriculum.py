@@ -37,6 +37,7 @@ class CurriculumManager(models.Manager["Curriculum"]):
     """Manager with fuzzy lookup to reduce near-duplicates."""
 
     def _token(self, short_name: str, long_name: str | None) -> str:
+        """Combine long and short name if present."""
         if long_name and long_name != short_name:
             return long_name + " " + short_name
         return short_name
@@ -48,20 +49,18 @@ class CurriculumManager(models.Manager["Curriculum"]):
         long_name: str | None,
         college: College,
         threshold: float = 0.9,
-    ) -> Curriculum | None:
+    ) -> tuple[Curriculum | None, float]:
         """Do a fuzzy curriclum search."""
         token = self._token(short_name, long_name)
-        default_code = College.get_default().code
+        college_code_dft = College.get_default().code
 
         best: tuple[Curriculum | None, float] = (None, 0.0)
         for cur in self.all():
             # college rule: if both non-default and differ, skip
             # we do not match if college differ and is set.
             if (
-                cur.college
-                and college
-                and cur.college.code != default_code
-                and college.code != default_code
+                cur.college.code != college_code_dft
+                and college.code != college_code_dft
                 and cur.college.code != college.code
             ):
                 continue
@@ -84,10 +83,12 @@ class CurriculumManager(models.Manager["Curriculum"]):
                     choose = True
                 elif has_long == best_long:
                     cur_default = (
-                        cur.college.code == default_code if cur.college else True
+                        cur.college.code == college_code_dft if cur.college else True
                     )
                     best_default = (
-                        best[0].college.code == default_code if best[0].college else True
+                        best[0].college.code == college_code_dft
+                        if best[0].college
+                        else True
                     )
                     if not cur_default and best_default:
                         choose = True
@@ -95,7 +96,7 @@ class CurriculumManager(models.Manager["Curriculum"]):
                         choose = cur.id < best[0].id
             if choose:
                 best = (cur, score)
-        return best[0]
+        return best
 
     def get_or_create(
         self,
@@ -104,7 +105,6 @@ class CurriculumManager(models.Manager["Curriculum"]):
     ) -> tuple["Curriculum", bool]:
         """Override get_or_create to optionally allow fuzzy curriculum reuse."""
 
-        # this work on default and arguments is a bit cumbersom but good practice
         fuzzy_threshold: float = kwargs.pop("fuzzy_threshold", 1.0)
         defaults = defaults.copy() if defaults else {}
         short_name: str | None = kwargs.get("short_name")
@@ -112,19 +112,21 @@ class CurriculumManager(models.Manager["Curriculum"]):
         long_name = kwargs.get("long_name") or defaults.get("long_name")
 
         if fuzzy_threshold < 1 and short_name and college:
-            _match = self.find_fuzzy_match(
+
+            _match, _score = self.find_fuzzy_match(
                 short_name=short_name,
                 college=college,
                 long_name=long_name,
                 threshold=fuzzy_threshold,
             )
+
             if _match:
                 # optionals infos to trace
                 # > There is more to save in description in case of fuzzy match all
                 # diff information from one or the other object should to be saved.
                 if hasattr(_match, "description") and _match.description is not None:
                     if "fuzzy_curriculum_match" not in _match.description:
-                        _match.description += f"\nfuzzy_curriculum_match:{_match.id}"
+                        _match.description += f"\nfuzzy_match:{_match, _score}"
                         _match.save(update_fields=["description"])
                 return _match, False
 

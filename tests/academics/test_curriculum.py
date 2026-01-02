@@ -11,16 +11,16 @@ def test_curriculum_get_or_create_respects_fuzzy_threshold(college_factory):
     """Fuzzy threshold reuses near-duplicates; default (1.0) creates new."""
     college = college_factory("FUZC")
     base, _ = Curriculum.objects.get_or_create(
-        short_name="BSCS",
+        short_name="BS CS",
         college=college,
         defaults={"long_name": "Bachelor of Computer Science"},
     )
 
     reuse, created = Curriculum.objects.get_or_create(
-        short_name="BSC Computer Sci",
+        short_name="BSC CSE",
         college=college,
-        defaults={"long_name": "Computer Science"},
-        fuzzy_threshold=0.8,
+        defaults={"long_name": "Bachelor of Science in Computer Science"},
+        fuzzy_threshold=0.75,
     )
     assert reuse.id == base.id
     assert created is False

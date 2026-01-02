@@ -245,10 +245,10 @@ class AbstractPerson(models.Model):
         cls,
         first,
         last,
-        middle=None,
+        middle="",
         unique=True,
         exclude=None,
-        prefix_len=None,
+        prefix_len=1,
     ):
         """Defaut to make a user name.  Should be overridend by subclasses."""
         return mk_username(

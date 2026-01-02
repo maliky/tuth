@@ -18,18 +18,17 @@ Functions:
         username from the provided names.
 """
 
-# regex patterns to pull suffixes, prefixes, initials, etc.
 from __future__ import annotations
 
+# regex patterns to pull suffixes, prefixes, initials, etc.
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, Hashable, Optional, Sequence, TypeVar
+from typing import Callable, Dict, Hashable, Optional, Sequence, TypeVar
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from rapidfuzz.distance import JaroWinkler
-
 
 User = get_user_model()
 
@@ -135,10 +134,9 @@ def inverse_if_comma(raw_name: str) -> str:
 def inverse_if_initial_last(raw_name: str) -> str:
     """Reverse the parts if the second is made only of initials."""
     front_part, _, back_part = raw_name.partition(" ")
-    # front_m = re.match(INITIAL_PATTERN, front_part)
 
-    REPEATING_INITIALS = r"([A-Z](\s|\b))*"
-    back_m = re.match(REPEATING_INITIALS, back_part)
+    repeating_initials = r"([A-Z](\s|\b))*"
+    back_m = re.match(repeating_initials, back_part)
     if not back_m:
         return raw_name
 
@@ -152,17 +150,7 @@ def extract_firstnlast(raw_name: str) -> tuple[str, str, str]:
     """Extracts the first and last parts of a name."""
     first_name = ""
     last_name = ""
-    # Before we simply map the first -> first and last -> last
-    # We try to enforce the following rule.
-    # if only one name is there, it is the last
-    # if two parts are there, and one is 2 or less char,
-    # we take is as initial of first name.
-    # else standard first middle last
 
-    # We remove extra spaces after dots
-    # raw_name = re.sub(r"\. *", ". ", raw_name)
-
-    # remove all dots
     raw_name = re.sub(r"\. *", " ", raw_name)
 
     # if we have a comma, inverse first and last
@@ -172,7 +160,6 @@ def extract_firstnlast(raw_name: str) -> tuple[str, str, str]:
 
     m = re.match(FIRST_PATTERN, raw_name)
     if m:
-        # ? why group(1) and not group(0). investigate and clarify even if no diff.
         first_name = m.group(1)
         raw_name = raw_name[len(first_name) :].strip()
 
@@ -181,13 +168,8 @@ def extract_firstnlast(raw_name: str) -> tuple[str, str, str]:
         last_name = m.group(1)
         raw_name = re.sub(LAST_PATTERN, "", raw_name).strip()
 
-    # removing any trailing dots
-    # raw_name = re.sub(r"^\.", "", raw_name).strip()
-
-    # Harmonizing dots to initials
     raw_name = re.sub(r"\b(\w)\b", r"\1.", raw_name).strip()
     if not last_name and not raw_name:  # so if only first_name
-        # first_name -> last name
         return last_name, first_name, raw_name
 
     return first_name, last_name, raw_name
@@ -207,39 +189,30 @@ def parse_name(
     raw: str | None, *, fallback_first: str = "Default", fallback_last: str = "User"
 ) -> NameParts:
     """Split a name and fill sensible defaults for missing parts."""
-    n = split_name(raw or "")
-    first = n.first or fallback_first
-    last = n.last or fallback_last
+    _n = split_name(raw or "")
+    first = _n.first or fallback_first
+    last = _n.last or fallback_last
     return NameParts(
-        prefix=n.prefix, first=first, middle=n.middle, last=last, suffix=n.suffix
+        prefix=_n.prefix, first=first, middle=_n.middle, last=last, suffix=_n.suffix
     )
 
 
 def split_name(name: str) -> NameParts:
-    """Splits a raw_name in prefix, first, middle, last, suffix.
-
-    Idealy the name's part are in logical order.
-    but we try to take care of last before first when separated by comma
-    or just last and initials for the first.
-    """
+    """Splits a raw_name in prefix, first, middle, last, suffix."""
     name_suffix, raw_name = extract_suffix(name)
     name_prefix, raw_name = extract_prefix(raw_name)
     first_name, last_name, middle_name = extract_firstnlast(raw_name)
 
-    # we remove all the dots from the names.
     first_name, middle_name, last_name = [
         n.replace(".", "").strip() for n in [first_name, middle_name, last_name]
     ]
 
-    # Restore dots to single letters only
     first, middle, last_name = [
         re.sub(INITIAL_PATTERN, r"\1.", n) for n in [first_name, middle_name, last_name]
     ]
 
-    # Restore dots on prefixes
     prefix = re.sub(PREFIX_PATTERN, r"\1.", name_prefix)
 
-    # special case if the suffix is a number I, II... we append it to the lastname
     last, suffix = handle_numbered_name_suffix(last_name, name_suffix)
 
     return NameParts(prefix=prefix, first=first, middle=middle, last=last, suffix=suffix)
@@ -253,19 +226,11 @@ def mk_username(
     exclude: Optional[set[str]] = None,
     prefix_len: Optional[int] = None,
 ) -> str:
-    """Generates a username.
-
-    Takes the initials from first and middle and add them to the last name
-    all lowercase.  Can set the prefix_len to reduce the part
-    of the first name been chopped.
-    When the middle name is give, take 2 char from it.
-    exclude permits to generate a username not in the list
-    """
+    """Generates a username."""
     middle_initial = re.sub(r"\.| |-", "", middle)[:1]
     first = re.sub(r"-|\.| ", "", first)
     last = re.sub(r"-|\.| ", "", last)
     baseusername = (first[:prefix_len] + middle_initial + last).lower()
-    # import pdb; pdb.set_trace()
 
     username = baseusername
     if unique:
@@ -276,10 +241,6 @@ def mk_username(
 
     if exclude:
         counter = 1
-        # {username} - exclude is empty when username in exclude
-        # and we don't want that..
-        # its not empty if username is not in exclude
-        # in that case
         while len({username} - exclude) == 0:
             counter += 1
             username = f"{baseusername}{counter}"
@@ -289,13 +250,11 @@ def mk_username(
 
 def extract_id_num(user_id: str) -> int:
     """Extract the number of an user_id what ever the prefix."""
-    # using non greedy start
     m = re.match(r".*?([0-9]+)", user_id)
 
     if m is None:
         raise ValidationError(f"A user id should have some digits in it. {user_id}")
 
-    # the group cannot be something else than digits
     return int(m.groups(0)[0])
 
 
@@ -322,9 +281,9 @@ def photo_upload_to(instance, filename: str) -> str:
 
 def mk_password(first: str, last: str) -> str:
     """Make a very simple password from the first and last name of a user."""
-    A = "A" if not first else first[0].upper()
-    B = "B" if not last else last[0].upper()
-    return f"{A}-pass-{B}!"
+    a_token = "A" if not first else first[0].upper()
+    b_token = "B" if not last else last[0].upper()
+    return f"{a_token}-pass-{b_token}!"
 
 
 def canonicalize_name(raw: str) -> str:
@@ -333,36 +292,37 @@ def canonicalize_name(raw: str) -> str:
     return " ".join([name.prefix, name.first, name.middle, name.last, name.suffix])
 
 
-def name_distance(name_a: str, name_b: str, *, prefix_weight: float = 0.1) -> float:
-    """Return a normalized distance (0=identical, 1=different) between two names."""
-    canonical_a = canonicalize_name(name_a)
-    canonical_b = canonicalize_name(name_b)
-    return float(
-        JaroWinkler.normalized_distance(
-            canonical_a, canonical_b, prefix_weight=prefix_weight
-        )
-    )
+# Not used !
+
+# def name_distance(name_a: str, name_b: str, *, prefix_weight: float = 0.1) -> float:
+#     """Return a normalized distance (0=identical, 1=different) between two names."""
+#     canonical_a = canonicalize_name(name_a)
+#     canonical_b = canonicalize_name(name_b)
+#     return float(
+#         JaroWinkler.normalized_distance(
+#             canonical_a, canonical_b, prefix_weight=prefix_weight
+#         )
+#     )
 
 
-def names_match(name_a: str, name_b: str, *, threshold: float = 0.2, **kwargs) -> bool:
-    """Return True when the distance between two names is within a given threshold."""
-    return name_distance(name_a, name_b, **kwargs) <= threshold
+# def names_match(name_a: str, name_b: str, *, threshold: float = 0.2, **kwargs) -> bool:
+#     """Return True when the distance between two names is within a given threshold."""
+#     return name_distance(name_a, name_b, **kwargs) <= threshold
 
 
-def name_similarity_matrix(
-    left_names: Sequence[str],
-    right_names: Sequence[str],
-    *,
-    max_distance: float | None = None,
-    **kwargs,
-) -> list[dict[str, object]]:
-    """Return a list of similarity rows describing pairwise name distances."""
-    # > Can we vectorize this with pandas or numpy built-in methods ?
-    matrix: list[dict[str, object]] = []
-    for left in left_names:
-        for right in right_names:
-            dist = name_distance(left, right, **kwargs)
-            if max_distance is not None and dist > max_distance:
-                continue
-            matrix.append({"left": left, "right": right, "distance": dist})
-    return matrix
+# def name_similarity_matrix(
+#     left_names: Sequence[str],
+#     right_names: Sequence[str],
+#     *,
+#     max_distance: float | None = None,
+#     **kwargs,
+# ) -> list[dict[str, object]]:
+#     """Return a list of similarity rows describing pairwise name distances."""
+#     matrix: list[dict[str, object]] = []
+#     for left in left_names:
+#         for right in right_names:
+#             dist = name_distance(left, right, **kwargs)
+#             if max_distance is not None and dist > max_distance:
+#                 continue
+#             matrix.append({"left": left, "right": right, "distance": dist})
+#     return matrix

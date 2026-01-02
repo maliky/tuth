@@ -27,7 +27,6 @@ def test_college_computed_fields(
     dept = department_factory("SCI")
     college = dept.college
     curr1 = curriculum_factory("CUR1")
-    curriculum_factory("CUR2")
     curriculum_courses = [
         curriculum_course_factory(str(n), curr1.short_name)
         for n in ["101", "102", "201", "202"]
@@ -62,6 +61,12 @@ def test_college_computed_fields(
 
     assert college.faculty_count == 1
     assert college.course_count == 4
-    assert "CUR1" in college.curricula_names
-    assert "SCI" in college.department_chairs
-    assert "sophomore: 1" in college.student_counts_by_level
+    assert "CUR1" in [
+        c.short_name for c in college.curricula.all()
+    ], f"{college.curricula.all()}"
+    assert "SCI" in [
+        c.code for c in college.departments.all()
+    ], f"{college.departments.all()}"
+    assert (
+        "sophomore: 1" in college.student_counts_by_level
+    ), f"{college.student_counts_by_level}"

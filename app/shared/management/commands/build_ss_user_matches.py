@@ -11,7 +11,7 @@ from typing import Iterable, TypedDict
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandParser
 
-from app.shared.importing.username_matching import best_matches
+from app.shared.fuzzy_matching import best_matches
 
 
 class MatchRow(TypedDict):

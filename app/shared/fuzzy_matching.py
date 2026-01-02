@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import re
 from difflib import SequenceMatcher
-from typing import Any, Callable, Iterable, Tuple, TypeVar
+from typing import Any, Callable, Iterable, List, Sequence, Tuple, TypeVar
 
+from rapidfuzz.distance import JaroWinkler
+
+Score = float
 _T = TypeVar("_T")
 
 
@@ -14,22 +17,29 @@ def identity(value: Any) -> Any:
     return value
 
 
-def similarity_ratio(a: str, b: str) -> float:
-    """Lightweight fuzzy ratio in [0,1]."""
-    if not a or not b:
+def jarowinkler_similarity(left: str | None, right: str | None) -> Score:
+    """Return similarity in [0,1] between two usernames using Jaro-Winkler."""
+    if not left or not right:
         return 0.0
-    return SequenceMatcher(None, a, b).ratio()
+    distance = JaroWinkler.normalized_distance(left, right)
+    return 1.0 - float(distance)
+
+
+def seq_similarity_score(left: str, right: str) -> float:
+    """Lightweight fuzzy ratio in [0,1]."""
+    if not left or not right:
+        return 0.0
+    return SequenceMatcher(None, left, right).ratio()
 
 
 def token_similarity(
     token_a: str, token_b: str, threshold: float = 0.9
 ) -> Tuple[float, bool]:
     """Return (score, is_match) for course/curriculum-like strings."""
-    score = similarity_ratio(token_a, token_b)
+    score = jarowinkler_similarity(token_a, token_b)
     return score, score >= threshold
 
 
-# ------- Name-specific similarity -------
 def normalize_name_tokens(name: str) -> Tuple[str, list[str]]:
     """Return (surname, given_tokens) lowercased and stripped of punctuation."""
     tokens = [re.sub(r"[^A-Za-z]", "", part).lower() for part in name.split() if part]
@@ -51,7 +61,7 @@ def sim_name_token(x: str, y: str) -> float:
         return 0.9 if x == y[0] else 0.1
     if len(y) == 1 and len(x) > 1:
         return 0.9 if y == x[0] else 0.1
-    return similarity_ratio(x, y)
+    return seq_similarity_score(x, y)
 
 
 def name_similarity(
@@ -69,7 +79,7 @@ def name_similarity(
     surn_a, givens_a = normalize_name_tokens(name_a)
     surn_b, givens_b = normalize_name_tokens(name_b)
 
-    sim_surname = similarity_ratio(surn_a, surn_b)
+    sim_surname = jarowinkler_similarity(surn_a, surn_b)
 
     # > Why do we reduce the case of low sim_threshold ?
     # > to make it more apparant that there is not similarity ?
@@ -124,3 +134,35 @@ def best_name_match(
         base, candidates, token_fn=token_fn, threshold=threshold, limit=1
     )
     return ranked[0] if ranked else (None, 0.0)
+
+
+def best_matches(
+    ss_username: str,
+    tusis_usernames: Iterable[str],
+    *,
+    top_n: int = 2,
+    max_gap: float = 0.2,
+) -> List[Tuple[str, Score]]:
+    """Return the best Tusis username candidates for a SmartSchool username.
+
+    Always returns the top candidate (if any). Includes a second when its score
+    is within *max_gap* of the first. Scores are similarity values where
+    1.0 == identical and 0 == no match.
+    """
+    scores: list[tuple[str, Score]] = []
+    for username in tusis_usernames:
+        score = jarowinkler_similarity(ss_username, username)
+        scores.append((username, score))
+    scores.sort(key=lambda item: item[1], reverse=True)
+
+    if not scores:
+        return []
+
+    best = scores[0]
+    if top_n < 2 or len(scores) < 2:
+        return [best]
+
+    second = scores[1]
+    if best[1] - second[1] <= max_gap:
+        return [best, second]
+    return [best]
