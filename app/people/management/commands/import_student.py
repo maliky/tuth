@@ -55,10 +55,10 @@ def _run_student_import(cmd, dataset: Dataset, *, dry_run: bool = False) -> None
     """Bulk import students with minimal logging for speed."""
     # Normalize legacy headers so import_id_fields ('student_id') is present.
     headers = dataset.headers or []
-    
+
     if headers:
         dataset.headers = [STUDENT_HEADER_MAP.get(h, h) for h in headers]
-    
+
     resource = StudentResource()
     # enable faster bulk operations when available
     if hasattr(resource._meta, "use_bulk"):

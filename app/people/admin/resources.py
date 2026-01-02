@@ -25,6 +25,7 @@ from app.shared.utils import get_in_row, normalize_academic_year
 from app.registry.models.registration import Registration
 from app.timetable.admin.widgets.core import (
     SemesterCodeWidget,
+    SemesterWidget,
     ensure_academic_year_code,
 )
 from app.timetable.models.semester import Semester
