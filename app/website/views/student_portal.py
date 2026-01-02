@@ -48,7 +48,7 @@ def _resolve_semester(student: Student, requested_semester_id: str | None):
     if semester is None and open_semesters:
         semester = open_semesters.first()
     if semester is None:
-        semester = student.current_enrolled_semester or get_current_semester()
+        semester = student.last_enrolled_semester or get_current_semester()
     return semester, list(open_semesters)
 
 

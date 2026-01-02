@@ -394,7 +394,7 @@ def _build_vpaa_context(_: HttpRequest) -> dict:
 def _build_enrollment_context(_: HttpRequest) -> dict:
     students_qs = Student.objects.select_related("curriculum")
     total_students = students_qs.count()
-    onboarding = students_qs.filter(current_enrolled_semester__isnull=True).count()
+    onboarding = students_qs.filter(last_enrolled_semester__isnull=True).count()
     pending_docs = DocumentStudent.objects.filter(status__code="pending").count()
     recent_students = list(students_qs.order_by("-id")[:6])
     student_items = [

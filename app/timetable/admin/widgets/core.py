@@ -38,11 +38,11 @@ class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
         """Get the academic year from the code YY-YY."""
         if not value:
             return None
-
-        try:
-            m = self.ay_pat.match(value)
-        except Exception as e:
-            raise (e(f"Invalid academic year short name, got '{m}' for {self.ay_pat}"))
+        m = self.ay_pat.match(value)
+        if not m:
+            raise ValueError(
+                f"Invalid academic year short name, got '{value!r}';" f"for {self.ay_pat}"
+            )
 
         start_year = int("20" + m.group(1))
         ay, ay_created = AcademicYear.objects.get_or_create(

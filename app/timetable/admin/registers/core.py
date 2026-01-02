@@ -74,7 +74,7 @@ class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
         if count is None:
             count = semester.current_students.count()
         url = reverse("admin:people_student_changelist") + (
-            f"?current_enrolled_semester={semester.id}"
+            f"?last_enrolled_semester={semester.id}"
         )
         return format_html('<a href="{}">{}</a>', url, count)
 

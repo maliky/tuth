@@ -27,7 +27,8 @@ class Student(AbstractPerson):
         >>> user = User.objects.create_user(username="stud")
         >>> s = Student.objects.create(
         ...     username=username,
-        ...     current_enrolled_semester=semester,
+        ...
+    last_enrolled_semester=semester,
         ... )
         >>> s.student_id  # auto-set from user id
         'TU_STD0001'
@@ -51,6 +52,13 @@ class Student(AbstractPerson):
     student_id = models.CharField(max_length=20, unique=True, blank=True)
 
     # ~~~~~~~~ Optional ~~~~~~~~
+    last_enrolled_semester = models.ForeignKey(
+        Semester,
+        on_delete=models.PROTECT,
+        null=True,
+        related_name="current_students",
+    )
+
     entry_semester = models.ForeignKey(
         Semester,
         on_delete=models.PROTECT,
@@ -150,7 +158,7 @@ class Student(AbstractPerson):
         """Make sure we have a curriculum for all students.
 
         When a student's enrollment is confirmed for the first time
-        (i.e., ``current_enrolled_semester`` is set) and the
+        (i.e., ``last_enrolled_semester`` is set) and the
         ``entry_semester`` is empty, record today's date.
         """
         if not self.curriculum_id:

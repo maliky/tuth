@@ -66,7 +66,7 @@ def student(semester, curriculum) -> Student:
         Student.objects.create(
             user=User(username="letudiant"),
             curriculum=curriculum,
-            current_enrolled_semester=semester,
+            last_enrolled_semester=semester,
         ),
     )
 

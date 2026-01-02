@@ -105,7 +105,7 @@ def portal_user_factory(semester):
                 defaults={
                     "curriculum": Curriculum.get_default(),
                     "entry_semester": semester,
-                    "current_enrolled_semester": semester,
+                    "last_enrolled_semester": semester,
                 },
                 username=user.username,
             )

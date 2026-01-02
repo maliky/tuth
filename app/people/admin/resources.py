@@ -88,15 +88,15 @@ class FacultyResource(resources.ModelResource):
     class Meta:
         model = Faculty
         import_id_fields = ("staff_profile",)
-        # fields = (
-        #     # "username",
-        #     # "first_name",
-        #     # "middle_name",
-        #     # "last_name",
-        #     # "name_prefix",
-        #     # "name_suffix",
-        #     "staff_profile",
-        # )
+        fields = (
+            #     # "username",
+            #     # "first_name",
+            #     # "middle_name",
+            #     # "last_name",
+            #     # "name_prefix",
+            #     # "name_suffix",
+            "staff_profile",
+        )
         skip_unchanged = True
         report_skipped = False
         use_bulk = False
@@ -215,6 +215,7 @@ class StudentResource(resources.ModelResource):
             "physical_address",
             "reason_for_leaving",
             "student_id",  #
+            "user",  # ->
         )
         skip_unchanged = True
         report_skipped = False
@@ -269,7 +270,7 @@ class StudentResource(resources.ModelResource):
                 sem_number = None
             if sem_number:
                 formatted = f"{entry_year}_Sem{sem_number}"
-                row["current_enrolled_semester"] = formatted
+                row["last_enrolled_semester"] = formatted
                 row.setdefault("entry_semester", formatted)
 
         bio_keys = [(k, v) for k, v in STUDENT_HEADER_MAP.items() if "bio_" in v]

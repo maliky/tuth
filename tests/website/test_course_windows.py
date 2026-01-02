@@ -73,7 +73,7 @@ def test_student_dashboard_prefers_open_semester(client):
         "people.Student",
         user=student_user,
         curriculum=curriculum,
-        current_enrolled_semester=current_sem,
+        last_enrolled_semester=current_sem,
     )
 
     next_sem.status_id = "registration"

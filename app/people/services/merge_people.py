@@ -117,7 +117,7 @@ def merge_people(target: PersonType, source: PersonType) -> PersonType:
         student_fields = [
             "curriculum",
             "entry_semester",
-            "current_enrolled_semester",
+            "last_enrolled_semester",
             "birth_place",
         ]
         _copy_if_missing(target, source, student_fields)

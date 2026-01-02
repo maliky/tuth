@@ -22,8 +22,8 @@ SEMESTER_FIELD_LOOKPS = (
     ("semester", "semester"),
     ("section", "section__semester"),
     ("curriculum_course", "curriculum_course__sections__semester"),
-    ("payment", "payment_student__current_enrolled_semester"),
-    ("student", "student__current_enrolled_semester"),
+    ("payment", "payment_student__last_enrolled_semester"),
+    ("student", "student__last_enrolled_semester"),
 )
 
 SemesterAcademicYearFilterAc = AutocompleteFilterFactory(
