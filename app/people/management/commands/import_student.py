@@ -9,6 +9,7 @@ from django.core.management.base import BaseCommand, CommandError, CommandParser
 from tablib import Dataset
 
 from app.people.admin.resources import StudentResource
+from app.people.admin.resources_mapping import STUDENT_HEADER_MAP
 from app.shared.management.commands.import_resources import _load_dataset
 from app.shared.file_utils import read_text_file
 
@@ -52,6 +53,11 @@ class Command(BaseCommand):
 
 def _run_student_import(cmd, dataset: Dataset, *, dry_run: bool = False) -> None:
     """Bulk import students with minimal logging for speed."""
+    # Normalize legacy headers so import_id_fields ('student_id') is present.
+    headers = dataset.headers or []
+    if headers:
+        dataset.headers = [STUDENT_HEADER_MAP.get(h, h) for h in headers]
+
     resource = StudentResource()
     # enable faster bulk operations when available
     if hasattr(resource._meta, "use_bulk"):
