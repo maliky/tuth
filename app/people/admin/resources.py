@@ -265,11 +265,12 @@ class StudentResource(resources.ModelResource):
             value = get_in_row(legacy_col, row)
             if value and not row.get(canonic_col):
                 row[canonic_col] = value
+            row.pop(legacy_col, None)
 
         # From them on we use canonic_col names
-        # legacy_id = get_in_row("StudentID", row)
-        # if legacy_id and not row.get("student_id"):
-        #     row["student_id"] = account_id or legacy_id
+        legacy_id = get_in_row("StudentID", row) or get_in_row("AccountID", row)
+        if legacy_id and not row.get("student_id"):
+            row["student_id"] = legacy_id
 
         # Synthesize student_name when source data provides split columns
         if not row.get("student_name"):
