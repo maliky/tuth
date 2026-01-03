@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import time
 from typing import Iterable
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
@@ -32,6 +33,12 @@ class Command(BaseCommand):
             action="store_true",
             help="Parse/import without writing to the database.",
         )
+        parser.add_argument(
+            "--batch-size",
+            type=int,
+            default=500,
+            help="Batch size for chunked student import (default: 500).",
+        )
 
     def handle(self, *args, **options) -> None:
         dry_run: bool = bool(options.get("dry_run"))
@@ -47,10 +54,13 @@ class Command(BaseCommand):
 
         text = read_text_file(paths[0])
         dataset = _load_dataset(text)
-        _run_student_import(self, dataset, dry_run=dry_run)
+        batch_size = int(options.get("batch_size") or 500)
+        _run_student_import(self, dataset, dry_run=dry_run, batch_size=batch_size)
 
 
-def _run_student_import(cmd, dataset: Dataset, *, dry_run: bool = False) -> None:
+def _run_student_import(
+    cmd, dataset: Dataset, *, dry_run: bool = False, batch_size: int = 500
+) -> None:
     """Bulk import students in chunks with minimal logging for speed."""
     headers = dataset.headers or []
     dataset.headers = [STUDENT_HEADER_MAP.get(h, h) for h in headers]
@@ -61,9 +71,9 @@ def _run_student_import(cmd, dataset: Dataset, *, dry_run: bool = False) -> None
     if hasattr(resource._meta, "use_bulk_update"):
         resource._meta.use_bulk_update = True
     if hasattr(resource._meta, "batch_size"):
-        resource._meta.batch_size = 500
+        resource._meta.batch_size = batch_size
 
-    chunk_size = 500
+    chunk_size = batch_size
     created = updated = skipped = invalid = 0
     total_rows = len(dataset)
 
@@ -74,12 +84,16 @@ def _run_student_import(cmd, dataset: Dataset, *, dry_run: bool = False) -> None
         chunk.headers = headers
         for row in dataset[start:end]:
             chunk.append(row)
+        t0 = time.perf_counter()
         result = resource.import_data(
             chunk,
             dry_run=dry_run,
             raise_errors=True,
             use_transactions=True,
         )
+        elapsed = time.perf_counter() - t0
+        rows_processed = end - start
+        sec_per_row = elapsed / rows_processed if rows_processed else 0.0
         totals = getattr(result, "totals", {}) or {}
         created += totals.get("new", 0)
         updated += totals.get("update", 0)
@@ -88,7 +102,8 @@ def _run_student_import(cmd, dataset: Dataset, *, dry_run: bool = False) -> None
         cmd.stdout.write(
             cmd.style.NOTICE(
                 f"Processed rows {start + 1}-{end} / {total_rows} "
-                f"(created {created}, updated {updated}, skipped {skipped}, invalid {invalid})"
+                f"(created {created}, updated {updated}, skipped {skipped}, invalid {invalid}) "
+                f"[{sec_per_row:.4f} sec/row]"
             )
         )
 
