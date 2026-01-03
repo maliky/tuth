@@ -49,13 +49,6 @@ class GradeResource(resources.ModelResource):
             row["semester_no"] = semester_value
         return super().before_import_row(row, **kwargs)
 
-    def handle_integrity_error(self, instance, error, row=None, import_result=None, **kwargs):
-        """Log integrity errors (duplicates) and continue batch processing."""
-        if import_result is not None and row is not None:
-            import_result.add_error(row, error)
-        return None
-
-
 class RegistrationResource(resources.ModelResource):
     """Resource for bulk importing :class:Registration rows."""
 
