@@ -140,6 +140,9 @@ def _run_import(
 ) -> None:
     """Execute the import for a dataset/resource pair with progress output."""
     resource: resources.ModelResource = ResourceClass()
+    # Allow resources to normalize headers/dataset before row iteration
+    if hasattr(resource, "before_import"):
+        resource.before_import(dataset)
     logger = get_import_logger()
     rows = list(dataset.dict)
     total_rows = len(rows)

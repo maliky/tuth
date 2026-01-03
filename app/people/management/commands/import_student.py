@@ -85,12 +85,16 @@ def _run_student_import(
         for row in dataset[start:end]:
             chunk.append(row)
         t0 = time.perf_counter()
-        result = resource.import_data(
-            chunk,
-            dry_run=dry_run,
-            raise_errors=True,
-            use_transactions=True,
-        )
+        try:
+            result = resource.import_data(
+                chunk,
+                dry_run=dry_run,
+                raise_errors=True,
+                use_transactions=True,
+            )
+        except Exception as exc:
+            _log_chunk_error(cmd, chunk, start, str(exc))
+            raise
         elapsed = time.perf_counter() - t0
         rows_processed = end - start
         sec_per_row = elapsed / rows_processed if rows_processed else 0.0
@@ -112,3 +116,30 @@ def _run_student_import(
         f"{skipped} skipped, {invalid} invalid."
     )
     cmd.stdout.write(cmd.style.SUCCESS(summary))
+
+
+def _log_chunk_error(cmd, chunk: Dataset, start_index: int, error: str, *, limit: int = 100) -> None:
+    """Log a sample of offending rows when a chunk fails."""
+    log_path = Path("import_student_errors.csv")
+    headers = list(chunk.headers or [])
+    fieldnames = ["row_number", "error", *headers]
+
+    mode = "a" if log_path.exists() else "w"
+    with log_path.open(mode, newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(fh, fieldnames=fieldnames)
+        if mode == "w":
+            writer.writeheader()
+        for idx, row in enumerate(chunk.dict, start=0):
+            if idx >= limit:
+                break
+            payload = {k: row.get(k, "") for k in headers}
+            payload["row_number"] = start_index + idx + 1
+            payload["error"] = error
+            writer.writerow(payload)
+
+    cmd.stdout.write(
+        cmd.style.ERROR(
+            f"Chunk starting at row {start_index + 1} failed: {error}; "
+            f"logged up to {limit} rows to {log_path}"
+        )
+    )
