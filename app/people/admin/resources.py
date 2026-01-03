@@ -182,7 +182,7 @@ class StudentResource(resources.ModelResource):
     birth_date = fields.Field(
         attribute="birth_date",
         column_name="birth_date",
-        widget=DateWidget("%Y-%m-%d %H:%M:%S")
+        widget=DateTimeWidget()
     )
     entry_semester = fields.Field(
         attribute="entry_semester",
