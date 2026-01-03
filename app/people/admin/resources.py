@@ -297,6 +297,12 @@ class StudentResource(resources.ModelResource):
         instance.user.groups.add(group)
         return super().after_save_instance(instance, row, **kwargs)
 
+    def handle_integrity_error(self, instance, error, row=None, import_result=None, **kwargs):
+        """Log and skip rows that hit integrity errors (e.g., duplicate keys) instead of aborting the batch."""
+        if import_result is not None and row is not None:
+            import_result.add_error(row, error)
+        return None
+
 
 class DonorResource(resources.ModelResource):
     """Import donors from a simple list of names."""
