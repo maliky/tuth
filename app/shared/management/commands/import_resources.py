@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Iterable, Sequence, Tuple
+from typing import Any, Iterable, Sequence, Tuple, Mapping
 
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError, CommandParser
@@ -148,6 +148,7 @@ def _run_import(
     updated = 0
     error_rows: list[tuple[int, list[Exception]]] = []
     invalid_rows: list[tuple[int, str]] = []
+    error_details: list[tuple[int, Mapping[str, Any], str]] = []
 
     logger.info(f"Starting import for {label}: {path}", extra={"resource": label})
     with transaction.atomic():
@@ -170,10 +171,12 @@ def _run_import(
                 handler = getattr(resource, "handle_integrity_error", None)
                 if handler and handler(exc, row, row_number, command=cmd):
                     continue
+                _log_row_detail(cmd, row_number, row, str(exc), error_details)
                 raise CommandError(
                     f"{label} import failed at row {row_number}: {exc}"
                 ) from exc
             except Exception as exc:
+                _log_row_detail(cmd, row_number, row, str(exc), error_details)
                 raise CommandError(
                     f"{label} import failed at row {row_number}: {exc}"
                 ) from exc
@@ -183,28 +186,38 @@ def _run_import(
             elif row_result.import_type == RowResult.IMPORT_TYPE_UPDATE:
                 updated += 1
             elif row_result.import_type == RowResult.IMPORT_TYPE_INVALID:
-                invalid_rows.append(
-                    (row_number, getattr(row_result, "error", "Invalid row"))
-                )
+                error_msg = getattr(row_result, "error", "Invalid row")
+                invalid_rows.append((row_number, error_msg))
+                _log_row_detail(cmd, row_number, row, str(error_msg), error_details)
 
             if row_result.errors:
                 error_rows.append((row_number, row_result.errors))
+                first = row_result.errors[0] if row_result.errors else None
+                if first is not None:
+                    _log_row_detail(
+                        cmd, row_number, row, getattr(first, "error", str(first)), error_details
+                    )
 
         if dry_run:
             transaction.set_rollback(True)
 
     if error_rows or invalid_rows:
-        for row_number, errors in error_rows[:5]:
-            # > Here there should obviously be errors, what else can we have ?
-            first = errors[0] if errors else None
-            if first is not None:
-                cmd.stdout.write(
-                    cmd.style.ERROR(
-                        f"Row {row_number} failed: {getattr(first, 'error', first)}"
+        for row_number, row_data, err in error_details[:5]:
+            sample = _summarize_row(row_data)
+            cmd.stdout.write(
+                cmd.style.ERROR(f"Row {row_number} error: {err}; data: {sample}")
+            )
+        if not error_details:
+            for row_number, errors in error_rows[:5]:
+                first = errors[0] if errors else None
+                if first is not None:
+                    cmd.stdout.write(
+                        cmd.style.ERROR(
+                            f"Row {row_number} failed: {getattr(first, 'error', first)}"
+                        )
                     )
-                )
-        for row_number, error in invalid_rows[:5]:
-            cmd.stdout.write(cmd.style.ERROR(f"Row {row_number} invalid: {error}"))
+            for row_number, error in invalid_rows[:5]:
+                cmd.stdout.write(cmd.style.ERROR(f"Row {row_number} invalid: {error}"))
         raise CommandError(
             f"{label} import failed with {len(error_rows)} errors "
             f"and {len(invalid_rows)} invalid rows."
@@ -218,6 +231,30 @@ def _run_import(
     reporter = getattr(resource, "post_import_report", None)
     if reporter:
         reporter(cmd)
+
+
+def _summarize_row(row: Mapping[str, Any], limit: int = 5) -> str:
+    """Return a compact string of the first few key/value pairs."""
+    items = list(row.items())[:limit]
+    return ", ".join(f"{k}={v}" for k, v in items)
+
+
+def _log_row_detail(
+    cmd,
+    row_number: int,
+    row: Mapping[str, Any],
+    error: str,
+    bucket: list[tuple[int, Mapping[str, Any], str]],
+    limit: int = 5,
+) -> None:
+    """Store row/error detail and print first few for visibility."""
+    if len(bucket) < limit:
+        cmd.stdout.write(
+            cmd.style.ERROR(
+                f"Row {row_number} error: {error}; data: {_summarize_row(row)}"
+            )
+        )
+    bucket.append((row_number, row, error))
 
 
 def _import_from_directory(

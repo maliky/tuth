@@ -72,3 +72,4 @@ with black, flake8 and mypy
 - Centralize username collision policy in one helper used by widgets/commands to avoid divergent suffixing.
 - Standardize import logging: consistent CSV paths/messages, counts for skipped/merged rows, and consider structured logs for commands.
 - Debugging: check function/class signatures and expected types/formats early; prefer settings-driven defaults over hardcoded formats.
+- Growing codebase habit: re-read AGENTS.md and related task files regularly to align with evolving patterns and instructions.
