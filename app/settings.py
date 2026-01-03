@@ -155,7 +155,6 @@ DATABASES = {
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = "en-gb"
-
 USE_L10N = True
 TIME_ZONE = "UTC"
 FORMAT_MODULE_PATH = "app.formats"

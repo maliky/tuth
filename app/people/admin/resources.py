@@ -6,7 +6,7 @@ import json
 import re
 
 from import_export import fields, resources
-from import_export.widgets import DateTimeWidget, DateWidget, Widget
+from import_export.widgets import DateWidget, Widget
 
 from app.academics.admin.widgets import CurriculumWidget
 from app.people.admin.resources_mapping import (
@@ -24,19 +24,16 @@ from app.people.models.faculty import Faculty
 from app.people.models.staffs import Staff
 from app.people.models.student import Student
 from app.people.utils import mk_username, parse_name, split_name
-from app.registry.models.registration import Registration
 from app.shared.auth.perms import UserRole
 from app.shared.utils import get_in_row
 from app.timetable.admin.widgets.core import (
     SemesterCodeWidget,
-    SemesterWidget,
     ensure_academic_year_code,
 )
 from app.timetable.models.semester import Semester
 from app.timetable.utils import (
     get_academic_year,
     get_semester_code,
-    normalize_academic_year,
 )
 
 
@@ -185,7 +182,7 @@ class StudentResource(resources.ModelResource):
     birth_date = fields.Field(
         attribute="birth_date",
         column_name="birth_date",
-        widget=DateWidget(["%Y-%m-%d %H:%M:%S", "%Y-%m-%d"]),
+        widget=DateWidget("%Y-%m-%d %H:%M:%S")
     )
     entry_semester = fields.Field(
         attribute="entry_semester",
