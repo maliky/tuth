@@ -24,9 +24,10 @@ class PeopleRepository:
         _n = split_name(name)
         username = mk_username(_n.first, _n.last, _n.middle, prefix_len=2)
 
+        faculty_dft: dict[str, Any] = _n.to_dict()
         faculty_dft.update({"college": college, "password": TEST_PW})
         faculty, _ = Faculty.objects.get_or_create(
-            username=username, defaults=_n.to_dict()
+            username=username, defaults=faculty_dft
         )
 
         return cast(Faculty, faculty)
