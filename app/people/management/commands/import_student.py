@@ -53,8 +53,7 @@ class Command(BaseCommand):
 def _run_student_import(cmd, dataset: Dataset, *, dry_run: bool = False) -> None:
     """Bulk import students in chunks with minimal logging for speed."""
     headers = dataset.headers or []
-    if headers:
-        dataset.headers = [STUDENT_HEADER_MAP.get(h, h) for h in headers]
+    dataset.headers = [STUDENT_HEADER_MAP.get(h, h) for h in headers]
 
     resource = StudentResource()
     if hasattr(resource._meta, "use_bulk"):
@@ -62,9 +61,9 @@ def _run_student_import(cmd, dataset: Dataset, *, dry_run: bool = False) -> None
     if hasattr(resource._meta, "use_bulk_update"):
         resource._meta.use_bulk_update = True
     if hasattr(resource._meta, "batch_size"):
-        resource._meta.batch_size = 1000
+        resource._meta.batch_size = 500
 
-    chunk_size = 1000
+    chunk_size = 500
     created = updated = skipped = invalid = 0
     total_rows = len(dataset)
 

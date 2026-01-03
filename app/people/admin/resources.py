@@ -180,9 +180,7 @@ class StudentResource(resources.ModelResource):
         widget=CurriculumWidget(),
     )
     birth_date = fields.Field(
-        attribute="birth_date",
-        column_name="birth_date",
-        widget=DateTimeWidget()
+        attribute="birth_date", column_name="birth_date", widget=DateTimeWidget()
     )
     entry_semester = fields.Field(
         attribute="entry_semester",
@@ -225,15 +223,12 @@ class StudentResource(resources.ModelResource):
         report_skipped = False
         use_bulk = False
 
+    def before_import(self, dataset):
+        headers = dataset.headers or []
+        dataset.headers = [STUDENT_HEADER_MAP.get(h, h) for h in headers]
+
     def before_import_row(self, row, **kwargs):
         """Inject derived columns to capture StudentInfo data."""
-        for legacy_col, canonic_col in STUDENT_HEADER_MAP.items():
-            value = get_in_row(legacy_col, row)
-            if value and not row.get(canonic_col):
-                row[canonic_col] = value
-            row.pop(legacy_col, None)
-        # From them on we use canonic_col names
-
         student_name = get_in_row("student_name", row)
 
         # Synthesize student_name when source data provides split columns
