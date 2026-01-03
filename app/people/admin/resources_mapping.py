@@ -12,12 +12,8 @@ FACULTY_COLUMN_MAP = {
 }
 
 GENDER_MAP = {
-    "M": "m",  # should use lower
-    "F": "f",  # should use lower
     "male": "m",
-    "m": "m",
     "female": "f",
-    "f": "f",
 }
 
 STUDENT_HEADER_MAP = {
@@ -49,8 +45,8 @@ STUDENT_HEADER_MAP = {
     "Semester": "semester_no",
     "Student": "student_name",
     "StudentID": "student_id",
-    "TermFirstEntered": "entry_sem_no",
-    "TermLastEnrolled": "last_enrolled_sem_no",
+    "TermFirstEntered": "entry_sememester_no",
+    "TermLastEnrolled": "last_enrolled_semester_no",
     "TimeCreated": "bio_timecreated",
     "VeteranStatusID": "bio_veteranstatusid",
     "YearOfEntry": "entry_year",

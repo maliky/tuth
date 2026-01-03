@@ -343,10 +343,10 @@ class Command(BaseCommand):
         if not _name:
             return None
 
-        n = parse_name(_name)
-        username = mk_username(n.first, n.last, n.middle, prefix_len=2, unique=True)
+        _n = parse_name(_name)
+        username = mk_username(_n.first, _n.last, _n.middle, prefix_len=2, unique=True)
 
-        staff_defaults: dict[str, Any] = n.to_dict()
+        staff_defaults: dict[str, Any] = _n.to_dict()
         staff_defaults["department"] = department
 
         staff, staff_created = Staff.objects.update_or_create(

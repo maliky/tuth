@@ -18,9 +18,9 @@ def test_student_import_assigns_student_group(curriculum, group_factory):
     ds.headers = ["student_id", "student_name", "curriculum"]
 
     name = "Alice Example"
-    name_part = split_name(name)
+    _n = split_name(name)
 
-    username = Student.mk_username(name_part.first, name_part.last, name_part.middle)
+    username = Student.mk_username(_n.first, _n.last, _n.middle)
 
     ds.append(["ST1", name, curriculum.pk])
 

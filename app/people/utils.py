@@ -23,7 +23,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, Hashable, Optional, Sequence, TypeVar
+from typing import Callable, Dict, Hashable, Optional, Sequence, TypeVar, Tuple
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -73,6 +73,14 @@ class NameParts:
             "middle_name": self.middle,
             "name_suffix": self.suffix,
         }
+
+    def to_string(self) -> str:
+        """Return the full name as a string."""
+        return " ".join(self.parts())
+
+    def parts(self) -> Tuple[str, str, str, str, str]:
+        """Returns the Name parts."""
+        return (self.prefix, self.first, self.middle, self.last, self.suffix)
 
 
 def default_password(first: str, last: str) -> str:
@@ -174,11 +182,13 @@ def parse_name(
     raw: str | None, *, fallback_first: str = "Default", fallback_last: str = "User"
 ) -> NameParts:
     """Split a name and fill sensible defaults for missing parts."""
-    n = split_name(raw or "")
-    first = n.first or fallback_first
-    last = n.last or fallback_last
+    _n = split_name(raw or "")
     return NameParts(
-        prefix=n.prefix, first=first, middle=n.middle, last=last, suffix=n.suffix
+        prefix=_n.prefix,
+        first=_n.first or fallback_first,
+        middle=_n.middle,
+        last=_n.last or fallback_last,
+        suffix=_n.suffix,
     )
 
 
@@ -263,8 +273,7 @@ def mk_password(first: str, last: str) -> str:
 
 def canonicalize_name(raw: str) -> str:
     """Return a canonical username-like representation of a name."""
-    name = split_name(raw)
-    return " ".join([name.prefix, name.first, name.middle, name.last, name.suffix])
+    return split_name(raw).to_string()
 
 
 def name_distance(name_a: str, name_b: str, *, prefix_weight: float = 0.1) -> float:

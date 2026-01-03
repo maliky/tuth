@@ -67,11 +67,11 @@ class DirectoryContactResource(resources.ModelResource):
     def before_import_row(self, row, **kwargs):
         """Get the faculty name and populate the username if empty."""
         raw_name = (row.get("faculty") or row.get("name") or "").strip()
-        n = split_name(raw_name)
-        row.update(n.to_dict())
+        _n = split_name(raw_name)
+        row.update(_n.to_dict())
 
         if not row.get("username"):
-            row["username"] = mk_username(n.first, n.last, n.middle, unique=True)
+            row["username"] = mk_username(_n.first, _n.last, _n.middle, unique=True)
 
 
 class FacultyResource(resources.ModelResource):
@@ -185,7 +185,7 @@ class StudentResource(resources.ModelResource):
     birth_date = fields.Field(
         attribute="birth_date",
         column_name="birth_date",
-        widget=DateTimeWidget("%Y-%m-%d %H:%M:%S"),
+        widget=DateWidget(["%Y-%m-%d %H:%M:%S", "%Y-%m-%d"]),
     )
     entry_semester = fields.Field(
         attribute="entry_semester",
@@ -237,14 +237,14 @@ class StudentResource(resources.ModelResource):
             row.pop(legacy_col, None)
         # From them on we use canonic_col names
 
+        student_name = get_in_row("student_name", row)
+
         # Synthesize student_name when source data provides split columns
-        if not row.get("student_name"):
+        if not student_name:
             first = get_in_row("first_name", row)
             middle = get_in_row("middle_name", row)
             last = get_in_row("last_name", row)
-            row["student_name"] = parse_name(
-                f"{first} {middle} {last}", fallback_last="Student"
-            )
+            row["student_name"] = parse_name(f"{first} {middle} {last}")
 
         # > I should not allow creation of new major or curriculum
         # > If a row does not fit because of the major or curriculum, I should log it
@@ -254,19 +254,33 @@ class StudentResource(resources.ModelResource):
         if len(curri_value) > 40:
             row["curriculum_short_name"] = curri_value[:40]
 
-        mapped_gender = GENDER_MAP.get(get_in_row("gender", row))
-        if mapped_gender:
-            row["gender"] = mapped_gender
+        _g = get_in_row("gender", row).lower()
+        row["gender"] = GENDER_MAP.get(_g, _g)
 
-        row["entry_semester"] = get_semester_code(
-            sem_value=get_in_row("entry_sem_no", row),
-            year_value=get_in_row("entry_year", row),
-        )
+        # entry_semester normalization
+        entry_year_val = get_in_row("entry_year", row)
+        entry_sem_val = get_in_row("entry_semester_no", row)
+        if not entry_sem_val:
+            entry_sem_val = get_semester_code(
+                sem_value=get_in_row("entry_semester_no", row),
+                year_value=entry_year_val,
+            )
+        elif "_Sem" not in entry_sem_val:
+            entry_sem_val = get_semester_code(
+                sem_value=entry_sem_val, year_value=entry_year_val
+            )
+        if entry_sem_val:
+            row["entry_semester"] = entry_sem_val
 
-        row["last_enrolled_semester"] = get_semester_code(
-            sem_value=get_in_row("last_enrolled_sem_no", row),
-            year_value=get_academic_year(),
-        )
+        # last_enrolled_semester normalization
+        last_sem_val = get_in_row("last_enrolled_semester_no", row)
+        if not last_sem_val:
+            last_sem_val = get_semester_code(
+                sem_value=get_in_row("last_enrolled_semester_no", row),
+                year_value=get_academic_year(),
+            )
+        if last_sem_val:
+            row["last_enrolled_semester"] = last_sem_val
 
         bio_keys = [(k, v) for k, v in STUDENT_HEADER_MAP.items() if "bio_" in v]
         bio_info = {v: row.get(k) for (k, v) in bio_keys if row.get(k, None) is None}

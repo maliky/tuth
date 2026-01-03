@@ -117,7 +117,7 @@ def load_directory_rows(path: Path) -> list[DirectoryRow]:
 
         # Build name from the unified full_name column (first/last already concatenated for CSV)
         full_name = get_in_row("full_name", row_dict)
-        name = parse_name(full_name)
+        _n = parse_name(full_name)  # not used?
 
         position = get_in_row("position", row_dict)
         division = get_in_row("division", row_dict)
@@ -172,8 +172,8 @@ def load_directory_rows(path: Path) -> list[DirectoryRow]:
 
         rows.append(
             DirectoryRow(
-                first_name=name.first,
-                last_name=name.last,
+                first_name=_n.first,
+                last_name=_n.last,
                 full_name=full_name,
                 email=email,
                 position=position,

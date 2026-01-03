@@ -21,13 +21,12 @@ class PeopleRepository:
     @transaction.atomic
     def get_or_create_faculty(name: str, college: College) -> Faculty:
         """Return an existing or new Faculty for the given name and college."""
-        n = split_name(name)
-        username = mk_username(n.first, n.last, n.middle, prefix_len=2)
+        _n = split_name(name)
+        username = mk_username(_n.first, _n.last, _n.middle, prefix_len=2)
 
-        faculty_dft: dict[str, Any] = n.to_dict()
         faculty_dft.update({"college": college, "password": TEST_PW})
         faculty, _ = Faculty.objects.get_or_create(
-            username=username, defaults=faculty_dft
+            username=username, defaults=_n.to_dict()
         )
 
         return cast(Faculty, faculty)
