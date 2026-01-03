@@ -75,7 +75,7 @@ class SemesterWidget(widgets.ForeignKeyWidget):
             return None
 
         sem_no = value.strip()
-        ay_code_value = get_in_row("academic_year", row) or get_in_row("entry_year", row)
+        ay_code_value = get_in_row("academic_year", row)
 
         ay = self.ay_w.clean(value=ay_code_value, row=row)
 

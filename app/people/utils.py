@@ -20,7 +20,6 @@ Functions:
 
 from __future__ import annotations
 
-# regex patterns to pull suffixes, prefixes, initials, etc.
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -45,21 +44,13 @@ SUFFIX_PATTERNS = [
     ]
 ]
 
-# prefix if followed by a dot then has a space just after
 PREFIX_PATTERN = re.compile(
     r"(\b(?:Doc|Dr|Hon|Mme|Mrs?|Ms|Prof|Rev|Sr|Fr)(?P<dot>\.)?(?(dot)\s*|\b))+",
     re.IGNORECASE,
 )
-# A single letter folowed by a dot and a space or a word separatore '\b'
 FULL_INITIAL_PATTERN = re.compile(r"\b([A-Z])(?P<dot>\.)?(?(dot)\s*|\b)")
-
-# A sequence of letters optionally separated with dots at the start of a string
 FIRST_PATTERN = re.compile(r"^([A-Za-z-]+|[A-Za-z-]\.?)")
-
-# At least one letter small or cap at the end of the string
 LAST_PATTERN = re.compile(r"([A-Za-z-]+)$")
-
-# A single letter follow by a space or the end of a string or a dot
 INITIAL_PATTERN = re.compile(r"\b([A-Z])(?=\s|$|\.)")
 
 
@@ -134,12 +125,10 @@ def inverse_if_comma(raw_name: str) -> str:
 def inverse_if_initial_last(raw_name: str) -> str:
     """Reverse the parts if the second is made only of initials."""
     front_part, _, back_part = raw_name.partition(" ")
-
     repeating_initials = r"([A-Z](\s|\b))*"
     back_m = re.match(repeating_initials, back_part)
     if not back_m:
         return raw_name
-
     back_match = back_m.group(0)
     if back_match != back_part:
         return raw_name
@@ -147,15 +136,11 @@ def inverse_if_initial_last(raw_name: str) -> str:
 
 
 def extract_firstnlast(raw_name: str) -> tuple[str, str, str]:
-    """Extracts the first and last parts of a name."""
+    """Extract the first and last parts of a name."""
     first_name = ""
     last_name = ""
-
     raw_name = re.sub(r"\. *", " ", raw_name)
-
-    # if we have a comma, inverse first and last
     raw_name = inverse_if_comma(raw_name).strip()
-    # if we have 2 parts made of initial only then must be first names
     raw_name = inverse_if_initial_last(raw_name).strip()
 
     m = re.match(FIRST_PATTERN, raw_name)
@@ -169,7 +154,7 @@ def extract_firstnlast(raw_name: str) -> tuple[str, str, str]:
         raw_name = re.sub(LAST_PATTERN, "", raw_name).strip()
 
     raw_name = re.sub(r"\b(\w)\b", r"\1.", raw_name).strip()
-    if not last_name and not raw_name:  # so if only first_name
+    if not last_name and not raw_name:
         return last_name, first_name, raw_name
 
     return first_name, last_name, raw_name
@@ -189,11 +174,11 @@ def parse_name(
     raw: str | None, *, fallback_first: str = "Default", fallback_last: str = "User"
 ) -> NameParts:
     """Split a name and fill sensible defaults for missing parts."""
-    _n = split_name(raw or "")
-    first = _n.first or fallback_first
-    last = _n.last or fallback_last
+    n = split_name(raw or "")
+    first = n.first or fallback_first
+    last = n.last or fallback_last
     return NameParts(
-        prefix=_n.prefix, first=first, middle=_n.middle, last=last, suffix=_n.suffix
+        prefix=n.prefix, first=first, middle=n.middle, last=last, suffix=n.suffix
     )
 
 
@@ -202,19 +187,14 @@ def split_name(name: str) -> NameParts:
     name_suffix, raw_name = extract_suffix(name)
     name_prefix, raw_name = extract_prefix(raw_name)
     first_name, last_name, middle_name = extract_firstnlast(raw_name)
-
     first_name, middle_name, last_name = [
         n.replace(".", "").strip() for n in [first_name, middle_name, last_name]
     ]
-
     first, middle, last_name = [
         re.sub(INITIAL_PATTERN, r"\1.", n) for n in [first_name, middle_name, last_name]
     ]
-
     prefix = re.sub(PREFIX_PATTERN, r"\1.", name_prefix)
-
     last, suffix = handle_numbered_name_suffix(last_name, name_suffix)
-
     return NameParts(prefix=prefix, first=first, middle=middle, last=last, suffix=suffix)
 
 
@@ -231,30 +211,25 @@ def mk_username(
     first = re.sub(r"-|\.| ", "", first)
     last = re.sub(r"-|\.| ", "", last)
     baseusername = (first[:prefix_len] + middle_initial + last).lower()
-
     username = baseusername
     if unique:
         counter = 1
         while User.objects.filter(username=username).exists():
             counter += 1
             username = f"{baseusername}{counter}"
-
     if exclude:
         counter = 1
         while len({username} - exclude) == 0:
             counter += 1
             username = f"{baseusername}{counter}"
-
     return username
 
 
 def extract_id_num(user_id: str) -> int:
     """Extract the number of an user_id what ever the prefix."""
     m = re.match(r".*?([0-9]+)", user_id)
-
     if m is None:
         raise ValidationError(f"A user id should have some digits in it. {user_id}")
-
     return int(m.groups(0)[0])
 
 
@@ -292,37 +267,35 @@ def canonicalize_name(raw: str) -> str:
     return " ".join([name.prefix, name.first, name.middle, name.last, name.suffix])
 
 
-# Not used !
-
-# def name_distance(name_a: str, name_b: str, *, prefix_weight: float = 0.1) -> float:
-#     """Return a normalized distance (0=identical, 1=different) between two names."""
-#     canonical_a = canonicalize_name(name_a)
-#     canonical_b = canonicalize_name(name_b)
-#     return float(
-#         JaroWinkler.normalized_distance(
-#             canonical_a, canonical_b, prefix_weight=prefix_weight
-#         )
-#     )
+def name_distance(name_a: str, name_b: str, *, prefix_weight: float = 0.1) -> float:
+    """Return a normalized distance (0=identical, 1=different) between two names."""
+    canonical_a = canonicalize_name(name_a)
+    canonical_b = canonicalize_name(name_b)
+    return float(
+        JaroWinkler.normalized_distance(
+            canonical_a, canonical_b, prefix_weight=prefix_weight
+        )
+    )
 
 
-# def names_match(name_a: str, name_b: str, *, threshold: float = 0.2, **kwargs) -> bool:
-#     """Return True when the distance between two names is within a given threshold."""
-#     return name_distance(name_a, name_b, **kwargs) <= threshold
+def names_match(name_a: str, name_b: str, *, threshold: float = 0.2, **kwargs) -> bool:
+    """Return True when the distance between two names is within a given threshold."""
+    return name_distance(name_a, name_b, **kwargs) <= threshold
 
 
-# def name_similarity_matrix(
-#     left_names: Sequence[str],
-#     right_names: Sequence[str],
-#     *,
-#     max_distance: float | None = None,
-#     **kwargs,
-# ) -> list[dict[str, object]]:
-#     """Return a list of similarity rows describing pairwise name distances."""
-#     matrix: list[dict[str, object]] = []
-#     for left in left_names:
-#         for right in right_names:
-#             dist = name_distance(left, right, **kwargs)
-#             if max_distance is not None and dist > max_distance:
-#                 continue
-#             matrix.append({"left": left, "right": right, "distance": dist})
-#     return matrix
+def name_similarity_matrix(
+    left_names: Sequence[str],
+    right_names: Sequence[str],
+    *,
+    max_distance: float | None = None,
+    **kwargs,
+) -> list[dict[str, object]]:
+    """Return a list of similarity rows describing pairwise name distances."""
+    matrix: list[dict[str, object]] = []
+    for left in left_names:
+        for right in right_names:
+            dist = name_distance(left, right, **kwargs)
+            if max_distance is not None and dist > max_distance:
+                continue
+            matrix.append({"left": left, "right": right, "distance": dist})
+    return matrix

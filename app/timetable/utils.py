@@ -61,16 +61,35 @@ def validate_subperiod(
             raise ValidationError({label: overlap_message})
 
 
-def get_current_semester(today: Optional[date] = None):
-    """Return the Semester active for *today* or ``None`` if none."""
-    from app.timetable.models.semester import Semester
+def get_academic_year(d: date | None = None) -> str:
+    """Return the academic year for the date."""
+    d = d or date.today()
+    start = d.year if d.month >= 9 else d.year - 1
+    end = start + 1
+    return f"{start % 100:02d}-{end % 100:02d}"
 
-    today = today or date.today()
-    return (
-        Semester.objects.filter(start_date__lte=today, end_date__gte=today)
-        .order_by("start_date")
-        .first()
-    )
+
+def normalize_academic_year(raw: str | None) -> str:
+    """Convert various academic year labels to the canonical YY-YY format."""
+    text = (raw or "").strip()
+    if not text:
+        return ""
+
+    token = text.replace(" ", "").replace("/", "-")
+    if len(token) == 9 and token[4] == "-":  # 2019-2020
+        return f"{token[2:4]}-{token[7:9]}"
+    if len(token) == 4 and token.isdigit():  # 2019
+        yy = token[2:4]
+        return f"{yy}-{int(yy) + 1:02d}"
+    if len(token) == 5 and token[2] == "-":  # 19-20
+        return token
+    return token
+
+
+def get_semester_code(sem_value: str, year_value: str) -> str:
+    """Format a semester code for unambigous semester parsing."""
+    _year = normalize_academic_year(year_value)
+    return f"{_year}_Sem{sem_value}"
 
 
 def mk_semester_code(year: str, sem_no: float | int) -> str:

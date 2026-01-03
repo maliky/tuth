@@ -13,10 +13,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from app.people.models.student import Student
 from app.registry.models.registration import Registration, RegistrationStatus
+from app.shared.admin.core import get_current_semester
 from app.shared.status import StatusHistory
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
-from app.timetable.utils import get_current_semester
 
 
 def landing_page(request: HttpRequest) -> HttpResponse:

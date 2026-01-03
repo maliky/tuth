@@ -12,6 +12,7 @@ from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.academics.models.course import CurriculumCourse
+from app.academics.utils import expand_course_code
 from app.registry.models import CreditHour
 from app.academics.ensures import (
     ensure_college,
@@ -20,7 +21,7 @@ from app.academics.ensures import (
     ensure_curriculum_course,
     ensure_department,
 )
-from app.shared.utils import expand_course_code, get_in_row
+from app.shared.utils import get_in_row
 
 
 class CurriculumCourseWidget(widgets.ForeignKeyWidget):

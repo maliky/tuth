@@ -27,9 +27,9 @@ from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.people.models.faculty import Faculty
 from app.people.models.staffs import Staff
-from app.people.utils import mk_username, split_name, parse_name
+from app.people.utils import mk_username, parse_name, split_name
 from app.registry.models import CreditHour
-from app.shared.utils import get_in_row, normalize_academic_year, parse_int
+from app.shared.utils import get_in_row, parse_int
 from app.spaces.models.core import Room, Space
 from app.timetable.admin.widgets.core import ensure_academic_year_code
 from app.timetable.choices import WEEKDAYS_NUMBER
@@ -37,7 +37,7 @@ from app.timetable.models.schedule import Schedule
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
 from app.timetable.models.session import SecSession
-from app.timetable.utils import mk_semester_code
+from app.timetable.utils import mk_semester_code, normalize_academic_year
 
 CID_PATTERN = re.compile(
     r"^(?P<dept>[A-Za-z]+)_(?P<num>\d+)_s(?P<section>\d+)$", re.IGNORECASE

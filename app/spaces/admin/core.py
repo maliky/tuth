@@ -5,8 +5,10 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
+from app.shared.admin.core import get_current_semester
 from app.spaces.models import Room, Space
 from app.timetable.admin.inlines import SecSessionInline
+from app.timetable.models.section import Section
 
 from .resources import RoomResource
 
@@ -23,9 +25,6 @@ class SpaceAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
 
     def current_sections(self, obj):
         """Return sections scheduled in this space for the current semester."""
-        from app.timetable.models.section import Section
-        from app.timetable.utils import get_current_semester
-
         semester = get_current_semester()
         if semester is None:
             return "--"

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from itertools import count
-from typing import Optional, Self, cast, Any
+from typing import Any, Optional, Self, cast
 
 from django.apps import apps
 from django.db import models
@@ -13,11 +13,10 @@ from simple_history.models import HistoricalRecords
 from app.academics.choices import LEVEL_NUMBER
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
+from app.academics.utils import make_course_code
 from app.registry.models import CreditHour
 from app.shared.fuzzy_matching import token_similarity
 from app.shared.types import CourseQuery
-from app.shared.utils import make_course_code
-from app.timetable.utils import get_current_semester
 
 DEFAULT_COURSE_NO = count(start=1, step=1)
 logger = logging.getLogger(__name__)
@@ -179,6 +178,8 @@ class Course(models.Model):
         # when adding the type hint  '-> FacultyQuery | None:'.
         # TODO: Try to fix this and add StudentQuery type hint to the next method.
 
+        from app.shared.admin.core import get_current_semester
+
         semester = get_current_semester()
         if semester is None:
             return Faculty.objects.none()
@@ -189,6 +190,8 @@ class Course(models.Model):
     def current_students(self):
         """Return students taking this course during the current semester."""
         Student = apps.get_model("people", "Student")
+
+        from app.shared.admin.core import get_current_semester
 
         semester = get_current_semester()
         if semester is None:
@@ -315,6 +318,8 @@ class CurriculumCourse(models.Model):
     def current_students(self):
         """Students enrolled in this curriculum course during the current semester."""
         Student = apps.get_model("people", "Student")
+        from app.shared.admin.core import get_current_semester
+
         semester = get_current_semester()
         if semester is None:
             return Student.objects.none()

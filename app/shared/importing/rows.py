@@ -5,10 +5,10 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
+from app.shared.types import Row, Transform
 from app.shared.utils import get_in_row
 
-Row = dict[str, Any]
-Transform = Callable[[Row], Row]
+# stuff here should go to academics.utils
 
 
 def pipeline(row: Row, *transforms: Transform) -> Row:
@@ -75,9 +75,29 @@ def setdefault_field(key: str, provider: Callable[[Row], str]) -> Transform:
     return _apply
 
 
+def first_value(row: Row, keys: Sequence[str]) -> str:
+    """Return the first non-empty value found in *keys*."""
+    for key in keys:
+        value = row.get(key)
+        if value is None:
+            continue
+        text = str(value).strip()
+        if text:
+            return text
+    return ""
+
+
+def set_course_codes(row: Row) -> Row:
+    """Populate college_code/course_dept when absent by inspecting course columns."""
+    college_code, dept_code = extract_course_codes(row)
+    row.setdefault("college_code", college_code)
+    row.setdefault("course_dept", dept_code)
+    return row
+
+
 def extract_course_codes(row: Row) -> tuple[str, str]:
     """Return college/department codes derived from the row content."""
-    from app.shared.utils import expand_course_code  # defer import to avoid cycles
+    from app.academics.utils import expand_course_code  # defer import to avoid cycles
 
     course_code = row.pop("course_code", "") or row.get("course_dept", "")
     course_no = get_in_row("course_no", row)
@@ -96,23 +116,3 @@ def extract_course_codes(row: Row) -> tuple[str, str]:
             get_in_row("course_dept", row) or "",
         )
     return college_code, dept_code
-
-
-def set_course_codes(row: Row) -> Row:
-    """Populate college_code/course_dept when absent by inspecting course columns."""
-    college_code, dept_code = extract_course_codes(row)
-    row.setdefault("college_code", college_code)
-    row.setdefault("course_dept", dept_code)
-    return row
-
-
-def first_value(row: Row, keys: Sequence[str]) -> str:
-    """Return the first non-empty value found in *keys*."""
-    for key in keys:
-        value = row.get(key)
-        if value is None:
-            continue
-        text = str(value).strip()
-        if text:
-            return text
-    return ""

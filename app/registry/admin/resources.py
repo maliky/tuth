@@ -6,8 +6,9 @@ from app.people.admin.widgets import GradeStudentWidget
 from app.registry.admin.widgets import GradeValueWidget
 from app.registry.models.grade import Grade, GradeValue
 from app.registry.models.registration import Registration
-from app.shared.utils import get_in_row, normalize_academic_year
+from app.shared.utils import get_in_row
 from app.timetable.admin.widgets.section import SectionWidget
+from app.timetable.utils import normalize_academic_year
 
 
 class GradeResource(resources.ModelResource):

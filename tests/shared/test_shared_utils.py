@@ -1,10 +1,12 @@
 """Test shared utils module."""
 
 from typing import Any
-from app.academics.models.college import College
+
 import pytest
+
+from app.academics.models.college import College
+from app.academics.utils import expand_course_code
 from app.shared.auth import perms
-from app.shared.utils import expand_course_code
 
 # from tests.fixtures.academics import department_factory, college
 

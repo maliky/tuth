@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence, TypeAlias, Union, Optional
+from typing import TYPE_CHECKING, Any, Callable, Sequence, TypeAlias, Union, Optional
 
 from django.db.models import QuerySet
 from import_export import resources
@@ -15,6 +15,9 @@ if TYPE_CHECKING:
     from app.people.models.student import Student
     from app.registry.models import Registration
     from app.timetable.models import Section
+
+Row = dict[str, Any]
+Transform = Callable[[Row], Row]
 
 SectionQuery: TypeAlias = QuerySet["Section"]
 CourseQuery: TypeAlias = QuerySet["Course"]

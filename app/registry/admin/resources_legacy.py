@@ -20,8 +20,9 @@ from app.shared.importing import (
     set_course_codes,
     setdefault_field,
 )
-from app.shared.utils import get_in_row, normalize_academic_year
+from app.shared.utils import get_in_row
 from app.timetable.admin.widgets.section import SectionWidget
+from app.timetable.utils import normalize_academic_year
 
 SEM_MAP = {
     "1": "1",

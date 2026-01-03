@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import csv
-from pathlib import Path
 import time
+from pathlib import Path
 from typing import Optional
 
+from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import transaction
 
@@ -18,20 +19,19 @@ from app.people.models.faculty import Faculty
 from app.people.models.student import Student
 from app.registry.models.grade import Grade, GradeValue
 from app.shared.models import CreditHour
-from app.shared.utils import normalize_academic_year
-from app.timetable.models.section import Section
-from app.timetable.models.semester import Semester
-from django.contrib.auth import get_user_model
 from app.shared.types import (
-    StrIntMapT,
-    TwoStrIntMapT,
-    TwoIntIntMapT,
-    ThreeIntOptIntMapT,
-    IntIntMapT,
     DeptCollegeMapT,
     DeptCourseMapT,
+    IntIntMapT,
     SectionKeyMapT,
+    StrIntMapT,
+    ThreeIntOptIntMapT,
+    TwoIntIntMapT,
+    TwoStrIntMapT,
 )
+from app.timetable.models.section import Section
+from app.timetable.models.semester import Semester
+from app.timetable.utils import normalize_academic_year
 
 
 def _norm_course_no(value: str) -> str:

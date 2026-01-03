@@ -6,33 +6,37 @@ import json
 import re
 
 from import_export import fields, resources
-from import_export.widgets import DateTimeWidget, Widget
+from import_export.widgets import DateTimeWidget, DateWidget, Widget
 
 from app.academics.admin.widgets import CurriculumWidget
-from app.shared.auth.perms import UserRole
-
+from app.people.admin.resources_mapping import (
+    FACULTY_COLUMN_MAP,
+    GENDER_MAP,
+    STUDENT_HEADER_MAP,
+)
 from app.people.admin.widgets import (
+    DonorUserWidget,
     StaffProfileWidget,
     UserStudentWidget,
-    DonorUserWidget,
 )
-from app.people.models.staffs import Staff
-from app.people.models.faculty import Faculty
-from app.people.models.student import Student
 from app.people.models.donor import Donor
-from app.people.utils import mk_username, split_name
-from app.shared.utils import get_in_row, normalize_academic_year
+from app.people.models.faculty import Faculty
+from app.people.models.staffs import Staff
+from app.people.models.student import Student
+from app.people.utils import mk_username, parse_name, split_name
 from app.registry.models.registration import Registration
+from app.shared.auth.perms import UserRole
+from app.shared.utils import get_in_row
 from app.timetable.admin.widgets.core import (
     SemesterCodeWidget,
     SemesterWidget,
     ensure_academic_year_code,
 )
 from app.timetable.models.semester import Semester
-from app.people.admin.resources_mapping import (
-    FACULTY_COLUMN_MAP,
-    GENDER_MAP,
-    STUDENT_HEADER_MAP,
+from app.timetable.utils import (
+    get_academic_year,
+    get_semester_code,
+    normalize_academic_year,
 )
 
 
@@ -88,15 +92,7 @@ class FacultyResource(resources.ModelResource):
     class Meta:
         model = Faculty
         import_id_fields = ("staff_profile",)
-        fields = (
-            #     # "username",
-            #     # "first_name",
-            #     # "middle_name",
-            #     # "last_name",
-            #     # "name_prefix",
-            #     # "name_suffix",
-            "staff_profile",
-        )
+        fields = "staff_profile"
         skip_unchanged = True
         report_skipped = False
         use_bulk = False
@@ -181,15 +177,25 @@ class StudentResource(resources.ModelResource):
         attribute="user", column_name="student_name", widget=UserStudentWidget()
     )
     # to be taken from gp table StudentInfo
+    curriculum = fields.Field(
+        attribute="curriculum",
+        column_name="curriculum_short_name",
+        widget=CurriculumWidget(),
+    )
+    birth_date = fields.Field(
+        attribute="birth_date",
+        column_name="birth_date",
+        widget=DateTimeWidget("%Y-%m-%d %H:%M:%S"),
+    )
     entry_semester = fields.Field(
         attribute="entry_semester",
         column_name="entry_semester",
-        widget=SemesterWidget(),
+        widget=SemesterCodeWidget(),
     )
-    curriculum = fields.Field(
-        attribute="curriculum",
-        column_name="curriculum_shortname",
-        widget=CurriculumWidget(),
+    last_enrolled_semester = fields.Field(
+        attribute="last_enrolled_semester",
+        column_name="last_enrolled_semester",
+        widget=SemesterCodeWidget(),
     )
 
     class Meta:
@@ -205,6 +211,7 @@ class StudentResource(resources.ModelResource):
             "father_address",
             "father_name",
             "gender",
+            "last_enrolled_semester",
             "last_school_attended",
             "marital_status",
             "mother_address",
@@ -219,9 +226,7 @@ class StudentResource(resources.ModelResource):
         )
         skip_unchanged = True
         report_skipped = False
-        use_bulk = False  # do not use because ressources is down row by row
-
-    # from studentInfo
+        use_bulk = False
 
     def before_import_row(self, row, **kwargs):
         """Inject derived columns to capture StudentInfo data."""
@@ -230,24 +235,16 @@ class StudentResource(resources.ModelResource):
             if value and not row.get(canonic_col):
                 row[canonic_col] = value
             row.pop(legacy_col, None)
-
         # From them on we use canonic_col names
-        legacy_id = get_in_row("StudentID", row) or get_in_row("AccountID", row)
-        if legacy_id and not row.get("student_id"):
-            row["student_id"] = legacy_id
 
         # Synthesize student_name when source data provides split columns
         if not row.get("student_name"):
             first = get_in_row("first_name", row)
             middle = get_in_row("middle_name", row)
             last = get_in_row("last_name", row)
-            if not first and not last:
-                first = "Humpty"
-                last = "Dumpty"
-                row["first_name"] = first
-                row["last_name"] = last
-
-            row["student_name"] = " ".join([first, middle, last])
+            row["student_name"] = parse_name(
+                f"{first} {middle} {last}", fallback_last="Student"
+            )
 
         # > I should not allow creation of new major or curriculum
         # > If a row does not fit because of the major or curriculum, I should log it
@@ -257,25 +254,22 @@ class StudentResource(resources.ModelResource):
         if len(curri_value) > 40:
             row["curriculum_short_name"] = curri_value[:40]
 
-        mapped_gender = GENDER_MAP.get(get_in_row("gender", row).lower())
+        mapped_gender = GENDER_MAP.get(get_in_row("gender", row))
         if mapped_gender:
             row["gender"] = mapped_gender
 
-        entry_semester = get_in_row("entry_semester", row)
-        entry_year = normalize_academic_year(get_in_row("entry_year", row))
-        if entry_semester and entry_year:
-            try:
-                sem_number = int(float(entry_semester))
-            except ValueError:
-                sem_number = None
-            if sem_number:
-                formatted = f"{entry_year}_Sem{sem_number}"
-                row["last_enrolled_semester"] = formatted
-                row.setdefault("entry_semester", formatted)
+        row["entry_semester"] = get_semester_code(
+            sem_value=get_in_row("entry_sem_no", row),
+            year_value=get_in_row("entry_year", row),
+        )
+
+        row["last_enrolled_semester"] = get_semester_code(
+            sem_value=get_in_row("last_enrolled_sem_no", row),
+            year_value=get_academic_year(),
+        )
 
         bio_keys = [(k, v) for k, v in STUDENT_HEADER_MAP.items() if "bio_" in v]
         bio_info = {v: row.get(k) for (k, v) in bio_keys if row.get(k, None) is None}
-
         row["bio"] = json.dumps(bio_info)
 
         return super().before_import_row(row, **kwargs)
