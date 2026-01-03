@@ -244,7 +244,7 @@ class StudentResource(resources.ModelResource):
             first = get_in_row("first_name", row)
             middle = get_in_row("middle_name", row)
             last = get_in_row("last_name", row)
-            row["student_name"] = parse_name(f"{first} {middle} {last}")
+            row["student_name"] = parse_name(f"{first} {middle} {last}").to_string()
 
         # > I should not allow creation of new major or curriculum
         # > If a row does not fit because of the major or curriculum, I should log it
