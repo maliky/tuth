@@ -6,7 +6,7 @@ import json
 import re
 
 from import_export import fields, resources
-from import_export.widgets import DateWidget, Widget
+from import_export.widgets import DateTimeWidget, Widget
 
 from app.academics.admin.widgets import CurriculumWidget
 from app.people.admin.resources_mapping import (

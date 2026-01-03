@@ -71,3 +71,4 @@ with black, flake8 and mypy
 - Tighten typing (TypeAlias for user model, prefer `Mapping`/`TypedDict`/`dataclass` for row structures) to keep mypy strict without casts.
 - Centralize username collision policy in one helper used by widgets/commands to avoid divergent suffixing.
 - Standardize import logging: consistent CSV paths/messages, counts for skipped/merged rows, and consider structured logs for commands.
+- Debugging: check function/class signatures and expected types/formats early; prefer settings-driven defaults over hardcoded formats.

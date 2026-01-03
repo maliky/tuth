@@ -47,20 +47,16 @@ class Command(BaseCommand):
 
         text = read_text_file(paths[0])
         dataset = _load_dataset(text)
-        # dataset = _combine_datasets(paths)
         _run_student_import(self, dataset, dry_run=dry_run)
 
 
 def _run_student_import(cmd, dataset: Dataset, *, dry_run: bool = False) -> None:
-    """Bulk import students with minimal logging for speed."""
-    # Normalize legacy headers so import_id_fields ('student_id') is present.
+    """Bulk import students in chunks with minimal logging for speed."""
     headers = dataset.headers or []
-
     if headers:
         dataset.headers = [STUDENT_HEADER_MAP.get(h, h) for h in headers]
 
     resource = StudentResource()
-    # enable faster bulk operations when available
     if hasattr(resource._meta, "use_bulk"):
         resource._meta.use_bulk = True
     if hasattr(resource._meta, "use_bulk_update"):
@@ -68,18 +64,34 @@ def _run_student_import(cmd, dataset: Dataset, *, dry_run: bool = False) -> None
     if hasattr(resource._meta, "batch_size"):
         resource._meta.batch_size = 1000
 
-    result = resource.import_data(
-        dataset,
-        dry_run=dry_run,
-        raise_errors=True,
-        use_transactions=True,
-    )
+    chunk_size = 1000
+    created = updated = skipped = invalid = 0
+    total_rows = len(dataset)
 
-    totals = getattr(result, "totals", {}) or {}
-    created = totals.get("new", 0)
-    updated = totals.get("update", 0)
-    skipped = totals.get("skip", 0)
-    invalid = totals.get("invalid", 0)
+    for start in range(0, total_rows, chunk_size):
+        end = min(start + chunk_size, total_rows)
+        chunk = Dataset()
+
+        chunk.headers = headers
+        for row in dataset[start:end]:
+            chunk.append(row)
+        result = resource.import_data(
+            chunk,
+            dry_run=dry_run,
+            raise_errors=True,
+            use_transactions=True,
+        )
+        totals = getattr(result, "totals", {}) or {}
+        created += totals.get("new", 0)
+        updated += totals.get("update", 0)
+        skipped += totals.get("skip", 0)
+        invalid += totals.get("invalid", 0)
+        cmd.stdout.write(
+            cmd.style.NOTICE(
+                f"Processed rows {start + 1}-{end} / {total_rows} "
+                f"(created {created}, updated {updated}, skipped {skipped}, invalid {invalid})"
+            )
+        )
 
     summary = (
         f"Student import complete: {created} created, {updated} updated, "
