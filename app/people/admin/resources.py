@@ -10,7 +10,7 @@ from import_export.widgets import DateTimeWidget, Widget
 
 from app.academics.admin.widgets import CurriculumWidget
 from app.people.admin.resources_mapping import (
-    FACULTY_COLUMN_MAP,
+    FACULTY_HEADER_MAP,
     GENDER_MAP,
     STUDENT_HEADER_MAP,
 )
@@ -37,38 +37,37 @@ from app.timetable.utils import (
 )
 
 
-class DirectoryContactResource(resources.ModelResource):
+class StaffResource(resources.ModelResource):
     """Import staff directory rows and create/update Staff profiles."""
 
-    username = fields.Field(column_name="username", attribute="user__username")
-    first_name = fields.Field(column_name="first_name", attribute="user__first_name")
-    last_name = fields.Field(column_name="last_name", attribute="user__last_name")
-    middle_name = fields.Field(column_name="middle_name", attribute="middle_name")
-    name_prefix = fields.Field(column_name="name_prefix", attribute="name_prefix")
-    name_suffix = fields.Field(column_name="name_suffix", attribute="name_suffix")
+    user = fields.Field(column_name="username", attribute="user")
+    # first_name = fields.Field(column_name="first_name", attribute="user__first_name")
+    # last_name = fields.Field(column_name="last_name", attribute="user__last_name")
+    # middle_name = fields.Field(column_name="middle_name", attribute="middle_name")
+    # name_prefix = fields.Field(column_name="name_prefix", attribute="name_prefix")
+    # name_suffix = fields.Field(column_name="name_suffix", attribute="name_suffix")
 
     class Meta:
         model = Staff
-        import_id_fields = ("user__username",)
-        fields = (
-            "username",
-            "first_name",
-            "last_name",
-            "middle_name",
-            "name_prefix",
-            "name_suffix",
-        )
+        import_id_fields = ("user",)
+        fields = ("user",)
         skip_unchanged = True
         report_skipped = True
 
-    def before_import_row(self, row, **kwargs):
-        """Get the faculty name and populate the username if empty."""
-        raw_name = (row.get("faculty") or row.get("name") or "").strip()
-        _n = split_name(raw_name)
-        row.update(_n.to_dict())
+    def before_import(self, dataset):
+        headers = dataset.headers or []
+        dataset.headers = [FACULTY_HEADER_MAP.get(h, h) for h in headers]
 
-        if not row.get("username"):
-            row["username"] = mk_username(_n.first, _n.last, _n.middle, unique=True)
+    def after_save_instance(self, instance, row, **kwargs):
+        """Assign the Staff group to the related user."""
+        if kwargs.get("dry_run"):
+            return None
+
+        user = instance.user
+        group = UserRole.STAFF.value.group
+        user.groups.add(group)
+
+        return super().after_save_instance(instance, row, **kwargs)
 
 
 class FacultyResource(resources.ModelResource):
@@ -80,40 +79,22 @@ class FacultyResource(resources.ModelResource):
     """
 
     staff_profile = fields.Field(
+        column_name="fullname",
         attribute="staff_profile",
-        column_name="staff_profile",
         widget=StaffProfileWidget(),
     )
 
-    # Instructor, name_prefix,first_n, middle_n, last_n, name_suffix, username
     class Meta:
         model = Faculty
         import_id_fields = ("staff_profile",)
-        fields = "staff_profile"
+        fields = ("staff_profile",)
         skip_unchanged = True
-        report_skipped = False
+        report_skipped = True
         use_bulk = False
 
-    def before_import_row(self, row, **kwargs):
-        """Normalize incoming faculty columns and build a full name."""
-        for incoming, canonical in FACULTY_COLUMN_MAP.items():
-            if incoming in row and canonical not in row:
-                row[canonical] = row.get(incoming, "")
-                row.pop(incoming, None)
-
-        prefix = get_in_row("name_prefix", row)
-        first = get_in_row("first_name", row)
-        middle = get_in_row("middle_name", row)
-        last = get_in_row("last_name", row)
-        suffix = get_in_row("name_suffix", row)
-
-        tokens = [prefix, first, middle, last, suffix]
-        full_name = " ".join(t for t in tokens if t).strip()
-        if full_name:
-            row["faculty_fullname"] = full_name
-            if "staff_profile" not in row:
-                row["staff_profile"] = full_name
-        row.pop("faculty", None)
+    def before_import(self, dataset):
+        headers = dataset.headers or []
+        dataset.headers = [FACULTY_HEADER_MAP.get(h, h) for h in headers]
 
     def after_save_instance(self, instance, row, **kwargs):
         """Assign the faculty group to the related user."""
@@ -197,6 +178,7 @@ class StudentResource(resources.ModelResource):
         model = Student
         import_id_fields = ("student_id",)
         fields = (
+            "fullname",
             "bio",
             "birth_date",
             "birth_place",

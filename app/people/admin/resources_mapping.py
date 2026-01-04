@@ -1,7 +1,7 @@
 """Column name mappings for import resources."""
 
 # Incoming headers -> canonical column names used by FacultyResource
-FACULTY_COLUMN_MAP = {
+FACULTY_HEADER_MAP = {
     "Instructor": "faculty_fullname",
     "first_n": "first_name",
     "middle_n": "middle_name",
