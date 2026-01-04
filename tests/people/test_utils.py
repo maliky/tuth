@@ -16,9 +16,9 @@ from app.people.utils import (
 @pytest.mark.parametrize(
     "first,last,username",
     [
-        ("Esop", "Thot", "esthot"),
-        ("esop", "Thot", "esthot"),
-        ("a", "Thot", "athot"),
+        ("Esop", "Thot", "esop.thot"),
+        ("esop", "Thot", "esop.thot"),
+        ("a", "Thot", "a.thot"),
         ("", "Thot", "thot"),
     ],
 )
@@ -31,19 +31,17 @@ def test_mk_username_default(first, last, username):
 @pytest.mark.django_db(transaction=True)
 def test_mk_username_uniqness(user_factory):
     """Check if the username stay uniq with an increased by number."""
-    username1 = mk_username("Esop", "Thot", prefix_len=2)  # esthot
+    username1 = mk_username("Esop", "Thot")  # esthot
     user1 = user_factory(username=username1)
 
     # create another user but with that username
-    un2 = mk_username("Esai", "Thot", prefix_len=2)  # esthot
+    un2 = mk_username("Esai", "Thot")  # esthot
     with pytest.raises(IntegrityError):
         with transaction.atomic():
             _ = user_factory(username=un2)
             # should through UNIQUE constraint failed: auth_user.username
 
-    username3 = mk_username(
-        "Esai", "Thot", unique=True, prefix_len=2
-    )  # esthot2, not esthot1
+    username3 = mk_username("Esai", "Thot", unique=True)  # esthot2, not esthot1
     user3 = user_factory(username=username3)
 
     assert username1 == "esthot", f"un1={username1}"

@@ -162,7 +162,7 @@ def _limit(text: str, max_len: int | None) -> str:
 
 def _upsert_staff(entry: DirectoryRow) -> bool:
     """Create or update a Staff profile."""
-    username = mk_username(entry.first_name, entry.last_name, prefix_len=2, unique=True)
+    username = mk_username(entry.first_name, entry.last_name, unique=True)
     username = _limit(username, User._meta.get_field("username").max_length)
     defaults = {
         "first_name": entry.first_name.capitalize(),
@@ -188,7 +188,7 @@ def _upsert_faculty(entry: DirectoryRow) -> bool:
     """Create or update a Faculty (wraps Staff)."""
     # Ensure staff profile first
     staff_username = mk_username(
-        entry.first_name, entry.last_name, prefix_len=2, unique=True
+        entry.first_name, entry.last_name, unique=True
     )
     staff_username = _limit(staff_username, User._meta.get_field("username").max_length)
     staff, created_staff = Staff.objects.update_or_create(

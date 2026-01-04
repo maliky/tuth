@@ -49,6 +49,7 @@ class GradeResource(resources.ModelResource):
             row["semester_no"] = semester_value
         return super().before_import_row(row, **kwargs)
 
+
 class RegistrationResource(resources.ModelResource):
     """Resource for bulk importing :class:Registration rows."""
 

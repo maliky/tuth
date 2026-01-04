@@ -145,6 +145,7 @@ class Student(AbstractPerson):
         unique=None,
         exclude=None,
         prefix_len=None,
+        sep=None,
     ):
         """Define the standard way to create student username.
 
@@ -152,7 +153,9 @@ class Student(AbstractPerson):
         the middle name inital and use the first 3 letters of the first name.
         As usual should be unique
         """
-        return super().mk_username(first, last, middle, exclude=exclude, prefix_len=3)
+        return super().mk_username(
+            first, last, middle=middle, exclude=exclude, prefix_len=prefix_len, sep=sep
+        )
 
     def save(self, *args, **kwargs):
         """Make sure we have a curriculum for all students.

@@ -53,6 +53,8 @@ FIRST_PATTERN = re.compile(r"^([A-Za-z-]+|[A-Za-z-]\.?)")
 LAST_PATTERN = re.compile(r"([A-Za-z-]+)$")
 INITIAL_PATTERN = re.compile(r"\b([A-Z])(?=\s|$|\.)")
 
+USERNAME_PREFIX_LEN_DFT = 20
+USERNAME_SEP_DFT = "."
 
 @dataclass
 class NameParts:
@@ -215,12 +217,21 @@ def mk_username(
     unique: Optional[bool] = False,
     exclude: Optional[set[str]] = None,
     prefix_len: Optional[int] = None,
+    sep: Optional[str] = None,
 ) -> str:
-    """Generates a username."""
+    """
+    Generates a username after cleaning the names.
+
+    first prefix len + middle initial . last.
+    """
     middle_initial = re.sub(r"\.| |-", "", middle)[:1]
     first = re.sub(r"-|\.| ", "", first)
     last = re.sub(r"-|\.| ", "", last)
-    baseusername = (first[:prefix_len] + middle_initial + last).lower()
+    prefix_len = USERNAME_PREFIX_LEN_DFT if prefix_len is None else prefix_len
+    sep = USERNAME_SEP_DFT if sep is None else sep
+    exclude = set() if exclude is None else exclude
+
+    baseusername = (first[:prefix_len] + middle_initial + sep + last).lower()
     username = baseusername
     if unique:
         counter = 1

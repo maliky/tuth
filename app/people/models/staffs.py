@@ -91,6 +91,7 @@ class Staff(AbstractPerson):
         unique=True,
         exclude=None,
         prefix_len=None,
+        sep=None,        
     ):
         """Generate staff usernames using a 1-letter name prefix and no middle."""
         return super().mk_username(
@@ -99,7 +100,8 @@ class Staff(AbstractPerson):
             middle="",
             unique=unique,
             exclude=exclude,
-            prefix_len=1 if prefix_len is None else prefix_len,
+            prefix_len=prefix_len,
+            sep=sep,                    
         )
 
     class Meta:

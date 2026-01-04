@@ -195,7 +195,11 @@ def _run_import(
                 first = row_result.errors[0] if row_result.errors else None
                 if first is not None:
                     _log_row_detail(
-                        cmd, row_number, row, getattr(first, "error", str(first)), error_details
+                        cmd,
+                        row_number,
+                        row,
+                        getattr(first, "error", str(first)),
+                        error_details,
                     )
 
         if dry_run:
