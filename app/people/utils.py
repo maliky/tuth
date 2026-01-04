@@ -56,6 +56,7 @@ INITIAL_PATTERN = re.compile(r"\b([A-Z])(?=\s|$|\.)")
 USERNAME_PREFIX_LEN_DFT = 20
 USERNAME_SEP_DFT = "."
 
+
 @dataclass
 class NameParts:
     """Parsed representation of a raw name suitable for user defaults."""
@@ -66,11 +67,19 @@ class NameParts:
     last: str
     suffix: str
 
+    def _ensure_capitalize(self) -> None:
+        """Return the Name parts capitalized."""
+        for _elt in ["prefix", "first", "middle", "last", "suffix"]:
+            elt = getattr(self, _elt, None)
+            if elt:
+                setattr(self, _elt, elt.capitalize())
+
     def to_dict(self) -> dict[str, str]:
         """Return admin-friendly defaults derived from the parsed name."""
+        self._ensure_capitalize()
         return {
-            "first_name": self.first.capitalize(),
-            "last_name": self.last.capitalize(),
+            "first_name": self.first,
+            "last_name": self.last,
             "name_prefix": self.prefix,
             "middle_name": self.middle,
             "name_suffix": self.suffix,
@@ -78,10 +87,17 @@ class NameParts:
 
     def to_string(self) -> str:
         """Return the full name as a string."""
-        return " ".join(self.parts())
+        self._ensure_capitalize()
+        return " ".join([p for p in self.fullparts() if p])
 
-    def parts(self) -> Tuple[str, str, str, str, str]:
-        """Returns the Name parts."""
+    def parts(self) -> Tuple[str, str, str]:
+        """Returns first, last and middle Name parts only."""
+        self._ensure_capitalize()
+        return (self.first, self.last, self.middle)
+
+    def fullparts(self) -> Tuple[str, str, str, str, str]:
+        """Returns All Name parts in order."""
+        self._ensure_capitalize()
         return (self.prefix, self.first, self.middle, self.last, self.suffix)
 
 
@@ -210,6 +226,26 @@ def split_name(name: str) -> NameParts:
     return NameParts(prefix=prefix, first=first, middle=middle, last=last, suffix=suffix)
 
 
+def mk_fullusername(
+    fullname: str,
+    unique: Optional[bool] = False,
+    exclude: Optional[set[str]] = None,
+    prefix_len: Optional[int] = None,
+    sep: Optional[str] = None,
+) -> str:
+    """Generate a username from the fullname."""
+    _n = split_name(fullname)
+    return mk_username(
+        _n.first,
+        _n.last,
+        _n.middle,
+        unique=unique,
+        exclude=exclude,
+        prefix_len=prefix_len,
+        sep=".",
+    )
+
+
 def mk_username(
     first: str,
     last: str,
@@ -219,10 +255,9 @@ def mk_username(
     prefix_len: Optional[int] = None,
     sep: Optional[str] = None,
 ) -> str:
-    """
-    Generates a username after cleaning the names.
+    """Generates a username after cleaning the names.
 
-    first prefix len + middle initial . last.
+    <first [prefix_len]> + <middle initial> '.' <last>.
     """
     middle_initial = re.sub(r"\.| |-", "", middle)[:1]
     first = re.sub(r"-|\.| ", "", first)
@@ -231,7 +266,9 @@ def mk_username(
     sep = USERNAME_SEP_DFT if sep is None else sep
     exclude = set() if exclude is None else exclude
 
-    baseusername = (first[:prefix_len] + middle_initial + sep + last).lower()
+    baseusername = (
+        first[:prefix_len] + middle_initial + (sep if first else "") + last
+    ).lower()
     username = baseusername
     if unique:
         counter = 1

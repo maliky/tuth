@@ -75,7 +75,7 @@ def test_mk_username_uniqness(user_factory):
     ],
 )
 def test_split_name_initial_patterns(raw, prefix, first, middle, last, suffix):
-    parts = split_name(raw).parts()
+    parts = split_name(raw).fullparts()
     ref = (prefix, first, middle, last, suffix)
     assert parts == ref, f"{parts} != {ref} !"
 

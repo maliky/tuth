@@ -11,10 +11,10 @@ FACULTY_COLUMN_MAP = {
     # "username": "username",
 }
 USER_COLUMN_MAP = {
-    "UserName" : "username",
-    "FirstName" : "first_name",
-    "MiddleName" : "middle_name",
-    "LastName" : "last_name",
+    "UserName": "username",
+    "FirstName": "first_name",
+    "MiddleName": "middle_name",
+    "LastName": "last_name",
     # "UserGroup" : "bio_usergroup",  # empty
 }
 
@@ -50,7 +50,7 @@ STUDENT_HEADER_MAP = {
     "Scholarship": "bio_scholarship",
     "Section": "section_no",
     "Semester": "semester_no",
-    "Student": "student_name",
+    "Student": "fullname",
     "StudentID": "student_id",
     "TermFirstEntered": "entry_sememester_no",
     "TermLastEnrolled": "last_enrolled_semester_no",

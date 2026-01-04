@@ -242,14 +242,7 @@ class AbstractPerson(models.Model):
 
     @classmethod
     def mk_username(
-        cls,
-        first,
-        last,
-        middle="",
-        unique=True,
-        exclude=None,
-        prefix_len=None,
-        sep=None
+        cls, first, last, middle="", unique=True, exclude=None, prefix_len=None, sep=None
     ):
         """Defaut to make a user name.  Should be overridend by subclasses."""
         return mk_username(
@@ -259,7 +252,7 @@ class AbstractPerson(models.Model):
             exclude=exclude,
             unique=unique,
             prefix_len=prefix_len,
-            sep=sep
+            sep=sep,
         )
 
     @classmethod

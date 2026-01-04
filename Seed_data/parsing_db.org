@@ -56,6 +56,8 @@
   import app.spaces as sp
   import app.timetable as tt
   
+  import parse_utils as pu
+  
   os.sys.executable, os.getcwd()
 #+END_SRC
 
@@ -2631,8 +2633,8 @@ Ignore UM_Curriculums for now.
 #+end_src
 
 #+begin_src python :results silent
-  _std = clean_df_str_cols(csvs["UM_students"])
-  ods = clean_df_str_cols(csvs["oldgrades"])
+  _std = pu.clean_df_str_cols(csvs["UM_students"])
+  ods = pu.clean_df_str_cols(csvs["oldgrades"])
   ods.loc[:,'StudentID'] = ods.StudentID.str.upper()
   gds = clean_df_str_cols(csvs["gradesheets"].drop(columns=["Code","Uploaded"]))
   gds.loc[:,'StudentID'] = gds.StudentID.str.upper()
