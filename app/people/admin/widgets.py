@@ -44,7 +44,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
             return Staff.get_unique_default()
 
         _n = parse_name(value, fallback_last="Staff")
-        username = get_in_row('username', row)
+        username = get_in_row("username", row)
         if not username:
             username = Staff.mk_username(_n.first, _n.last)
 
@@ -278,12 +278,10 @@ class UserStudentWidget(widgets.ForeignKeyWidget):
             return None
 
         fullname = (value or "").strip()
-        _n = parse_name(
-            fullname, fallback_first="Student", fallback_last=fullname
-        )
+        _n = parse_name(fullname, fallback_first="Student", fallback_last=fullname)
 
         if stdid not in self._cache_user:
-            username = get_in_row('username', row)
+            username = get_in_row("username", row)
             if not username:
                 username = Student.mk_username(
                     _n.first, _n.last, _n.middle, exclude=self._exclude_username

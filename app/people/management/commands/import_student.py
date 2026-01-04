@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+import csv
 import time
+from pathlib import Path
 from typing import Iterable
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
@@ -11,8 +12,8 @@ from tablib import Dataset
 
 from app.people.admin.resources import StudentResource
 from app.people.admin.resources_mapping import STUDENT_HEADER_MAP
-from app.shared.management.commands.import_resources import _load_dataset
 from app.shared.file_utils import read_text_file
+from app.shared.management.commands.import_resources import _load_dataset
 
 
 class Command(BaseCommand):
@@ -111,7 +112,9 @@ def _run_student_import(
     cmd.stdout.write(cmd.style.SUCCESS(summary))
 
 
-def _log_chunk_error(cmd, chunk: Dataset, start_index: int, error: str, *, limit: int = 100) -> None:
+def _log_chunk_error(
+    cmd, chunk: Dataset, start_index: int, error: str, *, limit: int = 100
+) -> None:
     """Log a sample of offending rows when a chunk fails."""
     log_path = Path("import_student_errors.csv")
     headers = list(chunk.headers or [])
