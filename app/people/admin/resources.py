@@ -16,6 +16,7 @@ from app.people.admin.resources_mapping import (
 )
 from app.people.admin.widgets import (
     DonorUserWidget,
+    UserWidget,    
     StaffProfileWidget,
     UserStudentWidget,
 )
