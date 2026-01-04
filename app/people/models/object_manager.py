@@ -173,7 +173,7 @@ class PersonManager(Manager):
             first = kwargs.get("first_name", "")
             last = kwargs.get("last_name", "")
             middle = kwargs.get("middle_name", "")
-            username = mk_username(first, last, middle, prefix_len=2, unique=True)
+            username = mk_username(first, last, middle, unique=True)
         return str(username)
 
     # public API ----------------------------------------------------

@@ -56,6 +56,8 @@
   import app.spaces as sp
   import app.timetable as tt
   
+  import parse_utils as pu
+  
   os.sys.executable, os.getcwd()
 #+END_SRC
 
@@ -2631,38 +2633,14 @@ Ignore UM_Curriculums for now.
 #+end_src
 
 #+begin_src python :results silent
-  _std = clean_df_str_cols(csvs["UM_students"])
-  ods = clean_df_str_cols(csvs["oldgrades"])
+  _std = pu.clean_df_str_cols(csvs["UM_students"])
+  ods = pu.clean_df_str_cols(csvs["oldgrades"])
   ods.loc[:,'StudentID'] = ods.StudentID.str.upper()
   gds = clean_df_str_cols(csvs["gradesheets"].drop(columns=["Code","Uploaded"]))
   gds.loc[:,'StudentID'] = gds.StudentID.str.upper()
 #+end_src
 
 * Fundamental outputs
-** TODO people_faculty.csv
-#+BEGIN_SRC python :results silent
-  staff = xlss["UM_Staff"].copy()
-  staff["staff_name"] = staff["Staff"].astype(str).str.strip()
-  users = xlss["Users"][["UserName", "FirstName", "MiddleName", "LastName"]].copy()
-  users["user_name"] = users["UserName"].astype(str).str.strip()
-  users["full_name"] = (
-      users[["FirstName", "MiddleName", "LastName"]]
-      .fillna("")
-      .agg(" ".join, axis=1)
-      .str.replace(r"\s+", " ", regex=True)
-      .str.strip()
-  )
-  directory = staff.merge(
-      users[["user_name", "full_name"]],
-      how="left",
-      left_on="staff_name",
-      right_on="full_name",
-  )
-  directory = directory.rename(columns={"user_name": "username"})
-  directory = directory[["staff_name", "username"]].drop_duplicates()
-  directory.to_csv(OUTDIR / "fundamentals_staff_faculty.csv", index=False)
-#+END_SRC
-
 ** academics_curricula.csv
    #+BEGIN_SRC python :results value
      cols = ["StudentID", "Major", "College", "YearOfEntry", "EnrollmentType", "AdmissionStatus", "ProgramID"]
@@ -4208,7 +4186,6 @@ full_gdf.to_csv(FDIR / "full_grades.tsv",sep="\t",index=False)
 None
 :end:
 
-
 * dependencies tree
 *** Text manifest (mandatory fields + generation snippets)
 **** College_Department : department.college_id, department.course_dept
@@ -4432,194 +4409,6 @@ Harmonize the room names
   df.loc[:,'status'] = "locked"
   df.to_csv(OUTDIR / "academicyear_semester.csv", index=False)  
 #+END_SRC
-
-  
-** DONE people_students.csv
-   CLOSED: [2025-12-18 jeu. 21:47]
-   :PROPERTIES:
-   :ORDERED:  t
-   :END:
-#+BEGIN_SRC python :results value
-  stid_reg = xlss['UM_Registrations'].StudentID.drop_duplicates()  
-  stid_um = load_csv(FDIR / "UM_students.utf8.tsvUM_students.csv")["StudentID"].drop_duplicates()
-  
-  # Student IDs In one but not the other
-  len(set(stid_reg.values) - set(stid_um.values)),   len(set(stid_um.values) - set(stid_reg.values))
-#+END_SRC
-
-#+RESULTS:
-:results:
-:end:
-
-#+BEGIN_SRC python :results silent
-  students = (
-      load_csv(FDIR / "UM_students.utf8.tsv")[["StudentID", "Major", "Curriculum"]]
-      .rename(
-          columns={
-              "StudentID": "student_id",
-              "Major": "major",
-          }
-      )
-      .assign(student_username="")
-  )
-  students["student_id"] = students["student_id"].astype(str).str.strip()
-  students["major"] = students["major"].astype(str).str.strip()
-  students["curriculum"] = students["curriculum"].astype(str).str.strip()
-  students.to_csv(OUTDIR / "fundamentals_students.csv", index=False)
-#+END_SRC
-
-#+BEGIN_SRC python :results value
-  scrs = clean_df_str_cols(csvs["studentcourses"])
-  ps = clean_df_str_cols(load_csv(FDIR / "people_students.csv", sep=","))
-  umstd = clean_df_str_cols(csvs["UM_students"])
-  sti = load_csv(FDIR/'StudentInfo.csv',sep=',').dropna(how='all')
-  len(scrs.StudentID.unique()), len(ps.StudentID.unique()), len(umstd.StudentID.unique()), len(ps.StudentID)
-#+END_SRC
-
-#+RESULTS:
-:results:
-(3251, 6581, 6581, 6582)
-:end:
-people_student and UM_students point to the same students
-may id in studentcourse are not in people_student. probably new students
-#+BEGIN_SRC python :results value
-set(scrs.StudentID.unique()) - set(ps.StudentID.unique())
-  
-#+END_SRC
-
-#+RESULTS:
-:results:
-{'tu-01833', 'Tu-03321', 'tu-03298', 'Tu-03145', 'Tu-03122', 'tu-03299', 'tu-03336', 'tu-03409', 'tu-03288', 'tu-02993', 'tu-03417', 'Tu-03142', '2329', '2', 'tu-03017', 'tu-03428', 'tu-01272', 'tu-02857', 'tu-03261', 'tu-03343', 'tu-03317', 'tu-03435', 'tu-03394', 'tu-03167', 'Tu-03216', 'tu-03283', 'tu-03287', 'tu-03309', 'tu-00949', 'tu-03421', 'Tu-03324', 'tu-03451', 'tu-03432', 'Tu-03453', '20308', 'tu-03268', '1', '23373', 'tu-03339', 'tu-01555', 'Tu-02964', 'tu-03154', 'tu-02943', '43559', '36820', 'fren', 'tu-03346', 'tu-03411', 'tu-03452', 'tu-03333', 'tu-02874', 'tu-03322', '25609', 'tu-03393', 'Tu-03032', 'tu-03385', 'tu-02625', 'tu-03381', 'Tu-03320', 'tu-03395', 'tu-03252', 'Tu-02652', '11389', 'tu-', '39033', 'Tu-03370', 'Tu-03151', 'tu-02907', 'tu-02983', 'tu-03271', 'tu-02367', 'tu-03414', 'Tu-03470', 'tu-01640', 'tu-03101', '27580', 'tu-03446', '13564', 'tu-01059', 'tu-03269', 'tu-03367', '4428', 'tu-03351', 'Tu-03316', 'Tu-03217', 'tu-02108', 'tu-03323', 'Tu-03007', '44935', 'Tu-02976', 'tu-02577', 'Tu-03384', 'tu-03324', 'tu-03390', 'tu-03438', 'tu-03170', 'Tu-03082', 'Tu-03191', 'tu-03217', 'tu-01634', 'tu-03302', 'tu-02864', '25422', 'tu-03258', 'tu-02592', 'tu-03274', 'Tu-03254', 'tu-02816', 'tu-03406', 'tu-03136', 'tu-03205', 'tu-03424', 'tu-02629', 'tu-03242', 'Tu-03418', 'tu-02988', 'tu-02544', 'Tu-02629', '59115', 'tu-03107', '18003', 'Tu-03290', 'Tu-03436', '3062', 'tu-03430', 'tu-02615', 'tu-03035', 'tu-03253', 'Tu-01540', 'tu-03353', 'tu-03328', 'Tu-03312', '42643', '26301', 'tu-03314', 'Tu-02977', 'tu-03227', 'Tu-02996', 'tu-03400', 'tu-03100', 'tu-03066', 'tu-03124', '2489', 'Tu-03086', 'tu-02133', 'tu-03281', 'tu-03334', 'tu-02901', 'tu-02626', 'tu-03010', 'Tu-03139', 'tu-02766', 'tu-03425', 'tu-02113', 'tu-03160', 'tu-03404', 'tu-02244', 'tu-03379', '33995', 'tu-03033', 'Tu-02963', '21270', 'tu-01863', 'tu-02939', 'tu-03266', 'tu-03405', 'tu-00792', 'tu-03142', 'tu-03443'}
-:end:
-
-**** Harmonizing all in one column
-#+BEGIN_SRC python :results value
-sorted(set(sti.columns))
-#+END_SRC
-
-#+RESULTS:
-:results:
-(['AccountID', 'ClassLevel', 'CumAttemptedHours', 'CumAttemptedHoursLocal', 'CumEarnedHours', 'CumEarnedHoursLocal', 'CumGPA', 'CumGPALocal', 'CumQualityHours', 'CumQualityHoursLocal', 'CumQualityPoints', 'CumQualityPointsLocal', 'CumRetainedHours', 'CumRetainedHoursLocal', 'DisableWebConnectPortal', 'PENVerified', 'TermLastEnrolled', 'TimeModified', 'bio_EnrollmentStatusID', 'bio_confidentialinfoflag', 'bio_homecountry', 'bio_numdependents', 'bio_termfirstentered', 'bio_timecreated', 'bio_veteranstatusid'],      AccountID  CumAttemptedHours  ...    bio_timecreated       TimeModified
-0        00353                NaN  ...  03/04/21 16:39:56  03/04/21 16:39:56
-1        00466              149.0  ...                NaN                NaN
-2        00921                NaN  ...  10/12/21 10:57:53  10/12/21 10:57:53
-3        01590               34.0  ...  09/28/21 09:56:40  09/28/21 09:56:40
-4        01610                NaN  ...                NaN                NaN
-...        ...                ...  ...                ...                ...
-5947  TU-02904              153.0  ...                NaN                NaN
-5948  TU-02907              134.0  ...                NaN                NaN
-5949  TU-02908              135.0  ...                NaN                NaN
-5950  TU-02909               16.0  ...                NaN                NaN
-5951  TU-02910              186.0  ...                NaN                NaN
-
-[5952 rows x 25 columns])
-:end:
-
-#+BEGIN_SRC python :results value
-sorted(set(ps.columns))
-#+END_SRC     
-
-#+RESULTS:
-:results:
-['AdmissionStatus', 'CountyOfOrigin', 'DateOfBirth', 'EmergencyContact', 'Enrolled', 'EnrollmentType', 'FatherAddress', 'FatherName', 'LastSchoolAttended', 'LastSchoolType', 'MotherAddress', 'MotherName', 'Nationality', 'PlaceOfBirth', 'ProgramID', 'Scholarship', 'StudentID', 'Uploaded', 'YearOfEntry', 'address', 'college_code', 'curriculum_short_name', 'enrollement_semester', 'first_name', 'gender', 'last_name', 'marital_status', 'middle_name', 'personal_email', 'phone_no']
-:end:
-
-#+BEGIN_SRC python :results value
-sorted(set(scrs.columns))
-#+END_SRC     
-
-#+RESULTS:
-:results:
-['AcademicYear', 'Amt', 'CourseCode', 'CourseNo', 'CreditHours', 'Curr', 'Section', 'Semester', 'StudentID', 'Withdrew']
-:end:
-
-#+BEGIN_SRC python :results value
-  scrs[:2].to_string()
-#+END_SRC
-
-#+RESULTS:
-:results:
-  academic_year  Semester Student_id CourseCode CourseNo  Section  CreditHours Curr  Amt Withdrew
-0     2023/2024         1      36764       CHEM      101      2.0          4.0  US$  5.0         
-1     2023/2024         1      36764       ENGL      101      2.0          3.0  US$  5.0         
-:end:
-
-#+BEGIN_SRC python :results value
-  from app.people.admin.resources_mapping import STUDENT_HEADER_MAP
-  sti = sti.rename(columns=STUDENT_HEADER_MAP)
-  scrs = scrs.rename(columns=STUDENT_HEADER_MAP)
-  ps = ps.rename(columns=STUDENT_HEADER_MAP)  
-#+END_SRC
-
-#+BEGIN_SRC python :results value
-  ps.iloc[0]
-#+END_SRC
-
-#+RESULTS:
-:results:
-Student_id                             41301
-first_name                            Tellee
-middle_name                              Dan
-last_name                           Appleton
-origin_county                               
-curriculum_short_name     BPA - Public Admin
-gender                                  Male
-college_code                             CBA
-entry_semester                           1.0
-entry_year                         2023/2024
-nationality                          LIBERIA
-birth_date               1900-01-01 00:00:00
-physical_address                            
-phone_number                                
-personal_email                              
-marital_status                        Single
-birth_place                                 
-bio_EnrollmentType                          
-bio_scholarship                           No
-last_school_attended                        
-bio_lastschooltype                          
-father_name                                 
-father_address                              
-mother_name                                 
-mother_address                              
-emergency_contact                           
-bio_admissionstatus      Arts in Economics 1
-bio_Enrolled                             Yes
-Uploaded                                 Yes
-ProgramID                Arts in Economics 1
-Name: 0, dtype: object
-:end:
-
-*** DONE Students
-    CLOSED: [2025-12-18 jeu. 21:46]
-  #+BEGIN_SRC python :results output
-    _ps = csvs["people_students"].fillna('')
-    _us = csvs["UM_students"].fillna('')
-    print(_ps.columns.values)
-    print(_us.columns.values)
-  #+END_SRC   
-#+RESULTS:
-:results:
-  ['StudentID,"first_name","middle_name","last_name","CountyOfOrigin","curriculum_short_name","gender","college_code","enrollement_semester","YearOfEntry","Nationality","DateOfBirth","address","phone_no","personal_email","marital_status","PlaceOfBirth","EnrollmentType","Scholarship","LastSchoolAttended","LastSchoolType","FatherName","FatherAddress","MotherName","MotherAddress","EmergencyContact","AdmissionStatus","Enrolled","Uploaded","ProgramID"']
-  ['StudentID' 'FirstName' 'MiddleName' 'LastName' 'CountyOfOrigin' 'Major'
-   'Sex' 'College' 'SemesterOfEntry' 'YearOfEntry' 'Nationality'
-   'DateOfBirth' 'AddressLine1' 'AddressLine2' 'AddressLine3'
-   'MaritalStatus' 'PlaceOfBirth' 'EnrollmentType' 'Scholarship'
-   'LastSchoolAttended' 'LastSchoolType' 'ReasonForLeaving' 'FatherName'
-   'FatherAddress' 'MotherName' 'MotherAddress' 'EmergencyContact' 'Photo'
-   'ImageRecomLastSch' 'ImageTranscript' 'ImageMedCertificate'
-   'ImageReportCard' 'ImageRecomComm' 'ImageRecomReli' 'ImageWaecCert'
-   'ImageAppLetter' 'Password' 'Salt' 'AdmissionStatus' 'TotCrHrsComp'
-   'Enrolled' 'Uploaded' 'ProgramID']
-  :end:
-
-*** DONE Studentinfo
-    CLOSED: [2025-12-18 jeu. 21:46]
-#+BEGIN_SRC python :results value
-  _sti = load_csv(FDIR/'StudentInfo.csv',sep=',').dropna(how='all')
-  cols = ['AccountID','TermFirstEntered', 'TermLastEnrolled']
-  csv_save("people_student_terms.tsv", _sti.loc[:,cols])
-#+END_SRC    
 
 * COMMENT I may have student with no grades
 #+BEGIN_SRC python :results value

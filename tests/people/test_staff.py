@@ -13,7 +13,7 @@ def test_staff_creation_generates_username_when_missing() -> None:
         last_name="Doe",
     )
 
-    expected_username = mk_username("Tina", "Doe", prefix_len=2)
+    expected_username = mk_username("Tina", "Doe")
     assert (
         staff.user.username == expected_username
     ), f"{staff.user.username} != {expected_username}"

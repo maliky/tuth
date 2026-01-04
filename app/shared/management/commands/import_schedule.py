@@ -344,7 +344,7 @@ class Command(BaseCommand):
             return None
 
         _n = parse_name(_name)
-        username = mk_username(_n.first, _n.last, _n.middle, prefix_len=2, unique=True)
+        username = mk_username(_n.first, _n.last, _n.middle, unique=True)
 
         staff_defaults: dict[str, Any] = _n.to_dict()
         staff_defaults["department"] = department

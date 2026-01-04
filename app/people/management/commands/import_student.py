@@ -24,8 +24,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "-f",
             "--file",
-            action="append",
-            default=None,
+            default="Seed_data/Fundamentals/people_full_students.csv",
             help="Path(s) to CSV/TSV files; defaults to people_students.csv",
         )
         parser.add_argument(
@@ -42,17 +41,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options) -> None:
         dry_run: bool = bool(options.get("dry_run"))
-        sources: list[str] = options["file"] or [
-            "Seed_data/Fundamentals/people_students.csv",
-            #  "Seed_data/Fundamentals/StudentInfo.csv",
-        ]
+        path: Path = Path(options["file"])
+        if not path.exists():
+            raise CommandError(f"Missing source files: {path}")
 
-        paths = [Path(p) for p in sources]
-        missing = [p for p in sources if not Path(p).exists()]
-        if missing:
-            raise CommandError(f"Missing source files: {', '.join(missing)}")
-
-        text = read_text_file(paths[0])
+        text = read_text_file(path)
         dataset = _load_dataset(text)
         batch_size = int(options.get("batch_size") or 500)
         _run_student_import(self, dataset, dry_run=dry_run, batch_size=batch_size)

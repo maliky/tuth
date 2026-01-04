@@ -1,14 +1,21 @@
 """Column name mappings for import resources."""
 
 # Incoming headers -> canonical column names used by FacultyResource
-FACULTY_COLUMN_MAP = {
+FACULTY_HEADER_MAP = {
     "Instructor": "faculty_fullname",
-    "name_prefix": "name_prefix",
     "first_n": "first_name",
     "middle_n": "middle_name",
     "last_n": "last_name",
-    "name_suffix": "name_suffix",
-    "username": "username",
+    # "name_prefix": "name_prefix",
+    # "name_suffix": "name_suffix",
+    # "username": "username",
+}
+USER_COLUMN_MAP = {
+    "UserName": "username",
+    "FirstName": "first_name",
+    "MiddleName": "middle_name",
+    "LastName": "last_name",
+    # "UserGroup" : "bio_usergroup",  # empty
 }
 
 GENDER_MAP = {
@@ -27,7 +34,7 @@ STUDENT_HEADER_MAP = {
     "Dept": "department",
     "EmergencyContact": "emergency_contact",
     "Enrolled": "bio_Enrolled",
-    "EnrollmentStatusID": "bio_EnrollmentStatusID",
+    "EnrollmentStatusID": "bio_enrollmentstatusid",
     "EnrollmentType": "bio_EnrollmentType",
     "FatherAddress": "father_address",
     "FatherName": "father_name",
@@ -43,7 +50,7 @@ STUDENT_HEADER_MAP = {
     "Scholarship": "bio_scholarship",
     "Section": "section_no",
     "Semester": "semester_no",
-    "Student": "student_name",
+    "Student": "fullname",
     "StudentID": "student_id",
     "TermFirstEntered": "entry_sememester_no",
     "TermLastEnrolled": "last_enrolled_semester_no",

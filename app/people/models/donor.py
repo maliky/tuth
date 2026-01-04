@@ -49,6 +49,7 @@ class Donor(AbstractPerson):
         unique=True,
         exclude=None,
         prefix_len=None,
+        sep=None,
     ):
         """Generate donor usernames with a short first-name prefix."""
         return super().mk_username(
@@ -57,7 +58,8 @@ class Donor(AbstractPerson):
             middle=middle,
             unique=unique,
             exclude=exclude,
-            prefix_len=2 if prefix_len is None else prefix_len,
+            prefix_len=prefix_len,
+            sep=sep,
         )
 
     @classmethod

@@ -14,7 +14,7 @@ def test_faculty_get_or_create() -> None:
         last_name="Ray",
     )
 
-    expected_username = mk_username("Paula", "Ray", prefix_len=2)
+    expected_username = mk_username("Paula", "Ray")
 
     assert faculty.staff_profile is not None
     assert faculty.staff_profile.user.username == expected_username

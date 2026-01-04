@@ -209,6 +209,7 @@ class Faculty(models.Model):
         unique=True,
         exclude=None,
         prefix_len=None,
+        sep=None,
     ):
         """Generate staff usernames using 1-letter name prefix and no middle."""
         return mk_username(
@@ -217,7 +218,8 @@ class Faculty(models.Model):
             middle="",
             unique=unique,
             exclude=exclude,
-            prefix_len=1 if prefix_len is None else prefix_len,
+            prefix_len=prefix_len,
+            sep=sep,
         )
 
     class Meta:
