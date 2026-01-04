@@ -24,8 +24,8 @@ class Command(BaseCommand):
         parser.add_argument(
             "-f",
             "--file",
-            default="Seed_data/Fundamentals/people_full_students.csv",
-            help="Path(s) to CSV/TSV files; defaults to people_students.csv",
+            default="Seed_data/Fundamentals/people_full_student.tsv",
+            help="Path(s) to CSV/TSV files; defaults to people_full_student.tsv",
         )
         parser.add_argument(
             "--dry-run",
