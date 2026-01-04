@@ -1,0 +1,300 @@
+2881,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",40907,Medford,,Nyenati,,BPA - Public Admin,Male,,1,,LIBERIA,2004-11-07 00:00:00,"Lake shepherd Community, Harper City, Maryland County, Liberia, ",0887435985,Princebedell@895gmail. Com ,,,,,,,,,,,,Business Administration 1,,,Business Administration 1
+2882,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",40915,Jerome,,Allison,River Gee,BSc - Computer Sci,Male,CET,1,2022/2023,LIBERIA,2000-11-25 00:00:00,Air field Community,0881354265,peterblayon@gmail.com,Single,Suloken Rivergee,,No,,,,,,,,Computer Science 1,Yes,Yes,Computer Science 1
+2883,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",40923,K.,Meshach,Jolo,,BSN - Nursing,Male,,1,,LIBERIA,1997-12-26 00:00:00,"Zone 7, Plleebo City, Maryland County, Liberia, ",0776248188,,,,,,,,,,,,,Nursing 1,,,Nursing 1
+2884,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",40931,Belinda,,Tuwleh,Sinoe,BUSA,Female,CBA,2,2023/2024,LIBERIA,2004-11-17 00:00:00,"Zone 2, Pleebo City, Maryland County, Liberia, ",0555891650,Belindatuwlehgmail. Com,Single,"Merci Clinic, Pleebo City",,No,,,,,,,,Business Administration 1,Yes,,Business Administration 1
+2885,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",40949,Theresa,O.,Toe,,BSc - Public Health,Female,,1,,LIBERIA,1999-04-13 00:00:00,"Lamax Cox community, Harper City, Maryland County, Liberia, ",0888068857,,,,,,,,,,,,,Public Health 1,,,Public Health 1
+2886,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",40956,Musa,D.,Talaweley,Lofa,BSc - Biology,Male,CAS,1,2023/2024,LIBERIA,2005-05-13 00:00:00,"Tubman Town, Harper City, Maryland County, Liberia, ",0881219286,talaweleym@gmail.com,Single,Harper City,,No,,,,,,,,Biology 1,Yes,Yes,Biology 1
+2887,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",40964,Alex,N.,Kanwie,River Gee,BA - 2ndEd/Biology,Male,EDRCE,1,2023/2024,LIBERIA,1999-07-27 00:00:00,,0555767574,,Single,,BA-BIOLOGY,No,,,,,,,,BA-BIOLOGY,Yes,Yes,BA-BIOLOGY
+2888,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",40967,Comfort,W.,Cummings,,REMEDIAL-MATH,,,1,,LIBERIA,1999-07-27 00:00:00,,,,,,,,,,,,,,,,,,
+2889,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",40972,Rose,T.,Wilson,Maryland,BPA - Public Admin,Female,CBA,1,2023/2024,LIBERIA,2004-05-11 00:00:00,"Zone 11, Pleebo City, Maryland County, Liberia, ",0888427557,Rose T. Wilson Gmail.com,Single,"CRC Hospital, Pleebo",,No,,,,,,,,Public Administration 1,Yes,Yes,Public Administration 1
+2890,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",40980,Alice,T.,Toe,,REMEDIAL-MATH,Female,,1,,LIBERIA,2001-04-22 00:00:00,"Zone 9, Pleebo City, Maryland County, Liberia, ",0881847229,,Single,,,No,,,,,,,,,Yes,,
+2891,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",40998,Satta,B.,Davis,G. Bassa,BSCE - Civil Eng,Female,CET,1,2023/2024,LIBERIA,2002-01-21 00:00:00,"Gregory street, Central Harper, Maryland County, Liberia, ",0880823637,Satta B Davis @gmaile. Com ,Single,HARPER,,,,,,,,,,Civil Engineering 1,,Yes,Civil Engineering 1
+2892,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41004,Naomi,B.,Quedee,Sinoe,BSc - Public Health,Female,CHS,2,2023/2024,LIBERIA,2003-12-04 00:00:00,"Green Street, Harper City, Maryland County, Liberia, ",0880774984,nquedee@gmail.com,Single,New Kru Town Monrovia,,No,,,,,,,,Public Health 1,Yes,Yes,Public Health 1
+2893,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41012,Jaymous,G,Morris,G. Kru,BPA - Public Admin,Male,CBA,1,2022/2023,LIBERIA,2002-02-02 00:00:00,"Zone 7, Pleebo City, Maryland County, Liberia, ",0881897066,morrisjaymous12@gmail.com,Single,"Pleebo, Maryland County",,No,,,,,,,,Business Administration 1,Yes,Yes,Business Administration 1
+2894,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41020,Peter,D.,Sawieh,,BSc - Biology,Male,,1,,LIBERIA,2002-08-05 00:00:00,"Stadium Road Community, Harper City, Maryland County, Liberia, ",0776322681,dsawiehp@gmail.com,Single,,,No,,,,,,,,Biology 1,Yes,,Biology 1
+2895,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41038,Stephen,P.,Appiah,Maryland,BSc - Public Health,Male,CAS,1,2023/2024,LIBERIA,1996-01-01 00:00:00,"Lake Shephard Community, Harper City",0888104427,www.stephenpirloappiah19@gmail.com,Single,Harper City,,No,,,,,,,,Public Health 1,Yes,,Public Health 1
+2896,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41046,Grace,,Wesee,Maryland,BSc - Biology,Female,CAS,1,2023/2024,LIBERIA,2000-10-21 00:00:00,"Bishophill Community, Harper City, Maryland County, Liberia, ",0880922198,weseegrace1021@gmail.com,Single,"Harper city, Maryland",,No,,,,,,,,Biology 1,Yes,,Biology 1
+2897,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41053,Cecelia,W.,Toe,G. Kru,BSN - Nursing,Female,CHS,1,2023/2024,LIBERIA,1990-12-12 00:00:00,"Zone 4C, Pleebo City, Maryland County, Liberia, ",0888771778,Cecelia wtoe90 ,Single,Grand Kru County,,No,,,,,,,,Nursing 1,Yes,,Nursing 1
+2898,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41061,Theophilus,T.,Kesseh,River Gee,BSN - Nursing,Male,CHS,1,2023/2024,LIBERIA,2004-05-20 00:00:00,"Zone 11. Pleebo City, Maryland County, Liberia, ",0881913741,theophiluskesseh@gmail.com,Single,Pleebo City,,No,,,,,,,,Nursing 1,Yes,Yes,Nursing 1
+2899,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41079,Romeo,G.,Nimely,Maryland,BSc - Environmental,Male,CAS,2,2023/2024,LIBERIA,1999-10-24 00:00:00,"Zone 9, Pleebo City, Maryland County, Liberia, ",077 049 9134,remeog@gmail.com,Single,Harper City,,No,,,,,,,,Environmental Science 1,Yes,Yes,Environmental Science 1
+2900,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41087,Akpalue,T.,Toe,,BSCE - Civil Eng,Male,,1,,LIBERIA,1990-06-20 00:00:00,"Zone 3B. PleeboCity, Maryland County, Liberia, ",0887380202,akpaluetoe@gmail.com,Single,,,No,,,,,,,,Civil Engineering 1,Yes,,Civil Engineering 1
+2901,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41095,Yiadene,P.,Brownell,,REMEDIAL-ENGL,Female,,1,,LIBERIA,1997-09-05 00:00:00,"Zone 7C, Pleebo City, Maryland County, Liberia, ",0880083431,,,,,,,,,,,,,,,,
+2902,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41103,Abraham,G.,Toe,Maryland,BSN - Nursing,Male,CHS,1,2022/2023,LIBERIA,1996-07-15 00:00:00,"Zone 8C, Pleebo City, Maryland County, Liberia, ",0888261634,toeabraham32@gmail.com,Single,Pleebo City,,No,,,,,,,,Nursing 1,Yes,Yes,Nursing 1
+2903,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41111,Lawrence,N.,Sikar,G. Kru,BA - 2ndEd/Biology,Male,EDRCE,1,2020/2021,LIBERIA,1974-10-24 00:00:00,"J. Lama Cox Community, Harper, Maryland County, Liberia, ",0881651238,sikar Lawrence @gmail.com,Single,,BA-BIOLOGY,No,,,,,,,,BA-BIOLOGY,Yes,,BA-BIOLOGY
+2904,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41129,Agnes,J.,Nyemah,Maryland,BSN - Nursing,Female,CHS,1,2022/2023,LIBERIA,1999-12-25 00:00:00,"Bishophill Community, Harper City, Maryland County, Liberia, ",0555354940,agnesnyemah99@gmail.com,Single,,,No,,,,,,,,Nursing 1,Yes,Yes,Nursing 1
+2905,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41137,Evon,B.,Potee,Sinoe,BSc - Computer Sci,Female,CET,1,2022/2023,LIBERIA,2000-11-03 00:00:00,"Tubm Town, Harper City, Maryland County, Liberia, ",0880359323,poteeevonb0@yahoo.com,Single,Harper,,No,,,,,,,,Nursing 1,Yes,Yes,Nursing 1
+2906,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41145,Peter,S.,Doe,River Gee,BSc - Biology,Male,CAS,1,2022/2023,LIBERIA,1997-08-24 00:00:00,"New Harper Community, Harper, Maryland County, Liberia, ",0882241995,doepeters112@gmail.com,Single,Rivergee County,,No,,,,,,,,Biology 1,Yes,Yes,Biology 1
+2907,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41152,Getrude,W.,Toe,G. Kru,BSc - Computer Sci,Female,CET,1,2023/2024,LIBERIA,2004-04-15 00:00:00,"Stadium Road community, Harper, Maryland County, Liberia, ",0881381374,getrudetoe265@gmail.com,Single,Harper,,No,,,,,,,,Computer Science 1,Yes,Yes,Computer Science 1
+2908,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41160,Rokia,,Konneh,Maryland,BSc - Public Health,Female,CHS,1,2022/2023,LIBERIA,2002-10-18 00:00:00,"Stadium Road Community, Harper City, Maryland County, Liberia, ",0555359091,koriakoneah@gmail.com,Single,Harper City,,No,,,,,,,,Public Health 1,Yes,Yes,Public Health 1
+2909,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41178,Jamesetta,C.,Wallace,River Gee,BSc - Public Health,Female,CHS,1,2023/2024,LIBERIA,1998-05-01 00:00:00,"Hance Street, Harper City, Maryland County, Libeeria, ",0886046553,jamesettaccwallace@gmail.com ,Single,Harper,,No,,,,,,,,Public Health 1,No,Yes,Public Health 1
+2910,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41186,Johm,Teba,Harris,Maryland,BSc - General Agr,Male,CAFS,1,2023/2024,LIBERIA,1990-08-06 00:00:00,"Printing Street, Harper City, Maryland County, Liberia, ",0881842121,harrisjohn@gmail.com,Single,"Rocktown, Harper",,No,,,,,,,,Agriculture 1,Yes,Yes,Agriculture 1
+2911,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41194,Patience,F.,Clark,Maryland,BUSA,Female,CBA,2,2023/2024,LIBERIA,1996-11-29 00:00:00,"GreenStreet, Harper City, Maryland County, Liberia, ",0775004994,clarkpatience72@gmail.com,Single,,,No,,,,,,,,Business Administration 1,Yes,Yes,Business Administration 1
+2912,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41202,Doris,M.,Sylla,Lofa,BSN - Nursing,Female,CHS,1,2022/2023,LIBERIA,2001-05-04 00:00:00,"Bishophill Community, Harper, Maryland County, Liberia, ",0888012406,dorismsylla@gmail.com,Single,,,No,,,,,,,,Nursing 1,Yes,,Nursing 1
+2913,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41210,Mozetha,B.,Teebioh,Maryland,BPA - Public Admin,Male,CBA,2,2023/2024,LIBERIA,1999-07-27 00:00:00,,0886291602,Mozethamozetha@gmail.com,Single,,,No,,,,,,,,Business Administration 1,Yes,Yes,Business Administration 1
+2914,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41228,J.,Targbe Toe,Moses,Maryland,BSc - Biology,Male,CAS,1,2023/2024,LIBERIA,2007-11-29 00:00:00,"White street, Bishophill, Harper City, Maryland County, Liberia, ",0881887696,jtargbetoe2007@gmail.com,Single,,,No,,,,,,,,Biology 1,Yes,Yes,Biology 1
+2915,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41236,Prince,R.,Bedell,Maryland,BPA - Public Admin,Male,CBA,2,2023/2024,LIBERIA,2005-05-07 00:00:00,"New Kru Town, Harper City, Maryland County",0887435985,Princebedell895@gmail.com,Single,"J.J.Dossen, Harper City",,No,,,,,,,,Business Administration 1,Yes,Yes,Business Administration 1
+2916,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41244,Jerrilyn,D.,Hinneh,River Gee,BSN - Nursing,Female,CHS,2,2023/2024,LIBERIA,2002-03-23 00:00:00,Larma Cox Community,0881986259,jerrilynhinneh2002@gmail.com,Single,Fish Town,,No,,,,,,,,Nursing 1,No,Yes,Nursing 1
+2917,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41251,Elijah,N.,Beikor,Nimba,BSME - Mech Eng,Male,CET,1,2022/2023,LIBERIA,1994-03-15 00:00:00,"White street, Jacksonville, Harper, Maryland County, Liberia, ",0555532261,elijahnyanmaleonbeikor@gmail.com,Single,"Yekepa, Nimba",,No,,,,,,,,Mechanical Engineering 1,Yes,Yes,Mechanical Engineering 1
+2918,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41269,Radia,T.,Gardiner,Maryland,BSN - Nursing,Female,CHS,1,2023/2024,LIBERIA,2005-01-06 00:00:00,Middle Cess Community,0555363120,Radiagadiner@gmail.com,Single,Harper City,,No,,,,,,,,Nursing 1,Yes,Yes,Nursing 1
+2919,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41277,Theodoisa,T.,Clark,Maryland,Agriculture 1,Female,CAFS,2,2023/2024,LIBERIA,1995-03-07 00:00:00,"Hoffman station  Maryland County, Liberia, ",0886694717,0886694717,Single,Harper J.J Dosssen Hospaital ,,No,,,,,,,,Agriculture 1,Yes,Yes,Agriculture 1
+2920,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41285,Prescelia,W.,Fiah,Sinoe,BSc - Environmental,Female,CAS,1,2022/2023,LIBERIA,2001-04-14 00:00:00,"Kpafloville, Tubman town, Harper City, Maryland County, Liberia, ",0888291339,presceliafiah&gmile.com,Single,F. J. Grant Hospital,,No,,,,,,,,Environmental Science 1,Yes,Yes,Environmental Science 1
+2921,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41293,Joyce,G.,Dalieh,Maryland,BSc - Env Sci,Female,CAS,2,2023/2024,LIBERIA,2001-04-16 00:00:00,Bishophill Community,0881928785,Joycedalieh,Single,"Fishtown, River Gee",,No,,,,,,,,Environmental Science 1,Yes,Yes,Environmental Science 1
+2922,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41301,Tellee,Dan,Appleton,Maryland,BA-BIOLOGY,Male,CAS,1,2023/2024,LIBERIA,2004-06-06 00:00:00,"Middlesex Community, Harper City, Maryland County, Liberia, ",0555160380,telleeappleton@gamil.com,Single,"J.J. Dossen, Harper City, Maryland County",,No,,,,,,,,Biology 1,Yes,Yes,Biology 1
+2923,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41319,Emmanuel,,Allison,,BSc - Computer Sci,,,1,,LIBERIA,1999-07-27 00:00:00,,,,,,,,,,,,,,,Computer Science 1,,,Computer Science 1
+2924,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41327,Prince,M.,Gbolon,Bong,BSc - Computer Sci,Male,CET,1,2023/2024,LIBERIA,2004-03-02 00:00:00,"Middlesex Community, Harper City, Maryland County, Liberia, ",0777934748,princegbolon3,Single,Montserrado,,No,,,,,,,,Computer Science 1,Yes,,Computer Science 1
+2925,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41335,Lewis,K.,Doe,Maryland,BSc - Environmental,Male,CAS,1,2022/2023,LIBERIA,1999-10-07 00:00:00,"Tubman Town, Harper",0886163044,lewiskdoe Gmail ,Single,Harper,,No,,,,,,,,Environmental Science 1,Yes,Yes,Environmental Science 1
+2926,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41343,Patrick,W.,Bedell,Maryland,BSN - Nursing,Male,CHS,1,2023/2024,LIBERIA,1983-07-12 00:00:00,Pleebo,0886892771,bedellw1983@gmail.com,Married,Pleebo,,No,,,,,,,,Nursing 1,Yes,Yes,Nursing 1
+2927,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41350,Shadrick,H.,Clarke,Maryland,BSCE - Civil Eng,Male,CET,1,2023/2024,LIBERIA,2003-06-04 00:00:00,Lake shepherd,0777467641,Shadrick H.Clark @. com,Single,Pleebo City,,No,,,,,,,,Civil Engineering 1,Yes,Yes,Civil Engineering 1
+2928,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41368,Okeh,,Zackpah,Nimba,BA - Guidance Coun,Male,EDRCE,1,2022/2023,LIBERIA,1999-08-13 00:00:00,Philadelphia Township,0880990027,ozackpah@gmail.com,Married,Ganta Hospital,BA-GUIDANCE/COUNS,No,,,,,,,,BA-GUIDANCE/COUNS,Yes,Yes,BA-GUIDANCE/COUNS
+2929,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41376,Winston,A.,Wilson,Maryland,BSc - Economics,Male,CBA,1,2020/2021,LIBERIA,1999-07-27 00:00:00,,,,Single,,,,,,,,,,,,,Yes,
+2930,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41384,Othello,G.,Norbain,Nimba,BSN - Nursing,Male,CHS,1,2023/2024,LIBERIA,1997-11-17 00:00:00,Stadium Road Community,0776200403,norbainothellogag@gmail.com,Single,Ganta hospital,,No,,,,,,,,Nursing 1,Yes,Yes,Nursing 1
+2931,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41392,Octavious,,Blay,,BSCE - Civil Eng,,,1,,LIBERIA,1999-07-27 00:00:00,,,,,,,,,,,,,,,Civil Engineering 1,,,Civil Engineering 1
+2932,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41418,Princess,K.,Toe,Maryland,BSc - Environmental,Female,CAS,2,2023/2024,LIBERIA,2005-06-01 00:00:00,"White Street Community, Harper",0888111010,pkt2002@gmail.com,Single,Pleebo Health Center,,No,,,,,,,,Environmental Science 1,Yes,Yes,Environmental Science 1
+2933,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41426,Doris,Q.,Wallace,,BBA - Accounting,,,1,,LIBERIA,1999-07-27 00:00:00,,,,,,,,,,,,,,,Accounting 1,,,Accounting 1
+2934,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41434,Josephine,H.,Dalieh,,REMEDIAL-MATH,,,1,,LIBERIA,1999-07-27 00:00:00,,,,,,,,,,,,,,,,,,
+2935,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41442,Lewis,G.,Johnson,G. Kru,BUSA,Male,CBA,1,2022/2023,LIBERIA,1998-07-27 00:00:00,"New Harper community, Harper",0880615669,41442,Single,"Wilsonville, Grand Kru County",,No,,,,,,,,Business Administration 1,Yes,,Business Administration 1
+2936,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41459,Sarath,,Kumar,,BBA - Business Admin,,,1,,LIBERIA,1999-07-27 00:00:00,,0777275026,sarathkumar994023@gmail.com,Single,,,No,,,,,,,,Business Administration 1,Yes,,Business Administration 1
+2937,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41467,Elien,L.,Yueh,Maryland,BSc - Computer Sci,Female,CET,2,2023/2024,LIBERIA,2000-12-15 00:00:00,"Marshell Street, Harper City, Maryland County",0555068372,elienlyueh@gmail.com,Single,"J.J.Dossen, Harper",,No,,,,,,,,Computer Science 1,Yes,,Computer Science 1
+2938,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41475,Augustine,S,Tamba,Lofa,BSEE - Elec Eng,Male,CET,2,2022/2023,LIBERIA,2003-02-08 00:00:00,TU Community,0770933929,0770933929,Single,Buchanan City,,No,,,,,,,,Electrical Engineering 1,Yes,Yes,Electrical Engineering 1
+2939,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41483,Cynthia,,Worjloh,G. Kru,BUS,Female,CBA,1,2023/2024,LIBERIA,1999-07-27 00:00:00,,0771508845 ,Cyntgiaworjloh@gmail.com ,Single,,,No,,,,,,,,Business Administration 1,Yes,Yes,Business Administration 1
+2940,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41491,Emmanuel,S.,Kosugba,River Gee,BPA - Public Admin,Male,CBA,1,2023/2024,LIBERIA,1999-07-27 00:00:00,"Bunker Hill community, Harper City",0778894059,emmanuelkosugba@gmail.com ,Single,"Tuobo, Rivergee, County",,No,,,,,,,,Public Administration 1,Yes,Yes,Public Administration 1
+2941,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41509,Dickson,W.,Youbie,,BSME - Mech Eng,,,1,,LIBERIA,1999-07-27 00:00:00,,,,,,,,,,,,,,,Mechanical Engineering 1,,,Mechanical Engineering 1
+2942,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41517,Moore,S.,Kollie,,BSEE - Elec Eng,,,1,,LIBERIA,1999-07-27 00:00:00,,0886451523,moorekollie7@gmail.com,,,,,,,,,,,,Electrical Engineering 1,,,Electrical Engineering 1
+2943,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41525,Samuel,B.,Cooper,Maryland,BSc - General Agr,Male,CAFS,2,2023/2024,LIBERIA,1983-05-09 00:00:00,"Zone #4B, Pleebo",0886830921,samuelcooper934@gmail.com,Single,Kwedoken,,No,,,,,,,,Agriculture 1,Yes,Yes,Agriculture 1
+2944,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41533,Victor,L.,Fallah,,BBA - Business Admin,,,1,,LIBERIA,1999-07-27 00:00:00,,,,,,,,,,,,,,,Business Administration 1,,,Business Administration 1
+2945,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41541,Alice,J.,Kwarbo,Maryland,BPA - Public Admin,Male,CBA,2,2022/2023,LIBERIA,2000-07-28 00:00:00,"Zone 7 A, Pleebo, Maryland County",0880915408,alicekwarbo24@gmail.com,Single,Karloken,,No,,,,,,,,Business Administration 1,Yes,,Business Administration 1
+2946,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41558,Josephine,H.,Scere,G. Kru,BSc - General Agr,Female,CAFS,1,2023/2024,LIBERIA,1997-06-24 00:00:00,"Reve Stree, Harper ",0888922690,christopherswen@gmail.com,Single,JJ. Dossen Hospial,,No,,,,,,,,Agriculture 1,Yes,Yes,Agriculture 1
+2947,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41566,Susanna,M.,Koffa,G. Kru,BSc - Biology,Female,CAS,1,2020/2021,LIBERIA,1999-07-27 00:00:00,,0880264816,Susanna koffa@ .com,Single,,,No,,,,,,,,Biology 1,Yes,Yes,Biology 1
+2948,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41574,Polosco,M.,Dennis,,REMEDIAL-MATH,,,1,,LIBERIA,1999-07-27 00:00:00,,,,,,,,,,,,,,,,,,
+2949,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41582,Edward,M.,Allison,Maryland,BBA - Accounting,Male,CBA,1,2023/2024,LIBERIA,2004-12-08 00:00:00,"Bishop Hill Community, Harper, Maryland",0555888726,edwardallison406@gmail.com,Single,"J.J. dossen, Harper, Marylnd County",,No,,,,,,,,Accounting 1,Yes,,Accounting 1
+2950,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41590,Susanna,B.,Elliott,Maryland,BSN - Nursing,Female,CHS,1,2022/2023,LIBERIA,1999-07-27 00:00:00,,0888428553,elliottsusannah6@gmail,Single,,,No,,,,,,,,Nursing 1,Yes,,Nursing 1
+2951,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41608,Kelvin,S.,Asare,Montserrado,BSc - Biology,Male,CAS,1,2022/2023,LIBERIA,2004-12-09 00:00:00,"Hance street, Harper",0887380038,tragrettasare@gmail.com,Single,West Point ,,No,,,,,,,,Biology 1,Yes,Yes,Biology 1
+2952,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41616,Linda,G.,Heagbetus,River Gee,BSN - Nursing,Female,CHS,1,2023/2024,LIBERIA,2003-06-28 00:00:00,"Airfied Community, Jacksonville Township, Harper, Maryland County",0775227457,heagbetuslindag@gmail.com ,Single,,,No,,,,,,,,Nursing 1,Yes,Yes,Nursing 1
+2953,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41624,Prisca,W.,Wah,River Gee,BSc - Environmental,Female,CAS,1,2022/2023,LIBERIA,1996-01-13 00:00:00,"Harper, Tubman Town ",+231555605523,priscastepney@gmail.com,Single,GBARGA,,,,,,,,,,Environmental Science 1,,Yes,Environmental Science 1
+2954,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41632,David,K.C,Sokan,River Gee,BSEE - Elec Eng,Male,CET,2,2022/2023,LIBERIA,2002-12-25 00:00:00,TU Commmunity ,0555780063,davidkcsokan@gmail.com,Single,River Gee Health Center ,,No,,,,,,,,Accounting 1,Yes,Yes,Accounting 1
+2955,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41640,Emmanuel,Q.,Toe,River Gee,BPA - Public Admin,Male,CBA,1,2023/2024,LIBERIA,1999-07-27 00:00:00,,0886747494,klaynah1@gmail.com,Single,,,No,,,,,,,,Public Administration 1,Yes,Yes,Public Administration 1
+2956,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41657,William,D.,Langford,,BSc - Environmental,,,1,,LIBERIA,1999-07-27 00:00:00,,,,,,,,,,,,,,,Environmental Science 1,,,Environmental Science 1
+2957,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41665,Eve,D.,Lawson,G. Kru,BSc - Public Health,Female,CHS,1,2023/2024,LIBERIA,2004-07-09 00:00:00,New Kru Towm,0888435291,evedlawson369@gmail.com,Single, Ivoire Coast,,No,,,,,,,,Public Health 1,Yes,Yes,Public Health 1
+2958,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41673,Ezekiel,S.,Taylor,Maryland,ENVS,Male,CAS,1,2023/2024,LIBERIA,2001-06-03 00:00:00,"Bassa Community, Harper City, Maryland County, Liberia, ",0881237265,ezekieltaylor642@ gmail. Com,,,,No,,,,,,,,Environmental Science 1,Yes,Yes,Environmental Science 1
+2959,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41681,Amos,N.,Kennedy,Bong,BUS,Male,CBA,1,2022/2023,LIBERIA,1996-05-06 00:00:00,"TU Community, Tubman Town, Harper, Maryland",0881386662,Kennedtamos429@gmail.com,Single,Suakoko,,No,,,,,,,,Business Administration 1,Yes,Yes,Business Administration 1
+2960,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41699,Sarah,,Koowon,Maryland,BSc - Biology,Female,CAS,1,2023/2024,LIBERIA,2003-11-04 00:00:00,"Pleebo-Zone4C, Pleebo City, Marylanc County, ",0881053636,sarahkoowon@gmail.com,Single,Pleebo City,,No,,,,,,,,Biology 1,Yes,Yes,Biology 1
+2961,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41707,Josephine,Ade,Davis,,BSc - Public Health,Female,,1,,LIBERIA,2002-03-27 00:00:00,"Zone 1B, Pleebo City, Maryland County, Liberia, ",0881318335,,,,,,,,,,,,,Public Health 1,,,Public Health 1
+2962,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41715,Stephanie,D.,Wenyor,Maryland,BBA - Accounting,Female,CBA,1,2023/2024,LIBERIA,1980-12-30 00:00:00,"Zone 7C, Pleebo City, Maryland County. Liberia, ",0880634010,stephanie.wenyou@tubmanu.edu.lr,Single,Ivory Coast ,,No,,,,,Teba Ouliya,Deceased,,Business Administration 1,Yes,Yes,Business Administration 1
+2963,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41723,Cecelia,B.,Freeman,Maryland,BSc - Public Health,Female,CHS,2,2022/2023,LIBERIA,1990-06-14 00:00:00,"Bishophill, Harper City, Maryland County, Liberia, ",0886662643,freemancecelia70@gmail.com,Single,"Johnsonville, Karluway",,No,,,,,,,,,Yes,Yes,
+2964,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41731,Gertrude,D.,Neufville,Maryland,BSc - Env Sci,Female,CAS,2,2023/2024,LIBERIA,2004-04-04 00:00:00,"Zone 7B, Pleebo City, Maryland County, Liberia, ",0881847227,Gertrude ,Single,"Pleebo City, Maryland",,No,,,,,,,,Environmental Science 1,Yes,Yes,Environmental Science 1
+2965,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41749,Abel,W.,Wesee,Maryland,BSc - Computer Sci,Male,CET,1,2022/2023,LIBERIA,2003-09-12 00:00:00,"Zone 1, Pleebo city, Maryland County, Liberia, ",0881126667,weseeabel45@gmail.com,Single,Maryland,,No,,,,,,,,Computer Science 1,Yes,Yes,Computer Science 1
+2966,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41756,Amelia,M.,Dahn,,BSc - Public Health,Female,,1,,LIBERIA,2002-10-25 00:00:00,"Airfield community, Harper City, Maryland County, Liberia, ",0887067585,ameliadiahn@gmail.com,Single,,,No,,,,,,,,Public Health 1,Yes,,Public Health 1
+2967,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41764,Victor,Kla,Nyengbie,,BSc - Env Sci,Male,,1,,LIBERIA,1998-09-10 00:00:00,"Kpafloville Community, Harper City, Maryland County, Liberia, ",0881833882,victornyengbie@gmail.com,,,,,,,,,,,,Environmental Science 1,,,Environmental Science 1
+2968,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41772,Adina,G.,Collins,G. Gedeh,BUS,Female,CBA,1,2022/2023,LIBERIA,2005-07-20 00:00:00,"Lake Shepherd community, Harper, Maryland County, Liberia, ",0881253955,adinacollins8@gmail.com,Single,"JJ Dossen, Harper, Maryland",,No,,,,,,,,Business Administration 1,Yes,Yes,Business Administration 1
+2969,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41780,Kelvina,M.,Tarwillie,,BBA - Accounting,Female,,1,,LIBERIA,2002-06-07 00:00:00,"Zone 2, Pleebo city, Maryland County, liberia, ",0880854130,Cavinatarwillie@gmail.com,,,,,,,,,,,,Accounting 1,,,Accounting 1
+2970,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41798,Joseph,Siah-Toh,Muhlenburg,Maryland,BSc - Env Sci,Male,CAS,1,2023/2024,LIBERIA,1995-12-29 00:00:00,"Marsh street, Harper City, Maryland County, Liberia, ",0881357718,josephsiahtoh95@gmail.com,Single,Harper,,No,,,,,,,,Environmental Science 1,,,Environmental Science 1
+2971,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41806,David,N.,Wlateh,Maryland,BUSA,Male,CBA,1,2023/2024,LIBERIA,1997-05-15 00:00:00,"Zone 1, Pleebo city, Maryland County, Liberia, ",0770937825,davidnwlatehjr666@gmail.com,Single,"Pleebo, Maryland",,No,,,,,,,,Business Administration 1,Yes,Yes,Business Administration 1
+2972,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41814,Elizabeth,,Chetaryee,,REMEDIAL-MATH,Female,,1,,LIBERIA,1999-12-20 00:00:00,"Middlesex Community, Harper City, Maryland County, Liberia, ",0880576088,,,,,,,,,,,,,,,,
+2973,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41822,Nimeledy,B.,Moses,River Gee,BSN - Nursing,Female,CHS,1,2023/2024,LIBERIA,2000-05-15 00:00:00,Biosh Hall community,0888455071,mosesnimeledy@gmail.com,Single,River Gee,,No,,,,,,,,Nursing 1,Yes,Yes,Nursing 1
+2974,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41830,Abigail,A.,Huskin,Maryland,BSc - Public Health,Female,CHS,2,2023/2024,LIBERIA,1998-09-09 00:00:00,Central Harper,0881129593,abigailhuskin57@gmail.com,Single,Harper,,No,,,,,,,,Public Health 1,Yes,,Public Health 1
+2975,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41848,Sylvester,N.,Stephen,Maryland,BBA - Business Admin,Male,CBA,1,2023/2024,LIBERIA,1999-07-27 00:00:00,"Bishop Hill, Harper City",0888429840,stephensylvestern@gmail.com ,Single,JJ Dossen Memorial Hospital,,No,,,,,,,,Business Administration 1,Yes,Yes,Business Administration 1
+2976,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41855,Veronica,K.,Doe,G. Kru,BUS,Female,CBA,1,2023/2024,LIBERIA,1999-07-27 00:00:00,"Zone #9, Pleebo",0775989151,doeveronicakuarniea@gmail.com,Single,Bigswen,,No,,,,,,,,Business Administration 1,Yes,Yes,Business Administration 1
+2977,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41863,Alvin,,Cisco,,BSc - General Agr,,,1,,LIBERIA,1999-07-27 00:00:00,,,,,,,,,,,,,,,Agriculture 1,,,Agriculture 1
+2978,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41871,Anbrews,B.,Carter,Sinoe,BSc - General Agr,Male,CAFS,1,2023/2024,LIBERIA,1999-09-27 00:00:00,"Marsh Street, Harper",0881844857,Anbrews Carter 11@gmail,Single,J.J. Doseesn Hopspital ,,No,,,,,,,,Agriculture 1,Yes,Yes,Agriculture 1
+2979,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41889,Zayzay,,Kamara,Maryland,BPA - Public Admin,Male,CBA,1,2023/2024,LIBERIA,2002-10-16 00:00:00,"New Harper Community, Harper, Maryland County, Liberia, ",0555239798,zayzayk80@gmail.com,Single,"JJ Dossen, Harper, maryland",,No,,,,,,,,Public Administration 1,Yes,Yes,Public Administration 1
+2980,"duplicate key value violates unique constraint ""people_student_user_id_key""
+DETAIL:  Key (user_id)=(7499) already exists.
+",41897,Jenetvi,T.,Doe,G. Kru,BSc - Biology,Female,CAS,1,2023/2024,LIBERIA,1999-07-27 00:00:00,,0880076368,41897,Single,,,No,,,,,,,,Business Administration 1,Yes,Yes,Business Administration 1
