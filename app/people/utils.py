@@ -325,4 +325,3 @@ def canonicalize_name(raw: str) -> str:
     tokens = [t.lower() for t in (prefix, first, middle, last, suffix) if t]
     # Do not Sort tokens they should already be in order from split_name
     return " ".join(tokens)
-

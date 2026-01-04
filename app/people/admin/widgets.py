@@ -28,6 +28,50 @@ from app.people.utils import (
 from app.shared.utils import get_in_row
 
 
+class UserWidget(widgets.ForeignKeyWidget):
+
+    def __init__(self):
+        self._cache_staff: dict[Hashable, Staff] = {}
+        super().__init__(Staff, field="staff_id")
+
+    def clean(self, value, row=None, *args, **kwargs) -> Staff:
+        """Create or fetch a Staff from a username.
+
+        The widget splits the name, creates the corresponding User if
+        needed.  It return or creates a Staff.
+        """
+        if not value:
+            return Staff.get_unique_default()
+
+        fullname = get_in_row("fullname", row)
+        _n = parse_name(fullname, fallback_last="Staff")
+
+        found_user = Staff.objects._find_by_name(
+            first_name=_n.first, last_name=_n.last, middle_name=_n.middle
+        )
+        if found_user:
+            existing_staff = Staff.objects.filter(user=found_user).first()
+            if existing_staff:
+                return existing_staff
+
+        def _create_staff() -> Staff:
+            staff, _ = Staff.objects.get_or_create(username=value, defaults=_n.to_dict())
+            staff.user.set_password(default_password(_n.first, _n.last))
+            staff.user.save(update_fields=["password"])
+            return cast(Staff, staff)
+
+        staff_obj = cached_entity(self._cache_staff, username, _create_staff)
+        return staff_obj
+
+    def render(self, value, obj=None) -> str:
+        """For the value (staff) for export."""
+        return value.long_name if value else ""  # type: ignore[no-any-return]
+
+    def after_import(self, dataset, result, **kwargs):
+        """Remove any cache which may be present after import."""
+        self._cache_staff = dict()
+
+
 class StaffProfileWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
@@ -46,7 +90,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         _n = parse_name(value, fallback_last="Staff")
         username = get_in_row("username", row)
         if not username:
-            username = Staff.mk_username(_n.first, _n.last)
+            username = Staff.mk_username(_n.first, _n.last, _n.middle)
 
         found_user = Staff.objects._find_by_name(
             first_name=_n.first, last_name=_n.last, middle_name=_n.middle

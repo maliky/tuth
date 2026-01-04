@@ -40,23 +40,18 @@ from app.timetable.utils import (
 class StaffResource(resources.ModelResource):
     """Import staff directory rows and create/update Staff profiles."""
 
-    user = fields.Field(column_name="username", attribute="user")
-    # first_name = fields.Field(column_name="first_name", attribute="user__first_name")
-    # last_name = fields.Field(column_name="last_name", attribute="user__last_name")
-    # middle_name = fields.Field(column_name="middle_name", attribute="middle_name")
-    # name_prefix = fields.Field(column_name="name_prefix", attribute="name_prefix")
-    # name_suffix = fields.Field(column_name="name_suffix", attribute="name_suffix")
+    user = fields.Field(column_name="username", attribute="user", widget=UserWidget())
 
     class Meta:
         model = Staff
         import_id_fields = ("user",)
-        fields = ("user",)
+        fields = ("user", "username")
         skip_unchanged = True
         report_skipped = True
 
     def before_import(self, dataset):
         headers = dataset.headers or []
-        dataset.headers = [FACULTY_HEADER_MAP.get(h, h) for h in headers]
+        dataset.headers = [USER_COLUMN_MAP.get(h, h) for h in headers]
 
     def after_save_instance(self, instance, row, **kwargs):
         """Assign the Staff group to the related user."""

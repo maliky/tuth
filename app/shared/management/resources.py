@@ -20,7 +20,8 @@ from app.timetable.admin.resources.core import SemesterResource
 
 # Unified directory-backed resources (legacy included)
 DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
-    ("Faculty", FacultyResource, ("people_instructors.csv",)),
+    ("Faculty", FacultyResource, ("people_full_faculty.tsv",)),
+    ("Staff", Staff, ("people_full_staff.tsv",)),    
     ("Room", RoomResource, ("space_room.csv",)),
     ("Course", CourseResource, ("academic_course.csv",)),
     (
@@ -39,7 +40,7 @@ DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
     (
         "Student",
         StudentResource,
-        ("people_students.csv",),
+        ("people_full_student.tsv",),
     ),
     (
         "Grade",

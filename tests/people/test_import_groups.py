@@ -74,4 +74,3 @@ def test_faculty_import_assigns_faculty_group(
 
     assert user.groups.filter(name=UserRole.FACULTY.value.label).exists()
     assert user.username == username, f"{user.username}, {username}"
-

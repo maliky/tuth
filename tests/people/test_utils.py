@@ -8,7 +8,8 @@ from app.people.utils import (
     mk_username,
     split_name,
     ensure_unique_usernames,
-    x)
+    x,
+)
 
 
 @pytest.mark.parametrize(
