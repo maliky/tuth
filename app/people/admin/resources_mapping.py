@@ -10,7 +10,7 @@ FACULTY_HEADER_MAP = {
     # "name_suffix": "name_suffix",
     # "username": "username",
 }
-USER_COLUMN_MAP = {
+USER_HEADER_MAP = {
     "UserName": "username",
     "FirstName": "first_name",
     "MiddleName": "middle_name",

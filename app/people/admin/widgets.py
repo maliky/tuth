@@ -258,6 +258,38 @@ class DonorUserWidget(widgets.ForeignKeyWidget):
         return user
 
 
+class StaffUserWidget(widgets.ForeignKeyWidget):
+    """Create or resolve a User from a username."""
+
+    def __init__(self):
+        super().__init__(User)
+        self._cache_user: dict[str, User] = {}
+
+    def clean(self, value, row=None, *args, **kwargs) -> User:
+        """Return or create a User from the donor name."""
+        username = (value or "").strip()
+        if not username:
+            return Staff.get_default().user
+
+        cached = self._cache_user.get(username)
+        if cached:
+            return cached
+
+        fullname = get_in_row("fullname", row)
+        _n = parse_name(fullname, fallback_last="Donor")
+
+        user, created = User.objects.get_or_create(
+            username=username,
+            defaults={"first_name": _n.first, "last_name": _n.last},
+        )
+        if created:
+            user.set_password(mk_password(_n.first, _n.last))
+            user.save(update_fields=["password"])
+
+        self._cache_user[raw_name] = user
+        return user
+
+
 class UserStudentWidget(widgets.ForeignKeyWidget):
     """Import a User from an existing student."""
 
