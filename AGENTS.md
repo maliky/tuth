@@ -59,6 +59,7 @@ Propose consistent naming for git commit but do not commit yourself.
 with black, flake8 and mypy
 - you can run `py_compile`,  `black`, `flake8`, and `mypy` at the end of your edits. 
 
+<<<<<<< HEAD
 ## Codebase style snapshot
 - Favor small functional helpers (`ensure_*`, `normalize_*`, `pipeline`, widgets) and `get_or_create`/`update_or_create` patterns with in-memory caches for imports and admin helpers.
 - Commands lean on `transaction.atomic`, emit progress/stats via `stdout`, and write CSV logs for skipped/invalid rows; docstrings are descriptive and comments with `# >` capture intent/TODOs.
@@ -73,3 +74,9 @@ with black, flake8 and mypy
 - Standardize import logging: consistent CSV paths/messages, counts for skipped/merged rows, and consider structured logs for commands.
 - Debugging: check function/class signatures and expected types/formats early; prefer settings-driven defaults over hardcoded formats.
 - Growing codebase habit: re-read AGENTS.md and related task files regularly to align with evolving patterns and instructions.
+=======
+### Environment notes
+- You may see harmless `pyenv: cannot rehash` warnings in some environments.
+- `rg` (ripgrep) is not always available; fall back to `python`/`grep` when needed.
+- Some sessions can be read-only; if you cannot write files, provide patch instructions instead of applying changes.
+>>>>>>> b1ea91705aba6427c0fbd1d8cd3ea7894aa71745

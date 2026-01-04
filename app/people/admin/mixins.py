@@ -88,7 +88,7 @@ class DuplicatePreviewMixin:
             qs[:50],
             token_fn=self._get_long_name,
             threshold=self.duplicate_threshold,
-            limit=3,
+            top_n=3,
         )
         if not matches:
             return ""

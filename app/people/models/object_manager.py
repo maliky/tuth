@@ -66,7 +66,7 @@ class PersonManager(Manager):
             candidates = self.get_queryset().filter(user__last_name__istartswith=last[:3])
 
         ranked_matches = top_name_matches(
-            base_name, candidates, self._get_long_name, threshold=0.9, limit=2
+            base_name, candidates, self._get_long_name, threshold=0.9, top_n=2
         )
         if not ranked_matches:
             return None

@@ -321,38 +321,8 @@ def mk_password(first: str, last: str) -> str:
 
 def canonicalize_name(raw: str) -> str:
     """Return a canonical username-like representation of a name."""
-    return split_name(raw).to_string()
+    prefix, first, middle, last, suffix = split_name(raw)
+    tokens = [t.lower() for t in (prefix, first, middle, last, suffix) if t]
+    # Do not Sort tokens they should already be in order from split_name
+    return " ".join(tokens)
 
-
-def name_distance(name_a: str, name_b: str, *, prefix_weight: float = 0.1) -> float:
-    """Return a normalized distance (0=identical, 1=different) between two names."""
-    canonical_a = canonicalize_name(name_a)
-    canonical_b = canonicalize_name(name_b)
-    return float(
-        JaroWinkler.normalized_distance(
-            canonical_a, canonical_b, prefix_weight=prefix_weight
-        )
-    )
-
-
-def names_match(name_a: str, name_b: str, *, threshold: float = 0.2, **kwargs) -> bool:
-    """Return True when the distance between two names is within a given threshold."""
-    return name_distance(name_a, name_b, **kwargs) <= threshold
-
-
-def name_similarity_matrix(
-    left_names: Sequence[str],
-    right_names: Sequence[str],
-    *,
-    max_distance: float | None = None,
-    **kwargs,
-) -> list[dict[str, object]]:
-    """Return a list of similarity rows describing pairwise name distances."""
-    matrix: list[dict[str, object]] = []
-    for left in left_names:
-        for right in right_names:
-            dist = name_distance(left, right, **kwargs)
-            if max_distance is not None and dist > max_distance:
-                continue
-            matrix.append({"left": left, "right": right, "distance": dist})
-    return matrix

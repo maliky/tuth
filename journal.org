@@ -1,4 +1,5 @@
 
+<<<<<<< HEAD
 * <2026-01-01 jeu. 09:13> names parts
   Could harden split_name with NameParts
 Make test for NameParts if I have empty parts.
@@ -199,13 +200,216 @@ FAILED tests/people/test_utils.py::test_name_distance_symmetry[Abraham W. Harmon
 FAILED tests/people/test_utils.py::test_name_distance_symmetry[Sylvester Nah-Nah Sylvester-0.0] - AssertionError
 ==================================== 10 failed, 137 passed, 56 xfailed in 49.40s =====================================
 (tusis) mlk@r1d05 ~/Tusis/Tusis_app $
+=======
+* <2025-12-20 Sat 15:25> tests
+in   test_faculty_import_assigns_...
+make sure we use an empty db with no existing faculty or students
+
+(tusis) mlk@r1d05 ~/Tusis/Tusis_app $ pytest tests/people/test_import_groups.py 
+========================================================= test session starts =========================================================
+platform linux -- Python 3.13.7, pytest-7.4.2, pluggy-1.6.0
+django: settings: app.settings (from env)
+rootdir: /home/mlk/Tusis/Tusis_app
+configfile: pyproject.toml
+plugins: hypothesis-6.82.7, bdd-8.1.0, django-4.5.2
+collected 2 items                                                                                                                     
+
+tests/people/test_import_groups.py FF                                                                                           [100%]
+
+============================================================== FAILURES ===============================================================
+______________________________________________ test_student_import_assigns_student_group ______________________________________________
+
+curriculum = <Curriculum: (DEFT) DFT_CUR>, group_factory = <function group_factory.<locals>._make at 0x7f4207cfdc60>
+
+    @pytest.mark.django_db
+    def test_student_import_assigns_student_group(curriculum, group_factory):
+        ds = Dataset()
+        ds.headers = ["student_id", "student_name", "curriculum"]
+    
+        name = "Alice Example"
+        _, first, middle, last, _ = split_name(name)
+    
+        username = Student.mk_username(first, last, middle)
+    
+        ds.append(["ST1", name, curriculum.pk])
+    
+        group_factory(UserRole.STUDENT.value.label)
+    
+        res = StudentResource().import_data(ds, dry_run=False)
+    
+        assert not res.has_errors(), res.row_errors()
+        student = Student.objects.get(student_id="ST1")
+        user = student.user
+    
+        assert user.groups.filter(name=UserRole.STUDENT.value.label).exists()
+>       assert user.username == username, f"{user.username}, {username}"
+E       AssertionError: aliceexample2, aliexample
+
+tests/people/test_import_groups.py:37: AssertionError
+______________________________________________ test_faculty_import_assigns_faculty_group ______________________________________________
+
+college = <College: DEFT>
+
+    @pytest.mark.django_db
+    def test_faculty_import_assigns_faculty_group(college):
+        ds = Dataset()
+        ds.headers = ["faculty"]
+        name = "Bob Teaches"
+        _, first, middle, last, _ = split_name(name)
+        username = mk_username(first, last, middle, prefix_len=2)
+    
+        ds.append([name])
+        res = FacultyResource().import_data(ds, dry_run=False, raise_errors=True)
+        assert not res.has_errors()
+    
+        faculty = Faculty.objects.first()
+        assert faculty is not None
+        user = faculty.staff_profile.user
+        assert user.groups.filter(name=UserRole.FACULTY.value.label).exists()
+>       assert user.username == username, f"{user.username}, {username}"
+E       AssertionError: bobteaches2, boteaches
+
+tests/people/test_import_groups.py:56: AssertionError
+======================================================= short test summary info =======================================================
+FAILED tests/people/test_import_groups.py::test_student_import_assigns_student_group - AssertionError: aliceexample2, aliexample
+FAILED tests/people/test_import_groups.py::test_faculty_import_assigns_faculty_group - AssertionError: bobteaches2, boteaches
+>>>>>>> b1ea91705aba6427c0fbd1d8cd3ea7894aa71745
 
 
-* <2025-12-18 jeu. 21:49> Terms for students
-  Define a rule to set the terms form the studentinfo import
-  something like for oldest for  first TermFirstEntered and newest for TermLastEnrolled
+* <2025-12-20 Sat 11:15> Importing matcher
+
+• I dug through the codebase:
+
+  - app/shared/fuzzy_matching.py defines name_similarity, but it currently calls    sim_name_token, which is commented out—so calling this function will raise a    NameError. It also relies on Python’s difflib.SequenceMatcher for both
+    surname and given-name scoring, with custom weighting/penalties.
+  - app/finance/utils.py doesn’t have any name-similarity logic; it only has
+    tuition helpers. The only other name-matching utilities live in app/shared/
+    importing/username_matching.py (Jaro-Winkler similarity for usernames) and
+    app/people/utils.py (name_distance, now order-insensitive and backed by
+    rapidfuzz Jaro-Winkler).
+
+  Given that, I prefer the Jaro-Winkler-based approach (as in people/utils.py or  shared/importing/username_matching.py) because:
+
+  - It uses a well-tested, fast C-backed implementation (rapidfuzz) instead of
+    Python-level SequenceMatcher.
+  - It produces a normalized distance/similarity, is symmetric, and—after
+    canonicalization/sorting tokens—handles name reordering more gracefully.
+  - It doesn’t depend on a missing helper (sim_name_token), so it won’t throw.
+
+  If you want to improve scalability for ~10k×10k name comparisons (100M pairs),  avoid Python loops and leverage vectorized/compiled distance routines:
+
+  - Use rapidfuzz.distance.JaroWinkler.cdist(left_list, right_list, workers=-1)
+    (or process.cdist) to compute a full similarity matrix in C with
+    multithreading. You can then threshold or keep top-k per row without holding    the full matrix by streaming/chunking.
+  - Pre-canonicalize and lowercase all names once; optionally sort tokens to
+    make comparisons order-insensitive as in people/utils.py.
+  - If 100M pairs is still too large to hold, block on simple keys (e.g., first
+    letter(s) of last name) to reduce candidate sets, then run cdist on each
+    block.
+
+  So: fix shared/fuzzy_matching.name_similarity by reinstating or replacing
+  sim_name_token (or swap to rapidfuzz), and for large-scale matching, use
+  rapidfuzz’s cdist/top-k utilities rather than Python loops.
 
 
+
+** ################
+  app/people/models/object_manager.py:66: error: Unexpected keyword argument
+  "limit" for "top_name_matches"  [call-arg]
+  app/shared/fuzzy_matching.py:54: note: "top_name_matches" defined here
+  app/people/admin/mixins.py:86: error: Unexpected keyword argument "limit" for
+  "top_name_matches"  [call-arg]
+  app/shared/fuzzy_matching.py:54: note: "top_name_matches" defined here
+  tests/people/test_utils.py:6: error: Module "app.people.utils" has no
+  attribute "name_distance"  [attr-defined]
+  tests/people/test_utils.py:6: error: Module "app.people.utils" has no
+  attribute "names_match"  [attr-defined]
+  tests/people/test_utils.py:6: error: Module "app.people.utils" has no
+  attribute "name_similarity_matrix"  [attr-defined]
+  Found 5 errors in 3 files (checked 256 source files)
+  (tusis) mlk@r1d05 ~/Tusis/Tusis_app $
+  ::: and update agents.md to help other agent work in our environment
+  
+
+*** proposed work
+I can’t apply the fixes directly because the filesystem is read-only, but here
+  are the exact changes to clear the mypy errors and add the requested guidance:
+
+  1) Allow limit in top_name_matches
+
+  - File: app/shared/fuzzy_matching.py
+  - Update the signature and slicing:
+
+  def top_name_matches(
+      base: str,
+      candidates: Iterable[_T],
+      token_fn: Callable[[_T], str] = identity,
+      threshold: float = 0.9,
+      top_n: int = 3,
+      limit: int | None = None,
+  ) -> list[tuple[_T, float]]:
+      ...
+      scored.sort(key=lambda t: t[1], reverse=True)
+      n = top_n if limit is None else limit
+      return scored[:n]
+
+  (best_name_match can stay as-is; it already passes top_n=1.)
+
+  2) Restore name-matching helpers in app/people/utils.py
+  Add these near the bottom (after canonicalize_name or grouped with the other
+  helpers):
+
+  def name_distance(name_a: str, name_b: str, *, prefix_weight: float = 0.1) ->
+  float:
+      """Return a normalized distance (0=identical, 1=different) between two
+  names."""
+      canonical_a = canonicalize_name(name_a)
+      canonical_b = canonicalize_name(name_b)
+      return float(
+          JaroWinkler.normalized_distance(
+              canonical_a, canonical_b, prefix_weight=prefix_weight
+          )
+      )
+
+
+  def names_match(name_a: str, name_b: str, *, threshold: float = 0.2, **kwargs)
+  -> bool:
+      """Return True when the distance between two names is within a given
+  threshold."""
+      return name_distance(name_a, name_b, **kwargs) <= threshold
+
+
+  def name_similarity_matrix(
+      left_names: Sequence[str],
+      right_names: Sequence[str],
+      *,
+      max_distance: float | None = None,
+      **kwargs,
+  ) -> list[dict[str, object]]:
+      """Return a list of similarity rows describing pairwise name distances."""
+      matrix: list[dict[str, object]] = []
+      for left in left_names:
+          for right in right_names:
+              dist = name_distance(left, right, **kwargs)
+              if max_distance is not None and dist > max_distance:
+                  continue
+              matrix.append({"left": left, "right": right, "distance": dist})
+      return matrix
+
+  3) Update AGENTS.md to help other agents
+  Add a short note such as:
+
+  - “You’ll see pyenv: cannot rehash warnings in this environment; they are
+    harmless.”
+  - “rg may be unavailable; fall back to python/grep.”
+  - “Filesystem may be read-only in some sessions; be prepared to provide patch
+    instructions instead of applying changes.”
+
+  After applying these, rerun mypy and the errors should disappear. Let me know
+  if you want me to apply the patches once write access is available.
+
+
+›    
 * <2025-12-18 jeu. 21:49> Terms for students
   Define a rule to set the terms form the studentinfo import
   something like for oldest for  first TermFirstEntered and newest for TermLastEnrolled
@@ -220,9 +424,13 @@ Row 3 failed: An error occurred in the current transaction. You can't execute qu
 Row 4 failed: An error occurred in the current transaction. You can't execute queries until the end of the 'atomic' block.
 Row 5 failed: An error occurred in the current transaction. You can't execute queries until the end of the 'atomic' block.
 CommandError: LegacyRegistration import failed with 8735 errors and 0 invalid rows.
+<<<<<<< HEAD
 (tusis) mlk@r1d05 ~/Tusis/Tusis_app $
 >>>>>>> 20512edc7d3e82d76f0aeae7606209d01d66366f
 
+=======
+(tusis) mlk@r1d05 ~/Tusis/Tusis_app $ 
+>>>>>>> b1ea91705aba6427c0fbd1d8cd3ea7894aa71745
 * <2025-12-17 mer. 17:53>  fuzzy matching for curriculums
 ** You did well but a few observation
 - do not abuse of .strip()  I take care of cleaning the data before reaching this deep in the code.
