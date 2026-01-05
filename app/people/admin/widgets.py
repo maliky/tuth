@@ -8,7 +8,7 @@ Usage::
     >>> print(staff.long_name)
 """
 
-from typing import Any, Hashable, cast
+from typing import Any, Hashable, Optional, cast
 
 from django.contrib.auth.models import User
 from import_export import widgets
@@ -22,7 +22,6 @@ from app.people.models.student import Student
 from app.people.utils import (
     cached_entity,
     create_person_factory,
-    default_password,
     mk_password,
     parse_name,
     get_name_parts,
@@ -37,7 +36,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         # super().__init__(Staff, field="staff_id")
         super().__init__(Staff)
 
-    def clean(self, value, row=None, *args, **kwargs) -> Staff:
+    def clean(self, value, row=None, *args, **kwargs) -> Optional[Staff]:
         """Create or fetch a Staff from a username.
 
         The widget get the staff from the username.
@@ -46,13 +45,13 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         username = (value or "").strip()
 
         if not username:
-            return Staff.get_unique_default()
+            return None #Staff.get_unique_default()
 
         _d, _, _ = get_name_parts(row)
 
         # def _create_staff() -> Staff:
         #     staff, _ = Staff.objects.get_or_create(username=username, defaults=_d)
-        #     staff.user.set_password(default_password(_first, _last))
+        #     staff.user.set_password(mk_password(_first, _last))
         #     staff.user.save(update_fields=["password"])
         #     return cast(Staff, staff)
         _create_staff = create_person_factory(username, Staff, _d, lambda s: s.user)
@@ -68,8 +67,47 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         self._cache_staff = dict()
 
 
+class UserWidget(widgets.ForeignKeyWidget):
+    """Create or resolve a User from a username."""
+
+    def __init__(self):
+        super().__init__(User)
+        self._cache_user: dict[Hashable, User] = {}
+
+    def clean(self, value, row=None, *args, **kwargs) -> Optional[User]:
+        """Return or create a User from the donor name."""
+        username = (value or "").strip()
+
+        if not username:
+            return None
+
+        cached = self._cache_user.get(username)
+        if cached:
+            return cached
+
+        _d, _first, _last = get_name_parts(row)
+
+        def _create_user() -> User:
+            user, created = User.objects.get_or_create(
+                username=username,
+                defaults={"first_name": _first, "last_name": _last},
+            )
+            if created:
+                user.set_password(mk_password(_first, _last))
+                user.save(update_fields=["password"])
+            return cast(User, user)
+
+        user_obj = cached_entity(self._cache_user, username, _create_user)
+
+        return user_obj
+
+    def after_import(self, dataset, result, **kwargs):
+        """Remove any cache which may be present after import."""
+        self.cache_user = dict()
+
+
 class FacultyWidget(widgets.ForeignKeyWidget):
-    """Ensure a Faculty entry exists for the given staff name."""
+    """Ensure a Faculty entry exists for the given username."""
 
     def __init__(self):
         # field is "id" by default
@@ -77,10 +115,9 @@ class FacultyWidget(widgets.ForeignKeyWidget):
         super().__init__(Faculty)
 
     def clean(self, value: str, row=None, *args, **kwargs) -> Faculty:
-        """From the faculty name, tries to get a faculty object.
+        """From the username, tries to get a faculty object.
 
-        Create user and staff if necessary.
-        if value is '<unique>' create a default unique faculty
+        Create user and faculty if necessary.
         """
         username = (value or "").strip()
 
@@ -91,7 +128,7 @@ class FacultyWidget(widgets.ForeignKeyWidget):
 
         # def _create_faculty() -> Faculty:
         #     faculty, _ = Faculty.objects.get_or_create(username=username, defaults=_d)
-        #     faculty.staff_profile.user.set_password(default_password(_f, _l))
+        #     faculty.staff_profile.user.set_password(mk_password(_f, _l))
         #     faculty.staff_profile.user.save(update_fields=["password"])
 
         #     return cast(Faculty, faculty)
@@ -112,7 +149,6 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
         # field is "id" by default
-        super().__init__(User)
         self._cache_student: dict[Hashable, Student] = {}
         super().__init__(Student)
 
@@ -124,21 +160,26 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         and create uniq username.
         """
         username = (value or "").strip()
-        stdid = row.get("student_id")
-        if not username or not stdid:
+        _stdid = row.get("student_id")
+        
+        if not username or not _stdid:
             return None
 
-        _d, _, _ = get_name_parts(row)
+        _d, _first, _last = get_name_parts(row)
 
-        # def _create_student() -> Student:
-        #     student, _ = Student.objects.get_or_create(
-        #         username=username,
-        #         defaults=_d,
-        #     )
-        #     student.user.set_password(default_password(_d["first"], _d["last"]))
-        #     student.user.save(update_fields=["password"])
-        #     return cast(Student, student)
-        _create_student = create_person_factory(username, Student, _d, lambda s: s.user)
+        def _create_student() -> Student:
+            student, _created = Student.objects.get_or_create(
+                username=username,
+                student_id=_stdid,
+                defaults=_d,
+            )
+            if _created:
+                student.user.set_password(mk_password(_first, _last))
+                student.user.save(update_fields=["password"])
+                
+            return cast(Student, student)
+
+        # _create_student = create_person_factory(username, Student, _d, lambda s: s.user)
 
         student_obj = cached_entity(self._cache_student, username, _create_student)
         return student_obj
@@ -188,7 +229,7 @@ class GradeStudentWidget(widgets.ForeignKeyWidget):
         )
 
         username = Student.mk_username(_n.first, _n.last)
-        password = default_password(_n.first, _n.last)
+        password = mk_password(_n.first, _n.last)
         user = User.objects.create_user(
             username=username,
             first_name=_n.first,
@@ -238,39 +279,6 @@ class DonorUserWidget(widgets.ForeignKeyWidget):
         return user
 
 
-class StaffUserWidget(widgets.ForeignKeyWidget):
-    """Create or resolve a User from a username."""
-
-    def __init__(self):
-        super().__init__(User)
-        self._cache_user: dict[str, User] = {}
-
-    def clean(self, value, row=None, *args, **kwargs) -> User:
-        """Return or create a User from the donor name."""
-        username = (value or "").strip()
-        if not username:
-            return Staff.get_default().user
-
-        cached = self._cache_user.get(username)
-        if cached:
-            return cached
-
-        _d, _first, _last = get_name_parts(row)
-        # fullname = get_in_row("fullname", row)
-        # _n = parse_name(fullname, fallback_last="Donor")
-
-        user, created = User.objects.get_or_create(
-            username=username,
-            defaults={"first_name": _first, "last_name": _last},
-        )
-        if created:
-            user.set_password(mk_password(_first, _last))
-            user.save(update_fields=["password"])
-
-        self._cache_user[username] = user
-        return user
-
-
 class UserStudentWidget(widgets.ForeignKeyWidget):
     """Import a User from an existing student."""
 
@@ -304,7 +312,7 @@ class UserStudentWidget(widgets.ForeignKeyWidget):
             user, _ = User.objects.get_or_create(
                 username=username, defaults={"first_name": _n.first, "last_name": _n.last}
             )
-            user.set_password(default_password(_n.first, _n.last))
+            user.set_password(mk_password(_n.first, _n.last))
             user.save(update_fields=["password"])
 
             self._cache_user[stdid] = user

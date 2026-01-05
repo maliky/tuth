@@ -17,10 +17,10 @@ from app.people.admin.resources_mapping import (
 )
 from app.people.admin.widgets import (
     DonorUserWidget,
-    StaffUserWidget,
     StaffProfileWidget,
     StudentUserWidget,
     UserStudentWidget,
+    UserWidget,
 )
 from app.people.models.donor import Donor
 from app.people.models.faculty import Faculty
@@ -46,22 +46,15 @@ from app.timetable.utils import (
 class StaffResource(resources.ModelResource):
     """Import staff directory rows and create/update Staff profiles."""
 
-    user = fields.Field(
-        column_name="username",
-        attribute="user",
-        widget=StaffUserWidget(),
-    )
+    user = fields.Field(column_name="username", attribute="user", widget=UserWidget())
 
     class Meta:
         model = Staff
-        import_id_fields = ("username",)
-        fields = ("user", "username", "middle_name", "prefix_name", "suffix_name")
+        import_id_fields = ("user",)
+        fields = ("user", "middle_name", "prefix_name", "suffix_name")
         skip_unchanged = True
-        report_skipped = True
+        report_skipped = False
 
-    def before_import(self, dataset):
-        headers = dataset.headers or []
-        dataset.headers = [USER_HEADER_MAP.get(h, h) for h in headers]
 
     def after_save_instance(self, instance, row, **kwargs):
         """Assign the Staff group to the related user."""
@@ -92,9 +85,9 @@ class FacultyResource(resources.ModelResource):
     class Meta:
         model = Faculty
         import_id_fields = ("staff_profile",)
-        fields = ("staff_profile", "username")
+        fields = ("staff_profile", "middle_name", "prefix_name", "suffix_name")
         skip_unchanged = True
-        report_skipped = True
+        report_skipped = False
         use_bulk = False
 
     def before_import(self, dataset):
@@ -113,51 +106,12 @@ class FacultyResource(resources.ModelResource):
         return super().after_save_instance(instance, row, **kwargs)
 
 
-class StudentInfoTermWidget(Widget):
-    """Parse StudentInfo term strings (e.g. '2022/2023, 2nd Semes')."""
-
-    term_pattern = re.compile(
-        r"(?P<start>\d{4})/(?P<end>\d{4}),\s*(?P<label>[A-Za-z0-9\s/]+)", re.IGNORECASE
-    )
-
-    def __init__(self, fallback_column: str | None = None) -> None:
-        super().__init__()
-        self.legacy_widget = SemesterCodeWidget()
-
-    def clean(self, value, row=None, *args, **kwargs):
-        if not value:
-            return None
-
-        _match = self.term_pattern.match(value.strip())
-        if not _match:
-            return None
-
-        label = _match.group("label").lower()
-
-        if "1st" in label or "first" in label:
-            sem_no = 1
-        elif "2nd" in label or "second" in label:
-            sem_no = 2
-        elif "vac" in label:
-            sem_no = 3
-        else:
-            return None
-
-        code = f"{_match.group('start')[-2:]}-{_match.group('end')[-2:]}"
-        academic_year = ensure_academic_year_code(code)
-        semester, _ = Semester.objects.get_or_create(
-            academic_year=academic_year,
-            number=sem_no,
-        )
-        return semester
-
-
 class StudentResource(resources.ModelResource):
     """Resource for importing Student objects from different csv files."""
 
     # Columns needs to be created on the fly
     user = fields.Field(
-        column_name="fullname", attribute="user", widget=StudentUserWidget()
+        column_name="username", attribute="user", widget=UserWidget()
     )
     # to be taken from gp table StudentInfo
     curriculum = fields.Field(
@@ -169,7 +123,7 @@ class StudentResource(resources.ModelResource):
         column_name="birth_date", attribute="birth_date", widget=DateTimeWidget()
     )
     entry_semester = fields.Field(
-        column_name="entry_semester",
+        column_name="entry_semester_no",
         attribute="entry_semester",
         widget=SemesterCodeWidget(),
     )
@@ -221,22 +175,22 @@ class StudentResource(resources.ModelResource):
 
     def before_import_row(self, row, **kwargs):
         """Inject derived columns to capture StudentInfo data."""
-        student_name = get_in_row("student_name", row)
+        # student_name = get_in_row("student_name", row)
 
         # Synthesize student_name when source data provides split columns
-        if not student_name:
-            first = get_in_row("first_name", row)
-            middle = get_in_row("middle_name", row)
-            last = get_in_row("last_name", row)
-            row["student_name"] = parse_name(f"{first} {middle} {last}").to_string()
+        # if not student_name:
+        #     first = get_in_row("first_name", row)
+        #     middle = get_in_row("middle_name", row)
+        #     last = get_in_row("last_name", row)
+        #     row["student_name"] = parse_name(f"{first} {middle} {last}").to_string()
 
         # > I should not allow creation of new major or curriculum
         # > If a row does not fit because of the major or curriculum, I should log it
         # > and create manual (eventulay the major or curriculum)
         # > I should also do a fuzzy search for a matching curriculum
-        curri_value = get_in_row("curriculum_short_name", row)
-        if len(curri_value) > 40:
-            row["curriculum_short_name"] = curri_value[:40]
+        # curri_value = get_in_row("curriculum_short_name", row)
+        # if len(curri_value) > 40:
+        #     row["curriculum_short_name"] = curri_value[:40]
 
         _g = get_in_row("gender", row).lower()
         row["gender"] = GENDER_MAP.get(_g, _g)
@@ -293,15 +247,7 @@ class StudentResource(resources.ModelResource):
 class DonorResource(resources.ModelResource):
     """Import donors from a simple list of names."""
 
-    user = fields.Field(
-        attribute="user",
-        column_name="donors",
-        widget=DonorUserWidget(),
-    )
-    bio = fields.Field(
-        attribute="bio",
-        column_name="bio",
-    )
+    user = fields.Field(column_name="donors", attribute="user", widget=UserWidget())
 
     class Meta:
         model = Donor

@@ -118,11 +118,6 @@ class NameParts:
         return (self.prefix, self.first, self.middle, self.last, self.suffix)
 
 
-def default_password(first: str, last: str) -> str:
-    """Return the canonical password used when creating new profiles."""
-    return mk_password(first, last)
-
-
 def cached_entity(
     cache: Dict[Hashable, Entity],
     key: Hashable,
@@ -390,11 +385,16 @@ def create_person_factory(
     """Return a new Person."""
 
     def f() -> PersonT:
+
         manager = cast(BaseManager[PersonT], model._default_manager)
         pers, _created = manager.get_or_create(username=username, defaults=_d)
+
         user = user_getter(pers)
-        user.set_password(default_password(_d["first_name"], _d["last_name"]))
-        user.save(update_fields=["password"])
+        if _created:
+            _pwd = mk_password(_d["first_name"], _d["last_name"])
+            user.set_password(_pwd)
+            user.save(update_fields=["password"])
+
         return pers
 
     return f
