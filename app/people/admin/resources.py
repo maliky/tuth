@@ -113,45 +113,6 @@ class FacultyResource(resources.ModelResource):
         return super().after_save_instance(instance, row, **kwargs)
 
 
-class StudentInfoTermWidget(Widget):
-    """Parse StudentInfo term strings (e.g. '2022/2023, 2nd Semes')."""
-
-    term_pattern = re.compile(
-        r"(?P<start>\d{4})/(?P<end>\d{4}),\s*(?P<label>[A-Za-z0-9\s/]+)", re.IGNORECASE
-    )
-
-    def __init__(self, fallback_column: str | None = None) -> None:
-        super().__init__()
-        self.legacy_widget = SemesterCodeWidget()
-
-    def clean(self, value, row=None, *args, **kwargs):
-        if not value:
-            return None
-
-        _match = self.term_pattern.match(value.strip())
-        if not _match:
-            return None
-
-        label = _match.group("label").lower()
-
-        if "1st" in label or "first" in label:
-            sem_no = 1
-        elif "2nd" in label or "second" in label:
-            sem_no = 2
-        elif "vac" in label:
-            sem_no = 3
-        else:
-            return None
-
-        code = f"{_match.group('start')[-2:]}-{_match.group('end')[-2:]}"
-        academic_year = ensure_academic_year_code(code)
-        semester, _ = Semester.objects.get_or_create(
-            academic_year=academic_year,
-            number=sem_no,
-        )
-        return semester
-
-
 class StudentResource(resources.ModelResource):
     """Resource for importing Student objects from different csv files."""
 
@@ -212,7 +173,7 @@ class StudentResource(resources.ModelResource):
             "username",
         )
         skip_unchanged = True
-        report_skipped = False
+        report_skipped = True
         use_bulk = False
 
     def before_import(self, dataset):
@@ -293,22 +254,15 @@ class StudentResource(resources.ModelResource):
 class DonorResource(resources.ModelResource):
     """Import donors from a simple list of names."""
 
-    user = fields.Field(
-        attribute="user",
-        column_name="donors",
-        widget=DonorUserWidget(),
-    )
-    bio = fields.Field(
-        attribute="bio",
-        column_name="bio",
-    )
+    user = fields.Field(column_name="donors", attribute="user", widget=DonorUserWidget())
+    bio = fields.Field(column_name="bio", attribute="bio")
 
     class Meta:
         model = Donor
         import_id_fields = ("user",)
         fields = ("user", "bio")
         skip_unchanged = True
-        report_skipped = False
+        report_skipped = True
 
     def before_import_row(self, row, **kwargs):
         """Keep the original donor column content for auditing."""
