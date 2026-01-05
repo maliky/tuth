@@ -221,7 +221,7 @@ class StudentResource(resources.ModelResource):
             row["last_enrolled_semester"] = last_sem_val
 
         bio_keys = [(k, v) for k, v in STUDENT_HEADER_MAP.items() if "bio_" in v]
-        bio_info = {v: row.get(k) for (k, v) in bio_keys if row.get(k, None) is None}
+        bio_info = {v: row.get(k) for (k, v) in bio_keys if row.get(k, None) is not None}
         row["bio"] = json.dumps(bio_info)
 
         return super().before_import_row(row, **kwargs)
