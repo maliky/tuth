@@ -183,6 +183,7 @@ class StudentResource(resources.ModelResource):
         model = Student
         import_id_fields = ("student_id",)
         fields = (
+            "user",
             "bio",
             "birth_date",
             "birth_place",

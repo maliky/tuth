@@ -39,7 +39,10 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractBaseUser
 from django.core.exceptions import ValidationError
 from django.db.models import Model
+from django.db.models.manager import BaseManager
 from rapidfuzz.distance import JaroWinkler
+
+from app.shared.utils import get_in_row
 
 User = get_user_model()
 Entity = TypeVar("Entity")
@@ -369,7 +372,7 @@ def name_similarity_matrix(
     return matrix
 
 
-def get_name_parts(row) -> Tuple[Dict[str, str], str, str]:
+def get_name_parts(row) -> Tuple[Dict[str, Any], str, str]:
     """Return a dicts with name parts extracted from row + first and last."""
     _d = {
         f"{k}_name": get_in_row(f"{k}_name", row)
@@ -383,14 +386,15 @@ def create_person_factory(
     model: type[PersonT],
     _d: dict[str, Any],
     user_getter: Callable[[PersonT], AbstractBaseUser],
-) -> Callable[None, PersonT]:
+) -> Callable[[], PersonT]:
     """Return a new Person."""
 
     def f() -> PersonT:
-        pers, _created = model.objects.get_or_create(username=username, defaults=_d)
+        manager = cast(BaseManager[PersonT], model._default_manager)
+        pers, _created = manager.get_or_create(username=username, defaults=_d)
         user = user_getter(pers)
         user.set_password(default_password(_d["first_name"], _d["last_name"]))
         user.save(update_fields=["password"])
-        return cast(PersonT, pers)
+        return pers
 
     return f
