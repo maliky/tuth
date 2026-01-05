@@ -23,13 +23,27 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, Hashable, Optional, Sequence, TypeVar, Tuple
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Hashable,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+    cast,
+)
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractBaseUser
 from django.core.exceptions import ValidationError
+from django.db.models import Model
 from rapidfuzz.distance import JaroWinkler
 
 User = get_user_model()
+Entity = TypeVar("Entity")
+PersonT = TypeVar("PersonT", bound=Model)
 
 
 SUFFIX_PATTERNS = [
@@ -80,9 +94,9 @@ class NameParts:
         return {
             "first_name": self.first,
             "last_name": self.last,
-            "name_prefix": self.prefix,
+            "prefix_name": self.prefix,
             "middle_name": self.middle,
-            "name_suffix": self.suffix,
+            "suffix_name": self.suffix,
         }
 
     def to_string(self) -> str:
@@ -104,9 +118,6 @@ class NameParts:
 def default_password(first: str, last: str) -> str:
     """Return the canonical password used when creating new profiles."""
     return mk_password(first, last)
-
-
-Entity = TypeVar("Entity")
 
 
 def cached_entity(
@@ -135,11 +146,11 @@ def extract_suffix(raw_name: str) -> tuple[str, str]:
 def extract_prefix(raw_name: str) -> tuple[str, str]:
     """Extracts the prefix of a name."""
     m = re.search(PREFIX_PATTERN, raw_name)
-    name_prefix = ""
+    prefix_name = ""
     if m:
-        name_prefix = m.group(0).replace(".", "").strip()
+        prefix_name = m.group(0).replace(".", "").strip()
         raw_name = re.sub(PREFIX_PATTERN, "", raw_name).strip()
-    return name_prefix, raw_name
+    return prefix_name, raw_name
 
 
 def inverse_if_comma(raw_name: str) -> str:
@@ -212,8 +223,8 @@ def parse_name(
 
 def split_name(name: str) -> NameParts:
     """Splits a raw_name in prefix, first, middle, last, suffix."""
-    name_suffix, raw_name = extract_suffix(name)
-    name_prefix, raw_name = extract_prefix(raw_name)
+    suffix_name, raw_name = extract_suffix(name)
+    prefix_name, raw_name = extract_prefix(raw_name)
     first_name, last_name, middle_name = extract_firstnlast(raw_name)
     first_name, middle_name, last_name = [
         n.replace(".", "").strip() for n in [first_name, middle_name, last_name]
@@ -221,8 +232,8 @@ def split_name(name: str) -> NameParts:
     first, middle, last_name = [
         re.sub(INITIAL_PATTERN, r"\1.", n) for n in [first_name, middle_name, last_name]
     ]
-    prefix = re.sub(PREFIX_PATTERN, r"\1.", name_prefix)
-    last, suffix = handle_numbered_name_suffix(last_name, name_suffix)
+    prefix = re.sub(PREFIX_PATTERN, r"\1.", prefix_name)
+    last, suffix = handle_numbered_name_suffix(last_name, suffix_name)
     return NameParts(prefix=prefix, first=first, middle=middle, last=last, suffix=suffix)
 
 
@@ -356,3 +367,30 @@ def name_similarity_matrix(
                 continue
             matrix.append({"left": left, "right": right, "distance": dist})
     return matrix
+
+
+def get_name_parts(row) -> Tuple[Dict[str, str], str, str]:
+    """Return a dicts with name parts extracted from row + first and last."""
+    _d = {
+        f"{k}_name": get_in_row(f"{k}_name", row)
+        for k in ("prefix", "first", "middle", "last", "suffix")
+    }
+    return _d, _d["first_name"], _d["last_name"]
+
+
+def create_person_factory(
+    username: str,
+    model: type[PersonT],
+    _d: dict[str, Any],
+    user_getter: Callable[[PersonT], AbstractBaseUser],
+) -> Callable[None, PersonT]:
+    """Return a new Person."""
+
+    def f() -> PersonT:
+        pers, _created = model.objects.get_or_create(username=username, defaults=_d)
+        user = user_getter(pers)
+        user.set_password(default_password(_d["first_name"], _d["last_name"]))
+        user.save(update_fields=["password"])
+        return cast(PersonT, pers)
+
+    return f

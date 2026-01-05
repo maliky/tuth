@@ -19,8 +19,8 @@ class PersonFormMixin(forms.ModelForm):
 
     STANDARD_USER_FIELDS = (
         "middle_name",
-        "name_prefix",
-        "name_suffix",
+        "prefix_name",
+        "suffix_name",
         "phone_number",
         "physical_address",
         "birth_date",

@@ -56,8 +56,8 @@ class AbstractPerson(models.Model):
     # ~~~~~~~~ Optional ~~~~~~~~
     # # need to define a list of choice well structured
     middle_name = models.CharField(blank=True)
-    name_prefix = models.CharField(help_text="eg. 'Miss.'", blank=True)
-    name_suffix = models.CharField(help_text="eg. 'Phd.'", blank=True)
+    prefix_name = models.CharField(help_text="eg. 'Miss.'", blank=True)
+    suffix_name = models.CharField(help_text="eg. 'Phd.'", blank=True)
     birth_date = models.DateField(_("date of birth"), null=True, blank=True)
     birth_place = models.CharField(blank=True)
     gender = models.CharField(choices=[("f", "Female"), ("m", "Male")], blank=True)
@@ -68,9 +68,6 @@ class AbstractPerson(models.Model):
     )
 
     # --- misc ---
-    # > Why do I have father adress for an Abstract Person ? already covered by student
-    # father_address = models.CharField(blank=True)
-    # father_name = models.CharField(blank=True)
     nationality = models.CharField(blank=True)
     origin_county = models.CharField(help_text="eg. Maryland, Nigeria", blank=True)
     bio = models.TextField(blank=True)
@@ -115,11 +112,11 @@ class AbstractPerson(models.Model):
         """Update the long name."""
         self.long_name = " ".join(
             [
-                self.name_prefix,
+                self.prefix_name,
                 self.user.first_name,
                 self.middle_name,
                 self.user.last_name,
-                self.name_suffix,
+                self.suffix_name,
             ]
         ).strip()
 

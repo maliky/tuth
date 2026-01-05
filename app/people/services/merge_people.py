@@ -122,8 +122,8 @@ def merge_people(target: PersonType, source: PersonType) -> PersonType:
         ]
         _copy_if_missing(target, source, student_fields)
         target.middle_name = target.middle_name or source.middle_name
-        target.name_prefix = target.name_prefix or source.name_prefix
-        target.name_suffix = target.name_suffix or source.name_suffix
+        target.prefix_name = target.prefix_name or source.prefix_name
+        target.suffix_name = target.suffix_name or source.suffix_name
 
     # Append a merge note in bio to keep traceability
     merge_note = f"[merged from {source.pk}/{getattr(source, 'obj_id', '')}]"

@@ -1,4 +1,37 @@
 
+* create a factory to generate these function
+        def _create_faculty() -> Faculty:
+            faculty, _ = Faculty.objects.get_or_create(username=username, defaults=_d)
+            _pwd = default_password(_d["first_name"], _d["last_name"])
+            faculty.staff_profile.user.set_password(_pwd)
+            faculty.staff_profile.user.save(update_fields=["password"])
+
+            return cast(Faculty, faculty)
+
+        def _create_student() -> Student:
+            student, _ = Student.objects.get_or_create(
+                username=username, defaults=_d,
+            )
+            student.user.set_password(default_password(_d['first'], _d['last']))
+            student.user.save(update_fields=["password"])
+            return cast(Student, student)
+        def _create_staff() -> Staff:
+            staff, _ = Staff.objects.get_or_create(username=username, defaults=_d)
+            staff.user.set_password(default_password(_first, _last))
+            staff.user.save(update_fields=["password"])
+            return cast(Staff, staff)
+
+        def _create_person(username, Person, _d, user_getter) -> PersonT:
+            pers, _ = Person.objects.get_or_create(username=username, defaults=_d)
+            _user = user_getter(pers)
+            _user.set_password(default_password(_d['first'], _d['last']))
+            _user.save(update_fields=["password"])
+            return cast(Person, pers)
+            
+  
+
+* <2026-01-05 lun. 09:51> UI
+- The bio field does not show in faculty
 
 * <2026-01-05 lun. 07:33>  Runing a sql cmd
 docker-compose -f docker-compose-preprod.yml exec -T db psql -U tusis_preprod -d tusis_preprod -c "SELECT version();"

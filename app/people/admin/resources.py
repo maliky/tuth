@@ -19,6 +19,7 @@ from app.people.admin.widgets import (
     DonorUserWidget,
     StaffUserWidget,
     StaffProfileWidget,
+    StudentUserWidget,
     UserStudentWidget,
 )
 from app.people.models.donor import Donor
@@ -39,6 +40,9 @@ from app.timetable.utils import (
 )
 
 
+# > widgets : columns name first (from the resource) and then the model field/attribute
+
+
 class StaffResource(resources.ModelResource):
     """Import staff directory rows and create/update Staff profiles."""
 
@@ -50,8 +54,8 @@ class StaffResource(resources.ModelResource):
 
     class Meta:
         model = Staff
-        import_id_fields = ('username',)
-        fields = ("user",'username')
+        import_id_fields = ("username",)
+        fields = ("user", "username", "middle_name", "prefix_name", "suffix_name")
         skip_unchanged = True
         report_skipped = True
 
@@ -88,7 +92,7 @@ class FacultyResource(resources.ModelResource):
     class Meta:
         model = Faculty
         import_id_fields = ("staff_profile",)
-        fields = ("staff_profile","username")
+        fields = ("staff_profile", "username")
         skip_unchanged = True
         report_skipped = True
         use_bulk = False
@@ -153,25 +157,25 @@ class StudentResource(resources.ModelResource):
 
     # Columns needs to be created on the fly
     user = fields.Field(
-        attribute="user", column_name="fullname", widget=UserStudentWidget()
+        column_name="fullname", attribute="user", widget=StudentUserWidget()
     )
     # to be taken from gp table StudentInfo
     curriculum = fields.Field(
-        attribute="curriculum",
         column_name="curriculum_short_name",
+        attribute="curriculum",
         widget=CurriculumWidget(),
     )
     birth_date = fields.Field(
-        attribute="birth_date", column_name="birth_date", widget=DateTimeWidget()
+        column_name="birth_date", attribute="birth_date", widget=DateTimeWidget()
     )
     entry_semester = fields.Field(
-        attribute="entry_semester",
         column_name="entry_semester",
+        attribute="entry_semester",
         widget=SemesterCodeWidget(),
     )
     last_enrolled_semester = fields.Field(
-        attribute="last_enrolled_semester",
         column_name="last_enrolled_semester",
+        attribute="last_enrolled_semester",
         widget=SemesterCodeWidget(),
     )
 
@@ -179,28 +183,32 @@ class StudentResource(resources.ModelResource):
         model = Student
         import_id_fields = ("student_id",)
         fields = (
-            "fullname",
             "bio",
             "birth_date",
             "birth_place",
-            "curriculum",  # ->
+            "curriculum",
             "emergency_contact",
-            "entry_semester",  # ->
+            "entry_semester",
             "father_address",
             "father_name",
+            "first_name",
             "gender",
             "last_enrolled_semester",
+            "last_name",
             "last_school_attended",
             "marital_status",
+            "middle_name",
             "mother_address",
             "mother_name",
             "nationality",
             "origin_county",
-            "phone_number",
+            "personal_email",
+            "phone_no",
             "physical_address",
-            "reason_for_leaving",
-            "student_id",  #
-            "user",  # ->
+            "prefix_name",
+            "student_id",
+            "suffix_name",
+            "username",
         )
         skip_unchanged = True
         report_skipped = False

@@ -37,7 +37,7 @@ def test_student_import_assigns_student_group(curriculum, group_factory):
 
 
 @pytest.mark.parametrize(
-    "staff_profile,name_prefix,first_n,middle_n,last_n,name_suffix,username",
+    "staff_profile,prefix_name,first_n,middle_n,last_n,suffix_name,username",
     [
         ("Gandyu A S", "", "A.", "S.", "Gandyu", "", "agandyu"),
         ("A. Molubah", "", "A.", "", "Molubah", "", "amolubah"),
@@ -47,21 +47,21 @@ def test_student_import_assigns_student_group(curriculum, group_factory):
 )
 @pytest.mark.django_db
 def test_faculty_import_assigns_faculty_group(
-    staff_profile, name_prefix, first_n, middle_n, last_n, name_suffix, username
+    staff_profile, prefix_name, first_n, middle_n, last_n, suffix_name, username
 ):
     # FacultyResource expects instructor-style columns; align the fixture accordingly.
     ds = Dataset()
     ds.headers = [
         "staff_profile",
-        "name_prefix",
+        "prefix_name",
         "first_n",
         "middle_n",
         "last_n",
-        "name_suffix",
+        "suffix_name",
         "username",
     ]
     ds.append(
-        [staff_profile, name_prefix, first_n, middle_n, last_n, name_suffix, username]
+        [staff_profile, prefix_name, first_n, middle_n, last_n, suffix_name, username]
     )
 
     res = FacultyResource().import_data(ds, dry_run=False, raise_errors=True)

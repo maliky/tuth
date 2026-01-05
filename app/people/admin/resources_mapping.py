@@ -6,8 +6,8 @@ FACULTY_HEADER_MAP = {
     "first_n": "first_name",
     "middle_n": "middle_name",
     "last_n": "last_name",
-    # "name_prefix": "name_prefix",
-    # "name_suffix": "name_suffix",
+    "name_prefix": "prefix_name",
+    "name_suffix": "suffix_name",
     # "username": "username",
 }
 USER_HEADER_MAP = {

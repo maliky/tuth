@@ -37,8 +37,8 @@ class FacultyManager(models.Manager):
         "personal_website",
         "academic_rank",
         "middle_name",
-        "name_prefix",
-        "name_suffix",
+        "prefix_name",
+        "suffix_name",
     }
 
     def _split_kwargs(
