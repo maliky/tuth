@@ -20,15 +20,16 @@ CREDIT_HOUR_CACHE: Dict[int, CreditHour] = {}
 
 
 def ensure_college(code_raw: str) -> College:
-    code = COLLEGE_CODE.get((code_raw or "").strip().lower(), "DEFT")
-    cached = COLLEGE_CACHE.get(code.lower())
+    """Return the college attached to code_raw if possible cached."""
+    code = COLLEGE_CODE.get((code_raw.lower() or ""), "DEFT")
+    cached = COLLEGE_CACHE.get(code)
     if cached:
         return cached
     college, _ = College.objects.get_or_create(
-        code=code.upper(),
+        code=code,
         defaults={"long_name": COLLEGE_LONG_NAME.get(code.lower(), code)},
     )
-    COLLEGE_CACHE[code.lower()] = college
+    COLLEGE_CACHE[code] = college
     return college
 
 
@@ -44,17 +45,21 @@ def ensure_department(dept_code_raw: str, college: College) -> Department:
 
 
 def ensure_curriculum(
-    name_raw: str, college: College, fuzzy_threshold: float = 1.0
+    name: str, college: College, fuzzy_threshold: float = 1.0
 ) -> Curriculum:
-    name = (name_raw or "").strip()
+    """Return a Curriculum attached"""
     if not name:
         return Curriculum.get_default()
+    
     key = (name.lower(), college.id if college else None)
     cached = CURRICULUM_CACHE.get(key)
     if cached:
         return cached
+
+    SHORT_NAME_MAX = Curriculum._meta.get_field("short_name").max_length
+    
     curriculum, _ = Curriculum.objects.get_or_create(
-        short_name=name[: Curriculum._meta.get_field("short_name").max_length],
+        short_name=name[:SHORT_NAME_MAX],
         college=college,
         defaults={"long_name": name},
         fuzzy_threshold=fuzzy_threshold,

@@ -36,7 +36,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         # super().__init__(Staff, field="staff_id")
         super().__init__(Staff)
 
-    def clean(self, value, row=None, *args, **kwargs) -> Staff:
+    def clean(self, value, row=None, *args, **kwargs) -> Optional[Staff]:
         """Create or fetch a Staff from a username.
 
         The widget get the staff from the username.
@@ -45,7 +45,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         username = (value or "").strip()
 
         if not username:
-            return Staff.get_unique_default()
+            return None #Staff.get_unique_default()
 
         _d, _, _ = get_name_parts(row)
 
@@ -149,7 +149,6 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
         # field is "id" by default
-        super().__init__(User)
         self._cache_student: dict[Hashable, Student] = {}
         super().__init__(Student)
 
@@ -162,19 +161,22 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         """
         username = (value or "").strip()
         _stdid = row.get("student_id")
+        
         if not username or not _stdid:
             return None
 
-        _d, _, _ = get_name_parts(row)
+        _d, _first, _last = get_name_parts(row)
 
         def _create_student() -> Student:
-            student, _ = Student.objects.get_or_create(
+            student, _created = Student.objects.get_or_create(
                 username=username,
                 student_id=_stdid,
                 defaults=_d,
             )
-            student.user.set_password(mk_password(_d["first"], _d["last"]))
-            student.user.save(update_fields=["password"])
+            if _created:
+                student.user.set_password(mk_password(_first, _last))
+                student.user.save(update_fields=["password"])
+                
             return cast(Student, student)
 
         # _create_student = create_person_factory(username, Student, _d, lambda s: s.user)

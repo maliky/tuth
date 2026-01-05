@@ -95,14 +95,10 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
 
         Example input row:
           - row["curriculum"] = "Bsc Agriculture"
-          - row["college_code"] = "CAFS" (optional, defaults to "COAS")
-
-        Automatically creates curriculum with today's date.
+          - row["college_code"] = "CAFS"
         """
         raw_value = (value or "").strip()
-
-        college_code = get_in_row("college_code", row)
-        college = ensure_college(college_code)
+        college = ensure_college(get_in_row("college_code", row))
 
         if not raw_value:
             return Curriculum.get_default(def_college=college)

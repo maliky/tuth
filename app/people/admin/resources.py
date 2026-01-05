@@ -51,12 +51,12 @@ class StaffResource(resources.ModelResource):
     class Meta:
         model = Staff
         import_id_fields = ("user",)
-        fields = ("user",'long_name', "middle_name", "prefix_name", "suffix_name")
+        fields = ("user", "middle_name", "prefix_name", "suffix_name")
         skip_unchanged = True
         report_skipped = False
 
 
-    def after_save_instance(self, instance, row, **3kwargs):
+    def after_save_instance(self, instance, row, **kwargs):
         """Assign the Staff group to the related user."""
         if kwargs.get("dry_run"):
             return None
@@ -85,9 +85,9 @@ class FacultyResource(resources.ModelResource):
     class Meta:
         model = Faculty
         import_id_fields = ("staff_profile",)
-        fields = ("staff_profile", "username")
+        fields = ("staff_profile", "middle_name", "prefix_name", "suffix_name")
         skip_unchanged = True
-        report_skipped = True
+        report_skipped = False
         use_bulk = False
 
     def before_import(self, dataset):
@@ -111,7 +111,7 @@ class StudentResource(resources.ModelResource):
 
     # Columns needs to be created on the fly
     user = fields.Field(
-        column_name="fullname", attribute="user", widget=StudentUserWidget()
+        column_name="username", attribute="user", widget=UserWidget()
     )
     # to be taken from gp table StudentInfo
     curriculum = fields.Field(
@@ -123,7 +123,7 @@ class StudentResource(resources.ModelResource):
         column_name="birth_date", attribute="birth_date", widget=DateTimeWidget()
     )
     entry_semester = fields.Field(
-        column_name="entry_semester",
+        column_name="entry_semester_no",
         attribute="entry_semester",
         widget=SemesterCodeWidget(),
     )
@@ -166,7 +166,7 @@ class StudentResource(resources.ModelResource):
             "username",
         )
         skip_unchanged = True
-        report_skipped = True
+        report_skipped = False
         use_bulk = False
 
     def before_import(self, dataset):
@@ -175,22 +175,22 @@ class StudentResource(resources.ModelResource):
 
     def before_import_row(self, row, **kwargs):
         """Inject derived columns to capture StudentInfo data."""
-        student_name = get_in_row("student_name", row)
+        # student_name = get_in_row("student_name", row)
 
         # Synthesize student_name when source data provides split columns
-        if not student_name:
-            first = get_in_row("first_name", row)
-            middle = get_in_row("middle_name", row)
-            last = get_in_row("last_name", row)
-            row["student_name"] = parse_name(f"{first} {middle} {last}").to_string()
+        # if not student_name:
+        #     first = get_in_row("first_name", row)
+        #     middle = get_in_row("middle_name", row)
+        #     last = get_in_row("last_name", row)
+        #     row["student_name"] = parse_name(f"{first} {middle} {last}").to_string()
 
         # > I should not allow creation of new major or curriculum
         # > If a row does not fit because of the major or curriculum, I should log it
         # > and create manual (eventulay the major or curriculum)
         # > I should also do a fuzzy search for a matching curriculum
-        curri_value = get_in_row("curriculum_short_name", row)
-        if len(curri_value) > 40:
-            row["curriculum_short_name"] = curri_value[:40]
+        # curri_value = get_in_row("curriculum_short_name", row)
+        # if len(curri_value) > 40:
+        #     row["curriculum_short_name"] = curri_value[:40]
 
         _g = get_in_row("gender", row).lower()
         row["gender"] = GENDER_MAP.get(_g, _g)
@@ -247,15 +247,14 @@ class StudentResource(resources.ModelResource):
 class DonorResource(resources.ModelResource):
     """Import donors from a simple list of names."""
 
-    user = fields.Field(column_name="donors", attribute="user", widget=DonorUserWidget())
-    bio = fields.Field(column_name="bio", attribute="bio")
+    user = fields.Field(column_name="donors", attribute="user", widget=UserWidget())
 
     class Meta:
         model = Donor
         import_id_fields = ("user",)
         fields = ("user", "bio")
         skip_unchanged = True
-        report_skipped = True
+        report_skipped = False
 
     def before_import_row(self, row, **kwargs):
         """Keep the original donor column content for auditing."""
