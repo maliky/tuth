@@ -31,3 +31,5 @@ exec -it web python manage.py makemigrations
   - t allocate psudo tty (interaction)
   - T no TTY # good for non interactive script
   - v with down delete volume
+** db db
+db_tusis_preprod
