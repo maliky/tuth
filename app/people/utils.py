@@ -118,8 +118,6 @@ class NameParts:
         return (self.prefix, self.first, self.middle, self.last, self.suffix)
 
 
-
-
 def cached_entity(
     cache: Dict[Hashable, Entity],
     key: Hashable,

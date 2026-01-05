@@ -17,10 +17,10 @@ from app.people.admin.resources_mapping import (
 )
 from app.people.admin.widgets import (
     DonorUserWidget,
-    StaffUserWidget,
     StaffProfileWidget,
     StudentUserWidget,
     UserStudentWidget,
+    UserWidget,
 )
 from app.people.models.donor import Donor
 from app.people.models.faculty import Faculty
@@ -46,24 +46,17 @@ from app.timetable.utils import (
 class StaffResource(resources.ModelResource):
     """Import staff directory rows and create/update Staff profiles."""
 
-    user = fields.Field(
-        column_name="username",
-        attribute="user",
-        widget=StaffUserWidget(),
-    )
+    user = fields.Field(column_name="username", attribute="user", widget=UserWidget())
 
     class Meta:
         model = Staff
-        import_id_fields = ("username",)
-        fields = ("user", "username", "middle_name", "prefix_name", "suffix_name")
+        import_id_fields = ("user",)
+        fields = ("user",'long_name', "middle_name", "prefix_name", "suffix_name")
         skip_unchanged = True
-        report_skipped = True
+        report_skipped = False
 
-    def before_import(self, dataset):
-        headers = dataset.headers or []
-        dataset.headers = [USER_HEADER_MAP.get(h, h) for h in headers]
 
-    def after_save_instance(self, instance, row, **kwargs):
+    def after_save_instance(self, instance, row, **3kwargs):
         """Assign the Staff group to the related user."""
         if kwargs.get("dry_run"):
             return None

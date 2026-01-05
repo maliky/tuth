@@ -8,7 +8,7 @@ Usage::
     >>> print(staff.long_name)
 """
 
-from typing import Any, Hashable, cast
+from typing import Any, Hashable, Optional, cast
 
 from django.contrib.auth.models import User
 from import_export import widgets
@@ -72,21 +72,22 @@ class UserWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
         super().__init__(User)
-        self._cache_user: dict[str, User] = {}
+        self._cache_user: dict[Hashable, User] = {}
 
-    def clean(self, value, row=None, *args, **kwargs) -> User:
+    def clean(self, value, row=None, *args, **kwargs) -> Optional[User]:
         """Return or create a User from the donor name."""
         username = (value or "").strip()
+
         if not username:
             return None
-        
+
         cached = self._cache_user.get(username)
         if cached:
             return cached
 
         _d, _first, _last = get_name_parts(row)
 
-        def _create_user():
+        def _create_user() -> User:
             user, created = User.objects.get_or_create(
                 username=username,
                 defaults={"first_name": _first, "last_name": _last},
@@ -94,6 +95,7 @@ class UserWidget(widgets.ForeignKeyWidget):
             if created:
                 user.set_password(mk_password(_first, _last))
                 user.save(update_fields=["password"])
+            return cast(User, user)
 
         user_obj = cached_entity(self._cache_user, username, _create_user)
 
@@ -160,7 +162,7 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         """
         username = (value or "").strip()
         _stdid = row.get("student_id")
-        if not username or not stdid:
+        if not username or not _stdid:
             return None
 
         _d, _, _ = get_name_parts(row)
@@ -320,34 +322,3 @@ class UserStudentWidget(widgets.ForeignKeyWidget):
         self._exclude_username = set()
         self.cache_username = dict()
         self.cache_student = dict()
-
-
-class DonorUserWidget(widgets.ForeignKeyWidget):
-    """Ensure a Donor entry exists for the given donor name."""
-
-    def __init__(self):
-        self._cache_donor: dict[Hashable, Faculty] = {}
-        super().__init__(Faculty)
-
-    def clean(self, value: str, row=None, *args, **kwargs) -> Faculty:
-        """From the donor name, tries to get a donor object.
-
-        Create user  if necessary.
-        """
-        username = (value or "").strip()
-
-        if not username:
-            return Donor.get_unique_default()
-
-        names_parts, _, _ = get_name_parts(row)
-
-        _create_donor = create_person_factory(
-            username, Donor, name_parts, lambda d: d.user
-        )
-
-        donor_obj = cached_entity(self._cache_donor, username, _create_donor)
-        return donor_obj
-
-    def after_import(self, dataset, result, **kwargs):
-        """Remove any cache which may be present after import."""
-        self.cache_donor = dict()
