@@ -69,10 +69,11 @@ class CollegeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
     list_display = (
         "code",
         "long_name",
-        "faculty_count_link",
+        # "faculty_count_link",
         "course_count_link",
         "curriculum_count_link",
-        "department_chair_links",
+        # "department_chair_links",
+        # "student_counts_by_level_link"
     )
     search_fields = ("code", "long_name")
 
@@ -149,6 +150,18 @@ class CollegeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
     fields = ("code", "long_name", "active_curricula_list", "inactive_curricula_list")
     readonly_fields = ("active_curricula_list", "inactive_curricula_list")
 
+    @admin.display(description="Students by level")
+    def student_counts_by_level_link(self, obj: College):
+        """Link to students filtered by college and computed level."""
+        rows = []
+        students = list(Student.objects.filter(curriculum__college=obj))
+        for level in ("Freshman", "Sophomore", "Junior", "Senior"):
+            count = sum(1 for s in students if getattr(s, "class_level", "") == level)
+            url = reverse("admin:people_student_changelist") + (
+                f"?curriculum__college__id__exact={obj.id}&class_level={level}"
+            )
+            rows.append((url, level, count))
+        return format_html_join(" | ", '<a href="{}">{}</a>: {}', rows)
 
 @admin.register(Course)
 class CourseAdmin(DepartmentRestrictedAdmin):
