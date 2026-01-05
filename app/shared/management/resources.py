@@ -8,7 +8,7 @@ from typing import Sequence
 from import_export import resources
 
 from app.academics.admin.resources import CourseResource, CurriculumCourseResource
-from app.people.admin.resources import DonorResource, FacultyResource, StudentResource
+from app.people.admin.resources import DonorResource, FacultyResource, StaffResource, StudentResource
 from app.people.models.staffs import Staff
 from app.registry.admin.resources import GradeResource
 from app.registry.admin.resources_legacy import (
@@ -21,8 +21,8 @@ from app.timetable.admin.resources.core import SemesterResource
 
 # Unified directory-backed resources (legacy included)
 DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
-    ("Faculty", FacultyResource, ("people_all_faculty.tsv",)),
-    ("Staff", StaffResource, ("people_all_staff.tsv",)),
+    ("Faculty", FacultyResource, ("people_full_faculty.tsv",)),
+    ("Staff", StaffResource, ("people_full_staff.tsv",)),
     ("Room", RoomResource, ("space_room.csv",)),
     ("Course", CourseResource, ("academic_course.csv",)),
     (
@@ -36,7 +36,7 @@ DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
         ("academicyear_semester.csv",),
     ),
     ("Donor", DonorResource, ("people_donors.csv",)),
-    ("Student", StudentResource, ("people_all_student.tsv",)),
+    ("Student", StudentResource, ("people_full_student.tsv",)),
     (
         "Grade",
         GradeResource,

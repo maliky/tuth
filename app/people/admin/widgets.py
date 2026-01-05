@@ -32,29 +32,30 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
         self._cache_staff: dict[Hashable, Staff] = {}
-        super().__init__(Staff, field="staff_id")
+        # super().__init__(Staff, field="staff_id")
+        super().__init__(Staff)
 
     def clean(self, value, row=None, *args, **kwargs) -> Staff:
-        """Create or fetch a Staff from a name.
+        """Create or fetch a Staff from a username.
 
-        The widget splits the name, creates the corresponding User if
-        needed.  It return or creates a Staff.
+        The widget get the staff from the username.
+        It return or creates a Staff.
         """
-        if not value:
+        username = (value or "").strip()
+
+        if not username:
             return Staff.get_unique_default()
 
-        _n = parse_name(value, fallback_last="Staff")
-        username = get_in_row("username", row)
-        if not username:
-            username = Staff.mk_username(_n.first, _n.last)
+        fullname = get_in_row("fullname", row)
+        _n = parse_name(fullname, fallback_last="Staff")
 
-        found_user = Staff.objects._find_by_name(
-            first_name=_n.first, last_name=_n.last, middle_name=_n.middle
-        )
-        if found_user:
-            existing_staff = Staff.objects.filter(user=found_user).first()
-            if existing_staff:
-                return existing_staff
+        # found_user = Staff.objects._find_by_name(
+        #     first_name=_n.first, last_name=_n.last, middle_name=_n.middle
+        # )
+        # if found_user:
+        #     existing_staff = Staff.objects.filter(user=found_user).first()
+        #     if existing_staff:
+        #         return existing_staff
 
         def _create_staff() -> Staff:
             staff, _ = Staff.objects.get_or_create(
@@ -82,7 +83,6 @@ class FacultyWidget(widgets.ForeignKeyWidget):
     def __init__(self):
         # field is "id" by default
         self._cache_faculty: dict[Hashable, Faculty] = {}
-        self._cache_exclude_username = set()
         super().__init__(Faculty)
 
     def clean(self, value: str, row=None, *args, **kwargs) -> Faculty:
@@ -91,15 +91,13 @@ class FacultyWidget(widgets.ForeignKeyWidget):
         Create user and staff if necessary.
         if value is '<unique>' create a default unique faculty
         """
-        if not value:
-            # return Faculty.get_unique_default()
-            return Faculty.get_default()
+        username = (value or "").strip()
 
-        _n = parse_name(value, fallback_last="Faculty")
-        username = Faculty.mk_username(
-            _n.first, _n.last, exclude=self._cache_exclude_username
-        )
-        self._cache_exclude_username |= {username}
+        if not username:
+            return Faculty.get_unique_default()
+
+        fullname = get_in_row("fullname", row)
+        _n = parse_name(fullname, fallback_last="Faculty")
 
         def _create_faculty() -> Faculty:
             faculty, _ = Faculty.objects.get_or_create(
@@ -123,9 +121,8 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
     def __init__(self):
         # field is "id" by default
         super().__init__(User)
-        self._cache_username: dict[str, str] = {}
-        self._exclude_username = set()
         self._cache_student: dict[str, Student] = {}
+        super().__init__(Student)
 
     def clean(self, value: str, row=None, *args, **kwargs) -> Student | None:
         """From the student name (and an id), gets a Student object.
@@ -134,37 +131,27 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         Use the extra column student_id to desambiguate sames names
         and create uniq username.
         """
-        if not value:
+        username = (value or "").strip()
+        stdid = row.get("student_id")
+        if not username or not stdid:
             return None
 
-        std_fullname = (value or "").strip()
-        _n = parse_name(
-            std_fullname, fallback_first="Student", fallback_last=std_fullname
-        )
+        fullname = get_in_row("fullname", row)
+        _n = parse_name(fullname, fallback_last="Student")
 
-        assert "student_id" in row
-        stdid = row.get("student_id")
-        # in case we get same first, last & middle name for different id,
-        # we create a new username because the previous one will be in _exclude
-        if stdid not in self._cache_student:
-            username = Student.mk_username(
-                _n.first, _n.last, _n.middle, exclude=self._exclude_username
-            )
-            self._cache_username[stdid] = username
-            self._exclude_username |= {username}
+        def _create_student() -> Student:
             student, _ = Student.objects.get_or_create(
                 username=username, defaults=_n.to_dict()
             )
-            student.set_password(default_password(_n.first, _n.last))
-            student.save(update_fields=["password"])
-            self._cache_student[stdid] = student
+            student.user.set_password(default_password(_n.first, _n.last))
+            student.user.save(update_fields=["password"])
+            return cast(Student, student)
 
-        return self._cache_student[stdid]
+        student_obj = cached_entity(self._cache_student, username, _create_student)
+        return student_obj
 
     def after_import(self, dataset, result, **kwargs):
         """Remove any cache which may be present after import."""
-        self._exclude_username = set()
-        self.cache_username = dict()
         self.cache_student = dict()
 
 
@@ -286,7 +273,7 @@ class StaffUserWidget(widgets.ForeignKeyWidget):
             user.set_password(mk_password(_n.first, _n.last))
             user.save(update_fields=["password"])
 
-        self._cache_user[raw_name] = user
+        self._cache_user[username] = user
         return user
 
 

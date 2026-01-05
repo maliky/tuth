@@ -13,6 +13,7 @@ from app.people.admin.resources_mapping import (
     FACULTY_HEADER_MAP,
     GENDER_MAP,
     STUDENT_HEADER_MAP,
+    USER_HEADER_MAP,
 )
 from app.people.admin.widgets import (
     DonorUserWidget,
@@ -79,7 +80,7 @@ class FacultyResource(resources.ModelResource):
     """
 
     staff_profile = fields.Field(
-        column_name="fullname",
+        column_name="username",
         attribute="staff_profile",
         widget=StaffProfileWidget(),
     )
@@ -87,7 +88,7 @@ class FacultyResource(resources.ModelResource):
     class Meta:
         model = Faculty
         import_id_fields = ("staff_profile",)
-        fields = ("staff_profile",)
+        fields = ("staff_profile","username")
         skip_unchanged = True
         report_skipped = True
         use_bulk = False
