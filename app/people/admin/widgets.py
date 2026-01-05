@@ -21,9 +21,11 @@ from app.people.models.staffs import Staff
 from app.people.models.student import Student
 from app.people.utils import (
     cached_entity,
+    create_person_factory,
     default_password,
     mk_password,
     parse_name,
+    get_name_parts,
 )
 from app.shared.utils import get_in_row
 
@@ -46,25 +48,14 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         if not username:
             return Staff.get_unique_default()
 
-        fullname = get_in_row("fullname", row)
-        _n = parse_name(fullname, fallback_last="Staff")
+        _d, _, _ = get_name_parts(row)
 
-        # found_user = Staff.objects._find_by_name(
-        #     first_name=_n.first, last_name=_n.last, middle_name=_n.middle
-        # )
-        # if found_user:
-        #     existing_staff = Staff.objects.filter(user=found_user).first()
-        #     if existing_staff:
-        #         return existing_staff
-
-        def _create_staff() -> Staff:
-            staff, _ = Staff.objects.get_or_create(
-                username=username, defaults=_n.to_dict()
-            )
-            staff.user.set_password(default_password(_n.first, _n.last))
-            staff.user.save(update_fields=["password"])
-            return cast(Staff, staff)
-
+        # def _create_staff() -> Staff:
+        #     staff, _ = Staff.objects.get_or_create(username=username, defaults=_d)
+        #     staff.user.set_password(default_password(_first, _last))
+        #     staff.user.save(update_fields=["password"])
+        #     return cast(Staff, staff)
+        _create_staff = create_person_factory(username, Staff, _d, lambda s: s.user)
         staff_obj = cached_entity(self._cache_staff, username, _create_staff)
         return staff_obj
 
@@ -96,16 +87,17 @@ class FacultyWidget(widgets.ForeignKeyWidget):
         if not username:
             return Faculty.get_unique_default()
 
-        fullname = get_in_row("fullname", row)
-        _n = parse_name(fullname, fallback_last="Faculty")
+        _d, _f, _l = get_name_parts(row)
 
-        def _create_faculty() -> Faculty:
-            faculty, _ = Faculty.objects.get_or_create(
-                username=username, defaults=_n.to_dict()
-            )
-            faculty.staff_profile.user.set_password(default_password(_n.first, _n.last))
-            faculty.staff_profile.user.save(update_fields=["password"])
-            return cast(Faculty, faculty)
+        # def _create_faculty() -> Faculty:
+        #     faculty, _ = Faculty.objects.get_or_create(username=username, defaults=_d)
+        #     faculty.staff_profile.user.set_password(default_password(_f, _l))
+        #     faculty.staff_profile.user.save(update_fields=["password"])
+
+        #     return cast(Faculty, faculty)
+        _create_faculty = create_person_factory(
+            username, Faculty, _d, lambda f: f.staff_profile.user
+        )
 
         faculty_obj = cached_entity(self._cache_faculty, username, _create_faculty)
         return faculty_obj
@@ -121,7 +113,7 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
     def __init__(self):
         # field is "id" by default
         super().__init__(User)
-        self._cache_student: dict[str, Student] = {}
+        self._cache_student: dict[Hashable, Student] = {}
         super().__init__(Student)
 
     def clean(self, value: str, row=None, *args, **kwargs) -> Student | None:
@@ -136,16 +128,17 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         if not username or not stdid:
             return None
 
-        fullname = get_in_row("fullname", row)
-        _n = parse_name(fullname, fallback_last="Student")
+        _d = get_name_parts(row)
 
-        def _create_student() -> Student:
-            student, _ = Student.objects.get_or_create(
-                username=username, defaults=_n.to_dict()
-            )
-            student.user.set_password(default_password(_n.first, _n.last))
-            student.user.save(update_fields=["password"])
-            return cast(Student, student)
+        # def _create_student() -> Student:
+        #     student, _ = Student.objects.get_or_create(
+        #         username=username,
+        #         defaults=_d,
+        #     )
+        #     student.user.set_password(default_password(_d["first"], _d["last"]))
+        #     student.user.save(update_fields=["password"])
+        #     return cast(Student, student)
+        _create_student = create_person_factory(username, Student, _d, lambda s: s.user)
 
         student_obj = cached_entity(self._cache_student, username, _create_student)
         return student_obj
@@ -262,15 +255,16 @@ class StaffUserWidget(widgets.ForeignKeyWidget):
         if cached:
             return cached
 
-        fullname = get_in_row("fullname", row)
-        _n = parse_name(fullname, fallback_last="Donor")
+        _d, _first, _last = get_name_parts(row)
+        # fullname = get_in_row("fullname", row)
+        # _n = parse_name(fullname, fallback_last="Donor")
 
         user, created = User.objects.get_or_create(
             username=username,
-            defaults={"first_name": _n.first, "last_name": _n.last},
+            defaults={"first_name": _first, "last_name": _last},
         )
         if created:
-            user.set_password(mk_password(_n.first, _n.last))
+            user.set_password(mk_password(_first, _last))
             user.save(update_fields=["password"])
 
         self._cache_user[username] = user

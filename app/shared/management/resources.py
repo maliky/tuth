@@ -8,7 +8,12 @@ from typing import Sequence
 from import_export import resources
 
 from app.academics.admin.resources import CourseResource, CurriculumCourseResource
-from app.people.admin.resources import DonorResource, FacultyResource, StaffResource, StudentResource
+from app.people.admin.resources import (
+    DonorResource,
+    FacultyResource,
+    StaffResource,
+    StudentResource,
+)
 from app.people.models.staffs import Staff
 from app.registry.admin.resources import GradeResource
 from app.registry.admin.resources_legacy import (
