@@ -128,7 +128,7 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         if not username or not stdid:
             return None
 
-        _d = get_name_parts(row)
+        _d, _, _ = get_name_parts(row)
 
         # def _create_student() -> Student:
         #     student, _ = Student.objects.get_or_create(
