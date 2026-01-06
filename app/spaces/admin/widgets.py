@@ -2,6 +2,7 @@
 
 from import_export import widgets
 
+from app.shared.utils import get_in_row
 from app.spaces.models.core import Room, Space
 
 
@@ -48,11 +49,11 @@ class RoomWidget(widgets.ForeignKeyWidget):
     ) -> Room:
         """Using the room no, and the space code, returns a Room (eventualy)."""
         room_code = (value or "").strip()
-        space_code = ((row or {}).get("space") or "<TBA>").strip()
-
+        space_code = get_in_row('space', row) or '<TBA>'
         space = self.space_w.clean(value=space_code, row=row)
+        
         room, _ = Room.objects.get_or_create(
-            code=room_code or "TBA",
+            code=room_code or "<TBA>",
             space=space or Space.get_default(),
         )
         return room

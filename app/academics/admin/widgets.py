@@ -143,10 +143,10 @@ class CourseWidget(widgets.ForeignKeyWidget):
             return Course.get_unique_default()
 
         college_code = (row.get("college_code") or "").strip() if row else ""
-        college = ensure_college(college_code)
-        department = ensure_department(course_dept, college)
+        college = ensure_college(college_code)  # verifier que 9a ne fait pas de doublons
+        department = ensure_department(course_dept, college) # idem
         title = row.get("course_title") if row else None
-
+        
         return ensure_course(
             department=department,
             course_no_raw=course_no,

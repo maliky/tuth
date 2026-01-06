@@ -50,8 +50,8 @@ class ScheduleWidget(widgets.ForeignKeyWidget):
         if weekday is None:
             return None
 
-        start_time = row.get("start_time", "").strip()
-        end_time = row.get("end_time", "").strip()
+        start_time = get_in_row("start_time",row)
+        end_time = get_in_row("end_time",row)
 
         schedule, _ = Schedule.objects.get_or_create(
             weekday=weekday,

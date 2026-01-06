@@ -3436,6 +3436,10 @@ BS - Computer Sci, computer science, Arts in Economics 1,
 :end:
 
 ** Grades- [ ]student_id :: TU-12345
+# > Identify the input, treatment and output to get to full_student_grades
+# > organise this in one module using functional typed pandish style
+# > The module should provide a cli to reproduce 
+
   - [ ] <- curriculum_id :: BSc Agri...
 - Section ID :: 24-25s1_MATH101_s1
   - [ ] semester_id, 24-25s1 ...

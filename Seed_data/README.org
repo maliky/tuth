@@ -1,9 +1,10 @@
-* Logic and rational
+* DONE Logic and rational
+  CLOSED: [2026-01-05 lun. 19:30]
   instead of handeling mixed colim format at import time
   I want to harmonize colimns trhoug one pass in parsing_db, saving the file in the correct format on the disk directly and eventualy combining many of them in one.
   this holds for Students, Grades...
   
-* Parsed:
+* Parsed Folder
   Contains files trimed and carefully selected from parsing_db.org
   people_student_terms.tsv complementary term info for student 
 * <2025-12-17 Wed 10:48> Data File Structuration
