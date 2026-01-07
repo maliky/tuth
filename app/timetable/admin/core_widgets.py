@@ -12,28 +12,6 @@ from app.timetable.models.semester import Semester
 from app.timetable.utils import parse_semester_code
 
 
-def ensure_academic_year_code(code: str | None) -> AcademicYear:
-    """Look up or auto-create an AcademicYear from its 'YY-YY' code.
-
-    If no code return current AcademicYear, the code should be properly formated.
-    """
-    code = (code or "").strip()
-    if not code:
-        return AcademicYear.get_default()
-
-    ys, _ = code.split("-")
-    start = date(int("20" + ys), 9, 1)
-
-    ay_obj, _created = AcademicYear.objects.get_or_create(
-        code=code, defaults={"start_date": start}
-    )
-
-    if _created:  # > is this really necessary ?
-        ay_obj.save()
-
-    return ay_obj
-
-
 class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
     """Convert YY-YY codes into :class:AcademicYear objects."""
 

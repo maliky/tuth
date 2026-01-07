@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import re
 from difflib import SequenceMatcher
-from typing import Any, Callable, Iterable, List, Sequence, Tuple, TypeVar
+from typing import Any, Callable, Iterable, List, Sequence, Tuple
 
 from rapidfuzz.distance import JaroWinkler
 
+from app.shared.types import _T
+
 Score = float
-_T = TypeVar("_T")
 
 
 def identity(value: Any) -> Any:
@@ -115,7 +116,7 @@ def top_name_matches(
     """Return up to 'limit' candidates ordered by similarity >= threshold."""
 
     scored: list[tuple[_T, float]] = []
-    
+
     for cand in candidates:
         token = token_fn(cand)
         score = name_similarity(base, token)

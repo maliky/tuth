@@ -1,10 +1,11 @@
 """Shared fast lookup helpers for timetable imports."""
 
+from datetime import date
 from typing import Dict, Optional, Tuple
 
 from app.academics.models.course import CurriculumCourse
 from app.shared.utils import to_int
-from app.timetable.admin.core_widgets import ensure_academic_year_code
+from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
 from app.timetable.utils import normalize_academic_year, parse_semester_code
@@ -12,6 +13,28 @@ from app.timetable.utils import normalize_academic_year, parse_semester_code
 # Simple in-memory caches keyed by normalized tokens
 SEMESTER_CACHE: Dict[Tuple[str, int], Semester] = {}
 SECTION_CACHE: Dict[Tuple[int, int, int, Optional[int]], Section] = {}
+
+
+def ensure_academic_year_code(code: str | None) -> AcademicYear:
+    """Look up or auto-create an AcademicYear from its 'YY-YY' code.
+
+    If no code return current AcademicYear, the code should be properly formated.
+    """
+    code = (code or "").strip()
+    if not code:
+        return AcademicYear.get_default()
+
+    ys, _ = code.split("-")
+    start = date(int("20" + ys), 9, 1)
+
+    ay_obj, _created = AcademicYear.objects.get_or_create(
+        code=code, defaults={"start_date": start}
+    )
+
+    if _created:  # > is this really necessary ?
+        ay_obj.save()
+
+    return ay_obj
 
 
 def ensure_semester(

@@ -6,8 +6,9 @@ from typing import Any, Dict, Mapping, Optional, Tuple, cast
 from django.contrib.auth.models import User
 from django.db.models import Manager
 
-from app.shared.fuzzy_matching import top_name_matches
 from app.people.utils import NameParts, mk_username
+from app.shared.types import _T
+from app.shared.fuzzy_matching import top_name_matches
 from app.shared.utils import get_in_row
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,14 @@ USER_KWARGS = {
     "is_superuser",
     "is_active",
 }
+
+
+def _get_match(
+    no: int, ranked_matches: list[tuple[_T, float]]
+) -> Tuple[Optional[User], int]:
+    _person, _score = ranked_matches[no] if len(ranked_matches) > no else (None, 0.0)
+    _user: Optional[User] = cast(Optional[User], getattr(_person, "user", None))
+    return _user, _score
 
 
 def _get_name(**kwargs) -> NameParts:
@@ -60,17 +69,26 @@ def _split_kwargs(**kwargs) -> Tuple[Dict[str, Any], Dict[str, Any]]:
 class PersonManager(Manager):
     """Custom creation Management."""
 
-    def _mk_name(self, full=False) -> str:
-        """Return the base name for the user."""
-        _get
-    def _find_by_name(self, name: NameParts) -> Optional[User]:
+    def _get_full_name(self, person: Any) -> str:
+        """Return the full name for the user."""
+        user_obj = getattr(person, "user", None)
+        return " ".join(
+            [
+                getattr(person, "prefix_name", "") or "",
+                getattr(user_obj, "first_name", "") or "",
+                getattr(person, "middle_name", "") or "",
+                getattr(user_obj, "last_name", "") or "",
+                getattr(person, "suffix_name", "") or "",
+            ]
+        ).strip()
+
+    def _find_by_name(self, name: NameParts, threshold: int = 0.9) -> Optional[User]:
         """Return an existing user matched on first/last/middle names (case-insensitive)."""
 
         if not name.first or not name.last:
             return None
 
         base_name = name.to_string(full=False)
-        long_name = name.to_string(full=True)
 
         # iexact : case insensitive
         candidates = self.get_queryset().filter(user__last_name__iexact=name.last)
@@ -84,19 +102,16 @@ class PersonManager(Manager):
             )
 
         ranked_matches = top_name_matches(
-            base_name, candidates, long_name, threshold=0.9, limit=2
+            base_name, candidates, self._get_full_name, threshold=threshold, limit=2
         )
         if not ranked_matches:
             return None
 
-        best_person, best_score = ranked_matches[0]
-        best_user: Optional[User] = cast(
-            Optional[User], getattr(best_person, "user", None)
-        )
-        second_score = ranked_matches[1][1] if len(ranked_matches) > 1 else 0.0
+        best_user, best_score = _get_match(0, ranked_matches)
+        second_user, second_score = _get_match(1, ranked_matches)
 
-        if best_user and best_score >= 0.92:
-            if (best_score - second_score) >= 0.05:
+        if best_user and best_score >= threshold:
+            if (best_score - second_score) >= 0.05:  # .05 ~ arbitraire
                 return best_user
             else:
                 logger.info(
@@ -106,7 +121,8 @@ class PersonManager(Manager):
                     getattr(best_user, "username", ""),
                     getattr(best_user, "get_full_name", lambda: "")(),
                     best_score,
-                    base_name,
+                    getattr(second_user, "username", ""),
+                    getattr(second_user, "get_full_name", lambda: "")(),
                     second_score,
                 )
 

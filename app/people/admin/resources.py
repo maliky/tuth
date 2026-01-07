@@ -29,16 +29,13 @@ from app.people.models.student import Student
 from app.people.utils import mk_username, parse_name, split_name
 from app.shared.auth.perms import UserRole
 from app.shared.utils import get_in_row
-from app.timetable.admin.core_widgets import (
-    SemesterCodeWidget,
-    ensure_academic_year_code,
-)
+from app.timetable.admin.core_widgets import SemesterCodeWidget
+from app.timetable.ensures import ensure_academic_year_code
 from app.timetable.models.semester import Semester
 from app.timetable.utils import (
     get_academic_year,
     get_semester_code,
 )
-
 
 # > widgets : columns name first (from the resource) and then the model field/attribute
 

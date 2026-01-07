@@ -9,7 +9,7 @@ FACULTY_CACHE: Dict[Tuple[str, int], Faculty] = {}
 
 def ensure_faculty(username, **kwargs) -> Faculty:
     """Look-up or create a faculty is returned."""
-    cached = FACULTY_CACHE[username]
+    cached = FACULTY_CACHE.get(username, None)
     if cached:
         return cached
 

@@ -23,10 +23,9 @@ from app.people.models.student import Student
 from app.people.utils import (
     cached_entity,
     create_person_factory,
+    get_name_parts,
     mk_password,
     parse_name,
-    get_name_parts,
-    split_name,
 )
 from app.shared.utils import get_in_row
 
@@ -329,8 +328,8 @@ class FacultyFullnameWidget(widgets.ForeignKeyWidget):
         Create user and faculty if necessary.
         """
         username = (value or "").strip()
-        faculty_name = get_in_row('faculty', row)
+        faculty_name = get_in_row("faculty", row)
         # update row if no infor for name parts where presents.
-        row.update(split_name(faculty_name).to_dict())
+        row.update(parse_name(faculty_name, fallback_last="Faculty").to_dict())
         faculty_obj = ensure_faculty(username, row)
         return faculty_obj
