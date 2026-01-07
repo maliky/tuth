@@ -14,17 +14,19 @@ SECTION_CACHE: Dict[Tuple[int, int, int, Optional[int]], Section] = {}
 
 
 def ensure_semester(academic_year: str, semester_no: str | int) -> Semester:
+    """Returns a Semester object from a semester no and academic year."""
+
     ay_code = normalize_academic_year(academic_year) or ""
-    sem_no = int(float(semester_no)) if semester_no not in (None, "") else 0
+    sem_no = int(float(semester_no)) if semester_no else 0
     key = (ay_code, sem_no)
+
     cached = SEMESTER_CACHE.get(key)
     if cached:
         return cached
+
     ay_obj = ensure_academic_year_code(ay_code) if ay_code else None
-    semester, _ = Semester.objects.get_or_create(
-        academic_year=ay_obj,
-        number=sem_no,
-    )
+    semester, _ = Semester.objects.get_or_create(academic_year=ay_obj, number=sem_no)
+
     SEMESTER_CACHE[key] = semester
     return semester
 
@@ -35,6 +37,7 @@ def ensure_section(
     number: int,
     faculty_id: int | None = None,
 ) -> Section:
+    """Look-up or autocreate a Section."""
     key = (semester.id, curriculum_course.id, number, faculty_id)
     cached = SECTION_CACHE.get(key)
     if cached:
