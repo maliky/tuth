@@ -21,6 +21,7 @@ from app.people.models.faculty import Faculty
 from app.people.models.staffs import Staff
 from app.people.models.student import Student
 from app.people.utils import (
+    NameParts,
     cached_entity,
     create_person_factory,
     get_name_parts,

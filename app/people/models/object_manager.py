@@ -209,7 +209,8 @@ class PersonManager(Manager):
 
         The defaults is used for updating and creating if create_defaults
         is not there.
-        kwargs is used to search for the Person to update."""
+        kwargs is used to search for the Person to update.
+        """
         defaults = dict(defaults or {})
         create_defaults = dict(create_defaults or {})
         lookup_kwargs = dict(kwargs)
@@ -221,8 +222,10 @@ class PersonManager(Manager):
         # If we have a user we use it
         provided_user = cast(Optional[User], user_lookup.pop("user", None))
         if provided_user:
-            # This should only be an update.
-            return super().update_or_create(user=provided_user, defaults=person_kwargs)
+            # This can be a creation if no super is attached ot the user
+            return super().update_or_create(
+                user=provided_user, defaults=person_def, create_defaults=person_create_def
+            )
 
         # If we have a username we use it
         provided_username = user_lookup.pop("username", None)
@@ -268,7 +271,7 @@ class PersonManager(Manager):
         if provided_user:
             return super().get_or_create(user=provided_user, defaults=person_kwargs)
 
-        _ = user_kwargs.pop("password", None)  #  Why 07/01/26 ?
+        _ = user_kwargs.pop("password", None)  # Why 07/01/26 ?
         provided_username = user_kwargs.pop("username", None)
 
         if provided_username:

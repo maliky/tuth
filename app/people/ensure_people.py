@@ -1,12 +1,10 @@
 """A module with function to ensure people exists in the DB."""
 
-from typing import Dict
-
-from app.people.ensure_people import ensure_person
+from typing import Dict, Type, cast, Mapping
 from app.people.models.faculty import Faculty
-from app.people.models.staffs import Staff
-from app.people.utils import NameParts, split_name
+from app.people.models.staff import Staff
 from app.shared.types import AbstractPersonT
+from app.people.utils import NameParts
 
 FACULTY_CACHE: Dict[str, Faculty] = {}
 
@@ -39,6 +37,6 @@ def ensure_faculty(username: str, name: NameParts) -> Faculty:
     staff_profile = ensure_person(Staff, username=username, name=name)
 
     fac_obj, _ = Faculty.objects.get_or_create(staff_profile=staff_profile)
-    FACULTY_CACHE[cache_key] = fac_obj
+    FACULTY_CACHE[fac_obj.username] = fac_obj
 
     return fac_obj

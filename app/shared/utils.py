@@ -9,14 +9,14 @@ from tablib import Dataset
 from app.shared.constants import STYLE_DEFAULT  # safe
 
 
-def to_int(value: str|int, default: int = 0) -> int:
+def to_int(value: str | int, default: int = 0) -> int:
     """Lenient int conversion for count-like inputs.
 
     Accepts "1" and "2.0". Truncates fractional values ("2.9" -> 2).
     Returns `default` for empty/None/non-numeric. Not intended for exotic formats.
     Use only when truncation is acceptable.
     """
-    if isintance(value, int):
+    if isinstance(value, int):
         return value
     try:
         return int(float(value))

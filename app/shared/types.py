@@ -10,26 +10,30 @@ from typing import (
     TypeAlias,
     TypeVar,
     Union,
+    Tuple,
     Optional,
 )
 
 from django.db.models import QuerySet
+from django.db.models import Model
 from import_export import resources
+
 
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from app.people.models.core import AbstractPerson
     from app.academics.models.course import Course
     from app.people.models.faculty import Faculty
     from app.people.models.student import Student
     from app.registry.models import Registration
     from app.timetable.models import Section
 
+
 AbstractPersonT = TypeVar("_T")
 Entity = TypeVar("Entity")
 PersonT = TypeVar("PersonT", bound=Model)
 AbstractPersonT = TypeVar("PersonT", bound="AbstractPerson")
-
 
 
 Row = dict[str, Any]

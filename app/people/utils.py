@@ -39,7 +39,6 @@ from app.shared.types import Entity, PersonT
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractBaseUser
 from django.core.exceptions import ValidationError
-from django.db.models import Model
 from django.db.models.manager import BaseManager
 from rapidfuzz.distance import JaroWinkler
 
