@@ -39,7 +39,7 @@ def _get_username(name: NameParts | None, **kwargs) -> str:
     username = kwargs.pop("username", "")
 
     if not username:
-        if name:
+        if name is not None:
             first, middle, last = name.parts()
         else:
             first = kwargs.get("first_name", "")
@@ -48,7 +48,7 @@ def _get_username(name: NameParts | None, **kwargs) -> str:
 
         username = mk_username(first, last, middle, unique=True)
 
-    return str(username)
+    return username
 
 
 def _split_kwargs(**kwargs) -> Tuple[Dict[str, Any], Dict[str, Any]]:
@@ -60,6 +60,9 @@ def _split_kwargs(**kwargs) -> Tuple[Dict[str, Any], Dict[str, Any]]:
 class PersonManager(Manager):
     """Custom creation Management."""
 
+    def _mk_name(self, full=False) -> str:
+        """Return the base name for the user."""
+        _get
     def _find_by_name(self, name: NameParts) -> Optional[User]:
         """Return an existing user matched on first/last/middle names (case-insensitive)."""
 
@@ -97,11 +100,9 @@ class PersonManager(Manager):
                 return best_user
             else:
                 logger.info(
-                    "Ambiguous duplicate for %s '%s %s %s'; best=%s '%s' (%.2f), second=%.50s (%.2f); skipping auto-merge",
+                    "Ambiguous duplicate for %s '%s'; best=%s '%s' (%.2f), second=%.50s (%.2f); skipping auto-merge",
                     self.model.__name__,
-                    first,
-                    middle,
-                    last,
+                    base_name,
                     getattr(best_user, "username", ""),
                     getattr(best_user, "get_full_name", lambda: "")(),
                     best_score,
@@ -227,7 +228,7 @@ class PersonManager(Manager):
         if found_user:
             return found_user
 
-        username = _get_username(name=nane)
+        username = _get_username(name=name)
 
         user, _ = User.objects.get_or_create(username=username, defaults=user_kwargs)
 

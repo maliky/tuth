@@ -15,6 +15,7 @@ from import_export import widgets
 
 from app.academics.admin.widgets import CurriculumWidget
 from app.academics.models.curriculum import Curriculum
+from app.people.ensure_people import ensure_faculty
 from app.people.models.donor import Donor
 from app.people.models.faculty import Faculty
 from app.people.models.staffs import Staff
@@ -25,6 +26,7 @@ from app.people.utils import (
     mk_password,
     parse_name,
     get_name_parts,
+    split_name,
 )
 from app.shared.utils import get_in_row
 
@@ -314,7 +316,7 @@ class UserStudentWidget(widgets.ForeignKeyWidget):
         self.cache_student = dict()
 
 
-class FacultyUsernameWidget(widgets.ForeignKeyWidget):
+class FacultyFullnameWidget(widgets.ForeignKeyWidget):
     """Ensure a Faculty entry exists for the given username."""
 
     def __init__(self):
@@ -327,6 +329,8 @@ class FacultyUsernameWidget(widgets.ForeignKeyWidget):
         Create user and faculty if necessary.
         """
         username = (value or "").strip()
+        faculty_name = get_in_row('faculty', row)
+        # update row if no infor for name parts where presents.
+        row.update(split_name(faculty_name).to_dict())
         faculty_obj = ensure_faculty(username, row)
         return faculty_obj
-

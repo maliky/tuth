@@ -113,7 +113,9 @@ def top_name_matches(
     limit: int = 3,
 ) -> list[tuple[_T, float]]:
     """Return up to 'limit' candidates ordered by similarity >= threshold."""
+
     scored: list[tuple[_T, float]] = []
+    
     for cand in candidates:
         token = token_fn(cand)
         score = name_similarity(base, token)

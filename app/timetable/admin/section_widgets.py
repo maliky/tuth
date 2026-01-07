@@ -9,7 +9,7 @@ from app.academics.admin.widgets import (
     CurriculumCourseWidget,
     CurriculumWidget,
 )
-from app.people.admin.widgets import FacultyUsernameWidget
+from app.people.admin.widgets import FacultyFullnameWidget
 from app.timetable.ensures import ensure_semester, ensure_section
 from app.shared.utils import get_in_row, asserts_keys, to_int
 from app.timetable.admin.core_widgets import SemesterCodeWidget, SemesterWidget
