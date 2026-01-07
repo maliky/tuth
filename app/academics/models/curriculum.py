@@ -105,30 +105,29 @@ class CurriculumManager(models.Manager["Curriculum"]):
     ) -> tuple["Curriculum", bool]:
         """Override get_or_create to optionally allow fuzzy curriculum reuse."""
 
-        fuzzy_threshold: float = kwargs.pop("fuzzy_threshold", 1.0)
-        defaults = defaults.copy() if defaults else {}
         short_name: str | None = kwargs.get("short_name")
         college: College | None = kwargs.get("college")
-        long_name = kwargs.get("long_name") or defaults.get("long_name")
+        fuzzy_threshold: float = kwargs.pop("fuzzy_threshold", 1.0)
+
+        long_name = defaults.get("long_name") if defaults else ""
 
         if fuzzy_threshold < 1 and short_name and college:
 
-            _match, _score = self.find_fuzzy_match(
+            cur_match, _score = self.find_fuzzy_match(
                 short_name=short_name,
                 college=college,
                 long_name=long_name,
                 threshold=fuzzy_threshold,
             )
 
-            if _match:
+            if cur_match:
                 # optionals infos to trace
                 # > There is more to save in description in case of fuzzy match all
-                # diff information from one or the other object should to be saved.
-                if hasattr(_match, "description") and _match.description is not None:
-                    if "fuzzy_curriculum_match" not in _match.description:
-                        _match.description += f"\nfuzzy_match:{_match, _score}"
-                        _match.save(update_fields=["description"])
-                return _match, False
+                # > diff information from one or the other object should to be saved.
+                if "fuzzy_curriculum_match" not in cur_match.description:
+                    cur_match.description += f"\nfuzzy_match:{cur_match, _score}"
+                    cur_match.save(update_fields=["description"])
+                return cur_match, False
 
         created_cur, created = super().get_or_create(defaults=defaults, **kwargs)
         return created_cur, bool(created)

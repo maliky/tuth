@@ -10,7 +10,7 @@ from simple_history.admin import SimpleHistoryAdmin
 
 from app.timetable.admin.filters import SemesterAcademicYearFilterAc
 from app.timetable.admin.inlines import SemesterInline
-from app.timetable.admin.resources.core import SemesterResource
+from app.timetable.admin.core_resources import SemesterResource
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester
 from app.timetable.models.term import Term

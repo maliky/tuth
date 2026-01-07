@@ -45,7 +45,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         username = (value or "").strip()
 
         if not username:
-            return None #Staff.get_unique_default()
+            return None  # Staff.get_unique_default()
 
         _d, _, _ = get_name_parts(row)
 
@@ -95,7 +95,7 @@ class UserWidget(widgets.ForeignKeyWidget):
             if created:
                 user.set_password(mk_password(_first, _last))
                 user.save(update_fields=["password"])
-            return cast(User, user)
+            return user
 
         user_obj = cached_entity(self._cache_user, username, _create_user)
 
@@ -161,7 +161,7 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         """
         username = (value or "").strip()
         _stdid = row.get("student_id")
-        
+
         if not username or not _stdid:
             return None
 
@@ -176,7 +176,7 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
             if _created:
                 student.user.set_password(mk_password(_first, _last))
                 student.user.save(update_fields=["password"])
-                
+
             return cast(Student, student)
 
         # _create_student = create_person_factory(username, Student, _d, lambda s: s.user)

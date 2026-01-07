@@ -6,7 +6,7 @@ from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from app.timetable.admin.inlines import SecSessionInline
-from app.timetable.admin.resources.session import ScheduleResource, SecSessionResource
+from app.timetable.admin.session_resources import ScheduleResource, SecSessionResource
 from app.timetable.models.schedule import Schedule
 from app.timetable.models.session import SecSession
 

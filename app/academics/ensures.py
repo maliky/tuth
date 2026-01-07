@@ -47,17 +47,18 @@ def ensure_department(dept_code_raw: str, college: College) -> Department:
 def ensure_curriculum(
     name: str, college: College, fuzzy_threshold: float = 1.0
 ) -> Curriculum:
-    """Return a Curriculum attached"""
+    """Return a Curriculum defautl of the college in bad cases."""
     if not name:
         return Curriculum.get_default()
-    
-    key = (name.lower(), college.id if college else None)
+
+    key = (name.lower(), college.id)
     cached = CURRICULUM_CACHE.get(key)
+
     if cached:
         return cached
 
     SHORT_NAME_MAX = Curriculum._meta.get_field("short_name").max_length
-    
+
     curriculum, _ = Curriculum.objects.get_or_create(
         short_name=name[:SHORT_NAME_MAX],
         college=college,
@@ -100,23 +101,23 @@ def ensure_curriculum_course(
     credit_code: int = 3,
     is_required: bool | None = None,
 ) -> CurriculumCourse:
+    """Provide a CurriculumCourse cached if possible."""
     key = (curriculum.id, course.id)
     cached = CURRICULUM_COURSE_CACHE.get(key)
+
     if cached:
         return cached
+
     credit = CREDIT_HOUR_CACHE.get(credit_code)
+
     if credit is None:
-        credit, _ = CreditHour.objects.get_or_create(
-            code=credit_code, defaults={"label": str(credit_code)}
-        )
+        credit, _ = CreditHour.objects.get_or_create(code=credit_code)
         CREDIT_HOUR_CACHE[credit_code] = credit
-    cc, _ = CurriculumCourse.objects.get_or_create(
+
+    ccur, _ = CurriculumCourse.objects.get_or_create(
         curriculum=curriculum,
         course=course,
-        defaults={
-            "credit_hours": credit,
-            "is_required": bool(is_required) if is_required is not None else False,
-        },
+        defaults={"credit_hours": credit, "is_required": is_required},
     )
-    CURRICULUM_COURSE_CACHE[key] = cc
-    return cc
+    CURRICULUM_COURSE_CACHE[key] = ccur
+    return ccur

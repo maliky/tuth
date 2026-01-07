@@ -22,7 +22,8 @@ from app.registry.admin.resources_legacy import (
 )
 from app.shared.types import DirectoryResourceEntry, ModelResourceType
 from app.spaces.admin.resources import RoomResource
-from app.timetable.admin.resources.core import SemesterResource
+from app.timetable.admin.core_resources import SemesterResource
+from app.timetable.admin.session_resources import SecSessionResource
 
 # Unified directory-backed resources (legacy included)
 DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
@@ -30,27 +31,12 @@ DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
     ("Staff", StaffResource, ("people_full_staff.tsv",)),
     ("Room", RoomResource, ("space_room.csv",)),
     ("Course", CourseResource, ("academic_course.csv",)),
-    (
-        "CurriculumCourse",
-        CurriculumCourseResource,
-        ("academic_curriculum_course.csv",),
-    ),
-    (
-        "Semester",
-        SemesterResource,
-        ("academicyear_semester.csv",),
-    ),
+    ("SecSession", SecSessionResource, ("timetable_sessions_25-26s2.tsv",)),
+    ("CurriculumCourse", CurriculumCourseResource, ("academic_curriculum_course.csv",)),
+    ("Semester", SemesterResource, ("academicyear_semester.csv",)),
     ("Donor", DonorResource, ("people_donors.csv",)),
     ("Student", StudentResource, ("people_full_student.tsv",)),
-    (
-        "Grade",
-        GradeResource,
-        (
-            "full_grades.tsv",  # new file combining gradesheets and oldgrades
-            # "full_grades_students.tsv"  # file with student information
-            # "registry_gradeSheets.csv",
-        ),
-    ),
+    ("Grade", GradeResource, ("full_grades.tsv",)),
     (
         "LegacyRegistration",
         LegacyRegistrationResource,

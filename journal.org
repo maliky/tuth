@@ -13,3 +13,7 @@ docker-compose -f docker-compose-preprod.yml exec -T db psql -U tusis_preprod -d
 * <2026-01-05 lun. 07:19>
 - Make test for NameParts if I have empty parts.
 
+* <2026-01-06 mar. 18:00> Notes on seed_full_student_grades.py
+- Target reader: intermediate Python/pandas engineer; comfortable with typing, argparse, set ops.
+- Typical US comp for that level: ~$110k–$150k base; higher with equity/bonus in SF/NYC/Seattle, closer to ~$100k–$120k in lower-cost areas.
+- To increase abstraction difficulty: introduce pipeline composition/IoC for loaders+savers, plugin registry for scoring strategies, structured logging/metrics with failure policies, config-driven IO/validation, and immutable data models with strict mypy coverage.

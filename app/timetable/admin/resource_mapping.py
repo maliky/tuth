@@ -2,10 +2,10 @@
 
 # See 25-26s2_processed_schedule.tsv
 PSCHEDULE_HEADER_MAP = {
-    "instructor": "faculty",  # "YANCY, George H."
-    "location": "room",  # "AC-30"
-    "weekday": "schedule_weekday",  # "Monday"
-    "cid": "course_shortcode",  # 	"ACCT_102_s1" ,
+    "instructor": "faculty",  # YANCY, George H.
+    "location": "room",  # AC-30
+    "weekday": "schedule_weekday",  # Monday
+    "cid": "course_shortcode",  # ACCT_102_s1
     "credit": "credit",  # 3
     "course_title": "course_t# can be defaultitle",  # "Introduction to Accounting"
     "college": "college",  # "COBA"
@@ -19,11 +19,12 @@ SCHEDULE_HEADER_MAP = {
 }
 
 # to secsession
-SECSESSION_HEADER_MAP = {
-    "room": "room",   # room, + space
-    "schedule": "schedule",  # weekday + start_time, end_time
-    "section": "section",  # section_no + course/curriculum (course_no, course_dept, college_code, course_title, credit_hours, is_required) semester_no, academic_year, faculty (username + "prefix", "first", "middle", "last", "suffix"|name)
-}
+# SECSESSION_HEADER_MAP = {
+#     "room": "room",  # room, + space
+#     "schedule": "schedule",  # weekday + start_time, end_time
+#     "section": "section",  # section_no + course/curriculum (course_no, course_dept,
+#     college_code, course_title, credit_hours, is_required) semester_no, academic_year, faculty (username + "prefix", "first", "middle", "last", "suffix"|name)
+# }
 
 # to section
 SECTION_HEADER_MAP = {
@@ -58,5 +59,3 @@ FSESSION_HEADER_MAP = {
     "student_id": "student_id",
     "student_name": "student_name",
 }
-
-

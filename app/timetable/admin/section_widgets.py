@@ -12,7 +12,7 @@ from app.academics.admin.widgets import (
 from app.people.admin.widgets import FacultyWidget
 from app.timetable.ensures import ensure_semester, ensure_section
 from app.shared.utils import get_in_row
-from app.timetable.admin.widgets.core import SemesterCodeWidget, SemesterWidget
+from app.timetable.admin.core_widgets import SemesterCodeWidget, SemesterWidget
 from app.timetable.models.section import Section
 
 
@@ -30,7 +30,9 @@ class SectionWidget(widgets.ForeignKeyWidget):
     # ------------ widget API ------------
     def clean(self, value, row=None, *args, **kwargs) -> Section | None:
         """Return the Section referenced by the CSV row."""
-        if row is None:
+
+        required = ["curriculum", "course_no", "dept_code", "college_code", "faculty"]
+        if not all([r in row for r in required]):
             raise ValueError("Row context required")
 
         # needs course in context

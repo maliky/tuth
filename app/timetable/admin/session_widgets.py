@@ -46,12 +46,14 @@ class ScheduleWidget(widgets.ForeignKeyWidget):
 
     def clean(self, value, row=None, *args, **kwargs) -> Schedule | None:
         """Return an existing Schedule using data from the import row."""
-        weekday: int | None = self.weekday_w.clean(value=value)
+
+        weekday = self.weekday_w.clean(value)
+
         if weekday is None:
             return None
 
-        start_time = get_in_row("start_time",row)
-        end_time = get_in_row("end_time",row)
+        start_time = get_in_row("start_time", row)
+        end_time = get_in_row("end_time", row)
 
         schedule, _ = Schedule.objects.get_or_create(
             weekday=weekday,
@@ -67,15 +69,13 @@ class WeekdayWidget(widgets.IntegerWidget):
 
     def clean(self, value, row=None, *args, **kwargs) -> int | None:
         """Accept either the integer 1-7 or the English weekday name."""
-        if not value:
+        day_val = (str(value) or "").strip().lower()
+
+        if not day_val:
             return WEEKDAYS_NUMBER.TBA
 
-        token = (str(value) or "").strip().lower()
-
-        if token.isdigit():
-            return int(token)
+        if day_val.isdigit():
+            return int(day_val)
 
         _map = {label.lower(): num for num, label in WEEKDAYS_NUMBER.choices}
-        assert token in _map, f"weekday: {token} is not in {_map}"
-
-        return _map[token]
+        return _map[day_val]

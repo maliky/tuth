@@ -31,7 +31,7 @@ from app.people.utils import mk_username, parse_name, split_name
 from app.registry.models import CreditHour
 from app.shared.utils import get_in_row, parse_int
 from app.spaces.models.core import Room, Space
-from app.timetable.admin.widgets.core import ensure_academic_year_code
+from app.timetable.admin.core_widgets import ensure_academic_year_code
 from app.timetable.choices import WEEKDAYS_NUMBER
 from app.timetable.models.schedule import Schedule
 from app.timetable.models.section import Section

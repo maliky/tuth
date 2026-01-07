@@ -29,7 +29,7 @@ from app.people.models.student import Student
 from app.people.utils import mk_username, parse_name, split_name
 from app.shared.auth.perms import UserRole
 from app.shared.utils import get_in_row
-from app.timetable.admin.widgets.core import (
+from app.timetable.admin.core_widgets import (
     SemesterCodeWidget,
     ensure_academic_year_code,
 )
@@ -54,7 +54,6 @@ class StaffResource(resources.ModelResource):
         fields = ("user", "middle_name", "prefix_name", "suffix_name")
         skip_unchanged = True
         report_skipped = False
-
 
     def after_save_instance(self, instance, row, **kwargs):
         """Assign the Staff group to the related user."""
@@ -110,9 +109,7 @@ class StudentResource(resources.ModelResource):
     """Resource for importing Student objects from different csv files."""
 
     # Columns needs to be created on the fly
-    user = fields.Field(
-        column_name="username", attribute="user", widget=UserWidget()
-    )
+    user = fields.Field(column_name="username", attribute="user", widget=UserWidget())
     # to be taken from gp table StudentInfo
     curriculum = fields.Field(
         column_name="curriculum_short_name",

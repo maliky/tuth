@@ -1,4 +1,4 @@
-"""app.timetable.admin.registers.section module."""
+"""app.timetable.admin.section_registers module."""
 
 from django.contrib import admin
 
@@ -13,7 +13,7 @@ from app.timetable.admin.filters import (
     SemesterFilterAC,
 )
 from app.timetable.admin.inlines import SecSessionInline
-from app.timetable.admin.resources.section import SectionResource
+from app.timetable.admin.section_resources import SectionResource
 from app.timetable.models.section import Section
 
 

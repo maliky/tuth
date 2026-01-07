@@ -3,7 +3,7 @@
 from typing import Dict, Optional, Tuple
 
 from app.academics.models.course import CurriculumCourse
-from app.timetable.admin.widgets.core import ensure_academic_year_code
+from app.timetable.admin.core_widgets import ensure_academic_year_code
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
 from app.timetable.utils import normalize_academic_year

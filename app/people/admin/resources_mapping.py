@@ -15,7 +15,7 @@ USER_HEADER_MAP = {
     "FirstName": "first_name",
     "MiddleName": "middle_name",
     "LastName": "last_name",
-    'fullname': 'long_name',
+    "fullname": "long_name",
     # "UserGroup" : "bio_usergroup",  # empty
 }
 

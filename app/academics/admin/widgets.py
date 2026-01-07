@@ -40,30 +40,18 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
     def clean(self, value, row=None, *args, **kwargs) -> CurriculumCourse:
         """Assemble course_dept, curriculum and course to return a curriculum course."""
         # we don't use value.  We always get a course back
+        # course_no* course_dept* college_code
         course = self.course_w.clean(value=None, row=row)
+        curriculum = self.curriculum_w.clean(value=value, row=row)
 
-        curriculum = (
-            self.curriculum_w.clean(value=value, row=row)
-            if value
-            else Curriculum.get_default()
+        ch_value = get_in_row("credit_hours", row)
+        ch_code = int(ch_value) if ch_value.isdigit() else 3
+        credit_hours, _ = CreditHour.objects.get_or_create(code=ch_code)
+
+        is_required_raw = get_in_row("is_required", row)
+        is_required = (
+            True if is_required_raw in {"1", "true", "yes", "required"} else False
         )
-
-        credit_hours_value = get_in_row("credit_hours", row)
-        credit_hours_code = 3
-        if credit_hours_value:
-            try:
-                credit_hours_code = int(float(credit_hours_value))
-            except ValueError:
-                pass
-
-        credit_hours, _ = CreditHour.objects.get_or_create(code=credit_hours_code)
-        is_required_raw = get_in_row("is_required", row).lower()
-        if is_required_raw in {"1", "true", "yes", "required"}:
-            is_required = True
-        elif is_required_raw in {"0", "false", "no"}:
-            is_required = False
-        else:
-            is_required = False
 
         return ensure_curriculum_course(
             curriculum=curriculum if curriculum else Curriculum.get_default(),
@@ -97,6 +85,7 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
           - row["curriculum"] = "Bsc Agriculture"
           - row["college_code"] = "CAFS"
         """
+
         raw_value = (value or "").strip()
         college = ensure_college(get_in_row("college_code", row))
 
@@ -142,11 +131,11 @@ class CourseWidget(widgets.ForeignKeyWidget):
         if not course_no or not course_dept:
             return Course.get_unique_default()
 
-        college_code = (row.get("college_code") or "").strip() if row else ""
+        college_code = get_in_row("college_code", row)
         college = ensure_college(college_code)  # verifier que 9a ne fait pas de doublons
-        department = ensure_department(course_dept, college) # idem
+        department = ensure_department(course_dept, college)  # idem
         title = row.get("course_title") if row else None
-        
+
         return ensure_course(
             department=department,
             course_no_raw=course_no,

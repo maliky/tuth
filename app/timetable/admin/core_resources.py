@@ -2,7 +2,7 @@
 
 from import_export import fields, resources
 
-from app.timetable.admin.widgets.core import AcademicYearCodeWidget
+from app.timetable.admin.core_widgets import AcademicYearCodeWidget
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester
 

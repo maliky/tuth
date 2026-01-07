@@ -4,7 +4,7 @@ from import_export import fields, resources
 
 from app.academics.admin.widgets import CurriculumCourseWidget
 from app.people.admin.widgets import FacultyWidget
-from app.timetable.admin.widgets.core import SemesterWidget
+from app.timetable.admin.core_widgets import SemesterWidget
 from app.timetable.models.section import Section
 
 

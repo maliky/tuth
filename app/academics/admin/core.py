@@ -163,6 +163,7 @@ class CollegeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
             rows.append((url, level, count))
         return format_html_join(" | ", '<a href="{}">{}</a>: {}', rows)
 
+
 @admin.register(Course)
 class CourseAdmin(DepartmentRestrictedAdmin):
     """Admin interface for Course.

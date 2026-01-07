@@ -21,7 +21,7 @@ from app.shared.importing import (
     setdefault_field,
 )
 from app.shared.utils import get_in_row
-from app.timetable.admin.widgets.section import SectionWidget
+from app.timetable.admin.section_widgets import SectionWidget
 from app.timetable.utils import normalize_academic_year
 
 SEM_MAP = {

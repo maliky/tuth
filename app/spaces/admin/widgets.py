@@ -23,12 +23,13 @@ class SpaceWidget(widgets.ForeignKeyWidget):
         If it does not exists, creates it.
         If nothing is passed return the default Space.
         """
-        if not value or value == "<TBA>":
+        space_val = (value or "").strip()
+        if not space_val:
             return Space.get_default()
 
         space, _ = Space.objects.get_or_create(
-            code=value.strip(),
-            defaults={"full_name": value.strip()},
+            code=space_val,
+            defaults={"full_name": space_val},
         )
         return space
 
@@ -49,9 +50,9 @@ class RoomWidget(widgets.ForeignKeyWidget):
     ) -> Room:
         """Using the room no, and the space code, returns a Room (eventualy)."""
         room_code = (value or "").strip()
-        space_code = get_in_row('space', row) or '<TBA>'
+        space_code = get_in_row("space", row) or "<TBA>"
         space = self.space_w.clean(value=space_code, row=row)
-        
+
         room, _ = Room.objects.get_or_create(
             code=room_code or "<TBA>",
             space=space or Space.get_default(),

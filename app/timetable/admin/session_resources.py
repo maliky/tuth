@@ -5,9 +5,8 @@ from import_export.widgets import TimeWidget
 
 from app.people.admin.resources_mapping import STUDENT_HEADER_MAP
 from app.spaces.admin.widgets import RoomWidget
-from app.timetable.admin.ressource_mapping import SECSESSION_HEADER_MAP
-from app.timetable.admin.widgets.section import SectionWidget
-from app.timetable.admin.widgets.session import ScheduleWidget, WeekdayWidget
+from app.timetable.admin.section_widgets import SectionWidget
+from app.timetable.admin.session_widgets import ScheduleWidget, WeekdayWidget
 from app.timetable.models.schedule import Schedule
 from app.timetable.models.session import SecSession
 
@@ -34,7 +33,6 @@ class ScheduleResource(resources.ModelResource):
         use_bulk = False
 
 
-
 class SecSessionResource(resources.ModelResource):
     room = fields.Field(column_name="room", attribute="room", widget=RoomWidget())
     schedule = fields.Field(
@@ -48,8 +46,6 @@ class SecSessionResource(resources.ModelResource):
         model = SecSession
         import_id_fields = ("room", "schedule", "section")
         fields = ("room", "schedule", "section")
-
-    def before_import(self, dataset):
-        headers = dataset.headers or []
-        dataset.headers = [SECSESSION_HEADER_MAP.get(h, h) for h in headers]
-
+        skip_unchanged = True
+        report_skipped = False
+        use_bulk = False

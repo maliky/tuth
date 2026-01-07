@@ -6,7 +6,7 @@ from django.contrib import admin
 from app.timetable.models.section import Section
 from app.timetable.models.session import SecSession
 from app.timetable.models.schedule import Schedule
-from app.timetable.admin.registers.section import SectionAdmin
+from app.timetable.admin.section_registers import SectionAdmin
 
 
 @pytest.mark.django_db
