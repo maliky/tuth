@@ -9,6 +9,25 @@ from tablib import Dataset
 from app.shared.constants import STYLE_DEFAULT  # safe
 
 
+def to_int(value: str, default: int = 0) -> int:
+    """Lenient int conversion for count-like inputs.
+
+    Accepts "1" and "2.0". Truncates fractional values ("2.9" -> 2).
+    Returns `default` for empty/None/non-numeric. Not intended for exotic formats.
+    Use only when truncation is acceptable.
+    """
+    try:
+        return int(float(value))
+    except Exception:
+        return default
+
+
+def asserts_keys(required: list[str], row: dict) -> None:
+    """Raise ValueError if any key in `required` is missing from `row`."""
+    if not all([r in row for r in required]):
+        raise ValueError(f"{required} are required in row {row} context.")
+
+
 def get_in_row(key: str, row: Optional[Mapping[str, str | None]]) -> str:
     """Return a value from the row (any mapping) safely stripped to a string.
 

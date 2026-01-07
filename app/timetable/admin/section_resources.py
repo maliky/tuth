@@ -3,7 +3,7 @@
 from import_export import fields, resources
 
 from app.academics.admin.widgets import CurriculumCourseWidget
-from app.people.admin.widgets import FacultyWidget
+from app.people.admin.widgets import FacultyUsernameWidget
 from app.timetable.admin.core_widgets import SemesterWidget
 from app.timetable.models.section import Section
 
@@ -35,7 +35,7 @@ class SectionResource(resources.ModelResource):
     faculty = fields.Field(
         column_name="faculty",
         attribute="faculty",
-        widget=FacultyWidget(),
+        widget=FacultyUsernameWidget(),
     )
 
     class Meta:

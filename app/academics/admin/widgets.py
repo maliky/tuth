@@ -21,7 +21,7 @@ from app.academics.ensures import (
     ensure_curriculum_course,
     ensure_department,
 )
-from app.shared.utils import get_in_row
+from app.shared.utils import asserts_keys, get_in_row, to_int
 
 
 class CurriculumCourseWidget(widgets.ForeignKeyWidget):
@@ -39,22 +39,24 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
 
     def clean(self, value, row=None, *args, **kwargs) -> CurriculumCourse:
         """Assemble course_dept, curriculum and course to return a curriculum course."""
-        # we don't use value.  We always get a course back
-        # course_no* course_dept* college_code
-        course = self.course_w.clean(value=None, row=row)
+        # we don't use value.  We always get a curriculum course back
+
+        asserts_keys(["course_no", "dept_code"], row)
+
         curriculum = self.curriculum_w.clean(value=value, row=row)
+        course = self.course_w.clean(value=None, row=row)
 
-        ch_value = get_in_row("credit_hours", row)
-        ch_code = int(ch_value) if ch_value.isdigit() else 3
-        credit_hours, _ = CreditHour.objects.get_or_create(code=ch_code)
+        credit_hours_val = to_int(get_in_row("credit_hours", row))
+        credit_hours, _ = CreditHour.objects.get_or_create(code=credit_hours_val)
 
-        is_required_raw = get_in_row("is_required", row)
         is_required = (
-            True if is_required_raw in {"1", "true", "yes", "required"} else False
+            True
+            if get_in_row("is_required", row) in {"1", "true", "yes", "required"}
+            else False
         )
 
         return ensure_curriculum_course(
-            curriculum=curriculum if curriculum else Curriculum.get_default(),
+            curriculum=curriculum,
             course=course,
             credit_code=credit_hours.code,
             is_required=is_required,
@@ -86,14 +88,14 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
           - row["college_code"] = "CAFS"
         """
 
-        raw_value = (value or "").strip()
+        curr_value = (value or "").strip()
         college = ensure_college(get_in_row("college_code", row))
 
-        if not raw_value:
+        if not curr_value:
             return Curriculum.get_default(def_college=college)
 
         curriculum = ensure_curriculum(
-            raw_value, college=college, fuzzy_threshold=fuzzy_threshold
+            curr_value, college=college, fuzzy_threshold=fuzzy_threshold
         )
 
         return curriculum
@@ -126,22 +128,24 @@ class CourseWidget(widgets.ForeignKeyWidget):
         the resource, but the info we need is spread across *row*).
         """
         course_no = get_in_row("course_no", row)
-        course_dept = get_in_row("course_dept", row)
+        dept_code = get_in_row("dept_code", row)
 
-        if not course_no or not course_dept:
+        if not course_no or not dept_code:
             return Course.get_unique_default()
 
         college_code = get_in_row("college_code", row)
         college = ensure_college(college_code)  # verifier que 9a ne fait pas de doublons
-        department = ensure_department(course_dept, college)  # idem
-        title = row.get("course_title") if row else None
+        department = ensure_department(dept_code, college)  # idem
 
-        return ensure_course(
+        title = get_in_row("course_title", row)
+
+        crs_obj = ensure_course(
             department=department,
-            course_no_raw=course_no,
+            course_no=course_no,
             title=title,
             fuzzy_threshold=fuzzy_threshold,
         )
+        return crs_obj
 
 
 class CourseManyWidget(widgets.ManyToManyWidget):

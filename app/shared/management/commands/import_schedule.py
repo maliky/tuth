@@ -37,7 +37,7 @@ from app.timetable.models.schedule import Schedule
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
 from app.timetable.models.session import SecSession
-from app.timetable.utils import mk_semester_code, normalize_academic_year
+from app.timetable.utils import normalize_academic_year
 
 CID_PATTERN = re.compile(
     r"^(?P<dept>[A-Za-z]+)_(?P<num>\d+)_s(?P<section>\d+)$", re.IGNORECASE

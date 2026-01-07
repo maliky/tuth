@@ -48,12 +48,6 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
             return None  # Staff.get_unique_default()
 
         _d, _, _ = get_name_parts(row)
-
-        # def _create_staff() -> Staff:
-        #     staff, _ = Staff.objects.get_or_create(username=username, defaults=_d)
-        #     staff.user.set_password(mk_password(_first, _last))
-        #     staff.user.save(update_fields=["password"])
-        #     return cast(Staff, staff)
         _create_staff = create_person_factory(username, Staff, _d, lambda s: s.user)
         staff_obj = cached_entity(self._cache_staff, username, _create_staff)
         return staff_obj
@@ -106,7 +100,7 @@ class UserWidget(widgets.ForeignKeyWidget):
         self.cache_user = dict()
 
 
-class FacultyWidget(widgets.ForeignKeyWidget):
+class FacultyUsernameWidget(widgets.ForeignKeyWidget):
     """Ensure a Faculty entry exists for the given username."""
 
     def __init__(self):
@@ -124,14 +118,8 @@ class FacultyWidget(widgets.ForeignKeyWidget):
         if not username:
             return Faculty.get_unique_default()
 
-        _d, _f, _l = get_name_parts(row)
+        _d, _first, _last = get_name_parts(row)
 
-        # def _create_faculty() -> Faculty:
-        #     faculty, _ = Faculty.objects.get_or_create(username=username, defaults=_d)
-        #     faculty.staff_profile.user.set_password(mk_password(_f, _l))
-        #     faculty.staff_profile.user.save(update_fields=["password"])
-
-        #     return cast(Faculty, faculty)
         _create_faculty = create_person_factory(
             username, Faculty, _d, lambda f: f.staff_profile.user
         )
@@ -324,3 +312,21 @@ class UserStudentWidget(widgets.ForeignKeyWidget):
         self._exclude_username = set()
         self.cache_username = dict()
         self.cache_student = dict()
+
+
+class FacultyUsernameWidget(widgets.ForeignKeyWidget):
+    """Ensure a Faculty entry exists for the given username."""
+
+    def __init__(self):
+        # field is "id" by default
+        super().__init__(Faculty)
+
+    def clean(self, value: str, row=None, *args, **kwargs) -> Faculty:
+        """From the username or name, tries to get a faculty object.
+
+        Create user and faculty if necessary.
+        """
+        username = (value or "").strip()
+        faculty_obj = ensure_faculty(username, row)
+        return faculty_obj
+

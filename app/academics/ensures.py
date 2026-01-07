@@ -21,10 +21,12 @@ CREDIT_HOUR_CACHE: Dict[int, CreditHour] = {}
 
 def ensure_college(code_raw: str) -> College:
     """Return the college attached to code_raw if possible cached."""
-    code = COLLEGE_CODE.get((code_raw.lower() or ""), "DEFT")
+    code = COLLEGE_CODE.get((code_raw.lower() or "DEFT"), "DEFT")
     cached = COLLEGE_CACHE.get(code)
+
     if cached:
         return cached
+
     college, _ = College.objects.get_or_create(
         code=code,
         defaults={"long_name": COLLEGE_LONG_NAME.get(code.lower(), code)},
@@ -47,16 +49,16 @@ def ensure_department(dept_code_raw: str, college: College) -> Department:
 def ensure_curriculum(
     name: str, college: College, fuzzy_threshold: float = 1.0
 ) -> Curriculum:
-    """Return a Curriculum defautl of the college in bad cases."""
+    """Return a Curriculum. Defaulting of the college curriculum if empyt name."""
     if not name:
-        return Curriculum.get_default()
+        return Curriculum.get_default(def_college=college)
 
     key = (name.lower(), college.id)
     cached = CURRICULUM_CACHE.get(key)
-
     if cached:
         return cached
 
+    # get the Curriculum.field 'short_name' max_length
     SHORT_NAME_MAX = Curriculum._meta.get_field("short_name").max_length
 
     curriculum, _ = Curriculum.objects.get_or_create(
@@ -66,31 +68,41 @@ def ensure_curriculum(
         fuzzy_threshold=fuzzy_threshold,
     )
     CURRICULUM_CACHE[key] = curriculum
+
     return curriculum
 
 
 def ensure_course(
     department: Department,
-    course_no_raw: str,
+    course_no: str,
     title: str | None = None,
     fuzzy_threshold: float = 1.0,
 ) -> Course:
-    course_no = (course_no_raw or "").strip()
+    """Look-up or create a course updating the title is set."""
+
+    # This should not happen but taking care of 102.0 -> 102
     if course_no.endswith(".0"):
         course_no = course_no[:-2]
+
     key = (department.id, course_no)
     cached = COURSE_CACHE.get(key)
     if cached:
         return cached
-    course, _ = Course.objects.get_or_create(
+
+    course, _created = Course.objects.get_or_create(
         department=department,
         number=course_no,
         defaults={"title": title},
         fuzzy_threshold=fuzzy_threshold,
     )
+
+    # if _created:
+    #     course.save()
+
     if title and course.title != title:
         course.title = title
         course.save(update_fields=["title"])
+
     COURSE_CACHE[key] = course
     return course
 
@@ -101,7 +113,7 @@ def ensure_curriculum_course(
     credit_code: int = 3,
     is_required: bool | None = None,
 ) -> CurriculumCourse:
-    """Provide a CurriculumCourse cached if possible."""
+    """Provide a CurriculumCourse cached if available."""
     key = (curriculum.id, course.id)
     cached = CURRICULUM_COURSE_CACHE.get(key)
 

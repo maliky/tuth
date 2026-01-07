@@ -6,19 +6,32 @@ from datetime import date
 from import_export import widgets
 
 from app.shared.utils import get_in_row
+from app.timetable.ensures import ensure_semester
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester
+from app.timetable.utils import parse_semester_code
 
 
-def ensure_academic_year_code(code: str) -> AcademicYear:
-    """Look up or auto-create an AcademicYear from its 'YY-YY' code."""
-    code = code.strip()
-    if not AcademicYear.objects.filter(code=code).exists():
-        ys, _ = code.split("-")
-        start = date(int("20" + ys), 9, 1)
-        AcademicYear.objects.create(start_date=start, code=code)
+def ensure_academic_year_code(code: str | None) -> AcademicYear:
+    """Look up or auto-create an AcademicYear from its 'YY-YY' code.
 
-    return AcademicYear.objects.get(code=code)
+    If no code return current AcademicYear, the code should be properly formated.
+    """
+    code = (code or "").strip()
+    if not code:
+        return AcademicYear.get_default()
+
+    ys, _ = code.split("-")
+    start = date(int("20" + ys), 9, 1)
+
+    ay_obj, _created = AcademicYear.objects.get_or_create(
+        code=code, defaults={"start_date": start}
+    )
+
+    if _created:  # > is this really necessary ?
+        ay_obj.save()
+
+    return ay_obj
 
 
 class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
@@ -36,19 +49,21 @@ class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
         **kwargs,
     ) -> AcademicYear | None:
         """Get the academic year from the code YY-YY."""
+
         if not value:
             return None
+
         m = self.ay_pat.match(value)
         if not m:
             raise ValueError(
                 f"Invalid academic year short name, got '{value!r}';" f"for {self.ay_pat}"
             )
 
-        start_year = int("20" + m.group(1))
+        start = date(int("20" + m.group(1)))
         ay, ay_created = AcademicYear.objects.get_or_create(
-            code=value,
-            defaults={"start_date": date(start_year, 8, 11)},
+            code=value, defaults={"start_date": start}
         )
+
         if ay_created:
             ay.save()
 
@@ -70,7 +85,8 @@ class SemesterWidget(widgets.ForeignKeyWidget):
         *args,
         **kwargs,
     ) -> Semester | None:
-        """Get the semester from a number and look for the academic year code also."""
+        """Get the semester from a number and look-up for the academic year code."""
+        # may be good to use ensure_semester with a default
         if not value:
             return None
 
@@ -80,24 +96,18 @@ class SemesterWidget(widgets.ForeignKeyWidget):
         ay = self.ay_w.clean(value=ay_code_value, row=row)
 
         semester, semester_created = Semester.objects.get_or_create(
-            academic_year=ay,
-            number=sem_no,
+            academic_year=ay, number=sem_no
         )
-        if semester_created:
-            semester.save()
+        # if semester_created:  # not sure if this is necessary.
+        #     semester.save()
         return semester
 
 
 class SemesterCodeWidget(widgets.ForeignKeyWidget):
-    """Parse YY-YY_SemN strings into :class:Semester objects."""
+    """Parse YY-YY_SemN like strings into :class:Semester objects."""
 
     def __init__(self, pat: str | None = None):
         super().__init__(Semester)
-        self.sem_pat = (
-            re.compile(r"^(?P<year>\d{2}-\d{2})_Sem(?P<num>\d+)$")
-            if pat is None
-            else re.compile(pat)
-        )
 
     def clean(
         self,
@@ -106,23 +116,12 @@ class SemesterCodeWidget(widgets.ForeignKeyWidget):
         *args,
         **kwargs,
     ) -> Semester | None:
-        """Get the semester and the ay directly from the fullfledge code."""
+        """Get the semester and the ay directly from '24-25_Sem2' or '24-25s2' code."""
+
         if not value:
             return None
 
-        m = self.sem_pat.match(value)
-        if not m:
-            return None
+        ay_code, sem_code = parse_semester_code(value)
+        sem_obj = ensure_semester(ay_code, sem_code)
 
-        ay_short = m.group("year")
-        sem_no = int(m.group("num"))
-        start_year = int("20" + ay_short.split("-")[0])
-        ay, _ = AcademicYear.objects.get_or_create(
-            code=ay_short,
-            defaults={"start_date": date(start_year, 8, 11)},
-        )
-        semester, _ = Semester.objects.get_or_create(
-            academic_year=ay,
-            number=sem_no,
-        )
-        return semester
+        return sem_obj

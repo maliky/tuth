@@ -236,7 +236,8 @@ class Course(models.Model):
 
     @classmethod
     def get_unique_default(cls) -> Self:
-        """Return a default Course which is unique. A most 1000 course can be created."""
+        """Return a default Course which is unique."""
+        # > where do I state the maximun number of courses to create ?
         number = f"{next(DEFAULT_COURSE_NO):04d}"
         return cls.get_default(number=number)
 

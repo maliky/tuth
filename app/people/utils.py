@@ -102,10 +102,11 @@ class NameParts:
             "suffix_name": self.suffix,
         }
 
-    def to_string(self) -> str:
-        """Return the full name as a string."""
+    def to_string(self, full=True) -> str:
+        """Return the full name as a string, or only first middle and last."""
         self._ensure_capitalize()
-        return " ".join([p for p in self.fullparts() if p])
+        _parts = self.fullparts() if full else self.parts()
+        return " ".join([p for p in _parts if p])
 
     def parts(self) -> Tuple[str, str, str]:
         """Returns first, last and middle Name parts only."""
@@ -267,6 +268,8 @@ def mk_username(
     """Generates a username after cleaning the names.
 
     <first [prefix_len]> + <middle initial> '.' <last>.
+    if the username is not used in creating a user it could
+    be regenerated on anoher call of this function.
     """
     middle_initial = re.sub(r"\.| |-", "", middle)[:1]
     first = re.sub(r"-|\.| ", "", first)

@@ -29,6 +29,7 @@ from app.shared.types import (
     TwoIntIntMapT,
     TwoStrIntMapT,
 )
+from app.shared.utils import to_int
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
 from app.timetable.utils import normalize_academic_year
@@ -40,13 +41,6 @@ def _norm_course_no(value: str) -> str:
     if value.endswith(".0"):
         value = value[:-2]
     return value
-
-
-def _to_int(value: str, default: int = 0) -> int:
-    try:
-        return int(float(value))
-    except Exception:
-        return default
 
 
 class Command(BaseCommand):
@@ -189,7 +183,7 @@ class Command(BaseCommand):
 
         def ensure_semester(ay_raw: str, sem_raw: str) -> int:
             ay_code = normalize_academic_year(ay_raw) or ""
-            sem_no = _to_int(sem_raw, default=0)
+            sem_no = to_int(sem_raw, default=0)
             key = (ay_code, sem_no)
             existing = semesters.get(key)
             if existing:
@@ -263,11 +257,11 @@ class Command(BaseCommand):
                     dept_pk, row.get("course_no", ""), row.get("course_title", "") or ""
                 )
                 curriculum_pk = ensure_curriculum(row.get("curriculum", ""), college_pk)
-                credit_code = _to_int(row.get("credit_hours", ""), default=3)
+                credit_code = to_int(row.get("credit_hours", ""), default=3)
                 curr_course_pk = ensure_curriculum_course(
                     curriculum_pk, course_pk, credit_code
                 )
-                sec_no = _to_int(row.get("section_no", ""), default=0)
+                sec_no = to_int(row.get("section_no", ""), default=0)
                 section_pk = ensure_section(
                     sem_pk, curr_course_pk, sec_no, default_faculty_id
                 )

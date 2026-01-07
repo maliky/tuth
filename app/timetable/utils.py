@@ -1,7 +1,8 @@
 """Utility helpers for the timetable app."""
 
 from datetime import date
-from typing import Optional
+import re
+from typing import Optional, Tuple, TypeAlias
 
 from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
@@ -70,12 +71,12 @@ def get_academic_year(d: date | None = None) -> str:
 
 
 def normalize_academic_year(raw: str | None) -> str:
-    """Convert various academic year labels to the canonical YY-YY format."""
+    """Convert various ay (2019-2020, 2019, 19_20) labels to the canonical YY-YY format."""
     text = (raw or "").strip()
     if not text:
         return ""
 
-    token = text.replace(" ", "").replace("/", "-")
+    token = text.replace(" ", "").replace("/", "-").replace("_", "-")
     if len(token) == 9 and token[4] == "-":  # 2019-2020
         return f"{token[2:4]}-{token[7:9]}"
     if len(token) == 4 and token.isdigit():  # 2019
@@ -92,14 +93,27 @@ def get_semester_code(sem_value: str, year_value: str) -> str:
     return f"{_year}_Sem{sem_value}"
 
 
-def mk_semester_code(year: str, sem_no: float | int) -> str:
-    r"""Given a year in format YYYY/YYYY and a sem no return the semester code.
+SemesterCodeT: TypeAlias = Tuple[str, int]
+SEMESTER_CODE_RE = re.compile(
+    r"^(?P<year>\d{2,4}-\d{2,4})[_-]?(?:Sem|sem|s)(?P<num>[0-4])$"
+)
 
-    The code is \r'^(?P<year>\\d{2}-\\d{2})_Sem(?P<num>\\d+)$'.
+
+def parse_semester_code(code: str | None) -> Optional[SemesterCodeT]:
+    """Parse strings like '24-25_Sem2' or '24-25s2' into (academic_year_code, semester_no).
+
+    Returns None when the pattern does not match.  The ay must be separated by '-'
     """
-    if not year or not sem_no:
-        return ""
-    ya, yb = year.split("/")
-    if isinstance(sem_no, float):
-        sem_no = int(sem_no)
-    return f"{ya[2:]}-{yb[2:]}-Sem{sem_no}"
+    if not code:
+        return ("", 0)
+
+    text = code.strip().replace(" ", "").replace("/", "-")
+    match = SEMESTER_CODE_RE.match(text)
+
+    if not match:
+        return ("", 0)
+
+    ay_code = match.group("year")
+    sem_no = int(match.group("num"))
+
+    return ay_code, sem_no

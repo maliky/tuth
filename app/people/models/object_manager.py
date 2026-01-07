@@ -7,66 +7,81 @@ from django.contrib.auth.models import User
 from django.db.models import Manager
 
 from app.shared.fuzzy_matching import top_name_matches
-from app.people.utils import mk_username
+from app.people.utils import NameParts, mk_username
 from app.shared.utils import get_in_row
 
 logger = logging.getLogger(__name__)
+USER_KWARGS = {
+    "user",
+    "username",
+    "password",
+    "email",
+    "first_name",
+    "last_name",
+    "is_staff",
+    "is_superuser",
+    "is_active",
+}
+
+
+def _get_name(**kwargs) -> NameParts:
+    """Extract for the passed dict the element making a name."""
+    named_parts = ["prefix", "first", "middle", "last", "suffix"]
+    parts = {f"{np}_name": kwargs.get(f"{np}_name", "") for np in named_parts}
+    return NameParts(**parts)
+
+
+def _get_username(name: NameParts | None, **kwargs) -> str:
+    """Look into the kwargs for elements to build the username.
+
+    if username exists remove it from kwargs.
+    """
+    username = kwargs.pop("username", "")
+
+    if not username:
+        if name:
+            first, middle, last = name.parts()
+        else:
+            first = kwargs.get("first_name", "")
+            last = kwargs.get("last_name", "")
+            middle = kwargs.get("middle_name", "")
+
+        username = mk_username(first, last, middle, unique=True)
+
+    return str(username)
+
+
+def _split_kwargs(**kwargs) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    """Returns user_kwargs, person_kwargs. username if exists goes to user_kwargs."""
+    user_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in USER_KWARGS}
+    return user_kwargs, kwargs
 
 
 class PersonManager(Manager):
     """Custom creation Management."""
 
-    USER_KWARGS = {
-        "user",
-        "username",
-        "password",
-        "email",
-        "first_name",
-        "last_name",
-        "is_staff",
-        "is_superuser",
-        "is_active",
-    }
-
-    def _split_kwargs(
-        self, kwargs: Dict[str, Any]
-    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        """Returns user_kwargs, person_kwargs."""
-        user_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in self.USER_KWARGS}
-        return user_kwargs, kwargs
-
-    def _get_long_name(self, person: Any) -> str:
-        user_obj = getattr(person, "user", None)
-        return " ".join(
-            [
-                getattr(user_obj, "first_name", "") or "",
-                getattr(person, "middle_name", "") or "",
-                getattr(user_obj, "last_name", "") or "",
-            ]
-        ).strip()
-
-    def _find_by_name(self, **user_kwargs: Any) -> Optional[User]:
+    def _find_by_name(self, name: NameParts) -> Optional[User]:
         """Return an existing user matched on first/last/middle names (case-insensitive)."""
-        first = get_in_row("first_name", user_kwargs)
-        last = get_in_row("last_name", user_kwargs)
-        middle = get_in_row("middle_name", user_kwargs)
 
-        if not first or not last:
+        if not name.first or not name.last:
             return None
 
-        base_name = " ".join([first, middle, last]).strip()
+        base_name = name.to_string(full=False)
+        long_name = name.to_string(full=True)
 
         # iexact : case insensitive
-        candidates = self.get_queryset().filter(user__last_name__iexact=last)
+        candidates = self.get_queryset().filter(user__last_name__iexact=name.last)
 
         if not candidates.exists():
             # > the problem here is that we already assume that
             # the first 3 char will be similare
             # At the same time we need to filter out some candidates
-            candidates = self.get_queryset().filter(user__last_name__istartswith=last[:3])
+            candidates = self.get_queryset().filter(
+                user__last_name__istartswith=name.last[:3]
+            )
 
         ranked_matches = top_name_matches(
-            base_name, candidates, self._get_long_name, threshold=0.9, limit=2
+            base_name, candidates, long_name, threshold=0.9, limit=2
         )
         if not ranked_matches:
             return None
@@ -103,9 +118,7 @@ class PersonManager(Manager):
         if not username:
             existing_user = cast(Optional[User], user_kwargs.pop("user", None))
             username = (
-                existing_user.username
-                if existing_user
-                else self._get_username(**user_kwargs)
+                existing_user.username if existing_user else _get_username(**user_kwargs)
             )
 
         found_user = self._find_by_name(**user_kwargs)
@@ -118,24 +131,14 @@ class PersonManager(Manager):
 
         return user
 
-    def _get_or_create(self, username: str, **user_kwargs: Any) -> User:
-        """Create or get the User and set/update password."""
-        _ = user_kwargs.pop("password", None)
-        existing_user = cast(Optional[User], user_kwargs.pop("user", None))
-        if existing_user:
-            return existing_user
+    # def _get_or_create(self, **user_kwargs: Any) -> User:
+    #     """Create or get the User and set/update password.
+    #     if user or username are present in user_kwargs use them first
 
-        found_user = self._find_by_name(**user_kwargs)
-        if found_user:
-            return found_user
-
-        user, _ = User.objects.get_or_create(username=username, defaults=user_kwargs)
-        # there some loop hole here
-        # if password:
-        #     # can I pass a hashed value directly to the password field of the user ?
-        #     user.set_password(password)  # to make sure it is hashed
-
-        return user
+    #     else do a fuzzy search using the name found in the kwargs
+    #     if the search fails it will create a new username before returning a user,
+    #     """
+    #     return user
 
     def _update_or_create(self, username: str, **user_kwargs: Any) -> User:
         """Get the User from username and set/update password or create it."""
@@ -166,20 +169,10 @@ class PersonManager(Manager):
             user.save(update_fields=["password"])
         return user
 
-    def _get_username(self, **kwargs) -> str:
-        """Look into the kwargs for elements to build the username."""
-        username = kwargs.pop("username", "")
-        if not username:
-            first = kwargs.get("first_name", "")
-            last = kwargs.get("last_name", "")
-            middle = kwargs.get("middle_name", "")
-            username = mk_username(first, last, middle, unique=True)
-        return str(username)
-
     # public API ----------------------------------------------------
     def create(self, **kwargs):
         """Create a user and the person."""
-        user_kwargs, person_kwargs = self._split_kwargs(kwargs)
+        user_kwargs, person_kwargs = self._split_kwargs(**kwargs)
         user = self._create_user(**user_kwargs)
         return super().create(user=user, **person_kwargs)
 
@@ -196,11 +189,11 @@ class PersonManager(Manager):
         username = (
             defaults.pop("username", False) or lookup_kwargs.pop("username", False)
             if "username" in defaults or "username" in lookup_kwargs
-            else self._get_username(**defaults, **lookup_kwargs)
+            else _get_username(**defaults, **lookup_kwargs)
         )
 
-        user_kwargs, person_kwargs = self._split_kwargs(lookup_kwargs)
-        user_default, person_default = self._split_kwargs(defaults)
+        user_kwargs, person_kwargs = _split_kwargs(**lookup_kwargs)
+        user_default, person_default = _split_kwargs(**defaults)
 
         combined_kwargs = {**user_default, **user_kwargs}
 
@@ -214,14 +207,33 @@ class PersonManager(Manager):
         """Get or Create the user and the person."""
         defaults = dict(defaults or {})
 
-        username = (
-            defaults.pop("username", False) or kwargs.pop("username", False)
-            if "username" in defaults or "username" in kwargs
-            else self._get_username(**defaults, **kwargs)
-        )
+        user_kwargs, person_kwargs = _split_kwargs(**kwargs, **defaults)
 
-        user_kwargs, person_kwargs = self._split_kwargs({**kwargs, **defaults})
+        provided_user = cast(Optional[User], user_kwargs.pop("user", None))
+        if provided_user:
+            return provided_user
 
-        user = self._get_or_create(username=username, **user_kwargs)
+        _ = user_kwargs.pop("password", None)
+        provided_username = user_kwargs.pop("username", None)
+
+        if provided_username:
+            user, _ = User.objects.get_or_create(
+                username=provided_username, defaults=user_kwargs
+            )
+
+        name = _get_name(**user_kwargs, **person_kwargs)
+
+        found_user = self._find_by_name(name=name)
+        if found_user:
+            return found_user
+
+        username = _get_username(name=nane)
+
+        user, _ = User.objects.get_or_create(username=username, defaults=user_kwargs)
+
+        # there some loop hole here
+        # if password:
+        #     # can I pass a hashed value directly to the password field of the user ?
+        #     user.set_password(password)  # to make sure it is hashed
 
         return super().get_or_create(user=user, defaults=person_kwargs)

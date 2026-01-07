@@ -9,10 +9,11 @@ from app.academics.admin.widgets import (
     CurriculumCourseWidget,
     CurriculumWidget,
 )
-from app.people.admin.widgets import FacultyWidget
+from app.people.admin.widgets import FacultyUsernameWidget
 from app.timetable.ensures import ensure_semester, ensure_section
-from app.shared.utils import get_in_row
+from app.shared.utils import get_in_row, asserts_keys, to_int
 from app.timetable.admin.core_widgets import SemesterCodeWidget, SemesterWidget
+from app.timetable.utils import parse_semester_code
 from app.timetable.models.section import Section
 
 
@@ -23,42 +24,38 @@ class SectionWidget(widgets.ForeignKeyWidget):
         super().__init__(Section)  # using pk until export is done
         self.curriculum_course_w = CurriculumCourseWidget()
         self.sem_w = SemesterWidget()
-        self.faculty_w = FacultyWidget()
+        self.faculty_w = FacultyFullnameWidget()
         self.fuzzy_threshold = fuzzy_threshold
         self._cache: dict[tuple[int, int, int, int | None], Section] = {}
 
     # ------------ widget API ------------
     def clean(self, value, row=None, *args, **kwargs) -> Section | None:
-        """Return the Section referenced by the CSV row."""
+        """Return the Section referenced by the sec_no as value."""
 
-        required = ["curriculum", "course_no", "dept_code", "college_code", "faculty"]
-        if not all([r in row for r in required]):
-            raise ValueError("Row context required")
+        sec_value = (value or "0").strip()
+        if not sec_value:
+            return None
+        sec_no = to_int(sec_value)
 
-        # needs course in context
-        curriculum_value = get_in_row("curriculum", row)
-        curriculum_course = self.curriculum_course_w.clean(
-            value=curriculum_value, row=row
+        asserts_keys(
+            ["curriculum", "course_no", "dept_code", "college_code", "faculty"], row
         )
 
-        semester_no = get_in_row("semester_no", row)
-        academic_year = get_in_row("academic_year", row)
-        semester = ensure_semester(academic_year, semester_no)
+        curriculum_value = get_in_row("curriculum", row)
+        curriculum_course = self.curriculum_course_w.clean(curriculum_value, row=row)
+
+        #  if we do not have semester_no or academic_year, we default to 25-26s2 sem.
+        semester_value = get_in_row("semester_no", row)
+        academic_value = get_in_row("academic_year", row)
+        semester = ensure_semester(academic_value, semester_value, default="25-26s2")
 
         faculty_value = get_in_row("faculty", row)
-        faculty = self.faculty_w.clean(value=faculty_value, row=row)
-
-        sec_no_value = value or "0"
-
-        if sec_no_value.isdigit():
-            number = int(sec_no_value)
-        else:
-            number = 0
+        faculty = self.faculty_w.clean(faculty_value, row=row)
 
         key = (
-            semester.id if semester else 0,
-            curriculum_course.id if curriculum_course else 0,
-            number,
+            semester.id,
+            curriculum_course.id,
+            sec_no,
             faculty.id if faculty else None,
         )
         cached = self._cache.get(key)
@@ -68,7 +65,7 @@ class SectionWidget(widgets.ForeignKeyWidget):
         section = ensure_section(
             semester=semester,
             curriculum_course=curriculum_course,
-            number=number,
+            number=sec_no,
             faculty_id=faculty.id if faculty else None,
         )
         self._cache[key] = section
@@ -87,7 +84,6 @@ class SectionCodeWidget(widgets.Widget):
 
     def __init__(self) -> None:
         super().__init__(Section)
-        self.sem_w = SemesterWidget()
         self.crs_w = CourseWidget()
 
     def clean(
@@ -98,16 +94,18 @@ class SectionCodeWidget(widgets.Widget):
         **kwargs,
     ) -> Section | None:
         """Return the Section identified by the import code string."""
-        course_dept_value = row.get("course_dept", "").strip()
+
+        course_dept_value = get_in_row("course_dept", row)
         course = self.crs_w.clean(value=course_dept_value, row=row)
 
-        sem_code_value, _, sec_no = [v.strip() for v in value.partition(":")]
+        sem_code_value, _, sec_value = [v.strip() for v in value.partition(":")]
 
-        semester = self.sem_w.clean(value=sem_code_value, row=row)
-        number = int(sec_no) if sec_no.isdigit() else None
+        ay_code, sem_no = parse_semester_code(sem_code_value)
 
         section, _ = Section.objects.get_or_create(
-            semester=semester, course=course, number=number
+            semester=ensure_semester(ay_code, sem_no),
+            course=course,
+            number=to_int(sec_value),
         )
 
         return section
