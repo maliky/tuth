@@ -25,7 +25,12 @@ if TYPE_CHECKING:
     from app.registry.models import Registration
     from app.timetable.models import Section
 
-_T = TypeVar("_T")
+AbstractPersonT = TypeVar("_T")
+Entity = TypeVar("Entity")
+PersonT = TypeVar("PersonT", bound=Model)
+AbstractPersonT = TypeVar("PersonT", bound="AbstractPerson")
+
+
 
 Row = dict[str, Any]
 Transform = Callable[[Row], Row]
@@ -35,6 +40,7 @@ CourseQuery: TypeAlias = QuerySet["Course"]
 FacultyQuery: TypeAlias = QuerySet["Faculty"]
 StudentQuery: TypeAlias = QuerySet["Student"]
 RegistrationQuery: TypeAlias = QuerySet["Registration"]
+SemesterCodeT: TypeAlias = Tuple[str, int]
 
 FieldT: TypeAlias = Union[
     list[str | list[str] | tuple[str, ...] | tuple[()]],

@@ -101,6 +101,8 @@ class SectionCodeWidget(widgets.Widget):
         sem_code_value, _, sec_value = [v.strip() for v in value.partition(":")]
 
         ay_code, sem_no = parse_semester_code(sem_code_value)
+        if not ay_code and not sem_no:
+            return None
 
         section, _ = Section.objects.get_or_create(
             semester=ensure_semester(ay_code, sem_no),

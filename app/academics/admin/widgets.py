@@ -44,6 +44,8 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
         asserts_keys(["course_no", "dept_code"], row)
 
         curriculum = self.curriculum_w.clean(value=value, row=row)
+        if curriculum is None:
+            curriculum = Curriculum.get_default()
         course = self.course_w.clean(value=None, row=row)
 
         credit_hours_val = to_int(get_in_row("credit_hours", row))

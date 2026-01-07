@@ -8,7 +8,7 @@ from typing import Any, Callable, Iterable, List, Sequence, Tuple
 
 from rapidfuzz.distance import JaroWinkler
 
-from app.shared.types import _T
+from app.shared.types import AbstractPersonT
 
 Score = float
 
@@ -108,14 +108,14 @@ def name_similarity(
 
 def top_name_matches(
     base: str,
-    candidates: Iterable[_T],
-    token_fn: Callable[[_T], str] = identity,
+    candidates: Iterable[AbstractPersonT],
+    token_fn: Callable[[AbstractPersonT], str] = identity,
     threshold: float = 0.9,
     limit: int = 3,
-) -> list[tuple[_T, float]]:
+) -> list[tuple[AbstractPersonT, float]]:
     """Return up to 'limit' candidates ordered by similarity >= threshold."""
 
-    scored: list[tuple[_T, float]] = []
+    scored: list[tuple[AbstractPersonT, float]] = []
 
     for cand in candidates:
         token = token_fn(cand)
@@ -128,10 +128,10 @@ def top_name_matches(
 
 def best_name_match(
     base: str,
-    candidates: Iterable[_T],
-    token_fn: Callable[[_T], str],
+    candidates: Iterable[AbstractPersonT],
+    token_fn: Callable[[AbstractPersonT], str],
     threshold: float = 0.9,
-) -> tuple[_T | None, float]:
+) -> tuple[AbstractPersonT | None, float]:
     """Return the best candidate and score meeting the threshold."""
     ranked = top_name_matches(
         base, candidates, token_fn=token_fn, threshold=threshold, limit=1

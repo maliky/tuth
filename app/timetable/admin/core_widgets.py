@@ -37,7 +37,7 @@ class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
                 f"Invalid academic year short name, got '{value!r}';" f"for {self.ay_pat}"
             )
 
-        start = date(int("20" + m.group(1)))
+        start = date(int("20" + m.group(1)), 8, 11)
         ay, ay_created = AcademicYear.objects.get_or_create(
             code=value, defaults={"start_date": start}
         )
@@ -100,6 +100,9 @@ class SemesterCodeWidget(widgets.ForeignKeyWidget):
             return None
 
         ay_code, sem_code = parse_semester_code(value)
+        if not ay_code and not sem_code:
+            return None
+
         sem_obj = ensure_semester(ay_code, sem_code)
 
         return sem_obj

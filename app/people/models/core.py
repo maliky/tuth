@@ -12,7 +12,9 @@ from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
 
 from app.people.models.object_manager import PersonManager
-from app.people.utils import extract_id_num, mk_username, photo_upload_to
+from app.people.utils import NameParts, extract_id_num, mk_username, photo_upload_to
+
+from typing import Mapping, Type, TypeVar, cast
 
 logger = logging.getLogger(__name__)
 

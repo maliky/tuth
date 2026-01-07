@@ -1,6 +1,11 @@
 
 
 
+* <2026-01-07 mer. 18:47>
+in ensure_people.ensure_person, why not use get_or_create instead of update_or_create ? see if :
+1. you can update PersonManage.update_or_create to look more like the get_or_create method.
+
+
 * Create username for donors
 
 * <2026-01-05 lun. 09:51> UI

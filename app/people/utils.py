@@ -31,9 +31,10 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
-    TypeVar,
     cast,
 )
+
+from app.shared.types import Entity, PersonT
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractBaseUser
@@ -45,9 +46,6 @@ from rapidfuzz.distance import JaroWinkler
 from app.shared.utils import get_in_row
 
 User = get_user_model()
-Entity = TypeVar("Entity")
-PersonT = TypeVar("PersonT", bound=Model)
-
 
 SUFFIX_PATTERNS = [
     re.compile(p, re.IGNORECASE)

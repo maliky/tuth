@@ -26,6 +26,7 @@ from app.people.utils import (
     get_name_parts,
     mk_password,
     parse_name,
+    split_name,
 )
 from app.shared.utils import get_in_row
 
@@ -327,9 +328,17 @@ class FacultyFullnameWidget(widgets.ForeignKeyWidget):
 
         Create user and faculty if necessary.
         """
-        username = (value or "").strip()
+        username = get_in_row("username", row)
         faculty_name = get_in_row("faculty", row)
-        # update row if no infor for name parts where presents.
-        row.update(parse_name(faculty_name, fallback_last="Faculty").to_dict())
-        faculty_obj = ensure_faculty(username, row)
+        name_parts = split_name(faculty_name)
+
+        updated_name = NameParts(
+            prefix_name=get_in_row("prefix_name", row) or name_parts.prefix,
+            first_name=get_in_row("first_name", row) or name_parts.first,
+            middle_name=get_in_row("middle_name", row) or name_parts.middle,
+            last_name=get_in_row("last_name", row) or name_parts.last,
+            suffix_name=get_in_row("suffix_name", row) or name_parts.suffix,
+        )
+
+        faculty_obj = ensure_faculty(username, name=updated_name)
         return faculty_obj

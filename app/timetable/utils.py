@@ -7,6 +7,8 @@ from typing import Optional, Tuple, TypeAlias
 from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 
+from app.shared.types import SemesterCodeT
+
 
 def validate_subperiod(
     *,
@@ -93,13 +95,12 @@ def get_semester_code(sem_value: str, year_value: str) -> str:
     return f"{_year}_Sem{sem_value}"
 
 
-SemesterCodeT: TypeAlias = Tuple[str, int]
 SEMESTER_CODE_RE = re.compile(
     r"^(?P<year>\d{2,4}-\d{2,4})[_-]?(?:Sem|sem|s)(?P<num>[0-4])$"
 )
 
 
-def parse_semester_code(code: str | None) -> Optional[SemesterCodeT]:
+def parse_semester_code(code: str | None) -> SemesterCodeT:
     """Parse strings like '24-25_Sem2' or '24-25s2' into (academic_year_code, semester_no).
 
     Returns None when the pattern does not match.  The ay must be separated by '-'
@@ -108,12 +109,12 @@ def parse_semester_code(code: str | None) -> Optional[SemesterCodeT]:
         return ("", 0)
 
     text = code.strip().replace(" ", "").replace("/", "-")
-    match = SEMESTER_CODE_RE.match(text)
+    _match = SEMESTER_CODE_RE.match(text)
 
-    if not match:
+    if not _match:
         return ("", 0)
 
-    ay_code = match.group("year")
-    sem_no = int(match.group("num"))
+    ay_code = _match.group("year")
+    sem_no = int(_match.group("num"))
 
     return ay_code, sem_no
