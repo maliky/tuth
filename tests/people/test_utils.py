@@ -24,7 +24,7 @@ from app.people.utils import (
 )
 def test_mk_username_default(first, last, username):
     """Default username generation without uniqueness."""
-    _uname = mk_username(first, last, prefix_len=2)
+    _uname = mk_username(first, last)
     assert _uname == username, f"{first} {last} -> {_uname} != {username}"
 
 
@@ -57,21 +57,21 @@ def test_mk_username_uniqness(user_factory):
 @pytest.mark.parametrize(
     "raw,prefix,first,middle,last,suffix",
     [
-        ("Doc. Malik K. Kone,  Ph.D.", "Doc.", "Malik", "K.", "Kone", "PhD"),
-        ("Dr Kone  Ph.D.", "Dr.", "", "", "Kone", "PhD"),
+        ("Doc. Malik K. Kone,  Ph.D.", "Doc.", "Malik", "K.", "KONE", "PhD"),
+        ("Dr Kone  Ph.D.", "Dr.", "", "", "KONE", "PhD"),
         # ("Rev Fr M Kone,  Ph.D.", "Rev. Fr.", "M.", "", "Kone", "PhD"),
-        ("Blayon, O. G", "", "O.", "G.", "Blayon", ""),
-        ("Blayon O G.", "", "O.", "G.", "Blayon", ""),
-        ("A. J K. Doe", "", "A.", "J. K.", "Doe", ""),
-        ("Al J. K. Doe", "", "Al", "J. K.", "Doe", ""),
-        ("Al Doe", "", "Al", "", "Doe", ""),
-        ("Doe A.", "", "A.", "", "Doe", ""),
-        ("B Doe", "", "B.", "", "Doe", ""),
-        ("Doe", "", "", "", "Doe", ""),
-        (" Doc Oum", "Doc.", "", "", "Oum", ""),
+        ("Blayon, O. G", "", "O.", "G.", "BLAYON", ""),
+        ("Blayon O G.", "", "O.", "G.", "BLAYON", ""),
+        ("A. J K. Doe", "", "A.", "J. K.", "DOE", ""),
+        ("Al J. K. Doe", "", "Al", "J. K.", "DOE", ""),
+        ("Al Doe", "", "Al", "", "DOE", ""),
+        ("Doe A.", "", "A.", "", "DOE", ""),
+        ("B Doe", "", "B.", "", "DOE", ""),
+        ("Doe", "", "", "", "DOE", ""),
+        (" Doc Oum", "Doc.", "", "", "OUM", ""),
         # need to be consitent with number of name to distinguish the 2 below
-        ("Nimely, II, William N.", "", "William", "N.", "NimelyII", ""),
-        ("Nimely, William G.", "", "William", "G.", "Nimely", ""),
+        ("Nimely, II, William N.", "", "William", "N.", "NIMELY", "II"),
+        ("Nimely, William G.", "", "William", "G.", "NIMELY", ""),
     ],
 )
 def test_split_name_initial_patterns(raw, prefix, first, middle, last, suffix):

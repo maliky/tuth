@@ -40,7 +40,7 @@ def _get_name(**kwargs) -> NameParts:
     return NameParts(**parts)
 
 
-def _get_username(name: NameParts | None, **kwargs) -> str:
+def _get_username(name: NameParts | None = None, **kwargs) -> str:
     """Look into the kwargs for elements to build the username.
 
     if username exists remove it from kwargs.
@@ -143,7 +143,7 @@ class PersonManager(Manager[AbstractPersonT]):
                 existing_user.username if existing_user else _get_username(**user_kwargs)
             )
 
-        found_user = self._find_by_name(**user_kwargs)
+        found_user = self._find_by_name(name=_get_name(**user_kwargs), threshold=0.9)
         if found_user:
             return found_user
 
@@ -168,7 +168,8 @@ class PersonManager(Manager[AbstractPersonT]):
             existing_user.save()
             return existing_user
 
-        found_user = self._find_by_name(**user_kwargs)
+        found_user = self._find_by_name(name=_get_name(**user_kwargs), threshold=0.9)
+
         if found_user:
             # user_kwargs.pop("username", None)
             if password:
@@ -234,7 +235,7 @@ class PersonManager(Manager[AbstractPersonT]):
 
         # In other case we use look by name
         name = _get_name(**user_lookup, **person_lookup)
-        found_user = self._find_by_name(name=name)
+        found_user = self._find_by_name(name=name, threshold=0.9)
 
         if found_user:
             user = found_user
@@ -268,7 +269,7 @@ class PersonManager(Manager[AbstractPersonT]):
             )
 
         name = _get_name(**user_kwargs, **person_kwargs)
-        found_user = self._find_by_name(name=name)
+        found_user = self._find_by_name(name=name, threshold=0.9)
 
         if found_user:
             return super().get_or_create(user=found_user, defaults=person_kwargs)
