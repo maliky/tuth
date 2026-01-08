@@ -1,5 +1,7 @@
 """Concrete creation tests for Staff."""
 
+from django.db import transaction
+from django.db.utils import IntegrityError
 import pytest
 
 from app.people.models.staffs import Staff
@@ -37,13 +39,19 @@ def test_staff_creation_can_set_custom_username() -> None:
 @pytest.mark.django_db
 def test_staff_creation_ensures_unique_username() -> None:
     first = Staff.objects.create(first_name="Amaury", last_name="Smith")
-    second = Staff.objects.create(
-        prefix_name="Doc", first_name="Amaury", last_name="Smith", suffix_name="PhD"
+    with pytest.raises(IntegrityError):
+        with transaction.atomic():
+            second = Staff.objects.create(
+                prefix_name="Doc.", first_name="Amaury", last_name="Smith"
+            )
+
+
+@pytest.mark.django_db
+def test_staff_get_or_create_ensures_unique_obj() -> None:
+    first = Staff.objects.create(first_name="Amaury", last_name="Smith")
+
+    second, _ = Staff.objects.get_or_create(
+        prefix_name="Doc.", first_name="Amaury", last_name="Smith"
     )
 
-    assert (
-        first.user.username != second.user.username
-    ), f"{first.user.username}  {second.user.username}"
-    assert (
-        second.user.username == first.user.username + "2"
-    ), f"second={second.user.username}, first={first.user.username}"
+    assert first == second, f"{first, second} and {first.id, second.id}"

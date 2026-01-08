@@ -253,7 +253,6 @@ class PersonManager(Manager[AbstractPersonT]):
     def get_or_create(self, defaults: Mapping[str, Any] | None = None, **kwargs):
         """Get or Create the user and the person."""
         defaults = dict(defaults or {})
-        import ipdb; ipdb.set_trace()
 
         user_kwargs, person_kwargs = _split_kwargs(**kwargs, **defaults)
 

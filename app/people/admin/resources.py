@@ -109,7 +109,7 @@ class StudentResource(resources.ModelResource):
     user = fields.Field(column_name="username", attribute="user", widget=UserWidget())
     # to be taken from gp table StudentInfo
     curriculum = fields.Field(
-        column_name="curriculum_short_name",
+        column_name="curriculum",
         attribute="curriculum",
         widget=CurriculumWidget(),
     )
@@ -133,6 +133,7 @@ class StudentResource(resources.ModelResource):
         fields = (
             "user",
             "bio",
+            "long_name",
             "birth_date",
             "birth_place",
             "curriculum",

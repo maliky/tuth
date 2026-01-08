@@ -26,6 +26,7 @@ GENDER_MAP = {
 }
 
 STUDENT_HEADER_MAP = {
+    "student_name", "long_name",
     "AcademicYear": "academic_year",
     "AccountID": "student_id",  # > ! this key is only from studeninfo
     "AdmissionStatus": "bio_admissionstatus",

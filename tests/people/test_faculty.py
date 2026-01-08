@@ -11,7 +11,7 @@ from app.people.utils import mk_username
 
 @pytest.mark.django_db
 def test_faculty_get_or_create() -> None:
-    faculty = Faculty.objects.get_or_create(first_name="Paula", last_name="Ray")
+    faculty, _ = Faculty.objects.get_or_create(first_name="Paula", last_name="Ray")
     expected_username = mk_username("Paula", "Ray")
 
     assert faculty.staff_profile is not None
@@ -43,10 +43,9 @@ def test_faculty_creation_ensures_unique_username() -> None:
 @pytest.mark.django_db
 def test_faculty_get_or_create_ensures_unique_obj() -> None:
     first = Faculty.objects.create(first_name="Amaury", last_name="Smith")
-    import ipdb; ipdb.set_trace()
 
-    second = Faculty.objects.get_or_create(
+    second, _ = Faculty.objects.get_or_create(
         prefix_name="Doc.", first_name="Amaury", last_name="Smith"
     )
 
-    assert first == second, f"{first, second}"
+    assert first == second, f"{first, second} and {first.id, second.id}"

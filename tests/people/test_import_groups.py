@@ -17,12 +17,14 @@ def test_student_import_assigns_student_group(curriculum, group_factory):
     ds = Dataset()
     ds.headers = ["student_id", "student_name", "curriculum"]
 
-    username = Student.mk_username(*split_name("Alice Example"))
+    name = split_name("Alice Example")
+    username = Student.mk_username(*name.parts())
 
-    ds.append(["ST1", name, curriculum.pk])
+    
+    ds.append(["ST1", name.to_string(full=True), curriculum.pk])
 
     group_factory(UserRole.STUDENT.value.label)
-
+    
     res = StudentResource().import_data(ds, dry_run=False)
 
     assert not res.has_errors(), res.row_errors()

@@ -65,7 +65,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
 
 
 class UserWidget(widgets.ForeignKeyWidget):
-    """Create or resolve a User from a username."""
+    """Create or resolve a User from a username or the name in ther row."""
 
     def __init__(self):
         super().__init__(User)
@@ -74,15 +74,14 @@ class UserWidget(widgets.ForeignKeyWidget):
     def clean(self, value, row=None, *args, **kwargs) -> Optional[User]:
         """Return or create a User from the donor name."""
         username = (value or "").strip()
+        _d, _first, _last = get_name_parts(row)
 
-        if not username:
+        if not username and not _last:
             return None
 
-        cached = self._cache_user.get(username)
+        cached = self._cache_user.get(username) if username else False
         if cached:
             return cached
-
-        _d, _first, _last = get_name_parts(row)
 
         def _create_user() -> User:
             user, created = User.objects.get_or_create(
