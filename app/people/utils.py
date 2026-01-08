@@ -34,6 +34,7 @@ from typing import (
     cast,
 )
 
+from app.people.constants import USER_KWARGS
 from app.shared.types import _T, ModelT
 
 from django.contrib.auth import get_user_model
@@ -404,3 +405,30 @@ def create_person_factory(
         return pers
 
     return f
+
+
+def get_name(**kwargs) -> NameParts:
+    """Extract from the passed dict the elements making a name."""
+    named_parts = ["prefix", "first", "middle", "last", "suffix"]
+    parts = {np: kwargs.get(f"{np}_name", "") for np in named_parts}
+    return NameParts(**parts)
+
+
+def split_kwargs(**kwargs) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    """Returns user_kwargs, person_kwargs. username if exists goes to user_kwargs."""
+    user_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in USER_KWARGS}
+    return user_kwargs, kwargs
+
+
+def get_full_name(person: Any) -> str:
+    """Return the full name for the user."""
+    user_obj = getattr(person, "user", None)
+    return " ".join(
+        [
+            getattr(person, "prefix_name", "") or "",
+            getattr(user_obj, "first_name", "") or "",
+            getattr(person, "middle_name", "") or "",
+            getattr(user_obj, "last_name", "") or "",
+            getattr(person, "suffix_name", "") or "",
+        ]
+    ).strip()

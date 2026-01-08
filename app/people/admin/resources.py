@@ -106,7 +106,9 @@ class StudentResource(resources.ModelResource):
     """Resource for importing Student objects from different csv files."""
 
     # Columns needs to be created on the fly
-    user = fields.Field(column_name="username", attribute="user", widget=UserWidget())
+    user = fields.Field(
+        column_name="long_name", attribute="user", widget=UserStudentWidget()
+    )
     # to be taken from gp table StudentInfo
     curriculum = fields.Field(
         column_name="curriculum",

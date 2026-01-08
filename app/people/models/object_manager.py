@@ -6,22 +6,12 @@ from typing import Any, Dict, Mapping, Optional, Tuple, cast
 from django.contrib.auth.models import User
 from django.db.models import Manager
 
-from app.people.utils import NameParts
+from app.people.utils import NameParts, get_name, split_kwargs, get_full_name
+
 from app.shared.fuzzy_matching import top_name_matches
 from app.shared.types import AbstractPersonT
 
 logger = logging.getLogger(__name__)
-USER_KWARGS = {
-    "user",
-    "username",
-    "password",
-    "email",
-    "first_name",
-    "last_name",
-    "is_staff",
-    "is_superuser",
-    "is_active",
-}
 
 
 def _get_match(
@@ -31,34 +21,6 @@ def _get_match(
     _person, _score = ranked_matches[no] if len(ranked_matches) > no else (None, 0.0)
     _user: Optional[User] = cast(Optional[User], getattr(_person, "user", None))
     return _user, float(_score)
-
-
-def _get_name(**kwargs) -> NameParts:
-    """Extract for the passed dict the element making a name."""
-    named_parts = ["prefix", "first", "middle", "last", "suffix"]
-    parts = {np: kwargs.get(f"{np}_name", "") for np in named_parts}
-    return NameParts(**parts)
-
-
-
-def _split_kwargs(**kwargs) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-    """Returns user_kwargs, person_kwargs. username if exists goes to user_kwargs."""
-    user_kwargs = {k: kwargs.pop(k) for k in list(kwargs) if k in USER_KWARGS}
-    return user_kwargs, kwargs
-
-
-def _get_full_name(person: Any) -> str:
-    """Return the full name for the user."""
-    user_obj = getattr(person, "user", None)
-    return " ".join(
-        [
-            getattr(person, "prefix_name", "") or "",
-            getattr(user_obj, "first_name", "") or "",
-            getattr(person, "middle_name", "") or "",
-            getattr(user_obj, "last_name", "") or "",
-            getattr(person, "suffix_name", "") or "",
-        ]
-    ).strip()
 
 
 class PersonManager(Manager[AbstractPersonT]):
@@ -107,7 +69,7 @@ class PersonManager(Manager[AbstractPersonT]):
             )
 
         ranked_matches = top_name_matches(
-            base_name, candidates, _get_full_name, threshold=threshold, limit=2
+            base_name, candidates, get_full_name, threshold=threshold, limit=2
         )
         if not ranked_matches:
             return None
@@ -140,10 +102,12 @@ class PersonManager(Manager[AbstractPersonT]):
         if not username:
             existing_user = cast(Optional[User], user_kwargs.pop("user", None))
             username = (
-                existing_user.username if existing_user else self._get_username(**user_kwargs)
+                existing_user.username
+                if existing_user
+                else self._get_username(**user_kwargs)
             )
 
-        found_user = self._find_by_name(name=_get_name(**user_kwargs), threshold=0.9)
+        found_user = self._find_by_name(name=get_name(**user_kwargs), threshold=0.9)
         if found_user:
             return found_user
 
@@ -168,7 +132,7 @@ class PersonManager(Manager[AbstractPersonT]):
             existing_user.save()
             return existing_user
 
-        found_user = self._find_by_name(name=_get_name(**user_kwargs), threshold=0.9)
+        found_user = self._find_by_name(name=get_name(**user_kwargs), threshold=0.9)
 
         if found_user:
             # user_kwargs.pop("username", None)
@@ -187,7 +151,7 @@ class PersonManager(Manager[AbstractPersonT]):
     # public API ----------------------------------------------------
     def create(self, **kwargs):
         """Create a user and the person."""
-        user_kwargs, person_kwargs = _split_kwargs(**kwargs)
+        user_kwargs, person_kwargs = split_kwargs(**kwargs)
         user = self._create_user(**user_kwargs)
         return super().create(user=user, **person_kwargs)
 
@@ -209,9 +173,9 @@ class PersonManager(Manager[AbstractPersonT]):
         create_defaults = dict(create_defaults or {})
         lookup_kwargs = dict(kwargs)
 
-        user_lookup, person_lookup = _split_kwargs(**lookup_kwargs)
-        user_def, person_def = _split_kwargs(**defaults)
-        user_create_def, person_create_def = _split_kwargs(**create_defaults)
+        user_lookup, person_lookup = split_kwargs(**lookup_kwargs)
+        user_def, person_def = split_kwargs(**defaults)
+        user_create_def, person_create_def = split_kwargs(**create_defaults)
 
         # If we have a user we use it
         provided_user = cast(Optional[User], user_lookup.pop("user", None))
@@ -234,7 +198,7 @@ class PersonManager(Manager[AbstractPersonT]):
             )
 
         # In other case we use look by name
-        name = _get_name(**user_lookup, **person_lookup)
+        name = get_name(**user_lookup, **person_lookup)
         found_user = self._find_by_name(name=name, threshold=0.9)
 
         if found_user:
@@ -254,7 +218,7 @@ class PersonManager(Manager[AbstractPersonT]):
         """Get or Create the user and the person."""
         defaults = dict(defaults or {})
 
-        user_kwargs, person_kwargs = _split_kwargs(**kwargs, **defaults)
+        user_kwargs, person_kwargs = split_kwargs(**kwargs, **defaults)
 
         provided_user = cast(Optional[User], user_kwargs.pop("user", None))
         if provided_user:
@@ -269,7 +233,7 @@ class PersonManager(Manager[AbstractPersonT]):
             )
             return super().get_or_create(user=user, defaults=person_kwargs)
 
-        name = _get_name(**user_kwargs, **person_kwargs)
+        name = get_name(**user_kwargs, **person_kwargs)
         found_user = self._find_by_name(name=name, threshold=0.9)
 
         if found_user:

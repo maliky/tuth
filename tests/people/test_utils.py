@@ -41,7 +41,9 @@ def test_mk_username_uniqness(user_factory):
             _ = user_factory(username=un2)
             # should through UNIQUE constraint failed: auth_user.username
 
-    username3 = mk_username("Esai", "Thot", unique=True, prefix_len=2)  # esthot2, not esthot1
+    username3 = mk_username(
+        "Esai", "Thot", unique=True, prefix_len=2
+    )  # esthot2, not esthot1
     user3 = user_factory(username=username3)
 
     assert username1 == "es.thot", f"un1={username1}"
@@ -72,7 +74,7 @@ def test_mk_username_uniqness(user_factory):
         # need to be consitent with number of name to distinguish the 2 below
         ("Nimely II, William N.", "", "William", "N.", "NIMELY-II", ""),
         ("Nimely, William G.", "", "William", "G.", "NIMELY", ""),
-        ("Nimely Phd, William G.", "", "William", "G.", "NIMELY", "Phd"),        
+        ("Nimely Phd, William G.", "", "William", "G.", "NIMELY", "Phd"),
     ],
 )
 def test_split_name_initial_patterns(raw, prefix, first, middle, last, suffix):

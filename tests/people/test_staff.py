@@ -38,10 +38,12 @@ def test_staff_creation_can_set_custom_username() -> None:
 
 @pytest.mark.django_db
 def test_staff_creation_ensures_unique_username() -> None:
-    first = Staff.objects.create(first_name="Amaury", last_name="Smith")
+
+    Staff.objects.create(first_name="Amaury", last_name="Smith")
+
     with pytest.raises(IntegrityError):
         with transaction.atomic():
-            second = Staff.objects.create(
+            Staff.objects.create(
                 prefix_name="Doc.", first_name="Amaury", last_name="Smith"
             )
 

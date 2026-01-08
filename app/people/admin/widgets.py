@@ -24,8 +24,11 @@ from app.people.utils import (
     NameParts,
     cached_entity,
     create_person_factory,
+    get_name,
     get_name_parts,
+    mk_fullusername,
     mk_password,
+    mk_username,
     parse_name,
     split_name,
 )
@@ -35,8 +38,6 @@ from app.shared.utils import get_in_row
 class StaffProfileWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
-        self._cache_staff: dict[Hashable, Staff] = {}
-        # super().__init__(Staff, field="staff_id")
         super().__init__(Staff)
 
     def clean(self, value, row=None, *args, **kwargs) -> Optional[Staff]:
@@ -46,22 +47,20 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         It return or creates a Staff.
         """
         username = (value or "").strip()
-        _d, _, last = get_name_parts(row)
-        
-        if not username and not last:
-            return None  # Staff.get_unique_default()
+        name = get_name(**row)
 
-        _create_staff = create_person_factory(username, Staff, _d, lambda s: s.user)
-        staff_obj = cached_entity(self._cache_staff, username, _create_staff)
-        return staff_obj
+        if not username:
+            if not name.last:
+                return None  # Staff.get_unique_default()
+
+        staff_factory = create_person_factory(
+            username, Staff, name.to_dict(), lambda s: s.user
+        )
+        return staff_factory()
 
     def render(self, value, obj=None) -> str:
         """For the value (staff) for export."""
         return value.long_name if value else ""  # type: ignore[no-any-return]
-
-    def after_import(self, dataset, result, **kwargs):
-        """Remove any cache which may be present after import."""
-        self._cache_staff = dict()
 
 
 class UserWidget(widgets.ForeignKeyWidget):
@@ -74,28 +73,30 @@ class UserWidget(widgets.ForeignKeyWidget):
     def clean(self, value, row=None, *args, **kwargs) -> Optional[User]:
         """Return or create a User from the donor name."""
         username = (value or "").strip()
-        _d, _first, _last = get_name_parts(row)
+        name = get_name(**row)
 
-        if not username and not _last:
-            return None
+        if not username:
+            if not name.last:
+                return None  # Staff.get_unique_default()
+            # it is understood that same user name return the same user
+            # even if prefix and suffix differ
+            # for bare user there is no fuzzy search.
+            username = mk_username(*name.parts())
 
-        cached = self._cache_user.get(username) if username else False
+        cached = self._cache_user.get(username)
         if cached:
             return cached
 
         def _create_user() -> User:
             user, created = User.objects.get_or_create(
-                username=username,
-                defaults={"first_name": _first, "last_name": _last},
+                username=username, defaults=name.to_dict()
             )
             if created:
-                user.set_password(mk_password(_first, _last))
+                user.set_password(mk_password(name.first, name.last))
                 user.save(update_fields=["password"])
             return user
 
-        user_obj = cached_entity(self._cache_user, username, _create_user)
-
-        return user_obj
+        return cached_entity(self._cache_user, username, _create_user)
 
     def after_import(self, dataset, result, **kwargs):
         """Remove any cache which may be present after import."""
@@ -103,39 +104,31 @@ class UserWidget(widgets.ForeignKeyWidget):
 
 
 class FacultyUsernameWidget(widgets.ForeignKeyWidget):
-    """Ensure a Faculty entry exists for the given username."""
+    """Get a Faculty give a username or a name in the row."""
 
     def __init__(self):
-        # field is "id" by default
-        self._cache_faculty: dict[Hashable, Faculty] = {}
         super().__init__(Faculty)
 
-    def clean(self, value: str, row=None, *args, **kwargs) -> Faculty:
+    def clean(self, value: str, row=None, *args, **kwargs) -> Optional[Faculty]:
         """From the username, tries to get a faculty object.
 
         Create user and faculty if necessary.
         """
         username = (value or "").strip()
+        name = get_name(**row)
 
         if not username:
-            return Faculty.get_unique_default()
+            if not name.last:
+                return None  # Staff.get_unique_default()
 
-        _d, _first, _last = get_name_parts(row)
-
-        _create_faculty = create_person_factory(
-            username, Faculty, _d, lambda f: f.staff_profile.user
+        faculty = create_person_factory(
+            username, Faculty, name.to_dict(), lambda f: f.staff_profile.user
         )
-
-        faculty_obj = cached_entity(self._cache_faculty, username, _create_faculty)
-        return faculty_obj
-
-    def after_import(self, dataset, result, **kwargs):
-        """Remove any cache which may be present after import."""
-        self.cache_faculty = dict()
+        return faculty()
 
 
 class StudentUserWidget(widgets.ForeignKeyWidget):
-    """Ensure a Student User exists."""
+    """Ensure a Student User given a username, stid or name."""
 
     def __init__(self):
         # field is "id" by default
@@ -150,29 +143,27 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         and create uniq username.
         """
         username = (value or "").strip()
-        _stdid = row.get("student_id")
+        student_id = get_in_row("student_id", row)
+        name = get_name(**row)
 
-        if not username or not _stdid:
+        if not username and not student_id and not name.last:
             return None
 
-        _d, _first, _last = get_name_parts(row)
+        key = username or student_id or name.to_string(full=True)
 
         def _create_student() -> Student:
-            student, _created = Student.objects.get_or_create(
+            student, created = Student.objects.get_or_create(
                 username=username,
-                student_id=_stdid,
-                defaults=_d,
+                student_id=student_id,  # this is why I do not use the factory
+                defaults=name.to_dict(),
             )
-            if _created:
-                student.user.set_password(mk_password(_first, _last))
+            if created:
+                student.user.set_password(mk_password(name.first, name.last))
                 student.user.save(update_fields=["password"])
 
             return cast(Student, student)
 
-        # _create_student = create_person_factory(username, Student, _d, lambda s: s.user)
-
-        student_obj = cached_entity(self._cache_student, username, _create_student)
-        return student_obj
+        return cached_entity(self._cache_student, key, _create_student)
 
     def after_import(self, dataset, result, **kwargs):
         """Remove any cache which may be present after import."""
@@ -235,7 +226,6 @@ class GradeStudentWidget(widgets.ForeignKeyWidget):
         student.save()
 
         self._cache_student[student_id] = student
-
         return student
 
 
@@ -288,8 +278,8 @@ class UserStudentWidget(widgets.ForeignKeyWidget):
         if not stdid:
             return None
 
-        fullname = (value or "").strip()
-        _n = parse_name(fullname, fallback_first="Student", fallback_last=fullname)
+        long_name = (value or "").strip()
+        _n = parse_name(long_name, fallback_first="Student", fallback_last=long_name)
 
         if stdid not in self._cache_user:
             username = get_in_row("username", row)
@@ -340,5 +330,4 @@ class FacultyFullnameWidget(widgets.ForeignKeyWidget):
             suffix=get_in_row("suffix_name", row) or name_parts.suffix,
         )
 
-        faculty_obj = ensure_faculty(username, name=updated_name)
-        return faculty_obj
+        return ensure_faculty(username, name=updated_name)
