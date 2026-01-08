@@ -2,39 +2,38 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    Optional,
     Sequence,
+    Tuple,
     TypeAlias,
     TypeVar,
     Union,
-    Tuple,
-    Optional,
 )
 
-from django.db.models import QuerySet
-from django.db.models import Model
+from django.db.models import Model, QuerySet
 from import_export import resources
 
-
 if TYPE_CHECKING:
-    from pathlib import Path
-
-    from app.people.models.core import AbstractPerson
     from app.academics.models.course import Course
+    from app.people.models.core import AbstractPerson
+    from app.people.models.donor import Donor
     from app.people.models.faculty import Faculty
+    from app.people.models.staffs import Staff
     from app.people.models.student import Student
     from app.registry.models import Registration
     from app.timetable.models import Section
 
 
-AbstractPersonT = TypeVar("_T")
-Entity = TypeVar("Entity")
-PersonT = TypeVar("PersonT", bound=Model)
-AbstractPersonT = TypeVar("PersonT", bound="AbstractPerson")
-
+_T = TypeVar("_T")
+ModelT = TypeVar("ModelT", bound=Model)
+PersonT = TypeVar("PersonT", "Staff", "Donor", "Student", bound="AbstractPerson")
+AbstractPersonT = TypeVar("AbstractPersonT", bound="AbstractPerson")
+Score = float
 
 Row = dict[str, Any]
 Transform = Callable[[Row], Row]
@@ -60,8 +59,6 @@ DirectoryResourceEntry: TypeAlias = tuple[
 ]
 
 LookUpType: TypeAlias = Sequence[tuple[str, str]]
-# PersonT = TypeVar("PersonT")  # ? what is this.
-# PersonT = TypeAlias = Donor|Staff| Student| Faculty
 
 # Generic mapping aliases used across importers
 StrIntMapT: TypeAlias = dict[str, int]

@@ -7,8 +7,8 @@ from django.contrib.auth.models import User
 from django.db.models import Manager
 
 from app.people.utils import NameParts, mk_username
-from app.shared.types import AbstractPersonT
 from app.shared.fuzzy_matching import top_name_matches
+from app.shared.types import AbstractPersonT
 
 logger = logging.getLogger(__name__)
 USER_KWARGS = {
@@ -45,7 +45,7 @@ def _get_username(name: NameParts | None, **kwargs) -> str:
 
     if username exists remove it from kwargs.
     """
-    username = kwargs.pop("username", "")
+    username = str(kwargs.pop("username", "") or "")
 
     if username:
         return username
@@ -81,7 +81,7 @@ def _get_full_name(person: Any) -> str:
     ).strip()
 
 
-class PersonManager(Manager):
+class PersonManager(Manager[AbstractPersonT]):
     """Custom creation Management."""
 
     def _find_by_name(self, name: NameParts, threshold: float = 0.9) -> Optional[User]:
@@ -153,15 +153,6 @@ class PersonManager(Manager):
 
         return user
 
-    # def _get_or_create(self, **user_kwargs: Any) -> User:
-    #     """Create or get the User and set/update password.
-    #     if user or username are present in user_kwargs use them first
-
-    #     else do a fuzzy search using the name found in the kwargs
-    #     if the search fails it will create a new username before returning a user,
-    #     """
-    #     return user
-
     def _update_or_create(self, username: str, **user_kwargs: Any) -> User:
         """Get the User from username and set/update password or create it."""
 
@@ -205,11 +196,13 @@ class PersonManager(Manager):
         create_defaults: Mapping[str, Any] | None = None,
         **kwargs,
     ):
-        """Update or Create a user and the Person.
+        """Update or Create a Person and the associated user.
 
         The defaults is used for updating and creating if create_defaults
-        is not there.
-        kwargs is used to search for the Person to update.
+        is not there. Kwargs is used to search for the Person to update.
+
+        The lookup is done wih kwargs in this order. user, username, name search,
+        built username from name.
         """
         defaults = dict(defaults or {})
         create_defaults = dict(create_defaults or {})
@@ -245,13 +238,8 @@ class PersonManager(Manager):
 
         if found_user:
             user = found_user
-            # Could be a creation. if a super is not created with this user.
-            # return super().update_or_create(
-            #     user=found_user, defaults=person_def, create_defaults=person_create_def
-            # )
-
         else:
-            # Finaly we prepare a lookup from scratch
+            # Finaly we prepare a lookup with a built username
             user, _ = User.objects.update_or_create(
                 username=_get_username(name=name),
                 defaults=user_def,

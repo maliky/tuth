@@ -13,10 +13,7 @@ from django.http import HttpRequest
 from app.academics.choices import LEVEL_NUMBER
 from app.academics.models import College, Curriculum, Department
 from app.people.models import Student
-from app.shared.types import LookUpType
-
-
-ModelT = TypeVar("ModelT", bound=Model)
+from app.shared.types import LookUpType, ModelT
 
 
 def _get_lookup_path(

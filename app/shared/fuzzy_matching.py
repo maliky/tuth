@@ -4,13 +4,11 @@ from __future__ import annotations
 
 import re
 from difflib import SequenceMatcher
-from typing import Any, Callable, Iterable, List, Sequence, Tuple
+from typing import Any, Callable, Iterable, List, Sequence, Tuple, TypeVar
 
 from rapidfuzz.distance import JaroWinkler
 
-from app.shared.types import AbstractPersonT
-
-Score = float
+from app.shared.types import AbstractPersonT, Score
 
 
 def identity(value: Any) -> Any:

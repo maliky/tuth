@@ -34,7 +34,7 @@ from typing import (
     cast,
 )
 
-from app.shared.types import Entity, PersonT
+from app.shared.types import _T, ModelT
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractBaseUser
@@ -81,12 +81,16 @@ class NameParts:
     last: str
     suffix: str
 
+    # def __str__(self):
+    #     return self.to_string(full=True)
     def _ensure_capitalize(self) -> None:
         """Return the Name parts capitalized."""
-        for _elt in ["prefix", "first", "middle", "last", "suffix"]:
-            elt = getattr(self, _elt, None)
-            if elt:
-                setattr(self, _elt, elt.capitalize())
+        # do not capitalize "suffix"
+        self.prefix = self.prefix.title()
+        self.first = self.first.title()
+        self.middle = self.middle.title()
+        self.last = self.last.upper()
+        # leave suffix as is.
 
     def to_dict(self) -> dict[str, str]:
         """Return admin-friendly defaults derived from the parsed name."""
@@ -117,10 +121,10 @@ class NameParts:
 
 
 def cached_entity(
-    cache: Dict[Hashable, Entity],
+    cache: Dict[Hashable, _T],
     key: Hashable,
-    factory: Callable[[], Entity],
-) -> Entity:
+    factory: Callable[[], _T],
+) -> _T:
     """Return a cached entity, computing it only once per key."""
     if key not in cache:
         cache[key] = factory()
@@ -378,15 +382,15 @@ def get_name_parts(row) -> Tuple[Dict[str, Any], str, str]:
 
 def create_person_factory(
     username: str,
-    model: type[PersonT],
+    model: type[ModelT],
     _d: dict[str, Any],
-    user_getter: Callable[[PersonT], AbstractBaseUser],
-) -> Callable[[], PersonT]:
+    user_getter: Callable[[ModelT], AbstractBaseUser],
+) -> Callable[[], ModelT]:
     """Return a new Person."""
 
-    def f() -> PersonT:
+    def f() -> ModelT:
 
-        manager = cast(BaseManager[PersonT], model._default_manager)
+        manager = cast(BaseManager[ModelT], model._default_manager)
         pers, _created = manager.get_or_create(username=username, defaults=_d)
 
         user = user_getter(pers)

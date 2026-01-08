@@ -334,11 +334,11 @@ class FacultyFullnameWidget(widgets.ForeignKeyWidget):
         name_parts = split_name(faculty_name)
 
         updated_name = NameParts(
-            prefix_name=get_in_row("prefix_name", row) or name_parts.prefix,
-            first_name=get_in_row("first_name", row) or name_parts.first,
-            middle_name=get_in_row("middle_name", row) or name_parts.middle,
-            last_name=get_in_row("last_name", row) or name_parts.last,
-            suffix_name=get_in_row("suffix_name", row) or name_parts.suffix,
+            prefix=get_in_row("prefix_name", row) or name_parts.prefix,
+            first=get_in_row("first_name", row) or name_parts.first,
+            middle=get_in_row("middle_name", row) or name_parts.middle,
+            last=get_in_row("last_name", row) or name_parts.last,
+            suffix=get_in_row("suffix_name", row) or name_parts.suffix,
         )
 
         faculty_obj = ensure_faculty(username, name=updated_name)

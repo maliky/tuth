@@ -2,9 +2,7 @@
 
 
 * <2026-01-07 mer. 18:47>
-in ensure_people.ensure_person, why not use get_or_create instead of update_or_create ? see if :
-1. you can update PersonManage.update_or_create to look more like the get_or_create method.
-
+Why you and ruff keeps importing ensure_person from app.people.models.core, it is not there but in app.people.ensures
 
 * Create username for donors
 

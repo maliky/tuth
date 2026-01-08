@@ -13,11 +13,10 @@ from app.people.models.role_assignment import RoleAssignment
 from app.people.models.staffs import Staff
 from app.people.models.student import Student
 from app.people.models.donor import Donor
+from app.shared.types import AbstractPersonT, PersonT
 from app.timetable.models.section import Section
 
 logger = logging.getLogger(__name__)
-
-PersonType = TypeVar("PersonType", Staff, Student)
 
 
 def _merge_users(target_user: User, source_user: User) -> None:
@@ -74,7 +73,7 @@ def _copy_if_missing(target, source, fields: Iterable[str]) -> None:
 
 
 @transaction.atomic
-def merge_people(target: PersonType, source: PersonType) -> PersonType:
+def merge_people(target: PersonT, source: PersonT) -> PersonT:
     """Merge a source person into target, reassigning relations and deleting source."""
     if target.pk == source.pk:
         return target
