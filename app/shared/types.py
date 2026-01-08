@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
 _T = TypeVar("_T")
 ModelT = TypeVar("ModelT", bound=Model)
-PersonT = TypeVar("PersonT", "Staff", "Donor", "Student", bound="AbstractPerson")
+PersonT = TypeVar("PersonT", "Staff", "Donor", "Student")
 AbstractPersonT = TypeVar("AbstractPersonT", bound="AbstractPerson")
 Score = float
 
