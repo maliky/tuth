@@ -81,7 +81,7 @@ class FacultyResource(resources.ModelResource):
     class Meta:
         model = Faculty
         import_id_fields = ("staff_profile",)
-        fields = ("staff_profile", "middle_name", "prefix_name", "suffix_name")
+        fields = ("staff_profile",)
         skip_unchanged = True
         report_skipped = False
         use_bulk = False

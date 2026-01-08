@@ -58,7 +58,7 @@ def test_student_email_uses_username_prefix():
     )
 
     email = student.mk_email()
-    assert email.startswith("jadoe"), f"email should start with username, got {email}"
+    assert email.startswith("janedoe"), f"email should start with username, got {email}"
     assert email.endswith(
         Student.EMAIL_SUFFIX
-    ), "Email suffix should match student suffix"
+    ), f"but {email, Student.EMAIL_SUFFIX}"

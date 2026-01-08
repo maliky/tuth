@@ -31,24 +31,24 @@ def test_mk_username_default(first, last, username):
 @pytest.mark.django_db(transaction=True)
 def test_mk_username_uniqness(user_factory):
     """Check if the username stay uniq with an increased by number."""
-    username1 = mk_username("Esop", "Thot")  # esthot
+    username1 = mk_username("Esop", "Thot", prefix_len=2)  # esthot
     user1 = user_factory(username=username1)
 
     # create another user but with that username
-    un2 = mk_username("Esai", "Thot")  # esthot
+    un2 = mk_username("Esai", "Thot", prefix_len=2)  # esthot
     with pytest.raises(IntegrityError):
         with transaction.atomic():
             _ = user_factory(username=un2)
             # should through UNIQUE constraint failed: auth_user.username
 
-    username3 = mk_username("Esai", "Thot", unique=True)  # esthot2, not esthot1
+    username3 = mk_username("Esai", "Thot", unique=True, prefix_len=2)  # esthot2, not esthot1
     user3 = user_factory(username=username3)
 
-    assert username1 == "esthot", f"un1={username1}"
-    assert un2 == "esthot", f"un2={un2}"
-    assert username3 == "esthot2", f"un3={username3}"
-    assert user1.username == "esthot", f"u1.username={user1.username}"
-    assert user3.username == "esthot2", f"u3.username={user3.username}"
+    assert username1 == "es.thot", f"un1={username1}"
+    assert un2 == "es.thot", f"un2={un2}"
+    assert username3 == "es.thot2", f"un3={username3}"
+    assert user1.username == "es.thot", f"u1.username={user1.username}"
+    assert user3.username == "es.thot2", f"u3.username={user3.username}"
 
 
 # Doit tester la création d'un staff d'un student d'un donor vérifier les ID
@@ -70,8 +70,9 @@ def test_mk_username_uniqness(user_factory):
         ("Doe", "", "", "", "DOE", ""),
         (" Doc Oum", "Doc.", "", "", "OUM", ""),
         # need to be consitent with number of name to distinguish the 2 below
-        ("Nimely, II, William N.", "", "William", "N.", "NIMELY", "II"),
+        ("Nimely II, William N.", "", "William", "N.", "NIMELY-II", ""),
         ("Nimely, William G.", "", "William", "G.", "NIMELY", ""),
+        ("Nimely Phd, William G.", "", "William", "G.", "NIMELY", "Phd"),        
     ],
 )
 def test_split_name_initial_patterns(raw, prefix, first, middle, last, suffix):

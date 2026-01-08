@@ -197,13 +197,17 @@ def extract_firstnlast(raw_name: str) -> tuple[str, str, str]:
     return first_name, last_name, raw_name
 
 
-def handle_numbered_name_suffix(last_name, name_suffix):
-    """Concatenate any roman numeral from the suffix in the last_name."""
+def handle_numbered_suffix(last_name, name_suffix):
+    """Concatenate any roman numeral from the suffix into the last_name.
+
+    The idea is that number such as I or II are part of the last name.
+    They are concatenated as last-II
+    """
     pat = r"\b(?:I{1,3})\b(?:,|\.)?"
     m = re.search(pat, name_suffix)
     if m:
         name_suffix = re.sub(pat, "", name_suffix)
-        last_name += re.sub(r"\.|,", "", m.group()).strip()
+        last_name += "-" + re.sub(r"\.|,", "", m.group()).strip()
     return last_name, name_suffix
 
 
@@ -223,17 +227,15 @@ def parse_name(
 
 def split_name(name: str) -> NameParts:
     """Splits a raw_name in prefix, first, middle, last, suffix."""
-    suffix_name, raw_name = extract_suffix(name)
-    prefix_name, raw_name = extract_prefix(raw_name)
-    first_name, last_name, middle_name = extract_firstnlast(raw_name)
-    first_name, middle_name, last_name = [
-        n.replace(".", "").strip() for n in [first_name, middle_name, last_name]
+    suffix, raw = extract_suffix(name)
+    prefix, raw = extract_prefix(raw)
+    first, last, middle = extract_firstnlast(raw)
+    first, middle, last = [n.replace(".", "").strip() for n in [first, middle, last]]
+    first, middle, last = [
+        re.sub(INITIAL_PATTERN, r"\1.", n) for n in [first, middle, last]
     ]
-    first, middle, last_name = [
-        re.sub(INITIAL_PATTERN, r"\1.", n) for n in [first_name, middle_name, last_name]
-    ]
-    prefix = re.sub(PREFIX_PATTERN, r"\1.", prefix_name)
-    last, suffix = handle_numbered_name_suffix(last_name, suffix_name)
+    prefix = re.sub(PREFIX_PATTERN, r"\1.", prefix)
+    last, suffix = handle_numbered_suffix(last, suffix)
     return NameParts(prefix=prefix, first=first, middle=middle, last=last, suffix=suffix)
 
 

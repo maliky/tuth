@@ -58,6 +58,7 @@ class FacultyManager(models.Manager):
     def get_or_create(self, defaults=None, **kwargs):
         """Get or Create the Faculty and create the Staff if id does not exists."""
         defaults = defaults or {}
+
         username = kwargs.pop("username")
         staff_kwargs, faculty_kwargs = self._split_kwargs({**kwargs, **defaults})
         staff_profile, _ = Staff.objects.get_or_create(

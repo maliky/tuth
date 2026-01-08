@@ -46,11 +46,11 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         It return or creates a Staff.
         """
         username = (value or "").strip()
-
-        if not username:
+        _d, _, last = get_name_parts(row)
+        
+        if not username and not last:
             return None  # Staff.get_unique_default()
 
-        _d, _, _ = get_name_parts(row)
         _create_staff = create_person_factory(username, Staff, _d, lambda s: s.user)
         staff_obj = cached_entity(self._cache_staff, username, _create_staff)
         return staff_obj
