@@ -56,7 +56,11 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         staff_factory = create_person_factory(
             username, Staff, name.to_dict(), lambda s: s.user
         )
-        return staff_factory()
+        staff_obj = staff_factory()
+        import ipdb; ipdb.set_trace()
+
+        staff_obj.save()
+        return staff_obj
 
     def render(self, value, obj=None) -> str:
         """For the value (staff) for export."""

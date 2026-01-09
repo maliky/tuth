@@ -73,4 +73,4 @@ def test_faculty_import_assigns_faculty_group(
     if not username:
         username = Faculty.mk_username(first, last, middle=middle, unique=False)
 
-    assert user.username == username, f"{user.username} and {username}"
+    assert user.username == username, f"{user.username, username}"
