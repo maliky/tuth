@@ -16,9 +16,7 @@ from app.people.admin.resources_mapping import (
     USER_HEADER_MAP,
 )
 from app.people.admin.widgets import (
-    DonorUserWidget,
     StaffProfileWidget,
-    StudentUserWidget,
     UserStudentWidget,
     UserWidget,
 )
@@ -26,7 +24,6 @@ from app.people.models.donor import Donor
 from app.people.models.faculty import Faculty
 from app.people.models.staffs import Staff
 from app.people.models.student import Student
-from app.people.utils import mk_username, parse_name, split_name
 from app.shared.auth.perms import UserRole
 from app.shared.utils import get_in_row
 from app.timetable.admin.core_widgets import SemesterCodeWidget
@@ -34,7 +31,7 @@ from app.timetable.ensures import ensure_academic_year_code
 from app.timetable.models.semester import Semester
 from app.timetable.utils import (
     get_academic_year,
-    get_semester_code,
+    normalize_semester_code,
 )
 
 # > widgets : columns name first (from the resource) and then the model field/attribute
@@ -48,7 +45,7 @@ class StaffResource(resources.ModelResource):
     class Meta:
         model = Staff
         import_id_fields = ("user",)
-        fields = ("user", "middle_name", "prefix_name", "suffix_name")
+        fields = ("user", "username", "middle_name", "prefix_name", "suffix_name")
         skip_unchanged = True
         report_skipped = False
 
@@ -194,26 +191,26 @@ class StudentResource(resources.ModelResource):
 
         # entry_semester normalization
         entry_year_val = get_in_row("entry_year", row)
-        entry_sem_val = get_in_row("entry_semester_no", row)
-        if not entry_sem_val:
-            entry_sem_val = get_semester_code(
-                sem_value=get_in_row("entry_semester_no", row),
-                year_value=entry_year_val,
-            )
-        elif "_Sem" not in entry_sem_val:
-            entry_sem_val = get_semester_code(
-                sem_value=entry_sem_val, year_value=entry_year_val
-            )
+        entry_sem_val = get_in_row("entry_semester", row) or get_in_row(
+            "entry_semester_no", row
+        )
+        entry_sem_val = normalize_semester_code(
+            entry_sem_val,
+            year_value=entry_year_val,
+            sem_value=get_in_row("entry_semester_no", row),
+        )
         if entry_sem_val:
             row["entry_semester"] = entry_sem_val
 
         # last_enrolled_semester normalization
-        last_sem_val = get_in_row("last_enrolled_semester_no", row)
-        if not last_sem_val:
-            last_sem_val = get_semester_code(
-                sem_value=get_in_row("last_enrolled_semester_no", row),
-                year_value=get_academic_year(),
-            )
+        last_sem_val = get_in_row("last_enrolled_semester", row) or get_in_row(
+            "last_enrolled_semester_no", row
+        )
+        last_sem_val = normalize_semester_code(
+            last_sem_val,
+            year_value=get_academic_year(),
+            sem_value=get_in_row("last_enrolled_semester_no", row),
+        )
         if last_sem_val:
             row["last_enrolled_semester"] = last_sem_val
 

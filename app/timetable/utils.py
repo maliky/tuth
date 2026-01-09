@@ -103,7 +103,7 @@ SEMESTER_CODE_RE = re.compile(
 def parse_semester_code(code: str | None) -> SemesterCodeT:
     """Parse strings like '24-25_Sem2' or '24-25s2' into (academic_year_code, semester_no).
 
-    Returns None when the pattern does not match.  The ay must be separated by '-'
+    Returns ("", 0) when the pattern does not match. The ay must be separated by '-'.
     """
     if not code:
         return ("", 0)
@@ -118,3 +118,23 @@ def parse_semester_code(code: str | None) -> SemesterCodeT:
     sem_no = int(_match.group("num"))
 
     return ay_code, sem_no
+
+
+def normalize_semester_code(
+    raw: str | None,
+    *,
+    year_value: str | None = None,
+    sem_value: str | None = None,
+) -> str:
+    """Return a canonical YY-YY_SemN string from mixed semester inputs."""
+    ay_code, sem_no = parse_semester_code(raw)
+    if ay_code and sem_no:
+        return f"{normalize_academic_year(ay_code)}_Sem{sem_no}"
+
+    raw_value = (raw or "").strip()
+    if raw_value and year_value:
+        return get_semester_code(sem_value=raw_value, year_value=year_value)
+    if sem_value and year_value:
+        return get_semester_code(sem_value=sem_value, year_value=year_value)
+
+    return ""

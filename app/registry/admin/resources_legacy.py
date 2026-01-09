@@ -6,7 +6,7 @@ from functools import cached_property
 
 from import_export import fields, widgets
 
-from app.people.admin.widgets import GradeStudentWidget
+from app.people.admin.widgets import StudentGradeWidget
 from app.registry.admin.resources import GradeResource, RegistrationResource
 from app.registry.models.registration import RegistrationStatus
 from app.shared.data import legacy_registration_rows
@@ -210,7 +210,7 @@ class LegacyRegistrationResource(RegistrationResource):
     student = fields.Field(
         attribute="student",
         column_name="student_id",
-        widget=GradeStudentWidget(),
+        widget=StudentGradeWidget(),
     )
     section = fields.Field(
         attribute="section",

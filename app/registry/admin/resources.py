@@ -2,7 +2,7 @@
 
 from import_export import fields, resources
 
-from app.people.admin.widgets import GradeStudentWidget
+from app.people.admin.widgets import StudentGradeWidget
 from app.registry.admin.widgets import GradeValueWidget
 from app.registry.models.grade import Grade, GradeValue
 from app.registry.models.registration import Registration
@@ -22,7 +22,7 @@ class GradeResource(resources.ModelResource):
     student = fields.Field(
         attribute="student",
         column_name="student_id",
-        widget=GradeStudentWidget(),
+        widget=StudentGradeWidget(),
     )
     section = fields.Field(
         attribute="section",

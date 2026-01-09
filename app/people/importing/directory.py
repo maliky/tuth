@@ -9,7 +9,7 @@ from typing import Iterable, Optional
 import pandas as pd
 import phonenumbers
 
-from app.people.utils import NameParts, parse_name
+from app.people.utils import name_parts_from_row
 from app.shared.importing import CsvRowLogger, drop_constant_columns, get_import_logger
 from app.shared.utils import get_in_row
 
@@ -116,8 +116,11 @@ def load_directory_rows(path: Path) -> list[DirectoryRow]:
             continue
 
         # Build name from the unified full_name column (first/last already concatenated for CSV)
-        full_name = get_in_row("full_name", row_dict)
-        _n = parse_name(full_name)  # not used?
+        name = name_parts_from_row(
+            row_dict,
+            fullname_key="full_name",
+            raw_name=full_name,
+        )
 
         position = get_in_row("position", row_dict)
         division = get_in_row("division", row_dict)
@@ -136,7 +139,7 @@ def load_directory_rows(path: Path) -> list[DirectoryRow]:
 
         bio_tags: list[str] = []
         # legacy identifiers
-        bio_tags = tag_legacy(bio_tags, full_name, legacy_user, email)
+        bio_tags = tag_legacy(bio_tags, name.to_string(), legacy_user, email)
         # alternate emails
         for key in ["Recovery Email", "Home Secondary Email", "Work Secondary Email"]:
             extra_email = get_in_row(key, row_dict)
@@ -172,9 +175,9 @@ def load_directory_rows(path: Path) -> list[DirectoryRow]:
 
         rows.append(
             DirectoryRow(
-                first_name=_n.first,
-                last_name=_n.last,
-                full_name=full_name,
+                first_name=name.first,
+                last_name=name.last,
+                full_name=name.to_string(),
                 email=email,
                 position=position,
                 phone=phone_primary,

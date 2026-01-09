@@ -6,6 +6,8 @@ Usage::
     >>> widget = StaffProfileWidget()
     >>> staff = widget.clean("Dr. Jane Doe")
     >>> print(staff.long_name)
+
+Namnig Convetion XYWidget return a X instance for a YRessource Call.
 """
 
 from typing import Any, Hashable, Optional, cast
@@ -21,16 +23,11 @@ from app.people.models.faculty import Faculty
 from app.people.models.staffs import Staff
 from app.people.models.student import Student
 from app.people.utils import (
-    NameParts,
     cached_entity,
     create_person_factory,
-    get_name,
-    get_name_parts,
-    mk_fullusername,
+    name_parts_from_row,
     mk_password,
     mk_username,
-    parse_name,
-    split_name,
 )
 from app.shared.utils import get_in_row
 
@@ -48,12 +45,12 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         It return or creates a Staff.
         """
         username = (value or "").strip()
-        name = get_name(**row)
+        name = name_parts_from_row(row, fullname_key="long_name")
 
         if not username:
             if not name.last:
                 return None  # Staff.get_unique_default()
-            username = Staff.mk_username(*name.parts(),unique=False)
+            username = Staff.mk_username(*name.parts(), unique=False)
 
         cached = self._cache_staff.get(username)
         if cached:
@@ -62,8 +59,8 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         staff_factory = create_person_factory(
             username, Staff, name.to_dict(), lambda s: s.user
         )
-        staff_obj =  cached_entity(self._cache_staff, username, staff_factory)
-        
+        staff_obj = cached_entity(self._cache_staff, username, staff_factory)
+
         return staff_obj
 
     def render(self, value, obj=None) -> str:
@@ -74,7 +71,6 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         """Remove any cache which may be present after import."""
         self.cache_staff = dict()
 
-    
 
 class UserWidget(widgets.ForeignKeyWidget):
     """Create or resolve a User from a username or the name in ther row."""
@@ -86,15 +82,15 @@ class UserWidget(widgets.ForeignKeyWidget):
     def clean(self, value, row=None, *args, **kwargs) -> Optional[User]:
         """Return or create a User from the donor name."""
         username = (value or "").strip()
-        name = get_name(**row)
+        _n = name_parts_from_row(row, raw_name=value, fullname_key="donors")
 
         if not username:
-            if not name.last:
+            if not _n.last:
                 return None  # Staff.get_unique_default()
             # it is understood that same user name return the same user
             # even if prefix and suffix differ
             # for bare user there is no fuzzy search.
-            username = mk_username(*name.parts())
+            username = mk_username(*_n.parts())
 
         cached = self._cache_user.get(username)
         if cached:
@@ -102,10 +98,10 @@ class UserWidget(widgets.ForeignKeyWidget):
 
         def _create_user() -> User:
             user, created = User.objects.get_or_create(
-                username=username, defaults=name.to_dict()
+                username=username, defaults=_n.to_dict(full=False)
             )
             if created:
-                user.set_password(mk_password(name.first, name.last))
+                user.set_password(mk_password(_n.first, _n.last))
                 user.save(update_fields=["password"])
             return user
 
@@ -128,7 +124,7 @@ class FacultyUsernameWidget(widgets.ForeignKeyWidget):
         Create user and faculty if necessary.
         """
         username = (value or "").strip()
-        name = get_name(**row)
+        name = name_parts_from_row(row, fullname_key="faculty")
 
         if not username:
             if not name.last:
@@ -137,7 +133,8 @@ class FacultyUsernameWidget(widgets.ForeignKeyWidget):
         faculty = create_person_factory(
             username, Faculty, name.to_dict(), lambda f: f.staff_profile.user
         )
-        return faculty()
+        faculty_obj = faculty()
+        return faculty_obj
 
 
 class StudentUserWidget(widgets.ForeignKeyWidget):
@@ -157,7 +154,11 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         """
         username = (value or "").strip()
         student_id = get_in_row("student_id", row)
-        name = get_name(**row)
+        name = name_parts_from_row(
+            row,
+            fullname_key="long_name",
+            fallback_last="Student",
+        )
 
         if not username and not student_id and not name.last:
             return None
@@ -176,14 +177,16 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
 
             return cast(Student, student)
 
-        return cached_entity(self._cache_student, key, _create_student)
+        student_obj = cached_entity(self._cache_student, key, _create_student)
+
+        return student_obj
 
     def after_import(self, dataset, result, **kwargs):
         """Remove any cache which may be present after import."""
         self.cache_student = dict()
 
 
-class GradeStudentWidget(widgets.ForeignKeyWidget):
+class StudentGradeWidget(widgets.ForeignKeyWidget):
     """Create or resolve a Student using a student_id when missing."""
 
     def __init__(self):
@@ -215,11 +218,9 @@ class GradeStudentWidget(widgets.ForeignKeyWidget):
 
         first_name = get_in_row("student_first_name", row)
         last_name = get_in_row("student_last_name", row)
-        _n = parse_name(
-            # Return vars with something.
-            " ".join(filter(None, [first_name, last_name])).strip(),
-            fallback_first="Student",
-            fallback_last=student_id,
+        raw_name = " ".join(filter(None, [first_name, last_name])).strip()
+        _n = name_parts_from_row(
+            row, raw_name=raw_name, fallback_first="Student", fallback_last=student_id
         )
 
         username = Student.mk_username(_n.first, _n.last)
@@ -242,7 +243,7 @@ class GradeStudentWidget(widgets.ForeignKeyWidget):
         return student
 
 
-class DonorUserWidget(widgets.ForeignKeyWidget):
+class UserDonorWidget(widgets.ForeignKeyWidget):
     """Create or resolve a User for Donor imports."""
 
     def __init__(self):
@@ -255,21 +256,15 @@ class DonorUserWidget(widgets.ForeignKeyWidget):
         if not raw_name:
             return Donor.get_default().user
 
-        cached = self._cache_user.get(raw_name)
-        if cached:
-            return cached
+        _n = name_parts_from_row(row, raw_name=raw_name)
 
-        _n = parse_name(raw_name, fallback_last="Donor")
-        username = Donor.mk_username(_n.first, _n.last)
+        donor_factory = create_person_factory(
+            raw_name, Donor, _n.to_dict(full=False), lambda s: s.user
+        )
 
-        _defaults = {"first_name": _n.first, "last_name": _n.last}
-        user, created = User.objects.get_or_create(username=username, defaults=_defaults)
-        if created:
-            user.set_password(mk_password(_n.first, _n.last))
-            user.save(update_fields=["password"])
+        donor_obj = donor_factory()
 
-        self._cache_user[raw_name] = user
-        return user
+        return donor_obj
 
 
 class UserStudentWidget(widgets.ForeignKeyWidget):
@@ -278,45 +273,45 @@ class UserStudentWidget(widgets.ForeignKeyWidget):
     def __init__(self):
         # field is "id" by default
         super().__init__(User)
-        self._cache_username: dict[str, str] = dict()
-        self._exclude_username = set()
         self._cache_user: dict[str, User] = dict()
 
     def clean(self, value: str, row=None, *args, **kwargs) -> User | None:
-        """From the student name (and an id), gets a Student object."""
-        if not value:
+        """From the student id, look up or create a Student object."""
+        username = (value or "").strip()
+        student_id = get_in_row("student_id", row)
+        _n = name_parts_from_row(
+            row,
+            fullname_key="long_name",
+            fallback_last="Student",
+        )
+
+        if not username and not student_id and not _n.last:
             return None
 
-        stdid = get_in_row("student_id", row)
-        if not stdid:
-            return None
+        # for the same name we get the same user back.
+        key = username or student_id or _n.to_string(full=True)
 
-        long_name = (value or "").strip()
-        _n = parse_name(long_name, fallback_first="Student", fallback_last=long_name)
+        cached = self._cache_user.get(key)
+        if cached:
+            return cached
 
-        if stdid not in self._cache_user:
-            username = get_in_row("username", row)
-            if not username:
-                username = Student.mk_username(
-                    _n.first, _n.last, _n.middle, exclude=self._exclude_username
-                )
-            self._cache_username[stdid] = username
-            self._exclude_username |= {username}
-            user, _ = User.objects.get_or_create(
-                username=username, defaults={"first_name": _n.first, "last_name": _n.last}
+        if not username:
+            username = Student.mk_username(
+                _n.first, _n.last, _n.middle, exclude=self._exclude_username
             )
-            user.set_password(mk_password(_n.first, _n.last))
-            user.save(update_fields=["password"])
 
-            self._cache_user[stdid] = user
+        dfts = _n.to_dict(full=False)
+        user_factory = create_person_factory(
+            username, User, dfts, user_getter=lambda u: u
+        )
 
-        return self._cache_user[stdid]
+        user_obj = cached_entity(self._cache_user, username, user_factory)
+
+        return user_obj
 
     def after_import(self, dataset, result, **kwargs):
         """Remove any cache which may be present after import."""
-        self._exclude_username = set()
-        self.cache_username = dict()
-        self.cache_student = dict()
+        self.cache_user = dict()
 
 
 class FacultyFullnameWidget(widgets.ForeignKeyWidget):
@@ -333,14 +328,10 @@ class FacultyFullnameWidget(widgets.ForeignKeyWidget):
         """
         username = get_in_row("username", row)
         faculty_name = get_in_row("faculty", row)
-        name_parts = split_name(faculty_name)
-
-        updated_name = NameParts(
-            prefix=get_in_row("prefix_name", row) or name_parts.prefix,
-            first=get_in_row("first_name", row) or name_parts.first,
-            middle=get_in_row("middle_name", row) or name_parts.middle,
-            last=get_in_row("last_name", row) or name_parts.last,
-            suffix=get_in_row("suffix_name", row) or name_parts.suffix,
+        updated_name = name_parts_from_row(
+            row,
+            fullname_key="faculty",
+            raw_name=faculty_name,
         )
 
         return ensure_faculty(username, name=updated_name)

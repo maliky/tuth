@@ -28,6 +28,7 @@ from typing import (
     Callable,
     Dict,
     Hashable,
+    Mapping,
     Optional,
     Sequence,
     Tuple,
@@ -93,16 +94,17 @@ class NameParts:
         self.last = self.last.upper()
         # leave suffix as is.
 
-    def to_dict(self) -> dict[str, str]:
-        """Return admin-friendly defaults derived from the parsed name."""
+    def to_dict(self, full=True) -> dict[str, str]:
+        """Return admin-friendly defaults derived from the parsed name.
+
+        If full is False only return first and last names. Default all.
+        """
         self._ensure_capitalize()
-        return {
-            "first_name": self.first,
-            "last_name": self.last,
-            "prefix_name": self.prefix,
-            "middle_name": self.middle,
-            "suffix_name": self.suffix,
-        }
+        named_parts = ["first", "last"]
+        if True:
+            named_parts += ["prefix", "middle", "suffix"]
+
+        return {f"{np}_name": getattr(self, np, "") for np in named_parts}
 
     def to_string(self, full=True) -> str:
         """Return the full name as a string, or only first middle and last."""
@@ -383,10 +385,37 @@ def get_name_parts(row) -> Tuple[Dict[str, Any], str, str]:
     return _d, _d["first_name"], _d["last_name"]
 
 
+def name_parts_from_row(
+    row: Mapping[str, str | None] | None,
+    *,
+    fullname_key: str = "long_name",
+    raw_name: str | None = None,
+    fallback_first: str = "",
+    fallback_last: str = "",
+) -> NameParts:
+    """Return NameParts from row fields, falling back to parsing a full name string."""
+    safe_row = row or {}
+    prefix = get_in_row("prefix_name", safe_row)
+    first = get_in_row("first_name", safe_row)
+    middle = get_in_row("middle_name", safe_row)
+    last = get_in_row("last_name", safe_row)
+    suffix = get_in_row("suffix_name", safe_row)
+
+    if last:
+        return NameParts(prefix, first, middle, last, suffix)
+
+    source_name = raw_name or get_in_row(fullname_key, safe_row)
+    return parse_name(
+        source_name,
+        fallback_first=fallback_first,
+        fallback_last=fallback_last,
+    )
+
+
 def create_person_factory(
     username: str,
     model: type[ModelT],
-    _d: dict[str, Any],
+    dfts: dict[str, Any],
     user_getter: Callable[[ModelT], AbstractBaseUser],
 ) -> Callable[[], ModelT]:
     """Return a new Person."""
@@ -394,11 +423,12 @@ def create_person_factory(
     def f() -> ModelT:
 
         manager = cast(BaseManager[ModelT], model._default_manager)
-        pers, _created = manager.get_or_create(username=username, defaults=_d)
+
+        pers, _created = manager.get_or_create(username=username, defaults=dfts)
 
         user = user_getter(pers)
         if _created:
-            _pwd = mk_password(_d["first_name"], _d["last_name"])
+            _pwd = mk_password(dfts["first_name"], dfts["last_name"])
             user.set_password(_pwd)
             user.save(update_fields=["password"])
 
