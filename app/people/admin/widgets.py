@@ -38,6 +38,7 @@ from app.shared.utils import get_in_row
 class StaffProfileWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
+        self._cache_staff: dict[Hashable, User] = {}
         super().__init__(Staff)
 
     def clean(self, value, row=None, *args, **kwargs) -> Optional[Staff]:
@@ -52,20 +53,28 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         if not username:
             if not name.last:
                 return None  # Staff.get_unique_default()
+            username = Staff.mk_username(*name.parts(),unique=False)
+
+        cached = self._cache_staff.get(username)
+        if cached:
+            return cached
 
         staff_factory = create_person_factory(
             username, Staff, name.to_dict(), lambda s: s.user
         )
-        staff_obj = staff_factory()
-        import ipdb; ipdb.set_trace()
-
-        staff_obj.save()
+        staff_obj =  cached_entity(self._cache_staff, username, staff_factory)
+        
         return staff_obj
 
     def render(self, value, obj=None) -> str:
         """For the value (staff) for export."""
         return value.long_name if value else ""  # type: ignore[no-any-return]
 
+    def after_import(self, dataset, result, **kwargs):
+        """Remove any cache which may be present after import."""
+        self.cache_staff = dict()
+
+    
 
 class UserWidget(widgets.ForeignKeyWidget):
     """Create or resolve a User from a username or the name in ther row."""
