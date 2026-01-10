@@ -250,6 +250,9 @@ def ensure_curriculum_course(
         CURRICULUM_COURSE_ID_CACHE[key] = cached.id
         return cached
 
+    # Ensure NOT NULL boolean defaults when imports omit the flag.
+    is_required = bool(is_required)
+
     credit = CREDIT_HOUR_CACHE.get(credit_code)
 
     if credit is None:
