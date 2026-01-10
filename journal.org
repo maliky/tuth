@@ -1,5 +1,14 @@
 
+* TODO
+  Finir la revision de import grades
+  faire lest test pour import section and grades
+  refactor patterns from widges
+  check for code duplication
 
+** Concerning seed_grades,
+
+
+#  for curriculums and people you need to use the personnalized manager.
 
 * <2026-01-07 mer. 18:47>
 Why you and ruff keeps importing ensure_person from app.people.models.core, it is not there but in app.people.ensures

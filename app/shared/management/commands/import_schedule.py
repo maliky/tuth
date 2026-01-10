@@ -20,19 +20,27 @@ from django.db import transaction
 from django.db.models import QuerySet
 from tqdm import tqdm
 
-from app.academics.choices import COLLEGE_CODE, COLLEGE_LONG_NAME
+from app.academics.choices import COLLEGE_CODE
+from app.academics.ensures import (
+    ensure_college,
+    ensure_course,
+    ensure_curriculum,
+    ensure_curriculum_course,
+    ensure_department,
+)
 from app.academics.models.college import College
 from app.academics.models.course import Course, CurriculumCourse
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
+from app.people.ensure_people import ensure_faculty
 from app.people.models.faculty import Faculty
 from app.people.models.staffs import Staff
-from app.people.utils import mk_username, parse_name, split_name
+from app.people.utils import name_parts_from_row
 from app.registry.models import CreditHour
 from app.shared.utils import get_in_row, parse_int
 from app.spaces.models.core import Room, Space
 from app.timetable.choices import WEEKDAYS_NUMBER
-from app.timetable.ensures import ensure_academic_year_code
+from app.timetable.ensures import ensure_semester
 from app.timetable.models.schedule import Schedule
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
@@ -212,34 +220,27 @@ class Command(BaseCommand):
         if sem_no is None:
             raise ValueError("Missing semester number")
 
-        ay = ensure_academic_year_code(ay_code)
-        semester, created = Semester.objects.get_or_create(
-            academic_year=ay,
-            number=sem_no,
-        )
+        created = not Semester.objects.filter(
+            academic_year__code=ay_code, number=sem_no
+        ).exists()
+        semester = ensure_semester(ay_code, sem_no)
         if created:
-            semester.save()
             stats.semesters += 1
         return semester
 
     def _resolve_college(self, token: str, stats: ImportStats) -> College:
         code = COLLEGE_CODE.get(token, token.upper())
-        college, created = College.objects.get_or_create(
-            code=code,
-            defaults={"long_name": COLLEGE_LONG_NAME.get(code.lower(), code)},
-        )
+        created = not College.objects.filter(code=code).exists()
+        college = ensure_college(code)
         if created:
-            college.save()
             stats.colleges += 1
         return college
 
     def _resolve_department(
         self, dept_code: str, college: College, stats: ImportStats
     ) -> Department:
-        department, created = Department.objects.get_or_create(
-            code=dept_code,
-            college=college,
-        )
+        created = not Department.objects.filter(code=dept_code, college=college).exists()
+        department = ensure_department(dept_code, college)
         if created:
             stats.departments += 1
         return department
@@ -257,20 +258,12 @@ class Command(BaseCommand):
             .all()
         )
         if candidates:
-            # reuse the most recently created course when duplicates exist
             return candidates[0]
 
-        course, created = Course.objects.get_or_create(
-            number=course_no,
-            department=department,
-            defaults={"title": title[:255] or None},
-        )
+        created = True
+        course = ensure_course(department, course_no, title=title)
         if created:
             stats.courses += 1
-        elif title and course.title != title:
-            # > Could be interesting here to surface in a course field or in a sidebar courses that where updated.
-            course.title = str(title)[:255]
-            course.save(update_fields=["title"])
         return course
 
     def _resolve_curriculum(
@@ -296,9 +289,7 @@ class Command(BaseCommand):
         if curriculum is not None:
             return curriculum
 
-        # > in case of no curriculum found we need to do a fuzzy search in the college and department
-        # > with a fallback on the college default curriculum in case of no match
-        curriculum = Curriculum.get_default(def_college=college)
+        curriculum = ensure_curriculum("", college, fuzzy_threshold=1.0)
         stats.curricula += 1
         return curriculum
 
@@ -319,10 +310,13 @@ class Command(BaseCommand):
         credit_hours: CreditHour,
         stats: ImportStats,
     ) -> CurriculumCourse:
-        curriculum_course, created = CurriculumCourse.objects.get_or_create(
+        created = not CurriculumCourse.objects.filter(
+            curriculum=curriculum, course=course
+        ).exists()
+        curriculum_course = ensure_curriculum_course(
             curriculum=curriculum,
             course=course,
-            defaults={"credit_hours": credit_hours},
+            credit_code=credit_hours.code,
         )
         if created:
             stats.curriculum_courses += 1
@@ -343,25 +337,16 @@ class Command(BaseCommand):
         if not _name:
             return None
 
-        _n = parse_name(_name)
-        username = mk_username(_n.first, _n.last, _n.middle, unique=True)
-
-        staff_defaults: dict[str, Any] = _n.to_dict()
-        staff_defaults["department"] = department
-
-        staff, staff_created = Staff.objects.update_or_create(
-            defaults=staff_defaults,
-            username=username,
+        name_parts = name_parts_from_row(None, raw_name=_name)
+        username = Staff.mk_username(
+            name_parts.first, name_parts.last, name_parts.middle, unique=True
         )
-        faculty, faculty_created = Faculty.objects.update_or_create(
-            staff_profile=staff,
-            defaults={"college": college},
-        )
+        created = not Faculty.objects.filter(staff_profile__username=username).exists()
+        faculty = ensure_faculty(username, name=name_parts)
         if not faculty.college_id and college:
             faculty.college = college
             faculty.save(update_fields=["college"])
-
-        if staff_created or faculty_created:
+        if created:
             stats.faculties += 1
         return faculty
 

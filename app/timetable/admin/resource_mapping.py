@@ -28,11 +28,11 @@ SCHEDULE_HEADER_MAP = {
 
 # to section
 SECTION_HEADER_MAP = {
-    "semester": "semester",
+    "semester": "semester_no",
     "curriculum": "curriculum",
-    "number": "number",
+    "number": "section_no",
     "faculty": "faculty",
-    "start_date": "start",  # can be default
+    "start_date": "section_start",  # can be default
     "end_date": "end",  # can be default
     "max_seat": "max",
 }

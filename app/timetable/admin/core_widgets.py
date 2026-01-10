@@ -6,7 +6,7 @@ from datetime import date
 from import_export import widgets
 
 from app.shared.utils import get_in_row
-from app.timetable.ensures import ensure_semester
+from app.timetable.ensures import ensure_semester_code
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester
 from app.timetable.utils import parse_semester_code
@@ -103,6 +103,6 @@ class SemesterCodeWidget(widgets.ForeignKeyWidget):
         if not ay_code and not sem_code:
             return None
 
-        sem_obj = ensure_semester(ay_code, sem_code)
+        sem_obj = ensure_semester_code(value)
 
         return sem_obj

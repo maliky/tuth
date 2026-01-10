@@ -256,6 +256,10 @@ class DonorResource(resources.ModelResource):
 
     def before_import_row(self, row, **kwargs):
         """Keep the original donor column content for auditing."""
+        username = get_in_row("username", row)
+        if not username:
+            row["username"] = ""
+
         raw_value = get_in_row("donors", row)
         if raw_value:
             row["bio"] = raw_value

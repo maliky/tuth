@@ -10,7 +10,7 @@ from app.academics.admin.widgets import (
     CurriculumWidget,
 )
 from app.people.admin.widgets import FacultyFullnameWidget
-from app.timetable.ensures import ensure_semester, ensure_section
+from app.timetable.ensures import ensure_semester, ensure_section, ensure_semester_code
 from app.shared.utils import get_in_row, asserts_keys, to_int
 from app.timetable.admin.core_widgets import SemesterCodeWidget, SemesterWidget
 from app.timetable.utils import parse_semester_code
@@ -105,7 +105,7 @@ class SectionCodeWidget(widgets.Widget):
             return None
 
         section, _ = Section.objects.get_or_create(
-            semester=ensure_semester(ay_code, sem_no),
+            semester=ensure_semester_code(sem_code_value),
             course=course,
             number=to_int(sec_value),
         )

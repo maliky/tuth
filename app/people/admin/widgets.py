@@ -84,7 +84,7 @@ class UserWidget(widgets.ForeignKeyWidget):
     def clean(self, value, row=None, *args, **kwargs) -> Optional[User]:
         """Return or create a User from username or name."""
         username = (value or "").strip()
-        _n = name_parts_from_row(row, fullname_key='donors')
+        _n = name_parts_from_row(row, fullname_key="donors")
 
         if not username:
             if not _n.last:
@@ -171,7 +171,7 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         super().__init__(Student)
 
     def clean(self, value: str, row=None, *args, **kwargs) -> Student | None:
-        """From the student name (and an id), gets a Student object.
+        """Look up for a student based on its username, stdid or name.
 
         Create user and student objects if necessary.
         Use the extra column student_id to desambiguate sames names
@@ -190,7 +190,9 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
 
         key = username or student_id or name.to_string(full=True)
 
-        def _create_student() -> Student:
+        # > using get or created in a cached version is a bit useless
+        # > as the get will never get called.
+        def _get_or_create_student() -> Student:
             student, created = Student.objects.get_or_create(
                 username=username,
                 student_id=student_id,  # this is why I do not use the factory
@@ -202,7 +204,7 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
 
             return cast(Student, student)
 
-        student_obj = cached_entity(self._cache_student, key, _create_student)
+        student_obj = cached_entity(self._cache_student, key, _get_or_create_student)
 
         return student_obj
 
@@ -216,7 +218,7 @@ class StudentGradeWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
         super().__init__(Student, field="student_id")
-        self._cache_student: dict[str, Student] = {}
+        self._cache_student: dict[Hashable, Student] = {}
         self.curriculum_w = CurriculumWidget()
 
     def clean(self, value, row=None, *args, **kwargs) -> Student:
