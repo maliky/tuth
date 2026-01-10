@@ -116,11 +116,7 @@ def load_directory_rows(path: Path) -> list[DirectoryRow]:
             continue
 
         # Build name from the unified full_name column (first/last already concatenated for CSV)
-        name = name_parts_from_row(
-            row_dict,
-            fullname_key="full_name",
-            raw_name=full_name,
-        )
+        name = name_parts_from_row(row_dict, fullname_key="full_name")
 
         position = get_in_row("position", row_dict)
         division = get_in_row("division", row_dict)

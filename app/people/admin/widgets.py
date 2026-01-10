@@ -18,6 +18,7 @@ from import_export import widgets
 from app.academics.admin.widgets import CurriculumWidget
 from app.academics.models.curriculum import Curriculum
 from app.people.ensure_people import ensure_faculty
+from app.people.models.core import AbstractPerson
 from app.people.models.donor import Donor
 from app.people.models.faculty import Faculty
 from app.people.models.staffs import Staff
@@ -35,7 +36,7 @@ from app.shared.utils import get_in_row
 class StaffProfileWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
-        self._cache_staff: dict[Hashable, User] = {}
+        self._cache_staff: dict[Hashable, Staff] = {}
         super().__init__(Staff)
 
     def clean(self, value, row=None, *args, **kwargs) -> Optional[Staff]:
@@ -75,8 +76,9 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
 class UserWidget(widgets.ForeignKeyWidget):
     """Create or resolve a User from a username or the name in ther row."""
 
-    def __init__(self):
+    def __init__(self, model: type[AbstractPerson] = Staff):
         super().__init__(User)
+        self.model = model
         self._cache_user: dict[Hashable, User] = {}
 
     def clean(self, value, row=None, *args, **kwargs) -> Optional[User]:
@@ -90,7 +92,7 @@ class UserWidget(widgets.ForeignKeyWidget):
             # it is understood that same user name return the same user
             # even if prefix and suffix differ
             # for bare user there is no fuzzy search.
-            username = mk_username(*_n.parts())
+            username = self.model.mk_username(*_n.parts())
 
         cached = self._cache_user.get(username)
         if cached:
@@ -271,7 +273,7 @@ class UserDonorWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
         super().__init__(User)
-        self._cache_user: dict[str, User] = {}
+        self._cache_user: dict[Hashable, User] = {}
 
     def clean(self, value, row=None, *args, **kwargs) -> User:
         """Return or create a User from the donor name."""
@@ -287,7 +289,7 @@ class UserDonorWidget(widgets.ForeignKeyWidget):
 
         donor_obj = donor_factory()
 
-        return donor_obj
+        return donor_obj.user
 
 
 class UserStudentWidget(widgets.ForeignKeyWidget):
@@ -296,7 +298,7 @@ class UserStudentWidget(widgets.ForeignKeyWidget):
     def __init__(self):
         # field is "id" by default
         super().__init__(User)
-        self._cache_user: dict[str, User] = dict()
+        self._cache_user: dict[Hashable, User] = dict()
 
     def clean(self, value: str, row=None, *args, **kwargs) -> User | None:
         """From the student id, name or username look up or create a Student object."""

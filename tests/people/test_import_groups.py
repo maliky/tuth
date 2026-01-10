@@ -14,31 +14,41 @@ from app.people.admin.resources import (
 )
 from app.people.models.faculty import Faculty
 from app.shared.auth.perms import UserRole
-from app.people.utils import mk_username, parse_name, split_name
+from app.people.utils import mk_username, name_parts_from_row, parse_name, split_name
 
 User = get_user_model()
 
 
+@pytest.mark.parametrize(
+    "student_id,long_name,username",
+    [
+        ("ST10007", "Alice Example", ""),
+    ],
+)
 @pytest.mark.django_db
-def test_student_import_assigns_student_group(curriculum, group_factory):
+def test_student_import(student_id, long_name, username, curriculum, group_factory):
     ds = Dataset()
-    ds.headers = ["student_id", "long_name", "curriculum"]
 
-    name = split_name("Alice Example")
-    username = Student.mk_username(*name.parts())
+    # username is mandatory for a student
+    ds.headers = ["student_id", "long_name", "username", "curriculum"]
 
-    ds.append(["ST10007", name.to_string(full=True), curriculum.pk])
+    raw_row = [student_id, long_name, "", curriculum.short_name]
+    ds.append(raw_row)
+    row = dict(zip(ds.headers, raw_row))
 
-    group_factory(UserRole.STUDENT.value.label)
+    # Create the username before the Resource call otherways it will differ if
+    # because by default uniqueness is set to True
+    _n = name_parts_from_row(row, fullname_key="long_name", fallback_last="Student")
+    username = Student.mk_username(*_n.parts())
 
     res = StudentResource().import_data(ds, dry_run=False)
-
     assert not res.has_errors(), res.row_errors()
-    student = Student.objects.get(student_id="ST10007")
-    user = student.user
 
-    assert user.groups.filter(name=UserRole.STUDENT.value.label).exists()
-    assert user.username == username
+    student = Student.objects.get(student_id="ST10007")
+    assert student.user.groups.filter(name=UserRole.STUDENT.value.label).exists()
+
+    # check that the generation of username is correct through the import
+    assert student.user.username == username, f"{student.user.username, username}"
 
 
 @pytest.mark.parametrize(
@@ -52,9 +62,7 @@ def test_student_import_assigns_student_group(curriculum, group_factory):
     ],
 )
 @pytest.mark.django_db
-def test_faculty_import_assigns_faculty_group(
-    long_name, prefix, first, middle, last, suffix, username
-):
+def test_faculty_import(long_name, prefix, first, middle, last, suffix, username):
     # FacultyResource expects instructor-style columns; align the fixture accordingly.
     ds = Dataset()
     ds.headers = [
@@ -68,17 +76,17 @@ def test_faculty_import_assigns_faculty_group(
     ]
     ds.append([long_name, prefix, first, middle, last, suffix, username])
 
+    if not username:
+        username = Faculty.mk_username(first, last, middle=middle)
+
     res = FacultyResource().import_data(ds, dry_run=False, raise_errors=True)
     assert not res.has_errors()
 
     faculty = Faculty.objects.first()
     assert faculty is not None, f"{ds.dict}"
+
     user = faculty.staff_profile.user
-
     assert user.groups.filter(name=UserRole.FACULTY.value.label).exists()
-
-    if not username:
-        username = Faculty.mk_username(first, last, middle=middle, unique=False)
 
     assert user.username == username, f"{user.username, username}"
 
@@ -87,13 +95,11 @@ def test_faculty_import_assigns_faculty_group(
     "long_name,prefix,first,middle,last,suffix,username",
     [
         ("Chinois A S", "", "A.", "S.", "Chinois", "", "as.chinois"),
-        ("Dylan, Alonse", "", "John", "A.", "Dylan", "", ""),
+        ("Dylan, Gad Alfonse", "", "Gad", "A.", "Dylan", "", ""),
     ],
 )
 @pytest.mark.django_db
-def test_staff_import_assigns_faculty_group(
-    long_name, prefix, first, middle, last, suffix, username
-):
+def test_staff_import(long_name, prefix, first, middle, last, suffix, username):
     # StaffResource expects instructor-style columns; align the fixture accordingly.
     ds = Dataset()
     ds.headers = [
@@ -107,6 +113,9 @@ def test_staff_import_assigns_faculty_group(
     ]
     ds.append([long_name, prefix, first, middle, last, suffix, username])
 
+    if not username:
+        username = Staff.mk_username(first, last, middle=middle)
+
     res = StaffResource().import_data(ds, dry_run=False, raise_errors=True)
     assert not res.has_errors()
 
@@ -116,9 +125,6 @@ def test_staff_import_assigns_faculty_group(
     user = staff.user
     assert user.groups.filter(name=UserRole.STAFF.value.label).exists()
 
-    if not username:
-        username = Staff.mk_username(first, last, middle=middle, unique=False)
-
     assert user.username == username, f"{user.username, username}"
 
 
@@ -126,23 +132,22 @@ def test_staff_import_assigns_faculty_group(
     "donors,username", [("Apple Newton", ""), ("Bob Dylan", "bdylan")]
 )
 @pytest.mark.django_db
-def test_donor_import_assigns_faculty_group(donors, username):
+def test_donor_import(donors, username):
     # FacultyResource expects instructor-style columns; align the fixture accordingly.
     ds = Dataset()
     ds.headers = ["donors", "username"]
     ds.append([donors, username])
+
+    if not username:
+        name = parse_name(donors)
+        username = Donor.mk_username(*name.parts(), unique=False)
 
     res = DonorResource().import_data(ds, dry_run=False, raise_errors=True)
     assert not res.has_errors()
 
     donor = Donor.objects.first()
     assert donor is not None, f"{ds.dict}"
-    user = donor.staff_profile.user
 
+    user = donor.user
     assert user.groups.filter(name=UserRole.DONOR.value.label).exists()
-
-    if not username:
-        name = parse_name(donors)
-        username = Donor.mk_username(*name.parts(), unique=False)
-
     assert user.username == username, f"{user.username, username}"

@@ -1,4 +1,4 @@
-"""Helpers to clean pandas DataFrames before import."""
+"""Helpers to clean tabular data before import."""
 
 from __future__ import annotations
 
@@ -8,7 +8,17 @@ import pandas as pd
 
 
 def unique_or_false(series: pd.Series) -> str | bool:
-    """Return the sole unique non-NaN value, or False if multiple/none."""
+    """Return the sole unique non-empty value in a column.
+
+    Args:
+        series: Column values to inspect for a single unique value.
+
+    Returns:
+        The unique string value when only one exists, otherwise False.
+
+    Examples:
+        A column with only "A" values returns "A".
+    """
     cleaned = series.fillna("").astype(str)
     uniques = cleaned.unique()
     if len(uniques) == 1:
@@ -18,7 +28,15 @@ def unique_or_false(series: pd.Series) -> str | bool:
 
 
 def drop_constant_columns(df: pd.DataFrame, *, log_fn=None) -> pd.DataFrame:
-    """Drop columns with a single unique value; log non-empty constants."""
+    """Drop columns with a single unique value.
+
+    Args:
+        df: Table data to clean.
+        log_fn: Logger called with messages about dropped columns when provided.
+
+    Returns:
+        A cleaned table without constant columns.
+    """
     cols_to_drop: list[str] = []
     for col in df.columns:
         uniq = unique_or_false(df[col])

@@ -137,7 +137,7 @@ class Student(AbstractPerson):
         return Course.objects.filter(id__in=allowed_ids)
 
     @classmethod
-    def mk_username(
+    def allowed_coursesmk_username(
         cls,
         first,
         last,

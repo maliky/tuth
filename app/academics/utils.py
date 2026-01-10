@@ -16,19 +16,18 @@ def expand_course_code(
 ) -> Tuple[str, str, str]:
     """Parse a course code into its components.
 
-    Parameters
-    ----------
-    code : Raw course code such as "CAFS-AGR121".
-        <college_code>-<dept_code><course_no>
-        See COURSE_PATTERN.
-    row : Optional CSV row providing a college_code fallback. The
-        college_code value is used only when the course code itself
-        does not include a college segment.
+    Args:
+        code: Raw course code in the pattern <college_code>-<dept_code><course_no>.
+        row: Row data used to supply a college_code when the code omits it.
 
-    Returns
-    -------
-    tuple[str, str, str]
-        The department code, course number and college code.
+    Returns:
+        Three values: college_code, dept_shortname, course_no.
+
+    Examples:
+        >>> expand_course_code("CAFS-AGR121")
+        ("CAFS", "AGR", "121")
+        >>> expand_course_code("AGR121", row={"college_code": "CAFS"})
+        ("CAFS", "AGR", "121")
     """
     assert "/" not in code
 
@@ -51,9 +50,19 @@ def expand_course_code(
 
 
 def make_course_code(dept: "Department", number: str, short=False) -> str:
-    """Return a course code.  dept.shortname+course.num.
+    """Build a course code from a department and a course number.
 
-    if short == True use dept.code (without college info)
+    Args:
+        dept: Record providing the department code or shortname.
+        number: Course number segment to append.
+        short: Use the department code without the college segment.
+
+    Returns:
+        An upper-cased course code string.
+
+    Examples:
+        If dept.shortname is "AGR" and number is "121",
+        the result is "AGR-121".
     """
     _dept_rep = dept.code if short else dept.shortname
     return f"{_dept_rep}-{number}".upper()

@@ -40,7 +40,9 @@ from app.timetable.utils import (
 class StaffResource(resources.ModelResource):
     """Import staff directory rows and create/update Staff profiles."""
 
-    user = fields.Field(column_name="username", attribute="user", widget=UserWidget())
+    user = fields.Field(
+        column_name="username", attribute="user", widget=UserWidget(model=Staff)
+    )
 
     class Meta:
         model = Staff
@@ -241,7 +243,9 @@ class StudentResource(resources.ModelResource):
 class DonorResource(resources.ModelResource):
     """Import donors from a simple list of names."""
 
-    user = fields.Field(column_name="donors", attribute="user", widget=UserWidget())
+    user = fields.Field(
+        column_name="donors", attribute="user", widget=UserWidget(model=Donor)
+    )
 
     class Meta:
         model = Donor

@@ -76,9 +76,10 @@ def student(semester, curriculum) -> Student:
 
 @pytest.fixture
 def group_factory() -> GroupFactory:
-    """Returns a function to create a group."""
+    """Factory to create a group with name."""
 
     def _make(name: str) -> Group:
+        """Create a group with name."""
         return Group.objects.create(name=name)
 
     return _make
