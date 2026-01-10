@@ -11,6 +11,13 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import transaction
 
+from app.academics.ensures import (
+    ensure_college as ensure_college_obj,
+    ensure_course as ensure_course_obj,
+    ensure_curriculum as ensure_curriculum_obj,
+    ensure_curriculum_course as ensure_curriculum_course_obj,
+    ensure_department as ensure_department_obj,
+)
 from app.academics.models.college import College
 from app.academics.models.course import Course, CurriculumCourse
 from app.academics.models.curriculum import Curriculum
@@ -30,6 +37,7 @@ from app.shared.types import (
     TwoStrIntMapT,
 )
 from app.shared.utils import to_int
+from app.timetable.ensures import ensure_semester as ensure_semester_obj
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
 from app.timetable.utils import normalize_academic_year
@@ -83,9 +91,13 @@ class Command(BaseCommand):
         colleges: StrIntMapT = {
             code.lower(): pk for code, pk in College.objects.values_list("code", "id")
         }
+        college_objs: dict[int, College] = {}
         departments: DeptCollegeMapT = {}  # (dept_code, college_id) -> id
+        department_objs: dict[int, Department] = {}
         courses: DeptCourseMapT = {}  # (dept_id, course_no) -> id
+        course_objs: dict[int, Course] = {}
         curriculum_courses: TwoIntIntMapT = {}  # (curriculum_id, course_id) -> id
+        curriculum_objs: dict[int, Curriculum] = {}
         sections: SectionKeyMapT = {}  # (sem, curr_course, num, faculty) -> id
         credit_hours_map: IntIntMapT = {
             code: code for code, in CreditHour.objects.values_list("code")
@@ -113,8 +125,9 @@ class Command(BaseCommand):
             existing = colleges.get(code)
             if existing:
                 return existing
-            col_obj, _ = College.objects.get_or_create(code=code.upper())
+            col_obj = ensure_college_obj(code)
             colleges[code] = col_obj.id
+            college_objs[col_obj.id] = col_obj
             return col_obj.id
 
         def ensure_department(dept_code_raw: str, college_id: int) -> int:
@@ -123,10 +136,13 @@ class Command(BaseCommand):
             existing = departments.get(key)
             if existing:
                 return existing
-            dept_obj, _ = Department.objects.get_or_create(
-                code=dept_code, college_id=college_id
-            )
+            college_obj = college_objs.get(college_id)
+            if college_obj is None:
+                college_obj = College.objects.get(pk=college_id)
+                college_objs[college_id] = college_obj
+            dept_obj = ensure_department_obj(dept_code, college_obj)
             departments[key] = dept_obj.id
+            department_objs[dept_obj.id] = dept_obj
             return dept_obj.id
 
         def ensure_course(dept_id: int, course_no_raw: str, title: str) -> int:
@@ -135,30 +151,36 @@ class Command(BaseCommand):
             existing = courses.get(key)
             if existing:
                 return existing
-            course_obj, _ = Course.objects.get_or_create(
-                department_id=dept_id,
-                number=course_no,
-                defaults={"title": title},
-                fuzzy_threshold=1.0,
-            )
+            dept_obj = department_objs.get(dept_id)
+            if dept_obj is None:
+                dept_obj = Department.objects.get(pk=dept_id)
+                department_objs[dept_id] = dept_obj
+            course_obj = ensure_course_obj(dept_obj, course_no, title=title)
             courses[key] = course_obj.id
+            course_objs[course_obj.id] = course_obj
             return course_obj.id
 
         def ensure_curriculum(name_raw: str, college_id: int) -> int:
             name = (name_raw or "").strip()
             if not name:
-                return Curriculum.get_default().id
+                college_obj = college_objs.get(college_id)
+                if college_obj is None:
+                    college_obj = College.objects.get(pk=college_id)
+                    college_objs[college_id] = college_obj
+                cur_obj = ensure_curriculum_obj("", college_obj, fuzzy_threshold=1.0)
+                curriculum_objs[cur_obj.id] = cur_obj
+                return cur_obj.id
             key = name.lower()
             existing = curricula.get(key)
             if existing:
                 return existing
-            cur_obj, _ = Curriculum.objects.get_or_create(
-                short_name=name[: Curriculum._meta.get_field("short_name").max_length],
-                college_id=college_id,
-                defaults={"long_name": name},
-                fuzzy_threshold=1.0,
-            )
+            college_obj = college_objs.get(college_id)
+            if college_obj is None:
+                college_obj = College.objects.get(pk=college_id)
+                college_objs[college_id] = college_obj
+            cur_obj = ensure_curriculum_obj(name, college_obj, fuzzy_threshold=1.0)
             curricula[key] = cur_obj.id
+            curriculum_objs[cur_obj.id] = cur_obj
             return cur_obj.id
 
         def ensure_curriculum_course(
@@ -170,13 +192,20 @@ class Command(BaseCommand):
                 return existing
             credit_id = credit_hours_map.get(credit_code)
             if credit_id is None:
-                credit_obj, _ = CreditHour.objects.get_or_create(code=credit_code)
-                credit_id = int(credit_obj.pk)
-                credit_hours_map[credit_code] = credit_id
-            cc_obj, _ = CurriculumCourse.objects.get_or_create(
-                curriculum_id=curriculum_id,
-                course_id=course_id,
-                defaults={"credit_hours_id": credit_id},
+                CreditHour.objects.get_or_create(code=credit_code)
+                credit_hours_map[credit_code] = credit_code
+            curriculum_obj = curriculum_objs.get(curriculum_id)
+            if curriculum_obj is None:
+                curriculum_obj = Curriculum.objects.get(pk=curriculum_id)
+                curriculum_objs[curriculum_id] = curriculum_obj
+            course_obj = course_objs.get(course_id)
+            if course_obj is None:
+                course_obj = Course.objects.get(pk=course_id)
+                course_objs[course_id] = course_obj
+            cc_obj = ensure_curriculum_course_obj(
+                curriculum=curriculum_obj,
+                course=course_obj,
+                credit_code=credit_code,
             )
             curriculum_courses[key] = cc_obj.id
             return cc_obj.id
@@ -188,9 +217,7 @@ class Command(BaseCommand):
             existing = semesters.get(key)
             if existing:
                 return existing
-            sem_obj, _ = Semester.objects.get_or_create(
-                academic_year__code=ay_code, number=sem_no
-            )
+            sem_obj = ensure_semester_obj(ay_code, sem_no)
             semesters[key] = sem_obj.id
             return sem_obj.id
 

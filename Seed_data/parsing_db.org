@@ -2,7 +2,6 @@
 #+options: ^:nil
 
 [[file:/var/opt/mlkdata/Prog/Python/tutorial.org::*Bibliothèque des dir][Bibliothèque des dir in tutorial.org]]
-
 * Preambule
 :PROPERTIES:
 :AUTHOR: M. Konneh
@@ -94,7 +93,7 @@
       for sheet_name in xls.sheet_names:
           df_name = f"{sheet_name}"
           dfs[df_name] = clean_df_str_cols(pd.read_excel(xls, sheet_name=sheet_name))
-          
+  
       return dfs
   
   
@@ -2633,7 +2632,7 @@ Ignore UM_Curriculums for now.
 #+end_src
 
 #+begin_src python :results silent
-  _std = pu.clean_df_str_cols(csvs["UM_students"])
+
   ods = pu.clean_df_str_cols(csvs["oldgrades"])
   ods.loc[:,'StudentID'] = ods.StudentID.str.upper()
   gds = clean_df_str_cols(csvs["gradesheets"].drop(columns=["Code","Uploaded"]))
@@ -3475,11 +3474,6 @@ or throught the course code
 
 #+RESULTS:
 :results:
-(  AcademicYear  Semester StudentID CourseCode  ... Grade  CrHrs ShortCode     Term
-0    2014/2015         2     13425       MATH  ...     C    3.0   MATH101  14-15s2
-1    2013/2014         2       921       HIST  ...     C    3.0   HIST102  13-14s2
-
-[2 rows x 10 columns], 198833)
 :end:
 #+BEGIN_SRC python :results value
   # gdf=  gdf.rename(

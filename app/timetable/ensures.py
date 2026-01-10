@@ -66,6 +66,12 @@ def ensure_semester(
     return semester
 
 
+def ensure_semester_code(code: str | None) -> Semester:
+    """Look-up Semester object from a semester code like '25-26_Sem2'."""
+    ay_code, sem_no = parse_semester_code(code)
+    return ensure_semester(ay_code, sem_no)
+
+
 def ensure_section(
     semester: Semester,
     curriculum_course: CurriculumCourse,

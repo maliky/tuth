@@ -259,7 +259,7 @@ class DonorResource(resources.ModelResource):
         username = get_in_row("username", row)
         if not username:
             row["username"] = ""
-            
+
         raw_value = get_in_row("donors", row)
         if raw_value:
             row["bio"] = raw_value
