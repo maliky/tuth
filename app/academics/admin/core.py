@@ -70,8 +70,8 @@ class CollegeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
         "code",
         "long_name",
         # "faculty_count_link",
-        "course_count_link",
-        "curriculum_count_link",
+        # "course_count_link",
+        # "curriculum_count_link",
         # "department_chair_links",
         # "student_counts_by_level_link"
     )
