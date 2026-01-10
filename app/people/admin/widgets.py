@@ -84,7 +84,7 @@ class UserWidget(widgets.ForeignKeyWidget):
     def clean(self, value, row=None, *args, **kwargs) -> Optional[User]:
         """Return or create a User from username or name."""
         username = (value or "").strip()
-        _n = name_parts_from_row(row, raw_name=value)
+        _n = name_parts_from_row(row, fullname_key='donors')
 
         if not username:
             if not _n.last:

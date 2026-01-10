@@ -46,7 +46,7 @@ class StaffResource(resources.ModelResource):
 
     class Meta:
         model = Staff
-        import_id_fields = ("user",)
+        import_id_fields = ("username",)
         fields = ("user", "username", "middle_name", "prefix_name", "suffix_name")
         skip_unchanged = True
         report_skipped = False
@@ -244,13 +244,13 @@ class DonorResource(resources.ModelResource):
     """Import donors from a simple list of names."""
 
     user = fields.Field(
-        column_name="donors", attribute="user", widget=UserWidget(model=Donor)
+        column_name="username", attribute="user", widget=UserWidget(model=Donor)
     )
 
     class Meta:
         model = Donor
-        import_id_fields = ("user",)
-        fields = ("user", "bio")
+        import_id_fields = ("username",)
+        fields = ("user", "username", "bio")
         skip_unchanged = True
         report_skipped = False
 

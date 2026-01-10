@@ -116,6 +116,8 @@ def test_staff_import(long_name, prefix, first, middle, last, suffix, username):
     if not username:
         username = Staff.mk_username(first, last, middle=middle)
 
+    # import ipdb; ipdb.set_trace()
+
     res = StaffResource().import_data(ds, dry_run=False, raise_errors=True)
     assert not res.has_errors()
 
