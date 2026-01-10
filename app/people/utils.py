@@ -101,7 +101,7 @@ class NameParts:
         """
         self._ensure_capitalize()
         named_parts = ["first", "last"]
-        if True:
+        if full:
             named_parts += ["prefix", "middle", "suffix"]
 
         return {f"{np}_name": getattr(self, np, "") for np in named_parts}

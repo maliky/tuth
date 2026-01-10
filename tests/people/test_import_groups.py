@@ -34,7 +34,7 @@ def test_student_import_assigns_student_group(curriculum, group_factory):
     res = StudentResource().import_data(ds, dry_run=False)
 
     assert not res.has_errors(), res.row_errors()
-    student = Student.objects.get(student_id="ST1")
+    student = Student.objects.get(student_id="ST10007")
     user = student.user
 
     assert user.groups.filter(name=UserRole.STUDENT.value.label).exists()

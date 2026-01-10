@@ -104,7 +104,7 @@ class StudentResource(resources.ModelResource):
 
     # Columns needs to be created on the fly
     user = fields.Field(
-        column_name="long_name", attribute="user", widget=UserStudentWidget()
+        column_name="username", attribute="user", widget=UserStudentWidget()
     )
     # to be taken from gp table StudentInfo
     curriculum = fields.Field(
