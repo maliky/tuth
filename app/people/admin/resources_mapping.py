@@ -11,6 +11,7 @@ FACULTY_HEADER_MAP = {
     "name_suffix": "suffix_name",
     # "username": "username",
 }
+
 USER_HEADER_MAP = {
     "UserName": "username",
     "FirstName": "first_name",
