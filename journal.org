@@ -6,12 +6,10 @@
   check for code duplication
 
 ** Concerning seed_grades,
-you repeat fillna astype str str strip/replace ...
-I would rather do that cleaning once at just after loading the data.
-check existing function in parsing_utils to do that.
-then remove the redundant cleaning in the followup function.
-just add a not in the docstring if the columns types are crutial and likely to be something else
-   
+
+
+#  for curriculums and people you need to use the personnalized manager.
+
 * <2026-01-07 mer. 18:47>
 Why you and ruff keeps importing ensure_person from app.people.models.core, it is not there but in app.people.ensures
 
