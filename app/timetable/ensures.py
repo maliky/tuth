@@ -35,6 +35,14 @@ ROOM_ID_CACHE: RoomCacheT = {}
 SESSION_ID_CACHE: SessionCacheT = {}
 
 
+def _section_cache_key(
+    semester_id: int, curriculum_course_id: int, number: int
+) -> Tuple[int, int, int, Optional[int]]:
+    """Build a cache key for section lookups."""
+    # it is ok, it as if I saved in a var.
+    return (semester_id, curriculum_course_id, number, None)
+
+
 def _normalize_semester_key(
     academic_year: str, semester_no: str | int, default: str | None = None
 ) -> Tuple[str, int]:
@@ -164,17 +172,23 @@ def ensure_section(
     faculty_id: int | None = None,
 ) -> Section:
     """Look-up or autocreate a Section."""
-    key = (semester.id, curriculum_course.id, number, faculty_id)
+    key = _section_cache_key(semester.id, curriculum_course.id, number)
     cached = SECTION_CACHE.get(key)
     if cached:
+        if faculty_id and cached.faculty_id is None:
+            cached.faculty_id = faculty_id
+            cached.save(update_fields=["faculty_id"])
         SECTION_ID_CACHE[key] = cached.id
         return cached
     sec, _ = Section.objects.get_or_create(
         semester=semester,
         curriculum_course=curriculum_course,
         number=number,
-        faculty_id=faculty_id,
+        defaults={"faculty_id": faculty_id},
     )
+    if faculty_id and sec.faculty_id is None:
+        sec.faculty_id = faculty_id
+        sec.save(update_fields=["faculty_id"])
     SECTION_CACHE[key] = sec
     SECTION_ID_CACHE[key] = sec.id
     return sec
@@ -187,16 +201,30 @@ def ensure_section_id(
     faculty_id: int | None = None,
 ) -> int:
     """Return a Section id for the given identifiers."""
-    key = (semester_id, curriculum_course_id, number, faculty_id)
-    cached = SECTION_ID_CACHE.get(key)
+    key = _section_cache_key(semester_id, curriculum_course_id, number)
+    cached = SECTION_CACHE.get(key)
     if cached:
-        return cached
+        if faculty_id and cached.faculty_id is None:
+            cached.faculty_id = faculty_id
+            cached.save(update_fields=["faculty_id"])
+        SECTION_ID_CACHE[key] = cached.id
+        return cached.id
+    cached_id = SECTION_ID_CACHE.get(key)
+    if cached_id:
+        if faculty_id:
+            Section.objects.filter(id=cached_id, faculty_id__isnull=True).update(
+                faculty_id=faculty_id
+            )
+        return cached_id
     sec, _ = Section.objects.get_or_create(
         semester_id=semester_id,
         curriculum_course_id=curriculum_course_id,
         number=number,
-        faculty_id=faculty_id,
+        defaults={"faculty_id": faculty_id},
     )
+    if faculty_id and sec.faculty_id is None:
+        sec.faculty_id = faculty_id
+        sec.save(update_fields=["faculty_id"])
     SECTION_CACHE[key] = sec
     SECTION_ID_CACHE[key] = sec.id
     return sec.id

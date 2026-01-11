@@ -23,7 +23,9 @@
 
 
 # ##
-Can't we factor the _resolve function of import_session command with in ensure modules ? 
+  1. pytest tests/shared/test_import_resources_secsession.py
+  2. pytest tests/timetable/test_import_sessions_command.py
+
 * <2026-01-05 lun. 09:51> UI
 - The bio field does not show in faculty
 

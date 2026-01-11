@@ -197,16 +197,20 @@ class PersonManager(Manager[AbstractPersonT]):
                 create_defaults=user_create_def,
             )
 
-        # In other case we use look by name
-        name = get_name(**user_lookup, **person_lookup)
+        # In other case we lookup by name
+        name = get_name(**defaults, **user_lookup, **person_lookup)
         found_user = self._find_by_name(name=name, threshold=0.9)
 
         if found_user:
             user = found_user
         else:
             # Finaly we prepare a lookup with a built username
+            # ! this does not work correctly because we do not give
+            # enough information to really create the user in case of creation.
+            # or the user_def are not been used at creation...?
+            username = self._get_username(name=name)
             user, _ = User.objects.update_or_create(
-                username=self._get_username(name=name),
+                username=username,
                 defaults=user_def,
                 create_defaults=user_create_def,
             )
