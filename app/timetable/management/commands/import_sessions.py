@@ -21,6 +21,7 @@ from app.academics.ensures import (
 from app.people.ensure_people import ensure_faculty
 from app.people.models.staffs import Staff
 from app.people.utils import name_parts_from_row
+from app.shared.importing import CsvRowLogger
 from app.shared.types import (
     RoomCacheT,
     RowStrOptT,
@@ -60,6 +61,7 @@ class Command(BaseCommand):
     """
 
     help = "Fast session import (TSV expected)."
+    invalid_logger: CsvRowLogger
 
     def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
@@ -76,7 +78,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--batch-size",
             type=int,
-            default=2000,
+            default=10,
             help="Number of rows per bulk insert chunk.",
         )
 
@@ -98,6 +100,33 @@ class Command(BaseCommand):
         batch_size: int = options["batch_size"]
 
         stats = ImportStats()
+        # Log invalid rows to a CSV for follow-up.
+        self.invalid_logger = CsvRowLogger(
+            "logs/import_sessions_invalid.csv",
+            (
+                "row_number",
+                "reason",
+                "academic_year",
+                "semester_no",
+                "section_no",
+                "dept_code",
+                "course_dept",
+                "course_no",
+                "college_code",
+                "curriculum",
+                "faculty",
+                "weekday",
+                "start_time",
+                "end_time",
+                "space",
+                "room",
+                "location",
+                "course_title",
+                "credit",
+                "credit_hours",
+            ),
+            "Session import skipped {count} invalid rows; details logged to {path}",
+        )
 
         schedule_cache = self._prime_schedule_cache()
         room_cache = self._prime_room_cache()
@@ -115,7 +144,7 @@ class Command(BaseCommand):
 
         with path.open(newline="", encoding="utf-8-sig") as f:
             reader = csv.DictReader(f, delimiter="\t")
-            for row in reader:
+            for row_number, row in enumerate(reader, start=2):
                 try:
                     resolved = self._resolve_row(
                         row,
@@ -128,7 +157,9 @@ class Command(BaseCommand):
                     )
                 except ValueError as exc:
                     stats.skipped += 1
-                    stats.warnings.append(str(exc))
+                    reason = str(exc)
+                    stats.warnings.append(reason)
+                    self._log_invalid_row(row_number, row, reason)
                     continue
 
                 if resolved is None:
@@ -147,6 +178,7 @@ class Command(BaseCommand):
             stats.updated += len(rows_to_update)
 
         self._print_summary(stats)
+        self.invalid_logger.report(self)
 
     def _resolve_row(
         self,
@@ -208,6 +240,33 @@ class Command(BaseCommand):
 
         session_cache[session_key] = (0, room_id)
         return SecSession(section_id=section_id, schedule_id=schedule_id, room_id=room_id)
+
+    def _log_invalid_row(self, row_number: int, row: RowStrOptT, reason: str) -> None:
+        """Capture invalid session rows for later inspection."""
+        self.invalid_logger.log(
+            {
+                "row_number": str(row_number),
+                "reason": reason,
+                "academic_year": (row.get("academic_year") or ""),
+                "semester_no": (row.get("semester_no") or ""),
+                "section_no": (row.get("section_no") or ""),
+                "dept_code": (row.get("dept_code") or ""),
+                "course_dept": (row.get("course_dept") or ""),
+                "course_no": (row.get("course_no") or ""),
+                "college_code": (row.get("college_code") or ""),
+                "curriculum": (row.get("curriculum") or ""),
+                "faculty": (row.get("faculty") or ""),
+                "weekday": (row.get("weekday") or ""),
+                "start_time": (row.get("start_time") or ""),
+                "end_time": (row.get("end_time") or ""),
+                "space": (row.get("space") or ""),
+                "room": (row.get("room") or ""),
+                "location": (row.get("location") or ""),
+                "course_title": (row.get("course_title") or ""),
+                "credit": (row.get("credit") or ""),
+                "credit_hours": (row.get("credit_hours") or ""),
+            }
+        )
 
     def _resolve_semester_id(self, row: RowStrOptT, semester_code: str) -> int:
         """Resolve a semester id from row values or a fallback code.
