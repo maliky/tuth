@@ -26,15 +26,15 @@ from app.timetable.admin.session_resources import SecSessionResource
 
 # Unified directory-backed resources (legacy included)
 DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
-    ("Faculty", FacultyResource, ("people_full_faculty.tsv",)),
-    ("Staff", StaffResource, ("people_full_staff.tsv",)),
     ("Room", RoomResource, ("space_room.csv",)),
+    ("Semester", SemesterResource, ("academicyear_semester.csv",)),
+    ("Staff", StaffResource, ("people_full_staff.tsv",)),
+    ("Donor", DonorResource, ("people_donors.csv",)),
+    ("Faculty", FacultyResource, ("people_full_faculty.tsv",)),
+    ("Student", StudentResource, ("people_full_student.tsv",)),
     ("Course", CourseResource, ("academic_course.csv",)),
     ("SecSession", SecSessionResource, ("timetable_sessions_25-26s2.tsv",)),
     ("CurriculumCourse", CurriculumCourseResource, ("academic_curriculum_course.csv",)),
-    ("Semester", SemesterResource, ("academicyear_semester.csv",)),
-    ("Donor", DonorResource, ("people_donors.csv",)),
-    ("Student", StudentResource, ("people_full_student.tsv",)),
     (
         "LegacyRegistration",
         LegacyRegistrationResource,

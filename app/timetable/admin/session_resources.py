@@ -44,7 +44,7 @@ class SecSessionResource(resources.ModelResource):
 
     class Meta:
         model = SecSession
-        import_id_fields = ("room", "schedule", "section")
+        import_id_fields = ("schedule", "section")
         fields = ("room", "schedule", "section")
         skip_unchanged = True
         report_skipped = False

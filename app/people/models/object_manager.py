@@ -82,7 +82,7 @@ class PersonManager(Manager[AbstractPersonT]):
                 return best_user
             else:
                 logger.info(
-                    "Ambiguous duplicate for %s '%s'; best=%s '%s' (%.2f), second=%.50s (%.2f); skipping auto-merge",
+                    "Ambiguous duplicate for %s '%s'; best=%s '%s' (%.2f), second=%s '%s' (%.2f); skipping auto-merge",
                     self.model.__name__,
                     base_name,
                     getattr(best_user, "username", ""),
