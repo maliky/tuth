@@ -62,6 +62,7 @@ def test_secsession_resource_import_data() -> None:
     assert session.section.number == 1, f"{session}"
     assert session.room.code == "201", f"{session}"
     assert session.room.space.code == "NB", f"{session}"
+    assert session.schedule is not None, f"{session}"
     assert session.schedule.weekday == WEEKDAYS_NUMBER.MONDAY, f"{session}"
 
 
@@ -85,4 +86,5 @@ def test_import_resources_secsession(tmp_path) -> None:
     assert session.section.number == 1
     assert session.room.code == "201"
     assert session.room.space.code == "NB"
+    assert session.schedule is not None
     assert session.schedule.weekday == WEEKDAYS_NUMBER.MONDAY

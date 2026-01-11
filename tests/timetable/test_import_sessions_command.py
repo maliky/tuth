@@ -29,4 +29,5 @@ def test_import_sessions_command_creates_session(tmp_path) -> None:
     assert session.section.number == 1
     assert session.room.code == "201"
     assert session.room.space.code == "NB"
+    assert session.schedule is not None
     assert session.schedule.weekday == WEEKDAYS_NUMBER.MONDAY
