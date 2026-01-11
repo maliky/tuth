@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Generator
+
 import pytest
 
 from app.academics import ensures as academics_ensures
@@ -15,7 +17,7 @@ def _clear_maps(*maps) -> None:
 
 
 @pytest.fixture(autouse=True)
-def _clear_ensure_caches() -> None:
+def _clear_ensure_caches() -> Generator[None, None, None]:
     _clear_maps(
         academics_ensures.COLLEGE_CACHE,
         academics_ensures.DEPARTMENT_CACHE,
