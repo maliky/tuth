@@ -56,8 +56,13 @@ class Command(BaseCommand):
         if opts["people"]:
             self.stdout.write("-> Importing people")
             call_command("import_student")
-            _import_resources(csv_dir, ["Donor", "Staff", "Faculty", "Student"])
+            _import_resources(csv_dir, ["Donor", "Staff", "Faculty"])
+            call_command("import_students")
 
+        if opts["registry"]:
+            self.stdout.write("-> Importing Registry (Grades)")
+            call_command("import_grades")
+            # call_command("import_secsession")
         self.stdout.write(self.style.SUCCESS("✔ fundamental data load completed"))
 
 
