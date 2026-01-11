@@ -15,7 +15,6 @@ from app.people.admin.resources import (
     StudentResource,
 )
 from app.people.models.staffs import Staff
-from app.registry.admin.resources import GradeResource
 from app.registry.admin.resources_legacy import (
     LegacyGradeSheetResource,
     LegacyRegistrationResource,
@@ -36,7 +35,6 @@ DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
     ("Semester", SemesterResource, ("academicyear_semester.csv",)),
     ("Donor", DonorResource, ("people_donors.csv",)),
     ("Student", StudentResource, ("people_full_student.tsv",)),
-    ("Grade", GradeResource, ("full_grades.tsv",)),
     (
         "LegacyRegistration",
         LegacyRegistrationResource,
