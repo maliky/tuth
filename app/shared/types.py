@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from datetime import time
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    Mapping,
     Optional,
     Sequence,
     Tuple,
@@ -39,6 +41,7 @@ Score = float
 
 Row = dict[str, Any]
 Transform = Callable[[Row], Row]
+RowStrOptT: TypeAlias = Mapping[str, Optional[str]]
 
 SectionQuery: TypeAlias = QuerySet["Section"]
 CourseQuery: TypeAlias = QuerySet["Course"]
@@ -74,3 +77,12 @@ DeptCollegeMapT: TypeAlias = dict[tuple[str, int], int]  # (dept_code, college_i
 DeptCourseMapT: TypeAlias = dict[tuple[int, str], int]  # (dept_id, course_no) -> id
 CurriculumCourseMapT: TypeAlias = dict[tuple[int, int], int]
 SectionKeyMapT: TypeAlias = dict[tuple[int, int, int, Optional[int]], int]
+
+ScheduleKeyT: TypeAlias = tuple[int, time, time | None]
+RoomKeyT: TypeAlias = tuple[str, str]
+SectionKeyT: TypeAlias = tuple[int, int, int]
+SessionKeyT: TypeAlias = tuple[int, int]
+ScheduleCacheT: TypeAlias = dict[ScheduleKeyT, int]
+RoomCacheT: TypeAlias = dict[RoomKeyT, int]
+SectionCacheT: TypeAlias = dict[SectionKeyT, tuple[int, Optional[int]]]
+SessionCacheT: TypeAlias = dict[SessionKeyT, tuple[int, int]]

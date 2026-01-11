@@ -75,7 +75,7 @@ def ensure_student_sid(student_id_raw: StudentIdT) -> int:
     if existing:
         return existing
 
-    User = get_user_model()
+    # User = get_user_model()
     # > Use the the model mk_username function
     # the pb it is not from the sid.
 

@@ -6,7 +6,7 @@ import csv
 from dataclasses import dataclass, field
 from datetime import datetime, time
 from pathlib import Path
-from typing import Mapping
+from typing import Optional
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import transaction
@@ -21,6 +21,13 @@ from app.academics.ensures import (
 from app.people.ensure_people import ensure_faculty
 from app.people.models.staffs import Staff
 from app.people.utils import name_parts_from_row
+from app.shared.types import (
+    RoomCacheT,
+    RowStrOptT,
+    ScheduleCacheT,
+    SectionCacheT,
+    SessionCacheT,
+)
 from app.shared.utils import get_in_row, to_int
 from app.spaces.models.core import Room, Space
 from app.timetable.choices import WEEKDAYS_NUMBER
@@ -41,7 +48,16 @@ class ImportStats:
 
 
 class Command(BaseCommand):
-    """Bulk import SecSession entries using preloaded caches."""
+    """Bulk import SecSession entries using preloaded caches.
+
+    Args:
+        --file: Path to a TSV file with session rows.
+        --semester-code: Fallback semester code when row values are missing.
+        --batch-size: Number of rows per bulk insert chunk.
+
+    Examples:
+        --semester-code "25-26s2"
+    """
 
     help = "Fast session import (TSV expected)."
 
@@ -65,6 +81,15 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options) -> None:
+        """Import session rows into SecSession.
+
+        Args:
+            *args: Unused positional arguments.
+            **options: Command options (file, semester_code, batch_size).
+
+        Raises:
+            CommandError: When the file is missing or import fails.
+        """
         path = Path(options["file"])
         if not path.exists():
             raise CommandError(f"Missing file: {path}")
@@ -125,27 +150,47 @@ class Command(BaseCommand):
 
     def _resolve_row(
         self,
-        row: Mapping[str, str | None],
+        row: RowStrOptT,
         *,
         semester_code: str,
-        schedule_cache: dict[tuple[int, time, time | None], int],
-        room_cache: dict[tuple[str, str], int],
-        section_cache: dict[tuple[int, int, int], tuple[int, int | None]],
-        session_cache: dict[tuple[int, int], tuple[int, int]],
+        schedule_cache: ScheduleCacheT,
+        room_cache: RoomCacheT,
+        section_cache: SectionCacheT,
+        session_cache: SessionCacheT,
         rows_to_update: list[SecSession],
     ) -> SecSession | None:
+        """Resolve a row into a SecSession or queue updates.
+
+        Args:
+            row: Session row with keys like weekday, start_time, end_time, section_no.
+            semester_code: Fallback semester code when row values are missing.
+            schedule_cache: Cache of schedule keys to ids.
+            room_cache: Cache of room keys to ids.
+            section_cache: Cache of section keys to (id, faculty_id).
+            session_cache: Cache of (section_id, schedule_id) to (id, room_id).
+            rows_to_update: List of sessions to update when room differs.
+
+        Returns:
+            A new SecSession to create, or None when the row updates an existing
+            session.
+
+        Raises:
+            ValueError: When the row contains invalid section_no values.
+
+        Examples:
+            semester_code: "25-26s2"
+        """
 
         semester_id = self._resolve_semester_id(row, semester_code)
         curriculum_course_id = self._resolve_curriculum_course_id(row)
         schedule_id = self._resolve_schedule_id(row, schedule_cache)
         room_id = self._resolve_room_id(row, room_cache)
-        faculty_id = self._resolve_faculty_id(row)        
-        
+        faculty_id = self._resolve_faculty_id(row)
+
         section_no = to_int(get_in_row("section_no", row))
         if section_no <= 0:
             # this is to prevent a DB failure, number >0
             raise ValueError(f"Invalid section_no value: {get_in_row('section_no', row)}")
-
 
         section_id = self._resolve_section_id(
             semester_id, curriculum_course_id, section_no, faculty_id, section_cache
@@ -164,15 +209,36 @@ class Command(BaseCommand):
         session_cache[session_key] = (0, room_id)
         return SecSession(section_id=section_id, schedule_id=schedule_id, room_id=room_id)
 
-    def _resolve_semester_id(
-        self, row: Mapping[str, str | None], semester_code: str
-    ) -> int:
+    def _resolve_semester_id(self, row: RowStrOptT, semester_code: str) -> int:
+        """Resolve a semester id from row values or a fallback code.
+
+        Args:
+            row: Row with academic_year and semester_no values.
+            semester_code: Fallback semester code like "25-26s2".
+
+        Returns:
+            Semester id from ensure_semester_id.
+        """
         academic_year = get_in_row("academic_year", row)
         semester_no = get_in_row("semester_no", row)
         default = semester_code if semester_code else None
         return ensure_semester_id(academic_year, semester_no, default=default)
 
-    def _resolve_curriculum_course_id(self, row: Mapping[str, str | None]) -> int:
+    def _resolve_curriculum_course_id(self, row: RowStrOptT) -> int:
+        """Resolve curriculum_course id for a session row.
+
+        Args:
+            row: Row with dept_code/course_dept, course_no, curriculum, credit.
+
+        Returns:
+            CurriculumCourse id.
+
+        Raises:
+            ValueError: When required dept_code or course_no values are missing.
+
+        Examples:
+            dept_code: "ACCT", course_no: "101"
+        """
         college_code = get_in_row("college_code", row)
         dept_code = get_in_row("dept_code", row) or get_in_row("course_dept", row)
         course_no = get_in_row("course_no", row)
@@ -192,7 +258,18 @@ class Command(BaseCommand):
         credit_code = to_int(credit_raw, default=3)
         return ensure_curriculum_course_id(curriculum_id, course_id, credit_code)
 
-    def _resolve_faculty_id(self, row: Mapping[str, str | None]) -> int | None:
+    def _resolve_faculty_id(self, row: RowStrOptT) -> int | None:
+        """Resolve the faculty id for a session row.
+
+        Args:
+            row: Row with faculty name or name parts.
+
+        Returns:
+            Faculty id or None when no faculty data is provided.
+
+        Examples:
+            faculty: "Dylan, John A"
+        """
         faculty_name = get_in_row("faculty", row)
         if not faculty_name and not get_in_row("last_name", row):
             return None
@@ -211,8 +288,20 @@ class Command(BaseCommand):
         curriculum_course_id: int,
         section_no: int,
         faculty_id: int | None,
-        cache: dict[tuple[int, int, int], tuple[int, int | None]],
+        cache: SectionCacheT,
     ) -> int:
+        """Resolve or create a section id for a session row.
+
+        Args:
+            semester_id: Target semester id.
+            curriculum_course_id: Target curriculum_course id.
+            section_no: Section number.
+            faculty_id: Optional faculty id.
+            cache: Cache of section keys to (id, faculty_id).
+
+        Returns:
+            Section id.
+        """
         key = (semester_id, curriculum_course_id, section_no)
         cached = cache.get(key)
         if cached:
@@ -237,9 +326,24 @@ class Command(BaseCommand):
 
     def _resolve_schedule_id(
         self,
-        row: Mapping[str, str | None],
-        cache: dict[tuple[int, time, time | None], int],
+        row: RowStrOptT,
+        cache: ScheduleCacheT,
     ) -> int:
+        """Resolve schedule id from weekday/start/end values.
+
+        Args:
+            row: Row with weekday, start_time, end_time.
+            cache: Cache of (weekday, start_time, end_time) to id.
+
+        Returns:
+            Schedule id.
+
+        Raises:
+            ValueError: When weekday or time parsing fails.
+
+        Examples:
+            weekday: "Mon", start_time: "08:30", end_time: "09:45"
+        """
         weekday = self._parse_weekday(get_in_row("weekday", row))
         start_time = self._parse_time(get_in_row("start_time", row), "start_time")
         end_time = self._parse_time(get_in_row("end_time", row), "end_time")
@@ -257,9 +361,21 @@ class Command(BaseCommand):
 
     def _resolve_room_id(
         self,
-        row: Mapping[str, str | None],
-        cache: dict[tuple[str, str], int],
+        row: RowStrOptT,
+        cache: RoomCacheT,
     ) -> int:
+        """Resolve room id from space/room or a combined location string.
+
+        Args:
+            row: Row with space/room or location value.
+            cache: Cache of (space_code, room_code) to id.
+
+        Returns:
+            Room id.
+
+        Examples:
+            location: "NB-201"
+        """
         space_code = get_in_row("space", row)
         room_code = get_in_row("room", row)
         if not space_code or not room_code:
@@ -281,6 +397,20 @@ class Command(BaseCommand):
         return room.id
 
     def _parse_weekday(self, value: str) -> int:
+        """Normalize weekday values to the WEEKDAYS_NUMBER enum.
+
+        Args:
+            value: Raw weekday string (label or digit).
+
+        Returns:
+            Weekday integer value.
+
+        Raises:
+            ValueError: When the weekday is not recognized.
+
+        Examples:
+            "Mon" -> 1
+        """
         token = (value or "").strip().lower()
         if not token:
             return WEEKDAYS_NUMBER.TBA
@@ -292,6 +422,21 @@ class Command(BaseCommand):
         return mapping[token]
 
     def _parse_time(self, value: str, label: str) -> time:
+        """Parse a time value from common string formats.
+
+        Args:
+            value: Raw time string.
+            label: Field label for error messages.
+
+        Returns:
+            Parsed time value.
+
+        Raises:
+            ValueError: When the value is missing or unparsable.
+
+        Examples:
+            "08:30", "08:30:00", "8:30 AM"
+        """
         text = (value or "").strip()
         if not text:
             raise ValueError(f"Missing {label} value")
@@ -303,6 +448,17 @@ class Command(BaseCommand):
         raise ValueError(f"Could not parse {label} value '{value}'")
 
     def _split_location(self, raw: str) -> tuple[str, str]:
+        """Split a location string into space and room codes.
+
+        Args:
+            raw: Location string from the input row.
+
+        Returns:
+            A tuple of (space_code, room_code).
+
+        Examples:
+            "NB-201" -> ("NB", "201")
+        """
         text = (raw or "").strip()
         if not text or text.lower() == "tba":
             return "TBA", "TBA"
@@ -317,24 +473,40 @@ class Command(BaseCommand):
 
         return normalized.upper(), normalized
 
-    def _prime_schedule_cache(self) -> dict[tuple[int, time, time | None], int]:
-        cache: dict[tuple[int, time, time | None], int] = {}
+    def _prime_schedule_cache(self) -> ScheduleCacheT:
+        """Prime a cache for Schedule lookups.
+
+        Returns:
+            A cache keyed by (weekday, start_time, end_time) to schedule id.
+        """
+        cache: ScheduleCacheT = {}
         for weekday, start, end, pk in Schedule.objects.values_list(
             "weekday", "start_time", "end_time", "id"
         ):
             cache[(weekday, start, end)] = pk
         return cache
 
-    def _prime_room_cache(self) -> dict[tuple[str, str], int]:
-        cache: dict[tuple[str, str], int] = {}
+    def _prime_room_cache(self) -> RoomCacheT:
+        """Prime a cache for Room lookups.
+
+        Returns:
+            A cache keyed by (space_code, room_code) to room id.
+        """
+        cache: RoomCacheT = {}
         for space_code, room_code, pk in Room.objects.values_list(
             "space__code", "code", "id"
         ):
             cache[(space_code, room_code)] = pk
         return cache
 
-    def _prime_section_cache(self) -> dict[tuple[int, int, int], tuple[int, int | None]]:
-        cache: dict[tuple[int, int, int], tuple[int, int | None]] = {}
+    def _prime_section_cache(self) -> SectionCacheT:
+        """Prime a cache for Section lookups.
+
+        Returns:
+            A cache keyed by (semester_id, curriculum_course_id, number) to
+            (section_id, faculty_id).
+        """
+        cache: SectionCacheT = {}
         for (
             semester_id,
             curriculum_course_id,
@@ -347,8 +519,13 @@ class Command(BaseCommand):
             cache[(semester_id, curriculum_course_id, number)] = (pk, faculty_id)
         return cache
 
-    def _prime_session_cache(self) -> dict[tuple[int, int], tuple[int, int]]:
-        cache: dict[tuple[int, int], tuple[int, int]] = {}
+    def _prime_session_cache(self) -> SessionCacheT:
+        """Prime a cache for SecSession lookups.
+
+        Returns:
+            A cache keyed by (section_id, schedule_id) to (session_id, room_id).
+        """
+        cache: SessionCacheT = {}
         for section_id, schedule_id, pk, room_id in SecSession.objects.values_list(
             "section_id", "schedule_id", "id", "room_id"
         ):
@@ -356,6 +533,12 @@ class Command(BaseCommand):
         return cache
 
     def _flush_create(self, rows: list[SecSession], batch_size: int) -> None:
+        """Bulk create SecSession rows.
+
+        Args:
+            rows: List of SecSession entries to create.
+            batch_size: Chunk size for the bulk insert.
+        """
         with transaction.atomic():
             SecSession.objects.bulk_create(
                 rows, ignore_conflicts=True, batch_size=batch_size
@@ -363,6 +546,7 @@ class Command(BaseCommand):
         rows.clear()
 
     def _print_summary(self, stats: ImportStats) -> None:
+        """Print the import summary to stdout."""
         summary = f"sessions {stats.created}"
         if stats.updated:
             summary += f", rooms updated {stats.updated}"
