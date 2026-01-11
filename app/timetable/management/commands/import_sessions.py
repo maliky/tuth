@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 from dataclasses import dataclass, field
 from datetime import datetime, time
+from time import monotonic
 from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import transaction
@@ -19,7 +20,10 @@ from app.academics.ensures import (
 from app.people.ensure_people import ensure_faculty
 from app.people.models.staffs import Staff
 from app.people.utils import name_parts_from_row
+
+from app.shared.importing import CsvRowLogger
 from app.shared.types import RowStrOptT, SectionCacheT, SessionKeyT
+
 from app.shared.utils import get_in_row, to_int
 from app.timetable.choices import WEEKDAYS_NUMBER
 from app.timetable.ensures import (
@@ -55,6 +59,7 @@ class Command(BaseCommand):
     """
 
     help = "Fast session import (TSV expected)."
+    invalid_logger: CsvRowLogger
 
     def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
@@ -71,7 +76,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--batch-size",
             type=int,
-            default=2000,
+            default=10,
             help="Number of rows per bulk insert chunk.",
         )
 
@@ -93,6 +98,36 @@ class Command(BaseCommand):
         batch_size: int = options["batch_size"]
 
         stats = ImportStats()
+        # Log throughput per batch similar to import_grades.
+        batch_started_at = monotonic()
+        processed_total = 0
+        # Log invalid rows to a CSV for follow-up.
+        self.invalid_logger = CsvRowLogger(
+            "logs/import_sessions_invalid.csv",
+            (
+                "row_number",
+                "reason",
+                "academic_year",
+                "semester_no",
+                "section_no",
+                "dept_code",
+                "course_dept",
+                "course_no",
+                "college_code",
+                "curriculum",
+                "faculty",
+                "weekday",
+                "start_time",
+                "end_time",
+                "space",
+                "room",
+                "location",
+                "course_title",
+                "credit",
+                "credit_hours",
+            ),
+            "Session import skipped {count} invalid rows; details logged to {path}",
+        )
 
         section_cache = _prime_section_cache()
         pending_sessions: set[SessionKeyT] = set()
@@ -108,7 +143,7 @@ class Command(BaseCommand):
 
         with path.open(newline="", encoding="utf-8-sig") as f:
             reader = csv.DictReader(f, delimiter="\t")
-            for row in reader:
+            for row_number, row in enumerate(reader, start=2):
                 try:
                     resolved = _resolve_row(
                         row,
@@ -119,7 +154,9 @@ class Command(BaseCommand):
                     )
                 except ValueError as exc:
                     stats.skipped += 1
-                    stats.warnings.append(str(exc))
+                    reason = str(exc)
+                    stats.warnings.append(reason)
+                    self._log_invalid_row(row_number, row, reason)
                     continue
 
                 if resolved is None:
@@ -138,6 +175,8 @@ class Command(BaseCommand):
             stats.updated += len(rows_to_update)
 
         self._print_summary(stats)
+        self.invalid_logger.report(self)
+
 
     def _print_summary(self, stats: ImportStats) -> None:
         """Print the import summary to stdout."""
@@ -480,3 +519,4 @@ def _flush_create(rows: list[SecSession], batch_size: int) -> None:
     with transaction.atomic():
         SecSession.objects.bulk_create(rows, ignore_conflicts=True, batch_size=batch_size)
     rows.clear()
+
