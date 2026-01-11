@@ -151,15 +151,12 @@ class FacultyFullnameWidget(widgets.ForeignKeyWidget):
 
         Create user and faculty if necessary.
         """
-        username = get_in_row("username", row)
-        faculty_name = get_in_row("faculty", row)
-        updated_name = name_parts_from_row(
-            row,
-            fullname_key="faculty",
-            raw_name=faculty_name,
-        )
 
-        return ensure_faculty(username, name=updated_name)
+        username = get_in_row("username", row)
+        updated_name = name_parts_from_row(row, fullname_key="faculty")
+        faculty_obj = ensure_faculty(username, name=updated_name)
+
+        return faculty_obj
 
 
 class StudentUserWidget(widgets.ForeignKeyWidget):

@@ -28,7 +28,7 @@ def ensure_person(
     lookup: Mapping[str, Any] = {"username": username} if username else {}
     # this objects manager is a bit diferent and will do a search on name fiels
     # found in defaults also
-    person, _ = model.objects.update_or_create(defaults=merged, **lookup)
+    person, _ = model.objects.get_or_create(defaults=merged, **lookup)
     return cast(AbstractPersonT, person)
 
 
