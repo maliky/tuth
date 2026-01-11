@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import TypeAlias
 
-from django.contrib.auth import get_user_model
-
 from app.academics.models.curriculum import Curriculum
 from app.people.models.student import Student
 from app.shared.types import StrIntMapT
@@ -75,18 +73,21 @@ def ensure_student_sid(student_id_raw: StudentIdT) -> int:
     if existing:
         return existing
 
-    # User = get_user_model()
-    # > Use the the model mk_username function
-    # the pb it is not from the sid.
+    if Student.objects.filter(student_id=sid).exists():
+        student = Student.objects.get(student_id=sid)
+        STUDENT_ID_CACHE[sid] = int(student.pk)
+        return int(student.pk)
 
-    # base_username = f"student_{sid}".lower()
-    # username = base_username
-    # this use creation is no
-
-    # > our personalized manager will take care of missing students
-    # > and create them on the fly.  Most of them will have bee created
-    # > already.
-    student = Student.get_or_create(student_id=sid)
+    # our personalized manager will take care of missing students
+    # and create them on the fly.
+    student, _ = Student.objects.get_or_create(
+        student_id=sid,
+        defaults={
+            "first_name": "Student",
+            "last_name": sid,
+            "curriculum": Curriculum.get_default(),
+        },
+    )
 
     # student.save()  # is it necessary after a save ?
 

@@ -21,6 +21,9 @@
 
 - faire les test pour import section and grades
 
+
+# ##
+Can't we factor the _resolve function of import_session command with in ensure modules ? 
 * <2026-01-05 lun. 09:51> UI
 - The bio field does not show in faculty
 

@@ -6,8 +6,6 @@ import csv
 from dataclasses import dataclass, field
 from datetime import datetime, time
 from pathlib import Path
-from typing import Optional
-
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import transaction
 
@@ -21,19 +19,18 @@ from app.academics.ensures import (
 from app.people.ensure_people import ensure_faculty
 from app.people.models.staffs import Staff
 from app.people.utils import name_parts_from_row
+
 from app.shared.importing import CsvRowLogger
-from app.shared.types import (
-    RoomCacheT,
-    RowStrOptT,
-    ScheduleCacheT,
-    SectionCacheT,
-    SessionCacheT,
-)
+from app.shared.types import RowStrOptT, SectionCacheT, SessionKeyT
+
 from app.shared.utils import get_in_row, to_int
-from app.spaces.models.core import Room, Space
 from app.timetable.choices import WEEKDAYS_NUMBER
-from app.timetable.ensures import ensure_semester_id
-from app.timetable.models.schedule import Schedule
+from app.timetable.ensures import (
+    ensure_room_id,
+    ensure_session_id,
+    ensure_schedule_id,
+    ensure_semester_id,
+)
 from app.timetable.models.section import Section
 from app.timetable.models.session import SecSession
 
@@ -128,10 +125,8 @@ class Command(BaseCommand):
             "Session import skipped {count} invalid rows; details logged to {path}",
         )
 
-        schedule_cache = self._prime_schedule_cache()
-        room_cache = self._prime_room_cache()
         section_cache = self._prime_section_cache()
-        session_cache = self._prime_session_cache()
+        pending_sessions: set[SessionKeyT] = set()
 
         rows_to_create: list[SecSession] = []
         rows_to_update: list[SecSession] = []
@@ -149,10 +144,8 @@ class Command(BaseCommand):
                     resolved = self._resolve_row(
                         row,
                         semester_code=semester_code,
-                        schedule_cache=schedule_cache,
-                        room_cache=room_cache,
                         section_cache=section_cache,
-                        session_cache=session_cache,
+                        pending_sessions=pending_sessions,
                         rows_to_update=rows_to_update,
                     )
                 except ValueError as exc:
@@ -185,10 +178,8 @@ class Command(BaseCommand):
         row: RowStrOptT,
         *,
         semester_code: str,
-        schedule_cache: ScheduleCacheT,
-        room_cache: RoomCacheT,
         section_cache: SectionCacheT,
-        session_cache: SessionCacheT,
+        pending_sessions: set[SessionKeyT],
         rows_to_update: list[SecSession],
     ) -> SecSession | None:
         """Resolve a row into a SecSession or queue updates.
@@ -196,10 +187,8 @@ class Command(BaseCommand):
         Args:
             row: Session row with keys like weekday, start_time, end_time, section_no.
             semester_code: Fallback semester code when row values are missing.
-            schedule_cache: Cache of schedule keys to ids.
-            room_cache: Cache of room keys to ids.
             section_cache: Cache of section keys to (id, faculty_id).
-            session_cache: Cache of (section_id, schedule_id) to (id, room_id).
+            pending_sessions: Tracks session keys already queued for creation.
             rows_to_update: List of sessions to update when room differs.
 
         Returns:
@@ -215,8 +204,8 @@ class Command(BaseCommand):
 
         semester_id = self._resolve_semester_id(row, semester_code)
         curriculum_course_id = self._resolve_curriculum_course_id(row)
-        schedule_id = self._resolve_schedule_id(row, schedule_cache)
-        room_id = self._resolve_room_id(row, room_cache)
+        schedule_id = self._resolve_schedule_id(row)
+        room_id = self._resolve_room_id(row)
         faculty_id = self._resolve_faculty_id(row)
 
         section_no = to_int(get_in_row("section_no", row))
@@ -228,17 +217,23 @@ class Command(BaseCommand):
             semester_id, curriculum_course_id, section_no, faculty_id, section_cache
         )
 
-        session_key = (section_id, schedule_id)
+        session_key: SessionKeyT = (section_id, schedule_id)
 
-        existing = session_cache.get(session_key)
+        existing = ensure_session_id(
+            section_id,
+            schedule_id,
+            room_id=room_id,
+            create=False,
+        )
         if existing:
             session_id, existing_room_id = existing
             if existing_room_id != room_id:
                 rows_to_update.append(SecSession(id=session_id, room_id=room_id))
-                session_cache[session_key] = (session_id, room_id)
             return None
 
-        session_cache[session_key] = (0, room_id)
+        if session_key in pending_sessions:
+            return None
+        pending_sessions.add(session_key)
         return SecSession(section_id=section_id, schedule_id=schedule_id, room_id=room_id)
 
     def _log_invalid_row(self, row_number: int, row: RowStrOptT, reason: str) -> None:
@@ -383,16 +378,11 @@ class Command(BaseCommand):
         cache[key] = (section.id, section.faculty_id)
         return section.id
 
-    def _resolve_schedule_id(
-        self,
-        row: RowStrOptT,
-        cache: ScheduleCacheT,
-    ) -> int:
+    def _resolve_schedule_id(self, row: RowStrOptT) -> int:
         """Resolve schedule id from weekday/start/end values.
 
         Args:
             row: Row with weekday, start_time, end_time.
-            cache: Cache of (weekday, start_time, end_time) to id.
 
         Returns:
             Schedule id.
@@ -406,28 +396,13 @@ class Command(BaseCommand):
         weekday = self._parse_weekday(get_in_row("weekday", row))
         start_time = self._parse_time(get_in_row("start_time", row), "start_time")
         end_time = self._parse_time(get_in_row("end_time", row), "end_time")
-        key = (weekday, start_time, end_time)
-        cached = cache.get(key)
-        if cached:
-            return cached
-        schedule, _ = Schedule.objects.get_or_create(
-            weekday=weekday,
-            start_time=start_time,
-            end_time=end_time,
-        )
-        cache[key] = schedule.id
-        return schedule.id
+        return ensure_schedule_id(weekday, start_time, end_time)
 
-    def _resolve_room_id(
-        self,
-        row: RowStrOptT,
-        cache: RoomCacheT,
-    ) -> int:
+    def _resolve_room_id(self, row: RowStrOptT) -> int:
         """Resolve room id from space/room or a combined location string.
 
         Args:
             row: Row with space/room or location value.
-            cache: Cache of (space_code, room_code) to id.
 
         Returns:
             Room id.
@@ -440,20 +415,7 @@ class Command(BaseCommand):
         if not space_code or not room_code:
             space_code, room_code = self._split_location(get_in_row("location", row))
 
-        key = (space_code or "TBA", room_code or "TBA")
-        cached = cache.get(key)
-        if cached:
-            return cached
-        if key[0] == "TBA":
-            space = Space.get_default()
-        else:
-            space, _ = Space.objects.get_or_create(
-                code=key[0],
-                defaults={"full_name": key[0]},
-            )
-        room, _ = Room.objects.get_or_create(space=space, code=key[1])
-        cache[key] = room.id
-        return room.id
+        return ensure_room_id(space_code or "TBA", room_code or "TBA")
 
     def _parse_weekday(self, value: str) -> int:
         """Normalize weekday values to the WEEKDAYS_NUMBER enum.
@@ -532,32 +494,6 @@ class Command(BaseCommand):
 
         return normalized.upper(), normalized
 
-    def _prime_schedule_cache(self) -> ScheduleCacheT:
-        """Prime a cache for Schedule lookups.
-
-        Returns:
-            A cache keyed by (weekday, start_time, end_time) to schedule id.
-        """
-        cache: ScheduleCacheT = {}
-        for weekday, start, end, pk in Schedule.objects.values_list(
-            "weekday", "start_time", "end_time", "id"
-        ):
-            cache[(weekday, start, end)] = pk
-        return cache
-
-    def _prime_room_cache(self) -> RoomCacheT:
-        """Prime a cache for Room lookups.
-
-        Returns:
-            A cache keyed by (space_code, room_code) to room id.
-        """
-        cache: RoomCacheT = {}
-        for space_code, room_code, pk in Room.objects.values_list(
-            "space__code", "code", "id"
-        ):
-            cache[(space_code, room_code)] = pk
-        return cache
-
     def _prime_section_cache(self) -> SectionCacheT:
         """Prime a cache for Section lookups.
 
@@ -576,19 +512,6 @@ class Command(BaseCommand):
             "semester_id", "curriculum_course_id", "number", "id", "faculty_id"
         ):
             cache[(semester_id, curriculum_course_id, number)] = (pk, faculty_id)
-        return cache
-
-    def _prime_session_cache(self) -> SessionCacheT:
-        """Prime a cache for SecSession lookups.
-
-        Returns:
-            A cache keyed by (section_id, schedule_id) to (session_id, room_id).
-        """
-        cache: SessionCacheT = {}
-        for section_id, schedule_id, pk, room_id in SecSession.objects.values_list(
-            "section_id", "schedule_id", "id", "room_id"
-        ):
-            cache[(section_id, schedule_id)] = (pk, room_id)
         return cache
 
     def _flush_create(self, rows: list[SecSession], batch_size: int) -> None:
