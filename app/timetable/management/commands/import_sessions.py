@@ -536,4 +536,4 @@ class Command(BaseCommand):
             summary += f", skipped {stats.skipped}"
         self.stdout.write(self.style.SUCCESS(f"Session import complete: {summary}"))
         for note in stats.warnings[:10]:
-            self.stdout.write(self.style.WARNING(f"- {note}"))
+            self.stdout.write(self.style.WARNING(f"- {note}")) 
