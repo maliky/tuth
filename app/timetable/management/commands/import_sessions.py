@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 from dataclasses import dataclass, field
 from datetime import datetime, time
+from time import monotonic
 from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import transaction
@@ -97,6 +98,9 @@ class Command(BaseCommand):
         batch_size: int = options["batch_size"]
 
         stats = ImportStats()
+        # Log throughput per batch similar to import_grades.
+        batch_started_at = monotonic()
+        processed_total = 0
         # Log invalid rows to a CSV for follow-up.
         self.invalid_logger = CsvRowLogger(
             "logs/import_sessions_invalid.csv",
