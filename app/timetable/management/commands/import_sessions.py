@@ -18,7 +18,6 @@ from app.academics.ensures import (
     ensure_department_id,
 )
 from app.people.ensure_people import ensure_faculty
-from app.people.models.staffs import Staff
 from app.people.utils import name_parts_from_row
 
 from app.shared.importing import CsvRowLogger
@@ -359,9 +358,7 @@ def _resolve_faculty_id(row: RowStrOptT) -> int | None:
     if not faculty_name and not get_in_row("last_name", row):
         return None
     name_parts = name_parts_from_row(row, fullname_key="faculty", raw_name=faculty_name)
-    username = Staff.mk_username(
-        name_parts.first, name_parts.last, name_parts.middle, unique=True
-    )
+    username = get_in_row("username", row)
     faculty = ensure_faculty(username, name=name_parts)
     return faculty.id
 
@@ -519,4 +516,3 @@ def _flush_create(rows: list[SecSession], batch_size: int) -> None:
     with transaction.atomic():
         SecSession.objects.bulk_create(rows, ignore_conflicts=True, batch_size=batch_size)
     rows.clear()
-

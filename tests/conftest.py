@@ -10,6 +10,17 @@ from app.academics import ensures as academics_ensures
 from app.people import ensure_people as people_ensures
 from app.timetable import ensures as timetable_ensures
 
+# Expose shared fixture modules for all tests.
+pytest_plugins = [
+    "tests.academics.fixture",
+    "tests.people.fixture",
+    "tests.registry.fixture",
+    "tests.shared.fixture",
+    "tests.shared.permissions_fixtures",
+    "tests.spaces.fixture",
+    "tests.timetable.fixture",
+]
+
 
 def _clear_maps(*maps) -> None:
     for mapping in maps:
@@ -42,6 +53,7 @@ def _clear_ensure_caches() -> Generator[None, None, None]:
         timetable_ensures.ROOM_ID_CACHE,
         timetable_ensures.SESSION_ID_CACHE,
         people_ensures.FACULTY_CACHE,
+        people_ensures.STUDENT_ID_CACHE,
     )
     yield
     _clear_maps(
@@ -68,4 +80,5 @@ def _clear_ensure_caches() -> Generator[None, None, None]:
         timetable_ensures.ROOM_ID_CACHE,
         timetable_ensures.SESSION_ID_CACHE,
         people_ensures.FACULTY_CACHE,
+        people_ensures.STUDENT_ID_CACHE,
     )
