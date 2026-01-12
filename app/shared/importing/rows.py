@@ -75,7 +75,7 @@ def setdefault_field(key: str, provider: Callable[[Row], str]) -> Transform:
     return _apply
 
 
-def first_value(row: Row, keys: Sequence[str]) -> str:
+def first_value(row: Mapping[str, Any], keys: Sequence[str]) -> str:
     """Return the first non-empty value found in *keys*."""
     for key in keys:
         value = row.get(key)

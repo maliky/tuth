@@ -18,10 +18,9 @@ from app.academics.ensures import (
     ensure_department_id,
 )
 from app.people.ensure_people import ensure_faculty
-from app.people.models.staffs import Staff
 from app.people.utils import name_parts_from_row
 
-from app.shared.importing import CsvRowLogger
+from app.shared.importing import CsvRowLogger, log_invalid_row
 from app.shared.types import RowStrOptT, SectionCacheT, SessionKeyT
 
 from app.shared.utils import get_in_row, to_int
@@ -44,6 +43,28 @@ class ImportStats:
     updated: int = 0
     skipped: int = 0
     warnings: list[str] = field(default_factory=list)
+
+
+INVALID_ROW_FIELDS = {
+    "academic_year": ("academic_year",),
+    "semester_no": ("semester_no",),
+    "section_no": ("section_no",),
+    "dept_code": ("dept_code", "course_dept"),
+    "course_dept": ("course_dept", "dept_code"),
+    "course_no": ("course_no",),
+    "college_code": ("college_code",),
+    "curriculum": ("curriculum",),
+    "faculty": ("faculty",),
+    "weekday": ("weekday",),
+    "start_time": ("start_time",),
+    "end_time": ("end_time",),
+    "space": ("space",),
+    "room": ("room",),
+    "location": ("location",),
+    "course_title": ("course_title",),
+    "credit": ("credit", "credit_hours"),
+    "credit_hours": ("credit_hours", "credit"),
+}
 
 
 class Command(BaseCommand):
@@ -98,9 +119,7 @@ class Command(BaseCommand):
         batch_size: int = options["batch_size"]
 
         stats = ImportStats()
-        # Log throughput per batch similar to import_grades.
-        batch_started_at = monotonic()
-        processed_total = 0
+
         # Log invalid rows to a CSV for follow-up.
         self.invalid_logger = CsvRowLogger(
             "logs/import_sessions_invalid.csv",
@@ -156,7 +175,7 @@ class Command(BaseCommand):
                     stats.skipped += 1
                     reason = str(exc)
                     stats.warnings.append(reason)
-                    self._log_invalid_row(row_number, row, reason)
+                    _log_invalid_row(self.invalid_logger, row_number, row, reason)
                     continue
 
                 if resolved is None:
@@ -177,7 +196,6 @@ class Command(BaseCommand):
         self._print_summary(stats)
         self.invalid_logger.report(self)
 
-
     def _print_summary(self, stats: ImportStats) -> None:
         """Print the import summary to stdout."""
         summary = f"sessions {stats.created}"
@@ -188,6 +206,16 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"Session import complete: {summary}"))
         for note in stats.warnings[:10]:
             self.stdout.write(self.style.WARNING(f"- {note}"))
+
+
+def _log_invalid_row(
+    logger: CsvRowLogger,
+    row_number: int,
+    row: RowStrOptT,
+    reason: str,
+) -> None:
+    """Record invalid rows into the shared CSV logger."""
+    log_invalid_row(logger, row_number, row, reason, fields=INVALID_ROW_FIELDS)
 
 
 def _resolve_row(
@@ -359,9 +387,7 @@ def _resolve_faculty_id(row: RowStrOptT) -> int | None:
     if not faculty_name and not get_in_row("last_name", row):
         return None
     name_parts = name_parts_from_row(row, fullname_key="faculty", raw_name=faculty_name)
-    username = Staff.mk_username(
-        name_parts.first, name_parts.last, name_parts.middle, unique=True
-    )
+    username = get_in_row("username", row)
     faculty = ensure_faculty(username, name=name_parts)
     return faculty.id
 
@@ -519,4 +545,3 @@ def _flush_create(rows: list[SecSession], batch_size: int) -> None:
     with transaction.atomic():
         SecSession.objects.bulk_create(rows, ignore_conflicts=True, batch_size=batch_size)
     rows.clear()
-

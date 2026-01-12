@@ -14,6 +14,7 @@ from app.shared.importing import (
     CsvRowLogger,
     coerce_field,
     first_value,
+    log_invalid_row,
     normalize_field,
     pipeline,
     rename_headers,
@@ -35,6 +36,14 @@ SEM_MAP = {
 }
 
 CURRICULUM_MAX_LEN = 40
+LEGACY_INVALID_FIELDS = {
+    "student_id": ("student_id", "studentid"),
+    "academic_year": ("academic_year", "AcademicYear"),
+    "semester_no": ("semester_no", "semester"),
+    "course_code": ("course_code", "coursecode"),
+    "course_no": ("course_no", "courseno"),
+    "grade_code": ("grade_code", "grade"),
+}
 
 
 def normalize_semester(raw: str | None) -> str:
@@ -177,17 +186,12 @@ class LegacyGradeSheetResource(GradeResource):
 
     def _log_invalid_row(self, row_number: int, row: dict[str, str], reason: str) -> None:
         """Append invalid row context to a CSV log for follow-up."""
-        self.invalid_logger.log(
-            {
-                "row_number": str(row_number),
-                "student_id": first_value(row, ("student_id", "studentid")),
-                "academic_year": first_value(row, ("academic_year", "AcademicYear")),
-                "semester_no": first_value(row, ("semester_no", "semester")),
-                "course_code": first_value(row, ("course_code", "coursecode")),
-                "course_no": first_value(row, ("course_no", "courseno")),
-                "grade_code": first_value(row, ("grade_code", "grade")),
-                "reason": str(reason),
-            }
+        log_invalid_row(
+            self.invalid_logger,
+            row_number,
+            row,
+            reason,
+            fields=LEGACY_INVALID_FIELDS,
         )
 
 

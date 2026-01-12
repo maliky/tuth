@@ -2,7 +2,7 @@
 
 # from . import rows, loggers     # noqa: F401
 
-from .loggers import CsvRowLogger, get_import_logger
+from .loggers import CsvRowLogger, get_import_logger, log_invalid_row
 from .dataframe_utils import drop_constant_columns
 from .rows import (
     coerce_field,
@@ -20,6 +20,7 @@ __all__ = [
     "drop_constant_columns",
     "first_value",
     "get_import_logger",
+    "log_invalid_row",
     "normalize_field",
     "pipeline",
     "rename_headers",

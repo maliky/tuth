@@ -5,9 +5,11 @@ from __future__ import annotations
 import csv
 import logging
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any, Iterable, Mapping, Sequence
 
 from django.core.management.base import BaseCommand
+
+from app.shared.importing.rows import first_value
 
 
 def get_import_logger() -> logging.Logger:
@@ -41,3 +43,18 @@ class CsvRowLogger:
 
         msg = self.message_template.format(count=len(self.rows), path=self.path)
         cmd.stdout.write(cmd.style.WARNING(msg))
+
+
+def log_invalid_row(
+    logger: CsvRowLogger,
+    row_number: int,
+    row: Mapping[str, Any],
+    reason: str,
+    *,
+    fields: Mapping[str, Sequence[str]],
+) -> None:
+    """Log an invalid row with normalized field extraction."""
+    payload = {"row_number": str(row_number), "reason": str(reason)}
+    for field_name, keys in fields.items():
+        payload[field_name] = first_value(row, keys)
+    logger.log(payload)
