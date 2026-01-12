@@ -7,6 +7,7 @@ from decimal import Decimal
 from typing import Any, Iterable, cast
 
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from django.db.models import Avg, DecimalField, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.http import HttpRequest, HttpResponse
@@ -25,8 +26,16 @@ from app.timetable.models.section import Section
 from .student_portal import _require_student, _resolve_semester
 
 
+@login_required
 def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
-    """Render the redesigned dashboard backed with live student data."""
+    """Render the student dashboard backed with live data.
+
+    Args:
+        request: Incoming HTTP request.
+
+    Returns:
+        Rendered student dashboard response.
+    """
     student = _require_student(request.user)
     semester, open_semesters = _resolve_semester(student, request.GET.get("semester"))
     registration_open = bool(semester and semester.is_registration_open())

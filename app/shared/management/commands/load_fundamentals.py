@@ -60,9 +60,9 @@ class Command(BaseCommand):
             call_command("import_students")
 
         if opts["registry"]:
-            self.stdout.write("-> Importing Registry (Grades)")
+            self.stdout.write("-> Importing Registry (Grades+Sessions)")
             call_command("import_grades")
-            # call_command("import_secsession")
+            call_command("import_sessions")
         self.stdout.write(self.style.SUCCESS("✔ fundamental data load completed"))
 
 
