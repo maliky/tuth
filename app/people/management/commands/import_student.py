@@ -36,8 +36,8 @@ class Command(BaseCommand):
         parser.add_argument(
             "--batch-size",
             type=int,
-            default=500,
-            help="Batch size for chunked student import (default: 500).",
+            default=100,
+            help="Batch size for chunked student import (default: 1000).",
         )
 
     def handle(self, *args, **options) -> None:
