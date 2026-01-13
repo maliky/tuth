@@ -146,9 +146,12 @@ def test_role_dashboards(
     portal_user_factory(username, **config)
     _login_to_portal(selenium_driver, live_server, username)
 
-    heading_el = WebDriverWait(selenium_driver, 20).until(
-        EC.presence_of_element_located((By.TAG_NAME, "h1"))
+    heading_locator = (By.TAG_NAME, "h1")
+    # Avoid stale heading elements while the post-login redirect completes.
+    WebDriverWait(selenium_driver, 20).until(
+        EC.text_to_be_present_in_element(heading_locator, expected_heading)
     )
+    heading_el = selenium_driver.find_element(*heading_locator)
     heading_text = heading_el.text.strip()
     assert expected_heading in heading_text
 
