@@ -36,7 +36,23 @@ Registration status table is empty but it should be populated like other based s
 - in admin/people/student
   - add a colum with latest enrolled_semester if know, and the cumulative gpa
   - in the filter, modify the label to make it clear how much credit is required for a student to be freshman sophomore ect.. in the filter eg freshman < 19 ch
-  
+- in admin/academics/curriculumcourse/
+  - add a filter to shown curriculum course taught by a faculty or add a colum listing the faculty teaching this curruculum course (each faculty should be clicable)
+  - add a colum with the # of sections for the ccourse (shoudl be clicable)
+- in admin/academics/department/:
+  - add the colum with the number of faculty giving at least a course in that department, should be linked to the admin/faculty view scoped(if possible)
+- in admin/academics/curriculum/
+  - link the course count to the listing of courses scoped to that curriculum
+
+- in admin/academics/course/
+  link each curricla listed to the curricula detailed view
+
+- Check the filter eg admin/academics/course/?in_curriculum_courses__curriculum=172
+  it does not seem to work, no course is listed for Dept 	(CAFS) ACCT for eg, but in general I see that course/2435 is  ACCT-201 Short code:ACCT-201 Department:(CAFS) ACCT and should be listed by the filter.
+
+
+
+    
 - +check ScopedAutocompleteAdminMixin,+
 * <2026-01-05 lun. 09:51> UI
 - The bio field does not show in faculty
