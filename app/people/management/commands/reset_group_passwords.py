@@ -23,26 +23,29 @@ def _set_passwords(queryset, password: str) -> int:
 
 
 class Command(BaseCommand):
-    """Reset passwords for group-based user cohorts."""
+    """Reset passwords for Staff, Faculty, and Student groups in bulk."""
 
     help = (
-        "Reset set passwords for Staff (excluding Faculty), Faculty, and Student groups. "
-        "Defaults: PassW0rd!_staff / PassW0rd!_faculty / PassW0rd!_student."
-        "If a password is not set, the group's password are not reset."
+        "Reset passwords for Staff (excluding Faculty), Faculty, and Student groups "
+        "using a bulk update. Pass -t/-f/-s to target specific cohorts; omitted "
+        "passwords leave that group unchanged."
     )
 
     def add_arguments(self, parser):
         parser.add_argument(
+            "-t",
             "--staff-password",
             default="",
             help="Password for Staff users (excluding Faculty).",
         )
         parser.add_argument(
+            "-f",
             "--faculty-password",
             default="",
             help="Password for Faculty users.",
         )
         parser.add_argument(
+            "-s",
             "--student-password",
             default="",
             help="Password for Student users.",
@@ -66,6 +69,10 @@ class Command(BaseCommand):
         )
         faculty_users = User.objects.filter(groups=faculty_group).distinct()
         student_users = User.objects.filter(groups=student_group).distinct()
+
+        staff_updated = 0
+        faculty_updated = 0
+        student_updated = 0
 
         with transaction.atomic():
             if staff_password:
