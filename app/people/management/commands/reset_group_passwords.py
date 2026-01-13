@@ -26,24 +26,25 @@ class Command(BaseCommand):
     """Reset passwords for group-based user cohorts."""
 
     help = (
-        "Reset passwords for Staff (excluding Faculty), Faculty, and Student groups. "
+        "Reset set passwords for Staff (excluding Faculty), Faculty, and Student groups. "
         "Defaults: PassW0rd!_staff / PassW0rd!_faculty / PassW0rd!_student."
+        "If a password is not set, the group's password are not reset."
     )
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--staff-password",
-            default=DEFAULT_STAFF_PASSWORD,
+            default="",
             help="Password for Staff users (excluding Faculty).",
         )
         parser.add_argument(
             "--faculty-password",
-            default=DEFAULT_FACULTY_PASSWORD,
+            default="",
             help="Password for Faculty users.",
         )
         parser.add_argument(
             "--student-password",
-            default=DEFAULT_STUDENT_PASSWORD,
+            default="",
             help="Password for Student users.",
         )
 
@@ -67,9 +68,12 @@ class Command(BaseCommand):
         student_users = User.objects.filter(groups=student_group).distinct()
 
         with transaction.atomic():
-            staff_updated = _set_passwords(staff_users, staff_password)
-            faculty_updated = _set_passwords(faculty_users, faculty_password)
-            student_updated = _set_passwords(student_users, student_password)
+            if staff_password:
+                staff_updated = _set_passwords(staff_users, staff_password)
+            if faculty_password:
+                faculty_updated = _set_passwords(faculty_users, faculty_password)
+            if student_password:
+                student_updated = _set_passwords(student_users, student_password)
 
         self.stdout.write(
             self.style.SUCCESS(
