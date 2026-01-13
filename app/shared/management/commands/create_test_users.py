@@ -16,6 +16,7 @@ from app.people.models.faculty import Faculty
 from app.shared.auth.helpers import ensure_superuser
 from app.shared.auth.perms import APP_MODELS, UserRole
 
+TEST_PASSWORD="PassW0rd!"
 
 class Command(BaseCommand):
     """Create test users using the UserRole."""
@@ -45,9 +46,9 @@ class Command(BaseCommand):
                 person.staff_profile.user if isinstance(person, Faculty) else person.user
             )
 
-            pwd = mk_password(_user.first_name, _user.last_name)
-            _user.set_password(pwd)
+            _user.set_password(TEST_PASSWORD)
             _user.save(update_fields=["password"])
+
             college = None
             if user_role.value.default_college:
                 college, _ = College.objects.get_or_create(
