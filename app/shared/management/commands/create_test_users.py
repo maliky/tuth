@@ -16,7 +16,8 @@ from app.people.models.faculty import Faculty
 from app.shared.auth.helpers import ensure_superuser
 from app.shared.auth.perms import APP_MODELS, UserRole
 
-TEST_PASSWORD="PassW0rd!"
+TEST_PASSWORD = "PassW0rd!"
+
 
 class Command(BaseCommand):
     """Create test users using the UserRole."""
@@ -65,7 +66,7 @@ class Command(BaseCommand):
             )  # type: ignore[attr-defined]
             # log
             status = "Created" if was_created else "Updated"
-            self.stdout.write(f" - {_user} ({group}): {status} with pwd {pwd}")
+            self.stdout.write(f" - {_user} ({group}): {status} with pwd {TEST_PASSWORD}")
 
         # nicely report results
         self.stdout.write(self.style.SUCCESS("Test users created or updated:"))

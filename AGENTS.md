@@ -26,7 +26,7 @@ The files:
 Do not change existing variable names
 
 ### Documentation & comments
-- Pay close attention to comment using '# >' markers they are specificaly for agents.
+- Pay close attention to comment using '# >' markers they are specificaly for agents.  You should read them but not write them yourself.
 - When editing code, do not remove commented lines.  Add a comment to explain why you suggest removing them, instead.
 - Comment your additions, especially if removing code
 - Document succintly new class, methods, or functions even internal ones

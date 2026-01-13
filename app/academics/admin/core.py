@@ -1,5 +1,8 @@
 """Core Admin module for academics."""
 
+from typing import TypeAlias, cast
+
+from django import forms
 from django.contrib import admin, messages
 from django.db import transaction
 from django.db.models import Count
@@ -55,6 +58,8 @@ from .resources import (
     PrerequisiteResource,
 )
 from django.utils.text import Truncator
+
+ModelChoiceFieldT: TypeAlias = forms.ModelChoiceField | forms.ModelMultipleChoiceField
 
 
 @admin.register(College)
@@ -205,10 +210,17 @@ class CourseAdmin(DepartmentRestrictedAdmin):
         form = super().get_form(request, obj, **kwargs)
         department_field = form.base_fields.get("department")
 
-        if department_field is not None:
-            department_field.queryset = department_field.queryset.select_related(
-                "college"
-            ).order_by("college__code", "shortname")
+        if isinstance(
+            department_field,
+            (forms.ModelChoiceField, forms.ModelMultipleChoiceField),
+        ):
+            # Mypy: cast to model choice fields before ordering the queryset.
+            department_field = cast(ModelChoiceFieldT, department_field)
+            if department_field.queryset is not None:
+                # Mypy: ensure queryset is set before chaining queryset methods.
+                department_field.queryset = department_field.queryset.select_related(
+                    "college"
+                ).order_by("college__code", "shortname")
         return form
 
 
