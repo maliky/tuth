@@ -8,11 +8,12 @@ from simple_history.admin import SimpleHistoryAdmin
 from app.finance.models.payment import Payment
 from app.finance.models.invoice import Invoice
 from app.finance.models.scholarship import Scholarship
+from app.shared.admin.mixins import ScopedAutocompleteAdminMixin
 from app.timetable.admin.filters import SemesterFilterAC
 
 
 @admin.register(Invoice)
-class InvoiceAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
+class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin settings for Payment."""
 
     list_display = ("__str__", "recorded_by")

@@ -20,6 +20,7 @@ from app.timetable.admin.views import SectionBySemesterAutocomplete
 from app.timetable.models.section import Section
 from simple_history.admin import SimpleHistoryAdmin
 from guardian.admin import GuardedModelAdmin
+from app.shared.admin.mixins import ScopedAutocompleteAdminMixin
 
 
 @admin.register(GradeValue)
@@ -34,7 +35,12 @@ class GradeValueAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAd
 
 
 @admin.register(Grade)
-class GradeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
+class GradeAdmin(
+    ScopedAutocompleteAdminMixin,
+    SimpleHistoryAdmin,
+    ImportExportModelAdmin,
+    GuardedModelAdmin,
+):
     """Admin interface for :class:~app.registry.models.Grade.
 
     Shows student, section and grade fields in the list view with autocomplete
@@ -75,7 +81,12 @@ class GradeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
 
 
 @admin.register(Registration)
-class RegistrationAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
+class RegistrationAdmin(
+    ScopedAutocompleteAdminMixin,
+    SimpleHistoryAdmin,
+    ImportExportModelAdmin,
+    GuardedModelAdmin,
+):
     """Allow students to register only for eligible sections."""
 
     list_display = ("student", "section", "status", "date_registered")
@@ -102,7 +113,9 @@ class RegistrationAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModel
 
 
 @admin.register(TranscriptRequest)
-class TranscriptRequestAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
+class TranscriptRequestAdmin(
+    ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedModelAdmin
+):
     """Allow students to request grade transcripts."""
 
     list_display = ("student", "status", "requested_at", "purpose")

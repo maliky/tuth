@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Iterable, Sequence, TypeVar, cast
+from typing import Iterable, Sequence, TypeAlias, TypeVar, cast
 
 from admin_searchable_dropdown.filters import AutocompleteFilter, _get_rel_model
 from django.contrib import admin
@@ -15,6 +15,8 @@ from app.academics.models import College, Curriculum, Department
 from app.people.models import Student
 from app.shared.types import LookUpType, ModelT
 
+ListFilterT: TypeAlias = Sequence[object]
+
 
 def _get_lookup_path(
     model: type[Model], lookup_map: Sequence[tuple[str, str]]
@@ -25,6 +27,36 @@ def _get_lookup_path(
         if field_name in field_names:
             return lookup_path
     return None
+
+
+def resolve_scoped_filter_lookups(
+    model: type[Model], list_filter: ListFilterT
+) -> set[str]:
+    """Return lookup parameter names for scoped autocomplete filters.
+
+    Args:
+        model: Model class registered with the admin.
+        list_filter: The ModelAdmin list_filter configuration.
+
+    Returns:
+        Set of lookup paths to allow in query parameters.
+
+    Example:
+        >>> resolve_scoped_filter_lookups(Section, [DepartmentFilterAC])
+        {'curriculum_course__course__department'}
+    """
+    lookups: set[str] = set()
+    for filter_item in list_filter:
+        filter_class = (
+            filter_item[1] if isinstance(filter_item, (list, tuple)) else filter_item
+        )
+        if isinstance(filter_class, type) and issubclass(
+            filter_class, ScopedAutocompleteFilter
+        ):
+            lookup_path = _get_lookup_path(model, filter_class.lookup_map)
+            if lookup_path:
+                lookups.add(lookup_path)
+    return lookups
 
 
 def _filter_admin_queryset(

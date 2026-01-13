@@ -61,8 +61,8 @@ class SectionBySemesterFilter(AutocompleteFilter):
 class SemesterFilterAC(ScopedAutocompleteFilter):
     """Autocomplete filter constrained to semesters present in the queryset."""
 
-    title = "Department"
-    parameter_name = "department"
-    field_name = "department"
+    title = "Semester"
+    parameter_name = "semester"
+    field_name = "semester"
     lookup_map = SEMESTER_FIELD_LOOKPS
     target_model = Semester

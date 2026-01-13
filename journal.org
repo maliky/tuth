@@ -1,6 +1,8 @@
 
 * UI
 - in admin timetable section retitle the filter for semester
+- remove import_directory_people.py <2026-01-12 Mon> and related
+- check ScopedAutocompleteAdminMixin,
 * <2026-01-05 lun. 09:51> UI
 - The bio field does not show in faculty
 

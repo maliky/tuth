@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import Optional, cast
 
-
+from django.contrib.admin import ModelAdmin
+from django.http import HttpRequest
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
@@ -13,10 +14,55 @@ from app.academics.models.college import College
 from app.academics.models.department import Department
 from app.people.models.staffs import Staff
 from app.people.models.faculty import Faculty
+from app.shared.admin.filters import resolve_scoped_filter_lookups
+
+
+class ScopedAutocompleteAdminMixin(ModelAdmin):
+    """Allow scoped autocomplete filters to pass admin lookup validation.
+
+    Django's admin only allows query parameters that match static list_filter
+    parameter names. ScopedAutocompleteFilter resolves related lookups at
+    runtime, so we whitelist those resolved parameters here.
+
+    Example:
+        class SectionAdmin(ScopedAutocompleteAdminMixin, CollegeRestrictedAdmin):
+            ...
+    """
+
+    def lookup_allowed(
+        self, lookup: str, value: str | None, request: HttpRequest | None = None
+    ) -> bool:
+        """Return True when a lookup is allowed for the admin.
+
+        Args:
+            lookup: Query string parameter name.
+            value: Query string parameter value.
+            request: HTTP request, if available.
+
+        Returns:
+            True when the lookup is allowed.
+
+        Example:
+            >>> admin.lookup_allowed("section__semester", "1", request)
+            True
+        """
+        if request is not None:
+            # Allow dynamic list_filter parameters produced by ScopedAutocompleteFilter.
+            dynamic_lookups = resolve_scoped_filter_lookups(
+                self.model, self.get_list_filter(request)
+            )
+            if lookup in dynamic_lookups:
+                return True
+        # Normalize None for legacy lookup_allowed signatures in stubs.
+        safe_value = value or ""
+        return super().lookup_allowed(lookup, safe_value)
 
 
 class CollegeRestrictedAdmin(
-    SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
+    ScopedAutocompleteAdminMixin,
+    SimpleHistoryAdmin,
+    ImportExportModelAdmin,
+    GuardedModelAdmin,
 ):
     """Limit queryset to objects within the user's college."""
 
@@ -40,7 +86,10 @@ class CollegeRestrictedAdmin(
 
 
 class DepartmentRestrictedAdmin(
-    SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
+    ScopedAutocompleteAdminMixin,
+    SimpleHistoryAdmin,
+    ImportExportModelAdmin,
+    GuardedModelAdmin,
 ):
     """Limit queryset to objects within the user's department."""
 

@@ -1,3 +1,64 @@
+# > Agent note: credentials compiled from app/shared/auth/helpers.py, app/shared/management/commands/test/create_test_users.py, app/shared/management/commands/test/reset_test_passwords.py, tests/people/fixture.py, tests/website/test_staff_permissions.py, and tests/selenium/test_portal_roles.py.
+* Test user credentials (dev/test)
+This section lists every explicit login/password pair defined in the repo for local dev and automated tests.
+
+** Default dev superuser
+- Login: dev
+- Password: dev
+- Source: app/shared/auth/helpers.ensure_superuser
+
+** Pytest fixtures and feature tests
+- Login: super
+  Password: secret123
+- Login: user_default
+  Password: zyx987
+- Login: registrar_officer
+  Password: PassW0rd!
+- Login: outsider
+  Password: PassW0rd!
+
+** Selenium portal role users (tests/selenium/test_portal_roles.py)
+All of the accounts below share the same password: PassW0rd!
+- instructor_user
+- student_user
+- chair_user
+- dean_user
+- vpaa_user
+- registrar_user
+- scholarship_user
+- finance_user
+- finance_officer_user
+- registrar_officer_user
+- enrollment_user
+- enrollment_officer_user
+- registrar_basic
+
+** Management command: create_test_users
+Command: python manage.py create_test_users
+Password pattern (mk_password): <FIRST_INITIAL>-pass-P!
+
+| Username                 | Password   | Role label                        |
+|--------------------------+------------+-----------------------------------|
+| test_donor               | D-pass-P!  | Donor                             |
+| test_cashier             | C-pass-P!  | Cashier                           |
+| test_student             | S-pass-P!  | Student                           |
+| test_prospecting_student | P-pass-P!  | Prospecting Student               |
+| test_staff               | S-pass-P!  | Staff                             |
+| test_faculty             | F-pass-P!  | Faculty                           |
+| test_chair               | C-pass-P!  | Chair                             |
+| test_dean                | D-pass-P!  | Dean                              |
+| test_vpaa                | V-pass-P!  | Vice President Academic Affairs   |
+| test_enrollment          | E-pass-P!  | Enrollment                        |
+| test_enrollment_officer  | E-pass-P!  | Enrollment Officer                |
+| test_finance             | F-pass-P!  | Finance                           |
+| test_finance_officer     | F-pass-P!  | Finance Officer                   |
+| test_registrar           | R-pass-P!  | Registrar                         |
+| test_registrar_officer   | R-pass-P!  | Registrar Officer                 |
+| test_it                  | I-pass-P!  | It                                |
+
+** Password reset helper
+If you run python manage.py reset_test_passwords (default prefix test_), all test_* accounts are reset to PassW0rd!.
+
 # need to update this sot the validation of the registered courses is done at the chair level.
 
 * Detailed Minimal Working Example (MWE) for Tuth System
@@ -486,4 +547,3 @@ Once a student completes their registration, they can see their bill updated in 
 Students can therefore view the total amount they owe the finance office. When computing these bills, we must also consider any scholarships students may have. This is managed by the scholarship office, another role we must account for.
 
 The scholarship office should be able to import into our system a list of students, donors, and the support provided to each student by each donor.
-
