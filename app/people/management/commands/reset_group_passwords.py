@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
@@ -15,11 +16,9 @@ DEFAULT_STUDENT_PASSWORD = "PassW0rd!_student"
 
 def _set_passwords(queryset, password: str) -> int:
     """Set the password for each user in the queryset and return the count."""
-    updated = 0
-    for user in queryset.iterator():
-        user.set_password(password)
-        user.save(update_fields=["password"])
-        updated += 1
+    # Bulk update uses a single hash value for all rows in this cohort.
+    hashed_password = make_password(password)
+    updated = int(queryset.update(password=hashed_password))
     return updated
 
 
