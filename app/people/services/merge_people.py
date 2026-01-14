@@ -47,17 +47,28 @@ def merge_users(target_user: User, source_user: User) -> User:
         return target_user
 
     # Merge linked profiles
+    merge_people_called = False
     for attr in ("staff", "student", "donor"):
         target_profile = getattr(target_user, attr, None)
         source_profile = getattr(source_user, attr, None)
         if target_profile and source_profile:
             merge_people(target_profile, source_profile)
+            merge_people_called = True
         elif source_profile and not target_profile:
             source_profile.user = target_user
             source_profile.save()
 
+    if merge_people_called:
+        if not source_user.pk:
+            # > Source user already deleted by profile merge.
+            return target_user
+        # > merge_people already merged groups/permissions; just delete the source.
+        source_user.delete()
+        return target_user
+
     _merge_users(target_user, source_user)
-    source_user.delete()
+    if source_user.pk:
+        source_user.delete()
     return target_user
 
 

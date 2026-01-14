@@ -9,6 +9,7 @@ from django import forms
 from django.contrib import messages
 from django.contrib import admin as dj_admin
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
+from django.core.exceptions import FieldDoesNotExist
 from django.db import transaction
 from django.db import models
 from django.template.response import TemplateResponse
@@ -92,6 +93,44 @@ def _set_attr_value(obj: ModelT, field_path: str, value: object) -> ModelT | Non
         return None
     setattr(current, parts[-1], value)
     return current
+
+
+def _resolve_field(model: type[models.Model], field_path: str) -> models.Field | None:
+    """Return the resolved Django field for a nested field path."""
+    current_model = model
+    parts = field_path.split("__")
+    for index, part in enumerate(parts):
+        try:
+            field = current_model._meta.get_field(part)
+        except FieldDoesNotExist:
+            return None
+        if not isinstance(field, models.Field):
+            return None
+        if index < len(parts) - 1:
+            related = getattr(field, "remote_field", None)
+            if not related:
+                return None
+            current_model = related.model
+        else:
+            return field
+    return None
+
+
+def _build_unique_placeholder(
+    field: models.Field, value: object, obj_pk: object
+) -> object:
+    """Return a placeholder value that frees a unique field."""
+    if not isinstance(value, str):
+        return value
+    suffix = f"_merged_{obj_pk}"
+    max_length = getattr(field, "max_length", None)
+    if not max_length:
+        return f"{value}{suffix}" if value else f"merged{suffix}"
+    if max_length <= len(suffix):
+        return suffix[-max_length:]
+    base_value = value or "merged"
+    keep_len = max_length - len(suffix)
+    return f"{base_value[:keep_len]}{suffix}"
 
 
 class MergeWizardForm(forms.Form):
@@ -214,6 +253,7 @@ class MergeWizardMixin(dj_admin.ModelAdmin):
             sources = candidates.exclude(pk=target.pk)
             source_count = sources.count()
             updated_objects: set[ModelT] = set()
+            unique_updates: list[tuple[str, ModelT, models.Field, object]] = []
             with transaction.atomic():
                 # Apply selected values to the target before running merges.
                 for field_name in merge_fields:
@@ -223,9 +263,23 @@ class MergeWizardMixin(dj_admin.ModelAdmin):
                     if selected_obj is None:
                         continue
                     value = _get_attr_value(selected_obj, field_name)
+                    field = _resolve_field(type(target), field_name)
+                    if (
+                        field
+                        and (field.unique or field.primary_key)
+                        and selected_obj.pk
+                        and selected_obj.pk != target.pk
+                    ):
+                        unique_updates.append((field_name, selected_obj, field, value))
                     updated = _set_attr_value(target, field_name, value)
                     if updated is not None:
                         updated_objects.add(updated)
+                # > Free unique values on source rows before saving the target.
+                for field_name, selected_obj, field, value in unique_updates:
+                    placeholder = _build_unique_placeholder(field, value, selected_obj.pk)
+                    updated = _set_attr_value(selected_obj, field_name, placeholder)
+                    if updated is not None:
+                        updated.save()
                 for obj in updated_objects:
                     obj.save()
                 self.merge_records(target, sources)
