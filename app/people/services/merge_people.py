@@ -21,6 +21,9 @@ logger = logging.getLogger(__name__)
 
 def _merge_users(target_user: User, source_user: User) -> None:
     """Merge groups/roles from source_user into target_user."""
+    if not target_user.pk or not source_user.pk:
+        # > Skip M2M operations if either user is not persisted yet.
+        return
     for group in source_user.groups.all():
         target_user.groups.add(group)
     for perm in source_user.user_permissions.all():

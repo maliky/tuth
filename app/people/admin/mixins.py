@@ -153,11 +153,11 @@ class MergeWizardMixin(dj_admin.ModelAdmin):
         """Add the merge action without overriding existing admin actions."""
         actions = super().get_actions(request)
         if "merge_records_action" not in actions:
-            description = getattr(
-                self.merge_records_action, "short_description", "Merge selected records"
-            )
+            # > Use unbound method to match Django action signature.
+            func = getattr(self.__class__, "merge_records_action")
+            description = getattr(func, "short_description", "Merge selected records")
             actions["merge_records_action"] = (
-                self.merge_records_action,
+                func,
                 "merge_records_action",
                 description,
             )

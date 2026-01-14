@@ -648,6 +648,8 @@ class GroupAdmin(dj_admin.ModelAdmin):
     """Group admin with user counts."""
 
     list_display = ("name", "user_count_link")
+    # > Required for RoleAssignmentAdmin autocomplete_fields on "group".
+    search_fields = ("name",)
 
     def get_queryset(self, request):
         """Annotate user totals for groups."""

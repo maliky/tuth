@@ -1,4 +1,8 @@
 
+* <2026-01-14 Wed 15:42> UX 5
+  - in eg. admin/people/student/1991/change
+    - need to add the list of grade of the student
+
 * <2026-01-14 Wed 11:22> UI next
 - in admin/acdemic/course
   - The 'By Curriculum' filter is not showing any thing to autocomplete.
