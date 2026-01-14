@@ -71,6 +71,33 @@ def _format_merge_value(value: object) -> str:
     return str(value)
 
 
+def _candidate_timestamp(obj: ModelT) -> datetime | None:
+    """Return a candidate timestamp to prefer older records."""
+    for attr in ("date_joined", "created_at"):
+        value = getattr(obj, attr, None)
+        if isinstance(value, datetime):
+            return value
+    return None
+
+
+def _default_candidate_id(candidates: list[ModelT]) -> str | None:
+    """Return the default candidate id (oldest record first)."""
+    if not candidates:
+        return None
+
+    def _sort_key(obj: ModelT) -> tuple[int, datetime | int, int]:
+        timestamp = _candidate_timestamp(obj)
+        pk_value = getattr(obj, "pk", None) or 0
+        if timestamp is not None:
+            return (0, timestamp, pk_value)
+        return (1, pk_value, 0)
+
+    oldest = min(candidates, key=_sort_key)
+    if not oldest.pk:
+        return None
+    return str(oldest.pk)
+
+
 def _get_attr_value(obj: ModelT, field_path: str) -> object:
     """Return a nested attribute value using Django-style paths."""
     current: object = obj
@@ -147,6 +174,7 @@ class MergeWizardForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.candidates = list(candidates)
         self.candidate_map = {str(obj.pk): obj for obj in self.candidates}
+        default_candidate_id = _default_candidate_id(self.candidates)
         choices = [(str(obj.pk), label_fn(obj)) for obj in self.candidates]
         self.fields["target_id"] = forms.ChoiceField(
             label="Merge target",
@@ -154,6 +182,9 @@ class MergeWizardForm(forms.Form):
             widget=forms.RadioSelect,
             required=True,
         )
+        if default_candidate_id:
+            # > Default to the oldest record to preserve existing values.
+            self.fields["target_id"].initial = default_candidate_id
         for field_name in merge_fields:
             field_key = self._field_key(field_name)
             field_choices = [
@@ -169,6 +200,9 @@ class MergeWizardForm(forms.Form):
                 widget=forms.RadioSelect,
                 required=True,
             )
+            if default_candidate_id:
+                # > Default to older record values for sparse fields.
+                self.fields[field_key].initial = default_candidate_id
 
     @staticmethod
     def _field_key(field_name: str) -> str:
