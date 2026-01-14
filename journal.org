@@ -1,4 +1,26 @@
 
+* <2026-01-14 Wed 11:22> UI next
+- in admin/acdemic/course
+  - The 'By Curriculum' filter is not showing any thing to autocomplete.
+#+BEGIN_SRC bash  -i
+  File "/home/mlk/.pyenv/versions/tusis/lib/python3.13/site-packages/django/contrib/admin/views/autocomplete.py", line 59, in get_queryset
+    qs = qs.complex_filter(self.source_field.get_limit_choices_to())
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ManyToManyRel' object has no attribute 'get_limit_choices_to'. Did you mean: 'limit_choices_to'?
+[14/Jan/2026 11:22:50] "GET /admin/autocomplete/?app_label=academics&model_name=course&field_name=curricula HTTP/1.1" 500 117807
+#+END_SRC    
+
+- in admin/academics/curriculumcourse and admin/people/faculty
+  - clicking on a faculty load the faculty but it is very slow (about 20 second) on a local powerfull maching (dev mode)
+- in admin/people/student
+  - cumulative gpa is still showing'-' empty before 4 when order in decreasing order.
+** Actions
+   in admin/people/faculty add a merge action for 2 faculty.  should make it clear which faculty information will overide the other in case of duplications.  I see a first step where you select the users to merge (2 3 or more) and the second step with the detailed information of each and the possibility to select which field to keep for the merged user.
+
+- should be the same merge mechanisme for all AbstractUsers Objects
+
+  
+
 * <2026-01-14 mer. 03:29> UI pb
 - in admin/registry/grade
   - searching for student name in grades fails (error 500) with :::web_1  |   File "/usr/local/lib/python3.12/site-packages/django/db/models/sql/query.py", line 1585, in build_filter
