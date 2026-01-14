@@ -153,11 +153,12 @@ class MergeableUserAdmin(MergeWizardMixin, DuplicatePreviewMixin, dj_admin.Model
             return ""
         safe_rows = []
         for other, score in matches:
+            other_user = cast(UserModel, other)
             url = reverse(
                 f"admin:{other._meta.app_label}_{other._meta.model_name}_change",
                 args=[other.pk],
             )
-            safe_rows.append((url, other.username, f"{score:.2f}"))
+            safe_rows.append((url, other_user.username, f"{score:.2f}"))
         return format_html_join(
             ", ",
             '<a href="{}">{}</a> ({})',

@@ -344,10 +344,11 @@ class DuplicatePreviewMixin:
 
     def get_queryset(self, request):
         """Attach duplicate ordering and optional duplicate filters."""
-        qs = super().get_queryset(request)
+        # > Mypy: mixin expects ModelAdmin.get_queryset in the MRO.
+        qs = super().get_queryset(request)  # type: ignore[misc]
         # > Cache per-request duplicate metrics for list display and ordering.
-        self._duplicate_score_cache = {}
-        self._duplicate_count_cache = {}
+        self._duplicate_score_cache: dict[int, float] = {}
+        self._duplicate_count_cache: dict[int, int] = {}
 
         dup_target = request.GET.get("dups_for")
         if dup_target:
@@ -423,22 +424,30 @@ class DuplicatePreviewMixin:
     def _duplicate_score_value(self, obj) -> float:
         """Return the best match score for the object."""
         cache = getattr(self, "_duplicate_score_cache", None)
-        if isinstance(cache, dict) and obj.pk in cache:
-            return cache[obj.pk]
+        if not isinstance(cache, dict):
+            cache = {}
+            self._duplicate_score_cache = cache
+        score_cache = cast(dict[int, float], cache)
+        if obj.pk in score_cache:
+            return score_cache[obj.pk]
         matches = self._duplicate_matches(obj)
         score = matches[0][1] if matches else 0.0
-        if isinstance(cache, dict) and obj.pk:
-            cache[obj.pk] = score
+        if obj.pk:
+            score_cache[obj.pk] = score
         return score
 
     def _duplicate_count_value(self, obj) -> int:
         """Return the number of potential duplicates for the object."""
         cache = getattr(self, "_duplicate_count_cache", None)
-        if isinstance(cache, dict) and obj.pk in cache:
-            return cache[obj.pk]
+        if not isinstance(cache, dict):
+            cache = {}
+            self._duplicate_count_cache = cache
+        count_cache = cast(dict[int, int], cache)
+        if obj.pk in count_cache:
+            return count_cache[obj.pk]
         count = len(self._duplicate_matches(obj))
-        if isinstance(cache, dict) and obj.pk:
-            cache[obj.pk] = count
+        if obj.pk:
+            count_cache[obj.pk] = count
         return count
 
     def _duplicate_score_map(self, queryset: models.QuerySet) -> dict[int, float]:
@@ -456,10 +465,8 @@ class DuplicatePreviewMixin:
         ordering = request.GET.get("o", "")
         if not ordering:
             return False
-        try:
-            list_display = list(self.get_list_display(request))
-        except Exception:
-            return False
+        admin_self = cast(dj_admin.ModelAdmin, self)
+        list_display = list(admin_self.get_list_display(request))
         if self.duplicate_field_name not in list_display:
             return False
         duplicate_index = list_display.index(self.duplicate_field_name) + 1
