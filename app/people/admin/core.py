@@ -34,7 +34,6 @@ from app.people.forms.person import (
     StaffForm,
     StudentForm,
 )
-from app.shared.fuzzy_matching import name_similarity
 from app.people.models.donor import Donor
 from app.people.models.faculty import Faculty
 from app.people.models.role_assignment import RoleAssignment
@@ -85,7 +84,7 @@ except Exception:
 
 
 @dj_admin.register(User)
-class MergeableUserAdmin(MergeWizardMixin, dj_admin.ModelAdmin):
+class MergeableUserAdmin(MergeWizardMixin, DuplicatePreviewMixin, dj_admin.ModelAdmin):
     """Lightweight user admin with merge action."""
 
     duplicate_threshold = 0.9
@@ -94,6 +93,7 @@ class MergeableUserAdmin(MergeWizardMixin, dj_admin.ModelAdmin):
         "full_name",
         "username",
         "is_active",
+        "duplicate_count_link",
         "possible_duplicates",
     )
     list_filter = ("groups",)
@@ -124,6 +124,21 @@ class MergeableUserAdmin(MergeWizardMixin, dj_admin.ModelAdmin):
         field = UserFullNameChoiceField(queryset=User.objects.none())
         return field.label_from_instance(cast(UserModel, obj))
 
+    def _get_long_name(self, obj: UserModel) -> str:
+        """Return the full name (or username) for duplicate checks."""
+        full_name = obj.get_full_name()
+        return full_name or obj.username
+
+    def _duplicate_candidates(self, obj: UserModel) -> tuple[str, models.QuerySet]:
+        """Return base name and candidate queryset for user duplicates."""
+        base_name = self._get_long_name(obj)
+        if not obj.last_name:
+            return base_name, obj.__class__.objects.none()
+        qs = obj.__class__.objects.exclude(pk=obj.pk).filter(
+            last_name__iexact=obj.last_name
+        )
+        return base_name, qs
+
     def merge_records(self, target: ModelT, sources: Iterable[ModelT]) -> None:
         """Merge selected users into the chosen target user."""
         target_user = cast(UserModel, target)
@@ -133,29 +148,23 @@ class MergeableUserAdmin(MergeWizardMixin, dj_admin.ModelAdmin):
     def possible_duplicates(self, obj):
         """Reuse the duplicate preview logic at the user level."""
         # We are missing the middle name here.
-        base_name = f"{obj.first_name} {obj.last_name}".strip()
-        qs = User.objects.exclude(pk=obj.pk).filter(last_name__iexact=obj.last_name)
-        rows = []
-        # > Why do we limite ourself to the first 50 ?
-        for other in qs[:50]:
-            other_name = f"{other.first_name} {other.last_name}".strip()
-            score = name_similarity(base_name, other_name)
-            if score >= self.duplicate_threshold:
-                url = reverse(
-                    f"admin:{other._meta.app_label}_{other._meta.model_name}_change",
-                    args=[other.pk],
-                )
-                rows.append((url, other.username, score))
-        if not rows:
+        matches = self._duplicate_matches(obj)[:3]
+        if not matches:
             return ""
         safe_rows = []
-        for url, label, score in rows[:3]:
-            safe_rows.append((url, label, f"{score:.2f}"))
+        for other, score in matches:
+            url = reverse(
+                f"admin:{other._meta.app_label}_{other._meta.model_name}_change",
+                args=[other.pk],
+            )
+            safe_rows.append((url, other.username, f"{score:.2f}"))
         return format_html_join(
             ", ",
             '<a href="{}">{}</a> ({})',
             safe_rows,
         )
+
+    possible_duplicates.admin_order_field = "duplicate_score_sort"  # type: ignore[attr-defined]
 
 
 @admin.register(Faculty)
@@ -508,6 +517,7 @@ class StudentAdmin(
         "last_enrolled_semester",
         "cumulative_gpa",
         "validated_credits",
+        "duplicate_count_link",
         "possible_duplicates",
     )
     search_fields = (

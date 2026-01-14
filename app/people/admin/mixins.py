@@ -14,9 +14,9 @@ from django.db import transaction
 from django.db import models
 from django.template.response import TemplateResponse
 from django.urls import reverse
-from django.utils.html import format_html_join
+from django.utils.html import format_html, format_html_join
 
-from app.shared.fuzzy_matching import top_name_matches
+from app.shared.fuzzy_matching import name_similarity
 from app.people.services.merge_people import merge_people
 
 ModelT: TypeAlias = models.Model
@@ -342,6 +342,38 @@ class DuplicatePreviewMixin:
     duplicate_threshold = 0.9
     duplicate_field_name = "possible_duplicates"
 
+    def get_queryset(self, request):
+        """Attach duplicate ordering and optional duplicate filters."""
+        qs = super().get_queryset(request)
+        # > Cache per-request duplicate metrics for list display and ordering.
+        self._duplicate_score_cache = {}
+        self._duplicate_count_cache = {}
+
+        dup_target = request.GET.get("dups_for")
+        if dup_target:
+            target = qs.filter(pk=dup_target).first()
+            if target:
+                dup_ids = {target.pk}
+                dup_ids.update(
+                    other.pk for other, _ in self._duplicate_matches(target) if other.pk
+                )
+                qs = qs.filter(pk__in=dup_ids)
+
+        if self._should_order_by_duplicate_score(request):
+            score_map = self._duplicate_score_map(qs)
+            when_statements = [
+                models.When(pk=pk, then=models.Value(score))
+                for pk, score in score_map.items()
+            ]
+            qs = qs.annotate(
+                duplicate_score_sort=models.Case(
+                    *when_statements,
+                    default=models.Value(0.0),
+                    output_field=models.FloatField(),
+                )
+            )
+        return qs
+
     def _get_long_name(self, obj):
         """Get the long name of an object if it exists. or the staff_profile.long_name."""
         return getattr(obj, "long_name", "") or getattr(
@@ -362,27 +394,85 @@ class DuplicatePreviewMixin:
             qs = obj.__class__.objects.none()
         return qs
 
-    def possible_duplicates(self, obj):
-        """Return a list of links to possible duplicates based on name similarity."""
-        # > What is missing here is to take in account ambiguous duplicates
-
+    def _duplicate_candidates(self, obj) -> tuple[str, models.QuerySet]:
+        """Return base name and candidate queryset used for duplicate checks."""
         base_name = self._get_long_name(obj)
-
         # pick a comparable user and last name
         person_user = getattr(obj, "user", None) or getattr(
             getattr(obj, "staff_profile", None), "user", None
         )
         if not person_user:
-            return ""
+            return base_name, obj.__class__.objects.none()
         qs = self._get_candidates(obj, person_user)
+        return base_name, qs
 
-        matches = top_name_matches(
-            base_name,
-            qs[:50],
-            token_fn=self._get_long_name,
-            threshold=self.duplicate_threshold,
-            limit=3,
-        )
+    def _duplicate_matches(self, obj) -> list[tuple[ModelT, float]]:
+        """Return all matches meeting the similarity threshold."""
+        base_name, qs = self._duplicate_candidates(obj)
+        if not base_name:
+            return []
+        matches: list[tuple[ModelT, float]] = []
+        for other in qs[:50]:
+            other_name = self._get_long_name(other)
+            score = name_similarity(base_name, other_name)
+            if score >= self.duplicate_threshold:
+                matches.append((other, score))
+        matches.sort(key=lambda item: item[1], reverse=True)
+        return matches
+
+    def _duplicate_score_value(self, obj) -> float:
+        """Return the best match score for the object."""
+        cache = getattr(self, "_duplicate_score_cache", None)
+        if isinstance(cache, dict) and obj.pk in cache:
+            return cache[obj.pk]
+        matches = self._duplicate_matches(obj)
+        score = matches[0][1] if matches else 0.0
+        if isinstance(cache, dict) and obj.pk:
+            cache[obj.pk] = score
+        return score
+
+    def _duplicate_count_value(self, obj) -> int:
+        """Return the number of potential duplicates for the object."""
+        cache = getattr(self, "_duplicate_count_cache", None)
+        if isinstance(cache, dict) and obj.pk in cache:
+            return cache[obj.pk]
+        count = len(self._duplicate_matches(obj))
+        if isinstance(cache, dict) and obj.pk:
+            cache[obj.pk] = count
+        return count
+
+    def _duplicate_score_map(self, queryset: models.QuerySet) -> dict[int, float]:
+        """Build a map of PKs to best duplicate score."""
+        score_map: dict[int, float] = {}
+        for obj in queryset:
+            if not obj.pk:
+                continue
+            score_map[obj.pk] = self._duplicate_score_value(obj)
+        self._duplicate_score_cache = score_map
+        return score_map
+
+    def _should_order_by_duplicate_score(self, request) -> bool:
+        """Return True when ordering by the duplicate score column."""
+        ordering = request.GET.get("o", "")
+        if not ordering:
+            return False
+        try:
+            list_display = list(self.get_list_display(request))
+        except Exception:
+            return False
+        if self.duplicate_field_name not in list_display:
+            return False
+        duplicate_index = list_display.index(self.duplicate_field_name) + 1
+        order_fields = [
+            part.lstrip("-") for part in ordering.split(",") if part.lstrip("-").isdigit()
+        ]
+        return str(duplicate_index) in order_fields
+
+    def possible_duplicates(self, obj):
+        """Return a list of links to possible duplicates based on name similarity."""
+        # > What is missing here is to take in account ambiguous duplicates
+
+        matches = self._duplicate_matches(obj)[:3]
         if not matches:
             return ""
         safe_rows = []
@@ -400,3 +490,13 @@ class DuplicatePreviewMixin:
         )
 
     possible_duplicates.short_description = "Possible duplicates"  # type: ignore[attr-defined]
+    possible_duplicates.admin_order_field = "duplicate_score_sort"  # type: ignore[attr-defined]
+
+    @dj_admin.display(description="Duplicates")
+    def duplicate_count_link(self, obj):
+        """Return a link to the duplicate-filtered changelist."""
+        count = self._duplicate_count_value(obj)
+        if not count:
+            return "0"
+        url = reverse(f"admin:{obj._meta.app_label}_{obj._meta.model_name}_changelist")
+        return format_html('<a href="{}?dups_for={}">{}</a>', url, obj.pk, count)
