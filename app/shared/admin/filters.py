@@ -144,10 +144,10 @@ class StudentLevelFilter(admin.SimpleListFilter):
         """All available values to filter by."""
         # Keep labels aligned with Student.class_level thresholds.
         label_map = {
-            LEVEL_NUMBER.ONE.label: f"{LEVEL_NUMBER.ONE.label} (<= 36 ch)",
-            LEVEL_NUMBER.TWO.label: f"{LEVEL_NUMBER.TWO.label} (37-72 ch)",
-            LEVEL_NUMBER.THREE.label: f"{LEVEL_NUMBER.THREE.label} (73-108 ch)",
-            LEVEL_NUMBER.FOUR.label: f"{LEVEL_NUMBER.FOUR.label} (>= 109 ch)",
+            LEVEL_NUMBER.ONE.label: f"{LEVEL_NUMBER.ONE.label} (<= 36 credits)",
+            LEVEL_NUMBER.TWO.label: f"{LEVEL_NUMBER.TWO.label} (37-72 credits)",
+            LEVEL_NUMBER.THREE.label: f"{LEVEL_NUMBER.THREE.label} (73-108 credits)",
+            LEVEL_NUMBER.FOUR.label: f"{LEVEL_NUMBER.FOUR.label} (>= 109 credits)",
         }
         return [(lv.label, label_map.get(lv.label, lv.label)) for lv in LEVEL_NUMBER]
 

@@ -3,10 +3,9 @@
 from typing import TypeAlias, cast
 
 from django import forms
-from django.contrib import admin, messages
-from django.db import transaction
+from django.contrib import admin
 from django.db.models import Count
-from django.urls import path, reverse
+from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
@@ -32,6 +31,7 @@ from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestricted
 from .actions import update_curriculum, update_department
 from .filters import (
     CourseCollegeFilter,
+    CourseCurriculumFilter,
     CurriculumFilterAC,
     CurriculumCourseFacultyFilterAC,
     DepartmentFilterAC,
@@ -192,12 +192,12 @@ class CourseAdmin(DepartmentRestrictedAdmin):
         "department",
         "curricula_links",
     )
-    autocomplete_fields = ("curricula",)
+    # Use list filters for curricula to avoid reverse M2M autocomplete errors.
     # > TODO: Add the list of student enrolled in this course the current semester.
     inlines = [RequiresInline, PrerequisiteInline, CourseCurriculumInline]
     list_select_related = ("department",)
     # list_editable = ("department",)
-    list_filter = (DepartmentFilterAC, CurriculumFilterAC, CourseCollegeFilter)
+    list_filter = (DepartmentFilterAC, CourseCurriculumFilter, CourseCollegeFilter)
 
     list_per_page = 100
     list_max_show_all = 500
@@ -210,7 +210,9 @@ class CourseAdmin(DepartmentRestrictedAdmin):
         """Prefetch curricula for link rendering in list_display."""
         qs = super().get_queryset(request)
         qs = qs.prefetch_related("curricula")
-        curriculum_id = request.GET.get("in_curriculum_courses__curriculum")
+        curriculum_id = request.GET.get("curricula__id__exact") or request.GET.get(
+            "in_curriculum_courses__curriculum"
+        )
         if curriculum_id:
             try:
                 curriculum_id = int(curriculum_id)
@@ -326,7 +328,9 @@ class CurriculumAdmin(CollegeRestrictedAdmin):
     def course_count_link(self, obj):
         """Link course counts to the course changelist for this curriculum."""
         count = obj.course_count()
-        url = reverse("admin:academics_course_changelist") + f"?curricula={obj.id}"
+        url = reverse("admin:academics_course_changelist") + (
+            f"?curricula__id__exact={obj.id}"
+        )
         return format_html('<a href="{}">{}</a>', url, count)
 
 

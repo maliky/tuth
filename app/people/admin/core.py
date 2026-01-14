@@ -1,13 +1,17 @@
 """Core module."""
 
+from typing import Iterable, TypeAlias, cast
+
+from django import forms
 from django.contrib import admin
 from django.contrib import admin as dj_admin
 from django.contrib.auth import get_user_model
-from django.contrib.auth.admin import UserAdmin
-from django.db.models import Case, F, FloatField, Q, Sum, When
+from django.contrib.auth.models import Group, User as UserModel
+from django.db import models
+from django.db.models import Case, Count, F, FloatField, Q, Sum, When
 from django.db.models.expressions import ExpressionWrapper
 from django.urls import reverse
-from django.utils.html import format_html_join
+from django.utils.html import format_html, format_html_join
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
@@ -18,10 +22,9 @@ from app.people.admin.filters import (
     FacultyTeachingDepartmentFilterAC,
     StudentEntrySemFAC,
 )
-from app.people.admin.merges import MergeUsersMixin
 from app.people.admin.mixins import (
     DuplicatePreviewMixin,
-    MergePeopleMixin,
+    MergeWizardMixin,
 )
 from app.people.admin.resources import FacultyResource
 from app.people.forms.base import PersonFormMixin
@@ -37,22 +40,39 @@ from app.people.models.faculty import Faculty
 from app.people.models.role_assignment import RoleAssignment
 from app.people.models.staffs import Staff
 from app.people.models.student import Student
+from app.people.services.merge_people import merge_people, merge_users
 from app.registry.admin import (
     DocumentStaffInline,
     DocumentStudentInline,
     StudentRegistrationInline,
 )
-from app.shared.admin.filters import (
-    BaseCollegeFilter,
-    StudentLevelFilter,
-)
+from app.shared.admin.filters import StudentLevelFilter
 from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
 from app.timetable.admin.inlines import SectionInline
 
 User = get_user_model()
+ModelT: TypeAlias = models.Model
 
 # GPA should ignore non-final grade codes (kept in registry.constants).
 GPA_EXCLUDED_CODES = {"ip", "ng", "w", "i", "ab", "dr"}
+
+MERGE_USER_FIELDS = (
+    "first_name",
+    "last_name",
+    "username",
+    "email",
+)
+
+
+class UserFullNameChoiceField(forms.ModelChoiceField):
+    """ModelChoiceField that shows full user names for admin widgets."""
+
+    def label_from_instance(self, obj: UserModel) -> str:
+        full_name = obj.get_full_name() or obj.username
+        staff_id = getattr(getattr(obj, "staff", None), "staff_id", "")
+        student_id = getattr(getattr(obj, "student", None), "student_id", "")
+        suffix = staff_id or student_id
+        return f"{full_name} ({suffix})" if suffix else full_name
 
 
 # ---- User admin with merge action ----
@@ -65,19 +85,50 @@ except Exception:
 
 
 @dj_admin.register(User)
-class MergeableUserAdmin(MergeUsersMixin, dj_admin.ModelAdmin):
+class MergeableUserAdmin(MergeWizardMixin, dj_admin.ModelAdmin):
     """Lightweight user admin with merge action."""
 
     duplicate_threshold = 0.9
+    merge_fields = MERGE_USER_FIELDS
     list_display = (
+        "full_name",
+        "username",
+        "is_active",
+        "possible_duplicates",
+    )
+    list_filter = ("groups",)
+    search_fields = (
         "username",
         "first_name",
         "last_name",
         "email",
-        "is_active",
-        "possible_duplicates",
+        "staff__staff_id",
+        "staff__long_name",
+        "student__student_id",
+        "student__long_name",
     )
-    search_fields = ("username", "first_name", "last_name", "email")
+
+    @admin.display(description="Full Name")
+    def full_name(self, obj):
+        """Return the full name for admin listings."""
+        full_name = obj.get_full_name()
+        return full_name or obj.username
+
+    def get_autocomplete_result_label(self, result):
+        """Show full-name labels in user autocomplete widgets."""
+        field = UserFullNameChoiceField(queryset=User.objects.none())
+        return field.label_from_instance(result)
+
+    def merge_object_label(self, obj: ModelT) -> str:
+        """Use full name labels in merge forms."""
+        field = UserFullNameChoiceField(queryset=User.objects.none())
+        return field.label_from_instance(cast(UserModel, obj))
+
+    def merge_records(self, target: ModelT, sources: Iterable[ModelT]) -> None:
+        """Merge selected users into the chosen target user."""
+        target_user = cast(UserModel, target)
+        for source in sources:
+            merge_users(target_user, cast(UserModel, source))
 
     def possible_duplicates(self, obj):
         """Reuse the duplicate preview logic at the user level."""
@@ -108,7 +159,7 @@ class MergeableUserAdmin(MergeUsersMixin, dj_admin.ModelAdmin):
 
 
 @admin.register(Faculty)
-class FacultyAdmin(DuplicatePreviewMixin, CollegeRestrictedAdmin):
+class FacultyAdmin(MergeWizardMixin, DuplicatePreviewMixin, CollegeRestrictedAdmin):
     """Admin options for :class:~app.people.models.Faculty.
 
     Displays the staff profile with optional filtering by college. The faculty
@@ -118,6 +169,32 @@ class FacultyAdmin(DuplicatePreviewMixin, CollegeRestrictedAdmin):
     # form =
     resource_class = FacultyResource
     form = FacultyForm
+    merge_fields = (
+        "staff_profile__user__first_name",
+        "staff_profile__user__last_name",
+        "staff_profile__user__username",
+        "staff_profile__user__email",
+        "staff_profile__middle_name",
+        "staff_profile__prefix_name",
+        "staff_profile__suffix_name",
+        "staff_profile__phone_number",
+        "staff_profile__physical_address",
+        "staff_profile__birth_date",
+        "staff_profile__bio",
+        "staff_profile__photo",
+        "staff_profile__nationality",
+        "staff_profile__origin_county",
+        "staff_profile__marital_status",
+        "staff_profile__gender",
+        "staff_profile__division",
+        "staff_profile__department",
+        "staff_profile__employment_date",
+        "staff_profile__position",
+        "college",
+        "google_profile",
+        "personal_website",
+        "academic_rank",
+    )
 
     list_display = (
         "faculty_name",
@@ -165,6 +242,15 @@ class FacultyAdmin(DuplicatePreviewMixin, CollegeRestrictedAdmin):
         ),
     ]
 
+    def get_queryset(self, request):
+        """Select related staff/profile data to speed up change views."""
+        qs = super().get_queryset(request)
+        return qs.select_related(
+            "staff_profile__user",
+            "staff_profile__department",
+            "college",
+        )
+
     @admin.display(description="Long Name", ordering="staff_profile__user__first_name")
     def faculty_name(self, obj):
         """Add the long name to the admin."""
@@ -180,15 +266,55 @@ class FacultyAdmin(DuplicatePreviewMixin, CollegeRestrictedAdmin):
         """Show the department/college that receives most sections for the faculty."""
         return obj.primary_assignment_label or "-"
 
+    def merge_object_label(self, obj: ModelT) -> str:
+        """Label faculty choices with staff names."""
+        faculty = cast(Faculty, obj)
+        return faculty.staff_profile.long_name or str(faculty)
+
+    def merge_records(self, target: ModelT, sources: Iterable[ModelT]) -> None:
+        """Merge faculty through their staff profiles."""
+        faculty_target = cast(Faculty, target)
+        for source in sources:
+            merge_people(
+                faculty_target.staff_profile, cast(Faculty, source).staff_profile
+            )
+
+    def sync_merge_target(self, target: ModelT) -> None:
+        """Sync staff profile fields after merging."""
+        faculty_target = cast(Faculty, target)
+        staff = faculty_target.staff_profile
+        staff._update_long_name()
+        staff.username = staff.user.username
+        staff.email = staff.user.email
+        staff.save()
+
 
 @admin.register(Donor)
-class DonorAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
+class DonorAdmin(MergeWizardMixin, SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin management for :class:~app.people.models.Donor.
 
     Shows each donor's user and ID with autocomplete for the user relation.
     """
 
     form = DonorForm
+    merge_fields = (
+        "user__first_name",
+        "user__last_name",
+        "user__username",
+        "user__email",
+        "middle_name",
+        "prefix_name",
+        "suffix_name",
+        "phone_number",
+        "physical_address",
+        "birth_date",
+        "bio",
+        "photo",
+        "nationality",
+        "origin_county",
+        "marital_status",
+        "gender",
+    )
     list_display = ("long_name", "donor_id", "username", "donor_bio")
     search_fields = ("donor_id", "long_name", "user__first_name", "user__last_name")
     readonly_fields = ("donor_id",)
@@ -214,9 +340,20 @@ class DonorAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
             return ""
         return obj.bio if len(obj.bio) <= 80 else f"{obj.bio[:77]}…"
 
+    def merge_object_label(self, obj: ModelT) -> str:
+        """Use donor long name labels in merge forms."""
+        donor = cast(Donor, obj)
+        return donor.long_name or str(donor)
+
+    def merge_records(self, target: ModelT, sources: Iterable[ModelT]) -> None:
+        """Merge selected donors into the chosen target."""
+        target_donor = cast(Donor, target)
+        for source in sources:
+            merge_people(target_donor, cast(Donor, source))
+
 
 @admin.register(Staff)
-class StaffAdmin(MergePeopleMixin, DuplicatePreviewMixin, DepartmentRestrictedAdmin):
+class StaffAdmin(MergeWizardMixin, DuplicatePreviewMixin, DepartmentRestrictedAdmin):
     """Admin management for :class:~app.people.models.Staff.
 
     Provides detailed fieldsets for personal and work information. Important
@@ -224,6 +361,28 @@ class StaffAdmin(MergePeopleMixin, DuplicatePreviewMixin, DepartmentRestrictedAd
     """
 
     form = StaffForm
+    merge_fields = (
+        "user__first_name",
+        "user__last_name",
+        "user__username",
+        "user__email",
+        "middle_name",
+        "prefix_name",
+        "suffix_name",
+        "phone_number",
+        "physical_address",
+        "birth_date",
+        "bio",
+        "photo",
+        "nationality",
+        "origin_county",
+        "marital_status",
+        "gender",
+        "division",
+        "department",
+        "position",
+        "employment_date",
+    )
     list_display = (
         "long_name",
         "staff_id",
@@ -264,10 +423,21 @@ class StaffAdmin(MergePeopleMixin, DuplicatePreviewMixin, DepartmentRestrictedAd
         ),
     ]
 
+    def merge_object_label(self, obj: ModelT) -> str:
+        """Use staff long names in merge forms."""
+        staff = cast(Staff, obj)
+        return staff.long_name or str(staff)
+
+    def merge_records(self, target: ModelT, sources: Iterable[ModelT]) -> None:
+        """Merge selected staff profiles into the chosen target."""
+        target_staff = cast(Staff, target)
+        for source in sources:
+            merge_people(target_staff, cast(Staff, source))
+
 
 @admin.register(Student)
 class StudentAdmin(
-    MergePeopleMixin,
+    MergeWizardMixin,
     DuplicatePreviewMixin,
     SimpleHistoryAdmin,
     ImportExportModelAdmin,
@@ -280,6 +450,34 @@ class StudentAdmin(
     """
 
     form = StudentForm
+    merge_fields = (
+        "user__first_name",
+        "user__last_name",
+        "user__username",
+        "user__email",
+        "middle_name",
+        "prefix_name",
+        "suffix_name",
+        "phone_number",
+        "physical_address",
+        "birth_date",
+        "bio",
+        "photo",
+        "nationality",
+        "origin_county",
+        "marital_status",
+        "gender",
+        "curriculum",
+        "last_enrolled_semester",
+        "entry_semester",
+        "last_school_attended",
+        "reason_for_leaving",
+        "father_name",
+        "father_address",
+        "mother_name",
+        "mother_address",
+        "emergency_contact",
+    )
     STUDENT_FIELDS = (
         "student_id",
         "curriculum",
@@ -388,10 +586,15 @@ class StudentAdmin(
                 ),
                 default=None,
                 output_field=FloatField(),
-            )
+            ),
+            gpa_sort_value=Case(
+                When(gpa_credit_total__gt=0, then=F("gpa_value")),
+                default=-1.0,
+                output_field=FloatField(),
+            ),
         )
 
-    @admin.display(description="Cumulative GPA", ordering="gpa_value")
+    @admin.display(description="Cumulative GPA", ordering="gpa_sort_value")
     def cumulative_gpa(self, obj):
         """Return the cumulative GPA computed from graded sections."""
         gpa_value = getattr(obj, "gpa_value", None)
@@ -410,7 +613,52 @@ class StudentAdmin(
         # The form.save() handles creating and linking the User.
         obj.save()
 
+    def merge_object_label(self, obj: ModelT) -> str:
+        """Use student long names in merge forms."""
+        student = cast(Student, obj)
+        return student.long_name or str(student)
+
+    def merge_records(self, target: ModelT, sources: Iterable[ModelT]) -> None:
+        """Merge selected students into the chosen target."""
+        target_student = cast(Student, target)
+        for source in sources:
+            merge_people(target_student, cast(Student, source))
+
 
 @admin.register(RoleAssignment)
 class RoleAssignmentAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     list_display = ("user", "group", "start_date")
+    autocomplete_fields = ("user", "group", "college", "department")
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Use full-name labels for user selection."""
+        if db_field.name == "user":
+            kwargs["form_class"] = UserFullNameChoiceField
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
+try:
+    dj_admin.site.unregister(Group)
+except Exception:
+    pass
+
+
+@dj_admin.register(Group)
+class GroupAdmin(dj_admin.ModelAdmin):
+    """Group admin with user counts."""
+
+    list_display = ("name", "user_count_link")
+
+    def get_queryset(self, request):
+        """Annotate user totals for groups."""
+        qs = super().get_queryset(request)
+        return qs.annotate(user_total=Count("user", distinct=True))
+
+    @admin.display(description="Users", ordering="user_total")
+    def user_count_link(self, obj):
+        """Link to users filtered by the group."""
+        count = getattr(obj, "user_total", None)
+        if count is None:
+            count = obj.user_set.count()
+        url = reverse("admin:auth_user_changelist") + (f"?groups__id__exact={obj.id}")
+        return format_html('<a href="{}">{}</a>', url, count)

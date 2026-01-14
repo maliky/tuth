@@ -4,16 +4,8 @@ from __future__ import annotations
 
 from typing import Sequence
 
-from admin_searchable_dropdown.filters import (
-    AutocompleteFilter,
-    AutocompleteFilterFactory,
-    _get_rel_model,
-)
+from admin_searchable_dropdown.filters import AutocompleteFilter
 from django.contrib import admin
-from django.db.models import Count, Model, QuerySet
-from django.http import HttpRequest
-from django.urls import reverse
-from django_admin_filters import MultiChoice
 
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
@@ -59,6 +51,24 @@ class CurriculumFilterAC(ScopedAutocompleteFilter):
     field_name = "curriculum"
     lookup_map = CURRICULUM_FIELD_LOOKUPS
     target_model = Curriculum
+
+
+class CourseCurriculumFilter(admin.SimpleListFilter):
+    """Curriculum filter for courses (avoids reverse M2M autocomplete errors)."""
+
+    title = "By Curriculum"
+    parameter_name = "curricula__id__exact"
+
+    def lookups(self, request, model_admin):
+        curricula = Curriculum.objects.order_by("short_name").values_list(
+            "id", "short_name"
+        )
+        return list(curricula)
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(curricula__id=self.value())
+        return queryset
 
 
 class CurriculumCourseFacultyFilterAC(ScopedAutocompleteFilter):

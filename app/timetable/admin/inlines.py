@@ -49,12 +49,12 @@ class SectionInline(admin.TabularInline):
 
     model = Section
     verbose_name_plural = "Sections taught"
+    show_change_link = True
     extra = 0
     fields = (
         "curriculum_course",
         "semester",
         "number",
-        "faculty",
         "start_date",
         "max_seats",
         "current_registrations",
@@ -62,6 +62,8 @@ class SectionInline(admin.TabularInline):
         "credit_hours",
     )
     readonly_fields = (
+        # Read-only values keep the inline lightweight on faculty profiles.
+        "curriculum_course",
         "semester",
         "current_registrations",
         "enrolled_total",
@@ -72,9 +74,13 @@ class SectionInline(admin.TabularInline):
     def get_queryset(self, request):
         """Annotate the inline queryset with enrollment totals."""
         qs = super().get_queryset(request)
-        return qs.select_related("semester", "curriculum_course__credit_hours").annotate(
-            enrolled_total=Count("section_registrations", distinct=True)
-        )
+        return qs.select_related(
+            "semester",
+            "faculty__staff_profile__user",
+            "curriculum_course__credit_hours",
+            "curriculum_course__course__department",
+            "curriculum_course__curriculum",
+        ).annotate(enrolled_total=Count("section_registrations", distinct=True))
 
     @admin.display(description="Enrolled", ordering="enrolled_total")
     def enrolled_total(self, obj):
