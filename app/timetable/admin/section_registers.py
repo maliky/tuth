@@ -71,6 +71,16 @@ class SectionAdmin(CollegeRestrictedAdmin):
             return qs.none()
         return qs.filter(faculty=faculty)
 
+    def lookup_allowed(self, lookup, value, request=None):
+        """Allow scoped academic year/college links from related admins."""
+        if lookup in {
+            "semester__academic_year",
+            "semester__academic_year__id__exact",
+            "curriculum_course__curriculum__college__id__exact",
+        }:
+            return True
+        return super().lookup_allowed(lookup, value, request)
+
     @admin.display(description="SecSessions")
     def all_sessions(self, obj: Section) -> str:
         """Return a human-readable summary of this Section’s sessions.

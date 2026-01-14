@@ -55,17 +55,22 @@ class GradeAdmin(
         "section",
         "value__description",
         "section__semester",
-        # "graded_on",  
+        # "graded_on",
     )
     # list_filter = ['section__semester', GradeSectionFilter]
     list_filter = [SemesterFilterAC, SectionBySemesterFilter, GradeStudentFilter]
+    autocomplete_fields = ("student", "section", "value")
+    list_select_related = ("student__user", "section__semester", "value")
     search_fields = (
         "student__student_id",
         "student__long_name",
         "student__user__first_name",
         "student__user__last_name",
         "student__user__username",
-        "section__semester",
+        "section__semester__academic_year__code",
+        "section__semester__academic_year__long_name",
+        "section__semester__number",
+        "section__curriculum_course__course__short_code",
     )
 
     def get_urls(self):

@@ -1,6 +1,9 @@
 """Inlines module."""
 
 from django.contrib import admin
+from django.db.models import Count
+from django.urls import reverse
+from django.utils.html import format_html
 
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.course import CurriculumCourse, Course
@@ -48,6 +51,37 @@ class CurriculumCourseInline(admin.TabularInline):
     extra = 0
     autocomplete_fields = ("course", "curriculum")
     ordering = ("course",)
+    fields = (
+        "course",
+        "credit_hours",
+        "is_required",
+        "is_elective",
+        "student_count_link",
+    )
+    readonly_fields = ("student_count_link",)
+
+    def get_queryset(self, request):
+        """Annotate student totals for curriculum-course rows."""
+        qs = super().get_queryset(request)
+        return qs.annotate(
+            student_total=Count("sections__section_registrations__student", distinct=True)
+        )
+
+    @admin.display(description="Students", ordering="student_total")
+    def student_count_link(self, obj):
+        """Link to students enrolled in this curriculum course."""
+        count = getattr(obj, "student_total", None)
+        if count is None:
+            count = (
+                obj.sections.filter(section_registrations__student__isnull=False)
+                .values_list("section_registrations__student_id", flat=True)
+                .distinct()
+                .count()
+            )
+        url = reverse("admin:people_student_changelist") + (
+            f"?student_registrations__section__curriculum_course__id__exact={obj.id}"
+        )
+        return format_html('<a href="{}">{}</a>', url, count)
 
 
 class DepartmentCourseInline(admin.TabularInline):

@@ -48,8 +48,10 @@ class SectionInline(admin.TabularInline):
     """Inline for creating Section rows."""
 
     model = Section
+    verbose_name_plural = "Sections taught"
     extra = 0
     fields = (
+        "curriculum_course",
         "semester",
         "number",
         "faculty",

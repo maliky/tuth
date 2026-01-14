@@ -73,6 +73,7 @@ class SemesterFilterAC(ScopedAutocompleteFilter):
     """Autocomplete filter constrained to semesters present in the queryset."""
 
     title = "Semester"
+    is_placeholder_title = True
     parameter_name = "semester"
     field_name = "semester"
     lookup_map = SEMESTER_FIELD_LOOKPS

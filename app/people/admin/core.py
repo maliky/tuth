@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.contrib import admin as dj_admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
-from django.db.models import F, FloatField, Q, Sum
+from django.db.models import Case, F, FloatField, Q, Sum, When
 from django.db.models.expressions import ExpressionWrapper
 from django.urls import reverse
 from django.utils.html import format_html_join
@@ -50,6 +50,9 @@ from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestricted
 from app.timetable.admin.inlines import SectionInline
 
 User = get_user_model()
+
+# GPA should ignore non-final grade codes (kept in registry.constants).
+GPA_EXCLUDED_CODES = {"ip", "ng", "w", "i", "ab", "dr"}
 
 
 # ---- User admin with merge action ----
@@ -303,7 +306,10 @@ class StudentAdmin(
         "curriculum",
         # "entry_semester",
         # "last_enrolled_semester",
+        "entry_semester",
+        "last_enrolled_semester",
         "cumulative_gpa",
+        "validated_credits",
         "possible_duplicates",
     )
     search_fields = (
@@ -330,7 +336,7 @@ class StudentAdmin(
                 "fields": STUDENT_FIELDS,
             },
         ),
-        ("Student Bio", {"classes":["collapse"],"fields": BIO_FIELDS}),
+        ("Student Bio", {"classes": ["collapse"], "fields": BIO_FIELDS}),
         (
             "User Account",
             {
@@ -352,29 +358,52 @@ class StudentAdmin(
     def get_queryset(self, request):
         """Annotate GPA aggregates for the list display."""
         qs = super().get_queryset(request)
+        grade_filter = Q(grade__value__number__isnull=False) & ~Q(
+            grade__value__code__in=GPA_EXCLUDED_CODES
+        )
         grade_points = ExpressionWrapper(
             F("grade__value__number")
             * F("grade__section__curriculum_course__credit_hours_id"),
             output_field=FloatField(),
         )
-        return qs.annotate(
-            gpa_quality_points=Sum(
-                grade_points, filter=Q(grade__value__number__isnull=False)
-            ),
+        qs = qs.annotate(
+            gpa_quality_points=Sum(grade_points, filter=grade_filter),
             gpa_credit_total=Sum(
                 "grade__section__curriculum_course__credit_hours_id",
-                filter=Q(grade__value__number__isnull=False),
+                filter=grade_filter,
+            ),
+            validated_credits_total=Sum(
+                "grade__section__curriculum_course__credit_hours_id",
+                filter=Q(grade__value__number__gte=1),
             ),
         )
+        return qs.annotate(
+            gpa_value=Case(
+                When(
+                    gpa_credit_total__gt=0,
+                    then=ExpressionWrapper(
+                        F("gpa_quality_points") / F("gpa_credit_total"),
+                        output_field=FloatField(),
+                    ),
+                ),
+                default=None,
+                output_field=FloatField(),
+            )
+        )
 
-    @admin.display(description="Cumulative GPA", ordering="gpa_quality_points")
+    @admin.display(description="Cumulative GPA", ordering="gpa_value")
     def cumulative_gpa(self, obj):
         """Return the cumulative GPA computed from graded sections."""
-        credit_total = getattr(obj, "gpa_credit_total", 0) or 0
-        quality_points = getattr(obj, "gpa_quality_points", 0) or 0
-        if not credit_total:
+        gpa_value = getattr(obj, "gpa_value", None)
+        if gpa_value is None:
             return "-"
-        return f"{quality_points / credit_total:.2f}"
+        return f"{gpa_value:.2f}"
+
+    @admin.display(description="Validated Credits", ordering="validated_credits_total")
+    def validated_credits(self, obj):
+        """Return the cumulative credits validated by the student."""
+        total = getattr(obj, "validated_credits_total", 0) or 0
+        return int(total)
 
     def save_model(self, request, obj, form, change):
         """Save the model."""
