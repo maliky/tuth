@@ -10,6 +10,7 @@ from admin_searchable_dropdown.filters import (
 from django.contrib import admin
 from django.urls import reverse
 
+from app.people.models.faculty import Faculty
 from app.shared.admin.filters import (
     BaseCollegeFilter,
     ScopedAutocompleteFilter,
@@ -39,6 +40,16 @@ class SectionCollegeFilter(BaseCollegeFilter):
 
 
 SectionFacultyFilterAc = AutocompleteFilterFactory("Faculty", "faculty")
+
+
+class SecSessionFacultyFilterAc(ScopedAutocompleteFilter):
+    """Autocomplete filter for session sections by faculty."""
+
+    title = "Faculty"
+    parameter_name = "section__faculty"
+    field_name = "faculty"
+    lookup_map = (("section", "section__faculty"),)
+    target_model = Faculty
 
 
 class SectionBySemesterFilter(AutocompleteFilter):

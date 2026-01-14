@@ -17,6 +17,7 @@ from django_admin_filters import MultiChoice
 
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
+from app.people.models.faculty import Faculty
 from app.shared.admin.filters import BaseCollegeFilter, ScopedAutocompleteFilter
 from app.shared.types import LookUpType
 
@@ -30,6 +31,7 @@ DEPARTMENT_FIELD_LOOKUPS: LookUpType = (
 CURRICULUM_FIELD_LOOKUPS: LookUpType = (
     ("curriculum", "curriculum"),
     ("curriculum_course", "curriculum_course__curriculum"),
+    ("curricula", "curricula"),
     ("in_curriculum_courses", "in_curriculum_courses__curriculum"),
 )
 
@@ -57,3 +59,13 @@ class CurriculumFilterAC(ScopedAutocompleteFilter):
     field_name = "curriculum"
     lookup_map = CURRICULUM_FIELD_LOOKUPS
     target_model = Curriculum
+
+
+class CurriculumCourseFacultyFilterAC(ScopedAutocompleteFilter):
+    """Autocomplete filter constrained to faculty teaching curriculum courses."""
+
+    title = "Faculty"
+    parameter_name = "sections__faculty"
+    field_name = "faculty"
+    lookup_map: LookUpType = (("sections", "sections__faculty"),)
+    target_model = Faculty

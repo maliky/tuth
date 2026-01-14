@@ -1,6 +1,8 @@
 """app.timetable.admin.section_registers module."""
 
 from django.contrib import admin
+from django.urls import reverse
+from django.utils.html import format_html
 
 from app.academics.admin.filters import DepartmentFilterAC
 from app.people.models.faculty import Faculty
@@ -32,7 +34,7 @@ class SectionAdmin(CollegeRestrictedAdmin):
         "curriculum_course",
         "number",
         "semester",
-        "faculty",
+        "faculty_link",
         "available_seats",
         "space_codes",
         "session_count",
@@ -90,3 +92,12 @@ class SectionAdmin(CollegeRestrictedAdmin):
     def credit_hours(self, obj: Section) -> int:
         """Return credit hours for this section's curriculum_course."""
         return obj.curriculum_course.credit_hours_id or 3
+
+    @admin.display(description="Faculty", ordering="faculty")
+    def faculty_link(self, obj: Section) -> str:
+        """Link faculty names to their admin profile."""
+        faculty = obj.faculty
+        if not faculty:
+            return "-"
+        url = reverse("admin:people_faculty_change", args=[faculty.pk])
+        return format_html('<a href="{}">{}</a>', url, faculty)

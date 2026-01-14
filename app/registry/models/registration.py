@@ -19,6 +19,8 @@ class RegistrationStatus(SimpleTableMixin):
         ("cleared", "Financially Cleared"),
         ("pending", "Pending Payment"),
     ]
+    # Ensures SimpleTableMixin can populate defaults at initialization.
+    DEFAULT_VALUES = TABLE_DEFAULT_VALUES
 
     class Meta:
         verbose_name_plural = "Registration Status"

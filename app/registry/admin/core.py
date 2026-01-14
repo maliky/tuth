@@ -10,6 +10,7 @@ from app.people.models.student import Student
 # from app.registry.admin.filters import GradeSectionFilter
 # from app.registry.admin.views import SectioGradeValueerAutocomplete
 from app.registry.models.grade import Grade, GradeValue
+from app.registry.admin.filters import GradeStudentFilter
 from app.registry.models.registration import Registration, RegistrationStatus
 from app.registry.models.transcript import TranscriptRequest, TranscriptRequestStatus
 from app.timetable.admin.filters import (
@@ -50,15 +51,22 @@ class GradeAdmin(
     date_hierarchy = "graded_on"
     list_display = (
         "student",
-        "grade_code",
+        # "grade_code",
         "section",
         "value__description",
         "section__semester",
-        "graded_on",
+        # "graded_on",  
     )
     # list_filter = ['section__semester', GradeSectionFilter]
-    list_filter = [SemesterFilterAC, SectionBySemesterFilter]
-    search_fields = ("student__student_id", "section__semester")
+    list_filter = [SemesterFilterAC, SectionBySemesterFilter, GradeStudentFilter]
+    search_fields = (
+        "student__student_id",
+        "student__long_name",
+        "student__user__first_name",
+        "student__user__last_name",
+        "student__user__username",
+        "section__semester",
+    )
 
     def get_urls(self):
         """Returns urls."""

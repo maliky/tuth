@@ -1,59 +1,151 @@
 
+* <2026-01-14 mer. 03:29> UI pb
+- in admin/registry/grade
+  - searching for student name in grades fails (error 500) with :::web_1  |   File "/usr/local/lib/python3.12/site-packages/django/db/models/sql/query.py", line 1585, in build_filter
+web_1  |     condition = self.build_lookup(lookups, col, value)
+web_1  |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+web_1  |   File "/usr/local/lib/python3.12/site-packages/django/db/models/sql/query.py", line 1406, in build_lookup
+web_1  |     lhs = self.try_transform(lhs, lookup_name)
+web_1  |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+web_1  |   File "/usr/local/lib/python3.12/site-packages/django/db/models/sql/query.py", line 1455, in try_transform
+web_1  |     raise FieldError(
+web_1  | django.core.exceptions.FieldError: Unsupported lookup 'icontains' for ForeignKey or join on the field not permitted.
+:::
+  - clicking on grade to get the detail is very slow and something times out with :::Attaching to tusis_app_web_1
+web_1  |               ^^^^^^^^^^^^^^^^^^^^^
+web_1  |   File "/usr/local/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1622, in execute_sql
+web_1  |     cursor.execute(sql, params)
+web_1  |   File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+web_1  |     return self._execute_with_wrappers(
+web_1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+web_1  |   File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+web_1  |     return executor(sql, params, many, context)
+web_1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+web_1  |   File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+web_1  |     return self.cursor.execute(sql, params)
+web_1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+web_1  |   File "/usr/local/lib/python3.12/encodings/utf_8.py", line 15, in decode
+web_1  |     def decode(input, errors='strict'):
+web_1  |     
+web_1  |   File "/usr/local/lib/python3.12/site-packages/gunicorn/workers/base.py", line 204, in handle_abort
+web_1  |     sys.exit(1)
+web_1  | SystemExit: 1
+web_1  | [2026-01-14 03:57:45 +0000] [23] [INFO] Worker exiting (pid: 23)
+web_1  | [2026-01-14 03:57:45 +0000] [55] [INFO] Booting worker with pid: 55
+:::
+  - the SemesterFilterAC, is titled Department which is missleading
+  - in admin/academic/course
+    - Selecting a curriculum in the filter display no choices
+  - in eg admin/academics/curriculum/172/change/
+    - along side the coures in curriculum inforation it would be good to have the number of student who are or have bieen enrolled in such courses together with a link to a list of those students
+  - in admin/people/faculty
+    - the list of section repeat identical lines. the list should be title section / or courses taught.
+  - in admin/academics/curriculumcourse
+    - the filter titeld by curriculum and faculty do not work.  Can we make test for the different filters that we made ourself?
+  - in admin/people/student
+    - sort on cumulateive gpa should ignore student without gpa and make sure we are using numerical gpa, the calculation seem off.
+    - add a column with the cumulative credits validated by the students
+  - in for eg admin/timetable/section/?semester__academic_year__id__exact=17
+    - returns a 400 error code :::web_1  |   File "/usr/local/lib/python3.12/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+web_1  |     response = view_func(request, *args, **kwargs)
+web_1  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+web_1  |   File "/usr/local/lib/python3.12/site-packages/django/contrib/admin/options.py", line 2024, in changelist_view
+web_1  |     cl = self.get_changelist_instance(request)
+web_1  |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+web_1  |   File "/usr/local/lib/python3.12/site-packages/django/contrib/admin/options.py", line 867, in get_changelist_instance
+web_1  |     return ChangeList(
+web_1  |            ^^^^^^^^^^^
+web_1  |   File "/usr/local/lib/python3.12/site-packages/django/contrib/admin/views/main.py", line 145, in __init__
+web_1  |     self.queryset = self.get_queryset(request)
+web_1  |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+web_1  |   File "/usr/local/lib/python3.12/site-packages/django/contrib/admin/views/main.py", line 545, in get_queryset
+web_1  |     ) = self.get_filters(request)
+web_1  |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+web_1  |   File "/usr/local/lib/python3.12/site-packages/django/contrib/admin/views/main.py", line 194, in get_filters
+web_1  |     raise DisallowedModelAdminLookup(f"Filtering by {key} not allowed")
+web_1  | django.contrib.admin.exceptions.DisallowedModelAdminLookup: Filtering by semester__academic_year__id__exact not allowed
+web_1  | 2026-01-14 04:21:00,947  WARNING   django.request :: Bad Request: /admin/timetable/section/
+web_1  | 172.24.0.1 - tusis [14/Jan/2026:04:21:00 +0000] "GET /admin/timetable/section/?semester__academic_year__id__exact=17 HTTP/1.0" 400 1377 "https://tusis.koba.sarl/admin/timetable/academicyear/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+:::
+
+     - ?curriculum_course__curriculum__college__id__exact=3&semester=67 for example bringss an error 400 :::web_1  |     return ChangeList(
+web_1  |            ^^^^^^^^^^^
+web_1  |   File "/usr/local/lib/python3.12/site-packages/django/contrib/admin/views/main.py", line 145, in __init__
+web_1  |     self.queryset = self.get_queryset(request)
+web_1  |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+web_1  |   File "/usr/local/lib/python3.12/site-packages/django/contrib/admin/views/main.py", line 545, in get_queryset
+web_1  |     ) = self.get_filters(request)
+web_1  |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+web_1  |   File "/usr/local/lib/python3.12/site-packages/django/contrib/admin/views/main.py", line 194, in get_filters
+web_1  |     raise DisallowedModelAdminLookup(f"Filtering by {key} not allowed")
+web_1  | django.contrib.admin.exceptions.DisallowedModelAdminLookup: Filtering by curriculum_course__curriculum__college__id__exact not allowed
+web_1  | 2026-01-14 04:25:05,945  WARNING   django.request :: Bad Request: /admin/timetable/section/
+web_1  | 172.24.0.1 - tusis [14/Jan/2026:04:25:05 +0000] "GET /admin/timetable/section/?curriculum_course__curriculum__college__id__exact=3&semester=67 HTTP/1.0" 400 1377 "https://tusis.koba.sarl/admin/timetable/section/?semester=67" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+(tusis) jil@tuvs:~/Tusis/Tusis_app$ 
+:::
+
+
 * UI
-- in admin timetable section:
-  - add a link on the faculty to get to his profile,
-- in admin/timetable/secsession:
-  - make the section curriculum course and section faculty clicable,
-  - add a filter for faculty (dropdown autocomplete
-- in admin/timetable/semester:
-  - make sure the count of students is done.  It should show the number of student having registered a course (completed or not) in this semester
-- admin/timetable/acdemicyear:
-  - add a columns, # of section  and # of student
-- in eg admin/timetable/schedule/56/change/
-  the list of section should indicate the semester
+ Here’s a clearer, cleaner version of your UX backlog plus a suggested priority order.
 
-- in eg admin/timetable/semester/49/change/
-  add an info field (yes it will change the DB but it is ok.)
-- in eg admin/timetable/secsession/1644/change/
-  add an info field (yes it will change the DB but it is ok.)
+  Rephrased backlog
 
-Registration status table is empty but it should be populated like other based status and type table at db initialisation. Check what is missing.
+  - Admin / Timetable / Sections list: add a clickable faculty link to the faculty profile.
+  - Admin / Timetable / SecSession: make curriculum course and faculty clickable; add a faculty filter with autocomplete.
+  - Admin / Timetable / Semester: show the count of students who registered at least one course in that semester (any status).
+  - Admin / Timetable / AcademicYear: add columns for total sections and total students.
+  - Admin / Timetable / Schedule change view (e.g., /admin/timetable/schedule/56/change/): show semester for each section.
+  - Admin / Timetable / Semester change view (e.g., /admin/timetable/semester/49/change/): add an info field (DB change ok).
+  - Admin / Timetable / SecSession change view (e.g., /admin/timetable/secsession/1644/change/): add an info field (DB change ok).
+  - Registry: RegistrationStatus table is empty—ensure it’s populated on DB init like other status/type tables.
+  - Admin / Registry / Grade: add a student filter (autocomplete), or include student name + ID in search fields.
+  - Admin / People / Student list: add a cumulative GPA column.
+  - Admin / People / Student change view (e.g., /admin/people/student/6574/change/): group bio fields (last school, parents, etc.); add
+    enrolled sections with grades.
+  - Investigate slow Grade change view (e.g., /admin/registry/grade/197582/change/).
+  - Admin / People / Faculty change view (e.g., /admin/people/faculty/310/change/): make semester read‑only in section list; show
+    enrolled student count + course credit hours per section; list all sections taught (not just current semester).
+  - Remove any remaining references to import_directory_people.py (if it’s meant to be removed).
+  - Admin / People / Student list: add latest enrolled semester column; update class‑level filter labels to show credit thresholds
+    (e.g., “Freshman < 19 CH”).
+  - Admin / Academics / CurriculumCourse: add filter by faculty or a column listing teaching faculty (clickable); add a clickable
+    section count.
+  - Admin / Academics / Department: add column for number of faculty teaching at least one course in the department, ideally linked to
+    filtered faculty list.
+  - Admin / Academics / Curriculum: make course count link to curriculum‑scoped course list.
+  - Admin / Academics / Course: link each listed curriculum to its detail page.
+  - Fix filter admin/academics/course/?in_curriculum_courses__curriculum=172 not showing expected courses.
 
-- in admin/registry/grade/
-  - add a filter with student name or id (dropdown autocomplete) or make sure the search field expose name and studentid.
-- in admin/people/student/
-  - add a colum with culumative gpa
-- in eg admin/people/student/6574/change/
-  - organize the fied last school attended father name .. in to a bio section.
-  - add a list of section enrolled with the grades if any for each section.
-- investigate. opening a grade in admin/registry/grade/ -> eg admin/registry/grade/197582/change/ takes long (several seconds)    What is slowing down
-- in  admin/people/faculty/310/change/
-  - in the sections list, the semester does not need to be editable.
-  - in the section list, each row should also indicate the number of enrolled students and the credit hours of the associated course
-  - the section list should not be limited to current semester but list all section taught by the faculty
+  Proposed prioritization
+  P0 – Breaks data correctness or workflow
 
-- Check that import_directory_people.py has been removed with pointing references.
-- in admin/people/student
-  - add a colum with latest enrolled_semester if know, and the cumulative gpa
-  - in the filter, modify the label to make it clear how much credit is required for a student to be freshman sophomore ect.. in the filter eg freshman < 19 ch
-- in admin/academics/curriculumcourse/
-  - add a filter to shown curriculum course taught by a faculty or add a colum listing the faculty teaching this curruculum course (each faculty should be clicable)
-  - add a colum with the # of sections for the ccourse (shoudl be clicable)
-- in admin/academics/department/:
-  - add the colum with the number of faculty giving at least a course in that department, should be linked to the admin/faculty view scoped(if possible)
-- in admin/academics/curriculum/
-  - link the course count to the listing of courses scoped to that curriculum
+  - RegistrationStatus table population.
+  - Fix the Curriculum filter not returning courses.
+  - Semester student count (registered students) if used for reporting.
 
-- in admin/academics/course/
-  link each curricla listed to the curricula detailed view
+  P1 – High‑impact admin usability
 
-- Check the filter eg admin/academics/course/?in_curriculum_courses__curriculum=172
-  it does not seem to work, no course is listed for Dept 	(CAFS) ACCT for eg, but in general I see that course/2435 is  ACCT-201 Short code:ACCT-201 Department:(CAFS) ACCT and should be listed by the filter.
+  - SecSession: clickable curriculum course/faculty + faculty filter.
+  - Grade admin: student filter or search includes name/id.
+  - Faculty change view: section list improvements (read‑only semester, student count, credit hours, all semesters).
+  - Student change view: bio section + enrolled sections with grades.
+
+  P2 – Medium‑impact navigation & visibility
+
+  - Timetable: faculty profile link in sections list.
+  - AcademicYear: sections + students columns.
+  - Schedule change view: show semester in section list.
+  - CurriculumCourse: faculty column/filter + section count.
+  - Curriculum: link course count to filtered list.
+  - Course: link curricula to detail page.
+  - Student list: cumulative GPA + latest enrolled semester + clearer class‑level filter labels.
+
+  P3 – Maintenance & cleanup
+
+  - Remove import_directory_people.py references.
+  - Add info fields on Semester/SecSession change views (DB changes ok).
 
 
-
-    
-- +check ScopedAutocompleteAdminMixin,+
 * <2026-01-05 lun. 09:51> UI
 - The bio field does not show in faculty
 

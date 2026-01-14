@@ -4,6 +4,8 @@ from django.contrib import admin
 from django.contrib import admin as dj_admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
+from django.db.models import F, FloatField, Q, Sum
+from django.db.models.expressions import ExpressionWrapper
 from django.urls import reverse
 from django.utils.html import format_html_join
 from guardian.admin import GuardedModelAdmin
@@ -13,6 +15,7 @@ from simple_history.admin import SimpleHistoryAdmin
 from app.academics.admin.filters import CurriculumFilterAC, DepartmentFilterAC
 from app.people.admin.filters import (
     FacultyGroupFAC,
+    FacultyTeachingDepartmentFilterAC,
     StudentEntrySemFAC,
 )
 from app.people.admin.merges import MergeUsersMixin
@@ -34,7 +37,11 @@ from app.people.models.faculty import Faculty
 from app.people.models.role_assignment import RoleAssignment
 from app.people.models.staffs import Staff
 from app.people.models.student import Student
-from app.registry.admin.inlines import DocumentStaffInline, DocumentStudentInline
+from app.registry.admin import (
+    DocumentStaffInline,
+    DocumentStudentInline,
+    StudentRegistrationInline,
+)
 from app.shared.admin.filters import (
     BaseCollegeFilter,
     StudentLevelFilter,
@@ -120,6 +127,7 @@ class FacultyAdmin(DuplicatePreviewMixin, CollegeRestrictedAdmin):
     )
     list_filter = [
         DepartmentFilterAC,
+        FacultyTeachingDepartmentFilterAC,
         FacultyGroupFAC,
         "college",
     ]
@@ -269,12 +277,33 @@ class StudentAdmin(
     """
 
     form = StudentForm
+    STUDENT_FIELDS = (
+        "student_id",
+        "curriculum",
+        "last_enrolled_semester",
+        "entry_semester",
+    )
+    BIO_FIELDS = (
+        "last_school_attended",
+        "reason_for_leaving",
+        "father_name",
+        "father_address",
+        "mother_name",
+        "mother_address",
+        "emergency_contact",
+        "nationality",
+        "origin_county",
+        "marital_status",
+        "gender",
+    )
     list_display = (
         "long_name",
         "student_id",
         "birth_date",
         "curriculum",
-        "entry_semester",
+        # "entry_semester",
+        # "last_enrolled_semester",
+        "cumulative_gpa",
         "possible_duplicates",
     )
     search_fields = (
@@ -292,14 +321,16 @@ class StudentAdmin(
         "curriculum__college",
     )
     readonly_fields = ("student_id",)
-    inlines = [DocumentStudentInline]
+    inlines = [StudentRegistrationInline, DocumentStudentInline]
+    list_select_related = ("curriculum", "entry_semester", "last_enrolled_semester")
     fieldsets = [
         (
             "Student Informations",
             {
-                "fields": StudentForm.SPECIFIC_FIELDS,
+                "fields": STUDENT_FIELDS,
             },
         ),
+        ("Student Bio", {"classes":["collapse"],"fields": BIO_FIELDS}),
         (
             "User Account",
             {
@@ -318,6 +349,33 @@ class StudentAdmin(
     ]
 
     # -------------- helpers for readonly panel --------------
+    def get_queryset(self, request):
+        """Annotate GPA aggregates for the list display."""
+        qs = super().get_queryset(request)
+        grade_points = ExpressionWrapper(
+            F("grade__value__number")
+            * F("grade__section__curriculum_course__credit_hours_id"),
+            output_field=FloatField(),
+        )
+        return qs.annotate(
+            gpa_quality_points=Sum(
+                grade_points, filter=Q(grade__value__number__isnull=False)
+            ),
+            gpa_credit_total=Sum(
+                "grade__section__curriculum_course__credit_hours_id",
+                filter=Q(grade__value__number__isnull=False),
+            ),
+        )
+
+    @admin.display(description="Cumulative GPA", ordering="gpa_quality_points")
+    def cumulative_gpa(self, obj):
+        """Return the cumulative GPA computed from graded sections."""
+        credit_total = getattr(obj, "gpa_credit_total", 0) or 0
+        quality_points = getattr(obj, "gpa_quality_points", 0) or 0
+        if not credit_total:
+            return "-"
+        return f"{quality_points / credit_total:.2f}"
+
     def save_model(self, request, obj, form, change):
         """Save the model."""
         # The form.save() handles creating and linking the User.

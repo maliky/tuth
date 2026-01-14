@@ -38,6 +38,8 @@ class Semester(StatusableMixin, models.Model):
     # Could set this to academic_year.start_date automatically on save
     # and force non-null values.
     end_date = models.DateField(null=True, blank=True)
+    # Free-form notes for admin tracking.
+    info = models.TextField(blank=True, default="")
 
     # > this is not clear. Why do we need that ? why a set ? or dict ?
     REGISTRATION_OPEN_CODES = {"registration"}

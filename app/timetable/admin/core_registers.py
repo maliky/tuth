@@ -25,10 +25,61 @@ class AcademicYearAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     order and grouped by the start date hierarchy.
     """
 
-    list_display = ("long_name", "start_date", "end_date", "code")
+    list_display = (
+        "long_name",
+        "start_date",
+        "end_date",
+        "code",
+        "section_count_link",
+        "student_count_link",
+    )
     date_hierarchy = "start_date"
     inlines = [SemesterInline]
     ordering = ("-start_date",)
+
+    def get_queryset(self, request):
+        """Annotate section/student totals for academic year listings."""
+        qs = super().get_queryset(request)
+        return qs.annotate(
+            section_total=Count("semester__section", distinct=True),
+            student_total=Count(
+                "semester__section__section_registrations__student", distinct=True
+            ),
+        )
+
+    @admin.display(description="Sections", ordering="section_total")
+    def section_count_link(self, academic_year):
+        """Link to sections scoped to this academic year."""
+        count = getattr(academic_year, "section_total", None)
+        if count is None:
+            count = (
+                academic_year.semester_set.filter(section__isnull=False)
+                .values_list("section__id", flat=True)
+                .distinct()
+                .count()
+            )
+        url = reverse("admin:timetable_section_changelist") + (
+            f"?semester__academic_year__id__exact={academic_year.id}"
+        )
+        return format_html('<a href="{}">{}</a>', url, count)
+
+    @admin.display(description="Students", ordering="student_total")
+    def student_count_link(self, academic_year):
+        """Link to registrations for the academic year."""
+        count = getattr(academic_year, "student_total", None)
+        if count is None:
+            count = (
+                academic_year.semester_set.filter(
+                    section__section_registrations__student__isnull=False
+                )
+                .values_list("section__section_registrations__student_id", flat=True)
+                .distinct()
+                .count()
+            )
+        url = reverse("admin:registry_registration_changelist") + (
+            f"?section__semester__academic_year__id__exact={academic_year.id}"
+        )
+        return format_html('<a href="{}">{}</a>', url, count)
 
 
 @admin.register(Semester)
@@ -55,14 +106,14 @@ class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
         qs = super().get_queryset(request)
         return qs.annotate(
             section_total=Count("section", distinct=True),
-            student_total=Count("current_students", distinct=True),
+            student_total=Count("section__section_registrations__student", distinct=True),
         )
 
     @admin.display(description="Sections", ordering="section_total")
     def section_count_link(self, semester):
         count = getattr(semester, "section_total", None)
         if count is None:
-            count = semester.sections.count()
+            count = semester.section_set.count()
         url = reverse("admin:timetable_section_changelist") + (
             f"?semester__id__exact={semester.id}"
         )
@@ -72,9 +123,14 @@ class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
     def student_count_link(self, semester):
         count = getattr(semester, "student_total", None)
         if count is None:
-            count = semester.current_students.count()
-        url = reverse("admin:people_student_changelist") + (
-            f"?last_enrolled_semester={semester.id}"
+            count = (
+                semester.section_set.filter(section_registrations__student__isnull=False)
+                .values_list("section_registrations__student_id", flat=True)
+                .distinct()
+                .count()
+            )
+        url = reverse("admin:registry_registration_changelist") + (
+            f"?section__semester__id__exact={semester.id}"
         )
         return format_html('<a href="{}">{}</a>', url, count)
 

@@ -142,7 +142,14 @@ class StudentLevelFilter(admin.SimpleListFilter):
 
     def lookups(self, request, model_admin):
         """All available values to filter by."""
-        return [(lv.label, lv.label) for lv in LEVEL_NUMBER]
+        # Keep labels aligned with Student.class_level thresholds.
+        label_map = {
+            LEVEL_NUMBER.ONE.label: f"{LEVEL_NUMBER.ONE.label} (<= 36 ch)",
+            LEVEL_NUMBER.TWO.label: f"{LEVEL_NUMBER.TWO.label} (37-72 ch)",
+            LEVEL_NUMBER.THREE.label: f"{LEVEL_NUMBER.THREE.label} (73-108 ch)",
+            LEVEL_NUMBER.FOUR.label: f"{LEVEL_NUMBER.FOUR.label} (>= 109 ch)",
+        }
+        return [(lv.label, label_map.get(lv.label, lv.label)) for lv in LEVEL_NUMBER]
 
     def queryset(self, request, qs):
         """Describe how to filter the student qs."""

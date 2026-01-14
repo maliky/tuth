@@ -5,6 +5,7 @@ from .inlines import (
     DocumentStaffInline,
     DocumentStudentInline,
     GradeInline,
+    StudentRegistrationInline,
 )
 from .resources import GradeResource
 from .resources_legacy import (
@@ -25,4 +26,5 @@ __all__ = [
     "GradeSectionFilter",
     "LegacyGradeSheetResource",
     "LegacyRegistrationResource",
+    "StudentRegistrationInline",
 ]

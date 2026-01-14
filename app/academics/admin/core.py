@@ -33,6 +33,7 @@ from .actions import update_curriculum, update_department
 from .filters import (
     CourseCollegeFilter,
     CurriculumFilterAC,
+    CurriculumCourseFacultyFilterAC,
     DepartmentFilterAC,
 )
 from .inlines import (
@@ -189,7 +190,7 @@ class CourseAdmin(DepartmentRestrictedAdmin):
         "short_code",
         "title",
         "department",
-        "list_curricula_str",
+        "curricula_links",
     )
     autocomplete_fields = ("curricula",)
     # > TODO: Add the list of student enrolled in this course the current semester.
@@ -204,6 +205,36 @@ class CourseAdmin(DepartmentRestrictedAdmin):
     search_fields = ("short_code", "department__code", "title")
     fields = ("short_code", "department", "number", "title", "description")
     actions = [update_department, merge_courses_action]
+
+    def get_queryset(self, request):
+        """Prefetch curricula for link rendering in list_display."""
+        qs = super().get_queryset(request)
+        qs = qs.prefetch_related("curricula")
+        curriculum_id = request.GET.get("in_curriculum_courses__curriculum")
+        if curriculum_id:
+            try:
+                curriculum_id = int(curriculum_id)
+            except (TypeError, ValueError):
+                return qs
+            return qs.filter(curricula__id=curriculum_id)
+        return qs
+
+    def lookup_allowed(self, lookup, value, request=None):
+        """Allow legacy curriculum lookup for course filters."""
+        if lookup == "in_curriculum_courses__curriculum":
+            return True
+        return super().lookup_allowed(lookup, value, request)
+
+    @admin.display(description="Curricula")
+    def curricula_links(self, obj: Course):
+        """Link each curriculum name to its admin change page."""
+        rows = [
+            (reverse("admin:academics_curriculum_change", args=[cur.pk]), cur.short_name)
+            for cur in obj.curricula.all().order_by("short_name")
+        ]
+        if not rows:
+            return "-"
+        return format_html_join(", ", '<a href="{}">{}</a>', rows)
 
     def get_form(self, request, obj=None, **kwargs):
         """Return the admin form with dep ordered by their shortname."""
@@ -270,7 +301,7 @@ class CurriculumAdmin(CollegeRestrictedAdmin):
         "college",
         "is_active",
         "status",
-        "course_count",
+        "course_count_link",
         "student_count",
     )
     list_filter = ("college",)
@@ -291,6 +322,13 @@ class CurriculumAdmin(CollegeRestrictedAdmin):
         )
         return format_html('<a href="{}">{}</a>', url, count)
 
+    @admin.display(description="Courses")
+    def course_count_link(self, obj):
+        """Link course counts to the course changelist for this curriculum."""
+        count = obj.course_count()
+        url = reverse("admin:academics_course_changelist") + f"?curricula={obj.id}"
+        return format_html('<a href="{}">{}</a>', url, count)
+
 
 @admin.register(CurriculumCourse)
 class CurriculumCourseAdmin(CollegeRestrictedAdmin):
@@ -307,9 +345,16 @@ class CurriculumCourseAdmin(CollegeRestrictedAdmin):
         "course_display",
         "department_link",
         "curriculum",
+        "section_count_link",
+        "faculty_links",
     )
     # list_editable = ("curriculum",)
-    list_filter = ("curriculum__college", CurriculumFilterAC, DepartmentFilterAC)
+    list_filter = (
+        "curriculum__college",
+        CurriculumFilterAC,
+        DepartmentFilterAC,
+        CurriculumCourseFacultyFilterAC,
+    )
 
     autocomplete_fields = ("curriculum", "course")
     list_select_related = ("curriculum", "course")
@@ -322,6 +367,15 @@ class CurriculumCourseAdmin(CollegeRestrictedAdmin):
 
     ordering = ("course__short_code",)
     actions = [update_curriculum]
+
+    def get_queryset(self, request):
+        """Annotate section totals and prefetch faculty for list_display."""
+        qs = super().get_queryset(request)
+        return (
+            qs.select_related("course__department")
+            .prefetch_related("sections__faculty__staff_profile__user")
+            .annotate(section_total=Count("sections", distinct=True))
+        )
 
     @admin.display(description="Course")
     def course_display(self, obj: CurriculumCourse) -> str:
@@ -336,6 +390,37 @@ class CurriculumCourseAdmin(CollegeRestrictedAdmin):
             return "-"
         url = reverse("admin:academics_course_changelist") + (f"?department={dept.id}")
         return format_html('<a href="{}">{}</a>', url, dept.code)
+
+    @admin.display(description="Sections", ordering="section_total")
+    def section_count_link(self, obj):
+        """Link to sections filtered by this curriculum course."""
+        count = getattr(obj, "section_total", None)
+        if count is None:
+            count = obj.sections.count()
+        url = reverse("admin:timetable_section_changelist") + (
+            f"?curriculum_course__id__exact={obj.id}"
+        )
+        return format_html('<a href="{}">{}</a>', url, count)
+
+    @admin.display(description="Faculty")
+    def faculty_links(self, obj):
+        """List linked faculty teaching sections for this curriculum course."""
+        faculties = []
+        seen = set()
+        for section in obj.sections.all():
+            faculty = section.faculty
+            if not faculty or faculty.pk in seen:
+                continue
+            seen.add(faculty.pk)
+            faculties.append(
+                (
+                    reverse("admin:people_faculty_change", args=[faculty.pk]),
+                    faculty.staff_profile.long_name,
+                )
+            )
+        if not faculties:
+            return "-"
+        return format_html_join(", ", '<a href="{}">{}</a>', faculties)
 
 
 @admin.register(CurriculumStatus)
@@ -355,7 +440,13 @@ class DepartmentAdmin(CollegeRestrictedAdmin):
     """
 
     resource_class = DepartmentResource
-    list_display = ("code", "long_name", "college", "course_count_link")
+    list_display = (
+        "code",
+        "long_name",
+        "college",
+        "course_count_link",
+        "faculty_count_link",
+    )
     list_filter = [
         "college",
     ]
@@ -367,7 +458,12 @@ class DepartmentAdmin(CollegeRestrictedAdmin):
     def get_queryset(self, request):
         # > explain the djangonic logic here
         qs = super().get_queryset(request)
-        return qs.annotate(course_count=Count("courses", distinct=True))
+        return qs.annotate(
+            course_count=Count("courses", distinct=True),
+            faculty_total=Count(
+                "courses__in_curriculum_courses__sections__faculty", distinct=True
+            ),
+        )
 
     @admin.display(description="Courses", ordering="course_count")
     def course_count_link(self, obj):
@@ -377,6 +473,22 @@ class DepartmentAdmin(CollegeRestrictedAdmin):
             count = obj.courses.count()
         url = reverse("admin:academics_course_changelist") + (
             f"?department__id__exact={obj.id}"
+        )
+        return format_html('<a href="{}">{}</a>', url, count)
+
+    @admin.display(description="Teaching Faculty", ordering="faculty_total")
+    def faculty_count_link(self, obj):
+        """Link to faculty teaching sections in this department."""
+        count = getattr(obj, "faculty_total", None)
+        if count is None:
+            count = (
+                obj.courses.filter(in_curriculum_courses__sections__faculty__isnull=False)
+                .values_list("in_curriculum_courses__sections__faculty_id", flat=True)
+                .distinct()
+                .count()
+            )
+        url = reverse("admin:people_faculty_changelist") + (
+            f"?section__curriculum_course__course__department={obj.id}"
         )
         return format_html('<a href="{}">{}</a>', url, count)
 

@@ -1,6 +1,7 @@
 """app.timetable.Inlines modules."""
 
 from django.contrib import admin
+from django.db.models import Count
 
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
@@ -24,6 +25,7 @@ class SecSessionInline(admin.TabularInline):
     extra = 0
     fields = (
         "section",
+        "section_semester",
         "room",
         "schedule",
     )
@@ -32,6 +34,14 @@ class SecSessionInline(admin.TabularInline):
         "room",
         "schedule",
     )
+    readonly_fields = ("section_semester",)
+
+    @admin.display(description="Semester")
+    def section_semester(self, obj):
+        """Show the semester for the inline section reference."""
+        if not obj.section_id:
+            return "-"
+        return obj.section.semester
 
 
 class SectionInline(admin.TabularInline):
@@ -46,6 +56,30 @@ class SectionInline(admin.TabularInline):
         "start_date",
         "max_seats",
         "current_registrations",
+        "enrolled_total",
+        "credit_hours",
     )
-    readonly_fields = ("current_registrations",)
+    readonly_fields = (
+        "semester",
+        "current_registrations",
+        "enrolled_total",
+        "credit_hours",
+    )
     ordering = ("-semester__start_date", "-number")
+
+    def get_queryset(self, request):
+        """Annotate the inline queryset with enrollment totals."""
+        qs = super().get_queryset(request)
+        return qs.select_related("semester", "curriculum_course__credit_hours").annotate(
+            enrolled_total=Count("section_registrations", distinct=True)
+        )
+
+    @admin.display(description="Enrolled", ordering="enrolled_total")
+    def enrolled_total(self, obj):
+        """Return the number of registered students for this section."""
+        return getattr(obj, "enrolled_total", 0)
+
+    @admin.display(description="Credits")
+    def credit_hours(self, obj):
+        """Return credit hours for the related curriculum course."""
+        return obj.curriculum_course.credit_hours_id or 0

@@ -7,6 +7,7 @@ from django.contrib.auth.hashers import make_password
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
+from app.people.utils import mk_password
 from app.shared.auth.perms import UserRole
 
 DEFAULT_STAFF_PASSWORD = "PassW0rd!_staff"
@@ -22,16 +23,33 @@ def _set_passwords(queryset, password: str) -> int:
     return updated
 
 
+def _set_passwords_from_names(queryset) -> int:
+    """Reset user passwords using the standard mk_password pattern."""
+    updated = 0
+    for user in queryset.iterator():
+        user.set_password(mk_password(user.first_name or "", user.last_name or ""))
+        user.save(update_fields=["password"])
+        updated += 1
+    return updated
+
+
 class Command(BaseCommand):
     """Reset passwords for Staff, Faculty, and Student groups in bulk."""
 
     help = (
         "Reset passwords for Staff (excluding Faculty), Faculty, and Student groups "
         "using a bulk update. Pass -t/-f/-s to target specific cohorts; omitted "
-        "passwords leave that group unchanged."
+        "passwords leave that group unchanged. Use --reset to apply the "
+        "standard mk_password pattern per user."
     )
 
     def add_arguments(self, parser):
+        parser.add_argument(
+            "-r",
+            "--reset",
+            action="store_true",
+            help="Reset passwords using the standard mk_password pattern.",
+        )
         parser.add_argument(
             "-t",
             "--staff-password",
@@ -55,6 +73,7 @@ class Command(BaseCommand):
         staff_password: str = options["staff_password"]
         faculty_password: str = options["faculty_password"]
         student_password: str = options["student_password"]
+        reset_passwords: bool = bool(options["reset"])
 
         User = get_user_model()
         staff_group = UserRole.STAFF.value.group
@@ -75,12 +94,17 @@ class Command(BaseCommand):
         student_updated = 0
 
         with transaction.atomic():
-            if staff_password:
-                staff_updated = _set_passwords(staff_users, staff_password)
-            if faculty_password:
-                faculty_updated = _set_passwords(faculty_users, faculty_password)
-            if student_password:
-                student_updated = _set_passwords(student_users, student_password)
+            if reset_passwords:
+                staff_updated = _set_passwords_from_names(staff_users)
+                faculty_updated = _set_passwords_from_names(faculty_users)
+                student_updated = _set_passwords_from_names(student_users)
+            else:
+                if staff_password:
+                    staff_updated = _set_passwords(staff_users, staff_password)
+                if faculty_password:
+                    faculty_updated = _set_passwords(faculty_users, faculty_password)
+                if student_password:
+                    student_updated = _set_passwords(student_users, student_password)
 
         self.stdout.write(
             self.style.SUCCESS(

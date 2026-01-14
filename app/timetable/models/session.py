@@ -39,6 +39,8 @@ class SecSession(models.Model):
         blank=True,
         related_name="sessions",
     )
+    # Free-form notes for admin tracking.
+    info = models.TextField(blank=True, default="")
 
     def __str__(self):
         """Return Schedule, Room for use in admin lists."""
