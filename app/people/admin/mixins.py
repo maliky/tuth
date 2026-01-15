@@ -341,6 +341,7 @@ class DuplicatePreviewMixin:
 
     duplicate_threshold = 0.9
     duplicate_field_name = "possible_duplicates"
+    duplicate_count_field_name = "duplicate_count_link"
 
     def get_queryset(self, request):
         """Attach duplicate ordering and optional duplicate filters."""
@@ -371,6 +372,19 @@ class DuplicatePreviewMixin:
                     *when_statements,
                     default=models.Value(0.0),
                     output_field=models.FloatField(),
+                )
+            )
+        if self._should_order_by_duplicate_count(request):
+            count_map = self._duplicate_count_map(qs)
+            when_statements = [
+                models.When(pk=pk, then=models.Value(count))
+                for pk, count in count_map.items()
+            ]
+            qs = qs.annotate(
+                duplicate_count_sort=models.Case(
+                    *when_statements,
+                    default=models.Value(0),
+                    output_field=models.IntegerField(),
                 )
             )
         return qs
@@ -460,6 +474,16 @@ class DuplicatePreviewMixin:
         self._duplicate_score_cache = score_map
         return score_map
 
+    def _duplicate_count_map(self, queryset: models.QuerySet) -> dict[int, int]:
+        """Build a map of PKs to duplicate counts."""
+        count_map: dict[int, int] = {}
+        for obj in queryset:
+            if not obj.pk:
+                continue
+            count_map[obj.pk] = self._duplicate_count_value(obj)
+        self._duplicate_count_cache = count_map
+        return count_map
+
     def _should_order_by_duplicate_score(self, request) -> bool:
         """Return True when ordering by the duplicate score column."""
         ordering = request.GET.get("o", "")
@@ -470,6 +494,21 @@ class DuplicatePreviewMixin:
         if self.duplicate_field_name not in list_display:
             return False
         duplicate_index = list_display.index(self.duplicate_field_name) + 1
+        order_fields = [
+            part.lstrip("-") for part in ordering.split(",") if part.lstrip("-").isdigit()
+        ]
+        return str(duplicate_index) in order_fields
+
+    def _should_order_by_duplicate_count(self, request) -> bool:
+        """Return True when ordering by the duplicate count column."""
+        ordering = request.GET.get("o", "")
+        if not ordering:
+            return False
+        admin_self = cast(dj_admin.ModelAdmin, self)
+        list_display = list(admin_self.get_list_display(request))
+        if self.duplicate_count_field_name not in list_display:
+            return False
+        duplicate_index = list_display.index(self.duplicate_count_field_name) + 1
         order_fields = [
             part.lstrip("-") for part in ordering.split(",") if part.lstrip("-").isdigit()
         ]
@@ -507,3 +546,5 @@ class DuplicatePreviewMixin:
             return "0"
         url = reverse(f"admin:{obj._meta.app_label}_{obj._meta.model_name}_changelist")
         return format_html('<a href="{}?dups_for={}">{}</a>', url, obj.pk, count)
+
+    duplicate_count_link.admin_order_field = "duplicate_count_sort"  # type: ignore[attr-defined]

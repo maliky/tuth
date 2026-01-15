@@ -603,6 +603,14 @@ class StudentAdmin(
                 default=-1.0,
                 output_field=FloatField(),
             ),
+            validated_credits_sort_value=Case(
+                When(
+                    validated_credits_total__isnull=False,
+                    then=F("validated_credits_total"),
+                ),
+                default=0.0,
+                output_field=FloatField(),
+            ),
         )
 
     @admin.display(description="Cumulative GPA", ordering="gpa_sort_value")
@@ -613,7 +621,9 @@ class StudentAdmin(
             return "-"
         return f"{gpa_value:.2f}"
 
-    @admin.display(description="Validated Credits", ordering="validated_credits_total")
+    @admin.display(
+        description="Validated Credits", ordering="validated_credits_sort_value"
+    )
     def validated_credits(self, obj):
         """Return the cumulative credits validated by the student."""
         total = getattr(obj, "validated_credits_total", 0) or 0
