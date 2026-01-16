@@ -670,6 +670,9 @@ class GroupAdmin(dj_admin.ModelAdmin):
     """Group admin with user counts."""
 
     list_display = ("name", "user_count_link")
+    # Show group members on the change form for quick verification.
+    readonly_fields = ("user_list",)
+    fields = ("name", "permissions", "user_list")
     # > Required for RoleAssignmentAdmin autocomplete_fields on "group".
     search_fields = ("name",)
 
@@ -686,3 +689,8 @@ class GroupAdmin(dj_admin.ModelAdmin):
             count = obj.user_set.count()
         url = reverse("admin:auth_user_changelist") + (f"?groups__id__exact={obj.id}")
         return format_html('<a href="{}">{}</a>', url, count)
+
+    @admin.display(description="Members")
+    def user_list(self, obj: Group) -> str:
+        """Return a comma-separated list of member usernames."""
+        return ", ".join(user.username for user in obj.user_set.all())
