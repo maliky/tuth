@@ -8,6 +8,7 @@ from app.academics.admin.filters import CurriculumFilterAC
 from app.people.models.faculty import Faculty
 from app.people.models.student import Student
 from app.registry.admin.inlines import GradeInline
+from app.shared.admin.core import get_current_semester
 from app.shared.admin.filters import BaseCollegeFilter
 from app.shared.admin.mixins import CollegeRestrictedAdmin
 from app.timetable.admin.filters import SectionFacultyFilterAc, SemesterFilterAC
@@ -82,6 +83,11 @@ class SectionAdmin(CollegeRestrictedAdmin):
         requires_student = request.GET.get("requires_student")
         if requires_student and not student_id:
             return qs.none(), use_distinct
+        if requires_student:
+            current_semester = get_current_semester()
+            if not current_semester or not current_semester.is_registration_open():
+                return qs.none(), use_distinct
+            qs = qs.filter(semester=current_semester)
         if not student_id:
             return qs, use_distinct
         try:

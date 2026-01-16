@@ -22,12 +22,23 @@ from app.timetable.admin.filters import (
     SemesterFilterAC,
 )
 from app.timetable.admin.views import SectionBySemesterAutocomplete
+from app.timetable.models.semester import Semester
 from app.timetable.models.section import Section
 from simple_history.admin import SimpleHistoryAdmin
 from guardian.admin import GuardedModelAdmin
+from app.shared.admin.core import get_current_semester
 from app.shared.admin.mixins import ScopedAutocompleteAdminMixin
 
 SectionQueryT: TypeAlias = QuerySet[Section]
+SemesterT: TypeAlias = Semester
+
+
+def _open_registration_semester() -> SemesterT | None:
+    """Return the current semester if registration is open."""
+    current = get_current_semester()
+    if current and current.is_registration_open():
+        return current
+    return None
 
 
 def _section_queryset_for_student(student: Student | None) -> SectionQueryT:
@@ -37,9 +48,15 @@ def _section_queryset_for_student(student: Student | None) -> SectionQueryT:
         "curriculum_course__course",
         "curriculum_course__curriculum",
     ).order_by("-semester__start_date", "curriculum_course__course__short_code")
+    current_semester = _open_registration_semester()
+    if not current_semester:
+        return qs.none()
     if not student:
         return qs.none()
-    return qs.filter(curriculum_course__course__in=student.allowed_courses())
+    return qs.filter(
+        semester=current_semester,
+        curriculum_course__course__in=student.allowed_courses(),
+    )
 
 
 def _resolve_request_student(request) -> Student | None:
