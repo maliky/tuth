@@ -6,6 +6,7 @@ from django.utils.html import format_html
 
 from app.academics.admin.filters import DepartmentFilterAC
 from app.people.models.faculty import Faculty
+from app.people.models.student import Student
 from app.registry.admin.inlines import GradeInline
 from app.shared.admin.filters import BaseCollegeFilter
 from app.shared.admin.mixins import CollegeRestrictedAdmin
@@ -70,6 +71,25 @@ class SectionAdmin(CollegeRestrictedAdmin):
         except (AttributeError, Faculty.DoesNotExist):
             return qs.none()
         return qs.filter(faculty=faculty)
+
+    def get_search_results(self, request, queryset, search_term):
+        """Filter section autocomplete results by selected student when provided."""
+        qs, use_distinct = super().get_search_results(request, queryset, search_term)
+        student_id = request.GET.get("student")
+        requires_student = request.GET.get("requires_student")
+        if requires_student and not student_id:
+            return qs.none(), use_distinct
+        if not student_id:
+            return qs, use_distinct
+        try:
+            student_pk = int(student_id)
+        except (TypeError, ValueError):
+            return qs, use_distinct
+        student = Student.objects.filter(pk=student_pk).first()
+        if not student:
+            return qs.none(), use_distinct
+        qs = qs.filter(curriculum_course__course__in=student.allowed_courses())
+        return qs, use_distinct
 
     def lookup_allowed(self, lookup, value, request=None):
         """Allow scoped academic year/college links from related admins."""
