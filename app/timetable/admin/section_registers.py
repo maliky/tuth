@@ -80,14 +80,18 @@ class SectionAdmin(CollegeRestrictedAdmin):
         """Filter section autocomplete results by selected student when provided."""
         qs, use_distinct = super().get_search_results(request, queryset, search_term)
         student_id = request.GET.get("student")
-        requires_student = request.GET.get("requires_student")
-        if requires_student and not student_id:
-            return qs.none(), use_distinct
-        if requires_student:
+        is_registration_lookup = (
+            request.GET.get("app_label") == "registry"
+            and request.GET.get("model_name") == "registration"
+            and request.GET.get("field_name") == "section"
+        )
+        if is_registration_lookup:
             current_semester = get_current_semester()
             if not current_semester or not current_semester.is_registration_open():
                 return qs.none(), use_distinct
             qs = qs.filter(semester=current_semester)
+            if not student_id:
+                return qs.none(), use_distinct
         if not student_id:
             return qs, use_distinct
         try:

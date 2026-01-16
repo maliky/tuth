@@ -22,8 +22,11 @@
       }
     }
 
-    var select2 = $section.data("select2");
-    if (select2 && select2.options && select2.options.options) {
+    function configureSectionAutocomplete() {
+      var select2 = $section.data("select2");
+      if (!select2 || !select2.options || !select2.options.options) {
+        return false;
+      }
       var options = select2.options.options;
       var ajaxOptions = options.ajax || {};
       var baseData = ajaxOptions.data;
@@ -43,7 +46,20 @@
       };
       options.ajax = ajaxOptions;
       $section.select2("destroy").select2(options);
+      return true;
     }
+
+    (function retryConfigure(attemptsLeft) {
+      if (configureSectionAutocomplete()) {
+        return;
+      }
+      if (attemptsLeft <= 0) {
+        return;
+      }
+      window.setTimeout(function () {
+        retryConfigure(attemptsLeft - 1);
+      }, 200);
+    })(10);
 
     toggleSection();
     // Wait for select2 to sync the value before resetting section choices.
