@@ -43,6 +43,7 @@ from app.people.services.merge_people import merge_people, merge_users
 from app.registry.admin import (
     DocumentStaffInline,
     DocumentStudentInline,
+    StudentGradeInline,
     StudentRegistrationInline,
 )
 from app.shared.admin.filters import StudentLevelFilter
@@ -536,7 +537,7 @@ class StudentAdmin(
         "curriculum__college",
     )
     readonly_fields = ("student_id",)
-    inlines = [StudentRegistrationInline, DocumentStudentInline]
+    inlines = [StudentRegistrationInline, StudentGradeInline, DocumentStudentInline]
     list_select_related = ("curriculum", "entry_semester", "last_enrolled_semester")
     fieldsets = [
         (

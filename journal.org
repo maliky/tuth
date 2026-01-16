@@ -1,4 +1,15 @@
 
+* <2026-01-15 Thu 16:55> UX 6
+  
+** student in student/dashboard/
+   - in have the course and grade displayed by semesters, with gpa per semester
+   - indicate the total number of credit validated
+   - 
+
+** in admin/registry/registrationstatus/
+   - add a column with the number of registration
+   - 
+
 * <2026-01-14 Wed 15:42> UX 5
   - in eg. admin/people/student/1991/change
     - need to add the list of grade of the student

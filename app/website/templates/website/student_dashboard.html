@@ -43,6 +43,11 @@
       <p class="mb-0 text-muted">{{ credit_summary.remaining }} credits remaining</p>
     </article>
     <article class="kpi-card">
+      <p class="text-muted text-uppercase small mb-1">Validated credits</p>
+      <div class="kpi-value">{{ credit_summary.validated }}</div>
+      <p class="mb-0 text-muted">Total credits with passing grades</p>
+    </article>
+    <article class="kpi-card">
       <p class="text-muted text-uppercase small mb-1">Cumulative GPA</p>
       <div class="kpi-value">{{ credit_summary.gpa }}</div>
       <p class="mb-0 text-muted">Good standing</p>
@@ -309,42 +314,59 @@
   </section>
 
   <section id="records" class="mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
       <div>
         <p class="text-uppercase small text-muted mb-1">Completed work</p>
         <h2 class="h4 mb-0">Courses & grades</h2>
       </div>
+      <span class="badge bg-light text-dark">
+        Validated credits: {{ credit_summary.validated }}
+      </span>
     </div>
 
-    <div class="table-responsive bg-white rounded-3 shadow-sm">
-      <table class="table mb-0 align-middle">
-        <thead>
-          <tr>
-            <th>Course</th>
-            <th>Credits</th>
-            <th>Grade</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for course in completed_courses %}
+    {% for semester in semester_grade_groups %}
+      <div class="table-responsive bg-white rounded-3 shadow-sm mb-3">
+        <div class="d-flex justify-content-between align-items-center px-3 pt-3">
+          <div>
+            <p class="text-uppercase small text-muted mb-1">Semester</p>
+            <h3 class="h5 mb-0">{{ semester.label }}</h3>
+          </div>
+          <div class="text-end">
+            <p class="text-uppercase small text-muted mb-1">Semester GPA</p>
+            <div class="h5 mb-0">{{ semester.gpa }}</div>
+          </div>
+        </div>
+        <table class="table mb-0 align-middle">
+          <thead>
             <tr>
-              <td>
-                <strong>{{ course.code }}</strong><br/>
-                <span class="text-muted">{{ course.title }}</span>
-              </td>
-              <td>{{ course.credits }}</td>
-              <td>{{ course.grade }}</td>
+              <th>Course</th>
+              <th>Credits</th>
+              <th>Grade</th>
             </tr>
-          {% empty %}
-            <tr>
-              <td colspan="3" class="text-center text-muted py-4">
-                No completed courses yet.
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {% for course in semester.courses %}
+              <tr>
+                <td>
+                  <strong>{{ course.code }}</strong><br/>
+                  <span class="text-muted">{{ course.title }}</span>
+                </td>
+                <td>{{ course.credits }}</td>
+                <td>{{ course.grade }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="3" class="text-center text-muted py-4">
+                  No completed courses this semester.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% empty %}
+      <div class="alert alert-light">No completed courses yet.</div>
+    {% endfor %}
   </section>
 
   <section id="support" class="action-list">

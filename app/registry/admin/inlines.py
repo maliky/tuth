@@ -10,6 +10,21 @@ from app.registry.models.grade import Grade
 from app.registry.models.registration import Registration
 
 
+def _format_section_link(section) -> str:
+    """Return a link to the section change view."""
+    if not section:
+        return "-"
+    url = reverse("admin:timetable_section_change", args=[section.pk])
+    return format_html('<a href="{}">{}</a>', url, section)
+
+
+def _format_section_semester(section):
+    """Return the semester label for a section."""
+    if not section:
+        return "-"
+    return section.semester
+
+
 class GradeInline(admin.TabularInline):
     """Inline editor for Grade records in a section."""
 
@@ -41,16 +56,12 @@ class StudentRegistrationInline(admin.TabularInline):
     @admin.display(description="Section")
     def section_link(self, obj):
         """Link to the related section change page."""
-        section = obj.section
-        url = reverse("admin:timetable_section_change", args=[section.pk])
-        return format_html('<a href="{}">{}</a>', url, section)
+        return _format_section_link(obj.section)
 
     @admin.display(description="Semester")
     def section_semester(self, obj):
         """Show the semester for the linked section."""
-        if not obj.section_id:
-            return "-"
-        return obj.section.semester
+        return _format_section_semester(obj.section)
 
     @admin.display(description="Grade")
     def grade_code(self, obj):
@@ -66,6 +77,32 @@ class StudentRegistrationInline(admin.TabularInline):
             return "-"
         code = grade.value.code or ""
         return code.upper() if code else "-"
+
+
+class StudentGradeInline(admin.TabularInline):
+    """Inline list of grades attached to a student."""
+
+    model = Grade
+    fk_name = "student"
+    extra = 0
+    can_delete = False
+    fields = ("section_link", "section_semester", "value")
+    readonly_fields = ("section_link", "section_semester", "value")
+
+    def get_queryset(self, request):
+        """Select related data for section and grade value."""
+        qs = super().get_queryset(request)
+        return qs.select_related("section__semester", "value")
+
+    @admin.display(description="Section")
+    def section_link(self, obj):
+        """Link to the related section change page."""
+        return _format_section_link(obj.section)
+
+    @admin.display(description="Semester")
+    def section_semester(self, obj):
+        """Show the semester for the linked section."""
+        return _format_section_semester(obj.section)
 
 
 class DocumentStaffInline(admin.TabularInline):  # StackedInline

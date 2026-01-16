@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from decimal import Decimal
-from typing import Any, Iterable, cast
+from typing import Any, DefaultDict, Iterable, TypedDict, cast
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -24,6 +24,27 @@ from app.timetable.choices import WEEKDAYS_NUMBER
 from app.timetable.models.section import Section
 
 from .student_portal import _require_student, _resolve_semester
+
+
+GPA_EXCLUDED_CODES = {"ip", "ng", "w", "i", "ab", "dr"}
+
+
+class SemesterGradeRowT(TypedDict):
+    """Row details for a semester grade listing."""
+
+    code: str
+    title: str
+    credits: int
+    grade: str
+
+
+class SemesterGradeGroupT(TypedDict):
+    """Grade grouping details for a single semester."""
+
+    semester_id: int
+    label: str
+    gpa: str
+    courses: list[SemesterGradeRowT]
 
 
 @login_required
@@ -287,13 +308,6 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         "last_payment": last_payment_label,
     }
 
-    credit_summary = {
-        "completed": completed_credits,
-        "required": required_credits,
-        "remaining": remaining_credits,
-        "gpa": f"{gpa:.2f}" if gpa else "N/A",
-    }
-
     student_profile = {
         "name": student.long_name or student.user.get_full_name() or student.username,
         "student_id": student.student_id or "Pending ID",
@@ -304,26 +318,81 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         ),
     }
 
-    completed_courses = []
+    completed_courses: list[SemesterGradeRowT] = []
+    semester_grade_groups: list[SemesterGradeGroupT] = []
+    semester_grade_lookup: dict[int, SemesterGradeGroupT] = {}
+    semester_gpa_points: DefaultDict[int, float] = defaultdict(float)
+    semester_gpa_credits: DefaultDict[int, int] = defaultdict(int)
+    validated_credits_total = 0
     grades = (
         Grade.objects.filter(student=student)
         .select_related(
             "section__curriculum_course__course",
             "section__curriculum_course__credit_hours",
+            "section__semester",
+            "section__semester__academic_year",
             "value",
         )
-        .order_by("-graded_on")
-    )
-    for grade in grades:
-        course = grade.section.curriculum_course.course
-        completed_courses.append(
-            {
-                "code": course.short_code or course.code,
-                "title": course.title or "",
-                "credits": grade.section.curriculum_course.credit_hours.code,
-                "grade": grade.value.code if grade.value else "",
-            }
+        .order_by(
+            "-section__semester__start_date",
+            "-section__semester__number",
+            "-graded_on",
         )
+    )
+    # > Group completed grades by semester with GPA summaries.
+    for grade in grades:
+        section = grade.section
+        semester_obj = section.semester
+        semester_id = semester_obj.id
+        group = semester_grade_lookup.get(semester_id)
+        if group is None:
+            group = {
+                "semester_id": semester_id,
+                "label": (
+                    f"{semester_obj.academic_year.code} · Semester {semester_obj.number}"
+                ),
+                "gpa": "N/A",
+                "courses": [],
+            }
+            semester_grade_lookup[semester_id] = group
+            semester_grade_groups.append(group)
+
+        course = section.curriculum_course.course
+        credits = int(section.curriculum_course.credit_hours.code)
+        grade_value = grade.value
+        grade_code = grade_value.code.upper() if grade_value and grade_value.code else ""
+
+        row: SemesterGradeRowT = {
+            "code": course.short_code or course.code,
+            "title": course.title or "",
+            "credits": credits,
+            "grade": grade_code,
+        }
+        group["courses"].append(row)
+        completed_courses.append(row)
+
+        if not grade_value or grade_value.number is None:
+            continue
+        if grade_value.number >= 1:
+            validated_credits_total += credits
+        if grade_value.code and grade_value.code not in GPA_EXCLUDED_CODES:
+            semester_gpa_points[semester_id] += float(grade_value.number) * credits
+            semester_gpa_credits[semester_id] += credits
+
+    for group in semester_grade_groups:
+        semester_id = group["semester_id"]
+        credit_total = semester_gpa_credits.get(semester_id, 0)
+        if credit_total:
+            gpa_value = semester_gpa_points[semester_id] / credit_total
+            group["gpa"] = f"{gpa_value:.2f}"
+
+    credit_summary = {
+        "completed": completed_credits,
+        "required": required_credits,
+        "remaining": remaining_credits,
+        "gpa": f"{gpa:.2f}" if gpa else "N/A",
+        "validated": validated_credits_total,
+    }
 
     announcements: list[str] = []
     if outstanding > 0:
@@ -390,6 +459,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         "available_courses": available_courses,
         "registration_limits": registration_limits,
         "completed_courses": completed_courses,
+        "semester_grade_groups": semester_grade_groups,
         "advisor_actions": advisor_actions,
         "announcements": announcements,
         "current_semester": semester,
