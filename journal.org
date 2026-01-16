@@ -1,3 +1,21 @@
+
+* <2026-01-16 Fri 16:28> UX 8 so
+    P0 – Blockers / correctness
+
+  - Admin / Registry / RegistrationStatus: add a column with registration count.
+
+  P1 – High‑impact workflows
+
+  - Admin / Academics / CurriculumCourse: add merge action with default target, validation messaging, and graceful
+    failure for incompatible selections.
+  - Decide merge rules for CurriculumCourse:
+      - Section conflicts (merge/renumber/skip).
+      - Invoice conflicts (keep target / move / keep both).
+      - Field precedence (credit_hours, is_required, is_elective).
+  - Admin / People / Faculty: show bio field in change view.
+
+
+
 * <2026-01-16 Fri 14:57>  UX 8
   Priority Order
 
