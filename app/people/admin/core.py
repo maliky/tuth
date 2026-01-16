@@ -5,6 +5,8 @@ from typing import Iterable, TypeAlias, cast
 from django import forms
 from django.contrib import admin
 from django.contrib import admin as dj_admin
+from django.contrib import messages
+from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, User as UserModel
 from django.db import models
@@ -46,9 +48,12 @@ from app.registry.admin import (
     StudentGradeInline,
     StudentRegistrationInline,
 )
+from app.registry.admin.core import _available_sections_for_student
+from app.registry.models.registration import Registration, RegistrationStatus
 from app.shared.admin.filters import StudentLevelFilter
 from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
 from app.timetable.admin.inlines import SectionInline
+from app.timetable.models.section import Section
 
 User = get_user_model()
 ModelT: TypeAlias = models.Model
@@ -456,6 +461,33 @@ class StaffAdmin(MergeWizardMixin, DuplicatePreviewMixin, DepartmentRestrictedAd
             merge_people(target_staff, cast(Staff, source))
 
 
+class StudentRegistrationForm(StudentForm):
+    """Student form that supports bulk registration selection."""
+
+    registration_sections = forms.ModelMultipleChoiceField(
+        queryset=Section.objects.none(),
+        required=False,
+        widget=FilteredSelectMultiple("Sections", False),
+    )
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        student = self.instance if getattr(self.instance, "pk", None) else None
+        sections_qs = _available_sections_for_student(student)
+        sections_field = self.fields.get("registration_sections")
+        if sections_field is not None and isinstance(
+            sections_field, forms.ModelMultipleChoiceField
+        ):
+            sections_field.queryset = sections_qs
+            if not student:
+                sections_field.help_text = "Save the student to load available sections."
+                sections_field.disabled = True
+            elif not sections_qs.exists():
+                sections_field.help_text = (
+                    "No available sections for the current open semester."
+                )
+
+
 @admin.register(Student)
 class StudentAdmin(
     MergeWizardMixin,
@@ -470,7 +502,7 @@ class StudentAdmin(
     on both fields. Import/export is supported via ImportExportModelAdmin.
     """
 
-    form = StudentForm
+    form = StudentRegistrationForm
     merge_fields = (
         "user__first_name",
         "user__last_name",
@@ -574,6 +606,16 @@ class StudentAdmin(
             "User Details",
             {"classes": ["collapse"], "fields": PersonFormMixin.STANDARD_USER_FIELDS},
         ),
+        (
+            "Registration",
+            {
+                "fields": ("registration_sections",),
+                "description": (
+                    "Select sections to register the student for the current open "
+                    "semester."
+                ),
+            },
+        ),
     ]
 
     # -------------- helpers for readonly panel --------------
@@ -643,9 +685,40 @@ class StudentAdmin(
         return int(total)
 
     def save_model(self, request, obj, form, change):
-        """Save the model."""
+        """Save the model and create selected registrations."""
         # The form.save() handles creating and linking the User.
         obj.save()
+        sections = list(
+            cast(
+                list[Section],
+                form.cleaned_data.get("registration_sections") or [],
+            )
+        )
+        if not sections:
+            return
+        status = RegistrationStatus.get_default()
+        created_count = 0
+        skipped_count = 0
+        for section in sections:
+            _, created = Registration.objects.get_or_create(
+                student=obj,
+                section=section,
+                defaults={"status": status},
+            )
+            if created:
+                created_count += 1
+            else:
+                skipped_count += 1
+        if created_count or skipped_count:
+            level = messages.SUCCESS if created_count else messages.WARNING
+            self.message_user(
+                request,
+                (
+                    f"Created {created_count} registration(s). "
+                    f"Skipped {skipped_count} existing registration(s)."
+                ),
+                level=level,
+            )
 
     def merge_object_label(self, obj: ModelT) -> str:
         """Use student long names in merge forms."""

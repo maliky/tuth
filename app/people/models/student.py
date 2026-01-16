@@ -137,7 +137,6 @@ class Student(AbstractPerson):
         for course in all_courses.exclude(id__in=passed_ids):
             # > do not uncommnent below. I need to solve the
             # > prerequisits firsts.
-
             # req_ids = course.course_prereq_edges.filter(
             #     curriculum=curriculum
             # ).values_list("prerequisite_course_id", flat=True)

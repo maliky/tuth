@@ -69,5 +69,35 @@
     $student.on("change select2:select select2:clear", handleStudentChange);
   }
 
-  $(initRegistrationSectionField);
+  function initRegistrationSectionsField() {
+    var $sections = $("#id_sections");
+    if (!$sections.length) {
+      return;
+    }
+    var $student = $("#id_student");
+    if (!$student.length) {
+      return;
+    }
+    var currentStudent = $student.val() || "";
+    function redirectForStudent() {
+      var nextStudent = $student.val() || "";
+      if (nextStudent === currentStudent) {
+        return;
+      }
+      currentStudent = nextStudent;
+      var url = new URL(window.location.href);
+      if (nextStudent) {
+        url.searchParams.set("student", nextStudent);
+      } else {
+        url.searchParams.delete("student");
+      }
+      window.location.assign(url.toString());
+    }
+    $student.on("change select2:select select2:clear", redirectForStudent);
+  }
+
+  $(function () {
+    initRegistrationSectionField();
+    initRegistrationSectionsField();
+  });
 })(django.jQuery);

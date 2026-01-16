@@ -7,6 +7,7 @@ from django.contrib import admin
 from django.db.models import Count, QuerySet
 from django.urls import path, reverse
 from django.utils.html import format_html
+from django.contrib.admin.widgets import FilteredSelectMultiple
 from import_export.admin import ImportExportModelAdmin
 
 from app.people.models.student import Student
@@ -55,6 +56,20 @@ def _section_queryset_for_student(student: Optional[Student]) -> SectionQueryT:
         semester=open_semester,
         curriculum_course__course__in=student.allowed_courses(),
     )
+
+
+def _available_sections_for_student(student: Student | None) -> SectionQueryT:
+    """Return sections eligible for new registrations for the student."""
+    qs = _section_queryset_for_student(student)
+    if not student:
+        return qs
+    registered_ids = Registration.objects.filter(student=student).values_list(
+        "section_id",
+        flat=True,
+    )
+    if not registered_ids:
+        return qs
+    return qs.exclude(id__in=registered_ids)
 
 
 def _resolve_request_student(request) -> Optional[Student]:
@@ -133,6 +148,91 @@ class RegistrationAdminForm(forms.ModelForm):
                     "section",
                     "Selected section is not available for this student.",
                 )
+        return cleaned
+
+
+class RegistrationBulkAddForm(forms.ModelForm):
+    """Admin form for adding multiple registrations at once."""
+
+    sections = forms.ModelMultipleChoiceField(
+        queryset=Section.objects.none(),
+        required=True,
+        widget=FilteredSelectMultiple("Sections", False),
+    )
+
+    class Meta:
+        model = Registration
+        fields = ("student", "sections", "status")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        student = self._resolve_student()
+        sections_field = self.fields.get("sections")
+        if sections_field is not None and isinstance(
+            sections_field, forms.ModelMultipleChoiceField
+        ):
+            sections_field.queryset = _available_sections_for_student(student)
+            sections_field.help_text = (
+                "Select a student first to load available sections."
+            )
+        status_field = self.fields.get("status")
+        if status_field is not None and not getattr(self.instance, "pk", None):
+            status_field.initial = RegistrationStatus.get_default()
+
+    def _resolve_student(self) -> Student | None:
+        """Return the selected student from bound data or the instance."""
+        student_id = (
+            self.data.get("student")
+            or self.initial.get("student")
+            or getattr(self.instance, "student_id", None)
+        )
+        if not student_id:
+            return None
+        try:
+            student_pk = int(student_id)
+        except (TypeError, ValueError):
+            return None
+        return Student.objects.filter(pk=student_pk).first()
+
+    def clean(self):
+        """Ensure selected sections are available for the selected student."""
+        cleaned: dict[str, object] = super().clean() or {}
+        student = cleaned.get("student")
+        sections = list(cast(list[Section], cleaned.get("sections") or []))
+        if not student:
+            if sections:
+                self.add_error("sections", "Select a student before choosing sections.")
+            return cleaned
+        if not sections:
+            self.add_error("sections", "Select at least one section.")
+            return cleaned
+        student_obj = cast(Student, student)
+        available_ids = set(
+            _available_sections_for_student(student_obj).values_list("id", flat=True)
+        )
+        invalid = [section for section in sections if section.pk not in available_ids]
+        if invalid:
+            self.add_error(
+                "sections",
+                "Selected sections are not available for this student.",
+            )
+            return cleaned
+        existing_ids = set(
+            Registration.objects.filter(
+                student=student_obj,
+                section__in=sections,
+            ).values_list("section_id", flat=True)
+        )
+        sections_to_create = [
+            section for section in sections if section.pk not in existing_ids
+        ]
+        if not sections_to_create:
+            self.add_error(
+                "sections",
+                "All selected sections are already registered for this student.",
+            )
+            return cleaned
+        cleaned["sections_to_create"] = sections_to_create
         return cleaned
 
 
@@ -223,6 +323,55 @@ class RegistrationAdmin(
         "section__number",
     )
     list_filter = (SemesterFilterAC,)
+
+    def get_form(self, request, obj=None, **kwargs):
+        """Select a bulk-add form for new registrations."""
+        if obj is None:
+            kwargs["form"] = RegistrationBulkAddForm
+        return super().get_form(request, obj, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+        """Create one or more registrations when bulk sections are provided."""
+        if not change and isinstance(form, RegistrationBulkAddForm):
+            student = cast(Student | None, form.cleaned_data.get("student"))
+            sections_to_create = list(
+                cast(
+                    list[Section],
+                    form.cleaned_data.get("sections_to_create") or [],
+                )
+            )
+            status = form.cleaned_data.get("status") or RegistrationStatus.get_default()
+            if not student or not sections_to_create:
+                return
+            primary_section = sections_to_create[0]
+            obj.student = student
+            obj.section = primary_section
+            obj.status = status
+            super().save_model(request, obj, form, change)
+            created_count = 1
+            skipped_count = 0
+            for section in sections_to_create[1:]:
+                _, created = Registration.objects.get_or_create(
+                    student=student,
+                    section=section,
+                    defaults={"status": status},
+                )
+                if created:
+                    created_count += 1
+                else:
+                    skipped_count += 1
+            total_selected = len(form.cleaned_data.get("sections") or [])
+            skipped_count += max(total_selected - created_count - skipped_count, 0)
+            if created_count:
+                self.message_user(
+                    request,
+                    (
+                        f"Created {created_count} registration(s). "
+                        f"Skipped {skipped_count} existing registration(s)."
+                    ),
+                )
+            return
+        super().save_model(request, obj, form, change)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Override the form to limit sections to the student's curriculum_course."""
