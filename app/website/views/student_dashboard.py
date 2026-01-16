@@ -44,6 +44,7 @@ class SemesterGradeGroupT(TypedDict):
     semester_id: int
     label: str
     gpa: str
+    credits_total: int
     courses: list[SemesterGradeRowT]
 
 
@@ -323,6 +324,8 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     semester_grade_lookup: dict[int, SemesterGradeGroupT] = {}
     semester_gpa_points: DefaultDict[int, float] = defaultdict(float)
     semester_gpa_credits: DefaultDict[int, int] = defaultdict(int)
+    # Track total credits per semester for display.
+    semester_credit_totals: DefaultDict[int, int] = defaultdict(int)
     validated_credits_total = 0
     grades = (
         Grade.objects.filter(student=student)
@@ -352,6 +355,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                     f"{semester_obj.academic_year.code} · Semester {semester_obj.number}"
                 ),
                 "gpa": "N/A",
+                "credits_total": 0,
                 "courses": [],
             }
             semester_grade_lookup[semester_id] = group
@@ -370,6 +374,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         }
         group["courses"].append(row)
         completed_courses.append(row)
+        semester_credit_totals[semester_id] += credits
 
         if not grade_value or grade_value.number is None:
             continue
@@ -385,6 +390,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         if credit_total:
             gpa_value = semester_gpa_points[semester_id] / credit_total
             group["gpa"] = f"{gpa_value:.2f}"
+        group["credits_total"] = semester_credit_totals.get(semester_id, 0)
 
     credit_summary = {
         "completed": completed_credits,

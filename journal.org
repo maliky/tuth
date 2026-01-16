@@ -1,4 +1,7 @@
 
+* <2026-01-16 ven. 11:04> UX 7
+- in admin/timetable/section add a filter for curriculum, and remove the one for the curriculum
+
 * <2026-01-15 Thu 16:55> UX 6
   
 ** student in student/dashboard/
