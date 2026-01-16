@@ -232,6 +232,7 @@ class FacultyAdmin(MergeWizardMixin, DuplicatePreviewMixin, CollegeRestrictedAdm
     )
     autocomplete_fields = ("staff_profile", "college")
     inlines = [SectionInline]
+    readonly_fields = ("staff_bio",)
     fieldsets = [
         (
             "User Information",
@@ -244,6 +245,8 @@ class FacultyAdmin(MergeWizardMixin, DuplicatePreviewMixin, CollegeRestrictedAdm
             },
         ),
         ("Faculty Information", {"fields": FacultyForm.FACULTY_FIELDS}),
+        # > maybe better to just add staff_bio to FACULTY_FIELDS
+        ("Staff Bio", {"fields": ("staff_bio",)}),
         (
             "Work Information",
             {
@@ -276,6 +279,11 @@ class FacultyAdmin(MergeWizardMixin, DuplicatePreviewMixin, CollegeRestrictedAdm
     def primary_assignment(self, obj):
         """Show the department/college that receives most sections for the faculty."""
         return obj.primary_assignment_label or "-"
+
+    @admin.display(description="Bio")
+    def staff_bio(self, obj):
+        """Show the staff bio."""
+        return obj.staff_profile.bio or "-"
 
     def merge_object_label(self, obj: ModelT) -> str:
         """Label faculty choices with staff names."""

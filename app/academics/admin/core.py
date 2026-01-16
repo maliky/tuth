@@ -27,6 +27,7 @@ from app.academics.models import (
 from app.people.models.student import Student
 from app.shared.admin.filters import BaseCollegeFilter
 from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
+from app.people.admin.mixins import MergeWizardMixin
 
 from .actions import update_curriculum, update_department
 from .filters import (
@@ -49,6 +50,7 @@ from .merges import (
     merge_curricula_action,
     merge_departments,
     merge_departments_action,
+    merge_curriculum_courses,
 )
 from .resources import (
     CollegeResource,
@@ -335,7 +337,7 @@ class CurriculumAdmin(CollegeRestrictedAdmin):
 
 
 @admin.register(CurriculumCourse)
-class CurriculumCourseAdmin(CollegeRestrictedAdmin):
+class CurriculumCourseAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
     """Admin screen for :class:~app.academics.models.CurriculumCourse.
 
     list_display shows the curriculum and related course while
@@ -345,12 +347,19 @@ class CurriculumCourseAdmin(CollegeRestrictedAdmin):
 
     resource_class = CurriculumCourseResource
     college_field = "curriculum__college"
+    merge_fields = (
+        "curriculum",
+        "course",
+        "credit_hours",
+        "is_required",
+        "is_elective",
+    )
     list_display = (
         "course_display",
         "department_link",
         "curriculum",
         "section_count_link",
-        "faculty_links",
+        "faculties_links",
     )
     list_filter = (
         "curriculum__college",
@@ -359,6 +368,7 @@ class CurriculumCourseAdmin(CollegeRestrictedAdmin):
         CurriculumCourseFacultyFilterAC,
     )
 
+    list_editable = ("curriculum",)
     autocomplete_fields = ("curriculum", "course")
     list_select_related = ("curriculum", "course")
     search_fields = ("curriculum__short_name", "course__code")
@@ -379,6 +389,20 @@ class CurriculumCourseAdmin(CollegeRestrictedAdmin):
             .prefetch_related("sections__faculty__staff_profile__user")
             .annotate(section_total=Count("sections", distinct=True))
         )
+
+    def merge_object_label(self, obj) -> str:
+        """Return a label for merge choices."""
+        curriculum_course = cast(CurriculumCourse, obj)
+        course = curriculum_course.course
+        curriculum = curriculum_course.curriculum
+        course_label = course.short_code or course.code or str(course)
+        curriculum_label = curriculum.short_name or curriculum.long_name
+        return f"{curriculum_label} | {course_label}"
+
+    def merge_records(self, target, sources):
+        """Merge curriculum courses into the target selection."""
+        target_course = cast(CurriculumCourse, target)
+        return merge_curriculum_courses(target_course, sources)
 
     @admin.display(description="Course")
     def course_display(self, obj: CurriculumCourse) -> str:
@@ -405,8 +429,8 @@ class CurriculumCourseAdmin(CollegeRestrictedAdmin):
         )
         return format_html('<a href="{}">{}</a>', url, count)
 
-    @admin.display(description="Faculty")
-    def faculty_links(self, obj):
+    @admin.display(description="Faculties")
+    def faculties_links(self, obj):
         """List linked faculty teaching sections for this curriculum course."""
         faculties = []
         seen = set()

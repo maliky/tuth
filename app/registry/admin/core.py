@@ -4,7 +4,7 @@ from typing import TypeAlias, cast
 
 from django import forms
 from django.contrib import admin
-from django.db.models import QuerySet
+from django.db.models import Count, QuerySet
 from django.urls import path
 from import_export.admin import ImportExportModelAdmin
 
@@ -252,9 +252,29 @@ class TranscriptRequestAdmin(
     list_filter = (SemesterFilterAC,)
 
 
-@admin.register(DocumentStatus, DocumentType, RegistrationStatus, TranscriptRequestStatus)
+@admin.register(DocumentStatus, DocumentType, TranscriptRequestStatus)
 class CurriculumStatusAdmin(admin.ModelAdmin):
     """Lookup admin for CurriculumStatus."""
 
     search_fields = ("code", "label")
     list_display = ("label",)
+
+
+@admin.register(RegistrationStatus)
+class RegistrationStatusAdmin(admin.ModelAdmin):
+    """Registration status admin with registration totals."""
+
+    list_display = ("label", "registration_count")
+
+    def get_queryset(self, request):
+        """Annotate registration totals for list display."""
+        qs = super().get_queryset(request)
+        return qs.annotate(registration_total=Count("registrations", distinct=True))
+
+    @admin.display(description="Registrations", ordering="registration_total")
+    def registration_count(self, obj):
+        """Return the number of registrations using this status."""
+        count = getattr(obj, "registration_total", None)
+        if count is None:
+            count = obj.registrations.count()
+        return count

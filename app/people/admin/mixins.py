@@ -20,6 +20,7 @@ from app.shared.fuzzy_matching import name_similarity
 from app.people.services.merge_people import merge_people
 
 ModelT: TypeAlias = models.Model
+MergeSummaryT: TypeAlias = dict[str, int]
 
 
 class _UserSyncedModel(Protocol):
@@ -244,7 +245,9 @@ class MergeWizardMixin(dj_admin.ModelAdmin):
         """Return the label used for merge choices."""
         return str(obj)
 
-    def merge_records(self, target: ModelT, sources: Iterable[ModelT]) -> None:
+    def merge_records(
+        self, target: ModelT, sources: Iterable[ModelT]
+    ) -> MergeSummaryT | None:
         """Apply merge logic to the target and sources."""
         raise NotImplementedError("merge_records must be implemented on subclasses.")
 
@@ -316,13 +319,38 @@ class MergeWizardMixin(dj_admin.ModelAdmin):
                         updated.save()
                 for obj in updated_objects:
                     obj.save()
-                self.merge_records(target, sources)
+                merge_summary = self.merge_records(target, sources)
                 self.sync_merge_target(target)
+            merged_total = source_count
+            if isinstance(merge_summary, dict):
+                merged_total = merge_summary.get("merged", source_count)
             self.message_user(
                 request,
-                f"Merged {source_count} record(s) into {target}.",
+                f"Merged {merged_total} record(s) into {target}.",
                 level=messages.SUCCESS,
             )
+            if isinstance(merge_summary, dict):
+                skipped_incompatible = merge_summary.get("skipped_incompatible", 0)
+                if skipped_incompatible:
+                    self.message_user(
+                        request,
+                        f"Skipped {skipped_incompatible} incompatible selection(s).",
+                        level=messages.WARNING,
+                    )
+                skipped_invoices = merge_summary.get("skipped_invoices", 0)
+                if skipped_invoices:
+                    self.message_user(
+                        request,
+                        f"Skipped {skipped_invoices} selection(s) with invoices.",
+                        level=messages.WARNING,
+                    )
+                sections_merged = merge_summary.get("sections_merged", 0)
+                if sections_merged:
+                    self.message_user(
+                        request,
+                        f"Merged {sections_merged} conflicting section(s).",
+                        level=messages.INFO,
+                    )
             return None
         context = {
             "title": "Merge selected records",
