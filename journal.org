@@ -1,6 +1,54 @@
 
 * <2026-01-16 ven. 11:04> UX 7
 - in admin/timetable/section add a filter for curriculum, and remove the one for the curriculum
+** Merging 
+*** curriculumcourse
+in admin/academics/curriculumcourse/
+add a merge action with proposed default values.  the merge should faile gracefully if the user selectev values that cannot merge, eg a department of a college that does not offert the curriculum chosen.
+A message explaining this constraint must be displayed on the page where one select the values for merging.
+
+Expose the merging issues that could arise ignoring majors/minors which are all empty for now.
+*** DONE Departments
+    CLOSED: [2026-01-16 Fri 11:51]
+- need to select the curricula     
+*** CourseCurriculum
+   Merge Strategy Review
+
+   - Sections (and cascades): When merging CurriculumCourse A → B, we must reassign all Section rows. Each Section
+     carries SecSession, Registration, Grade, Payment, SectionFee, etc., so those stay intact if the Section moves. The
+     risk is the unique constraint on (semester, curriculum_course, number) when the target already has a section with
+     the same semester/number.
+   - Conflict handling options for Sections:
+       1. Merge sections on conflict: move all child rows (sessions, registrations, grades, payments, fees) into the
+          target section and delete the source section. Requires de‑dupe for session uniqueness (section + schedule).
+       2. Renumber conflicting sections: keep both sections by finding the next available section number per semester.
+          No data loss, but numbering changes.
+       3. Skip conflicting sections: leave them on the source CurriculumCourse, report conflicts, and do not delete the
+          source until resolved.
+   - CurriculumCourse‑level relations:
+       - MajorCurriculumCourse / MinorCurriculumCourse: update to target and de‑dupe if the target already has the same
+         major/minor link.
+       - Invoice (OneToOne): if the target already has an invoice, we need a rule (keep target, skip source + report,
+         or move invoice and delete target’s).
+       - Fields like credit_hours, is_required, is_elective: decide if we keep target values, prefer non‑default values
+         from sources, or allow a manual choice.
+
+   Clarifications before I code
+   Pick a strategy for section conflicts:
+
+   1. Merge sections into target (move children + delete source section)
+   2. Renumber conflicting sections
+   3. Skip conflicts and keep source CurriculumCourse until manual cleanup
+
+   And for invoices:
+
+   1. Keep target invoice; skip conflicting source invoices with a report
+   2. Move source invoice to target and delete target invoice
+   3. Keep both by leaving source CurriculumCourse in place (no delete)
+
+   Also, what should the “default value” be for the merge action: the first selected item, or a specific
+   CurriculumCourse you choose in a confirmation form?
+  
 
 * <2026-01-15 Thu 16:55> UX 6
   

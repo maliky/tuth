@@ -352,7 +352,6 @@ class CurriculumCourseAdmin(CollegeRestrictedAdmin):
         "section_count_link",
         "faculty_links",
     )
-    # list_editable = ("curriculum",)
     list_filter = (
         "curriculum__college",
         CurriculumFilterAC,
@@ -393,7 +392,7 @@ class CurriculumCourseAdmin(CollegeRestrictedAdmin):
         if not dept:
             return "-"
         url = reverse("admin:academics_course_changelist") + (f"?department={dept.id}")
-        return format_html('<a href="{}">{}</a>', url, dept.code)
+        return format_html('<a href="{}">{}</a>', url, dept.shortname)
 
     @admin.display(description="Sections", ordering="section_total")
     def section_count_link(self, obj):
@@ -448,6 +447,7 @@ class DepartmentAdmin(CollegeRestrictedAdmin):
         "code",
         "long_name",
         "college",
+        "curricula_links",
         "course_count_link",
         "faculty_count_link",
     )
@@ -467,7 +467,7 @@ class DepartmentAdmin(CollegeRestrictedAdmin):
             faculty_total=Count(
                 "courses__in_curriculum_courses__sections__faculty", distinct=True
             ),
-        )
+        ).prefetch_related("courses__curricula")
 
     @admin.display(description="Courses", ordering="course_count")
     def course_count_link(self, obj):
@@ -495,6 +495,26 @@ class DepartmentAdmin(CollegeRestrictedAdmin):
             f"?section__curriculum_course__course__department={obj.id}"
         )
         return format_html('<a href="{}">{}</a>', url, count)
+
+    @admin.display(description="Curricula")
+    def curricula_links(self, obj):
+        """List curricula that include courses from this department."""
+        curricula_map = {}
+        for course in obj.courses.all():
+            for curriculum in course.curricula.all():
+                curricula_map[curriculum.pk] = curriculum
+        if not curricula_map:
+            return "-"
+        rows = [
+            (
+                reverse("admin:academics_curriculum_change", args=[curriculum.pk]),
+                curriculum.short_name,
+            )
+            for curriculum in sorted(
+                curricula_map.values(), key=lambda cur: cur.short_name
+            )
+        ]
+        return format_html_join(", ", '<a href="{}">{}</a>', rows)
 
 
 @admin.register(Prerequisite)
