@@ -13,7 +13,7 @@ from app.shared.status.mixins import StatusableMixin
 class RegistrationStatus(SimpleTableMixin):
     TABLE_DEFAULT_VALUES = [
         ("approved", "Approved"),
-        ("removed", "Remove"),
+        ("removed", "Removed"),
         ("canceled", "Canceled"),
         ("completed", "Completed"),
         ("cleared", "Financially Cleared"),

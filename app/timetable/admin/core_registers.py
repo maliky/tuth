@@ -99,7 +99,7 @@ class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
         "student_count_link",
     )
     list_filter = (SemesterAcademicYearFilterAc,)
-    list_editable=("status",)
+    list_editable = ("status",)
     # Search filter necessary here for termadmin search to complete
     search_fields = ("academic_year__code", "academic_year__long_name")
     ordering = ("academic_year", "number")
