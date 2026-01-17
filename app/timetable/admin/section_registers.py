@@ -1,6 +1,7 @@
 """app.timetable.admin.section_registers module."""
 
 from django.contrib import admin
+from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
 
@@ -15,6 +16,15 @@ from app.timetable.admin.filters import SectionFacultyFilterAc, SemesterFilterAC
 from app.timetable.admin.inlines import SecSessionInline
 from app.timetable.admin.section_resources import SectionResource
 from app.timetable.models.section import Section
+
+
+def _is_registration_lookup(request: HttpRequest) -> bool:
+    """Return True when the request targets registration section autocomplete."""
+    return (
+        request.GET.get("app_label") == "registry"
+        and request.GET.get("model_name") == "registration"
+        and request.GET.get("field_name") == "section"
+    )
 
 
 @admin.register(Section)
@@ -43,15 +53,8 @@ class SectionAdmin(CollegeRestrictedAdmin):
     # list_editable = ("curriculum_course__curriculum",)
     inlines = [SecSessionInline, GradeInline]
     # Added curriculum filtering per section list requirements.
-    list_filter = [
-        SectionFacultyFilterAc,
-        CurriculumFilterAC,
-        SemesterFilterAC,
-    ]
-    autocomplete_fields = (
-        "semester",
-        "faculty",
-    )
+    list_filter = [SectionFacultyFilterAc, CurriculumFilterAC, SemesterFilterAC]
+    autocomplete_fields = ("semester", "faculty")
 
     # Join related tables to reduce queries when pulling sections.
     list_select_related = (
@@ -60,15 +63,17 @@ class SectionAdmin(CollegeRestrictedAdmin):
         "semester",
         "faculty",
     )
-
-    search_fields = (
-        "^curriculum_course__course__short_code",
-    )  # fast starts-with on indexed code
+    # fast starts-with on indexed code
+    search_fields = ("^curriculum_course__course__short_code",)
 
     def get_queryset(self, request):
         """Prefetch sessions and limit sections to the current faculty."""
         qs = super().get_queryset(request).prefetch_related("sessions__room")
         if request.user.is_superuser:
+            return qs
+        if _is_registration_lookup(request):
+            # Allow registry registration lookups to see all sections.
+            # > should return the qs filterd on semester opened for registration.
             return qs
         try:
             faculty = request.user.staff.faculty
@@ -80,12 +85,7 @@ class SectionAdmin(CollegeRestrictedAdmin):
         """Filter section autocomplete results by selected student when provided."""
         qs, use_distinct = super().get_search_results(request, queryset, search_term)
         student_id = request.GET.get("student")
-        is_registration_lookup = (
-            request.GET.get("app_label") == "registry"
-            and request.GET.get("model_name") == "registration"
-            and request.GET.get("field_name") == "section"
-        )
-        if is_registration_lookup:
+        if _is_registration_lookup(request):
             current_semester = get_current_semester()
             if not current_semester or not current_semester.is_registration_open():
                 return qs.none(), use_distinct

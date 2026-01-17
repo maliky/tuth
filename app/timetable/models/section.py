@@ -17,11 +17,14 @@ if TYPE_CHECKING:
 
 
 class Section(models.Model):
-    """A single course offering in a given semester.
+    """A single course offering in a given semester (by a faculty).
 
     A section can include multiple session rows or schedule.
     Eg. MATH101 by M. Koné 25-26 (section) on Mondays and Thursday (sessions)
 
+    A section differs from a course. A same course can be offered across semester
+    /years through successive sections, which have themselves sessions (secsession)
+    
     Example:
         >>> from app.timetable.models import Section
         >>> Section.objects.create(course=course, semester=semester, number=1)
@@ -53,6 +56,9 @@ class Section(models.Model):
 
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
+
+    # Free-form notes for admin tracking.
+    info = models.TextField(blank=True, default="")
 
     # ~~~~ Read-only ~~~~
     current_registrations = models.PositiveIntegerField(default=0, editable=False)
