@@ -44,13 +44,13 @@ def _section_queryset_for_student(student: Student | None) -> SectionQueryT:
         "curriculum_course__course",
         "curriculum_course__curriculum",
     ).order_by("-semester__start_date", "curriculum_course__course__short_code")
-    current_semester = _open_registration_semester()
-    if not current_semester:
+    open_semester = _open_registration_semester()
+    if not open_semester:
         return qs.none()
     if not student:
         return qs.none()
     return qs.filter(
-        semester=current_semester,
+        semester=open_semester,
         curriculum_course__course__in=student.allowed_courses(),
     )
 
@@ -91,6 +91,7 @@ class RegistrationAdminForm(forms.ModelForm):
             section_field.queryset = _section_queryset_for_student(student)
             section_field.widget.attrs["data-student-field"] = "id_student"
             section_field.help_text = "Select a student first to load available sections."
+
         status_field = self.fields.get("status")
         if status_field is not None and not getattr(self.instance, "pk", None):
             status_field.initial = RegistrationStatus.get_default()

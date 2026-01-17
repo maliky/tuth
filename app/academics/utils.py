@@ -62,7 +62,7 @@ def make_course_code(dept: "Department", number: str, short=False) -> str:
 
     Examples:
         If dept.shortname is "AGR" and number is "121",
-        the result is "AGR-121".
+        the result is "AGR121".
     """
     _dept_rep = dept.code if short else dept.shortname
-    return f"{_dept_rep}-{number}".upper()
+    return f"{_dept_rep}{number}".upper()

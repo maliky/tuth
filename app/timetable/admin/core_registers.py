@@ -1,6 +1,10 @@
 """timetable.Core module."""
 
+from django import forms
 from django.contrib import admin
+from django.contrib import messages
+from django.contrib.admin.helpers import ActionForm
+from django.core.exceptions import ValidationError
 from django.db.models import Count
 from django.urls import reverse
 from django.utils.html import format_html
@@ -12,8 +16,16 @@ from app.timetable.admin.filters import SemesterAcademicYearFilterAc
 from app.timetable.admin.inlines import SemesterInline
 from app.timetable.admin.core_resources import SemesterResource
 from app.timetable.models.academic_year import AcademicYear
-from app.timetable.models.semester import Semester
+from app.timetable.models.semester import Semester, SemesterStatus
 from app.timetable.models.term import Term
+
+
+class SemesterActionForm(ActionForm):
+    """Action form used to select a status for bulk updates."""
+
+    status = forms.ModelChoiceField(
+        queryset=SemesterStatus.objects.all(), required=True, label="Status"
+    )
 
 
 @admin.register(AcademicYear)
@@ -91,6 +103,8 @@ class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
     """
 
     resource_class = SemesterResource
+    action_form = SemesterActionForm
+    actions = ("set_semester_status",)
     list_display = (
         "academic_year",
         "status",
@@ -103,6 +117,25 @@ class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
     # Search filter necessary here for termadmin search to complete
     search_fields = ("academic_year__code", "academic_year__long_name")
     ordering = ("academic_year", "number")
+
+    @admin.action(description="Set status for selected semesters")
+    def set_semester_status(self, request, queryset):
+        """Bulk update semester status with registration-open validation."""
+        status = request.POST.get("status")
+        if not status:
+            messages.error(request, "Select a status before running this action.")
+            return
+        status_obj = SemesterStatus.objects.filter(pk=status).first()
+        if status_obj is None:
+            messages.error(request, "Selected status was not found.")
+            return
+        # > uniqueness of opensemester is done at db level
+        updated = 0
+        for semester in queryset:
+            semester.status = status_obj
+            semester.save(update_fields=["status"])
+            updated += 1
+        messages.success(request, f"Updated {updated} semester(s).")
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

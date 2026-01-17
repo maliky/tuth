@@ -87,22 +87,22 @@ class SectionAdmin(CollegeRestrictedAdmin):
     def get_search_results(self, request, queryset, search_term):
         """Filter section autocomplete results by selected student when provided."""
         qs, use_distinct = super().get_search_results(request, queryset, search_term)
-        student_id = request.GET.get("student")
-        if not student_id:
-            if _is_registration_lookup(request)
-                return qs.none(), use_distinct
-            return qs, use_distinct
+        # student_id = request.GET.get("student")
+        # if not student_id:
+        #     if _is_registration_lookup(request):
+        #         return qs.none(), use_distinct
+        #     return qs, use_distinct
         
-        try:
-            student_pk = int(student_id)
-        except (TypeError, ValueError):
-            return qs, use_distinct
+        # try:
+        #     student_pk = int(student_id)
+        # except (TypeError, ValueError):
+        #     return qs, use_distinct
 
-        student = Student.objects.filter(pk=student_pk).first()
-        if not student:
-            return qs.none(), use_distinct
+        # student = Student.objects.filter(pk=student_pk).first()
+        # if not student:
+        #     return qs.none(), use_distinct
 
-        qs = qs.filter(curriculum_course__course__in=student.allowed_courses())
+        # qs = qs.filter(curriculum_course__course__in=student.allowed_courses())
         return qs, use_distinct
 
     def lookup_allowed(self, lookup, value, request=None):

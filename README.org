@@ -60,6 +60,26 @@ echo "xyz" > requirements-dev.txt
 #+BEGIN_SRC python
 black app/ && flake8 app/ && mypy app/
 #+END_SRC
+
+** Database SQL scripts
+Reusable SQL helpers live in the =scripts/= directory. Run them from
+=python manage.py dbshell= using psql's =\i= include command.
+
+#+BEGIN_SRC sql
+-- inside dbshell
+\i scripts/update_course_short_code.sql
+#+END_SRC
+
+Some scripts accept variables; set them before including the file:
+#+BEGIN_SRC sql
+\set source_id 123
+\set target_id 456
+\i scripts/curriculum_merge_conflicts.sql
+#+END_SRC
+
+Notes:
+- These scripts are written for PostgreSQL/psql.
+- Verify the output before applying merge updates in production.
 *** Tests
 Install dependencies from `requirements-dev.txt` before running tests.
 You  run `./run.sh -d` to start a dev env on the local machine.
