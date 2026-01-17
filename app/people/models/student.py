@@ -128,12 +128,18 @@ class Student(AbstractPerson):
         passed = self.passed_courses()
         allowed_ids: list[int] = []
         passed_ids = set(passed.values_list("id", flat=True))
+
         for course in all_courses.exclude(id__in=passed_ids):
-            req_ids = course.course_prereq_edges.filter(
-                curriculum=curriculum
-            ).values_list("prerequisite_course_id", flat=True)
-            if all(req_id in passed_ids for req_id in req_ids):
-                allowed_ids.append(course.id)
+            # > do not uncommnent below. I need to solve the
+            # > prerequisits firsts.
+            
+            # req_ids = course.course_prereq_edges.filter(
+            #     curriculum=curriculum
+            # ).values_list("prerequisite_course_id", flat=True)
+            # if all(req_id in passed_ids for req_id in req_ids):
+            #     allowed_ids.append(course.id)
+            allowed_ids.append(course.id)                
+                
         return Course.objects.filter(id__in=allowed_ids)
 
     @classmethod

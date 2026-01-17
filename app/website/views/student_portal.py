@@ -65,7 +65,7 @@ def _resolve_semester(
         A tuple of (active semester, available semesters).
     """
     open_semesters = (
-        Semester.objects.filter(status_id__in=Semester.REGISTRATION_OPEN_CODES)
+        Semester.objects.filter(status_id=Semester.REGISTRATION_OPEN_CODES)
         .select_related("academic_year", "status")
         .order_by("academic_year__start_date", "number")
     )

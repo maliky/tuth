@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from simple_history.models import HistoricalRecords
 
@@ -42,7 +43,7 @@ class Semester(StatusableMixin, models.Model):
     info = models.TextField(blank=True, default="")
 
     # > this is not clear. Why do we need that ? why a set ? or dict ?
-    REGISTRATION_OPEN_CODES = {"registration"}
+    REGISTRATION_OPEN_CODES = "registration"
 
     def clean(self) -> None:
         """Ensure semester dates stay within the academic year boundaries."""
@@ -77,13 +78,27 @@ class Semester(StatusableMixin, models.Model):
 
     def is_registration_open(self) -> bool:
         """Return True when the semester is open for course selection."""
-        return self.status_id in self.REGISTRATION_OPEN_CODES
+        return self.status_id == self.REGISTRATION_OPEN_CODES
+
+    @classmethod
+    def get_registration_open_semester(cls) -> "Semester | None":
+        """Return the open registration semester, raising if more than one exists."""
+        open_qs = cls.objects.filter(status_id=cls.REGISTRATION_OPEN_CODES)
+        if open_qs.count() > 1:
+            raise ValidationError("Multiple semesters are open for registration.")
+        return open_qs.first()
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=["academic_year", "number"], name="uniq_semester_per_year"
-            )
+            ),
+            # I will need to take care of this migration online also
+            models.UniqueConstraint(
+                fields=["status"],
+                condition=models.Q(status_id="registration"),
+                name="uniq_open_registration_semester",
+            ),
         ]
         ordering = ["start_date"]
 

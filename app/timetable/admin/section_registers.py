@@ -9,13 +9,13 @@ from app.academics.admin.filters import CurriculumFilterAC
 from app.people.models.faculty import Faculty
 from app.people.models.student import Student
 from app.registry.admin.inlines import GradeInline
-from app.shared.admin.core import get_current_semester
 from app.shared.admin.filters import BaseCollegeFilter
 from app.shared.admin.mixins import CollegeRestrictedAdmin
 from app.timetable.admin.filters import SectionFacultyFilterAc, SemesterFilterAC
 from app.timetable.admin.inlines import SecSessionInline
 from app.timetable.admin.section_resources import SectionResource
 from app.timetable.models.section import Section
+from app.timetable.models.semester import Semester
 
 
 def _is_registration_lookup(request: HttpRequest) -> bool:
@@ -69,11 +69,14 @@ class SectionAdmin(CollegeRestrictedAdmin):
     def get_queryset(self, request):
         """Prefetch sessions and limit sections to the current faculty."""
         qs = super().get_queryset(request).prefetch_related("sessions__room")
-        if request.user.is_superuser:
-            return qs
         if _is_registration_lookup(request):
-            # Allow registry registration lookups to see all sections.
-            # > should return the qs filterd on semester opened for registration.
+            # Scope registration lookups to the semester open for registration.
+            open_semester = Semester.get_registration_open_semester()
+            if not open_semester:
+                return qs.none()
+            return qs.filter(semester=open_semester)
+        # > or registrar roles...?
+        if request.user.is_superuser:
             return qs
         try:
             faculty = request.user.staff.faculty
@@ -85,22 +88,20 @@ class SectionAdmin(CollegeRestrictedAdmin):
         """Filter section autocomplete results by selected student when provided."""
         qs, use_distinct = super().get_search_results(request, queryset, search_term)
         student_id = request.GET.get("student")
-        if _is_registration_lookup(request):
-            current_semester = get_current_semester()
-            if not current_semester or not current_semester.is_registration_open():
-                return qs.none(), use_distinct
-            qs = qs.filter(semester=current_semester)
-            if not student_id:
-                return qs.none(), use_distinct
         if not student_id:
+            if _is_registration_lookup(request)
+                return qs.none(), use_distinct
             return qs, use_distinct
+        
         try:
             student_pk = int(student_id)
         except (TypeError, ValueError):
             return qs, use_distinct
+
         student = Student.objects.filter(pk=student_pk).first()
         if not student:
             return qs.none(), use_distinct
+
         qs = qs.filter(curriculum_course__course__in=student.allowed_courses())
         return qs, use_distinct
 

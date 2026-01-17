@@ -26,7 +26,6 @@ from app.timetable.models.semester import Semester
 from app.timetable.models.section import Section
 from simple_history.admin import SimpleHistoryAdmin
 from guardian.admin import GuardedModelAdmin
-from app.shared.admin.core import get_current_semester
 from app.shared.admin.mixins import ScopedAutocompleteAdminMixin
 
 SectionQueryT: TypeAlias = QuerySet[Section]
@@ -34,11 +33,8 @@ SemesterT: TypeAlias = Semester
 
 
 def _open_registration_semester() -> SemesterT | None:
-    """Return the current semester if registration is open."""
-    current = get_current_semester()
-    if current and current.is_registration_open():
-        return current
-    return None
+    """Return the single semester open for registration."""
+    return Semester.get_registration_open_semester()
 
 
 def _section_queryset_for_student(student: Student | None) -> SectionQueryT:
