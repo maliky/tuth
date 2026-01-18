@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Self, cast
+from decimal import Decimal
+from typing import Optional, Self, cast
 
 from app.shared.status.mixins import StatusableMixin
-from django.db import models
+from django.db import models, transaction
 from simple_history.models import HistoricalRecords
 
 from app.shared.mixins import SimpleTableMixin
@@ -224,7 +225,43 @@ class Payment(StatusableMixin, models.Model):
     @property
     def balance_due(self):
         """Compute the balance amount for this payement."""
-        return self.invoice.amount_due - self.amount_paid
+        return self.invoice.amount_due
+
+    def _invoice_balance_delta(
+        self,
+        previous_status_id: Optional[str],
+        previous_amount_paid: Decimal,
+    ) -> Decimal:
+        """Return the delta to apply to the invoice balance."""
+        is_cleared = self.status_id == "cleared"
+        was_cleared = previous_status_id == "cleared"
+        if not is_cleared and not was_cleared:
+            return Decimal("0.00")
+
+        current_amount = self.amount_paid or Decimal("0.00")
+        previous_amount = previous_amount_paid or Decimal("0.00")
+        cleared_delta = (current_amount if is_cleared else Decimal("0.00")) - (
+            previous_amount if was_cleared else Decimal("0.00")
+        )
+        return cleared_delta
+
+    def _update_invoice_balance(
+        self,
+        previous_status_id: Optional[str],
+        previous_amount_paid: Decimal,
+    ) -> None:
+        """Update the invoice amount_due to reflect cleared payments."""
+        if not self.invoice_id:
+            return
+        delta = self._invoice_balance_delta(previous_status_id, previous_amount_paid)
+        if delta == 0:
+            return
+        
+        new_amount = self.invoice.amount_due - delta
+        if new_amount < 0:
+            new_amount = Decimal("0.00")
+        self.invoice.amount_due = new_amount
+        self.invoice.save(update_fields=["amount_due"])
 
     def _ensure_payment_method(self):
         """Ensure that we have a payment method set otherway create a default one."""
@@ -237,10 +274,25 @@ class Payment(StatusableMixin, models.Model):
             self.status = ClearanceStatus.get_default()
 
     def save(self, *args, **kwargs):
-        """Ensure the status exist befor saving."""
+        """Ensure the status exists before saving."""
+        previous_status_id: Optional[str] = None
+        previous_amount_paid = Decimal("0.00")
+        if self.pk:
+            previous = (
+                Payment.objects.filter(pk=self.pk)
+                # Avoid values() TypedDict inference that trips mypy-django.
+                .values_list("status_id", "amount_paid").first()
+            )
+            if previous:
+                previous_status_id = previous[0]
+                previous_amount_paid = previous[1] or Decimal("0.00")
         self._ensure_payment_method()
         self._ensure_status()
-        return super().save(*args, **kwargs)
+        with transaction.atomic():
+            result = super().save(*args, **kwargs)
+            # > Are we sure that self.status_id is cleared when we get here ?
+            self._update_invoice_balance(previous_status_id, previous_amount_paid)
+        return result
 
 
 class SectionFee(models.Model):

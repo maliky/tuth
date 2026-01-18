@@ -36,13 +36,6 @@
 
   <section class="kpi-grid mb-4">
     <article class="kpi-card">
-      <p class="text-muted text-uppercase small mb-1">Credits completed</p>
-      <div class="kpi-value">
-        {{ credit_summary.completed }}/{{ credit_summary.required }}
-      </div>
-      <p class="mb-0 text-muted">{{ credit_summary.remaining }} credits remaining</p>
-    </article>
-    <article class="kpi-card">
       <p class="text-muted text-uppercase small mb-1">Validated credits</p>
       <div class="kpi-value">{{ credit_summary.validated }}</div>
       <p class="mb-0 text-muted">Total credits with passing grades</p>
@@ -86,6 +79,7 @@
             <th>Semester</th>
             <th>Updated</th>
             <th class="text-end">Fee</th>
+            <th class="text-end">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -110,10 +104,27 @@
                   —
                 {% endif %}
               </td>
+              <td class="text-end">
+                {% if row.can_cancel %}
+                  <form method="post" class="m-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="cancel_reservation" />
+                    <input type="hidden" name="registration_id" value="{{ row.registration_id }}" />
+                    {% if current_semester %}
+                      <input type="hidden" name="semester_id" value="{{ current_semester.id }}" />
+                    {% endif %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                      Cancel
+                    </button>
+                  </form>
+                {% else %}
+                  —
+                {% endif %}
+              </td>
             </tr>
           {% empty %}
             <tr>
-              <td colspan="6" class="text-center text-muted py-4">
+              <td colspan="7" class="text-center text-muted py-4">
                 No course records found.
               </td>
             </tr>
@@ -127,7 +138,7 @@
     <div>
       <header class="d-flex justify-content-between align-items-center mb-3">
         <div>
-          <p class="text-uppercase small text-muted mb-1">Course registration</p>
+          <p class="text-uppercase small text-muted mb-1">Course reservation</p>
           <h2 class="h4 mb-0">
             {% if current_semester %}{{ current_semester }}{% else %}Semester TBD{% endif %}
           </h2>
@@ -154,9 +165,9 @@
             </form>
           {% endif %}
           {% if registration_open %}
-            <span class="badge bg-success-subtle text-success">Registration open</span>
+            <span class="badge bg-success-subtle text-success">Reservation open</span>
           {% else %}
-            <span class="badge bg-danger-subtle text-danger">Registration closed</span>
+            <span class="badge bg-danger-subtle text-danger">Reservation closed</span>
           {% endif %}
         </div>
       </header>
@@ -278,12 +289,12 @@
       <div
         class="cart-panel"
         data-cart-list
-        data-credits-remaining="{{ registration_limits.credits_remaining }}"
+        data-credits-selected="{{ registration_limits.credits_selected }}"
         data-currency="{{ registration_limits.currency }}"
         data-balance="{{ registration_limits.balance }}"
       >
         <div class="d-flex justify-content-between align-items-center mb-2">
-          <strong>Registration cart</strong>
+          <strong>Reservation cart</strong>
           <span class="badge bg-info-subtle text-info">Seat held 48h</span>
         </div>
         <p class="text-muted small mb-3">
@@ -294,8 +305,8 @@
         </div>
         <footer>
           <div class="d-flex justify-content-between">
-            <span class="text-muted">Credits remaining</span>
-            <strong><span data-credit-remaining>{{ registration_limits.credits_remaining }}</span></strong>
+            <span class="text-muted">Credits selected</span>
+            <strong><span data-credit-selected>{{ registration_limits.credits_selected }}</span></strong>
           </div>
           <div class="d-flex justify-content-between">
             <span class="text-muted">Fee estimate</span>
@@ -305,7 +316,15 @@
             </strong>
           </div>
           <div class="d-grid gap-2 mt-3">
-            <button class="btn btn-success">Save reservation</button>
+            <form method="post" class="d-grid gap-2">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="reserve" />
+              <input type="hidden" name="section_ids" data-selected-sections value="" />
+              {% if current_semester %}
+                <input type="hidden" name="semester_id" value="{{ current_semester.id }}" />
+              {% endif %}
+              <button class="btn btn-success" type="submit">Save reservation</button>
+            </form>
             <button class="btn btn-outline-dark">Proceed to payment</button>
           </div>
         </footer>

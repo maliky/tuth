@@ -1,9 +1,23 @@
 
-* <2026-01-18 dim. 21:35> Reservation logic student
+* <2026-01-18 dim. 22:52> Registration/reservation workflow
+  - Think of where to block the multiple registrations of a student for a curriculum course in the same semester. I want to give him 2 chances separated by 48h. this Sould be computed on the fly, looking at the registration table history. no stored field, jsut computed values. check that the current workflow is compliant with this propoistion.
+  - Not sure about the naming of reservation.  undo the previous changes.  lets have registration every where (code, comments included), the distinction will be the status.
+     
+
+* DONE <2026-01-18 dim. 21:35> Reservation logic student
+  CLOSED: [2026-01-18 dim. 22:52]
+
   - A student registration going back from pending payment to not register should not be available for reregistration straigh away but one should wait 48 h before been able to redo the reservation.  We could also count tath after 2 registration attempt the cours not be available for this semester again.
   - add a message on the student dahsboard to make this rule clear.
-    
-    
+** Documenattion for internal function / method
+- Always add a documentation string, even a single line to internal function/method.
+- Do that in student_dashboard.py
+** student_dashboard improvements
+- Save reservation does not send the line to Current and past courses as register with pending payment status. check that save reservation does create a registration.  Harmonize terminology. Let's call it Reservation, so it should be Reservation Cart and not Registration Cart.
+- Cancel button in Current and past course does not remove the registration/reservation line. it should.
+- A course in registered (even with status pending payement) should not be listed in course registration.  it should appear but grayed out.
+- The course and Grades list group the courses per semester for older to newer. they should be listed for newer to older (semester key). keep the intra group ordering alphabeticaly for the courses.
+- Once Course have pending payment the total amount to be paid should be displayed in the outstanding balance.   
 
 * DONE <2026-01-18 dim. 19:32> Registration fro student/dashboard
   CLOSED: [2026-01-18 dim. 21:35]

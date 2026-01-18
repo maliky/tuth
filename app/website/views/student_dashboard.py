@@ -3,26 +3,32 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from datetime import date, timedelta
 from decimal import Decimal
-from typing import Any, DefaultDict, Iterable, TypedDict, cast
+from typing import Any, DefaultDict, Iterable, Optional, TypedDict, cast
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Avg, DecimalField, Q, Sum, Value
+from django.db import transaction
+from django.db.models import Avg, Count, DecimalField, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils import timezone
 
 from app.academics.models.course import CurriculumCourse
 from app.academics.models.prerequisite import Prerequisite
 from app.finance.models.invoice import Invoice
 from app.finance.models.payment import Payment
+from app.people.models.student import Student
 from app.registry.models.grade import Grade
 from app.finance.utils import tuition_for
-from app.registry.models.registration import Registration
+from app.registry.models.registration import Registration, RegistrationStatus
 from app.timetable.choices import WEEKDAYS_NUMBER
 from app.timetable.models.section import Section
+from app.timetable.models.semester import Semester
 
 from .student_helpers import _require_student, _resolve_semester
 
@@ -62,8 +68,161 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     student = _require_student(request.user)
     semester, open_semesters = _resolve_semester(student, request.GET.get("semester"))
     registration_open = bool(semester and semester.is_registration_open())
+    registration: Optional[Registration] = None
+
+    def _redirect_to_semester() -> HttpResponse:
+        """Redirect back to the dashboard with the current semester filter."""
+        redirect_url = reverse("student_dashboard")
+        selected_semester = request.POST.get("semester_id") or request.GET.get("semester")
+        if selected_semester:
+            redirect_url = f"{redirect_url}?semester={selected_semester}"
+        return redirect(redirect_url)
+
+    def _parse_section_ids(raw_ids: str) -> list[int]:
+        """Parse a comma-delimited list of section IDs into integers."""
+        ids: list[int] = []
+        for token in raw_ids.split(","):
+            token = token.strip()
+            if not token:
+                continue
+            try:
+                ids.append(int(token))
+            except ValueError:
+                continue
+        return ids
+
+    def _attempt_blocked_courses(
+        student_obj: Student, semester_obj: Optional[Semester]
+    ) -> set[int]:
+        """Return course IDs blocked by repeated reservation attempts."""
+        if semester_obj is None:
+            return set()
+        history_model = Registration.history.model
+        attempt_rows = (
+            history_model.objects.filter(
+                student_id=student_obj.id,
+                section__semester=semester_obj,
+                status_id="pending",
+            )
+            .values("section__curriculum_course__course_id")
+            .annotate(total=Count("id"))
+            .filter(total__gte=2)
+        )
+        return {row["section__curriculum_course__course_id"] for row in attempt_rows}
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "reserve":
+            raw_ids = request.POST.get("section_ids", "")
+            section_ids = _parse_section_ids(raw_ids)
+            if not section_ids:
+                messages.warning(request, "Select at least one section to reserve.")
+                return _redirect_to_semester()
+            if not semester or not registration_open:
+                messages.error(request, "Reservation is not open for this semester.")
+                return _redirect_to_semester()
+            # Pending reservations are cleaned up after 48 hours by a scheduled task.
+            pending_status = RegistrationStatus.get_default()
+            allowed_course_ids = set(
+                student.allowed_courses().values_list("id", flat=True)
+            )
+            sections = (
+                Section.objects.filter(id__in=section_ids, semester=semester)
+                .select_related("curriculum_course__course")
+                .order_by("id")
+            )
+            created = 0
+            updated = 0
+            skipped = 0
+            cooldown_skipped = 0
+            attempts_blocked = 0
+            cooldown_cutoff = timezone.now() - timedelta(hours=48)
+            blocked_courses = _attempt_blocked_courses(student, semester)
+            cooldown_courses = set(
+                Registration.objects.filter(
+                    student=student,
+                    status_id__in={"canceled", "removed"},
+                    section__semester=semester,
+                    date_registered__gte=cooldown_cutoff,
+                ).values_list("section__curriculum_course__course_id", flat=True)
+            )
+            with transaction.atomic():
+                for section in sections:
+                    if section.curriculum_course.course_id not in allowed_course_ids:
+                        skipped += 1
+                        continue
+                    if section.curriculum_course.course_id in blocked_courses:
+                        attempts_blocked += 1
+                        continue
+                    if section.curriculum_course.course_id in cooldown_courses:
+                        cooldown_skipped += 1
+                        continue
+                    registration, was_created = Registration.objects.get_or_create(
+                        student=student,
+                        section=section,
+                        defaults={"status": pending_status},
+                    )
+                    if was_created:
+                        created += 1
+                        continue
+                    if registration.status_id in {"canceled", "removed"}:
+                        registration.status = pending_status
+                        registration.date_registered = timezone.now()
+                        registration.save(update_fields=["status", "date_registered"])
+                        updated += 1
+                    else:
+                        skipped += 1
+            if created or updated:
+                messages.success(
+                    request,
+                    f"Saved {created + updated} reservation(s).",
+                )
+            if skipped:
+                messages.info(
+                    request,
+                    f"Skipped {skipped} section(s) already reserved or unavailable.",
+                )
+            if cooldown_skipped:
+                messages.warning(
+                    request,
+                    f"{cooldown_skipped} section(s) are locked for 48 hours after "
+                    "cancelation.",
+                )
+            if attempts_blocked:
+                messages.error(
+                    request,
+                    f"{attempts_blocked} section(s) hit the two-attempt limit for this "
+                    "semester.",
+                )
+            return _redirect_to_semester()
+        if action == "cancel_reservation":
+            reg_id = request.POST.get("registration_id")
+            if not reg_id:
+                messages.error(request, "Select a reservation to cancel.")
+                return _redirect_to_semester()
+            registration = Registration.objects.filter(pk=reg_id, student=student).first()
+            if not registration:
+                messages.error(request, "Reservation not found.")
+                return _redirect_to_semester()
+            if registration.status_id != "pending":
+                messages.warning(
+                    request,
+                    "Only pending reservations can be canceled.",
+                )
+                return _redirect_to_semester()
+            canceled_status = RegistrationStatus.objects.filter(code="canceled").first()
+            if canceled_status is None:
+                messages.error(request, "Canceled status is not configured.")
+                return _redirect_to_semester()
+            registration.status = canceled_status
+            # Reuse date_registered as a lock timestamp for cooldown enforcement.
+            registration.date_registered = timezone.now()
+            registration.save(update_fields=["status", "date_registered"])
+            messages.success(request, "Reservation canceled.")
+            return _redirect_to_semester()
 
     def _format_semester_label() -> str:
+        """Return a display label for the selected semester."""
         if semester:
             return f"{semester.academic_year.code} · Semester {semester.number}"
         if student.entry_semester:
@@ -72,6 +231,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         return "Not assigned"
 
     def _format_schedule(section: Section) -> str:
+        """Return a formatted schedule string for a section."""
         sessions = getattr(section, "sessions", None)
         if not sessions:
             return "Schedule TBA"
@@ -106,12 +266,14 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             "section__curriculum_course__credit_hours",
             "status",
         )
+        .prefetch_related("section__sectionfee_set")
         .order_by("-date_registered")
     )
 
-    registration_total = registrations.count()
+    active_registrations = registrations.exclude(status_id__in={"canceled", "removed"})
+    registration_total = active_registrations.count()
     summary_lookup: dict[str, dict[str, Any]] = {}
-    for reg in registrations:
+    for reg in active_registrations:
         code = reg.status.code if reg.status else reg.status_id
         label = reg.status.label if reg.status else reg.status_id
         entry = summary_lookup.setdefault(
@@ -141,12 +303,22 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         )
 
     def _section_fee(section: Section) -> Decimal:
+        """Return the total fee for a section, including tuition."""
         # Include baseline tuition even when no SectionFee rows exist.
-        base_fee = getattr(section, "fee_total", Decimal("0.00"))
+        base_fee = getattr(section, "fee_total", None)
+        if base_fee is None:
+            fee_set = getattr(section, "sectionfee_set", None)
+            if fee_set is not None:
+                base_fee = sum(
+                    (fee.amount for fee in fee_set.all()),
+                    Decimal("0.00"),
+                )
+            else:
+                base_fee = Decimal("0.00")
         return base_fee + tuition_for(section.curriculum_course)
 
     course_status_rows = []
-    for reg in registrations:
+    for reg in active_registrations:
         section = reg.section
         course = section.curriculum_course.course
         course_status_rows.append(
@@ -159,6 +331,8 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 "semester": str(section.semester),
                 "last_update": reg.date_registered.strftime("%b %d, %Y"),
                 "fee": _section_fee(section),
+                "registration_id": reg.id,
+                "can_cancel": reg.status_id == "pending",
             }
         )
 
@@ -200,6 +374,25 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     for section in sections:
         sections_by_course[section.curriculum_course.course_id].append(section)
 
+    registered_course_ids: set[int] = set()
+    cooldown_course_ids: set[int] = set()
+    attempt_blocked_course_ids: set[int] = set()
+    if semester:
+        registered_course_ids = set(
+            active_registrations.filter(section__semester=semester).values_list(
+                "section__curriculum_course__course_id",
+                flat=True,
+            )
+        )
+        cooldown_course_ids = set(
+            registrations.filter(
+                section__semester=semester,
+                status_id__in={"canceled", "removed"},
+                date_registered__gte=timezone.now() - timedelta(hours=48),
+            ).values_list("section__curriculum_course__course_id", flat=True)
+        )
+        attempt_blocked_course_ids = _attempt_blocked_courses(student, semester)
+
     passed_course_ids = set(student.passed_courses().values_list("id", flat=True))
     allowed_course_ids = set(student.allowed_courses().values_list("id", flat=True))
     prereqs: Iterable[Prerequisite] = []
@@ -234,13 +427,22 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 registration_open,
                 course.id in allowed_course_ids,
                 bool(course_sections),
+                course.id not in registered_course_ids,
+                course.id not in cooldown_course_ids,
+                course.id not in attempt_blocked_course_ids,
             ]
         )
 
         missing = [cast(str, p["label"]) for p in prereq_data if not p["met"]]
         reason = ""
-        if not registration_open:
-            reason = "Registration window is closed."
+        if course.id in attempt_blocked_course_ids:
+            reason = "Reservation limit reached for this semester."
+        elif course.id in cooldown_course_ids:
+            reason = "Reservation locked for 48 hours after cancelation."
+        elif course.id in registered_course_ids:
+            reason = "Already reserved."
+        elif not registration_open:
+            reason = "Reservation window is closed."
         elif missing:
             reason = f"Complete {', '.join(missing)} first."
         elif not course_sections:
@@ -275,14 +477,6 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         else:
             locked_courses.append(course_payload)
 
-    completed_credits = student.completed_credits
-    required_credits = (
-        student.curriculum.programs.aggregate(
-            total=Sum("credit_hours__code"),
-        ).get("total")
-        or 0
-    )
-    remaining_credits = max(required_credits - completed_credits, 0)
     gpa = (
         Grade.objects.filter(student=student)
         .aggregate(value=Avg("value__number"))
@@ -294,10 +488,20 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         "0.00"
     )
     payments = Payment.objects.filter(invoice__student=student)
-    total_paid = payments.aggregate(total=Sum("amount_paid")).get("total") or Decimal(
-        "0.00"
+    # amount_due already reflects the remaining balance after cleared payments.
+    pending_registrations = (
+        active_registrations.filter(status_id="pending")
+        .select_related(
+            "section__curriculum_course__course",
+            "section__curriculum_course__credit_hours",
+        )
+        .prefetch_related("section__sectionfee_set")
     )
-    outstanding = max(total_due - total_paid, Decimal("0.00"))
+    pending_total = sum(
+        (_section_fee(reg.section) for reg in pending_registrations),
+        Decimal("0.00"),
+    )
+    outstanding = total_due + pending_total
     last_payment = payments.order_by("-id").select_related("invoice").first()
     if last_payment and hasattr(last_payment.invoice, "created_at"):
         last_payment_label = last_payment.invoice.created_at.strftime("%b %d, %Y")
@@ -329,6 +533,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     semester_gpa_credits: DefaultDict[int, int] = defaultdict(int)
     # Track total credits per semester for display.
     semester_credit_totals: DefaultDict[int, int] = defaultdict(int)
+    semester_sort_info: dict[int, tuple[date, int]] = {}
     validated_credits_total = 0
     grades = (
         Grade.objects.filter(student=student)
@@ -350,6 +555,11 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         section = grade.section
         semester_obj = section.semester
         semester_id = semester_obj.id
+        if semester_id not in semester_sort_info:
+            semester_sort_info[semester_id] = (
+                semester_obj.start_date or date.min,
+                semester_obj.number,
+            )
         group = semester_grade_lookup.get(semester_id)
         if group is None:
             group = {
@@ -395,10 +605,14 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             group["gpa"] = f"{gpa_value:.2f}"
         group["credits_total"] = semester_credit_totals.get(semester_id, 0)
 
+    semester_grade_groups.sort(
+        key=lambda group: semester_sort_info.get(group["semester_id"], (date.min, 0)),
+        reverse=True,
+    )
+    for group in semester_grade_groups:
+        group["courses"].sort(key=lambda row: row["code"] or "")
+
     credit_summary = {
-        "completed": completed_credits,
-        "required": required_credits,
-        "remaining": remaining_credits,
         "gpa": f"{gpa:.2f}" if gpa else "N/A",
         "validated": validated_credits_total,
     }
@@ -412,9 +626,13 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     if semester:
         announcements.append(f"Selected semester: {semester}")
     if not registration_open:
-        announcements.append("Registration window is currently closed.")
+        announcements.append("Reservation window is currently closed.")
     if not announcements:
         announcements.append("You are all set for the semester.")
+    announcements.append(
+        "Canceled reservations lock sections for 48 hours; after two attempts, "
+        "the course is locked for the semester."
+    )
 
     curriculum_course_count = len(curriculum_courses)
     advisor_actions = [
@@ -436,15 +654,14 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     ]
 
     registration_limits = {
-        "credits_remaining": remaining_credits,
-        "credits_cap": getattr(settings, "STUDENT_MAX_CREDITS", 18),
+        "credits_selected": 0,
         "currency": currency,
         "balance": outstanding,
     }
 
     sidebar_links = [
         {"label": "Dashboard", "href": reverse("student_dashboard"), "active": True},
-        {"label": "Course Registration", "href": "#courses", "active": False},
+        {"label": "Course Reservation", "href": "#courses", "active": False},
         {"label": "Financials", "href": "#records", "active": False},
         {"label": "Support", "href": "#support", "active": False},
     ]

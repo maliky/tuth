@@ -3,10 +3,13 @@
   if (!cartPanel) return;
 
   const cartItemsContainer = cartPanel.querySelector("[data-cart-items]");
-  const creditRemainingEl = cartPanel.querySelector("[data-credit-remaining]");
+  const creditRemainingEl = cartPanel.querySelector("[data-credit-selected]");
   const feeEstimateEl = cartPanel.querySelector("[data-fee-estimate]");
+  const selectedSectionsInput = cartPanel.querySelector(
+    "[data-selected-sections]"
+  );
 
-  const initialCredits = Number(cartPanel.dataset.creditsRemaining || "0");
+  const initialCredits = Number(cartPanel.dataset.creditsSelected || "0");
   const currency = cartPanel.dataset.currency || "USD";
 
   const cart = new Map();
@@ -52,19 +55,21 @@
       feeTotal += Number(item.fee);
     });
 
-    const creditsRemaining = Math.max(initialCredits - creditsUsed, 0);
+    const creditsSelected = initialCredits + creditsUsed;
 
     if (creditRemainingEl) {
-      creditRemainingEl.textContent = creditsRemaining.toFixed(1).replace(".0", "");
-      if (creditsRemaining <= 0) {
-        creditRemainingEl.classList.add("text-danger");
-      } else {
-        creditRemainingEl.classList.remove("text-danger");
-      }
+      creditRemainingEl.textContent = creditsSelected
+        .toFixed(1)
+        .replace(".0", "");
     }
 
     if (feeEstimateEl) {
       feeEstimateEl.textContent = feeTotal.toFixed(2);
+    }
+
+    if (selectedSectionsInput) {
+      const sectionIds = Array.from(cart.values()).map((item) => item.sectionId);
+      selectedSectionsInput.value = sectionIds.join(",");
     }
   };
 
