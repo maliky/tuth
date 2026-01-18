@@ -1,6 +1,6 @@
 """Core Admin module for academics."""
 
-from typing import TypeAlias, cast
+from typing import Iterable, TypeAlias, cast
 
 from django import forms
 from django.contrib import admin
@@ -27,7 +27,7 @@ from app.academics.models import (
 from app.people.models.student import Student
 from app.shared.admin.filters import BaseCollegeFilter
 from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
-from app.people.admin.mixins import MergeWizardMixin
+from app.people.admin.mixins import MergeWizardMixin, ModelT
 
 from .actions import update_curriculum, update_department
 from .filters import (
@@ -47,8 +47,6 @@ from .inlines import (
 from .merges import (
     merge_courses_action,
     merge_curricula,
-    merge_curricula_action,
-    merge_departments,
     merge_departments_action,
     merge_curriculum_courses,
 )
@@ -288,7 +286,7 @@ class MinorCurriculumCourseAdmin(admin.ModelAdmin):
 
 
 @admin.register(Curriculum)
-class CurriculumAdmin(CollegeRestrictedAdmin):
+class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
     """Admin options for Curriculum.
 
     Key features:
@@ -316,7 +314,8 @@ class CurriculumAdmin(CollegeRestrictedAdmin):
     # list_selected_relate reduces the number of queries in db
     list_select_related = ("college",)
     search_fields = ("short_name", "long_name")
-    actions = ["merge_curricula_action"]
+    # Keep short_name out of the wizard to avoid active-name uniqueness collisions.
+    merge_fields = ("long_name", "college", "status", "is_active", "description")
 
     def student_count(self, obj):
         """Adding a link to the student number."""
@@ -334,6 +333,16 @@ class CurriculumAdmin(CollegeRestrictedAdmin):
             f"?curricula__id__exact={obj.id}"
         )
         return format_html('<a href="{}">{}</a>', url, count)
+
+    def merge_records(self, target: ModelT, sources: Iterable[ModelT]) -> dict[str, int]:
+        """Merge curricula using the shared merge helper."""
+        target_curriculum = cast(Curriculum, target)
+        source_curricula = cast(Iterable[Curriculum], sources)
+        summary = merge_curricula(target_curriculum, source_curricula)
+        return {
+            "merged": summary.get("curricula_merged", 0),
+            "sections_merged": summary.get("sections_merged", 0),
+        }
 
 
 @admin.register(CurriculumCourse)
