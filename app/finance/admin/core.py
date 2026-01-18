@@ -5,7 +5,6 @@ from typing import cast
 from app.finance.models.payment import FeeType, PaymentMethod, ClearanceStatus
 from django import forms
 from django.contrib import admin, messages
-from django.core.exceptions import ValidationError
 from guardian.admin import GuardedModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
@@ -17,6 +16,7 @@ from app.people.models.staffs import Staff
 from app.shared.admin.mixins import ScopedAutocompleteAdminMixin
 from app.timetable.admin.filters import SemesterFilterAC
 from app.timetable.models.semester import Semester
+from app.timetable.utils import resolve_registration_open_semester
 
 
 class StaffChoiceField(forms.ModelChoiceField):
@@ -40,7 +40,7 @@ class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedMode
         "student__user__username",
         "semester__academic_year__code",
     )
-    autocomplete_fields = ("student",)
+    autocomplete_fields = ("student", "recorded_by")
 
     @admin.display(description="Recorded by")
     def recorded_by_name(self, obj: Invoice) -> str:
@@ -52,16 +52,34 @@ class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedMode
 
     def _get_open_registration_semester(self, request) -> Semester | None:
         """Return the open registration semester, if available."""
+        # It's not clear what we have in request and where _open_registration..
+        # is coming from.
         if getattr(request, "_open_registration_semester_loaded", False):
             return getattr(request, "_open_registration_semester", None)
-        try:
-            semester = Semester.get_registration_open_semester()
-        except ValidationError as exc:
-            messages.error(request, str(exc))
-            semester = None
+
+        semester, error_message = resolve_registration_open_semester()
+        if error_message:
+            messages.error(request, error_message)
         request._open_registration_semester = semester
         request._open_registration_semester_loaded = True
+        
         return semester
+
+    def _resolve_recorded_by_staff(self, request) -> Staff | None:
+        """Return the staff profile tied to the request user."""
+        if getattr(request, "_recorded_by_staff_loaded", False):
+            return getattr(request, "_recorded_by_staff", None)
+
+        staff = getattr(request.user, "staff", None)
+        if staff is None and request.user.is_superuser:
+            messages.warning(
+                request,
+                "Superusers without staff profiles must select Recorded by manually.",
+            )
+
+        request._recorded_by_staff = staff
+        request._recorded_by_staff_loaded = True
+        return staff
 
     def get_changeform_initial_data(self, request):
         """Set default semester/recorded_by values for invoice creation."""
@@ -69,7 +87,7 @@ class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedMode
         open_semester = self._get_open_registration_semester(request)
         if open_semester and "semester" not in initial:
             initial["semester"] = str(open_semester.pk)
-        staff = getattr(request.user, "staff", None)
+        staff = self._resolve_recorded_by_staff(request)
         if staff and "recorded_by" not in initial:
             initial["recorded_by"] = str(staff.pk)
         return initial
@@ -89,28 +107,29 @@ class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedMode
         if db_field.name == "recorded_by":
             kwargs["form_class"] = StaffChoiceField
 
+        # Set the field before applying defaults to avoid using an unset value.
+        field = super().formfield_for_foreignkey(db_field, request, **kwargs)
+        if field is None:
+            return field
+
         if db_field.name == "semester":
             open_semester = self._get_open_registration_semester(request)
             if open_semester and isinstance(field, forms.ModelChoiceField):
                 field.initial = open_semester.pk
 
         if db_field.name == "recorded_by":
-            # > TODO need to take in account super user
-            staff = getattr(request.user, "staff", None)
+            # > TODO: handle superusers without staff profiles.
+            # Superusers without staff profiles must select a staff entry manually.
+            staff = self._resolve_recorded_by_staff(request)
             if staff and isinstance(field, forms.ModelChoiceField):
                 field.initial = staff.pk
 
-        # > It was not clear why this was higher up
-        field = super().formfield_for_foreignkey(db_field, request, **kwargs)
-        if field is None:
-            return field
-                
         return field
 
     def save_model(self, request, obj, form, change):
         """Persist defaults for recorded_by and semester on save."""
         if not obj.recorded_by_id:
-            staff = getattr(request.user, "staff", None)
+            staff = self._resolve_recorded_by_staff(request)
             if staff:
                 obj.recorded_by = staff
         if not obj.semester_id:

@@ -1,10 +1,21 @@
 
-* <2026-01-18 dim. 12:31> Registration
+* <2026-01-18 dim. 19:32> Registration fro student/dashboard
+** high priority
+add a user name column to admin/people/...
+** Low priority  
+- There is too much boiler plate code, make checks and rechecks for None or existence when the code workflow already provide the check up the line and there is no chance of calling subquent function with non existent objects.
+- Change all my typing hint of format Class | None => Optional[Class]  it is more readable for me.
+
+  
+
+* DONE <2026-01-18 dim. 12:31> Registration
+  CLOSED: [2026-01-18 dim. 19:32]
 - In 'admin/registry/registrationstatus/'
   - for registration column add link to the registrations counted
 - Propose plan to update invoice when a payment is made. the remaining amount should be updated.
 
-* <2026-01-18 dim. 12:24> Payments
+* DONE <2026-01-18 dim. 12:24> Payments
+  CLOSED: [2026-01-18 dim. 19:32]
 - in app/finance/admin/core.py,
   - _get_opne_registration_semester seems to be a duplicate. Check that we do not define a similar function else where in the code base and if we do, import the function after factoring the duplicated definitions to an appropriate place such as app/timetable/utils.py. The refactor should be rewritten in a more functional style.
   

@@ -2,12 +2,17 @@
 
 from datetime import date
 import re
-from typing import Optional, Tuple, TypeAlias
+from typing import Optional, Tuple, TypeAlias, TYPE_CHECKING
 
 from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 
 from app.shared.types import SemesterCodeT
+
+if TYPE_CHECKING:
+    from app.timetable.models.semester import Semester
+
+OpenRegistrationSemesterResultT: TypeAlias = Tuple["Semester | None", str | None]
 
 
 def validate_subperiod(
@@ -189,3 +194,14 @@ def normalize_semester_code(
         return get_semester_code(sem_value=sem_value, year_value=year_value)
 
     return ""
+
+
+def resolve_registration_open_semester() -> OpenRegistrationSemesterResultT:
+    """Return the registration-open semester and an optional error message."""
+    from app.timetable.models.semester import Semester
+
+    try:
+        semester = Semester.get_registration_open_semester()
+    except ValidationError as exc:
+        return None, str(exc)
+    return semester, None

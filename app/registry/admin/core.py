@@ -5,7 +5,8 @@ from typing import TypeAlias, cast
 from django import forms
 from django.contrib import admin
 from django.db.models import Count, QuerySet
-from django.urls import path
+from django.urls import path, reverse
+from django.utils.html import format_html
 from import_export.admin import ImportExportModelAdmin
 
 from app.people.models.student import Student
@@ -23,6 +24,7 @@ from app.timetable.admin.filters import (
 )
 from app.timetable.admin.views import SectionBySemesterAutocomplete
 from app.timetable.models.semester import Semester
+from app.timetable.utils import resolve_registration_open_semester
 from app.timetable.models.section import Section
 from simple_history.admin import SimpleHistoryAdmin
 from guardian.admin import GuardedModelAdmin
@@ -34,7 +36,8 @@ SemesterT: TypeAlias = Semester
 
 def _open_registration_semester() -> SemesterT | None:
     """Return the single semester open for registration."""
-    return Semester.get_registration_open_semester()
+    semester, _ = resolve_registration_open_semester()
+    return semester
 
 
 def _section_queryset_for_student(student: Student | None) -> SectionQueryT:
@@ -274,4 +277,7 @@ class RegistrationStatusAdmin(admin.ModelAdmin):
         count = getattr(obj, "registration_total", None)
         if count is None:
             count = obj.registrations.count()
-        return count
+        url = reverse("admin:registry_registration_changelist") + (
+            f"?status__id__exact={obj.pk}"
+        )
+        return format_html('<a href="{}">{}</a>', url, count)

@@ -210,6 +210,7 @@ class FacultyAdmin(MergeWizardMixin, DuplicatePreviewMixin, CollegeRestrictedAdm
     list_display = (
         "faculty_name",
         "faculty_staff_id",
+        "username",
         "academic_rank",
         "primary_assignment",
         "get_division",
@@ -405,6 +406,7 @@ class StaffAdmin(MergeWizardMixin, DuplicatePreviewMixin, DepartmentRestrictedAd
     list_display = (
         "long_name",
         "staff_id",
+        "username",
         "position",
         "roles",
         "possible_duplicates",
@@ -519,14 +521,15 @@ class StudentAdmin(
     list_display = (
         "long_name",
         "student_id",
-        "birth_date",
+        "username",
+        "cumulative_gpa",
+        "validated_credits",
         "curriculum",
         # "entry_semester",
         # "last_enrolled_semester",
         "entry_semester",
         "last_enrolled_semester",
-        "cumulative_gpa",
-        "validated_credits",
+        "birth_date",
         "duplicate_count_link",
         "possible_duplicates",
     )

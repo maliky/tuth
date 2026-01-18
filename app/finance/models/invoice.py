@@ -29,7 +29,7 @@ class Invoice(models.Model):
     """
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
-    curriculum_course = models.OneToOneField(
+    curriculum_course = models.ForeignKey(
         "academics.CurriculumCourse", on_delete=models.CASCADE
     )
     student = models.ForeignKey("people.Student", on_delete=models.PROTECT)
@@ -52,3 +52,12 @@ class Invoice(models.Model):
     def __str__(self) -> str:  # pragma: no cover
         """Return a concise representation of the payment."""
         return f"{self.curriculum_course} - {self.amount_due}"
+
+    class Meta:
+        constraints = [
+            # Prevent duplicate invoices per student/course/semester combination.
+            models.UniqueConstraint(
+                fields=["student", "curriculum_course", "semester"],
+                name="uniq_invoice_student_course_semester",
+            )
+        ]
