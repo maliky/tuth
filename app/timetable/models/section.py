@@ -24,7 +24,7 @@ class Section(models.Model):
 
     A section differs from a course. A same course can be offered across semester
     /years through successive sections, which have themselves sessions (secsession)
-    
+
     Example:
         >>> from app.timetable.models import Section
         >>> Section.objects.create(course=course, semester=semester, number=1)

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import cast
+from typing import Optional, cast
 
 from django.contrib.auth.models import AnonymousUser, User
 from django.core.exceptions import PermissionDenied
@@ -21,15 +21,15 @@ def _require_student(user: User | AnonymousUser) -> Student:
 
 
 def _resolve_semester(
-    student: Student, requested_semester_id: str | None
-) -> tuple[Semester | None, list[Semester]]:
+    student: Student, requested_semester_id: Optional[str]
+) -> tuple[Optional[Semester], list[Semester]]:
     """Return the semester that should drive course availability."""
     open_semesters = (
         Semester.objects.filter(status_id=Semester.REGISTRATION_OPEN_CODES)
         .select_related("academic_year", "status")
         .order_by("academic_year__start_date", "number")
     )
-    semester: Semester | None = None
+    semester: Optional[Semester] = None
 
     # we look if requested_semester_id is part of the open_semester
     if requested_semester_id:

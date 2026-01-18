@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Optional
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from simple_history.models import HistoricalRecords
@@ -81,7 +83,7 @@ class Semester(StatusableMixin, models.Model):
         return self.status_id == self.REGISTRATION_OPEN_CODES
 
     @classmethod
-    def get_registration_open_semester(cls) -> "Semester | None":
+    def get_registration_open_semester(cls) -> Optional["Semester"]:
         """Return the open registration semester, raising if more than one exists."""
         open_qs = cls.objects.filter(status_id=cls.REGISTRATION_OPEN_CODES)
         if open_qs.count() > 1:

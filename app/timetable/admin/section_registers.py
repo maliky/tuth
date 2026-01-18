@@ -92,7 +92,7 @@ class SectionAdmin(CollegeRestrictedAdmin):
         #     if _is_registration_lookup(request):
         #         return qs.none(), use_distinct
         #     return qs, use_distinct
-        
+
         # try:
         #     student_pk = int(student_id)
         # except (TypeError, ValueError):

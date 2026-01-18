@@ -12,7 +12,7 @@ from app.shared.types import SemesterCodeT
 if TYPE_CHECKING:
     from app.timetable.models.semester import Semester
 
-OpenRegistrationSemesterResultT: TypeAlias = Tuple["Semester | None", str | None]
+OpenRegistrationSemesterResultT: TypeAlias = Tuple[Optional["Semester"], Optional[str]]
 
 
 def validate_subperiod(
@@ -63,7 +63,7 @@ def validate_subperiod(
             raise ValidationError({label: overlap_message})
 
 
-def get_academic_year(d: date | None = None) -> str:
+def get_academic_year(d: Optional[date] = None) -> str:
     """Return the academic year label for a date.
 
     Args:
@@ -81,7 +81,7 @@ def get_academic_year(d: date | None = None) -> str:
     return f"{start % 100:02d}-{end % 100:02d}"
 
 
-def normalize_academic_year(raw: str | None) -> str:
+def normalize_academic_year(raw: Optional[str]) -> str:
     """Convert various labels to the canonical YY-YY academic year format.
 
     Args:
@@ -133,7 +133,7 @@ SEMESTER_CODE_RE = re.compile(
 )
 
 
-def parse_semester_code(code: str | None) -> SemesterCodeT:
+def parse_semester_code(code: Optional[str]) -> SemesterCodeT:
     """Parse semester code strings into their year and number components.
 
     Args:
@@ -163,10 +163,10 @@ def parse_semester_code(code: str | None) -> SemesterCodeT:
 
 
 def normalize_semester_code(
-    sem_code: str | None,
+    sem_code: Optional[str],
     *,
-    year_value: str | None = None,
-    sem_value: str | None = None,
+    year_value: Optional[str] = None,
+    sem_value: Optional[str] = None,
 ) -> str:
     """Return a canonical YY-YY_SemN string from mixed semester inputs.
 

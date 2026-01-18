@@ -1,6 +1,6 @@
 """Core module."""
 
-from typing import cast
+from typing import Optional, cast
 
 from app.finance.models.payment import FeeType, PaymentMethod, ClearanceStatus
 from django import forms
@@ -50,7 +50,7 @@ class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedMode
             return recorded_by.long_name or str(recorded_by)
         return "-"
 
-    def _get_open_registration_semester(self, request) -> Semester | None:
+    def _get_open_registration_semester(self, request) -> Optional[Semester]:
         """Return the open registration semester, if available."""
         # It's not clear what we have in request and where _open_registration..
         # is coming from.
@@ -62,10 +62,10 @@ class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedMode
             messages.error(request, error_message)
         request._open_registration_semester = semester
         request._open_registration_semester_loaded = True
-        
+
         return semester
 
-    def _resolve_recorded_by_staff(self, request) -> Staff | None:
+    def _resolve_recorded_by_staff(self, request) -> Optional[Staff]:
         """Return the staff profile tied to the request user."""
         if getattr(request, "_recorded_by_staff_loaded", False):
             return getattr(request, "_recorded_by_staff", None)

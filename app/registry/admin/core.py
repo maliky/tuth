@@ -1,6 +1,6 @@
 """Admin configuration for registry models."""
 
-from typing import TypeAlias, cast
+from typing import Optional, TypeAlias, cast
 
 from django import forms
 from django.contrib import admin
@@ -34,13 +34,13 @@ SectionQueryT: TypeAlias = QuerySet[Section]
 SemesterT: TypeAlias = Semester
 
 
-def _open_registration_semester() -> SemesterT | None:
+def _open_registration_semester() -> Optional[SemesterT]:
     """Return the single semester open for registration."""
     semester, _ = resolve_registration_open_semester()
     return semester
 
 
-def _section_queryset_for_student(student: Student | None) -> SectionQueryT:
+def _section_queryset_for_student(student: Optional[Student]) -> SectionQueryT:
     """Return sections scoped to a student or an empty queryset."""
     qs = Section.objects.select_related(
         "semester",
@@ -58,7 +58,7 @@ def _section_queryset_for_student(student: Student | None) -> SectionQueryT:
     )
 
 
-def _resolve_request_student(request) -> Student | None:
+def _resolve_request_student(request) -> Optional[Student]:
     """Resolve a student from request data or the current registration."""
     student_id = request.POST.get("student") or request.GET.get("student")
     if student_id:
@@ -99,7 +99,7 @@ class RegistrationAdminForm(forms.ModelForm):
         if status_field is not None and not getattr(self.instance, "pk", None):
             status_field.initial = RegistrationStatus.get_default()
 
-    def _resolve_student(self) -> Student | None:
+    def _resolve_student(self) -> Optional[Student]:
         """Return the selected student from bound data or the instance."""
         student_id = (
             self.data.get("student")
