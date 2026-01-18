@@ -1,22 +1,23 @@
 
 * <2026-01-18 dim. 12:31> Registration
-- In 'admin/registry/registrationstatus/' registration columns add link    to the registrations
-- there is only one invoice pour course curriculum, changes and update are tracked through history tracking
-- When a payment is made the invoice remaining amount is updated
+- In 'admin/registry/registrationstatus/'
+  - for registration column add link to the registrations counted
+- Propose plan to update invoice when a payment is made. the remaining amount should be updated.
 
 * <2026-01-18 dim. 12:24> Payments
-- in app/finance/admin/core.py, _get_opne_registration_semester seem a duplicate. check that we do not define a similare function else where and if so, import after moving the duplicated definition to an appropriate place such as app/timetable/utils.py and rewritten in more functional style.
+- in app/finance/admin/core.py,
+  - _get_opne_registration_semester seems to be a duplicate. Check that we do not define a similar function else where in the code base and if we do, import the function after factoring the duplicated definitions to an appropriate place such as app/timetable/utils.py. The refactor should be rewritten in a more functional style.
   
 - in 'admin/finance/invoice/add/'
-  - [X] set defaults for semester to semester opened for registration
-  - [ ] set "recorded by" to current logged in staff/user
-  - [X] scope curriculum course to those of the opened_semester
+  - [ ] set "recorded by" to current logged in staff/user (done but need to handle superuser, see in code comments)
+  - [ ] "Recorded by" field should be searchable either by name or by student id. as for the student field.
   - [X] Display searchable short name of scoped curriculum course
-  - [ ] "Recorded by" field should be searchable either name or student id as for the student
+  - [X] set defaults for semester to semester opened for registration
+  - [X] scope curriculum course to those of the opened_semester
 
 ** General observations
-  - [ ] Any field where we select an AbstractPerson should be searchable either name or id.
-  - [ ] the default display for a AbstractPerson is longname (id) no need to display the user name.
+  - [ ] the default display for an AbstractPerson should be its longname and ID in parenthesis.  No need to display the user name except on the admin page of the specific AbstractPerson
+  - [ ] Any field where we select an AbstractPerson should be searchable either by full name or id.
 * DONE <2026-01-16 ven. 16:40> merging
   CLOSED: [2026-01-18 dim. 12:30]
 I am trying to merge this
