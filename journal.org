@@ -2,6 +2,13 @@
 * <2026-01-18 dim. 22:52> Registration/reservation workflow
   - Think of where to block the multiple registrations of a student for a curriculum course in the same semester. I want to give him 2 chances separated by 48h. this Sould be computed on the fly, looking at the registration table history. no stored field, jsut computed values. check that the current workflow is compliant with this propoistion.
   - Not sure about the naming of reservation.  undo the previous changes.  lets have registration every where (code, comments included), the distinction will be the status.
+** Refactoring
+- Weekday parsing logic duplicated acrosse 2 import commands
+- Time parsing logic duplicated with identical formats
+- location splitting logic duplicated (include fall back in shared version)
+- college/departments code normaliztion repeated in admin widgets and ensures
+- academic-year normalization redundant.  Some function are alias or wrapper on others.
+- Extract a small pure helper like _coerce_int(value: str | int) -> int | None that returns None on failure, and have: parse_int call it directly, and to_int wrap it and apply default when None.
      
 
 * DONE <2026-01-18 dim. 21:35> Reservation logic student

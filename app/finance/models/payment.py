@@ -256,7 +256,7 @@ class Payment(StatusableMixin, models.Model):
         delta = self._invoice_balance_delta(previous_status_id, previous_amount_paid)
         if delta == 0:
             return
-        
+
         new_amount = self.invoice.amount_due - delta
         if new_amount < 0:
             new_amount = Decimal("0.00")
