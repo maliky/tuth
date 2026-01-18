@@ -3,10 +3,13 @@
 from typing import TYPE_CHECKING
 
 from django.contrib import admin, messages
+from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from app.academics.models.course import Course, CurriculumCourse
 from app.academics.models.curriculum import Curriculum
+from app.academics.models.prerequisite import Prerequisite
+from app.academics.models.concentration import Major, Minor
 from app.academics.models.department import Department
 from app.academics.models.concentration import (
     MajorCurriculumCourse,
@@ -37,37 +40,140 @@ def merge_departments_action(dept_admin: "DepartmentAdmin", request, queryset):
     )
 
 
-@admin.action(description="Merge selected curricula into the first")
+@admin.action(description="Merge selected curricula into the chosen target")
 def merge_curricula_action(curriculum_admin: "CurriculumAdmin", request, queryset):
-    """Merge curricula, moving students and programmed courses into the first."""
+    """Merge curricula, moving students and programmed courses into the target."""
     if queryset.count() < 2:
         messages.warning(request, "Select at least two curricula to merge.")
         return
-    target = queryset.order_by("id").first()
-    merge_curricula(target, queryset.exclude(pk=target.pk))
+    # Action form supplies the explicit target to avoid relying on selection order.
+    target_id = request.POST.get("merge_target")
+    if not target_id:
+        messages.error(request, "Select a merge target before running this action.")
+        return
+    target = Curriculum.objects.filter(pk=target_id).first()
+    if not target:
+        messages.error(request, "Merge target curriculum was not found.")
+        return
+    if not queryset.filter(pk=target.pk).exists():
+        messages.error(request, "Merge target must be part of the selection.")
+        return
+    sources = queryset.exclude(pk=target.pk)
+    try:
+        summary = merge_curricula(target, sources)
+    except ValidationError as exc:
+        messages.error(request, str(exc))
+        return
     messages.success(
         request,
-        f"Merged {queryset.count() - 1} curricula into {target.short_name}.",
+        f"Merged {summary['curricula_merged']} curriculum/curricula into "
+        f"{target.short_name}.",
     )
+    if summary["sections_merged"]:
+        messages.warning(
+            request,
+            f"Merged {summary['sections_merged']} conflicting section(s).",
+        )
+    if summary["prerequisites_skipped"]:
+        messages.warning(
+            request,
+            f"Skipped {summary['prerequisites_skipped']} duplicate prerequisite(s).",
+        )
 
 
 @transaction.atomic
 def merge_curricula(target: Curriculum, sources):
-    """Merge curricula: move students and curriculum courses to target."""
+    """Merge curricula: move attached records to the target curriculum."""
+    summary = {
+        "curricula_merged": 0,
+        "students_moved": 0,
+        "curriculum_courses_moved": 0,
+        "curriculum_courses_merged": 0,
+        "sections_moved": 0,
+        "sections_merged": 0,
+        "prerequisites_moved": 0,
+        "prerequisites_skipped": 0,
+        "majors_moved": 0,
+        "minors_moved": 0,
+    }
     for src in sources:
         if src.pk == target.pk:
             continue
-        Student.objects.filter(curriculum=src).update(curriculum=target)
+        moved_students = Student.objects.filter(curriculum=src).update(curriculum=target)
+        summary["students_moved"] += moved_students
+        summary["majors_moved"] += Major.objects.filter(curriculum=src).update(
+            curriculum=target
+        )
+        summary["minors_moved"] += Minor.objects.filter(curriculum=src).update(
+            curriculum=target
+        )
+        for prereq in Prerequisite.objects.filter(curriculum=src):
+            if Prerequisite.objects.filter(
+                curriculum=target,
+                course_id=prereq.course_id,
+                prerequisite_course_id=prereq.prerequisite_course_id,
+            ).exists():
+                prereq.delete()
+                summary["prerequisites_skipped"] += 1
+                continue
+            prereq.curriculum = target
+            prereq.save(update_fields=["curriculum"])
+            summary["prerequisites_moved"] += 1
         for cc in CurriculumCourse.objects.filter(curriculum=src):
-            # Avoid duplicate course entries on the target curriculum
+            # Avoid duplicate course entries on the target curriculum.
             existing = CurriculumCourse.objects.filter(
                 curriculum=target, course=cc.course
             ).first()
             if existing:
+                if Invoice.objects.filter(curriculum_course=cc).exists():
+                    raise ValidationError(
+                        "Cannot merge curricula because a source curriculum course "
+                        "has an invoice and the target already contains that course."
+                    )
+                changed_fields: list[str] = []
+                if cc.is_required and not existing.is_required:
+                    existing.is_required = True
+                    changed_fields.append("is_required")
+                if cc.is_elective and not existing.is_elective:
+                    existing.is_elective = True
+                    changed_fields.append("is_elective")
+                if changed_fields:
+                    existing.save(update_fields=changed_fields)
+                moved = _merge_curriculum_course_to_target(existing, cc)
+                summary["sections_moved"] += moved["sections_moved"]
+                summary["sections_merged"] += moved["sections_merged"]
+                summary["curriculum_courses_merged"] += 1
                 continue
             cc.curriculum = target
-            cc.save()
+            cc.save(update_fields=["curriculum"])
+            summary["curriculum_courses_moved"] += 1
         src.delete()
+        summary["curricula_merged"] += 1
+    return summary
+
+
+def _merge_curriculum_course_to_target(
+    target: CurriculumCourse, source: CurriculumCourse
+) -> dict[str, int]:
+    """Move section and concentration links from source to target."""
+    summary = {"sections_moved": 0, "sections_merged": 0}
+    _merge_curriculum_course_links(target, source)
+    source_sections = Section.objects.filter(curriculum_course=source)
+    for section in source_sections:
+        conflict = Section.objects.filter(
+            curriculum_course=target,
+            semester_id=section.semester_id,
+            number=section.number,
+        ).first()
+        if conflict:
+            _merge_sections(conflict, section)
+            summary["sections_merged"] += 1
+            continue
+        section.curriculum_course = target
+        section.save(update_fields=["curriculum_course"])
+        summary["sections_moved"] += 1
+    source.delete()
+    return summary
 
 
 @transaction.atomic
