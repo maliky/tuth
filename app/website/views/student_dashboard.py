@@ -19,11 +19,12 @@ from app.academics.models.prerequisite import Prerequisite
 from app.finance.models.invoice import Invoice
 from app.finance.models.payment import Payment
 from app.registry.models.grade import Grade
+from app.finance.utils import tuition_for
 from app.registry.models.registration import Registration
 from app.timetable.choices import WEEKDAYS_NUMBER
 from app.timetable.models.section import Section
 
-from .student_portal import _require_student, _resolve_semester
+from .student_helpers import _require_student, _resolve_semester
 
 
 GPA_EXCLUDED_CODES = {"ip", "ng", "w", "i", "ab", "dr"}
@@ -140,7 +141,9 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         )
 
     def _section_fee(section: Section) -> Decimal:
-        return getattr(section, "fee_total", Decimal("0.00"))
+        # Include baseline tuition even when no SectionFee rows exist.
+        base_fee = getattr(section, "fee_total", Decimal("0.00"))
+        return base_fee + tuition_for(section.curriculum_course)
 
     course_status_rows = []
     for reg in registrations:

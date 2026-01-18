@@ -286,7 +286,7 @@ class CurriculumCourse(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         """Return Curriculum <-> Course for readability."""
-        return f"{self.course} <-> {self.curriculum}"
+        return f"{self.course} :: {self.curriculum}"
 
     def _ensure_credit_hours(self):
         """Make sure the credit_hours is set."""

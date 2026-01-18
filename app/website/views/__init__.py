@@ -12,14 +12,11 @@ from .enrollment import (
 from .registrar import registrar_course_windows
 from .staff_dashboards import staff_dashboard, staff_role_dashboard
 from .student_dashboard import student_dashboard
-from .student_portal import course_dashboard, landing_page
 
 __all__ = [
     "PortalLoginView",
     "PortalLogoutView",
-    "course_dashboard",
     "create_student",
-    "landing_page",
     "portal_redirect",
     "registrar_course_windows",
     "staff_dashboard",

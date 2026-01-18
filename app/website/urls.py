@@ -15,7 +15,7 @@ urlpatterns = [
     path("portal/", views.portal_redirect, name="portal_redirect"),
     path("auth/login/", views.PortalLoginView.as_view(), name="portal_login"),
     path("auth/logout/", views.PortalLogoutView.as_view(), name="portal_logout"),
-    path("courses/", views.course_dashboard, name="course_dashboard"),
+    # Course dashboard removed in favor of the student dashboard flow.
     path("students/", views.student_list, name="student_list"),
     path("students/<int:pk>", views.student_detail, name="student_detail"),
     path("students/<int:pk>/delete/", views.student_delete, name="student_delete"),

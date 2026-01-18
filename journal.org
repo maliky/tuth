@@ -1,5 +1,24 @@
 
-* <2026-01-16 ven. 16:40> merging
+* <2026-01-18 dim. 12:31> Registration
+- In 'admin/registry/registrationstatus/' registration columns add link    to the registrations
+- there is only one invoice pour course curriculum, changes and update are tracked through history tracking
+- When a payment is made the invoice remaining amount is updated
+
+* <2026-01-18 dim. 12:24> Payments
+- in app/finance/admin/core.py, _get_opne_registration_semester seem a duplicate. check that we do not define a similare function else where and if so, import after moving the duplicated definition to an appropriate place such as app/timetable/utils.py and rewritten in more functional style.
+  
+- in 'admin/finance/invoice/add/'
+  - [X] set defaults for semester to semester opened for registration
+  - [ ] set "recorded by" to current logged in staff/user
+  - [X] scope curriculum course to those of the opened_semester
+  - [X] Display searchable short name of scoped curriculum course
+  - [ ] "Recorded by" field should be searchable either name or student id as for the student
+
+** General observations
+  - [ ] Any field where we select an AbstractPerson should be searchable either name or id.
+  - [ ] the default display for a AbstractPerson is longname (id) no need to display the user name.
+* DONE <2026-01-16 ven. 16:40> merging
+  CLOSED: [2026-01-18 dim. 12:30]
 I am trying to merge this
 
 Course
@@ -22,7 +41,8 @@ Faculty
 ::  but it is skipped because of incompatible selections
 I course have the same department and curriculum. I am expecting a new form asking me to slect fiedl per field the target value. I expect sections to be merged and the faculties to be combined, ie, nothing to do there, will be handled when sections point to the same curriculumcourse.
 
-* <2026-01-16 Fri 16:28> UX 8 so
+* DONE <2026-01-16 Fri 16:28> UX 8 so
+  CLOSED: [2026-01-18 dim. 12:31]
     P0 – Blockers / correctness
 
   - Admin / Registry / RegistrationStatus: add a column with registration count.
