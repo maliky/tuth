@@ -107,18 +107,16 @@ def extract_course_codes(row: Row) -> tuple[str, str]:
 
     # > Check the stuff here
     # could also be dept_code no ?
-    _course_code = get_in_row("course_code", row)
+    course_code = get_in_row("course_code", row)
 
-    if _course_code:
-        return expand_course_code(_course_code, row=row)
+    if not course_code:
+        _dept_code = get_in_row("dept_code", row) or get_in_row("course_dept", row)
+        course_no = get_in_row("course_no", row)
+        course_code = _dept_code + course_no
 
-    _dept_code = get_in_row("dept_code", row) or get_in_row("course_dept", row)
-    course_no = get_in_row("course_no", row)
-
-    _course_code = _dept_code + course_no
     try:
-        college_code, dept_code, _ = expand_course_code(_course_code, row=row)
+        college_code, dept_code, _ = expand_course_code(course_code, row=row)
     except AssertionError:
-        return (get_in_row("college_code", row), _course_code)
+        return (get_in_row("college_code", row), course_code)
 
     return college_code, dept_code
