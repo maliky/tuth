@@ -28,7 +28,8 @@ if TYPE_CHECKING:
     from app.people.models.staffs import Staff
     from app.people.models.student import Student
     from app.registry.models import Registration
-    from app.timetable.models import Section
+    from app.timetable.models.section import Section
+    from app.timetable.models.semester import Semester
 
 
 _T = TypeVar("_T")

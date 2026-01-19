@@ -12,7 +12,7 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandParser
 
 from app.shared.fuzzy_matching import best_matches
-from app.shared.utils import parse_str
+from app.shared.utils import get_in_row, parse_str
 
 
 class MatchRow(TypedDict):

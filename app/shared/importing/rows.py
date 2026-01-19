@@ -112,7 +112,7 @@ def extract_course_codes(row: Row) -> tuple[str, str]:
     if _course_code:
         return expand_course_code(_course_code, row=row)
 
-    _dept_code = (get_in_row("dept_code", row) or get_in_row("course_dept", row),)
+    _dept_code = get_in_row("dept_code", row) or get_in_row("course_dept", row)
     course_no = get_in_row("course_no", row)
 
     _course_code = _dept_code + course_no
@@ -120,5 +120,5 @@ def extract_course_codes(row: Row) -> tuple[str, str]:
         college_code, dept_code, _ = expand_course_code(_course_code, row=row)
     except AssertionError:
         return (get_in_row("college_code", row), _course_code)
-    
+
     return college_code, dept_code
