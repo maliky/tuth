@@ -21,7 +21,7 @@ from app.shared.importing import (
     set_course_codes,
     setdefault_field,
 )
-from app.shared.utils import get_in_row
+from app.shared.utils import get_in_row, parse_str
 from app.timetable.admin.section_widgets import SectionWidget
 from app.timetable.utils import normalize_academic_year
 
@@ -48,18 +48,13 @@ LEGACY_INVALID_FIELDS = {
 
 def normalize_semester(raw: str | None) -> str:
     """Collapse textual semester labels to numeric slots."""
-    token = (raw or "").strip().upper()
+    token = parse_str(raw, "upper")
     return SEM_MAP.get(token, "1")
-
-
-def normalize_year(raw: str | None) -> str:
-    """Public alias used in tests; delegate to normalize_academic_year."""
-    return normalize_academic_year(raw)
 
 
 def _truncate_curriculum_label(label: str) -> str:
     """Clamp curriculum labels to the DB max_length (40 chars)."""
-    text = (label or "").strip()
+    text = parse_str(label)
     if len(text) > CURRICULUM_MAX_LEN:
         return text[:CURRICULUM_MAX_LEN]
     return text

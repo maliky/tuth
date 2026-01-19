@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from datetime import date, datetime, time
+from datetime import date, time
 from pathlib import Path
 from typing import Any, Optional
 
@@ -37,15 +37,19 @@ from app.people.models.faculty import Faculty
 from app.people.models.staffs import Staff
 from app.people.utils import name_parts_from_row
 from app.registry.models import CreditHour
-from app.shared.utils import get_in_row, parse_int
+from app.shared.utils import get_in_row, parse_str, to_int
 from app.spaces.models.core import Room, Space
-from app.timetable.choices import WEEKDAYS_NUMBER
 from app.timetable.ensures import ensure_semester
 from app.timetable.models.schedule import Schedule
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
 from app.timetable.models.session import SecSession
-from app.timetable.utils import normalize_academic_year
+from app.timetable.utils import (
+    normalize_academic_year,
+    parse_time_value,
+    parse_weekday,
+    split_location,
+)
 
 CID_PATTERN = re.compile(
     r"^(?P<dept>[A-Za-z]+)_(?P<num>\d+)_s(?P<section>\d+)$", re.IGNORECASE
@@ -203,7 +207,7 @@ class Command(BaseCommand):
         dept_code = _match.group("dept").upper()
         course_no = _match.group("num")
         section_str = _match.group("section")
-        section_no = parse_int(section_str)
+        section_no = to_int(section_str)
         if section_no is None or section_no < 1:
             raise ValueError(f"Invalid section number in cid '{token}'")
 
@@ -216,7 +220,7 @@ class Command(BaseCommand):
         if not ay_code:
             raise ValueError("Missing academic year")
 
-        sem_no = parse_int(semester_str)
+        sem_no = to_int(semester_str)
         if sem_no is None:
             raise ValueError("Missing semester number")
 
@@ -333,7 +337,7 @@ class Command(BaseCommand):
         stats: ImportStats,
     ) -> Optional[Faculty]:
 
-        _name = str(raw_name or "").strip()
+        _name = parse_str(raw_name)
         if not _name:
             return None
 
@@ -378,9 +382,9 @@ class Command(BaseCommand):
         end_raw: object,
         stats: ImportStats,
     ) -> Schedule:
-        weekday = self._parse_weekday(weekday_raw)
-        start_time = self._parse_time(start_raw)
-        end_time = self._parse_time(end_raw)
+        weekday = parse_weekday(weekday_raw)
+        start_time = parse_time_value(start_raw)
+        end_time = parse_time_value(end_raw)
 
         schedule, created = Schedule.objects.get_or_create(
             weekday=weekday,
@@ -392,7 +396,7 @@ class Command(BaseCommand):
         return schedule
 
     def _resolve_room(self, location_str: str, stats: ImportStats) -> Room:
-        space_code, room_code = self._split_location(location_str)
+        space_code, room_code = split_location(location_str)
 
         if space_code == "TBA":
             space = Space.get_default()
@@ -429,49 +433,6 @@ class Command(BaseCommand):
             session.room = room
             session.save(update_fields=["room"])
         return session
-
-    def _parse_weekday(self, raw: str) -> int:
-        token = raw.lower()
-        if not token:
-            return WEEKDAYS_NUMBER.TBA
-        if token.isdigit():
-            return int(token)
-        mapping = {label.lower(): num for num, label in WEEKDAYS_NUMBER.choices}
-        if token not in mapping:
-            raise ValueError(f"Unknown weekday '{raw}'")
-        return mapping[token]
-
-    def _parse_time(self, raw: object) -> time:
-        if isinstance(raw, time):
-            return raw
-        text = str(raw or "").strip()
-        if not text:
-            raise ValueError("Missing time value")
-        for fmt in ("%H:%M", "%H:%M:%S", "%I:%M %p"):
-            try:
-                return datetime.strptime(text, fmt).time()
-            except ValueError:
-                continue
-        raise ValueError(f"Could not parse time '{text}'")
-
-    def _split_location(self, raw: object) -> tuple[str, str]:
-        text = str(raw or "").strip()
-        if not text or text.lower() == "tba":
-            return "TBA", "TBA"
-
-        normalized = re.sub(r"\s+", " ", text)
-        normalized = normalized.replace(" -", "-").replace("- ", "-")
-
-        for sep in ("-", "/", " "):
-            if sep in normalized:
-                left, right = normalized.split(sep, 1)
-                return left.strip().upper(), right.strip() or "TBA"
-
-        match = re.match(r"(?P<prefix>[A-Za-z]+)(?P<rest>.*)", normalized)
-        if match:
-            return match.group("prefix").upper(), match.group("rest").strip() or "TBA"
-
-        return normalized.upper(), normalized
 
     def _print_summary(self, stats: ImportStats) -> None:
         summary_parts = [

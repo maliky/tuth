@@ -6,6 +6,8 @@ from typing import Any
 
 import pandas as pd
 
+from app.shared.utils import parse_str
+
 
 def unique_or_false(series: pd.Series) -> str | bool:
     """Return the sole unique non-empty value in a column.
@@ -22,8 +24,7 @@ def unique_or_false(series: pd.Series) -> str | bool:
     cleaned = series.fillna("").astype(str)
     uniques = cleaned.unique()
     if len(uniques) == 1:
-        value = uniques[0].strip()
-        return value or ""
+        return parse_str(uniques[0])
     return False
 
 

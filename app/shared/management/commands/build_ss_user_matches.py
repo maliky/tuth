@@ -12,6 +12,7 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandParser
 
 from app.shared.fuzzy_matching import best_matches
+from app.shared.utils import parse_str
 
 
 class MatchRow(TypedDict):
@@ -52,7 +53,7 @@ def _read_usernames_from_csv(path: Path, columns: Iterable[str]) -> set[str]:
 
     for row in reader:
         for header in matched_headers:
-            value = (row.get(header) or "").strip()
+            value = get_in_row(header, row)
             if value:
                 rows.add(value)
     return rows

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import csv
 from dataclasses import dataclass, field
-from datetime import datetime, time
+from datetime import time
 from time import monotonic
 from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError, CommandParser
@@ -24,7 +24,6 @@ from app.shared.importing import CsvRowLogger, log_invalid_row
 from app.shared.types import RowStrOptT, SectionCacheT, SessionKeyT
 
 from app.shared.utils import get_in_row, to_int
-from app.timetable.choices import WEEKDAYS_NUMBER
 from app.timetable.ensures import (
     ensure_room_id,
     ensure_session_id,
@@ -33,6 +32,7 @@ from app.timetable.ensures import (
 )
 from app.timetable.models.section import Section
 from app.timetable.models.session import SecSession
+from app.timetable.utils import parse_time_value, parse_weekday, split_location
 
 
 @dataclass
@@ -92,7 +92,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--semester-code",
             default="25-26s2",
-            help="Fallback semester code when academic_year/semester_no are missing.",
+            help="Fallback semester code when academic_year/semester_no are missing. (def. 25-26s2)",
         )
         parser.add_argument(
             "--batch-size",
@@ -449,15 +449,7 @@ def _parse_weekday(value: str) -> int:
     Examples:
         "Mon" -> 1
     """
-    token = (value or "").strip().lower()
-    if not token:
-        return WEEKDAYS_NUMBER.TBA
-    if token.isdigit():
-        return int(token)
-    mapping = {label.lower(): num for num, label in WEEKDAYS_NUMBER.choices}
-    if token not in mapping:
-        raise ValueError(f"Unknown weekday '{value}'")
-    return mapping[token]
+    return parse_weekday(value)
 
 
 def _parse_time(value: str, label: str) -> time:
@@ -476,15 +468,7 @@ def _parse_time(value: str, label: str) -> time:
     Examples:
         "08:30", "08:30:00", "8:30 AM"
     """
-    text = (value or "").strip()
-    if not text:
-        raise ValueError(f"Missing {label} value")
-    for fmt in ("%H:%M", "%H:%M:%S", "%I:%M %p"):
-        try:
-            return datetime.strptime(text, fmt).time()
-        except ValueError:
-            continue
-    raise ValueError(f"Could not parse {label} value '{value}'")
+    return parse_time_value(value, label=label)
 
 
 def _split_location(raw: str) -> tuple[str, str]:
@@ -499,19 +483,7 @@ def _split_location(raw: str) -> tuple[str, str]:
     Examples:
         "NB-201" -> ("NB", "201")
     """
-    text = (raw or "").strip()
-    if not text or text.lower() == "tba":
-        return "TBA", "TBA"
-
-    normalized = " ".join(text.split())
-    normalized = normalized.replace(" -", "-").replace("- ", "-")
-
-    for sep in ("-", "/", " "):
-        if sep in normalized:
-            left, right = normalized.split(sep, 1)
-            return left.strip().upper(), right.strip() or "TBA"
-
-    return normalized.upper(), normalized
+    return split_location(raw)
 
 
 def _prime_section_cache() -> SectionCacheT:

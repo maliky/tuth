@@ -42,7 +42,8 @@ class StudentRegistrationInline(admin.TabularInline):
     model = Registration
     fk_name = "student"
     extra = 0
-    can_delete = False
+    # Allow staff to remove registrations directly from the student admin.
+    can_delete = True
     fields = ("section_link", "section_semester", "status", "grade_code")
     readonly_fields = ("section_link", "section_semester", "grade_code")
 

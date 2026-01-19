@@ -2,10 +2,11 @@
 
 from typing import TYPE_CHECKING, Mapping, Optional, Tuple
 
+from app.academics.choices import COLLEGE_CODE
 from app.academics.constants import COURSE_PATTERN  # safe
 from app.academics.models.college import College
 from app.shared.types import Row
-from app.shared.utils import get_in_row
+from app.shared.utils import get_in_row, parse_str
 
 if TYPE_CHECKING:
     from app.academics.models.department import Department
@@ -47,6 +48,17 @@ def expand_course_code(
             college_code = College.get_default().code
 
     return college_code, dept_shortname, course_no
+
+
+def normalize_college_code(code_raw: str) -> str:
+    """Normalize college codes using the shared mapping."""
+    token = parse_str(code_raw, "lower", dft="deft")
+    return COLLEGE_CODE.get(token, "DEFT")
+
+
+def normalize_department_code(code_raw: str) -> str:
+    """Normalize department codes to uppercase defaults."""
+    return parse_str(code_raw, "upper", dft="DEFT")
 
 
 def make_course_code(dept: "Department", number: str, short=False) -> str:

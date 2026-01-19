@@ -56,6 +56,7 @@ FieldT: TypeAlias = Union[
     tuple[()],
 ]
 
+OpenRegistrationSemesterResultT: TypeAlias = Tuple[Optional["Semester"], Optional[str]]
 ModelResourceType: TypeAlias = type[resources.ModelResource]
 DirectoryResourceEntry: TypeAlias = tuple[
     str,

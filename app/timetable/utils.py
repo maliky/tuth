@@ -1,18 +1,15 @@
 """Utility helpers for the timetable app."""
 
-from datetime import date
+from datetime import date, datetime, time
 import re
 from typing import Optional, Tuple, TypeAlias, TYPE_CHECKING
 
 from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 
+from app.shared.utils import parse_str
 from app.shared.types import SemesterCodeT
-
-if TYPE_CHECKING:
-    from app.timetable.models.semester import Semester
-
-OpenRegistrationSemesterResultT: TypeAlias = Tuple[Optional["Semester"], Optional[str]]
+from app.timetable.choices import WEEKDAYS_NUMBER
 
 
 def validate_subperiod(
@@ -95,7 +92,7 @@ def normalize_academic_year(raw: Optional[str]) -> str:
         "2019" becomes "19-20".
         "19_20" becomes "19-20".
     """
-    text = (raw or "").strip()
+    text = parse_str(raw)
     if not text:
         return ""
 
@@ -187,7 +184,7 @@ def normalize_semester_code(
     if ay_code and sem_no:
         return f"{normalize_academic_year(ay_code)}_Sem{sem_no}"
 
-    raw_value = (sem_code or "").strip()
+    raw_value = parse_str(sem_code)
     if raw_value and year_value:
         return get_semester_code(sem_value=raw_value, year_value=year_value)
     if sem_value and year_value:
@@ -196,12 +193,80 @@ def normalize_semester_code(
     return ""
 
 
-def resolve_registration_open_semester() -> OpenRegistrationSemesterResultT:
-    """Return the registration-open semester and an optional error message."""
-    from app.timetable.models.semester import Semester
+def parse_weekday(value: object) -> int:
+    """Normalize weekday values to the WEEKDAYS_NUMBER enum.
 
-    try:
-        semester = Semester.get_registration_open_semester()
-    except ValidationError as exc:
-        return None, str(exc)
-    return semester, None
+    Args:
+        value: Raw weekday string or number.
+
+    Returns:
+        Weekday integer value.
+
+    Raises:
+        ValueError: When the weekday is not recognized.
+    """
+    token = parse_str(value, "lower", dft="")
+    if not token:
+        return WEEKDAYS_NUMBER.TBA
+    if token.isdigit():
+        return int(token)
+    mapping = {label.lower(): num for num, label in WEEKDAYS_NUMBER.choices}
+    if token not in mapping:
+        raise ValueError(f"Unknown weekday '{value}'")
+    return mapping[token]
+
+
+def parse_time_value(value: object, *, label: str = "time") -> time:
+    """Parse a time value from common string formats.
+
+    Args:
+        value: Raw time input.
+        label: Field label for error messages.
+
+    Returns:
+        Parsed time value.
+
+    Raises:
+        ValueError: When the value is missing or unparsable.
+    """
+    if isinstance(value, time):
+        return value
+    raw_text = "" if not value else str(value)
+    text = parse_str(raw_text)
+    if not text:
+        raise ValueError(f"Missing {label} value")
+    for fmt in ("%H:%M", "%H:%M:%S", "%I:%M %p"):
+        try:
+            return datetime.strptime(text, fmt).time()
+        except ValueError:
+            continue
+    raise ValueError(f"Could not parse {label} value '{text}'")
+
+
+def split_location(raw: object) -> tuple[str, str]:
+    """Split a location string into space and room codes.
+
+    Args:
+        raw: Location string from the input row.
+
+    Returns:
+        A tuple of (space_code, room_code).
+    """
+    raw_value = "" if not raw else str(raw)
+    text = parse_str(raw_value)
+    if not text or text.lower() == "tba":
+        return "TBA", "TBA"
+
+    normalized = re.sub(r"\s+", " ", text)
+    normalized = normalized.replace(" -", "-").replace("- ", "-")
+
+    for sep in ("-", "/", " "):
+        if sep in normalized:
+            left, right = normalized.split(sep, 1)
+            return left.strip().upper(), right.strip() or "TBA"
+
+    _match = re.match(r"(?P<prefix>[A-Za-z]+)(?P<rest>.*)", normalized)
+    if _match:
+        return _match.group("prefix").upper(), _match.group("rest").strip() or "TBA"
+
+    return normalized.upper(), normalized

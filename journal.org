@@ -1,7 +1,46 @@
 
-* <2026-01-18 dim. 22:52> Registration/reservation workflow
+* <2026-01-19 lun. 00:36>
+- propose a test for import grades and import_sessions if not yet implemented
+
+* DONE <2026-01-19 lun. 00:07>
+  CLOSED: [2026-01-19 lun. 00:36]
+- in for eg /admin/people/student/1990/change/,
+  - in inlineRegistrations, need to be able to remove a registration.
+- I did an import through import_grade and I get many faculty without name just staff id and a username which is the staffid number +1.  Need to be investigaged
+** student dashboard
+- Do not display courses not sheduled this semester.
+- Only display in gray courses that are pending payment or that are locked after cancelation
+- in the Registration cart the credit selected should update as we add courses. now the credit selected is blocked at 0.
+  - There should be a warning and a lock if the number of credit selected is more that the authorized amount for the student.  Identify where this number is set for a student.  It should be editable by a staff, stored in the student's model. It is something that is been updated every semester.
+  - Give detail of what happen at the code level when I press 'Save registration'
+*** WORK said to be done
+• Updated the student dashboard registration flow to enforce per‑student credit limits, hide unscheduled courses, and refresh the “Current and past courses” table (plus the course list) via AJAX so it updates immediately after register/cancel. Added the per‑student credit limit field for staff to edit and wired the cart UI to show/lock on limit exceed.
+
+
+  Import‑grade faculty issue investigation:
+
+  - import_grades only uses Faculty.get_default() and does not create per‑row faculty records.  The likely source of numeric/blank‑name faculty is the name‑based creation in app/shared/management/commands/import_schedule.py or app/timetable/management/commands/import_sessions.py (both call ensure_faculty). If you want, I can add a guard there to skip or normalize rows with missing/non‑name faculty fields.
+
+  Next steps you may want:
+
+  2. Verify the AJAX flow by selecting a section, saving registration, and canceling to confirm the table and course list update immediately. NOT WORKING
+  3. If you want, I can harden ensure_faculty usage in the import commands to avoid creating  blank faculty records.
+    
+    
+* DONE <2026-01-18 dim. 22:52> Registration/reservation workflow
+  CLOSED: [2026-01-18 dim. 23:50]
   - Think of where to block the multiple registrations of a student for a curriculum course in the same semester. I want to give him 2 chances separated by 48h. this Sould be computed on the fly, looking at the registration table history. no stored field, jsut computed values. check that the current workflow is compliant with this propoistion.
   - Not sure about the naming of reservation.  undo the previous changes.  lets have registration every where (code, comments included), the distinction will be the status.
+** local install js
+- download the all js files, eg bootstrap. reduce dependency to excternal js library files.
+   
+** Student dashboard
+- When clicking cancel in Current and past courses, nothing is happening. I expect the line to disapear from the current and past course.
+- the already reserved / registration pending courses should not be mixed with courses not offered this semester.  They should be displayed alongside the other  course reservation but grayed and locked
+- When clicking 'Save reservation' the reservation cart rest but the registration line with pending payment does not appear in Current and past courses as i expect. invetigate why.  I shouldnt need to relaod the page.
+- the semester in Course and Grades section are still not ordered from the most recent to the oldest. Indicate where the odering is been done so I look at it directly.
+- Add the time to the udpated in Current and past courses so the student can compute when before what time he has to pay.
+  
 ** Refactoring
 - Weekday parsing logic duplicated acrosse 2 import commands
 - Time parsing logic duplicated with identical formats
@@ -10,162 +49,18 @@
 - academic-year normalization redundant.  Some function are alias or wrapper on others.
 - Extract a small pure helper like _coerce_int(value: str | int) -> int | None that returns None on failure, and have: parse_int call it directly, and to_int wrap it and apply default when None.
      
+** Worked
+• Reverted wording back to registration across the student dashboard, moved the cooldown/attempt blocking to rely solely on registration history, and separated already‑registered courses into their own locked list so they aren’t mixed with “not offered” courses. I also centralized the weekday/time/location parsing, normalized college/department code helpers, removed the redundant academic‑year alias, and added _coerce_int to unify int parsing.
 
-* DONE <2026-01-18 dim. 21:35> Reservation logic student
-  CLOSED: [2026-01-18 dim. 22:52]
+  Ordering note:
 
-  - A student registration going back from pending payment to not register should not be available for reregistration straigh away but one should wait 48 h before been able to redo the reservation.  We could also count tath after 2 registration attempt the cours not be available for this semester again.
-  - add a message on the student dahsboard to make this rule clear.
-** Documenattion for internal function / method
-- Always add a documentation string, even a single line to internal function/method.
-- Do that in student_dashboard.py
-** student_dashboard improvements
-- Save reservation does not send the line to Current and past courses as register with pending payment status. check that save reservation does create a registration.  Harmonize terminology. Let's call it Reservation, so it should be Reservation Cart and not Registration Cart.
-- Cancel button in Current and past course does not remove the registration/reservation line. it should.
-- A course in registered (even with status pending payement) should not be listed in course registration.  it should appear but grayed out.
-- The course and Grades list group the courses per semester for older to newer. they should be listed for newer to older (semester key). keep the intra group ordering alphabeticaly for the courses.
-- Once Course have pending payment the total amount to be paid should be displayed in the outstanding balance.   
+  - The Course & Grades semester ordering is done in app/website/views/student_dashboard.py in the semester_sort_info build + semester_grade_groups.sort(...) block (now uses semester start date or academic year start date).
 
-* DONE <2026-01-18 dim. 19:32> Registration fro student/dashboard
-  CLOSED: [2026-01-18 dim. 21:35]
-** high priority
-- [X] add a username column to admin/people/...
-- in student/dashboard
-  - current and past courses : add a button to cancel the reservation
-  - course & grades: order the semester from recent to old and inside each group the by alphabetical order of course
-  - Credits completed: remove the card in particular  total ie ''    required_credits = (
-        student.curriculum.programs.aggregate(
-            total=Sum("credit_hours__code"),
-        ).get("total")
-        or 0
-    )
-    remaining_credits = max(required_credits - completed_credits, 0)
-'' cannot be correct because students has options and elective courses.
-  - in the Registration cart replace the credits remaining by a sum of selected credits.
-  - link the save reservation button to the creation of 'reservation' ie registration that will removed after 48h if the state stays pending payment (not that we will not implement this yet, the state will be changed by finance).
-  - remaining amount should be stored.    
+  Local JS note:
 
-** Low priority  
-- There is too much boiler plate code, make checks and rechecks for None or existence when the code workflow already provide the check up the line and there is no chance of calling subquent function with non existent objects.
-- Change all my typing hint of format Class | None => Optional[Class]  it is more readable for me.
-- As you work through the code try to identify  and update place where this boiler plate code can be reduced.
-  
-** DONE 45 mintues
-• Updated the student dashboard flow to create/cancel pending reservations, post selected
-  section IDs, and show credits selected; grade groups now sort most-recent-first with per-
-  semester course ordering, and outstanding balance reads directly from remaining amount_due
-  (app/website/views/student_dashboard.py, app/website/templates/website/
-  student_dashboard.html, app/website/static/js/student_dashboard.js). Payments now adjust
-  invoice remaining balance when a payment is cleared (app/finance/models/payment.py), and
-  related helpers got Optional typing cleanup (app/finance/admin/core.py, app/registry/admin/
-  core.py, app/website/views/student_helpers.py, app/timetable/models/semester.py, app/
-  timetable/utils.py).
+  - I didn’t find any external JS references; bootstrap JS is already local. The only remote assets are CSS (Google Fonts in app/website/templates/website/landing.html and bootstrap‑icons in app/website/templates/website/staff/base.html).
+   
 
-* DONE <2026-01-18 dim. 12:31> Registration
-  CLOSED: [2026-01-18 dim. 19:32]
-- In 'admin/registry/registrationstatus/'
-  - for registration column add link to the registrations counted
-- Propose plan to update invoice when a payment is made. the remaining amount should be updated.
-
-* DONE <2026-01-18 dim. 12:24> Payments
-  CLOSED: [2026-01-18 dim. 19:32]
-- in app/finance/admin/core.py,
-  - _get_opne_registration_semester seems to be a duplicate. Check that we do not define a similar function else where in the code base and if we do, import the function after factoring the duplicated definitions to an appropriate place such as app/timetable/utils.py. The refactor should be rewritten in a more functional style.
-  
-- in 'admin/finance/invoice/add/'
-  - [ ] set "recorded by" to current logged in staff/user (done but need to handle superuser, see in code comments)
-  - [ ] "Recorded by" field should be searchable either by name or by student id. as for the student field.
-  - [X] Display searchable short name of scoped curriculum course
-  - [X] set defaults for semester to semester opened for registration
-  - [X] scope curriculum course to those of the opened_semester
-
-** General observations
-  - [ ] the default display for an AbstractPerson should be its longname and ID in parenthesis.  No need to display the user name except on the admin page of the specific AbstractPerson
-  - [ ] Any field where we select an AbstractPerson should be searchable either by full name or id.
-* DONE <2026-01-16 ven. 16:40> merging
-  CLOSED: [2026-01-18 dim. 12:30]
-I am trying to merge this
-
-Course
-Department
-Curriculum
-Sections
-Faculty
-	HIST-475 - Running While Others Walk: African Per…	(COED) HIST	
-
-
-
-
-1	Pius WLALEE
-	HIST-475	(COED) HIST	
-
-
-
-
-10	Default User
-::  but it is skipped because of incompatible selections
-I course have the same department and curriculum. I am expecting a new form asking me to slect fiedl per field the target value. I expect sections to be merged and the faculties to be combined, ie, nothing to do there, will be handled when sections point to the same curriculumcourse.
-
-* DONE <2026-01-16 Fri 16:28> UX 8 so
-  CLOSED: [2026-01-18 dim. 12:31]
-    P0 – Blockers / correctness
-
-  - Admin / Registry / RegistrationStatus: add a column with registration count.
-
-  P1 – High‑impact workflows
-
-  - Admin / Academics / CurriculumCourse: add merge action with default target, validation messaging, and graceful
-    failure for incompatible selections.
-  - Decide merge rules for CurriculumCourse:
-      - Section conflicts merge
-      - Invoice conflicts keep target
-  - Admin / People / Faculty: show bio field in change view.
-
-
-
-* <2026-01-16 Fri 14:57>  UX 8
-  Priority Order
-
-  - P0 — Data correctness/blockers: RegistrationStatus population; curriculum filter error in Course admin; Grade
-    search 500; Section admin disallowed filter lookups (400).
-  - P1 — High‑impact workflows: CurriculumCourse merge action w/ validation + default; Faculty merge action; Student
-    change view grades.
-  - P2 — Admin usability: curriculum/faculty links + counts; GPA/credits columns; performance fixes; timetable
-    listings.
-  - P3 — Cleanup: remove legacy import references; minor UI polish.
-
-  Tracker
-
-  - Done — Student dashboard: courses/grades by semester with semester GPA; total validated credits shown.
-  - Done — Admin Department list: curricula column added (via course → curricula links).
-  - Done — Admin Timetable Section: curriculum filter added; department/college filters removed (confirm this matches
-    intent).
-  - Todo — Admin Registry RegistrationStatus: add registration count column.
-  - Todo — Admin People Student change view: show grades list.
-  - Todo — Admin Academics Course: fix “By Curriculum” autocomplete error.
-  - Todo — Admin Academics CurriculumCourse: add merge action with defaults + validation message on selection page.
-  - Blocked — CurriculumCourse merge: needs conflict policy for Sections + Invoice handling + default target choice.
-  - Todo — Admin People Faculty: merge action with field‑level override selection; align with AbstractUser merge
-    mechanism.
-  - Todo — Admin Registry Grade: student name search 500; slow change view.
-  - Todo — Admin Timetable Section: disallowed lookup errors for semester/year and curriculum/college filters.
-  - Todo — Admin Academics Curriculum change view: show student count per course + link.
-  - Todo — Admin Academics CurriculumCourse: filters not working; add tests for custom filters.
-  - Todo — Admin People Student list: GPA sort logic; add validated credits + latest enrolled semester; fix
-    class‑level labels.
-  - Todo — Admin People Faculty: sections list duplicates; rename to “Sections/Courses taught”.
-  - Todo — Timetable UX: faculty link in sections list; SecSession links + faculty filter; AcademicYear/Semester
-    counts; Schedule/Semester change view info fields.
-  - Todo — Registry: ensure RegistrationStatus table is populated on init.
-  - Todo — Cleanup: remove references to import_directory_people.py.
-  - Todo — Faculty: bio field not showing.
-
-  Decisions Needed (to unblock CurriculumCourse merge)
-
-  1. Section conflicts: merge & de‑dupe; renumber; or skip conflicts.
-  2. Invoice conflicts: keep target + report; move source to target; or keep both by not deleting source.
-  3. Default target: first selected item or explicit choice in confirmation form.
-  
 * <2026-01-05 lun. 07:33>  Runing a sql cmd
 docker-compose -f docker-compose-preprod.yml exec -T db psql -U tusis_preprod -d tusis_preprod -c "SELECT version();"
 

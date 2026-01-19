@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from simple_history.models import HistoricalRecords
 
+from app.shared.types import OpenRegistrationSemesterResultT
 from app.shared.mixins import SimpleTableMixin
 from app.shared.status.mixins import StatusableMixin
 from app.timetable.choices import SEMESTER_NUMBER
@@ -83,12 +84,12 @@ class Semester(StatusableMixin, models.Model):
         return self.status_id == self.REGISTRATION_OPEN_CODES
 
     @classmethod
-    def get_registration_open_semester(cls) -> Optional["Semester"]:
-        """Return the open registration semester, raising if more than one exists."""
+    def registration_open_semester(cls) -> OpenRegistrationSemesterResultT:
+        """Return the open registration semester, with error msg if more than one exists."""
         open_qs = cls.objects.filter(status_id=cls.REGISTRATION_OPEN_CODES)
         if open_qs.count() > 1:
-            raise ValidationError("Multiple semesters are open for registration.")
-        return open_qs.first()
+            return None, "Multiple semesters are open for registration."
+        return open_qs.first(), None
 
     class Meta:
         constraints = [

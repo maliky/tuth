@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from typing import Dict, Optional, Tuple
 
-from app.academics.choices import COLLEGE_CODE, COLLEGE_LONG_NAME
+from app.academics.choices import COLLEGE_LONG_NAME
 from app.academics.models.college import College
 from app.academics.models.course import Course, CurriculumCourse
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
+from app.academics.utils import normalize_college_code, normalize_department_code
 from app.shared.models import CreditHour
+from app.shared.utils import parse_str
 from app.shared.types import DeptCollegeMapT, DeptCourseMapT, StrIntMapT, TwoIntIntMapT
 
 COLLEGE_CACHE: Dict[str, College] = {}
@@ -33,7 +35,7 @@ CURRICULUM_COURSE_ID_CACHE: TwoIntIntMapT = {}
 def _normalize_course_no(value: str) -> str:
     """Normalize course numbers like '101.0' -> '101'."""
     # This should not happen but taking care of 102.0 -> 102.
-    value = (value or "").strip()
+    value = parse_str(value)
     if value.endswith(".0"):
         value = value[:-2]
     return value
@@ -72,7 +74,7 @@ def _prime_curriculum_id_cache() -> None:
     if CURRICULUM_ID_CACHE:
         return
     for name, pk in Curriculum.objects.values_list("short_name", "id"):
-        CURRICULUM_ID_CACHE[(name or "").lower()] = pk
+        CURRICULUM_ID_CACHE[parse_str(name, "lower")] = pk
 
 
 def _prime_curriculum_course_id_cache() -> None:
@@ -135,7 +137,7 @@ def _get_curriculum_by_id(curriculum_id: int) -> Curriculum:
 
 def ensure_college(code_raw: str) -> College:
     """Return the college attached to code_raw if possible cached."""
-    code = COLLEGE_CODE.get((code_raw.lower() or "DEFT"), "DEFT")
+    code = normalize_college_code(code_raw)
     cached = COLLEGE_CACHE.get(code)
 
     if cached:
@@ -154,7 +156,8 @@ def ensure_college(code_raw: str) -> College:
 
 
 def ensure_department(dept_code_raw: str, college: College) -> Department:
-    dept_code = (dept_code_raw or "DEFT").strip().upper()
+    """Return a department for the given dept_code and college."""
+    dept_code = normalize_department_code(dept_code_raw)
     key = (dept_code, college.id)
     cached = DEPARTMENT_CACHE.get(key)
     if cached:
@@ -271,7 +274,7 @@ def ensure_curriculum_course(
 
 def ensure_college_id(code_raw: str) -> int:
     """Return a college id for the given code."""
-    code = COLLEGE_CODE.get((code_raw.lower() or "DEFT"), "DEFT")
+    code = normalize_college_code(code_raw)
     _prime_college_id_cache()
     cached = COLLEGE_ID_CACHE.get(code.lower())
     if cached:
@@ -282,7 +285,7 @@ def ensure_college_id(code_raw: str) -> int:
 
 def ensure_department_id(dept_code_raw: str, college_id: int) -> int:
     """Return a department id for the given code and college id."""
-    dept_code = (dept_code_raw or "DEFT").strip().upper()
+    dept_code = normalize_department_code(dept_code_raw)
     key = (dept_code, college_id)
     _prime_department_id_cache()
     cached = DEPARTMENT_ID_CACHE.get(key)
@@ -317,7 +320,7 @@ def ensure_curriculum_id(
     name_raw: str, college_id: int, fuzzy_threshold: float = 1.0
 ) -> int:
     """Return a curriculum id for the given name and college id."""
-    name = (name_raw or "").strip()
+    name = parse_str(name_raw)
     if not name:
         college = _get_college_by_id(college_id)
         curriculum = ensure_curriculum("", college, fuzzy_threshold=fuzzy_threshold)

@@ -24,7 +24,6 @@ from app.timetable.admin.filters import (
 )
 from app.timetable.admin.views import SectionBySemesterAutocomplete
 from app.timetable.models.semester import Semester
-from app.timetable.utils import resolve_registration_open_semester
 from app.timetable.models.section import Section
 from simple_history.admin import SimpleHistoryAdmin
 from guardian.admin import GuardedModelAdmin
@@ -36,7 +35,7 @@ SemesterT: TypeAlias = Semester
 
 def _open_registration_semester() -> Optional[SemesterT]:
     """Return the single semester open for registration."""
-    semester, _ = resolve_registration_open_semester()
+    semester, _ = Semester.registration_open_semester()
     return semester
 
 

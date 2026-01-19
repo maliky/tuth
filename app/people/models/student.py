@@ -12,6 +12,7 @@ from django.db.models import Sum
 from simple_history.models import HistoricalRecords
 
 from app.academics.choices import LEVEL_NUMBER
+from app.academics.constants import MAX_STUDENT_CREDITS
 from app.academics.models.course import Course, CurriculumCourse
 from app.academics.models.curriculum import Curriculum
 from app.people.models.core import AbstractPerson
@@ -64,6 +65,10 @@ class Student(AbstractPerson):
         on_delete=models.PROTECT,
         null=True,
         related_name="students_entered",
+    )
+    # Updated each semester by staff to cap registration credit load.
+    max_credit_hours = models.PositiveSmallIntegerField(
+        default=MAX_STUDENT_CREDITS,
     )
     last_school_attended = models.CharField(blank=True)
     reason_for_leaving = models.CharField(blank=True)

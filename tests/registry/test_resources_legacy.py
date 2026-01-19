@@ -4,16 +4,17 @@ from pathlib import Path
 
 import pytest
 
-from app.registry.admin.resources_legacy import normalize_semester, normalize_year
+from app.registry.admin.resources_legacy import normalize_semester
+from app.timetable.utils import normalize_academic_year
 from app.shared.data import legacy_registration_rows
 
 
 def test_normalize_year_formats():
-    assert normalize_year("2019/2020") == "19-20"
-    assert normalize_year("2019-2020") == "19-20"
-    assert normalize_year("2019") == "19-20"
-    assert normalize_year("19-20") == "19-20"
-    assert normalize_year("") == ""
+    assert normalize_academic_year("2019/2020") == "19-20"
+    assert normalize_academic_year("2019-2020") == "19-20"
+    assert normalize_academic_year("2019") == "19-20"
+    assert normalize_academic_year("19-20") == "19-20"
+    assert normalize_academic_year("") == ""
 
 
 def test_normalize_semester_tokens():

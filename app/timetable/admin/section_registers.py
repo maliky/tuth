@@ -71,7 +71,7 @@ class SectionAdmin(CollegeRestrictedAdmin):
         qs = super().get_queryset(request).prefetch_related("sessions__room")
         if _is_registration_lookup(request):
             # Scope registration lookups to the semester open for registration.
-            open_semester = Semester.get_registration_open_semester()
+            open_semester = Semester.registration_open_semester()
             if not open_semester:
                 return qs.none()
             return qs.filter(semester=open_semester)

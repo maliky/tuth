@@ -2,7 +2,7 @@
 
 from import_export import widgets
 
-from app.shared.utils import get_in_row
+from app.shared.utils import get_in_row, parse_str
 from app.spaces.models.core import Room, Space
 
 
@@ -23,7 +23,7 @@ class SpaceWidget(widgets.ForeignKeyWidget):
         If it does not exists, creates it.
         If nothing is passed return the default Space.
         """
-        space_val = (value or "").strip()
+        space_val = parse_str(value)
         if not space_val:
             return Space.get_default()
 
@@ -49,7 +49,7 @@ class RoomWidget(widgets.ForeignKeyWidget):
         **kwargs,
     ) -> Room:
         """Using the room no, and the space code, returns a Room (eventualy)."""
-        room_code = (value or "").strip()
+        room_code = parse_str(value)
         space_code = get_in_row("space", row) or "<TBA>"
         space = self.space_w.clean(value=space_code, row=row)
 

@@ -30,7 +30,7 @@ from app.people.utils import (
     mk_password,
     mk_username,
 )
-from app.shared.utils import get_in_row
+from app.shared.utils import get_in_row, parse_str
 
 
 class StaffProfileWidget(widgets.ForeignKeyWidget):
@@ -45,7 +45,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         The widget get the staff from the username.
         It return or creates a Staff.
         """
-        username = (value or "").strip()
+        username = parse_str(value)
         name = name_parts_from_row(row, fullname_key="long_name")
 
         if not username:
@@ -83,7 +83,7 @@ class UserWidget(widgets.ForeignKeyWidget):
 
     def clean(self, value, row=None, *args, **kwargs) -> Optional[User]:
         """Return or create a User from username or name."""
-        username = (value or "").strip()
+        username = parse_str(value)
         _n = name_parts_from_row(row, fullname_key="donors")
 
         if not username:
@@ -125,7 +125,7 @@ class FacultyUsernameWidget(widgets.ForeignKeyWidget):
 
         Create user and faculty if necessary.
         """
-        username = (value or "").strip()
+        username = parse_str(value)
         name = name_parts_from_row(row, fullname_key="faculty")
 
         if not username:
@@ -174,7 +174,7 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         Use the extra column student_id to desambiguate sames names
         and create uniq username.
         """
-        username = (value or "").strip()
+        username = parse_str(value)
         student_id = get_in_row("student_id", row)
         name = name_parts_from_row(
             row,
@@ -220,7 +220,7 @@ class StudentGradeWidget(widgets.ForeignKeyWidget):
 
     def clean(self, value, row=None, *args, **kwargs) -> Student:
         """Return the Student tied to the identifier, creating it if needed."""
-        student_id = (value or "").strip()
+        student_id = parse_str(value)
         if not student_id:
             return Student.get_default()
 
@@ -276,7 +276,7 @@ class UserDonorWidget(widgets.ForeignKeyWidget):
 
     def clean(self, value, row=None, *args, **kwargs) -> User:
         """Return or create a User from the donor name."""
-        raw_name = (value or "").strip()
+        raw_name = parse_str(value)
         if not raw_name:
             return Donor.get_default().user
 
@@ -301,7 +301,7 @@ class UserStudentWidget(widgets.ForeignKeyWidget):
 
     def clean(self, value: str, row=None, *args, **kwargs) -> User | None:
         """From the student id, name or username look up or create a Student object."""
-        username = (value or "").strip()
+        username = parse_str(value)
         student_id = get_in_row("student_id", row)
         _n = name_parts_from_row(
             row,

@@ -6,7 +6,7 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 from app.shared.types import Row, Transform
-from app.shared.utils import get_in_row
+from app.shared.utils import get_in_row, parse_str
 
 # stuff here should go to academics.utils
 
@@ -52,7 +52,7 @@ def coerce_field(
     """Coerce a textual field into a canonical representation with a default."""
 
     def _apply(row: Row) -> Row:
-        value = (row.get(key) or "").strip()
+        value = parse_str(row.get(key))
         if not value:
             row[key] = default
         elif converter:
@@ -96,23 +96,29 @@ def set_course_codes(row: Row) -> Row:
 
 
 def extract_course_codes(row: Row) -> tuple[str, str]:
-    """Return college/department codes derived from the row content."""
+    """Return college/department codes derived from the row content.
+
+    Assumptions are that course_code is the small MATH101,
+    MATH is dept_code and 101 is course_no.
+    renaming should have been done before reaching here.
+    We assure columns to be present in row.
+    """
     from app.academics.utils import expand_course_code  # defer import to avoid cycles
 
-    course_code = row.pop("course_code", "") or row.get("course_dept", "")
-    course_no = get_in_row("course_no", row)
-    merged = f"{course_code}{course_no}".strip()
-    if not merged:
-        return (
-            get_in_row("college_code", row) or "",
-            get_in_row("course_dept", row) or "",
-        )
+    # > Check the stuff here
+    # could also be dept_code no ?
+    _course_code = get_in_row("course_code", row)
 
+    if _course_code:
+        return expand_course_code(_course_code, row=row)
+
+    _dept_code = (get_in_row("dept_code", row) or get_in_row("course_dept", row),)
+    course_no = get_in_row("course_no", row)
+
+    _course_code = _dept_code + course_no
     try:
-        college_code, dept_code, _ = expand_course_code(merged, row=row)
+        college_code, dept_code, _ = expand_course_code(_course_code, row=row)
     except AssertionError:
-        return (
-            get_in_row("college_code", row) or "",
-            get_in_row("course_dept", row) or "",
-        )
+        return (get_in_row("college_code", row), _course_code)
+    
     return college_code, dept_code

@@ -9,7 +9,7 @@ from tablib import Dataset
 from app.shared.constants import STYLE_DEFAULT  # safe
 
 
-def to_int(value: str | int, default: int = 0) -> int:
+def to_int(value: str | int | None, default: int = 0) -> int:
     """Lenient int conversion for count-like inputs.
 
     Args:
@@ -17,7 +17,7 @@ def to_int(value: str | int, default: int = 0) -> int:
         default: Fallback value when parsing fails or input is empty.
 
     Returns:
-        Parsed i#> give examplesnteger value.
+        Parsed int
 
     Examples:
         >>> to_int("2.9")
@@ -25,11 +25,19 @@ def to_int(value: str | int, default: int = 0) -> int:
         >>> to_int("", default=5)
         5
     """
+    if not value:
+        return default
+
     if isinstance(value, int):
         return value
+
+    token = str(value).strip()
+    if not token:
+        return default
+
     try:
-        return int(float(value))
-    except Exception:
+        return int(float(token))
+    except (TypeError, ValueError):
         return default
 
 
@@ -47,6 +55,37 @@ def asserts_keys(required: list[str], row: dict) -> None:
         raise ValueError(f"{required} are required in row {row} context.")
 
 
+def _apply_case(text: str, casing: str) -> str:
+    """Return text transformed according to the casing directive."""
+    # why not user getattr(text, casting, text) ?
+    if casing == "lower":
+        return text.lower()
+    if casing == "upper":
+        return text.upper()
+    if casing == "title":
+        return text.title()
+    if casing == "capitalize":
+        return text.capitalize()
+    return text
+
+
+def parse_str(value: object, casing: str = "unchanged", dft: str = "") -> str:
+    """Parse an optional string with a default fallback.
+
+    casing: lower, upper, capitalize, title. default unchanged.
+    """
+    dft_value = _apply_case(dft, casing)
+    if value is None:
+        return dft_value
+
+    str_value = str(value)
+    if not str_value:
+        return dft_value
+
+    new_value = _apply_case(str_value, casing).strip()
+    return new_value if new_value else dft_value
+
+
 def get_in_row(key: str, row: Optional[Mapping[str, str | None]]) -> str:
     """Return a stripped string value from a row.
 
@@ -61,7 +100,7 @@ def get_in_row(key: str, row: Optional[Mapping[str, str | None]]) -> str:
         AttributeError: If the row does not support key lookup.
     """
     try:
-        return ((row or {}).get(key) or "").strip()
+        return parse_str((row or {}).get(key))
     except AttributeError as exc:
         raise AttributeError(f"Could not access key '{key}' in row {row}") from exc
 
@@ -87,37 +126,9 @@ def clean_column_headers(dataset) -> Dataset:
     Returns:
         The same dataset with cleaned headers.
     """
-    sanitised = [(header or "").strip() for header in dataset.headers]
+    sanitised = [parse_str(header) for header in dataset.headers]
     dataset.headers = sanitised
     return dataset
-
-
-def parse_int(value: str | None) -> int | None:
-    """Convert a value to an integer when possible.
-
-    Args:
-        value: Input to parse.
-
-    Returns:
-        Parsed integer or None when the input is blank or not numeric.
-
-    Examples:
-        >>> parse_int("3.0")
-        3
-        >>> parse_int("x") is None
-        True
-    """
-    if value is None:
-        return None
-
-    token = str(value).strip()
-    if not token:
-        return None
-
-    try:
-        return int(float(token))
-    except ValueError:
-        return None
 
 
 def log(cmd: BaseCommand, msg: str, style: str = STYLE_DEFAULT) -> None:

@@ -5,14 +5,18 @@ from typing import Any, Optional
 from django.db import IntegrityError
 from import_export import widgets
 
-from app.academics.choices import COLLEGE_CODE, COLLEGE_LONG_NAME
+from app.academics.choices import COLLEGE_LONG_NAME
 from app.academics.models.college import College
 from app.academics.models.concentration import Major
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.academics.models.course import CurriculumCourse
-from app.academics.utils import expand_course_code
+from app.academics.utils import (
+    expand_course_code,
+    normalize_college_code,
+    normalize_department_code,
+)
 from app.registry.models import CreditHour
 from app.academics.ensures import (
     ensure_college,
@@ -21,7 +25,7 @@ from app.academics.ensures import (
     ensure_curriculum_course,
     ensure_department,
 )
-from app.shared.utils import asserts_keys, get_in_row, to_int
+from app.shared.utils import asserts_keys, get_in_row, parse_str, to_int
 
 
 class CurriculumCourseWidget(widgets.ForeignKeyWidget):
@@ -90,7 +94,7 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
           - row["college_code"] = "CAFS"
         """
 
-        curr_value = (value or "").strip()
+        curr_value = parse_str(value)
         college = ensure_college(get_in_row("college_code", row))
 
         if not curr_value:
@@ -254,7 +258,7 @@ class CollegeWidget(widgets.ForeignKeyWidget):
         Accept 'CBA', 'CAFS', '', 'CHS', 'EDRCE', 'CET', 'CAS' and COAS, COED
         COET COBA but normalise the code to 4 letters
         """
-        code = COLLEGE_CODE.get((value or "").strip().lower(), "DEFT")
+        code = normalize_college_code(parse_str(value))
         college, _ = College.objects.get_or_create(
             code=code, defaults={"long_name": COLLEGE_LONG_NAME.get(code.lower(), "deft")}
         )
@@ -277,9 +281,9 @@ class DepartmentWidget(widgets.ForeignKeyWidget):
         if not value:
             return Department.get_default()
 
-        dept_code = (value or "").strip().upper()
+        dept_code = normalize_department_code(parse_str(value))
 
-        college = self.college_w.clean((row.get("college_code") or "").strip())
+        college = self.college_w.clean(get_in_row("college_code", row))
 
         department, _ = Department.objects.get_or_create(code=dept_code, college=college)
         return department

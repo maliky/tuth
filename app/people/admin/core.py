@@ -504,6 +504,7 @@ class StudentAdmin(
         "curriculum",
         "last_enrolled_semester",
         "entry_semester",
+        "max_credit_hours",
     )
     BIO_FIELDS = (
         "last_school_attended",

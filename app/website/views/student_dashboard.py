@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Any, DefaultDict, Iterable, Optional, TypedDict, cast
 
@@ -11,13 +11,15 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.db.models import Avg, Count, DecimalField, Q, Sum, Value
+from django.db.models import Avg, Count, DecimalField, Max, Q, Sum, Value
 from django.db.models.functions import Coalesce
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
+from app.academics.constants import MAX_STUDENT_CREDITS
 from app.academics.models.course import CurriculumCourse
 from app.academics.models.prerequisite import Prerequisite
 from app.finance.models.invoice import Invoice
@@ -69,6 +71,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     semester, open_semesters = _resolve_semester(student, request.GET.get("semester"))
     registration_open = bool(semester and semester.is_registration_open())
     registration: Optional[Registration] = None
+    ajax_messages: list[dict[str, str]] = []
 
     def _redirect_to_semester() -> HttpResponse:
         """Redirect back to the dashboard with the current semester filter."""
@@ -77,6 +80,17 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         if selected_semester:
             redirect_url = f"{redirect_url}?semester={selected_semester}"
         return redirect(redirect_url)
+
+    def _is_ajax_request() -> bool:
+        """Return True when the request expects JSON fragments."""
+        return request.headers.get("x-requested-with") == "XMLHttpRequest"
+
+    def _push_message(level: str, text: str) -> None:
+        """Queue a message for either AJAX or full-page responses."""
+        if _is_ajax_request():
+            ajax_messages.append({"level": level, "text": text})
+            return
+        getattr(messages, level)(request, text)
 
     def _parse_section_ids(raw_ids: str) -> list[int]:
         """Parse a comma-delimited list of section IDs into integers."""
@@ -91,10 +105,14 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 continue
         return ids
 
+    def _max_credit_hours(student_obj: Student) -> int:
+        """Return the per-student credit limit for the current semester."""
+        return int(getattr(student_obj, "max_credit_hours", 0) or MAX_STUDENT_CREDITS)
+
     def _attempt_blocked_courses(
         student_obj: Student, semester_obj: Optional[Semester]
     ) -> set[int]:
-        """Return course IDs blocked by repeated reservation attempts."""
+        """Return course IDs blocked by repeated registration attempts."""
         if semester_obj is None:
             return set()
         history_model = Registration.history.model
@@ -110,19 +128,63 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         )
         return {row["section__curriculum_course__course_id"] for row in attempt_rows}
 
+    def _cooldown_courses(
+        student_obj: Student,
+        semester_obj: Optional[Semester],
+        cutoff: datetime,
+    ) -> set[int]:
+        """Return course IDs locked during the cooldown window."""
+        if semester_obj is None:
+            return set()
+        history_model = Registration.history.model
+        cooldown_rows = (
+            history_model.objects.filter(
+                student_id=student_obj.id,
+                section__semester=semester_obj,
+                status_id__in={"canceled", "removed"},
+                history_date__gte=cutoff,
+            )
+            .values("section__curriculum_course__course_id")
+            .distinct()
+        )
+        return {row["section__curriculum_course__course_id"] for row in cooldown_rows}
+
     if request.method == "POST":
         action = request.POST.get("action")
-        if action == "reserve":
+        if action == "register":
             raw_ids = request.POST.get("section_ids", "")
             section_ids = _parse_section_ids(raw_ids)
             if not section_ids:
-                messages.warning(request, "Select at least one section to reserve.")
+                if _is_ajax_request():
+                    return JsonResponse(
+                        {
+                            "ok": False,
+                            "message": "Select at least one section to register.",
+                        },
+                        status=400,
+                    )
+                messages.warning(request, "Select at least one section to register.")
                 return _redirect_to_semester()
             if not semester or not registration_open:
-                messages.error(request, "Reservation is not open for this semester.")
+                if _is_ajax_request():
+                    return JsonResponse(
+                        {
+                            "ok": False,
+                            "message": "Registration is not open for this semester.",
+                        },
+                        status=400,
+                    )
+                messages.error(request, "Registration is not open for this semester.")
                 return _redirect_to_semester()
-            # Pending reservations are cleaned up after 48 hours by a scheduled task.
+            # Pending registrations are cleaned up after 48 hours by a scheduled task.
             pending_status = RegistrationStatus.get_default()
+            current_credits = (
+                Registration.objects.filter(student=student, section__semester=semester)
+                .exclude(status_id__in={"canceled", "removed"})
+                .aggregate(total=Sum("section__curriculum_course__credit_hours_id"))
+                .get("total")
+                or 0
+            )
             allowed_course_ids = set(
                 student.allowed_courses().values_list("id", flat=True)
             )
@@ -131,6 +193,29 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 .select_related("curriculum_course__course")
                 .order_by("id")
             )
+            existing_regs = Registration.objects.filter(
+                student=student,
+                section__semester=semester,
+                section_id__in=section_ids,
+            ).select_related("status")
+            existing_by_section = {reg.section_id: reg for reg in existing_regs}
+            new_credit_total = 0
+            for section in sections:
+                existing = existing_by_section.get(section.id)
+                if existing and existing.status_id not in {"canceled", "removed"}:
+                    continue
+                new_credit_total += int(section.curriculum_course.credit_hours.code)
+            max_credit_hours = _max_credit_hours(student)
+            # Enforce the per-student credit limit before persisting registrations.
+            if current_credits + new_credit_total > max_credit_hours:
+                msg = (
+                    "Selected sections exceed the credit limit for this semester. "
+                    "Reduce your selection or ask a staff member to adjust your limit."
+                )
+                if _is_ajax_request():
+                    return JsonResponse({"ok": False, "message": msg}, status=400)
+                messages.error(request, msg)
+                return _redirect_to_semester()
             created = 0
             updated = 0
             skipped = 0
@@ -138,19 +223,17 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             attempts_blocked = 0
             cooldown_cutoff = timezone.now() - timedelta(hours=48)
             blocked_courses = _attempt_blocked_courses(student, semester)
-            cooldown_courses = set(
-                Registration.objects.filter(
-                    student=student,
-                    status_id__in={"canceled", "removed"},
-                    section__semester=semester,
-                    date_registered__gte=cooldown_cutoff,
-                ).values_list("section__curriculum_course__course_id", flat=True)
+            cooldown_courses = _cooldown_courses(
+                student,
+                semester,
+                cooldown_cutoff,
             )
             with transaction.atomic():
                 for section in sections:
                     if section.curriculum_course.course_id not in allowed_course_ids:
                         skipped += 1
                         continue
+                    # > We should not need this as a student cannot select a blocked course, nor cooldown_course
                     if section.curriculum_course.course_id in blocked_courses:
                         attempts_blocked += 1
                         continue
@@ -167,59 +250,81 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                         continue
                     if registration.status_id in {"canceled", "removed"}:
                         registration.status = pending_status
-                        registration.date_registered = timezone.now()
-                        registration.save(update_fields=["status", "date_registered"])
+                        registration.save(update_fields=["status"])
                         updated += 1
                     else:
                         skipped += 1
             if created or updated:
-                messages.success(
-                    request,
-                    f"Saved {created + updated} reservation(s).",
+                _push_message(
+                    "success",
+                    f"Saved {created + updated} registration(s).",
                 )
             if skipped:
-                messages.info(
-                    request,
-                    f"Skipped {skipped} section(s) already reserved or unavailable.",
+                _push_message(
+                    "info",
+                    f"Skipped {skipped} section(s) already registered or unavailable.",
                 )
             if cooldown_skipped:
-                messages.warning(
-                    request,
+                _push_message(
+                    "warning",
                     f"{cooldown_skipped} section(s) are locked for 48 hours after "
                     "cancelation.",
                 )
             if attempts_blocked:
-                messages.error(
-                    request,
+                _push_message(
+                    "error",
                     f"{attempts_blocked} section(s) hit the two-attempt limit for this "
                     "semester.",
                 )
-            return _redirect_to_semester()
-        if action == "cancel_reservation":
+            if not _is_ajax_request():
+                return _redirect_to_semester()
+        if action == "cancel_registration":
             reg_id = request.POST.get("registration_id")
             if not reg_id:
-                messages.error(request, "Select a reservation to cancel.")
+                if _is_ajax_request():
+                    return JsonResponse(
+                        {"ok": False, "message": "Select a registration to cancel."},
+                        status=400,
+                    )
+                messages.error(request, "Select a registration to cancel.")
                 return _redirect_to_semester()
             registration = Registration.objects.filter(pk=reg_id, student=student).first()
             if not registration:
-                messages.error(request, "Reservation not found.")
+                if _is_ajax_request():
+                    return JsonResponse(
+                        {"ok": False, "message": "Registration not found."},
+                        status=404,
+                    )
+                messages.error(request, "Registration not found.")
                 return _redirect_to_semester()
             if registration.status_id != "pending":
+                if _is_ajax_request():
+                    return JsonResponse(
+                        {
+                            "ok": False,
+                            "message": "Only pending registrations can be canceled.",
+                        },
+                        status=400,
+                    )
                 messages.warning(
                     request,
-                    "Only pending reservations can be canceled.",
+                    "Only pending registrations can be canceled.",
                 )
                 return _redirect_to_semester()
             canceled_status = RegistrationStatus.objects.filter(code="canceled").first()
             if canceled_status is None:
+                if _is_ajax_request():
+                    return JsonResponse(
+                        {"ok": False, "message": "Canceled status is not configured."},
+                        status=500,
+                    )
                 messages.error(request, "Canceled status is not configured.")
                 return _redirect_to_semester()
             registration.status = canceled_status
-            # Reuse date_registered as a lock timestamp for cooldown enforcement.
-            registration.date_registered = timezone.now()
-            registration.save(update_fields=["status", "date_registered"])
-            messages.success(request, "Reservation canceled.")
-            return _redirect_to_semester()
+            registration.save(update_fields=["status"])
+            _push_message("success", "Registration canceled.")
+            if not _is_ajax_request():
+                return _redirect_to_semester()
 
     def _format_semester_label() -> str:
         """Return a display label for the selected semester."""
@@ -272,6 +377,15 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
 
     active_registrations = registrations.exclude(status_id__in={"canceled", "removed"})
     registration_total = active_registrations.count()
+    history_model = Registration.history.model
+    history_rows = (
+        history_model.objects.filter(
+            id__in=active_registrations.values_list("id", flat=True)
+        )
+        .values("id")
+        .annotate(last_change=Max("history_date"))
+    )
+    history_dates = {row["id"]: row["last_change"] for row in history_rows}
     summary_lookup: dict[str, dict[str, Any]] = {}
     for reg in active_registrations:
         code = reg.status.code if reg.status else reg.status_id
@@ -321,6 +435,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     for reg in active_registrations:
         section = reg.section
         course = section.curriculum_course.course
+        last_change = history_dates.get(reg.id) or reg.date_registered
         course_status_rows.append(
             {
                 "code": course.short_code or course.code,
@@ -329,7 +444,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 "status_label": reg.status.label if reg.status else reg.status_id,
                 "credits": section.curriculum_course.credit_hours.code,
                 "semester": str(section.semester),
-                "last_update": reg.date_registered.strftime("%b %d, %Y"),
+                "last_update": last_change.strftime("%b %d, %Y %H:%M"),
                 "fee": _section_fee(section),
                 "registration_id": reg.id,
                 "can_cancel": reg.status_id == "pending",
@@ -375,21 +490,30 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         sections_by_course[section.curriculum_course.course_id].append(section)
 
     registered_course_ids: set[int] = set()
+    pending_course_ids: set[int] = set()
     cooldown_course_ids: set[int] = set()
     attempt_blocked_course_ids: set[int] = set()
+    registered_status_by_course: dict[int, str] = {}
     if semester:
+        semester_registrations = active_registrations.filter(section__semester=semester)
         registered_course_ids = set(
-            active_registrations.filter(section__semester=semester).values_list(
+            semester_registrations.values_list(
                 "section__curriculum_course__course_id",
                 flat=True,
             )
         )
-        cooldown_course_ids = set(
-            registrations.filter(
-                section__semester=semester,
-                status_id__in={"canceled", "removed"},
-                date_registered__gte=timezone.now() - timedelta(hours=48),
-            ).values_list("section__curriculum_course__course_id", flat=True)
+        for reg in semester_registrations:
+            course_id = reg.section.curriculum_course.course_id
+            if course_id not in registered_status_by_course:
+                registered_status_by_course[course_id] = (
+                    reg.status.label if reg.status else reg.status_id
+                )
+            if reg.status_id == "pending":
+                pending_course_ids.add(course_id)
+        cooldown_course_ids = _cooldown_courses(
+            student,
+            semester,
+            timezone.now() - timedelta(hours=48),
         )
         attempt_blocked_course_ids = _attempt_blocked_courses(student, semester)
 
@@ -417,16 +541,18 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         )
 
     available_courses: list[dict[str, object]] = []
+    registered_courses: list[dict[str, object]] = []
     locked_courses: list[dict[str, object]] = []
     for cc in curriculum_courses:
         course = cc.course
         course_sections = sections_by_course.get(course.id, [])
+        if not course_sections:
+            continue
         prereq_data = prereq_map.get(course.id, [])
         is_eligible = all(
             [
                 registration_open,
                 course.id in allowed_course_ids,
-                bool(course_sections),
                 course.id not in registered_course_ids,
                 course.id not in cooldown_course_ids,
                 course.id not in attempt_blocked_course_ids,
@@ -436,13 +562,14 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         missing = [cast(str, p["label"]) for p in prereq_data if not p["met"]]
         reason = ""
         if course.id in attempt_blocked_course_ids:
-            reason = "Reservation limit reached for this semester."
+            reason = "Registration limit reached for this semester."
         elif course.id in cooldown_course_ids:
-            reason = "Reservation locked for 48 hours after cancelation."
+            reason = "Registration locked for 48 hours after cancelation."
         elif course.id in registered_course_ids:
-            reason = "Already reserved."
+            status_label = registered_status_by_course.get(course.id, "Registered")
+            reason = f"Registration status: {status_label}."
         elif not registration_open:
-            reason = "Reservation window is closed."
+            reason = "Registration window is closed."
         elif missing:
             reason = f"Complete {', '.join(missing)} first."
         elif not course_sections:
@@ -472,10 +599,12 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             "prerequisites": prereq_data,
             "sections": serialized_sections,
         }
-        if is_eligible:
-            available_courses.append(course_payload)
-        else:
+        if course.id in pending_course_ids:
+            registered_courses.append(course_payload)
+        elif course.id in cooldown_course_ids or course.id in attempt_blocked_course_ids:
             locked_courses.append(course_payload)
+        elif is_eligible:
+            available_courses.append(course_payload)
 
     gpa = (
         Grade.objects.filter(student=student)
@@ -557,7 +686,9 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         semester_id = semester_obj.id
         if semester_id not in semester_sort_info:
             semester_sort_info[semester_id] = (
-                semester_obj.start_date or date.min,
+                semester_obj.start_date
+                or semester_obj.academic_year.start_date
+                or date.min,
                 semester_obj.number,
             )
         group = semester_grade_lookup.get(semester_id)
@@ -626,11 +757,11 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     if semester:
         announcements.append(f"Selected semester: {semester}")
     if not registration_open:
-        announcements.append("Reservation window is currently closed.")
+        announcements.append("Registration window is currently closed.")
     if not announcements:
         announcements.append("You are all set for the semester.")
     announcements.append(
-        "Canceled reservations lock sections for 48 hours; after two attempts, "
+        "Canceled registrations lock sections for 48 hours; after two attempts, "
         "the course is locked for the semester."
     )
 
@@ -653,15 +784,25 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         },
     ]
 
+    current_semester_credits = 0
+    if semester:
+        current_semester_credits = (
+            active_registrations.filter(section__semester=semester)
+            .aggregate(total=Sum("section__curriculum_course__credit_hours_id"))
+            .get("total")
+            or 0
+        )
+
     registration_limits = {
-        "credits_selected": 0,
+        "credits_selected": current_semester_credits,
+        "credits_max": _max_credit_hours(student),
         "currency": currency,
         "balance": outstanding,
     }
 
     sidebar_links = [
         {"label": "Dashboard", "href": reverse("student_dashboard"), "active": True},
-        {"label": "Course Reservation", "href": "#courses", "active": False},
+        {"label": "Course Registration", "href": "#courses", "active": False},
         {"label": "Financials", "href": "#records", "active": False},
         {"label": "Support", "href": "#support", "active": False},
     ]
@@ -683,6 +824,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         "course_filters": course_filters,
         "course_status_rows": course_status_rows,
         "available_courses": available_courses,
+        "registered_courses": registered_courses,
         "registration_limits": registration_limits,
         "completed_courses": completed_courses,
         "semester_grade_groups": semester_grade_groups,
@@ -693,5 +835,31 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         "semester_options": semester_options,
         "locked_courses": locked_courses,
     }
+
+    if _is_ajax_request() and request.method == "POST":
+        registration_limits_payload = {
+            "credits_selected": registration_limits.get("credits_selected", 0),
+            "credits_max": registration_limits.get("credits_max", 0),
+        }
+        fragments = {
+            "course_table": render_to_string(
+                "website/partials/student_dashboard_course_table.html",
+                context,
+                request=request,
+            ),
+            "course_list": render_to_string(
+                "website/partials/student_dashboard_course_list.html",
+                context,
+                request=request,
+            ),
+        }
+        return JsonResponse(
+            {
+                "ok": True,
+                "fragments": fragments,
+                "messages": ajax_messages,
+                "registration_limits": registration_limits_payload,
+            }
+        )
 
     return render(request, "website/student_dashboard.html", context)

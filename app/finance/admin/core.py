@@ -16,7 +16,6 @@ from app.people.models.staffs import Staff
 from app.shared.admin.mixins import ScopedAutocompleteAdminMixin
 from app.timetable.admin.filters import SemesterFilterAC
 from app.timetable.models.semester import Semester
-from app.timetable.utils import resolve_registration_open_semester
 
 
 class StaffChoiceField(forms.ModelChoiceField):
@@ -57,7 +56,7 @@ class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedMode
         if getattr(request, "_open_registration_semester_loaded", False):
             return getattr(request, "_open_registration_semester", None)
 
-        semester, error_message = resolve_registration_open_semester()
+        semester, error_message = Semester.registration_open_semester()
         if error_message:
             messages.error(request, error_message)
         request._open_registration_semester = semester

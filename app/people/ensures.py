@@ -7,6 +7,7 @@ from typing import TypeAlias
 from app.academics.models.curriculum import Curriculum
 from app.people.models.student import Student
 from app.shared.types import StrIntMapT
+from app.shared.utils import parse_str
 
 StudentIdT: TypeAlias = str
 
@@ -64,7 +65,7 @@ def ensure_student_sid(student_id_raw: StudentIdT) -> int:
     """Return a student id, creating the record if missing."""
     # > we need to search student on student id direclty as
     # > it is also a primary key for the model
-    sid = (student_id_raw or "").strip()
+    sid = parse_str(student_id_raw)
     if not sid:
         return int(Student.get_default().pk)
 

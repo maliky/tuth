@@ -2,7 +2,7 @@
 
 from import_export import widgets
 
-from app.shared.utils import get_in_row
+from app.shared.utils import get_in_row, parse_str
 from app.spaces.admin.widgets import RoomCodeWidget
 from app.timetable.choices import WEEKDAYS_NUMBER
 from app.timetable.models.schedule import Schedule
@@ -69,7 +69,7 @@ class WeekdayWidget(widgets.IntegerWidget):
 
     def clean(self, value, row=None, *args, **kwargs) -> int | None:
         """Accept either the integer 1-7 or the English weekday name."""
-        day_val = (str(value) or "").strip().lower()
+        day_val = parse_str(value, "lower", dft="")
 
         if not day_val:
             return WEEKDAYS_NUMBER.TBA

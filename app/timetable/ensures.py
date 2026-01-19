@@ -16,7 +16,7 @@ from app.shared.types import (
     SessionKeyT,
     TwoStrIntMapT,
 )
-from app.shared.utils import to_int
+from app.shared.utils import parse_str, to_int
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.schedule import Schedule
 from app.timetable.models.section import Section
@@ -102,7 +102,7 @@ def ensure_academic_year_code(code: str | None) -> AcademicYear:
 
     If no code return current AcademicYear, the code should be properly formated.
     """
-    code = (code or "").strip()
+    code = parse_str(code)
     if not code:
         return AcademicYear.get_default()
 
