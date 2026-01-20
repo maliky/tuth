@@ -10,6 +10,7 @@ from django.db.models.functions import ExtractYear
 from simple_history.models import HistoricalRecords
 
 
+
 class AcademicYear(models.Model):
     """Top-level period covering two consecutive semesters.
 

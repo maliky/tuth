@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Optional
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
+from django.utils import timezone
 from simple_history.models import HistoricalRecords
 
 from app.shared.types import OpenRegistrationSemesterResultT
 from app.shared.mixins import SimpleTableMixin
 from app.shared.status.mixins import StatusableMixin
 from app.timetable.choices import SEMESTER_NUMBER
+from app.timetable.models.academic_year import AcademicYear
 from app.timetable.utils import validate_subperiod
 
 
@@ -90,6 +94,33 @@ class Semester(StatusableMixin, models.Model):
         if open_qs.count() > 1:
             return None, "Multiple semesters are open for registration."
         return open_qs.first(), None
+
+    @classmethod
+    def get_default(cls, today: date | None = None) -> "Semester":
+        """Return the current semester or create one for the current academic year."""
+        ref_date = today or timezone.now().date()
+        semester = (
+            cls.objects.filter(start_date__lte=ref_date)
+            .filter(Q(end_date__gte=ref_date) | Q(end_date__isnull=True))
+            .order_by("-start_date")
+            .first()
+        )
+        if semester:
+            return semester
+        academic_year = AcademicYear.get_default(ref_date)
+        fallback = (
+            cls.objects.filter(academic_year=academic_year).order_by("number").first()
+        )
+        if fallback:
+            return fallback
+        # Ensure statuses are present before creating a semester.
+        SemesterStatus._populate_attributes_and_db()
+        return cls.objects.create(
+            academic_year=academic_year,
+            number=SEMESTER_NUMBER.FIRST,
+            start_date=academic_year.start_date,
+            end_date=academic_year.end_date,
+        )
 
     class Meta:
         constraints = [

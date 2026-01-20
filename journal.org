@@ -1,4 +1,40 @@
 
+* <2026-01-20 Tue 20:52>
+What is candidate_map in "selected_obj = form.candidate_map.get(str(selected_id))"
+Make sure to add typing hint in function signature
+Do not write comments stating with '# >' yourself. It is the second time I am telling you this. how can I make clearer so you do not do it again ?
+Harmonize test types aliases. make sure they finish with T.
+
+* <2026-01-20 Tue 15:02>
+  Create Semester.get_default()  -> current semester
+  Create AcademicYear.get_default()  -> The default semester of the current semester
+  Wrap the above in test fixtures and reuse fixtures for sections if any, else create them. idem for CreditHours.
+
+  Test 1:
+  I allow duplicate curriculum or course but not the pair (curriculum, course). Check if you identified something pointing in another direction.
+
+  Test 2:
+  Do not allow merging of different Course. no allow_course_override, remove the test and guarde this type of merge.
+
+  Test 3:
+  Create a fixture for the invoice.  Should not be a problem since We do not have invoice in the DB.
+
+  Test4:   OK
+  # > ignore comment below
+  # Once I've selected the 2 curriculum and the merge curriculum action in the admin and press ok,  I want a form offering to select wich curriculum field will be taking precedences. so I should be show the course conflincting field to select which to merge. after selection, the merge should take place ...  
+  Test 5: ok
+  Extensions A, B OK
+  C: how can I have same curriculum/course ? with
+  '''    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("curriculum", "course"), name="uniq_course_per_curriculum"
+            )
+        ]
+''' or '/' means 'or' as in same curriculum or course ?
+
+  
+** Graphic color on links or code dashed, double ect... to better identify them
 * <2026-01-20 mar. 10:54>
 Here is the analysis and a concrete improvement plan, based on the current code paths (no code changes made).
  

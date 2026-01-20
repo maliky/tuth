@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Callable, TypeAlias
+from decimal import Decimal
+from typing import Callable, TypeAlias, cast
 
 import pytest
 
@@ -12,12 +13,19 @@ from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.academics.models.course import CurriculumCourse
 from app.academics.models.concentration import Major, Minor
+from app.finance.models.invoice import Invoice
+from app.people.models.student import Student
+from app.registry.models.credit_hours import CreditHour
+from app.timetable.models.academic_year import AcademicYear
+from app.timetable.models.semester import Semester
 
 CollegeFactory: TypeAlias = Callable[[str], College]
 CourseFactory: TypeAlias = Callable[[str], Course]
 CurriculumFactory: TypeAlias = Callable[[str], Curriculum]
 DepartmentFactory: TypeAlias = Callable[[str], Department]
 CurriculumCourseFactory: TypeAlias = Callable[[str, str], CurriculumCourse]
+CreditHourFactoryT: TypeAlias = Callable[[int], CreditHour]
+InvoiceFactoryT: TypeAlias = Callable[[CurriculumCourse], Invoice]
 
 
 @pytest.fixture
@@ -109,3 +117,47 @@ def major() -> Major:
 def minor() -> Minor:
     """Default minor with one curriculum_course."""
     return Minor.get_default()
+
+
+@pytest.fixture
+def default_academic_year() -> AcademicYear:
+    """Return the current academic year."""
+    return AcademicYear.get_default()
+
+
+@pytest.fixture
+def default_semester() -> Semester:
+    """Return the current semester."""
+    return Semester.get_default()
+
+
+@pytest.fixture
+def credit_hour() -> CreditHour:
+    """Return the default credit hour."""
+    return CreditHour.get_default()
+
+
+@pytest.fixture
+def credit_hour_factory() -> CreditHourFactoryT:
+    """Return a callable to create credit hour rows."""
+
+    def _make(code: int = 3) -> CreditHour:
+        return cast(CreditHour, CreditHour.objects.get(code=code))
+
+    return _make
+
+
+@pytest.fixture
+def invoice_factory(default_semester: Semester) -> InvoiceFactoryT:
+    """Return a callable to create invoices for curriculum courses."""
+
+    def _make(curriculum_course: CurriculumCourse) -> Invoice:
+        student = Student.get_default()
+        return Invoice.objects.create(
+            curriculum_course=curriculum_course,
+            student=student,
+            semester=default_semester,
+            amount_due=Decimal("10.00"),
+        )
+
+    return _make

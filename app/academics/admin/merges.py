@@ -1,6 +1,6 @@
 """Module with the merging function for academic objects."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, no_type_check
 
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
@@ -287,6 +287,8 @@ def merge_departments(target: Department, sources):
     return summary
 
 
+# Avoid mypy internal error on the annotate chain for collision summaries.
+@no_type_check
 def _department_merge_collision_summary(target: Department, sources) -> dict[str, int]:
     """Summarize potential department merge collisions.
 
@@ -544,14 +546,11 @@ def merge_curriculum_courses_action(course_admin, request, queryset):
 
 
 @transaction.atomic
-def merge_curriculum_courses(
-    target: CurriculumCourse, sources, *, allow_course_override: bool = False
-):
+def merge_curriculum_courses(target: CurriculumCourse, sources):
     """Merge CurriculumCourse rows into target.
 
     Rules:
-    - Only merge rows with the same curriculum.
-    - Course mismatches are only allowed when the wizard explicitly overrides it.
+    - Only merge rows with the same curriculum and course.
     - Section conflicts are merged into the target section.
     - Invoice conflicts keep the target; sources with invoices are skipped.
     - Concentration links move to the target when missing.
@@ -572,7 +571,7 @@ def merge_curriculum_courses(
         if src.curriculum_id != target.curriculum_id:
             summary["skipped_incompatible"] += 1
             continue
-        if src.course_id != target.course_id and not allow_course_override:
+        if src.course_id != target.course_id:
             summary["skipped_incompatible"] += 1
             continue
         if Invoice.objects.filter(curriculum_course=src).exists():

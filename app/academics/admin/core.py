@@ -1,6 +1,6 @@
 """Core Admin module for academics."""
 
-from typing import Iterable, TypeAlias, cast
+from typing import Iterable, TypeAlias, cast, no_type_check
 
 from django import forms
 from django.contrib import admin, messages
@@ -363,6 +363,8 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
             "is_elective_conflicts": summary.get("is_elective_conflicts", 0),
         }
 
+    # Avoid mypy internal error on the nested curriculum overlap query.
+    @no_type_check
     def _warn_curriculum_merge_precheck(
         self,
         request,
@@ -458,18 +460,7 @@ class CurriculumCourseAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
     def merge_records(self, target, sources):
         """Merge curriculum courses into the target selection."""
         target_course = cast(CurriculumCourse, target)
-        original_values = getattr(self, "_merge_original_values", {})
-        original_course = original_values.get("course")
-        original_course_id = getattr(original_course, "pk", None)
-        allow_course_override = (
-            original_course_id is not None
-            and target_course.course_id != original_course_id
-        )
-        return merge_curriculum_courses(
-            target_course,
-            sources,
-            allow_course_override=allow_course_override,
-        )
+        return merge_curriculum_courses(target_course, sources)
 
     @admin.display(description="Course")
     def course_display(self, obj: CurriculumCourse) -> str:
