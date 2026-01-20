@@ -39,7 +39,8 @@ class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedMode
         "student__user__username",
         "semester__academic_year__code",
     )
-    autocomplete_fields = ("student", "recorded_by")
+    # Enable curriculum course autocomplete so short_code searches work in add view.
+    autocomplete_fields = ("student", "recorded_by", "curriculum_course")
 
     @admin.display(description="Recorded by")
     def recorded_by_name(self, obj: Invoice) -> str:

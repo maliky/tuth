@@ -429,7 +429,8 @@ class CurriculumCourseAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
     list_editable = ("curriculum",)
     autocomplete_fields = ("curriculum", "course")
     list_select_related = ("curriculum", "course")
-    search_fields = ("curriculum__short_name", "course__code")
+    # Include short_code to support curriculum course autocomplete lookups.
+    search_fields = ("curriculum__short_name", "course__code", "course__short_code")
     list_per_page = 100
     list_max_show_all = 500
 
