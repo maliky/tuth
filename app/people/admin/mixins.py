@@ -289,38 +289,52 @@ class MergeWizardMixin(dj_admin.ModelAdmin):
             target = candidates.get(pk=target_id)
             sources = candidates.exclude(pk=target.pk)
             source_count = sources.count()
+            original_values = {
+                field_name: _get_attr_value(target, field_name)
+                for field_name in merge_fields
+            }
             updated_objects: set[ModelT] = set()
             unique_updates: list[tuple[str, ModelT, models.Field, object]] = []
-            with transaction.atomic():
-                # Apply selected values to the target before running merges.
-                for field_name in merge_fields:
-                    field_key = form._field_key(field_name)
-                    selected_id = form.cleaned_data.get(field_key)
-                    selected_obj = form.candidate_map.get(str(selected_id))
-                    if selected_obj is None:
-                        continue
-                    value = _get_attr_value(selected_obj, field_name)
-                    field = _resolve_field(type(target), field_name)
-                    if (
-                        field
-                        and (field.unique or field.primary_key)
-                        and selected_obj.pk
-                        and selected_obj.pk != target.pk
-                    ):
-                        unique_updates.append((field_name, selected_obj, field, value))
-                    updated = _set_attr_value(target, field_name, value)
-                    if updated is not None:
-                        updated_objects.add(updated)
-                # > Free unique values on source rows before saving the target.
-                for field_name, selected_obj, field, value in unique_updates:
-                    placeholder = _build_unique_placeholder(field, value, selected_obj.pk)
-                    updated = _set_attr_value(selected_obj, field_name, placeholder)
-                    if updated is not None:
-                        updated.save()
-                for obj in updated_objects:
-                    obj.save()
-                merge_summary = self.merge_records(target, sources)
-                self.sync_merge_target(target)
+            self._merge_original_values = original_values
+            self._merge_request = request
+            try:
+                with transaction.atomic():
+                    # Apply selected values to the target before running merges.
+                    for field_name in merge_fields:
+                        field_key = form._field_key(field_name)
+                        selected_id = form.cleaned_data.get(field_key)
+                        selected_obj = form.candidate_map.get(str(selected_id))
+                        if selected_obj is None:
+                            continue
+                        value = _get_attr_value(selected_obj, field_name)
+                        field = _resolve_field(type(target), field_name)
+                        if (
+                            field
+                            and (field.unique or field.primary_key)
+                            and selected_obj.pk
+                            and selected_obj.pk != target.pk
+                        ):
+                            unique_updates.append(
+                                (field_name, selected_obj, field, value)
+                            )
+                        updated = _set_attr_value(target, field_name, value)
+                        if updated is not None:
+                            updated_objects.add(updated)
+                    # > Free unique values on source rows before saving the target.
+                    for field_name, selected_obj, field, value in unique_updates:
+                        placeholder = _build_unique_placeholder(
+                            field, value, selected_obj.pk
+                        )
+                        updated = _set_attr_value(selected_obj, field_name, placeholder)
+                        if updated is not None:
+                            updated.save()
+                    for obj in updated_objects:
+                        obj.save()
+                    merge_summary = self.merge_records(target, sources)
+                    self.sync_merge_target(target)
+            finally:
+                self._merge_original_values = {}
+                self._merge_request = None
             merged_total = source_count
             if isinstance(merge_summary, dict):
                 merged_total = merge_summary.get("merged", source_count)
@@ -342,6 +356,36 @@ class MergeWizardMixin(dj_admin.ModelAdmin):
                     self.message_user(
                         request,
                         f"Skipped {skipped_invoices} selection(s) with invoices.",
+                        level=messages.WARNING,
+                    )
+                credit_hours_conflicts = merge_summary.get("credit_hours_conflicts", 0)
+                if credit_hours_conflicts:
+                    self.message_user(
+                        request,
+                        (
+                            "Credit hours differ on "
+                            f"{credit_hours_conflicts} selection(s)."
+                        ),
+                        level=messages.WARNING,
+                    )
+                is_required_conflicts = merge_summary.get("is_required_conflicts", 0)
+                if is_required_conflicts:
+                    self.message_user(
+                        request,
+                        (
+                            "Required flag differs on "
+                            f"{is_required_conflicts} selection(s)."
+                        ),
+                        level=messages.WARNING,
+                    )
+                is_elective_conflicts = merge_summary.get("is_elective_conflicts", 0)
+                if is_elective_conflicts:
+                    self.message_user(
+                        request,
+                        (
+                            "Elective flag differs on "
+                            f"{is_elective_conflicts} selection(s)."
+                        ),
                         level=messages.WARNING,
                     )
                 sections_merged = merge_summary.get("sections_merged", 0)

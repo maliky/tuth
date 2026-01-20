@@ -3,7 +3,7 @@
 from typing import Iterable, TypeAlias, cast
 
 from django import forms
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.db.models import Count
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
@@ -338,11 +338,58 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         """Merge curricula using the shared merge helper."""
         target_curriculum = cast(Curriculum, target)
         source_curricula = cast(Iterable[Curriculum], sources)
+        request = getattr(self, "_merge_request", None)
+        self._warn_curriculum_merge_precheck(
+            request,
+            target_curriculum,
+            source_curricula,
+        )
         summary = merge_curricula(target_curriculum, source_curricula)
+        if request and summary.get("curricula_retained", 0):
+            self.message_user(
+                request,
+                (
+                    "Some source curricula were retained due to invoice conflicts. "
+                    "Review scripts/curriculum_merge_conflicts.sql before retrying."
+                ),
+                level=messages.WARNING,
+            )
         return {
             "merged": summary.get("curricula_merged", 0),
             "sections_merged": summary.get("sections_merged", 0),
+            "skipped_invoices": summary.get("skipped_invoices", 0),
+            "credit_hours_conflicts": summary.get("credit_hours_conflicts", 0),
+            "is_required_conflicts": summary.get("is_required_conflicts", 0),
+            "is_elective_conflicts": summary.get("is_elective_conflicts", 0),
         }
+
+    def _warn_curriculum_merge_precheck(
+        self,
+        request,
+        target: Curriculum,
+        sources: Iterable[Curriculum],
+    ) -> None:
+        """Warn when the pre-merge SQL check should be reviewed."""
+        if request is None:
+            return
+        source_ids = [cur.pk for cur in sources if cur.pk]
+        if not source_ids or not target.pk:
+            return
+        overlap_count = CurriculumCourse.objects.filter(
+            curriculum=target,
+            course_id__in=CurriculumCourse.objects.filter(
+                curriculum_id__in=source_ids
+            ).values("course_id"),
+        ).count()
+        if overlap_count:
+            self.message_user(
+                request,
+                (
+                    "Course overlaps detected; run "
+                    "scripts/curriculum_merge_conflicts.sql before merging."
+                ),
+                level=messages.WARNING,
+            )
 
 
 @admin.register(CurriculumCourse)
@@ -411,7 +458,18 @@ class CurriculumCourseAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
     def merge_records(self, target, sources):
         """Merge curriculum courses into the target selection."""
         target_course = cast(CurriculumCourse, target)
-        return merge_curriculum_courses(target_course, sources)
+        original_values = getattr(self, "_merge_original_values", {})
+        original_course = original_values.get("course")
+        original_course_id = getattr(original_course, "pk", None)
+        allow_course_override = (
+            original_course_id is not None
+            and target_course.course_id != original_course_id
+        )
+        return merge_curriculum_courses(
+            target_course,
+            sources,
+            allow_course_override=allow_course_override,
+        )
 
     @admin.display(description="Course")
     def course_display(self, obj: CurriculumCourse) -> str:
