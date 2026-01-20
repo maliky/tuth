@@ -1,4 +1,75 @@
 
+* <2026-01-20 mar. 10:54>
+Here is the analysis and a concrete improvement plan, based on the current code paths (no code changes made).
+ 
+  Current Merge Mechanisms
+ 
+  - app/academics/admin/merges.py implements merge logic for departments, curricula, courses, and curriculum courses.
+    - Course/department use simple admin actions;
+    - curriculum/curriculumcourse have deeper merge logic.
+  - app/academics/admin/core.py wires the actions.
+    - Curriculum and CurriculumCourse use MergeWizardMixin;
+    - Course and Department use direct actions.
+  - app/people/admin/mixins.py provides MergeWizardMixin;
+    - app/people/admin/core.py uses it for User, Faculty, Staff, Student, Donor. Actual merging is done by app/people/services/merge_people.py.
+  - app/timetable/models/section.py and app/timetable/models/session.py define the Section/SecSession constraints, but there is no admin merge action for them. The only section merge logic is _merge_sections in app/academics/admin/merges.py.
+  - scripts/curriculum_merge_conflicts.sql is the existing SQL pre-check for curriculum merges.
+ 
+  Culprits / Risks Found
+ 
+  - Course merge action is broken: merge_courses tries to update a related field (curriculum_course__course), which is invalid and causes the error you saw. It also risks losing sections via cascade when the source course is deleted. app/academics/admin/merges.py.
+
+  - Department merge is too narrow: it only updates Course.department via .update(), which skips Course.save() and leaves code/short_code inconsistent with the new department. It also ignores other Department FKs (Staff,  RoleAssignment), so it can leave data pointing to deleted departments. app/academics/admin/merges.py, app/ academics/models/course.py, app/people/models/staffs.py, app/people/models/role_assignment.py.
+  - Curriculum merge uses _merge_curriculum_course_to_target and _merge_sections correctly, but it stops the entire merge on a single invoice conflict and does not resolve credit hour conflicts. app/academics/admin/merges.py, scripts/curriculum_merge_conflicts.sql.
+  - CurriculumCourse merge allows any two rows with the same curriculum and same course department, even if the course differs. That can merge unrelated courses. It also does not detect pre‑existing duplicates outside the selection. app/academics/admin/merges.py.
+  - People merges are risky: merge_people does not reassign related records (registrations, grades, invoices, scholarships, documents, payments recorded_by). This can delete data or raise PROTECT errors when the source is  deleted. app/people/services/merge_people.py, app/registry/models/registration.py, app/registry/models/grade.py, app/finance/models/invoice.py, app/finance/models/scholarship.py, app/registry/models/document.py, app/finance/ models/payment.py.
+  - merge_users updates RoleAssignment in bulk; if target already has the same role assignment, the unique constraint can fail. app/people/services/merge_people.py, app/people/models/role_assignment.py.
+  - Section/SecSession have no direct merge action; _merge_sections only merges sessions/grades/registrations and ignores section fields (faculty, dates, info, seats). app/academics/admin/merges.py, app/timetable/models/ section.py, app/timetable/models/session.py.
+
+ Plan to Correct and Improve
+ 
+  1. Pre‑merge conflict checks (SQL‑first, as requested).
+      - Keep using scripts/curriculum_merge_conflicts.sql for curriculum.
+      - Add similar SQL scripts for course, curriculumcourse, and department merges to surface:
+          - course duplicates per department, curriculumcourse duplicates, section collisions, prerequisite collisions
+          - staff/role assignments pointing to departments
+          - student/grade/registration/invoice collisions for people merges
+  2. Fix course merge logic to reuse existing helpers instead of updating across relations.
+      - For each source course, iterate curriculum courses:
+          - if target already has the same curriculum course, call the existing curriculum course merge helper (reuse _merge_curriculum_course_to_target and _merge_sections)
+          - otherwise move the curriculum course to the target and save
+      # - Update prerequisites that reference the source course (both course and prerequisite_course) with dedupe checks.  
+      - Only delete the source course after all dependent objects are moved.
+  3. Improve department merge.
+      # - Reassign all Department FKs (courses, staff profiles, role assignments) to target. ?
+      # > Department only FK is college.
+      - Recompute and save Course.code/Course.short_code after moving departments to prevent stale codes and uniqueness issues.
+	# > Course code are ok for now
+      - Provide a summary of collisions detected by the SQL pre‑check before proceeding.
+  4. Tighten curriculumcourse merge rules.
+      - Require same curriculum and same course unless the user explicitly selects a different course in the wizard, then validate for collisions.
+      - Add conflict summaries for credit hours and flags; do not silently pick one.
+  5. Make curriculum merge more resilient.
+      - Use the SQL script before merging.
+      - Change invoice conflicts from “raise and stop everything” to “skip with summary,” matching the curriculumcourse merge behavior.
+      - Provide a summary for credit hour differences (no auto overwrite).
+  6. Harden people merges by reassigning dependent records.
+      - Student: move registrations, grades, invoices, scholarships, scholarship snapshots, and documents before deleting source.
+      - Staff: move staff documents and reassign recorded_by where appropriate.
+      - Donor: move donor documents, scholarships, and letter templates.
+      - Update merge_users to dedupe RoleAssignment instead of bulk update to avoid unique constraint collisions.
+  # 7. Decide whether to add direct merge actions for Section and SecSession.
+  #     - If yes, use MergeWizardMixin and reuse _merge_sections for the dependent records.   
+  #     - Add field‑level merge handling for section fields (faculty, dates, info, max_seats).
+  # > not for now.
+  8. Keep all changes functional and reuse existing helpers; avoid alias wrappers.
+      - Add or update Google‑style docstrings and inline comments for any touched functions.
+
+  If you want me to implement, tell me which model group to start with (courses, departments, people, or curriculum/
+  curriculumcourse), and whether you want the SQL conflict scripts added first.
+
+    
+
 * <2026-01-19 lun. 00:36>
 - propose a test for import grades and import_sessions if not yet implemented
 

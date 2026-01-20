@@ -12,6 +12,7 @@ markers = [
 [tool.black]
 line-length = 90
 target-version = ["py313"]
+exclude = "__pycache__,.git,migrations,Seed_data"
 
 [tool.flake8]
 per-file-ignores = ["__init__.py:F401"]
