@@ -625,6 +625,16 @@ def _build_finance_officer_context(request: HttpRequest) -> dict:
     base = _build_finance_context(request)
     scholarship_admin = _maybe_reverse("admin:finance_scholarship_changelist")
     extras = []
+    finance_console = _maybe_reverse("finance_officer_invoices")
+    if finance_console:
+        extras.append(
+            {
+                "label": "Invoice & payment console",
+                "href": finance_console,
+                "description": "Review invoices and record pending payments.",
+                "variant": "primary",
+            }
+        )
     if scholarship_admin:
         extras.append(
             {

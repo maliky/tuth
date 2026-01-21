@@ -15,6 +15,36 @@ urlpatterns = [
     path("portal/", views.portal_redirect, name="portal_redirect"),
     path("auth/login/", views.PortalLoginView.as_view(), name="portal_login"),
     path("auth/logout/", views.PortalLogoutView.as_view(), name="portal_logout"),
+    path(
+        "student/invoice/statement/",
+        views.student_invoice_statement,
+        name="student_invoice_statement",
+    ),
+    path(
+        "student/invoice/statement/download/",
+        views.download_invoice_statement,
+        name="student_invoice_statement_download",
+    ),
+    path(
+        "staff/finance/invoices/",
+        views.finance_officer_invoices,
+        name="finance_officer_invoices",
+    ),
+    path(
+        "staff/finance/invoices/create-payments/",
+        views.finance_officer_create_payments,
+        name="finance_officer_create_payments",
+    ),
+    path(
+        "staff/finance/invoices/update-payments/",
+        views.finance_officer_update_payments,
+        name="finance_officer_update_payments",
+    ),
+    path(
+        "staff/finance/students/autocomplete/",
+        views.finance_officer_student_autocomplete,
+        name="finance_officer_student_autocomplete",
+    ),
     # Course dashboard removed in favor of the student dashboard flow.
     path("students/", views.student_list, name="student_list"),
     path("students/<int:pk>", views.student_detail, name="student_detail"),

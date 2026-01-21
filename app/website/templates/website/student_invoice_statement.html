@@ -1,0 +1,69 @@
+{% extends "website/student_portal_base.html" %}
+{% load static %}
+
+{% block page_title %}Invoice Statement - Tusis{% endblock %}
+{% block header_title %}Invoice Statement{% endblock %}
+
+{% block content %}
+  <section class="mb-4">
+    <div class="bg-white rounded-3 shadow-sm p-4">
+      <div class="d-flex justify-content-between flex-wrap gap-2">
+        <div>
+          <p class="text-uppercase small text-muted mb-1">Student</p>
+          <h2 class="h5 mb-1">{{ student.long_name }}</h2>
+          <p class="text-muted mb-0">{{ student.student_id }}</p>
+        </div>
+        <div class="text-end">
+          <p class="text-uppercase small text-muted mb-1">Total Due</p>
+          <div class="h4 mb-0">{{ currency }} {{ total_due|floatformat:2 }}</div>
+          <p class="text-muted mb-0">Outstanding invoices only</p>
+        </div>
+      </div>
+      <p class="text-muted small mt-3 mb-0">
+        Use your browser print dialog to save as PDF or capture the statement.
+      </p>
+    </div>
+  </section>
+
+  <section class="mb-5">
+    {% if statement_rows %}
+      <div class="table-responsive bg-white rounded-3 shadow-sm">
+        <table class="table mb-0 align-middle">
+          <thead>
+            <tr>
+              <th>Semester</th>
+              <th>Course</th>
+              <th>Credits</th>
+              <th>Created</th>
+              <th class="text-end">Amount Due</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in statement_rows %}
+              {% with invoice=row.invoice %}
+              <tr>
+                <td>
+                  {{ invoice.semester.academic_year.code }} - Semester {{ invoice.semester.number }}
+                </td>
+                <td>
+                  <strong>{{ invoice.curriculum_course.course.short_code }}</strong><br/>
+                  <span class="text-muted">{{ invoice.curriculum_course.course.title }}</span>
+                </td>
+                <td>{{ invoice.curriculum_course.credit_hours.code }}</td>
+                <td>{{ row.created_at }}</td>
+                <td class="text-end">{{ currency }} {{ invoice.amount_due|floatformat:2 }}</td>
+              </tr>
+              {% endwith %}
+            {% endfor %}
+            <tr class="table-light">
+              <td colspan="4" class="text-end"><strong>Total</strong></td>
+              <td class="text-end"><strong>{{ currency }} {{ total_due|floatformat:2 }}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="alert alert-light">No outstanding invoices found.</div>
+    {% endif %}
+  </section>
+{% endblock %}

@@ -1,4 +1,223 @@
 
+* <2026-01-21 mer. 21:15>  Admin invoice and finance
+- Make a sql script to merge together all courses that share the same short_code.  The default target should be the one with a course  description, or the one with the smalest id.  If cleaner do this as an admin action.
+- in admin invoice Add a payment column showin gthe number of payment related to that invoice.  clikcking the number should open the payement admin list filtered down to those payements.
+  
+- in student_dashboard.py
+  - move _section_fee to Section. make it a class method
+  - move format datetime, and format_short_datetime  in app/timetable/utils.py
+  - I am surprised to see us rebuild the context for the side bar in student_invoice_Statement, I though this side bar would be inherited through template logics.  am I missing something essential ?
+* DONE <2026-01-21 mer. 20:55> Finance officer UX
+CLOSED: [2026-01-21 mer. 21:35]
+- need more structure in the list.  When showing several student the studnet invoice details should be hidden (folder) under a summary row with the student name (ID) and total amount due.  A button  to create payments for this user should be on the row of thuser.  when presing it, it create all the invoice's payment for that users.  The genera button create payment should be called create indiviudal payment, and only show when a row is specificaly selected.
+- The tab display is good.
+- On the Payments tab.  Same folded display per listed student.
+- Amount paid should have de default value but it should be editable.
+- Status and Method should be editable also (drop down lists).
+- A 'validate change' button should be display at the student row level.  pressing it will push to the db the update on the payment rows, save them and update the invoice amount du and change their state if amount due drp below 0
+
+* DONE <2026-01-21 mer. 15:57>
+CLOSED: [2026-01-21 mer. 20:54]
+Key payment logic note: invoice balances only change when a payment is saved with status cleared in app/finance/models/payment.py, so creating a payment alone does not reduce amount_due.
+
+  - Student portal CTA
+    - Rename button label to “Proceed to Payment”.
+    - No payment creation on this action; it just redirects to the statement.
+    - Invoices continue to be created when a student saves registrations.
+  - Invoice statement behavior
+    - Statement rows come from invoices with amount_due > 0, not registrations.
+    - Remove the “Updated” column; show only invoice created_at
+    - Exclude canceled/removed registrations by deleting their invoices and any related payments on cancel. (no soft delete for now)
+    - Sidebar link remains as-is.
+  - Student course list UX
+    - Remove the “Registration status: …” line.
+    - Canceled badge text becomes:
+      - “Canceled for semester” if no unlock timestamp.
+      - “Canceled until Jan 23, 15:42” using a short %b %d, %H:%M format.
+    - Keep canceled courses in the visible registered list.
+    - Hide the “Credits selected” row in the cart when no sections are selected (front-end only).
+  - Admin invoice list
+    - Update list_display to include student name (ID), semester, amount_due, created_at.
+    - Add filters for semesters, amounts due  (if  simple to implement )
+    - Add list_select_related for student/user/semester.
+    - Search by Student name and ID and curriculum course
+  - Admin payment
+    - Hide recorded_by in the form; default to the logged-in user on save.
+  - Admin “Create payment” action
+    - Bulk action that also accepts a single invoice.
+    - Uses a shared helper to create pending payments (idempotent, skip if pending exists or amount_due <= 0).
+      - In the bulk action view for eah payment created set the default amount paid to the full invoice payment, but let the finance officer adjuste as necessary
+  - Finance officer UI
+    - Add a dedicated invoice/payment view with tabs:
+      - Invoices tab: last 100 with amount_due > 0, ordered by created_at desc.
+      - Payments tab: last 100 emphasize pending payments to clear.
+    - Student dropdown limited to students with invoices or payments.
+    - When a student is selected, show all his invoices/payments regardless of status.
+    - Status filters for payment per tab.
+    - Bulk “Create payment” action in the invoice tab using the shared helper.
+    - Pagination controls.
+
+  Assumptions to confirm
+
+  - Deleting payments on registration cancellation is required even though it removes payment history. No soft delte for now. The ide is tha a registration cannot be deleted if a payment has been made and the status is not pending anymore. There is no refund policy implemented yet.
+
+
+* <2026-01-21 mer. 15:27> Invoices and payments
+
+  Updated Plan – Invoices & Payments (15:18)
+
+** Student portal: “Proceed to Payment” flow
+
+  - Rename button label from “Download statement” to “Proceed to Payment”.
+  - On click: create a Payment row per invoice (not a new invoice) for all outstanding invoices, then redirect to the statement view.
+    - Yes invoices are created when the student save the registration. He first save teh registation than proceed to payment
+  - Ensure the created payments are pending (finance clears payments, not invoices).
+
+** Invoice statement behavior
+
+  - What appears in the invoice statement are invoices with amount_due > 0, not registration.
+  - Canceled registration must also destroy the associated invoice and associated payment(s).
+  - Statement shows only non‑canceled registrations; filter canceled/removed registrations out of the invoice list.
+  - Remove the “Updated” column; keep only “Registered” (created timestamp).
+  - Sidebar link label remains in the student portal, but the CTA/button is “Proceed to Payment”.
+
+** Student course list UX
+
+  - Remove the “Registration status: …” line and replace the badge label for canceled rows:
+    - “Canceled for semester” when no unlock time.
+    - “Canceled until Jan 23, 2026, 15:…” when the unlock time exists.
+  - Keep canceled courses in the visible registered list (not collapsible).
+  - Hide the “Credits selected” row when no sections are selected in the registration cart (front‑end only).
+
+** Admin – finance/invoice list enhancements
+
+  - Update InvoiceAdmin list_display to include student name+ID, semester, amount_due, created_at.
+  - Add list_select_related to avoid N+1 (student/user/semester).
+  - Add a “Create payment” action (or per‑row button) that uses a shared helper to create pending payments and optionally mark them as cleared per rules.
+
+  - In admin/finance/payment
+
+    - hide the recorded_by. It defaults to the logged in user.
+
+** Finance officer dashboard (staff UI)
+
+  - Add a dedicated finance officer invoice/payment list view + template:
+    - Default to last 100 invoices with amount_due > 0, ordered by created_at desc.
+    - Search by student name or student_id.
+    - Group by student; when a student is selected, show all invoices or payment what ever the status
+      - Have dropdown box to filter down payement/invoices by status
+      - In the dropdown list only student with payments or invoice should be proposed.
+    - Show payments alongside invoices but emphasize payments to be cleared.
+      - This should be 2 different tabs of the same UI
+    - Add per‑row “Create payment” action that uses the shared helper and similare logic as in the admin.  select row, selection action , validate.
+    - Add pagination controls.
+
+** Shared helper for payment creation
+
+  - Create a single helper that accepts invoice(s) and creates Payment rows (pending by default).
+  - Keep payment creation idempotent (avoid duplicates if a pending payment already exists).
+
+  If this looks right, confirm whether the “Create payment” action should also be available for a selected list in admin (bulk
+  
+* DONE <2026-01-21 mer. 15:18> Invoices and payments
+CLOSED: [2026-01-21 mer. 15:27]
+
+-  Rename the buton 'download statement' with Proceed to Payment'.  This will show the invoice statement to be printed and brought to finance with payment proof.
+- important change, when one clicks on proceed to payment, a payement is created for each invoice.  It is the payment that the finance clear, not the invoice direclty. The invoice are cleardd depending on rules related to the amount due.
+  Still on the finance ui, the officer should see both the invoce and the payements but emphasize is on the payements to be cleared.   
+
+**  <2026-01-21 12:50> Student portal
+
+  - Sidebar “Download statement” link + consistent sidebar on statement page: OK
+  - Canceled registration status + gray display + locked‑until timestamp: Partialy
+    - remove the ligne with 'Registration status' make badge a little more informative when necessary:
+      - Canceled for semester
+      - Canceled until Jan 23, 2026, 15...
+  - Statement shows created/updated timestamps: partialy
+    - Remove the updated column.  and make sure canceled registration do not show in the invoice statement.  Currently they somme show.
+
+  - Credit limit shows remaining credits: compliant;  do not show ' <div class="d-flex justify-content-between">
+            <span class="text-muted">Credits selected</span>
+            <strong><span data-credit-selected="">6</span></strong>
+          </div>' if not section selecte in the registration card.
+
+
+
+**  <2026-01-21 13:02> Finance admin + finance officer
+
+  - Admin invoice list (student name/ID, semester, amount due, created time): not compliant; InvoiceAdmin still only
+    shows __str__ and recorded_by in app/finance/admin/core.py.
+  - Finance officer view with invoices (amount_due > 0), grouped by student, search by name/ID, pagination, and per‑row “create payment”: not implemented; finance officer uses the generic dashboard actions in app/website/views/staff_dashboards.py and no invoice list exists in staff templates.
+  - Admin “create payment” action: not present; no action/button in app/finance/admin/core.py.
+  - Note: invoice balance only updates when a payment is saved with status=cleared (see app/finance/models/payment.py), so any “create payment” button must set that status to update amount_due as requested.
+
+Add a “Create payment” action in the admin invoice list and reuse the same helper in the finance officer UI for consistent balance updates. The staff view can mirror the admin list, but it needs its own  view/template (grouped by student, search, pagination, and per‑row POST action).
+
+
+
+
+* DONE <2026-01-21 mer. 12:21>
+CLOSED: [2026-01-21 mer. 15:24]
+1. Generate the invoices and the statement only on the "Dowload statement" action.
+2. On click : gather pending registrations for the current student but for any semester, create missing Invoice rows if they don't exists; reuse existing ones.
+3. Statemetn page aggregates all invoice row for the student, showing only rows with amount_due > 0.
+4. Button appear only when there are pending registrations for the current student.
+5. Add a registration guard to prevent same course in multiple sections for the same semester.
+6. No new Invoice model required.
+   Do not do the DB test now.
+
+   Implement the above.
+
+** DONE <2026-01-21 mer. 10:42>
+CLOSED: [2026-01-21 mer. 12:21]
+
+Review this   plan to Implement 
+
+  1. Define the “invoice statement” concept without a new model (initially).
+      - Create invoices only when the student clicks “Proceed to payment”.
+      - Use the existing Invoice rows as line items (one per course per semester).
+      - The rendered invoice page aggregates those rows into a single statement (total of all courses).
+  2. Add a server‑side “generate invoice” endpoint.
+     # > this is not clear. The invoice should only be created one for the pending regsitration for student in a semester.
+     # > Then if there are already pending invoice, for that student, they should also display and be comgined in one invoice.
+      - New view in app/website/views (or a dedicated finance view module):
+          - POST only (since it writes to DB).
+          - Collect pending registrations for the selected semester.
+          - For each registration: compute the fee (tuition + section fees) and get_or_create the corresponding Invoice.
+          - Keep it idempotent so repeated clicks don’t create duplicates.
+      - Redirect to a GET invoice display URL after creation.
+  3. Add invoice display endpoint + printable template.
+      - New URL in app/website/urls.py (e.g., /student/invoice/<semester_id>/).
+      - New template (e.g., app/website/templates/website/student_invoice.html) with:
+          - A printable layout (CSS @media print).
+          - Header, student info, term, line items (course, credit, fees), totals.
+          - A small “Print / Save as PDF” instruction (browser print dialog).
+  4. Wire the button on the dashboard.
+      - Replace or reuse the existing “Proceed to payment” button in app/website/templates/website/
+        student_dashboard.html.
+      - Make it a POST form that hits the “generate invoice” endpoint.
+      - Show it only if there are pending registrations for the selected semester.
+  5. Only  pending registrations for the active/selected semester are included
+  6. Optional evolution (if you want a real “invoice document” object later).
+     # > don t  I have an invoice object already ?  I think that together with payemnt it should be enough.
+      - Add an InvoiceBatch or InvoiceStatement model to group the line‑items and keep a stable invoice ID.
+      - Link existing Invoice rows to the batch via FK for historical re‑render.
+
+My observations:
+  # - Any created  invoice that is not cleared should show ?
+  # - A student should not be able to register in multiple sections of the same course. The Registratin unique constraint should guarde agasint that. if not needs to be guarded
+
+  DB‑Only Test Plan (No UX)
+
+  - Create registrations (pending) and verify no invoices exist until the “generate invoice” view is called.
+  - Call the “generate invoice” view and verify:
+      - It creates one Invoice per course per semester.
+      - It is idempotent
+      - Total sum equals tuition + section fees from SectionFee.
+  - Verify filtering:
+      -  Only registrations pending are included
+
+
 * <2026-01-20 Tue 20:52>
 What is candidate_map in "selected_obj = form.candidate_map.get(str(selected_id))"
 Make sure to add typing hint in function signature

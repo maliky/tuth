@@ -1,0 +1,36 @@
+{% if page and page.paginator.num_pages > 1 %}
+  <nav class="mt-4">
+    <ul class="pagination justify-content-center">
+      <li class="page-item {% if not page.has_previous %}disabled{% endif %}">
+        <a
+          class="page-link"
+          href="{% if page.has_previous %}{% if pagination_query %}?{{ pagination_query }}&page={{ page.previous_page_number }}{% else %}?page={{ page.previous_page_number }}{% endif %}{% else %}#{% endif %}"
+        >
+          Previous
+        </a>
+      </li>
+      {% for num in page.paginator.page_range %}
+        {% if num == page.number %}
+          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+        {% elif num <= page.number|add:2 and num >= page.number|add:-2 %}
+          <li class="page-item">
+            <a
+              class="page-link"
+              href="{% if pagination_query %}?{{ pagination_query }}&page={{ num }}{% else %}?page={{ num }}{% endif %}"
+            >
+              {{ num }}
+            </a>
+          </li>
+        {% endif %}
+      {% endfor %}
+      <li class="page-item {% if not page.has_next %}disabled{% endif %}">
+        <a
+          class="page-link"
+          href="{% if page.has_next %}{% if pagination_query %}?{{ pagination_query }}&page={{ page.next_page_number }}{% else %}?page={{ page.next_page_number }}{% endif %}{% else %}#{% endif %}"
+        >
+          Next
+        </a>
+      </li>
+    </ul>
+  </nav>
+{% endif %}

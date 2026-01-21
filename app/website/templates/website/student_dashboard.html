@@ -99,13 +99,13 @@
           <p class="text-muted small mb-0">Select a section to start.</p>
         </div>
         <footer>
-          <div class="d-flex justify-content-between">
+          <div class="d-flex justify-content-between" data-credits-selected-row>
             <span class="text-muted">Credits selected</span>
             <strong><span data-credit-selected>{{ registration_limits.credits_selected }}</span></strong>
           </div>
           <div class="d-flex justify-content-between">
-            <span class="text-muted">Credit limit</span>
-            <strong><span data-credit-limit>{{ registration_limits.credits_max }}</span></strong>
+            <span class="text-muted">Credits remaining</span>
+            <strong><span data-credit-limit>{{ registration_limits.credits_remaining }}</span></strong>
           </div>
           <p class="text-danger small d-none mb-0" data-credit-warning>
             Credit limit exceeded. Remove a course or ask staff to adjust your limit.
@@ -129,7 +129,14 @@
                 Save registration
               </button>
             </form>
-            <button class="btn btn-outline-dark">Proceed to payment</button>
+            {% if has_pending_registrations %}
+              <form method="post" action="{% url 'student_invoice_statement_download' %}">
+                {% csrf_token %}
+                <button class="btn btn-outline-dark" type="submit">
+                  Proceed to Payment
+                </button>
+              </form>
+            {% endif %}
           </div>
         </footer>
       </div>

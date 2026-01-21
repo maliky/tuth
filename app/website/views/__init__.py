@@ -9,9 +9,19 @@ from .enrollment import (
     student_detail,
     student_list,
 )
+from .finance_officer import (
+    finance_officer_create_payments,
+    finance_officer_invoices,
+    finance_officer_student_autocomplete,
+    finance_officer_update_payments,
+)
 from .registrar import registrar_course_windows
 from .staff_dashboards import staff_dashboard, staff_role_dashboard
-from .student_dashboard import student_dashboard
+from .student_dashboard import (
+    download_invoice_statement,
+    student_dashboard,
+    student_invoice_statement,
+)
 
 __all__ = [
     "PortalLoginView",
@@ -27,4 +37,10 @@ __all__ = [
     "student_delete",
     "student_detail",
     "student_list",
+    "student_invoice_statement",
+    "download_invoice_statement",
+    "finance_officer_invoices",
+    "finance_officer_create_payments",
+    "finance_officer_student_autocomplete",
+    "finance_officer_update_payments",
 ]

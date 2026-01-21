@@ -123,11 +123,16 @@
             </div>
           </div>
           <div class="text-end">
-            <span class="badge bg-secondary">Registered</span>
+            <span class="badge {{ course.status_class }}">{{ course.status_label|default:"Registered" }}</span>
           </div>
         </div>
         <div class="mt-3">
-          <small class="text-muted d-block">{{ course.reason }}</small>
+          {% if course.locked_until %}
+            <small class="text-muted d-block">Locked until {{ course.locked_until }}</small>
+          {% endif %}
+          {% if course.reason %}
+            <small class="text-muted d-block">{{ course.reason }}</small>
+          {% endif %}
         </div>
       </article>
     {% endfor %}

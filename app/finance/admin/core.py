@@ -12,6 +12,7 @@ from app.academics.models.course import CurriculumCourse
 from app.finance.models.payment import Payment
 from app.finance.models.invoice import Invoice
 from app.finance.models.scholarship import Scholarship
+from app.finance.utils import create_pending_payments
 from app.people.models.staffs import Staff
 from app.shared.admin.mixins import ScopedAutocompleteAdminMixin
 from app.timetable.admin.filters import SemesterFilterAC
@@ -25,22 +26,75 @@ class StaffChoiceField(forms.ModelChoiceField):
         return obj.long_name or str(obj)
 
 
+class AmountDueFilter(admin.SimpleListFilter):
+    """Filter invoices by remaining balance."""
+
+    title = "Amount due"
+    parameter_name = "amount_due"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("open", "Open balance"),
+            ("zero", "Zero balance"),
+        )
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value == "open":
+            return queryset.filter(amount_due__gt=0)
+        if value == "zero":
+            return queryset.filter(amount_due=0)
+        return queryset
+
+
 @admin.register(Invoice)
 class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin settings for Payment."""
 
-    list_display = ("__str__", "recorded_by_name")
-    list_filter = (SemesterFilterAC,)
+    list_display = (
+        "student_label",
+        "semester_label",
+        "curriculum_course",
+        "amount_due",
+        "created_at",
+        "recorded_by_name",
+    )
+    list_filter = (SemesterFilterAC, AmountDueFilter)
+    list_select_related = (
+        "student",
+        "student__user",
+        "semester",
+        "curriculum_course",
+        "recorded_by",
+    )
     readonly_fields = ("created_at",)
     search_fields = (
         "curriculum_course__course__short_code",
+        "curriculum_course__course__code",
+        "curriculum_course__course__title",
         "student__student_id",
         "student__long_name",
+        "student__user__first_name",
+        "student__user__last_name",
         "student__user__username",
         "semester__academic_year__code",
     )
     # Enable curriculum course autocomplete so short_code searches work in add view.
     autocomplete_fields = ("student", "recorded_by", "curriculum_course")
+    actions = ("create_payment_action",)
+
+    @admin.display(description="Student")
+    def student_label(self, obj: Invoice) -> str:
+        """Return the student name and ID for display."""
+        student = obj.student
+        name = student.long_name or student.user.get_full_name() or student.student_id
+        student_id = student.student_id or "Pending ID"
+        return f"{name} ({student_id})"
+
+    @admin.display(description="Semester")
+    def semester_label(self, obj: Invoice) -> str:
+        """Return the invoice semester label."""
+        return str(obj.semester)
 
     @admin.display(description="Recorded by")
     def recorded_by_name(self, obj: Invoice) -> str:
@@ -49,6 +103,30 @@ class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedMode
         if recorded_by is not None:
             return recorded_by.long_name or str(recorded_by)
         return "-"
+
+    @admin.action(description="Create pending payments")
+    def create_payment_action(self, request, queryset):
+        """Create pending payments for selected invoices."""
+        staff = self._resolve_recorded_by_staff(request)
+        summary = create_pending_payments(queryset, recorded_by=staff)
+        created = summary.get("created", 0)
+        skipped_existing = summary.get("skipped_existing", 0)
+        skipped_closed = summary.get("skipped_closed", 0)
+        if created:
+            messages.success(
+                request,
+                f"Created {created} pending payment(s) with full amounts.",
+            )
+        if skipped_existing:
+            messages.info(
+                request,
+                f"Skipped {skipped_existing} invoice(s) with pending payments.",
+            )
+        if skipped_closed:
+            messages.warning(
+                request,
+                f"Skipped {skipped_closed} invoice(s) with no balance due.",
+            )
 
     def _get_open_registration_semester(self, request) -> Optional[Semester]:
         """Return the open registration semester, if available."""
@@ -144,7 +222,21 @@ class PaymentAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin interface for :class:`~app.finance.models.Payment`."""
 
     list_display = ("invoice", "amount_paid", "payment_method", "status", "recorded_by")
-    autocomplete_fields = ("recorded_by", "payment_method", "invoice", "status")
+    autocomplete_fields = ("payment_method", "invoice", "status")
+    exclude = ("recorded_by",)
+
+    def save_model(self, request, obj, form, change):
+        """Set recorded_by from the logged-in staff profile."""
+        if not obj.recorded_by_id:
+            staff = getattr(request.user, "staff", None)
+            if staff is None and request.user.is_superuser:
+                messages.warning(
+                    request,
+                    "Superusers without staff profiles must select Recorded by manually.",
+                )
+            if staff:
+                obj.recorded_by = staff
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Scholarship)
