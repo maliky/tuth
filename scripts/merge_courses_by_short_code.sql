@@ -20,6 +20,7 @@ WITH duplicates AS (
 )
 SELECT
     c.id AS source_id,
+    -- > what does COALESCE means ?
     COALESCE(d.preferred_with_desc, d.min_id) AS target_id
 FROM academics_course c
 JOIN duplicates d ON c.short_code = d.short_code
