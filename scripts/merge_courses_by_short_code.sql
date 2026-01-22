@@ -59,34 +59,25 @@ WHERE p.id > p2.id
   AND p.curriculum_id IS NOT DISTINCT FROM p2.curriculum_id;
 
 -- Merge curriculum course rows that would collide after course updates.
-WITH cc_pairs AS (
-    SELECT
-        src.id AS src_id,
-        tgt.id AS tgt_id
-    FROM academics_curriculumcourse src
-    JOIN tmp_course_merge m ON src.course_id = m.source_id
-    JOIN academics_curriculumcourse tgt
-      ON tgt.curriculum_id = src.curriculum_id
-     AND tgt.course_id = m.target_id
-)
-UPDATE timetable_section s
-SET curriculum_course_id = cc_pairs.tgt_id
-FROM cc_pairs
-WHERE s.curriculum_course_id = cc_pairs.src_id;
+-- Materialize the pairs once so we can reuse them across statements.
+CREATE TEMP TABLE tmp_cc_pairs AS
+SELECT
+    src.id AS src_id,
+    tgt.id AS tgt_id
+FROM academics_curriculumcourse src
+JOIN tmp_course_merge m ON src.course_id = m.source_id
+JOIN academics_curriculumcourse tgt
+  ON tgt.curriculum_id = src.curriculum_id
+ AND tgt.course_id = m.target_id;
 
-WITH cc_pairs AS (
-    SELECT
-        src.id AS src_id,
-        tgt.id AS tgt_id
-    FROM academics_curriculumcourse src
-    JOIN tmp_course_merge m ON src.course_id = m.source_id
-    JOIN academics_curriculumcourse tgt
-      ON tgt.curriculum_id = src.curriculum_id
-     AND tgt.course_id = m.target_id
-)
+UPDATE timetable_section s
+SET curriculum_course_id = tmp_cc_pairs.tgt_id
+FROM tmp_cc_pairs
+WHERE s.curriculum_course_id = tmp_cc_pairs.src_id;
+
 DELETE FROM academics_curriculumcourse cc
-USING cc_pairs
-WHERE cc.id = cc_pairs.src_id;
+USING tmp_cc_pairs
+WHERE cc.id = tmp_cc_pairs.src_id;
 
 -- Update remaining curriculum courses to the target course.
 UPDATE academics_curriculumcourse cc

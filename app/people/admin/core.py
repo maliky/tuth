@@ -69,6 +69,15 @@ MERGE_USER_FIELDS = (
 )
 
 
+def _user_admin_link(user: UserModel | None) -> str:
+    """Return a link to the auth user change page for admin lists."""
+    if not user:
+        return "-"
+    url = reverse("admin:auth_user_change", args=[user.pk])
+    label = user.username or str(user.pk)
+    return format_html('<a href="{}">{}</a>', url, label)
+
+
 class UserFullNameChoiceField(forms.ModelChoiceField):
     """ModelChoiceField that shows full user names for admin widgets."""
 
@@ -281,6 +290,12 @@ class FacultyAdmin(MergeWizardMixin, DuplicatePreviewMixin, CollegeRestrictedAdm
         """Add the long name to the admin."""
         return obj.staff_profile.staff_id
 
+    @admin.display(description="Username", ordering="staff_profile__user__username")
+    def username(self, obj):
+        """Link the staff user for password edits."""
+        staff_profile = getattr(obj, "staff_profile", None)
+        return _user_admin_link(getattr(staff_profile, "user", None))
+
     @admin.display(description="Primary Assignment")
     def primary_assignment(self, obj):
         """Show the department/college that receives most sections for the faculty."""
@@ -364,6 +379,11 @@ class DonorAdmin(MergeWizardMixin, SimpleHistoryAdmin, GuardedModelAdmin):
         if not obj.bio:
             return ""
         return obj.bio if len(obj.bio) <= 80 else f"{obj.bio[:77]}…"
+
+    @admin.display(description="Username", ordering="user__username")
+    def username(self, obj):
+        """Link the donor user for password edits."""
+        return _user_admin_link(getattr(obj, "user", None))
 
     def merge_object_label(self, obj: ModelT) -> str:
         """Use donor long name labels in merge forms."""
@@ -453,6 +473,11 @@ class StaffAdmin(MergeWizardMixin, DuplicatePreviewMixin, DepartmentRestrictedAd
         """Use staff long names in merge forms."""
         staff = cast(Staff, obj)
         return staff.long_name or str(staff)
+
+    @admin.display(description="Username", ordering="user__username")
+    def username(self, obj):
+        """Link the staff user for password edits."""
+        return _user_admin_link(getattr(obj, "user", None))
 
     def merge_records(self, target: ModelT, sources: Iterable[ModelT]) -> None:
         """Merge selected staff profiles into the chosen target."""
@@ -683,6 +708,11 @@ class StudentAdmin(
         """Return the cumulative credits validated by the student."""
         total = getattr(obj, "validated_credits_total", 0) or 0
         return int(total)
+
+    @admin.display(description="Username", ordering="user__username")
+    def username(self, obj):
+        """Link the student user for password edits."""
+        return _user_admin_link(getattr(obj, "user", None))
 
     def save_model(self, request, obj, form, change):
         """Save the model and create selected registrations."""

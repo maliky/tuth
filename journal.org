@@ -1,8 +1,14 @@
 
-* <2026-01-22 jeu. 15:09> Observations
-What is this     grouped = defaultdict(list)
 
+* <2026-01-22 jeu. 20:14>  Users
+  In the different people listing, link the username to the different users/admin/auth/user/.. so it makes it easy to change the password
 
+* DONE <2026-01-22 jeu. 15:09> Observations
+  CLOSED: [2026-01-22 jeu. 20:11]
+- What is this     'grouped = defaultdict(list)'
+- in merge_Courses_by_short_code 
+  - what is coalesce ?
+  - I see cc_pairs defined twice ? Can't we do it just once and reuse. idem with cc_dupes ?
 * <2026-01-21 mer. 22:08> Registrat UX + Invoice and Finance cleaning
 
   Registrar UX (grades list)
