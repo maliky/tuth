@@ -86,34 +86,25 @@ FROM tmp_course_merge m
 WHERE cc.course_id = m.source_id;
 
 -- Remove any remaining duplicate curriculum course rows.
-WITH cc_dupes AS (
-    SELECT
-        cc.id AS drop_id,
-        cc2.id AS keep_id
-    FROM academics_curriculumcourse cc
-    JOIN academics_curriculumcourse cc2
-      ON cc.curriculum_id = cc2.curriculum_id
-     AND cc.course_id = cc2.course_id
-     AND cc.id > cc2.id
-)
-UPDATE timetable_section s
-SET curriculum_course_id = cc_dupes.keep_id
-FROM cc_dupes
-WHERE s.curriculum_course_id = cc_dupes.drop_id;
+-- Persist the duplicate map for reuse across update/delete statements.
+CREATE TEMP TABLE tmp_cc_dupes AS
+SELECT
+    cc.id AS drop_id,
+    cc2.id AS keep_id
+FROM academics_curriculumcourse cc
+JOIN academics_curriculumcourse cc2
+  ON cc.curriculum_id = cc2.curriculum_id
+ AND cc.course_id = cc2.course_id
+ AND cc.id > cc2.id;
 
-WITH cc_dupes AS (
-    SELECT
-        cc.id AS drop_id,
-        cc2.id AS keep_id
-    FROM academics_curriculumcourse cc
-    JOIN academics_curriculumcourse cc2
-      ON cc.curriculum_id = cc2.curriculum_id
-     AND cc.course_id = cc2.course_id
-     AND cc.id > cc2.id
-)
+UPDATE timetable_section s
+SET curriculum_course_id = tmp_cc_dupes.keep_id
+FROM tmp_cc_dupes
+WHERE s.curriculum_course_id = tmp_cc_dupes.drop_id;
+
 DELETE FROM academics_curriculumcourse cc
-USING cc_dupes
-WHERE cc.id = cc_dupes.drop_id;
+USING tmp_cc_dupes
+WHERE cc.id = tmp_cc_dupes.drop_id;
 
 -- Delete duplicate course rows.
 DELETE FROM academics_course c
@@ -121,5 +112,7 @@ USING tmp_course_merge m
 WHERE c.id = m.source_id;
 
 DROP TABLE tmp_course_merge;
+DROP TABLE tmp_cc_pairs;
+DROP TABLE tmp_cc_dupes;
 
 COMMIT;
