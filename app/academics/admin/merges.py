@@ -1,6 +1,7 @@
 """Module with the merging function for academic objects."""
 
-from typing import TYPE_CHECKING, no_type_check
+from typing import TYPE_CHECKING, TypeAlias, no_type_check
+from collections import defaultdict
 
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
@@ -26,6 +27,8 @@ from app.timetable.models.section import Section
 if TYPE_CHECKING:
     from app.academics.admin.core import CurriculumAdmin, DepartmentAdmin
     from app.academics.admin.core import CourseAdmin
+
+CourseMergeSummaryT: TypeAlias = dict[str, int]
 
 
 @admin.action(description="Merge selected departments into the first")
@@ -351,6 +354,74 @@ def merge_courses_action(course_admin: "CourseAdmin", request, queryset):
         )
 
 
+def _select_course_merge_target(courses: list[Course]) -> Course:
+    """Pick a target course based on description or smallest id."""
+    # Prefer the course with a description, otherwise default to the smallest id.
+    with_description = [
+        course for course in courses if course.description and course.description.strip()
+    ]
+    candidates = with_description or courses
+    sorted_candidates = sorted(candidates, key=lambda course: course.id or 0)[0]
+    # problem if no course has a descriptionthis will be empty.
+    return sorted_candidates
+
+
+@admin.action(description="Merge courses by short code")
+def merge_courses_by_short_code_action(
+    course_admin: "CourseAdmin",
+    request,
+    queryset,
+):
+    """Merge courses that share a short_code within the selection."""
+    courses = list(queryset)
+    if len(courses) < 2:
+        messages.warning(request, "Select at least two courses to merge.")
+        return
+
+    grouped = defaultdict(list)
+    for course in courses:
+        if course.short_code:
+            grouped[course.short_code].append(course)
+
+    summary: CourseMergeSummaryT = {
+        "groups": 0,
+        "merged": 0,
+        "skipped_invoices": 0,
+        "prerequisites_skipped": 0,
+    }
+    for _short_code, items in grouped.items():
+        if len(items) < 2:
+            continue
+        summary["groups"] += 1
+        target = _select_course_merge_target(items)
+        sources = [course for course in items if course.id != target.id]
+        group_summary = merge_courses(target, sources)
+        summary["merged"] += group_summary["merged"]
+        summary["skipped_invoices"] += group_summary["skipped_invoices"]
+        summary["prerequisites_skipped"] += group_summary["prerequisites_skipped"]
+
+    if summary["groups"] == 0:
+        messages.info(request, "No duplicate short codes found in the selection.")
+        return
+    messages.success(
+        request,
+        (
+            f"Merged {summary['merged']} course(s) across "
+            f"{summary['groups']} short code group(s)."
+        ),
+    )
+    if summary["skipped_invoices"]:
+        messages.warning(
+            request,
+            f"Skipped {summary['skipped_invoices']} course(s) with invoice conflicts.",
+        )
+    if summary["prerequisites_skipped"]:
+        messages.info(
+            request,
+            f"Skipped {summary['prerequisites_skipped']} prerequisite row(s).",
+        )
+
+
 @transaction.atomic
 def merge_courses(target: Course, sources):
     """Merge source courses into the target course.
@@ -387,7 +458,7 @@ def merge_courses(target: Course, sources):
         if _course_merge_has_invoice_conflict(source_curriculum_courses, target_cc_map):
             summary["skipped_invoices"] += 1
             continue
-        # > Merge or move curriculum courses before deleting the source course.
+        # Merge or move curriculum courses before deleting the source course.
         for cc in source_curriculum_courses:
             curriculum_id = cc.curriculum_id
             existing = target_cc_map.get(curriculum_id)

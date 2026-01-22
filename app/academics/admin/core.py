@@ -46,6 +46,7 @@ from .inlines import (
 )
 from .merges import (
     merge_courses_action,
+    merge_courses_by_short_code_action,
     merge_curricula,
     merge_departments_action,
     merge_curriculum_courses,
@@ -204,7 +205,12 @@ class CourseAdmin(DepartmentRestrictedAdmin):
 
     search_fields = ("short_code", "department__code", "title")
     fields = ("short_code", "department", "number", "title", "description")
-    actions = [update_department, merge_courses_action]
+    # Actions include manual merge and short_code-based merge helpers.
+    actions = [
+        update_department,
+        merge_courses_action,
+        merge_courses_by_short_code_action,
+    ]
 
     def get_queryset(self, request):
         """Prefetch curricula for link rendering in list_display."""

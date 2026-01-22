@@ -5,6 +5,10 @@ from typing import Optional, cast
 from app.finance.models.payment import FeeType, PaymentMethod, ClearanceStatus
 from django import forms
 from django.contrib import admin, messages
+from django.db.models import Count
+from django.urls import reverse
+from django.utils.html import format_html
+from django.utils.http import urlencode
 from guardian.admin import GuardedModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
@@ -56,6 +60,7 @@ class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedMode
         "semester_label",
         "curriculum_course",
         "amount_due",
+        "payments_link",
         "created_at",
         "recorded_by_name",
     )
@@ -82,6 +87,21 @@ class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedMode
     # Enable curriculum course autocomplete so short_code searches work in add view.
     autocomplete_fields = ("student", "recorded_by", "curriculum_course")
     actions = ("create_payment_action",)
+
+    def get_queryset(self, request):
+        """Annotate payment counts for list display."""
+        queryset = super().get_queryset(request)
+        return queryset.annotate(payments_count=Count("payments"))
+
+    @admin.display(description="Payments")
+    def payments_link(self, obj: Invoice) -> str:
+        """Return a clickable payment count for the invoice."""
+        count = getattr(obj, "payments_count", 0)
+        if not count:
+            return "0"
+        base_url = reverse("admin:finance_payment_changelist")
+        query = urlencode({"invoice__id__exact": obj.id})
+        return format_html('<a href="{}?{}">{}</a>', base_url, query, count)
 
     @admin.display(description="Student")
     def student_label(self, obj: Invoice) -> str:

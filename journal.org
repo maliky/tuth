@@ -1,4 +1,76 @@
 
+* <2026-01-22 jeu. 15:09> Observations
+What is this     grouped = defaultdict(list)
+
+
+* <2026-01-21 mer. 22:08> Registrat UX + Invoice and Finance cleaning
+
+  Registrar UX (grades list)
+
+  - Query & search
+      - Build a registrar grades view with select_related for student, section, course, faculty, semester.
+      - Default semester filter to the current semester (reuse the existing resolver).
+      - Search across student name/ID, course short name/code/title, and faculty name.
+  - Grouping + pagination
+      - Add a view mode control (dropdown or checkbox):
+          - Student view: grouped by student
+              - Summary: GPA, total grades, total credits
+              - Within student: group by semester, then show section‑level grades
+          - Course view: grouped by course
+              - Summary: # students, # sections
+              - If no semester selected: group by semester, then by section, then grades
+          - Faculty view: grouped by faculty
+              - Summary: # students, # courses, # sections
+              - If no semester selected: group by semester, then section, then grades
+      - Paginate 100 rows per page.
+  - UI
+      - Registrar dashboard panel should include:
+          - Search field
+          - Semester dropdown
+          - View mode selector (student/course/faculty)
+          - Collapsible grouped blocks (as above)
+      - Remove any panels that don’t add meaningful signal.
+  - Performance
+      - Use select_related/prefetch_related to avoid N+1 queries.
+
+  ———
+
+  Admin invoice + finance cleanup
+
+  - Course merge script
+      - Add SQL script to merge courses with the same short_code.
+      - Target selection: course with description, else smallest ID.
+      - Repoint curriculum courses, prerequisites, sections, etc.
+      - Optional follow‑up: wrap as admin action.
+  - Invoice payments column
+      - Add payments_count to InvoiceAdmin.list_display.
+      - Use annotate(Count("payments")).
+      - Make the count link to the payment admin changelist filtered by invoice.
+
+  ———
+
+  Student dashboard refactors
+
+  1. Move _section_fee
+
+  - Prefer existing Section method if present; otherwise add Section.fee_total().
+  - Update all callsites to use the model method.
+
+  2. Move datetime formatters
+
+  - Add format_datetime and format_short_datetime to app/timetable/utils.py.
+  - Replace local helpers in student_dashboard.py with imports.
+
+  3. Sidebar context
+
+  - Consolidate sidebar context in a shared helper or context processor.
+  - Keep per‑view custom active state only if required.
+  - Remove any unused cards or panels in the student UI.
+
+* <2026-01-21 mer. 22:00>  Registrar UX
+The registrar dashboard shoudl show the list of grade paged by 100 groupe by students with searchable field per student, course shortnaem long name, and faculty.  filter shoudl be availaabe for the semteser. current semester should be the default.
+
+
 * <2026-01-21 mer. 21:15>  Admin invoice and finance
 - Make a sql script to merge together all courses that share the same short_code.  The default target should be the one with a course  description, or the one with the smalest id.  If cleaner do this as an admin action.
 - in admin invoice Add a payment column showin gthe number of payment related to that invoice.  clikcking the number should open the payement admin list filtered down to those payements.
@@ -62,7 +134,8 @@ Key payment logic note: invoice balances only change when a payment is saved wit
   - Deleting payments on registration cancellation is required even though it removes payment history. No soft delte for now. The ide is tha a registration cannot be deleted if a payment has been made and the status is not pending anymore. There is no refund policy implemented yet.
 
 
-* <2026-01-21 mer. 15:27> Invoices and payments
+* DONE <2026-01-21 mer. 15:27> Invoices and payments
+CLOSED: [2026-01-21 mer. 22:06]
 
   Updated Plan – Invoices & Payments (15:18)
 
@@ -126,7 +199,8 @@ CLOSED: [2026-01-21 mer. 15:27]
 - important change, when one clicks on proceed to payment, a payement is created for each invoice.  It is the payment that the finance clear, not the invoice direclty. The invoice are cleardd depending on rules related to the amount due.
   Still on the finance ui, the officer should see both the invoce and the payements but emphasize is on the payements to be cleared.   
 
-**  <2026-01-21 12:50> Student portal
+** DONE <2026-01-21 12:50> Student portal
+CLOSED: [2026-01-21 mer. 22:06]
 
   - Sidebar “Download statement” link + consistent sidebar on statement page: OK
   - Canceled registration status + gray display + locked‑until timestamp: Partialy
@@ -224,7 +298,8 @@ Make sure to add typing hint in function signature
 Do not write comments stating with '# >' yourself. It is the second time I am telling you this. how can I make clearer so you do not do it again ?
 Harmonize test types aliases. make sure they finish with T.
 
-* <2026-01-20 Tue 15:02>
+* DONE <2026-01-20 Tue 15:02>
+CLOSED: [2026-01-21 mer. 22:07]
   Create Semester.get_default()  -> current semester
   Create AcademicYear.get_default()  -> The default semester of the current semester
   Wrap the above in test fixtures and reuse fixtures for sections if any, else create them. idem for CreditHours.
@@ -254,7 +329,8 @@ Harmonize test types aliases. make sure they finish with T.
 
   
 ** Graphic color on links or code dashed, double ect... to better identify them
-* <2026-01-20 mar. 10:54>
+* DONE <2026-01-20 mar. 10:54> Merges
+CLOSED: [2026-01-21 mer. 22:07]
 Here is the analysis and a concrete improvement plan, based on the current code paths (no code changes made).
  
   Current Merge Mechanisms
