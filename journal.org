@@ -5,6 +5,8 @@ in merge_courses_by_short_code.sql address the comments starting with -- >  . an
 
 switch the status of the registration of a student to cleared when the amount due for the attached invoice is >= 60% of the initial amount.
 
+switch the status of the registration of a student to cleared when the amount due for the attached invoice is >= 60% of the initial amount.
+
 * <2026-01-22 jeu. 20:14>  Users
   In the different people listing, link the username to the different users/admin/auth/user/.. so it makes it easy to change the password
 

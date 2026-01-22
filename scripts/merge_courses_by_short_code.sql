@@ -103,6 +103,18 @@ SET curriculum_course_id = tmp_cc_dupes.keep_id
 FROM tmp_cc_dupes
 WHERE s.curriculum_course_id = tmp_cc_dupes.drop_id;
 
+-- > save remark here : duplications
+WITH cc_dupes AS (
+    SELECT
+        cc.id AS drop_id,
+        cc2.id AS keep_id
+    FROM academics_curriculumcourse cc
+    JOIN academics_curriculumcourse cc2
+      ON cc.curriculum_id = cc2.curriculum_id
+     AND cc.course_id = cc2.course_id
+     AND cc.id > cc2.id
+)
+
 DELETE FROM academics_curriculumcourse cc
 USING tmp_cc_dupes
 WHERE cc.id = tmp_cc_dupes.drop_id;
