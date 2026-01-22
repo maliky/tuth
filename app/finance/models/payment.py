@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Optional, Self, cast
+from typing import Optional, Self, TYPE_CHECKING, cast
 
 from app.shared.status.mixins import StatusableMixin
 from django.db import models, transaction
+from django.db.models import Sum
 from simple_history.models import HistoricalRecords
 
 from app.shared.mixins import SimpleTableMixin
+
+if TYPE_CHECKING:
+    from app.finance.models.invoice import Invoice
 
 
 class AccountType(SimpleTableMixin):
@@ -292,7 +296,41 @@ class Payment(StatusableMixin, models.Model):
             result = super().save(*args, **kwargs)
             # > Are we sure that self.status_id is cleared when we get here ?
             self._update_invoice_balance(previous_status_id, previous_amount_paid)
+            # Update registrations once cleared payments reach the threshold.
+            _mark_registrations_cleared(self.invoice)
         return result
+
+
+# See where to move this function to avoid Model import in the function body
+def _mark_registrations_cleared(invoice: "Invoice") -> int:
+    """Set matching registrations to cleared when paid >= 60% of original amount."""
+    if not invoice:
+        return 0
+    cleared_total = Payment.objects.filter(
+        invoice=invoice, status_id="cleared"
+    ).aggregate(total=Sum("amount_paid"))["total"] or Decimal("0.00")
+    initial_amount = (invoice.amount_due or Decimal("0.00")) + cleared_total
+    if initial_amount <= 0:
+        threshold_met = True
+    else:
+        threshold_met = cleared_total >= (initial_amount * Decimal("0.60"))
+    if not threshold_met:
+        return 0
+    from app.registry.models.registration import Registration, RegistrationStatus
+
+    cleared_status, _ = RegistrationStatus.objects.get_or_create(
+        code="cleared",
+        defaults={"label": "Financially Cleared"},
+    )
+    return (
+        Registration.objects.filter(
+            student=invoice.student,
+            section__curriculum_course=invoice.curriculum_course,
+            section__semester=invoice.semester,
+        )
+        .exclude(status=cleared_status)
+        .update(status=cleared_status)
+    )
 
 
 class SectionFee(models.Model):

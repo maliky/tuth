@@ -1,4 +1,4 @@
-* Merge Conflict SQL Scripts
+# Merge Conflict SQL Scripts
 
 These scripts are intended to be run *before* hard merges so you can review collisions (duplicate courses, section overlaps, invoice clashes, etc.) in advance.
 
@@ -37,6 +37,10 @@ Use your local psql with the same environment variables used by Django.
 
 #+BEGIN_SRC bash
 psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT"  -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+#+END_SRC
+or user
+#+BEGIN_SRC bash
+  python manage.py dbshell
 #+END_SRC
 
 Then run the same `\set` + `\i` commands from the prompt.
