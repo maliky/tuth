@@ -20,6 +20,7 @@ WITH duplicates AS (
 )
 SELECT
     c.id AS source_id,
+    -- > what does COALESCE means ?
     COALESCE(d.preferred_with_desc, d.min_id) AS target_id
 FROM academics_course c
 JOIN duplicates d ON c.short_code = d.short_code
@@ -59,6 +60,7 @@ WHERE p.id > p2.id
   AND p.curriculum_id IS NOT DISTINCT FROM p2.curriculum_id;
 
 -- Merge curriculum course rows that would collide after course updates.
+
 WITH cc_pairs AS (
     SELECT
         src.id AS src_id,
@@ -74,6 +76,8 @@ SET curriculum_course_id = cc_pairs.tgt_id
 FROM cc_pairs
 WHERE s.curriculum_course_id = cc_pairs.src_id;
 
+--> Can't we save the previous def of cc_pairs to avoid repetition ?
+-- > What do we delete here exactly ?
 WITH cc_pairs AS (
     SELECT
         src.id AS src_id,
@@ -110,6 +114,7 @@ SET curriculum_course_id = cc_dupes.keep_id
 FROM cc_dupes
 WHERE s.curriculum_course_id = cc_dupes.drop_id;
 
+-- > save remark here : duplications
 WITH cc_dupes AS (
     SELECT
         cc.id AS drop_id,

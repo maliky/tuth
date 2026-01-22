@@ -1,7 +1,9 @@
-
 * <2026-01-22 jeu. 15:09> Observations
 What is this     grouped = defaultdict(list)
 
+in merge_courses_by_short_code.sql address the comments starting with -- >  . answer or do the requested task
+
+switch the status of the registration of a student to cleared when the amount due for the attached invoice is >= 60% of the initial amount.
 
 * <2026-01-21 mer. 22:08> Registrat UX + Invoice and Finance cleaning
 
@@ -291,15 +293,14 @@ My observations:
   - Verify filtering:
       -  Only registrations pending are included
 
-
+* <2026-01-21 Wed 10:39> Finance
 * <2026-01-20 Tue 20:52>
 What is candidate_map in "selected_obj = form.candidate_map.get(str(selected_id))"
 Make sure to add typing hint in function signature
 Do not write comments stating with '# >' yourself. It is the second time I am telling you this. how can I make clearer so you do not do it again ?
-Harmonize test types aliases. make sure they finish with T.
+Harmonize test types aliases. make sure they finish with T
 
-* DONE <2026-01-20 Tue 15:02>
-CLOSED: [2026-01-21 mer. 22:07]
+* <2026-01-20 Tue 15:02>
   Create Semester.get_default()  -> current semester
   Create AcademicYear.get_default()  -> The default semester of the current semester
   Wrap the above in test fixtures and reuse fixtures for sections if any, else create them. idem for CreditHours.
@@ -329,8 +330,7 @@ CLOSED: [2026-01-21 mer. 22:07]
 
   
 ** Graphic color on links or code dashed, double ect... to better identify them
-* DONE <2026-01-20 mar. 10:54> Merges
-CLOSED: [2026-01-21 mer. 22:07]
+* <2026-01-20 mar. 10:54>
 Here is the analysis and a concrete improvement plan, based on the current code paths (no code changes made).
  
   Current Merge Mechanisms
@@ -402,17 +402,17 @@ Here is the analysis and a concrete improvement plan, based on the current code 
     
 
 * <2026-01-19 lun. 00:36>
-- propose a test for import grades and import_sessions if not yet implemented
+ propose a test for import grades and import_sessions if not yet implemented
 
 * DONE <2026-01-19 lun. 00:07>
   CLOSED: [2026-01-19 lun. 00:36]
-- in for eg /admin/people/student/1990/change/,
+ in for eg /admin/people/student/1990/change/,
   - in inlineRegistrations, need to be able to remove a registration.
-- I did an import through import_grade and I get many faculty without name just staff id and a username which is the staffid number +1.  Need to be investigaged
+ I did an import through import_grade and I get many faculty without name just staff id and a username which is the staffid number +1.  Need to be investigaged
 ** student dashboard
-- Do not display courses not sheduled this semester.
-- Only display in gray courses that are pending payment or that are locked after cancelation
-- in the Registration cart the credit selected should update as we add courses. now the credit selected is blocked at 0.
+ Do not display courses not sheduled this semester.
+ Only display in gray courses that are pending payment or that are locked after cancelation
+ in the Registration cart the credit selected should update as we add courses. now the credit selected is blocked at 0.
   - There should be a warning and a lock if the number of credit selected is more that the authorized amount for the student.  Identify where this number is set for a student.  It should be editable by a staff, stored in the student's model. It is something that is been updated every semester.
   - Give detail of what happen at the code level when I press 'Save registration'
 *** WORK said to be done
@@ -434,22 +434,22 @@ Here is the analysis and a concrete improvement plan, based on the current code 
   - Think of where to block the multiple registrations of a student for a curriculum course in the same semester. I want to give him 2 chances separated by 48h. this Sould be computed on the fly, looking at the registration table history. no stored field, jsut computed values. check that the current workflow is compliant with this propoistion.
   - Not sure about the naming of reservation.  undo the previous changes.  lets have registration every where (code, comments included), the distinction will be the status.
 ** local install js
-- download the all js files, eg bootstrap. reduce dependency to excternal js library files.
+ download the all js files, eg bootstrap. reduce dependency to excternal js library files.
    
 ** Student dashboard
-- When clicking cancel in Current and past courses, nothing is happening. I expect the line to disapear from the current and past course.
-- the already reserved / registration pending courses should not be mixed with courses not offered this semester.  They should be displayed alongside the other  course reservation but grayed and locked
-- When clicking 'Save reservation' the reservation cart rest but the registration line with pending payment does not appear in Current and past courses as i expect. invetigate why.  I shouldnt need to relaod the page.
-- the semester in Course and Grades section are still not ordered from the most recent to the oldest. Indicate where the odering is been done so I look at it directly.
-- Add the time to the udpated in Current and past courses so the student can compute when before what time he has to pay.
+ When clicking cancel in Current and past courses, nothing is happening. I expect the line to disapear from the current and past course.
+ the already reserved / registration pending courses should not be mixed with courses not offered this semester.  They should be displayed alongside the other  course reservation but grayed and locked
+ When clicking 'Save reservation' the reservation cart rest but the registration line with pending payment does not appear in Current and past courses as i expect. invetigate why.  I shouldnt need to relaod the page.
+ the semester in Course and Grades section are still not ordered from the most recent to the oldest. Indicate where the odering is been done so I look at it directly.
+ Add the time to the udpated in Current and past courses so the student can compute when before what time he has to pay.
   
 ** Refactoring
-- Weekday parsing logic duplicated acrosse 2 import commands
-- Time parsing logic duplicated with identical formats
-- location splitting logic duplicated (include fall back in shared version)
-- college/departments code normaliztion repeated in admin widgets and ensures
-- academic-year normalization redundant.  Some function are alias or wrapper on others.
-- Extract a small pure helper like _coerce_int(value: str | int) -> int | None that returns None on failure, and have: parse_int call it directly, and to_int wrap it and apply default when None.
+ Weekday parsing logic duplicated acrosse 2 import commands
+ Time parsing logic duplicated with identical formats
+ location splitting logic duplicated (include fall back in shared version)
+ college/departments code normaliztion repeated in admin widgets and ensures
+ academic-year normalization redundant.  Some function are alias or wrapper on others.
+ Extract a small pure helper like _coerce_int(value: str | int) -> int | None that returns None on failure, and have: parse_int call it directly, and to_int wrap it and apply default when None.
      
 ** Worked
 • Reverted wording back to registration across the student dashboard, moved the cooldown/attempt blocking to rely solely on registration history, and separated already‑registered courses into their own locked list so they aren’t mixed with “not offered” courses. I also centralized the weekday/time/location parsing, normalized college/department code helpers, removed the redundant academic‑year alias, and added _coerce_int to unify int parsing.
@@ -468,9 +468,9 @@ docker-compose -f docker-compose-preprod.yml exec -T db psql -U tusis_preprod -d
 
 
 * <2026-01-05 lun. 07:19>
-- Make test for NameParts if I have empty parts.
+ Make test for NameParts if I have empty parts.
 
 * <2026-01-06 mar. 18:00> Notes on seed_full_student_grades.py
-- Target reader: intermediate Python/pandas engineer; comfortable with typing, argparse, set ops.
-- Typical US comp for that level: ~$110k–$150k base; higher with equity/bonus in SF/NYC/Seattle, closer to ~$100k–$120k in lower-cost areas.
-- To increase abstraction difficulty: introduce pipeline composition/IoC for loaders+savers, plugin registry for scoring strategies, structured logging/metrics with failure policies, config-driven IO/validation, and immutable data models with strict mypy coverage.
+ Target reader: intermediate Python/pandas engineer; comfortable with typing, argparse, set ops.
+ Typical US comp for that level: ~$110k–$150k base; higher with equity/bonus in SF/NYC/Seattle, closer to ~$100k–$120k in lower-cost areas.
+ To increase abstraction difficulty: introduce pipeline composition/IoC for loaders+savers, plugin registry for scoring strategies, structured logging/metrics with failure policies, config-driven IO/validation, and immutable data models with strict mypy coverage.
