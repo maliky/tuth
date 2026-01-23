@@ -29,6 +29,7 @@ class GradeInline(admin.TabularInline):
     """Inline editor for Grade records in a section."""
 
     model = Grade
+    classes = ["collapse"]
     fk_name = "section"
     extra = 0
     fields = ("student", "value", "graded_on")
@@ -40,7 +41,9 @@ class StudentRegistrationInline(admin.TabularInline):
     """Inline list of student registrations with grade summaries."""
 
     model = Registration
+    classes = ["collapse"]
     fk_name = "student"
+    verbose_name = "Currently registered sections"
     extra = 0
     # Allow staff to remove registrations directly from the student admin.
     can_delete = True
@@ -84,6 +87,7 @@ class StudentGradeInline(admin.TabularInline):
     """Inline list of grades attached to a student."""
 
     model = Grade
+    classes = ["collapse"]
     fk_name = "student"
     extra = 0
     can_delete = False
@@ -108,14 +112,17 @@ class StudentGradeInline(admin.TabularInline):
 
 class DocumentStaffInline(admin.TabularInline):  # StackedInline
     model = DocumentStaff
+    classes = ["collapse"]
     can_delete = True
 
 
 class DocumentStudentInline(admin.TabularInline):  # StackedInline
     model = DocumentStudent
+    classes = ["collapse"]
     can_delete = True
 
 
 class DocumentDonorInline(admin.TabularInline):  # StackedInline
     model = DocumentDonor
+    classes = ["collapse"]
     can_delete = True
