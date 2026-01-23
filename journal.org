@@ -1,3 +1,14 @@
+* <2026-01-23 Fri 14:37>
+** Staff dashboards
+- canceled registrations are move out of the data-table   
+** Semester defaulting
+** Student dashboard
+** Student receipts
+** Student admin
+** Registrar grades dashboard
+** Refactors
+** Dev hygiene
+  
 * <2026-01-23 ven. 12:49>
 ** Staff dashboards
 - Replace role cards/badges with a role dropdown near the current role;
@@ -8,24 +19,45 @@
 - All grade/section/student/course/curriculum/payment/invoice/registration views (admin + non‑admin) should default to the current semester,
   - with a dropdown to switch or clear the filter.
 ** Student dashboard
-- Rename header to “Current courses,” to "Registrations"
-- Keep all registrations in the table what ever their their status.
-- remove All/Pending/Cleared/Approved badges, from the course section.
-- exclude approved/cleared registration from locked/gray lists, and add per‑row actions
-- add the detail action to the approved registration row too.
+- [X] Rename header to “Current courses,” to "Registrations"
+- [ ] Keep all registrations in the table what ever their their status.
+  - [ ] Only keep not canceled registrations in the table.
+  - [ ] in the Payment receipt, make sure we include all registration for which a payment was made this semester, there could be canceled registration in that case.  If not payment was made for a registration, exclude that registraion of the payment receipt.
+  - [ ] Add a date of generation of the payment receipt
+  - [ ] Remove the notice about 'Use your browser print dialog to save as PDF or capture the receipt.'
+  - [ ] Distinguish in the side bar Menu, Download Payement statement and Download Invoice statement.
+- [X] remove All/Pending/Cleared/Approved badges, from the course section.
+- [X] exclude approved/cleared registration from locked/gray lists, and add per‑row actions
+- [X] add the detail action to the approved registration row too.
 ** Student receipts
-- Use “student_payment_receipt” (not invoice),
-- add per‑semester download for cleared courses, and provide a semester‑filtered receipt endpoint.
-  - Add a download invoice button in the data-course-table footer, in 'Action' column.
+- [X] Use “student_payment_receipt” (not invoice),
+- [X] add per‑semester download for cleared courses, and provide a semester‑filtered receipt endpoint.
+  - [X] Add a download invoice button in the data-course-table footer, in 'Action' column.
+** Invoice admin:
+- [ ] set the default By semester filter value to the current semester.
+- [ ] add an inline section to the associated payments
+** Payement admin
+- [ ] set the default By semester filter value to the current semester.
+- [ ] investigate bug : crash when setting the semester filter
+   
 ** Student admin
-- Add collapsible payments/invoices inlines
+- [ ] Add collapsible payments/invoices inlines
+- [ ] Correct bug, no student is shown and selecting a Semester will crash
+
 ** Registrar grades dashboard
-- Dedicated grade view with optimized queries,
+- [ ] Dedicated grade view with optimized queries,
+  - [ ] add small triangle to indicate the rows are collapsable
+  - [ ] for each student row add a summary row, with cumulated GPA/credit. must be the same row as the one with the student label
+    - [ ] for each semester row add a summary row, with cumulated GPA/credit. must be the same row as the one with the semester label
 - current semester default, pagination (100), searchable student dropdown, and grouped/collapsed display by student then semester.
+- [ ] Investigate bug
+  - [ ] Only a 6 students show on the first page instead of 100
+    - [ ] selecting another page reste the semester to a default value. search and semester value should stay the same from page to page.
+  - [ ] Remove the search field for course
 ** Refactors
-- Move helper logic (e.g., section fee and datetime formatting) into shared app‑level utilities; consolidate sidebar context.
+- [ ] Move helper logic (e.g., section fee and datetime formatting) into shared app‑level utilities; consolidate sidebar context.
 ** Dev hygiene
-- Add typing for candidate_map/form signatures and ensure TypeAlias names end with T.
+- [ ] Add typing for candidate_map/form signatures and ensure TypeAlias names end with T.
   
 **  #> Comment Backlog (Reported + Plan)
 ***  People: Merge + Admin Mixins
