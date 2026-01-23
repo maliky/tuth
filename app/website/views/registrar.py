@@ -11,8 +11,8 @@ from django.db.models import Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils import timezone
 
+from app.shared.admin import get_current_semester
 from app.people.models.student import Student
 from app.registry.models.grade import Grade
 from app.shared.utils import parse_str
@@ -102,15 +102,8 @@ def registrar_grades_dashboard(request: HttpRequest) -> HttpResponse:
     if semester_param == "all":
         semester_id = None
     if not semester_param_present:
-        today = timezone.now().date()
-        current_semester = (
-            Semester.objects.filter(start_date__lte=today)
-            .filter(Q(end_date__gte=today) | Q(end_date__isnull=True))
-            .order_by("-start_date")
-            .first()
-        )
-        if current_semester is None:
-            current_semester = Semester.objects.order_by("-start_date").first()
+        # Keep the default selection aligned with shared semester rules.
+        current_semester = get_current_semester()
         if current_semester:
             semester_id = current_semester.id
 

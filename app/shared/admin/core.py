@@ -9,12 +9,13 @@ from app.timetable.models.semester import Semester
 
 
 def get_current_semester() -> Semester | None:
-    """Return the semester covering today's date or the latest by start date."""
+    """Return the latest semester whose start date is on or before today."""
     today = timezone.now().date()
-    sem = Semester.objects.filter(start_date__lte=today, end_date__gte=today).first()
+    sem = Semester.objects.filter(start_date__lte=today).order_by("-start_date").first()
     if sem:
         return sem
-    return Semester.objects.order_by("-start_date").first()
+    # Fall back to the earliest start when all semesters are in the future.
+    return Semester.objects.order_by("start_date").first()
 
 
 @admin.register(CreditHour)

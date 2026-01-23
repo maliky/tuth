@@ -1,35 +1,67 @@
 
-* <2026-01-23 ven. 17:05>
+* <2026-01-23 Fri 20:40>
+write a small SQL script set the end date exactly the day before the opening of the next semester.
+edit the 
+
+* <2026-01-23 Fri 19:49>
+  - auth/login
+    - remove the text about the unified signin. This is for dev not for end users.
+  - Student dashboard
+    - remove the label Profil in student snapshot
+    - Remove the word download from the menu (for payment/invoice statement)
+  - Only show the canceled curriculum courses in the gray area. The user already knows which one are pending payment.
+  - The replace the lable financial in the menu by Old Course and grades
+  - Remove the support button from 'header actions'
+
+  - link the action card about the curriculum to an order list of the curriculum courses.  (keep it simple for now) for each course give a link to the detailed information of that course.
+
+  - Remove the action card about unofficial transcript.
+
+  - General:
+  What is the current Semester ?  it should be 25-26 Semester 2 but I see 25-26 Semester 3    
 
 
+  - Dashboards
+    - Keep the logout buton always visible on any dashboard page.
+
+  - [ ] Registration
+    - [ ] A registration is marked financely cleared only if the invoice was totaly paid
+    - [ ] Mark a registration approved if the invoice 40 % or more of the invoice is paid.
+** in registrar/grades
+
+   - add a button on the summary row to generate the official grade transcript
+     - For now it only produce a list of the grade and information about the user.
 * <2026-01-23 ven. 17:00>
   P0 – Blockers / correctness
 
-  - Student admin crashes + heavy load: remove the registrations/grades/invoices inlines and investigate the 500 on student 31625
-    (likely inline query/load).
-  - Payment admin list empty when it should show data: confirm any default filter/redirect is hiding all payments.
-  - Invoice admin list empty when it should show data: same investigation/rollback of defaults if needed.
+  - [X] Student admin crashes + heavy load: remove the registrations/grades/invoices inlines and investigate the 500 on student 31625 (likely inline query/load).
+  - [X] Payment admin list empty when it should show data: confirm any default filter/redirect is hiding all payments.
+  - [X] Invoice admin list empty when it should show data: same investigation/rollback of defaults if needed.
 
   P1 – Core workflow usability
 
-  - Registrar grades dashboard: fix wrong default semester selection, keep dashboard link visible, make the whole summary row
-    clickable.
-  - Pagination UX: add total records, total pages, last‑page link, and “go to page” input.
-  - Student dashboard: add per‑row “last payment update” and ensure sidebar links point to working payment/invoice lists (reuse
-    existing views).
+  - Registrar grades dashboard:
+    - [ ] fix wrong default semester selection ::
+      + shows '25-26 Semester 1' instead of 25-26 Semester 2
+    - [X] keep dashboard link visible,
+    - [X] make the whole summary rowclickable.
+  - [-] Pagination UX:
+    - [X] add total records, total pages, last‑page link,
+    - [ ] and “go to page” input,
+      + The go field show but entering a number will rester the semester filter.
+  - [-] Student dashboard:
+    - [ ] add per‑row “last payment update”.
+      + in student/payment/receipt/ on the table add the date of the payment for each payment 'date payed'
+    - [X] ensure sidebar links point to working payment/invoice lists (reuse  existing views).
 
   P2 – UX consistency
 
   - Staff dashboard: remove duplicate “Role Staff Workspace” link.
   - Harmonize staff link/button colors based on admin vs non‑admin destinations.
 
-  Clarification needed
-  You have two conflicting color rules:
+  Clarification provided on colors
+  - > “if target url is in admin button in blue, else yellow”
 
-  1. “if target url start with admin then button of card color, else blue”
-  2. “if target url is in admin button in blue, else yellow”
-
-  Which rule should we follow?
 
 
 

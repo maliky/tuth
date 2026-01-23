@@ -3,9 +3,9 @@
 from django import forms
 from django.contrib import admin
 from django.contrib import messages
-from django.contrib.admin.helpers import ActionForm
-from django.core.exceptions import ValidationError
+from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.db.models import Count
+from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.html import format_html
 from guardian.admin import GuardedModelAdmin
@@ -20,8 +20,8 @@ from app.timetable.models.semester import Semester, SemesterStatus
 from app.timetable.models.term import Term
 
 
-class SemesterActionForm(ActionForm):
-    """Action form used to select a status for bulk updates."""
+class SemesterActionForm(forms.Form):
+    """Form used to select a status for the bulk update step."""
 
     status = forms.ModelChoiceField(
         queryset=SemesterStatus.objects.all(), required=True, label="Status"
@@ -103,7 +103,6 @@ class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
     """
 
     resource_class = SemesterResource
-    action_form = SemesterActionForm
     actions = ("set_semester_status",)
     list_display = (
         "academic_year",
@@ -120,22 +119,38 @@ class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
 
     @admin.action(description="Set status for selected semesters")
     def set_semester_status(self, request, queryset):
-        """Bulk update semester status with registration-open validation."""
-        status = request.POST.get("status")
-        if not status:
-            messages.error(request, "Select a status before running this action.")
-            return
-        status_obj = SemesterStatus.objects.filter(pk=status).first()
-        if status_obj is None:
-            messages.error(request, "Selected status was not found.")
-            return
-        # > uniqueness of opensemester is done at db level
-        updated = 0
-        for semester in queryset:
-            semester.status = status_obj
-            semester.save(update_fields=["status"])
-            updated += 1
-        messages.success(request, f"Updated {updated} semester(s).")
+        """Bulk update semester status after a confirmation step."""
+        selected_ids = request.POST.getlist(ACTION_CHECKBOX_NAME)
+        form_data = request.POST if request.POST.get("apply_status") else None
+        form = SemesterActionForm(data=form_data)
+        if request.POST.get("apply_status") and form.is_valid():
+            status_obj = form.cleaned_data["status"]
+            # > uniqueness of opensemester is done at db level
+            updated = 0
+            for semester in queryset:
+                semester.status = status_obj
+                semester.save(update_fields=["status"])
+                updated += 1
+            messages.success(request, f"Updated {updated} semester(s).")
+            return None
+
+        # Two-step confirmation keeps the default delete action working.
+        context = {
+            "title": "Set semester status",
+            "queryset": queryset,
+            "status_form": form,
+            "action": "set_semester_status",
+            "action_checkbox_name": ACTION_CHECKBOX_NAME,
+            "selected_ids": selected_ids,
+            "select_across": request.POST.get("select_across", "0"),
+            "opts": self.model._meta,
+            "cancel_url": reverse("admin:timetable_semester_changelist"),
+        }
+        return TemplateResponse(
+            request,
+            "admin/timetable/semester_set_status.html",
+            context,
+        )
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

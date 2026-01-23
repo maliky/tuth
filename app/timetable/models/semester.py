@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import date
-from typing import Optional
+from datetime import date, timedelta
+from typing import Optional, TypeAlias
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -17,6 +17,36 @@ from app.shared.status.mixins import StatusableMixin
 from app.timetable.choices import SEMESTER_NUMBER
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.utils import validate_subperiod
+
+
+SemesterDateDefaultsT: TypeAlias = tuple[date, date]
+
+
+def _academic_year_end_date(academic_year: AcademicYear) -> date:
+    """Return the academic year end date, computing it if missing."""
+    if academic_year.end_date:
+        return academic_year.end_date
+    return academic_year.start_date.replace(year=academic_year.start_date.year + 1) - (
+        timedelta(days=1)
+    )
+
+
+def _default_semester_dates(
+    academic_year: AcademicYear, number: int
+) -> SemesterDateDefaultsT:
+    """Return default semester start/end dates per academic year rules."""
+    start_year = academic_year.start_date.year
+    end_year = start_year + 1
+    academic_year_end = _academic_year_end_date(academic_year)
+    if number == 0:
+        return academic_year.start_date, academic_year_end
+    if number == SEMESTER_NUMBER.FIRST:
+        return academic_year.start_date, date(start_year, 12, 31)
+    if number == SEMESTER_NUMBER.SECOND:
+        return date(end_year, 1, 1), date(end_year, 5, 31)
+    if number == SEMESTER_NUMBER.VACATION:
+        return date(end_year, 6, 1), academic_year_end
+    return academic_year.start_date, academic_year_end
 
 
 class Semester(StatusableMixin, models.Model):
@@ -43,8 +73,6 @@ class Semester(StatusableMixin, models.Model):
     start_date = models.DateField(null=True, blank=True)
 
     # ~~~~~~~~ Optional ~~~~~~~~
-    # Could set this to academic_year.start_date automatically on save
-    # and force non-null values.
     end_date = models.DateField(null=True, blank=True)
     # Free-form notes for admin tracking.
     info = models.TextField(blank=True, default="")
@@ -52,10 +80,22 @@ class Semester(StatusableMixin, models.Model):
     # > this is not clear. Why do we need that ? why a set ? or dict ?
     REGISTRATION_OPEN_CODES = "registration"
 
+    def _ensure_default_dates(self) -> None:
+        """Ensure default dates are applied when missing."""
+        if not self.academic_year_id:
+            return
+        default_start, default_end = _default_semester_dates(
+            self.academic_year, int(self.number)
+        )
+        if not self.start_date:
+            self.start_date = default_start
+        if not self.end_date:
+            self.end_date = default_end
+
     def clean(self) -> None:
         """Ensure semester dates stay within the academic year boundaries."""
-        if not self.start_date:
-            self.start_date = self.academic_year.start_date
+        # Default semester dates based on the academic year rules.
+        self._ensure_default_dates()
 
         # Semester.clean() and Term.clean() call validate_subperiod() but not
         # full_clean() on related objects. In admin workflows the parent may still
@@ -70,7 +110,8 @@ class Semester(StatusableMixin, models.Model):
                 pk=self.pk
             ),
             overlap_message="Overlapping Semesters in the same academic year.",
-            label="semester",
+            # Use a non-field error so admin list edits can render the message.
+            label="__all__",
         )
         self.validate_status(SemesterStatus.objects.all())
 
@@ -80,6 +121,8 @@ class Semester(StatusableMixin, models.Model):
             self.status_id = "planning"
 
     def save(self, *args, **kwargs):
+        # Ensure default date ranges are always set, even outside form validation.
+        self._ensure_default_dates()
         self._ensure_status()
         return super().save(*args, **kwargs)
 
