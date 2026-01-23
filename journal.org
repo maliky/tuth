@@ -1,7 +1,33 @@
 
 * <2026-01-23 ven. 16:21>
-Internal server error wheen openaing a student.
-- remove the colapsible inline payment invoices, grade or section from the admin. keep that for the registrat view.  This slows dow admin interface.
+** Student admin
+- [ ] remove the collapsible inline payment invoices, grade or section from the admin. keep that for the registrar view.  This slows dow admin interface.
+  - [ ] Internal server error wheen opening some student eg studid 31625, probably ressources related
+
+** Payement admin
+- [ ] Should display all payments by default. but show none.
+
+** Invoice admin:
+- [ ] Should display all payments by default. but show none.  
+** Staff dashboards
+  - [ ] Make it clear with some color code wich action card will open the django admin and which will not.
+    - if the target url start with admin (domain excluded) then button of card color, else blue.
+** Registrar grades dashboard
+- [ ] dashboard link should always be visible
+- [ ] not the current semester is not the one selected by default. (selected 25-26-Sem3 instead of 25-26-Sem2)
+- [ ] make the whole summary row clicable to collapse or expand it.
+- [ ] current semester default, pagination (100), searchable student dropdown, and grouped/collapsed display by student then semester.
+  - [ ] pagination: add the total number of record, number of pages and link to the last, and a space to set the page number to go to.
+** Student dashboard
+- [-] Keep all registrations in the table what ever their their status.
+  - [ ] Add a last update of payment ligne by ligne
+  - [ ] Make the Download Payement statement and Download Invoice statement button in the menu point to effective list of payment and invoice. reuse existing functions
+** Staff dashboard
+- [ ] Remove the link Role Staff Workspace it is duplicate to the default login user workspace
+- [ ] Check the colors of the links and make this consitent accross all staff dashboards.  
+  - [ ] if the target url is in admin button in blue, else yellow.
+
+* Student Admin   
    
 
 * <2026-01-23 ven. 12:49>

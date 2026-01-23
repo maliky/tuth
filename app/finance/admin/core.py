@@ -71,16 +71,23 @@ def _redirect_to_current_semester_filter(
     return redirect(f"{request.path}?{params.urlencode()}")
 
 
-
 @admin.register(SectionFee)
 class SectionFeeAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin settings for SectionFee."""
+
     #  Need to add logic for exports
-    list_display = ('section', 'fee_type', 'amount')
-    list_filter = ('section__curriculum_course__curriculum__college','section__curriculum_course__curriculum')
-    list_select_related = ("section__semester","section","section__curriculum_course",)
-    search_fields = ('section',"section__curriculum_course")
-    
+    list_display = ("section", "fee_type", "amount")
+    list_filter = (
+        "section__curriculum_course__curriculum__college",
+        "section__curriculum_course__curriculum",
+    )
+    list_select_related = (
+        "section__semester",
+        "section",
+        "section__curriculum_course",
+    )
+    search_fields = ("section", "section__curriculum_course")
+
 
 @admin.register(Invoice)
 class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedModelAdmin):
