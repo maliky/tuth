@@ -1,8 +1,3 @@
-
-* <2026-01-23 Fri 20:40>
-write a small SQL script set the end date exactly the day before the opening of the next semester.
-edit the 
-
 * <2026-01-23 Fri 19:49>
   - auth/login
     - remove the text about the unified signin. This is for dev not for end users.
@@ -32,27 +27,19 @@ edit the
    - add a button on the summary row to generate the official grade transcript
      - For now it only produce a list of the grade and information about the user.
 * <2026-01-23 ven. 17:00>
-  P0 – Blockers / correctness
-
-  - [X] Student admin crashes + heavy load: remove the registrations/grades/invoices inlines and investigate the 500 on student 31625 (likely inline query/load).
-  - [X] Payment admin list empty when it should show data: confirm any default filter/redirect is hiding all payments.
-  - [X] Invoice admin list empty when it should show data: same investigation/rollback of defaults if needed.
 
   P1 – Core workflow usability
 
   - Registrar grades dashboard:
     - [ ] fix wrong default semester selection ::
       + shows '25-26 Semester 1' instead of 25-26 Semester 2
-    - [X] keep dashboard link visible,
-    - [X] make the whole summary rowclickable.
   - [-] Pagination UX:
-    - [X] add total records, total pages, last‑page link,
     - [ ] and “go to page” input,
       + The go field show but entering a number will rester the semester filter.
   - [-] Student dashboard:
     - [ ] add per‑row “last payment update”.
       + in student/payment/receipt/ on the table add the date of the payment for each payment 'date payed'
-    - [X] ensure sidebar links point to working payment/invoice lists (reuse  existing views).
+
 
   P2 – UX consistency
 

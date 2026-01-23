@@ -23,10 +23,10 @@ from app.timetable.models import Semester
 SEMESTER_FIELD_LOOKPS = (
     ("semester", "semester"),
     ("section", "section__semester"),
+    ("programs", "programs__sections__semester"),
+    ("in_curriculum_courses", "in_curriculum_courses__sections__semester"),
     ("curriculum_course", "curriculum_course__sections__semester"),
     ("sections", "sections__semester"),
-    ("in_curriculum_courses", "in_curriculum_courses__sections__semester"),
-    ("programs", "programs__sections__semester"),
     ("student_registrations", "student_registrations__section__semester"),
     ("invoice", "invoice__semester"),
     ("payment", "payment_student__last_enrolled_semester"),
