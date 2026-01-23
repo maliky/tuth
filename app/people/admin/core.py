@@ -19,6 +19,7 @@ from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from app.academics.admin.filters import CurriculumFilterAC, DepartmentFilterAC
+from app.finance.admin.inlines import StudentInvoiceInline
 from app.people.admin.filters import (
     FacultyGroupFAC,
     FacultyTeachingDepartmentFilterAC,
@@ -52,6 +53,7 @@ from app.registry.admin.core import _available_sections_for_student
 from app.registry.models.registration import Registration, RegistrationStatus
 from app.shared.admin.filters import StudentLevelFilter
 from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
+from app.timetable.admin.filters import SemesterFilterAC
 from app.timetable.admin.inlines import SectionInline
 from app.timetable.models.section import Section
 
@@ -600,13 +602,19 @@ class StudentAdmin(
     )
     # list_editable = ("curriculum",)
     list_filter = (
+        SemesterFilterAC,
         CurriculumFilterAC,
         StudentEntrySemFAC,
         StudentLevelFilter,
         "curriculum__college",
     )
     readonly_fields = ("student_id",)
-    inlines = [StudentRegistrationInline, StudentGradeInline, DocumentStudentInline]
+    inlines = [
+        StudentRegistrationInline,
+        StudentGradeInline,
+        StudentInvoiceInline,
+        DocumentStudentInline,
+    ]
     list_select_related = ("curriculum", "entry_semester", "last_enrolled_semester")
     fieldsets = [
         (

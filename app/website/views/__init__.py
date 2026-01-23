@@ -15,7 +15,11 @@ from .finance_officer import (
     finance_officer_student_autocomplete,
     finance_officer_update_payments,
 )
-from .registrar import registrar_course_windows
+from .registrar import (
+    registrar_course_windows,
+    registrar_grades_dashboard,
+    registrar_student_autocomplete,
+)
 from .staff_dashboards import staff_dashboard, staff_role_dashboard
 from .student_dashboard import (
     download_invoice_statement,
@@ -31,6 +35,8 @@ __all__ = [
     "create_student",
     "portal_redirect",
     "registrar_course_windows",
+    "registrar_grades_dashboard",
+    "registrar_student_autocomplete",
     "staff_dashboard",
     "staff_role_dashboard",
     "student_dashboard",

@@ -136,6 +136,7 @@ def group_payments(payments: Iterable[Payment]) -> list[PaymentGroupT]:
 def invoice_queryset(
     selected_student_id: Optional[int],
     status_filter: str,
+    semester_id: Optional[int],
 ) -> QuerySet[Invoice]:
     """Return the base invoice queryset for the finance officer view."""
     qs = Invoice.objects.select_related(
@@ -146,6 +147,8 @@ def invoice_queryset(
     ).order_by("-created_at")
     if selected_student_id:
         qs = qs.filter(student_id=selected_student_id)
+    if semester_id:
+        qs = qs.filter(semester_id=semester_id)
     if status_filter == "open":
         qs = qs.filter(amount_due__gt=0)
     return qs
@@ -154,6 +157,7 @@ def invoice_queryset(
 def payment_queryset(
     selected_student_id: Optional[int],
     status_filter: str,
+    semester_id: Optional[int],
 ) -> QuerySet[Payment]:
     """Return the base payment queryset for the finance officer view."""
     qs = Payment.objects.select_related(
@@ -166,6 +170,8 @@ def payment_queryset(
     ).order_by("-id")
     if selected_student_id:
         qs = qs.filter(invoice__student_id=selected_student_id)
+    if semester_id:
+        qs = qs.filter(invoice__semester_id=semester_id)
     if status_filter and status_filter != "all":
         qs = qs.filter(status_id=status_filter)
     return qs

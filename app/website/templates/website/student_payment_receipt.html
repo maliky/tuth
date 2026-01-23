@@ -18,7 +18,7 @@
         <div class="text-end">
           <p class="text-uppercase small text-muted mb-1">Total Paid</p>
           <div class="h4 mb-0">{{ currency }} {{ total_paid|floatformat:2 }}</div>
-          <p class="text-muted mb-0">Cleared invoices only</p>
+          <p class="text-muted mb-0">Payments recorded for this semester</p>
         </div>
       </div>
       <p class="text-muted small mt-3 mb-0">
@@ -65,7 +65,7 @@
       </div>
     {% else %}
       <div class="alert alert-light">
-        No cleared invoices found for this semester.
+        No payments recorded for this semester.
       </div>
     {% endif %}
   </section>

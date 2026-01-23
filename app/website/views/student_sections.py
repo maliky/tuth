@@ -19,7 +19,7 @@ from .student_helpers import (
 )
 
 
-# > move this to an utils file probably in app/shared 
+# > move this to an utils file probably in app/shared
 def _format_time(value: Optional[time]) -> str:
     """Return a time string for schedule displays."""
     if value is None:
@@ -38,7 +38,7 @@ def student_section_detail(
         Registration.objects.filter(
             student=student,
             section_id=section_id,
-            status_id="cleared",
+            status_id__in={"cleared", "approved"},
         )
         .select_related(
             "section__semester__academic_year",

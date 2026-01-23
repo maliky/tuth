@@ -27,13 +27,18 @@ from app.finance.models.invoice import Invoice
 from app.finance.models.payment import Payment
 from app.people.models.student import Student
 from app.registry.models.grade import Grade
-from app.finance.utils import tuition_for
 from app.registry.models.registration import Registration, RegistrationStatus
 from app.timetable.choices import WEEKDAYS_NUMBER
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
+from app.timetable.utils import format_datetime, format_short_datetime
 
-from .student_helpers import _require_student, _resolve_semester
+from .student_helpers import (
+    _build_sidebar_links,
+    _build_student_profile,
+    _require_student,
+    _resolve_semester,
+)
 
 
 GPA_EXCLUDED_CODES = {"ip", "ng", "w", "i", "ab", "dr"}
@@ -57,36 +62,6 @@ class SemesterGradeGroupT(TypedDict):
     credits_total: int
     receipt_url: str
     courses: list[SemesterGradeRowT]
-
-
-def _section_fee(section: Section) -> Decimal:
-    """Return the total fee for a section, including tuition."""
-    # Include baseline tuition even when no SectionFee rows exist.
-    base_fee = getattr(section, "fee_total", None)
-    if base_fee is None:
-        fee_set = getattr(section, "sectionfee_set", None)
-        if fee_set is not None:
-            base_fee = sum(
-                (fee.amount for fee in fee_set.all()),
-                Decimal("0.00"),
-            )
-        else:
-            base_fee = Decimal("0.00")
-    return base_fee + tuition_for(section.curriculum_course)
-
-
-def _format_datetime(value: Optional[datetime]) -> str:
-    """Return a formatted datetime string for statement displays."""
-    if not value:
-        return "-"
-    return timezone.localtime(value).strftime("%b %d, %Y %H:%M")
-
-
-def _format_short_datetime(value: Optional[datetime]) -> str:
-    """Return a short datetime string for compact UI badges."""
-    if not value:
-        return "-"
-    return timezone.localtime(value).strftime("%b %d, %H:%M")
 
 
 @login_required
@@ -113,39 +88,11 @@ def student_invoice_statement(request: HttpRequest) -> HttpResponse:
     total_due = sum((invoice.amount_due for invoice in invoices), Decimal("0.00"))
     currency = getattr(settings, "FINANCE_DEFAULT_CURRENCY", "USD")
     statement_rows = [
-        {"invoice": invoice, "created_at": _format_datetime(invoice.created_at)}
+        {"invoice": invoice, "created_at": format_datetime(invoice.created_at)}
         for invoice in invoices
     ]
-    student_profile = {
-        "name": student.long_name or student.user.get_full_name() or student.username,
-        "student_id": student.student_id or "Pending ID",
-        "academic_year": (
-            f"{student.entry_semester.academic_year.code} · Semester "
-            f"{student.entry_semester.number}"
-            if student.entry_semester
-            else "Not assigned"
-        ),
-        "curriculum": student.curriculum.long_name or student.curriculum.short_name,
-        "avatar": (
-            student.photo.url if getattr(student, "photo", None) and student.photo else ""
-        ),
-    }
-    dashboard_url = reverse("student_dashboard")
-    sidebar_links = [
-        {"label": "Dashboard", "href": dashboard_url, "active": False},
-        {
-            "label": "Course Registration",
-            "href": f"{dashboard_url}#courses",
-            "active": False,
-        },
-        {"label": "Financials", "href": f"{dashboard_url}#records", "active": False},
-        {
-            "label": "Download statement",
-            "href": reverse("student_invoice_statement"),
-            "active": True,
-        },
-        {"label": "Support", "href": f"{dashboard_url}#support", "active": False},
-    ]
+    student_profile = _build_student_profile(student)
+    sidebar_links = _build_sidebar_links("Download statement")
     context = {
         "student": student,
         "statement_rows": statement_rows,
@@ -384,7 +331,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                             student=student,
                             curriculum_course=section.curriculum_course,
                             semester=section.semester,
-                            defaults={"amount_due": _section_fee(section)},
+                            defaults={"amount_due": section.fee_total_amount()},
                         )
                         continue
                     if registration.status_id in {"canceled", "removed"}:
@@ -396,7 +343,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                             student=student,
                             curriculum_course=section.curriculum_course,
                             semester=section.semester,
-                            defaults={"amount_due": _section_fee(section)},
+                            defaults={"amount_due": section.fee_total_amount()},
                         )
                     else:
                         skipped += 1
@@ -556,55 +503,25 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     )
 
     active_registrations = registrations.exclude(status_id__in={"canceled", "removed"})
-    registration_total = active_registrations.count()
     history_model = Registration.history.model
     history_rows = (
-        history_model.objects.filter(
-            id__in=active_registrations.values_list("id", flat=True)
-        )
+        history_model.objects.filter(id__in=registrations.values_list("id", flat=True))
         .values("id")
         .annotate(last_change=Max("history_date"))
     )
     history_dates = {row["id"]: row["last_change"] for row in history_rows}
-    summary_lookup: dict[str, dict[str, Any]] = {}
-    for reg in active_registrations:
-        code = reg.status.code if reg.status else reg.status_id
-        label = reg.status.label if reg.status else reg.status_id
-        entry = summary_lookup.setdefault(
-            code,
-            {"status__code": code, "status__label": label, "total": 0},
-        )
-        entry["total"] += 1
-    status_summary: list[dict[str, Any]] = sorted(
-        summary_lookup.values(), key=lambda item: item["status__label"] or ""
-    )
-    course_filters = [
-        {
-            "label": "All",
-            "value": "all",
-            "active": True,
-            "count": registration_total,
-        }
-    ]
-    for summary in status_summary:
-        course_filters.append(
-            {
-                "label": summary["status__label"] or summary["status__code"],
-                "value": summary["status__code"],
-                "active": False,
-                "count": summary["total"],
-            }
-        )
 
     course_status_rows = []
     course_status_total_credits = 0
-    for reg in active_registrations:
+    for reg in registrations:
         section = reg.section
         course = section.curriculum_course.course
         last_change = history_dates.get(reg.id) or reg.date_registered
         credits = int(section.curriculum_course.credit_hours.code)
         course_status_total_credits += credits
         is_cleared = reg.status_id == "cleared"
+        is_approved = reg.status_id == "approved"
+        can_view = is_cleared or is_approved
         course_status_rows.append(
             {
                 "code": course.short_code or course.code,
@@ -614,13 +531,13 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 "credits": credits,
                 "semester": str(section.semester),
                 "last_update": last_change.strftime("%b %d, %Y %H:%M"),
-                "fee": _section_fee(section),
+                "fee": section.fee_total_amount(),
                 "registration_id": reg.id,
                 "can_cancel": reg.status_id == "pending",
-                "can_view": is_cleared,
+                "can_view": can_view,
                 "section_url": (
                     reverse("student_section_detail", args=[section.id])
-                    if is_cleared
+                    if can_view
                     else ""
                 ),
             }
@@ -763,7 +680,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 "schedule": _format_schedule(section),
                 "seats_total": section.max_seats,
                 "seats_remaining": section.available_seats,
-                "fee": _section_fee(section),
+                "fee": section.fee_total_amount(),
             }
             for section in course_sections
         ]
@@ -789,7 +706,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             course_payload["status_class"] = "bg-info-subtle text-info"
             registered_courses.append(course_payload)
         elif course.id in registered_course_ids:
-            if status_id == "cleared":
+            if status_id in {"cleared", "approved"}:
                 continue
             course_payload["status_label"] = registered_status_by_course.get(
                 course.id, "Registered"
@@ -799,7 +716,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             unlock_time = cooldown_course_locks.get(course.id)
             if unlock_time:
                 course_payload["status_label"] = (
-                    f"Canceled until {_format_short_datetime(unlock_time)}"
+                    f"Canceled until {format_short_datetime(unlock_time)}"
                 )
             else:
                 course_payload["status_label"] = "Canceled for semester"
@@ -817,14 +734,18 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     )
 
     invoices = Invoice.objects.filter(student=student)
-    cleared_invoice_semester_ids = set(
-        invoices.filter(amount_due__lte=0).values_list("semester_id", flat=True)
-    )
     total_due = invoices.aggregate(total=Sum("amount_due")).get("total") or Decimal(
         "0.00"
     )
     invoice_keys = set(invoices.values_list("curriculum_course_id", "semester_id"))
     payments = Payment.objects.filter(invoice__student=student)
+    # Receipt availability is driven by any recorded payment amount.
+    cleared_invoice_semester_ids = set(
+        payments.filter(amount_paid__gt=0).values_list(
+            "invoice__semester_id",
+            flat=True,
+        )
+    )
     # amount_due already reflects the remaining balance after cleared payments.
     pending_registrations = (
         active_registrations.filter(status_id="pending")
@@ -837,7 +758,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     pending_registrations_list = list(pending_registrations)
     pending_total = sum(
         (
-            _section_fee(reg.section)
+            reg.section.fee_total_amount()
             for reg in pending_registrations_list
             if (
                 reg.section.curriculum_course_id,
@@ -863,15 +784,8 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         "last_payment": last_payment_label,
     }
 
-    student_profile = {
-        "name": student.long_name or student.user.get_full_name() or student.username,
-        "student_id": student.student_id or "Pending ID",
-        "academic_year": _format_semester_label(),
-        "curriculum": student.curriculum.long_name or student.curriculum.short_name,
-        "avatar": (
-            student.photo.url if getattr(student, "photo", None) and student.photo else ""
-        ),
-    }
+    student_profile = _build_student_profile(student)
+    student_profile["academic_year"] = _format_semester_label()
 
     completed_courses: list[SemesterGradeRowT] = []
     semester_grade_groups: list[SemesterGradeGroupT] = []
@@ -1026,23 +940,14 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         "currency": currency,
         "balance": outstanding,
     }
+    current_semester_receipt_url = ""
+    if semester and semester.id in cleared_invoice_semester_ids:
+        current_semester_receipt_url = reverse(
+            "student_payment_receipt",
+            args=[semester.id],
+        )
 
-    dashboard_url = reverse("student_dashboard")
-    sidebar_links = [
-        {"label": "Dashboard", "href": dashboard_url, "active": True},
-        {
-            "label": "Course Registration",
-            "href": f"{dashboard_url}#courses",
-            "active": False,
-        },
-        {"label": "Financials", "href": f"{dashboard_url}#records", "active": False},
-        {
-            "label": "Download statement",
-            "href": reverse("student_invoice_statement"),
-            "active": False,
-        },
-        {"label": "Support", "href": f"{dashboard_url}#support", "active": False},
-    ]
+    sidebar_links = _build_sidebar_links("Dashboard")
 
     semester_options = [
         {
@@ -1058,9 +963,9 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         "sidebar_links": sidebar_links,
         "credit_summary": credit_summary,
         "financial_summary": financial_summary,
-        "course_filters": course_filters,
         "course_status_rows": course_status_rows,
         "course_status_total_credits": course_status_total_credits,
+        "current_semester_receipt_url": current_semester_receipt_url,
         "available_courses": available_courses,
         "registered_courses": registered_courses,
         "registration_limits": registration_limits,

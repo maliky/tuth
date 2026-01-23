@@ -75,4 +75,14 @@ urlpatterns = [
         views.registrar_course_windows,
         name="registrar_course_windows",
     ),
+    path(
+        "registrar/grades/",
+        views.registrar_grades_dashboard,
+        name="registrar_grades_dashboard",
+    ),
+    path(
+        "registrar/grades/students/autocomplete/",
+        views.registrar_student_autocomplete,
+        name="registrar_student_autocomplete",
+    ),
 ]

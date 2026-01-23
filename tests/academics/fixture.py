@@ -19,11 +19,11 @@ from app.registry.models.credit_hours import CreditHour
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester
 
-CollegeFactory: TypeAlias = Callable[[str], College]
-CourseFactory: TypeAlias = Callable[[str], Course]
-CurriculumFactory: TypeAlias = Callable[[str], Curriculum]
-DepartmentFactory: TypeAlias = Callable[[str], Department]
-CurriculumCourseFactory: TypeAlias = Callable[[str, str], CurriculumCourse]
+CollegeFactoryT: TypeAlias = Callable[[str], College]
+CourseFactoryT: TypeAlias = Callable[[str], Course]
+CurriculumFactoryT: TypeAlias = Callable[[str], Curriculum]
+DepartmentFactoryT: TypeAlias = Callable[[str], Department]
+CurriculumCourseFactoryT: TypeAlias = Callable[[str, str], CurriculumCourse]
 CreditHourFactoryT: TypeAlias = Callable[[int], CreditHour]
 InvoiceFactoryT: TypeAlias = Callable[[CurriculumCourse], Invoice]
 
@@ -57,7 +57,7 @@ def curriculum_course() -> CurriculumCourse:
 
 
 @pytest.fixture
-def college_factory() -> CollegeFactory:
+def college_factory() -> CollegeFactoryT:
     def _make(code: str = "TEST") -> College:
         """Create College with matching code."""
         return College.objects.create(code=code)
@@ -66,7 +66,7 @@ def college_factory() -> CollegeFactory:
 
 
 @pytest.fixture
-def department_factory() -> DepartmentFactory:
+def department_factory() -> DepartmentFactoryT:
     def _make(shortname: str = "DEPT_TEST") -> Department:
         return Department.get_default(shortname)
 
@@ -74,7 +74,7 @@ def department_factory() -> DepartmentFactory:
 
 
 @pytest.fixture
-def curriculum_factory() -> CurriculumFactory:
+def curriculum_factory() -> CurriculumFactoryT:
     def _make(short_name: str = "CURRI_TEST") -> Curriculum:
         return Curriculum.get_default(short_name)
 
@@ -82,7 +82,7 @@ def curriculum_factory() -> CurriculumFactory:
 
 
 @pytest.fixture
-def course_factory() -> CourseFactory:
+def course_factory() -> CourseFactoryT:
     def _make(number: str = "101") -> Course:
         course = Course.get_default(number)
         return course
@@ -93,7 +93,7 @@ def course_factory() -> CourseFactory:
 @pytest.fixture
 def curriculum_course_factory(
     course_factory, curriculum_factory
-) -> CurriculumCourseFactory:
+) -> CurriculumCourseFactoryT:
     def _make(
         course_num="111", curriculum_short_name: str = "CURRI_TEST"
     ) -> CurriculumCourse:

@@ -10,6 +10,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 from app.finance.models.invoice import Invoice
+from app.finance.models.payment import Payment
 from app.timetable.models.semester import Semester
 
 from .student_helpers import (
@@ -31,7 +32,7 @@ def student_payment_receipt(
     request: HttpRequest,
     semester_id: int,
 ) -> HttpResponse:
-    """Render a cleared payment receipt for the requested semester."""
+    """Render a payment receipt for the requested semester."""
     student = _require_student(request.user)
     semester = (
         Semester.objects.filter(pk=semester_id).select_related("academic_year").first()
@@ -39,32 +40,36 @@ def student_payment_receipt(
     if semester is None:
         raise Http404("Semester not found.")
 
-    invoices = list(
-        Invoice.objects.filter(
-            student=student,
-            semester=semester,
-            amount_due__lte=0,
+    payments = (
+        Payment.objects.filter(
+            invoice__student=student,
+            invoice__semester=semester,
+            amount_paid__gt=0,
         )
         .select_related(
-            "curriculum_course__course",
-            "curriculum_course__credit_hours",
-            "semester__academic_year",
+            "invoice__curriculum_course__course",
+            "invoice__curriculum_course__credit_hours",
+            "invoice__semester__academic_year",
         )
-        .prefetch_related("payments__status", "payments__payment_method")
-        .order_by("curriculum_course__course__short_code")
+        .order_by("invoice__curriculum_course__course__short_code")
     )
 
     receipt_rows: list[ReceiptRowT] = []
     total_paid = Decimal("0.00")
-    for invoice in invoices:
-        paid_total = sum(
-            (
-                payment.amount_paid
-                for payment in invoice.payments.all()
-                if payment.status_id == "cleared"
-            ),
-            Decimal("0.00"),
+    invoice_totals: dict[int, Decimal] = {}
+    invoice_lookup: dict[int, Invoice] = {}
+    invoice_ids: list[int] = []
+    for payment in payments:
+        invoice = payment.invoice
+        if invoice.id not in invoice_lookup:
+            invoice_lookup[invoice.id] = invoice
+            invoice_ids.append(invoice.id)
+        invoice_totals[invoice.id] = invoice_totals.get(invoice.id, Decimal("0.00")) + (
+            payment.amount_paid
         )
+    for invoice_id in invoice_ids:
+        invoice = invoice_lookup[invoice_id]
+        paid_total = invoice_totals.get(invoice_id, Decimal("0.00"))
         receipt_rows.append({"invoice": invoice, "paid_total": paid_total})
         total_paid += paid_total
 

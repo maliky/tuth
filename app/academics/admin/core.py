@@ -60,6 +60,7 @@ from .resources import (
     PrerequisiteResource,
 )
 from django.utils.text import Truncator
+from app.timetable.admin.filters import SemesterFilterAC
 
 ModelChoiceFieldT: TypeAlias = forms.ModelChoiceField | forms.ModelMultipleChoiceField
 
@@ -198,7 +199,12 @@ class CourseAdmin(DepartmentRestrictedAdmin):
     inlines = [RequiresInline, PrerequisiteInline, CourseCurriculumInline]
     list_select_related = ("department",)
     # list_editable = ("department",)
-    list_filter = (DepartmentFilterAC, CourseCurriculumFilter, CourseCollegeFilter)
+    list_filter = (
+        SemesterFilterAC,
+        DepartmentFilterAC,
+        CourseCurriculumFilter,
+        CourseCollegeFilter,
+    )
 
     list_per_page = 100
     list_max_show_all = 500
@@ -312,7 +318,7 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         "course_count_link",
         "student_count",
     )
-    list_filter = ("college",)
+    list_filter = (SemesterFilterAC, "college")
     list_editable = ("status", "is_active", "college")
     autocomplete_fields = ("college",)
     inlines = [CurriculumCourseInline]
@@ -426,6 +432,7 @@ class CurriculumCourseAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         "faculties_links",
     )
     list_filter = (
+        SemesterFilterAC,
         "curriculum__college",
         CurriculumFilterAC,
         DepartmentFilterAC,

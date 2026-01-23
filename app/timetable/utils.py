@@ -2,10 +2,11 @@
 
 from datetime import date, datetime, time
 import re
-from typing import Optional, Tuple, TypeAlias, TYPE_CHECKING
+from typing import Optional
 
 from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
+from django.utils import timezone
 
 from app.shared.utils import parse_str
 from app.shared.types import SemesterCodeT
@@ -270,3 +271,17 @@ def split_location(raw: object) -> tuple[str, str]:
         return _match.group("prefix").upper(), _match.group("rest").strip() or "TBA"
 
     return normalized.upper(), normalized
+
+
+def format_datetime(value: Optional[datetime]) -> str:
+    """Return a formatted datetime string for UI displays."""
+    if not value:
+        return "-"
+    return timezone.localtime(value).strftime("%b %d, %Y %H:%M")
+
+
+def format_short_datetime(value: Optional[datetime]) -> str:
+    """Return a short datetime string for compact UI badges."""
+    if not value:
+        return "-"
+    return timezone.localtime(value).strftime("%b %d, %H:%M")

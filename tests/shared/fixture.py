@@ -15,7 +15,7 @@ from django.db.utils import OperationalError, ProgrammingError
 from app.people.models.student import Student
 from app.shared.status.mixins import StatusHistory
 
-StatusHistoryFactory: TypeAlias = Callable[[Student, str], StatusHistory]
+StatusHistoryFactoryT: TypeAlias = Callable[[Student, str], StatusHistory]
 ModelTypeT: TypeAlias = type[models.Model]
 
 
@@ -79,7 +79,7 @@ def status_history(student: Student) -> StatusHistory:
 
 
 @pytest.fixture
-def status_history_factory() -> StatusHistoryFactory:
+def status_history_factory() -> StatusHistoryFactoryT:
     """Return a callable to build status history entries."""
 
     def _make(student: Student, status: str = "pending") -> StatusHistory:

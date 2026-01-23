@@ -19,6 +19,7 @@ from django.views.decorators.http import require_POST
 from app.finance.models.invoice import Invoice
 from app.finance.models.payment import ClearanceStatus, Payment, PaymentMethod
 from app.finance.utils import create_pending_payments
+from app.shared.admin.core import get_current_semester
 from app.shared.auth.perms import UserRole
 from app.shared.utils import parse_str
 from app.website.views.finance_officer_helpers import (
@@ -31,6 +32,7 @@ from app.website.views.finance_officer_helpers import (
     invoice_queryset,
     payment_queryset,
 )
+from app.timetable.models.semester import Semester
 
 
 FINANCE_GROUPS = {
@@ -179,6 +181,11 @@ def finance_officer_invoices(request: HttpRequest) -> HttpResponse:
     selected_student_id = clean_int(request.GET.get("student_id"))
     invoice_status = request.GET.get("invoice_status") or None
     payment_status = request.GET.get("payment_status") or None
+    semester_param = request.GET.get("semester")
+    semester_id = clean_int(semester_param)
+    semester_param_present = "semester" in request.GET
+    if semester_param == "all":
+        semester_id = None
     if selected_student_id and invoice_status is None:
         invoice_status = "all"
     if not selected_student_id and invoice_status is None:
@@ -187,6 +194,10 @@ def finance_officer_invoices(request: HttpRequest) -> HttpResponse:
         payment_status = "all"
     if not selected_student_id and payment_status is None:
         payment_status = "pending"
+    if not semester_param_present:
+        current_semester = get_current_semester()
+        if current_semester:
+            semester_id = current_semester.id
 
     base_params = request.GET.copy()
     base_params.pop("tab", None)
@@ -212,8 +223,16 @@ def finance_officer_invoices(request: HttpRequest) -> HttpResponse:
                 selected_student_id,
             )
             selected_student_label = student_options[0]["label"]
-    invoice_qs = invoice_queryset(selected_student_id, invoice_status or "open")
-    payment_qs = payment_queryset(selected_student_id, payment_status or "pending")
+    invoice_qs = invoice_queryset(
+        selected_student_id,
+        invoice_status or "open",
+        semester_id,
+    )
+    payment_qs = payment_queryset(
+        selected_student_id,
+        payment_status or "pending",
+        semester_id,
+    )
 
     page_number = request.GET.get("page")
     per_page = 100
@@ -241,6 +260,24 @@ def finance_officer_invoices(request: HttpRequest) -> HttpResponse:
         {"code": method.code, "label": method.label}
         for method in PaymentMethod.objects.order_by("label")
     ]
+    semester_options = [
+        {
+            "value": "all",
+            "label": "All semesters",
+            "selected": semester_param == "all",
+        }
+    ]
+    for sem in Semester.objects.select_related("academic_year").order_by(
+        "-academic_year__start_date",
+        "-number",
+    ):
+        semester_options.append(
+            {
+                "value": str(sem.id),
+                "label": f"{sem.academic_year.code} · Semester {sem.number}",
+                "selected": semester_id == sem.id,
+            }
+        )
 
     context = {
         "page_title": "Finance Officer Console",
@@ -257,6 +294,7 @@ def finance_officer_invoices(request: HttpRequest) -> HttpResponse:
         "payment_status_options": payment_status_options,
         "payment_status_choices": payment_status_choices,
         "payment_method_options": payment_method_options,
+        "semester_options": semester_options,
         "invoice_groups": invoice_groups,
         "payment_groups": payment_groups,
         "invoice_page": invoice_page,

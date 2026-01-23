@@ -11,9 +11,11 @@ from django.contrib import admin
 from django.urls import reverse
 
 from app.people.models.faculty import Faculty
+from app.shared.admin.core import get_current_semester
 from app.shared.admin.filters import (
     BaseCollegeFilter,
     ScopedAutocompleteFilter,
+    _filter_queryset_by_value,
     _get_lookup_path,
     _related_qs_for_lookup,
 )
@@ -23,6 +25,11 @@ SEMESTER_FIELD_LOOKPS = (
     ("semester", "semester"),
     ("section", "section__semester"),
     ("curriculum_course", "curriculum_course__sections__semester"),
+    ("sections", "sections__semester"),
+    ("in_curriculum_courses", "in_curriculum_courses__sections__semester"),
+    ("programs", "programs__sections__semester"),
+    ("student_registrations", "student_registrations__section__semester"),
+    ("invoice", "invoice__semester"),
     ("payment", "payment_student__last_enrolled_semester"),
     ("student", "student__last_enrolled_semester"),
 )
@@ -78,3 +85,18 @@ class SemesterFilterAC(ScopedAutocompleteFilter):
     field_name = "semester"
     lookup_map = SEMESTER_FIELD_LOOKPS
     target_model = Semester
+
+    def queryset(self, request, qs):
+        """Filter by selected semester or default to the current semester."""
+        if self.parameter_name in request.GET and not self.value():
+            return qs
+        if self.value():
+            return _filter_queryset_by_value(qs, self.lookup_path, self.value())
+        current_semester = get_current_semester()
+        if current_semester:
+            return _filter_queryset_by_value(
+                qs,
+                self.lookup_path,
+                str(current_semester.id),
+            )
+        return qs

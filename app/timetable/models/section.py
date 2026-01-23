@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import TYPE_CHECKING, Set
 
 from django.core.exceptions import ValidationError
@@ -11,6 +12,7 @@ from simple_history.models import HistoricalRecords
 
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
+from app.finance.utils import tuition_for
 
 if TYPE_CHECKING:
     from app.spaces.models.core import Room
@@ -120,6 +122,20 @@ class Section(models.Model):
     def has_available_seats(self) -> bool:
         """Return 'True' if the section still has seats available."""
         return self.current_registrations < self.max_seats
+
+    def fee_total_amount(self) -> Decimal:
+        """Return the total fee for the section including tuition."""
+        base_fee = getattr(self, "fee_total", None)
+        if base_fee is None:
+            fee_set = getattr(self, "sectionfee_set", None)
+            if fee_set is not None:
+                base_fee = sum(
+                    (fee.amount for fee in fee_set.all()),
+                    Decimal("0.00"),
+                )
+            else:
+                base_fee = Decimal("0.00")
+        return base_fee + tuition_for(self.curriculum_course)
 
     def clean(self) -> None:
         """Check that the dates are correct."""

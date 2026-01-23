@@ -58,14 +58,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
       <div>
         <p class="text-uppercase small text-muted mb-1">Course tracking</p>
-        <h2 class="h4 mb-0">Current courses</h2>
-      </div>
-      <div class="filters">
-        {% for filter in course_filters %}
-          <button type="button" class="{% if filter.active %}active{% endif %}">
-            {{ filter.label }}{% if filter.count is not None %} ({{ filter.count }}){% endif %}
-          </button>
-        {% endfor %}
+        <h2 class="h4 mb-0">Registrations</h2>
       </div>
     </div>
 

@@ -483,6 +483,17 @@ def _build_registrar_context(_: HttpRequest) -> dict:
             {"label": "No transcript requests", "value": "All clear."},
         ]
 
+    actions = []
+    grades_url = _maybe_reverse("registrar_grades_dashboard")
+    if grades_url:
+        actions.append(
+            {
+                "label": "Review grades",
+                "href": grades_url,
+                "description": "Browse grades grouped by student and semester.",
+                "variant": "outline-secondary",
+            }
+        )
     return {
         "metrics": [
             {"label": "Pending transcripts", "value": pending_qs.count()},
@@ -497,7 +508,7 @@ def _build_registrar_context(_: HttpRequest) -> dict:
                 "items": transcript_items,
             }
         ],
-        "actions": [],
+        "actions": actions,
     }
 
 
@@ -846,6 +857,16 @@ def _render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse
     accessible_links = _build_accessible_dashboard_links(
         _as_user(request.user), role_slug
     )
+    role_switcher: list[dict[str, Any]] = []
+    if len(accessible_links) > 1:
+        role_switcher = [
+            {
+                "label": link["label"],
+                "href": link["href"],
+                "active": link["active"],
+            }
+            for link in accessible_links
+        ]
     base: dict[str, Any] = {
         "title": config["title"],
         "summary": config["summary"],
@@ -856,6 +877,7 @@ def _render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse
     }
     base.update(context)
     base["accessible_dashboards"] = accessible_links
+    base["role_switcher"] = role_switcher
     template_name = config.get("template", "website/staff/role_dashboard.html")
 
     sidebar_links = [

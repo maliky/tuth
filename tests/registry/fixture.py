@@ -18,12 +18,12 @@ from app.registry.models import (
 )
 from app.registry.models.grade import GradeValue
 
-RegistrationFactory: TypeAlias = Callable[[str, str, str, int], Registration]
-GradeFactory: TypeAlias = Callable[[str, str, str, str, Decimal], Grade]
-DocumentStudentFactory: TypeAlias = Callable[[str, str], DocumentStudent]
-DocumentStaffFactory: TypeAlias = Callable[[str], DocumentStaff]
-DocumentDonorFactory: TypeAlias = Callable[[str], DocumentDonor]
-DocumentTypeFactory: TypeAlias = Callable[[str], Generator[DocumentType, None, None]]
+RegistrationFactoryT: TypeAlias = Callable[[str, str, str, int], Registration]
+GradeFactoryT: TypeAlias = Callable[[str, str, str, str, Decimal], Grade]
+DocumentStudentFactoryT: TypeAlias = Callable[[str, str], DocumentStudent]
+DocumentStaffFactoryT: TypeAlias = Callable[[str], DocumentStaff]
+DocumentDonorFactoryT: TypeAlias = Callable[[str], DocumentDonor]
+DocumentTypeFactoryT: TypeAlias = Callable[[str], Generator[DocumentType, None, None]]
 
 DECIMAL_90 = Decimal("90")
 
@@ -105,7 +105,7 @@ def documentStaff(
 
 
 @pytest.fixture
-def registration_factory(student_factory, section_factory) -> RegistrationFactory:
+def registration_factory(student_factory, section_factory) -> RegistrationFactoryT:
     """Return a callable to build registrations.
 
     Parameters allow customizing the semester of the created section.
@@ -125,7 +125,7 @@ def registration_factory(student_factory, section_factory) -> RegistrationFactor
 
 
 @pytest.fixture
-def grade_factory(student_factory, section_factory) -> GradeFactory:
+def grade_factory(student_factory, section_factory) -> GradeFactoryT:
     """Return a callable to build grades."""
 
     def _make(
@@ -147,7 +147,7 @@ def grade_factory(student_factory, section_factory) -> GradeFactory:
 
 
 @pytest.fixture
-def documenttype_factory() -> DocumentTypeFactory:
+def documenttype_factory() -> DocumentTypeFactoryT:
     """Return a callable to build document type."""
 
     def _make(code="other") -> Generator[DocumentType, None, None]:
@@ -161,7 +161,7 @@ def documenttype_factory() -> DocumentTypeFactory:
 @pytest.fixture
 def documentstudent_factory(
     student_factory, documenttype_factory, data_file
-) -> DocumentStudentFactory:
+) -> DocumentStudentFactoryT:
     """Return a callable to build documents for Students."""
 
     def _make(student_uname: str, curri_short_name: str) -> DocumentStudent:
@@ -180,7 +180,7 @@ def documentstudent_factory(
 @pytest.fixture
 def documentdonor_factory(
     donor_factory, documenttype_factory, data_file
-) -> DocumentDonorFactory:
+) -> DocumentDonorFactoryT:
     """Return a callable to build documents for donors."""
 
     def _make(donor_uname: str) -> DocumentDonor:
@@ -197,7 +197,7 @@ def documentdonor_factory(
 @pytest.fixture
 def documentstaff_factory(
     staff_factory, documenttype_factory, data_file
-) -> DocumentStaffFactory:
+) -> DocumentStaffFactoryT:
     """Return a callable to build documents for Staff."""
 
     def _make(staff_uname: str) -> DocumentStaff:

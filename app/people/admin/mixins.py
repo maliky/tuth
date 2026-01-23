@@ -21,6 +21,7 @@ from app.people.services.merge_people import merge_people
 
 ModelT: TypeAlias = models.Model
 MergeSummaryT: TypeAlias = dict[str, int]
+CandidateMapT: TypeAlias = dict[str, ModelT]
 
 
 class _UserSyncedModel(Protocol):
@@ -174,7 +175,7 @@ class MergeWizardForm(forms.Form):
     ) -> None:
         super().__init__(*args, **kwargs)
         self.candidates = list(candidates)
-        self.candidate_map = {str(obj.pk): obj for obj in self.candidates}
+        self.candidate_map: CandidateMapT = {str(obj.pk): obj for obj in self.candidates}
         default_candidate_id = _default_candidate_id(self.candidates)
         choices = [(str(obj.pk), label_fn(obj)) for obj in self.candidates]
         self.fields["target_id"] = forms.ChoiceField(

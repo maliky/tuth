@@ -69,6 +69,18 @@
         <td><strong>{{ course_status_total_credits }}</strong></td>
         <td colspan="4"></td>
       </tr>
+      <tr>
+        <td colspan="6" class="text-end text-muted">Payment receipt</td>
+        <td class="text-end">
+          {% if current_semester_receipt_url %}
+            <a class="btn btn-sm btn-outline-primary" href="{{ current_semester_receipt_url }}">
+              Download
+            </a>
+          {% else %}
+            —
+          {% endif %}
+        </td>
+      </tr>
     </tfoot>
   </table>
 </div>

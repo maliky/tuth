@@ -244,6 +244,14 @@ class PaymentAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     list_display = ("invoice", "amount_paid", "payment_method", "status", "recorded_by")
     autocomplete_fields = ("payment_method", "invoice", "status")
     exclude = ("recorded_by",)
+    list_filter = (SemesterFilterAC,)
+    list_select_related = (
+        "invoice",
+        "invoice__semester",
+        "invoice__student",
+        "payment_method",
+        "status",
+    )
 
     def save_model(self, request, obj, form, change):
         """Set recorded_by from the logged-in staff profile."""

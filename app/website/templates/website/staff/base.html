@@ -16,12 +16,22 @@
   <div class="staff-shell container-xl py-5">
     <header class="staff-shell__header">
       <div>
-        <p class="staff-shell__eyebrow">
-          {{ eyebrow|default:"Staff workspace" }}
-        </p>
         <h1 class="staff-shell__title">{{ page_title|default:"Staff workspace" }}</h1>
-        {% if page_summary %}
-          <p class="staff-shell__summary text-muted">{{ page_summary }}</p>
+        {% if role_switcher %}
+          <div class="role-switcher">
+            <label class="text-muted small" for="role-switcher">Role</label>
+            <select
+              id="role-switcher"
+              class="form-select form-select-sm"
+              onchange="if (this.value) { window.location = this.value; }"
+            >
+              {% for role in role_switcher %}
+                <option value="{{ role.href }}" {% if role.active %}selected{% endif %}>
+                  {{ role.label }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
         {% endif %}
       </div>
       <div class="staff-shell__actions">
