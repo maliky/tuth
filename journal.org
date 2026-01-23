@@ -1,3 +1,5 @@
+* <2026-01-23 Fri 23:01> Strange mergin and not faculty anymore ?
+  
 * <2026-01-23 Fri 19:49>
   - auth/login
     - remove the text about the unified signin. This is for dev not for end users.
