@@ -72,6 +72,14 @@ def _build_student_profile(student: Student) -> dict[str, str]:
 def _build_sidebar_links(active_label: str) -> list[dict[str, str | bool]]:
     """Return sidebar links with the requested active label."""
     dashboard_url = reverse("student_dashboard")
+    # Use the current semester for the payment statement shortcut when possible.
+    payment_statement_url = ""
+    current_semester = get_current_semester()
+    if current_semester:
+        payment_statement_url = reverse(
+            "student_payment_receipt",
+            args=[current_semester.id],
+        )
     links: list[dict[str, str | bool]] = [
         {"label": "Dashboard", "href": dashboard_url, "active": False},
         {
@@ -81,7 +89,12 @@ def _build_sidebar_links(active_label: str) -> list[dict[str, str | bool]]:
         },
         {"label": "Financials", "href": f"{dashboard_url}#records", "active": False},
         {
-            "label": "Download statement",
+            "label": "Download payment statement",
+            "href": payment_statement_url or "#",
+            "active": False,
+        },
+        {
+            "label": "Download invoice statement",
             "href": reverse("student_invoice_statement"),
             "active": False,
         },

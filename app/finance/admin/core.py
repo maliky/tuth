@@ -6,6 +6,8 @@ from app.finance.models.payment import FeeType, PaymentMethod, ClearanceStatus
 from django import forms
 from django.contrib import admin, messages
 from django.db.models import Count
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.http import urlencode
@@ -13,11 +15,13 @@ from guardian.admin import GuardedModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from app.academics.models.course import CurriculumCourse
+from app.finance.admin.inlines import InvoicePaymentInline
 from app.finance.models.payment import Payment
 from app.finance.models.invoice import Invoice
 from app.finance.models.scholarship import Scholarship
 from app.finance.utils import create_pending_payments
 from app.people.models.staffs import Staff
+from app.shared.admin.core import get_current_semester
 from app.shared.admin.mixins import ScopedAutocompleteAdminMixin
 from app.timetable.admin.filters import SemesterFilterAC
 from app.timetable.models.semester import Semester
@@ -51,6 +55,22 @@ class AmountDueFilter(admin.SimpleListFilter):
         return queryset
 
 
+def _redirect_to_current_semester_filter(
+    request: HttpRequest,
+    param_name: str,
+) -> HttpResponse | None:
+    """Redirect to include the current semester filter when missing."""
+    if param_name in request.GET:
+        return None
+    current_semester = get_current_semester()
+    if not current_semester:
+        return None
+    params = request.GET.copy()
+    params.pop("p", None)
+    params[param_name] = str(current_semester.id)
+    return redirect(f"{request.path}?{params.urlencode()}")
+
+
 @admin.register(Invoice)
 class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin settings for Payment."""
@@ -73,6 +93,7 @@ class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedMode
         # "recorded_by",
     )
     readonly_fields = ("created_at",)
+    inlines = (InvoicePaymentInline,)
     search_fields = (
         "curriculum_course__course__short_code",
         "curriculum_course__course__code",
@@ -92,6 +113,13 @@ class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedMode
         """Annotate payment counts for list display."""
         queryset = super().get_queryset(request)
         return queryset.annotate(payments_count=Count("payments"))
+
+    def changelist_view(self, request, extra_context=None):
+        """Default the semester filter to the current semester when unset."""
+        redirect_response = _redirect_to_current_semester_filter(request, "semester")
+        if redirect_response is not None:
+            return redirect_response
+        return super().changelist_view(request, extra_context=extra_context)
 
     @admin.display(description="Payments")
     def payments_link(self, obj: Invoice) -> str:
@@ -238,7 +266,7 @@ class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedMode
 
 
 @admin.register(Payment)
-class PaymentAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
+class PaymentAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin interface for :class:`~app.finance.models.Payment`."""
 
     list_display = ("invoice", "amount_paid", "payment_method", "status", "recorded_by")
@@ -265,6 +293,16 @@ class PaymentAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
             if staff:
                 obj.recorded_by = staff
         super().save_model(request, obj, form, change)
+
+    def changelist_view(self, request, extra_context=None):
+        """Default the semester filter to the current semester when unset."""
+        redirect_response = _redirect_to_current_semester_filter(
+            request,
+            "invoice__semester",
+        )
+        if redirect_response is not None:
+            return redirect_response
+        return super().changelist_view(request, extra_context=extra_context)
 
 
 @admin.register(Scholarship)

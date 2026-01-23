@@ -9,6 +9,7 @@ from django.utils.html import format_html
 from django.utils.http import urlencode
 
 from app.finance.models.invoice import Invoice
+from app.finance.models.payment import Payment
 
 
 class StudentInvoiceInline(admin.TabularInline):
@@ -44,3 +45,14 @@ class StudentInvoiceInline(admin.TabularInline):
         base_url = reverse("admin:finance_payment_changelist")
         query = urlencode({"invoice__id__exact": obj.id})
         return format_html('<a href="{}?{}">{}</a>', base_url, query, count)
+
+
+class InvoicePaymentInline(admin.TabularInline):
+    """Inline list of payments attached to an invoice."""
+
+    model = Payment
+    fk_name = "invoice"
+    classes = ["collapse"]
+    extra = 0
+    can_delete = False
+    fields = ("amount_paid", "status", "payment_method", "recorded_by")

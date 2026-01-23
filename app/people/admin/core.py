@@ -52,7 +52,11 @@ from app.registry.admin import (
 from app.registry.admin.core import _available_sections_for_student
 from app.registry.models.registration import Registration, RegistrationStatus
 from app.shared.admin.filters import StudentLevelFilter
-from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
+from app.shared.admin.mixins import (
+    CollegeRestrictedAdmin,
+    DepartmentRestrictedAdmin,
+    ScopedAutocompleteAdminMixin,
+)
 from app.timetable.admin.filters import SemesterFilterAC
 from app.timetable.admin.inlines import SectionInline
 from app.timetable.models.section import Section
@@ -517,6 +521,7 @@ class StudentRegistrationForm(StudentForm):
 
 @admin.register(Student)
 class StudentAdmin(
+    ScopedAutocompleteAdminMixin,
     MergeWizardMixin,
     DuplicatePreviewMixin,
     SimpleHistoryAdmin,

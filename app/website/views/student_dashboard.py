@@ -92,7 +92,7 @@ def student_invoice_statement(request: HttpRequest) -> HttpResponse:
         for invoice in invoices
     ]
     student_profile = _build_student_profile(student)
-    sidebar_links = _build_sidebar_links("Download statement")
+    sidebar_links = _build_sidebar_links("Download invoice statement")
     context = {
         "student": student,
         "statement_rows": statement_rows,
@@ -514,6 +514,8 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     course_status_rows = []
     course_status_total_credits = 0
     for reg in registrations:
+        if reg.status_id == "canceled":
+            continue
         section = reg.section
         course = section.curriculum_course.course
         last_change = history_dates.get(reg.id) or reg.date_registered

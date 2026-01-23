@@ -38,8 +38,11 @@
         {% if actions %}
           {% for action in actions %}
             <article class="action-card">
-              <p class="action-card__label">{{ action.description }}</p>
-              <a class="btn btn-outline-secondary w-100" href="{{ action.href }}">
+              <p class="action-card__label">
+                <span class="action-card__cue {% if action.is_admin %}is-admin{% else %}is-app{% endif %}"></span>
+                {{ action.description }}
+              </p>
+              <a class="btn btn-{{ action.variant|default:"outline-secondary" }} w-100" href="{{ action.href }}">
                 {{ action.label }}
               </a>
             </article>

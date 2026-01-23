@@ -11,7 +11,6 @@ from django.contrib import admin
 from django.urls import reverse
 
 from app.people.models.faculty import Faculty
-from app.shared.admin.core import get_current_semester
 from app.shared.admin.filters import (
     BaseCollegeFilter,
     ScopedAutocompleteFilter,
@@ -87,16 +86,7 @@ class SemesterFilterAC(ScopedAutocompleteFilter):
     target_model = Semester
 
     def queryset(self, request, qs):
-        """Filter by selected semester or default to the current semester."""
-        if self.parameter_name in request.GET and not self.value():
-            return qs
+        """Filter by the selected semester when provided."""
         if self.value():
             return _filter_queryset_by_value(qs, self.lookup_path, self.value())
-        current_semester = get_current_semester()
-        if current_semester:
-            return _filter_queryset_by_value(
-                qs,
-                self.lookup_path,
-                str(current_semester.id),
-            )
         return qs

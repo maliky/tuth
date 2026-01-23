@@ -111,6 +111,15 @@ def _with_actions(context: dict[str, Any], extra: list[dict[str, Any]]) -> dict[
     return merged
 
 
+def _annotate_admin_actions(actions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Flag action links that point to Django admin views."""
+    admin_prefix = reverse("admin:index")
+    for action in actions:
+        href = str(action.get("href") or "")
+        action["is_admin"] = href.startswith(admin_prefix)
+    return actions
+
+
 def _build_staff_context(request: HttpRequest) -> dict:
     user = _as_user(request.user)
     staff_profile = getattr(user, "staff", None)
@@ -876,6 +885,9 @@ def _render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse
         "eyebrow": role_slug.replace("_", " ").title(),
     }
     base.update(context)
+    if isinstance(base.get("actions"), list):
+        # Add admin cues for action cards.
+        base["actions"] = _annotate_admin_actions(base["actions"])
     base["accessible_dashboards"] = accessible_links
     base["role_switcher"] = role_switcher
     template_name = config.get("template", "website/staff/role_dashboard.html")

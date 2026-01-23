@@ -35,6 +35,8 @@ class RegistrarSemesterGroupT(TypedDict):
     semester: Semester
     label: str
     rows: list[RegistrarGradeRowT]
+    credits_total: int
+    gpa: str
 
 
 class RegistrarStudentGroupT(TypedDict):
@@ -44,6 +46,11 @@ class RegistrarStudentGroupT(TypedDict):
     student_label: str
     student_id: str
     semesters: list[RegistrarSemesterGroupT]
+    credits_total: int
+    gpa: str
+
+
+GPA_EXCLUDED_CODES = {"ip", "ng", "w", "i", "ab", "dr"}
 
 
 def _clean_int(value: str | None) -> int | None:
@@ -88,7 +95,6 @@ def registrar_student_autocomplete(request: HttpRequest) -> HttpResponse:
 @permission_required("registry.view_grade", raise_exception=True)
 def registrar_grades_dashboard(request: HttpRequest) -> HttpResponse:
     """Render the registrar grade dashboard grouped by student and semester."""
-    search_query = parse_str(request.GET.get("q"))
     selected_student_id = _clean_int(request.GET.get("student_id"))
     semester_param = request.GET.get("semester")
     semester_id = _clean_int(semester_param)
@@ -100,66 +106,77 @@ def registrar_grades_dashboard(request: HttpRequest) -> HttpResponse:
         if current_semester:
             semester_id = current_semester.id
 
-    grades_qs = Grade.objects.select_related(
-        "student",
-        "student__user",
-        "section__semester__academic_year",
-        "section__curriculum_course__course",
-        "section__curriculum_course__credit_hours",
-        "section__faculty__staff_profile__user",
-        "value",
-    ).order_by(
-        "student__long_name",
-        "-section__semester__start_date",
-        "-section__semester__number",
-        "section__curriculum_course__course__short_code",
-    )
-
+    students_qs = Student.objects.filter(grade__isnull=False).select_related("user")
     if semester_id:
-        grades_qs = grades_qs.filter(section__semester_id=semester_id)
+        students_qs = students_qs.filter(grade__section__semester_id=semester_id)
     if selected_student_id:
-        grades_qs = grades_qs.filter(student_id=selected_student_id)
-    if search_query:
-        grades_qs = grades_qs.filter(
-            Q(student__student_id__icontains=search_query)
-            | Q(student__long_name__icontains=search_query)
-            | Q(student__user__first_name__icontains=search_query)
-            | Q(student__user__last_name__icontains=search_query)
-            | Q(section__curriculum_course__course__short_code__icontains=search_query)
-            | Q(section__curriculum_course__course__title__icontains=search_query)
-            | Q(section__faculty__staff_profile__user__first_name__icontains=search_query)
-            | Q(section__faculty__staff_profile__user__last_name__icontains=search_query)
-        )
+        students_qs = students_qs.filter(id=selected_student_id)
+    students_qs = students_qs.distinct().order_by("long_name", "student_id")
 
     per_page = 100
-    paginator = Paginator(grades_qs, per_page)
+    paginator = Paginator(students_qs, per_page)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
+
+    student_ids = [student.id for student in page_obj]
+    grades_qs = Grade.objects.none()
+    if student_ids:
+        grades_qs = (
+            Grade.objects.select_related(
+                "student",
+                "student__user",
+                "section__semester__academic_year",
+                "section__curriculum_course__course",
+                "section__curriculum_course__credit_hours",
+                "section__faculty__staff_profile__user",
+                "value",
+            )
+            .filter(student_id__in=student_ids)
+            .order_by(
+                "student__long_name",
+                "-section__semester__start_date",
+                "-section__semester__number",
+                "section__curriculum_course__course__short_code",
+            )
+        )
+    if semester_id:
+        grades_qs = grades_qs.filter(section__semester_id=semester_id)
 
     student_groups: list[RegistrarStudentGroupT] = []
     student_lookup: dict[int, RegistrarStudentGroupT] = {}
     semester_lookup_map: dict[int, dict[int, RegistrarSemesterGroupT]] = {}
-    for grade in page_obj:
+    student_gpa_points: dict[int, float] = {}
+    student_gpa_credits: dict[int, int] = {}
+    semester_gpa_points: dict[tuple[int, int], float] = {}
+    semester_gpa_credits: dict[tuple[int, int], int] = {}
+    for student in page_obj:
+        student_group = cast(
+            RegistrarStudentGroupT,
+            {
+                "student": student,
+                "student_label": student.long_name or student.user.get_full_name(),
+                "student_id": student.student_id or "Pending ID",
+                "semesters": [],
+                "credits_total": 0,
+                "gpa": "N/A",
+            },
+        )
+        student_groups.append(student_group)
+        student_lookup[student.id] = student_group
+        semester_lookup_map[student.id] = {}
+        student_gpa_points[student.id] = 0.0
+        student_gpa_credits[student.id] = 0
+
+    for grade in grades_qs:
         student = grade.student
-        student_group = student_lookup.get(student.id)
-        if student_group is None:
-            student_group = cast(
-                RegistrarStudentGroupT,
-                {
-                    "student": student,
-                    "student_label": student.long_name or student.user.get_full_name(),
-                    "student_id": student.student_id or "Pending ID",
-                    "semesters": [],
-                },
-            )
-            student_lookup[student.id] = student_group
-            student_groups.append(student_group)
-            semester_lookup_map[student.id] = cast(dict[int, RegistrarSemesterGroupT], {})
-        assert student_group is not None
+        student_group_opt = student_lookup.get(student.id)
+        if student_group_opt is None:
+            continue
+        student_group = student_group_opt
         semester_group_lookup = semester_lookup_map[student.id]
         semester = grade.section.semester
-        semester_group = semester_group_lookup.get(semester.id)
-        if semester_group is None:
+        semester_group_opt = semester_group_lookup.get(semester.id)
+        if semester_group_opt is None:
             semester_group = cast(
                 RegistrarSemesterGroupT,
                 {
@@ -168,11 +185,16 @@ def registrar_grades_dashboard(request: HttpRequest) -> HttpResponse:
                         f"{semester.academic_year.code} · Semester {semester.number}"
                     ),
                     "rows": [],
+                    "credits_total": 0,
+                    "gpa": "N/A",
                 },
             )
             semester_group_lookup[semester.id] = semester_group
             student_group["semesters"].append(semester_group)
-        assert semester_group is not None
+            semester_gpa_points[(student.id, semester.id)] = 0.0
+            semester_gpa_credits[(student.id, semester.id)] = 0
+        else:
+            semester_group = semester_group_opt
         faculty_label = "TBA"
         if grade.section.faculty and grade.section.faculty.staff_profile:
             faculty_label = (
@@ -182,6 +204,7 @@ def registrar_grades_dashboard(request: HttpRequest) -> HttpResponse:
         course = grade.section.curriculum_course.course
         course_code = course.short_code or course.code or ""
         course_title = course.title or ""
+        credits = int(grade.section.curriculum_course.credit_hours.code)
         grade_label = "-"
         if grade.value and grade.value.code:
             grade_label = grade.value.code.upper()
@@ -189,11 +212,46 @@ def registrar_grades_dashboard(request: HttpRequest) -> HttpResponse:
             {
                 "course_code": course_code,
                 "course_title": course_title,
-                "credits": int(grade.section.curriculum_course.credit_hours.code),
+                "credits": credits,
                 "grade": grade_label,
                 "faculty": faculty_label,
             }
         )
+        semester_group["credits_total"] += credits
+        student_group["credits_total"] += credits
+        if (
+            grade.value
+            and grade.value.number is not None
+            and (grade.value.code or "").lower() not in GPA_EXCLUDED_CODES
+        ):
+            semester_key = (student.id, semester.id)
+            semester_gpa_points[semester_key] = (
+                semester_gpa_points.get(semester_key, 0.0)
+                + float(grade.value.number) * credits
+            )
+            semester_gpa_credits[semester_key] = (
+                semester_gpa_credits.get(semester_key, 0) + credits
+            )
+            student_gpa_points[student.id] = (
+                student_gpa_points.get(student.id, 0.0)
+                + float(grade.value.number) * credits
+            )
+            student_gpa_credits[student.id] = (
+                student_gpa_credits.get(student.id, 0) + credits
+            )
+
+    for student_group in student_groups:
+        student_id = student_group["student"].id
+        total_credits = student_gpa_credits.get(student_id, 0)
+        if total_credits:
+            student_group["gpa"] = f"{student_gpa_points[student_id] / total_credits:.2f}"
+        for semester_group in student_group["semesters"]:
+            semester_key = (student_id, semester_group["semester"].id)
+            sem_credits = semester_gpa_credits.get(semester_key, 0)
+            if sem_credits:
+                semester_group["gpa"] = (
+                    f"{semester_gpa_points[semester_key] / sem_credits:.2f}"
+                )
 
     semester_options = [
         {"value": "all", "label": "All semesters", "selected": semester_param == "all"}
@@ -220,16 +278,23 @@ def registrar_grades_dashboard(request: HttpRequest) -> HttpResponse:
                 or selected_student.student_id
             )
 
+    pagination_params = request.GET.copy()
+    pagination_params.pop("page", None)
+    if "semester" not in pagination_params and semester_id:
+        pagination_params["semester"] = str(semester_id)
+    if selected_student_id and "student_id" not in pagination_params:
+        pagination_params["student_id"] = str(selected_student_id)
+
     context = {
         "page_title": "Registrar grades",
         "page_summary": "Review grades grouped by student and semester.",
         "eyebrow": "Registrar",
-        "search_query": search_query,
         "student_groups": student_groups,
         "page_obj": page_obj,
         "semester_options": semester_options,
         "selected_student_id": selected_student_id,
         "selected_student_label": selected_student_label,
+        "pagination_query": pagination_params.urlencode(),
         "student_autocomplete_url": reverse("registrar_student_autocomplete"),
     }
     return render(request, "website/staff/registrar_grades_dashboard.html", context)

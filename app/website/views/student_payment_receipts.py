@@ -9,9 +9,11 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
+from django.utils import timezone
 from app.finance.models.invoice import Invoice
 from app.finance.models.payment import Payment
 from app.timetable.models.semester import Semester
+from app.timetable.utils import format_datetime
 
 from .student_helpers import (
     _build_sidebar_links,
@@ -75,6 +77,7 @@ def student_payment_receipt(
 
     currency = getattr(settings, "FINANCE_DEFAULT_CURRENCY", "USD")
     semester_label = f"{semester.academic_year.code} · Semester {semester.number}"
+    generated_at = format_datetime(timezone.now())
 
     context = {
         "student": student,
@@ -82,7 +85,8 @@ def student_payment_receipt(
         "currency": currency,
         "total_paid": total_paid,
         "semester_label": semester_label,
+        "generated_at": generated_at,
         "student_profile": _build_student_profile(student),
-        "sidebar_links": _build_sidebar_links("Financials"),
+        "sidebar_links": _build_sidebar_links("Download payment statement"),
     }
     return render(request, "website/student_payment_receipt.html", context)
