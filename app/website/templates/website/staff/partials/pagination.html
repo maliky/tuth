@@ -1,5 +1,28 @@
 {% if page and page.paginator.num_pages > 1 %}
-  <nav class="mt-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-4">
+    <div class="text-muted small">
+      {{ page.paginator.count }} records · {{ page.paginator.num_pages }} pages
+    </div>
+    <form
+      method="get"
+      action="{% if pagination_query %}?{{ pagination_query }}{% else %}?{% endif %}"
+      class="d-flex align-items-center gap-2"
+    >
+      <label class="text-muted small mb-0" for="pagination-page">Go to</label>
+      <input
+        id="pagination-page"
+        class="form-control form-control-sm"
+        type="number"
+        name="page"
+        min="1"
+        max="{{ page.paginator.num_pages }}"
+        value="{{ page.number }}"
+        style="width: 5rem;"
+      />
+      <button class="btn btn-sm btn-outline-secondary" type="submit">Go</button>
+    </form>
+  </div>
+  <nav class="mt-3">
     <ul class="pagination justify-content-center">
       <li class="page-item {% if not page.has_previous %}disabled{% endif %}">
         <a
@@ -29,6 +52,14 @@
           href="{% if page.has_next %}{% if pagination_query %}?{{ pagination_query }}&page={{ page.next_page_number }}{% else %}?page={{ page.next_page_number }}{% endif %}{% else %}#{% endif %}"
         >
           Next
+        </a>
+      </li>
+      <li class="page-item {% if not page.has_next %}disabled{% endif %}">
+        <a
+          class="page-link"
+          href="{% if page.has_next %}{% if pagination_query %}?{{ pagination_query }}&page={{ page.paginator.num_pages }}{% else %}?page={{ page.paginator.num_pages }}{% endif %}{% else %}#{% endif %}"
+        >
+          Last
         </a>
       </li>
     </ul>

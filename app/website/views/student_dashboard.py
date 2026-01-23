@@ -92,7 +92,7 @@ def student_invoice_statement(request: HttpRequest) -> HttpResponse:
         for invoice in invoices
     ]
     student_profile = _build_student_profile(student)
-    sidebar_links = _build_sidebar_links("Download invoice statement")
+    sidebar_links = _build_sidebar_links("Download invoice statement", student=student)
     context = {
         "student": student,
         "statement_rows": statement_rows,
@@ -511,6 +511,26 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     )
     history_dates = {row["id"]: row["last_change"] for row in history_rows}
 
+    invoices = Invoice.objects.filter(student=student)
+    invoice_key_rows = list(
+        invoices.values_list("curriculum_course_id", "semester_id", "id")
+    )
+    invoice_keys = {(row[0], row[1]) for row in invoice_key_rows}
+    invoice_id_by_key = {(row[0], row[1]): row[2] for row in invoice_key_rows}
+    invoice_ids = [row[2] for row in invoice_key_rows if row[2]]
+    payment_last_updates: dict[int, datetime] = {}
+    if invoice_ids:
+        payment_history_rows = (
+            Payment.history.filter(invoice_id__in=invoice_ids)
+            .values("invoice_id")
+            .annotate(last_change=Max("history_date"))
+        )
+        payment_last_updates = {
+            row["invoice_id"]: row["last_change"]
+            for row in payment_history_rows
+            if row["last_change"]
+        }
+
     course_status_rows = []
     course_status_total_credits = 0
     for reg in registrations:
@@ -524,6 +544,14 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         is_cleared = reg.status_id == "cleared"
         is_approved = reg.status_id == "approved"
         can_view = is_cleared or is_approved
+        invoice_id = invoice_id_by_key.get(
+            (section.curriculum_course_id, section.semester_id)
+        )
+        payment_last_update = (
+            format_datetime(payment_last_updates[invoice_id])
+            if invoice_id and invoice_id in payment_last_updates
+            else "-"
+        )
         course_status_rows.append(
             {
                 "code": course.short_code or course.code,
@@ -533,6 +561,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 "credits": credits,
                 "semester": str(section.semester),
                 "last_update": last_change.strftime("%b %d, %Y %H:%M"),
+                "payment_last_update": payment_last_update,
                 "fee": section.fee_total_amount(),
                 "registration_id": reg.id,
                 "can_cancel": reg.status_id == "pending",
@@ -735,11 +764,9 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         .get("value")
     )
 
-    invoices = Invoice.objects.filter(student=student)
     total_due = invoices.aggregate(total=Sum("amount_due")).get("total") or Decimal(
         "0.00"
     )
-    invoice_keys = set(invoices.values_list("curriculum_course_id", "semester_id"))
     payments = Payment.objects.filter(invoice__student=student)
     # Receipt availability is driven by any recorded payment amount.
     cleared_invoice_semester_ids = set(
@@ -949,7 +976,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             args=[semester.id],
         )
 
-    sidebar_links = _build_sidebar_links("Dashboard")
+    sidebar_links = _build_sidebar_links("Dashboard", student=student)
 
     semester_options = [
         {

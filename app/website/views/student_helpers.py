@@ -8,6 +8,7 @@ from django.contrib.auth.models import AnonymousUser, User
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
 
+from app.finance.models.payment import Payment
 from app.people.models.student import Student
 from app.shared.admin.core import get_current_semester
 from app.timetable.models.semester import Semester
@@ -69,17 +70,35 @@ def _build_student_profile(student: Student) -> dict[str, str]:
     }
 
 
-def _build_sidebar_links(active_label: str) -> list[dict[str, str | bool]]:
+def _build_sidebar_links(
+    active_label: str,
+    *,
+    student: Student | None = None,
+) -> list[dict[str, str | bool]]:
     """Return sidebar links with the requested active label."""
     dashboard_url = reverse("student_dashboard")
     # Use the current semester for the payment statement shortcut when possible.
     payment_statement_url = ""
-    current_semester = get_current_semester()
-    if current_semester:
+    payment_semester_id = None
+    if student is not None:
+        payment_semester_id = (
+            Payment.objects.filter(invoice__student=student, amount_paid__gt=0)
+            .order_by("-id")
+            .values_list("invoice__semester_id", flat=True)
+            .first()
+        )
+    if payment_semester_id:
         payment_statement_url = reverse(
             "student_payment_receipt",
-            args=[current_semester.id],
+            args=[payment_semester_id],
         )
+    else:
+        current_semester = get_current_semester()
+        if current_semester:
+            payment_statement_url = reverse(
+                "student_payment_receipt",
+                args=[current_semester.id],
+            )
     links: list[dict[str, str | bool]] = [
         {"label": "Dashboard", "href": dashboard_url, "active": False},
         {

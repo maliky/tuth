@@ -19,7 +19,6 @@ from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from app.academics.admin.filters import CurriculumFilterAC, DepartmentFilterAC
-from app.finance.admin.inlines import StudentInvoiceInline
 from app.people.admin.filters import (
     FacultyGroupFAC,
     FacultyTeachingDepartmentFilterAC,
@@ -46,8 +45,6 @@ from app.people.services.merge_people import merge_people, merge_users
 from app.registry.admin import (
     DocumentStaffInline,
     DocumentStudentInline,
-    StudentGradeInline,
-    StudentRegistrationInline,
 )
 from app.registry.admin.core import _available_sections_for_student
 from app.registry.models.registration import Registration, RegistrationStatus
@@ -614,12 +611,7 @@ class StudentAdmin(
         "curriculum__college",
     )
     readonly_fields = ("student_id",)
-    inlines = [
-        StudentRegistrationInline,
-        StudentGradeInline,
-        StudentInvoiceInline,
-        DocumentStudentInline,
-    ]
+    inlines = [DocumentStudentInline]
     list_select_related = ("curriculum", "entry_semester", "last_enrolled_semester")
     fieldsets = [
         (

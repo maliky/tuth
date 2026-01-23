@@ -81,7 +81,7 @@ def student_section_detail(
 
     context = {
         "student_profile": _build_student_profile(student),
-        "sidebar_links": _build_sidebar_links("Course Registration"),
+        "sidebar_links": _build_sidebar_links("Course Registration", student=student),
         "section": {
             "code": section.course.short_code or section.course.code,
             "title": section.course.title or "",

@@ -1,4 +1,38 @@
 
+* <2026-01-23 ven. 17:05>
+
+
+* <2026-01-23 ven. 17:00>
+  P0 – Blockers / correctness
+
+  - Student admin crashes + heavy load: remove the registrations/grades/invoices inlines and investigate the 500 on student 31625
+    (likely inline query/load).
+  - Payment admin list empty when it should show data: confirm any default filter/redirect is hiding all payments.
+  - Invoice admin list empty when it should show data: same investigation/rollback of defaults if needed.
+
+  P1 – Core workflow usability
+
+  - Registrar grades dashboard: fix wrong default semester selection, keep dashboard link visible, make the whole summary row
+    clickable.
+  - Pagination UX: add total records, total pages, last‑page link, and “go to page” input.
+  - Student dashboard: add per‑row “last payment update” and ensure sidebar links point to working payment/invoice lists (reuse
+    existing views).
+
+  P2 – UX consistency
+
+  - Staff dashboard: remove duplicate “Role Staff Workspace” link.
+  - Harmonize staff link/button colors based on admin vs non‑admin destinations.
+
+  Clarification needed
+  You have two conflicting color rules:
+
+  1. “if target url start with admin then button of card color, else blue”
+  2. “if target url is in admin button in blue, else yellow”
+
+  Which rule should we follow?
+
+
+
 * <2026-01-23 ven. 16:21>
 ** Student admin
 - [ ] remove the collapsible inline payment invoices, grade or section from the admin. keep that for the registrar view.  This slows dow admin interface.

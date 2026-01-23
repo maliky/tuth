@@ -87,6 +87,9 @@ def student_payment_receipt(
         "semester_label": semester_label,
         "generated_at": generated_at,
         "student_profile": _build_student_profile(student),
-        "sidebar_links": _build_sidebar_links("Download payment statement"),
+        "sidebar_links": _build_sidebar_links(
+            "Download payment statement",
+            student=student,
+        ),
     }
     return render(request, "website/student_payment_receipt.html", context)
