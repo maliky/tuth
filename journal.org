@@ -8,38 +8,47 @@
 
 ** <2026-01-22 Thu 22:00>  Status Check
 
-  - Student admin: registration selection is at the end, but grades/registrations inlines are not collapsible and
-    there is no payments/invoices list section; app/people/admin/core.py.
-  - Student dashboard: title still “Current and past courses,” no per‑semester receipt download, no credit summary
-    row in current courses, no section detail action/page, and cleared courses are not explicitly removed from the
-    gray/locked area; app/website/templates/website/student_dashboard.html, app/website/templates/website/partials/
-    student_dashboard_course_table.html, app/website/views/student_dashboard.py.
-  - Registrar grades UX: no dedicated registrar dashboard view, no grouping/view modes, no 100‑row pagination
-    control, and no default semester selection; current GradeAdmin is a flat list with filters/search; app/registry/
-    admin/core.py.
-  - Users listing: username links to auth_user are already wired for Student/Staff/Faculty/Donor lists; app/people/
-    admin/core.py.
-  - Admin finance cleanup: invoice payments count link and queryset annotation exist; app/finance/admin/core.py.
-  - Course merge script for same short_code exists and matches target selection logic; scripts/
-    merge_courses_by_short_code.sql.
+*** TODO Student admin:
+registration selection is at the end, but grades/registrations inlines are not collapsible and there is no payments/invoices list section; app/people/admin/core.py.
+*** Student dashboard:
+     Title still “Current and past courses,” no per‑semester receipt download, no credit summary row in current courses, no section detail action/page, and cleared courses are not explicitly removed from the gray/locked area;
+     app/website/templates/website/student_dashboard.html, app/website/templates/website/partials/ student_dashboard_course_table.html, app/website/views/student_dashboard.py.
+*** Registrar grades UX:
+     no dedicated registrar dashboard view, no grouping/view modes, no 100‑row pagination control, and no default semester selection; current GradeAdmin is a flat list with filters/search; app/registry/ admin/core.py.
+*** TODO Users listing:
+     username links to auth_user are already wired for Student/Staff/Faculty/Donor lists; app/people/admin/core.py.
+*** DONE Admin finance cleanup:
+CLOSED: [2026-01-23 ven. 11:47]
+     invoice payments count link and queryset annotation exist; app/finance/admin/core.py.
+  - Course merge script for same short_code exists and matches target selection logic; scripts/ merge_courses_by_short_code.sql.
 
   Priority Plan (Requested Features)
 
-  - Student dashboard UX: rename header to “Current courses,” add a credits total row in current courses, remove
-    financially‑cleared items from locked/gray lists, and add per‑row actions for cleared sections plus a small
-    section detail page; app/website/templates/website/student_dashboard.html, app/website/templates/website/
-    partials/student_dashboard_course_table.html, app/website/views/student_dashboard.py, new template/view/URL for
-    section detail.
-  - Student dashboard receipts: add per‑semester “download receipt” for financially cleared courses; likely add a
-    filtered invoice/receipt endpoint keyed by semester; app/website/views/student_dashboard.py, app/website/urls.py,    new template.
-  - Student admin: make Grades/Registrations inlines collapsible, keep registration selection in the “Registration”
-    fieldset at the end, and add payments/invoices list section; app/people/admin/core.py, new finance inlines.
-  - Registrar grades dashboard: build a dedicated view with select_related/prefetch, current semester default,
-    view‑mode grouping, and pagination 100; app/registry/admin/core.py or a new admin view module plus templates.
-  - Student dashboard refactors: move _section_fee into Section model, move datetime formatters to app/timetable/
-    utils.py, and consolidate sidebar context; app/website/views/student_dashboard.py, app/timetable/models/
-    section.py, app/timetable/utils.py.
-  - Dev hygiene: add typing for candidate_map/form signatures and align test TypeAlias names to end in T; app/people/    admin/mixins.py, tests/*.
+*** Student dashboard UX:
+- Rename header to “Current courses,” add a credits total row in current courses,
+- remove financially‑cleared items from locked/gray lists,
+-  and add per‑row actions for cleared sections plus a small section detail page;
+  app/website/templates/website/student_dashboard.html, app/website/templates/website/ partials/student_dashboard_course_table.html, app/website/views/student_dashboard.py, new template/view/URL for section detail.
+*** Student dashboard receipts:
+- add per‑semester “download receipt” for financially cleared courses;
+-  likely add a filtered invoice/receipt endpoint keyed by semester;
+   app/website/views/student_dashboard.py, app/website/urls.py,  new template.
+*** TODO Student admin:
+-  make Grades/Registrations inlines collapsible,
+-  keep registration selection in the “Registration” fieldset at the end,
+-  and add payments/invoices list section;
+  app/people/admin/core.py, new finance inlines.
+*** Registrar grades dashboard:
+     build a dedicated view with select_related/prefetch, current semester default, view‑mode grouping,  and pagination 100;
+     app/registry/admin/core.py or a new admin view module plus templates.
+*** Student dashboard refactors:
+     move _section_fee into Section model,
+     move datetime formatters to app/timetable/ utils.py,
+     and consolidate sidebar context;
+     app/website/views/student_dashboard.py,     app/timetable/models/ section.py, app/timetable/utils.py.
+*** Dev hygiene:
+     add typing for candidate_map/form signatures and align test TypeAlias names to end in T;
+     app/people/admin/mixins.py, tests/*.
 
 **  #> Comment Backlog (Reported + Plan)
 ***  People: Merge + Admin Mixins
