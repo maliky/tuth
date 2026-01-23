@@ -1,0 +1,92 @@
+* Selenium Grid 4 Plan (Local + Parallel)
+  # Comment: guide for running Selenium tests in parallel on classic browsers.
+
+** Goals
+   - Run Selenium tests on multiple browsers (Chrome + Firefox + Edge) in parallel.
+   - Keep local setup simple and reproducible.
+   - Preserve existing pytest + selenium fixtures.
+
+** Prerequisites
+   - Java 11+ installed (Selenium Grid 4 is a Java application).
+   - Browsers installed locally (Chrome, Firefox, Edge).
+   - Drivers available locally:
+     - Chrome: /usr/bin/chromedriver (pinned, see AGENTS.md).
+     - Firefox: geckodriver in PATH.
+     - Edge: msedgedriver in PATH.
+   - Python dependencies already in the project (pytest, selenium, pytest-xdist).
+
+** Step 1: Download Selenium Grid 4 Server
+   # Comment: fetch the standalone server jar once.
+   - Download from https://github.com/SeleniumHQ/selenium/releases
+   - Example file name: selenium-server-4.x.x.jar
+   - Store it under ./tools/selenium/ (or any local path you prefer).
+
+** Step 2: Start a Grid Hub (Event Bus + Router)
+   # Comment: Selenium Grid 4 supports a single "hub" in distributed mode.
+   - Open a terminal:
+     - java -jar selenium-server-4.x.x.jar hub
+   - This starts:
+     - Event bus publish port (4442)
+     - Event bus subscribe port (4443)
+     - Router port (4444)
+   - Confirm the Grid UI is reachable:
+     - http://localhost:4444/ui
+
+** Step 3: Start Browser Nodes (One per Browser)
+   # Comment: each node registers to the hub and advertises its browser.
+
+   *** Chrome node
+   - java -jar selenium-server-4.x.x.jar node \
+     --detect-drivers true \
+     --publish-events tcp://localhost:4442 \
+     --subscribe-events tcp://localhost:4443
+
+   *** Firefox node
+   - java -jar selenium-server-4.x.x.jar node \
+     --detect-drivers true \
+     --publish-events tcp://localhost:4442 \
+     --subscribe-events tcp://localhost:4443
+
+   *** Edge node
+   - java -jar selenium-server-4.x.x.jar node \
+     --detect-drivers true \
+     --publish-events tcp://localhost:4442 \
+     --subscribe-events tcp://localhost:4443
+
+   # Comment: you can run all nodes on the same machine; each node can advertise
+   # Comment: multiple browsers if drivers are detected and available.
+
+** Step 4: Validate the Grid
+   - Visit http://localhost:4444/ui
+   - Check that each node is listed with its browser and slot count.
+
+** Step 5: Configure pytest to Use the Grid
+   # Comment: existing selenium tests can target the grid by using Remote.
+   - Ensure tests/selenium/conftest.py reads a GRID_URL and BROWSER.
+   - Example environment variables:
+     - export SELENIUM_GRID_URL="http://localhost:4444/wd/hub"
+     - export SELENIUM_BROWSER="chrome"  # or firefox, edge
+
+** Step 6: Parallel Execution (pytest-xdist)
+   # Comment: distribute tests across workers; each worker requests a grid slot.
+   - Run:
+     - pytest tests/selenium -n 4
+   - Increase -n based on node slot count and CPU capacity.
+   - If running multiple browsers, run per-browser batches:
+     - SELENIUM_BROWSER=chrome pytest tests/selenium -n 2
+     - SELENIUM_BROWSER=firefox pytest tests/selenium -n 2
+     - SELENIUM_BROWSER=edge pytest tests/selenium -n 2
+
+** Step 7: Headless vs Headed
+   # Comment: run headed for debugging, headless for CI speed.
+   - Set SELENIUM_HEADLESS=1 (if fixtures support it).
+
+** Recommended Local Matrix
+   - Chrome + Firefox in parallel (2 nodes, 2 slots each).
+   - Edge optional if installed.
+
+** Notes
+   - Keep chromedriver at /usr/bin/chromedriver (pin requirement).
+   - If you see "no matching capabilities", confirm:
+     - Driver availability in PATH.
+     - Browser version is compatible with the driver.
