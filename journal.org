@@ -11,13 +11,15 @@
   
 * <2026-01-23 ven. 12:49>
 ** Staff dashboards
-- Replace role cards/badges with a role dropdown near the current role;
+- [X] Replace role cards/badges with a role dropdown near the current role;
   - only show for users with multi‑role access.
-- Move other action cards into a consistent collapsible left sidebar.
-- Simplify/remove the summary text and eyebrow.
+- [X] Move other action cards into a consistent collapsible left sidebar.
+  - [ ] Make it clear with some color code wich action card will open the django admin and which will not.
+- [X] Simplify/remove the summary text and eyebrow.
 ** Semester defaulting
-- All grade/section/student/course/curriculum/payment/invoice/registration views (admin + non‑admin) should default to the current semester,
-  - with a dropdown to switch or clear the filter.
+- [-] All grade/section/student/course/curriculum/payment/invoice/registration views (admin + non‑admin) should default to the current semester,
+  - [X] with a dropdown to switch or clear the filter.
+  - [ ] A default semester is set but it is not the current semester. also it is reset when changing page.  undo the changes done to implement this feature.
 ** Student dashboard
 - [X] Rename header to “Current courses,” to "Registrations"
 - [ ] Keep all registrations in the table what ever their their status.
