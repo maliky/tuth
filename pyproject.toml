@@ -12,11 +12,11 @@ markers = [
 [tool.black]
 line-length = 90
 target-version = ["py313"]
-exclude = "__pycache__,.git,migrations,Seed_data"
+exclude = "__pycache__|.git|migrations|Seed_data"
 
 [tool.flake8]
 per-file-ignores = ["__init__.py:F401"]
-exclude = "__pycache__,.git,migrations,Seed_data"
+extend-exclude = "__pycache__/**,.git/**,migrations/**,Seed_data/**"
 max-complexity = 15
 max-line-length = 90
 # The old ignore list: C901,W605,E203,D401,W503,D101,D107,D103,E501

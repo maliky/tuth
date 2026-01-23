@@ -57,12 +57,12 @@ class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedMode
 
     list_display = (
         "student_label",
-        "semester_label",
         "curriculum_course",
+        "semester_label",
         "amount_due",
         "payments_link",
         "created_at",
-        "recorded_by_name",
+        # "recorded_by_name",
     )
     list_filter = (SemesterFilterAC, AmountDueFilter)
     list_select_related = (
@@ -70,7 +70,7 @@ class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedMode
         "student__user",
         "semester",
         "curriculum_course",
-        "recorded_by",
+        # "recorded_by",
     )
     readonly_fields = ("created_at",)
     search_fields = (
@@ -116,13 +116,13 @@ class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedMode
         """Return the invoice semester label."""
         return str(obj.semester)
 
-    @admin.display(description="Recorded by")
-    def recorded_by_name(self, obj: Invoice) -> str:
-        """Return the staff long name for display."""
-        recorded_by = obj.recorded_by
-        if recorded_by is not None:
-            return recorded_by.long_name or str(recorded_by)
-        return "-"
+    # @admin.display(description="Recorded by")
+    # def recorded_by_name(self, obj: Invoice) -> str:
+    #     """Return the staff long name for display."""
+    #     recorded_by = obj.recorded_by
+    #     if recorded_by is not None:
+    #         return recorded_by.long_name or str(recorded_by)
+    #     return "-"
 
     @admin.action(description="Create pending payments")
     def create_payment_action(self, request, queryset):
