@@ -90,6 +90,7 @@ class StudentGradeInline(admin.TabularInline):
     classes = ["collapse"]
     fk_name = "student"
     extra = 0
+    classes = ['collapse']
     can_delete = False
     fields = ("section_link", "section_semester", "value")
     readonly_fields = ("section_link", "section_semester", "value")

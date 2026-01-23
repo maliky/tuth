@@ -19,7 +19,7 @@ from .student_helpers import (
 )
 
 
-# > move this to an utils file probably in app/shared 
+# > move this to an utils file probably in app/shared
 def _format_time(value: Optional[time]) -> str:
     """Return a time string for schedule displays."""
     if value is None:
