@@ -1,3 +1,11 @@
+
+** <2026-01-22 jeu. 22:22> UX harmonization
+- on the different staff dashobard move the card to the left of the screen.
+- By default all views concerning Grades/sections/students/courses/curriculum/payment/invoices/registrations, in admin or elsewhere should be filter by default on the current semester.  Thoses views should obviously have a way to select another semester or remove the filter all togehter. in admin view, this is done through the filters, in other view, we need to add a dropdown list with semester, wehre the default value is the current semester
+
+- what is needed is a student_payment_receipt not student_invoice_receipt.  update/ rename the function and file accordingly.
+  
+
 ** <2026-01-22 Thu 22:00>  Status Check
 
   - Student admin: registration selection is at the end, but grades/registrations inlines are not collapsible and
@@ -33,9 +41,8 @@
     section.py, app/timetable/utils.py.
   - Dev hygiene: add typing for candidate_map/form signatures and align test TypeAlias names to end in T; app/people/    admin/mixins.py, tests/*.
 
-  #> Comment Backlog (Reported + Plan)
-
-  People: Merge + Admin Mixins
+**  #> Comment Backlog (Reported + Plan)
+***  People: Merge + Admin Mixins
 
   - app/people/services/merge_people.py — confirm M2M merge behavior when a user is not persisted; decide if skip is
     correct.
@@ -46,7 +53,7 @@
   - app/people/admin/mixins.py — review defaulting older record values for sparse fields.
   - app/people/admin/mixins.py — confirm unbound method action wiring is still needed.
 
-  People: Merge + Duplicate Handling
+***  People: Merge + Duplicate Handling
 
   - app/people/admin/mixins.py — confirm freeing unique values on sources is safe.
   - app/people/admin/mixins.py — resolve mixin get_queryset typing note.
@@ -55,7 +62,7 @@
   - app/people/admin/widgets.py — reconsider cached get_or_create pattern usefulness.
   - app/people/admin/widgets.py — ensure cache path doesn’t prevent get calls.
 
-  People: Ensures + Models + Admin Resources
+***  People: Ensures + Models + Admin Resources
 
   - app/people/ensures.py — implement student lookup by student_id (primary key path).
   - app/people/ensures.py — use model mk_username consistently.
@@ -64,7 +71,7 @@
   - app/people/models/student.py — resolve prerequisite logic before uncommenting path.
   - app/people/models/object_manager.py — clarify assumptions in manager logic.
 
-  People: Admin Resources Mapping
+***  People: Admin Resources Mapping
 
   - app/people/models/object_manager.py — prevent duplicate usernames on import.
   - app/people/admin/resources.py — document or fix widgets column mapping.
@@ -73,12 +80,12 @@
   - app/people/admin/resources.py — add fuzzy curriculum match during import.
   - app/people/admin/resources_mapping.py — document AccountID origin constraints.
 
-  People: Admin Core
+***  People: Admin Core
 
   - app/people/admin/core.py — consider moving staff_bio into FACULTY_FIELDS.
   - app/people/admin/core.py — validate the RoleAssignmentAdmin autocomplete note.
 
-  Timetable: Admin + Models
+***  Timetable: Admin + Models
 
   - app/timetable/admin/session_widgets.py — ensure section id is available to create secsession.
   - app/timetable/admin/section_registers.py — handle/propagate error messaging.
@@ -87,19 +94,19 @@
   - app/timetable/admin/core_registers.py — confirm open semester uniqueness handling.
   - app/timetable/models/schedule.py — enforce end_time > start_time validation.
 
-  Timetable: Models + Ensures
+***  Timetable: Models + Ensures
 
   - app/timetable/models/semester.py — clarify need for REGISTRATION_OPEN_CODES set/dict.
   - app/timetable/ensures.py — decide if _created branch is needed.
 
-  Registry: Admin + Imports + Models
+***  Registry: Admin + Imports + Models
 
   - app/registry/admin/core.py — convert semester filter to autocomplete and limit to used semesters.
   - app/registry/management/commands/import_grades.py — validate assumption that students exist.
   - app/registry/management/commands/import_grades.py — ensure_student should resolve by student_id.
   - app/registry/models/document.py — confirm classmethods on abstract model viability.
 
-  Website: Student Dashboard
+***  Website: Student Dashboard
 
   - app/website/views/student_dashboard.py — review “blocked/cooldown shouldn’t be selectable” logic.
   - app/website/views/student_dashboard.py — confirm semester GPA grouping note is still needed.
@@ -121,7 +128,7 @@
   - app/academics/models/curriculum.py — surface warning to users on fuzzy match.
   - app/academics/models/curriculum.py — decide if using _id fields is necessary.
 
-  Scripts
+***  Scripts
 
   - scripts/merge_courses_by_short_code.sql — document COALESCE meaning.
   - scripts/merge_courses_by_short_code.sql — clarify duplication remark.

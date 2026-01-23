@@ -22,6 +22,8 @@ from .student_dashboard import (
     student_dashboard,
     student_invoice_statement,
 )
+from .student_payment_receipts import student_payment_receipt
+from .student_sections import student_section_detail
 
 __all__ = [
     "PortalLoginView",
@@ -39,6 +41,8 @@ __all__ = [
     "student_list",
     "student_invoice_statement",
     "download_invoice_statement",
+    "student_payment_receipt",
+    "student_section_detail",
     "finance_officer_invoices",
     "finance_officer_create_payments",
     "finance_officer_student_autocomplete",

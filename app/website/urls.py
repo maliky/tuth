@@ -26,6 +26,16 @@ urlpatterns = [
         name="student_invoice_statement_download",
     ),
     path(
+        "student/payment/receipt/<int:semester_id>/",
+        views.student_payment_receipt,
+        name="student_payment_receipt",
+    ),
+    path(
+        "student/sections/<int:section_id>/",
+        views.student_section_detail,
+        name="student_section_detail",
+    ),
+    path(
         "staff/finance/invoices/",
         views.finance_officer_invoices,
         name="finance_officer_invoices",

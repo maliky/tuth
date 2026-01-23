@@ -55,6 +55,7 @@ class SemesterGradeGroupT(TypedDict):
     label: str
     gpa: str
     credits_total: int
+    receipt_url: str
     courses: list[SemesterGradeRowT]
 
 
@@ -596,22 +597,32 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         )
 
     course_status_rows = []
+    course_status_total_credits = 0
     for reg in active_registrations:
         section = reg.section
         course = section.curriculum_course.course
         last_change = history_dates.get(reg.id) or reg.date_registered
+        credits = int(section.curriculum_course.credit_hours.code)
+        course_status_total_credits += credits
+        is_cleared = reg.status_id == "cleared"
         course_status_rows.append(
             {
                 "code": course.short_code or course.code,
                 "title": course.title or "",
                 "status": reg.status_id,
                 "status_label": reg.status.label if reg.status else reg.status_id,
-                "credits": section.curriculum_course.credit_hours.code,
+                "credits": credits,
                 "semester": str(section.semester),
                 "last_update": last_change.strftime("%b %d, %Y %H:%M"),
                 "fee": _section_fee(section),
                 "registration_id": reg.id,
                 "can_cancel": reg.status_id == "pending",
+                "can_view": is_cleared,
+                "section_url": (
+                    reverse("student_section_detail", args=[section.id])
+                    if is_cleared
+                    else ""
+                ),
             }
         )
 
@@ -659,6 +670,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     cooldown_course_ids: set[int] = set()
     attempt_blocked_course_ids: set[int] = set()
     registered_status_by_course: dict[int, str] = {}
+    registered_status_id_by_course: dict[int, str] = {}
     if semester:
         semester_registrations = active_registrations.filter(section__semester=semester)
         registered_course_ids = set(
@@ -670,8 +682,10 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         for reg in semester_registrations:
             course_id = reg.section.curriculum_course.course_id
             if course_id not in registered_status_by_course:
+                status_id = reg.status_id or ""
+                registered_status_id_by_course[course_id] = status_id
                 registered_status_by_course[course_id] = (
-                    reg.status.label if reg.status else reg.status_id
+                    reg.status.label if reg.status else status_id
                 )
             if reg.status_id == "pending":
                 pending_course_ids.add(course_id)
@@ -767,6 +781,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             "status_class": "bg-secondary",
             "locked_until": "",
         }
+        status_id = registered_status_id_by_course.get(course.id, "")
         if course.id in pending_course_ids:
             course_payload["status_label"] = registered_status_by_course.get(
                 course.id, "Pending"
@@ -774,6 +789,8 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             course_payload["status_class"] = "bg-info-subtle text-info"
             registered_courses.append(course_payload)
         elif course.id in registered_course_ids:
+            if status_id == "cleared":
+                continue
             course_payload["status_label"] = registered_status_by_course.get(
                 course.id, "Registered"
             )
@@ -800,6 +817,9 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     )
 
     invoices = Invoice.objects.filter(student=student)
+    cleared_invoice_semester_ids = set(
+        invoices.filter(amount_due__lte=0).values_list("semester_id", flat=True)
+    )
     total_due = invoices.aggregate(total=Sum("amount_due")).get("total") or Decimal(
         "0.00"
     )
@@ -898,6 +918,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 ),
                 "gpa": "N/A",
                 "credits_total": 0,
+                "receipt_url": "",
                 "courses": [],
             }
             semester_grade_lookup[semester_id] = group
@@ -939,6 +960,11 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         reverse=True,
     )
     for group in semester_grade_groups:
+        if group["semester_id"] in cleared_invoice_semester_ids:
+            group["receipt_url"] = reverse(
+                "student_payment_receipt",
+                args=[group["semester_id"]],
+            )
         group["courses"].sort(key=lambda row: row["code"] or "")
 
     credit_summary = {
@@ -1034,6 +1060,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         "financial_summary": financial_summary,
         "course_filters": course_filters,
         "course_status_rows": course_status_rows,
+        "course_status_total_credits": course_status_total_credits,
         "available_courses": available_courses,
         "registered_courses": registered_courses,
         "registration_limits": registration_limits,

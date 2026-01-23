@@ -6,6 +6,7 @@ from typing import Optional, cast
 
 from django.contrib.auth.models import AnonymousUser, User
 from django.core.exceptions import PermissionDenied
+from django.urls import reverse
 
 from app.people.models.student import Student
 from app.shared.admin.core import get_current_semester
@@ -46,3 +47,47 @@ def _resolve_semester(
     if semester is None:
         semester = student.last_enrolled_semester or get_current_semester()
     return semester, list(open_semesters)
+
+
+def _build_student_profile(student: Student) -> dict[str, str]:
+    """Return the student profile block for portal templates."""
+    academic_year = "Not assigned"
+    if student.entry_semester:
+        academic_year = (
+            f"{student.entry_semester.academic_year.code} · "
+            f"Semester {student.entry_semester.number}"
+        )
+    avatar_url = ""
+    if getattr(student, "photo", None) and student.photo:
+        avatar_url = student.photo.url
+    return {
+        "name": student.long_name or student.user.get_full_name() or student.username,
+        "student_id": student.student_id or "Pending ID",
+        "academic_year": academic_year,
+        "curriculum": student.curriculum.long_name or student.curriculum.short_name,
+        "avatar": avatar_url,
+    }
+
+
+def _build_sidebar_links(active_label: str) -> list[dict[str, str | bool]]:
+    """Return sidebar links with the requested active label."""
+    dashboard_url = reverse("student_dashboard")
+    links: list[dict[str, str | bool]] = [
+        {"label": "Dashboard", "href": dashboard_url, "active": False},
+        {
+            "label": "Course Registration",
+            "href": f"{dashboard_url}#courses",
+            "active": False,
+        },
+        {"label": "Financials", "href": f"{dashboard_url}#records", "active": False},
+        {
+            "label": "Download statement",
+            "href": reverse("student_invoice_statement"),
+            "active": False,
+        },
+        {"label": "Support", "href": f"{dashboard_url}#support", "active": False},
+    ]
+    for link in links:
+        if link["label"] == active_label:
+            link["active"] = True
+    return links

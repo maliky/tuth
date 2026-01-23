@@ -46,6 +46,10 @@
                   Cancel
                 </button>
               </form>
+            {% elif row.can_view %}
+              <a class="btn btn-sm btn-outline-primary" href="{{ row.section_url }}">
+                Details
+              </a>
             {% else %}
               —
             {% endif %}
@@ -59,5 +63,12 @@
         </tr>
       {% endfor %}
     </tbody>
+    <tfoot>
+      <tr class="table-light">
+        <td colspan="2" class="text-end"><strong>Total credits</strong></td>
+        <td><strong>{{ course_status_total_credits }}</strong></td>
+        <td colspan="4"></td>
+      </tr>
+    </tfoot>
   </table>
 </div>
