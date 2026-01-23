@@ -632,7 +632,7 @@ class StudentAdmin(
             {"classes": ["collapse"], "fields": PersonFormMixin.STANDARD_USER_FIELDS},
         ),
         (
-            "Registration",
+            "Adding new Registrations",
             {
                 "fields": ("registration_sections",),
                 "description": (
