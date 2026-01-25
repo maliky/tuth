@@ -7,29 +7,6 @@ from django.db import models
 from app.shared.mixins import SimpleTableMixin
 from app.shared.status.mixins import StatusableMixin
 
-
-class TranscriptRequestStatus(SimpleTableMixin):
-    """Lookup table storing allowed states for transcript requests."""
-
-    DEFAULT_VALUES = [
-        ("pending", "Pending"),
-        ("processing", "Processing"),
-        ("completed", "Completed"),
-        ("on_hold", "On hold"),
-    ]
-
-    class Meta:
-        verbose_name_plural = "Transcript Request Status"
-
-    @classmethod
-    def get_default(cls):
-        """Return the default status."""
-        default, _ = cls.objects.get_or_create(
-            code="pending", defaults={"label": "Pending"}
-        )
-        return default
-
-
 class TranscriptRequest(StatusableMixin, models.Model):
     """Records a student's transcript request and its fulfillment status."""
 

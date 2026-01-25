@@ -22,50 +22,6 @@ def set_document_path(instance, filename: str) -> str:
     return str(Path(instance_name) / str(instance.person) / filename)
 
 
-class DocumentType(SimpleTableMixin):
-
-    DEFAULT_VALUES = [
-        ("photo", "Photo"),
-        ("applet", "Application Letter"),
-        ("recls", "Recommandation Last School"),
-        ("reccom", "Recommandation Community"),
-        ("recrel", "Recommandation Relgious Leaders"),
-        ("medcert", "Medical Certificat"),
-        ("repcard", "Report Card"),
-        ("waec", "Waec"),
-        ("bill", "Bill"),
-        ("transcript", "Transcript"),
-        ("public", "Public_signature"),
-        ("other", "Other Document"),
-    ]
-
-    @classmethod
-    def get_default(cls) -> Self:
-        """Returns the default FeeType."""
-        deft, _ = cls.objects.get_or_create(
-            code="other", defaults={"label": "Other Document"}
-        )
-        return cast(Self, deft)
-
-
-class DocumentStatus(SimpleTableMixin):
-    DEFAULT_VALUES = [
-        ("pending", "Pending"),
-        ("approved", "Approved"),
-        ("adjustments_required", "Adjustments Required"),
-        ("rejected", "Rejected"),
-    ]
-
-    class Meta:
-        verbose_name_plural = "Document Status"
-
-    @classmethod
-    def get_default(cls) -> Self:
-        """Returns the default FeeType."""
-        deft, _ = cls.objects.get_or_create(code="pending", defaults={"label": "Pending"})
-        return cast(Self, deft)
-
-
 class AbstractDocument(StatusableMixin, models.Model):
     """Abstract / factorize some of the documents common methods.
 

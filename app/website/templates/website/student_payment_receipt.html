@@ -34,6 +34,7 @@
             <tr>
               <th>Course</th>
               <th>Credits</th>
+              <th>Date paid</th>
               <th class="text-end">Paid</th>
               <th class="text-end">Balance</th>
             </tr>
@@ -47,13 +48,14 @@
                   <span class="text-muted">{{ invoice.curriculum_course.course.title }}</span>
                 </td>
                 <td>{{ invoice.curriculum_course.credit_hours.code }}</td>
+                <td>{{ row.paid_on }}</td>
                 <td class="text-end">{{ currency }} {{ row.paid_total|floatformat:2 }}</td>
                 <td class="text-end">{{ currency }} {{ invoice.amount_due|floatformat:2 }}</td>
               </tr>
               {% endwith %}
             {% endfor %}
             <tr class="table-light">
-              <td colspan="2" class="text-end"><strong>Total</strong></td>
+              <td colspan="3" class="text-end"><strong>Total</strong></td>
               <td class="text-end">
                 <strong>{{ currency }} {{ total_paid|floatformat:2 }}</strong>
               </td>

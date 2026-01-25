@@ -4,6 +4,7 @@
 WITH year_parts AS (
     SELECT
         sem.id,
+        sem.academic_year_id,
         sem.number,
         ay.start_date AS ay_start,
         COALESCE(
@@ -15,21 +16,41 @@ WITH year_parts AS (
     FROM timetable_semester AS sem
     JOIN timetable_academicyear AS ay
         ON ay.id = sem.academic_year_id
+),
+semester_dates AS (
+    SELECT
+        id,
+        academic_year_id,
+        number,
+        ay_start,
+        ay_end,
+        CASE
+            WHEN number = 0 THEN ay_start
+            WHEN number = 1 THEN ay_start
+            WHEN number = 2 THEN make_date(end_year, 1, 1)
+            WHEN number = 3 THEN make_date(end_year, 6, 1)
+            ELSE ay_start
+        END AS start_date
+    FROM year_parts
+),
+ordered_semesters AS (
+    SELECT
+        id,
+        academic_year_id,
+        number,
+        ay_end,
+        start_date,
+        LEAD(start_date)
+            OVER (PARTITION BY academic_year_id ORDER BY number) AS next_start_date
+    FROM semester_dates
 )
 UPDATE timetable_semester AS sem
-SET start_date = CASE
-        WHEN year_parts.number = 0 THEN year_parts.ay_start
-        WHEN year_parts.number = 1 THEN year_parts.ay_start
-        WHEN year_parts.number = 2 THEN make_date(year_parts.end_year, 1, 1)
-        WHEN year_parts.number = 3 THEN make_date(year_parts.end_year, 6, 1)
-        ELSE year_parts.ay_start
-    END,
+SET start_date = ordered_semesters.start_date,
     end_date = CASE
-        WHEN year_parts.number = 0 THEN year_parts.ay_end
-        WHEN year_parts.number = 1 THEN make_date(year_parts.start_year, 12, 31)
-        WHEN year_parts.number = 2 THEN make_date(year_parts.end_year, 5, 31)
-        WHEN year_parts.number = 3 THEN year_parts.ay_end
-        ELSE year_parts.ay_end
+        WHEN ordered_semesters.number = 0 THEN ordered_semesters.ay_end
+        WHEN ordered_semesters.next_start_date IS NOT NULL
+            THEN ordered_semesters.next_start_date - INTERVAL '1 day'
+        ELSE ordered_semesters.ay_end
     END
-FROM year_parts
-WHERE sem.id = year_parts.id;
+FROM ordered_semesters
+WHERE sem.id = ordered_semesters.id;

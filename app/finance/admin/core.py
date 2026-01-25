@@ -1,11 +1,11 @@
 """Core module."""
 
-from typing import Optional, cast
+from typing import Optional
 
 from app.finance.models.payment import FeeType, PaymentMethod, ClearanceStatus, SectionFee
 from django import forms
 from django.contrib import admin, messages
-from django.db.models import Count
+from django.db.models import Count, F
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.http import urlencode
@@ -35,21 +35,37 @@ class AmountDueFilter(admin.SimpleListFilter):
     """Filter invoices by remaining balance."""
 
     title = "Amount due"
-    parameter_name = "amount_due"
+    parameter_name = "balance"
 
     def lookups(self, request, model_admin):
         return (
-            ("open", "Open balance"),
             ("zero", "Zero balance"),
+            ("low", "balance <= 60%"),
+            ("mid", "60% < balance"),
+            ("full", "Full balance"),
         )
 
     def queryset(self, request, queryset):
         value = self.value()
-        if value == "open":
-            return queryset.filter(amount_due__gt=0)
         if value == "zero":
-            return queryset.filter(amount_due=0)
-        return queryset
+            return queryset.filter(balance=0)
+        if value == "full":
+            return queryset.filter(balance=F("initial_amount_due"))
+
+        if value not in {"low", "mid"}:
+            return queryset
+
+        invoice_ids: list[int] = []
+        # Limit columns since we only need balances and initial totals.
+        for invoice in queryset.only("id", "balance", "initial_amount_due"):
+            threshold = invoice.initial_forty_percent_due()
+
+            if value == "low" and invoice.balance <= threshold:
+                invoice_ids.append(invoice.pk)
+            if value == "mid" and threshold < invoice.balance:
+                invoice_ids.append(invoice.pk)
+                
+        return queryset.filter(pk__in=invoice_ids)
 
 
 @admin.register(SectionFee)
@@ -78,7 +94,7 @@ class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedMode
         "student_label",
         "curriculum_course",
         "semester_label",
-        "amount_due",
+        "balance",
         "payments_link",
         "created_at",
         # "recorded_by_name",

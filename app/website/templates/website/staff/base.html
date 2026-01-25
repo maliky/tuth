@@ -36,6 +36,10 @@
       </div>
       <div class="staff-shell__actions">
         {% block header_actions %}{% endblock %}
+        {# Logout remains visible on all staff dashboards. #}
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'portal_logout' %}">
+          Log out
+        </a>
         <a class="btn btn-outline-secondary btn-sm" href="{% url 'admin:index' %}">
           Django admin
         </a>

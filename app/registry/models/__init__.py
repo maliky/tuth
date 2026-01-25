@@ -4,12 +4,16 @@ from .document import (
     DocumentStaff,
     DocumentDonor,
     DocumentStudent,
+)
+from .status_types import (
     DocumentStatus,
     DocumentType,
+    RegistrationStatus,
+    TranscriptRequestStatus,
 )
 from .grade import Grade, GradeValue
-from .registration import Registration, RegistrationStatus
-from .transcript import TranscriptRequest, TranscriptRequestStatus
+from .registration import Registration
+from .transcript import TranscriptRequest
 from .credit_hours import CreditHour
 
 __all__ = [

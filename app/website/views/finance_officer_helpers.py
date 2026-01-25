@@ -105,7 +105,7 @@ def group_invoices(invoices: Iterable[Invoice]) -> list[InvoiceGroupT]:
             group_lookup[student_id] = group
             groups.append(group)
         group["rows"].append(invoice)
-        group["total_due"] += invoice.amount_due
+        group["total_due"] += invoice.balance
     return groups
 
 
@@ -150,7 +150,7 @@ def invoice_queryset(
     if semester_id:
         qs = qs.filter(semester_id=semester_id)
     if status_filter == "open":
-        qs = qs.filter(amount_due__gt=0)
+        qs = qs.filter(balance__gt=0)
     return qs
 
 

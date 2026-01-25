@@ -157,7 +157,7 @@ def invoice_factory(default_semester: Semester) -> InvoiceFactoryT:
             curriculum_course=curriculum_course,
             student=student,
             semester=default_semester,
-            amount_due=Decimal("10.00"),
+            balance=Decimal("10.00"),
         )
 
     return _make

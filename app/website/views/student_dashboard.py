@@ -77,7 +77,7 @@ def student_invoice_statement(request: HttpRequest) -> HttpResponse:
     """Render the invoice statement for the current student."""
     student = _require_student(request.user)
     invoices = list(
-        Invoice.objects.filter(student=student, amount_due__gt=0)
+        Invoice.objects.filter(student=student, balance__gt=0)
         .select_related(
             "curriculum_course__course",
             "curriculum_course__credit_hours",
@@ -85,7 +85,7 @@ def student_invoice_statement(request: HttpRequest) -> HttpResponse:
         )
         .order_by("semester__start_date", "curriculum_course__course__short_code")
     )
-    total_due = sum((invoice.amount_due for invoice in invoices), Decimal("0.00"))
+    total_due = sum((invoice.balance for invoice in invoices), Decimal("0.00"))
     currency = getattr(settings, "FINANCE_DEFAULT_CURRENCY", "USD")
     statement_rows = [
         {"invoice": invoice, "created_at": format_datetime(invoice.created_at)}
@@ -331,7 +331,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                             student=student,
                             curriculum_course=section.curriculum_course,
                             semester=section.semester,
-                            defaults={"amount_due": section.fee_total_amount()},
+                            defaults={"balance": section.fee_total_amount()},
                         )
                         continue
                     if registration.status_id in {"canceled", "removed"}:
@@ -343,7 +343,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                             student=student,
                             curriculum_course=section.curriculum_course,
                             semester=section.semester,
-                            defaults={"amount_due": section.fee_total_amount()},
+                            defaults={"balance": section.fee_total_amount()},
                         )
                     else:
                         skipped += 1
@@ -671,6 +671,8 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     available_courses: list[dict[str, object]] = []
     registered_courses: list[dict[str, object]] = []
     locked_courses: list[dict[str, object]] = []
+    # Keep a dedicated list for canceled courses to drive the gray area UI.
+    canceled_courses: list[dict[str, object]] = []
     for cc in curriculum_courses:
         course = cc.course
         course_sections = sections_by_course.get(course.id, [])
@@ -735,14 +737,17 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 course.id, "Pending"
             )
             course_payload["status_class"] = "bg-info-subtle text-info"
-            registered_courses.append(course_payload)
+            # Pending courses are visible in the status table; keep them out of
+            # the gray area list as requested.
+            continue
         elif course.id in registered_course_ids:
             if status_id in {"cleared", "approved"}:
                 continue
             course_payload["status_label"] = registered_status_by_course.get(
                 course.id, "Registered"
             )
-            registered_courses.append(course_payload)
+            # Active registrations are covered elsewhere; do not show here.
+            continue
         elif course.id in cooldown_course_ids:
             unlock_time = cooldown_course_locks.get(course.id)
             if unlock_time:
@@ -752,7 +757,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             else:
                 course_payload["status_label"] = "Canceled for semester"
             course_payload["status_class"] = "bg-secondary text-white"
-            registered_courses.append(course_payload)
+            canceled_courses.append(course_payload)
         elif course.id in attempt_blocked_course_ids:
             locked_courses.append(course_payload)
         elif is_eligible:
@@ -764,7 +769,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         .get("value")
     )
 
-    total_due = invoices.aggregate(total=Sum("amount_due")).get("total") or Decimal(
+    total_due = invoices.aggregate(total=Sum("balance")).get("total") or Decimal(
         "0.00"
     )
     payments = Payment.objects.filter(invoice__student=student)
@@ -775,7 +780,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             flat=True,
         )
     )
-    # amount_due already reflects the remaining balance after cleared payments.
+    # balance already reflects the remaining balance after cleared payments.
     pending_registrations = (
         active_registrations.filter(status_id="pending")
         .select_related(
@@ -937,13 +942,9 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         {
             "title": f"{student.curriculum.short_name} curriculum overview",
             "description": f"{curriculum_course_count} mapped courses in your program.",
-            "cta": "#",
+            "cta": reverse("student_curriculum_courses"),
         },
-        {
-            "title": "Download unofficial transcript",
-            "description": f"{len(completed_courses)} graded courses available.",
-            "cta": "#",
-        },
+        # Unofficial transcript card removed for the current dashboard scope.
         {
             "title": "Message your advisor",
             "description": "Need clearance? Let your college advisor know.",
@@ -997,6 +998,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         "current_semester_receipt_url": current_semester_receipt_url,
         "available_courses": available_courses,
         "registered_courses": registered_courses,
+        "canceled_courses": canceled_courses,
         "registration_limits": registration_limits,
         "completed_courses": completed_courses,
         "semester_grade_groups": semester_grade_groups,

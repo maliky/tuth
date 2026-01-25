@@ -1,373 +1,128 @@
+
+* <2026-01-25 Sun 15:15> Registration life cycle
+Check the status update for invoice
+  - It should be called anytime a payment is saved (ie invoice.balance is changed)
+
+- check status and type imports after move to new module status_types.py
+- in test factories use cls.get_default when available
+- handle the additional fixed fee for the cc
+* DONE <2026-01-25 Sun 11:09> TODO
+  CLOSED: [2026-01-25 Sun 15:14]
+  - [X] in payment.py
+    - [X] review the documentation, in particular the example
+      
+  - [X] in invoice.py
+    - 
+    - [X] review the documentation, in particular the example DONE
+    - [X] balance, need migrations
+      - [X] renamed amount_due DONE
+      - [X] added initial_amount_due DONE
+
 * <2026-01-23 Fri 23:01> Strange mergin and not faculty anymore ?
-  
-* <2026-01-23 Fri 19:49>
-  - auth/login
-    - remove the text about the unified signin. This is for dev not for end users.
-  - Student dashboard
-    - remove the label Profil in student snapshot
-    - Remove the word download from the menu (for payment/invoice statement)
-  - Only show the canceled curriculum courses in the gray area. The user already knows which one are pending payment.
-  - The replace the lable financial in the menu by Old Course and grades
-  - Remove the support button from 'header actions'
+- Need to adress the fee structure for courses.
+  - Too long to load, investigate
 
-  - link the action card about the curriculum to an order list of the curriculum courses.  (keep it simple for now) for each course give a link to the detailed information of that course.
+- in student/payment/receipt
+  - compute  balance sum beside the paid sum
+- in student/dashboar remo the Payment receipt button. it is already in the menu under payment statement.
+  - rename the payment statement to payment receipt in the menu
 
-  - Remove the action card about unofficial transcript.
-
-  - General:
-  What is the current Semester ?  it should be 25-26 Semester 2 but I see 25-26 Semester 3    
-
-
-  - Dashboards
-    - Keep the logout buton always visible on any dashboard page.
-
-  - [ ] Registration
-    - [ ] A registration is marked financely cleared only if the invoice was totaly paid
-    - [ ] Mark a registration approved if the invoice 40 % or more of the invoice is paid.
-** in registrar/grades
-
-   - add a button on the summary row to generate the official grade transcript
-     - For now it only produce a list of the grade and information about the user.
-* <2026-01-23 ven. 17:00>
-
-  P1 – Core workflow usability
-
-  - Registrar grades dashboard:
-    - [ ] fix wrong default semester selection ::
-      + shows '25-26 Semester 1' instead of 25-26 Semester 2
-  - [-] Pagination UX:
-    - [ ] and “go to page” input,
-      + The go field show but entering a number will rester the semester filter.
-  - [-] Student dashboard:
-    - [ ] add per‑row “last payment update”.
-      + in student/payment/receipt/ on the table add the date of the payment for each payment 'date payed'
-
-
-  P2 – UX consistency
-
-  - Staff dashboard: remove duplicate “Role Staff Workspace” link.
-  - Harmonize staff link/button colors based on admin vs non‑admin destinations.
-
-  Clarification provided on colors
-  - > “if target url is in admin button in blue, else yellow”
-
-
-
-
-* <2026-01-23 ven. 16:21>
-** Student admin
-- [ ] remove the collapsible inline payment invoices, grade or section from the admin. keep that for the registrar view.  This slows dow admin interface.
-  - [ ] Internal server error wheen opening some student eg studid 31625, probably ressources related
-
-** Payement admin
-- [ ] Should display all payments by default. but show none.
-
-** Invoice admin:
-- [ ] Should display all payments by default. but show none.  
-** Staff dashboards
-  - [ ] Make it clear with some color code wich action card will open the django admin and which will not.
-    - if the target url start with admin (domain excluded) then button of card color, else blue.
-** Registrar grades dashboard
-- [ ] dashboard link should always be visible
-- [ ] not the current semester is not the one selected by default. (selected 25-26-Sem3 instead of 25-26-Sem2)
-- [ ] make the whole summary row clicable to collapse or expand it.
-- [ ] current semester default, pagination (100), searchable student dropdown, and grouped/collapsed display by student then semester.
-  - [ ] pagination: add the total number of record, number of pages and link to the last, and a space to set the page number to go to.
-** Student dashboard
-- [-] Keep all registrations in the table what ever their their status.
-  - [ ] Add a last update of payment ligne by ligne
-  - [ ] Make the Download Payement statement and Download Invoice statement button in the menu point to effective list of payment and invoice. reuse existing functions
-** Staff dashboard
-- [ ] Remove the link Role Staff Workspace it is duplicate to the default login user workspace
-- [ ] Check the colors of the links and make this consitent accross all staff dashboards.  
-  - [ ] if the target url is in admin button in blue, else yellow.
-
-* Student Admin   
    
 
 * <2026-01-23 ven. 12:49>
-** Staff dashboards
-  - [ ] Make it clear with some color code wich action card will open the django admin and which will not.
-    - if the target url start with admin (domain excluded) then button of card color, else blue.
-** Semester defaulting
-- [-] All grade/section/student/course/curriculum/payment/invoice/registration views (admin + non‑admin) should default to the current semester,
-  - [ ] A default semester is set but it is not the current semester. also it is reset when changing page.  undo the changes done to implement this feature.
-** Student dashboard
-- [ ] Keep all registrations in the table what ever their their status.
-  - [ ] Only keep not canceled registrations in the table.
-  - [ ] in the Payment receipt, make sure we include all registration for which a payment was made this semester, there could be canceled registration in that case.  If not payment was made for a registration, exclude that registraion of the payment receipt.
-  - [ ] Add a date of generation of the payment receipt
-  - [ ] Remove the notice about 'Use your browser print dialog to save as PDF or capture the receipt.'
-  - [ ] Distinguish in the side bar Menu, Download Payement statement and Download Invoice statement.
-** Student receipts
-** Invoice admin:
-- [ ] set the default By semester filter value to the current semester.
-- [ ] add an inline section to the associated payments
-** Payement admin
-- [ ] set the default By semester filter value to the current semester.
-- [ ] investigate bug : crash when setting the semester filter
-   
-** Student admin
-- [ ] Add collapsible payments/invoices inlines
-- [X] Correct bug, no student is shown and selecting a Semester will crash
+**  People: Merge + Admin Mixins
 
-** Registrar grades dashboard
-- [ ] Dedicated grade view with optimized queries,
-  - [ ] add small triangle to indicate the rows are collapsable
-  - [ ] for each student row add a summary row, with cumulated GPA/credit. must be the same row as the one with the student label
-    - [ ] for each semester row add a summary row, with cumulated GPA/credit. must be the same row as the one with the semester label
-- current semester default, pagination (100), searchable student dropdown, and grouped/collapsed display by student then semester.
-- [ ] Investigate bug
-  - [ ] Only a 6 students show on the first page instead of 100
-    - [ ] selecting another page reste the semester to a default value. search and semester value should stay the same from page to page.
-  - [ ] Remove the search field for course
-** Refactors
-- [ ] Move helper logic (e.g., section fee and datetime formatting) into shared app‑level utilities; consolidate sidebar context.
-** Dev hygiene
-- [ ] Add typing for candidate_map/form signatures and ensure TypeAlias names end with T.
-  
-**  #> Comment Backlog (Reported + Plan)
-***  People: Merge + Admin Mixins
+ - app/people/services/merge_people.py — confirm M2M merge behavior when a user is not persisted; decide if skip is
+   correct.
+ - app/people/services/merge_people.py — handle “source user already deleted by profile merge” case safely.
+ - app/people/services/merge_people.py — verify “merge_people already merged groups/permissions; just delete
+   source.”
+ - app/people/admin/mixins.py — review defaulting to oldest record for target selection.
+ - app/people/admin/mixins.py — review defaulting older record values for sparse fields.
+ - app/people/admin/mixins.py — confirm unbound method action wiring is still needed.
 
-  - app/people/services/merge_people.py — confirm M2M merge behavior when a user is not persisted; decide if skip is
-    correct.
-  - app/people/services/merge_people.py — handle “source user already deleted by profile merge” case safely.
-  - app/people/services/merge_people.py — verify “merge_people already merged groups/permissions; just delete
-    source.”
-  - app/people/admin/mixins.py — review defaulting to oldest record for target selection.
-  - app/people/admin/mixins.py — review defaulting older record values for sparse fields.
-  - app/people/admin/mixins.py — confirm unbound method action wiring is still needed.
+**  People: Merge + Duplicate Handling
 
-***  People: Merge + Duplicate Handling
+ - app/people/admin/mixins.py — confirm freeing unique values on sources is safe.
+ - app/people/admin/mixins.py — resolve mixin get_queryset typing note.
+ - app/people/admin/mixins.py — validate per‑request duplicate metrics caching.
+ - app/people/admin/mixins.py — address “ambiguous duplicates” handling gap.
+ - app/people/admin/widgets.py — reconsider cached get_or_create pattern usefulness.
+ - app/people/admin/widgets.py — ensure cache path doesn’t prevent get calls.
 
-  - app/people/admin/mixins.py — confirm freeing unique values on sources is safe.
-  - app/people/admin/mixins.py — resolve mixin get_queryset typing note.
-  - app/people/admin/mixins.py — validate per‑request duplicate metrics caching.
-  - app/people/admin/mixins.py — address “ambiguous duplicates” handling gap.
-  - app/people/admin/widgets.py — reconsider cached get_or_create pattern usefulness.
-  - app/people/admin/widgets.py — ensure cache path doesn’t prevent get calls.
+**  People: Ensures + Models + Admin Resources
 
-***  People: Ensures + Models + Admin Resources
+ - app/people/ensures.py — implement student lookup by student_id (primary key path).
+ - app/people/ensures.py — use model mk_username consistently.
+ - app/people/models/staffs.py — design organogram support for divisions/departments.
+ - app/people/models/student.py — add computed level based on credits completed.
+ - app/people/models/student.py — resolve prerequisite logic before uncommenting path.
+ - app/people/models/object_manager.py — clarify assumptions in manager logic.
 
-  - app/people/ensures.py — implement student lookup by student_id (primary key path).
-  - app/people/ensures.py — use model mk_username consistently.
-  - app/people/models/staffs.py — design organogram support for divisions/departments.
-  - app/people/models/student.py — add computed level based on credits completed.
-  - app/people/models/student.py — resolve prerequisite logic before uncommenting path.
-  - app/people/models/object_manager.py — clarify assumptions in manager logic.
+**  People: Admin Resources Mapping
 
-***  People: Admin Resources Mapping
+ - app/people/models/object_manager.py — prevent duplicate usernames on import.
+ - app/people/admin/resources.py — document or fix widgets column mapping.
+ - app/people/admin/resources.py — block new major/curriculum creation during import.
+ - app/people/admin/resources.py — log mismatched rows for manual handling.
+ - app/people/admin/resources.py — add fuzzy curriculum match during import.
+ - app/people/admin/resources_mapping.py — document AccountID origin constraints.
 
-  - app/people/models/object_manager.py — prevent duplicate usernames on import.
-  - app/people/admin/resources.py — document or fix widgets column mapping.
-  - app/people/admin/resources.py — block new major/curriculum creation during import.
-  - app/people/admin/resources.py — log mismatched rows for manual handling.
-  - app/people/admin/resources.py — add fuzzy curriculum match during import.
-  - app/people/admin/resources_mapping.py — document AccountID origin constraints.
+**  People: Admin Core
 
-***  People: Admin Core
+ - app/people/admin/core.py — consider moving staff_bio into FACULTY_FIELDS.
+ - app/people/admin/core.py — validate the RoleAssignmentAdmin autocomplete note.
 
-  - app/people/admin/core.py — consider moving staff_bio into FACULTY_FIELDS.
-  - app/people/admin/core.py — validate the RoleAssignmentAdmin autocomplete note.
+**  Timetable: Admin + Models
 
-***  Timetable: Admin + Models
+ - app/timetable/admin/session_widgets.py — ensure section id is available to create secsession.
+ - app/timetable/admin/section_registers.py — handle/propagate error messaging.
+ - app/timetable/admin/section_registers.py — clarify registrar role handling.
+ - app/timetable/admin/filters.py — justify or change use_pk_exact usage.
+ - app/timetable/admin/core_registers.py — confirm open semester uniqueness handling.
+ - app/timetable/models/schedule.py — enforce end_time > start_time validation.
 
-  - app/timetable/admin/session_widgets.py — ensure section id is available to create secsession.
-  - app/timetable/admin/section_registers.py — handle/propagate error messaging.
-  - app/timetable/admin/section_registers.py — clarify registrar role handling.
-  - app/timetable/admin/filters.py — justify or change use_pk_exact usage.
-  - app/timetable/admin/core_registers.py — confirm open semester uniqueness handling.
-  - app/timetable/models/schedule.py — enforce end_time > start_time validation.
+**  Timetable: Models + Ensures
 
-***  Timetable: Models + Ensures
+ - app/timetable/models/semester.py — clarify need for REGISTRATION_OPEN_CODES set/dict.
+ - app/timetable/ensures.py — decide if _created branch is needed.
 
-  - app/timetable/models/semester.py — clarify need for REGISTRATION_OPEN_CODES set/dict.
-  - app/timetable/ensures.py — decide if _created branch is needed.
+**  Registry: Admin + Imports + Models
 
-***  Registry: Admin + Imports + Models
+ - app/registry/admin/core.py — convert semester filter to autocomplete and limit to used semesters.
+ - app/registry/management/commands/import_grades.py — validate assumption that students exist.
+ - app/registry/management/commands/import_grades.py — ensure_student should resolve by student_id.
+ - app/registry/models/document.py — confirm classmethods on abstract model viability.
 
-  - app/registry/admin/core.py — convert semester filter to autocomplete and limit to used semesters.
-  - app/registry/management/commands/import_grades.py — validate assumption that students exist.
-  - app/registry/management/commands/import_grades.py — ensure_student should resolve by student_id.
-  - app/registry/models/document.py — confirm classmethods on abstract model viability.
+**  Website: Student Dashboard
 
-***  Website: Student Dashboard
+ - app/website/views/student_dashboard.py — review “blocked/cooldown shouldn’t be selectable” logic.
+ - app/website/views/student_dashboard.py — confirm semester GPA grouping note is still needed.
 
-  - app/website/views/student_dashboard.py — review “blocked/cooldown shouldn’t be selectable” logic.
-  - app/website/views/student_dashboard.py — confirm semester GPA grouping note is still needed.
+ Finance + Tests
 
-  Finance + Tests
+ - app/finance/admin/core.py — handle superusers without staff profiles.
+ - app/finance/models/payment.py — confirm status_id is cleared before invoice update logic.
+ - tests/finance/fixture.py — review finance fixtures after model changes.
+ - tests/finance/test_utils.py — validate need for dummy dataclasses.
 
-  - app/finance/admin/core.py — handle superusers without staff profiles.
-  - app/finance/models/payment.py — confirm status_id is cleared before invoice update logic.
-  - tests/finance/fixture.py — review finance fixtures after model changes.
-  - tests/finance/test_utils.py — validate need for dummy dataclasses.
+ Academics
 
-  Academics
+ - app/academics/admin/core.py — add current‑semester student list for courses.
+ - app/academics/admin/core.py — explain/clarify the “djangonic logic” comment.
+ - app/academics/models/course.py — factor alternate‑case logic with curriculum.
+ - app/academics/models/course.py — define max course number generation policy.
+ - app/academics/models/curriculum.py — preserve differing info on fuzzy match.
+ - app/academics/models/curriculum.py — surface warning to users on fuzzy match.
+ - app/academics/models/curriculum.py — decide if using _id fields is necessary.
 
-  - app/academics/admin/core.py — add current‑semester student list for courses.
-  - app/academics/admin/core.py — explain/clarify the “djangonic logic” comment.
-  - app/academics/models/course.py — factor alternate‑case logic with curriculum.
-  - app/academics/models/course.py — define max course number generation policy.
-  - app/academics/models/curriculum.py — preserve differing info on fuzzy match.
-  - app/academics/models/curriculum.py — surface warning to users on fuzzy match.
-  - app/academics/models/curriculum.py — decide if using _id fields is necessary.
+**  Scripts
 
-***  Scripts
+ - scripts/merge_courses_by_short_code.sql — document COALESCE meaning.
+ - scripts/merge_courses_by_short_code.sql — clarify duplication remark.
 
-  - scripts/merge_courses_by_short_code.sql — document COALESCE meaning.
-  - scripts/merge_courses_by_short_code.sql — clarify duplication remark.
-
-  If you want, I can turn this into a scoped execution order (P0/P1) and start with the student dashboard UX first,
-  or the registrar grades dashboard first.
-
-
-* <2026-01-23 ven. 12:49>
-** Staff dashboards
-- [X] Replace role cards/badges with a role dropdown near the current role;
-  - only show for users with multi‑role access.
-- [X] Move other action cards into a consistent collapsible left sidebar.
-  - [ ] Make it clear with some color code wich action card will open the django admin and which will not.
-- [X] Simplify/remove the summary text and eyebrow.
-** Semester defaulting
-- [-] All grade/section/student/course/curriculum/payment/invoice/registration views (admin + non‑admin) should default to the current semester,
-  - [X] with a dropdown to switch or clear the filter.
-  - [ ] A default semester is set but it is not the current semester. also it is reset when changing page.  undo the changes done to implement this feature.
-** Student dashboard
-- [X] Rename header to “Current courses,” to "Registrations"
-- [ ] Keep all registrations in the table what ever their their status.
-  - [ ] Only keep not canceled registrations in the table.
-  - [ ] in the Payment receipt, make sure we include all registration for which a payment was made this semester, there could be canceled registration in that case.  If not payment was made for a registration, exclude that registraion of the payment receipt.
-  - [ ] Add a date of generation of the payment receipt
-  - [ ] Remove the notice about 'Use your browser print dialog to save as PDF or capture the receipt.'
-  - [ ] Distinguish in the side bar Menu, Download Payement statement and Download Invoice statement.
-- [X] remove All/Pending/Cleared/Approved badges, from the course section.
-- [X] exclude approved/cleared registration from locked/gray lists, and add per‑row actions
-- [X] add the detail action to the approved registration row too.
-** Student receipts
-- [X] Use “student_payment_receipt” (not invoice),
-- [X] add per‑semester download for cleared courses, and provide a semester‑filtered receipt endpoint.
-  - [X] Add a download invoice button in the data-course-table footer, in 'Action' column.
-** Invoice admin:
-- [ ] set the default By semester filter value to the current semester.
-- [ ] add an inline section to the associated payments
-** Payement admin
-- [ ] set the default By semester filter value to the current semester.
-- [ ] investigate bug : crash when setting the semester filter
-   
-** Student admin
-- [ ] Add collapsible payments/invoices inlines
-- [ ] Correct bug, no student is shown and selecting a Semester will crash
-
-** Registrar grades dashboard
-- [ ] Dedicated grade view with optimized queries,
-  - [ ] add small triangle to indicate the rows are collapsable
-  - [ ] for each student row add a summary row, with cumulated GPA/credit. must be the same row as the one with the student label
-    - [ ] for each semester row add a summary row, with cumulated GPA/credit. must be the same row as the one with the semester label
-- current semester default, pagination (100), searchable student dropdown, and grouped/collapsed display by student then semester.
-- [ ] Investigate bug
-  - [ ] Only a 6 students show on the first page instead of 100
-    - [ ] selecting another page reste the semester to a default value. search and semester value should stay the same from page to page.
-  - [ ] Remove the search field for course
-** Refactors
-- [ ] Move helper logic (e.g., section fee and datetime formatting) into shared app‑level utilities; consolidate sidebar context.
-** Dev hygiene
-- [ ] Add typing for candidate_map/form signatures and ensure TypeAlias names end with T.
-  
-**  #> Comment Backlog (Reported + Plan)
-***  People: Merge + Admin Mixins
-
-  - app/people/services/merge_people.py — confirm M2M merge behavior when a user is not persisted; decide if skip is
-    correct.
-  - app/people/services/merge_people.py — handle “source user already deleted by profile merge” case safely.
-  - app/people/services/merge_people.py — verify “merge_people already merged groups/permissions; just delete
-    source.”
-  - app/people/admin/mixins.py — review defaulting to oldest record for target selection.
-  - app/people/admin/mixins.py — review defaulting older record values for sparse fields.
-  - app/people/admin/mixins.py — confirm unbound method action wiring is still needed.
-
-***  People: Merge + Duplicate Handling
-
-  - app/people/admin/mixins.py — confirm freeing unique values on sources is safe.
-  - app/people/admin/mixins.py — resolve mixin get_queryset typing note.
-  - app/people/admin/mixins.py — validate per‑request duplicate metrics caching.
-  - app/people/admin/mixins.py — address “ambiguous duplicates” handling gap.
-  - app/people/admin/widgets.py — reconsider cached get_or_create pattern usefulness.
-  - app/people/admin/widgets.py — ensure cache path doesn’t prevent get calls.
-
-***  People: Ensures + Models + Admin Resources
-
-  - app/people/ensures.py — implement student lookup by student_id (primary key path).
-  - app/people/ensures.py — use model mk_username consistently.
-  - app/people/models/staffs.py — design organogram support for divisions/departments.
-  - app/people/models/student.py — add computed level based on credits completed.
-  - app/people/models/student.py — resolve prerequisite logic before uncommenting path.
-  - app/people/models/object_manager.py — clarify assumptions in manager logic.
-
-***  People: Admin Resources Mapping
-
-  - app/people/models/object_manager.py — prevent duplicate usernames on import.
-  - app/people/admin/resources.py — document or fix widgets column mapping.
-  - app/people/admin/resources.py — block new major/curriculum creation during import.
-  - app/people/admin/resources.py — log mismatched rows for manual handling.
-  - app/people/admin/resources.py — add fuzzy curriculum match during import.
-  - app/people/admin/resources_mapping.py — document AccountID origin constraints.
-
-***  People: Admin Core
-
-  - app/people/admin/core.py — consider moving staff_bio into FACULTY_FIELDS.
-  - app/people/admin/core.py — validate the RoleAssignmentAdmin autocomplete note.
-
-***  Timetable: Admin + Models
-
-  - app/timetable/admin/session_widgets.py — ensure section id is available to create secsession.
-  - app/timetable/admin/section_registers.py — handle/propagate error messaging.
-  - app/timetable/admin/section_registers.py — clarify registrar role handling.
-  - app/timetable/admin/filters.py — justify or change use_pk_exact usage.
-  - app/timetable/admin/core_registers.py — confirm open semester uniqueness handling.
-  - app/timetable/models/schedule.py — enforce end_time > start_time validation.
-
-***  Timetable: Models + Ensures
-
-  - app/timetable/models/semester.py — clarify need for REGISTRATION_OPEN_CODES set/dict.
-  - app/timetable/ensures.py — decide if _created branch is needed.
-
-***  Registry: Admin + Imports + Models
-
-  - app/registry/admin/core.py — convert semester filter to autocomplete and limit to used semesters.
-  - app/registry/management/commands/import_grades.py — validate assumption that students exist.
-  - app/registry/management/commands/import_grades.py — ensure_student should resolve by student_id.
-  - app/registry/models/document.py — confirm classmethods on abstract model viability.
-
-***  Website: Student Dashboard
-
-  - app/website/views/student_dashboard.py — review “blocked/cooldown shouldn’t be selectable” logic.
-  - app/website/views/student_dashboard.py — confirm semester GPA grouping note is still needed.
-
-  Finance + Tests
-
-  - app/finance/admin/core.py — handle superusers without staff profiles.
-  - app/finance/models/payment.py — confirm status_id is cleared before invoice update logic.
-  - tests/finance/fixture.py — review finance fixtures after model changes.
-  - tests/finance/test_utils.py — validate need for dummy dataclasses.
-
-  Academics
-
-  - app/academics/admin/core.py — add current‑semester student list for courses.
-  - app/academics/admin/core.py — explain/clarify the “djangonic logic” comment.
-  - app/academics/models/course.py — factor alternate‑case logic with curriculum.
-  - app/academics/models/course.py — define max course number generation policy.
-  - app/academics/models/curriculum.py — preserve differing info on fuzzy match.
-  - app/academics/models/curriculum.py — surface warning to users on fuzzy match.
-  - app/academics/models/curriculum.py — decide if using _id fields is necessary.
-
-***  Scripts
-
-  - scripts/merge_courses_by_short_code.sql — document COALESCE meaning.
-  - scripts/merge_courses_by_short_code.sql — clarify duplication remark.
-
-  If you want, I can turn this into a scoped execution order (P0/P1) and start with the student dashboard UX first,
-  or the registrar grades dashboard first.
+ If you want, I can turn this into a scoped execution order (P0/P1) and start with the student dashboard UX first,
+ or the registrar grades dashboard first.
 
 
 * DONE <2026-01-19 lun. 00:07>

@@ -39,12 +39,12 @@ Factories return callables for creating additional objects on demand.
 # def payment(student) -> Payment:
 #     """Default financial record for a student."""
 
-#     return Payment.objects.create(student=student, amount_due=DECIMAL_10)
+#     return Payment.objects.create(student=student, balance=DECIMAL_10)
 
 
 # @pytest.fixture
-# def payment(payment, staff, curriculum_course) -> Invoice:
-#     """Default payment record for a curriculum_course."""
+# def invoice(payment, staff, curriculum_course) -> Invoice:
+#     """Default invoice record for a curriculum_course."""
 #     return Invoice.objects.create(
 #         curriculum_course=curriculum_course,
 #         amount=DECIMAL_1,
@@ -57,7 +57,7 @@ Factories return callables for creating additional objects on demand.
 # def scholarship(donor, student) -> Scholarship:
 #     """Default scholarship linking donor and student."""
 #     return Scholarship.objects.create(
-#         donor=donor, student=student, amount=DECIMAL_1, start_date=TODAY
+#         donor=donor, student=student, amount=DECIMAL_10, start_date=TODAY
 #     )
 
 
@@ -69,11 +69,11 @@ Factories return callables for creating additional objects on demand.
 #     """Return a callable to build financial records."""
 
 #     def _make(
-#         student_uname: str, curri_short_name: str, amount_due: Decimal = DECIMAL_0
+#         student_uname: str, curri_short_name: str, balance: Decimal = DECIMAL_0
 #     ) -> Payment:
 #         return Payment.objects.create(
 #             student=student_factory(student_uname, curri_short_name),
-#             amount_due=amount_due,
+#             balance=balance,
 #         )
 
 #     return _make

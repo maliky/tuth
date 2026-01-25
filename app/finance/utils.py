@@ -35,6 +35,7 @@ def tuition_for(curriculum_course: "CurriculumCourse") -> Decimal:
     """
     credit_hours = getattr(curriculum_course, "credit_hours", None)
     credit_code = getattr(credit_hours, "code", None)
+    
     return Decimal(int(credit_code or 0)) * TUITION_RATE_PER_CREDIT
 
 
@@ -61,7 +62,7 @@ def create_pending_payments(
         return summary
     with transaction.atomic():
         for invoice in invoice_list:
-            if invoice.amount_due <= 0:
+            if invoice.balance <= 0:
                 summary["skipped_closed"] += 1
                 continue
             if Payment.objects.filter(
@@ -72,7 +73,7 @@ def create_pending_payments(
                 continue
             Payment.objects.create(
                 invoice=invoice,
-                amount_paid=invoice.amount_due,
+                amount_paid=invoice.balance,
                 recorded_by=recorded_by,
             )
             summary["created"] += 1

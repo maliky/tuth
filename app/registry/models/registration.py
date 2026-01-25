@@ -10,32 +10,8 @@ from typing import Self, cast
 from app.shared.status.mixins import StatusableMixin
 
 
-class RegistrationStatus(SimpleTableMixin):
-    TABLE_DEFAULT_VALUES = [
-        ("approved", "Approved"),
-        ("removed", "Removed"),
-        ("canceled", "Canceled"),
-        ("completed", "Completed"),
-        ("cleared", "Financially Cleared"),
-        ("pending", "Pending Payment"),
-    ]
-    # Ensures SimpleTableMixin can populate defaults at initialization.
-    DEFAULT_VALUES = TABLE_DEFAULT_VALUES
-
-    class Meta:
-        verbose_name_plural = "Registration Status"
-
-    @classmethod
-    def get_default(cls) -> Self:
-        """Returns the default FeeType."""
-        deft, _ = cls.objects.get_or_create(
-            code="pending", defaults={"label": "Pending Payment"}
-        )
-        return cast(Self, deft)
-
-
 class Registration(StatusableMixin, models.Model):
-    """Enrollment of a student in a course section.
+    """Enrollment of a student in a course section with its status.
 
     Example:
         >>> from app.registry.models.registration import Registration
@@ -76,7 +52,7 @@ class Registration(StatusableMixin, models.Model):
         ]
 
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.student} – {self.section} -  {self.status}"
+        return f"{self.student} - {self.section}:{self.status}"
 
     def _ensure_registration_status(self):
         """Ensure a clearance status is set."""

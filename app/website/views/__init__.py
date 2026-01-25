@@ -18,6 +18,7 @@ from .finance_officer import (
 from .registrar import (
     registrar_course_windows,
     registrar_grades_dashboard,
+    registrar_grade_transcript,
     registrar_student_autocomplete,
 )
 from .staff_dashboards import staff_dashboard, staff_role_dashboard
@@ -25,6 +26,10 @@ from .student_dashboard import (
     download_invoice_statement,
     student_dashboard,
     student_invoice_statement,
+)
+from .student_curriculum import (
+    student_curriculum_course_detail,
+    student_curriculum_courses,
 )
 from .student_payment_receipts import student_payment_receipt
 from .student_sections import student_section_detail
@@ -36,6 +41,7 @@ __all__ = [
     "portal_redirect",
     "registrar_course_windows",
     "registrar_grades_dashboard",
+    "registrar_grade_transcript",
     "registrar_student_autocomplete",
     "staff_dashboard",
     "staff_role_dashboard",
@@ -47,6 +53,8 @@ __all__ = [
     "student_list",
     "student_invoice_statement",
     "download_invoice_statement",
+    "student_curriculum_courses",
+    "student_curriculum_course_detail",
     "student_payment_receipt",
     "student_section_detail",
     "finance_officer_invoices",

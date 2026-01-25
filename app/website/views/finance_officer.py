@@ -85,21 +85,24 @@ def finance_officer_create_payments(request: HttpRequest) -> HttpResponse:
     """Create pending payments for selected invoices."""
     _require_finance_access(request)
     raw_ids = request.POST.getlist("invoice_ids")
-    invoice_ids = [clean_int(value) for value in raw_ids]
-    invoice_ids = [value for value in invoice_ids if value]
+    invoice_ids = [clean_int(value) for value in raw_ids if clean_int(value)]
     student_id = clean_int(request.POST.get("student_id"))
+    
     if not invoice_ids and not student_id:
         messages.warning(request, "Select at least one invoice.")
+        # > What is the POST.get next ?
         return redirect(request.POST.get("next") or reverse("finance_officer_invoices"))
+    
     if invoice_ids:
         invoices = Invoice.objects.filter(id__in=invoice_ids)
     else:
         if student_id is None:
+            # >  cannot reach heare because not invoice_ids and not student_id
             messages.warning(request, "Select a student to create payments.")
             return redirect(
                 request.POST.get("next") or reverse("finance_officer_invoices")
             )
-        invoices = Invoice.objects.filter(student_id=student_id, amount_due__gt=0)
+        invoices = Invoice.objects.filter(student_id=student_id, balance__gt=0)
     staff = getattr(request.user, "staff", None)
     summary = create_pending_payments(invoices, recorded_by=staff)
     created = summary.get("created", 0)
@@ -212,6 +215,13 @@ def finance_officer_invoices(request: HttpRequest) -> HttpResponse:
         payment_tab_url = "?tab=payments"
     pagination_params = request.GET.copy()
     pagination_params.pop("page", None)
+    if "semester" not in pagination_params and semester_id:
+        pagination_params["semester"] = str(semester_id)
+    # Preserve filter inputs when the "Go to page" form submits.
+    pagination_hidden_fields: list[dict[str, str]] = []
+    for key, values in pagination_params.lists():
+        for value in values:
+            pagination_hidden_fields.append({"name": key, "value": value})
 
     student_options = []
     selected_student_label = ""
@@ -303,6 +313,8 @@ def finance_officer_invoices(request: HttpRequest) -> HttpResponse:
         "invoice_tab_url": invoice_tab_url,
         "payment_tab_url": payment_tab_url,
         "pagination_query": pagination_params.urlencode(),
+        "pagination_hidden_fields": pagination_hidden_fields,
+        "pagination_action": request.path,
         "student_autocomplete_url": reverse("finance_officer_student_autocomplete"),
         "dashboard_url": reverse(
             "staff_role_dashboard",

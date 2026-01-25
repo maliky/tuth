@@ -60,7 +60,7 @@ def _create_semesters() -> tuple[AcademicYear, Semester, Semester]:
     current_semester = Semester.objects.create(
         academic_year=academic_year,
         number=2,
-        # > defaut start and end date should be set based on number and academic year        
+        # > defaut start and end date should be set based on number and academic year
         start_date=today - timedelta(days=10),
     )
     return academic_year, previous_semester, current_semester
@@ -82,9 +82,7 @@ def _create_section_for_semester(semester: Semester):
         number="101",
         title="Intro to Accounting",
     )
-    credit_hours, _ = CreditHour.objects.get_or_create(
-        code=3, defaults={"label": "3"}
-    )
+    credit_hours, _ = CreditHour.objects.get_or_create(code=3, defaults={"label": "3"})
     curriculum_course = baker.make(
         "academics.CurriculumCourse",
         curriculum=curriculum,
@@ -127,9 +125,7 @@ def test_registrar_grades_defaults_to_current_semester(
     registrar_user = _create_registrar_user("registrar_default_semester")
 
     _login_to_portal(selenium_driver, live_server, registrar_user.username)
-    selenium_driver.get(
-        f"{live_server.url}{reverse('registrar_grades_dashboard')}"
-    )
+    selenium_driver.get(f"{live_server.url}{reverse('registrar_grades_dashboard')}")
 
     expected_label = f"{academic_year.code} · Semester {current.number}"
     WebDriverWait(selenium_driver, 10).until(
@@ -151,9 +147,7 @@ def test_registrar_grades_dashboard_link_and_row_expand(
     registrar_user = _create_registrar_user("registrar_row_click")
 
     _login_to_portal(selenium_driver, live_server, registrar_user.username)
-    selenium_driver.get(
-        f"{live_server.url}{reverse('registrar_grades_dashboard')}"
-    )
+    selenium_driver.get(f"{live_server.url}{reverse('registrar_grades_dashboard')}")
 
     selenium_driver.find_element(By.LINK_TEXT, "Back to dashboard")
 
@@ -195,9 +189,7 @@ def test_registrar_grades_pagination_shows_counts_and_last_link(
     registrar_user = _create_registrar_user("registrar_pagination")
 
     _login_to_portal(selenium_driver, live_server, registrar_user.username)
-    selenium_driver.get(
-        f"{live_server.url}{reverse('registrar_grades_dashboard')}"
-    )
+    selenium_driver.get(f"{live_server.url}{reverse('registrar_grades_dashboard')}")
 
     WebDriverWait(selenium_driver, 10).until(
         EC.presence_of_element_located((By.CSS_SELECTOR, ".pagination"))
@@ -208,3 +200,54 @@ def test_registrar_grades_pagination_shows_counts_and_last_link(
     last_link = selenium_driver.find_element(By.LINK_TEXT, "Last")
     last_href = last_link.get_attribute("href")
     assert "page=2" in last_href
+
+
+def test_registrar_grades_transcript_button(
+    live_server,
+    selenium_driver,
+):
+    """Summary row should link to the official grade transcript preview."""
+    _academic_year, _previous, current = _create_semesters()
+    section, curriculum = _create_section_for_semester(current)
+    student = _create_student_grade(section, curriculum, "student_transcript")
+    registrar_user = _create_registrar_user("registrar_transcript")
+
+    _login_to_portal(selenium_driver, live_server, registrar_user.username)
+    selenium_driver.get(f"{live_server.url}{reverse('registrar_grades_dashboard')}")
+
+    transcript_path = reverse("registrar_grade_transcript", args=[student.id])
+    transcript_link = selenium_driver.find_element(
+        By.CSS_SELECTOR, f"a[href$='{transcript_path}']"
+    )
+    transcript_link.click()
+
+    WebDriverWait(selenium_driver, 10).until(
+        EC.text_to_be_present_in_element((By.TAG_NAME, "h1"), "Official grade transcript")
+    )
+    assert student.student_id in selenium_driver.page_source
+
+
+def test_registrar_grades_go_to_preserves_semester(
+    live_server,
+    selenium_driver,
+    tiny_paginator,
+):
+    """Go-to pagination should keep the semester filter in the form."""
+    _academic_year, _previous, current = _create_semesters()
+    section, curriculum = _create_section_for_semester(current)
+    _create_student_grade(section, curriculum, "student_page_one")
+    _create_student_grade(section, curriculum, "student_page_two")
+    registrar_user = _create_registrar_user("registrar_pagination_filter")
+
+    _login_to_portal(selenium_driver, live_server, registrar_user.username)
+    dashboard_path = reverse("registrar_grades_dashboard")
+    url = f"{live_server.url}{dashboard_path}?semester={current.id}"
+    selenium_driver.get(url)
+
+    WebDriverWait(selenium_driver, 10).until(
+        EC.presence_of_element_located((By.ID, "pagination-page"))
+    )
+    hidden_semester = selenium_driver.find_element(
+        By.CSS_SELECTOR, "form input[type=hidden][name='semester']"
+    )
+    assert hidden_semester.get_attribute("value") == str(current.id)

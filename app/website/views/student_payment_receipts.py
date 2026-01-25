@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from decimal import Decimal
-from typing import TypedDict
+from typing import TypeAlias, TypedDict
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.db.models import Max
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
@@ -27,6 +29,10 @@ class ReceiptRowT(TypedDict):
 
     invoice: Invoice
     paid_total: Decimal
+    paid_on: str
+
+
+PaymentUpdateMapT: TypeAlias = dict[int, datetime]
 
 
 @login_required
@@ -69,10 +75,34 @@ def student_payment_receipt(
         invoice_totals[invoice.id] = invoice_totals.get(invoice.id, Decimal("0.00")) + (
             payment.amount_paid
         )
+    payment_last_updates: PaymentUpdateMapT = {}
+    if invoice_ids:
+        payment_history_rows = (
+            Payment.history.filter(invoice_id__in=invoice_ids)
+            .values("invoice_id")
+            .annotate(last_change=Max("history_date"))
+        )
+        payment_last_updates = {
+            row["invoice_id"]: row["last_change"]
+            for row in payment_history_rows
+            if row["last_change"]
+        }
+
     for invoice_id in invoice_ids:
         invoice = invoice_lookup[invoice_id]
         paid_total = invoice_totals.get(invoice_id, Decimal("0.00"))
-        receipt_rows.append({"invoice": invoice, "paid_total": paid_total})
+        paid_on = (
+            format_datetime(payment_last_updates[invoice_id])
+            if invoice_id in payment_last_updates
+            else "-"
+        )
+        receipt_rows.append(
+            {
+                "invoice": invoice,
+                "paid_total": paid_total,
+                "paid_on": paid_on,
+            }
+        )
         total_paid += paid_total
 
     currency = getattr(settings, "FINANCE_DEFAULT_CURRENCY", "USD")

@@ -98,10 +98,10 @@
   <div class="alert alert-light">No available courses.</div>
 {% endfor %}
 
-{% if registered_courses %}
+{% if canceled_courses %}
   <div class="mt-4">
-    <p class="text-uppercase small text-muted mb-2">Registered this semester</p>
-    {% for course in registered_courses %}
+    <p class="text-uppercase small text-muted mb-2">Canceled courses</p>
+    {% for course in canceled_courses %}
       <article class="course-card disabled">
         <div class="d-flex justify-content-between align-items-start gap-2">
           <div>

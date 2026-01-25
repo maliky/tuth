@@ -116,7 +116,10 @@ def _annotate_admin_actions(actions: list[dict[str, Any]]) -> list[dict[str, Any
     admin_prefix = reverse("admin:index")
     for action in actions:
         href = str(action.get("href") or "")
-        action["is_admin"] = href.startswith(admin_prefix)
+        is_admin = href.startswith(admin_prefix)
+        action["is_admin"] = is_admin
+        # Align action button colors with admin vs app destinations.
+        action["variant"] = "primary" if is_admin else "warning"
     return actions
 
 
@@ -797,13 +800,19 @@ def _direct_subordinates(role_slug: str) -> set[str]:
 
 def _accessible_role_slugs(user: User) -> set[str]:
     if user.is_superuser:
-        return set(ROLE_CONFIG.keys())
+        slugs = set(ROLE_CONFIG.keys())
+        if len(slugs) > 1:
+            slugs.discard("general")
+        return slugs
     membership = _user_membership_slugs(user)
     inherited = {slug for slug in ROLE_CONFIG if _user_inherits_role(user, slug)}
     direct_lower: set[str] = set()
     for slug in membership | inherited:
         direct_lower.update(_direct_subordinates(slug))
-    return {"general"} | membership | inherited | direct_lower
+    slugs = membership | inherited | direct_lower
+    if not slugs:
+        return {"general"}
+    return slugs
 
 
 def _build_accessible_dashboard_links(
@@ -899,13 +908,16 @@ def _render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse
             "active": role_slug == "general",
             "icon": "bi-speedometer2",
         },
-        {
-            "label": "Roles",
-            "href": reverse("staff_role_dashboard", args=[role_slug]),
-            "active": role_slug != "general",
-            "icon": "bi-people",
-        },
     ]
+    if len(accessible_links) > 1:
+        sidebar_links.append(
+            {
+                "label": "Roles",
+                "href": reverse("staff_role_dashboard", args=[role_slug]),
+                "active": role_slug != "general",
+                "icon": "bi-people",
+            }
+        )
     breadcrumbs = [
         {"label": "Staff Workspace", "href": reverse("staff_dashboard")},
         {"label": config["title"], "href": ""},

@@ -59,9 +59,9 @@
   {% if student_groups %}
     {% for group in student_groups %}
       <div class="card shadow-sm mb-3">
-        <div class="card-header p-0">
+        <div class="card-header p-0 d-flex align-items-center gap-2">
           <button
-            class="btn btn-link text-decoration-none w-100 text-start d-flex justify-content-between align-items-center collapse-toggle px-3 py-2"
+            class="btn btn-link text-decoration-none flex-grow-1 text-start d-flex justify-content-between align-items-center collapse-toggle px-3 py-2"
             type="button"
             data-bs-toggle="collapse"
             data-bs-target="#student-{{ group.student.id }}"
@@ -77,6 +77,12 @@
               GPA {{ group.gpa }} · Credits {{ group.credits_total }}
             </span>
           </button>
+          <a
+            class="btn btn-sm btn-outline-primary me-3"
+            href="{% url 'registrar_grade_transcript' group.student.id %}"
+          >
+            Official transcript
+          </a>
         </div>
         <div class="collapse" id="student-{{ group.student.id }}">
           <div class="card-body">

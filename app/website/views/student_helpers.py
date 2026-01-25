@@ -106,14 +106,18 @@ def _build_sidebar_links(
             "href": f"{dashboard_url}#courses",
             "active": False,
         },
-        {"label": "Financials", "href": f"{dashboard_url}#records", "active": False},
         {
-            "label": "Download payment statement",
+            "label": "Old Course and grades",
+            "href": f"{dashboard_url}#records",
+            "active": False,
+        },
+        {
+            "label": "Payment statement",
             "href": payment_statement_url or "#",
             "active": False,
         },
         {
-            "label": "Download invoice statement",
+            "label": "Invoice statement",
             "href": reverse("student_invoice_statement"),
             "active": False,
         },

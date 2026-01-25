@@ -23,7 +23,7 @@ class StudentInvoiceInline(admin.TabularInline):
     fields = (
         "semester",
         "curriculum_course",
-        "amount_due",
+        "balance",
         "payments_link",
         "created_at",
     )

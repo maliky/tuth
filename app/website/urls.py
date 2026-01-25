@@ -36,6 +36,16 @@ urlpatterns = [
         name="student_section_detail",
     ),
     path(
+        "student/curriculum/",
+        views.student_curriculum_courses,
+        name="student_curriculum_courses",
+    ),
+    path(
+        "student/curriculum/<int:curriculum_course_id>/",
+        views.student_curriculum_course_detail,
+        name="student_curriculum_course_detail",
+    ),
+    path(
         "staff/finance/invoices/",
         views.finance_officer_invoices,
         name="finance_officer_invoices",
@@ -79,6 +89,11 @@ urlpatterns = [
         "registrar/grades/",
         views.registrar_grades_dashboard,
         name="registrar_grades_dashboard",
+    ),
+    path(
+        "registrar/grades/<int:student_id>/transcript/",
+        views.registrar_grade_transcript,
+        name="registrar_grade_transcript",
     ),
     path(
         "registrar/grades/students/autocomplete/",

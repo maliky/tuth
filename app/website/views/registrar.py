@@ -11,12 +11,14 @@ from django.db.models import Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 
 from app.shared.admin import get_current_semester
 from app.people.models.student import Student
 from app.registry.models.grade import Grade
 from app.shared.utils import parse_str
 from app.timetable.models.semester import Semester, SemesterStatus
+from app.timetable.utils import format_datetime
 
 
 class RegistrarGradeRowT(TypedDict):
@@ -48,6 +50,16 @@ class RegistrarStudentGroupT(TypedDict):
     semesters: list[RegistrarSemesterGroupT]
     credits_total: int
     gpa: str
+
+
+class RegistrarTranscriptRowT(TypedDict):
+    """Row details for the official grade transcript."""
+
+    semester_label: str
+    course_code: str
+    course_title: str
+    credits: int
+    grade: str
 
 
 GPA_EXCLUDED_CODES = {"ip", "ng", "w", "i", "ab", "dr"}
@@ -285,6 +297,11 @@ def registrar_grades_dashboard(request: HttpRequest) -> HttpResponse:
         pagination_params["semester"] = str(semester_id)
     if selected_student_id and "student_id" not in pagination_params:
         pagination_params["student_id"] = str(selected_student_id)
+    # Preserve filter inputs when the "Go to page" form submits.
+    pagination_hidden_fields: list[dict[str, str]] = []
+    for key, values in pagination_params.lists():
+        for value in values:
+            pagination_hidden_fields.append({"name": key, "value": value})
 
     context = {
         "page_title": "Registrar grades",
@@ -296,9 +313,71 @@ def registrar_grades_dashboard(request: HttpRequest) -> HttpResponse:
         "selected_student_id": selected_student_id,
         "selected_student_label": selected_student_label,
         "pagination_query": pagination_params.urlencode(),
+        "pagination_hidden_fields": pagination_hidden_fields,
+        "pagination_action": request.path,
         "student_autocomplete_url": reverse("registrar_student_autocomplete"),
     }
     return render(request, "website/staff/registrar_grades_dashboard.html", context)
+
+
+@login_required
+@permission_required("registry.view_grade", raise_exception=True)
+def registrar_grade_transcript(
+    request: HttpRequest,
+    student_id: int,
+) -> HttpResponse:
+    """Render an official grade transcript preview for a student."""
+    student = get_object_or_404(
+        Student.objects.select_related("user", "curriculum"), pk=student_id
+    )
+    grades = (
+        Grade.objects.select_related(
+            "section__semester__academic_year",
+            "section__curriculum_course__course",
+            "section__curriculum_course__credit_hours",
+            "value",
+        )
+        .filter(student=student)
+        .order_by(
+            "section__semester__start_date",
+            "section__semester__number",
+            "section__curriculum_course__course__short_code",
+        )
+    )
+    transcript_rows: list[RegistrarTranscriptRowT] = []
+    for grade in grades:
+        semester = grade.section.semester
+        course = grade.section.curriculum_course.course
+        grade_label = "-"
+        if grade.value and grade.value.code:
+            grade_label = grade.value.code.upper()
+        transcript_rows.append(
+            {
+                "semester_label": (
+                    f"{semester.academic_year.code} · Semester {semester.number}"
+                ),
+                "course_code": course.short_code or course.code or "",
+                "course_title": course.title or "",
+                "credits": int(grade.section.curriculum_course.credit_hours.code),
+                "grade": grade_label,
+            }
+        )
+    context = {
+        "page_title": "Official grade transcript",
+        "page_summary": "Registrar-issued transcript preview.",
+        "eyebrow": "Registrar",
+        "student": student,
+        "student_label": (
+            student.long_name or student.user.get_full_name() or student.student_id
+        ),
+        "curriculum_label": (
+            student.curriculum.long_name or student.curriculum.short_name
+        ),
+        "generated_at": format_datetime(timezone.now()),
+        "transcript_rows": transcript_rows,
+        "dashboard_url": reverse("registrar_grades_dashboard"),
+    }
+    return render(request, "website/staff/registrar_grade_transcript.html", context)
 
 
 @permission_required("timetable.change_semester", raise_exception=True)

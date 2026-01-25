@@ -1,9 +1,7 @@
 {% extends "website/staff/base.html" %}
 
 {% block header_actions %}
-  <a class="btn btn-outline-secondary btn-sm" href="{% url 'portal_logout' %}">
-    Logout
-  </a>
+  {# Logout button rendered in staff base header for consistency. #}
 {% endblock %}
 
 {% block staff_content %}

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from decimal import Decimal
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -12,6 +13,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from app.academics.models.course import CurriculumCourse
+from app.finance.models.invoice import Invoice
+from app.finance.models.payment import Payment
 from app.academics.models.curriculum import Curriculum
 from app.people.models.student import Student
 from app.timetable.models.academic_year import AcademicYear
@@ -85,3 +89,40 @@ def test_student_dashboard_sidebar_links_route_to_statements(
     WebDriverWait(selenium_driver, 10).until(
         EC.text_to_be_present_in_element((By.TAG_NAME, "h1"), "Payment Receipt")
     )
+
+
+def test_student_payment_receipt_shows_paid_on_column(
+    live_server,
+    selenium_driver,
+):
+    """Receipt table should include the date paid column."""
+    today = timezone.now().date()
+    academic_year = AcademicYear.get_default(today)
+    semester = Semester.objects.create(
+        academic_year=academic_year,
+        number=1,
+        start_date=today - timedelta(days=1),
+    )
+    user = _create_student_user("student_receipt", semester)
+    student = Student.objects.get(user=user)
+    curriculum_course = CurriculumCourse.get_default()
+    invoice = Invoice.objects.create(
+        curriculum_course=curriculum_course,
+        student=student,
+        semester=semester,
+        balance=Decimal("100.00"),
+    )
+    Payment.objects.create(
+        invoice=invoice,
+        amount_paid=Decimal("25.00"),
+    )
+
+    _login_to_portal(selenium_driver, live_server, user.username)
+    receipt_path = reverse("student_payment_receipt", args=[semester.id])
+    receipt_url = f"{live_server.url}{receipt_path}"
+    selenium_driver.get(receipt_url)
+
+    WebDriverWait(selenium_driver, 10).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, "table"))
+    )
+    assert "Date paid" in selenium_driver.page_source
