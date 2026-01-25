@@ -64,7 +64,7 @@ class AmountDueFilter(admin.SimpleListFilter):
                 invoice_ids.append(invoice.pk)
             if value == "mid" and threshold < invoice.balance:
                 invoice_ids.append(invoice.pk)
-                
+
         return queryset.filter(pk__in=invoice_ids)
 
 

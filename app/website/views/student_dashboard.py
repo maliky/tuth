@@ -769,9 +769,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         .get("value")
     )
 
-    total_due = invoices.aggregate(total=Sum("balance")).get("total") or Decimal(
-        "0.00"
-    )
+    total_due = invoices.aggregate(total=Sum("balance")).get("total") or Decimal("0.00")
     payments = Payment.objects.filter(invoice__student=student)
     # Receipt availability is driven by any recorded payment amount.
     cleared_invoice_semester_ids = set(

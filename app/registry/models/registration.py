@@ -34,7 +34,6 @@ class Registration(StatusableMixin, models.Model):
     )
 
     # ~~~~ Auto-filled ~~~~
-    # this is optional and I could get it through the SatusableMixin
     status = models.ForeignKey(
         "registry.RegistrationStatus",
         on_delete=models.PROTECT,
@@ -42,14 +41,6 @@ class Registration(StatusableMixin, models.Model):
     )
     date_registered = models.DateTimeField(auto_now_add=True)
     history = HistoricalRecords()
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["student", "section"],
-                name="uniq_registration_student_section",
-            )
-        ]
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.student} - {self.section}:{self.status}"
@@ -63,3 +54,11 @@ class Registration(StatusableMixin, models.Model):
         """Check model before save."""
         self._ensure_registration_status()
         return super().save(*args, **kwargs)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["student", "section"],
+                name="uniq_registration_student_section",
+            )
+        ]

@@ -1,31 +1,25 @@
 
 * <2026-01-25 Sun 15:15> Registration life cycle
-Check the status update for invoice
-  - It should be called anytime a payment is saved (ie invoice.balance is changed)
+- 1. check InvoiceStatus, 2. yes that is correct, settled differs from financialy
+  cleared in my business logic. it does not clear registration but make it
+  partialy_cleared.  3. payment update invoice balance.
 
-- check status and type imports after move to new module status_types.py
-- in test factories use cls.get_default when available
-- handle the additional fixed fee for the cc
-* DONE <2026-01-25 Sun 11:09> TODO
-  CLOSED: [2026-01-25 Sun 15:14]
-  - [X] in payment.py
-    - [X] review the documentation, in particular the example
-      
-  - [X] in invoice.py
-    - 
-    - [X] review the documentation, in particular the example DONE
-    - [X] balance, need migrations
-      - [X] renamed amount_due DONE
-      - [X] added initial_amount_due DONE
+  
+  Check the status update for invoice
+  - the update should be called anytime a payment is saved (causing its invoice.balance to be changed)
+- check finance/registration status/types imports, after their move to new modules status_types.py
+- use cls.get_default in test fixture instead of recreating objects
+- Handle the additional fixed fee for the cc
 
 * <2026-01-23 Fri 23:01> Strange mergin and not faculty anymore ?
 - Need to adress the fee structure for courses.
   - Too long to load, investigate
 
-- in student/payment/receipt
-  - compute  balance sum beside the paid sum
-- in student/dashboar remo the Payment receipt button. it is already in the menu under payment statement.
-  - rename the payment statement to payment receipt in the menu
+- [X] in student/payment/receipt
+  - [X] compute  balance sum beside the paid sum
+- [ ] in student/dashboard remove the Payment receipt button.
+  - [ ] it is already in the menu under payment statement.
+  - [ ] rename the payment statement to payment receipt in the menu
 
    
 

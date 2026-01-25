@@ -7,6 +7,7 @@ from django.db import models
 from app.shared.mixins import SimpleTableMixin
 from app.shared.status.mixins import StatusableMixin
 
+
 class TranscriptRequest(StatusableMixin, models.Model):
     """Records a student's transcript request and its fulfillment status."""
 

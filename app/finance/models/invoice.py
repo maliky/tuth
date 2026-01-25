@@ -9,6 +9,7 @@ from simple_history.models import HistoricalRecords
 
 from app.academics.models.course import CurriculumCourse
 from app.people.models.student import Student
+from app.registry.models.registration import Registration, RegistrationStatus
 from app.shared.admin.core import get_current_semester
 from app.shared.status.mixins import StatusableMixin
 
@@ -95,13 +96,18 @@ class Invoice(StatusableMixin, models.Model):
             # self.clearance_balance() < self.balance < self.initial_amount_due
             self.status = "updated"
 
-    def update_balance(self,amount_paid):
+    def update_balance(self, amount_paid) -> None:
         """Update the invoice balance after a amount_paid"""
-        new_amount = self.invoice.balance - self.amount_paid
+        if not amount_paid:
+            return None
+
+        new_amount = self.balance - amount_paid
         if new_amount < 0:
             new_amount = Decimal("0.00")
-        self.invoice.balance = new_amount
-        self.invoice.save(update_fields=["balance"])
+        self.balance = new_amount
+        self._update_status()
+        _update_registration_status(self)
+        self.save(update_fields=["balance", "status"])
 
     def clearance_balance(self) -> Decimal:
         """Return the balance under which the invoice status should be paritaly cleared."""
@@ -113,8 +119,6 @@ class Invoice(StatusableMixin, models.Model):
 
     def save(self, *args, **kwargs) -> None:
         """Ensure the balance is set before saving."""
-
-        # > will this be method be called on update_field ?
         self._update_status()
         return super().save(*args, **kwargs)
 
@@ -127,7 +131,6 @@ class Invoice(StatusableMixin, models.Model):
             student=Student.get_default(),
             semester=semester,
             initial_amount_due=0,
-            balance=0,
         )
 
     class Meta:
@@ -138,3 +141,28 @@ class Invoice(StatusableMixin, models.Model):
                 name="uniq_invoice_student_course_semester",
             )
         ]
+
+
+def _update_registration_status(invoice: "Invoice") -> int:
+    """Update registration status when the invoice balance change."""
+    if not invoice:
+        return 0
+
+    cleared_status = RegistrationStatus.cleared()
+
+    if invoice.status_id in {"initial", "updated"}:
+        reg_status = RegistrationStatus.pending()
+    if invoice.status_id == "settled":
+        reg_status = RegistrationStatus.partialy_cleared()
+    if invoice.status_id == "cleared":
+        reg_status = cleared_status
+
+    return (
+        Registration.objects.filter(
+            student=invoice.student,
+            section__curriculum_course=invoice.curriculum_course,
+            section__semester=invoice.semester,
+        )
+        .exclude(status=cleared_status)
+        .update(status=reg_status)
+    )

@@ -61,14 +61,6 @@ class Payment(StatusableMixin, models.Model):
         null=True,
     )
 
-    def _update_invoice_balance(self) -> None:
-        """Update the invoice balance to reflect cleared payments."""
-        new_amount = self.invoice.balance - self.amount_paid
-        if new_amount < 0:
-            new_amount = Decimal("0.00")
-        self.invoice.balance = new_amount
-        self.invoice.save(update_fields=["balance"])
-
     def _ensure_payment_method(self):
         """Ensure that we have a method set, otherway create a default one."""
         if not self.payment_method_id:
@@ -85,33 +77,6 @@ class Payment(StatusableMixin, models.Model):
         self._ensure_status()
         with transaction.atomic():
             result = super().save(*args, **kwargs)
-            # the invoice must exist before the invoice.
-            self._update_invoice_balance()
-            # Update registrations once cleared payments reach the threshold.
-            _update_registration_status(self.invoice)
+            # the invoice must exist before the payment
+            self.invoice.update_balance(amount_paid=self.amount_paid)
         return result
-
-
-# See where to move this function to avoid Model import in the function body
-def _update_registration_status(invoice: "Invoice") -> int:
-    """Update registration status when the invoice is settled."""
-    if not invoice:
-        return 0
-    # Align registration clearance with the invoice status instead of payment totals.
-    if invoice.status_id != "settled":
-        return 0
-    from app.registry.models.registration import Registration, RegistrationStatus
-
-    cleared_status, _ = RegistrationStatus.objects.get_or_create(
-        code="cleared",
-        defaults={"label": "Financially Cleared"},
-    )
-    return (
-        Registration.objects.filter(
-            student=invoice.student,
-            section__curriculum_course=invoice.curriculum_course,
-            section__semester=invoice.semester,
-        )
-        .exclude(status=cleared_status)
-        .update(status=cleared_status)
-    )

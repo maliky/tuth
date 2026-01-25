@@ -71,19 +71,33 @@ class TranscriptRequestStatus(SimpleTableMixin):
 
 
 class RegistrationStatus(SimpleTableMixin):
+    """Registration status lookup values for registry records."""
+
     DEFAULT_VALUES = [
         ("pending", "Pending Payment"),
-        ("partial", "Partialy Approved"),
-        ("cleared", "Financially Cleared"),
+        ("partialy_cleared", "Partialy Cleared"),
+        ("cleared", "Totaly Cleared"),
     ]
 
     class Meta:
         verbose_name_plural = "Registration Status"
 
     @classmethod
+    def pending(cls) -> Self:
+        """Return Pending"""
+        return cls.get_by_code("pending")
+
+    @classmethod
+    def partialy_cleared(cls) -> Self:
+        """Return parialy cleared"""
+        return cls.get_by_code("partialy_cleared")
+
+    @classmethod
+    def cleared(cls) -> Self:
+        """Return cleared"""
+        return cls.get_by_code("cleared")
+
+    @classmethod
     def get_default(cls) -> Self:
-        """Returns the default FeeType."""
-        deft, _ = cls.objects.get_or_create(
-            code="pending", defaults={"label": "Pending Payment"}
-        )
-        return cast(Self, deft)
+        """Returns the default RegistrationStatus."""
+        return cls.pending()

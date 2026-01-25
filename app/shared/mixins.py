@@ -1,5 +1,6 @@
 """Shared mixins for admin and views."""
 
+from typing import Tuple
 from app.shared.utils import as_title
 from django.db import models
 from django.core.exceptions import ObjectDoesNotExist
@@ -52,6 +53,12 @@ class SimpleTableMixin(models.Model):
             # set variable like PENDING = 'pending', 'Pending'
             # this for transition but soon obsolete
             # object.__setattr__(cls, val.upper(), (val, as_title(val)))
+
+    @classmethod
+    def get_by_code(cls, code) -> Self:
+        """Return an object by code, creating it if it does not exists."""
+        obj, _ = cls.objects.get_or_create(code=code)
+        return cast(Self, obj)
 
     def __str__(self) -> str:
         """Return human readable label."""

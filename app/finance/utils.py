@@ -35,7 +35,7 @@ def tuition_for(curriculum_course: "CurriculumCourse") -> Decimal:
     """
     credit_hours = getattr(curriculum_course, "credit_hours", None)
     credit_code = getattr(credit_hours, "code", None)
-    
+
     return Decimal(int(credit_code or 0)) * TUITION_RATE_PER_CREDIT
 
 

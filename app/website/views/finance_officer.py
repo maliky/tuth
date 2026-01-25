@@ -87,12 +87,12 @@ def finance_officer_create_payments(request: HttpRequest) -> HttpResponse:
     raw_ids = request.POST.getlist("invoice_ids")
     invoice_ids = [clean_int(value) for value in raw_ids if clean_int(value)]
     student_id = clean_int(request.POST.get("student_id"))
-    
+
     if not invoice_ids and not student_id:
         messages.warning(request, "Select at least one invoice.")
         # > What is the POST.get next ?
         return redirect(request.POST.get("next") or reverse("finance_officer_invoices"))
-    
+
     if invoice_ids:
         invoices = Invoice.objects.filter(id__in=invoice_ids)
     else:
