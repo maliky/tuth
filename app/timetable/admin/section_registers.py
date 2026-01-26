@@ -41,13 +41,13 @@ class SectionAdmin(CollegeRestrictedAdmin):
     list_display = (
         "curriculum_course",
         "number",
-        "semester",
         "faculty_link",
+        "space",        
         "available_seats",
-        "space_codes",
+        "credit_hours",        
         "session_count",
-        "credit_hours",
-        "curriculum_display",
+        # "curriculum_display",
+        "semester",
     )
     # need to be a field of the section
     # list_editable = ("curriculum_course__curriculum",)

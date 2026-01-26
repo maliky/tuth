@@ -672,6 +672,7 @@ class StudentAdmin(
                 filter=Q(grade__value__number__gte=1),
             ),
         )
+        # There is a problem here I get whole gpa only
         return qs.annotate(
             gpa_value=Case(
                 When(

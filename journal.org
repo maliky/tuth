@@ -20,6 +20,8 @@
         sortable (credits, available seats, secsession count).
       - Move semester filter to the right-most position per requested order.
 ** Grades GPA rounding:
+   - the gpa calculation should be done at the student or curriculum level /per curriculum or per student.
+     
       - Look at gpa computationin app.people.admin.core.py:StudentAdmin.get_queryset
       - Ensure rounding to 2 decimal places (not integer).
       - Keep consistent formatting in views and admin.
