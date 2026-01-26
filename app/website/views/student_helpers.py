@@ -10,7 +10,6 @@ from django.urls import reverse
 
 from app.finance.models.payment import Payment
 from app.people.models.student import Student
-from app.shared.admin.core import get_current_semester
 from app.timetable.models.semester import Semester
 
 
@@ -46,7 +45,7 @@ def _resolve_semester(
 
     # or the student last enrolled semester or the current one
     if semester is None:
-        semester = student.last_enrolled_semester or get_current_semester()
+        semester = student.last_enrolled_semester or Semester.get_current_semester()
     return semester, list(open_semesters)
 
 
@@ -93,7 +92,7 @@ def _build_sidebar_links(
             args=[payment_semester_id],
         )
     else:
-        current_semester = get_current_semester()
+        current_semester = Semester.get_current_semester()
         if current_semester:
             payment_statement_url = reverse(
                 "student_payment_receipt",

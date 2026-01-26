@@ -20,7 +20,6 @@ from app.finance.models.invoice import Invoice
 from app.finance.models.payment import Payment
 from app.finance.models.status_types_methods import PaymentMethod, PaymentStatus
 from app.finance.utils import create_pending_payments
-from app.shared.admin.core import get_current_semester
 from app.shared.auth.perms import UserRole
 from app.shared.utils import parse_str
 from app.timetable.models.semester import Semester
@@ -198,7 +197,7 @@ def finance_officer_invoices(request: HttpRequest) -> HttpResponse:
     if not selected_student_id and payment_status is None:
         payment_status = "pending"
     if not semester_param_present:
-        current_semester = get_current_semester()
+        current_semester = Semester.get_current_semester()
         if current_semester:
             semester_id = current_semester.id
 

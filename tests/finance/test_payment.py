@@ -27,28 +27,28 @@ def test_payment_registration_cycle(registration_factory, invoice_factory):
 
     cleared = PaymentStatus.get_by_code("cleared")
 
-    assert reg.status_id == RegistrationStatus.pending().id
+    assert reg.status == RegistrationStatus.pending()
 
     Payment.objects.create(invoice=invoice, amount_paid=D10, status=cleared)
     reg.refresh_from_db()
-    assert reg.status_id == RegistrationStatus.pending().id
+    assert reg.status == RegistrationStatus.pending()
 
     Payment.objects.create(invoice=invoice, amount_paid=D10, status=cleared)
     reg.refresh_from_db()
-    assert reg.status_id == RegistrationStatus.partialy_cleared().id
+    assert reg.status == RegistrationStatus.partialy_cleared()
 
     Payment.objects.create(invoice=invoice, amount_paid=D40, status=cleared)
     reg.refresh_from_db()
-    assert reg.status_id == RegistrationStatus.partialy_cleared().id
+    assert reg.status == RegistrationStatus.partialy_cleared()
 
     Payment.objects.create(invoice=invoice, amount_paid=D10, status=cleared)
     reg.refresh_from_db()
-    assert reg.status_id == RegistrationStatus.partialy_cleared().id
+    assert reg.status == RegistrationStatus.partialy_cleared()
 
     Payment.objects.create(invoice=invoice, amount_paid=D20, status=cleared)
     reg.refresh_from_db()
-    assert reg.status_id == RegistrationStatus.cleared().id
+    assert reg.status == RegistrationStatus.cleared()
 
     Payment.objects.create(invoice=invoice, amount_paid=D10, status=cleared)
     reg.refresh_from_db()
-    assert reg.status_id == RegistrationStatus.partialy_cleared().id
+    assert reg.status == RegistrationStatus.partialy_cleared()

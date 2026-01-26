@@ -15,7 +15,13 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from app.academics.models.college import College
+from app.academics.models.course import Course, CurriculumCourse
+from app.academics.models.curriculum import Curriculum
+from app.academics.models.department import Department
+from app.people.models.student import Student
 from app.shared.models import CreditHour
+from app.timetable.models.section import Section
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester
 from app.website.views import registrar as registrar_views
@@ -68,28 +74,29 @@ def _create_semesters() -> tuple[AcademicYear, Semester, Semester]:
 
 def _create_section_for_semester(semester: Semester):
     """Create a curriculum course section for the supplied semester."""
-    college = baker.make("academics.College")
-    department = baker.make("academics.Department", college=college)
-    curriculum = baker.make(
+    college: College = baker.make("academics.College")
+    department: Department = baker.make("academics.Department", college=college)
+    curriculum: Curriculum = baker.make(
         "academics.Curriculum",
         college=college,
         short_name="BBA",
         long_name="BBA Accounting",
     )
-    course = baker.make(
+    course: Course = baker.make(
         "academics.Course",
         department=department,
         number="101",
         title="Intro to Accounting",
     )
+    credit_hours: CreditHour
     credit_hours, _ = CreditHour.objects.get_or_create(code=3, defaults={"label": "3"})
-    curriculum_course = baker.make(
+    curriculum_course: CurriculumCourse = baker.make(
         "academics.CurriculumCourse",
         curriculum=curriculum,
         course=course,
         credit_hours=credit_hours,
     )
-    section = baker.make(
+    section: Section = baker.make(
         "timetable.Section",
         semester=semester,
         curriculum_course=curriculum_course,
@@ -102,7 +109,7 @@ def _create_student_grade(section, curriculum, username: str):
     """Create a student and grade record tied to the provided section."""
     UserModel = get_user_model()
     student_user = UserModel.objects.create_user(username=username)
-    student = baker.make(
+    student: Student = baker.make(
         "people.Student",
         user=student_user,
         curriculum=curriculum,

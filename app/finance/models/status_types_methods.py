@@ -142,6 +142,26 @@ class InvoiceStatus(SimpleTableMixin):
         verbose_name_plural = "Invoice Status"
 
     @classmethod
+    def initial(cls) -> Self:
+        """Returns the initial InvoiceStatus."""
+        return cls.objects.get_by_code("initial")
+
+    @classmethod
+    def settled(cls) -> Self:
+        """Returns the settled InvoiceStatus."""
+        return cls.objects.get_by_code("settled")
+
+    @classmethod
+    def cleared(cls) -> Self:
+        """Returns the cleared InvoiceStatus."""
+        return cls.objects.get_by_code("cleared")
+
+    @classmethod
+    def updated(cls) -> Self:
+        """Returns the updated InvoiceStatus."""
+        return cls.objects.get_by_code("updated")
+
+    @classmethod
     def get_default(cls) -> Self:
         """Returns the default InvoiceStatus."""
         deft, _ = cls.objects.get_or_create(code="initial")

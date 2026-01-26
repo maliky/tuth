@@ -17,6 +17,7 @@ from app.academics.utils import make_course_code
 from app.registry.models import CreditHour
 from app.shared.fuzzy_matching import token_similarity
 from app.shared.types import CourseQuery
+from app.timetable.models.semester import Semester
 
 DEFAULT_COURSE_NO = count(start=1, step=1)
 logger = logging.getLogger(__name__)
@@ -178,9 +179,7 @@ class Course(models.Model):
         # when adding the type hint  '-> FacultyQuery | None:'.
         # TODO: Try to fix this and add StudentQuery type hint to the next method.
 
-        from app.shared.admin.core import get_current_semester
-
-        semester = get_current_semester()
+        semester = Semester.get_current_semester()
         if semester is None:
             return Faculty.objects.none()
         return Faculty.objects.filter(
@@ -191,9 +190,7 @@ class Course(models.Model):
         """Return students taking this course during the current semester."""
         Student = apps.get_model("people", "Student")
 
-        from app.shared.admin.core import get_current_semester
-
-        semester = get_current_semester()
+        semester = Semester.get_current_semester()
         if semester is None:
             return Student.objects.none()
         return Student.objects.filter(
@@ -319,9 +316,8 @@ class CurriculumCourse(models.Model):
     def current_students(self):
         """Students enrolled in this curriculum course during the current semester."""
         Student = apps.get_model("people", "Student")
-        from app.shared.admin.core import get_current_semester
 
-        semester = get_current_semester()
+        semester = Semester.get_current_semester()
         if semester is None:
             return Student.objects.none()
 

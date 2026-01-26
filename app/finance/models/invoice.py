@@ -3,16 +3,18 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from typing import Any
 
 from django.db import models
 from simple_history.models import HistoricalRecords
 
 from app.academics.models.course import CurriculumCourse
+from app.finance.models.status_types_methods import InvoiceStatus
 from app.people.models.student import Student
 from app.registry.models.registration import Registration
 from app.registry.models.status_types import RegistrationStatus
-from app.shared.admin.core import get_current_semester
 from app.shared.mixins import StatusableMixin
+from app.timetable.models.semester import Semester
 
 
 class Invoice(StatusableMixin, models.Model):
@@ -36,11 +38,11 @@ class Invoice(StatusableMixin, models.Model):
         >>> from decimal import Decimal
         >>> from app.academics.models.course import CurriculumCourse
         >>> from app.people.models.student import Student
-        >>> from app.shared.admin.core import get_current_semester
+        >>> from app.timetable.models.semester import Semester
         >>> Invoice.objects.create(
         ...     curriculum_course=CurriculumCourse.get_default(),
         ...     student=Student.get_default(),
-        ...     semester=get_current_semester(),
+        ...     semester=Semester.get_current_semester(),
         ...     initial_amount_due=Decimal("10.00"),
         ...     balance=Decimal("10.00"),
         ... )
@@ -61,7 +63,7 @@ class Invoice(StatusableMixin, models.Model):
         default="initial",
     )
 
-    balance = models.DecimalField(max_digits=8, decimal_places=2)
+    balance = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     history = HistoricalRecords()
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -88,14 +90,14 @@ class Invoice(StatusableMixin, models.Model):
         """Update the invoice status based on balance."""
         self._ensure_balance()
         if self.balance == self.initial_amount_due:
-            self.status = "initial"
+            self.status = InvoiceStatus.initial()
         elif self.balance == 0:
-            self.status = "cleared"
+            self.status = InvoiceStatus.cleared()
         elif self.balance <= self.clearance_balance():
-            self.status = "settled"
+            self.status = InvoiceStatus.settled()
         else:
             # self.clearance_balance() < self.balance < self.initial_amount_due
-            self.status = "updated"
+            self.status = InvoiceStatus.updated()
 
     def update_balance(self, amount_paid) -> None:
         """Update the invoice balance after a amount_paid."""
@@ -118,7 +120,7 @@ class Invoice(StatusableMixin, models.Model):
         """Return 40% of the initial amount due."""
         return self.initial_amount_due * Decimal("0.40")
 
-    def save(self, *args, **kwargs) -> None:
+    def save(self, *args, **kwargs):
         """Ensure the balance is set before saving."""
         self._update_status()
         return super().save(*args, **kwargs)
@@ -126,7 +128,7 @@ class Invoice(StatusableMixin, models.Model):
     @classmethod
     def get_default(cls) -> "Invoice":
         """Return a default invoice for placeholder/student defaults."""
-        semester = get_current_semester()
+        semester = Semester.get_current_semester()
         return cls.objects.create(
             curriculum_course=CurriculumCourse.get_default(),
             student=Student.get_default(),

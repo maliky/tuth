@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, timedelta
-from typing import Optional, TypeAlias
+from typing import Optional, Self, TypeAlias
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -137,6 +137,12 @@ class Semester(StatusableMixin, models.Model):
         return open_qs.first(), None
 
     @classmethod
+    def get_current_semester(cls) -> Self:
+        """Return the latest semester whose start date is on or before today."""
+        today = timezone.now().date()
+        return cls.get_default(today)
+
+    @classmethod
     def get_default(cls, today: date | None = None) -> "Semester":
         """Return the current semester or create one for the current academic year."""
         ref_date = today or timezone.now().date()
@@ -148,19 +154,20 @@ class Semester(StatusableMixin, models.Model):
         )
         if semester:
             return semester
-        academic_year = AcademicYear.get_default(ref_date)
-        fallback = (
-            cls.objects.filter(academic_year=academic_year).order_by("number").first()
-        )
-        if fallback:
-            return fallback
+
+        # Here it would be good to take the semster of the year with the start  date
+        # or do a test on start date with default semster start dates
+        ay = AcademicYear.get_default(ref_date)
+
         # Ensure statuses are present before creating a semester.
         SemesterStatus._populate_attributes_and_db()
+        sem1_start, sem1_end = _default_semester_dates(ay, SEMESTER_NUMBER.FIRST)
+
         return cls.objects.create(
-            academic_year=academic_year,
+            academic_year=ay,
             number=SEMESTER_NUMBER.FIRST,
-            start_date=academic_year.start_date,
-            end_date=academic_year.end_date,
+            start_date=sem1_start,
+            end_date=sem1_end,
         )
 
     class Meta:

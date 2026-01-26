@@ -7,7 +7,7 @@ from typing import cast
 import pytest
 
 from app.academics.models.course import CurriculumCourse
-from app.finance.utils import tuition_for
+from app.timetable.models.section import tuition_for
 
 
 # > Why do we need those 2 DumyDataClass ?

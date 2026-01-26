@@ -115,7 +115,7 @@ def registrar_grades_dashboard(request: HttpRequest) -> HttpResponse:
         semester_id = None
     if not semester_param_present:
         # Keep the default selection aligned with shared semester rules.
-        current_semester = get_current_semester()
+        current_semester = Semester.get_current_semester()
         if current_semester:
             semester_id = current_semester.id
 
