@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from typing import Iterator
 
 import pytest
 from django.db import connection
-from django.db.models import Count
 
 from app.academics.admin.merges import (
     merge_curricula,
@@ -23,7 +23,7 @@ pytestmark = pytest.mark.django_db(transaction=True)
 
 
 @contextmanager
-def _curriculum_course_constraint_disabled():
+def _curriculum_course_constraint_disabled() -> Iterator[None]:
     """Temporarily drop the uniq_course_per_curriculum constraint."""
     constraint = next(
         c
@@ -37,16 +37,22 @@ def _curriculum_course_constraint_disabled():
     finally:
         # Remove duplicates created during the test so the unique constraint can
         # be restored deterministically without leaking state across tests.
-        duplicate_groups = (
-            CurriculumCourse.objects.values("curriculum_id", "course_id")
-            .annotate(total=Count("id"))
-            .filter(total__gt=1)
-        )
-        for group in duplicate_groups:
+        duplicate_pairs: list[tuple[int, int]] = []
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT curriculum_id, course_id
+                FROM academics_curriculumcourse
+                GROUP BY curriculum_id, course_id
+                HAVING COUNT(*) > 1
+                """
+            )
+            duplicate_pairs = list(cursor.fetchall())
+        for curriculum_id, course_id in duplicate_pairs:
             duplicate_ids = list(
                 CurriculumCourse.objects.filter(
-                    curriculum_id=group["curriculum_id"],
-                    course_id=group["course_id"],
+                    curriculum_id=curriculum_id,
+                    course_id=course_id,
                 )
                 .order_by("id")
                 .values_list("id", flat=True)
