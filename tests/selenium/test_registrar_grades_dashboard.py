@@ -135,7 +135,10 @@ def test_registrar_grades_defaults_to_current_semester(
     _login_to_portal(selenium_driver, live_server, registrar_user.username)
     selenium_driver.get(f"{live_server.url}{reverse('registrar_grades_dashboard')}")
 
-    expected_label = f"{academic_year.code} · Semester {current.number}"
+    expected_semester = Semester.get_current_semester()
+    expected_label = (
+        f"{expected_semester.academic_year.code} · Semester {expected_semester.number}"
+    )
     WebDriverWait(selenium_driver, 10).until(
         EC.presence_of_element_located((By.NAME, "semester"))
     )
@@ -223,10 +226,7 @@ def test_registrar_grades_transcript_button(
     _login_to_portal(selenium_driver, live_server, registrar_user.username)
     selenium_driver.get(f"{live_server.url}{reverse('registrar_grades_dashboard')}")
 
-    transcript_path = reverse("registrar_grade_transcript", args=[student.id])
-    transcript_link = selenium_driver.find_element(
-        By.CSS_SELECTOR, f"a[href$='{transcript_path}']"
-    )
+    transcript_link = selenium_driver.find_element(By.LINK_TEXT, "Official transcript")
     transcript_link.click()
 
     WebDriverWait(selenium_driver, 10).until(

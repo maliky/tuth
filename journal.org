@@ -1,4 +1,17 @@
 
+* <2026-01-26 Mon 14:30> Admin
+- add a merge action for departments take similar precaution as the own taken for curriculum courses
+  - I should be able to select the target values in a subsequent form
+- in admin/finance/sectionfee/add
+  - I get an internal server error
+- I should regroupt all Type/Status/ Models + impersonate and Grade Value under the same heading in the admin interface (Admin heading ?)
+- In admin/timetable/section
+  - remove the curriculum column
+  - make the credits and # secsession, available seats sortable. add a filter on available seats, using occupancy level of the section, move semester. respect the order from left to right Faculty > space > available seat> credits> secsession > semester.. in fact replace space code with room or room plus space
+- in grades,
+  - The the grade gpa computation, it seems rounded to the uint, should be rounde to 2 decimal places
+    
+
 * <2026-01-26 Mon 09:56> method order
 - class meta
 - class attribute

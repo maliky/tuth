@@ -43,13 +43,17 @@ class Payment(StatusableMixin, models.Model):
         "finance.PaymentMethod",
         on_delete=models.PROTECT,
         related_name="payments",
-        default="cash",
+        null=True,
+        blank=True,
+        default=None,
     )
     status = models.ForeignKey(
         "finance.PaymentStatus",
         on_delete=models.PROTECT,
         related_name="payments",
-        default="pending",
+        null=True,
+        blank=True,
+        default=None,
     )
 
     history = HistoricalRecords()

@@ -146,7 +146,10 @@ def test_role_dashboards(
     portal_user_factory(username, **config)
     _login_to_portal(selenium_driver, live_server, username)
 
-    heading_locator = (By.TAG_NAME, "h1")
+    if config.get("student"):
+        heading_locator = (By.CSS_SELECTOR, ".portal-header h1")
+    else:
+        heading_locator = (By.CSS_SELECTOR, ".staff-shell__title")
     # Avoid stale heading elements while the post-login redirect completes.
     WebDriverWait(selenium_driver, 20).until(
         EC.text_to_be_present_in_element(heading_locator, expected_heading)
