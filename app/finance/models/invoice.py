@@ -9,9 +9,10 @@ from simple_history.models import HistoricalRecords
 
 from app.academics.models.course import CurriculumCourse
 from app.people.models.student import Student
-from app.registry.models.registration import Registration, RegistrationStatus
+from app.registry.models.registration import Registration
+from app.registry.models.status_types import RegistrationStatus
 from app.shared.admin.core import get_current_semester
-from app.shared.status.mixins import StatusableMixin
+from app.shared.mixins import StatusableMixin
 
 
 class Invoice(StatusableMixin, models.Model):
@@ -97,7 +98,7 @@ class Invoice(StatusableMixin, models.Model):
             self.status = "updated"
 
     def update_balance(self, amount_paid) -> None:
-        """Update the invoice balance after a amount_paid"""
+        """Update the invoice balance after a amount_paid."""
         if not amount_paid:
             return None
 

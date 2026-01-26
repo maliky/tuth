@@ -1,8 +1,8 @@
 
 * <2026-01-25 Sun 15:15> Registration life cycle
-- 1. check InvoiceStatus, 2. yes that is correct, settled differs from financialy
-  cleared in my business logic. it does not clear registration but make it
-  partialy_cleared.  3. payment update invoice balance.
+1. check InvoiceStatus,
+2. note that settled differs from financialy. cleared in my business logic. settled invoice should  not clear registration but make it partialy_cleared.
+3. Check payment.save will update invoice balance and eventualy registration status.
 
   
   Check the status update for invoice

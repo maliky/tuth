@@ -1,20 +1,20 @@
 """Curriculum module."""
 
 from __future__ import annotations
+
 import logging
-from django.db.models import Count
+from datetime import date
+from typing import Any, Mapping, Optional, Self, cast
 
 from django.apps import apps
-from datetime import date
-from typing import Optional, Self, cast, Mapping, Any
-
-from app.shared.fuzzy_matching import token_similarity
-from app.shared.mixins import SimpleTableMixin
-from app.shared.utils import as_title
 from django.db import models
+from django.db.models import Count
 from simple_history.models import HistoricalRecords
+
 from app.academics.models.college import College
-from app.shared.status.mixins import StatusableMixin
+from app.shared.fuzzy_matching import token_similarity
+from app.shared.mixins import SimpleTableMixin, StatusableMixin
+from app.shared.utils import as_title
 
 logger = logging.getLogger(__name__)
 

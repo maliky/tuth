@@ -17,11 +17,13 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from app.finance.models.invoice import Invoice
-from app.finance.models.payment import ClearanceStatus, Payment, PaymentMethod
+from app.finance.models.payment import Payment
+from app.finance.models.status_types_methods import PaymentMethod, PaymentStatus
 from app.finance.utils import create_pending_payments
 from app.shared.admin.core import get_current_semester
 from app.shared.auth.perms import UserRole
 from app.shared.utils import parse_str
+from app.timetable.models.semester import Semester
 from app.website.views.finance_officer_helpers import (
     build_student_options,
     clean_int,
@@ -32,8 +34,6 @@ from app.website.views.finance_officer_helpers import (
     invoice_queryset,
     payment_queryset,
 )
-from app.timetable.models.semester import Semester
-
 
 FINANCE_GROUPS = {
     UserRole.FINANCE.value.label,
@@ -260,11 +260,11 @@ def finance_officer_invoices(request: HttpRequest) -> HttpResponse:
         {"value": "all", "label": "All payments"},
     ] + [
         {"value": status.code, "label": status.label}
-        for status in ClearanceStatus.objects.order_by("label")
+        for status in PaymentStatus.objects.order_by("label")
     ]
     payment_status_choices = [
         {"code": status.code, "label": status.label}
-        for status in ClearanceStatus.objects.order_by("label")
+        for status in PaymentStatus.objects.order_by("label")
     ]
     payment_method_options = [
         {"code": method.code, "label": method.label}

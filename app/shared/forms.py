@@ -1,10 +1,11 @@
 """Utility forms shared across the project."""
 
+# Seem dead code
 from django import forms
 from django.core.exceptions import FieldDoesNotExist
 from django.forms import ChoiceField
 
-from app.shared.status.mixins import StatusHistory
+from app.shared.mixins import StatusHistory
 
 
 class StatusHistoryForm(forms.ModelForm):

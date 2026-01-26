@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from django.db import models
+from simple_history.models import HistoricalRecords
 
-from app.finance.models.status_types import FeeType
+from app.finance.models.status_types_methods import FeeType
 
 
 class SectionFee(models.Model):

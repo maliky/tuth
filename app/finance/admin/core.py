@@ -2,7 +2,13 @@
 
 from typing import Optional
 
-from app.finance.models.payment import FeeType, PaymentMethod, ClearanceStatus, SectionFee
+from app.finance.models.section_fee import SectionFee
+from app.finance.models.status_types_methods import (
+    FeeType,
+    PaymentMethod,
+    PaymentStatus,
+    InvoiceStatus,
+)
 from django import forms
 from django.contrib import admin, messages
 from django.db.models import Count, F
@@ -66,24 +72,6 @@ class AmountDueFilter(admin.SimpleListFilter):
                 invoice_ids.append(invoice.pk)
 
         return queryset.filter(pk__in=invoice_ids)
-
-
-@admin.register(SectionFee)
-class SectionFeeAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
-    """Admin settings for SectionFee."""
-
-    #  Need to add logic for exports
-    list_display = ("section", "fee_type", "amount")
-    list_filter = (
-        "section__curriculum_course__curriculum__college",
-        "section__curriculum_course__curriculum",
-    )
-    list_select_related = (
-        "section__semester",
-        "section",
-        "section__curriculum_course",
-    )
-    search_fields = ("section", "section__curriculum_course")
 
 
 @admin.register(Invoice)
@@ -273,6 +261,14 @@ class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedMode
         super().save_model(request, obj, form, change)
 
 
+@admin.register(PaymentStatus, InvoiceStatus, FeeType, PaymentMethod)
+class LookupAdmin(admin.ModelAdmin):
+    """Basic admin for finance lookup tables."""
+
+    search_fields = ("code", "label")
+    list_display = ("label",)
+
+
 @admin.register(Payment)
 class PaymentAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin interface for :class:`~app.finance.models.Payment`."""
@@ -315,9 +311,19 @@ class ScholarshipAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     autocomplete_fields = ("donor", "student")
 
 
-@admin.register(ClearanceStatus, FeeType, PaymentMethod)
-class LookupAdmin(admin.ModelAdmin):
-    """Basic admin for finance lookup tables."""
+@admin.register(SectionFee)
+class SectionFeeAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
+    """Admin settings for SectionFee."""
 
-    search_fields = ("code", "label")
-    list_display = ("label",)
+    #  Need to add logic for exports
+    list_display = ("section", "fee_type", "amount")
+    list_filter = (
+        "section__curriculum_course__curriculum__college",
+        "section__curriculum_course__curriculum",
+    )
+    list_select_related = (
+        "section__semester",
+        "section",
+        "section__curriculum_course",
+    )
+    search_fields = ("section", "section__curriculum_course")

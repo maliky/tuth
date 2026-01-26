@@ -11,13 +11,11 @@ from django.db.models import Q
 from django.utils import timezone
 from simple_history.models import HistoricalRecords
 
+from app.shared.mixins import SimpleTableMixin, StatusableMixin
 from app.shared.types import OpenRegistrationSemesterResultT
-from app.shared.mixins import SimpleTableMixin
-from app.shared.status.mixins import StatusableMixin
 from app.timetable.choices import SEMESTER_NUMBER
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.utils import validate_subperiod
-
 
 SemesterDateDefaultsT: TypeAlias = tuple[date, date]
 

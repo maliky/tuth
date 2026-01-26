@@ -3,10 +3,11 @@
 from django.core.management.base import BaseCommand
 
 from app.academics.models.curriculum import CurriculumStatus
-from app.finance.models.payment import (
+from app.finance.models.status_types_methods import (
     AccountChartType,
     AccountType,
-    ClearanceStatus,
+    PaymentStatus,
+    InvoiceStatus,
     FeeType,
     PaymentMethod,
 )
@@ -29,7 +30,8 @@ class Command(BaseCommand):
         CLASS_MAP = [
             ("AccountType", AccountType),  # before charttype
             ("AccountChartType", AccountChartType),
-            ("ClearanceStatus", ClearanceStatus),
+            ("PaymentStatus", PaymentStatus),
+            ("InvoiceStatus", InvoiceStatus),
             ("CreditHour", CreditHour),
             ("CurriculumStatus", CurriculumStatus),
             ("DocumentStatus", DocumentStatus),

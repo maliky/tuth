@@ -1,6 +1,6 @@
 """status and types for regsitry app."""
 
-from typing import cast
+from typing import Self, cast
 from app.shared.mixins import SimpleTableMixin
 
 
@@ -84,17 +84,17 @@ class RegistrationStatus(SimpleTableMixin):
 
     @classmethod
     def pending(cls) -> Self:
-        """Return Pending"""
+        """Return Pending."""
         return cls.get_by_code("pending")
 
     @classmethod
     def partialy_cleared(cls) -> Self:
-        """Return parialy cleared"""
+        """Return parialy cleared."""
         return cls.get_by_code("partialy_cleared")
 
     @classmethod
     def cleared(cls) -> Self:
-        """Return cleared"""
+        """Return cleared."""
         return cls.get_by_code("cleared")
 
     @classmethod

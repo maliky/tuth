@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from django.db import models
 
-from app.shared.mixins import SimpleTableMixin
-from app.shared.status.mixins import StatusableMixin
+from app.registry.models.status_types import TranscriptRequestStatus
+from app.shared.mixins import SimpleTableMixin, StatusableMixin
 
 
 class TranscriptRequest(StatusableMixin, models.Model):

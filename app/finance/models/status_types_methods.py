@@ -143,7 +143,7 @@ class InvoiceStatus(SimpleTableMixin):
 
     @classmethod
     def get_default(cls) -> Self:
-        """Returns the default ClearanceStatus."""
+        """Returns the default InvoiceStatus."""
         deft, _ = cls.objects.get_or_create(code="initial")
         return cast(Self, deft)
 
@@ -151,21 +151,26 @@ class InvoiceStatus(SimpleTableMixin):
 class PaymentStatus(SimpleTableMixin):
     """Clearance Statuses for payment."""
 
-    DEFAULT_VALUES = [
-        ("pending", "Pending"),
-        ("cleared", "Cleared"),
-        ("blocked", "Blocked"),
-    ]
+    DEFAULT_VALUES = [("pending", "Pending"), ("cleared", "Cleared")]
 
     class Meta:
         verbose_name = "Payment Status"
         verbose_name_plural = "Payment Status"
 
     @classmethod
+    def cleared(cls) -> Self:
+        """Returns the cleared PaymentStatus."""
+        return cls.get_by_code(code="cleared")
+
+    @classmethod
+    def pending(cls) -> Self:
+        """Returns the pending PaymentStatus."""
+        return cls.get_by_code(code="pending")
+
+    @classmethod
     def get_default(cls) -> Self:
         """Returns the default PaymentStatus."""
-        deft, _ = cls.objects.get_or_create(code="pending")
-        return cast(Self, deft)
+        return cls.pending()
 
 
 class PaymentMethod(SimpleTableMixin):

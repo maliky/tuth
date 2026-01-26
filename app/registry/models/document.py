@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional, cast, Self
+from typing import Optional, Self, cast
 
 from django.db import models
 from simple_history.models import HistoricalRecords
 
-from app.shared.mixins import SimpleTableMixin
-
-from app.shared.status.mixins import StatusableMixin, StatusHistory
+from app.registry.models.status_types import DocumentStatus, DocumentType
+from app.shared.mixins import SimpleTableMixin, StatusableMixin, StatusHistory
 
 
 def set_document_path(instance, filename: str) -> str:

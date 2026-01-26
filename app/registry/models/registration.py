@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from app.shared.mixins import SimpleTableMixin
-from django.db import models
-from simple_history.models import HistoricalRecords
 from typing import Self, cast
 
-from app.shared.status.mixins import StatusableMixin
+from django.db import models
+from simple_history.models import HistoricalRecords
+
+from app.registry.models.status_types import RegistrationStatus
+from app.shared.mixins import SimpleTableMixin, StatusableMixin
 
 
 class Registration(StatusableMixin, models.Model):

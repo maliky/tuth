@@ -6,14 +6,14 @@ from typing import Callable, TypeAlias
 
 import pytest
 from django.apps import apps
-from django.contrib.auth.models import Group, Permission, User
 from django.contrib.auth.management import create_permissions
+from django.contrib.auth.models import Group, Permission, User
 from django.contrib.contenttypes.models import ContentType
 from django.db import connection, models
 from django.db.utils import OperationalError, ProgrammingError
 
 from app.people.models.student import Student
-from app.shared.status.mixins import StatusHistory
+from app.shared.mixins import StatusHistory
 
 StatusHistoryFactoryT: TypeAlias = Callable[[Student, str], StatusHistory]
 ModelTypeT: TypeAlias = type[models.Model]

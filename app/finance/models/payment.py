@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING
 from django.db import models, transaction
 from simple_history.models import HistoricalRecords
 
-from app.finance.models.status_types_methods import PaymentStatus
-from app.shared.status.mixins import StatusableMixin
+from app.finance.models.status_types_methods import PaymentMethod, PaymentStatus
+from app.shared.mixins import StatusableMixin
 
 if TYPE_CHECKING:
     from app.finance.models.invoice import Invoice
@@ -46,7 +46,7 @@ class Payment(StatusableMixin, models.Model):
         default="cash",
     )
     status = models.ForeignKey(
-        "finance.ClearanceStatus",
+        "finance.PaymentStatus",
         on_delete=models.PROTECT,
         related_name="payments",
         default="pending",

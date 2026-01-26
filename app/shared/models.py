@@ -8,7 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 from app.registry.models.credit_hours import CreditHour
-from app.shared.status.mixins import StatusHistory
+from app.shared.mixins import StatusHistory
 
 
 class ApprovalQueue(models.Model):

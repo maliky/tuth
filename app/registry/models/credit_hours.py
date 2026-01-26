@@ -8,7 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
-from app.shared.status.mixins import StatusHistory
+from app.shared.mixins import StatusHistory
 
 
 class CreditHourManager(models.Manager):
