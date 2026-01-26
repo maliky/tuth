@@ -40,12 +40,11 @@ class SectionAdmin(CollegeRestrictedAdmin):
     college_field = "curriculum_course__curriculum__college"
     list_display = (
         "curriculum_course",
-        "number",
+        "session_count",        
         "faculty_link",
-        "space",        
+        "space_codes",        
         "available_seats",
         "credit_hours",        
-        "session_count",
         # "curriculum_display",
         "semester",
     )
@@ -117,22 +116,10 @@ class SectionAdmin(CollegeRestrictedAdmin):
             return True
         return super().lookup_allowed(lookup, value, request)
 
-    @admin.display(description="SecSessions")
-    def all_sessions(self, obj: Section) -> str:
-        """Return a human-readable summary of this Section’s sessions.
-
-        For example: “Mon 09:00–10:00 (Rm 101); Wed 09:00–10:00 (Rm 101)”
-        """
-        slots = []
-        for sess in obj.sessions.all():
-            slots.append(f"{sess.schedule} ({sess.room})")
-
-        return "; ".join(slots) or "--"
-
-    @admin.display(description="# SecSessions")
+    @admin.display(description="# Sessions")
     def session_count(self, obj: Section) -> int:
         """Return the number of sessions attached to this section."""
-        return obj.sessions.count()
+        return f"{obj.number}/{obj.sessions.count()}"
 
     @admin.display(description="Credits")
     def credit_hours(self, obj: Section) -> int:

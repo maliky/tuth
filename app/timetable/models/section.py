@@ -119,7 +119,7 @@ class Section(models.Model):
     @property
     def space_codes(self) -> str:
         """Return a comma-separated string of each room’s code."""
-        return ", ".join(room.code for room in self.spaces)
+        return ", ".join(f"{room}" for room in self.spaces)
 
     @property
     def short_code(self) -> str:
