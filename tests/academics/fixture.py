@@ -153,11 +153,13 @@ def invoice_factory(default_semester: Semester) -> InvoiceFactoryT:
 
     def _make(curriculum_course: CurriculumCourse) -> Invoice:
         student = Student.get_default()
+        amount = Decimal("10.00")
         return Invoice.objects.create(
             curriculum_course=curriculum_course,
             student=student,
             semester=default_semester,
-            balance=Decimal("10.00"),
+            initial_amount_due=amount,
+            balance=amount,
         )
 
     return _make

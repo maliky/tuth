@@ -29,7 +29,7 @@ class DummyCurriculumCourse:
 def test_tuition_for_uses_rate(monkeypatch, hours):
     """tuition_for() should multiply hours by the rate."""
     rate = Decimal("9.99")
-    monkeypatch.setattr("app.finance.utils.TUITION_RATE_PER_CREDIT", rate)
+    monkeypatch.setattr("app.timetable.models.section.TUITION_RATE_PER_CREDIT", rate)
 
     dummy = DummyCurriculumCourse(credit_hours=DummyCreditHours(code=hours))
     curriculum_course = cast(CurriculumCourse, dummy)

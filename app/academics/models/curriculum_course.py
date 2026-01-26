@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Optional, Self, cast, TYPE_CHECKING
+from typing import Optional, Self, cast
 
 from django.db import models
 from simple_history.models import HistoricalRecords
@@ -12,10 +12,6 @@ from app.academics.models.curriculum import Curriculum
 from app.registry.models import CreditHour
 from app.shared.types import FacultyQuery, StudentQuery
 from app.timetable.models.semester import Semester
-
-if TYPE_CHECKING:
-    from app.people.models.student import Student
-    from app.people.models.faculty import Faculty
 
 
 class CurriculumCourse(models.Model):
@@ -80,6 +76,8 @@ class CurriculumCourse(models.Model):
 
     def current_faculty(self) -> FacultyQuery:
         """Get the list of faculty teaching this course in the current semester."""
+        from app.people.models.faculty import Faculty
+
         semester = Semester.get_current_semester()
         faculty_qs = Faculty.objects.filter(
             section__semester=semester, section__curriculum_course=self
@@ -88,6 +86,8 @@ class CurriculumCourse(models.Model):
 
     def current_students(self) -> StudentQuery:
         """Students enrolled in this curriculum course during the current semester."""
+        from app.people.models.student import Student
+
         semester = Semester.get_current_semester()
         students_qs = Student.objects.filter(
             student_registrations__section__semester=semester,

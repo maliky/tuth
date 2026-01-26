@@ -6,6 +6,7 @@ from contextlib import contextmanager
 
 import pytest
 from django.db import connection
+from django.db.models import Count
 
 from app.academics.admin.merges import (
     merge_curricula,
@@ -34,6 +35,25 @@ def _curriculum_course_constraint_disabled():
     try:
         yield
     finally:
+        # Remove duplicates created during the test so the unique constraint can
+        # be restored deterministically without leaking state across tests.
+        duplicate_groups = (
+            CurriculumCourse.objects.values("curriculum_id", "course_id")
+            .annotate(total=Count("id"))
+            .filter(total__gt=1)
+        )
+        for group in duplicate_groups:
+            duplicate_ids = list(
+                CurriculumCourse.objects.filter(
+                    curriculum_id=group["curriculum_id"],
+                    course_id=group["course_id"],
+                )
+                .order_by("id")
+                .values_list("id", flat=True)
+            )
+            # Keep the first record to preserve the target row, drop the rest.
+            for drop_id in duplicate_ids[1:]:
+                CurriculumCourse.objects.filter(id=drop_id).delete()
         with connection.schema_editor(atomic=False) as schema_editor:
             schema_editor.add_constraint(CurriculumCourse, constraint)
 

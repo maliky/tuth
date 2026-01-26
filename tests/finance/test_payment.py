@@ -5,7 +5,7 @@ from decimal import Decimal
 import pytest
 
 from app.finance.models.payment import Payment
-from app.finance.models.status_types_methods import PaymentStatus
+from app.finance.models.status_types_methods import PaymentMethod, PaymentStatus
 from app.registry.models.status_types import RegistrationStatus
 
 pytestmark = pytest.mark.django_db
@@ -29,26 +29,58 @@ def test_payment_registration_cycle(registration_factory, invoice_factory):
 
     assert reg.status == RegistrationStatus.pending()
 
-    Payment.objects.create(invoice=invoice, amount_paid=D10, status=cleared)
+    payment_method = PaymentMethod.get_default()
+
+    Payment.objects.create(
+        invoice=invoice,
+        amount_paid=D10,
+        status=cleared,
+        payment_method=payment_method,
+    )
     reg.refresh_from_db()
     assert reg.status == RegistrationStatus.pending()
 
-    Payment.objects.create(invoice=invoice, amount_paid=D10, status=cleared)
+    Payment.objects.create(
+        invoice=invoice,
+        amount_paid=D10,
+        status=cleared,
+        payment_method=payment_method,
+    )
     reg.refresh_from_db()
     assert reg.status == RegistrationStatus.partialy_cleared()
 
-    Payment.objects.create(invoice=invoice, amount_paid=D40, status=cleared)
+    Payment.objects.create(
+        invoice=invoice,
+        amount_paid=D40,
+        status=cleared,
+        payment_method=payment_method,
+    )
     reg.refresh_from_db()
     assert reg.status == RegistrationStatus.partialy_cleared()
 
-    Payment.objects.create(invoice=invoice, amount_paid=D10, status=cleared)
+    Payment.objects.create(
+        invoice=invoice,
+        amount_paid=D10,
+        status=cleared,
+        payment_method=payment_method,
+    )
     reg.refresh_from_db()
     assert reg.status == RegistrationStatus.partialy_cleared()
 
-    Payment.objects.create(invoice=invoice, amount_paid=D20, status=cleared)
+    Payment.objects.create(
+        invoice=invoice,
+        amount_paid=D20,
+        status=cleared,
+        payment_method=payment_method,
+    )
     reg.refresh_from_db()
     assert reg.status == RegistrationStatus.cleared()
 
-    Payment.objects.create(invoice=invoice, amount_paid=D10, status=cleared)
+    Payment.objects.create(
+        invoice=invoice,
+        amount_paid=D10,
+        status=cleared,
+        payment_method=payment_method,
+    )
     reg.refresh_from_db()
     assert reg.status == RegistrationStatus.partialy_cleared()

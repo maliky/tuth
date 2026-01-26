@@ -39,14 +39,16 @@ if not _can_bind_localhost():
 def _create_student_user(username: str, semester: Semester):
     """Create a student user linked to the supplied semester."""
     UserModel = get_user_model()
-    user = UserModel.objects.create_user(username=username)
+    user, _created = UserModel.objects.get_or_create(username=username)
     user.set_password(TEST_PASSWORD)
     user.save()
-    Student.objects.create(
+    Student.objects.get_or_create(
         user=user,
-        curriculum=Curriculum.get_default(),
-        entry_semester=semester,
-        last_enrolled_semester=semester,
+        defaults={
+            "curriculum": Curriculum.get_default(),
+            "entry_semester": semester,
+            "last_enrolled_semester": semester,
+        },
     )
     return user
 
@@ -110,6 +112,7 @@ def test_student_payment_receipt_shows_paid_on_column(
         curriculum_course=curriculum_course,
         student=student,
         semester=semester,
+        initial_amount_due=Decimal("100.00"),
         balance=Decimal("100.00"),
     )
     Payment.objects.create(
