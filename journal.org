@@ -1,5 +1,14 @@
 
-* <2026-01-26 lun. 20:03> GPA
+*  <2026-01-26 lun. 20:42> mergin departments
+use merge wizardmixin
+yes keep shortname out
+you can drop thec onflict summary function, to heavy  for my usecase now,
+add confirmation form waqrning
+do change merge_Departments if not need
+
+
+* DONE <2026-01-26 lun. 20:03> GPA
+CLOSED: [2026-01-26 lun. 20:36]
 gpa.py is ok,
 
 yes udpate references
@@ -19,14 +28,6 @@ What we exclude from gpa are dr, ip, ip_upd, ng, w, i, ab,
 
   Plan
 
-  - Review existing admin merge actions (curriculum/course/curriculumcourse) to
-    mirror patterns, then design a Department merge flow with:
-      - Step 1: select source rows.
-      - Step 2: confirmation form to choose the target Department and field
-        precedence.
-      - Safeguards: block/skip merges that violate college/curriculum
-        relationships; collect conflicts and surface them in the confirmation
-        form.
   - Admin timetable sections:
       - Update list_display order to: Faculty > Room (replace space code with
         room or room + space) > Available Seats > Credits > # SecSession >
@@ -35,6 +36,16 @@ What we exclude from gpa are dr, ip, ip_upd, ng, w, i, ab,
       - Add list_filter on occupancy/available seats, and make numeric columns
         sortable (credits, available seats, secsession count).
       - Move semester filter to the right-most position per requested order.
+
+** Review existing admin merge actions (curriculum/course/curriculumcourse) to
+    mirror patterns, then design a Department merge flow with:
+      - Step 1: select source rows.
+      - Step 2: confirmation form to choose the target Department and field
+        precedence.
+      - Safeguards: block/skip merges that violate college/curriculum
+        relationships; collect conflicts and surface them in the confirmation
+        form.
+
 ** Grades GPA rounding:
    - the gpa calculation should be done at the student or curriculum level /per curriculum or per student.
      

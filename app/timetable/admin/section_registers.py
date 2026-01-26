@@ -117,8 +117,8 @@ class SectionAdmin(CollegeRestrictedAdmin):
         return super().lookup_allowed(lookup, value, request)
 
     @admin.display(description="# Sessions")
-    def session_count(self, obj: Section) -> int:
-        """Return the number of sessions attached to this section."""
+    def session_count(self, obj: Section) -> str:
+        """Return the section number and session count label."""
         return f"{obj.number}/{obj.sessions.count()}"
 
     @admin.display(description="Credits")

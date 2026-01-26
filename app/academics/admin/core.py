@@ -48,7 +48,7 @@ from .merges import (
     merge_courses_action,
     merge_courses_by_short_code_action,
     merge_curricula,
-    merge_departments_action,
+    merge_departments,
     merge_curriculum_courses,
 )
 from .resources import (
@@ -531,7 +531,7 @@ class CurriculumStatusAdmin(admin.ModelAdmin):
 
 
 @admin.register(Department)
-class DepartmentAdmin(CollegeRestrictedAdmin):
+class DepartmentAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
     """Admin interface for :class:~app.academics.models.Department.
 
     Shows department code, name and college. autocomplete_fields speeds up
@@ -539,6 +539,7 @@ class DepartmentAdmin(CollegeRestrictedAdmin):
     """
 
     resource_class = DepartmentResource
+    merge_fields = ("code", "long_name", "college")
     list_display = (
         "code",
         "long_name",
@@ -553,7 +554,6 @@ class DepartmentAdmin(CollegeRestrictedAdmin):
     list_editable = ("college",)
     search_fields = ("code", "long_name", "college")
     inlines = [DepartmentCourseInline]
-    actions = ["merge_departments_action"]
 
     def get_queryset(self, request):
         # > explain the djangonic logic here
@@ -611,6 +611,27 @@ class DepartmentAdmin(CollegeRestrictedAdmin):
             )
         ]
         return format_html_join(", ", '<a href="{}">{}</a>', rows)
+
+    def merge_records(self, target: ModelT, sources: Iterable[ModelT]) -> dict[str, int]:
+        """Merge departments using the shared merge helper."""
+        target_department = cast(Department, target)
+        source_departments = cast(Iterable[Department], sources)
+        summary = merge_departments(target_department, source_departments)
+        return {"merged": summary.get("merged", 0)}
+
+    def merge_records_action(self, request, queryset):
+        """Warn about college alignment before showing the merge form."""
+        response = super().merge_records_action(request, queryset)
+        if request.method == "POST" and request.POST.get("apply_merge"):
+            return response
+        messages.warning(
+            request,
+            (
+                "Review the selected departments carefully. "
+                "Departments should belong to the same college before merging."
+            ),
+        )
+        return response
 
 
 @admin.register(Prerequisite)
