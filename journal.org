@@ -19,12 +19,13 @@
       - Add list_filter on occupancy/available seats, and make numeric columns
         sortable (credits, available seats, secsession count).
       - Move semester filter to the right-most position per requested order.
-  - Grades GPA rounding:
-      - Locate GPA computation (likely in model or admin list annotation).
+** Grades GPA rounding:
+      - Look at gpa computationin app.people.admin.core.py:StudentAdmin.get_queryset
       - Ensure rounding to 2 decimal places (not integer).
       - Keep consistent formatting in views and admin.
 
-** Admin regrouping:
+** DONE Admin regrouping:
+   CLOSED: [2026-01-26 Mon 16:21]
       - Inventory models should share the same admin heading (Type/Status +
         Impersonate + GradeValue) + creditHourAdmin.
       - Implement a shared app_index or ModelAdmin grouping so those entries

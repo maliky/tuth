@@ -12,6 +12,7 @@ from django.contrib.auth.models import Group, User as UserModel
 from django.db import models
 from django.db.models import Case, Count, F, FloatField, Q, Sum, When
 from django.db.models.expressions import ExpressionWrapper
+from django.db.models.functions import Round
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 from guardian.admin import GuardedModelAdmin
@@ -94,9 +95,9 @@ class UserFullNameChoiceField(forms.ModelChoiceField):
 
 # ---- User admin with merge action ----
 
-
 try:
     dj_admin.site.unregister(User)
+    dj_admin.site.unregister(Group)
 except Exception:
     pass
 
@@ -675,9 +676,12 @@ class StudentAdmin(
             gpa_value=Case(
                 When(
                     gpa_credit_total__gt=0,
-                    then=ExpressionWrapper(
-                        F("gpa_quality_points") / F("gpa_credit_total"),
-                        output_field=FloatField(),
+                    then=Round(
+                        ExpressionWrapper(
+                            F("gpa_quality_points") / F("gpa_credit_total"),
+                            output_field=FloatField(),
+                        ),
+                        precision=2,
                     ),
                 ),
                 default=None,
@@ -777,12 +781,6 @@ class RoleAssignmentAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
         if db_field.name == "user":
             kwargs["form_class"] = UserFullNameChoiceField
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
-
-try:
-    dj_admin.site.unregister(Group)
-except Exception:
-    pass
 
 
 @dj_admin.register(Group)
