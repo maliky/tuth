@@ -105,7 +105,7 @@ def group_invoices(invoices: Iterable[Invoice]) -> list[InvoiceGroupT]:
             group_lookup[student_id] = group
             groups.append(group)
         group["rows"].append(invoice)
-        group["total_due"] += invoice.balance
+        group["total_due"] += invoice.get_balance()
     return groups
 
 

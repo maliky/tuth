@@ -137,7 +137,7 @@ class Semester(StatusableMixin, models.Model):
         return open_qs.first(), None
 
     @classmethod
-    def get_current_semester(cls) -> Self:
+    def get_current_semester(cls) -> "Semester":
         """Return the latest semester whose start date is on or before today."""
         today = timezone.now().date()
         return cls.get_default(today)

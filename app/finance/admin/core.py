@@ -18,7 +18,7 @@ from django.utils.http import urlencode
 from guardian.admin import GuardedModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
-from app.academics.models.course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriculumCourse
 from app.finance.admin.inlines import InvoicePaymentInline
 from app.finance.models.payment import Payment
 from app.finance.models.invoice import Invoice

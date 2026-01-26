@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date, time
 from typing import Dict, Optional, Tuple
 
-from app.academics.models.course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriculumCourse
 from app.shared.types import (
     RoomCacheT,
     RoomKeyT,

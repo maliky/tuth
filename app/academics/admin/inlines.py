@@ -6,7 +6,8 @@ from django.urls import reverse
 from django.utils.html import format_html
 
 from app.academics.models.prerequisite import Prerequisite
-from app.academics.models.course import CurriculumCourse, Course
+from app.academics.models.course import Course
+from app.academics.models.curriculum_course import CurriculumCourse
 
 
 class RequiresInline(admin.TabularInline):

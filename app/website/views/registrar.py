@@ -13,7 +13,6 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
-from app.shared.admin import get_current_semester
 from app.people.models.student import Student
 from app.registry.models.grade import Grade
 from app.shared.utils import parse_str

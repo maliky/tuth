@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Iterable, Optional
 from django.db import transaction
 
 if TYPE_CHECKING:
-    from app.academics.models.course import CurriculumCourse
+    from app.academics.models.curriculum_course import CurriculumCourse
     from app.people.models.staffs import Staff
 
 from app.finance.models.invoice import Invoice
@@ -22,7 +22,7 @@ def create_pending_payments(
     invoices: Iterable[Invoice],
     recorded_by: Optional["Staff"] = None,
 ) -> PaymentCreateSummaryT:
-    """Create pending payments for invoices when none exist.
+    """Create pending full payments for invoices when none exist.
 
     Args:
         invoices: Iterable of invoices to receive pending payments.
@@ -41,19 +41,15 @@ def create_pending_payments(
         return summary
     with transaction.atomic():
         for invoice in invoice_list:
-            if invoice.balance <= 0:
+            balance = invoice.get_balance()
+            if balance <= 0:
                 summary["skipped_closed"] += 1
                 continue
-            if Payment.objects.filter(
-                invoice=invoice,
-                status_id="pending",
-            ).exists():
+            if Payment.objects.filter(invoice=invoice, status_id="pending").exists():
                 summary["skipped_existing"] += 1
                 continue
             Payment.objects.create(
-                invoice=invoice,
-                amount_paid=invoice.balance,
-                recorded_by=recorded_by,
+                invoice=invoice, amount_paid=balance, recorded_by=recorded_by
             )
             summary["created"] += 1
     return summary

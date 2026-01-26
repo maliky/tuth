@@ -18,7 +18,7 @@ from app.shared.admin.filters import (
     _get_lookup_path,
     _related_qs_for_lookup,
 )
-from app.timetable.models import Semester
+from app.timetable.models.semester import Semester
 
 SEMESTER_FIELD_LOOKPS = (
     ("semester", "semester"),

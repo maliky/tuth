@@ -6,13 +6,14 @@ from typing import Dict, Optional, Tuple
 
 from app.academics.choices import COLLEGE_LONG_NAME
 from app.academics.models.college import College
-from app.academics.models.course import Course, CurriculumCourse
+from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
+from app.academics.models.curriculum_course import CurriculumCourse
 from app.academics.models.department import Department
 from app.academics.utils import normalize_college_code, normalize_department_code
 from app.shared.models import CreditHour
-from app.shared.utils import parse_str
 from app.shared.types import DeptCollegeMapT, DeptCourseMapT, StrIntMapT, TwoIntIntMapT
+from app.shared.utils import parse_str
 
 COLLEGE_CACHE: Dict[str, College] = {}
 DEPARTMENT_CACHE: Dict[Tuple[str, int], Department] = {}

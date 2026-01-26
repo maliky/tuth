@@ -12,7 +12,8 @@ from app.academics.admin.merges import (
     merge_curriculum_courses,
     merge_courses,
 )
-from app.academics.models.course import Course, CurriculumCourse
+from app.academics.models.course import Course
+from app.academics.models.curriculum_course import CurriculumCourse
 from app.academics.models.curriculum import Curriculum
 from app.timetable.models.section import Section
 

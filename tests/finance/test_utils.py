@@ -6,7 +6,7 @@ from typing import cast
 
 import pytest
 
-from app.academics.models.course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriculumCourse
 from app.timetable.models.section import tuition_for
 
 

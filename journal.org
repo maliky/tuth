@@ -1,4 +1,14 @@
 
+* <2026-01-26 Mon 09:56> method order
+- class meta
+- class attribute
+- @classmethod
+- @property methodes
+- __ methodes
+- _ methodes
+- normal methodes
+Lexical order in each category    
+
 * <2026-01-25 Sun 15:15> Registration life cycle
 1. check InvoiceStatus,
 2. note that settled differs from financialy. cleared in my business logic. settled invoice should  not clear registration but make it partialy_cleared.

@@ -27,8 +27,7 @@ def _freeze_now(monkeypatch: pytest.MonkeyPatch, target_date: date) -> None:
     monkeypatch.setattr(shared_admin_core.timezone, "now", lambda: frozen)
 
 
-    
-#> Test 0 revoir
+# > Test 0 revoir
 def test_get_current_semester_uses_latest_started(monkeypatch: pytest.MonkeyPatch):
     """Select the closest semester whose start date is not in the future."""
     SemesterStatus._populate_attributes_and_db()

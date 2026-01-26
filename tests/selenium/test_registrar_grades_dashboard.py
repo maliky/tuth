@@ -16,7 +16,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from app.academics.models.college import College
-from app.academics.models.course import Course, CurriculumCourse
+from app.academics.models.course import Course
+from app.academics.models.curriculum_course import CurriculumCourse
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.people.models.student import Student

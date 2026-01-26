@@ -14,7 +14,7 @@ from app.people.utils import mk_username
 from app.timetable.models.semester import Semester
 
 if TYPE_CHECKING:
-    from app.timetable.models import Section
+    from app.timetable.models.section import Section
 
 
 class FacultyManager(models.Manager):

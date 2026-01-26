@@ -9,9 +9,6 @@ from app.timetable.models.section import Section
 from app.timetable.admin.section_registers import SectionAdmin
 from app.registry.admin.inlines import GradeInline
 
-# from app.academics.models.course import CurriculumCourse
-# from app.academics.models.course import Course
-
 
 @pytest.mark.django_db
 def test_section_admin_has_grade_inline():

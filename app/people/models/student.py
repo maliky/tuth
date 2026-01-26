@@ -13,7 +13,9 @@ from simple_history.models import HistoricalRecords
 
 from app.academics.choices import LEVEL_NUMBER
 from app.academics.constants import MAX_STUDENT_CREDITS
-from app.academics.models.course import Course, CurriculumCourse
+from app.academics.models.course import Course
+from app.academics.models.curriculum_course import CurriculumCourse
+
 from app.academics.models.curriculum import Curriculum
 from app.people.models.core import AbstractPerson
 from app.shared.mixins import SimpleTableMixin

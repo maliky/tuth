@@ -2,8 +2,9 @@
 
 from .college import College
 from .concentration import Major, MajorCurriculumCourse, Minor, MinorCurriculumCourse
-from .course import Course, CurriculumCourse
+from .course import Course
 from .curriculum import Curriculum, CurriculumStatus
+from .curriculum_course import CurriculumCourse
 from .department import Department
 from .prerequisite import Prerequisite
 

@@ -1,7 +1,7 @@
 """Views for the  admin timetable module."""
 
 from admin_searchable_dropdown.views import AutocompleteJsonView
-from app.timetable.models import Section
+from app.timetable.models.section import Section
 
 
 class SectionBySemesterAutocomplete(AutocompleteJsonView):

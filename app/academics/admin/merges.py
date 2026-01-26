@@ -8,7 +8,8 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Q
 
-from app.academics.models.course import Course, CurriculumCourse
+from app.academics.models.course import Course
+from app.academics.models.curriculum_course import CurriculumCourse
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.concentration import Major, Minor

@@ -15,7 +15,7 @@ from app.academics.models.curriculum import Curriculum
 
 if TYPE_CHECKING:
     from app.spaces.models.core import Room
-    from app.academics.models.course import CurriculumCourse
+    from app.academics.models.curriculum_course import CurriculumCourse
 
 
 TUITION_RATE_PER_CREDIT = Decimal("5.00")
@@ -49,7 +49,7 @@ class Section(models.Model):
     /years through successive sections, which have themselves sessions (secsession)
 
     Example:
-        >>> from app.timetable.models import Section
+        >>> from app.timetable.models.section import Section
         >>> Section.objects.create(course=course, semester=semester, number=1)
 
         >>> Section.objects.create(course=course, semester=semester)

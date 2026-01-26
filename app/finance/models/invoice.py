@@ -8,7 +8,7 @@ from typing import Any
 from django.db import models
 from simple_history.models import HistoricalRecords
 
-from app.academics.models.course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriculumCourse
 from app.finance.models.status_types_methods import InvoiceStatus
 from app.people.models.student import Student
 from app.registry.models.registration import Registration
@@ -36,7 +36,7 @@ class Invoice(StatusableMixin, models.Model):
 
     Example:
         >>> from decimal import Decimal
-        >>> from app.academics.models.course import CurriculumCourse
+        >>> from app.academics.models.curriculum_course import CurriculumCourse
         >>> from app.people.models.student import Student
         >>> from app.timetable.models.semester import Semester
         >>> Invoice.objects.create(
@@ -77,23 +77,24 @@ class Invoice(StatusableMixin, models.Model):
         "finance.scholarship", on_delete=models.PROTECT, null=True
     )
 
+    def get_balance(self) -> Decimal:
+        """Return the balance."""
+        if self.balance is None:
+            self.balance = self.initial_amount_due
+        return self.balance
+
     def __str__(self) -> str:  # pragma: no cover
         """Return a concise representation of the payment."""
         return f"{self.curriculum_course} - {self.balance}"
 
-    def _ensure_balance(self) -> None:
-        """Set the balance on first save when not provided."""
-        if self.balance is None:
-            self.balance = self.initial_amount_due
-
     def _update_status(self) -> None:
         """Update the invoice status based on balance."""
-        self._ensure_balance()
-        if self.balance == self.initial_amount_due:
+        balance = self.get_balance()
+        if balance == self.initial_amount_due:
             self.status = InvoiceStatus.initial()
-        elif self.balance == 0:
+        elif balance == 0:
             self.status = InvoiceStatus.cleared()
-        elif self.balance <= self.clearance_balance():
+        elif balance <= self.clearance_balance():
             self.status = InvoiceStatus.settled()
         else:
             # self.clearance_balance() < self.balance < self.initial_amount_due
@@ -104,7 +105,8 @@ class Invoice(StatusableMixin, models.Model):
         if not amount_paid:
             return None
 
-        new_amount = self.balance - amount_paid
+        new_amount = self.get_balance() - amount_paid
+
         if new_amount < 0:
             new_amount = Decimal("0.00")
         self.balance = new_amount

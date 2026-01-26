@@ -11,7 +11,7 @@ from app.academics.models.concentration import Major
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
-from app.academics.models.course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriculumCourse
 from app.academics.utils import (
     expand_course_code,
     normalize_college_code,

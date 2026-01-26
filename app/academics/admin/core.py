@@ -11,11 +11,11 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
+from app.academics.models.curriculum_course import CurriculumCourse
 from app.academics.models import (
     College,
     Course,
     Curriculum,
-    CurriculumCourse,
     CurriculumStatus,
     Department,
     Major,

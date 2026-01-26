@@ -21,7 +21,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from app.academics.constants import MAX_STUDENT_CREDITS
-from app.academics.models.course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriculumCourse
 from app.academics.models.prerequisite import Prerequisite
 from app.finance.models.invoice import Invoice
 from app.finance.models.payment import Payment
@@ -85,7 +85,7 @@ def student_invoice_statement(request: HttpRequest) -> HttpResponse:
         )
         .order_by("semester__start_date", "curriculum_course__course__short_code")
     )
-    total_due = sum((invoice.balance for invoice in invoices), Decimal("0.00"))
+    total_due = sum((invoice.get_balance() for invoice in invoices), Decimal("0.00"))
     currency = getattr(settings, "FINANCE_DEFAULT_CURRENCY", "USD")
     statement_rows = [
         {"invoice": invoice, "created_at": format_datetime(invoice.created_at)}

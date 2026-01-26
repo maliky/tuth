@@ -11,7 +11,7 @@ from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
-from app.academics.models.course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriculumCourse
 from app.academics.models.concentration import Major, Minor
 from app.finance.models.invoice import Invoice
 from app.people.models.student import Student
