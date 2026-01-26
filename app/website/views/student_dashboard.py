@@ -11,7 +11,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.db.models import Avg, Count, DecimalField, Max, Q, Sum, Value
+from django.db.models import Count, DecimalField, Max, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
@@ -26,6 +26,7 @@ from app.academics.models.prerequisite import Prerequisite
 from app.finance.models.invoice import Invoice
 from app.finance.models.payment import Payment
 from app.people.models.student import Student
+from app.registry.gpa import get_cumulative_gpa, get_grade_points_and_credits
 from app.registry.models.grade import Grade
 from app.registry.models.registration import Registration, RegistrationStatus
 from app.timetable.choices import WEEKDAYS_NUMBER
@@ -39,9 +40,6 @@ from .student_helpers import (
     _require_student,
     _resolve_semester,
 )
-
-
-GPA_EXCLUDED_CODES = {"ip", "ng", "w", "i", "ab", "dr"}
 
 
 class SemesterGradeRowT(TypedDict):
@@ -763,11 +761,8 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         elif is_eligible:
             available_courses.append(course_payload)
 
-    gpa = (
-        Grade.objects.filter(student=student)
-        .aggregate(value=Avg("value__number"))
-        .get("value")
-    )
+    gpa_result = get_cumulative_gpa(student=student, curriculum=student.curriculum)
+    gpa = gpa_result["gpa"]
 
     total_due = invoices.aggregate(total=Sum("balance")).get("total") or Decimal("0.00")
     payments = Payment.objects.filter(invoice__student=student)
@@ -889,9 +884,11 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             continue
         if grade_value.number >= 1:
             validated_credits_total += credits
-        if grade_value.code and grade_value.code not in GPA_EXCLUDED_CODES:
-            semester_gpa_points[semester_id] += float(grade_value.number) * credits
-            semester_gpa_credits[semester_id] += credits
+        gpa_values = get_grade_points_and_credits(grade)
+        if gpa_values is not None:
+            quality_points, gpa_credits = gpa_values
+            semester_gpa_points[semester_id] += quality_points
+            semester_gpa_credits[semester_id] += gpa_credits
 
     for group in semester_grade_groups:
         semester_id = group["semester_id"]

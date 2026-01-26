@@ -48,6 +48,9 @@ from app.registry.admin import (
     DocumentStudentInline,
 )
 from app.registry.admin.core import _available_sections_for_student
+
+# GPA should ignore non-final grade codes (kept in registry.constants).
+from app.registry.constants import GPA_EXCLUDED_CODES
 from app.registry.models.registration import Registration, RegistrationStatus
 from app.shared.admin.filters import StudentLevelFilter
 from app.shared.admin.mixins import (
@@ -61,9 +64,6 @@ from app.timetable.models.section import Section
 
 User = get_user_model()
 ModelT: TypeAlias = models.Model
-
-# GPA should ignore non-final grade codes (kept in registry.constants).
-GPA_EXCLUDED_CODES = {"ip", "ng", "w", "i", "ab", "dr"}
 
 MERGE_USER_FIELDS = (
     "first_name",

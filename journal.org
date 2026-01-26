@@ -1,4 +1,20 @@
 
+* <2026-01-26 lun. 20:03> GPA
+gpa.py is ok,
+
+yes udpate references
+yes pure helper function
+
+call the public function simply get_gpa
+do the cummulative get_cumulative_gpa
+
+yes refactor with shared helper
+
+keep the test for later
+
+yes  f are counted
+What we exclude from gpa are dr, ip, ip_upd, ng, w, i, ab, 
+
 * <2026-01-26 Mon 14:30> Admin
 
   Plan

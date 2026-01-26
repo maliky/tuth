@@ -14,6 +14,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from app.people.models.student import Student
+from app.registry.gpa import get_grade_points_and_credits
 from app.registry.models.grade import Grade
 from app.shared.utils import parse_str
 from app.timetable.models.semester import Semester, SemesterStatus
@@ -59,9 +60,6 @@ class RegistrarTranscriptRowT(TypedDict):
     course_title: str
     credits: int
     grade: str
-
-
-GPA_EXCLUDED_CODES = {"ip", "ng", "w", "i", "ab", "dr"}
 
 
 def _clean_int(value: str | None) -> int | None:
@@ -231,25 +229,21 @@ def registrar_grades_dashboard(request: HttpRequest) -> HttpResponse:
         )
         semester_group["credits_total"] += credits
         student_group["credits_total"] += credits
-        if (
-            grade.value
-            and grade.value.number is not None
-            and (grade.value.code or "").lower() not in GPA_EXCLUDED_CODES
-        ):
+        gpa_values = get_grade_points_and_credits(grade)
+        if gpa_values is not None:
+            quality_points, gpa_credits = gpa_values
             semester_key = (student.id, semester.id)
             semester_gpa_points[semester_key] = (
-                semester_gpa_points.get(semester_key, 0.0)
-                + float(grade.value.number) * credits
+                semester_gpa_points.get(semester_key, 0.0) + quality_points
             )
             semester_gpa_credits[semester_key] = (
-                semester_gpa_credits.get(semester_key, 0) + credits
+                semester_gpa_credits.get(semester_key, 0) + gpa_credits
             )
             student_gpa_points[student.id] = (
-                student_gpa_points.get(student.id, 0.0)
-                + float(grade.value.number) * credits
+                student_gpa_points.get(student.id, 0.0) + quality_points
             )
             student_gpa_credits[student.id] = (
-                student_gpa_credits.get(student.id, 0) + credits
+                student_gpa_credits.get(student.id, 0) + gpa_credits
             )
 
     for student_group in student_groups:

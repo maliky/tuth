@@ -40,11 +40,11 @@ class SectionAdmin(CollegeRestrictedAdmin):
     college_field = "curriculum_course__curriculum__college"
     list_display = (
         "curriculum_course",
-        "session_count",        
+        "session_count",
         "faculty_link",
-        "space_codes",        
+        "space_codes",
         "available_seats",
-        "credit_hours",        
+        "credit_hours",
         # "curriculum_display",
         "semester",
     )
