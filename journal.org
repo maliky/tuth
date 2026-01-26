@@ -1,16 +1,43 @@
 
 * <2026-01-26 Mon 14:30> Admin
-- add a merge action for departments take similar precaution as the own taken for curriculum courses
-  - I should be able to select the target values in a subsequent form
-- in admin/finance/sectionfee/add
-  - I get an internal server error
-- I should regroupt all Type/Status/ Models + impersonate and Grade Value under the same heading in the admin interface (Admin heading ?)
-- In admin/timetable/section
-  - remove the curriculum column
-  - make the credits and # secsession, available seats sortable. add a filter on available seats, using occupancy level of the section, move semester. respect the order from left to right Faculty > space > available seat> credits> secsession > semester.. in fact replace space code with room or room plus space
-- in grades,
-  - The the grade gpa computation, it seems rounded to the uint, should be rounde to 2 decimal places
-    
+
+  Plan
+
+  - Review existing admin merge actions (curriculum/course/curriculumcourse) to
+    mirror patterns, then design a Department merge flow with:
+      - Step 1: select source rows.
+      - Step 2: confirmation form to choose the target Department and field
+        precedence.
+      - Safeguards: block/skip merges that violate college/curriculum
+        relationships; collect conflicts and surface them in the confirmation
+        form.
+  - Admin timetable sections:
+      - Update list_display order to: Faculty > Room (replace space code with
+        room or room + space) > Available Seats > Credits > # SecSession >
+        Semester.
+      - Remove curriculum column.
+      - Add list_filter on occupancy/available seats, and make numeric columns
+        sortable (credits, available seats, secsession count).
+      - Move semester filter to the right-most position per requested order.
+  - Grades GPA rounding:
+      - Locate GPA computation (likely in model or admin list annotation).
+      - Ensure rounding to 2 decimal places (not integer).
+      - Keep consistent formatting in views and admin.
+
+** Admin regrouping:
+      - Inventory models should share the same admin heading (Type/Status +
+        Impersonate + GradeValue) + creditHourAdmin.
+      - Implement a shared app_index or ModelAdmin grouping so those entries
+        appear under one 'Admin' heading in the admin interface.
+
+
+** Draft UX Behavioral tests
+
+** Section fee
+   Change the model like the feetype and amount to a curriculum_course and a semester.
+   Rename it Course Fee.
+   Make the curriculum_course dropdown searchable
+   default to the current semester for the semester field but still propose other semesters
 
 * <2026-01-26 Mon 09:56> method order
 - class meta
