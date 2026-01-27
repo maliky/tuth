@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from app.finance.models.section_fee import SectionFee
+from app.finance.models.course_fee import CourseFee, CurriculumCourseFee
 from app.finance.models.status_types_methods import (
     FeeType,
     PaymentMethod,
@@ -311,19 +311,44 @@ class ScholarshipAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     autocomplete_fields = ("donor", "student")
 
 
-@admin.register(SectionFee)
-class SectionFeeAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
-    """Admin settings for SectionFee."""
+class BaseCourseFeeAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
+    """Shared admin settings for course fee lookups."""
 
-    #  Need to add logic for exports
-    list_display = ("section", "fee_type", "amount")
-    list_filter = (
-        "section__curriculum_course__curriculum__college",
-        "section__curriculum_course__curriculum",
+    list_display: tuple[str, ...] = ("semester", "amount")
+
+    def get_changeform_initial_data(self, request):
+        """Preset the semester to the current one for new fee entries."""
+        initial = super().get_changeform_initial_data(request)
+        if "semester" not in initial:
+            current_semester = Semester.get_current_semester()
+            if current_semester:
+                initial["semester"] = current_semester.id
+        return initial
+
+
+@admin.register(CourseFee)
+class CourseFeeAdmin(BaseCourseFeeAdmin):
+    """Admin settings for CourseFee."""
+
+    list_display = ("course", "semester", "fee_type", "amount")
+    autocomplete_fields = ("course",)
+    search_fields = (
+        "course__short_code",
+        "course__code",
+        "course__title",
     )
-    list_select_related = (
-        "section__semester",
-        "section",
-        "section__curriculum_course",
+
+
+@admin.register(CurriculumCourseFee)
+class CurriculumCourseFeeAdmin(BaseCourseFeeAdmin):
+    """Admin settings for CurriculumCourseFee."""
+
+    list_display = ("curriculum_course", "semester", "fee_type", "amount")
+    autocomplete_fields = ("curriculum_course",)
+    search_fields = (
+        "curriculum_course__course__short_code",
+        "curriculum_course__course__code",
+        "curriculum_course__course__title",
+        "curriculum_course__curriculum__short_name",
+        "curriculum_course__curriculum__long_name",
     )
-    search_fields = ("section", "section__curriculum_course")

@@ -18,27 +18,6 @@ if TYPE_CHECKING:
     from app.academics.models.curriculum_course import CurriculumCourse
 
 
-TUITION_RATE_PER_CREDIT = Decimal("5.00")
-
-
-def tuition_for(curriculum_course: "CurriculumCourse") -> Decimal:
-    """Calculate the tuition amount for a curriculum course.
-
-    Args:
-        curriculum_course: Curriculum course carrying the credit hour value.
-
-    Returns:
-        The total tuition cost.
-
-    Examples:
-        With 3 credit hours at the current rate, the result is 15.00.
-    """
-    credit_hours = getattr(curriculum_course, "credit_hours", None)
-    credit_code = getattr(credit_hours, "code", None)
-
-    return Decimal(int(credit_code or 0)) * TUITION_RATE_PER_CREDIT
-
-
 class Section(models.Model):
     """A single course offering in a given semester (by a faculty).
 
@@ -146,17 +125,7 @@ class Section(models.Model):
 
     def fee_total_amount(self) -> Decimal:
         """Return the total fee for the section including tuition."""
-        base_fee = getattr(self, "fee_total", None)
-        if base_fee is None:
-            fee_set = getattr(self, "sectionfee_set", None)
-            if fee_set is not None:
-                base_fee = sum(
-                    (fee.amount for fee in fee_set.all()),
-                    Decimal("0.00"),
-                )
-            else:
-                base_fee = Decimal("0.00")
-        return base_fee + tuition_for(self.curriculum_course)
+        return self.curriculum_course.total_fee(self.semester)
 
     def clean(self) -> None:
         """Check that the dates are correct."""

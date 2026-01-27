@@ -6,24 +6,6 @@ you can drop thec onflict summary function, to heavy  for my usecase now,
 add confirmation form waqrning
 do change merge_Departments if not need
 
-
-* DONE <2026-01-26 lun. 20:03> GPA
-CLOSED: [2026-01-26 lun. 20:36]
-gpa.py is ok,
-
-yes udpate references
-yes pure helper function
-
-call the public function simply get_gpa
-do the cummulative get_cumulative_gpa
-
-yes refactor with shared helper
-
-keep the test for later
-
-yes  f are counted
-What we exclude from gpa are dr, ip, ip_upd, ng, w, i, ab, 
-
 * <2026-01-26 Mon 14:30> Admin
 
   Plan
@@ -36,38 +18,35 @@ What we exclude from gpa are dr, ip, ip_upd, ng, w, i, ab,
       - Safeguards: block/skip merges that violate college/curriculum
         relationships; collect conflicts and surface them in the confirmation
         form.*
-** DONE Admin timetable sections:
-  CLOSED: [2026-01-26 Mon 17:15]
-      - Update list_display order to: Faculty > Room (replace space code with
-        room or room + space) > Available Seats > Credits > # SecSession >
-        Semester.
-      - Remove curriculum column.
-      - Add list_filter on occupancy/available seats, and make numeric columns
-        sortable (credits, available seats, secsession count).
-      - Move semester filter to the right-most position per requested order.
-** DONE Grades GPA rounding:
-   CLOSED: [2026-01-26 Mon 17:15]
-   - the gpa calculation should be done at the student or curriculum level /per curriculum or per student.
-     
-      - Look at gpa computationin app.people.admin.core.py:StudentAdmin.get_queryset
-      - Ensure rounding to 2 decimal places (not integer).
-      - Keep consistent formatting in views and admin.
-
-** DONE Admin regrouping:
-   CLOSED: [2026-01-26 Mon 16:21]
-      - Inventory models should share the same admin heading (Type/Status +
-        Impersonate + GradeValue) + creditHourAdmin.
-      - Implement a shared app_index or ModelAdmin grouping so those entries
-        appear under one 'Admin' heading in the admin interface.
-
-
 ** Draft UX Behavioral tests
 
 ** Section fee
-   Change the model like the feetype and amount to a curriculum_course and a semester.
-   Rename it Course Fee.
-   Make the curriculum_course dropdown searchable
-   default to the current semester for the semester field but still propose other semesters
+
+** update
+   A) OK
+     yes do not do migrations
+   B) Avoid services. CurriculumCourseFee can also be a good place.
+      - resolution order, OK
+   C) UX,
+      - should have searchable autocomplete fields
+      - Do preset with default current semester in add view.
+        On the backend, if a curriculumcourse fee is created for a specific semester and none where set for the null semester, then it should set the same for the null semester.
+   D) OK
+   E) Leav the tests for now.
+
+** draft
+I need a model change for the additiona fee management.  Drop the SectionFee Model (nothing in DB).  Replace it with a CourseFee keyed on course semester and amount.
+semester can be Null.
+Create a coursecurriculumFee to overide the Course Fee on special occcasion where a course fee may differe in different curriculums.
+
+Register the model in the admin, with a searchable drowpdown for course/curriculumcourses.
+in the ui, the default semester selected should be the current semester.
+
+
+To get a student section fee, we check the attached curriculum course fee for the semester if any, else the curriculum course fee, if any, then course fee for the semester if any, and finaly the course fee.  We add this fee to the tuition fee computed based on the course credit found in curriculum course.
+
+to make it clearer, I would like the fee computation to be centralized in the curriculum fee.
+
 
 * <2026-01-26 Mon 09:56> method order
 - class meta

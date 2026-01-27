@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Optional, Self, cast
 
 from django.db import models
@@ -10,8 +11,12 @@ from simple_history.models import HistoricalRecords
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.registry.models import CreditHour
+from app.finance.models.course_fee import CourseFee, CurriculumCourseFee
 from app.shared.types import FacultyQuery, StudentQuery
 from app.timetable.models.semester import Semester
+
+
+TUITION_RATE_PER_CREDIT = Decimal("5.00")
 
 
 class CurriculumCourse(models.Model):
@@ -94,6 +99,60 @@ class CurriculumCourse(models.Model):
             student_registrations__section__curriculum_course=self,
         ).distinct()
         return students_qs
+
+    def tuition_for(self) -> Decimal:
+        """Return the tuition amount for this curriculum course."""
+        credit_hours = getattr(self, "credit_hours", None)
+        credit_code = getattr(credit_hours, "code", None)
+        return Decimal(int(credit_code or 0)) * TUITION_RATE_PER_CREDIT
+
+    def total_fee(self, semester) -> Decimal:
+        """Return tuition plus resolved additional fees for a semester."""
+        curriculum_semester_fees = (
+            CurriculumCourseFee.objects.filter(
+                curriculum_course=self, semester=semester
+            )
+            if semester
+            else CurriculumCourseFee.objects.none()
+        )
+        curriculum_default_fees = CurriculumCourseFee.objects.filter(
+            curriculum_course=self, semester__isnull=True
+        )
+        course_semester_fees = (
+            CourseFee.objects.filter(course=self.course, semester=semester)
+            if semester
+            else CourseFee.objects.none()
+        )
+        course_default_fees = CourseFee.objects.filter(
+            course=self.course, semester__isnull=True
+        )
+
+        def _fee_map(fees):
+            return {fee.fee_type_id: fee.amount for fee in fees}
+
+        curriculum_semester_map = _fee_map(curriculum_semester_fees)
+        curriculum_default_map = _fee_map(curriculum_default_fees)
+        course_semester_map = _fee_map(course_semester_fees)
+        course_default_map = _fee_map(course_default_fees)
+
+        fee_types = set()
+        fee_types.update(curriculum_semester_map)
+        fee_types.update(curriculum_default_map)
+        fee_types.update(course_semester_map)
+        fee_types.update(course_default_map)
+
+        fee_total = Decimal("0.00")
+        for fee_type_id in fee_types:
+            if fee_type_id in curriculum_semester_map:
+                fee_total += curriculum_semester_map[fee_type_id]
+            elif fee_type_id in curriculum_default_map:
+                fee_total += curriculum_default_map[fee_type_id]
+            elif fee_type_id in course_semester_map:
+                fee_total += course_semester_map[fee_type_id]
+            elif fee_type_id in course_default_map:
+                fee_total += course_default_map[fee_type_id]
+
+        return self.tuition_for() + fee_total
 
     def save(self, *args, **kwargs):
         """Make sure we set default before saving."""

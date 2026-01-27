@@ -11,8 +11,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.db.models import Count, DecimalField, Max, Q, Sum, Value
-from django.db.models.functions import Coalesce
+from django.db.models import Count, Max, Q, Sum
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
@@ -496,7 +495,6 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             "section__curriculum_course__credit_hours",
             "status",
         )
-        .prefetch_related("section__sectionfee_set")
         .order_by("-date_registered")
     )
 
@@ -591,15 +589,6 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             "semester",
         )
         sections_qs = sections_qs.prefetch_related("sessions__schedule")
-        sections_qs = sections_qs.annotate(
-            fee_total=Coalesce(
-                Sum("sectionfee__amount"),
-                Value(
-                    Decimal("0.00"),
-                    output_field=DecimalField(max_digits=10, decimal_places=2),
-                ),
-            )
-        )
         if semester:
             sections_qs = sections_qs.filter(semester=semester)
         sections = sections_qs
@@ -774,13 +763,11 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         )
     )
     # balance already reflects the remaining balance after cleared payments.
-    pending_registrations = (
-        active_registrations.filter(status_id="pending")
-        .select_related(
-            "section__curriculum_course__course",
-            "section__curriculum_course__credit_hours",
-        )
-        .prefetch_related("section__sectionfee_set")
+    pending_registrations = active_registrations.filter(
+        status_id="pending"
+    ).select_related(
+        "section__curriculum_course__course",
+        "section__curriculum_course__credit_hours",
     )
     pending_registrations_list = list(pending_registrations)
     pending_total = sum(

@@ -7,7 +7,6 @@ from typing import cast
 import pytest
 
 from app.academics.models.curriculum_course import CurriculumCourse
-from app.timetable.models.section import tuition_for
 
 
 # > Why do we need those 2 DumyDataClass ?
@@ -29,8 +28,11 @@ class DummyCurriculumCourse:
 def test_tuition_for_uses_rate(monkeypatch, hours):
     """tuition_for() should multiply hours by the rate."""
     rate = Decimal("9.99")
-    monkeypatch.setattr("app.timetable.models.section.TUITION_RATE_PER_CREDIT", rate)
+    monkeypatch.setattr(
+        "app.academics.models.curriculum_course.TUITION_RATE_PER_CREDIT",
+        rate,
+    )
 
     dummy = DummyCurriculumCourse(credit_hours=DummyCreditHours(code=hours))
     curriculum_course = cast(CurriculumCourse, dummy)
-    assert tuition_for(curriculum_course) == Decimal(hours) * rate
+    assert curriculum_course.tuition_for() == Decimal(hours) * rate

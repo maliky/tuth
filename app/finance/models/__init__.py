@@ -1,5 +1,6 @@
 """Convenience exports for finance app models."""
 
+from app.finance.models.course_fee import CourseFee, CurriculumCourseFee
 from app.finance.models.invoice import Invoice
 from app.finance.models.payment import Payment
 from app.finance.models.scholarship import (
@@ -7,7 +8,6 @@ from app.finance.models.scholarship import (
     ScholarshipLetterTemplate,
     ScholarshipTermSnapshot,
 )
-from app.finance.models.section_fee import SectionFee
 from app.finance.models.status_types_methods import (
     AccountChartType,
     AccountType,
@@ -19,13 +19,14 @@ from app.finance.models.status_types_methods import (
 __all__ = [
     "AccountChartType",
     "AccountType",
-    "PaymentStatus",
+    "CourseFee",
+    "CurriculumCourseFee",
     "FeeType",
     "Invoice",
     "Payment",
+    "PaymentStatus",
     "PaymentMethod",
     "Scholarship",
     "ScholarshipLetterTemplate",
     "ScholarshipTermSnapshot",
-    "SectionFee",
 ]
