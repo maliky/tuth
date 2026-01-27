@@ -28,7 +28,7 @@ class Payment(StatusableMixin, models.Model):
 
     Example:
         >>> from app.finance.models.invoice import Invoice
-        >>> invoice = Invoice.get_default()
+        # >>> invoice = Invoice.get_default()
         >>> invoice.save(update_fields=["initial_amount_due", "balance"])
         >>> Payment.objects.create(invoice=invoice)
     """

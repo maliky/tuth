@@ -8,13 +8,13 @@ from typing import Any
 from django.db import models
 from simple_history.models import HistoricalRecords
 
-from app.academics.models.curriculum_course import CurriculumCourse
+# from app.academics.models.curriculum_course import CurriculumCourse
 from app.finance.models.status_types_methods import InvoiceStatus
-from app.people.models.student import Student
+# from app.people.models.student import Student
 from app.registry.models.registration import Registration
 from app.registry.models.status_types import RegistrationStatus
 from app.shared.mixins import StatusableMixin
-from app.timetable.models.semester import Semester
+# from app.timetable.models.semester import Semester
 
 
 class Invoice(StatusableMixin, models.Model):
@@ -127,16 +127,16 @@ class Invoice(StatusableMixin, models.Model):
         self._update_status()
         return super().save(*args, **kwargs)
 
-    @classmethod
-    def get_default(cls) -> "Invoice":
-        """Return a default invoice for placeholder/student defaults."""
-        semester = Semester.get_current_semester()
-        return cls.objects.create(
-            curriculum_course=CurriculumCourse.get_default(),
-            student=Student.get_default(),
-            semester=semester,
-            initial_amount_due=0,
-        )
+    # @classmethod
+    # def get_default(cls) -> "Invoice":
+    #     """Return a default invoice for placeholder/student defaults."""
+    #     semester = Semester.get_current_semester()
+    #     return cls.objects.create(
+    #         curriculum_course=CurriculumCourse.get_default(),
+    #         student=Student.get_default(),
+    #         semester=semester,
+    #         initial_amount_due=0,
+    #     )
 
     class Meta:
         constraints = [
