@@ -109,9 +109,7 @@ class CurriculumCourse(models.Model):
     def total_fee(self, semester) -> Decimal:
         """Return tuition plus resolved additional fees for a semester."""
         curriculum_semester_fees = (
-            CurriculumCourseFee.objects.filter(
-                curriculum_course=self, semester=semester
-            )
+            CurriculumCourseFee.objects.filter(curriculum_course=self, semester=semester)
             if semester
             else CurriculumCourseFee.objects.none()
         )
