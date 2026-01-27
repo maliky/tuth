@@ -28,7 +28,16 @@ What we exclude from gpa are dr, ip, ip_upd, ng, w, i, ab,
 
   Plan
 
-  - Admin timetable sections:
+  - Review existing admin merge actions (curriculum/course/curriculumcourse) to
+    mirror patterns, then design a Department merge flow with:
+      - Step 1: select source rows.
+      - Step 2: confirmation form to choose the target Department and field
+        precedence.
+      - Safeguards: block/skip merges that violate college/curriculum
+        relationships; collect conflicts and surface them in the confirmation
+        form.*
+** DONE Admin timetable sections:
+  CLOSED: [2026-01-26 Mon 17:15]
       - Update list_display order to: Faculty > Room (replace space code with
         room or room + space) > Available Seats > Credits > # SecSession >
         Semester.
@@ -36,17 +45,8 @@ What we exclude from gpa are dr, ip, ip_upd, ng, w, i, ab,
       - Add list_filter on occupancy/available seats, and make numeric columns
         sortable (credits, available seats, secsession count).
       - Move semester filter to the right-most position per requested order.
-
-** Review existing admin merge actions (curriculum/course/curriculumcourse) to
-    mirror patterns, then design a Department merge flow with:
-      - Step 1: select source rows.
-      - Step 2: confirmation form to choose the target Department and field
-        precedence.
-      - Safeguards: block/skip merges that violate college/curriculum
-        relationships; collect conflicts and surface them in the confirmation
-        form.
-
-** Grades GPA rounding:
+** DONE Grades GPA rounding:
+   CLOSED: [2026-01-26 Mon 17:15]
    - the gpa calculation should be done at the student or curriculum level /per curriculum or per student.
      
       - Look at gpa computationin app.people.admin.core.py:StudentAdmin.get_queryset
