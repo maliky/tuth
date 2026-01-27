@@ -199,10 +199,10 @@ class CourseAdmin(DepartmentRestrictedAdmin):
     # Use list filters for curricula to avoid reverse M2M autocomplete errors.
     # > TODO: Add the list of student enrolled in this course the current semester.
     inlines = [
+        CourseFeeInline,
         RequiresInline,
         PrerequisiteInline,
         CourseCurriculumInline,
-        CourseFeeInline,
     ]
     list_select_related = ("department",)
     list_editable = ("department",)
