@@ -39,7 +39,9 @@ from .filters import (
 )
 from .inlines import (
     CourseCurriculumInline,
+    CourseFeeInline,
     CurriculumCourseInline,
+    CurriculumCourseFeeInline,
     DepartmentCourseInline,
     PrerequisiteInline,
     RequiresInline,
@@ -192,13 +194,18 @@ class CourseAdmin(DepartmentRestrictedAdmin):
         "short_code",
         "title",
         "department",
-        "curricula_links",
     )
+    # Curricula column removed from list_display; keep helper for reuse elsewhere.
     # Use list filters for curricula to avoid reverse M2M autocomplete errors.
     # > TODO: Add the list of student enrolled in this course the current semester.
-    inlines = [RequiresInline, PrerequisiteInline, CourseCurriculumInline]
+    inlines = [
+        RequiresInline,
+        PrerequisiteInline,
+        CourseCurriculumInline,
+        CourseFeeInline,
+    ]
     list_select_related = ("department",)
-    # list_editable = ("department",)
+    list_editable = ("department",)
     list_filter = (
         SemesterFilterAC,
         DepartmentFilterAC,
@@ -449,6 +456,7 @@ class CurriculumCourseAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
 
     # Optional inline to list all curricula for this curriculum_course.
     # inlines = [CurriculumCourseInline]
+    inlines = [CurriculumCourseFeeInline]
 
     ordering = ("course__short_code",)
     actions = [update_curriculum]
