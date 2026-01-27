@@ -16,6 +16,7 @@ from app.registry.models.document import DocumentStatus, DocumentType
 # from app.registry.admin.filters import GradeSectionFilter
 # from app.registry.admin.views import SectioGradeValueerAutocomplete
 from app.registry.models.grade import Grade, GradeValue
+from app.registry.admin.resources import GradeResource
 from app.registry.admin.filters import GradeStudentFilter
 from app.registry.models.registration import Registration, RegistrationStatus
 from app.registry.models.transcript import TranscriptRequest, TranscriptRequestStatus
@@ -260,6 +261,7 @@ class GradeAdmin(
     lookups for student and section.
     """
 
+    resource_class = GradeResource
     date_hierarchy = "graded_on"
     list_display = (
         "student",
@@ -283,6 +285,8 @@ class GradeAdmin(
         "section__semester__academic_year__long_name",
         "section__semester__number",
         "section__curriculum_course__course__short_code",
+        "section__curriculum_course__course__code",
+        "section__curriculum_course__course__department__code",
     )
 
     def get_urls(self):

@@ -16,9 +16,16 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.http import urlencode
 from guardian.admin import GuardedModelAdmin
+from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from app.academics.models.curriculum_course import CurriculumCourse
+from app.finance.admin.resources import (
+    CourseFeeResource,
+    CurriculumCourseFeeResource,
+    InvoiceResource,
+    PaymentResource,
+)
 from app.finance.admin.inlines import InvoicePaymentInline
 from app.finance.models.payment import Payment
 from app.finance.models.invoice import Invoice
@@ -75,9 +82,15 @@ class AmountDueFilter(admin.SimpleListFilter):
 
 
 @admin.register(Invoice)
-class InvoiceAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedModelAdmin):
+class InvoiceAdmin(
+    ScopedAutocompleteAdminMixin,
+    SimpleHistoryAdmin,
+    ImportExportModelAdmin,
+    GuardedModelAdmin,
+):
     """Admin settings for Payment."""
 
+    resource_class = InvoiceResource
     list_display = (
         "student_label",
         "curriculum_course",
@@ -270,9 +283,15 @@ class LookupAdmin(admin.ModelAdmin):
 
 
 @admin.register(Payment)
-class PaymentAdmin(ScopedAutocompleteAdminMixin, SimpleHistoryAdmin, GuardedModelAdmin):
+class PaymentAdmin(
+    ScopedAutocompleteAdminMixin,
+    SimpleHistoryAdmin,
+    ImportExportModelAdmin,
+    GuardedModelAdmin,
+):
     """Admin interface for :class:`~app.finance.models.Payment`."""
 
+    resource_class = PaymentResource
     list_display = ("invoice", "amount_paid", "payment_method", "status", "recorded_by")
     autocomplete_fields = ("payment_method", "invoice", "status")
     exclude = ("recorded_by",)
@@ -311,7 +330,7 @@ class ScholarshipAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     autocomplete_fields = ("donor", "student")
 
 
-class BaseCourseFeeAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
+class BaseCourseFeeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Shared admin settings for course fee lookups."""
 
     list_display: tuple[str, ...] = ("semester", "amount")
@@ -330,6 +349,7 @@ class BaseCourseFeeAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
 class CourseFeeAdmin(BaseCourseFeeAdmin):
     """Admin settings for CourseFee."""
 
+    resource_class = CourseFeeResource
     list_display = ("course", "semester", "fee_type", "amount")
     autocomplete_fields = ("course",)
     search_fields = (
@@ -343,6 +363,7 @@ class CourseFeeAdmin(BaseCourseFeeAdmin):
 class CurriculumCourseFeeAdmin(BaseCourseFeeAdmin):
     """Admin settings for CurriculumCourseFee."""
 
+    resource_class = CurriculumCourseFeeResource
     list_display = ("curriculum_course", "semester", "fee_type", "amount")
     autocomplete_fields = ("curriculum_course",)
     search_fields = (

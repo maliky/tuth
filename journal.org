@@ -1,4 +1,7 @@
 
+* <2026-01-27 Tue 17:08>  Fee
+  - need to find a clean way to import default course fix fee. 
+
 *  <2026-01-26 lun. 20:42> mergin departments
 use merge wizardmixin
 yes keep shortname out
