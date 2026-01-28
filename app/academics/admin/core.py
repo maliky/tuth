@@ -18,10 +18,6 @@ from app.academics.models import (
     Curriculum,
     CurriculumStatus,
     Department,
-    Major,
-    MajorCurriculumCourse,
-    Minor,
-    MinorCurriculumCourse,
     Prerequisite,
 )
 from app.people.models.student import Student
@@ -35,6 +31,7 @@ from .filters import (
     CourseCurriculumFilter,
     CurriculumFilterAC,
     CurriculumCourseFacultyFilterAC,
+    DepartmentCurriculumFilterAC,
     DepartmentFilterAC,
 )
 from .inlines import (
@@ -274,34 +271,6 @@ class CourseAdmin(DepartmentRestrictedAdmin):
                     "college"
                 ).order_by("college__code", "shortname")
         return form
-
-
-@admin.register(Major)
-class MajorAdmin(admin.ModelAdmin):
-    """Admin options for Major."""
-
-    list_display = ("name", "course_count")
-
-
-@admin.register(Minor)
-class MinorAdmin(admin.ModelAdmin):
-    """Admin options for Minor."""
-
-    list_display = ("name", "course_count")
-
-
-@admin.register(MajorCurriculumCourse)
-class MajorCurriculumAdmin(admin.ModelAdmin):
-    """Admin options for MajorCurriculumCourse."""
-
-    list_display = ("major", "curriculum_course")
-
-
-@admin.register(MinorCurriculumCourse)
-class MinorCurriculumCourseAdmin(admin.ModelAdmin):
-    """Admin options for MinorCurriculumCourse."""
-
-    list_display = ("minor", "curriculum_course")
 
 
 @admin.register(Curriculum)
@@ -552,12 +521,12 @@ class DepartmentAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         "code",
         "long_name",
         "college",
-        "curricula_links",
         "course_count_link",
         "faculty_count_link",
     )
     list_filter = [
         "college",
+        DepartmentCurriculumFilterAC,
     ]
     list_editable = ("college",)
     search_fields = ("code", "long_name", "college")
@@ -600,25 +569,7 @@ class DepartmentAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         )
         return format_html('<a href="{}">{}</a>', url, count)
 
-    @admin.display(description="Curricula")
-    def curricula_links(self, obj):
-        """List curricula that include courses from this department."""
-        curricula_map = {}
-        for course in obj.courses.all():
-            for curriculum in course.curricula.all():
-                curricula_map[curriculum.pk] = curriculum
-        if not curricula_map:
-            return "-"
-        rows = [
-            (
-                reverse("admin:academics_curriculum_change", args=[curriculum.pk]),
-                curriculum.short_name,
-            )
-            for curriculum in sorted(
-                curricula_map.values(), key=lambda cur: cur.short_name
-            )
-        ]
-        return format_html_join(", ", '<a href="{}">{}</a>', rows)
+    # > Curricula list removed from list_display to reduce page load.
 
     def merge_records(self, target: ModelT, sources: Iterable[ModelT]) -> dict[str, int]:
         """Merge departments using the shared merge helper."""
