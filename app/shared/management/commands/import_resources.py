@@ -8,10 +8,9 @@ resources for each model.
 
 from __future__ import annotations
 
-from collections import OrderedDict
-from pathlib import Path
-from typing import Any, Iterable, Sequence
 import logging
+from pathlib import Path
+from typing import Any, Iterable, Sequence, Tuple, Mapping
 
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError, CommandParser
@@ -22,38 +21,45 @@ from tablib import Dataset
 from tablib.core import InvalidDimensions
 from tqdm import tqdm
 
-from app.academics.admin.resources import (  # noqa: F401
+from app.academics.admin import (  # noqa: F401
     CourseResource,
     CurriculumCourseResource,
 )
-from app.academics.models.college import College  # noqa: F401
-from app.people.admin.resources import FacultyResource, StudentResource, DonorResource
-from app.registry.admin.resources import GradeResource
-from app.registry.admin.resources_legacy import (
+from app.academics.models import College  # noqa: F401
+from app.people.admin import DonorResource, FacultyResource, StudentResource
+from app.registry.admin import (
+    GradeResource,
     LegacyGradeSheetResource,
     LegacyRegistrationResource,
 )
 from app.shared.auth.helpers import ensure_superuser  # noqa: F401
 from app.shared.file_utils import guess_tabular_format, read_text_file
+from app.shared.importing import get_import_logger
+from app.shared.management.resources import (
+    DIRECTORY_RESOURCE_ENTRIES,
+    RESOURCE_REGISTRY,
+    RESOURCE_CHOICES,
+)
 from app.shared.types import DirectoryResourceEntry, ModelResourceType
 from app.shared.utils import clean_column_headers
-from app.shared.importing.logging_utils import get_import_logger, log_notice
-from app.spaces.admin.resources import RoomResource  # noqa: F401
-from app.timetable.admin.resources.core import SemesterResource  # noqa: F401
-from app.timetable.admin.resources.section import SectionResource
-from app.timetable.admin.resources.session import (
+from app.spaces.admin import RoomResource  # noqa: F401
+from app.timetable.admin import (
     ScheduleResource,
     SecSessionResource,
+    SectionResource,
+    SemesterResource,
 )  # noqa: F401
 
 
 class Command(BaseCommand):
-    """Load sections and sessions from cleaned_tscc.csv or provided file."""
+    """Load data from set of files csv or tsv provided directly or through a directory."""
+
+    RESOURCE_CHOICES: Sequence[str] = RESOURCE_CHOICES
 
     help = (
         "Import resources from a CSV file or directory.\n\n"
         "Arguments:\n"
-        "  -f/--file_path: path to a CSV/TSV or a directory containing resource files.\n"
+        "  -f/--file_path: path to a CSV/TSV or a directory containing resources.\n"
         "  -r/--resource: optional, one or more resource names to limit the import "
         "(defaults to all available). Choices include Grade, LegacyGrade, LegacyRegistration "
         "and directory-scoped resources (Faculty, Room, Course, CurriculumCourse, Semester, "
@@ -65,287 +71,268 @@ class Command(BaseCommand):
         "handle_integrity_error, post_import_report).\n"
     )
 
-    RESOURCE_REGISTRY: dict[str, ModelResourceType] = {
-        "Grade": GradeResource,
-        "LegacyGrade": LegacyGradeSheetResource,
-        "LegacyRegistration": LegacyRegistrationResource,
-    }
-    DIRECTORY_RESOURCES: Sequence[DirectoryResourceEntry] = (
-        ("Faculty", FacultyResource, ("people_instructors.csv",)),
-        ("Room", RoomResource, ("space_room.csv",)),
-        ("Course", CourseResource, ("academic_course.csv",)),
-        (
-            "CurriculumCourse",
-            CurriculumCourseResource,
-            ("academic_curriculum_course.csv",),
-        ),
-        (
-            "Semester",
-            SemesterResource,
-            ("academicyear_semester.csv",),
-        ),
-        ("Donor", DonorResource, ("people_donors.csv",)),
-        (
-            "Student",
-            StudentResource,
-            (
-                # StudentInfo.csv  # may  have usefull info
-                "people_students.csv",
-                "UM_students.csv",
-            ),
-        ),
-        (
-            "Grade",
-            GradeResource,
-            (
-                "registry_gradeSheets.csv",
-                "gradesheets.csv",
-            ),
-        ),
-    )
-    LEGACY_DIRECTORY_RESOURCES: Sequence[DirectoryResourceEntry] = (
-        (
-            "LegacyRegistration",
-            LegacyRegistrationResource,
-            (
-                "registry_registration.csv",
-                "studentcourses.csv",
-                "UM_StudentsCourses.csv",
-            ),
-        ),
-        (
-            "LegacyGrade",
-            LegacyGradeSheetResource,
-            (
-                "oldgrades.csv",
-                "UM_TransferGrades.csv",
-            ),
-        ),
-    )
-    RESOURCE_CHOICES = tuple(
-        OrderedDict.fromkeys(
-            list(RESOURCE_REGISTRY.keys())
-            + [key for key, *_ in DIRECTORY_RESOURCES]
-            + [key for key, *_ in LEGACY_DIRECTORY_RESOURCES]
-        ).keys()
-    )
-
     def add_arguments(self, parser: CommandParser) -> None:
         """Register --file_path CLI option for the CSV to import."""
         parser.add_argument(
             "-f",
             "--file_path",
             nargs="?",
-            default="./Seed_data/cleaned_tscc.csv",
+            default="./Seed_data/Fundamentals",
             help="Path to CSV file with resources data",
         )
+        parser.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Parse/import without writing to the database.",
+        )
+
         parser.add_argument(
             "-r",
             "--resource",
             action="append",
-            choices=self.RESOURCE_CHOICES,
-            help="Limit import to the selected resource(s). Can be repeated.",
+            choices=(*self.RESOURCE_CHOICES, "all"),
+            help=(
+                "Limit import to the selected resource(s). Can be repeated. "
+                "Use 'all' to load every available resource."
+            ),
         )
 
-    def handle(self, *args: Any, **options: Any) -> None:
+    def handle(self, *args: Any, **opts: Any) -> None:
         """Validate and import each resource from the provided CSV."""
-        call_command("migrate", interactive=False, verbosity=0)
-        call_command("create_states")
-        ensure_superuser(self)
-        call_command("load_roles", verbosity=0)
+        file_path = Path(opts["file_path"])
+        selected_rsc_raw = opts.get("resource") or []
+        if isinstance(selected_rsc_raw, str):
+            selected_rsc: list[str] = [selected_rsc_raw]
+        else:
+            selected_rsc = list(selected_rsc_raw)
 
-        path = Path(options["file_path"])
-        selected = options.get("resource")
-        if not path.exists():
-            raise FileNotFoundError(str(path))
+        if not selected_rsc or "all" in selected_rsc:
+            selected_rsc = list(RESOURCE_CHOICES)
 
-        if path.is_dir():
-            self._import_from_directory(path, selected)
+        dry_run: bool = bool(opts.get("dry_run"))
+        if not file_path.exists():
+            raise FileNotFoundError(str(file_path))
+
+        if file_path.is_dir():
+            _import_from_directory(self, file_path, selected_rsc, dry_run)
             return
 
-        file_contents = read_text_file(path)
-        try:
-            dataset: Dataset = Dataset().load(
-                file_contents, format=guess_tabular_format(file_contents)
-            )
-        except InvalidDimensions:
-            if selected and len(selected) == 1 and selected[0] == "Donor":
-                dataset = self._build_donor_dataset(file_contents)
-            else:
-                raise
-        dataset = clean_column_headers(dataset)
+        file_contents = read_text_file(file_path)
+        dataset = _load_dataset(file_contents)
 
-        selected_keys = selected or list(self.RESOURCE_REGISTRY.keys())
+        for key in selected_rsc:
+            ResourceClass = RESOURCE_REGISTRY.get(key)
+            if ResourceClass is None:
+                raise CommandError(f"Unknown resource: {key}")
+            _run_import(self, dataset, key, ResourceClass, file_path, dry_run)
 
-        for key in selected_keys:
-            if key not in self.RESOURCE_REGISTRY:
-                raise CommandError(
-                    f"Resource '{key}' is only available when importing from a directory."
+
+# ------------------------------------------------------------------ helpers
+
+
+def _run_import(
+    cmd,
+    dataset: Dataset,
+    label: str,
+    ResourceClass: ModelResourceType,
+    path: Path,
+    dry_run: bool = False,
+) -> None:
+    """Execute the import for a dataset/resource pair with progress output."""
+    resource: resources.ModelResource = ResourceClass()
+    # Allow resources to normalize headers/dataset before row iteration
+    if hasattr(resource, "before_import"):
+        resource.before_import(dataset)
+    logger = get_import_logger()
+    rows = list(dataset.dict)
+    total_rows = len(rows)
+    instance_loader = resource._meta.instance_loader_class(resource, dataset)
+    created = 0
+    updated = 0
+    error_rows: list[tuple[int, list[Exception]]] = []
+    invalid_rows: list[tuple[int, str]] = []
+    error_details: list[tuple[int, Mapping[str, Any], str]] = []
+
+    logger.info(f"Starting import for {label}: {path}", extra={"resource": label})
+    with transaction.atomic():
+        for row_number, row in enumerate(
+            tqdm(rows, total=total_rows or None, desc=f"Importing {label}"),
+            start=1,
+        ):
+            skip_check = getattr(resource, "should_skip_row", None)
+            if skip_check and skip_check(row, row_number, command=cmd):
+                continue
+            try:
+                row_result = resource.import_row(
+                    row,
+                    instance_loader,
+                    dry_run=dry_run,
+                    row_number=row_number,
                 )
-            ResourceClass = self.RESOURCE_REGISTRY[key]
-            self._run_import(dataset, key, ResourceClass)
 
-    # ------------------------------------------------------------------ helpers
-
-    def _run_import(
-        self,
-        dataset: Dataset,
-        label: str,
-        ResourceClass: ModelResourceType,
-    ) -> None:
-        """Execute the import for a dataset/resource pair with progress output."""
-        resource: resources.ModelResource = ResourceClass()
-        logger = get_import_logger()
-        rows = list(dataset.dict)
-        total_rows = len(rows)
-        instance_loader = resource._meta.instance_loader_class(resource, dataset)
-        created = 0
-        updated = 0
-        error_rows: list[tuple[int, list[Exception]]] = []
-        invalid_rows: list[tuple[int, str]] = []
-
-        log_notice(logger, f"Starting import for {label}", extra={"resource": label})
-        with transaction.atomic():
-            for row_number, row in enumerate(
-                tqdm(rows, total=total_rows or None, desc=f"Importing {label}"),
-                start=1,
-            ):
-                skip_check = getattr(resource, "should_skip_row", None)
-                if skip_check and skip_check(row, row_number, command=self):
+            except IntegrityError as exc:
+                handler = getattr(resource, "handle_integrity_error", None)
+                if handler and handler(exc, row, row_number, command=cmd):
                     continue
-                try:
-                    row_result = resource.import_row(
+                _log_row_detail(cmd, row_number, row, str(exc), error_details)
+                raise CommandError(
+                    f"{label} import failed at row {row_number}: {exc}"
+                ) from exc
+            except Exception as exc:
+                _log_row_detail(cmd, row_number, row, str(exc), error_details)
+                raise CommandError(
+                    f"{label} import failed at row {row_number}: {exc}"
+                ) from exc
+
+            if row_result.import_type == RowResult.IMPORT_TYPE_NEW:
+                created += 1
+            elif row_result.import_type == RowResult.IMPORT_TYPE_UPDATE:
+                updated += 1
+            elif row_result.import_type == RowResult.IMPORT_TYPE_INVALID:
+                error_msg = getattr(row_result, "error", "Invalid row")
+                invalid_rows.append((row_number, error_msg))
+                _log_row_detail(cmd, row_number, row, str(error_msg), error_details)
+
+            if row_result.errors:
+                error_rows.append((row_number, row_result.errors))
+                first = row_result.errors[0] if row_result.errors else None
+                if first is not None:
+                    _log_row_detail(
+                        cmd,
+                        row_number,
                         row,
-                        instance_loader,
-                        dry_run=False,
-                        row_number=row_number,
-                    )
-                except IntegrityError as exc:
-                    handler = getattr(resource, "handle_integrity_error", None)
-                    if handler and handler(exc, row, row_number, command=self):
-                        continue
-                    raise CommandError(
-                        f"{label} import failed at row {row_number}: {exc}"
-                    ) from exc
-                except Exception as exc:
-                    raise CommandError(
-                        f"{label} import failed at row {row_number}: {exc}"
-                    ) from exc
-
-                if row_result.import_type == RowResult.IMPORT_TYPE_NEW:
-                    created += 1
-                elif row_result.import_type == RowResult.IMPORT_TYPE_UPDATE:
-                    updated += 1
-                elif row_result.import_type == RowResult.IMPORT_TYPE_INVALID:
-                    invalid_rows.append(
-                        (row_number, getattr(row_result, "error", "Invalid row"))
+                        getattr(first, "error", str(first)),
+                        error_details,
                     )
 
-                if row_result.errors:
-                    error_rows.append((row_number, row_result.errors))
+        if dry_run:
+            transaction.set_rollback(True)
 
-            # > Explain the code below.  How does it not delete everything
-            # > on each pass ?
-            if resource._meta.use_bulk:
-                resource.bulk_create(
-                    using_transactions=True,
-                    dry_run=False,
-                    raise_errors=True,
-                )
-                resource.bulk_update(
-                    using_transactions=True,
-                    dry_run=False,
-                    raise_errors=True,
-                )
-                resource.bulk_delete(
-                    using_transactions=True,
-                    dry_run=False,
-                    raise_errors=True,
-                )
-
-        if error_rows or invalid_rows:
+    if error_rows or invalid_rows:
+        for row_number, row_data, err in error_details[:5]:
+            sample = _summarize_row(row_data)
+            cmd.stdout.write(
+                cmd.style.ERROR(f"Row {row_number} error: {err}; data: {sample}")
+            )
+        if not error_details:
             for row_number, errors in error_rows[:5]:
                 first = errors[0] if errors else None
                 if first is not None:
-                    self.stdout.write(
-                        self.style.ERROR(
+                    cmd.stdout.write(
+                        cmd.style.ERROR(
                             f"Row {row_number} failed: {getattr(first, 'error', first)}"
                         )
                     )
             for row_number, error in invalid_rows[:5]:
-                self.stdout.write(self.style.ERROR(f"Row {row_number} invalid: {error}"))
-            raise CommandError(
-                f"{label} import failed with {len(error_rows)} errors "
-                f"and {len(invalid_rows)} invalid rows."
-            )
-
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"{label} import completed: {created} created, {updated} updated."
-            )
-        )
-        reporter = getattr(resource, "post_import_report", None)
-        if reporter:
-            reporter(self)
-        log_notice(
-            logger,
-            f"Completed import for {label}",
-            extra={
-                "resource": label,
-                "created_count": created,
-                "updated_count": updated,
-                "error_count": len(error_rows),
-                "invalid_count": len(invalid_rows),
-            },
+                cmd.stdout.write(cmd.style.ERROR(f"Row {row_number} invalid: {error}"))
+        raise CommandError(
+            f"{label} import failed with {len(error_rows)} errors "
+            f"and {len(invalid_rows)} invalid rows."
         )
 
-    def _import_from_directory(self, directory: Path, selected: list[str] | None) -> None:
-        """Load individual CSV files found in a directory."""
-        if selected:
-            targets = selected
-        else:
-            targets = [name for name, *_ in self.DIRECTORY_RESOURCES]
+    cmd.stdout.write(
+        cmd.style.SUCCESS(
+            f"{label} import completed{' (dry-run)' if dry_run else ''}: {created} created, {updated} updated."
+        )
+    )
+    reporter = getattr(resource, "post_import_report", None)
+    if reporter:
+        reporter(cmd)
 
-        target_set = set(targets)
-        ordered = list(self.DIRECTORY_RESOURCES) + list(self.LEGACY_DIRECTORY_RESOURCES)
 
-        for name, ResourceClass, filenames in ordered:
-            if name not in target_set:
-                continue
+def _summarize_row(row: Mapping[str, Any], limit: int = 5) -> str:
+    """Return a compact string of the first few key/value pairs."""
+    items = list(row.items())[:limit]
+    return ", ".join(f"{k}={v}" for k, v in items)
 
-            dataset = self._load_directory_dataset(directory, filenames)
-            if dataset is None:
-                self.stdout.write(
-                    self.style.WARNING(f"↷ skipping {name}: {filenames} not found")
-                )
-                continue
 
-            self._run_import(dataset, name, ResourceClass)
+def _log_row_detail(
+    cmd,
+    row_number: int,
+    row: Mapping[str, Any],
+    error: str,
+    bucket: list[tuple[int, Mapping[str, Any], str]],
+    limit: int = 5,
+) -> None:
+    """Store row/error detail and print first few for visibility."""
+    if len(bucket) < limit:
+        cmd.stdout.write(
+            cmd.style.ERROR(
+                f"Row {row_number} error: {error}; data: {_summarize_row(row)}"
+            )
+        )
+    bucket.append((row_number, row, error))
 
-    def _load_directory_dataset(
-        self, directory: Path, filenames: Iterable[str]
-    ) -> Dataset | None:
-        """Return a dataset for the first matching CSV in filenames."""
-        for name in filenames:
-            file_path = directory / name
-            if not file_path.exists():
-                continue
-            contents = read_text_file(file_path)
-            try:
-                dataset = Dataset().load(contents, format=guess_tabular_format(contents))
-            except InvalidDimensions:
-                dataset = self._build_donor_dataset(contents)
-            return clean_column_headers(dataset)
-        return None
 
-    def _build_donor_dataset(self, text: str) -> Dataset:
-        """Create a single-column dataset from donor CSV text."""
-        dataset = Dataset(headers=["donors"])
-        lines = [line.strip() for line in text.splitlines() if line.strip()]
-        if lines and lines[0].lower().startswith("donor"):
-            lines = lines[1:]
-        for value in lines:
-            cleaned = value.strip().strip('"')
-            if cleaned:
-                dataset.append([cleaned])
-        return dataset
+def _import_from_directory(
+    cmd: Command, directory: Path, selected: list[str] | None, dry_run: bool = False
+) -> None:
+    """Load individual CSV files found in a directory."""
+    targets = selected or [name for name, *_ in DIRECTORY_RESOURCE_ENTRIES]
+    target_set = set(targets)
+
+    for name, ResourceClass, filenames in DIRECTORY_RESOURCE_ENTRIES:
+        if name not in target_set:
+            continue
+
+        datasets = _load_directory_datasets(directory, filenames)
+        if datasets is None:
+            cmd.stdout.write(
+                cmd.style.WARNING(f"↷ skipping {name}: {filenames} not found")
+            )
+            continue
+        for dataset, file_path in datasets:
+            _run_import(cmd, dataset, name, ResourceClass, file_path, dry_run)
+
+    return None
+
+
+def _load_directory_datasets(
+    directory: Path, filenames: Iterable[str]
+) -> Iterable[Tuple[Dataset, Path]] | None:
+    """Return the datasets and the file_path each of the matching CSV/TSV."""
+    datasets = []
+
+    for filename in filenames:
+        file_path = directory / filename
+        if not file_path.exists():
+            continue
+        contents = read_text_file(file_path)
+        dataset = _load_dataset(contents)
+        if dataset:
+            datasets.append((dataset, file_path))
+
+    return datasets or None
+
+
+def _load_dataset(file_contents) -> Dataset:
+    """Load the c/tsv file in Dataset handling special Donor case."""
+    import csv
+
+    try:
+        csv.field_size_limit(10_000_000)
+    except Exception:
+        pass
+    try:
+        dataset: Dataset = Dataset().load(
+            file_contents, format=guess_tabular_format(file_contents)
+        )
+    except InvalidDimensions:
+        dataset = _build_donor_dataset(file_contents)
+
+    cleaned_dataset = clean_column_headers(dataset)
+
+    return cleaned_dataset
+
+
+def _build_donor_dataset(text: str) -> Dataset:
+    """Create a single-column dataset from donor CSV text."""
+    dataset = Dataset(headers=["donors"])
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    if lines and lines[0].lower().startswith("donor"):
+        lines = lines[1:]
+    for value in lines:
+        cleaned = value.strip().strip('"')
+        if cleaned:
+            dataset.append([cleaned])
+    return dataset

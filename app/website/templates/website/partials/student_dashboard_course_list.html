@@ -1,0 +1,188 @@
+<header class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <p class="text-uppercase small text-muted mb-1">Course registration</p>
+    <h2 class="h4 mb-0">
+      {% if current_semester %}{{ current_semester }}{% else %}Semester TBD{% endif %}
+    </h2>
+  </div>
+  <div class="d-flex align-items-center gap-3 flex-wrap">
+    <span class="badge bg-light text-dark">
+      {{ available_courses|length }} available course{% if available_courses|length != 1 %}s{% endif %}
+    </span>
+    {% if semester_options %}
+      <form method="get" class="d-flex align-items-center gap-2">
+        <label class="text-muted small mb-0" for="semester-picker">Semester</label>
+        <select
+          id="semester-picker"
+          name="semester"
+          class="form-select form-select-sm"
+          onchange="this.form.submit()"
+        >
+          {% for option in semester_options %}
+            <option value="{{ option.id }}" {% if option.active %}selected{% endif %}>
+              {{ option.label }}
+            </option>
+          {% endfor %}
+        </select>
+      </form>
+    {% endif %}
+    {% if registration_open %}
+      <span class="badge bg-success-subtle text-success">Registration open</span>
+    {% else %}
+      <span class="badge bg-danger-subtle text-danger">Registration closed</span>
+    {% endif %}
+  </div>
+</header>
+
+{% for course in available_courses %}
+  <article class="course-card">
+    <div class="d-flex justify-content-between align-items-start gap-2">
+      <div>
+        <h3 class="h5 mb-1">{{ course.title }}</h3>
+        <p class="mb-1 text-muted">
+          {{ course.code }} · {{ course.credits }} credits
+          {% if course.elective %}
+            · <span class="badge bg-warning-subtle text-dark">Elective</span>
+          {% endif %}
+        </p>
+        <div class="course-meta">
+          {% for prereq in course.prerequisites %}
+            <span class="prereq-chip {% if prereq.met %}met{% else %}missing{% endif %}">
+              {{ prereq.label }}
+            </span>
+          {% empty %}
+            <span class="text-muted small">No prerequisites</span>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="text-end">
+        {% if course.eligible %}
+          <span class="badge bg-success-subtle text-success">Available</span>
+        {% else %}
+          <span class="badge bg-secondary">Locked</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="mt-3">
+      <label class="form-label">Select a section to register</label>
+      <select
+        class="form-select section-picker"
+        data-course-code="{{ course.code }}"
+        data-course-title="{{ course.title }}"
+        data-credits="{{ course.credits }}"
+        {% if not course.eligible %}disabled{% endif %}
+      >
+        <option value="">Choose section</option>
+        {% for section in course.sections %}
+          <option
+            value="{{ section.id }}"
+            data-section-label="{{ section.label }}"
+            data-schedule="{{ section.schedule }}"
+            data-seats-total="{{ section.seats_total }}"
+            data-seats-remaining="{{ section.seats_remaining }}"
+            data-fee="{{ section.fee }}"
+          >
+            {{ section.label }} · {{ section.schedule }} ·
+            {{ section.seats_remaining }}/{{ section.seats_total }} seats ·
+            {{ financial_summary.currency }} {{ section.fee|floatformat:2 }}
+          </option>
+        {% endfor %}
+      </select>
+      {% if course.reason %}
+        <small class="text-danger d-block mt-1">{{ course.reason }}</small>
+      {% endif %}
+    </div>
+  </article>
+{% empty %}
+  <div class="alert alert-light">No available courses.</div>
+{% endfor %}
+
+{% if canceled_courses %}
+  <div class="mt-4">
+    <p class="text-uppercase small text-muted mb-2">Canceled courses</p>
+    {% for course in canceled_courses %}
+      <article class="course-card disabled">
+        <div class="d-flex justify-content-between align-items-start gap-2">
+          <div>
+            <h3 class="h5 mb-1">{{ course.title }}</h3>
+            <p class="mb-1 text-muted">
+              {{ course.code }} · {{ course.credits }} credits
+              {% if course.elective %}
+                · <span class="badge bg-warning-subtle text-dark">Elective</span>
+              {% endif %}
+            </p>
+            <div class="course-meta">
+              {% for prereq in course.prerequisites %}
+                <span class="prereq-chip {% if prereq.met %}met{% else %}missing{% endif %}">
+                  {{ prereq.label }}
+                </span>
+              {% empty %}
+                <span class="text-muted small">No prerequisites</span>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="text-end">
+            <span class="badge {{ course.status_class }}">{{ course.status_label|default:"Registered" }}</span>
+          </div>
+        </div>
+        <div class="mt-3">
+          {% if course.locked_until %}
+            <small class="text-muted d-block">Locked until {{ course.locked_until }}</small>
+          {% endif %}
+          {% if course.reason %}
+            <small class="text-muted d-block">{{ course.reason }}</small>
+          {% endif %}
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% if locked_courses %}
+  <div class="mt-4">
+    <button
+      class="btn btn-outline-secondary d-flex align-items-center gap-2"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#locked-courses"
+      aria-expanded="false"
+      aria-controls="locked-courses"
+    >
+      Locked / not yet available courses
+      <span class="badge bg-secondary">{{ locked_courses|length }}</span>
+    </button>
+    <div class="collapse mt-3" id="locked-courses">
+      {% for course in locked_courses %}
+        <article class="course-card disabled">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div>
+              <h3 class="h5 mb-1">{{ course.title }}</h3>
+              <p class="mb-1 text-muted">
+                {{ course.code }} · {{ course.credits }} credits
+                {% if course.elective %}
+                  · <span class="badge bg-warning-subtle text-dark">Elective</span>
+                {% endif %}
+              </p>
+              <div class="course-meta">
+                {% for prereq in course.prerequisites %}
+                  <span class="prereq-chip {% if prereq.met %}met{% else %}missing{% endif %}">
+                    {{ prereq.label }}
+                  </span>
+                {% empty %}
+                  <span class="text-muted small">No prerequisites</span>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="text-end">
+              <span class="badge bg-secondary">Locked</span>
+            </div>
+          </div>
+          <div class="mt-3">
+            <small class="text-danger d-block">{{ course.reason }}</small>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}

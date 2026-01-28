@@ -1,42 +1,43 @@
 #+TITLE: Tusis program
 
-* Tusis Application — Quickstart Guide
-
-** Tusis Application Overview
+* Tusis Application Overview
 
 Tusis is a student information and academic management system designed to streamline administrative tasks at the university. It manages student profiles, curricula, courses, registrations, class schedules, financial transactions, and role-based permissions, all through Django's admin interface.
 
 This document summarizes how to run and test the Tusis application in different environments.
-** Getting the Code
+* Getting the Code
 Clone the repository and enter its directory:
+
 #+BEGIN_SRC bash
-git clone <repository-url>
+git clone <repository-url> tusis
 cd tusis
 #+END_SRC
-** The apps
-Here are the different applications you will find in this directory:
-| App Name | Description |
-|------------+-----------------------------------------------------------|
-| Registry | Handles student documents, registrations, and class rosters |
-| Spaces | Manages buildings, rooms, and locations |
-| Academics | Maintains courses, curricula, colleges, and prerequisites |
-| Timetable | Schedules sections, semesters, academic years, and sessions |
-| People | Manages user profiles, roles, and permissions |
-| Finance | Processes payments, financial records, and scholarships |
 
-** Running Locally without Docker
-For a quick local setup using SQLite, run:
+* The apps
+# to be completed   
+Here are the different applications you will find in this directory:
+| App Name  | Description                                                 |
+|-----------+-------------------------------------------------------------|
+| Registry  | Handles student documents, registrations, and class rosters |
+| Spaces    | Manages buildings, rooms, and locations                     |
+| Academics | Maintains courses, curricula, colleges, and prerequisites   |
+| Timetable | Schedules sections, semesters, academic years, and sessions |
+| People    | Manages user profiles, roles, and permissions               |
+| Finance   | Processes payments, financial records, and scholarships     |
+
+* Running Localy 
+You will need postgresql installed, graphviz and other for the dev environment
 #+BEGIN_SRC bash
-python3 -m venv venv
-source venv/bin/activate
+pyenv virtualenv install tusis
+pyenv local tusis
 pip install -r requirements.txt
-cp env-test .env
-./run.sh -m  # check run.sh -h for documentation or look the source
+./run.sh -d  # check run.sh -h for documentation or look the source
 #+END_SRC
+
 Open http://127.0.0.1:8000 in your browser.
 
 
-** Development Environment
+* Development Environment
 To make changes :
 The repo includes a ~.python-version~ file which instructs *pyenv* to use a
 virtual environment named ~tusis~. You can create it with:
@@ -57,9 +58,29 @@ echo "xyz" > requirements-dev.txt
 #+BEGIN_SRC python
 black app/ && flake8 app/ && mypy app/
 #+END_SRC
-*** Tests
-Install dependencies from `requirements-dev.txt` and `requirements-test.txt` before running tests.
-You can run `./run.sh -m` to start a fresh test on the local machine.
+
+* Database SQL scripts
+Reusable SQL helpers live in the =scripts/= directory. Run them from
+=python manage.py dbshell= using psql's =\i= include command.
+
+#+BEGIN_SRC sql
+-- inside dbshell
+\i scripts/update_course_short_code.sql
+#+END_SRC
+
+Some scripts accept variables; set them before including the file:
+#+BEGIN_SRC sql
+\set source_id 123
+\set target_id 456
+\i scripts/curriculum_merge_conflicts.sql
+#+END_SRC
+
+Notes:
+- These scripts are written for PostgreSQL/psql.
+- Verify the output before applying merge updates in production.
+** Tests
+Install dependencies from `requirements-dev.txt` before running tests.
+You  run `./run.sh -d` to start a dev env on the local machine.
 
 You can copy the reusable template stored at `Seed_data/db_seed_example.txt` or  populate your DB with a file having this structure:
 #+BEGIN_SRC
@@ -89,44 +110,15 @@ Before starting the stack, copy the sample environment file:
 cp .env-dev.example .env-dev
 #+END_SRC
 
-*** Launch your docker-compose dev environment
-Build and start the dev stack:
-#+BEGIN_SRC bash
-docker-compose -f docker-compose-dev.yml up --build
-#+END_SRC
-Once the containers are running, visit [[https://localhost][https://localhost]] to access the app.
-
-*** Running manage.py commands inside Docker
-Run Django management commands from the host by exec-ing into the =web= container:
-#+BEGIN_SRC bash
-# dev stack
-docker-compose -f docker-compose-dev.yml exec web python manage.py createsuperuser
-# pre-prod stack
-docker-compose -f docker-compose-preprod.yml exec web python manage.py create_states
-#+END_SRC
-Replace the command at the end with whatever you need (e.g., =load_roles=, =import_resources=).
-
-*** Running Tests
-**** Using Docker
-
-Run tests within the dev container:
-
-#+BEGIN_SRC bash
-docker-compose -f docker-compose-dev.yml run --rm web pytest tests/
-#+END_SRC
-
-Access the application at [[https://localhost][https://localhost]]
-
-**** Without Docker (Linux)
-
-Load the environment variables from your local `.env` file, then run pytest:
+** Running Tests
+Load the environment variables from your local `.env-test` file, then run pytest:
 
 #+BEGIN_SRC bash
 export $(grep -v '^#' .env | xargs)  # load variables
 pytest tests/
 #+END_SRC
 
-**** Browser UI smoke tests
+*** Browser UI smoke tests
 The Selenium suite exercises the public landing page and any future UI flows that require a real browser. Install the dev requirements, then run:
 #+BEGIN_SRC bash
 pytest -m selenium tests/selenium
@@ -143,7 +135,7 @@ SELENIUM_REMOTE_URL=http://127.0.0.1:4444/wd/hub pytest -m selenium tests/seleni
 When the variable is set the suite connects to the remote browser instead of starting a local one.
 If the runtime disallows opening localhost sockets (some secure sandboxes do), the tests will be auto-skipped with a clear reason.
 
-*** Restart from a clean state
+** Restart from a clean state
 #+BEGIN_SRC bash term2
   docker-compose -f docker-compose-dev.yml down -v
   sudo rm app/migrations/*
@@ -157,28 +149,10 @@ In another terminal,
 #+BEGIN_SRC bash  term3
     docker-compose -f docker-compose-dev.yml exec web python manage.py makemigrations app
     docker-compose -f docker-compose-dev.yml exec web python manage.py migrate
-    docker-compose -f docker-compose-dev.yml exec web python manage.py populate_initial_data
+    docker-compose -f docker-compose-dev.yml exec web python manage.py load_fundamentals
 #+END_SRC
 
-*** Passwords
-** Production Environment
-
-Build and launch the production environment:
-
-# Copy the sample production environment settings:
-#+BEGIN_SRC bash
-cp .env-prod.example .env-prod
-#+END_SRC
-
-#+begin_src bash
-docker-compose -f docker-compose-prod.yml up --build -d
-#+end_src
-
-- Ensure that your production `.env-prod` file is configured and secure.
-
-Access the application via your production URL (e.g., [[https://tuth.babao.rhum][https://tusis.babao.rhum]]).
-
-** Pre-production Deployment (Docker + native Nginx)
+* Pre-production Deployment (Docker + native Nginx)
 This tier runs PostgreSQL and Django/Gunicorn in Docker, while the host’s native Nginx (already secured with your =htpasswd= in =/etc/nginx=) serves static/media files and proxies to the containerised app.
 
 1. **Prepare secrets**
@@ -200,44 +174,10 @@ This tier runs PostgreSQL and Django/Gunicorn in Docker, while the host’s nati
 
 With this split, Nginx keeps handling TLS and Basic Auth on the host while the Python/PostgreSQL workloads stay reproducible inside Docker.
 
-** Data Import/Export
+* Data Import/Export
 
 Several admin screens expose Import and Export buttons powered by
 the =django-import-export= package. Use these buttons to upload CSV
 or XLSX files and to download existing records. Models such as
 Courses, Curricula and Sections already provide corresponding
 resources.
-
-
-** Importing a full workbook
-Use ``import_workbook`` to load an Excel file containing
-``timetable``, ``academics``, ``people`` and ``spaces`` sheets.
-
-# +begin_src bash
-python manage.py import_workbook myfile.xlsx --dry-run
-# +end_src
-Run the command without ``--dry-run`` to persist changes.
-
-* COMMENT
-Installing nodes
-Installing pyenv
-Installing python 3.13
-#+BEGIN_SRC bash  -i
-pyenv install 3.13
-pyenv virtualenv 3.13 tusis
-pyenv local tusis
-#+END_SRC
-Installing librairies
-** special lib
-
-*** pygraphviz
-#+BEGIN_SRC bash  -i
-sudo apt-get install graphviz graphviz-dev
-pip install pygraphviz
-#+END_SRC
-
-pip install -r requirements-dev
-
-Installing webdriver
-Installing DB posgresql
-Installing IDE / codex

@@ -12,12 +12,12 @@ from app.timetable.models.schedule import Schedule
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester, SemesterStatus
 from app.timetable.models.session import SecSession
-from tests.academics.fixture import CurriculumCourseFactory
+from tests.academics.fixture import CurriculumCourseFactoryT
 
-AcademicYearFactory: TypeAlias = Callable[[datetime], AcademicYear]
-SemesterFactory: TypeAlias = Callable[[int], Semester]
-SectionFactory: TypeAlias = Callable[[str, str, int, int], Section]
-SecSessionFactory: TypeAlias = Callable[[str, str, str], SecSession]
+AcademicYearFactoryT: TypeAlias = Callable[[datetime], AcademicYear]
+SemesterFactoryT: TypeAlias = Callable[[int], Semester]
+SectionFactoryT: TypeAlias = Callable[[str, str, int, int], Section]
+SecSessionFactoryT: TypeAlias = Callable[[str, str, str], SecSession]
 
 DEF_DATE = datetime(2010, 9, 1)
 
@@ -41,7 +41,7 @@ def _ensure_semester_statuses() -> None:
 
 
 @pytest.fixture
-def semester(academic_year_factory: AcademicYearFactory) -> Semester:
+def semester(academic_year_factory: AcademicYearFactoryT) -> Semester:
     """Get a Semester object for a specific academic year."""
     _ensure_semester_statuses()
     ay = academic_year_factory(DEF_DATE)
@@ -64,7 +64,7 @@ def session(section, room) -> SecSession:
 
 
 @pytest.fixture
-def academic_year_factory() -> AcademicYearFactory:
+def academic_year_factory() -> AcademicYearFactoryT:
 
     def _make(start_date: datetime = DEF_DATE) -> AcademicYear:
 
@@ -74,7 +74,7 @@ def academic_year_factory() -> AcademicYearFactory:
 
 
 @pytest.fixture
-def semester_factory(academic_year_factory: AcademicYearFactory) -> SemesterFactory:
+def semester_factory(academic_year_factory: AcademicYearFactoryT) -> SemesterFactoryT:
     def _make(number: int, ay_start_date: datetime = DEF_DATE) -> Semester:
 
         _ensure_semester_statuses()
@@ -88,9 +88,9 @@ def semester_factory(academic_year_factory: AcademicYearFactory) -> SemesterFact
 
 @pytest.fixture
 def section_factory(
-    semester_factory: SemesterFactory,
-    curriculum_course_factory: CurriculumCourseFactory,
-) -> SectionFactory:
+    semester_factory: SemesterFactoryT,
+    curriculum_course_factory: CurriculumCourseFactoryT,
+) -> SectionFactoryT:
     def _make(
         course_number: str = "111",
         curriculum_short_name: str = "CURRI_TEST",
@@ -109,7 +109,7 @@ def section_factory(
 
 
 @pytest.fixture
-def session_factory(section_factory: SectionFactory, room_factory) -> SecSessionFactory:
+def session_factory(section_factory: SectionFactoryT, room_factory) -> SecSessionFactoryT:
     def _make(
         room_code: str, course_number: str, curriculum_short_name: str
     ) -> SecSession:

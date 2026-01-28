@@ -111,6 +111,18 @@ def _with_actions(context: dict[str, Any], extra: list[dict[str, Any]]) -> dict[
     return merged
 
 
+def _annotate_admin_actions(actions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Flag action links that point to Django admin views."""
+    admin_prefix = reverse("admin:index")
+    for action in actions:
+        href = str(action.get("href") or "")
+        is_admin = href.startswith(admin_prefix)
+        action["is_admin"] = is_admin
+        # Align action button colors with admin vs app destinations.
+        action["variant"] = "primary" if is_admin else "warning"
+    return actions
+
+
 def _build_staff_context(request: HttpRequest) -> dict:
     user = _as_user(request.user)
     staff_profile = getattr(user, "staff", None)
@@ -318,7 +330,7 @@ def _build_dean_context(request: HttpRequest) -> dict:
             )
             .select_related("staff_profile__department")
             .order_by(
-                "staff_profile__department__short_name",
+                "staff_profile__department__code",
                 "staff_profile__user__last_name",
             )
         )
@@ -394,7 +406,7 @@ def _build_vpaa_context(_: HttpRequest) -> dict:
 def _build_enrollment_context(_: HttpRequest) -> dict:
     students_qs = Student.objects.select_related("curriculum")
     total_students = students_qs.count()
-    onboarding = students_qs.filter(current_enrolled_semester__isnull=True).count()
+    onboarding = students_qs.filter(last_enrolled_semester__isnull=True).count()
     pending_docs = DocumentStudent.objects.filter(status__code="pending").count()
     recent_students = list(students_qs.order_by("-id")[:6])
     student_items = [
@@ -483,6 +495,17 @@ def _build_registrar_context(_: HttpRequest) -> dict:
             {"label": "No transcript requests", "value": "All clear."},
         ]
 
+    actions = []
+    grades_url = _maybe_reverse("registrar_grades_dashboard")
+    if grades_url:
+        actions.append(
+            {
+                "label": "Review grades",
+                "href": grades_url,
+                "description": "Browse grades grouped by student and semester.",
+                "variant": "outline-secondary",
+            }
+        )
     return {
         "metrics": [
             {"label": "Pending transcripts", "value": pending_qs.count()},
@@ -497,7 +520,7 @@ def _build_registrar_context(_: HttpRequest) -> dict:
                 "items": transcript_items,
             }
         ],
-        "actions": [],
+        "actions": actions,
     }
 
 
@@ -625,6 +648,16 @@ def _build_finance_officer_context(request: HttpRequest) -> dict:
     base = _build_finance_context(request)
     scholarship_admin = _maybe_reverse("admin:finance_scholarship_changelist")
     extras = []
+    finance_console = _maybe_reverse("finance_officer_invoices")
+    if finance_console:
+        extras.append(
+            {
+                "label": "Invoice & payment console",
+                "href": finance_console,
+                "description": "Review invoices and record pending payments.",
+                "variant": "primary",
+            }
+        )
     if scholarship_admin:
         extras.append(
             {
@@ -767,13 +800,19 @@ def _direct_subordinates(role_slug: str) -> set[str]:
 
 def _accessible_role_slugs(user: User) -> set[str]:
     if user.is_superuser:
-        return set(ROLE_CONFIG.keys())
+        slugs = set(ROLE_CONFIG.keys())
+        if len(slugs) > 1:
+            slugs.discard("general")
+        return slugs
     membership = _user_membership_slugs(user)
     inherited = {slug for slug in ROLE_CONFIG if _user_inherits_role(user, slug)}
     direct_lower: set[str] = set()
     for slug in membership | inherited:
         direct_lower.update(_direct_subordinates(slug))
-    return {"general"} | membership | inherited | direct_lower
+    slugs = membership | inherited | direct_lower
+    if not slugs:
+        return {"general"}
+    return slugs
 
 
 def _build_accessible_dashboard_links(
@@ -836,6 +875,16 @@ def _render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse
     accessible_links = _build_accessible_dashboard_links(
         _as_user(request.user), role_slug
     )
+    role_switcher: list[dict[str, Any]] = []
+    if len(accessible_links) > 1:
+        role_switcher = [
+            {
+                "label": link["label"],
+                "href": link["href"],
+                "active": link["active"],
+            }
+            for link in accessible_links
+        ]
     base: dict[str, Any] = {
         "title": config["title"],
         "summary": config["summary"],
@@ -845,7 +894,11 @@ def _render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse
         "eyebrow": role_slug.replace("_", " ").title(),
     }
     base.update(context)
+    if isinstance(base.get("actions"), list):
+        # Add admin cues for action cards.
+        base["actions"] = _annotate_admin_actions(base["actions"])
     base["accessible_dashboards"] = accessible_links
+    base["role_switcher"] = role_switcher
     template_name = config.get("template", "website/staff/role_dashboard.html")
 
     sidebar_links = [
@@ -855,13 +908,16 @@ def _render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse
             "active": role_slug == "general",
             "icon": "bi-speedometer2",
         },
-        {
-            "label": "Roles",
-            "href": reverse("staff_role_dashboard", args=[role_slug]),
-            "active": role_slug != "general",
-            "icon": "bi-people",
-        },
     ]
+    if len(accessible_links) > 1:
+        sidebar_links.append(
+            {
+                "label": "Roles",
+                "href": reverse("staff_role_dashboard", args=[role_slug]),
+                "active": role_slug != "general",
+                "icon": "bi-people",
+            }
+        )
     breadcrumbs = [
         {"label": "Staff Workspace", "href": reverse("staff_dashboard")},
         {"label": config["title"], "href": ""},

@@ -4,27 +4,8 @@ from __future__ import annotations
 
 from django.db import models
 
-from app.shared.mixins import SimpleTableMixin
-from app.shared.status.mixins import StatusableMixin
-
-
-class TranscriptRequestStatus(SimpleTableMixin):
-    """Lookup table storing allowed states for transcript requests."""
-
-    DEFAULT_VALUES = [
-        ("pending", "Pending"),
-        ("processing", "Processing"),
-        ("completed", "Completed"),
-        ("on_hold", "On hold"),
-    ]
-
-    @classmethod
-    def get_default(cls):
-        """Return the default status."""
-        default, _ = cls.objects.get_or_create(
-            code="pending", defaults={"label": "Pending"}
-        )
-        return default
+from app.registry.models.status_types import TranscriptRequestStatus
+from app.shared.mixins import SimpleTableMixin, StatusableMixin
 
 
 class TranscriptRequest(StatusableMixin, models.Model):

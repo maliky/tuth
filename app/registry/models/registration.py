@@ -2,38 +2,17 @@
 
 from __future__ import annotations
 
-from app.shared.mixins import SimpleTableMixin
-from django.db import models
-from simple_history.models import HistoricalRecords
 from typing import Self, cast
 
-from app.shared.status.mixins import StatusableMixin
+from django.db import models
+from simple_history.models import HistoricalRecords
 
-
-class RegistrationStatus(SimpleTableMixin):
-    TABLE_DEFAULT_VALUES = [
-        ("approved", "Approved"),
-        ("removed", "Remove"),
-        ("canceled", "Canceled"),
-        ("completed", "Completed"),
-        ("cleared", "Financially Cleared"),
-        ("pending", "Pending Payment"),
-    ]
-
-    class Meta:
-        verbose_name_plural = "Registration Status"
-
-    @classmethod
-    def get_default(cls) -> Self:
-        """Returns the default FeeType."""
-        deft, _ = cls.objects.get_or_create(
-            code="pending", defaults={"label": "Pending Payment"}
-        )
-        return cast(Self, deft)
+from app.registry.models.status_types import RegistrationStatus
+from app.shared.mixins import SimpleTableMixin, StatusableMixin
 
 
 class Registration(StatusableMixin, models.Model):
-    """Enrollment of a student in a course section.
+    """Enrollment of a student in a course section with its status.
 
     Example:
         >>> from app.registry.models.registration import Registration
@@ -56,7 +35,6 @@ class Registration(StatusableMixin, models.Model):
     )
 
     # ~~~~ Auto-filled ~~~~
-    # this is optional and I could get it through the SatusableMixin
     status = models.ForeignKey(
         "registry.RegistrationStatus",
         on_delete=models.PROTECT,
@@ -65,16 +43,8 @@ class Registration(StatusableMixin, models.Model):
     date_registered = models.DateTimeField(auto_now_add=True)
     history = HistoricalRecords()
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["student", "section"],
-                name="uniq_registration_student_section",
-            )
-        ]
-
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.student} – {self.section} -  {self.status}"
+        return f"{self.student} - {self.section}:{self.status}"
 
     def _ensure_registration_status(self):
         """Ensure a clearance status is set."""
@@ -85,3 +55,11 @@ class Registration(StatusableMixin, models.Model):
         """Check model before save."""
         self._ensure_registration_status()
         return super().save(*args, **kwargs)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["student", "section"],
+                name="uniq_registration_student_section",
+            )
+        ]

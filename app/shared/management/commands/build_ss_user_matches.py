@@ -6,12 +6,19 @@ import argparse
 import csv
 import json
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, TypedDict
 
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandParser
 
-from app.shared.importing.username_matching import best_matches
+from app.shared.fuzzy_matching import best_matches
+from app.shared.utils import get_in_row, parse_str
+
+
+class MatchRow(TypedDict):
+    username: str
+    score: float
+
 
 User = get_user_model()
 
@@ -36,7 +43,7 @@ def _read_usernames_from_csv(path: Path, columns: Iterable[str]) -> set[str]:
     except Exception:
         pass
 
-    rows = set()
+    rows: set[str] = set()
     reader = csv.DictReader(text.splitlines(), delimiter=delimiter)
     available = {_normalize_header(h): h for h in (reader.fieldnames or [])}
     requested = [_normalize_header(c) for c in columns]
@@ -46,22 +53,25 @@ def _read_usernames_from_csv(path: Path, columns: Iterable[str]) -> set[str]:
 
     for row in reader:
         for header in matched_headers:
-            value = (row.get(header) or "").strip()
+            value = get_in_row(header, row)
             if value:
                 rows.add(value)
     return rows
 
 
-def _load_existing(path: Path) -> dict[str, list[dict[str, float]]]:
+def _load_existing(path: Path) -> dict[str, list[MatchRow]]:
     if not path.exists():
         return {}
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(data, dict):
+            return data
+        return {}
     except json.JSONDecodeError:
         return {}
 
 
-def _save_mapping(path: Path, mapping: dict[str, list[dict[str, float]]]) -> None:
+def _save_mapping(path: Path, mapping: dict[str, list[MatchRow]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(mapping, indent=2, sort_keys=True), encoding="utf-8")
 
@@ -114,7 +124,7 @@ class Command(BaseCommand):
         tusis_usernames: Iterable[str] = User.objects.values_list("username", flat=True)
 
         existing = {} if refresh else _load_existing(output)
-        updated = dict(existing)
+        updated: dict[str, list[MatchRow]] = dict(existing)
 
         new_count = 0
         for ss_name in ss_usernames:
@@ -122,7 +132,8 @@ class Command(BaseCommand):
                 continue
             matches = best_matches(ss_name, tusis_usernames, top_n=2, max_gap=0.2)
             updated[ss_name] = [
-                {"username": username, "score": round(score, 3)} for username, score in matches
+                MatchRow(username=username, score=round(score, 3))
+                for username, score in matches
             ]
             new_count += 1
 

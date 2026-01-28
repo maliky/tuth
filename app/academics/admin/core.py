@@ -1,48 +1,57 @@
-"""Core module."""
+"""Core Admin module for academics."""
 
-from django.urls import path, reverse
-from django.utils.html import format_html
+from typing import Iterable, TypeAlias, cast, no_type_check
+
+from django import forms
+from django.contrib import admin, messages
 from django.db.models import Count
-
-from app.academics.models.concentration import (
-    Major,
-    MajorCurriculumCourse,
-    Minor,
-    MinorCurriculumCourse,
-)
-from django.contrib import admin
+from django.urls import reverse
+from django.utils.html import format_html, format_html_join
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
-from app.academics.admin.actions import update_curriculum, update_department
-from app.academics.admin.filters import (
-    CurriculumFilterAc,
-    # CollegeChoicesFilter,
-    DepartmentFilterAc,
-    ProgramFilterAc,
+from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models import (
+    College,
+    Course,
+    Curriculum,
+    CurriculumStatus,
+    Department,
+    Major,
+    MajorCurriculumCourse,
+    Minor,
+    MinorCurriculumCourse,
+    Prerequisite,
 )
-
-# https://pypi.org/project/django-more-admin-filters/
-# from more_admin_filters import MultiSelectFilter
-from app.academics.admin.views import CurriculumBySemester
-from app.academics.models.college import College
-from app.academics.models.course import Course, CurriculumCourse
-from app.academics.models.curriculum import Curriculum, CurriculumStatus
-from app.academics.models.department import Department
-from app.academics.models.prerequisite import Prerequisite
-from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
+from app.people.models.student import Student
 from app.shared.admin.filters import BaseCollegeFilter
-from django.contrib import messages
-from django.db import transaction
+from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
+from app.people.admin.mixins import MergeWizardMixin, ModelT
 
-from .filters import CurriculumFilter
+from .actions import update_curriculum, update_department
+from .filters import (
+    CourseCollegeFilter,
+    CourseCurriculumFilter,
+    CurriculumFilterAC,
+    CurriculumCourseFacultyFilterAC,
+    DepartmentFilterAC,
+)
 from .inlines import (
     CourseCurriculumInline,
+    CourseFeeInline,
     CurriculumCourseInline,
+    CurriculumCourseFeeInline,
     DepartmentCourseInline,
     PrerequisiteInline,
     RequiresInline,
+)
+from .merges import (
+    merge_courses_action,
+    merge_courses_by_short_code_action,
+    merge_curricula,
+    merge_departments,
+    merge_curriculum_courses,
 )
 from .resources import (
     CollegeResource,
@@ -52,6 +61,10 @@ from .resources import (
     DepartmentResource,
     PrerequisiteResource,
 )
+from django.utils.text import Truncator
+from app.timetable.admin.filters import SemesterFilterAC
+
+ModelChoiceFieldT: TypeAlias = forms.ModelChoiceField | forms.ModelMultipleChoiceField
 
 
 @admin.register(College)
@@ -66,47 +79,99 @@ class CollegeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
     list_display = (
         "code",
         "long_name",
-        "faculty_count",
-        "course_count",
-        "curricula_names",
-        "department_chairs",
-        "student_counts_by_level",
+        # "faculty_count_link",
+        # "course_count_link",
+        # "curriculum_count_link",
+        # "department_chair_links",
+        # "student_counts_by_level_link"
     )
     search_fields = ("code", "long_name")
 
+    @admin.display(description="Curricula")
+    def curriculum_count_link(self, obj: College):
+        count = obj.curricula.count()
+        url = reverse("admin:academics_curriculum_changelist") + (
+            f"?college__id__exact={obj.id}"
+        )
+        return format_html('<a href="{}">{}</a>', url, count)
 
-@transaction.atomic
-def merge_curricula(target: Curriculum, sources):
-    """Merge curricula: move students and curriculum courses to target."""
-    for src in sources:
-        if src.pk == target.pk:
-            continue
-        Student.objects.filter(curriculum=src).update(curriculum=target)
-        for cc in CurriculumCourse.objects.filter(curriculum=src):
-            # Avoid duplicate course entries on the target curriculum
-            existing = CurriculumCourse.objects.filter(
-                curriculum=target, course=cc.course
-            ).first()
-            if existing:
-                continue
-            cc.curriculum = target
-            cc.save()
-        src.delete()
+    @admin.display(description="Faculty")
+    def faculty_count_link(self, obj: College):
+        count = obj.faculty_count
+        url = reverse("admin:people_faculty_changelist") + (
+            f"?college__id__exact={obj.id}"
+        )
+        return format_html('<a href="{}">{}</a>', url, count)
 
+    @admin.display(description="Courses")
+    def course_count_link(self, obj: College):
+        count = obj.course_count
+        url = reverse("admin:academics_course_changelist") + (
+            f"?department__college__id__exact={obj.id}"
+        )
+        return format_html('<a href="{}">{}</a>', url, count)
 
-@transaction.atomic
-def merge_departments(target: Department, sources):
-    """Merge departments: move courses (and their curricula) to target."""
-    for src in sources:
-        if src.pk == target.pk:
-            continue
-        Course.objects.filter(department=src).update(department=target)
-        Department.objects.filter(pk=src.pk).delete()
+    @admin.display(description="Departments")
+    def department_chair_links(self, obj: College):
+        """Link departments filtered by college."""
+        qs = obj.departments.all().order_by("shortname")
+        rows = []
+        for dept in qs:
+            url = reverse("admin:academics_department_changelist") + (
+                f"?college__id__exact={obj.id}&id__exact={dept.id}"
+            )
+            rows.append((url, dept.code))
+        if not rows:
+            return ""
+        return format_html_join(", ", '<a href="{}">{}</a>', rows)
 
+    @admin.display(description="Active curricula")
+    def active_curricula_list(self, obj: College):
+        if not getattr(obj, "pk", None):
+            return "Save the college to view curricula."
+        active = obj.curricula.filter(is_active=True).order_by("short_name")
+        rows = [
+            (
+                reverse("admin:academics_curriculum_change", args=[cur.pk]),
+                cur.short_name,
+            )
+            for cur in active
+        ]
+        if not rows:
+            return "None"
+        return format_html_join(", ", '<a href="{}">{}</a>', rows)
 
-class CourseCollegeFilter(BaseCollegeFilter):
-    field_path = "department__college"
-    parameter_name = "department__college__id__exact"
+    @admin.display(description="Inactive curricula")
+    def inactive_curricula_list(self, obj: College):
+        if not getattr(obj, "pk", None):
+            return "Save the college to view curricula."
+        inactive = obj.curricula.filter(is_active=False).order_by("short_name")
+        rows = [
+            (
+                reverse("admin:academics_curriculum_change", args=[cur.pk]),
+                cur.short_name,
+            )
+            for cur in inactive
+        ]
+        if not rows:
+            return "None"
+        return format_html_join(", ", '<a href="{}">{}</a>', rows)
+
+    fields = ("code", "long_name", "active_curricula_list", "inactive_curricula_list")
+    readonly_fields = ("active_curricula_list", "inactive_curricula_list")
+
+    @admin.display(description="Students by level")
+    def student_counts_by_level_link(self, obj: College):
+        """Link to students filtered by college and computed level."""
+        rows = []
+        students = list(Student.objects.filter(curriculum__college=obj))
+        for level in ("Freshman", "Sophomore", "Junior", "Senior"):
+            count = sum(1 for s in students if getattr(s, "class_level", "") == level)
+            url = reverse("admin:people_student_changelist") + (
+                f"?curriculum__college__id__exact={obj.id}&class_level={level}"
+            )
+            rows.append((url, level, count))
+        return format_html_join(" | ", '<a href="{}">{}</a>: {}', rows)
 
 
 @admin.register(Course)
@@ -129,35 +194,85 @@ class CourseAdmin(DepartmentRestrictedAdmin):
         "short_code",
         "title",
         "department",
-        "list_curricula_str",
     )
-    autocomplete_fields = ("curricula",)
+    # Curricula column removed from list_display; keep helper for reuse elsewhere.
+    # Use list filters for curricula to avoid reverse M2M autocomplete errors.
     # > TODO: Add the list of student enrolled in this course the current semester.
-    inlines = [RequiresInline, PrerequisiteInline, CourseCurriculumInline]
+    inlines = [
+        CourseFeeInline,
+        RequiresInline,
+        PrerequisiteInline,
+        CourseCurriculumInline,
+    ]
     list_select_related = ("department",)
     list_editable = ("department",)
     list_filter = (
+        SemesterFilterAC,
+        DepartmentFilterAC,
+        CourseCurriculumFilter,
         CourseCollegeFilter,
-        "department",
-        ProgramFilterAc,
     )
 
     list_per_page = 100
     list_max_show_all = 500
 
-    search_fields = ("short_code", "department__short_name", "title")
+    search_fields = ("short_code", "department__code", "title")
     fields = ("short_code", "department", "number", "title", "description")
-    actions = [update_department]
+    # Actions include manual merge and short_code-based merge helpers.
+    actions = [
+        update_department,
+        merge_courses_action,
+        merge_courses_by_short_code_action,
+    ]
+
+    def get_queryset(self, request):
+        """Prefetch curricula for link rendering in list_display."""
+        qs = super().get_queryset(request)
+        qs = qs.prefetch_related("curricula")
+        curriculum_id = request.GET.get("curricula__id__exact") or request.GET.get(
+            "in_curriculum_courses__curriculum"
+        )
+        if curriculum_id:
+            try:
+                curriculum_id = int(curriculum_id)
+            except (TypeError, ValueError):
+                return qs
+            return qs.filter(curricula__id=curriculum_id)
+        return qs
+
+    def lookup_allowed(self, lookup, value, request=None):
+        """Allow legacy curriculum lookup for course filters."""
+        if lookup == "in_curriculum_courses__curriculum":
+            return True
+        return super().lookup_allowed(lookup, value, request)
+
+    @admin.display(description="Curricula")
+    def curricula_links(self, obj: Course):
+        """Link each curriculum name to its admin change page."""
+        rows = [
+            (reverse("admin:academics_curriculum_change", args=[cur.pk]), cur.short_name)
+            for cur in obj.curricula.all().order_by("short_name")
+        ]
+        if not rows:
+            return "-"
+        return format_html_join(", ", '<a href="{}">{}</a>', rows)
 
     def get_form(self, request, obj=None, **kwargs):
-        """Return the admin form with dep ordered by their short_name."""
+        """Return the admin form with dep ordered by their shortname."""
         form = super().get_form(request, obj, **kwargs)
         department_field = form.base_fields.get("department")
 
-        if department_field is not None:
-            department_field.queryset = department_field.queryset.select_related(
-                "college"
-            ).order_by("college__code", "short_name")
+        if isinstance(
+            department_field,
+            (forms.ModelChoiceField, forms.ModelMultipleChoiceField),
+        ):
+            # Mypy: cast to model choice fields before ordering the queryset.
+            department_field = cast(ModelChoiceFieldT, department_field)
+            if department_field.queryset is not None:
+                # Mypy: ensure queryset is set before chaining queryset methods.
+                department_field.queryset = department_field.queryset.select_related(
+                    "college"
+                ).order_by("college__code", "shortname")
         return form
 
 
@@ -190,7 +305,7 @@ class MinorCurriculumCourseAdmin(admin.ModelAdmin):
 
 
 @admin.register(Curriculum)
-class CurriculumAdmin(CollegeRestrictedAdmin):
+class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
     """Admin options for Curriculum.
 
     Key features:
@@ -207,32 +322,19 @@ class CurriculumAdmin(CollegeRestrictedAdmin):
         "college",
         "is_active",
         "status",
-        "course_count",
+        "course_count_link",
         "student_count",
     )
-    list_filter = ("college",)
-    list_editable =("status", "is_active", "college")
+    list_filter = (SemesterFilterAC, "college")
+    list_editable = ("status", "is_active", "college")
     autocomplete_fields = ("college",)
     inlines = [CurriculumCourseInline]
 
     # list_selected_relate reduces the number of queries in db
     list_select_related = ("college",)
     search_fields = ("short_name", "long_name")
-    actions = ["merge_curricula_action"]
-
-    # def get_urls(self):
-    #     """Returns urls."""
-    #     urls = super().get_urls()
-    #     custom = [
-    #         path(
-    #             "curriculum_by_semester_ac/",
-    #             self.admin_site.admin_view(
-    #                 CurriculumBySemester.as_view(model_admin=self)
-    #             ),
-    #             name="curriculum_by_semester_ac",
-    #         )
-    #     ]
-    #     return custom + urls
+    # Keep short_name out of the wizard to avoid active-name uniqueness collisions.
+    merge_fields = ("long_name", "college", "status", "is_active", "description")
 
     def student_count(self, obj):
         """Adding a link to the student number."""
@@ -242,22 +344,77 @@ class CurriculumAdmin(CollegeRestrictedAdmin):
         )
         return format_html('<a href="{}">{}</a>', url, count)
 
-    @admin.action(description="Merge selected curricula into the first")
-    def merge_curricula_action(self, request, queryset):
-        """Merge curricula, moving students and programmed courses into the first."""
-        if queryset.count() < 2:
-            messages.warning(request, "Select at least two curricula to merge.")
-            return
-        target = queryset.order_by("id").first()
-        merge_curricula(target, queryset.exclude(pk=target.pk))
-        messages.success(
-            request,
-            f"Merged {queryset.count()-1} curricula into {target.short_name}.",
+    @admin.display(description="Courses")
+    def course_count_link(self, obj):
+        """Link course counts to the course changelist for this curriculum."""
+        count = obj.course_count()
+        url = reverse("admin:academics_course_changelist") + (
+            f"?curricula__id__exact={obj.id}"
         )
+        return format_html('<a href="{}">{}</a>', url, count)
+
+    def merge_records(self, target: ModelT, sources: Iterable[ModelT]) -> dict[str, int]:
+        """Merge curricula using the shared merge helper."""
+        target_curriculum = cast(Curriculum, target)
+        source_curricula = cast(Iterable[Curriculum], sources)
+        request = getattr(self, "_merge_request", None)
+        self._warn_curriculum_merge_precheck(
+            request,
+            target_curriculum,
+            source_curricula,
+        )
+        summary = merge_curricula(target_curriculum, source_curricula)
+        if request and summary.get("curricula_retained", 0):
+            self.message_user(
+                request,
+                (
+                    "Some source curricula were retained due to invoice conflicts. "
+                    "Review scripts/curriculum_merge_conflicts.sql before retrying."
+                ),
+                level=messages.WARNING,
+            )
+        return {
+            "merged": summary.get("curricula_merged", 0),
+            "sections_merged": summary.get("sections_merged", 0),
+            "skipped_invoices": summary.get("skipped_invoices", 0),
+            "credit_hours_conflicts": summary.get("credit_hours_conflicts", 0),
+            "is_required_conflicts": summary.get("is_required_conflicts", 0),
+            "is_elective_conflicts": summary.get("is_elective_conflicts", 0),
+        }
+
+    # Avoid mypy internal error on the nested curriculum overlap query.
+    @no_type_check
+    def _warn_curriculum_merge_precheck(
+        self,
+        request,
+        target: Curriculum,
+        sources: Iterable[Curriculum],
+    ) -> None:
+        """Warn when the pre-merge SQL check should be reviewed."""
+        if request is None:
+            return
+        source_ids = [cur.pk for cur in sources if cur.pk]
+        if not source_ids or not target.pk:
+            return
+        overlap_count = CurriculumCourse.objects.filter(
+            curriculum=target,
+            course_id__in=CurriculumCourse.objects.filter(
+                curriculum_id__in=source_ids
+            ).values("course_id"),
+        ).count()
+        if overlap_count:
+            self.message_user(
+                request,
+                (
+                    "Course overlaps detected; run "
+                    "scripts/curriculum_merge_conflicts.sql before merging."
+                ),
+                level=messages.WARNING,
+            )
 
 
 @admin.register(CurriculumCourse)
-class CurriculumCourseAdmin(CollegeRestrictedAdmin):
+class CurriculumCourseAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
     """Admin screen for :class:~app.academics.models.CurriculumCourse.
 
     list_display shows the curriculum and related course while
@@ -267,26 +424,110 @@ class CurriculumCourseAdmin(CollegeRestrictedAdmin):
 
     resource_class = CurriculumCourseResource
     college_field = "curriculum__college"
-    list_display = (
-        "course",
-        "course__short_code",
+    merge_fields = (
         "curriculum",
-        "course__department",
+        "course",
+        "credit_hours",
+        "is_required",
+        "is_elective",
     )
-    list_editable = ("curriculum",)
-    list_filter = ("curriculum__college", CurriculumFilterAc, DepartmentFilterAc)
+    list_display = (
+        "course_display",
+        "department_link",
+        "curriculum",
+        "section_count_link",
+        "faculties_links",
+    )
+    list_filter = (
+        SemesterFilterAC,
+        "curriculum__college",
+        CurriculumFilterAC,
+        DepartmentFilterAC,
+        CurriculumCourseFacultyFilterAC,
+    )
 
+    list_editable = ("curriculum",)
     autocomplete_fields = ("curriculum", "course")
     list_select_related = ("curriculum", "course")
-    search_fields = ("curriculum__short_name", "course__code")
+    # Include short_code to support curriculum course autocomplete lookups.
+    search_fields = ("curriculum__short_name", "course__code", "course__short_code")
     list_per_page = 100
     list_max_show_all = 500
 
     # Optional inline to list all curricula for this curriculum_course.
     # inlines = [CurriculumCourseInline]
+    inlines = [CurriculumCourseFeeInline]
 
     ordering = ("course__short_code",)
     actions = [update_curriculum]
+
+    def get_queryset(self, request):
+        """Annotate section totals and prefetch faculty for list_display."""
+        qs = super().get_queryset(request)
+        return (
+            qs.select_related("course__department")
+            .prefetch_related("sections__faculty__staff_profile__user")
+            .annotate(section_total=Count("sections", distinct=True))
+        )
+
+    def merge_object_label(self, obj) -> str:
+        """Return a label for merge choices."""
+        curriculum_course = cast(CurriculumCourse, obj)
+        course = curriculum_course.course
+        curriculum = curriculum_course.curriculum
+        course_label = course.short_code or course.code or str(course)
+        curriculum_label = curriculum.short_name or curriculum.long_name
+        return f"{curriculum_label} | {course_label}"
+
+    def merge_records(self, target, sources):
+        """Merge curriculum courses into the target selection."""
+        target_course = cast(CurriculumCourse, target)
+        return merge_curriculum_courses(target_course, sources)
+
+    @admin.display(description="Course")
+    def course_display(self, obj: CurriculumCourse) -> str:
+        """Truncate course display to avoid very long values in list view."""
+        return Truncator(str(obj.course)).chars(50)
+
+    @admin.display(description="Department")
+    def department_link(self, obj: CurriculumCourse):
+        """Link to departments filtered to this course's department."""
+        dept = getattr(obj.course, "department", None)
+        if not dept:
+            return "-"
+        url = reverse("admin:academics_course_changelist") + (f"?department={dept.id}")
+        return format_html('<a href="{}">{}</a>', url, dept.shortname)
+
+    @admin.display(description="Sections", ordering="section_total")
+    def section_count_link(self, obj):
+        """Link to sections filtered by this curriculum course."""
+        count = getattr(obj, "section_total", None)
+        if count is None:
+            count = obj.sections.count()
+        url = reverse("admin:timetable_section_changelist") + (
+            f"?curriculum_course__id__exact={obj.id}"
+        )
+        return format_html('<a href="{}">{}</a>', url, count)
+
+    @admin.display(description="Faculties")
+    def faculties_links(self, obj):
+        """List linked faculty teaching sections for this curriculum course."""
+        faculties = []
+        seen = set()
+        for section in obj.sections.all():
+            faculty = section.faculty
+            if not faculty or faculty.pk in seen:
+                continue
+            seen.add(faculty.pk)
+            faculties.append(
+                (
+                    reverse("admin:people_faculty_change", args=[faculty.pk]),
+                    faculty.staff_profile.long_name,
+                )
+            )
+        if not faculties:
+            return "-"
+        return format_html_join(", ", '<a href="{}">{}</a>', faculties)
 
 
 @admin.register(CurriculumStatus)
@@ -298,7 +539,7 @@ class CurriculumStatusAdmin(admin.ModelAdmin):
 
 
 @admin.register(Department)
-class DepartmentAdmin(CollegeRestrictedAdmin):
+class DepartmentAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
     """Admin interface for :class:~app.academics.models.Department.
 
     Shows department code, name and college. autocomplete_fields speeds up
@@ -306,19 +547,31 @@ class DepartmentAdmin(CollegeRestrictedAdmin):
     """
 
     resource_class = DepartmentResource
-    list_display = ("short_name", "long_name", "college", "course_count_link")
+    merge_fields = ("code", "long_name", "college")
+    list_display = (
+        "code",
+        "long_name",
+        "college",
+        "curricula_links",
+        "course_count_link",
+        "faculty_count_link",
+    )
     list_filter = [
         "college",
     ]
-    list_editable =("college",)
-    search_fields = ("short_name", "long_name", "college")
+    list_editable = ("college",)
+    search_fields = ("code", "long_name", "college")
     inlines = [DepartmentCourseInline]
-    actions = ["merge_departments_action"]
 
     def get_queryset(self, request):
         # > explain the djangonic logic here
         qs = super().get_queryset(request)
-        return qs.annotate(course_count=Count("courses", distinct=True))
+        return qs.annotate(
+            course_count=Count("courses", distinct=True),
+            faculty_total=Count(
+                "courses__in_curriculum_courses__sections__faculty", distinct=True
+            ),
+        ).prefetch_related("courses__curricula")
 
     @admin.display(description="Courses", ordering="course_count")
     def course_count_link(self, obj):
@@ -331,18 +584,62 @@ class DepartmentAdmin(CollegeRestrictedAdmin):
         )
         return format_html('<a href="{}">{}</a>', url, count)
 
-    @admin.action(description="Merge selected departments into the first")
-    def merge_departments_action(self, request, queryset):
-        """Merge departments: move courses into the first selected department."""
-        if queryset.count() < 2:
-            messages.warning(request, "Select at least two departments to merge.")
-            return
-        target = queryset.order_by("id").first()
-        merge_departments(target, queryset.exclude(pk=target.pk))
-        messages.success(
-            request,
-            f"Merged {queryset.count()-1} department(s) into {target.short_name}.",
+    @admin.display(description="Teaching Faculty", ordering="faculty_total")
+    def faculty_count_link(self, obj):
+        """Link to faculty teaching sections in this department."""
+        count = getattr(obj, "faculty_total", None)
+        if count is None:
+            count = (
+                obj.courses.filter(in_curriculum_courses__sections__faculty__isnull=False)
+                .values_list("in_curriculum_courses__sections__faculty_id", flat=True)
+                .distinct()
+                .count()
+            )
+        url = reverse("admin:people_faculty_changelist") + (
+            f"?section__curriculum_course__course__department={obj.id}"
         )
+        return format_html('<a href="{}">{}</a>', url, count)
+
+    @admin.display(description="Curricula")
+    def curricula_links(self, obj):
+        """List curricula that include courses from this department."""
+        curricula_map = {}
+        for course in obj.courses.all():
+            for curriculum in course.curricula.all():
+                curricula_map[curriculum.pk] = curriculum
+        if not curricula_map:
+            return "-"
+        rows = [
+            (
+                reverse("admin:academics_curriculum_change", args=[curriculum.pk]),
+                curriculum.short_name,
+            )
+            for curriculum in sorted(
+                curricula_map.values(), key=lambda cur: cur.short_name
+            )
+        ]
+        return format_html_join(", ", '<a href="{}">{}</a>', rows)
+
+    def merge_records(self, target: ModelT, sources: Iterable[ModelT]) -> dict[str, int]:
+        """Merge departments using the shared merge helper."""
+        target_department = cast(Department, target)
+        source_departments = cast(Iterable[Department], sources)
+        summary = merge_departments(target_department, source_departments)
+        return {"merged": summary.get("merged", 0)}
+
+    def merge_records_action(self, request, queryset):
+        """Warn about college alignment before showing the merge form."""
+        response = super().merge_records_action(request, queryset)
+        if request.method == "POST" and request.POST.get("apply_merge"):
+            return response
+        messages.warning(
+            request,
+            (
+                "Review the selected departments carefully. "
+                "Departments should belong to the same college before merging."
+            ),
+        )
+        return response
 
 
 @admin.register(Prerequisite)
@@ -365,5 +662,5 @@ class PrerequisiteAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModel
     # search_fields = ("course", "prerequisite_course") # not permitted no search of fk
     list_display = ("course", "prerequisite_course", "curriculum")
     autocomplete_fields = ("course", "prerequisite_course", "curriculum")
-    list_filter = (CurriculumFilter,)
+    list_filter = (CurriculumFilterAC,)
     # search_fields = ("course", "prerequisite_course", "curriculum")

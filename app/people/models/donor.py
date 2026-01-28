@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 from django.contrib.auth.models import User
 from django.db import models
 from simple_history.models import HistoricalRecords
@@ -39,6 +41,28 @@ class Donor(AbstractPerson):
         ]
 
     @classmethod
+    def mk_username(
+        cls,
+        first,
+        last,
+        middle=None,
+        unique=True,
+        exclude=None,
+        prefix_len=None,
+        sep=None,
+    ):
+        """Generate donor usernames with a short first-name prefix."""
+        return super().mk_username(
+            first,
+            last,
+            middle=middle,
+            unique=unique,
+            exclude=exclude,
+            prefix_len=prefix_len,
+            sep=sep,
+        )
+
+    @classmethod
     def get_default(cls) -> "Donor":
         """Return a placeholder Donor for legacy imports."""
         user, created = User.objects.get_or_create(
@@ -53,4 +77,4 @@ class Donor(AbstractPerson):
             user=user,
             defaults={"username": user.username},
         )
-        return donor
+        return cast("Donor", donor)

@@ -1,61 +1,55 @@
 # Contributor Guide
 
-Welcome — and thanks for helping grow **Tusis**, Tubman University’s information system.
+Welcome — and thanks for helping grow **Tusis**, Tubman University’s Student Information System.
 This guide explains how to spin up the development stack, run checks, write tests, and craft pull requests.
-
----
-
-### Selenium driver pin
-
-- Use the system `chromedriver` (currently 142.x) when running Selenium. The fixtures look for `/usr/bin/chromedriver` first; do not downgrade to the webdriver-manager default (114) because it breaks local browsers.
-
-### Files to leave untouched unless asked
-#### DO NOT TOUCH
-- `TODO.org`
-- `journal.org`
-- Any file explicitly flagged by the user in a conversation
-
 
 ---
 
 ## 2 · Conventions
 
-### Ignore `migrations/` folders in commits
+- Growing codebase habit: re-read AGENTS.md and related task files regularly to align with evolving patterns and instructions.
 
-Do not commit change made to migration files. The will be regenerated with new DB.
+### Files to leave untouched unless asked
+The folders: 
+- `migrations/`
+- `Seed_data`
+ and all files under them
+ 
+The files:
+- `TODO.org`
+- `journal.org`
+- all `.gitignore` files
+- Any file explicitly flagged by the user in a conversation
+---
 
 ### naming
-Don't change existing variable names
+Do not change existing variable names
 
 ### Documentation & comments
-- Pay close attention to comment using '# >' markers they are for you.
+- Pay close attention to comment using '# >' markers they are specificaly for agents.  You should read them but not write or delete them yourself.
 - When editing code, do not remove commented lines.  Add a comment to explain why you suggest removing them, instead.
 - Comment your additions, especially if removing code
-- Document succintly new class, methods, or functions
-- In the reports, do not ad precision, file precision is enough
+- Document succintly new class, methods, or functions even internal ones
+- In the reports, do not add line precision, file precision is enough
 
 ### Coding style
+- Typing: prefer explicit TypeAliases ending with `T` (e.g., `StrIntMapT`), avoid `Any`, and keep mypy happy (no implicit Optional where a concrete type is expected).
 - Prefer functional-style helpers (small pure functions) and reuse existing utilities before adding new logic.
 - Factor common routines rather than duplicating blocks; keep new code composable.
+- For app import prefere three level deep.  using __init___ and __all__ in case of deeper nesting.
+- Trying keep python files size under 300 lines for readability.  They can be bundled together latter at deployment or production stage.
 
-### Branching
-
-Always work on a feature branch off of `dev`.
-Example:
-
-git checkout -b feature/section-reservations
-
-Use consistent naming:
-```bash
-    feature/... for new functionality
-
-    fix/... for bug fixes
-
-    chore/... for small changes, cleanups, or refactoring
-
-    hotfix/... only if needed urgently on production
-    
-```
 ### Linting and checks
-- Check that the code pass 
-black, flake8 and mypy
+- Check that the code pass with `py_compile`,  `black`, `flake8`, and `mypy` at the end of your edits. 
+
+## Codebase style snapshot
+- Favor small functional helpers (`ensure_*`, `normalize_*`, `pipeline`, widgets) and `get_or_create`/`update_or_create` patterns with in-memory caches for imports and admin helpers.
+- Commands lean on `transaction.atomic`, emit progress/stats via `stdout`, and write CSV logs for skipped/invalid rows; docstrings are descriptive and comments with `# >` capture intent/TODOs.
+
+## Debugging  and  Tests
+
+- check function/class signatures and expected types/formats early; prefer settings-driven defaults over hardcoded formats.
+
+### Selenium driver pin
+
+- Use the system `chromedriver` (currently 142.x) when running Selenium. The fixtures look for `/usr/bin/chromedriver` first; do not downgrade to the webdriver-manager default (114) because it breaks local browsers.

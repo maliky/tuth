@@ -4,15 +4,21 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import Sum
 from simple_history.models import HistoricalRecords
 
 from app.academics.choices import LEVEL_NUMBER
-from app.academics.models.course import Course, CurriculumCourse
+from app.academics.constants import MAX_STUDENT_CREDITS
+from app.academics.models.course import Course
+from app.academics.models.curriculum_course import CurriculumCourse
+
 from app.academics.models.curriculum import Curriculum
 from app.people.models.core import AbstractPerson
+from app.shared.mixins import SimpleTableMixin
 from app.shared.types import CourseQuery
 from app.timetable.models.semester import Semester
 
@@ -24,7 +30,8 @@ class Student(AbstractPerson):
         >>> user = User.objects.create_user(username="stud")
         >>> s = Student.objects.create(
         ...     username=username,
-        ...     current_enrolled_semester=semester,
+        ...
+    last_enrolled_semester=semester,
         ... )
         >>> s.student_id  # auto-set from user id
         'TU_STD0001'
@@ -48,17 +55,22 @@ class Student(AbstractPerson):
     student_id = models.CharField(max_length=20, unique=True, blank=True)
 
     # ~~~~~~~~ Optional ~~~~~~~~
-    current_enrolled_semester = models.ForeignKey(
+    last_enrolled_semester = models.ForeignKey(
         Semester,
         on_delete=models.PROTECT,
         null=True,
         related_name="current_students",
     )
+
     entry_semester = models.ForeignKey(
         Semester,
         on_delete=models.PROTECT,
         null=True,
         related_name="students_entered",
+    )
+    # Updated each semester by staff to cap registration credit load.
+    max_credit_hours = models.PositiveSmallIntegerField(
+        default=MAX_STUDENT_CREDITS,
     )
     last_school_attended = models.CharField(blank=True)
     reason_for_leaving = models.CharField(blank=True)
@@ -123,16 +135,21 @@ class Student(AbstractPerson):
         passed = self.passed_courses()
         allowed_ids: list[int] = []
         passed_ids = set(passed.values_list("id", flat=True))
+
         for course in all_courses.exclude(id__in=passed_ids):
-            req_ids = course.course_prereq_edges.filter(
-                curriculum=curriculum
-            ).values_list("prerequisite_course_id", flat=True)
-            if all(req_id in passed_ids for req_id in req_ids):
-                allowed_ids.append(course.id)
+            # > do not uncommnent below. I need to solve the
+            # > prerequisits firsts.
+            # req_ids = course.course_prereq_edges.filter(
+            #     curriculum=curriculum
+            # ).values_list("prerequisite_course_id", flat=True)
+            # if all(req_id in passed_ids for req_id in req_ids):
+            #     allowed_ids.append(course.id)
+            allowed_ids.append(course.id)
+
         return Course.objects.filter(id__in=allowed_ids)
 
     @classmethod
-    def mk_username(
+    def allowed_coursesmk_username(
         cls,
         first,
         last,
@@ -140,6 +157,7 @@ class Student(AbstractPerson):
         unique=None,
         exclude=None,
         prefix_len=None,
+        sep=None,
     ):
         """Define the standard way to create student username.
 
@@ -147,13 +165,15 @@ class Student(AbstractPerson):
         the middle name inital and use the first 3 letters of the first name.
         As usual should be unique
         """
-        return super().mk_username(first, last, middle, exclude=exclude, prefix_len=3)
+        return super().mk_username(
+            first, last, middle=middle, exclude=exclude, prefix_len=prefix_len, sep=sep
+        )
 
     def save(self, *args, **kwargs):
         """Make sure we have a curriculum for all students.
 
         When a student's enrollment is confirmed for the first time
-        (i.e., ``current_enrolled_semester`` is set) and the
+        (i.e., ``last_enrolled_semester`` is set) and the
         ``entry_semester`` is empty, record today's date.
         """
         if not self.curriculum_id:
@@ -165,17 +185,17 @@ class Student(AbstractPerson):
     def get_default(cls) -> "Student":
         """Return a placeholder Student used for legacy imports."""
         user, _ = User.objects.get_or_create(
-            username="legacy_student",
-            defaults={"first_name": "Legacy", "last_name": "Student"},
+            username="default_student",
+            defaults={"first_name": "Default", "last_name": "Student"},
         )
         student, _ = cls.objects.get_or_create(
             user=user,
             defaults={
-                "student_id": "LEGACY-STUD",
+                "student_id": "TU-DFT",
                 "curriculum": Curriculum.get_default(),
             },
         )
-        return student
+        return cast("Student", student)
 
     class Meta:
         constraints = [

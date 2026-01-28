@@ -9,7 +9,7 @@ from django.db import models
 from simple_history.models import HistoricalRecords
 
 from app.academics.models.curriculum import Curriculum
-from app.academics.models.course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriculumCourse
 
 
 class ConcentrationMixin(models.Model):

@@ -3,13 +3,11 @@ set -euo pipefail  # e exit immediatly if error, -u unset var are error -o pipef
 
 printusage() {
     cat >&2 <<EOF
-Usage: $(basename "$0") [-d | --dev] [-p | --prod] [-m | --migrate]
+Usage: $(basename "$0") [-d | --dev] [-p | --preprod]
 
 Options
   -d, --dev       Run in development mode (loads .env-dev)
-  -p, --prod      Run in production mode  (loads .env-prod)
-  -t, --test      Run in test mode (loads .env-test)
-  -m, --migrate   Run 'makemigrations' and 'migrate' before starting
+  -p, --preprod   Run in pre-production mode  (loads .env-preprod)
   -h, --help      Show this help
 EOF
 }
@@ -21,58 +19,39 @@ RUN_MIGRATIONS=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -d|--dev)   MODE=dev ;;
-        -p|--prod)  MODE=prod ;;
-        -t|--test)  MODE=test ;;        
-        -m|--migrate) RUN_MIGRATIONS=true ;;
+        -p|--preprod)  MODE=preprod ;;
         -h|--help)  printusage; exit 0 ;;
         *)          echo "Unknown option: $1" >&2; printusage; exit 1 ;;
     esac
     shift
 done
 
-if [[ -z "$MODE" ]]; then
-    MODE="test"
+if [[ -z "${MODE}" ]]; then
+  echo "Error: choose --dev or --preprod" >&2
+  printusage
+  exit 1
 fi
-
 # ---- load environment ------------------------------------------------------
-echo ">> Running in $MODE mode…<<"
-if [[ $MODE == dev ]]; then
-    ln -fs .env-dev .env
-elif [[ $MODE == prod ]]; then
-    ln -fs .env-prod .env
-elif [[ $MODE == test ]]; then
-    ln -fs env-test .env
-fi
-export $(grep -v '^#' .env | xargs)  # load variables
+echo ">> Running in ${MODE} mode…<<"
 
-# ---- optional migrations ---------------------------------------------------
-if $RUN_MIGRATIONS; then
-    # we start from fresh db
-    if [[ $MODE == dev ]]; then
-        python manage.py reset_db
-    elif [[ $MODE == test ]]; then
-        sudo find . -path "*migrations*" -type f -delete
-        sudo find . -type d -name "__pycache__" -exec rm -rf {} +        
-        rm -f $DJANGO_DB_NAME
-    fi
-    echo ">> Running makemigrations and migrate <<"
-    # should makemigraton for all discovered apps
-    python manage.py makemigrations
-    python manage.py makemigrations registry spaces academics timetable people finance shared website
-    python manage.py migrate
-    python manage.py create_test_users
-    python manage.py load_roles
-    python manage.py create_states
-fi
+ENV_FILE=".env-${MODE}"
+[[ -f "${ENV_FILE}" ]] || { echo "Missing ${ENV_FILE}" >&2; exit 1; }
+
+ln -fs "${ENV_FILE}" .env
+
+set -a
+# shellcheck disable=SC1091
+source .env
+set +a
 
 # ---- static & server -------------------------------------------------------
 python manage.py collectstatic --noinput
 
-if [[ $MODE == dev ||  $MODE == prod ]]; then
-    echo ">> Running gunicorn server <<"
-    gunicorn app.wsgi:application --bind 0.0.0.0:8000
-elif [[ $MODE == test ]]; then
-    echo ">> Running local server <<"    
+if [[ $MODE == dev ]]; then
+    echo ">> Running server <<"
     python manage.py runserver
+elif [[ $MODE == preprod ]]; then
+    echo ">> Running restarting the docker <<"    
+    docker-compose -f docker-compose-preprod.yml restart web
 fi
 

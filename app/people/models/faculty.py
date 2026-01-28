@@ -1,15 +1,20 @@
 """Faculty class."""
 
-from typing import Any, Dict, Self, Tuple, cast
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Dict, Optional, Self, Tuple, cast
 
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Count, QuerySet
 
-from app.academics.models.college import College
-from app.academics.models.curriculum import Curriculum
+from app.academics.models import College, Curriculum
 from app.people.models.staffs import Staff
+from app.people.utils import mk_username
 from app.timetable.models.semester import Semester
+
+if TYPE_CHECKING:
+    from app.timetable.models.section import Section
 
 
 class FacultyManager(models.Manager):
@@ -32,8 +37,8 @@ class FacultyManager(models.Manager):
         "personal_website",
         "academic_rank",
         "middle_name",
-        "name_prefix",
-        "name_suffix",
+        "prefix_name",
+        "suffix_name",
     }
 
     def _split_kwargs(
@@ -51,10 +56,18 @@ class FacultyManager(models.Manager):
         return super().create(staff_profile=staff_profile, **faculty_kwargs)
 
     def get_or_create(self, defaults=None, **kwargs):
-        """Get or Create the Faculty and create the Staff if id does not exists."""
+        """Get or Create the Faculty and create the Staff if it does not exists."""
         defaults = defaults or {}
-        username = kwargs.pop("username")
+        username = kwargs.pop("username", None)
+        staff_profile = kwargs.pop("staff_profile", None)
+
         staff_kwargs, faculty_kwargs = self._split_kwargs({**kwargs, **defaults})
+
+        if staff_profile:
+            return super().get_or_create(
+                staff_profile=staff_profile, defaults=staff_kwargs
+            )
+
         staff_profile, _ = Staff.objects.get_or_create(
             username=username, defaults=staff_kwargs
         )
@@ -83,7 +96,7 @@ class Faculty(models.Model):
 
     # ~~~~ Optional ~~~~
     # Main college for the faculty (Could be a department also)
-    # just for administrative convieniance
+    # just for administrative convenience
     college = models.ForeignKey(
         "academics.College", on_delete=models.CASCADE, null=True, blank=True
     )
@@ -128,28 +141,31 @@ class Faculty(models.Model):
     @property
     def primary_assignment_label(self) -> str:
         """Return the department/college where the faculty teaches the most sections."""
-        sections = (
-            self.section_set.values(
-                "curriculum_course__course__department__short_name",
+        qs: Any = self.section_set  # noqa: ANN401
+        row = (
+            qs.values_list(
+                "curriculum_course__course__department__code",
                 "curriculum_course__course__department__college__code",
             )
-            .annotate(section_total=Count("id"))
+            .annotate(section_total=Count("pk"))
             .order_by(
-                "-section_total", "curriculum_course__course__department__short_name"
+                "-section_total",
+                "curriculum_course__course__department__code",
             )
             .first()
         )
-        if not sections:
+
+        if not row:
             return ""
 
-        dept = sections.get("curriculum_course__course__department__short_name") or ""
-        college = (
-            sections.get("curriculum_course__course__department__college__code") or ""
-        )
+        dept, college, *_ = row  # type: ignore[misc]
+        dept_s = dept or ""
+        college_s = college or ""
 
-        if dept and college:
-            return f"{dept} ({college})"
-        return dept or college
+        if dept_s and college_s:
+            return f"{dept_s} ({college_s})"
+
+        return dept_s or college_s
 
     def _ensure_college(self):
         """Make sure we have a college."""
@@ -184,13 +200,35 @@ class Faculty(models.Model):
         faculty = cls(staff_profile=profile, college=college)
         faculty.save()
 
-        return cast(Self, faculty)
+        return faculty
 
     @classmethod
     def get_unique_default(cls) -> Self:
         """Returns a unique default Faculty."""
         unique_profile = Staff.get_unique_default()
         return cls.get_default(unique_profile)
+
+    @classmethod
+    def mk_username(
+        cls,
+        first,
+        last,
+        middle="",
+        unique=True,
+        exclude=None,
+        prefix_len=None,
+        sep=None,
+    ):
+        """Generate staff usernames using 1-letter name prefix and no middle."""
+        return mk_username(
+            first,
+            last,
+            middle="",
+            unique=unique,
+            exclude=exclude,
+            prefix_len=prefix_len,
+            sep=sep,
+        )
 
     class Meta:
         verbose_name = "Faculty"

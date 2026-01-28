@@ -15,6 +15,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from app.people.models.student import Student
+from app.shared.utils import parse_str
 
 
 class StudentAdminLookupForm(forms.Form):
@@ -33,15 +34,15 @@ class StudentAdminLookupForm(forms.Form):
     )
 
     def clean(self) -> dict[str, object]:
-        cleaned = super().clean()
+        cleaned = dict(super().clean() or {})
         if cleaned.get("student"):
             return cleaned
-        query = (cleaned.get("student_query") or "").strip()
+        query = parse_str(cleaned.get("student_query"))
         if not query:
             raise forms.ValidationError("Select a student from the search results.")
 
         student = (
-            Student.objects.filter(current_enrolled_semester__isnull=False)
+            Student.objects.filter(last_enrolled_semester__isnull=False)
             .filter(Q(student_id__iexact=query) | Q(long_name__iexact=query))
             .order_by("student_id")
             .first()
@@ -143,8 +144,8 @@ def student_admin_edit(request: HttpRequest) -> HttpResponse:
 @permission_required("people.view_student", raise_exception=True)
 def student_autocomplete(request: HttpRequest) -> HttpResponse:
     """Provide JSON suggestions for the student lookup."""
-    query = (request.GET.get("q") or "").strip()
-    students = Student.objects.filter(current_enrolled_semester__isnull=False)
+    query = parse_str(request.GET.get("q"))
+    students = Student.objects.filter(last_enrolled_semester__isnull=False)
     if query:
         students = students.filter(
             Q(student_id__icontains=query) | Q(long_name__icontains=query)

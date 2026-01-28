@@ -155,7 +155,6 @@ DATABASES = {
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = "en-gb"
-
 USE_L10N = True
 TIME_ZONE = "UTC"
 FORMAT_MODULE_PATH = "app.formats"
@@ -195,14 +194,14 @@ LOGGING = {
         },
     },
     "handlers": {
-          "file": {
-              "class": "logging.handlers.RotatingFileHandler",
-              "filename": str(LOG_DIR / "django.log"),
-              "maxBytes": 5 * 1024 * 1024,
-              "backupCount": 5,
-              "formatter": "verbose",
-              "level": "INFO",
-          },
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOG_DIR / "django.log",
+            "maxBytes": 5 * 1024 * 1024,
+            "backupCount": 5,
+            "formatter": "verbose",
+            "level": "INFO",
+        },
         "actions": {
             "class": "logging.FileHandler",
             "filename": LOG_DIR / "actions.log",
@@ -216,7 +215,7 @@ LOGGING = {
         },
     },
     "root": {
-        "handlers": ["actions", "stdout"],
+        "handlers": ["file", "actions", "stdout"],
         "level": "INFO",
     },
 }

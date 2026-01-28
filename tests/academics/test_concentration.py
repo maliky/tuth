@@ -12,7 +12,7 @@ from app.academics.models.concentration import (
     Minor,
     MinorCurriculumCourse,
 )
-from app.academics.models.course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriculumCourse
 
 pytestmark = pytest.mark.django_db
 

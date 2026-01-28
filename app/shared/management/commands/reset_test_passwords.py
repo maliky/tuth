@@ -3,6 +3,8 @@
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 
+from app.shared.management.commands.create_test_users import TEST_PASSWORD
+
 
 class Command(BaseCommand):
     """Reset all test_* users (or any prefix) to a shared password."""
@@ -20,7 +22,7 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--password",
-            default="PassW0rd!",
+            default=TEST_PASSWORD,
             help="Password to set on the matching accounts (default: %(default)s)",
         )
 

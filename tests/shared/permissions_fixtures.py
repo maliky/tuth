@@ -12,11 +12,11 @@ from app.academics.models.college import College
 from app.shared.auth.perms import UserRole
 from app.people.models.role_assignment import RoleAssignment
 
-RoleUserFactory: TypeAlias = Callable[[UserRole], User]
+RoleUserFactoryT: TypeAlias = Callable[[UserRole], User]
 
 
 @pytest.fixture
-def role_user_factory(college_factory, user_factory) -> RoleUserFactory:
+def role_user_factory(college_factory, user_factory) -> RoleUserFactoryT:
     """Return a callable creating a user, group, and role assignment.
 
     Returns the user in a group, with permission to view a college.
@@ -67,7 +67,7 @@ def finance_officer(role_user_factory) -> User:
 # def basic_user(user_factory, curriculum, semester):
 #     user = user_factory("plain")
 #     Student.objects.create(
-#         user=user, curriculum=curriculum, current_enrolled_semester=semester
+#         user=user, curriculum=curriculum, last_enrolled_semester=semester
 #     )
 #     return user
 

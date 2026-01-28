@@ -1,13 +1,61 @@
 """Filters for the registry models in Admin."""
 
+from urllib.parse import urlencode
+
 from admin_searchable_dropdown.filters import (
-    AutocompleteFilterFactory,
     AutocompleteFilter,
+    AutocompleteFilterFactory,
+    _get_rel_model,
 )
-from app.timetable.models.semester import Semester
 from django.contrib import admin
 from django.urls import reverse
-from urllib.parse import urlencode
+
+from app.people.models.faculty import Faculty
+from app.shared.admin.filters import (
+    BaseCollegeFilter,
+    ScopedAutocompleteFilter,
+    _filter_queryset_by_value,
+    _get_lookup_path,
+    _related_qs_for_lookup,
+)
+from app.timetable.models.semester import Semester
+
+SEMESTER_FIELD_LOOKPS = (
+    ("semester", "semester"),
+    ("section", "section__semester"),
+    ("programs", "programs__sections__semester"),
+    ("in_curriculum_courses", "in_curriculum_courses__sections__semester"),
+    ("curriculum_course", "curriculum_course__sections__semester"),
+    ("sections", "sections__semester"),
+    ("student_registrations", "student_registrations__section__semester"),
+    ("invoice", "invoice__semester"),
+    ("payment", "payment_student__last_enrolled_semester"),
+    ("student", "student__last_enrolled_semester"),
+)
+
+SemesterAcademicYearFilterAc = AutocompleteFilterFactory(
+    "Academic year",
+    "academic_year",
+    use_pk_exact=False,  # > what advantages is there to use_pk_exact ?
+)
+
+
+class SectionCollegeFilter(BaseCollegeFilter):
+    field_path = "curriculum_course__curriculum__college"
+    parameter_name = "curriculum_course__curriculum__college__id__exact"
+
+
+SectionFacultyFilterAc = AutocompleteFilterFactory("Faculty", "faculty")
+
+
+class SecSessionFacultyFilterAc(ScopedAutocompleteFilter):
+    """Autocomplete filter for session sections by faculty."""
+
+    title = "Faculty"
+    parameter_name = "section__faculty"
+    field_name = "faculty"
+    lookup_map = (("section", "section__faculty"),)
+    target_model = Faculty
 
 
 class SectionBySemesterFilter(AutocompleteFilter):
@@ -27,68 +75,18 @@ class SectionBySemesterFilter(AutocompleteFilter):
         )
 
 
-GradeSemesterFilterAc = AutocompleteFilterFactory(
-    "Semester",  # title
-    "section__semester",  # look-up path (Grade → Section → Semester)
-    use_pk_exact=False,
-)
+class SemesterFilterAC(ScopedAutocompleteFilter):
+    """Autocomplete filter constrained to semesters present in the queryset."""
 
-SectionSemesterFilterAc = AutocompleteFilterFactory(
-    "Semester",  # title
-    "semester",  # look-up path (Grade → Section → Semester)
-    use_pk_exact=False,
-)
-
-
-class SemesterFilter(admin.SimpleListFilter):
-    """Filter queryset by semester with a current semester default."""
-
-    title = "semester"
+    title = "Semester"
+    # is_placeholder_title = True
     parameter_name = "semester"
-
-    def lookups(self, request, model_admin):
-        """Get the semesters order in decreasing age.
-
-        Returns a list of tuples. The first element in each
-        tuple is the coded value for the option that will
-        appear in the URL query. The second element is the
-        human-readable name for the option that will appear
-        in the right sidebar.
-
-        See https://docs.djangoproject.com/en/5.2/ref/contrib/admin/filters/
-        """
-        # Request and mode_admin are not used but it's ok.
-        semesters = Semester.objects.order_by("-start_date")
-        return [(s.id, str(s)) for s in semesters]
+    field_name = "semester"
+    lookup_map = SEMESTER_FIELD_LOOKPS
+    target_model = Semester
 
     def queryset(self, request, qs):
-        """Filter the results of different model based on the related semester.
-
-        Returns the filtered queryset based on the value.
-        provided in the query string and retrievable via
-        `self.value()`.
-        """
-        if self.value() is None:
-            # current = get_current_semester()  # should I default to current
-            # if so the All keyword has no use
-            # if not current:
-            return qs
-            # semester_id = current.id
-        else:
-            semester_id = int(self.value())  # type: ignore[arg-type]
-
-        model = qs.model
-        field_names = {f.name for f in model._meta.get_fields()}
-        if "semester" in field_names:
-            return qs.filter(semester_id=semester_id)
-        if "section" in field_names:
-            return qs.filter(section__semester_id=semester_id)
-        if "curriculum_course" in field_names:
-            return qs.filter(
-                curriculum_course__sections__semester_id=semester_id
-            ).distinct()
-        if "payment" in field_names:
-            return qs.filter(payment__student__current_enrolled_semester_id=semester_id)
-        if "student" in field_names:
-            return qs.filter(student__current_enrolled_semester_id=semester_id)
+        """Filter by the selected semester when provided."""
+        if self.value():
+            return _filter_queryset_by_value(qs, self.lookup_path, self.value())
         return qs

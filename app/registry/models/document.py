@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional, cast, Self
+from typing import Optional, Self, cast
 
 from django.db import models
 from simple_history.models import HistoricalRecords
 
-from app.shared.mixins import SimpleTableMixin
-
-from app.shared.status.mixins import StatusableMixin, StatusHistory
+from app.registry.models.status_types import DocumentStatus, DocumentType
+from app.shared.mixins import SimpleTableMixin, StatusableMixin, StatusHistory
 
 
 def set_document_path(instance, filename: str) -> str:
@@ -20,50 +19,6 @@ def set_document_path(instance, filename: str) -> str:
     """
     instance_name = instance.__class__.__name__.lower()
     return str(Path(instance_name) / str(instance.person) / filename)
-
-
-class DocumentType(SimpleTableMixin):
-
-    DEFAULT_VALUES = [
-        ("photo", "Photo"),
-        ("applet", "Application Letter"),
-        ("recls", "Recommandation Last School"),
-        ("reccom", "Recommandation Community"),
-        ("recrel", "Recommandation Relgious Leaders"),
-        ("medcert", "Medical Certificat"),
-        ("repcard", "Report Card"),
-        ("waec", "Waec"),
-        ("bill", "Bill"),
-        ("transcript", "Transcript"),
-        ("public", "Public_signature"),
-        ("other", "Other Document"),
-    ]
-
-    @classmethod
-    def get_default(cls) -> Self:
-        """Returns the default FeeType."""
-        deft, _ = cls.objects.get_or_create(
-            code="other", defaults={"label": "Other Document"}
-        )
-        return cast(Self, deft)
-
-
-class DocumentStatus(SimpleTableMixin):
-    DEFAULT_VALUES = [
-        ("pending", "Pending"),
-        ("approved", "Approved"),
-        ("adjustments_required", "Adjustments Required"),
-        ("rejected", "Rejected"),
-    ]
-
-    class Meta:
-        verbose_name_plural = "Document Status"
-
-    @classmethod
-    def get_default(cls) -> Self:
-        """Returns the default FeeType."""
-        deft, _ = cls.objects.get_or_create(code="pending", defaults={"label": "Pending"})
-        return cast(Self, deft)
 
 
 class AbstractDocument(StatusableMixin, models.Model):

@@ -10,7 +10,8 @@ class GroupAdmin(DjangoGroupAdmin):
 
     # List the users belonging to the group
     readonly_fields = ("user_list",)
-    fields = ("name", "permissions", "user_list")
+    # DjangoGroupAdmin defines fieldsets, so we override to ensure user_list renders.
+    fieldsets = ((None, {"fields": ("name", "permissions", "user_list")}),)
 
     def user_list(self, obj: Group) -> str:
         """Return a comma-separated list of usernames."""

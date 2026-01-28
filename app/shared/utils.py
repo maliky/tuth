@@ -1,157 +1,143 @@
 """General utility helpers shared between apps."""
 
-from typing import Mapping, Optional, Tuple
+from datetime import date
+from typing import Mapping, Optional
 
 from django.core.management.base import BaseCommand
+from tablib import Dataset
 
-from app.academics.constants import COURSE_PATTERN
-from app.academics.models.college import College
-from app.academics.models.department import Department
-from app.shared.constants import STYLE_DEFAULT
+from app.shared.constants import STYLE_DEFAULT  # safe
 
 
-def expand_course_code(
-    code: str, *, row: Optional[Mapping[str, str]] = None
-) -> Tuple[str, str, str]:
-    """Parse a course code into its components.
+def to_int(value: str | int | None, default: int = 0) -> int:
+    """Lenient int conversion for count-like inputs.
 
-    Parameters
-    ----------
-    code : Raw course code such as "CAFS-AGR121".
-        <college_code>-<dept_code><course_no>
-        See COURSE_PATTERN.
-    row : Optional CSV row providing a college_code fallback. The
-        college_code value is used only when the course code itself
-        does not include a college segment.
+    Args:
+        value: Input value to coerce.
+        default: Fallback value when parsing fails or input is empty.
 
-    Returns
-    -------
-    tuple[str, str, str]
-        The department code, course number and college code.
+    Returns:
+        Parsed int
+
+    Examples:
+        >>> to_int("2.9")
+        2
+        >>> to_int("", default=5)
+        5
     """
-    assert "/" not in code
+    if not value:
+        return default
 
-    _match = COURSE_PATTERN.search(code.strip().upper())
-    assert _match is not None, f"Code '{code}' doesn't match expected pattern"
+    if isinstance(value, int):
+        return value
 
-    college_code, dept_short_name, course_no = (
-        _match.group("college"),
-        _match.group("dept"),
-        _match.group("num"),
-    )
+    token = str(value).strip()
+    if not token:
+        return default
 
-    if not college_code:
-        if row and "college_code" in row:
-            college_code = row["college_code"]
-        else:
-            college_code = College.get_default().code
-
-    return college_code, dept_short_name, course_no
+    try:
+        return int(float(token))
+    except (TypeError, ValueError):
+        return default
 
 
-def make_course_code(dept: Department, number: str, short=False) -> str:
-    """Return a course code.
+def asserts_keys(required: list[str], row: dict) -> None:
+    """Ensure required keys are present in a row.
 
-    formed from dept.code+course.num
-    if short == True use dept.short_name (without college info)
+    Args:
+        required: Keys that must exist in the row.
+        row: Row data to validate.
+
+    Raises:
+        ValueError: If any required key is missing.
     """
-    _dept_code = dept.short_name if short else dept.code
-    return f"{_dept_code}-{number}".upper()
+    if not all([r in row for r in required]):
+        raise ValueError(f"{required} are required in row {row} context.")
 
 
-from typing import Mapping
+def _apply_case(text: str, casing: str) -> str:
+    """Return text transformed according to the casing directive."""
+    # why not user getattr(text, casting, text) ?
+    if casing == "lower":
+        return text.lower()
+    if casing == "upper":
+        return text.upper()
+    if casing == "title":
+        return text.title()
+    if casing == "capitalize":
+        return text.capitalize()
+    return text
+
+
+def parse_str(value: object, casing: str = "unchanged", dft: str = "") -> str:
+    """Parse an optional string with a default fallback.
+
+    casing: lower, upper, capitalize, title. default unchanged.
+    """
+    dft_value = _apply_case(dft, casing)
+    if value is None:
+        return dft_value
+
+    str_value = str(value)
+    if not str_value:
+        return dft_value
+
+    new_value = _apply_case(str_value, casing).strip()
+    return new_value if new_value else dft_value
 
 
 def get_in_row(key: str, row: Optional[Mapping[str, str | None]]) -> str:
-    """Return a value from the row (any mapping) safely stripped to a string.
+    """Return a stripped string value from a row.
 
-    Does so safely always returning something even if None is in the row.
+    Args:
+        key: Key to look up in the row.
+        row: Row data to read from.
+
+    Returns:
+        Stripped value or an empty string when the key is missing or None.
+
+    Raises:
+        AttributeError: If the row does not support key lookup.
     """
     try:
-        return ((row or {}).get(key) or "").strip()
+        return parse_str((row or {}).get(key))
     except AttributeError as exc:
         raise AttributeError(f"Could not access key '{key}' in row {row}") from exc
 
 
 def as_title(value: str) -> str:
-    """Utility to clean a strip _ from a str and capitalize its words."""
+    """Normalize a string by replacing underscores and title-casing words.
+
+    Args:
+        value: Input string to normalize.
+
+    Returns:
+        Title-cased string with underscores replaced by spaces.
+    """
     return value.replace("_", " ").title()
 
 
-def clean_column_headers(dataset):
-    """Strip blank headers that may appear due to trailing commas and remap column names."""
-    # sanitize column headers: strip whitespace
-    sanitised = [(header or "").strip() for header in dataset.headers]
-    rename_map = {
-        "course_dept_no": "course_dept",
-        "course_name": "course_dept",
-        "dept_code": "course_dept",
-        "Instructor": "faculty",
-        "nameprefix": "name_prefix",
-        "firstname": "first_name",
-        "middlename": "middle_name",
-        "lastname": "last_name",
-        "namesuffix": "name_suffix",
-        "semester": "semester_no",
-        "grade": "grade_code",
-        "Grade": "grade_code",
-        "CountyOfOrigin": "origin_county",
-        "PlaceOfBirth": "birth_place",
-        "Address": "address",
-        "PhoneNumber": "phone_no",
-        "Phone": "phone_no",
-        "PhoneNo": "phone_no",
-        "LastSchoolAttended": "last_school_attended",
-        "ReasonForLeaving": "reason_for_leaving",
-        "FatherName": "father_name",
-        "FatherAddress": "father_address",
-        "MotherName": "mother_name",
-        "MotherAddress": "mother_address",
-        "EmergencyContact": "emergency_contact",
-        "Nationality": "nationality",
-        "DateOfBirth": "birth_date",
-        "MaritalStatus": "marital_status",
-        "Gender": "gender",
-        "curriculum_short_name": "major",
-        "enrollement_semester": "current_enrolled_sem",
-    }
-    dataset.headers = [rename_map.get(name, name) for name in sanitised]
+def clean_column_headers(dataset) -> Dataset:
+    """Strip whitespace from dataset headers.
+
+    Args:
+        dataset: Tabular data with headers to sanitize.
+
+    Returns:
+        The same dataset with cleaned headers.
+    """
+    sanitised = [parse_str(header) for header in dataset.headers]
+    dataset.headers = sanitised
     return dataset
 
 
-def normalize_academic_year(raw: str | None) -> str:
-    """Convert various academic year labels to the canonical YY-YY format."""
-    text = (raw or "").strip()
-    if not text:
-        return ""
-
-    token = text.replace(" ", "").replace("/", "-")
-    if len(token) == 9 and token[4] == "-":  # 2019-2020
-        return f"{token[2:4]}-{token[7:9]}"
-    if len(token) == 4 and token.isdigit():  # 2019
-        yy = token[2:4]
-        return f"{yy}-{int(yy) + 1:02d}"
-    if len(token) == 5 and token[2] == "-":  # 19-20
-        return token
-    return token
-
-
-def parse_int(value: str | None) -> int | None:
-    """Safely convert arbitrary strings to integers."""
-    if value is None:
-        return None
-
-    token = str(value).strip()
-    if not token:
-        return None
-
-    try:
-        return int(float(token))
-    except ValueError:
-        return None
-
-
 def log(cmd: BaseCommand, msg: str, style: str = STYLE_DEFAULT) -> None:
-    """Write a styled message to the management command output."""
+    """Write a styled message to a management command output.
+
+    Args:
+        cmd: Command instance whose stdout and style are used.
+        msg: Message to write.
+        style: Name of the style attribute to apply.
+    """
     style_obj = getattr(cmd.style, style, cmd.style.NOTICE)
     cmd.stdout.write(style_obj(msg))

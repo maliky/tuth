@@ -1,0 +1,359 @@
+{% extends "website/staff/base.html" %}
+{% load static %}
+
+{% block staff_head_extra %}
+  <link rel="stylesheet" href="{% static 'admin/css/vendor/select2/select2.min.css' %}" />
+  <link rel="stylesheet" href="{% static 'admin/css/autocomplete.css' %}" />
+  <style>
+    .collapse-toggle .chevron {
+      transition: transform 0.2s ease;
+    }
+    .collapse-toggle[aria-expanded="true"] .chevron {
+      transform: rotate(90deg);
+    }
+  </style>
+{% endblock %}
+
+{% block header_actions %}
+  <a class="btn btn-outline-secondary btn-sm" href="{{ dashboard_url }}">
+    Back to dashboard
+  </a>
+{% endblock %}
+
+{% block staff_content %}
+  <section class="card shadow-sm mb-4">
+    <div class="card-body">
+      <form method="get" class="row g-3 align-items-end">
+        <input type="hidden" name="tab" value="{{ active_tab }}" />
+        <div class="col-md-5">
+          <label class="form-label">Student</label>
+          <select
+            class="form-select"
+            name="student_id"
+            data-student-autocomplete
+            data-autocomplete-url="{{ student_autocomplete_url }}"
+          >
+            {% if selected_student_id %}
+              <option value="{{ selected_student_id }}" selected>
+                {{ selected_student_label }}
+              </option>
+            {% endif %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Semester</label>
+          <select class="form-select" name="semester">
+            {% for option in semester_options %}
+              <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>
+                {{ option.label }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Status</label>
+          {% if active_tab == "payments" %}
+            <select class="form-select" name="payment_status">
+              {% for option in payment_status_options %}
+                <option value="{{ option.value }}" {% if option.value == payment_status %}selected{% endif %}>
+                  {{ option.label }}
+                </option>
+              {% endfor %}
+            </select>
+          {% else %}
+            <select class="form-select" name="invoice_status">
+              {% for option in invoice_status_options %}
+                <option value="{{ option.value }}" {% if option.value == invoice_status %}selected{% endif %}>
+                  {{ option.label }}
+                </option>
+              {% endfor %}
+            </select>
+          {% endif %}
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-primary w-100" type="submit">Filter</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <a
+        class="nav-link {% if active_tab != 'payments' %}active{% endif %}"
+        href="{{ invoice_tab_url }}"
+      >
+        Invoices
+      </a>
+    </li>
+    <li class="nav-item">
+      <a
+        class="nav-link {% if active_tab == 'payments' %}active{% endif %}"
+        href="{{ payment_tab_url }}"
+      >
+        Payments
+      </a>
+    </li>
+  </ul>
+
+  {% if active_tab == "payments" %}
+    {% if payment_groups %}
+      {% for group in payment_groups %}
+        <form
+          id="payment-update-form-{{ group.student.id }}"
+          method="post"
+          action="{% url 'finance_officer_update_payments' %}"
+        >
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ current_path }}" />
+          <input type="hidden" name="student_id" value="{{ group.student.id }}" />
+          <div class="card shadow-sm mb-3">
+            <div class="card-header d-flex flex-wrap align-items-center gap-3 justify-content-between">
+              <div>
+                <button
+                  class="btn btn-link text-decoration-none p-0 d-inline-flex align-items-center gap-2 collapse-toggle"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#payments-{{ group.student.id }}"
+                  aria-expanded="false"
+                  aria-controls="payments-{{ group.student.id }}"
+                >
+                  <i class="bi bi-chevron-right chevron" aria-hidden="true"></i>
+                  <strong>{{ group.student.long_name }}</strong>
+                </button>
+                <span class="text-muted">({{ group.student.student_id }})</span>
+                <span class="badge bg-warning text-dark ms-2">
+                  Pending: {{ group.pending_count }}
+                </span>
+              </div>
+              <div class="d-flex align-items-center gap-3">
+                <div>
+                  <span class="text-muted small">Total paid</span><br/>
+                  <strong>{{ group.total_paid }}</strong>
+                </div>
+                <button class="btn btn-outline-primary btn-sm" type="submit">
+                  Validate changes
+                </button>
+              </div>
+            </div>
+            <div class="collapse" id="payments-{{ group.student.id }}">
+              <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Invoice</th>
+                      <th>Amount due</th>
+                      <th>Amount paid</th>
+                      <th>Status</th>
+                      <th>Method</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for payment in group.rows %}
+                      <tr>
+                        <td>
+                          {{ payment.invoice.curriculum_course.course.short_code }} -
+                          {{ payment.invoice.semester.academic_year.code }} - Semester {{ payment.invoice.semester.number }}
+                          <input type="hidden" name="payment_ids" value="{{ payment.id }}" />
+                        </td>
+                        <td>{{ payment.invoice.amount_due }}</td>
+                        <td>
+                          <input
+                            class="form-control form-control-sm"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            name="amount_paid_{{ payment.id }}"
+                            value="{{ payment.amount_paid }}"
+                          />
+                        </td>
+                        <td>
+                          <select class="form-select form-select-sm" name="status_{{ payment.id }}">
+                            {% for option in payment_status_choices %}
+                              <option value="{{ option.code }}" {% if option.code == payment.status.code %}selected{% endif %}>
+                                {{ option.label }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                        </td>
+                        <td>
+                          <select class="form-select form-select-sm" name="method_{{ payment.id }}">
+                            {% for option in payment_method_options %}
+                              <option value="{{ option.code }}" {% if option.code == payment.payment_method.code %}selected{% endif %}>
+                                {{ option.label }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </form>
+      {% endfor %}
+    {% else %}
+      <div class="alert alert-light">No payments found.</div>
+    {% endif %}
+  {% else %}
+    {% for group in invoice_groups %}
+      <form
+        id="student-payment-form-{{ group.student.id }}"
+        method="post"
+        action="{% url 'finance_officer_create_payments' %}"
+      >
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ current_path }}" />
+        <input type="hidden" name="student_id" value="{{ group.student.id }}" />
+      </form>
+    {% endfor %}
+
+    <form
+      id="invoice-selection-form"
+      method="post"
+      action="{% url 'finance_officer_create_payments' %}"
+    >
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ current_path }}" />
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <p class="mb-0 text-muted">Select invoices for individual payments.</p>
+        <button
+          class="btn btn-outline-primary btn-sm d-none"
+          type="submit"
+          id="invoice-selection-submit"
+        >
+          Create individual payment
+        </button>
+      </div>
+      {% if invoice_groups %}
+        {% for group in invoice_groups %}
+          <div class="card shadow-sm mb-3">
+            <div class="card-header d-flex flex-wrap align-items-center gap-3 justify-content-between">
+              <div>
+                <button
+                  class="btn btn-link text-decoration-none p-0 d-inline-flex align-items-center gap-2 collapse-toggle"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#invoices-{{ group.student.id }}"
+                  aria-expanded="false"
+                  aria-controls="invoices-{{ group.student.id }}"
+                >
+                  <i class="bi bi-chevron-right chevron" aria-hidden="true"></i>
+                  <strong>{{ group.student.long_name }}</strong>
+                </button>
+                <span class="text-muted">({{ group.student.student_id }})</span>
+              </div>
+              <div class="d-flex align-items-center gap-3">
+                <div>
+                  <span class="text-muted small">Total due</span><br/>
+                  <strong>{{ group.total_due }}</strong>
+                </div>
+                <button
+                  class="btn btn-outline-primary btn-sm"
+                  type="submit"
+                  form="student-payment-form-{{ group.student.id }}"
+                >
+                  Create payments for student
+                </button>
+              </div>
+            </div>
+            <div class="collapse" id="invoices-{{ group.student.id }}">
+              <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th>Course</th>
+                      <th>Semester</th>
+                      <th>Amount due</th>
+                      <th>Created</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for invoice in group.rows %}
+                      <tr>
+                        <td>
+                          <input
+                            type="checkbox"
+                            class="invoice-checkbox"
+                            name="invoice_ids"
+                            value="{{ invoice.id }}"
+                          />
+                        </td>
+                        <td>
+                          {{ invoice.curriculum_course.course.short_code }} -
+                          {{ invoice.curriculum_course.course.title }}
+                        </td>
+                        <td>
+                          {{ invoice.semester.academic_year.code }} - Semester {{ invoice.semester.number }}
+                        </td>
+                        <td>{{ invoice.amount_due }}</td>
+                        <td>{{ invoice.created_at|date:"M d, Y H:i" }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="alert alert-light">No invoices found.</div>
+      {% endif %}
+    </form>
+  {% endif %}
+
+  {% if active_tab == "payments" %}
+    {% with page=payment_page %}
+      {% include "website/staff/partials/pagination.html" %}
+    {% endwith %}
+  {% else %}
+    {% with page=invoice_page %}
+      {% include "website/staff/partials/pagination.html" %}
+    {% endwith %}
+  {% endif %}
+{% endblock %}
+
+{% block body_extra %}
+  <script src="{% static 'admin/js/vendor/jquery/jquery.min.js' %}"></script>
+  <script src="{% static 'admin/js/vendor/select2/select2.full.min.js' %}"></script>
+  <script>
+    (function () {
+      const select = document.querySelector("[data-student-autocomplete]");
+      if (select && window.jQuery) {
+        const $select = window.jQuery(select);
+        const url = select.dataset.autocompleteUrl;
+        $select.select2({
+          allowClear: true,
+          placeholder: "Search by name or ID",
+          minimumInputLength: 2,
+          ajax: {
+            url: url,
+            dataType: "json",
+            delay: 250,
+            data: function (params) {
+              return { q: params.term };
+            },
+            processResults: function (data) {
+              return data;
+            },
+          },
+        });
+      }
+
+      const selectionButton = document.getElementById("invoice-selection-submit");
+      const checkboxes = document.querySelectorAll(".invoice-checkbox");
+      const toggleButton = () => {
+        if (!selectionButton) return;
+        const anyChecked = Array.from(checkboxes).some((box) => box.checked);
+        selectionButton.classList.toggle("d-none", !anyChecked);
+      };
+      checkboxes.forEach((box) => {
+        box.addEventListener("change", toggleButton);
+      });
+      toggleButton();
+    })();
+  </script>
+{% endblock %}

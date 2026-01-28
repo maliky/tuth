@@ -12,7 +12,9 @@ from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
 
 from app.people.models.object_manager import PersonManager
-from app.people.utils import extract_id_num, mk_username, photo_upload_to
+from app.people.utils import NameParts, extract_id_num, mk_username, photo_upload_to
+
+from typing import Mapping, Type, TypeVar, cast
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +58,8 @@ class AbstractPerson(models.Model):
     # ~~~~~~~~ Optional ~~~~~~~~
     # # need to define a list of choice well structured
     middle_name = models.CharField(blank=True)
-    name_prefix = models.CharField(help_text="eg. 'Miss.'", blank=True)
-    name_suffix = models.CharField(help_text="eg. 'Phd.'", blank=True)
+    prefix_name = models.CharField(help_text="eg. 'Miss.'", blank=True)
+    suffix_name = models.CharField(help_text="eg. 'Phd.'", blank=True)
     birth_date = models.DateField(_("date of birth"), null=True, blank=True)
     birth_place = models.CharField(blank=True)
     gender = models.CharField(choices=[("f", "Female"), ("m", "Male")], blank=True)
@@ -68,8 +70,6 @@ class AbstractPerson(models.Model):
     )
 
     # --- misc ---
-    father_address = models.CharField(blank=True)
-    father_name = models.CharField(blank=True)
     nationality = models.CharField(blank=True)
     origin_county = models.CharField(help_text="eg. Maryland, Nigeria", blank=True)
     bio = models.TextField(blank=True)
@@ -114,11 +114,11 @@ class AbstractPerson(models.Model):
         """Update the long name."""
         self.long_name = " ".join(
             [
-                self.name_prefix,
+                self.prefix_name,
                 self.user.first_name,
                 self.middle_name,
                 self.user.last_name,
-                self.name_suffix,
+                self.suffix_name,
             ]
         ).strip()
 
@@ -144,11 +144,29 @@ class AbstractPerson(models.Model):
     def _ensure_username(self):
         """Create a model field matching the user field for admin."""
         self._ensure_user()
-        if self.user.username:
-            self.username = self.user.username
-        else:
-            # Should never get here because username is mandatory for a user.
+        current_username = self.user.username or ""
+        desired_username = current_username or self.mk_username(
+            self.user.first_name,
+            self.user.last_name,
+            middle=self.middle_name,
+            unique=False,
+        )
+        username = desired_username
+        counter = 1
+        while (
+            username
+            and User.objects.filter(username=username).exclude(pk=self.user.pk).exists()
+        ):
+            counter += 1
+            username = f"{desired_username}{counter}"
+
+        if username and username != current_username:
+            self.user.username = username
+            self.user.save(update_fields=["username"])
+
+        if not self.user.username:
             raise ValidationError("A username should exists.")
+        self.username = self.user.username
 
     def _ensure_email(self):
         """Create a model field matching the email field for admin."""
@@ -223,22 +241,17 @@ class AbstractPerson(models.Model):
 
     @classmethod
     def mk_username(
-        cls,
-        first,
-        last,
-        middle=None,
-        unique=True,
-        exclude=None,
-        prefix_len=None,
+        cls, first, last, middle="", unique=True, exclude=None, prefix_len=None, sep=None
     ):
         """Defaut to make a user name.  Should be overridend by subclasses."""
         return mk_username(
             first,
             last,
-            middle=middle if middle else "",
+            middle=middle,
             exclude=exclude,
             unique=unique,
             prefix_len=prefix_len,
+            sep=sep,
         )
 
     @classmethod

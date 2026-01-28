@@ -1,0 +1,90 @@
+"""Column name mappings for import resources."""
+
+# Incoming headers -> canonical column names used by FacultyResource
+# keept it for legacy but shouldn be used anymore
+FACULTY_HEADER_MAP = {
+    "Instructor": "staff_profile",
+    "first_n": "first_name",
+    "middle_n": "middle_name",
+    "last_n": "last_name",
+    "name_prefix": "prefix_name",
+    "name_suffix": "suffix_name",
+    # "username": "username",
+}
+
+USER_HEADER_MAP = {
+    "UserName": "username",
+    "FirstName": "first_name",
+    "MiddleName": "middle_name",
+    "LastName": "last_name",
+    "fullname": "long_name",
+    # "UserGroup" : "bio_usergroup",  # empty
+}
+
+GENDER_MAP = {
+    "male": "m",
+    "female": "f",
+}
+
+STUDENT_HEADER_MAP = {
+    "student_name": "long_name",
+    "AcademicYear": "academic_year",
+    "AccountID": "student_id",  # > ! this key is only from studeninfo
+    "AdmissionStatus": "bio_admissionstatus",
+    "ConfidentialInfoFlag": "bio_confidentialinfoflag",
+    "CountyOfOrigin": "origin_county",
+    "DOB": "birth_date",
+    "DateOfBirth": "birth_date",
+    "Dept": "department",
+    "EmergencyContact": "emergency_contact",
+    "Enrolled": "bio_Enrolled",
+    "EnrollmentStatusID": "bio_enrollmentstatusid",
+    "EnrollmentType": "bio_EnrollmentType",
+    "FatherAddress": "father_address",
+    "FatherName": "father_name",
+    "HomeCountry": "bio_homecountry",
+    "LastSchoolAttended": "last_school_attended",
+    "LastSchoolType": "bio_lastschooltype",
+    "Mobile": "phone_number",
+    "MotherAddress": "mother_address",
+    "MotherName": "mother_name",
+    "Nationality": "nationality",
+    "NumDependents": "bio_numdependents",
+    "PlaceOfBirth": "birth_place",
+    "Scholarship": "bio_scholarship",
+    "Section": "section_no",
+    "Semester": "semester_no",
+    "Student": "fullname",
+    "StudentID": "student_id",
+    "TermFirstEntered": "entry_sememester_no",
+    "TermLastEnrolled": "last_enrolled_semester_no",
+    "TimeCreated": "bio_timecreated",
+    "VeteranStatusID": "bio_veteranstatusid",
+    "YearOfEntry": "entry_year",
+    "address": "physical_address",
+    "curriculum": "curriculum_shortname",
+    # "Amt": "Amt",
+    # "ClassLevel": "ClassLevel",
+    # "CourseCode": "CourseCode",
+    # "CourseNo": "CourseNo",
+    # "CreditHours": "CreditHours",
+    # "CumAttemptedHours": "CumAttemptedHours",
+    # "CumAttemptedHoursLocal": "CumAttemptedHoursLocal",
+    # "CumEarnedHours": "CumEarnedHours",
+    # "CumEarnedHoursLocal": "CumEarnedHoursLocal",
+    # "CumGPA": "CumGPA",
+    # "CumGPALocal": "CumGPALocal",
+    # "CumQualityHours": "CumQualityHours",
+    # "CumQualityHoursLocal": "CumQualityHoursLocal",
+    # "CumQualityPoints": "CumQualityPoints",
+    # "CumQualityPointsLocal": "CumQualityPointsLocal",
+    # "CumRetainedHours": "CumRetainedHours",
+    # "CumRetainedHoursLocal": "CumRetainedHoursLocal",
+    # "Curr": "Curr",
+    # "DisableWebConnectPortal": "DisableWebConnectPortal",
+    # "PENVerified": "PENVerified",
+    # "ProgramID": "ProgramID",
+    # "TimeModified": "TimeModified",
+    # "Uploaded": "Uploaded",
+    # "Withdrew": "Withdrew",
+}

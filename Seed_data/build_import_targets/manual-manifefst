@@ -1,0 +1,46 @@
+################ fundamental
+AcademicYear(models.Model):
+Semester(StatusableMixin, models.Model):
+Term(models.Model):
+
+College(models.Model):
+Department(models.Model):
+
+CreditHour(models.Model):
+
+GradeValue(models.Model):
+Grade(models.Model):
+
+Room(models.Model):
+Space(models.Model):
+
+SectionFee(models.Model):
+
+################ core
+
+Section(models.Model):
+
+Faculty(models.Model):
+
+Course(models.Model):
+Curriculum(StatusableMixin, models.Model):
+CurriculumCourse(models.Model):
+Prerequisite(models.Model):
+
+Schedule(models.Model):
+
+################ Payement, registration related
+Invoice(models.Model):
+Payment(StatusableMixin, models.Model):
+Registration(StatusableMixin, models.Model):
+
+################ optional or default applied
+MajorCurriculumCourse(models.Model):
+MinorCurriculumCourse(models.Model):
+
+Scholarship(models.Model):
+
+TranscriptRequest(StatusableMixin, models.Model):
+
+
+

@@ -6,22 +6,24 @@ from functools import cached_property
 
 from import_export import fields, widgets
 
-from app.people.admin.widgets import GradeStudentWidget
+from app.people.admin.widgets import StudentGradeWidget
 from app.registry.admin.resources import GradeResource, RegistrationResource
 from app.registry.models.registration import RegistrationStatus
 from app.shared.data import legacy_registration_rows
-from app.shared.importing.loggers import CsvRowLogger
-from app.shared.importing.rows import (
+from app.shared.importing import (
+    CsvRowLogger,
     coerce_field,
     first_value,
+    log_invalid_row,
     normalize_field,
     pipeline,
     rename_headers,
     set_course_codes,
     setdefault_field,
 )
-from app.shared.utils import get_in_row, normalize_academic_year
-from app.timetable.admin.widgets.section import SectionWidget
+from app.shared.utils import get_in_row, parse_str
+from app.timetable.admin.section_widgets import SectionWidget
+from app.timetable.utils import normalize_academic_year
 
 SEM_MAP = {
     "1": "1",
@@ -34,17 +36,25 @@ SEM_MAP = {
 }
 
 CURRICULUM_MAX_LEN = 40
+LEGACY_INVALID_FIELDS = {
+    "student_id": ("student_id", "studentid"),
+    "academic_year": ("academic_year", "AcademicYear"),
+    "semester_no": ("semester_no", "semester"),
+    "course_code": ("course_code", "coursecode"),
+    "course_no": ("course_no", "courseno"),
+    "grade_code": ("grade_code", "grade"),
+}
 
 
 def normalize_semester(raw: str | None) -> str:
     """Collapse textual semester labels to numeric slots."""
-    token = (raw or "").strip().upper()
+    token = parse_str(raw, "upper")
     return SEM_MAP.get(token, "1")
 
 
 def _truncate_curriculum_label(label: str) -> str:
     """Clamp curriculum labels to the DB max_length (40 chars)."""
-    text = (label or "").strip()
+    text = parse_str(label)
     if len(text) > CURRICULUM_MAX_LEN:
         return text[:CURRICULUM_MAX_LEN]
     return text
@@ -52,20 +62,21 @@ def _truncate_curriculum_label(label: str) -> str:
 
 class LegacyGradeSheetResource(GradeResource):
     """Import SmartSchool grade sheets while reusing the standard widgets."""
+
     dataset_headers = {
-        "StudentID": "student_id",
-        "Grade": "grade_code",
-        "CourseNo": "course_no",
-        "CourseCode": "course_code",
-        "Section": "section_no",
-        "CrHrs": "credit_hours",
-        "AcademicYear": "academic_year",
-        "Semester": "semester_no",
-        "Major": "curriculum",
-        "College": "college_code",
-        "Instructor": "faculty",
-        "Points": "legacy_points",
-        "Date": "legacy_graded_on",
+        "academicyear": "academic_year",
+        "college": "college_code",
+        "coursecode": "course_code",
+        "courseno": "course_no",
+        "crhrs": "credit_hours",
+        "date": "legacy_graded_on",
+        "grade": "grade_code",
+        "instructor": "faculty",
+        "major": "curriculum",
+        "points": "legacy_points",
+        "section": "section_no",
+        "semester": "semester_no",
+        "studentid": "student_id",
     }
     fallback_curriculum = "Legacy"
 
@@ -89,9 +100,9 @@ class LegacyGradeSheetResource(GradeResource):
 
     def should_skip_row(self, row, row_number, *, command=None) -> bool:
         """Skip empty/invalid rows lacking course or grade data."""
-        course_code = first_value(row, ("course_code", "CourseCode"))
-        course_no = first_value(row, ("course_no", "CourseNo"))
-        grade = first_value(row, ("grade_code", "Grade"))
+        course_code = first_value(row, ("course_code", "coursecode"))
+        course_no = first_value(row, ("course_no", "courseno"))
+        grade = first_value(row, ("grade_code", "grade"))
         reason = ""
         if not grade:
             reason = "missing grade"
@@ -170,17 +181,12 @@ class LegacyGradeSheetResource(GradeResource):
 
     def _log_invalid_row(self, row_number: int, row: dict[str, str], reason: str) -> None:
         """Append invalid row context to a CSV log for follow-up."""
-        self.invalid_logger.log(
-            {
-                "row_number": row_number,
-                "student_id": first_value(row, ("student_id", "StudentID")),
-                "academic_year": first_value(row, ("academic_year", "AcademicYear")),
-                "semester_no": first_value(row, ("semester_no", "Semester")),
-                "course_code": first_value(row, ("course_code", "CourseCode")),
-                "course_no": first_value(row, ("course_no", "CourseNo")),
-                "grade_code": first_value(row, ("grade_code", "Grade")),
-                "reason": reason,
-            }
+        log_invalid_row(
+            self.invalid_logger,
+            row_number,
+            row,
+            reason,
+            fields=LEGACY_INVALID_FIELDS,
         )
 
 
@@ -188,22 +194,22 @@ class LegacyRegistrationResource(RegistrationResource):
     """Load SmartSchool registrations while ensuring statuses and widgets."""
 
     dataset_headers = {
-        "StudentID": "student_id",
-        "AcademicYear": "academic_year",
-        "Semester": "semester_no",
-        "CourseCode": "course_code",
-        "CourseNo": "course_no",
-        "Section": "section_no",
-        "CrHrs": "credit_hours",
-        "Major": "curriculum",
-        "Curriculum": "curriculum",
-        "College": "college_code",
+        "studentid": "student_id",
+        "academicyear": "academic_year",
+        "semester": "semester_no",
+        "coursecode": "course_code",
+        "courseno": "course_no",
+        "section": "section_no",
+        "crhrs": "credit_hours",
+        "major": "curriculum",
+        "curriculum": "curriculum",
+        "college": "college_code",
     }
 
     student = fields.Field(
         attribute="student",
         column_name="student_id",
-        widget=GradeStudentWidget(),
+        widget=StudentGradeWidget(),
     )
     section = fields.Field(
         attribute="section",
@@ -280,18 +286,21 @@ class LegacyRegistrationResource(RegistrationResource):
         """Emit a summary when duplicates were encountered."""
         self.duplicate_logger.report(command)
 
-    def _log_duplicate_row(self, row_number: int, row: dict[str, str], error: str) -> None:
+    def _log_duplicate_row(
+        self, row_number: int, row: dict[str, str], error: str
+    ) -> None:
         """Append duplicate registration context to the log file."""
         self.duplicate_logger.log(
             {
-                "row_number": row_number,
-                "student_id": row.get("student_id", ""),
-                "academic_year": row.get("academic_year", ""),
-                "semester_no": row.get("semester_no", ""),
-                "course_code": row.get("course_code") or row.get("course_dept", ""),
-                "course_no": row.get("course_no", ""),
-                "section_no": row.get("section_no", ""),
-                "status": row.get("status", ""),
+                "row_number": str(row_number),
+                "student_id": get_in_row("student_id", row),
+                "academic_year": get_in_row("academic_year", row),
+                "semester_no": get_in_row("semester_no", row),
+                "course_code": get_in_row("course_code", row)
+                or get_in_row("course_dept", row),
+                "course_no": get_in_row("course_no", row),
+                "section_no": get_in_row("section_no", row),
+                "status": get_in_row("status", row),
                 "error": error,
             }
         )

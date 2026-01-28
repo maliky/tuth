@@ -13,7 +13,7 @@ pytestmark = pytest.mark.django_db
 
 
 def _setup_course_env(faculty, student_factory, curriculum_course_factory):
-    """Create a course with a section in the current semester."""
+    """Create a curriculum course with a section in the current semester."""
     today = date.today()
     start = date(today.year, 8, 1)
     ay = AcademicYear.objects.create(start_date=start)
@@ -23,12 +23,11 @@ def _setup_course_env(faculty, student_factory, curriculum_course_factory):
         start_date=today - timedelta(days=1),
         end_date=today + timedelta(days=1),
     )
-    curriculum_course = curriculum_course_factory()
-    course = curriculum_course.course
+    course = curriculum_course_factory()
     section = Section.objects.create(
-        semester=semester, curriculum_course=curriculum_course, faculty=faculty
+        semester=semester, curriculum_course=course, faculty=faculty
     )
-    student = student_factory("stud1", curriculum_course.curriculum.short_name)
+    student = student_factory("stud1", course.curriculum.short_name)
     Registration.objects.create(student=student, section=section)
     return course, faculty, student
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import TYPE_CHECKING, Set
 
 from django.core.exceptions import ValidationError
@@ -14,16 +15,20 @@ from app.academics.models.curriculum import Curriculum
 
 if TYPE_CHECKING:
     from app.spaces.models.core import Room
+    from app.academics.models.curriculum_course import CurriculumCourse
 
 
 class Section(models.Model):
-    """A single course offering in a given semester.
+    """A single course offering in a given semester (by a faculty).
 
     A section can include multiple session rows or schedule.
     Eg. MATH101 by M. Koné 25-26 (section) on Mondays and Thursday (sessions)
 
+    A section differs from a course. A same course can be offered across semester
+    /years through successive sections, which have themselves sessions (secsession)
+
     Example:
-        >>> from app.timetable.models import Section
+        >>> from app.timetable.models.section import Section
         >>> Section.objects.create(course=course, semester=semester, number=1)
 
         >>> Section.objects.create(course=course, semester=semester)
@@ -53,6 +58,9 @@ class Section(models.Model):
 
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
+
+    # Free-form notes for admin tracking.
+    info = models.TextField(blank=True, default="")
 
     # ~~~~ Read-only ~~~~
     current_registrations = models.PositiveIntegerField(default=0, editable=False)
@@ -90,7 +98,7 @@ class Section(models.Model):
     @property
     def space_codes(self) -> str:
         """Return a comma-separated string of each room’s code."""
-        return ", ".join(room.code for room in self.spaces)
+        return ", ".join(f"{room}" for room in self.spaces)
 
     @property
     def short_code(self) -> str:
@@ -114,6 +122,10 @@ class Section(models.Model):
     def has_available_seats(self) -> bool:
         """Return 'True' if the section still has seats available."""
         return self.current_registrations < self.max_seats
+
+    def fee_total_amount(self) -> Decimal:
+        """Return the total fee for the section including tuition."""
+        return self.curriculum_course.total_fee(self.semester)
 
     def clean(self) -> None:
         """Check that the dates are correct."""

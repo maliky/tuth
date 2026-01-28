@@ -1,0 +1,82 @@
+{% extends "website/student_portal_base.html" %}
+{% load static %}
+
+{% block page_title %}Section Details - Tusis{% endblock %}
+{% block header_title %}Section Details{% endblock %}
+
+{% block content %}
+  <section class="mb-4">
+    <div class="bg-white rounded-3 shadow-sm p-4">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+        <div>
+          <p class="text-uppercase small text-muted mb-1">Section</p>
+          <h2 class="h5 mb-1">
+            {{ section.code }} · Section {{ section.number }}
+          </h2>
+          <p class="text-muted mb-0">{{ section.title }}</p>
+          <p class="text-muted small mb-0">{{ section.semester }}</p>
+        </div>
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'student_dashboard' %}#courses">
+          Back to dashboard
+        </a>
+      </div>
+      <div class="row g-3 mt-3">
+        <div class="col-md-4">
+          <p class="text-uppercase small text-muted mb-1">Credits</p>
+          <p class="mb-0">{{ section.credits }}</p>
+        </div>
+        <div class="col-md-4">
+          <p class="text-uppercase small text-muted mb-1">Faculty</p>
+          <p class="mb-0">{{ section.faculty }}</p>
+        </div>
+        <div class="col-md-4">
+          <p class="text-uppercase small text-muted mb-1">Status</p>
+          <p class="mb-0">{{ section.status }}</p>
+        </div>
+        <div class="col-md-4">
+          <p class="text-uppercase small text-muted mb-1">Registered</p>
+          <p class="mb-0">{{ section.registered_on|date:"M d, Y H:i" }}</p>
+        </div>
+        <div class="col-md-4">
+          <p class="text-uppercase small text-muted mb-1">Seats</p>
+          <p class="mb-0">
+            {{ section.seats_available }}/{{ section.seats_total }} available
+          </p>
+        </div>
+      </div>
+      {% if section.info %}
+        <p class="text-muted small mt-3 mb-0">{{ section.info }}</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="mb-5">
+    <div class="bg-white rounded-3 shadow-sm p-4">
+      <p class="text-uppercase small text-muted mb-3">Schedule</p>
+      {% if section.schedule_rows %}
+        <div class="table-responsive">
+          <table class="table mb-0 align-middle">
+            <thead>
+              <tr>
+                <th>Day</th>
+                <th>Time</th>
+                <th>Room</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in section.schedule_rows %}
+                <tr>
+                  <td>{{ row.weekday }}</td>
+                  <td>{{ row.time }}</td>
+                  <td>{{ row.room }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted mb-0">Schedule information is not available yet.</p>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

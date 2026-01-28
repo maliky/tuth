@@ -1,0 +1,51 @@
+# Merge Conflict SQL Scripts
+
+These scripts are intended to be run *before* hard merges so you can review collisions (duplicate courses, section overlaps, invoice clashes, etc.) in advance.
+
+** Dockerized (preprod) workflow
+
+Run `psql` inside the database container, then load a script.
+
+#+BEGIN_SRC bash
+docker-compose -f docker-compose-preprod.yml exec db  psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+#+END_SRC
+
+Inside the `psql` prompt:
+
+#+BEGIN_SRC sql
+\set source_id 1
+\set target_id 2
+\i scripts/course_merge_conflicts.sql
+#+END_SRC
+
+Replace the script name as needed:
+- =scripts/course_merge_conflicts.sql=
+- =scripts/curriculumcourse_merge_conflicts.sql=
+- =scripts/curriculum_merge_conflicts.sql=
+- =scripts/department_merge_conflicts.sql=
+- =scripts/student_merge_conflicts.sql=
+
+You can also pipe the script directly into psql:
+
+#+BEGIN_SRC bash
+cat scripts/course_merge_conflicts.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v source_id=1 -v target_id=2
+#+END_SRC
+
+** Dev / native psql workflow
+
+Use your local psql with the same environment variables used by Django.
+
+#+BEGIN_SRC bash
+psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT"  -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+#+END_SRC
+or user
+#+BEGIN_SRC bash
+  python manage.py dbshell
+#+END_SRC
+
+Then run the same `\set` + `\i` commands from the prompt.
+
+** Notes
+
+- The scripts assume the IDs are valid and exist.
+- Use =\q= to quit psql.

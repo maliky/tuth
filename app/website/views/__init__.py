@@ -9,19 +9,40 @@ from .enrollment import (
     student_detail,
     student_list,
 )
-from .registrar import registrar_course_windows
+from .finance_officer import (
+    finance_officer_create_payments,
+    finance_officer_invoices,
+    finance_officer_student_autocomplete,
+    finance_officer_update_payments,
+)
+from .registrar import (
+    registrar_course_windows,
+    registrar_grades_dashboard,
+    registrar_grade_transcript,
+    registrar_student_autocomplete,
+)
 from .staff_dashboards import staff_dashboard, staff_role_dashboard
-from .student_dashboard import student_dashboard
-from .student_portal import course_dashboard, landing_page
+from .student_dashboard import (
+    download_invoice_statement,
+    student_dashboard,
+    student_invoice_statement,
+)
+from .student_curriculum import (
+    student_curriculum_course_detail,
+    student_curriculum_courses,
+)
+from .student_payment_receipts import student_payment_receipt
+from .student_sections import student_section_detail
 
 __all__ = [
     "PortalLoginView",
     "PortalLogoutView",
-    "course_dashboard",
     "create_student",
-    "landing_page",
     "portal_redirect",
     "registrar_course_windows",
+    "registrar_grades_dashboard",
+    "registrar_grade_transcript",
+    "registrar_student_autocomplete",
     "staff_dashboard",
     "staff_role_dashboard",
     "student_dashboard",
@@ -30,4 +51,14 @@ __all__ = [
     "student_delete",
     "student_detail",
     "student_list",
+    "student_invoice_statement",
+    "download_invoice_statement",
+    "student_curriculum_courses",
+    "student_curriculum_course_detail",
+    "student_payment_receipt",
+    "student_section_detail",
+    "finance_officer_invoices",
+    "finance_officer_create_payments",
+    "finance_officer_student_autocomplete",
+    "finance_officer_update_payments",
 ]

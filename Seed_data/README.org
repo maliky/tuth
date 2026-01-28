@@ -1,0 +1,442 @@
+* DONE Logic and rational
+  CLOSED: [2026-01-05 lun. 19:30]
+  instead of handeling mixed colim format at import time
+  I want to harmonize colimns trhoug one pass in parsing_db, saving the file in the correct format on the disk directly and eventualy combining many of them in one.
+  this holds for Students, Grades...
+  
+* Parsed Folder
+  Contains files trimed and carefully selected from parsing_db.org
+  people_student_terms.tsv complementary term info for student 
+* <2025-12-17 Wed 10:48> Data File Structuration
+** Academics
+- Colleges 
+  - Departments
+    - Courses
+- Curriculums
+  - Majors  
+    - Minors
+- Prerequisites
+- Programmed Courses
+** Finance
+- Invoices
+- Payments
+- Scholarships
+** People
+*** Donors
+*** Faculty profiles
+*** Role assignments
+*** Staffs
+*** Students
+#+BEGIN_SRC python
+{
+    "bio": ["Comments", "Denomination", "EducationLevel", "Occupation", "Scholarship"],
+    "birth_date": "DateOfBirth",
+    "birth_place": "PlaceOfBirth",
+    "current_enrolled_semester": ["YearOfEntry", "SemesterOfEntry"],  # ->
+    "curriculum": [
+        "Curriculum",
+        "College",
+        "Major",
+        "Minor",
+        "ProgramID",
+        "EnrollmentType",
+    ],  # ->
+    "emergency_contact": ["EmergencyContact"],
+    "entry_semester": ["DateOfEntry", "DateOfEnrollment", "DateAmitted"],  # ->
+    "father_address": ["FatherAddress"],
+    "father_name": ["FatherName"],
+    "gender": ["Sex"],
+    "last_school_attended": ["LastSchoolAttended", "LastSchoolType"],
+    "marital_status": ["MaritalStatus"],
+    "mother_address": ["MotherAdress"],
+    "mother_name": ["MotherName"],
+    "nationality": ["Nationality"],
+    "origin_county": ["CountyOfOrigin"],
+    "phone_number": ["Phone"],
+    "physical_address": ["AddressLine1", "AddressLine2", "AddressLine3", "District"],
+    "reason_for_leaving": ["ReasonForLeaving"],
+    "student_id": ["StudnetID"],  #
+    "user": ["FirstName", "Lastname", "MiddleName", "Email"],  # ->
+}
+#+END_SRC
+  
+** Registry
+- Grades : ok
+- *Registrations*
+- Transcript Request
+** DONE Timetable
+   CLOSED: [2025-12-18 jeu. 23:28]
+- Schedules : schedules 25-26s2
+- Sections
+- Sessions
+- Terms
+** DONE Spaces 
+   CLOSED: [2025-12-18 jeu. 23:28]
+- Rooms: Fundamentals/space_room.csv
+- Spaces / Buildings: Fundamentals/space_room.csv
+** DONE Automatic
+   CLOSED: [2025-12-18 jeu. 23:28]
+*** Academic   
+ - Major curriculum courses-
+ - Curriculum Status: automatic
+ - Minor curriculum courses
+*** Finance
+- Payment methods : automatic
+- Clearance Status: automatic
+- Fee types: automatic
+*** Registry
+- Credit hours : automatic
+- Grade values : automatic
+- Registration Status: automatic
+- Document Status: automatic
+- Document types: automatic
+- Transcript Request Status: automatic
+*** Timetable
+- Semesters : Automatic
+- Academic years : Automatic
+    
+*** Authentication and Authorization
+ - Groups
+ - Users
+
+* <2025-12-16 Tue 19:37> dev env set on r1d05
+  working on the impots
+* <2025-11-23 Sun 11:50>
+** Implemented fuzzy name matching and wired it through the pipeline.
+
+  - Added canonicalize_name, name_distance, and names_match in app/people/utils.py (leveraging    split_name/mk_username plus RapidFuzz’s Jaro-Winkler distance) so we can compare names
+    regardless of ordering or missing middle names.
+  - Documented the “reuse helpers & factor logic” rule in AGENTS.md, added rapidfuzz==3.9.2 to    requirements.txt, and created unit tests in tests/people/test_utils.py that exercise the
+    new distance and matching helpers.
+  - Updated the fundamentals_staff_faculty snippet inside Scripts/parsing_db.org to import
+    names_match and automatically associate staff rows with Users via the new proximity metric    when usernames don’t align; also ensured the college/department + space/room snippets
+    reflect the new generation steps.
+
+  Testing
+
+  cd Tusis_app
+  pytest tests/people/test_utils.py
+
+
+** Next
+
+That's cool. but look at my comments for you (# >...) in parsing_db.org, We need to create a similarity matrice. This should be donne in advance and used as a lookup later on when needed.  Propose another utility taking 2 lists of names and computing the similarity matrice.
+Also Instead of removing todo entry in org mode,  mark them has done.
+
+* <2025-11-22 Sat 12:00>
+  Generate
+   academics_colleges_departments.csv
+   academics_courses.csv
+   academics_curricula.csv
+   academics_curriculum_courses.csv
+   people_directory_faculty.csv
+   people_students.csv
+   spaces_rooms.csv
+   timetable_semesters_sections.csv
+   timetable_sessions.csv
+   registry_finance_registrations.tsv
+
+   Use Scripts/tests/fixtures_manifest.yaml
+
+* <2025-11-21 Fri 17:47> connecting the real sample to django
+
+** Use Trimmed Data With Django Imports
+  - Your trimmed CSVs now live under Sources/Trimed/<target> in the seed tree (the Tusis_app/Seed_data/Sources entry is already a link into the repo root, verified via ls Tusis_app/Seed_data/Sources). That means any folder you create under Sources/Trimed is reachable from Django as Tusis_app/Seed_data/Sources/Trimed/<target>.
+
+  - The import order stays the same as documented in README.org:242: from the Tusis_app root run
+
+    python manage.py create_states
+    python manage.py load_roles
+    # optional: python manage.py create_test_users
+    before any data loads, so reference tables and roles exist.
+
+  Pointing import_resources_individualy at the trimmed dump
+
+  - Django ships the per-directory loader in app/shared/management/commands/import_resources_individualy.py:38-126.
+    It scans the folder you pass through -d/--dir and imports every filename listed in FILEMAP. Right now only um_students.csv is enabled, so extend FILEMAP with the other outputs you care about (e.g., map um_courses.csv to CourseResource, um_coursessections.csv to SectionResource, etc.) before running a larger import.
+
+  - Once the mapping matches your trimmed filenames, run the command from the project root and point it to the SmartSchool subset you generated:
+
+#+BEGIN_SRC bash  -i
+cd /mnt/backup/Jobs/TU/DRID/TII-Technics-Innovations/Tusis/Data/Tusis_app
+source tusis-venv/bin/activate  # or your usual env
+python manage.py import_resources_individualy \
+       -d Seed_data/Sources/Trimed/COBA_sample/SmartSchool \
+       --format csv
+
+#+END_SRC
+Replace COBA_sample/SmartSchool with whichever trimmed target directory you want (COBA, COBA_full, etc.). Because that Seed_data/Sources path is a link into the repo-level Sources, you do not need to move or duplicate files—just pass the relative path inside Tusis_app.
+
+  Alternate bulk import
+
+- If you prefer the single combined CSV workflow mentioned in README.org:242, you can concatenate the trimmed files into the schema that app/shared/management/commands/import_resources.py expects and run:
+#+BEGIN_SRC bash  -i
+python manage.py import_resources -f Seed_data/Sources/Trimed/COBA_sample/combined.csv
+#+END_SRC
+
+(you’d generate combined.csv with your own script, mirroring the column layout described in README.org:223-224.)
+
+***  Reminders
+- Ensure the filenames in your trimmed folder match the lowercase keys in FILEMAP (e.g., um_students.csv, um_curriculumcourses.csv). The management command lowercases before lookup, so renaming files now prevents “skipping” warnings.
+
+- After each import, check the console output from the command—_load_data logs “skipping … missing” if any file wasn’t found, which is a quick signal that your trimmed directory or FILEMAP needs an adjustment.
+
+Once the FILEMAP covers all resource CSVs you plan to seed, the only knob you change between full and trimmed imports is the -d Seed_data/Sources/Trimed/<target> argument.
+
+
+* <2025-11-21 Fri 16:43> Review of step one and sample cli
+  The data_sampler looks good but for me to better look at it I would like you to split
+  it in smaller packages (~250 lignes, doc included).
+  In data_sample we cand do some factoring, that will reduce code.
+  dg.  make a small helper function for this '''    if value is None or (isinstance(value, float) and math.isnan(value)):
+        return None
+'''
+You can also you pandas or numpy vectorised functions.
+In loading helpers you have 2 type of methods, should be factorised as only name of the file changes
+#+BEGIN_SRC python
+  def load_ss_table(self,csv_file) -> pd.DataFrame:
+      path = self.config.smartschool_root / cvs_file
+      return pd.read_csv(path, sep="\t", encoding="utf-16-le", low_memory=False)
+
+    # def load_wb_tables(self,wb_name) -> pd.DataFrame:
+    #     return self.workbook.load(wb_name)
+
+    # keep the original version as using the above commented code is not an improvment
+#+END_SRC
+
+For this code ''
+        unique_buckets = [
+            b for b in df[bucket_col].astype(str).fillna("UNKNOWN").unique()
+        ]
+'' can't use and pandas method to get the list of values  and sort at the same time
+The sampling is ok in _sample_indices but I think it would be cleaner and more pythonique with sampled function for existing packges, you can probably find some in random or numpy.random..
+
+factorize here '''
+        keys.curricula = {
+            normalize_token(value)
+            for value in students.get("Curriculum", pd.Series(dtype=object))
+        } - {None}
+        program_ids = {
+            normalize_token(value)
+            for value in students.get("ProgramID", pd.Series(dtype=object))
+        } - {None}
+'''
+#+BEGIN_SRC python
+  def get_keys(col):
+        return keys.curricula = {
+              normalize_token(value)
+              for value in students.get(col, pd.Series(dtype=object))
+        } - {None}
+
+
+#+END_SRC
+etc..
+
+
+* <2025-11-21 Fri 15:17>Step 1. Implement the sampler module + CLI wrapper.
+
+** Added a  SmartSchool sampler CLI
+- reads the raw CSV/XLS exports,
+- exposes configurable arguments, and
+- enforces clean output folders
+
+Does so before  each run so we can regenerate fixtures deterministically:
+   - Scripts/tests/data_sampler.py:1,
+   - Scripts/tests/data_sampler.py:162,
+   - Scripts/tests/data_sampler.py:672.
+
+** Implemented deterministic COBA-focused student selection
+It normalizes legacy college codes, collapses IDs, buckets by entry year, and keeps reproducible cohorts with a seeded shuffle (Scripts/tests/data_sampler.py:202).
+
+** Built relationship tracking so every downstream table is trimmed consistently
+- curricula/courses (including ProgramID-based curricula discovery),
+- sections & sessions, instructors, and finance artifacts derived only from the sampled roster and registrations
+  - Scripts/tests/data_sampler.py:248
+  - Scripts/tests/data_sampler.py:336
+  - Scripts/tests/data_sampler.py:389
+  - Scripts/tests/data_sampler.py:440
+
+** Added finance filtering
+It maps invoice references back to the sampled students to avoid dragging unrelate ledger rows, plus manifest-driven copying of whole manual files for the fields: [] sources highlighted in Tests/fixtures_manifest.yaml
+   - Scripts/tests/data_sampler.py:477
+   - Scripts/tests/data_sampler.py:527
+   - Scripts/tests/data_sampler.py:541.
+
+** Normalization
+   Every run writes normalized CSVs plus a manifest capturing the sampled students, curricula, courses, sections, and invoices
+   - Scripts/tests/data_sampler.py:603.
+
+** Sample Output
+Generated a demonstration subset for 25 COBA students in Sources/Trimed/COBA_sample, including the row-count summary in manifest.json to verify the pipeline before scaling to a few hundred records
+   - Sources/Trimed/COBA_sample/manifest.json:1
+
+** Testing
+python Scripts/tests/data_sampler.py --student-count 25 --output-dir Sources/Trimed/COBA_sample --overwrite
+  - produced 25 students, 2620 finance rows, and copied required manual sources
+
+** Next Steps
+- [X] Re-run Scripts/tests/data_sampler.py with your desired cohort size/output directory, then
+  - point the Django import routines at Sources/Trimed/<target> to validate migrations quickly.
+- [ ] Extend the sampler/tests to cover GradPro fallback when needed and consider trimming the Users table once instructor ↔ account mappings are clarified.
+
+
+
+* <2025-11-21 Fri 14:12>
+   As you can see in the README.org I am trying to migrate data from a set of DB files mainely csv and xls, comming from 2 system: smart school a recent system but with limitation in the business logic, and grapro which cess maintenance. The aim is to import the data in the new application based on django ( you can find it behind thelink Tusis_app...)
+
+   I have multi-gigabyt DB, and I want to make sure this are working correctly before doing a full migration.  There fore the first step is to test the migration porcess for a subset of the data.  I want to limit myself to data for student from the business of administration. CBA (but I renamed it COBA, as others CET-> COET, CHS -> COHS, CED -> COED, CAS-> COAS).  In the COBA college, for testing purposes we do not need all the data but only the record related to a few hunders students from all levels.  Can you craft a plan to make a program that will  trim down the source Data to a DB related only to COBA and a few hundred students ?
+
+   This data should be save in a new folder under Sources/Trimed/
+
+important files are README and Scrits/parsing_db.org those in /Scripts/build_targets/, Parsed and /Tests/fixtures_manifest.yaml
+
+The later sometimes defines empty fields 'fields: []'  Why ? Can't we drop the table all together?
+
+Answer that question and give a test plan after a carreful review of the project.  files main have changed places so use a tree command (ignoring git, cache etc...) to update file paths and see the updated structure.
+
+
+** COBA Sampler Plan
+# > Ignore Gradpro for now
+# use simple latin- char no →, — in your report please. use -> or -- instead
+- Start by codifying config in Scripts/Tests/data_sampler.py (mirrors README directives in README.org:16-40) so we can point at the current SmartSchool and GradPro roots plus explicit college-code remaps (CBA→COBA, etc.)—the script should read the manifest in Tests/fixtures_manifest.yaml:1-170 to learn which upstream tables feed each target export.
+*** Build a deterministic student selector
+   - Load UM_students from the SmartSchool dump via the helpers in Scripts/parsing_db.org:67-128,
+   - filter rows whose Major/College resolves to COBA,
+   - stratify by level (freshman…senior), and
+   - randomly sample ~300 IDs with a reproducible seed;
+   # when SmartSchool lacks an ID, fall back to GradPro equivalents using the same mapping logic.
+*** Derive transitive key sets so downstream tables stay consistent:
+- collect
+  - all Curriculum/Course codes tied to the sampled students (UM_Registrations, UM_CurriculumCourses) plus,
+  - all referenced sections, instructors, rooms, payments, and files;
+- store these as Python sets that every trimming function consults.
+
+*** Implement per-domain filters aligned with the build targets (see Scripts/build_targets/*.py):
+  e.g., trim UM_Courses* to only departments that appear in the COBA curricula, slice UM_CoursesSections/UM_CoursesSchedule to sections taught in those departments, filter finance tables (dbotransaction.csv, files.csv) by the invoice refs tied to the sampled students, and pull in manual spreadsheets (e.g., people.ods) only when those rows match the same IDs.
+
+*** Normalization
+- Write normalized CSV/TSV outputs into Sources/Trimed/<domain>/<table>.csv
+- mirror the directory structure in Parsed/ so later scripts can swap between full and trimmed datasets by toggling a root path.
+
+- Add a manifest snapshot (JSON/YAML) recording which student IDs, course codes, and invoices were included; this makes re-runs deterministic and documents the sample selection
+
+- Wrap the script with a CLI (python Scripts/tests/data_sampler.py --college COBA --size 320 --output Sources/Trimed) that validates the destination is clean, logs row counts per table, and optionally compares hashes against previous runs so we can detect unexpected drifts before relying on the fixtures.
+
+**  Why fields: [] Exist
+Entries such as people.ods and the cleaned schedules list no explicit columns in Tests/fixtures_manifest.yaml:51-139 because those sources are semi-structured spreadsheets where the loader needs the whole sheet (column names shift per semester) or the script only needs metadata (e.g., sheet names) rather than fixed columns.
+
+Keeping the source listed tells the sampler to copy/normalize that entire file so later transforms (see Scripts/build_targets/people.py and timetable.py) can still run; dropping it would break those modules even if no columns are enumerated today.
+
+** Test Plan
+*** Unit-test each filter function with in-memory DataFrames
+  Confirm the student selector only keeps COBA codes, the registration filter keeps every record tied to selected students, and that dependent tables (sections, sessions, payments) shrink exactly to the referenced key
+
+- Add integration tests that invoke the CLI against tiny mock dumps stored in Tests/fixtures/;
+  verify that the trimmed outputs maintain referential integrity (no registration referencing a missing student, no session pointing to a dropped section) and that the manifest lists match the written file
+
+*** Include regression tests around manual spreadsheets
+Use sample schedule_25-26s1_cleaned.xlsx and people.ods copies to ensure the sampler copies entire sheets when fields: [] is configured and still filters rows by the allowed IDs afterwar
+
+- Before real runs, execute the script in dry-run mode to report intended row counts;
+- Compare counts and random seed checksum against expectations to confirmeterminism.
+
+- After generating Sources/Trimed, run the downstream Scripts/build_targets modules against the trimmed data and assert they still emit the same column schemas as the full pipeline—a quick pytest/CI target can load trimmed fixtures and execute the per-domain builders to guard against regressions.
+
+** Next steps once the plan looks good:
+  1. Implement the sampler module + CLI wrapper.
+  2. Populate a small mock dataset and wire up the unit/integration tests above.
+  3. Dry-run on the real SmartSchool/GradPro extracts and inspect the manifest + row  counts before relying on the trimmed DB.
+
+* <2025-11-21 Fri 13:17> Test Suite Plan
+** Define fixtures & relationships
+- Map each target dataset to its upstream  tables and note cross-table dependencies (e.g., UM_Registrations ↔ UM_Studen course/college lookups, payments referencing files).
+- Capture this in a simpl YAML/JSON manifest so fixture builders know which tables must be sampled together.
+** Sampling pipeline
+ - Build a Scripts/tests/data_sampler.py that reads the live SmartSchool CSV/XLS files via the new loaders, takes deterministic (~500-row) slices per logical domain, and preserves referential integrity:
+1. Select a seed list of student IDs, course codes, section IDs, etc., then filter every related table to only rows touching those keys.
+2. For payments/registrations, ensure both sides (transaction + file metadata) are included.
+3. Write the reduced datasets into Scripts/tests/fixtures/<table>.csv.
+  - Keep the sampler deterministic by seeding random.Random or using fixed k lists so fixtures stay stable in git.
+** Stand-alone test harness:
+ - Create a Scripts/tests/ package with pytest (add to dev deps if needed) include helper factories that load the fixture CSV/XLS files instead of full dumps.
+ - For each transformer module:
+   - Arrange: load the relevant fixture DataFrames.
+   - Act: run the transformer function (e.g., build_curricula_table).
+   - Assert: verify shape, column names/orders, required deduplications, key integrity (e.g., every course_dept in output exists in fixtures, prerequisites aggregated correctly, payments maintain invoice counts
+ - Add property-style checks for referential integrity (e.g., sections reference existing semesters) using the sampled data.
+
+** Execution scripts
+ - Provide a make fixtures target (or python Scripts/tests/data_sampler.py --refresh) to regenerate fixtures when the source dumps change.
+ - Wire pytest Scripts/tests into CI or a simple ./run_tests.sh so contributors can validate transformations quickly without loading the full datasets.
+
+** Documentation
+ - Document the fixture generation process and testing commands in Scripts/tests/README.md (or extend Seed_data/README.org) so the team knows how to refresh samples and run the suite.
+
+* <2025-11-19> Seed Data Intake & Wrangling Plan
+** Scope
+ This note inventories every asset under =Seed_data/=, explains how each source maps to Tusis models, and captures the tooling already checked into =Scripts/= for data wrangling (name cleanup, schedule reshaping, etc.). Use it as the working log for staging SmartSchool → Tusis imports and for deciding which raw files matter.
+
+** Action Plan (working)
+ 1. **Stage raw dumps**: keep =Sources/Smart_School= and =Sources/GradPro= unzipped, checksum them, and snapshot absolute paths so downstream notebooks/scripts can mount them predictably.
+ 2. **Profile SmartSchool tables** with =Scripts/parsing_db.org=: load CSV/XLS exports via Pandas, prune unused columns, and emit canonical TSV files (the =Parsed/= outputs referenced inside the script) for the fields we actually migrate.
+ 3. **Normalize manual spreadsheets** (=people.ods=, schedule workbooks, prereq documents) into the import-ready CSV schemas defined in the main repo (see =import_resources= and README quickstart).
+ 4. **Reconcile legacy vs new**: only fall back to GradPro extracts (or the Access .mdb) when SmartSchool lacks the record—flag any conflicting IDs in this log before import.
+ 5. **Feed Django** via =manage.py import_resources= (or the per-model variant) once each dataset validates; keep the generated CSVs beside this README for traceability.
+
+** Data Inventory
+*** SmartSchool exports (=Seed_data/Sources/Smart_School=)
+ - =dbexport_backup/= and =my_ss_db_backup250708/dbexport_backup/=: identical csv/xls exports (students, studentcourses, gradessheets, files/filedetail, etc.). These match the tables enumerated in =Scripts/parsing_db.org=. Primary focus tables:
+   - *UM_Courses*, *UM_CoursesLevels*, *UM_CoursesSections*: drive `Course`, `CurriculumCourse`, and `Section` imports.
+   - *UM_Curriculums*, *UM_CurriculumCourses*: feed curricula + mapping.
+   - *UM_StudentsCourses*, *UM_Registrations*, *UM_GradeSheet*: academic history + term registrations.
+   - *UM_Staff*, *Users*, *AuditTrail*: staff rosters and login metadata for people import + auditing.
+   - *UM_Tuition*, *UM_Fees*, *UM_CollegeFees*: finance scaffolding for Payment/Fee defaults.
+ - =it_ss_db_backup_250520/TU\ DATABASE\ SCRIPT/tudbscript.sql=: UTF-16 SQL Server script that recreates the =SmartSchool_WVSTU= database (CREATE DATABASE + all tables). Potential conversion path: convert to UTF-8 (e.g., `iconv -f UTF-16LE -t UTF-8`) then run through `sqlserver2pgsql` or `pgloader` to target Postgres if we ever need a full RDBMS migration instead of CSV-level wrangling.
+ - Helper: =Scripts/parsing_db.org= already opens these exports, defines Pandas helpers (=load_xls=, =peek_in=, etc.), and shows which tables were worth extracting. Re-run it from =Seed_data/Scripts= when SmartSchool delivers a fresh dump.
+
+*** GradPro legacy (=Seed_data/Sources/GradPro=)
+ - =GP_DB250717/= holds hundreds of CSVs grouped by subfolder (Medium/Small). Focus if SmartSchool is missing older alumni: *StudentInfo.csv*, *StudentRecords.csv*, *Courses.csv*, *Classes.csv*, *Sessions.csv*, *Prerequisites.csv*. The Access backup (=grapro-backup-20250717-154832.mdb=) remains as the canonical source; use `mdb-export`/`mdbtools` to regenerate CSVs if needed.
+ - Treat GradPro as read-only reference—only ingest items that do not exist (or conflict) in SmartSchool.
+
+*** Manual/curated sources (=Seed_data/Sources=)
+ - =people.ods=: curated staff/student roster with cleaned names; good seed for `StudentResource` or manual overrides.
+ - =schedule_25-26s1_cleaned.xlsx= & =schedule_25-26s2-draft.xlsx=: structured timetables already massaged for AY25-26. Each sheet aligns with the expected columns from `db_seed_example.txt` (course code/no, section, faculty, weekday, start/end, room).
+ - =sessions_24-25s2.csv= & =sessions_25-26s1.csv=: condensed session exports ready for `SecSessionResource` (`weekday`, `start_time`, `end_time`, `room`, `section_no`).
+ - =Prerequises/= folder: source-of-truth spreadsheets & docs for prerequisites (CAF/S COAS etc). Convert each workbook sheet into the =academics_curriculum_courses.csv= schema defined in the main README.
+
+*** Seed CSV templates
+ - =curricula.csv= & =sections.csv= showcase the cleaned outputs expected by the Django importers (mirror them when generating new files).
+ - =db_seed_example.txt= documents the row layout consumed by `run.sh` for ad-hoc imports.
+
+*** Helper apps (=Seed_data/Scripts/=)
+ - =class_schedule/= python package used by both CLI + Flask app for cleaning schedules (merging duplicate instructor names, slotting rooms, etc.).
+ - =schedule_checker_app/= embedded Flask UI (`online_schedule_checker.py`, static Altair charts) for visually verifying the cleaned schedules. The =processed/= folder is where uploaded spreadsheets land.
+ - =ss_roster2csv/= CLI (see README) to convert SmartSchool roster exports into normalized CSV with cleaned names/usernames; relies on its own `pyproject`. Use this when SmartSchool dumps differ from the Pandas notebook expectations.
+ - =parsing_db.org=: literate notebook describing data exploration. Keep extending this file when discovering new useful SmartSchool tables; it is the single best map of table/column semantics.
+
+** Wrangling Strategy
+ 1. **SmartSchool pipeline**
+    - Execute =parsing_db.org=, which already loads =scdb.xls= + CSV companions, drops all-null columns, and writes TSVs under =Seed_data/Parsed=. Extend its =RESOURCES_MAP= style lists to emit the nine import-ready CSV schemas (curriculum, course, section, student, faculty, room, semester, session, registration/payment) defined in the project root README.
+    - Validate each dataset via `resource.import_data(..., dry_run=True)` inside the command before committing.
+ 2. **Manual sheets**
+    - Use =Scripts/class_schedule= utils to collapse instructor names (`helper.py` has split-name logic) and to pivot schedule spreadsheets into the `SectionResource` + `SecSessionResource` columns.
+    - Feed prerequisite Excel docs through Pandas, map textual program names to `Curriculum.short_name`, then append to =academics_curriculum_courses.csv=.
+ 3. **GradPro fallback**
+    - Only touch the tables flagged above; they share column names (e.g., `StudentInfo.csv` has `StudentID`, `Major`, `Status`). Build a lightweight mapper to translate them into the same canonical CSVs used elsewhere.
+ 4. **Database import**
+    - Run, in order: `python manage.py create_states`, `python manage.py load_roles`, optional `python manage.py create_test_users`, then `python manage.py import_resources -f <combined.csv>` for bulk loads or `import_resources_individualy -d <dir>` when staging per-table files.
+    - Keep a CHANGELOG entry in this README whenever a new CSV is produced so we can track provenance.
+ 5. **Optional full DB conversion**
+    - If direct SQL-level migration becomes necessary, spin up a temporary SQL Server instance, run `sqlcmd -i tudbscript.sql`, take a `.bak`, then use `pgloader` (supports SQL Server source) to produce a Postgres schema. Caveat: requires mapping identity columns and date/time precision; still slower than the CSV route but worth considering if we need transactional history intact.
+
+** Outstanding Tasks / Questions
+ - SmartSchool zipped exports include =logs/= and =Void/= directories—confirm whether any of those tables (voided files, audit logs) must be preserved for compliance.
+ - Decide whether to source prerequisites exclusively from the curated spreadsheets or to trust SmartSchool’s =UM_CurriculumCourses= pre-req columns.
+ - Verify if =people.ods= supersedes SmartSchool user data (esp. name spellings) and document whichever source we decide to treat as canonical.
+ - GradPro `.mdb`: check if `mdbtools` on Linux can open it losslessly; otherwise note that a Windows VM export may be required.
+ - For the direct SQL conversion idea, we still need to know whether the `.mdf/.ldf` mentioned in `tudbscript.sql` exist anywhere; currently only the script survives.
+
+** Next Steps Log
+ - [ ] Extend =parsing_db.org= to emit actual CSVs for UM_* tables → =Seed_data/Parsed/=. Track output names here.
+ - [ ] Re-run =ss_roster2csv= against the latest SmartSchool roster to have clean names before seeding Django.
+ - [ ] Snapshot checksums (e.g., `shasum`) for each raw dump to detect upstream changes.

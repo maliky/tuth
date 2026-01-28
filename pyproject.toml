@@ -1,5 +1,5 @@
 [tool.pytest.ini_options]
-addopts = "-p no:cacheprovider --assert=plain --strict-markers"
+addopts = "-p no:cacheprovider --assert=plain --strict-markers -q --create-db"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
 markers = [
   "selenium: browser-facing end-to-end tests powered by Selenium",
@@ -12,10 +12,11 @@ markers = [
 [tool.black]
 line-length = 90
 target-version = ["py313"]
+exclude = "__pycache__|.git|migrations|Seed_data"
 
 [tool.flake8]
 per-file-ignores = ["__init__.py:F401"]
-exclude = "__pycache__,.git,migrations"
+extend-exclude = "__pycache__,.git,migrations,Seed_data"
 max-complexity = 15
 max-line-length = 90
 # The old ignore list: C901,W605,E203,D401,W503,D101,D107,D103,E501
@@ -40,9 +41,6 @@ ignore = [
 ]
 docstring-convention = "google"
 
-
-
-
 [tool.mypy]
 python_version = "3.13"
 check_untyped_defs = true
@@ -52,7 +50,7 @@ warn_redundant_casts = true
 warn_return_any = true
 warn_unreachable = true
 plugins = ["mypy_django_plugin.main"]
-exclude = "Docs/.*"
+exclude = ["Docs/.*","Seed_data/*"]
 
 [[tool.mypy.overrides]]
 module = "app.website.views"

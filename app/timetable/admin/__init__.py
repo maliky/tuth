@@ -1,34 +1,38 @@
 """Initialization for the admin package."""
 
+from .core_registers import AcademicYearAdmin, SemesterAdmin, TermAdmin
+from .core_resources import AcademicYearResource, SemesterResource
 from .filters import (
     SectionBySemesterFilter,
-    SemesterFilter,
-    SectionSemesterFilterAc,
-    GradeSemesterFilterAc,
+    SectionFacultyFilterAc,
+    SemesterFilterAC,
 )
 from .inlines import SectionInline, SemesterInline
-from .registers.core import AcademicYearAdmin, SemesterAdmin, TermAdmin
-from .registers.section import SectionAdmin
-from .registers.session import SecSessionAdmin
-from .resources.core import AcademicYearResource, SemesterResource
-from .resources.section import SectionResource
+from .section_registers import SectionAdmin
+from .section_resources import SectionResource
+from .session_resources import ScheduleResource, SecSessionResource
+from .session_registers import SecSessionAdmin
 from .views import SectionBySemesterAutocomplete
 
 __all__ = [
-    "TermAdmin",
+    # Admin
     "AcademicYearAdmin",
-    "AcademicYearResource",
+    "SecSessionAdmin",
     "SectionAdmin",
+    "SemesterAdmin",
+    "TermAdmin",
+    # Resource
+    "AcademicYearResource",
+    "SecSessionResource",
+    "ScheduleResource",
+    "SectionResource",
+    "SemesterResource",
+    # Inline
+    "SectionInline",
+    "SemesterInline",
+    # Filters
     "SectionBySemesterAutocom",
     "SectionBySemesterFilter",
-    "SectionSemesterFilterAc",
-    "GradeSemesterFilterAc",
-    "SemesterFilter",
-    "SectionInline",
-    "SectionResource",
-    "SemesterAdmin",
-    "SectionSemesterFilterAc",
-    "SemesterInline",
-    "SemesterResource",
-    "SecSessionAdmin",
+    "SectionFacultyFilterAc",
+    "SemesterFilterAC",
 ]

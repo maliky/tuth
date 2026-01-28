@@ -1,79 +1,81 @@
 """Filters module."""
 
-from admin_searchable_dropdown.filters import (
-    AutocompleteFilter,
-    AutocompleteFilterFactory,
-)
+from __future__ import annotations
 
-# https://pypi.org/project/django-admin-list-filters/
-from django_admin_filters import MultiChoice
+from typing import Sequence
+
+from admin_searchable_dropdown.filters import AutocompleteFilter
 from django.contrib import admin
-from django.db.models import Count
-from django.urls import reverse
 
+from app.academics.models.curriculum import Curriculum
+from app.academics.models.department import Department
+from app.people.models.faculty import Faculty
+from app.shared.admin.filters import BaseCollegeFilter, ScopedAutocompleteFilter
+from app.shared.types import LookUpType
 
-# class CollegeChoicesFilter(MultiChoice):
-#     FILTER_LABEL = "College"
-#     BUTTON_LABEL = "Filter"
-
-CurriculumCourseFilterAc = AutocompleteFilterFactory(
-    "Curriculum",  # title
-    "curriculum_course__curriculum",  # look-up path ( → cuccirulm )
-    # use_pk_exact=False
+DEPARTMENT_FIELD_LOOKUPS: LookUpType = (
+    ("department", "department"),
+    ("course", "course__department"),
+    ("staff_profile", "staff_profile__department"),
+    ("curriculum_course", "curriculum_course__course__department"),
 )
 
-ProgramFilterAc = AutocompleteFilterFactory(
-    "Curriculum",  # title
-    "in_curriculum_courses__curriculum",  # look-up path ( → cuccirulm )
-    # use_pk_exact=False
-)
-
-DepartmentFilterAc = AutocompleteFilterFactory(
-    "Department",  # title
-    "course__department",
-)
-CurriculumFilterAc = AutocompleteFilterFactory(
-    "Curriculum",  # title
-    "curriculum",
+CURRICULUM_FIELD_LOOKUPS: LookUpType = (
+    ("curriculum", "curriculum"),
+    ("curriculum_course", "curriculum_course__curriculum"),
+    ("curricula", "curricula"),
+    ("in_curriculum_courses", "in_curriculum_courses__curriculum"),
 )
 
 
-class CurriculumBySemesterFilterAc(AutocompleteFilter):
-    """Returns the curriculum having section for a specific semester."""
+class CourseCollegeFilter(BaseCollegeFilter):
+    field_path = "department__college"
+    parameter_name = "department__college"
+
+
+class DepartmentFilterAC(ScopedAutocompleteFilter):
+    """Autocomplete filter constrained to departments present in the queryset."""
+
+    title = "Department"
+    parameter_name = "department"
+    field_name = "department"
+    lookup_map = DEPARTMENT_FIELD_LOOKUPS
+    target_model = Department
+
+
+class CurriculumFilterAC(ScopedAutocompleteFilter):
+    """Autocomplete filter constrained to curricula present in the queryset."""
 
     title = "Curriculum"
-    field_name = "curriculum_course__curriculum"
-
-    def get_autocomplete_url(self, request, model_admin):
-        """Get the urls registered in SectionAdmin.get_urls."""
-        base = reverse("admin:curriculum_by_semester_ac")
-        # semester_id = request.GET.get("semester")
-        return base
-
-
-class CurriculumFilter(admin.SimpleListFilter):
-    title = "curriculum"
     parameter_name = "curriculum"
+    field_name = "curriculum"
+    lookup_map = CURRICULUM_FIELD_LOOKUPS
+    target_model = Curriculum
+
+
+class CourseCurriculumFilter(admin.SimpleListFilter):
+    """Curriculum filter for courses (avoids reverse M2M autocomplete errors)."""
+
+    title = "By Curriculum"
+    parameter_name = "curricula__id__exact"
 
     def lookups(self, request, model_admin):
-        """Update the filter so only curricula of the already selected college show."""
-        qs = model_admin.get_queryset(request)
-        college_id = request.GET.get("college__id__exact")
-
-        if college_id:
-            qs = qs.filter(college_id=college_id)
-        curricula = (
-            qs.values("curriculum", "curriculum__short_name")
-            .annotate(count=Count("pk"))
-            .filter(curriculum__isnull=False, count__gt=0)
-            .order_by("curriculum__short_name")
+        curricula = Curriculum.objects.order_by("short_name").values_list(
+            "id", "short_name"
         )
+        return list(curricula)
 
-        return [(c["curriculum"], c["curriculum__short_name"]) for c in curricula]
-
-    def queryset(self, request, qs):
-        """Overide the queryset returning a curriculum."""
+    def queryset(self, request, queryset):
         if self.value():
-            return qs.filter(curriculum_id=self.value())
+            return queryset.filter(curricula__id=self.value())
+        return queryset
 
-        return qs
+
+class CurriculumCourseFacultyFilterAC(ScopedAutocompleteFilter):
+    """Autocomplete filter constrained to faculty teaching curriculum courses."""
+
+    title = "Faculty"
+    parameter_name = "sections__faculty"
+    field_name = "faculty"
+    lookup_map: LookUpType = (("sections", "sections__faculty"),)
+    target_model = Faculty

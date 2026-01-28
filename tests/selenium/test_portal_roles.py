@@ -105,7 +105,7 @@ def portal_user_factory(semester):
                 defaults={
                     "curriculum": Curriculum.get_default(),
                     "entry_semester": semester,
-                    "current_enrolled_semester": semester,
+                    "last_enrolled_semester": semester,
                 },
                 username=user.username,
             )
@@ -146,9 +146,17 @@ def test_role_dashboards(
     portal_user_factory(username, **config)
     _login_to_portal(selenium_driver, live_server, username)
 
-    WebDriverWait(selenium_driver, 10).until(
-        EC.text_to_be_present_in_element((By.TAG_NAME, "h1"), expected_heading)
+    if config.get("student"):
+        heading_locator = (By.CSS_SELECTOR, ".portal-header h1")
+    else:
+        heading_locator = (By.CSS_SELECTOR, ".staff-shell__title")
+    # Avoid stale heading elements while the post-login redirect completes.
+    WebDriverWait(selenium_driver, 20).until(
+        EC.text_to_be_present_in_element(heading_locator, expected_heading)
     )
+    heading_el = selenium_driver.find_element(*heading_locator)
+    heading_text = heading_el.text.strip()
+    assert expected_heading in heading_text
 
     logout_url = f"{live_server.url}{reverse('portal_logout')}"
     selenium_driver.get(logout_url)

@@ -1,11 +1,23 @@
 {
-  "include": ["app", "tests"],
-  "venvPath": "/home/mlk/.pyenv/versions/",
-  "venv": "tusis",
-  "pythonVersion": "3.13",
-  "pythonPlatform": "Linux",
-  "typeCheckingMode": "basic",
-  "reportMissingImports": true,
-  "reportUnusedImport": true,
-  "reportUndefinedVariable": true
+    "include": ["app", "tests"],
+    "exclude": [
+        "**/.git",
+        "**/.venv",
+        "**/venv",
+        "**/__pycache__",
+        "**/.mypy_cache",
+        "**/.ruff_cache",
+        "**/node_modules",
+        "**/.pytest_cache",
+        "**/migrations",
+        "/home/mlk/.pyenv"
+    ],    
+    "venvPath": "/home/mlk/.pyenv/versions/",
+    "venv": "tusis",
+    "pythonVersion": "3.13",
+    "pythonPlatform": "Linux",
+    "typeCheckingMode": "basic",
+    "reportMissingImports": true,
+    "reportUnusedImport": true,
+    "reportUndefinedVariable": true
 }

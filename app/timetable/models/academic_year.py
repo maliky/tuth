@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import date, timedelta
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -56,10 +56,23 @@ class AcademicYear(models.Model):
             self.end_date = self.start_date.replace(year=ys + 1) - timedelta(days=1)
 
         ye = ys + 1
-        self.long_name = f"{ys}/{ye}"
+        self.long_name = f"{ys}-{ye}"
         self.code = f"{str(ys)[-2:]}-{str(ye)[-2:]}"
 
         super().save(*args, **kwargs)
+
+    @classmethod
+    def get_default(cls, today: date | None = None) -> "AcademicYear":
+        """Return the current academic year.
+
+        Uses Aug 1 as the rollover: dates on/after Aug 1 belong to the new academic year,
+        dates before Aug 1 belong to the prior start year.
+        """
+        ref = today or date.today()
+        start_year = ref.year if ref.month >= 8 else ref.year - 1
+        start = date(start_year, 8, 1)
+        ay, _ = cls.objects.get_or_create(start_date=start)
+        return ay
 
     class Meta:
         constraints = [

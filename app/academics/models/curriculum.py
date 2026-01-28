@@ -1,18 +1,22 @@
 """Curriculum module."""
 
 from __future__ import annotations
-from django.db.models import Count
+
+import logging
+from datetime import date
+from typing import Any, Mapping, Optional, Self, cast
 
 from django.apps import apps
-from datetime import date
-from typing import Self, cast
-
-from app.shared.mixins import SimpleTableMixin
-from app.shared.utils import as_title
 from django.db import models
+from django.db.models import Count
 from simple_history.models import HistoricalRecords
+
 from app.academics.models.college import College
-from app.shared.status.mixins import StatusableMixin
+from app.shared.fuzzy_matching import token_similarity
+from app.shared.mixins import SimpleTableMixin, StatusableMixin
+from app.shared.utils import as_title
+
+logger = logging.getLogger(__name__)
 
 
 class CurriculumStatus(SimpleTableMixin):
@@ -29,7 +33,106 @@ class CurriculumStatus(SimpleTableMixin):
         verbose_name_plural = "Curriculum Status"
 
 
-# need to update the docs
+class CurriculumManager(models.Manager["Curriculum"]):
+    """Manager with fuzzy lookup to reduce near-duplicates."""
+
+    def _token(self, short_name: str, long_name: str | None) -> str:
+        """Combine long and short name if present."""
+        if long_name and long_name != short_name:
+            return long_name + " " + short_name
+        return short_name
+
+    def find_fuzzy_match(
+        self,
+        *,
+        short_name: str,
+        long_name: str | None,
+        college: College,
+        threshold: float = 0.9,
+    ) -> tuple[Curriculum | None, float]:
+        """Do a fuzzy curriclum search."""
+        token = self._token(short_name, long_name)
+        college_code_dft = College.get_default().code
+
+        best: tuple[Curriculum | None, float] = (None, 0.0)
+        for cur in self.all():
+            # college rule: if both non-default and differ, skip
+            # we do not match if college differ and is set.
+            if (
+                cur.college.code != college_code_dft
+                and college.code != college_code_dft
+                and cur.college.code != college.code
+            ):
+                continue
+
+            other_token = self._token(cur.short_name, cur.long_name)
+            score, ok = token_similarity(token, other_token, threshold=threshold)
+
+            if not ok:
+                continue
+            choose = False
+            if score > best[1]:
+                choose = True
+            elif score == best[1] and best[0] is not None:
+                # tie-breaker: prefer one with long_name, else non-default college, else lower id
+                has_long = bool(cur.long_name and cur.long_name != cur.short_name)
+                best_long = bool(
+                    best[0].long_name and best[0].long_name != best[0].short_name
+                )
+                if has_long and not best_long:
+                    choose = True
+                elif has_long == best_long:
+                    cur_default = (
+                        cur.college.code == college_code_dft if cur.college else True
+                    )
+                    best_default = (
+                        best[0].college.code == college_code_dft
+                        if best[0].college
+                        else True
+                    )
+                    if not cur_default and best_default:
+                        choose = True
+                    elif cur_default == best_default and cur.id and best[0].id:
+                        choose = cur.id < best[0].id
+            if choose:
+                best = (cur, score)
+        return best
+
+    def get_or_create(
+        self,
+        defaults=None,
+        **kwargs: Any,
+    ) -> tuple["Curriculum", bool]:
+        """Override get_or_create to optionally allow fuzzy curriculum reuse."""
+
+        short_name: str | None = kwargs.get("short_name")
+        college: College | None = kwargs.get("college")
+        fuzzy_threshold: float = kwargs.pop("fuzzy_threshold", 1.0)
+
+        long_name = defaults.get("long_name") if defaults else ""
+
+        if fuzzy_threshold < 1 and short_name and college:
+
+            cur_match, _score = self.find_fuzzy_match(
+                short_name=short_name,
+                college=college,
+                long_name=long_name,
+                threshold=fuzzy_threshold,
+            )
+
+            if cur_match:
+                # optionals infos to trace
+                # > There is more to save in description in case of fuzzy match all
+                # > diff information from one or the other object should to be saved.
+                if "fuzzy_curriculum_match" not in cur_match.description:
+                    cur_match.description += f"\nfuzzy_match:{cur_match, _score}"
+                    cur_match.save(update_fields=["description"])
+                return cur_match, False
+
+        created_cur, created = super().get_or_create(defaults=defaults, **kwargs)
+        return created_cur, bool(created)
+
+
 class Curriculum(StatusableMixin, models.Model):
     """Set of courses that make up a degree curriculum/program within a college.
 
@@ -74,12 +177,19 @@ class Curriculum(StatusableMixin, models.Model):
     # the list of curriculum_courses.course should be included in C.
     # can a course be not offered  in any curricula ?
     # needs clarification...
+    # There is a difference between curriculum and Curriculum Course (programmed course)
+    # The curriculum is the set of course
+    # A curriculum course is a matching curriculum <-> course with meta
+
     curriculum_course = models.ManyToManyField(
         "academics.Course",
         through="academics.CurriculumCourse",
         related_name="curricula",  # <-- reverse accessor course.curricula
         blank=True,
     )
+    description = models.TextField(blank=True)
+
+    objects: CurriculumManager = CurriculumManager()
 
     @property
     def courses(self):
@@ -100,14 +210,15 @@ class Curriculum(StatusableMixin, models.Model):
         return _prefix + self.short_name
 
     @classmethod
-    def get_default(cls, short_name="DFT_CUR") -> Self:
+    def get_default(
+        cls, short_name: str = "DFT_CUR", def_college: Optional[College] = None
+    ) -> Self:
         """Returns a default curriculum."""
-        def_curriculum, _ = cls.objects.get_or_create(
-            short_name=short_name,
-            long_name="Default Curriculum",
-            college=College.get_default(),
+        _college = College.get_default() if def_college is None else def_college
+        dft_curriculum, _ = cls.objects.get_or_create(
+            short_name=short_name, long_name="Default Curriculum", college=_college
         )
-        return cast(Self, def_curriculum)
+        return cast(Self, dft_curriculum)
 
     def _ensure_activity(self):
         """Make sure than only an aproved curriculum can be active."""

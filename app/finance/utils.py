@@ -1,24 +1,55 @@
 """Utility helpers used in the finance app."""
 
+from __future__ import annotations
+
 from decimal import Decimal
+from typing import TYPE_CHECKING, Iterable, Optional
+
+from django.db import transaction
+
+if TYPE_CHECKING:
+    from app.academics.models.curriculum_course import CurriculumCourse
+    from app.people.models.staffs import Staff
+
+from app.finance.models.invoice import Invoice
+from app.finance.models.payment import Payment
 
 
-TUITION_RATE_PER_CREDIT = Decimal("5.00")
+PaymentCreateSummaryT = dict[str, int]
 
 
-def tuition_for(course, credit_hours: int) -> Decimal:
-    """Calculate the tuition amount for a course.
+def create_pending_payments(
+    invoices: Iterable[Invoice],
+    recorded_by: Optional["Staff"] = None,
+) -> PaymentCreateSummaryT:
+    """Create pending full payments for invoices when none exist.
 
-    Parameters
-    ----------
-    course
-        The course instance for which tuition is calculated.
-    credit_hours : int
-        Number of credit hours to bill.
+    Args:
+        invoices: Iterable of invoices to receive pending payments.
+        recorded_by: Optional staff profile to attach to created payments.
 
-    Returns
-    -------
-    Decimal
-        The total tuition cost.
+    Returns:
+        Summary counts for created and skipped payments.
     """
-    return Decimal(credit_hours) * TUITION_RATE_PER_CREDIT
+    summary: PaymentCreateSummaryT = {
+        "created": 0,
+        "skipped_existing": 0,
+        "skipped_closed": 0,
+    }
+    invoice_list = list(invoices)
+    if not invoice_list:
+        return summary
+    with transaction.atomic():
+        for invoice in invoice_list:
+            balance = invoice.get_balance()
+            if balance <= 0:
+                summary["skipped_closed"] += 1
+                continue
+            if Payment.objects.filter(invoice=invoice, status_id="pending").exists():
+                summary["skipped_existing"] += 1
+                continue
+            Payment.objects.create(
+                invoice=invoice, amount_paid=balance, recorded_by=recorded_by
+            )
+            summary["created"] += 1
+    return summary

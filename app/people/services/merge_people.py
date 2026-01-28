@@ -13,15 +13,17 @@ from app.people.models.role_assignment import RoleAssignment
 from app.people.models.staffs import Staff
 from app.people.models.student import Student
 from app.people.models.donor import Donor
+from app.shared.types import AbstractPersonT, PersonT
 from app.timetable.models.section import Section
 
 logger = logging.getLogger(__name__)
 
-PersonType = TypeVar("PersonType", Staff, Student)
-
 
 def _merge_users(target_user: User, source_user: User) -> None:
     """Merge groups/roles from source_user into target_user."""
+    if not target_user.pk or not source_user.pk:
+        # > Skip M2M operations if either user is not persisted yet.
+        return
     for group in source_user.groups.all():
         target_user.groups.add(group)
     for perm in source_user.user_permissions.all():
@@ -45,17 +47,28 @@ def merge_users(target_user: User, source_user: User) -> User:
         return target_user
 
     # Merge linked profiles
+    merge_people_called = False
     for attr in ("staff", "student", "donor"):
         target_profile = getattr(target_user, attr, None)
         source_profile = getattr(source_user, attr, None)
         if target_profile and source_profile:
             merge_people(target_profile, source_profile)
+            merge_people_called = True
         elif source_profile and not target_profile:
             source_profile.user = target_user
             source_profile.save()
 
+    if merge_people_called:
+        if not source_user.pk:
+            # > Source user already deleted by profile merge.
+            return target_user
+        # > merge_people already merged groups/permissions; just delete the source.
+        source_user.delete()
+        return target_user
+
     _merge_users(target_user, source_user)
-    source_user.delete()
+    if source_user.pk:
+        source_user.delete()
     return target_user
 
 
@@ -74,7 +87,7 @@ def _copy_if_missing(target, source, fields: Iterable[str]) -> None:
 
 
 @transaction.atomic
-def merge_people(target: PersonType, source: PersonType) -> PersonType:
+def merge_people(target: PersonT, source: PersonT) -> PersonT:
     """Merge a source person into target, reassigning relations and deleting source."""
     if target.pk == source.pk:
         return target
@@ -107,9 +120,7 @@ def merge_people(target: PersonType, source: PersonType) -> PersonType:
         target_faculty = Faculty.objects.filter(staff_profile=target).first()
 
         if source_faculty and target_faculty:
-            Section.objects.filter(faculty=source_faculty).update(
-                faculty=target_faculty
-            )
+            Section.objects.filter(faculty=source_faculty).update(faculty=target_faculty)
             source_faculty.delete()
         elif source_faculty and not target_faculty:
             source_faculty.staff_profile = target
@@ -119,18 +130,20 @@ def merge_people(target: PersonType, source: PersonType) -> PersonType:
         student_fields = [
             "curriculum",
             "entry_semester",
-            "current_enrolled_sem",
+            "last_enrolled_semester",
             "birth_place",
         ]
         _copy_if_missing(target, source, student_fields)
         target.middle_name = target.middle_name or source.middle_name
-        target.name_prefix = target.name_prefix or source.name_prefix
-        target.name_suffix = target.name_suffix or source.name_suffix
+        target.prefix_name = target.prefix_name or source.prefix_name
+        target.suffix_name = target.suffix_name or source.suffix_name
 
     # Append a merge note in bio to keep traceability
     merge_note = f"[merged from {source.pk}/{getattr(source, 'obj_id', '')}]"
     if merge_note not in (target.bio or ""):
-        target.bio = (target.bio or "").rstrip() + (" " if target.bio else "") + merge_note
+        target.bio = (
+            (target.bio or "").rstrip() + (" " if target.bio else "") + merge_note
+        )
 
     target.save()
 

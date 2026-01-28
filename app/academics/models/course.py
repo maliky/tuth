@@ -2,22 +2,98 @@
 
 from __future__ import annotations
 
+import logging
 from itertools import count
-from typing import Optional, Self, cast
+from typing import Any, Optional, Self, cast
 
-from django.apps import apps
 from django.db import models
 from simple_history.models import HistoricalRecords
 
 from app.academics.choices import LEVEL_NUMBER
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
-from app.shared.models import CreditHour
+from app.academics.utils import make_course_code
+from app.registry.models import CreditHour
+from app.shared.fuzzy_matching import token_similarity
 from app.shared.types import CourseQuery
-from app.shared.utils import make_course_code
-from app.timetable.utils import get_current_semester
 
 DEFAULT_COURSE_NO = count(start=1, step=1)
+logger = logging.getLogger(__name__)
+
+
+class CourseManager(models.Manager["Course"]):
+    """Manager with fuzzy lookup to avoid near-duplicate courses."""
+
+    def _token(self, department: Department, number: str, title: str | None) -> str:
+        parts = [department.code, number or ""]
+        if title:
+            parts.append(title)
+        return " ".join(p for p in parts if p)
+
+    def find_fuzzy_match(
+        self,
+        *,
+        department: Department,
+        number: str,
+        title: str | None = None,
+        threshold: float = 0.9,
+    ) -> Course | None:
+        """Return an existing course with a similar identifier/title."""
+        token = self._token(department, number, title)
+        candidates = self.filter(department=department)
+        best: tuple[Course | None, float] = (None, 0.0)
+        # > We can factor this and the one in curriclum,
+        # > using a function to handle alternate case
+        for course in candidates:
+            other_token = self._token(course.department, course.number, course.title)
+            score, ok = token_similarity(token, other_token, threshold=threshold)
+            if ok and score > best[1]:
+                best = (course, score)
+        return best[0]
+
+    def get_or_create(
+        self,
+        defaults=None,
+        **kwargs: Any,
+    ) -> tuple[Course, bool]:
+        """Return a course; if fuzzy_threshold < 1 try fuzzy reuse first.
+
+        Required keys in kwargs: department, number. Optional: title.
+        """
+        fuzzy_threshold: float = kwargs.pop("fuzzy_threshold", 1.0)
+
+        defaults = defaults.copy() if defaults else {}
+
+        department: Department | None = kwargs.get("department")
+        number = kwargs.get("number")
+        title = defaults.get("title")
+
+        if fuzzy_threshold < 1 and department is not None and number is not None:
+            _match = self.find_fuzzy_match(
+                department=department,
+                number=str(number),
+                title=title,
+                threshold=fuzzy_threshold,
+            )
+            if _match:
+                logger.info(
+                    "Fuzzy course match reused",
+                    extra={
+                        "course_id": _match.id,
+                        "dept": department.code,
+                        "number": number,
+                    },
+                )
+                if title and _match.title != title:
+                    _match.title = title
+                    _match.save(update_fields=["title"])
+                return _match, False
+
+        if title and "title" not in defaults:
+            defaults["title"] = title
+
+        created_course, created = super().get_or_create(defaults=defaults, **kwargs)
+        return created_course, bool(created)
 
 
 class Course(models.Model):
@@ -25,20 +101,15 @@ class Course(models.Model):
 
     Example:
         >>> COAS = College.get_default()
-        >>> MATH = Departement.objects.create(
-        ...     code="COAS",
-        ...     long_name="College of Arts and Sciences",
-        ... )
-        >>> Course.objects.create(
-        ...     name="MATH",
-        ...     number="101",
-        ...     title="Algebra",
-        ...     college=coas,
-        ... )
+        >>> MATH = Departement.objects.create(code=MATH,college=COAS)
+        >>> Course.objects.create(department=MATH,number="101",title="Algebra")
 
     Side Effects:
         save() populates code from name and number.
     """
+
+    objects: CourseManager = CourseManager()
+    history = HistoricalRecords()
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     number = models.CharField(max_length=10)  # e.g. 101
@@ -49,11 +120,12 @@ class Course(models.Model):
         on_delete=models.CASCADE,
         related_name="courses",
     )
-    history = HistoricalRecords()
     # ~~~~ Read-only ~~~~
+    #  Code is uniq include the college code + dep + no
     code = models.CharField(max_length=20, editable=False)
 
     # ~~~~~~~~ Optional ~~~~~~~~
+    # Can have duplicate only include dep + no
     short_code = models.CharField(max_length=20, editable=True, null=True, blank=True)
     title = models.CharField(max_length=255, blank=True, null=True)
     description: models.TextField = models.TextField(blank=True, null=True)
@@ -65,10 +137,27 @@ class Course(models.Model):
         blank=True,
     )
 
-    def __str__(self) -> str:  # pragma: no cover
-        """Return the CODE - Title representation."""
-        title = f" - {self.title}" if self.title else ""
-        return f"{self.short_code}{title}"
+    @classmethod
+    def for_curriculum(cls, curriculum) -> CourseQuery:
+        """Return courses included in the given curriculum."""
+        return cls.objects.filter(curricula=curriculum).distinct()
+
+    @classmethod
+    def get_default(cls, number: str = "0000") -> Self:
+        """Return a default Course."""
+        def_crs, _ = cls.objects.get_or_create(
+            department=Department.get_default(),
+            number=number,
+            defaults={"title": f"Default Course {number}"},
+        )
+        return cast(Self, def_crs)
+
+    @classmethod
+    def get_unique_default(cls) -> Self:
+        """Return a default Course which is unique."""
+        # > where do I state the maximun number of courses to create ?
+        number = f"{next(DEFAULT_COURSE_NO):04d}"
+        return cls.get_default(number=number)
 
     @property
     def level(self) -> str:
@@ -84,6 +173,11 @@ class Course(models.Model):
         except KeyError:  # digit ∉ enum
             return "other"
 
+    def __str__(self) -> str:  # pragma: no cover
+        """Return the CODE - Title representation."""
+        title = f" - {self.title}" if self.title else ""
+        return f"{self.short_code}{title}"
+
     def _ensure_codes(self):
         if not self.code:
             self.code = make_course_code(self.department, number=self.number)
@@ -95,34 +189,6 @@ class Course(models.Model):
     def _ensure_dept(self):
         if not self.department_id:
             self.department = Department.get_default()
-
-    def current_faculty(self):
-        """Get the list of faculty teaching this course in the current semester."""
-        Faculty = apps.get_model("people", "Faculty")
-
-        # Returning Any from function declared to return
-        # "QuerySet[Faculty, Faculty] | None"  [no-any-return]
-        # when adding the type hint  '-> FacultyQuery | None:'.
-        # TODO: Try to fix this and add StudentQuery type hint to the next method.
-
-        semester = get_current_semester()
-        if semester is None:
-            return Faculty.objects.none()
-        return Faculty.objects.filter(
-            section__semester=semester, section__curriculum_course__course=self
-        ).distinct()
-
-    def current_students(self):
-        """Return students taking this course during the current semester."""
-        Student = apps.get_model("people", "Student")
-
-        semester = get_current_semester()
-        if semester is None:
-            return Student.objects.none()
-        return Student.objects.filter(
-            student_registrations__section__semester=semester,
-            student_registrations__section__curriculum_course__course=self,
-        ).distinct()
 
     def list_curricula_str(self, sep: str = ", ") -> str:
         """Return the list of curricula including this course."""
@@ -137,31 +203,10 @@ class Course(models.Model):
 
     # ---------- hooks ----------
     def save(self, *args, **kwargs) -> None:
-        """Populate code from department short_name and number before saving."""
+        """Populate code from department shortname and number before saving."""
         self._ensure_dept()
         self._ensure_codes()
         super().save(*args, **kwargs)
-
-    @classmethod
-    def for_curriculum(cls, curriculum) -> CourseQuery:
-        """Return courses included in the given curriculum."""
-        return cls.objects.filter(curricula=curriculum).distinct()
-
-    @classmethod
-    def get_default(cls, number: str = "0000") -> Self:
-        """Return a default Course."""
-        def_crs, _ = cls.objects.get_or_create(
-            department=Department.get_default(),
-            number=number,
-            title=f"Default Course {number}",
-        )
-        return cast(Self, def_crs)
-
-    @classmethod
-    def get_unique_default(cls) -> Self:
-        """Return a default Course which is unique. A most 1000 course can be created."""
-        number = f"{next(DEFAULT_COURSE_NO):04d}"
-        return cls.get_default(number=number)
 
     class Meta:
         constraints = [
@@ -170,92 +215,4 @@ class Course(models.Model):
                 name="uniq_course_codenumber_per_department",
             ),
         ]
-        ordering = ["short_code"]
-
-
-class CurriculumCourse(models.Model):
-    """Map Curriculum instances to their constituent courses.
-
-    It can be called a 'program'
-    Example:
-        >>> CurriculumCourse.objects.create(curriculum=curriculum, course=course)
-
-    Side Effects:
-        save() defaults credit_hours to the course value when missing.
-    """
-
-    # ~~~~ Mandatory ~~~~
-    # curriculum or major
-    curriculum = models.ForeignKey(
-        "academics.Curriculum", on_delete=models.CASCADE, related_name="programs"
-    )
-    course = models.ForeignKey(
-        "academics.Course", on_delete=models.CASCADE, related_name="in_curriculum_courses"
-    )
-
-    # ~~~~ Auto-filled ~~~~
-    is_required = models.BooleanField(default=False)  # for required general courses
-    is_elective = models.BooleanField(default=False)
-    history = HistoricalRecords()
-    # credit hours depend on the curricula not the Course
-    credit_hours = models.ForeignKey(
-        "shared.CreditHour",
-        on_delete=models.PROTECT,
-        default=3,
-        help_text="Credits to be used in this curriculum for this course",
-        related_name="curriculum_courses",
-    )
-
-    def __str__(self) -> str:  # pragma: no cover
-        """Return Curriculum <-> Course for readability."""
-        return f"{self.course} <-> {self.curriculum}"
-
-    def _ensure_credit_hours(self):
-        """Make sure the credit_hours is set."""
-        if not self.credit_hours_id:
-            self.credit_hours_id = 3
-        CreditHour.objects.get_or_create(
-            code=self.credit_hours_id, defaults={"label": str(self.credit_hours_id)}
-        )
-
-    def save(self, *args, **kwargs):
-        """Make sure we set default before saving."""
-        self._ensure_credit_hours()
-        super().save(*args, **kwargs)
-
-    @classmethod
-    def get_default(cls, _course: Optional[Course] = None) -> Self:
-        """Returns a default CurriculumCourse."""
-        def_pg, _ = cls.objects.get_or_create(
-            curriculum=Curriculum.get_default(),
-            course=(_course or Course.get_default()),
-        )
-        return cast(Self, def_pg)
-
-    @classmethod
-    def get_unique_default(cls) -> Self:
-        """Returns a default unique CurriculumCourse."""
-        u_course = Course.get_unique_default()
-        return cls.get_default(_course=u_course)
-
-    def current_students(self):
-        """Students enrolled in this curriculum course during the current semester."""
-        Student = apps.get_model("people", "Student")
-        semester = get_current_semester()
-        if semester is None:
-            return Student.objects.none()
-
-        return Student.objects.filter(
-            # student_registrations__section__semester=semester,
-            student_registrations__section__curriculum_course=self,
-        ).distinct()
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=("curriculum", "course"), name="uniq_course_per_curriculum"
-            )
-        ]
-        ordering = ["curriculum"]
-        verbose_name = "Programmed Course"
-        verbose_name_plural = "Programmed Courses"
+        ordering = ["code"]

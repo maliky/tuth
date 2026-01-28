@@ -9,6 +9,8 @@ from typing import Iterable
 
 from django.conf import settings
 
+from app.shared.utils import parse_str
+
 DEFAULT_REGISTRATION_FILES = (
     "Seed_data/Trimed/registry_registration.csv",
     "Seed_data/Trimed/registry_registration.head.csv",
@@ -27,12 +29,11 @@ def _candidate_paths(source_path: str | Path | None) -> Iterable[Path]:
 
     bases.extend(DEFAULT_REGISTRATION_FILES)
 
+    base_dir = Path(getattr(settings, "BASE_DIR", "."))
     for candidate in bases:
-        if candidate is None:
-            continue
         path = Path(candidate).expanduser()
         if not path.is_absolute():
-            path = Path(settings.BASE_DIR) / path
+            path = base_dir / path
         yield path
 
 
@@ -43,8 +44,7 @@ def _read_rows(path: Path) -> tuple[dict[str, str], ...]:
         rows: list[dict[str, str]] = []
         for raw in reader:
             cleaned = {
-                (key or "").strip(): (value or "").strip()
-                for key, value in (raw or {}).items()
+                parse_str(key): parse_str(value) for key, value in (raw or {}).items()
             }
             rows.append(cleaned)
     return tuple(rows)

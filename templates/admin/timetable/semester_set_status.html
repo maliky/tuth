@@ -1,0 +1,24 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+  <h1>{{ title }}</h1>
+  <p>{{ queryset|length }} semester(s) selected.</p>
+
+  <form method="post" action="">
+    {% csrf_token %}
+    <fieldset class="module aligned">
+      {{ status_form }}
+    </fieldset>
+    {% for obj in queryset %}
+      <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk }}" />
+    {% endfor %}
+    <input type="hidden" name="action" value="{{ action }}" />
+    <input type="hidden" name="apply_status" value="1" />
+    <input type="hidden" name="select_across" value="{{ select_across }}" />
+    <div class="submit-row">
+      <input type="submit" value="{% trans 'Apply' %}" class="default" />
+      <a href="{{ cancel_url }}" class="button cancel-link">{% trans 'Cancel' %}</a>
+    </div>
+  </form>
+{% endblock %}

@@ -16,6 +16,8 @@ from app.people.models.faculty import Faculty
 from app.shared.auth.helpers import ensure_superuser
 from app.shared.auth.perms import APP_MODELS, UserRole
 
+TEST_PASSWORD = "PassW0rd!"
+
 
 class Command(BaseCommand):
     """Create test users using the UserRole."""
@@ -45,9 +47,9 @@ class Command(BaseCommand):
                 person.staff_profile.user if isinstance(person, Faculty) else person.user
             )
 
-            pwd = mk_password(_user.first_name, _user.last_name)
-            _user.set_password(pwd)
+            _user.set_password(TEST_PASSWORD)
             _user.save(update_fields=["password"])
+
             college = None
             if user_role.value.default_college:
                 college, _ = College.objects.get_or_create(
@@ -64,7 +66,7 @@ class Command(BaseCommand):
             )  # type: ignore[attr-defined]
             # log
             status = "Created" if was_created else "Updated"
-            self.stdout.write(f" - {_user} ({group}): {status} with pwd {pwd}")
+            self.stdout.write(f" - {_user} ({group}): {status} with pwd {TEST_PASSWORD}")
 
         # nicely report results
         self.stdout.write(self.style.SUCCESS("Test users created or updated:"))

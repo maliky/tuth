@@ -1,10 +1,12 @@
 """Test shared utils module."""
 
 from typing import Any
-from app.academics.models.college import College
+
 import pytest
+
+from app.academics.models.college import College
+from app.academics.utils import expand_course_code
 from app.shared.auth import perms
-from app.shared.utils import expand_course_code
 
 # from tests.fixtures.academics import department_factory, college
 
@@ -29,10 +31,10 @@ def test_expand_code_to_defaults_when_row_missing(college, department_factory):
 
     dft_college = College.get_default()
 
-    college_code, dept_short_name, num = expand_course_code("BIOL105")
+    college_code, dept_code, num = expand_course_code("BIOL105")
 
     assert college_code == dft_college.code
-    assert dept_short_name == dept.short_name
+    assert dept_code == dept.code
     assert num == "105"
 
 
@@ -45,10 +47,10 @@ def test_expand_code_invalid_format():
 def test_expand_code_accepts_underscore(college, department_factory):
 
     dept = department_factory("ACCT")
-    college_code, dept_short_name, num = expand_course_code("ACCT_404")
+    college_code, dept_shortname, num = expand_course_code("ACCT_404")
 
     assert college_code == college.code
-    assert dept_short_name == dept.short_name
+    assert dept_shortname == dept.code
     assert num == "404"
 
 

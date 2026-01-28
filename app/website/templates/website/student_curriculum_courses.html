@@ -1,0 +1,39 @@
+{% extends "website/student_portal_base.html" %}
+{% load static %}
+
+{% block page_title %}Curriculum Courses · Tusis{% endblock %}
+{% block header_title %}Curriculum Courses{% endblock %}
+
+{% block content %}
+  <section class="mb-4">
+    <div class="bg-white rounded-3 shadow-sm p-4">
+      <p class="text-uppercase small text-muted mb-1">Program</p>
+      <h2 class="h5 mb-0">{{ curriculum_label }}</h2>
+      <p class="text-muted mb-0">Ordered curriculum courses with detail links.</p>
+    </div>
+  </section>
+
+  <section class="mb-5">
+    {% if course_rows %}
+      <ol class="list-group list-group-numbered shadow-sm">
+        {% for course in course_rows %}
+          <li class="list-group-item d-flex justify-content-between align-items-start">
+            <div class="ms-2 me-auto">
+              <div class="fw-semibold">{{ course.code }}</div>
+              <div class="text-muted">{{ course.title }}</div>
+              <small class="text-muted">{{ course.credits }} credits</small>
+            </div>
+            <a
+              class="btn btn-sm btn-outline-primary"
+              href="{% url 'student_curriculum_course_detail' course.id %}"
+            >
+              Details
+            </a>
+          </li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <div class="alert alert-light">No curriculum courses configured.</div>
+    {% endif %}
+  </section>
+{% endblock %}

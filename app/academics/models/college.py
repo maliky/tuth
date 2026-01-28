@@ -20,7 +20,7 @@ class College(models.Model):
     """
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
-    code = models.CharField(default="deft")
+    code = models.CharField(default="DEFT")
 
     # ~~~~ auto-filled ~~~~
     long_name = models.CharField(
@@ -75,29 +75,14 @@ class College(models.Model):
         return ", ".join(f"{lvl}: {cnt}" for lvl, cnt in counts.items())
 
     @property
-    def department_chairs(self) -> str:
-        """Return departments with their current chair names."""
-        RoleAssignment = apps.get_model("people", "RoleAssignment")
-        result: list[str] = []
-        for dept in self.departments.all():
-            chair = (
-                RoleAssignment.objects.filter(
-                    department=dept,
-                    group=UserRole.CHAIR.value.group,
-                    end_date__isnull=True,
-                )
-                .select_related("user")
-                .first()
-            )
-            chair_name = chair.user.get_full_name() if chair else ""
-            result.append(f"{dept.short_name}: {chair_name}")
-        return ", ".join(result)
+    def department_str(self) -> str:
+        """Return departments of this college."""
+        return ", ".join([f"{dept.code}" for dept in self.departments.all()])
 
     @property
-    def curricula_names(self) -> str:
-        """Return curriculum short names for this college."""
-        names = self.curricula.values_list("short_name", flat=True)
-        return ", ".join(names)
+    def curricula_count(self) -> int:
+        """Return number of curricula under this college."""
+        return int(self.curricula.count())
 
     @property
     def faculty_count(self) -> int:

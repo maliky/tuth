@@ -17,15 +17,7 @@ class Department(models.Model):
     """
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
-    short_name = models.CharField(max_length=8)
-    # would be good to restric this to a few dept.
-    # but it is also here that I should set the Truth
-    # short_name = models.CharField(
-    #     max_length=6,
-    #     choices=DepartmentShortNameChoice.choices,
-    #     default=DepartmentShortNameChoice.DEFT,
-    # )
-
+    code = models.CharField(max_length=8)
     # ~~~~ Auto-filled ~~~~
     college = models.ForeignKey(
         "academics.College",
@@ -36,16 +28,16 @@ class Department(models.Model):
     history = HistoricalRecords()
 
     # ~~~~ Read-only ~~~~
-    code = models.CharField(max_length=50, unique=True, editable=False)
+    shortname = models.CharField(max_length=50, unique=True, editable=False)
 
     def __str__(self) -> str:  # pragma: no cover
         """The Department common representation. ! This is not unique."""
-        return f"({self.college.code}) {self.short_name}"
+        return self.shortname
 
-    def _ensure_code(self) -> None:
-        """Build a unique department code from short_name and college."""
-        if not self.code:
-            self.code = f"{self.college.code}-{self.short_name}"
+    def _ensure_shortname(self) -> None:
+        """Build a unique department code from shortname and college."""
+        if not self.shortname:
+            self.shortname = f"({self.college.code}) {self.code}"
 
     def _ensure_college(self) -> None:
         """Make sure to have a college for the department."""
@@ -55,7 +47,7 @@ class Department(models.Model):
     def _ensure_long_name(self) -> None:
         """Make sure a title is set."""
         if not self.long_name:
-            self.long_name = f"{self.short_name} department of {self.college}"
+            self.long_name = f"{self.code} department of {self.college}"
 
     def get_courses(self) -> models.QuerySet:
         """Return all the courses for this department."""
@@ -67,26 +59,23 @@ class Department(models.Model):
 
     def save(self, *args, **kwargs) -> None:
         """Save the Department making sure the code is set."""
-        self._ensure_code()
         self._ensure_college()
+        self._ensure_shortname()
         self._ensure_long_name()
         super().save(*args, **kwargs)
 
     @classmethod
-    def get_default(cls, short_name="DFT") -> Self:
+    def get_default(cls, code="DFT") -> Self:
         """Return the default Department."""
-        default_dept, _ = cls.objects.get_or_create(
-            short_name=short_name,
-            long_name=f"Department of {short_name}",
-            college=College.get_default(),
-        )
+        dft_college = College.get_default()
+        default_dept, _ = cls.objects.get_or_create(code=code, college=dft_college)
         return cast(Self, default_dept)
 
     class Meta:
-        ordering = ["college__code", "short_name"]
+        ordering = ["college__code", "code"]
         constraints = [
             models.UniqueConstraint(
-                fields=["short_name", "college"],
-                name="uniq_department_short_name_per_college",
+                fields=["code", "college"],
+                name="uniq_department_code_per_college",
             ),
         ]

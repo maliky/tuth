@@ -1,4 +1,5 @@
 """Test admin login module."""
+
 import pytest
 from django.urls import reverse
 from pytest_bdd import given, parsers, scenario, then, when

@@ -14,7 +14,7 @@ from app.academics.admin.widgets import (
 from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
-from app.academics.models.course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriculumCourse
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.department import Department
 
@@ -230,10 +230,11 @@ class DepartmentResource(resources.ModelResource):
 
     class Meta:
         model = Department
-        import_id_fields = "department_code"
+        import_id_fields = "department_shortname"
+        # should I have __ instead of _ ?
         fields = (
             "college_code",
             "course_dept",
-            "department_code",
+            "department_shortname",
             "long_name",
         )

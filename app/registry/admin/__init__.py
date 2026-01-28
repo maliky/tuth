@@ -1,12 +1,32 @@
 """Initialization for the registry admin package."""
 
+from .inlines import (
+    DocumentDonorInline,
+    DocumentStaffInline,
+    DocumentStudentInline,
+    GradeInline,
+    StudentGradeInline,
+    StudentRegistrationInline,
+)
+from .resources import GradeResource
+from .resources_legacy import (
+    LegacyGradeSheetResource,
+    LegacyRegistrationResource,
+)
 from .core import GradeAdmin
 from .filters import GradeSectionFilter
-from .inlines import DocumentStudentInline, GradeInline
+
 
 __all__ = [
+    "DocumentDonorInline",
+    "DocumentStaffInline",
+    "DocumentStudentInline",
     "GradeAdmin",
     "GradeInline",
+    "GradeResource",
     "GradeSectionFilter",
-    "DocumentStudentInline",
+    "LegacyGradeSheetResource",
+    "LegacyRegistrationResource",
+    "StudentGradeInline",
+    "StudentRegistrationInline",
 ]

@@ -1,0 +1,179 @@
+{% extends "website/staff/base.html" %}
+{% load static %}
+
+{% block staff_head_extra %}
+  <link rel="stylesheet" href="{% static 'admin/css/vendor/select2/select2.min.css' %}" />
+  <link rel="stylesheet" href="{% static 'admin/css/autocomplete.css' %}" />
+  <style>
+    .collapse-toggle .chevron {
+      transition: transform 0.2s ease;
+    }
+    .collapse-toggle[aria-expanded="true"] .chevron {
+      transform: rotate(90deg);
+    }
+  </style>
+{% endblock %}
+
+{% block header_actions %}
+  <a class="btn btn-outline-secondary btn-sm" href="{% url 'staff_dashboard' %}">
+    Back to dashboard
+  </a>
+{% endblock %}
+
+{% block staff_content %}
+  <section class="card shadow-sm mb-4">
+    <div class="card-body">
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-6">
+          <label class="form-label">Student</label>
+          <select
+            class="form-select"
+            name="student_id"
+            data-student-autocomplete
+            data-autocomplete-url="{{ student_autocomplete_url }}"
+          >
+            {% if selected_student_id %}
+              <option value="{{ selected_student_id }}" selected>
+                {{ selected_student_label }}
+              </option>
+            {% endif %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Semester</label>
+          <select class="form-select" name="semester">
+            {% for option in semester_options %}
+              <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>
+                {{ option.label }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <button class="btn btn-primary w-100" type="submit">Filter</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  {% if student_groups %}
+    {% for group in student_groups %}
+      <div class="card shadow-sm mb-3">
+        <div class="card-header p-0 d-flex align-items-center gap-2">
+          <button
+            class="btn btn-link text-decoration-none flex-grow-1 text-start d-flex justify-content-between align-items-center collapse-toggle px-3 py-2"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#student-{{ group.student.id }}"
+            aria-expanded="false"
+            aria-controls="student-{{ group.student.id }}"
+          >
+            <span class="d-inline-flex align-items-center gap-2">
+              <i class="bi bi-chevron-right chevron" aria-hidden="true"></i>
+              <strong>{{ group.student_label }}</strong>
+              <span class="text-muted">({{ group.student_id }})</span>
+            </span>
+            <span class="text-muted small">
+              GPA {{ group.gpa }} · Credits {{ group.credits_total }}
+            </span>
+          </button>
+          <a
+            class="btn btn-sm btn-outline-primary me-3"
+            href="{% url 'registrar_grade_transcript' group.student.id %}"
+          >
+            Official transcript
+          </a>
+        </div>
+        <div class="collapse" id="student-{{ group.student.id }}">
+          <div class="card-body">
+            {% for semester in group.semesters %}
+              <div class="border rounded-3 mb-3">
+                <div class="p-0">
+                  <button
+                    class="btn btn-link text-decoration-none w-100 text-start d-flex justify-content-between align-items-center collapse-toggle px-3 py-2"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#semester-{{ group.student.id }}-{{ semester.semester.id }}"
+                    aria-expanded="false"
+                    aria-controls="semester-{{ group.student.id }}-{{ semester.semester.id }}"
+                  >
+                    <span class="d-inline-flex align-items-center gap-2">
+                      <i class="bi bi-chevron-right chevron" aria-hidden="true"></i>
+                      <strong>{{ semester.label }}</strong>
+                    </span>
+                    <span class="text-muted small">
+                      GPA {{ semester.gpa }} · Credits {{ semester.credits_total }}
+                    </span>
+                  </button>
+                </div>
+                <div class="collapse" id="semester-{{ group.student.id }}-{{ semester.semester.id }}">
+                  <div class="table-responsive">
+                    <table class="table mb-0 align-middle">
+                      <thead>
+                        <tr>
+                          <th>Course</th>
+                          <th>Credits</th>
+                          <th>Grade</th>
+                          <th>Faculty</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for row in semester.rows %}
+                          <tr>
+                            <td>
+                              <strong>{{ row.course_code }}</strong><br/>
+                              <span class="text-muted">{{ row.course_title }}</span>
+                            </td>
+                            <td>{{ row.credits }}</td>
+                            <td>{{ row.grade }}</td>
+                            <td>{{ row.faculty }}</td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+
+    {% with page=page_obj %}
+      {% include "website/staff/partials/pagination.html" %}
+    {% endwith %}
+  {% else %}
+    <div class="alert alert-light">No grades found for the selection.</div>
+  {% endif %}
+{% endblock %}
+
+{% block body_extra %}
+  <script src="{% static 'admin/js/vendor/jquery/jquery.min.js' %}"></script>
+  <script src="{% static 'admin/js/vendor/select2/select2.full.min.js' %}"></script>
+  <script>
+    (function () {
+      const select = document.querySelector("[data-student-autocomplete]");
+      if (select && window.jQuery) {
+        const $select = window.jQuery(select);
+        const url = select.dataset.autocompleteUrl;
+        $select.select2({
+          allowClear: true,
+          placeholder: "Search by name or ID",
+          minimumInputLength: 2,
+          ajax: {
+            url: url,
+            dataType: "json",
+            delay: 250,
+            data: function (params) {
+              return { q: params.term };
+            },
+            processResults: function (data) {
+              return data;
+            },
+          },
+        });
+      }
+    })();
+  </script>
+{% endblock %}

@@ -1,9 +1,7 @@
 {% extends "website/staff/base.html" %}
 
 {% block header_actions %}
-  <a class="btn btn-outline-secondary btn-sm" href="{% url 'portal_logout' %}">
-    Logout
-  </a>
+  {# Logout button rendered in staff base header for consistency. #}
 {% endblock %}
 
 {% block staff_content %}
@@ -22,6 +20,39 @@
   {% endif %}
 
   <div class="staff-dashboard__grid">
+    <aside class="staff-dashboard__sidebar">
+      <button
+        class="btn btn-outline-secondary w-100 d-flex justify-content-between align-items-center"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#staff-actions"
+        aria-expanded="true"
+        aria-controls="staff-actions"
+      >
+        Quick actions
+        <span class="small text-muted">toggle</span>
+      </button>
+      <div class="collapse show mt-3" id="staff-actions">
+        {% if actions %}
+          {% for action in actions %}
+            <article class="action-card">
+              <p class="action-card__label">
+                <span class="action-card__cue {% if action.is_admin %}is-admin{% else %}is-app{% endif %}"></span>
+                {{ action.description }}
+              </p>
+              <a class="btn btn-{{ action.variant|default:"outline-secondary" }} w-100" href="{{ action.href }}">
+                {{ action.label }}
+              </a>
+            </article>
+          {% endfor %}
+        {% else %}
+          <article class="action-card action-card--empty">
+            <p>No quick actions right now.</p>
+          </article>
+        {% endif %}
+      </div>
+    </aside>
+
     <div class="staff-dashboard__primary">
       {% if metrics %}
         <div class="staff-dashboard__metrics">
@@ -75,45 +106,5 @@
         </article>
       {% endfor %}
     </div>
-
-    <aside class="staff-dashboard__secondary">
-      {% if accessible_dashboards %}
-        <article class="action-card">
-          <p class="action-card__label">Accessible dashboards</p>
-          <div class="accessible-list">
-            {% for dash in accessible_dashboards %}
-              <a
-                href="{{ dash.href }}"
-                class="accessible-list__item {% if dash.active %}is-active{% endif %}"
-              >
-                <div>
-                  <strong>{{ dash.label }}</strong>
-                  {% if dash.summary %}
-                    <p class="text-muted mb-0 small">{{ dash.summary }}</p>
-                  {% endif %}
-                </div>
-                {% if dash.active %}
-                  <span class="badge bg-success ms-2">Current</span>
-                {% endif %}
-              </a>
-            {% endfor %}
-          </div>
-        </article>
-      {% endif %}
-      {% if actions %}
-        {% for action in actions %}
-          <article class="action-card">
-            <p class="action-card__label">{{ action.description }}</p>
-            <a class="btn btn-outline-secondary w-100" href="{{ action.href }}">
-              {{ action.label }}
-            </a>
-          </article>
-        {% endfor %}
-      {% else %}
-        <article class="action-card action-card--empty">
-          <p>No quick actions right now.</p>
-        </article>
-      {% endif %}
-    </aside>
   </div>
 {% endblock %}

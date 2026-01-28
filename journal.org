@@ -1,340 +1,253 @@
 
-* <2025-11-10 Mon 04:35>  Updated implementation plan
-** Curriculum creation & approval
- - Keep using Django admin/import-export for deans to create curricula + prerequisites (already works).
- - Wire the existing ApprovalQueue to the admin save hook so any curriculum marked “pending” automatically creates a queue item for VPAA review, and add a simple admin action (“Approve via VPAA”) that flips status + closes the queue entry. No new UI needed beyond admin extensions.
-# > For this I am cautious about adding queue item for VPAA.  I think it introduce complexity.  It would be better to simply use exiting state tracking classes and expose that field as editable to the VPAA when he list the curriculum.  I think there's already a bool actualy doing that job of flagging the curriculum as validated or pending. Why didn't you like that simple option ?
+* <2026-01-27 Tue 17:08>  Fee
+  - need to find a clean way to import default course fix fee. 
 
-** Enrollment officer workflow
-- Continue letting enrollment staff create student profiles directly in admin.To support document uploads, expose the registry.DocumentStudent inline and add an admin filter showing “missing required docs” so officers can confirm completeness before flipping a student to “eligible.” (No separate front-end yet.)
-# > That's ok you can make the change for that
+*  <2026-01-26 lun. 20:42> mergin departments
+use merge wizardmixin
+yes keep shortname out
+you can drop thec onflict summary function, to heavy  for my usecase now,
+add confirmation form waqrning
+do change merge_Departments if not need
 
-** Student pre-registration (what’s still missing)
-- Data: need at least one active semester with sections, plus RegistrationStatus entries (pending, cleared, etc.)—once seeded, the current views can render.
-# > Sections are there. What is missing are registrationstatus entries. Can you mock them up ?
-- Functionality: implement POST handlers on /courses/ to:
-# > are you sure this should be on courses and not on reservation ?  
-  - enforce seat counts (Section.current_registrations updates)
-  - attach a Registration.status = pending
-# > Do not mixe Course and CurriculumCourse, Sections and SecSession.  seat counts is linked to Section not Course
-# > What we will need to add in the future is the possibility for a Dean a associated facutlies with courses they can potentialy teach.
-    
-  - block courses where prerequisites or schedule conflicts fail (validation logic largely exists but must be applied server-side).
-# > The scheduling checks should not be done now. For creating the schedule I will use an external application  such ad FET. But it is true that my app should check on input for time, room, faculty, or student conflicts although this should have been done in creating the schedule for the different sessions.
-# > What can happen since we give the choice to student of different SecSession is that they selected conflicting session. This should be flagged at reservation level.
+* <2026-01-26 Mon 14:30> Admin
 
-  - Add a “Reservations” list and cancel action so students can withdraw before finance clears them.
-# > This is already implemented in the cards of the student UX. Why do you propose it again ?
-  - Hook status changes into StatusHistory so we can audit transitions.
-# > Which status changes are you talking about?  We do not need to audit change to the status tables
-** Financial clearance
-- Build a minimal finance UI (or admin action) that lists Registration rows with status = pending and lets a finance officer trigger “clear” (set status to cleared, maybe attach DocumentPayment for proof).
-# > you can impmelent this. The attachement of a payment proof is important but not mandatory.  We can trust the finance officer that he file the proof outside of the system.  
-- Tie receipts/payments to Invoice and expose a button “Mark cleared” that simply changes the registration status; this is low-cost because the backend already has models.
-# > This should be very similare to an admin table listing invoices with and editable boolean field 'payment cleared'. 
-** Registrar validation
-- Per your note, defer new registrar features for now. Once the earlier steps
-are stable, we can revisit the registrar dashboard to add actions that convert
-cleared registrations into official roster entries.
-# > yes. confirmed. defer for now.
+  Plan
 
+  - Review existing admin merge actions (curriculum/course/curriculumcourse) to
+    mirror patterns, then design a Department merge flow with:
+      - Step 1: select source rows.
+      - Step 2: confirmation form to choose the target Department and field
+        precedence.
+      - Safeguards: block/skip merges that violate college/curriculum
+        relationships; collect conflicts and surface them in the confirmation
+        form.*
+** Draft UX Behavioral tests
 
-* TODO <2025-11-11 Tue 17:09> View routing map
+** Section fee
 
- CLOSED: [2025-11-11 mar. 21:25]
-<2025-11-12 mer. 14:04> Getting there :
-Enrollement Desk create sutdent/news/ students/  should be removed to point direclty to the Adminj jump
- #+BEGIN_SRC plantuml :results file link :file Docs/view_routing_map3.png
-@startuml
-skinparam actorStyle awesome
-left to right direction
+** update
+   A) OK
+     yes do not do migrations
+   B) Avoid services. CurriculumCourseFee can also be a good place.
+      - resolution order, OK
+   C) UX,
+      - should have searchable autocomplete fields
+      - Do preset with default current semester in add view.
+        On the backend, if a curriculumcourse fee is created for a specific semester and none where set for the null semester, then it should set the same for the null semester.
+   D) OK
+   E) Leav the tests for now.
 
-actor Visitor
-actor Student
-actor "Faculty & Staff" as Staff
+** draft
+I need a model change for the additiona fee management.  Drop the SectionFee Model (nothing in DB).  Replace it with a CourseFee keyed on course semester and amount.
+semester can be Null.
+Create a coursecurriculumFee to overide the Course Fee on special occcasion where a course fee may differe in different curriculums.
 
-rectangle "Public Entry" {
-  [Landing\n(/)] as Landing
-}
-
-rectangle "Unified Portal" {
-  [Portal Login\n(/auth/login/)] as Login
-  [Role Router\n(/portal/)] as Router
-  [Logout\n(/auth/logout/)] as Logout
-}
-
-rectangle "Student Surface" {
-  [Student Dashboard\n(/student/dashboard/)] as StuDash
-  [Course Dashboard\n(/courses/)] as Courses
-}
-
-rectangle "Staff Dashboards\n(/staff/<role>/)" as StaffDashboards {
-  [VPAA Approval Hub\nrole=vpaa] as StaffVPAA
-  [Dean Oversight\nrole=dean] as StaffDean
-  [Chair Curriculum Center\nrole=chair] as StaffChair
-  [Instruction Hub\nrole=faculty] as StaffFaculty
-  [Registrar Officer Console\nrole=registrar_officer] as StaffRegistrarOfficer
-  [Registrar Lifecycle Ops\nrole=registrar] as StaffRegistrar
-  [Enrollment Officer Desk\nrole=enrollment_officer] as StaffEnrollOfficer
-  [Enrollment Desk\nrole=enrollment] as StaffEnroll
-  [Finance Officer Control\nrole=finance_officer] as StaffFinanceOfficer
-  [Finance & Holds\nrole=finance] as StaffFinance
-  [Cashier Station\nrole=cashier] as StaffCashier
-  [Scholarship Office\nrole=scholarship] as StaffScholarship
-  [IT Support\nrole=it] as StaffIT
-  [Staff Workspace\nrole=staff] as StaffGeneral
-}
-
-rectangle "Enrollment Tools" {
-  [Student Snapshot\n(/students/)] as StuList
-  [Student Detail\n(/students/<pk>)] as StuDetail
-  [Admin Jump\n(/students/admin-edit/)] as AdminJump
-  [Create Student CTA\n(/students/new/)] as StuNew
-  [Delete Student\n(/students/<pk>/delete/)] as StuDelete
-}
-
-rectangle "Registrar Tools" {
-  [Course Windows\n(/registrar/course-windows/)] as RegWin
-}
-
-rectangle "Admin" {
-  [Django Admin\n(/admin/)] as AdminPage
-}
-
-Visitor --> Landing
-Landing --> Login
-Student --> Login
-Staff --> Login
-
-Login --> Router
-Router --> StuDash
-Router --> StaffGeneral
-Router --> AdminPage
-
-StuDash --> Courses
-
-StaffGeneral --> StaffFaculty
-StaffGeneral --> StaffRegistrar
-StaffGeneral --> StaffFinance
-
-StaffVPAA --> StaffDean
-StaffDean --> StaffChair
-StaffChair --> StaffFaculty
-
-StaffRegistrarOfficer --> StaffRegistrar
-StaffEnrollOfficer --> StaffEnroll
-StaffFinanceOfficer --> StaffFinance
-
-StaffRegistrar --> RegWin
-StaffRegistrarOfficer --> RegWin
-StaffEnroll --> StuList
-StaffEnroll --> AdminJump
-StaffEnroll --> StuNew
-StuList --> StuDetail
-StuDetail --> StuDelete
-
-StaffDashboards --> AdminPage : Admin CTA (shared)
-StaffFinance --> AdminPage : Audit invoices
-StaffFinanceOfficer --> AdminPage
-AdminPage --> StaffGeneral : “Back to dashboard” link
-
-Student --> Logout
-Staff --> Logout
-
-@enduml
-#+END_SRC
-
-#+RESULTS:
-[[file:Docs/view_routing_map3.png]]
+Register the model in the admin, with a searchable drowpdown for course/curriculumcourses.
+in the ui, the default semester selected should be the current semester.
 
 
-* DONE <2025-11-11 Tue 19:59> Role hierarchy sketch
-  CLOSED: [2025-11-11 mar. 21:24]
-Mapped the intended officer/non-officer structure described in `app/shared/auth/perms.py`. Officers inherit access to their non-officer workspaces, while Staff remains the base profile every employee can fall back to.
+To get a student section fee, we check the attached curriculum course fee for the semester if any, else the curriculum course fee, if any, then course fee for the semester if any, and finaly the course fee.  We add this fee to the tuition fee computed based on the course credit found in curriculum course.
 
-#+BEGIN_SRC plantuml :results file link :file Docs/role_hierarchy.png
-@startuml
-skinparam linetype ortho
-skinparam nodesep 40
-skinparam ranksep 30
-
-[VPAA] --> [Dean]
-[Dean] --> [Chair]
-[Chair] --> [Faculty]
-
-[VPAA] --> [Registrar Officer]
-[Registrar Officer] --> [Registrar]
-
-[VPAA] --> [Enrollment Officer]
-[Enrollment Officer] --> [Enrollment Staff]
-
-[VPAA] --> [Finance Officer]
-[Finance Officer] --> [Finance]
-[Finance] --> [Cashier]
-[Finance Officer] --> [Scholarship Officer]
-
-[VPAA] --> [IT Support]
-
-[Staff (base)] --> [Faculty]
-[Staff (base)] --> [Enrollment Staff]
-[Staff (base)] --> [Finance]
-[Staff (base)] --> [Registrar]
-[Staff (base)] --> [General Workspace]
-
-@enduml
-#+END_SRC
-
-#+RESULTS:
-[[file:Docs/role_hierarchy.png]]
-
-* DONE The scenario narrative is solid, but “ready to run” depends on whether each step already has backing data, permissions, and UI hooks in the codebase:
-  CLOSED: [2025-11-10 Mon 05:19]
-
-  - Dean → VPAA workflow: 
-# > But for me the Dean can create a curriculum using the admin interface and event import a curriculum and prerequisits using the import-export extention.
-
-  - Enrollment officer & student onboarding: 
-# >  the way I see that above is the enrollement staff creating the student profil using the admin interface directly.
-
-  - Student pre-registration:
-# > Ok so except data, what is missing here concretely to make it work ?
-    
-  - Financial clearance: 
-# > Well we can do that right ? it does not cost much doesn't it ?
-
-  - Registrar validation: 
-# > lets hold on this one for now.
+to make it clearer, I would like the fee computation to be centralized in the curriculum fee.
 
 
-* DONE UX Surface Map (2025-11-09)
-  CLOSED: [2025-11-11 mar. 21:24]
+* <2026-01-26 Mon 09:56> method order
+- class meta
+- class attribute
+- @classmethod
+- @property methodes
+- __ methodes
+- _ methodes
+- normal methodes
+Lexical order in each category    
 
-#+BEGIN_SRC plantuml :results file link :file Docs/ux_surface_map.png
-@startuml
-skinparam actorStyle awesome
-left to right direction
+* <2026-01-25 Sun 15:15> Registration life cycle
+1. check InvoiceStatus,
+2. note that settled differs from financialy. cleared in my business logic. settled invoice should  not clear registration but make it partialy_cleared.
+3. Check payment.save will update invoice balance and eventualy registration status.
 
-actor Applicant
-actor Student
-actor Instructor
-actor Chair
-actor Dean
-actor VPAA
-actor Registrar
-actor "Financial Officer" as Finance
-actor "Scholarship Officer" as Scholarship
-actor "Enrollment Officer" as EnrollOfficer
-
-rectangle "Applicant Portal" {
-  [Landing Page\n(/)] as Landing
-  [Apply + Upload Docs] as Apply
-  [Status Tracker] as Status
-  Applicant --> Landing
-  Landing --> Apply
-  Apply --> Status
-}
-
-rectangle "Unified Access" as Portal {
-  [Portal Login\n(/auth/login/)]
-  [Role Router\n(/portal/)]
-}
-
-rectangle "Student Experience" {
-  [Student Dashboard\n(/student/dashboard/)] as StuDash
-  [Course Registration\n(/courses/)] as Courses
-  [Financial Status] as StuFin
-  [Schedule & Grades] as StuSched
-  [Documents Upload] as StuDocs
-
-  Student --> StuDash
-  StuDash --> Courses
-  StuDash --> StuFin
-  StuDash --> StuSched
-  StuDash --> StuDocs
-}
-
-rectangle "Faculty / Staff Console\n(/staff/<role>/)" {
-  [Instruction Hub\n(Instructor)] as Instr
-  [Chair Curriculum Center] as ChairDash
-  [Dean Oversight Page] as DeanDash
-  [VPAA Approval Hub] as VPaaDash
-  [Registrar Lifecycle Ops] as RegDash
-  [Finance & Holds] as FinDash
-  [Scholarship Office] as SchDash
-  [Enrollment Operations] as EnrollDash
-
-  Instructor --> Instr
-  Chair --> ChairDash
-  ChairDash --> DeanDash
-  DeanDash --> VPaaDash
-  Dean --> DeanDash
-  VPAA --> VPaaDash
-  Registrar --> RegDash
-  Finance --> FinDash
-  Scholarship --> SchDash
-  EnrollOfficer --> EnrollDash
-}
-
-Portal --> StuDash
-Portal --> Instr
-Portal --> ChairDash
-Portal --> DeanDash
-Portal --> VPaaDash
-Portal --> RegDash
-Portal --> FinDash
-Portal --> SchDash
-
-Courses --> RegDash : Registrations/holds
-StuDash --> FinDash : Balances & payments
-SchDash --> FinDash : Donor letters & compliance
-Apply --> EnrollDash : Document review / profile creation
-Status --> EnrollDash : Candidate updates
-RegDash --> VPaaDash : Overloads / approvals
-ChairDash --> DeanDash
-DeanDash --> VPaaDash
-
-@enduml
-#+END_SRC
-
-#+RESULTS:
-[[file:../Plantuml/ux_surface_map.png]]
-
-  /model      choose what model and reasoning effort to use
-  /approvals  choose what Codex can do without approval
-  /review     review my current changes and find issues
-  /new        start a new chat during a conversation
-  /init       create an AGENTS.md file with instructions for Codex
-  /compact    summarize conversation to prevent hitting the context limit
-  /undo       ask Codex to undo a turn
-  /diff       show git diff (including untracked files)
-
-
-
-
-*** Passwords
- - test_donor (Donor): Created with pwd D-pass-P!
- - test_cashier (Cashier): Created with pwd C-pass-P!
- - test_student (Student): Created with pwd S-pass-P!
- - test_prospecting_student (Prospecting Student): Created with pwd P-pass-P!
- - test_staff (Staff): Created with pwd S-pass-P!
- - test_faculty (Faculty): Created with pwd F-pass-P!
- - test_chair (Chair): Created with pwd C-pass-P!
- - test_dean (Dean): Created with pwd D-pass-P!
- - test_vpaa (Vice President Academic Affairs): Created with pwd V-pass-P!
- - test_enrollment (Enrollment): Created with pwd E-pass-P!
- - test_enrollment_officer (Enrollment Officer): Created with pwd E-pass-P!
- - test_finance (Finance): Created with pwd F-pass-P!
- - test_finance_officer (Finance Officer): Created with pwd F-pass-P!
- - test_registrar (Registrar): Created with pwd R-pass-P!
- - test_registrar_officer (Registrar Officer): Created with pwd R-pass-P!
- - test_it (It): Created with pwd I-pass-P!
- - testest (Student)   - T-pass-T!
   
+  Check the status update for invoice
+  - the update should be called anytime a payment is saved (causing its invoice.balance to be changed)
+- check finance/registration status/types imports, after their move to new modules status_types.py
+- use cls.get_default in test fixture instead of recreating objects
+- Handle the additional fixed fee for the cc
+
+* <2026-01-23 Fri 23:01> Strange mergin and not faculty anymore ?
+- Need to adress the fee structure for courses.
+  - Too long to load, investigate
+
+- [X] in student/payment/receipt
+  - [X] compute  balance sum beside the paid sum
+- [ ] in student/dashboard remove the Payment receipt button.
+  - [ ] it is already in the menu under payment statement.
+  - [ ] rename the payment statement to payment receipt in the menu
+
+   
+
+* <2026-01-23 ven. 12:49>
+**  People: Merge + Admin Mixins
+
+ - app/people/services/merge_people.py — confirm M2M merge behavior when a user is not persisted; decide if skip is
+   correct.
+ - app/people/services/merge_people.py — handle “source user already deleted by profile merge” case safely.
+ - app/people/services/merge_people.py — verify “merge_people already merged groups/permissions; just delete
+   source.”
+ - app/people/admin/mixins.py — review defaulting to oldest record for target selection.
+ - app/people/admin/mixins.py — review defaulting older record values for sparse fields.
+ - app/people/admin/mixins.py — confirm unbound method action wiring is still needed.
+
+**  People: Merge + Duplicate Handling
+
+ - app/people/admin/mixins.py — confirm freeing unique values on sources is safe.
+ - app/people/admin/mixins.py — resolve mixin get_queryset typing note.
+ - app/people/admin/mixins.py — validate per‑request duplicate metrics caching.
+ - app/people/admin/mixins.py — address “ambiguous duplicates” handling gap.
+ - app/people/admin/widgets.py — reconsider cached get_or_create pattern usefulness.
+ - app/people/admin/widgets.py — ensure cache path doesn’t prevent get calls.
+
+**  People: Ensures + Models + Admin Resources
+
+ - app/people/ensures.py — implement student lookup by student_id (primary key path).
+ - app/people/ensures.py — use model mk_username consistently.
+ - app/people/models/staffs.py — design organogram support for divisions/departments.
+ - app/people/models/student.py — add computed level based on credits completed.
+ - app/people/models/student.py — resolve prerequisite logic before uncommenting path.
+ - app/people/models/object_manager.py — clarify assumptions in manager logic.
+
+**  People: Admin Resources Mapping
+
+ - app/people/models/object_manager.py — prevent duplicate usernames on import.
+ - app/people/admin/resources.py — document or fix widgets column mapping.
+ - app/people/admin/resources.py — block new major/curriculum creation during import.
+ - app/people/admin/resources.py — log mismatched rows for manual handling.
+ - app/people/admin/resources.py — add fuzzy curriculum match during import.
+ - app/people/admin/resources_mapping.py — document AccountID origin constraints.
+
+**  People: Admin Core
+
+ - app/people/admin/core.py — consider moving staff_bio into FACULTY_FIELDS.
+ - app/people/admin/core.py — validate the RoleAssignmentAdmin autocomplete note.
+
+**  Timetable: Admin + Models
+
+ - app/timetable/admin/session_widgets.py — ensure section id is available to create secsession.
+ - app/timetable/admin/section_registers.py — handle/propagate error messaging.
+ - app/timetable/admin/section_registers.py — clarify registrar role handling.
+ - app/timetable/admin/filters.py — justify or change use_pk_exact usage.
+ - app/timetable/admin/core_registers.py — confirm open semester uniqueness handling.
+ - app/timetable/models/schedule.py — enforce end_time > start_time validation.
+
+**  Timetable: Models + Ensures
+
+ - app/timetable/models/semester.py — clarify need for REGISTRATION_OPEN_CODES set/dict.
+ - app/timetable/ensures.py — decide if _created branch is needed.
+
+**  Registry: Admin + Imports + Models
+
+ - app/registry/admin/core.py — convert semester filter to autocomplete and limit to used semesters.
+ - app/registry/management/commands/import_grades.py — validate assumption that students exist.
+ - app/registry/management/commands/import_grades.py — ensure_student should resolve by student_id.
+ - app/registry/models/document.py — confirm classmethods on abstract model viability.
+
+**  Website: Student Dashboard
+
+ - app/website/views/student_dashboard.py — review “blocked/cooldown shouldn’t be selectable” logic.
+ - app/website/views/student_dashboard.py — confirm semester GPA grouping note is still needed.
+
+ Finance + Tests
+
+ - app/finance/admin/core.py — handle superusers without staff profiles.
+ - app/finance/models/payment.py — confirm status_id is cleared before invoice update logic.
+ - tests/finance/fixture.py — review finance fixtures after model changes.
+ - tests/finance/test_utils.py — validate need for dummy dataclasses.
+
+ Academics
+
+ - app/academics/admin/core.py — add current‑semester student list for courses.
+ - app/academics/admin/core.py — explain/clarify the “djangonic logic” comment.
+ - app/academics/models/course.py — factor alternate‑case logic with curriculum.
+ - app/academics/models/course.py — define max course number generation policy.
+ - app/academics/models/curriculum.py — preserve differing info on fuzzy match.
+ - app/academics/models/curriculum.py — surface warning to users on fuzzy match.
+ - app/academics/models/curriculum.py — decide if using _id fields is necessary.
+
+**  Scripts
+
+ - scripts/merge_courses_by_short_code.sql — document COALESCE meaning.
+ - scripts/merge_courses_by_short_code.sql — clarify duplication remark.
+
+ If you want, I can turn this into a scoped execution order (P0/P1) and start with the student dashboard UX first,
+ or the registrar grades dashboard first.
 
 
-* codex tips
+* DONE <2026-01-19 lun. 00:07>
+  CLOSED: [2026-01-19 lun. 00:36]
+ in for eg /admin/people/student/1990/change/,
+  - in inlineRegistrations, need to be able to remove a registration.
+ I did an import through import_grade and I get many faculty without name just staff id and a username which is the staffid number +1.  Need to be investigaged
+** student dashboard
+ Do not display courses not sheduled this semester.
+ Only display in gray courses that are pending payment or that are locked after cancelation
+ in the Registration cart the credit selected should update as we add courses. now the credit selected is blocked at 0.
+  - There should be a warning and a lock if the number of credit selected is more that the authorized amount for the student.  Identify where this number is set for a student.  It should be editable by a staff, stored in the student's model. It is something that is been updated every semester.
+  - Give detail of what happen at the code level when I press 'Save registration'
+*** WORK said to be done
+• Updated the student dashboard registration flow to enforce per‑student credit limits, hide unscheduled courses, and refresh the “Current and past courses” table (plus the course list) via AJAX so it updates immediately after register/cancel. Added the per‑student credit limit field for staff to edit and wired the cart UI to show/lock on limit exceed.
+
+
+  Import‑grade faculty issue investigation:
+
+  - import_grades only uses Faculty.get_default() and does not create per‑row faculty records.  The likely source of numeric/blank‑name faculty is the name‑based creation in app/shared/management/commands/import_schedule.py or app/timetable/management/commands/import_sessions.py (both call ensure_faculty). If you want, I can add a guard there to skip or normalize rows with missing/non‑name faculty fields.
+
+  Next steps you may want:
+
+  2. Verify the AJAX flow by selecting a section, saving registration, and canceling to confirm the table and course list update immediately. NOT WORKING
+  3. If you want, I can harden ensure_faculty usage in the import commands to avoid creating  blank faculty records.
+    
+    
+* DONE <2026-01-18 dim. 22:52> Registration/reservation workflow
+  CLOSED: [2026-01-18 dim. 23:50]
+  - Think of where to block the multiple registrations of a student for a curriculum course in the same semester. I want to give him 2 chances separated by 48h. this Sould be computed on the fly, looking at the registration table history. no stored field, jsut computed values. check that the current workflow is compliant with this propoistion.
+  - Not sure about the naming of reservation.  undo the previous changes.  lets have registration every where (code, comments included), the distinction will be the status.
+** local install js
+ download the all js files, eg bootstrap. reduce dependency to excternal js library files.
+   
+** Student dashboard
+ When clicking cancel in Current and past courses, nothing is happening. I expect the line to disapear from the current and past course.
+ the already reserved / registration pending courses should not be mixed with courses not offered this semester.  They should be displayed alongside the other  course reservation but grayed and locked
+ When clicking 'Save reservation' the reservation cart rest but the registration line with pending payment does not appear in Current and past courses as i expect. invetigate why.  I shouldnt need to relaod the page.
+ the semester in Course and Grades section are still not ordered from the most recent to the oldest. Indicate where the odering is been done so I look at it directly.
+ Add the time to the udpated in Current and past courses so the student can compute when before what time he has to pay.
   
-  / for commands                          ctrl + j for newline
-  @ for file paths                        ctrl + v to paste images
-  esc esc to edit previous message        ctrl + c to exit
-                                          ctrl + t to view transcript
+** Refactoring
+ Weekday parsing logic duplicated acrosse 2 import commands
+ Time parsing logic duplicated with identical formats
+ location splitting logic duplicated (include fall back in shared version)
+ college/departments code normaliztion repeated in admin widgets and ensures
+ academic-year normalization redundant.  Some function are alias or wrapper on others.
+ Extract a small pure helper like _coerce_int(value: str | int) -> int | None that returns None on failure, and have: parse_int call it directly, and to_int wrap it and apply default when None.
+     
+** Worked
+• Reverted wording back to registration across the student dashboard, moved the cooldown/attempt blocking to rely solely on registration history, and separated already‑registered courses into their own locked list so they aren’t mixed with “not offered” courses. I also centralized the weekday/time/location parsing, normalized college/department code helpers, removed the redundant academic‑year alias, and added _coerce_int to unify int parsing.
+
+  Ordering note:
+
+  - The Course & Grades semester ordering is done in app/website/views/student_dashboard.py in the semester_sort_info build + semester_grade_groups.sort(...) block (now uses semester start date or academic year start date).
+
+  Local JS note:
+
+  - I didn’t find any external JS references; bootstrap JS is already local. The only remote assets are CSS (Google Fonts in app/website/templates/website/landing.html and bootstrap‑icons in app/website/templates/website/staff/base.html).
+   
+
+* <2026-01-05 lun. 07:33>  Runing a sql cmd
+docker-compose -f docker-compose-preprod.yml exec -T db psql -U tusis_preprod -d tusis_preprod -c "SELECT version();"
+
+
+* <2026-01-05 lun. 07:19>
+ Make test for NameParts if I have empty parts.
+
+* <2026-01-06 mar. 18:00> Notes on seed_full_student_grades.py
+ Target reader: intermediate Python/pandas engineer; comfortable with typing, argparse, set ops.
+ Typical US comp for that level: ~$110k–$150k base; higher with equity/bonus in SF/NYC/Seattle, closer to ~$100k–$120k in lower-cost areas.
+ To increase abstraction difficulty: introduce pipeline composition/IoC for loaders+savers, plugin registry for scoring strategies, structured logging/metrics with failure policies, config-driven IO/validation, and immutable data models with strict mypy coverage.

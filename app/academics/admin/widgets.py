@@ -5,15 +5,27 @@ from typing import Any, Optional
 from django.db import IntegrityError
 from import_export import widgets
 
-from app.academics.choices import COLLEGE_CODE, COLLEGE_LONG_NAME
+from app.academics.choices import COLLEGE_LONG_NAME
 from app.academics.models.college import College
 from app.academics.models.concentration import Major
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
-from app.academics.models.course import CurriculumCourse
-from app.shared.models import CreditHour
-from app.shared.utils import expand_course_code, get_in_row
+from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.utils import (
+    expand_course_code,
+    normalize_college_code,
+    normalize_department_code,
+)
+from app.registry.models import CreditHour
+from app.academics.ensures import (
+    ensure_college,
+    ensure_course,
+    ensure_curriculum,
+    ensure_curriculum_course,
+    ensure_department,
+)
+from app.shared.utils import asserts_keys, get_in_row, parse_str, to_int
 
 
 class CurriculumCourseWidget(widgets.ForeignKeyWidget):
@@ -24,48 +36,37 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
     to CourseWidget then assembles a CurriculumCourse object from the results.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         super().__init__(CurriculumCourse)
         self.curriculum_w = CurriculumWidget()
         self.course_w = CourseWidget()
 
     def clean(self, value, row=None, *args, **kwargs) -> CurriculumCourse:
         """Assemble course_dept, curriculum and course to return a curriculum course."""
-        # we don't use value.  We always get a course back
+        # we don't use value.  We always get a curriculum course back
+
+        asserts_keys(["course_no", "dept_code"], row)
+
+        curriculum = self.curriculum_w.clean(value=value, row=row)
+        if curriculum is None:
+            curriculum = Curriculum.get_default()
         course = self.course_w.clean(value=None, row=row)
 
-        curriculum = (
-            self.curriculum_w.clean(value=value, row=row)
-            if value
-            else Curriculum.get_default()
+        credit_hours_val = to_int(get_in_row("credit_hours", row))
+        credit_hours, _ = CreditHour.objects.get_or_create(code=credit_hours_val)
+
+        is_required = (
+            True
+            if get_in_row("is_required", row) in {"1", "true", "yes", "required"}
+            else False
         )
 
-        credit_hours_value = get_in_row("credit_hours", row)
-        credit_hours_code = 3
-        if credit_hours_value:
-            try:
-                credit_hours_code = int(float(credit_hours_value))
-            except ValueError:
-                pass
-
-        credit_hours, _ = CreditHour.objects.get_or_create(code=credit_hours_code)
-        is_required_raw = get_in_row("is_required", row).lower()
-        if is_required_raw in {"1", "true", "yes", "required"}:
-            is_required = True
-        elif is_required_raw in {"0", "false", "no"}:
-            is_required = False
-        else:
-            is_required = False
-
-        curriculum_course, _ = CurriculumCourse.objects.get_or_create(
+        return ensure_curriculum_course(
             curriculum=curriculum,
             course=course,
-            defaults={
-                "credit_hours": credit_hours,
-                "is_required": is_required,
-            },
+            credit_code=credit_hours.code,
+            is_required=is_required,
         )
-        return curriculum_course
 
 
 class CurriculumWidget(widgets.ForeignKeyWidget):
@@ -77,74 +78,31 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
 
     SHORT_NAME_MAX = Curriculum._meta.get_field("short_name").max_length
 
-    def __init__(self):
+    def __init__(self, fuzzy_threshold: float = 1):
         # set the look_up field to uniquely identify the Curriculum to short_name.
+        self.fuzzy_threshold = fuzzy_threshold
         super().__init__(Curriculum, field="short_name")
         self.college_w = CollegeWidget()
 
-    def clean(self, value, row=None, *args, **kwargs) -> Curriculum | None:
+    def clean(
+        self, value, row=None, fuzzy_threshold: float = 1.0, *args, **kwargs
+    ) -> Curriculum | None:
         """Returns a Curriculum object matching the provided short_name in value.
 
         Example input row:
           - row["curriculum"] = "Bsc Agriculture"
-          - row["college_code"] = "CAFS" (optional, defaults to "COAS")
-
-        Automatically creates curriculum with today's date.
+          - row["college_code"] = "CAFS"
         """
-        major_name = get_in_row("major", row)
-        if not value:
-            if major_name:
-                value = major_name
-            else:
-                return Curriculum.get_default()
 
-        raw_label = (value or "").strip()
-        if not raw_label:
-            return Curriculum.get_default()
-        long_name = get_in_row("curriculum_long_name", row) or raw_label
-        short_name = raw_label[: self.SHORT_NAME_MAX]
+        curr_value = parse_str(value)
+        college = ensure_college(get_in_row("college_code", row))
 
-        college_code = get_in_row("college_code", row)
-        college = self.college_w.clean(college_code)
+        if not curr_value:
+            return Curriculum.get_default(def_college=college)
 
-        # We create  the lookup used in case of creation fo the curriculum
-        lookup = {"short_name": short_name}
-        if college:
-            lookup["college"] = college
-
-        try:
-            curriculum, _ = Curriculum.objects.get_or_create(
-                defaults={
-                    "long_name": long_name or short_name,
-                    "college": college,
-                },
-                **lookup,
-            )
-        except Curriculum.MultipleObjectsReturned:
-            fallback = (
-                Curriculum.objects.filter(**lookup)
-                .order_by("-is_active", "-creation_date")
-                .first()
-            )
-            if fallback is None:
-                raise
-            curriculum = fallback
-        else:
-            if (long_name or short_name) and not curriculum.long_name:
-                curriculum.long_name = long_name or short_name
-                curriculum.save(update_fields=["long_name"])
-
-        # add the major if there is
-        if major_name:
-            try:
-                major, _ = Major.objects.get_or_create(
-                    name=major_name, defaults={"curriculum": curriculum}
-                )
-            except IntegrityError:
-                major = Major.objects.filter(name=major_name).first()
-                if major and major.curriculum_id != curriculum.id:
-                    major.curriculum = curriculum
-                    major.save(update_fields=["curriculum"])
+        curriculum = ensure_curriculum(
+            curr_value, college=college, fuzzy_threshold=fuzzy_threshold
+        )
 
         return curriculum
 
@@ -166,6 +124,7 @@ class CourseWidget(widgets.ForeignKeyWidget):
         self,
         value: Any,
         row: Optional[dict[str, Any]] = None,
+        fuzzy_threshold: float = 1,
         *args: Any,
         **kwargs: Any,
     ) -> Course:
@@ -175,17 +134,24 @@ class CourseWidget(widgets.ForeignKeyWidget):
         the resource, but the info we need is spread across *row*).
         """
         course_no = get_in_row("course_no", row)
-        course_dept = get_in_row("course_dept", row)
+        dept_code = get_in_row("dept_code", row)
 
-        if not course_no or not course_dept:
+        if not course_no or not dept_code:
             return Course.get_unique_default()
 
-        # department Widget wants college_code
-        course, _ = Course.objects.get_or_create(
-            number=course_no,
-            department=self.department_w.clean(course_dept, row),
+        college_code = get_in_row("college_code", row)
+        college = ensure_college(college_code)  # verifier que 9a ne fait pas de doublons
+        department = ensure_department(dept_code, college)  # idem
+
+        title = get_in_row("course_title", row)
+
+        crs_obj = ensure_course(
+            department=department,
+            course_no=course_no,
+            title=title,
+            fuzzy_threshold=fuzzy_threshold,
         )
-        return course
+        return crs_obj
 
 
 class CourseManyWidget(widgets.ManyToManyWidget):
@@ -266,10 +232,10 @@ class CourseCodeWidget(widgets.ForeignKeyWidget):
 
         course, _ = Course.objects.get_or_create(
             department=dept,
-            course_no=course_no,
+            number=course_no,
         )
         # defaults are ignore in case of existance
-        # since we want to update in all case, just doing it.
+        # since we want to update in all case we do it manualy.
         if title_raw and course.title != title_raw:
             course.title = title_raw
             course.save(update_fields=["title"])
@@ -292,7 +258,7 @@ class CollegeWidget(widgets.ForeignKeyWidget):
         Accept 'CBA', 'CAFS', '', 'CHS', 'EDRCE', 'CET', 'CAS' and COAS, COED
         COET COBA but normalise the code to 4 letters
         """
-        code = COLLEGE_CODE.get((value or "").strip().lower(), "DEFT")
+        code = normalize_college_code(parse_str(value))
         college, _ = College.objects.get_or_create(
             code=code, defaults={"long_name": COLLEGE_LONG_NAME.get(code.lower(), "deft")}
         )
@@ -315,11 +281,9 @@ class DepartmentWidget(widgets.ForeignKeyWidget):
         if not value:
             return Department.get_default()
 
-        dept_short_name = (value or "").strip().upper()
+        dept_code = normalize_department_code(parse_str(value))
 
-        college = self.college_w.clean((row.get("college_code") or "").strip())
+        college = self.college_w.clean(get_in_row("college_code", row))
 
-        department, _ = Department.objects.get_or_create(
-            short_name=dept_short_name, college=college
-        )
+        department, _ = Department.objects.get_or_create(code=dept_code, college=college)
         return department

@@ -3,10 +3,11 @@
 from django.core.management.base import BaseCommand
 
 from app.academics.models.curriculum import CurriculumStatus
-from app.finance.models.payment import (
+from app.finance.models.status_types_methods import (
     AccountChartType,
     AccountType,
-    ClearanceStatus,
+    PaymentStatus,
+    InvoiceStatus,
     FeeType,
     PaymentMethod,
 )
@@ -14,7 +15,7 @@ from app.people.admin.resources import StudentResource
 from app.registry.models.document import DocumentStatus, DocumentType
 from app.registry.models.grade import GradeValue
 from app.registry.models.registration import RegistrationStatus
-from app.shared.models import CreditHour
+from app.registry.models import CreditHour
 from app.timetable.models.semester import SemesterStatus
 
 
@@ -29,7 +30,8 @@ class Command(BaseCommand):
         CLASS_MAP = [
             ("AccountType", AccountType),  # before charttype
             ("AccountChartType", AccountChartType),
-            ("ClearanceStatus", ClearanceStatus),
+            ("PaymentStatus", PaymentStatus),
+            ("InvoiceStatus", InvoiceStatus),
             ("CreditHour", CreditHour),
             ("CurriculumStatus", CurriculumStatus),
             ("DocumentStatus", DocumentStatus),
@@ -43,7 +45,9 @@ class Command(BaseCommand):
         ]
 
         for name, cls in CLASS_MAP:
-            cls()._populate_attributes_and_db()
+            populate = getattr(cls, "_populate_attributes_and_db", None)
+            if callable(populate):
+                populate()
             self.stdout.write((f" - Defaults for {name} Created"))
 
         self.stdout.write(self.style.SUCCESS("Defaults states and status Created"))

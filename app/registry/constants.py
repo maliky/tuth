@@ -29,3 +29,6 @@ GRADES_DESCRIPTION = {
     "ng": "NG - No Grade",
     "w": "W - Semester Withdraw",
 }
+
+# Grade codes that should not count toward GPA calculations.
+GPA_EXCLUDED_CODES = {"dr", "ip", "ip_upd", "ng", "w", "i", "ab"}

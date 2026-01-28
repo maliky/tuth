@@ -8,6 +8,7 @@
     href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
   />
   <link rel="stylesheet" href="{% static 'css/staff-dashboard.css' %}" />
+  {% block staff_head_extra %}{% endblock %}
 {% endblock %}
 {% block body_class %}staff-light-body{% endblock %}
 
@@ -15,16 +16,30 @@
   <div class="staff-shell container-xl py-5">
     <header class="staff-shell__header">
       <div>
-        <p class="staff-shell__eyebrow">
-          {{ eyebrow|default:"Staff workspace" }}
-        </p>
         <h1 class="staff-shell__title">{{ page_title|default:"Staff workspace" }}</h1>
-        {% if page_summary %}
-          <p class="staff-shell__summary text-muted">{{ page_summary }}</p>
+        {% if role_switcher %}
+          <div class="role-switcher">
+            <label class="text-muted small" for="role-switcher">Role</label>
+            <select
+              id="role-switcher"
+              class="form-select form-select-sm"
+              onchange="if (this.value) { window.location = this.value; }"
+            >
+              {% for role in role_switcher %}
+                <option value="{{ role.href }}" {% if role.active %}selected{% endif %}>
+                  {{ role.label }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
         {% endif %}
       </div>
       <div class="staff-shell__actions">
         {% block header_actions %}{% endblock %}
+        {# Logout remains visible on all staff dashboards. #}
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'portal_logout' %}">
+          Log out
+        </a>
         <a class="btn btn-outline-secondary btn-sm" href="{% url 'admin:index' %}">
           Django admin
         </a>

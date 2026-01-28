@@ -11,14 +11,14 @@ from app.people.models.donor import Donor
 from app.people.models.staffs import Staff
 from app.people.models.faculty import Faculty
 from app.people.models.student import Student
-from tests.academics.fixture import CurriculumFactory
+from tests.academics.fixture import CurriculumFactoryT
 
-UserFactory: TypeAlias = Callable[[str], User]
-GroupFactory: TypeAlias = Callable[[str], Group]
-StaffFactory: TypeAlias = Callable[[str], Staff]
-StudentFactory: TypeAlias = Callable[[str, str], Student]
-DonorFactory: TypeAlias = Callable[[str], Donor]
-FacultyFactory: TypeAlias = Callable[[str], Faculty]
+UserFactoryT: TypeAlias = Callable[[str], User]
+GroupFactoryT: TypeAlias = Callable[[str], Group]
+StaffFactoryT: TypeAlias = Callable[[str], Staff]
+StudentFactoryT: TypeAlias = Callable[[str, str], Student]
+DonorFactoryT: TypeAlias = Callable[[str], Donor]
+FacultyFactoryT: TypeAlias = Callable[[str], Faculty]
 
 
 @pytest.fixture
@@ -54,7 +54,7 @@ def faculty(staff: Staff) -> Faculty:
 
 
 @pytest.fixture
-def donor(user_factory: UserFactory) -> Donor:
+def donor(user_factory: UserFactoryT) -> Donor:
     user = user_factory("donorlegenereux")
     return cast(Donor, Donor.objects.create(user=user))
 
@@ -66,7 +66,7 @@ def student(semester, curriculum) -> Student:
         Student.objects.create(
             user=User(username="letudiant"),
             curriculum=curriculum,
-            current_enrolled_semester=semester,
+            last_enrolled_semester=semester,
         ),
     )
 
@@ -75,17 +75,18 @@ def student(semester, curriculum) -> Student:
 
 
 @pytest.fixture
-def group_factory() -> GroupFactory:
-    """Returns a function to create a group."""
+def group_factory() -> GroupFactoryT:
+    """Factory to create a group with name."""
 
     def _make(name: str) -> Group:
+        """Create a group with name."""
         return Group.objects.create(name=name)
 
     return _make
 
 
 @pytest.fixture
-def user_factory() -> UserFactory:
+def user_factory() -> UserFactoryT:
     """Returns a function to create a user."""
 
     def _make(username: str) -> User:
@@ -95,7 +96,7 @@ def user_factory() -> UserFactory:
 
 
 @pytest.fixture
-def staff_factory() -> StaffFactory:
+def staff_factory() -> StaffFactoryT:
     """Return a callable for making extra Staff objects on demand.
 
     my_staff = staff_factory("joe", some_department)
@@ -108,7 +109,7 @@ def staff_factory() -> StaffFactory:
 
 
 @pytest.fixture
-def faculty_factory() -> FacultyFactory:
+def faculty_factory() -> FacultyFactoryT:
     """Return a callable for making extra Faculty objects on demand.
 
     my_faculty = faculty_factory("joe", some_department)
@@ -122,8 +123,8 @@ def faculty_factory() -> FacultyFactory:
 
 @pytest.fixture
 def student_factory(
-    curriculum_factory: CurriculumFactory,
-) -> StudentFactory:
+    curriculum_factory: CurriculumFactoryT,
+) -> StudentFactoryT:
     """Return a callable for making extra Student objects on demand.
 
     my_student = student_factory("joe", some_curriculum short name)
@@ -142,7 +143,7 @@ def student_factory(
 
 
 @pytest.fixture
-def donor_factory() -> DonorFactory:
+def donor_factory() -> DonorFactoryT:
     """Return a callable for making extra Donoro objects on demand."""
 
     def _make(uname: str) -> Donor:

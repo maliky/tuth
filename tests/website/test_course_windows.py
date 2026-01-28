@@ -7,13 +7,14 @@ from django.contrib.auth.models import Permission, User
 from django.urls import reverse
 from model_bakery import baker
 
+from app.academics.models.college import College
+from app.academics.models.course import Course
+from app.academics.models.curriculum import Curriculum
+from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.department import Department
 from app.shared.models import CreditHour
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester, SemesterStatus
-from app.academics.models.college import College
-from app.academics.models.course import Course, CurriculumCourse
-from app.academics.models.curriculum import Curriculum
-from app.academics.models.department import Department
 
 
 def _ensure_semester_statuses():
@@ -73,7 +74,7 @@ def test_student_dashboard_prefers_open_semester(client):
         "people.Student",
         user=student_user,
         curriculum=curriculum,
-        current_enrolled_semester=current_sem,
+        last_enrolled_semester=current_sem,
     )
 
     next_sem.status_id = "registration"
