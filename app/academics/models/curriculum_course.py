@@ -3,20 +3,53 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Optional, Self, cast
+from typing import Optional, Self, TypeAlias, cast
 
 from django.db import models
 from simple_history.models import HistoricalRecords
 
+from app.academics.choices import LEVEL_NUMBER
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
-from app.registry.models import CreditHour
 from app.finance.models.course_fee import CourseFee, CurriculumCourseFee
+from app.registry.models import CreditHour
 from app.shared.types import FacultyQuery, StudentQuery
+from app.timetable.choices import SEMESTER_NUMBER
 from app.timetable.models.semester import Semester
 
 
 TUITION_RATE_PER_CREDIT = Decimal("5.00")
+ChoiceListT: TypeAlias = list[tuple[int, str]]
+
+
+def _semester_number_choices() -> ChoiceListT:
+    """Return semester choices including an undefined value."""
+    choices = [(0, "Undefined (0)")]
+    choices.extend(list(SEMESTER_NUMBER.choices))
+    return choices
+
+
+def _year_number_choices() -> ChoiceListT:
+    """Return year level choices mapped to student levels."""
+    choices: ChoiceListT = [(int(LEVEL_NUMBER.UNDEF.value), "Undefined (99)")]
+    label_overrides = {
+        LEVEL_NUMBER.FOUR: "Senior 1",
+        LEVEL_NUMBER.FIVE: "Senior 2",
+    }
+    for level in (
+        LEVEL_NUMBER.ONE,
+        LEVEL_NUMBER.TWO,
+        LEVEL_NUMBER.THREE,
+        LEVEL_NUMBER.FOUR,
+        LEVEL_NUMBER.FIVE,
+    ):
+        label = label_overrides.get(level, level.label.title())
+        choices.append((int(level.value), label))
+    return choices
+
+
+SEMESTER_NUMBER_CHOICES = tuple(_semester_number_choices())
+YEAR_NUMBER_CHOICES = tuple(_year_number_choices())
 
 
 class CurriculumCourse(models.Model):
@@ -50,6 +83,23 @@ class CurriculumCourse(models.Model):
         default=3,
         help_text="Credits to be used in this curriculum for this course",
         related_name="curriculum_courses",
+    )
+    semester_number = models.PositiveSmallIntegerField(
+        choices=SEMESTER_NUMBER_CHOICES,
+        default=0,
+        db_index=True,
+        help_text="Normal semester number for this course in the curriculum",
+    )
+    year_number = models.PositiveSmallIntegerField(
+        choices=YEAR_NUMBER_CHOICES,
+        default=LEVEL_NUMBER.UNDEF,
+        db_index=True,
+        help_text="Normal year level for this course in the curriculum",
+    )
+    required_group_number = models.PositiveSmallIntegerField(
+        default=0,
+        db_index=True,
+        help_text="Group number for required elective selection (0 = none)",
     )
 
     @classmethod
@@ -109,9 +159,7 @@ class CurriculumCourse(models.Model):
     def total_fee(self, semester) -> Decimal:
         """Return tuition plus resolved additional fees for a semester."""
         curriculum_semester_fees = (
-            CurriculumCourseFee.objects.filter(
-                curriculum_course=self, semester=semester
-            )
+            CurriculumCourseFee.objects.filter(curriculum_course=self, semester=semester)
             if semester
             else CurriculumCourseFee.objects.none()
         )

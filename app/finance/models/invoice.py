@@ -10,10 +10,12 @@ from simple_history.models import HistoricalRecords
 
 # from app.academics.models.curriculum_course import CurriculumCourse
 from app.finance.models.status_types_methods import InvoiceStatus
+
 # from app.people.models.student import Student
 from app.registry.models.registration import Registration
 from app.registry.models.status_types import RegistrationStatus
 from app.shared.mixins import StatusableMixin
+
 # from app.timetable.models.semester import Semester
 
 
@@ -74,7 +76,7 @@ class Invoice(StatusableMixin, models.Model):
         on_delete=models.SET_NULL,
     )
     scholarship = models.ForeignKey(
-        "finance.scholarship", on_delete=models.PROTECT, null=True
+        "finance.scholarship", on_delete=models.PROTECT, null=True, blank=True
     )
 
     def get_balance(self) -> Decimal:

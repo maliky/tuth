@@ -208,6 +208,17 @@ class CurriculumCourseResource(resources.ModelResource):
     credit_hours_f = fields.Field(
         attribute="credit_hours", column_name="credit_hours", default=3
     )
+    year_number_f = fields.Field(
+        attribute="year_number", column_name="year_number", default=99
+    )
+    semester_number_f = fields.Field(
+        attribute="semester_number", column_name="semester_number", default=0
+    )
+    required_group_number_f = fields.Field(
+        attribute="required_group_number",
+        column_name="required_group_number",
+        default=0,
+    )
 
     class Meta:
         model = CurriculumCourse
@@ -219,6 +230,9 @@ class CurriculumCourseResource(resources.ModelResource):
             "curriculum_f",
             "course_f",
             "credit_hours_f",
+            "year_number_f",
+            "semester_number_f",
+            "required_group_number_f",
         )
         list_filter = ("curriculum_college", "curriculum")
         skip_unchanged = True

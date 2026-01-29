@@ -27,6 +27,10 @@ CURRICULUM_FIELD_LOOKUPS: LookUpType = (
     ("in_curriculum_courses", "in_curriculum_courses__curriculum"),
 )
 
+DEPARTMENT_CURRICULUM_LOOKUPS: LookUpType = (
+    ("courses", "courses__in_curriculum_courses__curriculum"),
+)
+
 
 class CourseCollegeFilter(BaseCollegeFilter):
     field_path = "department__college"
@@ -50,6 +54,16 @@ class CurriculumFilterAC(ScopedAutocompleteFilter):
     parameter_name = "curriculum"
     field_name = "curriculum"
     lookup_map = CURRICULUM_FIELD_LOOKUPS
+    target_model = Curriculum
+
+
+class DepartmentCurriculumFilterAC(ScopedAutocompleteFilter):
+    """Autocomplete filter for curricula linked through department courses."""
+
+    title = "Curriculum"
+    parameter_name = "curriculum"
+    field_name = "curriculum"
+    lookup_map = DEPARTMENT_CURRICULUM_LOOKUPS
     target_model = Curriculum
 
 

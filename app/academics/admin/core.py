@@ -191,6 +191,7 @@ class CourseAdmin(DepartmentRestrictedAdmin):
         "short_code",
         "title",
         "department",
+        "grade_count",
     )
     # Curricula column removed from list_display; keep helper for reuse elsewhere.
     # Use list filters for curricula to avoid reverse M2M autocomplete errors.
@@ -225,7 +226,9 @@ class CourseAdmin(DepartmentRestrictedAdmin):
     def get_queryset(self, request):
         """Prefetch curricula for link rendering in list_display."""
         qs = super().get_queryset(request)
-        qs = qs.prefetch_related("curricula")
+        qs = qs.prefetch_related("curricula").annotate(
+            grade_total=Count("in_curriculum_courses__sections__grade", distinct=True)
+        )
         curriculum_id = request.GET.get("curricula__id__exact") or request.GET.get(
             "in_curriculum_courses__curriculum"
         )
@@ -253,6 +256,11 @@ class CourseAdmin(DepartmentRestrictedAdmin):
         if not rows:
             return "-"
         return format_html_join(", ", '<a href="{}">{}</a>', rows)
+
+    @admin.display(description="Grades", ordering="grade_total")
+    def grade_count(self, obj: Course) -> int:
+        """Return the number of grades recorded for this course."""
+        return int(getattr(obj, "grade_total", 0) or 0)
 
     def get_form(self, request, obj=None, **kwargs):
         """Return the admin form with dep ordered by their shortname."""

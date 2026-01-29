@@ -1,15 +1,32 @@
 
+* <2026-01-29 jeu. 20:39> Taking care of course groups
+A curriculum is a set of units U giving credits.
+A Unit U can be a course or a set of courses from which one will be choosen.
+I can make the elective a simple char field that will take the same letter if the course are to be grouped.
+
+
+* <2026-01-28 mer. 11:44>  Curriculum
+in curriculmcourse change the model . add a int feld , call default semester_number it repreesetn the normal semester this course will be offered in theis curriculum.  add another fiedl year_number. represtening the normal year this course is normaly offered for this curriculum. the year number should bap to exsiting student levle fresham, sofphormor, junior, senior 1 and senior2, semesters numbers should be only 0 (nodt defined, 1 ,2, 3 for vacation) we should reuse existing kesy or choices present in the code base.  make sure you look for them first.
+I do not mind if the field or choice or text field and not int, what is important is that we can order them.
+
+once the model is updated, if it does not require to much new code I want to group the inlien course in the curriculum by years and semester.  or at leats sort theem so they appeare in order (grouped)
+
+your taks is 1 to make a plan of implemtation of the above features
+
+
 * <2026-01-27 Tue 17:08>  Fee
   - need to find a clean way to import default course fix fee. 
 
-*  <2026-01-26 lun. 20:42> mergin departments
+* DONE <2026-01-26 lun. 20:42> mergin departments
+CLOSED: [2026-01-28 mer. 22:45]
 use merge wizardmixin
 yes keep shortname out
 you can drop thec onflict summary function, to heavy  for my usecase now,
 add confirmation form waqrning
 do change merge_Departments if not need
 
-* <2026-01-26 Mon 14:30> Admin
+* DONE <2026-01-26 Mon 14:30> Admin
+CLOSED: [2026-01-28 mer. 22:45]
 
   Plan
 
