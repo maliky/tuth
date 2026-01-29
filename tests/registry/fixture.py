@@ -27,7 +27,6 @@ DocumentDonorFactoryT: TypeAlias = Callable[[str], DocumentDonor]
 DocumentTypeFactoryT: TypeAlias = Callable[[str], Generator[DocumentType, None, None]]
 
 
-
 @pytest.fixture
 def data_file():
     """Provide a simple data file."""

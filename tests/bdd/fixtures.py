@@ -3,19 +3,27 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Protocol
 
 import pytest
 
+from app.people.models.student import Student
 from app.timetable.models.semester import Semester
+
+
+class PortalUserT(Protocol):
+    """Minimal user interface needed by portal-related tests."""
+
+    username: str
 
 
 @dataclass
 class StudentContext:
     """Shared state for student dashboard BDD steps."""
 
-    user: object | None = None
+    user: PortalUserT | None = None
     semester: Semester | None = None
-    student: object | None = None
+    student: Student | None = None
 
 
 @pytest.fixture
@@ -42,9 +50,9 @@ def portal_context() -> PortalContext:
 class RegistrarContext:
     """Shared state for registrar dashboard BDD steps."""
 
-    user: object | None = None
+    user: PortalUserT | None = None
     semester: Semester | None = None
-    student: object | None = None
+    student: Student | None = None
 
 
 @pytest.fixture

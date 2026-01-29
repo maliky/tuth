@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, timedelta
-from typing import Callable, TypeAlias
+from typing import Callable, TypeAlias, cast
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -78,7 +78,7 @@ def registrar_semester_pair(
     registrar_semester_pair_factory: RegistrarSemesterPairFactoryT,
 ) -> tuple[AcademicYear, Semester, Semester]:
     """Return a default previous/current semester pair."""
-    return registrar_semester_pair_factory()
+    return registrar_semester_pair_factory(None, 90, 10)
 
 
 @pytest.fixture
@@ -124,7 +124,7 @@ def registrar_student_factory() -> RegistrarStudentFactoryT:
                 "last_enrolled_semester": semester,
             },
         )
-        return student
+        return cast(Student, student)
 
     return _make
 

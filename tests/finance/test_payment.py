@@ -10,7 +10,6 @@ pytestmark = pytest.mark.django_db
 pytest_plugins = ["tests.finance.fixture"]
 
 
-
 def test_payment_registration_cycle(registration_factory, invoice_factory):
     """Payments should update registration status based on invoice balance."""
 

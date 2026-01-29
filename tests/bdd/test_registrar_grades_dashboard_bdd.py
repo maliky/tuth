@@ -19,9 +19,7 @@ pytestmark = [
 ]
 
 
-@scenario(
-    "features/registrar_grades_dashboard.feature", "Defaults to current semester"
-)
+@scenario("features/registrar_grades_dashboard.feature", "Defaults to current semester")
 def test_registrar_grades_default_semester_bdd():
     """Drive the default semester scenario."""
 
@@ -42,16 +40,12 @@ def test_registrar_grades_pagination_bdd():
     """Drive the pagination scenario."""
 
 
-@scenario(
-    "features/registrar_grades_dashboard.feature", "Transcript button"
-)
+@scenario("features/registrar_grades_dashboard.feature", "Transcript button")
 def test_registrar_grades_transcript_bdd():
     """Drive the transcript scenario."""
 
 
-@scenario(
-    "features/registrar_grades_dashboard.feature", "Go-to preserves semester"
-)
+@scenario("features/registrar_grades_dashboard.feature", "Go-to preserves semester")
 def test_registrar_grades_go_to_preserves_bdd():
     """Drive the go-to pagination scenario."""
 
@@ -149,14 +143,16 @@ def registrar_can_expand_row(
 ) -> None:
     """Expand the row for the prepared student."""
     assert registrar_context.student is not None
+    # Cache the id to keep type narrowing inside the nested callback.
+    student_id = registrar_context.student.id
     toggle = selenium_driver.find_element(
         By.CSS_SELECTOR,
-        f"button[data-bs-target='#student-{registrar_context.student.id}']",
+        f"button[data-bs-target='#student-{student_id}']",
     )
     toggle.click()
 
     def _row_expanded(driver):
-        target = driver.find_element(By.ID, f"student-{registrar_context.student.id}")
+        target = driver.find_element(By.ID, f"student-{student_id}")
         return "show" in target.get_attribute("class").split()
 
     WebDriverWait(selenium_driver, 10).until(_row_expanded)
@@ -177,18 +173,14 @@ def pagination_shows_counts(selenium_driver) -> None:
 
 
 @then("the official transcript page is shown for the student")
-def transcript_page_shown(
-    registrar_context: RegistrarContext, selenium_driver
-) -> None:
+def transcript_page_shown(registrar_context: RegistrarContext, selenium_driver) -> None:
     """Open and verify the transcript preview."""
     assert registrar_context.student is not None
     transcript_link = selenium_driver.find_element(By.LINK_TEXT, "Official transcript")
     transcript_link.click()
 
     WebDriverWait(selenium_driver, 10).until(
-        EC.text_to_be_present_in_element(
-            (By.TAG_NAME, "h1"), "Official grade transcript"
-        )
+        EC.text_to_be_present_in_element((By.TAG_NAME, "h1"), "Official grade transcript")
     )
     assert registrar_context.student.student_id in selenium_driver.page_source
 

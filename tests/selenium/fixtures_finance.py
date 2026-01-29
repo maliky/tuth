@@ -20,7 +20,6 @@ StudentInvoiceFactoryT: TypeAlias = Callable[
 PaymentFactoryT: TypeAlias = Callable[[Invoice, Decimal], Payment]
 
 
-
 @pytest.fixture
 def student_invoice_factory() -> StudentInvoiceFactoryT:
     """Return a callable to create invoices for students in a semester."""

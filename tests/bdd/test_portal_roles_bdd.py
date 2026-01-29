@@ -19,16 +19,12 @@ pytestmark = [
 ]
 
 
-@scenario(
-    "features/portal_roles.feature", "User lands on the correct dashboard"
-)
+@scenario("features/portal_roles.feature", "User lands on the correct dashboard")
 def test_portal_role_dashboards_bdd():
     """Drive dashboard landing scenarios for portal roles."""
 
 
-@scenario(
-    "features/portal_roles.feature", "Role dashboards show expected actions"
-)
+@scenario("features/portal_roles.feature", "Role dashboards show expected actions")
 def test_portal_role_actions_bdd():
     """Drive role action visibility scenarios."""
 
@@ -117,7 +113,9 @@ def dashboard_heading_includes(
 @then(parsers.parse('the dashboard actions include "{actions}"'))
 def dashboard_actions_include(selenium_driver, actions: str) -> None:
     """Ensure the dashboard actions include the expected links."""
-    expected_paths = {reverse(name.strip()) for name in actions.split(",") if name.strip()}
+    expected_paths = {
+        reverse(name.strip()) for name in actions.split(",") if name.strip()
+    }
 
     def _actions_loaded(driver):
         return expected_paths.issubset(_action_paths(driver))
