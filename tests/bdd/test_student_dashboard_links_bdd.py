@@ -9,9 +9,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from app.people.models.student import Student
 from app.timetable.models.semester import Semester
 from tests.bdd.fixtures import StudentContext
-from tests.selenium.test_portal_roles import _login_to_portal
+from tests.selenium.fixtures_portal import _login_to_portal
+from tests.constants import D25
 
 
 pytestmark = [
@@ -20,12 +22,21 @@ pytestmark = [
 ]
 
 
+# In pytest-bdd, a scenario is the executable test case wired to the feature file.
 @scenario(
     "bdd/features/student_dashboard_links.feature",
     "Student can open invoice and payment statements",
 )
 def test_student_dashboard_links_bdd():
     """Drive the student dashboard link flow via BDD steps."""
+
+
+@scenario(
+    "bdd/features/student_dashboard_links.feature",
+    "Payment receipt shows the date paid column",
+)
+def test_student_payment_receipt_date_paid_bdd():
+    """Drive the payment receipt column scenario."""
 
 
 @given("a student with an active semester")
@@ -36,6 +47,25 @@ def student_with_active_semester(
     user = portal_user_factory("student_links_bdd", student=True, groups=[])
     student_context.user = user
     student_context.semester = semester
+    student_context.student = Student.objects.get(user=user)
+
+
+@given("a student with a paid invoice")
+def student_with_paid_invoice(
+    student_context: StudentContext,
+    portal_user_factory,
+    semester: Semester,
+    student_invoice_factory,
+    payment_factory,
+) -> None:
+    """Provision a student with a payment on file."""
+    user = portal_user_factory("student_receipt_bdd", student=True, groups=[])
+    student = Student.objects.get(user=user)
+    invoice = student_invoice_factory(student, semester)
+    payment_factory(invoice, D25)
+    student_context.user = user
+    student_context.semester = semester
+    student_context.student = student
 
 
 @when("the student logs in to the portal")
@@ -96,3 +126,12 @@ def payment_receipt_visible(selenium_driver) -> None:
     WebDriverWait(selenium_driver, 10).until(
         EC.text_to_be_present_in_element((By.TAG_NAME, "h1"), "Payment Receipt")
     )
+
+
+@then("the payment receipt shows the date paid column")
+def payment_receipt_shows_date_paid(selenium_driver) -> None:
+    """Ensure the payment receipt table includes the date paid column."""
+    WebDriverWait(selenium_driver, 10).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, "table"))
+    )
+    assert "Date paid" in selenium_driver.page_source

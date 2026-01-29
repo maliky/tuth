@@ -1,19 +1,14 @@
 """Tests for payment-driven registration status updates."""
 
-from decimal import Decimal
-
 import pytest
 
 from app.finance.models.payment import Payment
+from tests.constants import D10, D20, D30, D100
 from app.registry.models.status_types import RegistrationStatus
 
 pytestmark = pytest.mark.django_db
 pytest_plugins = ["tests.finance.fixture"]
 
-D10 = Decimal("10.00")
-D20 = Decimal("20.00")
-D30 = Decimal("30.00")
-D100 = Decimal("100.00")
 
 
 def test_payment_registration_cycle(registration_factory, invoice_factory):

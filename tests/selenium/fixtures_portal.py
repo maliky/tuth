@@ -5,11 +5,14 @@ from __future__ import annotations
 import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.urls import reverse
+from selenium.webdriver.common.by import By
 
 from app.academics.models.curriculum import Curriculum
 from app.people.models.student import Student
 from app.timetable.models.semester import Semester
-from tests.selenium.test_portal_roles import TEST_PASSWORD
+
+TEST_PASSWORD = "PassW0rd!"
 
 
 @pytest.fixture
@@ -53,3 +56,12 @@ def portal_user_factory(semester: Semester):
         return user
 
     return _build
+
+
+def _login_to_portal(driver, live_server, username):
+    """Authenticate the user via the portal login form."""
+    login_url = f"{live_server.url}{reverse('portal_login')}"
+    driver.get(login_url)
+    driver.find_element(By.ID, "id_username").send_keys(username)
+    driver.find_element(By.ID, "id_password").send_keys(TEST_PASSWORD)
+    driver.find_element(By.CSS_SELECTOR, "button[type=submit]").click()

@@ -1,4 +1,83 @@
 
+* <2026-01-29 jeu. 10:11> Selenium BDD
+
+** Inventory
+Landing page
+
+  - tests/selenium/test_landing_page.py
+      - No domain fixtures; just live_server + selenium_driver.
+      - BDD feature candidates: “Visitor sees hero” and “Visitor clicks Tusis CTA”.
+
+  Portal roles / dashboards
+
+  - tests/selenium/test_portal_roles.py
+      - Uses portal_user_factory, role/group assignments, and the shared _login_to_portal helper.
+      - BDD feature candidates: “User lands on role dashboard” (scenario outline), “Role-specific actions visible”,
+        “Registrar cannot manage semester windows”.
+
+  Registrar grades dashboard
+
+  - tests/selenium/test_registrar_grades_dashboard.py
+      - Needs registrar user with view_grade permission, academic year/semester (current + previous), curriculum/
+        course/section, student + grade records, and tiny_paginator.
+      - BDD feature candidates: “Defaults to current semester”, “Row expand”, “Pagination counts/last”, “Transcript
+        button”, “Go-to preserves semester”.
+
+  Student finance (dashboard/receipt)
+
+  - tests/selenium/test_student_dashboard_links.py
+      - Needs student user + curriculum + semester + invoice + payment.
+      - One test already converted to BDD (tests/bdd/test_student_dashboard_links_bdd.py).
+      - Remaining candidate: “Receipt shows Date paid column”.
+
+  Already converted
+
+  - tests/bdd/test_student_dashboard_links_bdd.py covers sidebar invoice/payment links.
+
+  If you want, I’ll move to step 2 next: normalize fixtures for each domain so the BDD conversions are easy and
+  consistent.
+
+
+›    
+
+*** DONE
+• Centralized auth/roles helpers and added domain‑specific fixture modules so upcoming BDD conversions can reuse
+  consistent factories without pulling from test files.
+
+  - Added shared Selenium fixtures for registrar/grades and finance: tests/selenium/fixtures_registrar_grades.py,
+    tests/selenium/fixtures_finance.py.
+  - Moved portal login helper + TEST_PASSWORD into tests/selenium/fixtures_portal.py and updated imports in Selenium +    BDD tests.
+  - Wired new fixture modules into tests/selenium/conftest.py and tests/bdd/conftest.py so they’re available to BDD
+    steps.
+
+  Next steps (pick one):
+
+  1. Convert landing page Selenium tests to BDD (Step 3).
+  2. Convert portal roles dashboard tests next (start Step 4 early).
+  3. Quick check: pytest -m selenium tests/selenium/test_landing_page.py
+
+    
+
+** • Here’s the staged plan in 5 steps:
+
+  1. Inventory current Selenium tests, group into feature areas (landing page,
+     portal roles, registrar grades, student finance), and confirm required shared
+     fixtures/data per group.
+  2. Build/normalize shared fixture modules per domain (auth/roles, timetable,
+     academics, registrar/grades, finance) with minimal, composable factories to
+     support BDD steps.
+  3. Convert low‑risk flows first (landing page + simple navigation) into BDD
+     features and steps; remove the duplicated Selenium tests after verification.
+  4. Convert complex dashboard flows next (portal roles, registrar grades, student
+     finance receipt/paid column), reusing shared fixtures and consolidating steps
+     across scenarios.
+  5. Run selenium‑marked tests in batches, clean up unused helpers/imports, and
+     finalize documentation on BDD usage + fixtures.
+
+  Tell me which group you want first (1–4) and I’ll start.
+
+  
+
 * <2026-01-27 Tue 17:08>  Fee
   - need to find a clean way to import default course fix fee. 
 

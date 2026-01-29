@@ -16,7 +16,9 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 pytest_plugins = [
     "tests.selenium.fixtures_portal",
+    "tests.selenium.fixtures_registrar_grades",
     "tests.selenium.fixtures_registrar",
+    "tests.selenium.fixtures_finance",
 ]
 
 _DEFAULT_IMPLICIT_WAIT = 5

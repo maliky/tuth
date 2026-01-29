@@ -7,6 +7,7 @@ from typing import cast
 import pytest
 
 from app.academics.models.curriculum_course import CurriculumCourse
+from tests.constants import D9_99
 
 
 # > Why do we need those 2 DumyDataClass ?
@@ -27,7 +28,7 @@ class DummyCurriculumCourse:
 @pytest.mark.parametrize("hours", [0, 1, 3])
 def test_tuition_for_uses_rate(monkeypatch, hours):
     """tuition_for() should multiply hours by the rate."""
-    rate = Decimal("9.99")
+    rate = D9_99
     # Monkeypatch sets the module-level rate without altering global settings.
     monkeypatch.setattr(
         "app.academics.models.curriculum_course.TUITION_RATE_PER_CREDIT",

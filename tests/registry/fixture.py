@@ -17,6 +17,7 @@ from app.registry.models import (
     Registration,
 )
 from app.registry.models.grade import GradeValue
+from tests.constants import D90
 
 RegistrationFactoryT: TypeAlias = Callable[[str, str, str, int], Registration]
 GradeFactoryT: TypeAlias = Callable[[str, str, str, str, Decimal], Grade]
@@ -25,7 +26,6 @@ DocumentStaffFactoryT: TypeAlias = Callable[[str], DocumentStaff]
 DocumentDonorFactoryT: TypeAlias = Callable[[str], DocumentDonor]
 DocumentTypeFactoryT: TypeAlias = Callable[[str], Generator[DocumentType, None, None]]
 
-DECIMAL_90 = Decimal("90")
 
 
 @pytest.fixture
@@ -133,7 +133,7 @@ def grade_factory(student_factory, section_factory) -> GradeFactoryT:
         curri_short_name: str,
         course_number: str,
         letter: str = "A",
-        numeric: Decimal = DECIMAL_90,
+        numeric: Decimal = D90,
     ) -> Grade:
 
         grade_value, _ = GradeValue.objects.get_or_create(code=letter)
