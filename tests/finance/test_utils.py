@@ -26,7 +26,7 @@ class DummyCurriculumCourse:
 
     def tuition_for(self) -> Decimal:
         """Reuse the real CurriculumCourse logic for testing the rate."""
-        return CurriculumCourse.tuition_for(self)
+        return CurriculumCourse.tuition_for(cast(CurriculumCourse, self))
 
 
 @pytest.mark.parametrize("hours", [0, 1, 3])
