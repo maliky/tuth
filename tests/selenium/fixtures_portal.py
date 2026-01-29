@@ -20,7 +20,13 @@ def portal_user_factory(semester: Semester):
     """Create portal users with optional student profile and group assignments."""
     UserModel = get_user_model()
 
-    def _build(username: str, *, groups: list[str] | None = None, student: bool = False):
+    def _build(
+        username: str,
+        *,
+        groups: list[str] | None = None,
+        student: bool = False,
+        semester_override: Semester | None = None,
+    ):
         first_name = "Test"
         last_name = username.replace("_", " ").title()
 
@@ -44,12 +50,13 @@ def portal_user_factory(semester: Semester):
             group, _ = Group.objects.get_or_create(name=group_name)
             user.groups.add(group)
         if student:
+            active_semester = semester_override or semester
             Student.objects.update_or_create(
                 user=user,
                 defaults={
                     "curriculum": Curriculum.get_default(),
-                    "entry_semester": semester,
-                    "last_enrolled_semester": semester,
+                    "entry_semester": active_semester,
+                    "last_enrolled_semester": active_semester,
                 },
                 username=user.username,
             )

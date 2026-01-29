@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 from django.urls import reverse
-from pytest_bdd import given, scenario, then, when
+from pytest_bdd import given, parsers, scenario, then, when
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -20,21 +20,21 @@ pytestmark = [
 
 
 @scenario(
-    "bdd/features/portal_roles.feature", "User lands on the correct dashboard"
+    "features/portal_roles.feature", "User lands on the correct dashboard"
 )
 def test_portal_role_dashboards_bdd():
     """Drive dashboard landing scenarios for portal roles."""
 
 
 @scenario(
-    "bdd/features/portal_roles.feature", "Role dashboards show expected actions"
+    "features/portal_roles.feature", "Role dashboards show expected actions"
 )
 def test_portal_role_actions_bdd():
     """Drive role action visibility scenarios."""
 
 
 @scenario(
-    "bdd/features/portal_roles.feature",
+    "features/portal_roles.feature",
     "Registrar without officer permissions cannot manage semester windows",
 )
 def test_portal_registrar_action_restriction_bdd():
@@ -63,7 +63,11 @@ def _action_paths(driver) -> set[str]:
     return paths
 
 
-@given('a portal user "<username>" with role "<role>" and student "<student>"')
+@given(
+    parsers.re(
+        r'a portal user "(?P<username>.+)" with role "(?P<role>.*)" and student "(?P<student>.+)"'
+    )
+)
 def portal_user_with_role(
     portal_context: PortalContext,
     portal_user_factory,
@@ -93,7 +97,7 @@ def user_logs_in_to_portal(
     _login_to_portal(selenium_driver, live_server, portal_context.username)
 
 
-@then('the dashboard heading includes "<heading>"')
+@then(parsers.parse('the dashboard heading includes "{heading}"'))
 def dashboard_heading_includes(
     portal_context: PortalContext, selenium_driver, heading: str
 ) -> None:
@@ -110,7 +114,7 @@ def dashboard_heading_includes(
     assert heading in selenium_driver.find_element(*heading_locator).text
 
 
-@then('the dashboard actions include "<actions>"')
+@then(parsers.parse('the dashboard actions include "{actions}"'))
 def dashboard_actions_include(selenium_driver, actions: str) -> None:
     """Ensure the dashboard actions include the expected links."""
     expected_paths = {reverse(name.strip()) for name in actions.split(",") if name.strip()}
@@ -121,7 +125,7 @@ def dashboard_actions_include(selenium_driver, actions: str) -> None:
     WebDriverWait(selenium_driver, 10).until(_actions_loaded)
 
 
-@then('the dashboard actions do not include "<action>"')
+@then(parsers.parse('the dashboard actions do not include "{action}"'))
 def dashboard_actions_exclude(selenium_driver, action: str) -> None:
     """Ensure the dashboard actions do not include the forbidden link."""
     action_paths = _action_paths(selenium_driver)

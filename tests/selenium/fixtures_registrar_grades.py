@@ -37,7 +37,7 @@ def registrar_user_factory() -> RegistrarUserFactoryT:
     permission = Permission.objects.get(codename="view_grade")
 
     def _make(username: str):
-        user = UserModel.objects.create_user(username=username)
+        user, _created = UserModel.objects.get_or_create(username=username)
         user.set_password(TEST_PASSWORD)
         user.save()
         user.user_permissions.add(permission)
@@ -113,15 +113,18 @@ def registrar_student_factory() -> RegistrarStudentFactoryT:
     UserModel = get_user_model()
 
     def _make(username: str, curriculum: Curriculum, semester: Semester) -> Student:
-        user = UserModel.objects.create_user(username=username)
+        user, _created = UserModel.objects.get_or_create(username=username)
         user.set_password(TEST_PASSWORD)
         user.save()
-        return Student.objects.create(
+        student, _created = Student.objects.get_or_create(
             user=user,
-            curriculum=curriculum,
-            entry_semester=semester,
-            last_enrolled_semester=semester,
+            defaults={
+                "curriculum": curriculum,
+                "entry_semester": semester,
+                "last_enrolled_semester": semester,
+            },
         )
+        return student
 
     return _make
 

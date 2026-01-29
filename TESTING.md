@@ -72,6 +72,21 @@ pytest -m selenium
 
 Feature-style tests use pytest-bdd and live in `tests/features`.
 
+### BDD Selenium Tests
+
+Behavior-driven Selenium tests live under `tests/bdd`. Feature files are in
+`tests/bdd/features`, and step definitions are in `tests/bdd/test_*_bdd.py`.
+Shared step state is defined in `tests/bdd/fixtures.py`. Selenium fixtures are
+centralized in `tests/selenium/fixtures_browser.py` and the domain fixture
+modules (`tests/selenium/fixtures_portal.py`,
+`tests/selenium/fixtures_registrar_grades.py`, `tests/selenium/fixtures_finance.py`).
+
+Run BDD Selenium tests explicitly:
+
+```bash
+DJANGO_SETTINGS_MODULE=app.settings pytest -m selenium tests/bdd
+```
+
 ### Notes and TODOs
 
 - `tests/finance/fixture.py` contains commented-out fixtures pending finance

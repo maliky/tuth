@@ -24,7 +24,7 @@ pytestmark = [
 
 # In pytest-bdd, a scenario is the executable test case wired to the feature file.
 @scenario(
-    "bdd/features/student_dashboard_links.feature",
+    "features/student_dashboard_links.feature",
     "Student can open invoice and payment statements",
 )
 def test_student_dashboard_links_bdd():
@@ -32,7 +32,7 @@ def test_student_dashboard_links_bdd():
 
 
 @scenario(
-    "bdd/features/student_dashboard_links.feature",
+    "features/student_dashboard_links.feature",
     "Payment receipt shows the date paid column",
 )
 def test_student_payment_receipt_date_paid_bdd():
@@ -41,12 +41,18 @@ def test_student_payment_receipt_date_paid_bdd():
 
 @given("a student with an active semester")
 def student_with_active_semester(
-    student_context: StudentContext, portal_user_factory, semester: Semester
+    student_context: StudentContext, portal_user_factory
 ) -> None:
     """Provision a student tied to the current academic term."""
-    user = portal_user_factory("student_links_bdd", student=True, groups=[])
+    current_semester = Semester.get_current_semester()
+    user = portal_user_factory(
+        "student_links_bdd",
+        student=True,
+        groups=[],
+        semester_override=current_semester,
+    )
     student_context.user = user
-    student_context.semester = semester
+    student_context.semester = current_semester
     student_context.student = Student.objects.get(user=user)
 
 
@@ -54,17 +60,22 @@ def student_with_active_semester(
 def student_with_paid_invoice(
     student_context: StudentContext,
     portal_user_factory,
-    semester: Semester,
     student_invoice_factory,
     payment_factory,
 ) -> None:
     """Provision a student with a payment on file."""
-    user = portal_user_factory("student_receipt_bdd", student=True, groups=[])
+    current_semester = Semester.get_current_semester()
+    user = portal_user_factory(
+        "student_receipt_bdd",
+        student=True,
+        groups=[],
+        semester_override=current_semester,
+    )
     student = Student.objects.get(user=user)
-    invoice = student_invoice_factory(student, semester)
+    invoice = student_invoice_factory(student, current_semester)
     payment_factory(invoice, D25)
     student_context.user = user
-    student_context.semester = semester
+    student_context.semester = current_semester
     student_context.student = student
 
 

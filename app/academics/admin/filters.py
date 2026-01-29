@@ -53,6 +53,16 @@ class CurriculumFilterAC(ScopedAutocompleteFilter):
     target_model = Curriculum
 
 
+class DepartmentCurriculumFilterAC(ScopedAutocompleteFilter):
+    """Autocomplete filter constrained to curricula linked to department courses."""
+
+    title = "Curriculum"
+    parameter_name = "curriculum"
+    field_name = "curriculum"
+    lookup_map: LookUpType = (("courses", "courses__curricula"),)
+    target_model = Curriculum
+
+
 class CourseCurriculumFilter(admin.SimpleListFilter):
     """Curriculum filter for courses (avoids reverse M2M autocomplete errors)."""
 

@@ -15,12 +15,12 @@ pytestmark = [
 ]
 
 
-@scenario("bdd/features/landing_page.feature", "Visitor sees the landing page hero")
+@scenario("features/landing_page.feature", "Visitor sees the landing page hero")
 def test_landing_page_hero_bdd():
     """Drive the landing page hero scenario."""
 
 
-@scenario("bdd/features/landing_page.feature", "Visitor uses the Tusis button")
+@scenario("features/landing_page.feature", "Visitor uses the Tusis button")
 def test_landing_page_tusis_button_bdd():
     """Drive the portal CTA scenario."""
 
