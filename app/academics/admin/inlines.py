@@ -2,6 +2,8 @@
 
 from django.contrib import admin
 from collections import defaultdict
+from typing import Any, cast
+
 from django.db.models import Count
 from django.urls import reverse
 from django.utils.html import format_html
@@ -82,10 +84,9 @@ class CurriculumCourseInline(admin.TabularInline):
     fields = (
         "year_number",
         "semester_number",
-        "required_group_number",
         "course",
+        "required_group_number",
         "credit_hours",
-        "is_required",
         "student_count_link",
     )
     readonly_fields = ("student_count_link",)
@@ -144,6 +145,10 @@ class CurriculumCourseInline(admin.TabularInline):
             summary = summary_map.get(self._group_key(row), {})
             row.group_course_count = summary.get("course_count", 0)
             row.group_credit_total = summary.get("credit_total", 0)
+        # > Keep the enriched rows so the inline template can read summary values.
+        qs_cache = cast(Any, qs)
+        qs_cache._result_cache = rows
+        qs_cache._prefetch_done = True
         return qs
 
     @admin.display(description="Students", ordering="student_total")
