@@ -57,6 +57,7 @@ def test_expand_code_accepts_underscore(college, department_factory):
 def test_validate_role_matrix(monkeypatch):
     """Check the return value if everything is fine."""
     expected: dict[str, dict[Any, Any]] = {ur.value.code: {} for ur in perms.UserRole}
+    # Monkeypatch isolates ROLE_MATRIX changes to this test only.
     monkeypatch.setattr(perms, "ROLE_MATRIX", expected)
     assert perms.validate_role_matrix() == set()
 

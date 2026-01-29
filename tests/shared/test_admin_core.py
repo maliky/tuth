@@ -15,6 +15,7 @@ pytestmark = pytest.mark.django_db
 
 def _freeze_now(monkeypatch: pytest.MonkeyPatch, target_date: date) -> None:
     """Force timezone.now() to return a stable datetime for tests."""
+    # Monkeypatch keeps the override scoped to the test without touching settings.
     frozen = datetime(
         target_date.year,
         target_date.month,

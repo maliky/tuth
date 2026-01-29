@@ -59,6 +59,19 @@ echo "xyz" > requirements-dev.txt
 black app/ && flake8 app/ && mypy app/
 #+END_SRC
 
+* Style Notes
+* <2026-01-26 Mon 09:56> method order
+When editing a class, keep members ordered as follows and sort items alphabetically within each group:
+- class meta
+- class attributes
+- @classmethod
+- @property methods
+- __ methods
+- _ methods
+- @classmethod
+- public methods
+If you touch a class, reorder its members to follow this convention so the codebase converges on a consistent layout.
+
 * Database SQL scripts
 Reusable SQL helpers live in the =scripts/= directory. Run them from
 =python manage.py dbshell= using psql's =\i= include command.

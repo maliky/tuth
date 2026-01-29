@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from decimal import Decimal
 from typing import Callable, TypeAlias, cast
 
 import pytest
@@ -18,6 +17,7 @@ from app.people.models.student import Student
 from app.registry.models.credit_hours import CreditHour
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester
+from tests.constants import D10
 
 CollegeFactoryT: TypeAlias = Callable[[str], College]
 CourseFactoryT: TypeAlias = Callable[[str], Course]
@@ -25,6 +25,7 @@ CurriculumFactoryT: TypeAlias = Callable[[str], Curriculum]
 DepartmentFactoryT: TypeAlias = Callable[[str], Department]
 CurriculumCourseFactoryT: TypeAlias = Callable[[str, str], CurriculumCourse]
 CreditHourFactoryT: TypeAlias = Callable[[int], CreditHour]
+
 InvoiceFactoryT: TypeAlias = Callable[[CurriculumCourse], Invoice]
 
 
@@ -153,7 +154,7 @@ def invoice_factory(default_semester: Semester) -> InvoiceFactoryT:
 
     def _make(curriculum_course: CurriculumCourse) -> Invoice:
         student = Student.get_default()
-        amount = Decimal("10.00")
+        amount = D10
         return Invoice.objects.create(
             curriculum_course=curriculum_course,
             student=student,

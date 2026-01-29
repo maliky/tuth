@@ -9,9 +9,9 @@ import pytest
 
 from app.finance.models.invoice import Invoice
 from app.registry.models.registration import Registration
+from tests.constants import D100
 
 InvoiceFactoryT: TypeAlias = Callable[[Registration, Decimal], Invoice]
-D100 = Decimal("100.00")
 
 
 @pytest.fixture

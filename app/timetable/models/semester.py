@@ -163,12 +163,13 @@ class Semester(StatusableMixin, models.Model):
         SemesterStatus._populate_attributes_and_db()
         sem1_start, sem1_end = _default_semester_dates(ay, SEMESTER_NUMBER.FIRST)
 
-        return cls.objects.create(
+        # Avoid duplicate semesters when the academic year already has Sem 1.
+        semester, _created = cls.objects.get_or_create(
             academic_year=ay,
             number=SEMESTER_NUMBER.FIRST,
-            start_date=sem1_start,
-            end_date=sem1_end,
+            defaults={"start_date": sem1_start, "end_date": sem1_end},
         )
+        return semester
 
     class Meta:
         constraints = [

@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from django.db import models
 from django.db.models import Q
 from simple_history.models import HistoricalRecords
 
 from app.finance.models.status_types_methods import FeeType
+
+if TYPE_CHECKING:
+    from app.academics.models.curriculum_course import CurriculumCourse
+    from app.timetable.models.semester import Semester
 
 
 class CourseFee(models.Model):
@@ -75,7 +80,7 @@ class CourseFee(models.Model):
                 name="uniq_course_fee_type_per_semester",
             ),
             models.UniqueConstraint(
-                fields=["course","fee_type"],
+                fields=["course", "fee_type"],
                 condition=Q(semester__isnull=True),
                 name="uniq_course_fee_type_default",
             ),
@@ -127,7 +132,11 @@ class CurriculumCourseFee(models.Model):
         return CourseFee.resolve_amount(curriculum_course.course, semester)
 
     @classmethod
-    def total_fee(cls, curriculum_course, semester) -> Decimal:
+    def total_fee(
+        cls,
+        curriculum_course: "CurriculumCourse",
+        semester: "Semester",
+    ) -> Decimal:
         """Return tuition plus resolved additional fees for a curriculum course."""
         return curriculum_course.total_fee(semester)
 
@@ -153,7 +162,7 @@ class CurriculumCourseFee(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["curriculum_course", "semester","fee_type"],
+                fields=["curriculum_course", "semester", "fee_type"],
                 name="uniq_curriculum_course_fee_type_per_semester",
             ),
             models.UniqueConstraint(
