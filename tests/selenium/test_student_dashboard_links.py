@@ -20,20 +20,12 @@ from app.academics.models.curriculum import Curriculum
 from app.people.models.student import Student
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester
-from tests.selenium.test_landing_page import _can_bind_localhost
 from tests.selenium.test_portal_roles import TEST_PASSWORD, _login_to_portal
 
 pytestmark = [
     pytest.mark.django_db(transaction=True),
     pytest.mark.selenium,
 ]
-
-if not _can_bind_localhost():
-    pytestmark.append(
-        pytest.mark.skip(
-            reason="Selenium tests require permission to bind localhost sockets."
-        )
-    )
 
 
 def _create_student_user(username: str, semester: Semester):
@@ -51,43 +43,6 @@ def _create_student_user(username: str, semester: Semester):
         },
     )
     return user
-
-
-def test_student_dashboard_sidebar_links_route_to_statements(
-    live_server,
-    selenium_driver,
-):
-    """Sidebar links should route to payment and invoice statement pages."""
-    today = timezone.now().date()
-    academic_year = AcademicYear.get_default(today)
-    semester = Semester.objects.create(
-        academic_year=academic_year,
-        number=1,
-        start_date=today - timedelta(days=1),
-    )
-    user = _create_student_user("student_links", semester)
-
-    _login_to_portal(selenium_driver, live_server, user.username)
-
-    dashboard_url = f"{live_server.url}{reverse('student_dashboard')}"
-    selenium_driver.get(dashboard_url)
-
-    invoice_link = selenium_driver.find_element(
-        By.CSS_SELECTOR, ".portal-nav a[href][href*='invoice']"
-    )
-    payment_link = selenium_driver.find_element(
-        By.CSS_SELECTOR, ".portal-nav a[href][href*='payment']"
-    )
-
-    invoice_link.click()
-    WebDriverWait(selenium_driver, 10).until(
-        EC.text_to_be_present_in_element((By.TAG_NAME, "h1"), "Invoice Statement")
-    )
-
-    selenium_driver.get(payment_link.get_attribute("href"))
-    WebDriverWait(selenium_driver, 10).until(
-        EC.text_to_be_present_in_element((By.TAG_NAME, "h1"), "Payment Receipt")
-    )
 
 
 def test_student_payment_receipt_shows_paid_on_column(

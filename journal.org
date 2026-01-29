@@ -51,7 +51,8 @@ To get a student section fee, we check the attached curriculum course fee for th
 to make it clearer, I would like the fee computation to be centralized in the curriculum fee.
 
 
-* <2026-01-26 Mon 09:56> method order
+* DONE <2026-01-26 Mon 09:56> method order
+  CLOSED: [2026-01-28 mer. 23:25]
 - class meta
 - class attribute
 - @classmethod

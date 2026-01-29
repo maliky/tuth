@@ -28,6 +28,7 @@ class DummyCurriculumCourse:
 def test_tuition_for_uses_rate(monkeypatch, hours):
     """tuition_for() should multiply hours by the rate."""
     rate = Decimal("9.99")
+    # Monkeypatch sets the module-level rate without altering global settings.
     monkeypatch.setattr(
         "app.academics.models.curriculum_course.TUITION_RATE_PER_CREDIT",
         rate,

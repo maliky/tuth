@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import socket
 from typing import Generator
 
 import pytest
@@ -13,6 +14,11 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.remote.webdriver import WebDriver
 from webdriver_manager.chrome import ChromeDriverManager
 
+pytest_plugins = [
+    "tests.selenium.fixtures_portal",
+    "tests.selenium.fixtures_registrar",
+]
+
 _DEFAULT_IMPLICIT_WAIT = 5
 _PREFERRED_DRIVER_VERSION = "142.0.7444.61"
 
@@ -21,6 +27,20 @@ def _bool_flag(value: str | None, default: bool = True) -> bool:
     if value is None:
         return default
     return value.strip().lower() not in {"0", "false", "no", "off"}
+
+
+def _can_bind_localhost() -> bool:
+    """Best-effort probe to verify the codex sandbox allows opening sockets."""
+    sock: socket.socket | None = None
+    try:
+        sock = socket.socket()
+        sock.bind(("127.0.0.1", 0))
+    except OSError:
+        return False
+    finally:
+        if sock:
+            sock.close()
+    return True
 
 
 def _implicit_wait_seconds(raw_value: str | None) -> int:
@@ -94,6 +114,23 @@ def _create_driver() -> WebDriver:
     remote_url = os.getenv("SELENIUM_REMOTE_URL")
     headless = _bool_flag(os.getenv("SELENIUM_HEADLESS"), default=True)
     return _build_chromium(headless=headless, remote_url=remote_url)
+
+
+def pytest_collection_modifyitems(config, items) -> None:
+    """Skip selenium-marked tests when localhost sockets are unavailable.
+
+    This hook centralizes the skip logic so individual test modules stay clean.
+    """
+    # pytest_collection_modifyitems runs after collection; skipping here avoids
+    # per-module guards while keeping the selenium mark as the switch.
+    if _can_bind_localhost():
+        return
+    skip_marker = pytest.mark.skip(
+        reason="Selenium tests require permission to bind localhost sockets."
+    )
+    for item in items:
+        if "selenium" in item.keywords:
+            item.add_marker(skip_marker)
 
 
 @pytest.fixture(scope="session")

@@ -7,7 +7,6 @@ from datetime import timedelta
 import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
-from django.core.paginator import Paginator
 from django.urls import reverse
 from django.utils import timezone
 from model_bakery import baker
@@ -25,22 +24,13 @@ from app.shared.models import CreditHour
 from app.timetable.models.section import Section
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester
-from app.website.views import registrar as registrar_views
 from app.registry.models.grade import GradeValue
-from tests.selenium.test_landing_page import _can_bind_localhost
 from tests.selenium.test_portal_roles import TEST_PASSWORD, _login_to_portal
 
 pytestmark = [
     pytest.mark.django_db(transaction=True),
     pytest.mark.selenium,
 ]
-
-if not _can_bind_localhost():
-    pytestmark.append(
-        pytest.mark.skip(
-            reason="Selenium tests require permission to bind localhost sockets."
-        )
-    )
 
 
 def _create_registrar_user(username: str):
@@ -172,19 +162,6 @@ def test_registrar_grades_dashboard_link_and_row_expand(
         return "show" in target.get_attribute("class").split()
 
     WebDriverWait(selenium_driver, 10).until(_row_expanded)
-
-
-@pytest.fixture
-def tiny_paginator(monkeypatch: pytest.MonkeyPatch):
-    """Force the registrar dashboard to paginate after one record."""
-
-    class TinyPaginator(Paginator):
-        """Paginator that ignores the requested per-page size."""
-
-        def __init__(self, object_list, per_page, **kwargs):
-            super().__init__(object_list, 1, **kwargs)
-
-    monkeypatch.setattr(registrar_views, "Paginator", TinyPaginator)
 
 
 def test_registrar_grades_pagination_shows_counts_and_last_link(

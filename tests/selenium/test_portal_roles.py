@@ -3,18 +3,13 @@
 from __future__ import annotations
 
 import pytest
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
 from django.urls import reverse
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from urllib.parse import urlparse
 
-from app.academics.models.curriculum import Curriculum
-from app.people.models.student import Student
 from app.timetable.models.semester import Semester
-from tests.selenium.test_landing_page import _can_bind_localhost
 
 TEST_PASSWORD = "PassW0rd!"
 
@@ -62,56 +57,6 @@ pytestmark = [
     pytest.mark.django_db(transaction=True),
     pytest.mark.selenium,
 ]
-
-if not _can_bind_localhost():
-    pytestmark.append(
-        pytest.mark.skip(
-            reason="Selenium tests require permission to bind localhost sockets."
-        )
-    )
-
-
-@pytest.fixture
-def portal_user_factory(semester):
-    """Create portal users with optional student profile and group assignments."""
-    UserModel = get_user_model()
-
-    def _build(username: str, *, groups: list[str] | None = None, student: bool = False):
-        first_name = "Test"
-        last_name = username.replace("_", " ").title()
-
-        user, created = UserModel.objects.get_or_create(
-            username=username,
-            defaults={
-                "first_name": first_name,
-                "last_name": last_name,
-            },
-        )
-        if created:
-            user.set_password(TEST_PASSWORD)
-        else:
-            user.groups.clear()
-            user.set_password(TEST_PASSWORD)
-            user.first_name = first_name
-            user.last_name = last_name
-        user.save()
-
-        for group_name in groups or []:
-            group, _ = Group.objects.get_or_create(name=group_name)
-            user.groups.add(group)
-        if student:
-            Student.objects.update_or_create(
-                user=user,
-                defaults={
-                    "curriculum": Curriculum.get_default(),
-                    "entry_semester": semester,
-                    "last_enrolled_semester": semester,
-                },
-                username=user.username,
-            )
-        return user
-
-    return _build
 
 
 def _login_to_portal(driver, live_server, username):
