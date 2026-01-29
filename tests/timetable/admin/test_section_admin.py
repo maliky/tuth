@@ -25,5 +25,5 @@ def test_section_admin_counts(section, room, schedule):
     SecSession.objects.create(section=section, room=room, schedule=schedule)
     SecSession.objects.create(section=section, room=room, schedule=other)
     admin_obj = SectionAdmin(Section, admin.site)
-    assert admin_obj.session_count(section) == 2
+    assert admin_obj.session_count(section) == f"{section.number}/2"
     assert admin_obj.credit_hours(section) == section.curriculum_course.credit_hours_id

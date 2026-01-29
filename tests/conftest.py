@@ -13,6 +13,12 @@ from app.timetable import ensures as timetable_ensures
 # Expose shared fixture modules for all tests.
 pytest_plugins = [
     "tests.academics.fixture",
+    "tests.bdd.fixtures",
+    "tests.selenium.fixtures_browser",
+    "tests.selenium.fixtures_portal",
+    "tests.selenium.fixtures_registrar_grades",
+    "tests.selenium.fixtures_registrar",
+    "tests.selenium.fixtures_finance",
     "tests.people.fixture",
     "tests.registry.fixture",
     "tests.shared.fixture",

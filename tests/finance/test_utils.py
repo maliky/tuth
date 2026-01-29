@@ -24,6 +24,10 @@ class DummyCurriculumCourse:
 
     credit_hours: DummyCreditHours
 
+    def tuition_for(self) -> Decimal:
+        """Reuse the real CurriculumCourse logic for testing the rate."""
+        return CurriculumCourse.tuition_for(self)
+
 
 @pytest.mark.parametrize("hours", [0, 1, 3])
 def test_tuition_for_uses_rate(monkeypatch, hours):
