@@ -2,9 +2,10 @@
 
 from django.contrib import admin
 from collections import defaultdict
-from typing import Any, cast
+from typing import Any, Callable, cast
 
 from django.db.models import Count
+from django.forms.models import BaseInlineFormSet
 from django.urls import reverse
 from django.utils.html import format_html
 
@@ -71,6 +72,34 @@ class CurriculumCourseFeeInline(admin.TabularInline):
     ordering = ("semester",)
 
 
+class CurriculumCourseSummaryFormSet(BaseInlineFormSet):
+    """Inline formset that annotates group summary values."""
+
+    summary_builder: Callable[
+        [list[CurriculumCourse]], dict[tuple[int, int], dict[str, int]]
+    ]
+    group_key_builder: Callable[[CurriculumCourse], tuple[int, int]]
+
+    def get_queryset(self):
+        """Attach summary attributes used by the inline template."""
+        qs = super().get_queryset()
+        summary_builder = getattr(self, "summary_builder", None)
+        group_key_builder = getattr(self, "group_key_builder", None)
+        if summary_builder is None or group_key_builder is None:
+            return qs
+        rows = list(qs)
+        summary_map = summary_builder(rows)
+        for row in rows:
+            summary = summary_map.get(group_key_builder(row), {})
+            row.group_course_count = summary.get("course_count", 0)
+            row.group_credit_total = summary.get("credit_total", 0)
+        # > Keep enriched rows so template can read summary values.
+        qs_cache = cast(Any, qs)
+        qs_cache._result_cache = rows
+        qs_cache._prefetch_done = True
+        return qs
+
+
 class CurriculumCourseInline(admin.TabularInline):
     """Inline for linking courses to a curriculum."""
 
@@ -81,6 +110,7 @@ class CurriculumCourseInline(admin.TabularInline):
     autocomplete_fields = ("course", "curriculum")
     ordering = ("year_number", "semester_number", "course__code")
     template = "admin/academics/curriculumcourse/tabular_inline.html"
+    formset = CurriculumCourseSummaryFormSet
     fields = (
         "year_number",
         "semester_number",
@@ -136,20 +166,17 @@ class CurriculumCourseInline(admin.TabularInline):
     def get_queryset(self, request):
         """Annotate student totals for curriculum-course rows."""
         qs = super().get_queryset(request)
-        qs = qs.annotate(
+        return qs.annotate(
             student_total=Count("sections__section_registrations__student", distinct=True)
         ).order_by("year_number", "semester_number", "course__code")
-        rows = list(qs)
-        summary_map = self._build_group_summary(rows)
-        for row in rows:
-            summary = summary_map.get(self._group_key(row), {})
-            row.group_course_count = summary.get("course_count", 0)
-            row.group_credit_total = summary.get("credit_total", 0)
-        # > Keep the enriched rows so the inline template can read summary values.
-        qs_cache = cast(Any, qs)
-        qs_cache._result_cache = rows
-        qs_cache._prefetch_done = True
-        return qs
+
+    def get_formset(self, request, obj=None, **kwargs):
+        """Attach group summaries to inline rows for template rendering."""
+        formset = super().get_formset(request, obj, **kwargs)
+        formset_class = cast(Any, formset)
+        formset_class.summary_builder = self._build_group_summary
+        formset_class.group_key_builder = self._group_key
+        return formset
 
     @admin.display(description="Students", ordering="student_total")
     def student_count_link(self, obj):
