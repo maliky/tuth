@@ -20,3 +20,4 @@ tqdm
 rapidfuzz==3.9.2
 pandas
 xlrd
+weasyprint
