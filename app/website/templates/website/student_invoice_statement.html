@@ -17,11 +17,11 @@
           <p class="text-uppercase small text-muted mb-1">Total Due</p>
           <div class="h4 mb-0">{{ currency }} {{ total_due|floatformat:2 }}</div>
           <p class="text-muted mb-0">Outstanding invoices only</p>
+          <a class="btn btn-outline-primary btn-sm mt-2" href="{% url 'student_invoice_snapshot_pdf' %}">
+            Download PDF
+          </a>
         </div>
       </div>
-      <p class="text-muted small mt-3 mb-0">
-        Use your browser print dialog to save as PDF or capture the statement.
-      </p>
     </div>
   </section>
 

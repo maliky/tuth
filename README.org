@@ -156,7 +156,8 @@ If the runtime disallows opening localhost sockets (some secure sandboxes do), t
 
 In another terminal,
 #+BEGIN_SRC bash term2
-   docker-compose -f docker-compose-dev.yml up --build
+  docker-compose -f docker-compose-dev.yml --build  --no-cache   
+  docker-compose -f docker-compose-dev.yml up -d
 #+END_SRC
 
 #+BEGIN_SRC bash  term3

@@ -31,6 +31,7 @@ from .student_curriculum import (
     student_curriculum_course_detail,
     student_curriculum_courses,
 )
+from .invoice_snapshots import student_invoice_snapshot_pdf
 from .student_payment_receipts import student_payment_receipt
 from .student_sections import student_section_detail
 
@@ -57,6 +58,7 @@ __all__ = [
     "student_curriculum_course_detail",
     "student_payment_receipt",
     "student_section_detail",
+    "student_invoice_snapshot_pdf",
     "finance_officer_invoices",
     "finance_officer_create_payments",
     "finance_officer_student_autocomplete",

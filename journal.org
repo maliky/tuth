@@ -1,37 +1,113 @@
 
 
-* <2026-01-30 ven. 11:49>  Payments / Invoice
+* <2026-01-30 ven. 15:01> Invoice template
+# The snapshot should occure the first time the user access student_invoice_statement
 
-** plan
-    create the invoice_snapshot model
-    add  helper functions in finance/utils where we have something similare for payment
+** I reviewed the PDF at data/bc/93afbf-000f-47eb-bece-93aa309d0dca/
+  template_bill.pdf (extracted text with pypdf). Here’s what the template expects
+  and how it maps to what we currently have.
 
-   
-    On print invoice, we build the snapshot and render it (push to download)
-    Let's use weasyprint
-    Propose a template and discuss how a non technical use could edit it ( a wsiwg editor?)
-    After the invoice_snapshot creation:
-    plan some test, db side and also ux bdd side
-    
+*** Fields shown in the template
 
-**  1) HTML/CSS → PDF (recommended)
+  - Header:
+      - “Registration Bill”
+      - University name + address (static text)
+      - Date/Time (printed at generation)
+  - Student block:
+      - Academic Semester (Academic Year + Semester number)
+      - ID No
+      - Name
+      - Department
+      - Major  # Curriculum name for us
+      - Present Status (freshman/sophomore/junior/senior) # we compute it from the number of credit done, have a method for that already
+      - Address
+  - Course table (line items):
+      - Course Code  # it the course department for us
+      - Course No # we have that
+	# the 2 above are replaced by our course short code
+      - Course Title
+      - Credit Hours # from  curriculum course
+      - Cost Per Credit (US$) # fixed
+      - Cost of Course 
+      - Total Credit Hours
+  - Fee summary:
+      - Activities / Library / Maintenance / Registration / Sports / Technology
+        (fees list)  # we need to set this precisely. I may have that information in the DB.
+      - Fees total
+      - Tuition total
+      - Total Bill
+      - Arrears  # can only get that from DB
+      - Payments
+      - Balance
+  - Payment Instructions:
+      - 40% required amount # we have that and we can even set it dynamicaly
+      - Bank account name + number
+      - Deposit amount (40% of fees)
+      - Deposited by (student ID + name)   # just info must be deposited by...
+      - Note about processing time
+      - Dean signature line (static)
 
-  - Build a Django template with CSS grid and tables that match the visual sections    above.
-  - Use WeasyPrint or wkhtmltopdf to render the HTML into PDF.
-  - Pros: fast iteration, easy styling, close match to the template.
+  What we already have in the system
+
+  - Student: student_id, long_name, physical_address, class_level
+  - Major: student.curriculum
+  - Academic semester: invoice.semester (academic year + number)
+  - Course lines: invoice.curriculum_course.course.short_code, course.number,
+    course.title
+  - Credit hours: curriculum_course.credit_hours.code
+  - Tuition rate: TUITION_RATE_PER_CREDIT (in CurriculumCourse.tuition_for)
+  - Invoice totals: invoice.initial_amount_due, invoice.balance
+  - Payments: Payment rows tied to Invoice
+
+
+
+  - Department: Student doesn’t have a direct department; curriculum doesn’t lin    to a department. We’ll need a rule (e.g., derive from course department or add    to curriculum).
+  - For now we will stick to the model even so some course my include extra fee, thos will be treated on the side. so a course cost is tuition_rate_per_credoit * credit_hours
+  - Fee breakdown: here the fee mixes course fee (eg. lab fee, pe fee) with semester fee (registration/library fee)
+  - Arrears: should be treated as balance not tied to the current semester
+  - Payment instructions / bank account / dean line: Not stored. keep as stati
+    settings.
+
+
+**  Template editing by non‑technical users (proposal)
+
+  - Store a template in DB (e.g., InvoiceTemplate model with html, css) and allow
+    edits via a WYSIWYG:
+      - Options: django‑ckeditor, django‑tinymce, or a lightweight HTML editor in
+        admin.
+  - Use placeholder tokens like {{ student_name }} / {{ total_due }} and a preview    action.
+  - Keep the locked layout CSS separate so users only edit content blocks.
+
+  Test plan (DB + UX)
+
+  - DB: snapshot creation persists correct payload, total_due, and line items.
+  - DB: creating snapshot for empty invoices still writes a valid snapshot.
+  - UX/BDD: clicking “Download PDF” returns a PDF, opens correctly, and layout
+    matches the template.
+  
+
+* <2026-01-30 ven. 11:49>  Invoice
+   :PROPERTIES:
+   :ID:       bc93afbf-000f-47eb-bece-93aa309d0dca
+   :END:
+
+
+-   create the invoice_snapshot model to be printed in pdf
+-   add  helper functions in finance/utils where we have something similare for payment
+-    On print invoice, we build the snapshot and render it (push to download)
+-    Let's use weasyprint
+-    Propose a template and discuss how a non technical use could edit it ( a wsiwg editor?)
   - Key layout tips:
       - Use a two‑column grid for the student info block.
       - Use a strict table for course lines (fixed column widths).
       - Use a second table for fees/summary with a right‑aligned totals column.
       - Lock fonts, sizes, and spacing with CSS to keep layout stable.
+	( see data file with attached id for on layout precision )
+  
+-    After the invoice_snapshot creation:
+-    plan some test, db side and also ux bdd side
+    
 
-
-** Create 2 models one for Payments and one Invoices                 :ATTACH:
-   :PROPERTIES:
-   :ID:       bc93afbf-000f-47eb-bece-93aa309d0dca
-   :END:
-The invoice should look like the attached document
-What strategies do you suggest to produce a similar results? 
 * <2026-01-27 Tue 17:08>  Fee and Payments
 
   - need to find a clean way to import default course fix fee. 

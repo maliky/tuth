@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Registration Bill</title>
+    <style>
+      @page {
+        size: A4;
+        margin: 22mm 18mm;
+      }
+      body {
+        font-family: "DejaVu Sans", "Noto Sans", Arial, sans-serif;
+        color: #111827;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+      h1, h2, h3 {
+        margin: 0;
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 14px;
+      }
+      .brand {
+        font-size: 16px;
+        font-weight: 700;
+      }
+      .subtitle {
+        font-size: 12px;
+        font-weight: 600;
+        margin-top: 4px;
+      }
+      .muted {
+        color: #6b7280;
+      }
+      .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 20px;
+        padding: 10px 0 14px;
+        border-top: 1px solid #e5e7eb;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 18px;
+      }
+      .info-block {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .label {
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .lines th,
+      .lines td {
+        padding: 6px 5px;
+        border-bottom: 1px solid #e5e7eb;
+        vertical-align: top;
+      }
+      .lines th {
+        text-align: left;
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #6b7280;
+      }
+      .lines td.amount,
+      .summary td.amount {
+        text-align: right;
+        white-space: nowrap;
+      }
+      .totals-row td {
+        font-weight: 600;
+      }
+      .fees {
+        margin-top: 14px;
+        width: 55%;
+      }
+      .fees th,
+      .fees td {
+        padding: 4px 4px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      .summary {
+        margin-top: 8px;
+        width: 45%;
+        margin-left: auto;
+      }
+      .summary td {
+        padding: 4px 4px;
+      }
+      .summary tr.total td {
+        font-weight: 700;
+        border-top: 1px solid #111827;
+      }
+      .instructions {
+        margin-top: 18px;
+        padding-top: 12px;
+        border-top: 1px dashed #e5e7eb;
+      }
+      .signature {
+        margin-top: 18px;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div>
+        <div class="brand">{{ payload.university_name }}</div>
+        <div class="muted">{{ payload.university_address }}</div>
+        <div class="subtitle">Registration Bill</div>
+      </div>
+      <div class="muted">Date {{ payload.generated_at }}</div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-block">
+        <div class="label muted">Academic Semester</div>
+        <div>{{ payload.academic_semester }}</div>
+      </div>
+      <div class="info-block">
+        <div class="label muted">ID No.</div>
+        <div>{{ payload.student_id }}</div>
+      </div>
+      <div class="info-block">
+        <div class="label muted">Name</div>
+        <div>{{ payload.student_name }}</div>
+      </div>
+      <div class="info-block">
+        <div class="label muted">Department</div>
+        <div>{{ payload.department }}</div>
+      </div>
+      <div class="info-block">
+        <div class="label muted">Major</div>
+        <div>{{ payload.curriculum }}</div>
+      </div>
+      <div class="info-block">
+        <div class="label muted">Present Status</div>
+        <div>{{ payload.present_status }}</div>
+      </div>
+      <div class="info-block">
+        <div class="label muted">Address</div>
+        <div>{{ payload.address }}</div>
+      </div>
+    </div>
+
+    <table class="lines">
+      <thead>
+        <tr>
+          <th style="width: 16%">Course</th>
+          <th style="width: 36%">Course Title</th>
+          <th style="width: 10%">Cr. Hrs</th>
+          <th style="width: 18%">Cost / Cr.</th>
+          <th style="width: 20%" class="amount">Cost of Course</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for line in payload.lines %}
+          <tr>
+            <td>{{ line.course_code }}</td>
+            <td>{{ line.course_title }}</td>
+            <td>{{ line.credits }}</td>
+            <td>{{ totals.currency }} {{ line.cost_per_credit }}</td>
+            <td class="amount">{{ totals.currency }} {{ line.course_cost }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5" class="muted">No course lines found.</td>
+          </tr>
+        {% endfor %}
+        <tr class="totals-row">
+          <td colspan="2">Total Credit Hours</td>
+          <td>{{ payload.total_credit_hours }}</td>
+          <td></td>
+          <td class="amount"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table class="fees">
+      <thead>
+        <tr>
+          <th>Fee</th>
+          <th class="amount">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fee in payload.fee_lines %}
+          <tr>
+            <td>{{ fee.label }}</td>
+            <td class="amount">{{ totals.currency }} {{ fee.amount }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="2" class="muted">No additional fees</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <table class="summary">
+      <tbody>
+        <tr>
+          <td>Fees Total</td>
+          <td class="amount">{{ totals.currency }} {{ payload.fees_total }}</td>
+        </tr>
+        <tr>
+          <td>Tuition Total</td>
+          <td class="amount">{{ totals.currency }} {{ payload.tuition_total }}</td>
+        </tr>
+        <tr class="total">
+          <td>Total Bill</td>
+          <td class="amount">{{ totals.currency }} {{ payload.total_bill }}</td>
+        </tr>
+        <tr>
+          <td>Arrears</td>
+          <td class="amount">{{ totals.currency }} {{ payload.arrears }}</td>
+        </tr>
+        <tr>
+          <td>Payments</td>
+          <td class="amount">- {{ totals.currency }} {{ payload.payments }}</td>
+        </tr>
+        <tr class="total">
+          <td>Balance</td>
+          <td class="amount">{{ totals.currency }} {{ payload.balance }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="instructions">
+      <div><strong>Payment Instructions</strong></div>
+      <div>To complete your registration, pay 40% ({{ totals.currency }} {{ payload.required_deposit }}) of your fees.</div>
+      <div>All payments must be made at {{ payload.bank_account_name }}.</div>
+      <div>Account No (USD): {{ payload.bank_account_number }}</div>
+      <div>Deposit Amt.: {{ totals.currency }} {{ payload.required_deposit }}</div>
+      <div>Deposited By: {{ payload.deposit_by_label }}</div>
+      <div class="muted">{{ payload.payment_note }}</div>
+      <div class="signature">{{ payload.dean_signature }}</div>
+    </div>
+  </body>
+</html>

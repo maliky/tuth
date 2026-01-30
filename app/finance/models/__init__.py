@@ -2,6 +2,7 @@
 
 from app.finance.models.course_fee import CourseFee, CurriculumCourseFee
 from app.finance.models.invoice import Invoice
+from app.finance.models.invoice_snapshot import InvoiceSnapshot
 from app.finance.models.payment import Payment
 from app.finance.models.scholarship import (
     Scholarship,
@@ -23,6 +24,7 @@ __all__ = [
     "CurriculumCourseFee",
     "FeeType",
     "Invoice",
+    "InvoiceSnapshot",
     "Payment",
     "PaymentStatus",
     "PaymentMethod",
