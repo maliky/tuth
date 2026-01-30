@@ -330,6 +330,7 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         )
         return format_html('<a href="{}">{}</a>', url, count)
 
+
     def merge_records(self, target: ModelT, sources: Iterable[ModelT]) -> dict[str, int]:
         """Merge curricula using the shared merge helper."""
         target_curriculum = cast(Curriculum, target)
