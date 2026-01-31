@@ -136,6 +136,24 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             return
         getattr(messages, level)(request, text)
 
+    def _ensure_invoice_for_section(section: Section) -> None:
+        """Create or patch invoices so initial_amount_due is always set."""
+        amount_due = section.fee_total_amount()
+        invoice, created = Invoice.objects.get_or_create(
+            student=student,
+            curriculum_course=section.curriculum_course,
+            semester=section.semester,
+            defaults={
+                "initial_amount_due": amount_due,
+                "balance": amount_due,
+            },
+        )
+        if not created and invoice.initial_amount_due is None:
+            invoice.initial_amount_due = amount_due
+            if invoice.balance is None:
+                invoice.balance = amount_due
+            invoice.save(update_fields=["initial_amount_due", "balance", "status"])
+
     def _parse_section_ids(raw_ids: str) -> list[int]:
         """Parse a comma-delimited list of section IDs into integers."""
         ids: list[int] = []
@@ -324,24 +342,14 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                     if was_created:
                         created += 1
                         current_course_ids.add(course_id)
-                        Invoice.objects.get_or_create(
-                            student=student,
-                            curriculum_course=section.curriculum_course,
-                            semester=section.semester,
-                            defaults={"balance": section.fee_total_amount()},
-                        )
+                        _ensure_invoice_for_section(section)
                         continue
                     if registration.status_id in {"canceled", "removed"}:
                         registration.status = pending_status
                         registration.save(update_fields=["status"])
                         updated += 1
                         current_course_ids.add(course_id)
-                        Invoice.objects.get_or_create(
-                            student=student,
-                            curriculum_course=section.curriculum_course,
-                            semester=section.semester,
-                            defaults={"balance": section.fee_total_amount()},
-                        )
+                        _ensure_invoice_for_section(section)
                     else:
                         skipped += 1
             if created or updated:

@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import Protocol
 
 import pytest
 
 from app.people.models.student import Student
+from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
 
 
@@ -24,6 +26,8 @@ class StudentContext:
     user: PortalUserT | None = None
     semester: Semester | None = None
     student: Student | None = None
+    section: Section | None = None
+    fee_due: Decimal | None = None
 
 
 @pytest.fixture
