@@ -214,6 +214,9 @@ class CurriculumCourseResource(resources.ModelResource):
     semester_number_f = fields.Field(
         attribute="semester_number", column_name="semester_number", default=0
     )
+    level_number_f = fields.Field(
+        attribute="level_number", column_name="level_number", default=99
+    )
     required_group_number_f = fields.Field(
         attribute="required_group_number",
         column_name="required_group_number",
@@ -232,6 +235,7 @@ class CurriculumCourseResource(resources.ModelResource):
             "credit_hours_f",
             "year_number_f",
             "semester_number_f",
+            "level_number_f",
             "required_group_number_f",
         )
         list_filter = ("curriculum_college", "curriculum")

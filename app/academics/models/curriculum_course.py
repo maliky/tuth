@@ -50,6 +50,16 @@ def _year_number_choices() -> ChoiceListT:
 
 SEMESTER_NUMBER_CHOICES = tuple(_semester_number_choices())
 YEAR_NUMBER_CHOICES = tuple(_year_number_choices())
+LEVEL_NUMBER_CHOICES = tuple(
+    [(int(LEVEL_NUMBER.UNDEF.value), "Undefined (99)"), (0, "Remedial (0)")]
+    + [
+        (
+            level,
+            f"Level {level} (Y{(level - 1) // 2 + 1}S{1 if level % 2 else 2})",
+        )
+        for level in range(1, 9)
+    ]
+)
 
 
 class CurriculumCourse(models.Model):
@@ -90,6 +100,12 @@ class CurriculumCourse(models.Model):
         db_index=True,
         help_text="Normal semester number for this course in the curriculum",
     )
+    level_number = models.PositiveSmallIntegerField(
+        choices=LEVEL_NUMBER_CHOICES,
+        default=LEVEL_NUMBER.UNDEF,
+        db_index=True,
+        help_text="Derived level number (0=remedial, 1-8=Y1S1..Y4S2, 99=undefined)",
+    )
     year_number = models.PositiveSmallIntegerField(
         choices=YEAR_NUMBER_CHOICES,
         default=LEVEL_NUMBER.UNDEF,
@@ -128,6 +144,21 @@ class CurriculumCourse(models.Model):
         CreditHour.objects.get_or_create(
             code=self.credit_hours_id, defaults={"label": str(self.credit_hours_id)}
         )
+
+    def _ensure_year_semester_from_level(self) -> None:
+        """Autofill year/semester when a level number is provided."""
+        level_value = int(getattr(self, "level_number", LEVEL_NUMBER.UNDEF) or 0)
+        if level_value == int(LEVEL_NUMBER.UNDEF.value):
+            return
+        if level_value <= 0:
+            self.year_number = LEVEL_NUMBER.UNDEF
+            self.semester_number = 0
+            return
+        if 1 <= level_value <= 8:
+            year_value = (level_value - 1) // 2 + 1
+            semester_value = 1 if level_value % 2 else 2
+            self.year_number = year_value
+            self.semester_number = semester_value
 
     def current_faculty(self) -> FacultyQuery:
         """Get the list of faculty teaching this course in the current semester."""
@@ -205,6 +236,7 @@ class CurriculumCourse(models.Model):
     def save(self, *args, **kwargs):
         """Make sure we set default before saving."""
         self._ensure_credit_hours()
+        self._ensure_year_semester_from_level()
         super().save(*args, **kwargs)
 
     class Meta:

@@ -250,8 +250,17 @@ class Curriculum(StatusableMixin, models.Model):
         return self.curriculum_course.count()
 
     def student_count(self):
-        """Count the number of student who selected this curriculum."""
-        return self.students.count()
+        """Count student registrations per curriculum course."""
+        Registration = apps.get_model("registry", "Registration")
+        # Count distinct student/course pairs to match curriculum-course inline totals.
+        return (
+            Registration.objects.filter(
+                section__curriculum_course__curriculum=self,
+            )
+            .values("student_id", "section__curriculum_course_id")
+            .distinct()
+            .count()
+        )
 
     def current_student_count(self):
         """Total number of students currently enrolled in courses of this curriculum."""

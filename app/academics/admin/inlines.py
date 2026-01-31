@@ -117,6 +117,7 @@ class CurriculumCourseInline(admin.TabularInline):
     template = "admin/academics/curriculumcourse/tabular_inline.html"
     formset = CurriculumCourseSummaryFormSet
     fields = (
+        "level_number",
         "year_number",
         "semester_number",
         "course",
@@ -124,7 +125,7 @@ class CurriculumCourseInline(admin.TabularInline):
         "credit_hours",
         "student_count_link",
     )
-    readonly_fields = ("student_count_link",)
+    readonly_fields = ("year_number", "semester_number", "student_count_link")
 
     def formfield_for_dbfield(self, db_field, request, **kwargs):
         """Rename required group field label for inline display."""
@@ -173,7 +174,12 @@ class CurriculumCourseInline(admin.TabularInline):
         qs = super().get_queryset(request)
         return qs.annotate(
             student_total=Count("sections__section_registrations__student", distinct=True)
-        ).order_by("year_number", "semester_number", "course__code")
+        ).order_by(
+            "year_number",
+            "semester_number",
+            "required_group_number",
+            "course__code",
+        )
 
     def get_formset(self, request, obj=None, **kwargs):
         """Attach group summaries to inline rows for template rendering."""
