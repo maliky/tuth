@@ -45,7 +45,14 @@ class CourseCurriculumInline(admin.TabularInline):
     verbose_name_plural = "Curricula with this course."
     extra = 0
     autocomplete_fields = ("curriculum",)
-    ordering = ("course",)
+    ordering = ("curriculum__college__code", "curriculum__short_name")
+    template = "admin/academics/coursecurriculum/tabular_inline.html"
+    fields = (
+        "curriculum",
+        "level_number",
+        "required_group_number",
+        "credit_hours",
+    )
 
 
 class CourseFeeInline(admin.TabularInline):
@@ -118,14 +125,12 @@ class CurriculumCourseInline(admin.TabularInline):
     formset = CurriculumCourseSummaryFormSet
     fields = (
         "level_number",
-        "year_number",
-        "semester_number",
         "course",
         "required_group_number",
         "credit_hours",
         "student_count_link",
     )
-    readonly_fields = ("year_number", "semester_number", "student_count_link")
+    readonly_fields = ("student_count_link",)
 
     def formfield_for_dbfield(self, db_field, request, **kwargs):
         """Rename required group field label for inline display."""

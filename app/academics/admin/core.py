@@ -413,6 +413,7 @@ class CurriculumCourseAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         "course_display",
         "department_link",
         "curriculum",
+        "level_number",
         "section_count_link",
         "faculties_links",
     )

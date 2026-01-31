@@ -103,6 +103,8 @@ class CurriculumCourse(models.Model):
     level_number = models.PositiveSmallIntegerField(
         choices=LEVEL_NUMBER_CHOICES,
         default=LEVEL_NUMBER.UNDEF,
+        null=True,
+        blank=True,
         db_index=True,
         help_text="Derived level number (0=remedial, 1-8=Y1S1..Y4S2, 99=undefined)",
     )
@@ -147,7 +149,10 @@ class CurriculumCourse(models.Model):
 
     def _ensure_year_semester_from_level(self) -> None:
         """Autofill year/semester when a level number is provided."""
-        level_value = int(getattr(self, "level_number", LEVEL_NUMBER.UNDEF) or 0)
+        level_value_raw = getattr(self, "level_number", None)
+        if level_value_raw is None:
+            return
+        level_value = int(level_value_raw)
         if level_value == int(LEVEL_NUMBER.UNDEF.value):
             return
         if level_value <= 0:
@@ -159,6 +164,7 @@ class CurriculumCourse(models.Model):
             semester_value = 1 if level_value % 2 else 2
             self.year_number = year_value
             self.semester_number = semester_value
+            return
 
     def current_faculty(self) -> FacultyQuery:
         """Get the list of faculty teaching this course in the current semester."""
