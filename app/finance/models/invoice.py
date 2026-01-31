@@ -122,7 +122,7 @@ class Invoice(StatusableMixin, models.Model):
 
     def initial_forty_percent_due(self) -> Decimal:
         """Return 40% of the initial amount due."""
-        amount_due = self.initial_amount_due
+        amount_due: Decimal | None = getattr(self, "initial_amount_due", None)
         if amount_due is None:
             amount_due = self.balance
         if amount_due is None:
@@ -132,7 +132,8 @@ class Invoice(StatusableMixin, models.Model):
     def save(self, *args, **kwargs):
         """Ensure the balance is set before saving."""
         # Legacy safeguard: align totals when older rows missed initial_amount_due.
-        if self.initial_amount_due is None:
+        initial_amount_due: Decimal | None = getattr(self, "initial_amount_due", None)
+        if initial_amount_due is None:
             if self.balance is not None:
                 self.initial_amount_due = self.balance
             else:

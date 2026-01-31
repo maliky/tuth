@@ -81,18 +81,18 @@ def student_saves_registration(
     """Select a section from the dashboard and submit the registration."""
     assert student_context.user is not None
     assert student_context.section is not None
+    section = student_context.section
     _login_to_portal(selenium_driver, live_server, student_context.user.username)
     selenium_driver.get(f"{live_server.url}{reverse('student_dashboard')}")
 
     select_element = selenium_driver.find_element(By.CSS_SELECTOR, ".section-picker")
-    Select(select_element).select_by_value(str(student_context.section.id))
+    Select(select_element).select_by_value(str(section.id))
 
     selected_input = selenium_driver.find_element(
         By.CSS_SELECTOR, "[data-selected-sections]"
     )
     WebDriverWait(selenium_driver, 10).until(
-        lambda _driver: str(student_context.section.id)
-        in (selected_input.get_attribute("value") or "")
+        lambda _driver: str(section.id) in (selected_input.get_attribute("value") or "")
     )
 
     selenium_driver.find_element(By.CSS_SELECTOR, "[data-register-submit]").click()
@@ -110,11 +110,12 @@ def invoice_created_with_initial_amount_due(
     assert student_context.student is not None
     assert student_context.section is not None
     assert student_context.fee_due is not None
+    section = student_context.section
 
     def _registration_exists() -> bool:
         return Registration.objects.filter(
             student=student_context.student,
-            section=student_context.section,
+            section=section,
         ).exists()
 
     WebDriverWait(selenium_driver, 10).until(lambda _driver: _registration_exists())
