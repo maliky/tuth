@@ -108,7 +108,12 @@ class CurriculumCourseInline(admin.TabularInline):
     verbose_name_plural = "Courses in this curriculum."
     extra = 0
     autocomplete_fields = ("course", "curriculum")
-    ordering = ("year_number", "semester_number", "course__code")
+    ordering = (
+        "year_number",
+        "semester_number",
+        "required_group_number",
+        "course__code",
+    )
     template = "admin/academics/curriculumcourse/tabular_inline.html"
     formset = CurriculumCourseSummaryFormSet
     fields = (
