@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import os
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -23,6 +24,7 @@ NodeMapT: TypeAlias = dict[int, str]
 EdgeListT: TypeAlias = set[tuple[int, int]]
 LevelMapT: TypeAlias = dict[int, int]
 NodeAttrMapT: TypeAlias = dict[int, dict[str, str]]
+OwnerIdsT: TypeAlias = tuple[int, int]
 
 CSV_HEADERS: Sequence[str] = (
     "curriculum_short_name",
@@ -85,7 +87,7 @@ def _department_color(dept_code: str | None) -> str:
 
 def _node_shape(is_curriculum_course: bool) -> str:
     """Return the DOT shape for a node type."""
-    return "box" if is_curriculum_course else "rectangle"
+    return "box" if is_curriculum_course else "ellipse"
 
 
 def _output_dir() -> Path:
@@ -246,6 +248,25 @@ def _render_png(dot_path: Path, png_path: Path) -> None:
     )
 
 
+def _resolve_owner_ids() -> OwnerIdsT:
+    """Return uid/gid for exported files using env overrides when present."""
+    uid_raw = os.getenv("TUSIS_EXPORT_UID")
+    gid_raw = os.getenv("TUSIS_EXPORT_GID")
+    uid = int(uid_raw) if uid_raw is not None else os.getuid()
+    gid = int(gid_raw) if gid_raw is not None else os.getgid()
+    return uid, gid
+
+
+def _apply_owner(paths: Iterable[Path]) -> None:
+    """Apply ownership to generated files when possible."""
+    uid, gid = _resolve_owner_ids()
+    for path in paths:
+        try:
+            path.chown(uid, gid)
+        except PermissionError:
+            continue
+
+
 def export_prereq_graph(curriculum: Curriculum) -> PrereqGraphPaths:
     """Export prerequisite CSV + DOT + PNG for a curriculum."""
     node_map, level_map, course_map, node_attrs = _build_course_maps(curriculum)
@@ -288,6 +309,7 @@ def export_prereq_graph(curriculum: Curriculum) -> PrereqGraphPaths:
     dot_path.write_text(dot_contents, encoding="utf-8")
 
     _render_png(dot_path, png_path)
+    _apply_owner([csv_path, dot_path, png_path])
 
     return PrereqGraphPaths(
         csv_path=csv_path,
