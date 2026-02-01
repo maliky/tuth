@@ -89,16 +89,21 @@ class CurriculumCourseSummaryFormSet(BaseInlineFormSet):
 
     def get_queryset(self):
         """Attach summary attributes used by the inline template."""
-        qs = super().get_queryset().annotate(
-            student_total=Count(
-                "sections__section_registrations__student",
-                distinct=True,
+        qs = (
+            super()
+            .get_queryset()
+            .annotate(
+                student_total=Count(
+                    "sections__section_registrations__student",
+                    distinct=True,
+                )
             )
-        ).order_by(
-            "year_number",
-            "semester_number",
-            "required_group_number",
-            "course__code",
+            .order_by(
+                "year_number",
+                "semester_number",
+                "required_group_number",
+                "course__code",
+            )
         )
         summary_builder = getattr(self, "summary_builder", None)
         group_key_builder = getattr(self, "group_key_builder", None)

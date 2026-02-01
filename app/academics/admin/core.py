@@ -371,7 +371,6 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
             level=messages.SUCCESS,
         )
 
-
     def merge_records(self, target: ModelT, sources: Iterable[ModelT]) -> dict[str, int]:
         """Merge curricula using the shared merge helper."""
         target_curriculum = cast(Curriculum, target)

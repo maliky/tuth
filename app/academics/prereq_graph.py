@@ -116,9 +116,11 @@ def _build_csv_rows(
                 "course_id": course.id,
                 "course_short_code": course.short_code or course.code or str(course),
                 "course_title": course.title,
-                "course_level_number": int(course_cc.level_number)
-                if course_cc and course_cc.level_number is not None
-                else "",
+                "course_level_number": (
+                    int(course_cc.level_number)
+                    if course_cc and course_cc.level_number is not None
+                    else ""
+                ),
                 "course_department_code": course_dept.code if course_dept else "",
                 "course_college_code": course_college.code if course_college else "",
                 "prerequisite_course_id": prereq_course.id,
@@ -126,13 +128,15 @@ def _build_csv_rows(
                 or prereq_course.code
                 or str(prereq_course),
                 "prerequisite_title": prereq_course.title,
-                "prerequisite_level_number": int(prereq_cc.level_number)
-                if prereq_cc and prereq_cc.level_number is not None
-                else "",
+                "prerequisite_level_number": (
+                    int(prereq_cc.level_number)
+                    if prereq_cc and prereq_cc.level_number is not None
+                    else ""
+                ),
                 "prerequisite_department_code": prereq_dept.code if prereq_dept else "",
-                "prerequisite_college_code": prereq_college.code
-                if prereq_college
-                else "",
+                "prerequisite_college_code": (
+                    prereq_college.code if prereq_college else ""
+                ),
             }
         )
     return rows
@@ -154,9 +158,7 @@ def _build_edges(prerequisites: Iterable[Prerequisite]) -> EdgeListT:
     return edges
 
 
-def _build_dot(
-    node_map: NodeMapT, edges: EdgeListT, level_map: LevelMapT
-) -> str:
+def _build_dot(node_map: NodeMapT, edges: EdgeListT, level_map: LevelMapT) -> str:
     """Return DOT contents for prerequisite graph."""
     lines: list[str] = [
         "digraph prereq {",
