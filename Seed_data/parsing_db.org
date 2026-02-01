@@ -55,14 +55,13 @@
   import app.spaces as sp
   import app.timetable as tt
   
-  import parse_utils as pu
+  import parsing_utils as pu
   
   os.sys.executable, os.getcwd()
 #+END_SRC
 
 #+RESULTS:
 :results:
-('/home/mlk/.pyenv/versions/tusis/bin/python', '/mnt/backup/Jobs/TU/DRID/TII-Technics-Innovations/Tusis/Tusis_app/Seed_data')
 :end:
 
 * Loading the DB in Memory
