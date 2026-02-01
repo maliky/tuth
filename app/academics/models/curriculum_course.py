@@ -57,7 +57,7 @@ LEVEL_NUMBER_CHOICES = tuple(
             level,
             f"Level {level} (Y{(level - 1) // 2 + 1}S{1 if level % 2 else 2})",
         )
-        for level in range(1, 9)
+        for level in range(1, 11)
     ]
 )
 
@@ -106,7 +106,7 @@ class CurriculumCourse(models.Model):
         null=True,
         blank=True,
         db_index=True,
-        help_text="Derived level number (0=remedial, 1-8=Y1S1..Y4S2, 99=undefined)",
+        help_text="Derived level number (0=remedial, 1-10=Y1S1..Y5S2, 99=undefined)",
     )
     year_number = models.PositiveSmallIntegerField(
         choices=YEAR_NUMBER_CHOICES,
@@ -159,7 +159,7 @@ class CurriculumCourse(models.Model):
             self.year_number = LEVEL_NUMBER.UNDEF
             self.semester_number = 0
             return
-        if 1 <= level_value <= 8:
+        if 1 <= level_value <= 10:
             year_value = (level_value - 1) // 2 + 1
             semester_value = 1 if level_value % 2 else 2
             self.year_number = year_value

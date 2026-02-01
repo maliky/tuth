@@ -50,6 +50,7 @@ from .merges import (
     merge_departments,
     merge_curriculum_courses,
 )
+from app.academics.prereq_graph import export_prereq_graph
 from .resources import (
     CollegeResource,
     CourseResource,
@@ -59,6 +60,7 @@ from .resources import (
     PrerequisiteResource,
 )
 from django.utils.text import Truncator
+from django.conf import settings
 from app.timetable.admin.filters import SemesterFilterAC
 
 ModelChoiceFieldT: TypeAlias = forms.ModelChoiceField | forms.ModelMultipleChoiceField
@@ -312,6 +314,7 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
     search_fields = ("short_name", "long_name")
     # Keep short_name out of the wizard to avoid active-name uniqueness collisions.
     merge_fields = ("long_name", "college", "status", "is_active", "description")
+    actions = ["export_prereq_graph_action"]
 
     def student_count(self, obj):
         """Adding a link to the student number."""
@@ -329,6 +332,45 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
             f"?curricula__id__exact={obj.id}"
         )
         return format_html('<a href="{}">{}</a>', url, count)
+
+    @admin.action(description="Export prerequisite graph (CSV + DOT + PNG)")
+    def export_prereq_graph_action(self, request, queryset):
+        """Export prerequisite graphs for selected curricula."""
+        if not queryset:
+            self.message_user(request, "No curricula selected.", level=messages.WARNING)
+            return
+
+        outputs = []
+        for curriculum in queryset:
+            try:
+                outputs.append(export_prereq_graph(curriculum))
+            except Exception as exc:  # pragma: no cover - admin message path
+                self.message_user(
+                    request,
+                    f"Failed for {curriculum.short_name}: {exc}",
+                    level=messages.ERROR,
+                )
+                continue
+
+        if not outputs:
+            return
+
+        links = []
+        for output in outputs:
+            links.append(
+                format_html(
+                    '<a href="{url}">{label}</a>',
+                    url=f"{settings.MEDIA_URL}Prereq/{output.png_path.name}",
+                    label=output.png_path.name,
+                )
+            )
+        msg = format_html_join(" · ", "{}", ((link,) for link in links))
+        self.message_user(
+            request,
+            format_html("Generated prerequisite graphs: {}.", msg),
+            level=messages.SUCCESS,
+        )
+
 
     def merge_records(self, target: ModelT, sources: Iterable[ModelT]) -> dict[str, int]:
         """Merge curricula using the shared merge helper."""
