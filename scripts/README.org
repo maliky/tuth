@@ -1,6 +1,9 @@
 # Merge Conflict SQL Scripts
 
 These scripts are intended to be run *before* hard merges so you can review collisions (duplicate courses, section overlaps, invoice clashes, etc.) in advance.
+The level-number normalizer updates curriculum-course rows based on a unique
+course level, so you can align program levels across curricula without
+manual edits.
 
 ** Dockerized (preprod) workflow
 
@@ -24,12 +27,25 @@ Replace the script name as needed:
 - =scripts/curriculum_merge_conflicts.sql=
 - =scripts/department_merge_conflicts.sql=
 - =scripts/student_merge_conflicts.sql=
+- =scripts/normalize_curriculumcourse_level_by_course.sql=
 
 You can also pipe the script directly into psql:
 
 #+BEGIN_SRC bash
 cat scripts/course_merge_conflicts.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v source_id=1 -v target_id=2
 #+END_SRC
+
+To normalize curriculum course level numbers by course short code:
+
+#+BEGIN_SRC bash
+cat scripts/normalize_curriculumcourse_level_by_course.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v course_short_code='ACCT-201'
+#+END_SRC
+
+The normalizer checks that exactly one defined level_number exists for the
+given course short_code (non-null and not 99). If it finds a single value,
+it copies that level_number into rows where level_number is null/99 and also
+syncs year_number/semester_number from the level. If no defined level exists
+or multiple values exist, it does nothing.
 
 ** Dev / native psql workflow
 

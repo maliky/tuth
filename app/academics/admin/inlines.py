@@ -89,7 +89,17 @@ class CurriculumCourseSummaryFormSet(BaseInlineFormSet):
 
     def get_queryset(self):
         """Attach summary attributes used by the inline template."""
-        qs = super().get_queryset()
+        qs = super().get_queryset().annotate(
+            student_total=Count(
+                "sections__section_registrations__student",
+                distinct=True,
+            )
+        ).order_by(
+            "year_number",
+            "semester_number",
+            "required_group_number",
+            "course__code",
+        )
         summary_builder = getattr(self, "summary_builder", None)
         group_key_builder = getattr(self, "group_key_builder", None)
         if summary_builder is None or group_key_builder is None:
@@ -128,9 +138,8 @@ class CurriculumCourseInline(admin.TabularInline):
         "course",
         "required_group_number",
         "credit_hours",
-        "student_count_link",
     )
-    readonly_fields = ("student_count_link",)
+    readonly_fields = ()
 
     def formfield_for_dbfield(self, db_field, request, **kwargs):
         """Rename required group field label for inline display."""
@@ -175,11 +184,9 @@ class CurriculumCourseInline(admin.TabularInline):
         return summary_map
 
     def get_queryset(self, request):
-        """Annotate student totals for curriculum-course rows."""
+        """Order curriculum-course rows for inline display."""
         qs = super().get_queryset(request)
-        return qs.annotate(
-            student_total=Count("sections__section_registrations__student", distinct=True)
-        ).order_by(
+        return qs.order_by(
             "year_number",
             "semester_number",
             "required_group_number",
@@ -194,21 +201,7 @@ class CurriculumCourseInline(admin.TabularInline):
         formset_class.group_key_builder = self._group_key
         return formset
 
-    @admin.display(description="Students", ordering="student_total")
-    def student_count_link(self, obj):
-        """Link to students enrolled in this curriculum course."""
-        count = getattr(obj, "student_total", None)
-        if count is None:
-            count = (
-                obj.sections.filter(section_registrations__student__isnull=False)
-                .values_list("section_registrations__student_id", flat=True)
-                .distinct()
-                .count()
-            )
-        url = reverse("admin:people_student_changelist") + (
-            f"?student_registrations__section__curriculum_course__id__exact={obj.id}"
-        )
-        return format_html('<a href="{}">{}</a>', url, count)
+    # Student counts removed from inline to avoid slow/incorrect values.
 
 
 class DepartmentCourseInline(admin.TabularInline):

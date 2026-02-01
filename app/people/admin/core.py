@@ -23,6 +23,7 @@ from app.academics.admin.filters import CurriculumFilterAC, DepartmentFilterAC
 from app.people.admin.filters import (
     FacultyGroupFAC,
     FacultyTeachingDepartmentFilterAC,
+    StudentCurriculumCourseFilterAC,
     StudentEntrySemFAC,
 )
 from app.people.admin.mixins import (
@@ -609,6 +610,7 @@ class StudentAdmin(
         CurriculumFilterAC,
         StudentEntrySemFAC,
         StudentLevelFilter,
+        StudentCurriculumCourseFilterAC,
         "curriculum__college",
     )
     readonly_fields = ("student_id",)
