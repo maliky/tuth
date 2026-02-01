@@ -139,8 +139,8 @@ class CurriculumCourseInline(admin.TabularInline):
     template = "admin/academics/curriculumcourse/tabular_inline.html"
     formset = CurriculumCourseSummaryFormSet
     fields = (
-        "level_number",
         "course",
+        "level_number",
         "required_group_number",
         "credit_hours",
     )

@@ -115,7 +115,7 @@ def _build_csv_rows(
                 "curriculum_short_name": curriculum.short_name,
                 "course_id": course.id,
                 "course_short_code": course.short_code or course.code or str(course),
-                "course_title": course.title,
+                "course_title": course.title or "",
                 "course_level_number": (
                     int(course_cc.level_number)
                     if course_cc and course_cc.level_number is not None
@@ -127,7 +127,7 @@ def _build_csv_rows(
                 "prerequisite_short_code": prereq_course.short_code
                 or prereq_course.code
                 or str(prereq_course),
-                "prerequisite_title": prereq_course.title,
+                "prerequisite_title": prereq_course.title or "",
                 "prerequisite_level_number": (
                     int(prereq_cc.level_number)
                     if prereq_cc and prereq_cc.level_number is not None
