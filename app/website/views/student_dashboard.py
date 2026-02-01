@@ -148,7 +148,8 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 "balance": amount_due,
             },
         )
-        if not created and invoice.initial_amount_due is None:
+        initial_amount_due: Decimal | None = getattr(invoice, "initial_amount_due", None)
+        if not created and initial_amount_due is None:
             invoice.initial_amount_due = amount_due
             if invoice.balance is None:
                 invoice.balance = amount_due
