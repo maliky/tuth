@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Iterable, Sequence, TypeAlias
 
 from django.conf import settings
+from django.db.models import Q
 from django.core.management.base import CommandError
 from django.utils.text import slugify
 
@@ -21,6 +22,7 @@ CsvRowT: TypeAlias = dict[str, str | int]
 NodeMapT: TypeAlias = dict[int, str]
 EdgeListT: TypeAlias = set[tuple[int, int]]
 LevelMapT: TypeAlias = dict[int, int]
+NodeAttrMapT: TypeAlias = dict[int, dict[str, str]]
 
 CSV_HEADERS: Sequence[str] = (
     "curriculum_short_name",
@@ -56,6 +58,36 @@ def resolve_curriculum(short_name: str) -> Curriculum:
     return curriculum
 
 
+def _course_display(course) -> str:
+    """Return the display short code for a course in prereq outputs."""
+    return course.short_code or course.code or str(course)
+
+
+def _department_color(dept_code: str | None) -> str:
+    """Return a stable color for a department code."""
+    if not dept_code:
+        return "#6c757d"
+    palette = [
+        "#0d6efd",
+        "#198754",
+        "#dc3545",
+        "#fd7e14",
+        "#6f42c1",
+        "#20c997",
+        "#0dcaf0",
+        "#ffc107",
+        "#6610f2",
+        "#d63384",
+    ]
+    color_index = abs(hash(dept_code)) % len(palette)
+    return palette[color_index]
+
+
+def _node_shape(is_curriculum_course: bool) -> str:
+    """Return the DOT shape for a node type."""
+    return "box" if is_curriculum_course else "rectangle"
+
+
 def _output_dir() -> Path:
     """Return output directory for prerequisite graphs."""
     return Path(settings.MEDIA_ROOT) / "Prereq"
@@ -68,11 +100,12 @@ def _safe_curriculum_slug(curriculum: Curriculum) -> str:
 
 def _build_course_maps(
     curriculum: Curriculum,
-) -> tuple[NodeMapT, LevelMapT, dict[int, CurriculumCourse]]:
+) -> tuple[NodeMapT, LevelMapT, dict[int, CurriculumCourse], NodeAttrMapT]:
     """Return node/level maps for all curriculum courses."""
     course_map: dict[int, CurriculumCourse] = {}
     node_map: NodeMapT = {}
     level_map: LevelMapT = {}
+    node_attrs: NodeAttrMapT = {}
 
     qs = (
         CurriculumCourse.objects.filter(curriculum=curriculum)
@@ -82,13 +115,19 @@ def _build_course_maps(
     for curriculum_course in qs:
         course = curriculum_course.course
         course_map[course.id] = curriculum_course
-        label = course.short_code or course.code or str(course)
+        label = _course_display(course)
         node_map[course.id] = label
+        node_attrs[course.id] = {
+            "shape": _node_shape(True),
+            "color": _department_color(
+                getattr(course.department, "code", None) if course.department else None
+            ),
+        }
         level_value = curriculum_course.level_number
         if level_value is not None:
             level_map[course.id] = int(level_value)
 
-    return node_map, level_map, course_map
+    return node_map, level_map, course_map, node_attrs
 
 
 def _build_csv_rows(
@@ -114,7 +153,7 @@ def _build_csv_rows(
             {
                 "curriculum_short_name": curriculum.short_name,
                 "course_id": course.id,
-                "course_short_code": course.short_code or course.code or str(course),
+                "course_short_code": _course_display(course),
                 "course_title": course.title or "",
                 "course_level_number": (
                     int(course_cc.level_number)
@@ -124,9 +163,7 @@ def _build_csv_rows(
                 "course_department_code": course_dept.code if course_dept else "",
                 "course_college_code": course_college.code if course_college else "",
                 "prerequisite_course_id": prereq_course.id,
-                "prerequisite_short_code": prereq_course.short_code
-                or prereq_course.code
-                or str(prereq_course),
+                "prerequisite_short_code": _course_display(prereq_course),
                 "prerequisite_title": prereq_course.title or "",
                 "prerequisite_level_number": (
                     int(prereq_cc.level_number)
@@ -158,7 +195,12 @@ def _build_edges(prerequisites: Iterable[Prerequisite]) -> EdgeListT:
     return edges
 
 
-def _build_dot(node_map: NodeMapT, edges: EdgeListT, level_map: LevelMapT) -> str:
+def _build_dot(
+    node_map: NodeMapT,
+    edges: EdgeListT,
+    level_map: LevelMapT,
+    node_attrs: NodeAttrMapT,
+) -> str:
     """Return DOT contents for prerequisite graph."""
     lines: list[str] = [
         "digraph prereq {",
@@ -168,7 +210,12 @@ def _build_dot(node_map: NodeMapT, edges: EdgeListT, level_map: LevelMapT) -> st
 
     for course_id in sorted(node_map):
         label = node_map[course_id].replace('"', "'")
-        lines.append(f'  C{course_id} [label="{label}"];')
+        attrs = node_attrs.get(course_id, {})
+        shape = attrs.get("shape", "box")
+        color = attrs.get("color", "#6c757d")
+        lines.append(
+            f'  C{course_id} [label="{label}" shape="{shape}" color="{color}"];'
+        )
 
     for src, dst in sorted(edges):
         lines.append(f"  C{src} -> C{dst};")
@@ -201,16 +248,30 @@ def _render_png(dot_path: Path, png_path: Path) -> None:
 
 def export_prereq_graph(curriculum: Curriculum) -> PrereqGraphPaths:
     """Export prerequisite CSV + DOT + PNG for a curriculum."""
-    node_map, level_map, course_map = _build_course_maps(curriculum)
+    node_map, level_map, course_map, node_attrs = _build_course_maps(curriculum)
+    curriculum_course_ids = list(course_map.keys())
 
     prerequisites = (
-        Prerequisite.objects.filter(curriculum=curriculum)
+        Prerequisite.objects.filter(course_id__in=curriculum_course_ids)
+        .filter(Q(curriculum=curriculum) | Q(curriculum__isnull=True))
         .select_related(
             "course__department__college",
             "prerequisite_course__department__college",
         )
         .order_by("course__short_code", "prerequisite_course__short_code")
     )
+    for prereq in prerequisites:
+        prereq_course = prereq.prerequisite_course
+        if prereq_course.id not in node_map:
+            node_map[prereq_course.id] = _course_display(prereq_course)
+            node_attrs[prereq_course.id] = {
+                "shape": _node_shape(False),
+                "color": _department_color(
+                    getattr(prereq_course.department, "code", None)
+                    if prereq_course.department
+                    else None
+                ),
+            }
 
     output_dir = _output_dir()
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -223,7 +284,7 @@ def export_prereq_graph(curriculum: Curriculum) -> PrereqGraphPaths:
     _write_csv(csv_path, rows)
 
     edges = _build_edges(prerequisites)
-    dot_contents = _build_dot(node_map, edges, level_map)
+    dot_contents = _build_dot(node_map, edges, level_map, node_attrs)
     dot_path.write_text(dot_contents, encoding="utf-8")
 
     _render_png(dot_path, png_path)

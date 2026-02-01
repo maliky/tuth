@@ -1,5 +1,8 @@
 
 
+* <2026-02-01 dim. 18:43> Test the prereq graph engine
+  
+
 * <2026-01-30 ven. 23:00> curriculum
 add a link from the dean dashboard to the curriculum admin, for him to edit curriculums
 he should be able to see all the course, but only edit those courses unders his college.
