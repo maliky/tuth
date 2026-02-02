@@ -1,5 +1,26 @@
 
 
+* <2026-02-02 lun. 07:23> DB sync
+1. You run the dump on preprod (redirection happens on preprod)
+
+  ssh jil@54.36.60.51 'cd Tusis/Tusis_app && docker compose -f docker-compose-preprod.yml exec
+  -T db pg_dump -Fc -Z 9 -U tusis_preprod -d tusis_preprod > /tmp/tusis_preprod.dump'
+
+  rsync jil@54.36.60.51:/tmp/tusis_preprod.dump /tmp/
+
+  sudo -u postgres dropdb --if-exists --force tusis
+  sudo -u postgres createdb -O tusisuser tusis
+
+  3. Restore the dump into test_tusis (keep ownership local):
+
+  sudo -u postgres pg_restore -v -d tusis --no-owner --no-privileges --role=tusisuser /tmp/tusis_preprod.dump
+
+#  Quick sanity check:
+
+  psql -d test_tusis -c "SELECT count(*) FROM django_migrations;"
+
+
+
 * <2026-02-02 lun. 05:09> graphes and DB
   - how to sync the database from the online to the local
   - equivalence of the graphe with d3js
