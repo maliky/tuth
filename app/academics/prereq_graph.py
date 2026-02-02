@@ -23,6 +23,7 @@ NodeMapT: TypeAlias = dict[int, str]
 EdgeListT: TypeAlias = set[tuple[int, int]]
 LevelMapT: TypeAlias = dict[int, int]
 NodeAttrMapT: TypeAlias = dict[int, dict[str, str]]
+GroupMapT: TypeAlias = dict[int, list[int]]
 
 CSV_HEADERS: Sequence[str] = (
     "curriculum_short_name",
@@ -61,6 +62,11 @@ def resolve_curriculum(short_name: str) -> Curriculum:
 def _course_display(course) -> str:
     """Return the display short code for a course in prereq outputs."""
     return course.short_code or course.code or str(course)
+
+
+def _dot_safe_label(value: str) -> str:
+    """Return a DOT-safe label by normalizing quotes."""
+    return value.replace('"', "'")
 
 
 def _department_color(dept_code: str | None) -> str:
@@ -200,16 +206,22 @@ def _build_dot(
     edges: EdgeListT,
     level_map: LevelMapT,
     node_attrs: NodeAttrMapT,
+    group_map: GroupMapT,
+    title: str,
 ) -> str:
     """Return DOT contents for prerequisite graph."""
+    safe_title = _dot_safe_label(title)
     lines: list[str] = [
         "digraph prereq {",
         "  rankdir=LR;",
         "  node [shape=box];",
+        f'  label="{safe_title}";',
+        "  labelloc=top;",
+        "  fontsize=20;",
     ]
 
     for course_id in sorted(node_map):
-        label = node_map[course_id].replace('"', "'")
+        label = _dot_safe_label(node_map[course_id])
         attrs = node_attrs.get(course_id, {})
         shape = attrs.get("shape", "box")
         color = attrs.get("color", "#6c757d")
@@ -230,7 +242,23 @@ def _build_dot(
         level_nodes = " ".join(
             f"C{course_id}" for course_id in sorted(levels[level_value])
         )
-        lines.append(f"  {{ rank=same; {level_nodes}; }}")
+        lines.append(
+            f'  L{level_value} [shape=plaintext label="S-{level_value}"];'
+        )
+        lines.append(f"  {{ rank=same; L{level_value}; {level_nodes}; }}")
+
+    for group_number, course_ids in sorted(group_map.items()):
+        if not course_ids:
+            continue
+        ports = "|".join(
+            f"<c{course_id}> {node_map.get(course_id, f'C{course_id}')}"
+            for course_id in course_ids
+        )
+        lines.append(
+            f'  G{group_number} [shape=record label="{ports}"];'
+        )
+        for course_id in course_ids:
+            lines.append(f"  G{group_number}:c{course_id} -> C{course_id};")
 
     lines.append("}")
     return "\n".join(lines)
@@ -273,6 +301,12 @@ def export_prereq_graph(curriculum: Curriculum) -> PrereqGraphPaths:
                 ),
             }
 
+    group_map: GroupMapT = {}
+    for course_id, curriculum_course in course_map.items():
+        group_number = int(getattr(curriculum_course, "required_group_number", 0) or 0)
+        if group_number:
+            group_map.setdefault(group_number, []).append(course_id)
+
     output_dir = _output_dir()
     output_dir.mkdir(parents=True, exist_ok=True)
     slug = _safe_curriculum_slug(curriculum)
@@ -284,7 +318,14 @@ def export_prereq_graph(curriculum: Curriculum) -> PrereqGraphPaths:
     _write_csv(csv_path, rows)
 
     edges = _build_edges(prerequisites)
-    dot_contents = _build_dot(node_map, edges, level_map, node_attrs)
+    dot_contents = _build_dot(
+        node_map,
+        edges,
+        level_map,
+        node_attrs,
+        group_map,
+        curriculum.long_name or curriculum.short_name or str(curriculum),
+    )
     dot_path.write_text(dot_contents, encoding="utf-8")
 
     _render_png(dot_path, png_path)
