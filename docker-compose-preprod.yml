@@ -25,6 +25,9 @@ services:
       dockerfile: Dockerfile-prod
     restart: unless-stopped
     <<: *default-env
+    environment:
+      - TUSIS_EXPORT_UID=1002
+      - TUSIS_EXPORT_GID=1002
     depends_on:
       - db
     command: ["/bin/bash", "/code/deploy/preprod/entrypoint.sh"]

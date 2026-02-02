@@ -19,9 +19,9 @@ from app.academics.prereq_graph import (
 
 
 class Command(BaseCommand):
-    """Export curriculum prerequisites as CSV, DOT, and PNG."""
+    """Export curriculum prerequisites as JSON, DOT, and PNG."""
 
-    help = "Export prerequisites for one curriculum as CSV + DOT + PNG."
+    help = "Export prerequisites for one curriculum as JSON + DOT + PNG."
 
     def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
@@ -40,6 +40,7 @@ class Command(BaseCommand):
         curriculum = resolve_curriculum(short_names[0])
         output = export_prereq_graph(curriculum)
 
-        self.stdout.write(self.style.SUCCESS(f"CSV: {output.csv_path}"))
+        self.stdout.write(self.style.SUCCESS(f"JSON: {output.json_path}"))
+        self.stdout.write(self.style.SUCCESS(f"JS: {output.js_path}"))
         self.stdout.write(self.style.SUCCESS(f"DOT: {output.dot_path}"))
         self.stdout.write(self.style.SUCCESS(f"PNG: {output.png_path}"))

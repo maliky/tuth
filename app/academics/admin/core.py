@@ -357,10 +357,14 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
 
         links = []
         for output in outputs:
+            slug = output.json_path.stem
+            view_url = reverse("academics_prereq_graph", args=[slug])
+            png_url = f"{settings.MEDIA_URL}Prereq/{output.png_path.name}"
             links.append(
                 format_html(
-                    '<a href="{url}">{label}</a>',
-                    url=f"{settings.MEDIA_URL}Prereq/{output.png_path.name}",
+                    '<a href="{view}">{label}</a> (<a href="{png}">PNG</a>)',
+                    view=view_url,
+                    png=png_url,
                     label=output.png_path.name,
                 )
             )
