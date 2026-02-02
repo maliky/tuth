@@ -19,6 +19,15 @@ services:
       timeout: 5s
       retries: 5
 
+  js-tools:
+    image: node:20-bookworm-slim
+    working_dir: /code
+    <<: *default-env
+    volumes:
+      - .:/code
+      - preprod_node_modules:/code/node_modules
+    command: ["bash", "-lc", "sleep infinity"]
+
   web:
     build:
       context: .
@@ -38,3 +47,4 @@ services:
 
 volumes:
   preprod_postgres_data:
+  preprod_node_modules:

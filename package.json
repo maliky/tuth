@@ -1,0 +1,14 @@
+{
+  "name": "tusis-js-tools",
+  "private": true,
+  "devDependencies": {
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.2.5"
+  },
+  "scripts": {
+    "lint:js": "eslint \"app/**/static/**/*.js\" \"static/**/*.js\"",
+    "format:check:js": "prettier --check \"app/**/static/**/*.js\" \"static/**/*.js\"",
+    "format:js": "prettier --write \"app/**/static/**/*.js\" \"static/**/*.js\""
+  }
+}

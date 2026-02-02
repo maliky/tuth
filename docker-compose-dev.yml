@@ -21,5 +21,15 @@ services:
       -c maintenance_work_mem=32MB
       -c effective_cache_size=256MB
 
+  js-tools:
+    image: node:20-bookworm-slim
+    container_name: tusis-dev-js-tools
+    working_dir: /code
+    volumes:
+      - .:/code
+      - tusis_node_modules:/code/node_modules
+    command: ["bash", "-lc", "sleep infinity"]
+
 volumes:
   tusis_pgdata:
+  tusis_node_modules:

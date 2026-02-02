@@ -29,7 +29,6 @@ logs/*
 media/*
 nginx/*
 node_modules
-package*json
 static/*
 test_import.py
 !.env-dev.example

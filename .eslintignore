@@ -1,0 +1,4 @@
+**/*.min.js
+**/*.min.css
+**/bootstrap-icons/**
+

@@ -74,9 +74,19 @@ def _department_color(dept_code: str | None) -> str:
     return palette[color_index]
 
 
-def _node_shape(is_curriculum_course: bool) -> str:
+def _node_shape(is_curriculum_course: bool, college_code: str | None = None) -> str:
     """Return the DOT shape for a node type."""
-    return "box" if is_curriculum_course else "ellipse"
+    code = (college_code or "").upper()
+    shape_map = {
+        "COAS": "box",
+        "COHS": "egg",
+        "CAFS": "triangle",
+        "COET": "house",
+        "COED": "ellipse",
+        "COAB": "diamond",
+    }
+    fallback_shape = "box" if is_curriculum_course else "ellipse"
+    return shape_map.get(code, fallback_shape)
 
 
 def _output_dir() -> Path:
@@ -103,12 +113,13 @@ def _build_course_maps(
     )
     for curriculum_course in qs:
         course = curriculum_course.course
+        dept = course.department
+        college = dept.college if dept else None
+        college_code = college.code if college else None
         course_map[course.id] = curriculum_course
         node_attrs[course.id] = {
-            "shape": _node_shape(True),
-            "color": _department_color(
-                getattr(course.department, "code", None) if course.department else None
-            ),
+            "shape": _node_shape(True, college_code=college_code),
+            "color": _department_color(getattr(dept, "code", None) if dept else None),
         }
     return course_map, node_attrs
 
@@ -133,12 +144,15 @@ def _build_json_payload(
             group_number = int(curriculum_course.required_group_number)
         dept = course.department
         college = dept.college if dept else None
+        college_code = college.code if college else None
+        title_text = course.title or course.code or course.short_code or str(course)
         attrs = node_attrs.get(course.id, {})
         nodes.append(
             {
                 "id": f"C{course.id}",
                 "course_id": course.id,
                 "label": _course_display(course),
+                "title": title_text,
                 "level_number": (
                     int(curriculum_course.level_number)
                     if curriculum_course and curriculum_course.level_number is not None
@@ -148,7 +162,9 @@ def _build_json_payload(
                 "department_code": dept.code if dept else "",
                 "college_code": college.code if college else "",
                 "is_in_curriculum": is_in_curriculum,
-                "shape": attrs.get("shape", _node_shape(is_in_curriculum)),
+                "shape": attrs.get(
+                    "shape", _node_shape(is_in_curriculum, college_code=college_code)
+                ),
                 "color": attrs.get(
                     "color", _department_color(dept.code if dept else None)
                 ),
@@ -196,6 +212,12 @@ def _build_edges(links: Iterable[dict[str, str]]) -> EdgeListT:
     return edges
 
 
+def _course_id_sort_key(node: dict[str, object]) -> int:
+    """Return a course id for stable group sorting."""
+    course_id = node.get("course_id")
+    return course_id if isinstance(course_id, int) else 0
+
+
 def _build_dot(payload: JsonPayloadT) -> str:
     """Return DOT contents for prerequisite graph."""
     meta = payload.get("meta", {})
@@ -229,10 +251,14 @@ def _build_dot(payload: JsonPayloadT) -> str:
         label = str(node.get("label", "")).replace('"', "'")
         shape = str(node.get("shape", "box"))
         color = str(node.get("color", "#6c757d"))
+        is_in_curriculum = bool(node.get("is_in_curriculum", True))
+        style_attr = ' style="dashed"' if not is_in_curriculum else ""
         group_number = node.get("group_number")
         if isinstance(group_number, int) and group_number > 0:
             continue
-        lines.append(f'  {node_id} [label="{label}" shape="{shape}" color="{color}"];')
+        lines.append(
+            f'  {node_id} [label="{label}" shape="{shape}" color="{color}"{style_attr}];'
+        )
 
     edges = _build_edges(links)
     node_levels: dict[str, int] = {}
@@ -255,7 +281,7 @@ def _build_dot(payload: JsonPayloadT) -> str:
 
     for group_number in sorted(group_map):
         group_nodes = group_map[group_number]
-        group_nodes.sort(key=lambda item: int(item.get("course_id", 0) or 0))
+        group_nodes.sort(key=_course_id_sort_key)
         ports = "|".join(
             f"<c{node.get('course_id')}> {node.get('label', '')}" for node in group_nodes
         )
@@ -280,7 +306,8 @@ def _build_dot(payload: JsonPayloadT) -> str:
             dst_ref = dst_id
         lines.append(f"  {src_ref} -> {dst_ref};")
 
-    for level_value in sorted(levels):
+    level_values = sorted(levels)
+    for level_value in level_values:
         level_nodes = []
         for node_id in sorted(levels[level_value]):
             node = node_by_id.get(node_id)
@@ -292,6 +319,38 @@ def _build_dot(payload: JsonPayloadT) -> str:
                 level_nodes.append(node_id)
         lines.append(f'  L{level_value} [shape=plaintext label="S-{level_value}"];')
         lines.append(f"  {{ rank=same; L{level_value}; {' '.join(level_nodes)}; }}")
+
+    # Keep level bands ordered left-to-right with invisible edges.
+    for index in range(len(level_values) - 1):
+        src_level = level_values[index]
+        dst_level = level_values[index + 1]
+        lines.append(f"  L{src_level} -> L{dst_level} [style=invis];")
+
+    # Legend for shapes and curriculum inclusion style.
+    lines.extend(
+        [
+            "  subgraph cluster_legend {",
+            '    label="Legend";',
+            "    labelloc=b;",
+            "    labeljust=l;",
+            "    fontsize=12;",
+            "    style=rounded;",
+            '    color="#ced4da";',
+            "    rank=sink;",
+            '    LEG_COAS [label="COAS" shape=box];',
+            '    LEG_COHS [label="COHS" shape=egg];',
+            '    LEG_CAFS [label="CAFS" shape=triangle];',
+            '    LEG_COET [label="COET" shape=house];',
+            '    LEG_COED [label="COED" shape=ellipse];',
+            '    LEG_COAB [label="COAB" shape=diamond];',
+            '    LEG_OUT [label="Not in curriculum" shape=ellipse style="dashed"];',
+            "    { rank=same; LEG_COAS; LEG_COHS; LEG_CAFS; LEG_COET; "
+            "LEG_COED; LEG_COAB; LEG_OUT; }",
+            "    LEG_COAS -> LEG_COHS -> LEG_CAFS -> LEG_COET -> LEG_COED "
+            "-> LEG_COAB -> LEG_OUT [style=invis];",
+            "  }",
+        ]
+    )
 
     lines.append("}")
     return "\n".join(lines)
@@ -328,7 +387,7 @@ def _apply_owner(paths: Iterable[Path]) -> None:
 
 
 def export_prereq_graph(curriculum: Curriculum) -> PrereqGraphPaths:
-    """Export prerequisite CSV + DOT + PNG for a curriculum."""
+    """Export prerequisite JSON + DOT + PNG for a curriculum."""
     course_map, node_attrs = _build_course_maps(curriculum)
     curriculum_course_ids = list(course_map.keys())
 

@@ -1,8 +1,10 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <title>Prerequisite Graph</title>
+    <link rel="icon" href="{% static 'favicon.ico' %}" />
     <style>
       body {
         font-family: "Helvetica Neue", Arial, sans-serif;
@@ -29,14 +31,41 @@
         color: #0d6efd;
         font-size: 14px;
       }
+      header .actions button {
+        margin-left: 12px;
+        border: 1px solid #ced4da;
+        background: #ffffff;
+        color: #0d6efd;
+        font-size: 13px;
+        padding: 6px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      header .actions button:hover {
+        border-color: #adb5bd;
+        color: #0b5ed7;
+      }
+      #graph-error {
+        margin: 12px 24px 0;
+        padding: 10px 14px;
+        background: #fff3cd;
+        border: 1px solid #ffecb5;
+        color: #664d03;
+        border-radius: 6px;
+        font-size: 14px;
+        display: none;
+      }
       #graph {
         width: 100%;
         height: calc(100vh - 64px);
       }
       .node rect,
-      .node ellipse {
+      .node ellipse,
+      .node polygon,
+      .node path {
         fill: #ffffff;
         stroke-width: 2px;
+        stroke-linejoin: round;
       }
       .node text {
         font-size: 12px;
@@ -54,115 +83,20 @@
     <header>
       <h1>Prerequisite Graph – {{ slug }}</h1>
       <div class="actions">
+        <button type="button" id="layout-toggle">Switch to DAG layout</button>
         <a href="{{ json_url }}">Download JSON</a>
+        <a href="{{ dot_url }}">Download DOT</a>
         <a href="{{ png_url }}">Download PNG</a>
       </div>
     </header>
-    <svg id="graph"></svg>
+    <div id="graph-error"></div>
+    <svg id="graph" data-json-url="{{ json_url }}"></svg>
 
-    <script src="https://unpkg.com/d3@7"></script>
-    <script src="https://unpkg.com/d3-dag@0.6.4"></script>
-    <script src="{{ js_url }}"></script>
-    <script>
-      (function () {
-        const payload = window.PREREQ_GRAPH;
-        if (!payload) {
-          return;
-        }
-
-        const nodes = payload.nodes || [];
-        const links = payload.links || [];
-
-        const parents = new Map(nodes.map((node) => [node.id, []]));
-        links.forEach((link) => {
-          const list = parents.get(link.target);
-          if (list) {
-            list.push(link.source);
-          }
-        });
-
-        const dag = d3
-          .dagStratify()
-          .id((d) => d.id)
-          .parentIds((d) => parents.get(d.id) || [])(nodes);
-
-        const width = document.getElementById("graph").clientWidth;
-        const height = document.getElementById("graph").clientHeight;
-
-        const layout = d3
-          .sugiyama()
-          .nodeSize([120, 60])
-          .layering(d3.layeringLongestPath())
-          .decross(d3.decrossTwoLayer())
-          .coord(d3.coordVert())
-          .size([width - 80, height - 80]);
-
-        layout(dag);
-
-        const svg = d3.select("#graph");
-        svg.attr("viewBox", [0, 0, width, height].join(" "));
-
-        const zoomLayer = svg.append("g").attr("transform", "translate(40,40)");
-
-        svg.call(
-          d3
-            .zoom()
-            .scaleExtent([0.2, 3])
-            .on("zoom", (event) => zoomLayer.attr("transform", event.transform))
-        );
-
-        zoomLayer
-          .append("g")
-          .selectAll("path")
-          .data(dag.links())
-          .join("path")
-          .attr("class", "link")
-          .attr(
-            "d",
-            d3
-              .line()
-              .x((d) => d.x)
-              .y((d) => d.y)
-              .curve(d3.curveCatmullRom)
-          );
-
-        const nodeGroup = zoomLayer
-          .append("g")
-          .selectAll("g")
-          .data(dag.descendants())
-          .join("g")
-          .attr("class", "node")
-          .attr("transform", (d) => `translate(${d.x},${d.y})`);
-
-        nodeGroup.each(function (d) {
-          const node = d.data;
-          const shape = node.shape || "box";
-          const color = node.color || "#6c757d";
-          const group = d3.select(this);
-          if (shape === "ellipse") {
-            group
-              .append("ellipse")
-              .attr("rx", 55)
-              .attr("ry", 22)
-              .attr("stroke", color);
-          } else {
-            group
-              .append("rect")
-              .attr("x", -55)
-              .attr("y", -22)
-              .attr("width", 110)
-              .attr("height", 44)
-              .attr("rx", 6)
-              .attr("stroke", color);
-          }
-        });
-
-        nodeGroup
-          .append("text")
-          .attr("text-anchor", "middle")
-          .attr("dy", "0.35em")
-          .text((d) => d.data.label);
-      })();
-    </script>
+    <script defer src="{% static 'academics/js/d3.v7.min.js' %}"></script>
+    <script defer src="{% static 'academics/js/d3-dag.iife.min.js' %}"></script>
+    <script
+      defer
+      src="{% static 'academics/js/prereq_graph_viewer.js' %}"
+    ></script>
   </body>
 </html>

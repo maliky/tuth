@@ -1,16 +1,8 @@
-"""Export curriculum prerequisite data as CSV + Graphviz DOT."""
+"""Export curriculum prerequisite data as JSON + Graphviz DOT."""
 
 from __future__ import annotations
 
-import csv
-import shutil
-import subprocess
-from pathlib import Path
-from typing import Iterable, Sequence, TypeAlias
-
-from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError, CommandParser
-from django.utils.text import slugify
 
 from app.academics.prereq_graph import (
     export_prereq_graph,

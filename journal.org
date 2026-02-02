@@ -1,5 +1,28 @@
+* <2026-02-02 lun. 16:55> JS docker for js dev
+docker compose -f docker-compose-preprod.yml up -d js-tools
+docker compose -f docker-compose-preprod.yml exec js-tools npm ci
+docker compose -f docker-compose-preprod.yml exec js-tools npm run lint:js
+docker compose -f docker-compose-preprod.yml exec js-tools npm run format:check:js
 
 
+› 
+
+* DONE <2026-02-02 lun. 10:58>
+CLOSED: [2026-02-02 lun. 12:36]
+update the final display of node in the dot file and if possible in the js representation too.
+- shapes use the following mapping:
+  - COAS box
+  - COHS egg
+  - CAFS triangle
+  - COET house
+  - COED ellipse
+  - COAB diamond
+- dashed border if the course in not in the curriculum    
+- add invisible links between the level_number node to make sure their groups is arrragned in the correct order.
+
+  if this styles can be extended to the js representation qlso thqt would be good.
+
+Finaly when one clicks on the link resulting from the admin action I want the page with the js to load and a link to download the dot generated png
 * <2026-02-02 lun. 07:23> DB sync
 1. You run the dump on preprod (redirection happens on preprod)
 
@@ -20,10 +43,6 @@
   psql -d test_tusis -c "SELECT count(*) FROM django_migrations;"
 
 
-
-* <2026-02-02 lun. 05:09> graphes and DB
-  - how to sync the database from the online to the local
-  - equivalence of the graphe with d3js
 
 * <2026-02-01 dim. 18:43> Test the prereq graph engine
   

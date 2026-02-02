@@ -16,10 +16,17 @@ Including another URLconf
 """
 
 from django.contrib import admin
+from django.templatetags.static import static
 from django.urls import include, path
+from django.views.generic import RedirectView
 
 
 urlpatterns = [
+    # Keep favicon available even when static is served separately.
+    path(
+        "favicon.ico",
+        RedirectView.as_view(url=static("favicon.ico"), permanent=False),
+    ),
     path("admin/", admin.site.urls),
     path("impersonate/", include("impersonate.urls")),
     path("academics/", include("app.academics.urls")),

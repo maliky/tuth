@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import csv
+import json
 
 import pytest
 from django.test.utils import override_settings
@@ -36,21 +36,17 @@ def test_export_prereq_graph_includes_global_prereqs(
     with override_settings(MEDIA_ROOT=tmp_path):
         output = prereq_graph.export_prereq_graph(curriculum)
 
-    with output.csv_path.open(newline="", encoding="utf-8") as handle:
-        rows = list(csv.DictReader(handle))
+    payload = json.loads(output.json_path.read_text(encoding="utf-8"))
+    links = payload.get("links", [])
 
-    course_label = prereq_graph._course_display(course)
     prereq_label = prereq_graph._course_display(prereq_course)
 
     assert any(
-        row.get("course_short_code") == course_label
-        and row.get("prerequisite_short_code") == prereq_label
-        for row in rows
+        link.get("source") == f"C{prereq_course.id}"
+        and link.get("target") == f"C{course.id}"
+        for link in links
     )
-    assert not any(
-        row.get("course_short_code") == prereq_graph._course_display(other_course)
-        for row in rows
-    )
+    assert not any(link.get("target") == f"C{other_course.id}" for link in links)
 
     dot_text = output.dot_path.read_text(encoding="utf-8")
     assert prereq_label in dot_text

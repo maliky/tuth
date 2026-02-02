@@ -16,6 +16,7 @@ def prereq_graph_view(request: HttpRequest, slug: str) -> HttpResponse:
     json_path = Path(settings.MEDIA_ROOT) / "Prereq" / f"{slug}.json"
     js_path = Path(settings.MEDIA_ROOT) / "Prereq" / f"{slug}.js"
     png_path = Path(settings.MEDIA_ROOT) / "Prereq" / f"{slug}.png"
+    dot_path = Path(settings.MEDIA_ROOT) / "Prereq" / f"{slug}.dot"
     if not json_path.exists():
         raise Http404("Prerequisite graph not found.")
 
@@ -24,5 +25,6 @@ def prereq_graph_view(request: HttpRequest, slug: str) -> HttpResponse:
         "json_url": f"{settings.MEDIA_URL}Prereq/{json_path.name}",
         "js_url": f"{settings.MEDIA_URL}Prereq/{js_path.name}",
         "png_url": f"{settings.MEDIA_URL}Prereq/{png_path.name}",
+        "dot_url": f"{settings.MEDIA_URL}Prereq/{dot_path.name}",
     }
     return render(request, "academics/prereq_graph.html", context)

@@ -333,7 +333,7 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         )
         return format_html('<a href="{}">{}</a>', url, count)
 
-    @admin.action(description="Export prerequisite graph (CSV + DOT + PNG)")
+    @admin.action(description="Export prerequisite graph (JSON/JS + DOT + PNG)")
     def export_prereq_graph_action(self, request, queryset):
         """Export prerequisite graphs for selected curricula."""
         if not queryset:
@@ -365,7 +365,7 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
                     '<a href="{view}">{label}</a> (<a href="{png}">PNG</a>)',
                     view=view_url,
                     png=png_url,
-                    label=output.png_path.name,
+                    label=f"View graph {slug}",
                 )
             )
         msg = format_html_join(" · ", "{}", ((link,) for link in links))
