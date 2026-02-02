@@ -21,6 +21,7 @@ from app.academics.models.prerequisite import Prerequisite
 
 EdgeListT: TypeAlias = set[tuple[int, int]]
 NodeAttrMapT: TypeAlias = dict[int, dict[str, str]]
+GroupMapT: TypeAlias = dict[int, list[int]]
 OwnerIdsT: TypeAlias = tuple[int, int]
 JsonPayloadT: TypeAlias = dict[str, object]
 
@@ -45,6 +46,11 @@ def resolve_curriculum(short_name: str) -> Curriculum:
 def _course_display(course) -> str:
     """Return the display short code for a course in prereq outputs."""
     return course.short_code or course.code or str(course)
+
+
+def _dot_safe_label(value: str) -> str:
+    """Return a DOT-safe label by normalizing quotes."""
+    return value.replace('"', "'")
 
 
 def _department_color(dept_code: str | None) -> str:
@@ -180,10 +186,14 @@ def _build_edges(links: Iterable[dict[str, str]]) -> EdgeListT:
 
 def _build_dot(payload: JsonPayloadT) -> str:
     """Return DOT contents for prerequisite graph."""
+    safe_title = _dot_safe_label(title)
     lines: list[str] = [
         "digraph prereq {",
         "  rankdir=LR;",
         "  node [shape=box];",
+        f'  label="{safe_title}";',
+        "  labelloc=top;",
+        "  fontsize=20;",
     ]
 
     nodes = payload.get("nodes", [])
@@ -268,6 +278,7 @@ def export_prereq_graph(curriculum: Curriculum) -> PrereqGraphPaths:
         )
         .order_by("course__short_code", "prerequisite_course__short_code")
     )
+
     output_dir = _output_dir()
     output_dir.mkdir(parents=True, exist_ok=True)
     slug = _safe_curriculum_slug(curriculum)
