@@ -25,6 +25,7 @@ GroupMapT: TypeAlias = dict[int, list[int]]
 OwnerIdsT: TypeAlias = tuple[int, int]
 JsonPayloadT: TypeAlias = dict[str, object]
 
+
 @dataclass(frozen=True)
 class PrereqGraphPaths:
     """Paths generated for a curriculum prerequisite graph export."""
@@ -127,6 +128,9 @@ def _build_json_payload(
             return
         seen_nodes.add(course.id)
         curriculum_course = course_map.get(course.id)
+        group_number = 0
+        if curriculum_course and curriculum_course.required_group_number:
+            group_number = int(curriculum_course.required_group_number)
         dept = course.department
         college = dept.college if dept else None
         attrs = node_attrs.get(course.id, {})
@@ -135,14 +139,19 @@ def _build_json_payload(
                 "id": f"C{course.id}",
                 "course_id": course.id,
                 "label": _course_display(course),
-                "level_number": int(curriculum_course.level_number)
-                if curriculum_course and curriculum_course.level_number is not None
-                else None,
+                "level_number": (
+                    int(curriculum_course.level_number)
+                    if curriculum_course and curriculum_course.level_number is not None
+                    else None
+                ),
+                "group_number": group_number,
                 "department_code": dept.code if dept else "",
                 "college_code": college.code if college else "",
                 "is_in_curriculum": is_in_curriculum,
                 "shape": attrs.get("shape", _node_shape(is_in_curriculum)),
-                "color": attrs.get("color", _department_color(dept.code if dept else None)),
+                "color": attrs.get(
+                    "color", _department_color(dept.code if dept else None)
+                ),
             }
         )
 
@@ -167,6 +176,9 @@ def _build_json_payload(
         "meta": {
             "curriculum_id": curriculum.id,
             "curriculum_short_name": curriculum.short_name,
+            "curriculum_title": curriculum.long_name
+            or curriculum.short_name
+            or str(curriculum),
         },
         "nodes": nodes,
         "links": links,
@@ -186,6 +198,12 @@ def _build_edges(links: Iterable[dict[str, str]]) -> EdgeListT:
 
 def _build_dot(payload: JsonPayloadT) -> str:
     """Return DOT contents for prerequisite graph."""
+    meta = payload.get("meta", {})
+    title = ""
+    if isinstance(meta, dict):
+        title = str(
+            meta.get("curriculum_title") or meta.get("curriculum_short_name") or ""
+        )
     safe_title = _dot_safe_label(title)
     lines: list[str] = [
         "digraph prereq {",
@@ -201,14 +219,20 @@ def _build_dot(payload: JsonPayloadT) -> str:
     if not isinstance(nodes, list) or not isinstance(links, list):
         raise CommandError("Invalid prerequisite graph payload.")
 
+    node_by_id: dict[str, dict[str, object]] = {}
+    for node in nodes:
+        if isinstance(node, dict):
+            node_by_id[str(node.get("id", ""))] = node
+
     for node in nodes:
         node_id = str(node.get("id", ""))
         label = str(node.get("label", "")).replace('"', "'")
         shape = str(node.get("shape", "box"))
         color = str(node.get("color", "#6c757d"))
-        lines.append(
-            f'  {node_id} [label="{label}" shape="{shape}" color="{color}"];'
-        )
+        group_number = node.get("group_number")
+        if isinstance(group_number, int) and group_number > 0:
+            continue
+        lines.append(f'  {node_id} [label="{label}" shape="{shape}" color="{color}"];')
 
     edges = _build_edges(links)
     node_levels: dict[str, int] = {}
@@ -217,18 +241,57 @@ def _build_dot(payload: JsonPayloadT) -> str:
         if isinstance(level_value, int):
             node_levels[str(node.get("id", ""))] = level_value
 
-    for src, dst in sorted(edges):
-        lines.append(f"  C{src} -> C{dst};")
-
     levels: dict[int, list[str]] = {}
     for node_id, level_value in node_levels.items():
         if level_value == 99:
             continue
         levels.setdefault(level_value, []).append(node_id)
 
+    group_map: dict[int, list[dict[str, object]]] = {}
+    for node in nodes:
+        group_number = node.get("group_number")
+        if isinstance(group_number, int) and group_number > 0:
+            group_map.setdefault(group_number, []).append(node)
+
+    for group_number in sorted(group_map):
+        group_nodes = group_map[group_number]
+        group_nodes.sort(key=lambda item: int(item.get("course_id", 0) or 0))
+        ports = "|".join(
+            f"<c{node.get('course_id')}> {node.get('label', '')}" for node in group_nodes
+        )
+        lines.append(
+            f'  ALT{group_number} [shape=record,label="{_dot_safe_label(ports)}"];'
+        )
+
+    for src, dst in sorted(edges):
+        src_id = f"C{src}"
+        dst_id = f"C{dst}"
+        src_node = node_by_id.get(src_id)
+        dst_node = node_by_id.get(dst_id)
+        src_group = src_node.get("group_number") if src_node else None
+        dst_group = dst_node.get("group_number") if dst_node else None
+        if isinstance(src_group, int) and src_group > 0:
+            src_ref = f"ALT{src_group}:c{src}"
+        else:
+            src_ref = src_id
+        if isinstance(dst_group, int) and dst_group > 0:
+            dst_ref = f"ALT{dst_group}:c{dst}"
+        else:
+            dst_ref = dst_id
+        lines.append(f"  {src_ref} -> {dst_ref};")
+
     for level_value in sorted(levels):
-        level_nodes = " ".join(sorted(levels[level_value]))
-        lines.append(f"  {{ rank=same; {level_nodes}; }}")
+        level_nodes = []
+        for node_id in sorted(levels[level_value]):
+            node = node_by_id.get(node_id)
+            group_number = node.get("group_number") if node else None
+            course_id = node.get("course_id") if node else None
+            if isinstance(group_number, int) and group_number > 0 and course_id:
+                level_nodes.append(f"ALT{group_number}:c{course_id}")
+            else:
+                level_nodes.append(node_id)
+        lines.append(f'  L{level_value} [shape=plaintext label="S-{level_value}"];')
+        lines.append(f"  {{ rank=same; L{level_value}; {' '.join(level_nodes)}; }}")
 
     lines.append("}")
     return "\n".join(lines)
@@ -260,7 +323,7 @@ def _apply_owner(paths: Iterable[Path]) -> None:
         try:
             if hasattr(os, "chown"):
                 os.chown(path, uid, gid)
-        except (PermissionError, OSError):
+        except OSError:
             continue
 
 
@@ -294,9 +357,7 @@ def export_prereq_graph(curriculum: Curriculum) -> PrereqGraphPaths:
     json_path.write_text(
         json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8"
     )
-    js_path.write_text(
-        f"window.PREREQ_GRAPH = {json.dumps(payload)};", encoding="utf-8"
-    )
+    js_path.write_text(f"window.PREREQ_GRAPH = {json.dumps(payload)};", encoding="utf-8")
 
     dot_contents = _build_dot(payload)
     dot_path.write_text(dot_contents, encoding="utf-8")
