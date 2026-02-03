@@ -9,12 +9,32 @@
     fee: string;
   };
 
+  type AjaxFragmentsT = {
+    course_table?: string;
+    course_list?: string;
+  };
+
+  type RegistrationLimitsT = {
+    credits_selected?: string | number;
+    credits_max?: string | number;
+  };
+
+  type AjaxResponseT = {
+    message?: string;
+    fragments?: AjaxFragmentsT;
+    registration_limits?: RegistrationLimitsT;
+  };
+
+  type AjaxPayloadT = {
+    ok: boolean;
+    data: AjaxResponseT;
+  };
+
   const cartPanel = document.querySelector<HTMLElement>("[data-cart-list]");
   if (!cartPanel) return;
 
-  const cartItemsContainer = cartPanel.querySelector<HTMLElement>(
-    "[data-cart-items]"
-  );
+  const cartItemsContainer =
+    cartPanel.querySelector<HTMLElement>("[data-cart-items]");
   const creditRemainingEl = cartPanel.querySelector<HTMLElement>(
     "[data-credit-selected]"
   );
@@ -186,43 +206,45 @@
   const courseTableContainer = document.querySelector<HTMLElement>(
     "[data-course-table]"
   );
-  const courseListContainer = document.querySelector<HTMLElement>(
-    "[data-course-list]"
-  );
+  const courseListContainer =
+    document.querySelector<HTMLElement>("[data-course-list]");
 
   const submitAjaxForm = (form: HTMLFormElement): void => {
     const formData = new FormData(form);
+    // Normalize the AJAX response so downstream code stays typed.
+    const parseAjaxResponse = async (
+      response: Response
+    ): Promise<AjaxPayloadT> => {
+      const data = (await response.json()) as AjaxResponseT;
+      return { ok: response.ok, data };
+    };
+
     fetch(form.action || window.location.href, {
       method: form.method || "POST",
       headers: { "X-Requested-With": "XMLHttpRequest" },
       credentials: "same-origin",
       body: formData,
     })
-      .then((response) =>
-        response.json().then((data) => ({ ok: response.ok, data }))
-      )
+      .then(parseAjaxResponse)
       .then((payload) => {
         if (!payload.ok) {
-          const message = payload.data && payload.data.message;
+          const message = payload.data.message;
           if (message) {
             window.alert(message);
           }
           return;
         }
-        const fragments = payload.data.fragments || {};
-        if (courseTableContainer && fragments.course_table) {
+        const fragments = payload.data.fragments;
+        if (courseTableContainer && fragments?.course_table) {
           courseTableContainer.innerHTML = fragments.course_table;
         }
-        if (courseListContainer && fragments.course_list) {
+        if (courseListContainer && fragments?.course_list) {
           courseListContainer.innerHTML = fragments.course_list;
         }
-        if (payload.data.registration_limits) {
-          baseCredits = Number(
-            payload.data.registration_limits.credits_selected || "0"
-          );
-          maxCredits = Number(
-            payload.data.registration_limits.credits_max || maxCredits || "0"
-          );
+        const limits = payload.data.registration_limits;
+        if (limits) {
+          baseCredits = Number(limits.credits_selected || "0");
+          maxCredits = Number(limits.credits_max || maxCredits || "0");
         }
         resetCart();
       })

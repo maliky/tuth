@@ -105,7 +105,9 @@
 
   type D3DagStratifyT = {
     id: (fn: (node: GraphNodeT) => string) => D3DagStratifyT;
-    parentIds: (fn: (node: GraphNodeT) => string[]) => (nodes: GraphNodeT[]) => D3DagT;
+    parentIds: (
+      fn: (node: GraphNodeT) => string[]
+    ) => (nodes: GraphNodeT[]) => D3DagT;
   };
 
   type D3SugiyamaT = {
@@ -136,9 +138,9 @@
     coordVert?: () => unknown;
   };
 
-  interface Window {
+  type WindowWithD3T = Window & {
     d3?: D3GlobalT;
-  }
+  };
 
   const graphEl = document.getElementById("graph");
   const errorBox = document.getElementById("graph-error");
@@ -177,12 +179,13 @@
     return;
   }
 
-  if (!window.d3) {
+  const windowWithD3 = window as WindowWithD3T;
+  if (!windowWithD3.d3) {
     showError("Graph library failed to load. Check that d3 is available.");
     return;
   }
 
-  const d3 = window.d3 as D3GlobalT;
+  const d3 = windowWithD3.d3 as D3GlobalT;
 
   const drawNodeShape = (group: D3SelectionT, node: GraphNodeT): void => {
     const shape = node.shape || "box";
@@ -239,9 +242,7 @@
   };
 
   /** Resolve force-link endpoints to node objects when available. */
-  const resolveLinkNode = (
-    endpoint: GraphLinkEndpointT
-  ): GraphNodeT | null => {
+  const resolveLinkNode = (endpoint: GraphLinkEndpointT): GraphNodeT | null => {
     if (typeof endpoint === "object" && endpoint !== null) {
       return endpoint;
     }
@@ -280,7 +281,9 @@
       }
     });
 
-    const uniqueLevels = Array.from(new Set(numericLevels)).sort((a, b) => a - b);
+    const uniqueLevels = Array.from(new Set(numericLevels)).sort(
+      (a, b) => a - b
+    );
     const levelKeys: LevelKeyT[] = uniqueLevels.slice();
     if (hasUnknown) {
       levelKeys.push("NA");
@@ -342,7 +345,9 @@
       .attr("d", "M0,-5L10,0L0,5")
       .attr("fill", "#adb5bd");
 
-    const zoomLayer = svg.append("g").attr("transform", `translate(${marginX},${marginY})`);
+    const zoomLayer = svg
+      .append("g")
+      .attr("transform", `translate(${marginX},${marginY})`);
 
     svg.call(
       d3
@@ -398,25 +403,20 @@
       .join("g")
       .attr("class", "node");
 
-    nodeSelection.each(function (node) {
-      drawNodeShape(d3.select(this), node as GraphNodeT);
+    nodeSelection.each(function (node: unknown) {
+      const graphNode = node as GraphNodeT;
+      drawNodeShape(d3.select(this), graphNode);
     });
 
     nodeSelection
       .append("title")
-      .text((node) => {
-        const graphNode = node as GraphNodeT;
-        return graphNode.title || graphNode.label || "";
-      });
+      .text((node: GraphNodeT) => node.title || node.label || "");
 
     nodeSelection
       .append("text")
       .attr("text-anchor", "middle")
       .attr("dy", "0.35em")
-      .text((node) => {
-        const graphNode = node as GraphNodeT;
-        return graphNode.label;
-      });
+      .text((node: GraphNodeT) => node.label);
 
     const linkPath = (link: GraphLinkT): string => {
       const sourceNode = resolveLinkNode(link.source);
@@ -453,24 +453,23 @@
       .force(
         "x",
         d3
-          .forceX((node) => levelPositions.get(node._levelKey as LevelKeyT) || 0)
+          .forceX(
+            (node) => levelPositions.get(node._levelKey as LevelKeyT) || 0
+          )
           .strength(0.8)
       )
       .force(
         "y",
-        d3
-          .forceY((node) => node._targetY || innerHeight / 2)
-          .strength(0.6)
+        d3.forceY((node) => node._targetY || innerHeight / 2).strength(0.6)
       )
       .force("collide", d3.forceCollide().radius(40))
       .force("center", d3.forceCenter(innerWidth / 2, innerHeight / 2));
 
     simulation.on("tick", () => {
-      linkSelection.attr("d", (link) => linkPath(link as GraphLinkT));
+      linkSelection.attr("d", (link: GraphLinkT) => linkPath(link));
 
-      nodeSelection.attr("transform", (node) => {
-        const graphNode = node as GraphNodeT;
-        return `translate(${graphNode.x},${graphNode.y})`;
+      nodeSelection.attr("transform", (node: GraphNodeT) => {
+        return `translate(${node.x},${node.y})`;
       });
     });
   };
@@ -580,31 +579,24 @@
         .data(dag.descendants())
         .join("g")
         .attr("class", "node")
-        .attr("transform", (d) => {
-          const dagNode = d as D3DagNodeT;
-          return `translate(${dagNode.x},${dagNode.y})`;
+        .attr("transform", (d: D3DagNodeT) => {
+          return `translate(${d.x},${d.y})`;
         });
 
-      nodeGroup.each(function (d) {
+      nodeGroup.each(function (d: unknown) {
         const dagNode = d as D3DagNodeT;
         drawNodeShape(d3.select(this), dagNode.data);
       });
 
       nodeGroup
         .append("title")
-        .text((d) => {
-          const dagNode = d as D3DagNodeT;
-          return dagNode.data.title || dagNode.data.label || "";
-        });
+        .text((d: D3DagNodeT) => d.data.title || d.data.label || "");
 
       nodeGroup
         .append("text")
         .attr("text-anchor", "middle")
         .attr("dy", "0.35em")
-        .text((d) => {
-          const dagNode = d as D3DagNodeT;
-          return dagNode.data.label;
-        });
+        .text((d: D3DagNodeT) => d.data.label);
     } catch (error) {
       const message = String(error || "");
       const cycleHint = message.toLowerCase().includes("cycle")
