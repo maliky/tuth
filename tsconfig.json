@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2019",
+    "lib": ["DOM", "ES2019"],
+    "module": "ES2020",
+    "moduleResolution": "Node",
+    "rootDir": "app",
+    "outDir": "static/build",
+    "strict": true,
+    "noImplicitAny": true,
+    "noEmitOnError": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "inlineSources": true
+  },
+  "include": ["app/**/static/**/*.ts"],
+  "exclude": ["node_modules", "static/build"]
+}

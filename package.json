@@ -4,10 +4,13 @@
   "devDependencies": {
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^9.1.0",
-    "prettier": "^3.2.5"
+    "prettier": "^3.2.5",
+    "typescript": "^5.7.2"
   },
   "scripts": {
+    "build:ts": "tsc -p tsconfig.json",
     "lint:js": "eslint \"app/**/static/**/*.js\" \"static/**/*.js\"",
+    "typecheck:ts": "tsc -p tsconfig.json --noEmit",
     "format:check:js": "prettier --check \"app/**/static/**/*.js\" \"static/**/*.js\"",
     "format:js": "prettier --write \"app/**/static/**/*.js\" \"static/**/*.js\""
   }

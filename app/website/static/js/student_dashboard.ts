@@ -1,14 +1,39 @@
 (function () {
-  const cartPanel = document.querySelector("[data-cart-list]");
+  type CartItemT = {
+    courseCode: string;
+    courseTitle: string;
+    credits: string;
+    sectionId: string;
+    sectionLabel: string;
+    schedule: string;
+    fee: string;
+  };
+
+  const cartPanel = document.querySelector<HTMLElement>("[data-cart-list]");
   if (!cartPanel) return;
 
-  const cartItemsContainer = cartPanel.querySelector("[data-cart-items]");
-  const creditRemainingEl = cartPanel.querySelector("[data-credit-selected]");
-  const creditLimitEl = cartPanel.querySelector("[data-credit-limit]");
-  const creditWarningEl = cartPanel.querySelector("[data-credit-warning]");
-  const feeEstimateEl = cartPanel.querySelector("[data-fee-estimate]");
-  const registerSubmitBtn = cartPanel.querySelector("[data-register-submit]");
-  const selectedSectionsInput = cartPanel.querySelector(
+  const cartItemsContainer = cartPanel.querySelector<HTMLElement>(
+    "[data-cart-items]"
+  );
+  const creditRemainingEl = cartPanel.querySelector<HTMLElement>(
+    "[data-credit-selected]"
+  );
+  const creditLimitEl = cartPanel.querySelector<HTMLElement>(
+    "[data-credit-limit]"
+  );
+  const creditSelectedRow = cartPanel.querySelector<HTMLElement>(
+    "[data-credits-selected-row]"
+  );
+  const creditWarningEl = cartPanel.querySelector<HTMLElement>(
+    "[data-credit-warning]"
+  );
+  const feeEstimateEl = cartPanel.querySelector<HTMLElement>(
+    "[data-fee-estimate]"
+  );
+  const registerSubmitBtn = cartPanel.querySelector<HTMLButtonElement>(
+    "[data-register-submit]"
+  );
+  const selectedSectionsInput = cartPanel.querySelector<HTMLInputElement>(
     "[data-selected-sections]"
   );
 
@@ -16,14 +41,15 @@
   let maxCredits = Number(cartPanel.dataset.creditsMax || "0");
   const currency = cartPanel.dataset.currency || "USD";
 
-  const cart = new Map();
+  const cart = new Map<string, CartItemT>();
 
-  const formatCurrency = (value) =>
+  const formatCurrency = (value: number | string): string =>
     `${currency} ${Number(value).toFixed(2)}`;
 
-  const formatCredits = (value) => value.toFixed(1).replace(".0", "");
+  const formatCredits = (value: number): string =>
+    value.toFixed(1).replace(".0", "");
 
-  const updateLimitUI = (creditsSelected) => {
+  const updateLimitUI = (creditsSelected: number): void => {
     if (creditWarningEl) {
       const overLimit = maxCredits > 0 && creditsSelected > maxCredits;
       creditWarningEl.classList.toggle("d-none", !overLimit);
@@ -33,13 +59,16 @@
     }
   };
 
-  const renderCart = () => {
+  const renderCart = (): void => {
     if (!cartItemsContainer) return;
 
     cartItemsContainer.innerHTML = "";
     if (cart.size === 0) {
       cartItemsContainer.innerHTML =
         '<p class="text-muted small mb-0">Select a section to start.</p>';
+      if (creditSelectedRow) {
+        creditSelectedRow.classList.add("d-none");
+      }
     } else {
       cart.forEach((item, key) => {
         const div = document.createElement("div");
@@ -62,6 +91,9 @@
         `;
         cartItemsContainer.appendChild(div);
       });
+      if (creditSelectedRow) {
+        creditSelectedRow.classList.remove("d-none");
+      }
     }
 
     let creditsUsed = 0;
@@ -78,7 +110,8 @@
     }
 
     if (creditLimitEl) {
-      creditLimitEl.textContent = formatCredits(maxCredits);
+      const remaining = Math.max(maxCredits - creditsSelected, 0);
+      creditLimitEl.textContent = formatCredits(remaining);
     }
 
     updateLimitUI(creditsSelected);
@@ -88,12 +121,14 @@
     }
 
     if (selectedSectionsInput) {
-      const sectionIds = Array.from(cart.values()).map((item) => item.sectionId);
+      const sectionIds = Array.from(cart.values()).map(
+        (item) => item.sectionId
+      );
       selectedSectionsInput.value = sectionIds.join(",");
     }
   };
 
-  const resetCart = () => {
+  const resetCart = (): void => {
     cart.clear();
     document.querySelectorAll(".section-picker").forEach((select) => {
       if (select instanceof HTMLSelectElement) {
@@ -118,7 +153,7 @@
       return;
     }
 
-    const payload = {
+    const payload: CartItemT = {
       courseCode: target.dataset.courseCode || selectedOption.value,
       courseTitle: target.dataset.courseTitle || "",
       credits: target.dataset.credits || selectedOption.dataset.credits || "0",
@@ -148,11 +183,14 @@
     }
   });
 
-  const courseTableContainer = document.querySelector("[data-course-table]");
-  const courseListContainer = document.querySelector("[data-course-list]");
+  const courseTableContainer = document.querySelector<HTMLElement>(
+    "[data-course-table]"
+  );
+  const courseListContainer = document.querySelector<HTMLElement>(
+    "[data-course-list]"
+  );
 
-  const submitAjaxForm = (form) => {
-    if (!(form instanceof HTMLFormElement)) return;
+  const submitAjaxForm = (form: HTMLFormElement): void => {
     const formData = new FormData(form);
     fetch(form.action || window.location.href, {
       method: form.method || "POST",

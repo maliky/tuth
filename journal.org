@@ -1,8 +1,51 @@
+
+* <2026-02-03 mar. 09:04> Dev tools for tsjs
+recompile emacs with tree-sitter (should be availabel from emacs 29)
+
 * <2026-02-02 lun. 16:55> JS docker for js dev
 docker compose -f docker-compose-preprod.yml up -d js-tools
 docker compose -f docker-compose-preprod.yml exec js-tools npm ci
 docker compose -f docker-compose-preprod.yml exec js-tools npm run lint:js
 docker compose -f docker-compose-preprod.yml exec js-tools npm run format:check:js
+
+
+* To convert to TJS
+  1. Inventory your own JS files vs Django/vendor JS; only convert your own.
+  2. For each converted file, update template script tags to the compiled path under static/build/....
+  3. If any file uses import/export, switch that <script> tag to type="module".
+     If it’s a plain script, it can stay a normal <script>.
+
+  Plan to convert your JS files
+
+  1. Start small: pick one “owned” file, rename to .ts, fix types, run tsc.
+  2. Replace its template reference with the compiled .js in static/build.
+  3. Repeat file-by-file. Keep existing variable names unchanged (per your guide).
+  4. Add docstrings/comments to any new functions/classes you create.
+
+  Making sure Django collects the compiled TS
+
+  - static/build lives under your project’s static/ directory, so collectstatic will include it as long as:
+      - It’s on disk when collectstatic runs.
+      - Templates refer to /static/build/... (via {% static %}).
+  - You can sanity‑check with python manage.py findstatic build/app/.../your.js.
+
+  Container vs native dev install (differences you’ll need to handle)
+
+  - Native dev:
+      - Install locally: npm i includes typescript.
+      - Run npx tsc -p tsconfig.json on your machine.
+      - Output is written to static/build on your filesystem for Django to pick up.
+  - Preprod / container tool suite:
+      - If JS tools run inside a container, TypeScript must be installed there too.
+      - The container must write static/build onto a shared/mounted volume that Django can see.
+      - If collectstatic runs in a different container, ensure static/build exists in that container’s filesystem at build time (either build inside the same container or share the volume).
+
+  If you want, I can:
+
+  1. Add the tsconfig.json and npm scripts (build:ts, typecheck:ts) now, or
+  2. Start with a small pilot conversion of one JS file and update its template reference.
+
+
 
 
 › 

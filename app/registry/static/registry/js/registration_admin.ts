@@ -1,4 +1,43 @@
-(function ($) {
+type Select2AjaxParamsT = {
+  term?: string;
+  page?: number;
+};
+
+type Select2AjaxDataT = Record<string, unknown>;
+
+type Select2AjaxOptionsT = {
+  data?: (params: Select2AjaxParamsT) => Select2AjaxDataT;
+};
+
+type Select2OptionsT = {
+  ajax?: Select2AjaxOptionsT;
+};
+
+type Select2InstanceT = {
+  options?: {
+    options?: Select2OptionsT;
+  };
+};
+
+type JQueryInstanceT = {
+  length: number;
+  attr: (name: string) => string | undefined;
+  val: ((value: string | number | null) => JQueryInstanceT) &
+    (() => string | number | null | undefined);
+  data: (key: string) => unknown;
+  on: (events: string, handler: () => void) => JQueryInstanceT;
+  select2: (arg?: string | Select2OptionsT) => JQueryInstanceT;
+  trigger: (event: string) => JQueryInstanceT;
+};
+
+type JQueryStaticT = ((selector: string) => JQueryInstanceT) &
+  ((handler: () => void) => void);
+
+declare const django: {
+  jQuery: JQueryStaticT;
+};
+
+(function ($: JQueryStaticT) {
   function initRegistrationSectionField() {
     var $section = $("#id_section");
     if (!$section.length) {
@@ -22,16 +61,16 @@
       }
     }
 
-    function configureSectionAutocomplete() {
-      var select2 = $section.data("select2");
+    function configureSectionAutocomplete(): boolean {
+      var select2 = $section.data("select2") as Select2InstanceT | null;
       if (!select2 || !select2.options || !select2.options.options) {
         return false;
       }
       var options = select2.options.options;
-      var ajaxOptions = options.ajax || {};
+      var ajaxOptions: Select2AjaxOptionsT = options.ajax || {};
       var baseData = ajaxOptions.data;
-      ajaxOptions.data = function (params) {
-        var data = baseData
+      ajaxOptions.data = function (params: Select2AjaxParamsT) {
+        var data: Select2AjaxDataT = baseData
           ? baseData(params)
           : {
               term: params.term,
@@ -49,7 +88,7 @@
       return true;
     }
 
-    (function retryConfigure(attemptsLeft) {
+    (function retryConfigure(attemptsLeft: number) {
       if (configureSectionAutocomplete()) {
         return;
       }
@@ -87,7 +126,7 @@
       currentStudent = nextStudent;
       var url = new URL(window.location.href);
       if (nextStudent) {
-        url.searchParams.set("student", nextStudent);
+        url.searchParams.set("student", String(nextStudent));
       } else {
         url.searchParams.delete("student");
       }

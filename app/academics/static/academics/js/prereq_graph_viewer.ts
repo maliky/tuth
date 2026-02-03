@@ -2,12 +2,150 @@
 (function () {
   "use strict";
 
+  type LayoutModeT = "force" | "dag";
+  type LevelKeyT = number | "NA";
+
+  type GraphNodeT = {
+    id: string;
+    label: string;
+    title?: string;
+    shape?: string;
+    color?: string;
+    level_number?: number | null;
+    is_in_curriculum?: boolean;
+    _levelKey?: LevelKeyT;
+    _targetY?: number;
+    x?: number;
+    y?: number;
+  };
+
+  type GraphLinkEndpointT = GraphNodeT | string;
+
+  type GraphLinkT = {
+    source: GraphLinkEndpointT;
+    target: GraphLinkEndpointT;
+  };
+
+  type GraphPayloadT = {
+    nodes?: GraphNodeT[];
+    links?: GraphLinkT[];
+  };
+
+  type D3SelectionT = {
+    selectAll: (selector: string) => D3SelectionT;
+    remove: () => D3SelectionT;
+    attr: (name: string, value?: unknown) => D3SelectionT;
+    append: (name: string) => D3SelectionT;
+    data: (data: unknown[]) => D3SelectionT;
+    join: (name: string) => D3SelectionT;
+    each: (
+      callback: (this: Element, datum: unknown, index: number) => void
+    ) => D3SelectionT;
+    text: (value: unknown) => D3SelectionT;
+    call: (fn: unknown) => D3SelectionT;
+  };
+
+  type D3ZoomTransformT = {
+    toString: () => string;
+  };
+
+  type D3ZoomEventT = {
+    transform: D3ZoomTransformT;
+  };
+
+  type D3ZoomT = {
+    scaleExtent: (extent: [number, number]) => D3ZoomT;
+    on: (event: string, handler: (event: D3ZoomEventT) => void) => D3ZoomT;
+  };
+
+  type D3ForceSimulationT = {
+    force: (name: string, force: unknown) => D3ForceSimulationT;
+    on: (event: string, handler: () => void) => D3ForceSimulationT;
+  };
+
+  type D3ForceLinkT = {
+    id: (fn: (node: GraphNodeT) => string) => D3ForceLinkT;
+    distance: (value: number) => D3ForceLinkT;
+    strength: (value: number) => D3ForceLinkT;
+  };
+
+  type D3ForceManyBodyT = {
+    strength: (value: number) => D3ForceManyBodyT;
+  };
+
+  type D3ForceAxisT = {
+    strength: (value: number) => D3ForceAxisT;
+  };
+
+  type D3ForceCollideT = {
+    radius: (value: number) => D3ForceCollideT;
+  };
+
+  type D3LinePointT = {
+    x: number;
+    y: number;
+  };
+
+  type D3LineT = {
+    x: (fn: (d: D3LinePointT) => number) => D3LineT;
+    y: (fn: (d: D3LinePointT) => number) => D3LineT;
+    curve: (curve: unknown) => D3LineT;
+  };
+
+  type D3DagNodeT = {
+    x: number;
+    y: number;
+    data: GraphNodeT;
+  };
+
+  type D3DagT = {
+    links: () => D3LinePointT[][];
+    descendants: () => D3DagNodeT[];
+  };
+
+  type D3DagStratifyT = {
+    id: (fn: (node: GraphNodeT) => string) => D3DagStratifyT;
+    parentIds: (fn: (node: GraphNodeT) => string[]) => (nodes: GraphNodeT[]) => D3DagT;
+  };
+
+  type D3SugiyamaT = {
+    (dag: D3DagT): void;
+    nodeSize: (size: [number, number]) => D3SugiyamaT;
+    layering: (algo: unknown) => D3SugiyamaT;
+    decross: (algo: unknown) => D3SugiyamaT;
+    coord: (algo: unknown) => D3SugiyamaT;
+    size: (size: [number, number]) => D3SugiyamaT;
+  };
+
+  type D3GlobalT = {
+    select: (el: Element) => D3SelectionT;
+    zoom: () => D3ZoomT;
+    forceSimulation: (nodes: GraphNodeT[]) => D3ForceSimulationT;
+    forceLink: (links: GraphLinkT[]) => D3ForceLinkT;
+    forceManyBody: () => D3ForceManyBodyT;
+    forceX: (fn: (node: GraphNodeT) => number) => D3ForceAxisT;
+    forceY: (fn: (node: GraphNodeT) => number) => D3ForceAxisT;
+    forceCollide: () => D3ForceCollideT;
+    forceCenter: (x: number, y: number) => unknown;
+    line: () => D3LineT;
+    curveCatmullRom: unknown;
+    dagStratify?: () => D3DagStratifyT;
+    sugiyama?: () => D3SugiyamaT;
+    layeringLongestPath?: () => unknown;
+    decrossTwoLayer?: () => unknown;
+    coordVert?: () => unknown;
+  };
+
+  interface Window {
+    d3?: D3GlobalT;
+  }
+
   const graphEl = document.getElementById("graph");
   const errorBox = document.getElementById("graph-error");
   const toggleButton = document.getElementById("layout-toggle");
   const layoutStorageKey = "prereq-graph-layout";
 
-  const showError = (message) => {
+  const showError = (message: string): void => {
     if (!errorBox) {
       return;
     }
@@ -15,10 +153,11 @@
     errorBox.style.display = "block";
   };
 
-  let cachedPayload = null;
-  let currentLayout = localStorage.getItem(layoutStorageKey) || "force";
+  let cachedPayload: GraphPayloadT | null = null;
+  const storedLayout = localStorage.getItem(layoutStorageKey);
+  let currentLayout: LayoutModeT = storedLayout === "dag" ? "dag" : "force";
 
-  const updateToggleLabel = () => {
+  const updateToggleLabel = (): void => {
     if (!toggleButton) {
       return;
     }
@@ -43,13 +182,15 @@
     return;
   }
 
-  const drawNodeShape = (group, node) => {
+  const d3 = window.d3 as D3GlobalT;
+
+  const drawNodeShape = (group: D3SelectionT, node: GraphNodeT): void => {
     const shape = node.shape || "box";
     const color = node.color || "#6c757d";
     const isInCurriculum = node.is_in_curriculum !== false;
     const dashStyle = isInCurriculum ? null : "6,4";
 
-    const strokeAttrs = (selection) => {
+    const strokeAttrs = (selection: D3SelectionT): void => {
       selection.attr("stroke", color);
       if (dashStyle) {
         selection.attr("stroke-dasharray", dashStyle);
@@ -97,7 +238,17 @@
     );
   };
 
-  const renderForce = (payload) => {
+  /** Resolve force-link endpoints to node objects when available. */
+  const resolveLinkNode = (
+    endpoint: GraphLinkEndpointT
+  ): GraphNodeT | null => {
+    if (typeof endpoint === "object" && endpoint !== null) {
+      return endpoint;
+    }
+    return null;
+  };
+
+  const renderForce = (payload: GraphPayloadT): void => {
     const nodes = Array.isArray(payload.nodes)
       ? payload.nodes.map((node) => ({ ...node }))
       : [];
@@ -118,29 +269,29 @@
     const innerWidth = width - marginX * 2;
     const innerHeight = height - marginY * 2;
 
-    const numericLevels = [];
+    const numericLevels: number[] = [];
     let hasUnknown = false;
 
     nodes.forEach((node) => {
       if (Number.isInteger(node.level_number)) {
-        numericLevels.push(node.level_number);
+        numericLevels.push(node.level_number as number);
       } else {
         hasUnknown = true;
       }
     });
 
     const uniqueLevels = Array.from(new Set(numericLevels)).sort((a, b) => a - b);
-    const levelKeys = uniqueLevels.slice();
+    const levelKeys: LevelKeyT[] = uniqueLevels.slice();
     if (hasUnknown) {
       levelKeys.push("NA");
     }
 
-    const levelIndex = new Map();
+    const levelIndex = new Map<LevelKeyT, number>();
     levelKeys.forEach((key, index) => {
       levelIndex.set(key, index);
     });
 
-    const levelPositions = new Map();
+    const levelPositions = new Map<LevelKeyT, number>();
     const levelCount = Math.max(levelKeys.length, 1);
     const levelSpacing = levelCount > 1 ? innerWidth / (levelCount - 1) : 0;
 
@@ -152,14 +303,16 @@
       levelPositions.set(key, x);
     });
 
-    const levelGroups = new Map();
+    const levelGroups = new Map<LevelKeyT, GraphNodeT[]>();
     nodes.forEach((node) => {
-      const key = Number.isInteger(node.level_number) ? node.level_number : "NA";
+      const key: LevelKeyT = Number.isInteger(node.level_number)
+        ? (node.level_number as number)
+        : "NA";
       node._levelKey = key;
       if (!levelGroups.has(key)) {
         levelGroups.set(key, []);
       }
-      levelGroups.get(key).push(node);
+      levelGroups.get(key)?.push(node);
     });
 
     levelGroups.forEach((groupNodes) => {
@@ -171,7 +324,7 @@
       });
     });
 
-    const svg = window.d3.select(graphEl);
+    const svg = d3.select(graphEl);
     svg.selectAll("*").remove();
     svg.attr("viewBox", [0, 0, width, height].join(" "));
 
@@ -192,7 +345,7 @@
     const zoomLayer = svg.append("g").attr("transform", `translate(${marginX},${marginY})`);
 
     svg.call(
-      window.d3
+      d3
         .zoom()
         .scaleExtent([0.2, 3])
         .on("zoom", (event) => zoomLayer.attr("transform", event.transform))
@@ -206,8 +359,8 @@
       .data(levelKeys)
       .join("g")
       .each(function (key, index) {
-        const group = window.d3.select(this);
-        const x = levelPositions.get(key);
+        const group = d3.select(this);
+        const x = levelPositions.get(key as LevelKeyT) || 0;
         const label = key === "NA" ? "S-NA" : `S-${key}`;
         const fill = index % 2 === 0 ? "#ffffff" : "#f1f3f5";
         group
@@ -246,27 +399,35 @@
       .attr("class", "node");
 
     nodeSelection.each(function (node) {
-      drawNodeShape(window.d3.select(this), node);
+      drawNodeShape(d3.select(this), node as GraphNodeT);
     });
 
     nodeSelection
       .append("title")
-      .text((node) => node.title || node.label || "");
+      .text((node) => {
+        const graphNode = node as GraphNodeT;
+        return graphNode.title || graphNode.label || "";
+      });
 
     nodeSelection
       .append("text")
       .attr("text-anchor", "middle")
       .attr("dy", "0.35em")
-      .text((node) => node.label);
+      .text((node) => {
+        const graphNode = node as GraphNodeT;
+        return graphNode.label;
+      });
 
-    const linkPath = (link) => {
-      if (!link.source || !link.target) {
+    const linkPath = (link: GraphLinkT): string => {
+      const sourceNode = resolveLinkNode(link.source);
+      const targetNode = resolveLinkNode(link.target);
+      if (!sourceNode || !targetNode) {
         return "";
       }
-      const sx = link.source.x || 0;
-      const sy = link.source.y || 0;
-      const tx = link.target.x || 0;
-      const ty = link.target.y || 0;
+      const sx = sourceNode.x || 0;
+      const sy = sourceNode.y || 0;
+      const tx = targetNode.x || 0;
+      const ty = targetNode.y || 0;
       const dx = tx - sx;
       const dy = ty - sy;
       const len = Math.hypot(dx, dy) || 1;
@@ -278,45 +439,45 @@
       return `M${startX},${startY} L${endX},${endY}`;
     };
 
-    const simulation = window.d3
+    const simulation = d3
       .forceSimulation(nodes)
       .force(
         "link",
-        window.d3
+        d3
           .forceLink(links)
           .id((node) => node.id)
           .distance(140)
           .strength(0.7)
       )
-      .force("charge", window.d3.forceManyBody().strength(-280))
+      .force("charge", d3.forceManyBody().strength(-280))
       .force(
         "x",
-        window.d3
-          .forceX((node) => levelPositions.get(node._levelKey))
+        d3
+          .forceX((node) => levelPositions.get(node._levelKey as LevelKeyT) || 0)
           .strength(0.8)
       )
       .force(
         "y",
-        window.d3
+        d3
           .forceY((node) => node._targetY || innerHeight / 2)
           .strength(0.6)
       )
-      .force("collide", window.d3.forceCollide().radius(40))
-      .force("center", window.d3.forceCenter(innerWidth / 2, innerHeight / 2));
+      .force("collide", d3.forceCollide().radius(40))
+      .force("center", d3.forceCenter(innerWidth / 2, innerHeight / 2));
 
     simulation.on("tick", () => {
-      linkSelection.attr("d", linkPath);
+      linkSelection.attr("d", (link) => linkPath(link as GraphLinkT));
 
-      nodeSelection.attr(
-        "transform",
-        (node) => `translate(${node.x},${node.y})`
-      );
+      nodeSelection.attr("transform", (node) => {
+        const graphNode = node as GraphNodeT;
+        return `translate(${graphNode.x},${graphNode.y})`;
+      });
     });
   };
 
   // Standby DAG renderer (kept for reference).
-  const renderDag = (payload) => {
-    if (!window.d3 || typeof window.d3.dagStratify !== "function") {
+  const renderDag = (payload: GraphPayloadT): void => {
+    if (typeof d3.dagStratify !== "function") {
       showError(
         "Graph library failed to load. Check that d3 and d3-dag are available."
       );
@@ -331,11 +492,17 @@
       return;
     }
 
-    const parents = new Map(nodes.map((node) => [node.id, []]));
+    const parents = new Map<string, string[]>(
+      nodes.map((node) => [node.id, []])
+    );
     links.forEach((link) => {
-      const list = parents.get(link.target);
+      const targetId =
+        typeof link.target === "string" ? link.target : link.target.id;
+      const sourceId =
+        typeof link.source === "string" ? link.source : link.source.id;
+      const list = parents.get(targetId);
       if (list) {
-        list.push(link.source);
+        list.push(sourceId);
       }
     });
 
@@ -343,13 +510,13 @@
     const width = rect.width || 1200;
     const height = rect.height || 800;
 
-    const svg = window.d3.select(graphEl);
+    const svg = d3.select(graphEl);
     svg.selectAll("*").remove();
     svg.attr("viewBox", [0, 0, width, height].join(" "));
 
-    let dag;
+    let dag: D3DagT;
     try {
-      dag = window.d3
+      dag = d3
         .dagStratify()
         .id((d) => d.id)
         .parentIds((d) => parents.get(d.id) || [])(nodes);
@@ -363,12 +530,21 @@
     }
 
     try {
-      const layout = window.d3
+      if (
+        !d3.sugiyama ||
+        !d3.layeringLongestPath ||
+        !d3.decrossTwoLayer ||
+        !d3.coordVert
+      ) {
+        throw new Error("DAG layout helpers are unavailable.");
+      }
+
+      const layout = d3
         .sugiyama()
         .nodeSize([120, 60])
-        .layering(window.d3.layeringLongestPath())
-        .decross(window.d3.decrossTwoLayer())
-        .coord(window.d3.coordVert())
+        .layering(d3.layeringLongestPath())
+        .decross(d3.decrossTwoLayer())
+        .coord(d3.coordVert())
         .size([width - 80, height - 80]);
 
       layout(dag);
@@ -376,7 +552,7 @@
       const zoomLayer = svg.append("g").attr("transform", "translate(40,40)");
 
       svg.call(
-        window.d3
+        d3
           .zoom()
           .scaleExtent([0.2, 3])
           .on("zoom", (event) => zoomLayer.attr("transform", event.transform))
@@ -391,11 +567,11 @@
         .attr("marker-end", "url(#arrowhead)")
         .attr(
           "d",
-          window.d3
+          d3
             .line()
-            .x((d) => d.x)
-            .y((d) => d.y)
-            .curve(window.d3.curveCatmullRom)
+            .x((d) => (d as D3LinePointT).x)
+            .y((d) => (d as D3LinePointT).y)
+            .curve(d3.curveCatmullRom)
         );
 
       const nodeGroup = zoomLayer
@@ -404,21 +580,31 @@
         .data(dag.descendants())
         .join("g")
         .attr("class", "node")
-        .attr("transform", (d) => `translate(${d.x},${d.y})`);
+        .attr("transform", (d) => {
+          const dagNode = d as D3DagNodeT;
+          return `translate(${dagNode.x},${dagNode.y})`;
+        });
 
       nodeGroup.each(function (d) {
-        drawNodeShape(window.d3.select(this), d.data);
+        const dagNode = d as D3DagNodeT;
+        drawNodeShape(d3.select(this), dagNode.data);
       });
 
       nodeGroup
         .append("title")
-        .text((d) => d.data.title || d.data.label || "");
+        .text((d) => {
+          const dagNode = d as D3DagNodeT;
+          return dagNode.data.title || dagNode.data.label || "";
+        });
 
       nodeGroup
         .append("text")
         .attr("text-anchor", "middle")
         .attr("dy", "0.35em")
-        .text((d) => d.data.label);
+        .text((d) => {
+          const dagNode = d as D3DagNodeT;
+          return dagNode.data.label;
+        });
     } catch (error) {
       const message = String(error || "");
       const cycleHint = message.toLowerCase().includes("cycle")
@@ -428,7 +614,7 @@
     }
   };
 
-  const applyLayout = () => {
+  const applyLayout = (): void => {
     if (!cachedPayload) {
       return;
     }
@@ -436,7 +622,7 @@
       errorBox.style.display = "none";
     }
     if (currentLayout === "dag") {
-      if (!window.d3 || typeof window.d3.dagStratify !== "function") {
+      if (!d3 || typeof d3.dagStratify !== "function") {
         showError(
           "DAG layout unavailable. Check that d3-dag is loaded, or switch back to force."
         );
@@ -469,7 +655,7 @@
       }
       return response.json();
     })
-    .then((payload) => {
+    .then((payload: GraphPayloadT) => {
       cachedPayload = payload;
       applyLayout();
     })

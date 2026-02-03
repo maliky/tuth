@@ -388,7 +388,7 @@ class RegistrationAdmin(
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     class Media:
-        js = ("registry/js/registration_admin.js",)
+        js = ("build/registry/static/registry/js/registration_admin.js",)
 
 
 @admin.register(TranscriptRequest)
