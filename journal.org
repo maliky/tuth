@@ -1,4 +1,81 @@
 
+
+
+* <2026-02-03 mar. 16:28> TS debuging
+** <2026-02-03 mar. 17:01> Questions
+What is IIFE ?
+Why not bundle @types/d3 ?
+Where is the WindowWithD3T used ?
+
+** Confirm the script order actually loaded
+Checked.
+** Check d3 is present
+  window.d3 && window.d3.version
+
+  Expected: "7.9.0" YES 
+
+** Check d3‑dag exports
+** Inspect what d3‑dag actually adds
+
+Object.keys(window.d3 || {}).filter(k => k.toLowerCase().includes("dag") || k.toLowerCase().includes("sugi") || k.toLowerCase().includes("graph"));
+
+(14) ['geoOrthographic', 'geoOrthographicRaw', 'geoStereographic', 'geoStereographicRaw', 'graph', 'graphConnect', 'graphHierarchy', 'graphJson', 'graphStratify', 'sugiNodeLength', 'sugifyCompact', 'sugifyLayer', 'sugiyama', 'unsugify']
+
+no dag stuf..
+
+** Verify the d3‑dag file actually loaded
+
+  const dagSrc = document.querySelector('script[src*="d3-dag"]')?.src;
+  dagSrc
+
+  Then:
+
+  fetch(dagSrc).then(r => [r.ok, r.status, r.url]);
+
+  I get ::
+  Promise {<pending>}
+[[Prototype]]: Promise
+[[PromiseState]]: "fulfilled"
+[[PromiseResult]]: Array(3)
+  0:true
+  1: 200
+  2: "https://tusis.koba.sarl/static/academics/js/d3-dag.iife.min.js"
+  length: 3
+[[  Prototype]]: Array(0)
+
+** Verify the viewer JS you’re running is the updated one
+
+  const viewerSrc = document.querySelector('script[src*="prereq_graph_viewer"]')?.src;
+  viewerSrc
+  points to '￼https://tusis.koba.sarl/static/build/academics/static/academics/js/prereq_graph_viewer.js'  . 
+  Then:
+
+fetch(viewerSrc).then(r => r.text()).then(t => t.includes("graphStratify"));
+
+Expected: true.  YES IT IS.
+
+*** If all of the above is correct but message still appears
+Here I did do a hard refresh to get graphStratify.
+  window.d3 && window.d3.graphStratify
+
+I get
+fetch(viewerSrc).then(r => r.text()).then(t => t.includes("graphStratify"));  
+Promise {<pending>}
+[[Prototype]]
+: 
+Promise
+[[PromiseState]]
+: 
+"fulfilled"
+[[PromiseResult]]
+: 
+true
+window.d3.graphStratify
+ƒ dr(...e){if(e.length)throw D`got arguments to graphStratify(${e}), but constructor takes no arguments; these were probably meant as data which should be called as \`graphStratify()(...)\``;return Nt(…
+
+So it is a function and I still see the message.  so how do I clear the cache ? I did ctrl + shit + reload, rebuilt, restsarted the container zeb.  should I restart the js container too (find it strage if so).   where can the old code be cached ?  browser ? nginx server ? npm cache  ?  router ?
+
+
 * <2026-02-03 mar. 09:04> Dev tools for tsjs
 recompile emacs with tree-sitter (should be availabel from emacs 29)
 

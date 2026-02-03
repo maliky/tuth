@@ -1,3 +1,4 @@
+// Minimal Select2/jQuery types for this file (we avoid bundling @types here).
 type Select2AjaxParamsT = {
   term?: string;
   page?: number;
@@ -33,11 +34,14 @@ type JQueryInstanceT = {
 type JQueryStaticT = ((selector: string) => JQueryInstanceT) &
   ((handler: () => void) => void);
 
+// django.jQuery is the admin-safe jQuery instance (no global $).
 declare const django: {
   jQuery: JQueryStaticT;
 };
 
+// Wrap in an IIFE to keep admin globals clean.
 (function ($: JQueryStaticT) {
+  /** Keep the section field synced with the currently selected student. */
   function initRegistrationSectionField() {
     var $section = $("#id_section");
     if (!$section.length) {
@@ -61,6 +65,7 @@ declare const django: {
       }
     }
 
+    /** Patch Select2's AJAX data payload to include the student id. */
     function configureSectionAutocomplete(): boolean {
       var select2 = $section.data("select2") as Select2InstanceT | null;
       if (!select2 || !select2.options || !select2.options.options) {
@@ -88,6 +93,7 @@ declare const django: {
       return true;
     }
 
+    // Select2 can initialize after this script runs; retry a few times.
     (function retryConfigure(attemptsLeft: number) {
       if (configureSectionAutocomplete()) {
         return;
@@ -108,6 +114,7 @@ declare const django: {
     $student.on("change select2:select select2:clear", handleStudentChange);
   }
 
+  /** Redirect the multi-section admin page when the student filter changes. */
   function initRegistrationSectionsField() {
     var $sections = $("#id_sections");
     if (!$sections.length) {
@@ -135,6 +142,7 @@ declare const django: {
     $student.on("change select2:select select2:clear", redirectForStudent);
   }
 
+  // DOM-ready hook for Django admin pages.
   $(function () {
     initRegistrationSectionField();
     initRegistrationSectionsField();

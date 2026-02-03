@@ -1,4 +1,5 @@
 // Render prerequisite graph using a force layout (default), with d3-dag standby.
+// Wrapped in an IIFE to keep globals clean on pages that include multiple scripts.
 (function () {
   "use strict";
 
@@ -31,6 +32,7 @@
     links?: GraphLinkT[];
   };
 
+  // Minimal d3 types used by this module (we do not bundle @types/d3 here).
   type D3SelectionT = {
     selectAll: (selector: string) => D3SelectionT;
     remove: () => D3SelectionT;
@@ -131,13 +133,14 @@
     forceCenter: (x: number, y: number) => unknown;
     line: () => D3LineT;
     curveCatmullRom: unknown;
-    dagStratify?: () => D3DagStratifyT;
+    graphStratify?: () => D3DagStratifyT;
     sugiyama?: () => D3SugiyamaT;
     layeringLongestPath?: () => unknown;
     decrossTwoLayer?: () => unknown;
     coordVert?: () => unknown;
   };
 
+  // Local window type to avoid global augmentation in a module-less script.
   type WindowWithD3T = Window & {
     d3?: D3GlobalT;
   };
@@ -145,8 +148,10 @@
   const graphEl = document.getElementById("graph");
   const errorBox = document.getElementById("graph-error");
   const toggleButton = document.getElementById("layout-toggle");
+  // LocalStorage key for persisting the chosen layout between sessions.
   const layoutStorageKey = "prereq-graph-layout";
 
+  /** Display a banner error message in the UI. */
   const showError = (message: string): void => {
     if (!errorBox) {
       return;
@@ -159,6 +164,7 @@
   const storedLayout = localStorage.getItem(layoutStorageKey);
   let currentLayout: LayoutModeT = storedLayout === "dag" ? "dag" : "force";
 
+  /** Update toggle button text to reflect the active layout. */
   const updateToggleLabel = (): void => {
     if (!toggleButton) {
       return;
@@ -173,12 +179,14 @@
     return;
   }
 
+  // data-json-url is injected by the template to point at the JSON endpoint.
   const jsonUrl = graphEl.dataset.jsonUrl || "";
   if (!jsonUrl) {
     showError("Graph data URL not provided.");
     return;
   }
 
+  // d3 is exposed as a global by the script tag (no module import here).
   const windowWithD3 = window as WindowWithD3T;
   if (!windowWithD3.d3) {
     showError("Graph library failed to load. Check that d3 is available.");
@@ -187,6 +195,7 @@
 
   const d3 = windowWithD3.d3 as D3GlobalT;
 
+  /** Draw a node shape based on the node metadata. */
   const drawNodeShape = (group: D3SelectionT, node: GraphNodeT): void => {
     const shape = node.shape || "box";
     const color = node.color || "#6c757d";
@@ -249,12 +258,15 @@
     return null;
   };
 
+  /** Render the graph using a force simulation with level-guided positions. */
   const renderForce = (payload: GraphPayloadT): void => {
     const nodes = Array.isArray(payload.nodes)
-      ? payload.nodes.map((node) => ({ ...node }))
+      ? // Clone the payload to avoid mutating cached data directly.
+        payload.nodes.map((node) => ({ ...node }))
       : [];
     const links = Array.isArray(payload.links)
-      ? payload.links.map((link) => ({ ...link }))
+      ? // Clone links so the force simulation can attach positions safely.
+        payload.links.map((link) => ({ ...link }))
       : [];
 
     if (!nodes.length) {
@@ -289,6 +301,7 @@
       levelKeys.push("NA");
     }
 
+    // Map each level to an x-axis position so semesters line up visually.
     const levelIndex = new Map<LevelKeyT, number>();
     levelKeys.forEach((key, index) => {
       levelIndex.set(key, index);
@@ -306,11 +319,13 @@
       levelPositions.set(key, x);
     });
 
+    // Group nodes by level so we can distribute them vertically.
     const levelGroups = new Map<LevelKeyT, GraphNodeT[]>();
     nodes.forEach((node) => {
       const key: LevelKeyT = Number.isInteger(node.level_number)
         ? (node.level_number as number)
         : "NA";
+      // Store computed values on the node for use by d3 forces.
       node._levelKey = key;
       if (!levelGroups.has(key)) {
         levelGroups.set(key, []);
@@ -331,6 +346,7 @@
     svg.selectAll("*").remove();
     svg.attr("viewBox", [0, 0, width, height].join(" "));
 
+    // Define arrowheads for link markers once per render.
     const defs = svg.append("defs");
     defs
       .append("marker")
@@ -349,6 +365,7 @@
       .append("g")
       .attr("transform", `translate(${marginX},${marginY})`);
 
+    // Enable pan/zoom over the graph without re-running the simulation.
     svg.call(
       d3
         .zoom()
@@ -418,6 +435,7 @@
       .attr("dy", "0.35em")
       .text((node: GraphNodeT) => node.label);
 
+    // Force links store endpoints as node objects once the simulation runs.
     const linkPath = (link: GraphLinkT): string => {
       const sourceNode = resolveLinkNode(link.source);
       const targetNode = resolveLinkNode(link.target);
@@ -465,6 +483,7 @@
       .force("collide", d3.forceCollide().radius(40))
       .force("center", d3.forceCenter(innerWidth / 2, innerHeight / 2));
 
+    // Update SVG positions on every simulation tick.
     simulation.on("tick", () => {
       linkSelection.attr("d", (link: GraphLinkT) => linkPath(link));
 
@@ -475,8 +494,9 @@
   };
 
   // Standby DAG renderer (kept for reference).
+  /** Render the graph using d3-dag's sugiyama layout. */
   const renderDag = (payload: GraphPayloadT): void => {
-    if (typeof d3.dagStratify !== "function") {
+    if (typeof d3.graphStratify !== "function") {
       showError(
         "Graph library failed to load. Check that d3 and d3-dag are available."
       );
@@ -491,6 +511,7 @@
       return;
     }
 
+    // Build a parent list for each node for d3-dag's stratify helper.
     const parents = new Map<string, string[]>(
       nodes.map((node) => [node.id, []])
     );
@@ -516,7 +537,7 @@
     let dag: D3DagT;
     try {
       dag = d3
-        .dagStratify()
+        .graphStratify()
         .id((d) => d.id)
         .parentIds((d) => parents.get(d.id) || [])(nodes);
     } catch (error) {
@@ -606,6 +627,7 @@
     }
   };
 
+  /** Render the current layout and update the toggle label. */
   const applyLayout = (): void => {
     if (!cachedPayload) {
       return;
@@ -614,7 +636,7 @@
       errorBox.style.display = "none";
     }
     if (currentLayout === "dag") {
-      if (!d3 || typeof d3.dagStratify !== "function") {
+      if (typeof d3.graphStratify !== "function") {
         showError(
           "DAG layout unavailable. Check that d3-dag is loaded, or switch back to force."
         );
@@ -633,6 +655,7 @@
 
   if (toggleButton) {
     updateToggleLabel();
+    // Persist layout preference between page loads.
     toggleButton.addEventListener("click", () => {
       currentLayout = currentLayout === "dag" ? "force" : "dag";
       localStorage.setItem(layoutStorageKey, currentLayout);
@@ -640,6 +663,7 @@
     });
   }
 
+  // Fetch graph data and render once the payload arrives.
   fetch(jsonUrl, { credentials: "same-origin" })
     .then((response) => {
       if (!response.ok) {

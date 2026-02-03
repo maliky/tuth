@@ -1,4 +1,6 @@
+// Wrap in an IIFE to avoid leaking variables into the global scope.
 (function () {
+  /** Canonical shape of a cart entry derived from DOM data attributes. */
   type CartItemT = {
     courseCode: string;
     courseTitle: string;
@@ -9,22 +11,26 @@
     fee: string;
   };
 
+  /** Response fragments returned by the AJAX endpoint (snake_case). */
   type AjaxFragmentsT = {
     course_table?: string;
     course_list?: string;
   };
 
+  /** Registration credit limits returned by the AJAX endpoint. */
   type RegistrationLimitsT = {
     credits_selected?: string | number;
     credits_max?: string | number;
   };
 
+  /** JSON payload returned by the registration AJAX endpoint. */
   type AjaxResponseT = {
     message?: string;
     fragments?: AjaxFragmentsT;
     registration_limits?: RegistrationLimitsT;
   };
 
+  /** Typed wrapper for fetch responses used by this module. */
   type AjaxPayloadT = {
     ok: boolean;
     data: AjaxResponseT;
@@ -61,6 +67,7 @@
   let maxCredits = Number(cartPanel.dataset.creditsMax || "0");
   const currency = cartPanel.dataset.currency || "USD";
 
+  // Use a Map so we can look up and replace cart entries by course code.
   const cart = new Map<string, CartItemT>();
 
   const formatCurrency = (value: number | string): string =>
@@ -69,6 +76,7 @@
   const formatCredits = (value: number): string =>
     value.toFixed(1).replace(".0", "");
 
+  /** Update warning UI and submit availability based on credit limits. */
   const updateLimitUI = (creditsSelected: number): void => {
     if (creditWarningEl) {
       const overLimit = maxCredits > 0 && creditsSelected > maxCredits;
@@ -79,6 +87,7 @@
     }
   };
 
+  /** Render the cart panel, compute totals, and sync hidden form values. */
   const renderCart = (): void => {
     if (!cartItemsContainer) return;
 
@@ -148,6 +157,7 @@
     }
   };
 
+  /** Clear selections and re-render the cart to baseline. */
   const resetCart = (): void => {
     cart.clear();
     document.querySelectorAll(".section-picker").forEach((select) => {
@@ -158,6 +168,7 @@
     renderCart();
   };
 
+  // Event delegation: listen for changes on all section pickers in the page.
   document.addEventListener("change", (event) => {
     const target = event.target;
     if (!(target instanceof HTMLSelectElement)) return;
@@ -187,6 +198,7 @@
     renderCart();
   });
 
+  // Event delegation: handle cart item removal via data attributes.
   document.addEventListener("click", (event) => {
     const button = event.target;
     if (!(button instanceof HTMLElement)) return;
@@ -209,6 +221,7 @@
   const courseListContainer =
     document.querySelector<HTMLElement>("[data-course-list]");
 
+  /** Submit an AJAX form, update fragments, and refresh the cart. */
   const submitAjaxForm = (form: HTMLFormElement): void => {
     const formData = new FormData(form);
     // Normalize the AJAX response so downstream code stays typed.
@@ -249,10 +262,12 @@
         resetCart();
       })
       .catch(() => {
+        // Fallback to non-AJAX submit if the request fails.
         form.submit();
       });
   };
 
+  // Intercept only forms marked with data-ajax for progressive enhancement.
   document.addEventListener("submit", (event) => {
     const form = event.target;
     if (!(form instanceof HTMLFormElement)) return;
