@@ -2,6 +2,17 @@
 * <2026-02-03 mar. 09:04> Dev tools for tsjs
 recompile emacs with tree-sitter (should be availabel from emacs 29)
 
+
+  Typical loop (dev/preprod)
+
+  1. Edit .ts
+  2. Run checks: npm run check:ts
+  3. Build compiled JS: npm run build:ts (generates static/build/**)
+  4. Run Django collectstatic (so the compiled static/build/** is collected into your configured static root)
+  5. Restart/reload the app container(s) if needed (depends on your setup; in many setups only step 3+4 is required, but restart is
+     fine/safer)
+
+     
 * <2026-02-02 lun. 16:55> JS docker for js dev
 docker compose -f docker-compose-preprod.yml up -d js-tools
 docker compose -f docker-compose-preprod.yml exec -T js-tools npm ci
@@ -9,7 +20,9 @@ docker compose -f docker-compose-preprod.yml exec -T js-tools npm run lint:js
 docker compose -f docker-compose-preprod.yml exec -T js-tools npm run format:check:js
 
 
-* To convert to TJS
+
+* DONE To convert to TJS
+CLOSED: [2026-02-03 mar. 15:35]
   1. Inventory your own JS files vs Django/vendor JS; only convert your own.
   2. For each converted file, update template script tags to the compiled path under static/build/....
   3. If any file uses import/export, switch that <script> tag to type="module".
@@ -69,10 +82,10 @@ Finaly when one clicks on the link resulting from the admin action I want the pa
 * <2026-02-02 lun. 07:23> DB sync
 1. You run the dump on preprod (redirection happens on preprod)
 
-  ssh jil@54.36.60.51 'cd Tusis/Tusis_app && docker compose -f docker-compose-preprod.yml exec
+  ssh user@host 'cd Tusis/Tusis_app && docker compose -f docker-compose-preprod.yml exec
   -T db pg_dump -Fc -Z 9 -U tusis_preprod -d tusis_preprod > /tmp/tusis_preprod.dump'
 
-  rsync jil@54.36.60.51:/tmp/tusis_preprod.dump /tmp/
+  rsync user@host:/tmp/tusis_preprod.dump /tmp/
 
   sudo -u postgres dropdb --if-exists --force tusis
   sudo -u postgres createdb -O tusisuser tusis
