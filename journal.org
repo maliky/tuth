@@ -1,11 +1,23 @@
 
 
 
+* <2026-02-03 mar. 23:14>
+This is probably a good source of something working  and close to what we want '''https://observablehq.com/@erikbrinkman/d3-dag-sugiyama''' The code is now working but we need to improve it a little:
+- add vertical rectangle to show the semester.
+- organise them from left to right.
+- place the node in their respective semesters from left to right.
+- add the arrows and
+- finaly display full title of th enode on mouse hover.
+  
+
+
 * <2026-02-03 mar. 16:28> TS debuging
 ** <2026-02-03 mar. 17:01> Questions
-What is IIFE ?
+What is IIFE ?  lambda expresion
 Why not bundle @types/d3 ?
 Where is the WindowWithD3T used ?
+
+https://erikbrinkman.github.io/d3-dag/interfaces/LayeringLongestPath.html
 
 ** Confirm the script order actually loaded
 Checked.

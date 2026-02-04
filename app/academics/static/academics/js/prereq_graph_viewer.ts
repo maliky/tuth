@@ -89,6 +89,7 @@
   };
 
   type D3LineT = {
+    (data: D3LinePointT[]): string;
     x: (fn: (d: D3LinePointT) => number) => D3LineT;
     y: (fn: (d: D3LinePointT) => number) => D3LineT;
     curve: (curve: unknown) => D3LineT;
@@ -100,9 +101,18 @@
     data: GraphNodeT;
   };
 
+  type D3DagLinkT = {
+    points: D3LinePointT[];
+  };
+
   type D3DagT = {
-    links: () => D3LinePointT[][];
-    descendants: () => D3DagNodeT[];
+    links: () => D3DagLinkT[];
+    nodes: () => Iterable<D3DagNodeT>;
+  };
+
+  type LayoutResultT = {
+    width: number;
+    height: number;
   };
 
   type D3DagStratifyT = {
@@ -113,12 +123,13 @@
   };
 
   type D3SugiyamaT = {
-    (dag: D3DagT): void;
+    (dag: D3DagT): LayoutResultT;
     nodeSize: (size: [number, number]) => D3SugiyamaT;
     layering: (algo: unknown) => D3SugiyamaT;
     decross: (algo: unknown) => D3SugiyamaT;
     coord: (algo: unknown) => D3SugiyamaT;
-    size: (size: [number, number]) => D3SugiyamaT;
+    gap: (gap: [number, number]) => D3SugiyamaT;
+    tweaks: (tweaks: unknown[]) => D3SugiyamaT;
   };
 
   type D3GlobalT = {
@@ -137,7 +148,8 @@
     sugiyama?: () => D3SugiyamaT;
     layeringLongestPath?: () => unknown;
     decrossTwoLayer?: () => unknown;
-    coordVert?: () => unknown;
+    tweakSize?: (size: LayoutResultT) => unknown;
+    tweakFlip?: (style?: "diagonal" | "horizontal" | "vertical") => unknown;
   };
 
   // Local window type to avoid global augmentation in a module-less script.
@@ -250,38 +262,20 @@
     );
   };
 
-  /** Resolve force-link endpoints to node objects when available. */
-  const resolveLinkNode = (endpoint: GraphLinkEndpointT): GraphNodeT | null => {
-    if (typeof endpoint === "object" && endpoint !== null) {
-      return endpoint;
-    }
-    return null;
+  type LevelLayoutT = {
+    levelIndex: Map<LevelKeyT, number>;
+    levelPositions: Map<LevelKeyT, number>;
+    levelCount: number;
   };
 
-  /** Render the graph using a force simulation with level-guided positions. */
-  const renderForce = (payload: GraphPayloadT): void => {
-    const nodes = Array.isArray(payload.nodes)
-      ? // Clone the payload to avoid mutating cached data directly.
-        payload.nodes.map((node) => ({ ...node }))
-      : [];
-    const links = Array.isArray(payload.links)
-      ? // Clone links so the force simulation can attach positions safely.
-        payload.links.map((link) => ({ ...link }))
-      : [];
+  const getLevelKey = (node: GraphNodeT): LevelKeyT =>
+    Number.isInteger(node.level_number) ? (node.level_number as number) : "NA";
 
-    if (!nodes.length) {
-      showError("No nodes available to render.");
-      return;
-    }
-
-    const rect = graphEl.getBoundingClientRect();
-    const width = Math.max(rect.width || 0, 900);
-    const height = Math.max(rect.height || 0, 600);
-    const marginX = 40;
-    const marginY = 40;
-    const innerWidth = width - marginX * 2;
-    const innerHeight = height - marginY * 2;
-
+  const buildLevelLayout = (
+    nodes: GraphNodeT[],
+    innerWidth: number,
+    marginX: number
+  ): LevelLayoutT => {
     const numericLevels: number[] = [];
     let hasUnknown = false;
 
@@ -301,7 +295,6 @@
       levelKeys.push("NA");
     }
 
-    // Map each level to an x-axis position so semesters line up visually.
     const levelIndex = new Map<LevelKeyT, number>();
     levelKeys.forEach((key, index) => {
       levelIndex.set(key, index);
@@ -319,12 +312,89 @@
       levelPositions.set(key, x);
     });
 
+    return { levelIndex, levelPositions, levelCount };
+  };
+
+  const ensureArrowhead = (svg: D3SelectionT): void => {
+    const defs = svg.append("defs");
+    defs
+      .append("marker")
+      .attr("id", "arrowhead")
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 14)
+      .attr("refY", 0)
+      .attr("markerWidth", 6)
+      .attr("markerHeight", 6)
+      .attr("orient", "auto")
+      .append("path")
+      .attr("d", "M0,-5L10,0L0,5")
+      .attr("fill", "#adb5bd");
+  };
+
+  const getNodeHoverText = (node: GraphNodeT): string => {
+    const label = node.label ? String(node.label) : "";
+    const title = node.title ? String(node.title) : "";
+    if (label && title && label !== title) {
+      return `${label} — ${title}`;
+    }
+    return title || label;
+  };
+
+  const normalizeNodeId = (value: string | number | null | undefined): string =>
+    String(value ?? "");
+
+  const normalizeLinkEndpoint = (endpoint: GraphLinkEndpointT): string => {
+    if (typeof endpoint === "object" && endpoint !== null) {
+      return normalizeNodeId(endpoint.id);
+    }
+    return normalizeNodeId(endpoint);
+  };
+
+  /** Resolve force-link endpoints to node objects when available. */
+  const resolveLinkNode = (endpoint: GraphLinkEndpointT): GraphNodeT | null => {
+    if (typeof endpoint === "object" && endpoint !== null) {
+      return endpoint;
+    }
+    return null;
+  };
+
+  /** Render the graph using a force simulation with level-guided positions. */
+  const renderForce = (payload: GraphPayloadT): void => {
+    const nodes = Array.isArray(payload.nodes)
+      ? // Clone the payload to avoid mutating cached data directly.
+        payload.nodes.map((node) => ({
+          ...node,
+          id: normalizeNodeId(node.id),
+        }))
+      : [];
+    const links = Array.isArray(payload.links)
+      ? // Clone links so the force simulation can attach positions safely.
+        payload.links.map((link) => ({
+          ...link,
+          source: normalizeLinkEndpoint(link.source),
+          target: normalizeLinkEndpoint(link.target),
+        }))
+      : [];
+
+    if (!nodes.length) {
+      showError("No nodes available to render.");
+      return;
+    }
+
+    const rect = graphEl.getBoundingClientRect();
+    const width = Math.max(rect.width || 0, 900);
+    const height = Math.max(rect.height || 0, 600);
+    const marginX = 40;
+    const marginY = 40;
+    const innerWidth = width - marginX * 2;
+    const innerHeight = height - marginY * 2;
+
+    const { levelPositions } = buildLevelLayout(nodes, innerWidth, marginX);
+
     // Group nodes by level so we can distribute them vertically.
     const levelGroups = new Map<LevelKeyT, GraphNodeT[]>();
     nodes.forEach((node) => {
-      const key: LevelKeyT = Number.isInteger(node.level_number)
-        ? (node.level_number as number)
-        : "NA";
+      const key = getLevelKey(node);
       // Store computed values on the node for use by d3 forces.
       node._levelKey = key;
       if (!levelGroups.has(key)) {
@@ -347,19 +417,7 @@
     svg.attr("viewBox", [0, 0, width, height].join(" "));
 
     // Define arrowheads for link markers once per render.
-    const defs = svg.append("defs");
-    defs
-      .append("marker")
-      .attr("id", "arrowhead")
-      .attr("viewBox", "0 -5 10 10")
-      .attr("refX", 14)
-      .attr("refY", 0)
-      .attr("markerWidth", 6)
-      .attr("markerHeight", 6)
-      .attr("orient", "auto")
-      .append("path")
-      .attr("d", "M0,-5L10,0L0,5")
-      .attr("fill", "#adb5bd");
+    ensureArrowhead(svg);
 
     const zoomLayer = svg
       .append("g")
@@ -372,37 +430,6 @@
         .scaleExtent([0.2, 3])
         .on("zoom", (event) => zoomLayer.attr("transform", event.transform))
     );
-
-    const bandWidth = Math.min(200, innerWidth / levelCount);
-    const bandGroup = zoomLayer.append("g").attr("class", "level-bands");
-
-    bandGroup
-      .selectAll("g")
-      .data(levelKeys)
-      .join("g")
-      .each(function (key, index) {
-        const group = d3.select(this);
-        const x = levelPositions.get(key as LevelKeyT) || 0;
-        const label = key === "NA" ? "S-NA" : `S-${key}`;
-        const fill = index % 2 === 0 ? "#ffffff" : "#f1f3f5";
-        group
-          .append("rect")
-          .attr("x", x - bandWidth / 2)
-          .attr("y", 0)
-          .attr("width", bandWidth)
-          .attr("height", innerHeight)
-          .attr("fill", fill)
-          .attr("stroke", "#e9ecef")
-          .attr("stroke-dasharray", "4,4");
-        group
-          .append("text")
-          .attr("x", x)
-          .attr("y", 14)
-          .attr("text-anchor", "middle")
-          .attr("fill", "#6c757d")
-          .attr("font-size", 12)
-          .text(label);
-      });
 
     const linkGroup = zoomLayer.append("g").attr("class", "links");
     const nodeGroup = zoomLayer.append("g").attr("class", "nodes");
@@ -427,7 +454,7 @@
 
     nodeSelection
       .append("title")
-      .text((node: GraphNodeT) => node.title || node.label || "");
+      .text((node: GraphNodeT) => getNodeHoverText(node));
 
     nodeSelection
       .append("text")
@@ -503,8 +530,19 @@
       return;
     }
 
-    const nodes = Array.isArray(payload.nodes) ? payload.nodes : [];
-    const links = Array.isArray(payload.links) ? payload.links : [];
+    const nodes = Array.isArray(payload.nodes)
+      ? payload.nodes.map((node) => ({
+          ...node,
+          id: normalizeNodeId(node.id),
+        }))
+      : [];
+    const links = Array.isArray(payload.links)
+      ? payload.links.map((link) => ({
+          ...link,
+          source: normalizeLinkEndpoint(link.source),
+          target: normalizeLinkEndpoint(link.target),
+        }))
+      : [];
 
     if (!nodes.length) {
       showError("No nodes available to render.");
@@ -516,10 +554,8 @@
       nodes.map((node) => [node.id, []])
     );
     links.forEach((link) => {
-      const targetId =
-        typeof link.target === "string" ? link.target : link.target.id;
-      const sourceId =
-        typeof link.source === "string" ? link.source : link.source.id;
+      const targetId = normalizeLinkEndpoint(link.target);
+      const sourceId = normalizeLinkEndpoint(link.source);
       const list = parents.get(targetId);
       if (list) {
         list.push(sourceId);
@@ -529,10 +565,20 @@
     const rect = graphEl.getBoundingClientRect();
     const width = rect.width || 1200;
     const height = rect.height || 800;
+    const marginX = 40;
+    const marginY = 40;
+    const innerWidth = width - marginX * 2;
+    const innerHeight = height - marginY * 2;
+    const { levelIndex, levelCount } = buildLevelLayout(
+      nodes,
+      innerWidth,
+      marginX
+    );
 
     const svg = d3.select(graphEl);
     svg.selectAll("*").remove();
     svg.attr("viewBox", [0, 0, width, height].join(" "));
+    ensureArrowhead(svg);
 
     let dag: D3DagT;
     try {
@@ -550,26 +596,78 @@
     }
 
     try {
-      if (
-        !d3.sugiyama ||
-        !d3.layeringLongestPath ||
-        !d3.decrossTwoLayer ||
-        !d3.coordVert
-      ) {
-        throw new Error("DAG layout helpers are unavailable.");
+      if (!d3.sugiyama) {
+        throw new Error("DAG layout engine is unavailable.");
       }
 
-      const layout = d3
-        .sugiyama()
-        .nodeSize([120, 60])
-        .layering(d3.layeringLongestPath())
-        .decross(d3.decrossTwoLayer())
-        .coord(d3.coordVert())
-        .size([width - 80, height - 80]);
+      const semesterLayering = (
+        dagGraph: D3DagT,
+        sep: (source: unknown, target: unknown) => number
+      ): number => {
+        let maxSep = 0;
+        const nodesList: Array<{ data: GraphNodeT; y: number }> = [];
+        const dagNodes =
+          typeof dagGraph.nodes === "function"
+            ? dagGraph.nodes()
+            : (dagGraph as unknown as Iterable<D3DagNodeT>);
+
+        if (!dagNodes || !(Symbol.iterator in Object(dagNodes))) {
+          throw new Error("DAG nodes are not iterable.");
+        }
+
+        for (const node of dagNodes) {
+          nodesList.push(node);
+          maxSep = Math.max(
+            maxSep,
+            sep(undefined, node) + sep(node, undefined)
+          );
+        }
+
+        const layerGap = Math.max(maxSep, 1);
+        let min = Infinity;
+        let max = -Infinity;
+
+        nodesList.forEach((node) => {
+          const key = getLevelKey(node.data);
+          const index = levelIndex.get(key) ?? levelCount - 1;
+          node.y = index * layerGap;
+          min = Math.min(min, node.y - sep(undefined, node));
+          max = Math.max(max, node.y + sep(node, undefined));
+        });
+
+        nodesList.forEach((node) => {
+          node.y -= min;
+        });
+
+        return max - min;
+      };
+
+      let layout = d3.sugiyama().nodeSize([120, 60]);
+      layout = layout.layering(semesterLayering);
+
+      if (d3.decrossTwoLayer) {
+        layout = layout.decross(d3.decrossTwoLayer());
+      }
+
+      const tweaks: unknown[] = [];
+
+      if (d3.tweakSize) {
+        tweaks.push(d3.tweakSize({ width: innerWidth, height: innerHeight }));
+      }
+
+      if (d3.tweakFlip) {
+        tweaks.push(d3.tweakFlip("diagonal"));
+      }
+
+      if (tweaks.length && typeof layout.tweaks === "function") {
+        layout = layout.tweaks(tweaks);
+      }
 
       layout(dag);
 
-      const zoomLayer = svg.append("g").attr("transform", "translate(40,40)");
+      const zoomLayer = svg
+        .append("g")
+        .attr("transform", `translate(${marginX},${marginY})`);
 
       svg.call(
         d3
@@ -578,26 +676,25 @@
           .on("zoom", (event) => zoomLayer.attr("transform", event.transform))
       );
 
+      const lineBuilder = d3
+        .line()
+        .x((d) => (d as D3LinePointT).x)
+        .y((d) => (d as D3LinePointT).y)
+        .curve(d3.curveCatmullRom);
+
       zoomLayer
         .append("g")
         .selectAll("path")
-        .data(dag.links())
+        .data(Array.from(dag.links()))
         .join("path")
         .attr("class", "link")
         .attr("marker-end", "url(#arrowhead)")
-        .attr(
-          "d",
-          d3
-            .line()
-            .x((d) => (d as D3LinePointT).x)
-            .y((d) => (d as D3LinePointT).y)
-            .curve(d3.curveCatmullRom)
-        );
+        .attr("d", (link: D3DagLinkT) => lineBuilder(link.points));
 
       const nodeGroup = zoomLayer
         .append("g")
         .selectAll("g")
-        .data(dag.descendants())
+        .data(Array.from(dag.nodes()))
         .join("g")
         .attr("class", "node")
         .attr("transform", (d: D3DagNodeT) => {
@@ -611,7 +708,7 @@
 
       nodeGroup
         .append("title")
-        .text((d: D3DagNodeT) => d.data.title || d.data.label || "");
+        .text((d: D3DagNodeT) => getNodeHoverText(d.data));
 
       nodeGroup
         .append("text")
