@@ -1,4 +1,4 @@
-// Prerequisite graph viewer using Cytoscape.js + ELK (layered DAG layout).
+// Prerequisite graph viewer using Cytoscape.js + ELK (compound semester layout).
 //
 // We intentionally keep this as a plain browser script (no bundler, no imports)
 // because Tusis serves static assets directly via Django.
@@ -41,7 +41,15 @@
     isInCurriculum: boolean;
     levelKey: LevelKeyT;
     partition: string;
-    targetLevel?: number;
+    parent?: string;
+  };
+
+  type CyParentDataT = {
+    id: string;
+    label: string;
+    bandColor: string;
+    levelKey: LevelKeyT;
+    partition: string;
   };
 
   type CyEdgeDataT = {
@@ -57,13 +65,19 @@
     classes?: string;
   };
 
+  type CyParentElementT = {
+    group: "nodes";
+    data: CyParentDataT;
+    classes?: string;
+  };
+
   type CyEdgeElementT = {
     group: "edges";
     data: CyEdgeDataT;
     classes?: string;
   };
 
-  type CyElementT = CyNodeElementT | CyEdgeElementT;
+  type CyElementT = CyNodeElementT | CyParentElementT | CyEdgeElementT;
 
   type CyLayoutOptionsT = {
     name: string;
@@ -104,15 +118,7 @@
     resize: () => void;
   };
 
-  type CyNodeT = {
-    data: (key?: string) => unknown;
-    position: (pos?: { x: number; y: number }) => { x: number; y: number };
-  };
-
-  type ColumnEntryT = { node: CyNodeT; x: number };
-
   type CyNodeCollectionT = {
-    forEach: (fn: (node: CyNodeT) => void) => void;
     ungrabify: () => void;
   };
 
@@ -120,7 +126,6 @@
     container: HTMLElement;
     elements: CyElementT[];
     style: unknown[];
-    wheelSensitivity?: number;
     userZoomingEnabled?: boolean;
     userPanningEnabled?: boolean;
     boxSelectionEnabled?: boolean;
@@ -132,7 +137,7 @@
     ELK?: unknown;
   };
 
-  const graphEl = document.getElementById("graph-elk");
+  const graphEl = document.getElementById("graph-elk-compound");
   const errorBox = document.getElementById("graph-error");
   const layoutModeKey = "prereq-graph-layout-mode";
 
@@ -170,27 +175,32 @@
     windowWithCyto.cytoscapeElk(cytoscape);
   }
 
+  const existingTooltip = document.querySelector(
+    ".graph-tooltip"
+  ) as HTMLDivElement | null;
   // Simple HTML tooltip for node hover. Canvas/WebGL renderers can't rely on
   // the browser's native <title> tooltip, so we do it ourselves.
-  const tooltipEl = document.createElement("div");
-  tooltipEl.className = "graph-tooltip";
-  tooltipEl.style.position = "fixed";
-  tooltipEl.style.zIndex = "9999";
-  tooltipEl.style.display = "none";
-  tooltipEl.style.pointerEvents = "none";
-  tooltipEl.style.background = "rgba(33, 37, 41, 0.92)";
-  tooltipEl.style.color = "#ffffff";
-  tooltipEl.style.padding = "6px 8px";
-  tooltipEl.style.borderRadius = "6px";
-  tooltipEl.style.fontSize = "12px";
-  tooltipEl.style.maxWidth = "320px";
-  tooltipEl.style.boxShadow = "0 6px 14px rgba(0,0,0,0.18)";
-  document.body.appendChild(tooltipEl);
+  const tooltipEl = existingTooltip || document.createElement("div");
+  if (!existingTooltip) {
+    tooltipEl.className = "graph-tooltip";
+    tooltipEl.style.position = "fixed";
+    tooltipEl.style.zIndex = "9999";
+    tooltipEl.style.display = "none";
+    tooltipEl.style.pointerEvents = "none";
+    tooltipEl.style.background = "rgba(33, 37, 41, 0.92)";
+    tooltipEl.style.color = "#ffffff";
+    tooltipEl.style.padding = "6px 8px";
+    tooltipEl.style.borderRadius = "6px";
+    tooltipEl.style.fontSize = "12px";
+    tooltipEl.style.maxWidth = "320px";
+    tooltipEl.style.boxShadow = "0 6px 14px rgba(0,0,0,0.18)";
+    document.body.appendChild(tooltipEl);
+  }
 
   let cy: CytoscapeInstanceT | null = null;
   let cachedPayload: GraphPayloadT | null = null;
 
-  /** Toggle visibility for the ELK graph container. */
+  /** Toggle visibility for the ELK compound graph container. */
   const setGraphVisible = (isVisible: boolean): void => {
     if (!graphEl) {
       return;
@@ -207,7 +217,7 @@
     return "elk";
   };
 
-  setGraphVisible(getActiveMode() === "elk");
+  setGraphVisible(getActiveMode() === "elk-compound");
 
   /** Normalize the semester/layer key from the JSON payload. */
   const normalizeLevelKey = (node: GraphNodeT): LevelKeyT => {
@@ -266,34 +276,26 @@
     return Array.from(levels).sort((a, b) => a - b);
   };
 
-  const buildLevelBand = (level: number): HTMLDivElement => {
-    const band = document.createElement("div");
-    band.className = "graph-band";
-    const label = document.createElement("div");
-    label.className = "graph-band-label";
-    label.textContent = formatLevelLabel(level);
-    band.appendChild(label);
-    return band;
+  /** Build the compound semester parent nodes used by the layout. */
+  const buildSemesterParents = (levels: number[]): CyParentElementT[] => {
+    return levels.map((level, index) => {
+      const isOdd = index % 2 === 0;
+      const bandColor = isOdd ? "#f8f9fa" : "#ffffff";
+      return {
+        group: "nodes",
+        data: {
+          id: `SEM${level}`,
+          label: formatLevelLabel(level),
+          bandColor,
+          levelKey: level,
+          partition: levelKeyToPartition(level),
+        },
+        classes: "semester-group",
+      };
+    });
   };
 
-  /** Render vertical semester bands behind the graph for visual grouping. */
-  const renderLevelBands = (levels: number[]): void => {
-    if (!graphEl) {
-      return;
-    }
-    const existing = graphEl.querySelector(".graph-bands");
-    if (existing) {
-      existing.remove();
-    }
-    if (!levels.length) {
-      return;
-    }
-    const container = document.createElement("div");
-    container.className = "graph-bands";
-    levels.forEach((level) => container.appendChild(buildLevelBand(level)));
-    graphEl.prepend(container);
-  };
-
+  /** Determine the shared level for a group of alternative nodes. */
   const groupLevelKey = (groupNodes: GraphNodeT[]): LevelKeyT => {
     const numericLevels = groupNodes
       .map((node) => node.level_number)
@@ -307,9 +309,11 @@
     return "NA";
   };
 
+  /** Stable sort key for alternative group nodes. */
   const groupSortKey = (node: GraphNodeT): number | string =>
     node.course_id ?? node.label ?? node.id;
 
+  /** Group nodes by alternative group_number. */
   const buildGroupMap = (nodes: GraphNodeT[]): Map<number, GraphNodeT[]> => {
     const groupMap = new Map<number, GraphNodeT[]>();
     nodes.forEach((node) => {
@@ -324,6 +328,7 @@
     return groupMap;
   };
 
+  /** Resolve original node ids to their level keys. */
   const buildNodeLevelKeyById = (
     nodes: GraphNodeT[]
   ): Map<string, LevelKeyT> => {
@@ -334,6 +339,7 @@
     return nodeLevelKeyById;
   };
 
+  /** Map alternative group members to their group ids + level keys. */
   const buildGroupMappings = (
     groupMap: Map<number, GraphNodeT[]>
   ): {
@@ -352,6 +358,7 @@
     return { groupedNodeId, groupLevelKeyById };
   };
 
+  /** Build target semester levels for nodes missing a level number. */
   const buildTargetLevelsBySource = (
     links: GraphLinkT[],
     groupedNodeId: Map<string, string>,
@@ -380,6 +387,7 @@
     return targetLevelsBySource;
   };
 
+  /** Select the earliest target level for a node. */
   const minTargetLevel = (
     targetLevelsBySource: Map<string, number[]>,
     nodeId: string
@@ -389,6 +397,27 @@
       return undefined;
     }
     return Math.min(...levels);
+  };
+
+  /** Resolve the semester column for nodes that do not have a level number. */
+  const resolveAnchorLevel = (
+    targetLevel: number | undefined,
+    levels: number[]
+  ): number | null => {
+    if (!targetLevel || !levels.length) {
+      return null;
+    }
+    if (targetLevel <= levels[0]) {
+      return levels[0];
+    }
+    const desired = targetLevel - 1;
+    let candidate = levels[0];
+    levels.forEach((level) => {
+      if (level <= desired) {
+        candidate = level;
+      }
+    });
+    return candidate;
   };
 
   /** Build Cytoscape elements from the exported JSON format. */
@@ -406,6 +435,18 @@
       nodeLevelKeyById,
       groupLevelKeyById
     );
+    const levels = extractLevelNumbers(payload);
+    const parentNodes = buildSemesterParents(levels);
+    const fallbackLevel = levels.length ? levels[0] : null;
+
+    parentNodes.forEach((parent) => elements.push(parent));
+
+    const resolveParentId = (level: number | null): string | undefined => {
+      if (typeof level === "number" && Number.isFinite(level)) {
+        return `SEM${level}`;
+      }
+      return undefined;
+    };
 
     groupMap.forEach((groupNodes, groupNumber) => {
       const sortedNodes = [...groupNodes].sort((a, b) => {
@@ -418,14 +459,24 @@
       });
 
       const levelKey = groupLevelKey(sortedNodes);
-      const partition = levelKeyToPartition(levelKey);
+      const groupId = `ALT${groupNumber}`;
+      const groupTargetLevel =
+        typeof levelKey === "number"
+          ? undefined
+          : minTargetLevel(targetLevelsBySource, groupId);
+      const anchorLevel =
+        typeof levelKey === "number"
+          ? levelKey
+          : (resolveAnchorLevel(groupTargetLevel, levels) ?? fallbackLevel);
+      const partitionLevel =
+        typeof anchorLevel === "number" ? anchorLevel : levelKey;
+      const partition = levelKeyToPartition(partitionLevel);
       const labelLines = sortedNodes.map((node) =>
         String(node.label || node.id)
       );
       const titleLines = sortedNodes.map((node) =>
         String(node.title || node.label || node.id)
       );
-      const groupId = `ALT${groupNumber}`;
       const groupLabel = [`ALT ${groupNumber}`, ...labelLines].join("\n");
       const groupTitle = `Alternatives: ${titleLines.join(" | ")}`;
       const groupColor =
@@ -434,10 +485,6 @@
         (node) => node.is_in_curriculum !== false
       );
       const groupClasses = isInCurriculum ? "" : "is-outside-curriculum";
-      const groupTargetLevel =
-        typeof levelKey === "number"
-          ? undefined
-          : minTargetLevel(targetLevelsBySource, groupId);
 
       elements.push({
         group: "nodes",
@@ -450,7 +497,7 @@
           isInCurriculum,
           levelKey,
           partition,
-          targetLevel: groupTargetLevel,
+          parent: resolveParentId(anchorLevel),
         },
         classes: groupClasses,
       });
@@ -461,13 +508,19 @@
         continue;
       }
       const levelKey = normalizeLevelKey(node);
-      const partition = levelKeyToPartition(levelKey);
-      const nodeClasses =
-        node.is_in_curriculum !== false ? "" : "is-outside-curriculum";
       const nodeTargetLevel =
         typeof levelKey === "number"
           ? undefined
           : minTargetLevel(targetLevelsBySource, String(node.id));
+      const anchorLevel =
+        typeof levelKey === "number"
+          ? levelKey
+          : (resolveAnchorLevel(nodeTargetLevel, levels) ?? fallbackLevel);
+      const partitionLevel =
+        typeof anchorLevel === "number" ? anchorLevel : levelKey;
+      const partition = levelKeyToPartition(partitionLevel);
+      const nodeClasses =
+        node.is_in_curriculum !== false ? "" : "is-outside-curriculum";
       elements.push({
         group: "nodes",
         data: {
@@ -479,7 +532,7 @@
           isInCurriculum: node.is_in_curriculum !== false,
           levelKey,
           partition,
-          targetLevel: nodeTargetLevel,
+          parent: resolveParentId(anchorLevel),
         },
         classes: nodeClasses,
       });
@@ -540,6 +593,25 @@
       },
     },
     {
+      selector: "node.semester-group",
+      style: {
+        shape: "round-rectangle",
+        "background-color": "data(bandColor)",
+        "border-width": 1,
+        "border-color": "#dee2e6",
+        "border-style": "solid",
+        padding: 16,
+        "text-valign": "top",
+        "text-halign": "center",
+        "text-margin-y": 6,
+        "font-size": 12,
+        "font-weight": 600,
+        "text-wrap": "wrap",
+        "text-max-width": 140,
+        "compound-sizing-wrt-labels": "include",
+      },
+    },
+    {
       selector: "node.is-outside-curriculum",
       style: {
         "border-style": "dashed",
@@ -558,145 +630,7 @@
     },
   ];
 
-  /** Run the ELK layered layout with semester partitions (left-to-right). */
-  const buildLevelColumns = (
-    nodes: CyNodeCollectionT,
-    width: number,
-    paddingX: number
-  ): Map<LevelKeyT, number> => {
-    const numericLevels = new Set<number>();
-
-    nodes.forEach((node) => {
-      const raw = node.data("levelKey");
-      if (typeof raw === "number" && Number.isFinite(raw)) {
-        numericLevels.add(Math.trunc(raw));
-      }
-    });
-
-    const sortedLevels = Array.from(numericLevels).sort((a, b) => a - b);
-    const levelKeys: LevelKeyT[] = [...sortedLevels];
-
-    const levelCount = Math.max(levelKeys.length, 1);
-    const innerWidth = Math.max(width - paddingX * 2, 240);
-    const spacing = levelCount > 1 ? innerWidth / (levelCount - 1) : 0;
-
-    const columns = new Map<LevelKeyT, number>();
-    levelKeys.forEach((levelKey, index) => {
-      const x =
-        levelCount > 1 ? paddingX + index * spacing : paddingX + innerWidth / 2;
-      columns.set(levelKey, x);
-    });
-
-    return columns;
-  };
-
-  const buildColumnEntries = (
-    columns: Map<LevelKeyT, number>
-  ): Array<[number, number]> => {
-    const columnEntries = Array.from(columns.entries()).filter(
-      ([levelKey]) => typeof levelKey === "number"
-    ) as Array<[number, number]>;
-    columnEntries.sort((a, b) => a[0] - b[0]);
-    return columnEntries;
-  };
-
-  const resolveAnchorLevel = (
-    targetLevel: number | undefined,
-    columnEntries: Array<[number, number]>
-  ): number | null => {
-    if (!targetLevel || !columnEntries.length) {
-      return null;
-    }
-    if (targetLevel <= columnEntries[0][0]) {
-      return columnEntries[0][0];
-    }
-    const desired = targetLevel - 1;
-    let candidate = columnEntries[0][0];
-    columnEntries.forEach(([level]) => {
-      if (level <= desired) {
-        candidate = level;
-      }
-    });
-    return candidate;
-  };
-
-  const applyColumnSpacing = (
-    columnNodes: Map<string, ColumnEntryT[]>,
-    minGap: number
-  ): void => {
-    columnNodes.forEach((nodesInColumn) => {
-      nodesInColumn.sort((a, b) => a.node.position().y - b.node.position().y);
-      let lastY = -Infinity;
-      nodesInColumn.forEach((entry) => {
-        const pos = entry.node.position();
-        const y = pos.y - lastY < minGap ? lastY + minGap : pos.y;
-        entry.node.position({ x: entry.x, y });
-        lastY = y;
-      });
-    });
-  };
-
-  const applyLevelColumns = (): void => {
-    if (!cy || !graphEl) return;
-
-    const rect = graphEl.getBoundingClientRect();
-    const width = Math.max(rect.width || 0, 900);
-    const paddingX = 60;
-    const columns = buildLevelColumns(cy.nodes(), width, paddingX);
-    const columnEntries = buildColumnEntries(columns);
-    const columnValues = columnEntries.map((entry) => entry[1]);
-    const lastColumnX = columnValues.length
-      ? Math.max(...columnValues)
-      : paddingX + Math.max(width - paddingX * 2, 240) / 2;
-    const firstColumnX = columnValues.length
-      ? Math.min(...columnValues)
-      : paddingX + Math.max(width - paddingX * 2, 240) / 2;
-    const columnSpacing =
-      columnEntries.length > 1
-        ? Math.abs(columnEntries[1][1] - columnEntries[0][1])
-        : 140;
-    const columnNodes = new Map<string, ColumnEntryT[]>();
-
-    const pushColumnNode = (key: string, entry: ColumnEntryT): void => {
-      if (!columnNodes.has(key)) {
-        columnNodes.set(key, []);
-      }
-      columnNodes.get(key)?.push(entry);
-    };
-
-    cy.nodes().forEach((node) => {
-      const levelKey = node.data("levelKey");
-      if (typeof levelKey === "number" && Number.isFinite(levelKey)) {
-        const key = Math.trunc(levelKey);
-        const x = columns.get(key);
-        if (typeof x === "number") {
-          pushColumnNode(String(key), { node, x });
-        }
-        return;
-      }
-
-      const targetLevelRaw = node.data("targetLevel");
-      const targetLevel =
-        typeof targetLevelRaw === "number" && Number.isFinite(targetLevelRaw)
-          ? Math.trunc(targetLevelRaw)
-          : undefined;
-      const anchorLevel = resolveAnchorLevel(targetLevel, columnEntries);
-      if (anchorLevel !== null) {
-        const anchorX = columns.get(anchorLevel);
-        if (typeof anchorX === "number") {
-          pushColumnNode(String(anchorLevel), { node, x: anchorX });
-          return;
-        }
-      }
-      const leftX = Math.max(firstColumnX - columnSpacing, 40);
-      pushColumnNode("NA-left", { node, x: leftX });
-    });
-
-    // Keep nodes within each column from overlapping vertically.
-    const minGap = 70;
-    applyColumnSpacing(columnNodes, minGap);
-  };
-
+  /** Run the ELK layered layout with compound semester parents. */
   const runElkLayout = (): void => {
     if (!cy) return;
     if (!windowWithCyto.ELK) {
@@ -732,21 +666,12 @@
           algorithm: "layered",
           "elk.direction": "RIGHT",
           "elk.partitioning.activate": true,
+          "elk.hierarchyHandling": "INCLUDE_CHILDREN",
           // Slightly more breathing room for course graphs.
           "elk.spacing.nodeNode": 30,
-          "elk.layered.spacing.nodeNodeBetweenLayers": 60,
+          "elk.layered.spacing.nodeNodeBetweenLayers": 70,
           // Reduce edge crossings where possible (default is already good).
           "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
-        },
-        stop: () => {
-          // Snap nodes horizontally to their semester columns while keeping
-          // ELK's vertical ordering to reduce edge crossings.
-          window.requestAnimationFrame(() => {
-            applyLevelColumns();
-            if (cy) {
-              cy.fit(undefined, 24);
-            }
-          });
         },
       }).run();
     } catch (err) {
@@ -787,9 +712,6 @@
       cy = null;
     }
 
-    const levelNumbers = extractLevelNumbers(payload);
-    renderLevelBands(levelNumbers);
-
     const elements = buildElements(payload);
     if (elements.length === 0) {
       showError("Graph payload is empty.");
@@ -828,7 +750,7 @@
     cy.fit(undefined, 24);
   });
 
-  /** Fetch the payload from Django and render it when ELK is active. */
+  /** Fetch the payload from Django and render it when ELK compound is active. */
   const loadAndRender = async (forceRender = false): Promise<void> => {
     try {
       const response = await fetch(jsonUrl, { credentials: "same-origin" });
@@ -838,7 +760,7 @@
       }
       const payload = (await response.json()) as GraphPayloadT;
       cachedPayload = payload;
-      if (forceRender || getActiveMode() === "elk") {
+      if (forceRender || getActiveMode() === "elk-compound") {
         renderGraph(payload);
       }
     } catch (err) {
@@ -847,13 +769,14 @@
       console.error(err);
     }
   };
+
   window.addEventListener("prereq-layout-change", (event) => {
     const layoutEvent = event as CustomEvent<{ mode?: LayoutModeSelectionT }>;
     const mode = layoutEvent.detail?.mode;
     if (!mode) {
       return;
     }
-    if (mode === "elk") {
+    if (mode === "elk-compound") {
       if (cachedPayload) {
         renderGraph(cachedPayload);
       } else {

@@ -143,8 +143,7 @@
         <label for="layout-select">Layout</label>
         <select id="layout-select">
           <option value="elk">ELK (layered)</option>
-          <option value="force">Force</option>
-          <option value="dag">DAG (d3-dag)</option>
+          <option value="elk-compound">ELK (compound semesters)</option>
         </select>
         <a href="{{ json_url }}">Download JSON</a>
         <a href="{{ dot_url }}">Download DOT</a>
@@ -152,26 +151,20 @@
       </div>
     </header>
     <div id="graph-error"></div>
-    <svg
-      id="graph-d3"
-      class="graph-pane"
-      data-json-url="{{ json_url }}"
-    ></svg>
     <div
       id="graph-elk"
       class="graph-pane"
+      data-json-url="{{ json_url }}"
+    ></div>
+    <div
+      id="graph-elk-compound"
+      class="graph-pane is-hidden"
       data-json-url="{{ json_url }}"
     ></div>
 
     <script
       defer
       src="{% static 'build/academics/static/academics/js/prereq_graph_layout_switcher.js' %}"
-    ></script>
-    <script defer src="{% static 'academics/js/d3.v7.min.js' %}"></script>
-    <script defer src="{% static 'academics/js/d3-dag.iife.min.js' %}"></script>
-    <script
-      defer
-      src="{% static 'build/academics/static/academics/js/prereq_graph_viewer.js' %}"
     ></script>
     <script
       defer
@@ -185,6 +178,10 @@
     <script
       defer
       src="{% static 'build/academics/static/academics/js/prereq_graph_viewer_elk.js' %}"
+    ></script>
+    <script
+      defer
+      src="{% static 'build/academics/static/academics/js/prereq_graph_viewer_elk_compound.js' %}"
     ></script>
   </body>
 </html>
