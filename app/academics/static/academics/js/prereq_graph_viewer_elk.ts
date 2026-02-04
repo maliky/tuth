@@ -41,6 +41,7 @@
     isInCurriculum: boolean;
     levelKey: LevelKeyT;
     partition: string;
+    targetLevel?: number;
   };
 
   type CyEdgeDataT = {
@@ -324,6 +325,48 @@
     const groupSortKey = (node: GraphNodeT): number | string =>
       node.course_id ?? node.label ?? node.id;
 
+    const nodeLevelKeyById = new Map<string, LevelKeyT>();
+    nodes.forEach((node) => {
+      nodeLevelKeyById.set(String(node.id), normalizeLevelKey(node));
+    });
+
+    const groupLevelKeyById = new Map<string, LevelKeyT>();
+    groupMap.forEach((groupNodes, groupNumber) => {
+      const groupId = `ALT${groupNumber}`;
+      groupNodes.forEach((node) => {
+        groupedNodeId.set(String(node.id), groupId);
+      });
+      groupLevelKeyById.set(groupId, groupLevelKey(groupNodes));
+    });
+
+    const targetLevelsBySource = new Map<string, number[]>();
+    links.forEach((link) => {
+      let sourceId = String(link.source);
+      let targetId = String(link.target);
+      if (groupedNodeId.has(sourceId)) {
+        sourceId = groupedNodeId.get(sourceId) as string;
+      }
+      if (groupedNodeId.has(targetId)) {
+        targetId = groupedNodeId.get(targetId) as string;
+      }
+      const targetLevelKey =
+        groupLevelKeyById.get(targetId) ?? nodeLevelKeyById.get(targetId);
+      if (typeof targetLevelKey === "number") {
+        if (!targetLevelsBySource.has(sourceId)) {
+          targetLevelsBySource.set(sourceId, []);
+        }
+        targetLevelsBySource.get(sourceId)?.push(targetLevelKey);
+      }
+    });
+
+    const minTargetLevel = (nodeId: string): number | undefined => {
+      const levels = targetLevelsBySource.get(nodeId);
+      if (!levels || !levels.length) {
+        return undefined;
+      }
+      return Math.min(...levels);
+    };
+
     groupMap.forEach((groupNodes, groupNumber) => {
       const sortedNodes = [...groupNodes].sort((a, b) => {
         const aKey = groupSortKey(a);
@@ -351,6 +394,8 @@
         (node) => node.is_in_curriculum !== false
       );
       const groupClasses = isInCurriculum ? "" : "is-outside-curriculum";
+      const groupTargetLevel =
+        typeof levelKey === "number" ? undefined : minTargetLevel(groupId);
 
       elements.push({
         group: "nodes",
@@ -363,12 +408,9 @@
           isInCurriculum,
           levelKey,
           partition,
+          targetLevel: groupTargetLevel,
         },
         classes: groupClasses,
-      });
-
-      sortedNodes.forEach((node) => {
-        groupedNodeId.set(String(node.id), groupId);
       });
     });
 
@@ -380,6 +422,10 @@
       const partition = levelKeyToPartition(levelKey);
       const nodeClasses =
         node.is_in_curriculum !== false ? "" : "is-outside-curriculum";
+      const nodeTargetLevel =
+        typeof levelKey === "number"
+          ? undefined
+          : minTargetLevel(String(node.id));
       elements.push({
         group: "nodes",
         data: {
@@ -391,6 +437,7 @@
           isInCurriculum: node.is_in_curriculum !== false,
           levelKey,
           partition,
+          targetLevel: nodeTargetLevel,
         },
         classes: nodeClasses,
       });
@@ -508,11 +555,30 @@
     const width = Math.max(rect.width || 0, 900);
     const paddingX = 60;
     const columns = buildLevelColumns(cy.nodes(), width, paddingX);
-    const columnValues = Array.from(columns.values());
+    const columnEntries = Array.from(columns.entries()).filter(
+      ([levelKey]) => typeof levelKey === "number"
+    ) as Array<[number, number]>;
+    columnEntries.sort((a, b) => a[0] - b[0]);
+    const columnValues = columnEntries.map((entry) => entry[1]);
     const lastColumnX = columnValues.length
       ? Math.max(...columnValues)
       : paddingX + Math.max(width - paddingX * 2, 240) / 2;
-    const naNodes: CyNodeT[] = [];
+    const firstColumnX = columnValues.length
+      ? Math.min(...columnValues)
+      : paddingX + Math.max(width - paddingX * 2, 240) / 2;
+    const columnSpacing =
+      columnEntries.length > 1
+        ? Math.abs(columnEntries[1][1] - columnEntries[0][1])
+        : 140;
+    type ColumnEntryT = { node: CyNodeT; x: number };
+    const columnNodes = new Map<string, ColumnEntryT[]>();
+
+    const pushColumnNode = (key: string, entry: ColumnEntryT): void => {
+      if (!columnNodes.has(key)) {
+        columnNodes.set(key, []);
+      }
+      columnNodes.get(key)?.push(entry);
+    };
 
     cy.nodes().forEach((node) => {
       const levelKey = node.data("levelKey");
@@ -520,27 +586,54 @@
         const key = Math.trunc(levelKey);
         const x = columns.get(key);
         if (typeof x === "number") {
-          const pos = node.position();
-          node.position({ x, y: pos.y });
+          pushColumnNode(String(key), { node, x });
         }
-      } else {
-        naNodes.push(node);
+        return;
       }
+
+      const targetLevelRaw = node.data("targetLevel");
+      const targetLevel =
+        typeof targetLevelRaw === "number" && Number.isFinite(targetLevelRaw)
+          ? Math.trunc(targetLevelRaw)
+          : undefined;
+      let anchorLevel: number | null = null;
+      if (targetLevel && columnEntries.length) {
+        if (targetLevel <= columnEntries[0][0]) {
+          anchorLevel = columnEntries[0][0];
+        } else {
+          const desired = targetLevel - 1;
+          let candidate = columnEntries[0][0];
+          columnEntries.forEach(([level]) => {
+            if (level <= desired) {
+              candidate = level;
+            }
+          });
+          anchorLevel = candidate;
+        }
+      }
+      if (anchorLevel !== null) {
+        const anchorX = columns.get(anchorLevel);
+        if (typeof anchorX === "number") {
+          pushColumnNode(String(anchorLevel), { node, x: anchorX });
+          return;
+        }
+      }
+      const leftX = Math.max(firstColumnX - columnSpacing, 40);
+      pushColumnNode("NA-left", { node, x: leftX });
     });
 
-    if (naNodes.length) {
-      const minGap = 70;
-      const baseX = lastColumnX + 120;
-      naNodes.sort((a, b) => a.position().y - b.position().y);
+    // Keep nodes within each column from overlapping vertically.
+    const minGap = 70;
+    columnNodes.forEach((nodesInColumn) => {
+      nodesInColumn.sort((a, b) => a.node.position().y - b.node.position().y);
       let lastY = -Infinity;
-      naNodes.forEach((node) => {
-        const pos = node.position();
-        const x = pos.x < baseX ? baseX : pos.x;
+      nodesInColumn.forEach((entry) => {
+        const pos = entry.node.position();
         const y = pos.y - lastY < minGap ? lastY + minGap : pos.y;
-        node.position({ x, y });
+        entry.node.position({ x: entry.x, y });
         lastY = y;
       });
-    }
+    });
   };
 
   const runElkLayout = (): void => {
