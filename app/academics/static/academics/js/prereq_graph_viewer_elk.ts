@@ -53,11 +53,13 @@
   type CyNodeElementT = {
     group: "nodes";
     data: CyNodeDataT;
+    classes?: string;
   };
 
   type CyEdgeElementT = {
     group: "edges";
     data: CyEdgeDataT;
+    classes?: string;
   };
 
   type CyElementT = CyNodeElementT | CyEdgeElementT;
@@ -216,8 +218,7 @@
   /** Convert a level key to a stable partition id (string) for ELK. */
   const levelKeyToPartition = (levelKey: LevelKeyT): string => {
     if (levelKey === "NA") {
-      // Keep unknown levels to the far right.
-      return "99";
+      return "NA";
     }
     // Pad so lexical ordering matches numeric ordering (e.g. 02 before 10).
     return String(levelKey).padStart(2, "0");
@@ -238,7 +239,7 @@
         return "pentagon";
       case "box":
       default:
-        return "round-rectangle";
+        return "rectangle";
     }
   };
 
@@ -303,6 +304,7 @@
       const isInCurriculum = sortedNodes.every(
         (node) => node.is_in_curriculum !== false
       );
+      const groupClasses = isInCurriculum ? "" : "is-outside-curriculum";
 
       elements.push({
         group: "nodes",
@@ -310,12 +312,13 @@
           id: groupId,
           label: groupLabel,
           title: groupTitle,
-          shape: "round-rectangle",
+          shape: "rectangle",
           borderColor: String(groupColor),
           isInCurriculum,
           levelKey,
           partition,
         },
+        classes: groupClasses,
       });
 
       sortedNodes.forEach((node) => {
@@ -329,6 +332,8 @@
       }
       const levelKey = normalizeLevelKey(node);
       const partition = levelKeyToPartition(levelKey);
+      const nodeClasses =
+        node.is_in_curriculum !== false ? "" : "is-outside-curriculum";
       elements.push({
         group: "nodes",
         data: {
@@ -341,6 +346,7 @@
           levelKey,
           partition,
         },
+        classes: nodeClasses,
       });
     }
 
@@ -399,7 +405,7 @@
       },
     },
     {
-      selector: "node[isInCurriculum = false]",
+      selector: "node.is-outside-curriculum",
       style: {
         "border-style": "dashed",
       },
@@ -424,22 +430,16 @@
     paddingX: number
   ): Map<LevelKeyT, number> => {
     const numericLevels = new Set<number>();
-    let hasUnknown = false;
 
     nodes.forEach((node) => {
       const raw = node.data("levelKey");
       if (typeof raw === "number" && Number.isFinite(raw)) {
         numericLevels.add(Math.trunc(raw));
-      } else {
-        hasUnknown = true;
       }
     });
 
     const sortedLevels = Array.from(numericLevels).sort((a, b) => a - b);
     const levelKeys: LevelKeyT[] = [...sortedLevels];
-    if (hasUnknown) {
-      levelKeys.push("NA");
-    }
 
     const levelCount = Math.max(levelKeys.length, 1);
     const innerWidth = Math.max(width - paddingX * 2, 240);
@@ -462,19 +462,39 @@
     const width = Math.max(rect.width || 0, 900);
     const paddingX = 60;
     const columns = buildLevelColumns(cy.nodes(), width, paddingX);
+    const columnValues = Array.from(columns.values());
+    const lastColumnX = columnValues.length
+      ? Math.max(...columnValues)
+      : paddingX + Math.max(width - paddingX * 2, 240) / 2;
+    const naNodes: CyNodeT[] = [];
 
     cy.nodes().forEach((node) => {
       const levelKey = node.data("levelKey");
-      const key =
-        typeof levelKey === "number" && Number.isFinite(levelKey)
-          ? Math.trunc(levelKey)
-          : "NA";
-      const x = columns.get(key) ?? columns.get("NA");
-      if (typeof x === "number") {
-        const pos = node.position();
-        node.position({ x, y: pos.y });
+      if (typeof levelKey === "number" && Number.isFinite(levelKey)) {
+        const key = Math.trunc(levelKey);
+        const x = columns.get(key);
+        if (typeof x === "number") {
+          const pos = node.position();
+          node.position({ x, y: pos.y });
+        }
+      } else {
+        naNodes.push(node);
       }
     });
+
+    if (naNodes.length) {
+      const minGap = 70;
+      const baseX = lastColumnX + 120;
+      naNodes.sort((a, b) => a.position().y - b.position().y);
+      let lastY = -Infinity;
+      naNodes.forEach((node) => {
+        const pos = node.position();
+        const x = pos.x < baseX ? baseX : pos.x;
+        const y = pos.y - lastY < minGap ? lastY + minGap : pos.y;
+        node.position({ x, y });
+        lastY = y;
+      });
+    }
   };
 
   const runElkLayout = (): void => {
@@ -498,7 +518,10 @@
           const partition =
             typeof dataFn === "function"
               ? dataFn.call(node, "partition")
-              : "99";
+              : "NA";
+          if (partition === "NA") {
+            return {};
+          }
           return {
             // Constrain nodes into partitions (semesters) ordered along elk.direction.
             // See ELK's layered partitioning options.
@@ -574,7 +597,6 @@
       container: graphEl as HTMLElement,
       elements,
       style: buildStyles(),
-      wheelSensitivity: 0.18,
       userZoomingEnabled: true,
       userPanningEnabled: true,
       boxSelectionEnabled: false,

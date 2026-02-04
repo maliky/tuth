@@ -2,6 +2,49 @@
 
 
 * <2026-02-04 mer. 07:32>  network
+** <2026-02-04 mer. 15:46>  iteration on cyto and elk, nealry there
+cytoscape.3.33.1.min.js:23 You have set a custom wheel sensitivity.  This will make your app zoom unnaturally when using mainstream mice.  You should change this value from the default only if you can guarantee that all your users will use the same hardware and OS configuration as your current machine.
+at @ cytoscape.3.33.1.min.js:23
+initRenderer @ cytoscape.3.33.1.min.js:31
+Eu @ cytoscape.3.33.1.min.js:31
+Uh @ cytoscape.3.33.1.min.js:31
+renderGraph @ prereq_graph_viewer_elk.ts:573
+(anonymous) @ prereq_graph_viewer_elk.ts:633
+(anonymous) @ prereq_graph_layout_switcher.ts:64
+handleMouseUp_ @ unknown
+cytoscape.3.33.1.min.js:23 The selector `node[isInCurriculum = false]`is invalid
+at @ cytoscape.3.33.1.min.js:23
+parse @ cytoscape.3.33.1.min.js:29
+as @ cytoscape.3.33.1.min.js:29
+mu.selector @ cytoscape.3.33.1.min.js:31
+appendFromJson @ cytoscape.3.33.1.min.js:31
+mu.append @ cytoscape.3.33.1.min.js:31
+(anonymous) @ cytoscape.3.33.1.min.js:31
+(anonymous) @ cytoscape.3.33.1.min.js:31
+Eu @ cytoscape.3.33.1.min.js:31
+Uh @ cytoscape.3.33.1.min.js:31
+renderGraph @ prereq_graph_viewer_elk.ts:573
+(anonymous) @ prereq_graph_viewer_elk.ts:633
+(anonymous) @ prereq_graph_layout_switcher.ts:64
+handleMouseUp_ @ unknown
+elkjs.0.11.0.bundled.js:6501 [Violation] 'setTimeout' handler took 65ms
+
+:::
+We are getting there
+::: a few twicks.
+nodes seem be well positioned on the x axis.  The courses with NA as level number, should arrange freely but with the constraint of not overlapping another course and been positionned so that the arrow is pointing to the right ( or oblic right).
+the border of tho node should be straight line for the nodes in the curriculum and dashedd only for those not in the curriculum. Currently all are dashed .  The legend for the shape is as follow but you may need to adapte it slight to match the available default form in the elk or cyto library
+
+- shapes use the following mapping:
+  - COAS box
+  - COHS egg/ pyramid
+  - CAFS triangle
+  - COET house/circle
+  - COED ellipse
+  - COAB diamond
+
+ Finaly remove the constraint on not moving the node and add vertical lines do divide the semester level_numbers with asmall legend at the top or bottom
+
 ** <2026-02-04 mer. 09:18> implemntation with cyto and elk
   - TS: docker-compose -f docker-compose-preprod.yml exec -T js-tools npm run check:ts && docker-compose -f docker-compose-preprod.yml exec -T js-tools npm run build:ts
   - Static: docker-compose -f docker-compose-preprod.yml exec -T web python manage.py collectstatic --noinput
