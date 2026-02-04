@@ -28,7 +28,7 @@ module.exports = [
       "@typescript-eslint": tsPlugin,
     },
     rules: {
-      "no-console": "off",
+      "no-console": "warn",
       "@typescript-eslint/await-thenable": "error",
       "@typescript-eslint/no-floating-promises": "error",
       "@typescript-eslint/no-misused-promises": [

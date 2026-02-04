@@ -4,6 +4,7 @@
   "use strict";
 
   type LayoutModeT = "force" | "dag";
+  type LayoutModeSelectionT = "force" | "dag" | "elk";
   type LevelKeyT = number | "NA";
 
   type GraphNodeT = {
@@ -63,6 +64,7 @@
   type D3ForceSimulationT = {
     force: (name: string, force: unknown) => D3ForceSimulationT;
     on: (event: string, handler: () => void) => D3ForceSimulationT;
+    stop: () => D3ForceSimulationT;
   };
 
   type D3ForceLinkT = {
@@ -157,11 +159,12 @@
     d3?: D3GlobalT;
   };
 
-  const graphEl = document.getElementById("graph");
+  const graphEl = document.getElementById("graph-d3");
   const errorBox = document.getElementById("graph-error");
-  const toggleButton = document.getElementById("layout-toggle");
-  // LocalStorage key for persisting the chosen layout between sessions.
+  // LocalStorage key for persisting the chosen force/dag layout between sessions.
   const layoutStorageKey = "prereq-graph-layout";
+  // Layout mode that includes ELK selection from the shared dropdown.
+  const layoutModeKey = "prereq-graph-layout-mode";
 
   /** Display a banner error message in the UI. */
   const showError = (message: string): void => {
@@ -173,23 +176,28 @@
   };
 
   let cachedPayload: GraphPayloadT | null = null;
+  let forceSimulation: D3ForceSimulationT | null = null;
   const storedLayout = localStorage.getItem(layoutStorageKey);
+  const storedMode = localStorage.getItem(layoutModeKey);
   let currentLayout: LayoutModeT = storedLayout === "dag" ? "dag" : "force";
+  if (storedMode === "dag" || storedMode === "force") {
+    currentLayout = storedMode;
+  }
 
-  /** Update toggle button text to reflect the active layout. */
-  const updateToggleLabel = (): void => {
-    if (!toggleButton) {
+  /** Toggle visibility for the D3 graph container. */
+  const setGraphVisible = (isVisible: boolean): void => {
+    if (!graphEl) {
       return;
     }
-    toggleButton.textContent =
-      currentLayout === "dag"
-        ? "Switch to force layout"
-        : "Switch to DAG layout";
+    graphEl.classList.toggle("is-hidden", !isVisible);
   };
 
   if (!graphEl) {
     return;
   }
+
+  const initialMode = localStorage.getItem(layoutModeKey);
+  setGraphVisible(initialMode !== "elk");
 
   // data-json-url is injected by the template to point at the JSON endpoint.
   const jsonUrl = graphEl.dataset.jsonUrl || "";
@@ -484,6 +492,10 @@
       return `M${startX},${startY} L${endX},${endY}`;
     };
 
+    if (forceSimulation) {
+      forceSimulation.stop();
+    }
+
     const simulation = d3
       .forceSimulation(nodes)
       .force(
@@ -518,6 +530,8 @@
         return `translate(${node.x},${node.y})`;
       });
     });
+
+    forceSimulation = simulation;
   };
 
   // Standby DAG renderer (kept for reference).
@@ -682,6 +696,18 @@
         .y((d) => (d as D3LinePointT).y)
         .curve(d3.curveCatmullRom);
 
+      const safeLinkPath = (link: D3DagLinkT): string => {
+        const points = Array.isArray(link.points) ? link.points : [];
+        const safePoints = points.filter(
+          (point) => Number.isFinite(point.x) && Number.isFinite(point.y)
+        );
+        if (safePoints.length < 2) {
+          return "";
+        }
+        const path = lineBuilder(safePoints);
+        return path || "";
+      };
+
       zoomLayer
         .append("g")
         .selectAll("path")
@@ -689,7 +715,7 @@
         .join("path")
         .attr("class", "link")
         .attr("marker-end", "url(#arrowhead)")
-        .attr("d", (link: D3DagLinkT) => lineBuilder(link.points));
+        .attr("d", (link: D3DagLinkT) => safeLinkPath(link));
 
       const nodeGroup = zoomLayer
         .append("g")
@@ -724,10 +750,14 @@
     }
   };
 
-  /** Render the current layout and update the toggle label. */
+  /** Render the current force/DAG layout based on the shared dropdown. */
   const applyLayout = (): void => {
     if (!cachedPayload) {
       return;
+    }
+    if (forceSimulation) {
+      forceSimulation.stop();
+      forceSimulation = null;
     }
     if (errorBox) {
       errorBox.style.display = "none";
@@ -739,7 +769,6 @@
         );
         currentLayout = "force";
         localStorage.setItem(layoutStorageKey, currentLayout);
-        updateToggleLabel();
         renderForce(cachedPayload);
         return;
       }
@@ -747,18 +776,28 @@
     } else {
       renderForce(cachedPayload);
     }
-    updateToggleLabel();
   };
 
-  if (toggleButton) {
-    updateToggleLabel();
-    // Persist layout preference between page loads.
-    toggleButton.addEventListener("click", () => {
-      currentLayout = currentLayout === "dag" ? "force" : "dag";
-      localStorage.setItem(layoutStorageKey, currentLayout);
-      applyLayout();
-    });
-  }
+  // Respond to global layout changes from the dropdown.
+  window.addEventListener("prereq-layout-change", (event) => {
+    const layoutEvent = event as CustomEvent<{ mode?: LayoutModeSelectionT }>;
+    const mode = layoutEvent.detail?.mode;
+    if (!mode) {
+      return;
+    }
+    if (mode === "elk") {
+      setGraphVisible(false);
+      if (forceSimulation) {
+        forceSimulation.stop();
+        forceSimulation = null;
+      }
+      return;
+    }
+    setGraphVisible(true);
+    currentLayout = mode;
+    localStorage.setItem(layoutStorageKey, currentLayout);
+    applyLayout();
+  });
 
   // Fetch graph data and render once the payload arrives.
   fetch(jsonUrl, { credentials: "same-origin" })
@@ -770,6 +809,12 @@
     })
     .then((payload: GraphPayloadT) => {
       cachedPayload = payload;
+      const activeMode = localStorage.getItem(layoutModeKey);
+      if (activeMode === "elk") {
+        setGraphVisible(false);
+        return;
+      }
+      setGraphVisible(true);
       applyLayout();
     })
     .catch((error) => {

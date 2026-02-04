@@ -45,6 +45,20 @@
         border-color: #adb5bd;
         color: #0b5ed7;
       }
+      header .actions label {
+        margin-left: 12px;
+        font-size: 13px;
+        color: #495057;
+      }
+      header .actions select {
+        margin-left: 6px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        padding: 5px 8px;
+        font-size: 13px;
+        background: #ffffff;
+        color: #0d6efd;
+      }
       #graph-error {
         margin: 12px 24px 0;
         padding: 10px 14px;
@@ -55,9 +69,13 @@
         font-size: 14px;
         display: none;
       }
-      #graph {
+      .graph-pane {
         width: 100%;
         height: calc(100vh - 64px);
+        background: #ffffff;
+      }
+      .graph-pane.is-hidden {
+        display: none;
       }
       .node rect,
       .node ellipse,
@@ -83,20 +101,51 @@
     <header>
       <h1>Prerequisite Graph – {{ slug }}</h1>
       <div class="actions">
-        <button type="button" id="layout-toggle">Switch to DAG layout</button>
+        <label for="layout-select">Layout</label>
+        <select id="layout-select">
+          <option value="elk">ELK (layered)</option>
+          <option value="force">Force</option>
+          <option value="dag">DAG (d3-dag)</option>
+        </select>
         <a href="{{ json_url }}">Download JSON</a>
         <a href="{{ dot_url }}">Download DOT</a>
         <a href="{{ png_url }}">Download PNG</a>
       </div>
     </header>
     <div id="graph-error"></div>
-    <svg id="graph" data-json-url="{{ json_url }}"></svg>
+    <svg
+      id="graph-d3"
+      class="graph-pane"
+      data-json-url="{{ json_url }}"
+    ></svg>
+    <div
+      id="graph-elk"
+      class="graph-pane"
+      data-json-url="{{ json_url }}"
+    ></div>
 
+    <script
+      defer
+      src="{% static 'build/academics/static/academics/js/prereq_graph_layout_switcher.js' %}"
+    ></script>
     <script defer src="{% static 'academics/js/d3.v7.min.js' %}"></script>
     <script defer src="{% static 'academics/js/d3-dag.iife.min.js' %}"></script>
     <script
       defer
       src="{% static 'build/academics/static/academics/js/prereq_graph_viewer.js' %}"
+    ></script>
+    <script
+      defer
+      src="{% static 'academics/js/cytoscape.3.33.1.min.js' %}"
+    ></script>
+    <script defer src="{% static 'academics/js/elkjs.0.11.0.bundled.js' %}"></script>
+    <script
+      defer
+      src="{% static 'academics/js/cytoscape-elk.2.3.0.js' %}"
+    ></script>
+    <script
+      defer
+      src="{% static 'build/academics/static/academics/js/prereq_graph_viewer_elk.js' %}"
     ></script>
   </body>
 </html>

@@ -1,6 +1,76 @@
 
 
 
+* <2026-02-04 mer. 07:32>  network
+** <2026-02-04 mer. 09:18> implemntation with cyto and elk
+  - TS: docker-compose -f docker-compose-preprod.yml exec -T js-tools npm run check:ts && docker-compose -f docker-compose-preprod.yml exec -T js-tools npm run build:ts
+  - Static: docker-compose -f docker-compose-preprod.yml exec -T web python manage.py collectstatic --noinput
+
+** <2026-02-04 mer. 08:21> Auestions
+compare cytoscape and 
+** <2026-02-04 mer. 08:19> proposed solution
+  - d3-dag isn’t “dead”, but the author explicitly calls it “light maintenance mode” (not expanding to new use cases).
+  - For your constraints (ranked DAG + low crossings + simple hover interactions, no dragging), I’d switch to Cytoscape.js + ELK via cytoscape-elk (hierarchical    “layered” layout) and keep your page as a plain Django template with <script> tags (no bundler). (js.cytoscape.org (https://js.cytoscape.org/index.html?    utm_source=openai))
+
+***  Plan (Third Layout Option)
+**** Vendor the runtime libs into Django static 
+  - Add these to a committed static folder (e.g. static/vendor/ or app/academics/static/academics/vendor/):
+      - Cytoscape.js (core renderer)
+      - elkjs last git push 2 years ?
+      - cytoscape-elk (adapter; supports the layered algorithm) (github.com      (https://github.com/cytoscape/cytoscape.js-elk))
+  - Optional: add an npm script later that copies the exact dist/ files from  node_modules/ into static/vendor/ so upgrades are repeatable.
+
+**** Add a new viewer
+
+  - Create app/academics/static/academics/js/prereq_graph_viewer_cytoscape.ts.
+  - Keep it as an IIFE (like your current viewer) and consume globals (window.cytoscape, window.ELK / elkjs) so you can keep plain <script defer>  tags.
+
+**** Build a deterministic “semester -> rank/layer” constraint using ELK  partitioning
+
+  - Use ELK’s partitioning to force left-to-right ordering by semester:
+      - Graph option: elk.partitioning.activate = true (eclipse.dev (https://eclipse.dev/elk/reference/options/org-eclipse-elk-partitioning-activate.html?utm_source=openai))
+      - Per-node option: elk.partitioning.partition = <semesterNumber>eclipse.dev (https://eclipse.dev/elk/reference/options/org-eclipse-elk-partitioning-partition.html?utm_source=openai))
+  - Run ELK “layered” with left-to-right direction (in cytoscape-elk: elk:algorithm: 'layered', 'elk.direction': 'RIGHT', ... }). (github.comhttps://github.com/cytoscape/cytoscape.js-elk))
+  - Map your existing level_number (or semester field) to an integer partition;put “NA” courses into a final partition.
+
+**** Render + interactions (the pieces you asked for)
+
+  - Edges: style with arrowheads (Cytoscape supports target arrows via style; noSVG marker work needed).
+  - Hover full title: implement a small HTML tooltip div that follows the cursoron mouseover/mousemove for nodes (canvas-based renderers can’t rely on SVG<title>).
+  - (Later) dependency highlighting: Cytoscape makes it easy to walk fan-in / fan-    out and apply a “highlight” class.
+
+**** Wire it into the template as “Option 3”
+
+  - Update app/academics/templates/academics/prereq_graph.html to add:
+      - A container div for Cytoscape (keep your existing SVG for d3 if you wantboth options side-by-side).
+      - Script order: cytoscape -> elkjs -> cytoscape-elk -> build/.../prereq_graph_viewer_cytoscape.js. (github.com (https://github.com/cytoscape/cytoscape.js-elk))
+      - A UI toggle that switches between “D3 viewer” and “Cytoscape+ELKviewer” (persist in localStorage, like you already do).
+
+**** Ensure Django will serve/collect the new assets
+
+  - npm run build:ts generates static/build/.../*.js.
+  - collectstatic will pick up:
+      - your compiled outputs under static/build/
+      - the vendored libs under static/vendor/ (or app/**/static/**)
+  - Production/preprod should only ever serve from {% static %} paths (so hashed/static storage works normally).
+
+
+
+** pb
+I think I have it wrong, we should not use d3-dag.  the createor are not maintaining it any more.  it is outdated and may even be an over kill for what I wnat to do.
+I think d3 is a well coded library and I am a bit familliar with it but for our purpose it may not be the best js library.
+
+I am quite satisfied with what dot / graphviw does but I want it in js to have a little more interacctivity ( full title on hover, or higligh of graph depedency for eg)
+
+maybe graphology and sigma.js are good match event if done to support bigger graphes
+There is also react flow but I am imagining that it is an over kill for too much interaction. I do not need to move the nodes arround.
+What I need is to constrain node in layers (ranks) and let the library find the best line for defined edges ( to minimise crossing for eg or edge lenght).  Add to this a little interaction for hovering and you have my requirements.
+
+With that said, I am ready to do a third proposition of layout using what would be a good js library for my use case and constraints.
+
+Plan the creation of this third option
+
+
 * <2026-02-03 mar. 23:14>
 This is probably a good source of something working  and close to what we want '''https://observablehq.com/@erikbrinkman/d3-dag-sugiyama''' The code is now working but we need to improve it a little:
 - add vertical rectangle to show the semester.
