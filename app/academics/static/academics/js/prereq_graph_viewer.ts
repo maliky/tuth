@@ -1,4 +1,9 @@
 // Render prerequisite graph using a force layout (default), with d3-dag standby.
+// DEAD CODE: the force + d3-dag layouts are unplugged from the UI as of 2026-02-04.
+// To resurrect: re-add the layout options + `#graph-d3` container in
+// `app/academics/templates/academics/prereq_graph.html`, include
+// `build/academics/static/academics/js/prereq_graph_viewer.js` plus the D3
+// scripts, and wire the modes back into `prereq_graph_layout_switcher.ts`.
 // Wrapped in an IIFE to keep globals clean on pages that include multiple scripts.
 (function () {
   "use strict";

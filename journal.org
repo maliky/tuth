@@ -2,6 +2,76 @@
 
 
 * <2026-02-04 mer. 07:32>  network
+** <2026-02-04 mer. 23:11>  paufinage elk
+  Root cause (why the min‑crossings error happens)
+
+  - ELK throws that error when a hierarchical processor is used in a child graph
+    but the root graph does not declare the same hierarchical processor.
+  - In our case, the compound layout introduces hierarchy (semester parents), but    the min‑crossings preset changes the crossing minimization strategy only at
+    the root, so the child graphs still use a different processor. ELK refuses
+    this mismatch.
+
+  Plan (step‑by‑step, scoped to your requests)
+
+  1. Fix the min‑crossings error cleanly
+      - Ensure the root and child graphs use the same hierarchical processor for
+        crossing minimization when hierarchy is enabled.
+      - In practice: when tuning = min-crossings, set the same crossing
+        minimization strategy for all levels (root + child).
+      - I’ll implement this by adding a helper that:
+          - Always sets "elk.layered.crossingMinimization.strategy" to the same
+            value when hierarchy is active.
+          - Avoids mixed defaults by explicitly setting the same strategy in the
+            root graph options.
+      - We’ll verify by selecting Min Crossings and ensuring no ELK exception.
+  2. Add a Year compound node (Y1, Y2, …)
+      - Current structure: Semester parents SEM1, SEM2, …
+      - New structure:
+          - Year parents YEAR1, YEAR2, …
+          - Semester parents become children of their year node.
+          - Course nodes remain children of their semester node.
+      - This yields a two‑level compound hierarchy: Year → Semester → Courses.
+  3. Replace “ALT group” single node with a compound group
+      - Current: ALT{n} is a single node with combined label.
+      - New:
+          - Create a parent node ALTGROUP{n} (compound parent).
+          - Create two child nodes inside it (the actual alternatives), each a
+            real course node (with proper label/title/border).
+          - Edges:
+              - Incoming edges that previously targeted the ALT group now target
+                each child (or a single child if the source is specific).
+              - Outgoing edges from ALT group become outgoing edges from each
+                child.
+      - This keeps the actual choices visible and gives ELK more geometry to
+        reduce crossings.
+  4. Add edge/spacing tunables
+      - Add explicit ELK spacing knobs (root options) such as:
+          - "elk.spacing.edgeNode"
+          - "elk.spacing.edgeEdge"
+          - "elk.layered.spacing.edgeNodeBetweenLayers"
+          - "elk.layered.spacing.edgeEdgeBetweenLayers"
+      - Expose them in the same presets or keep them hard‑coded initially.
+      - Test if tighter spacing increases crossings; tune based on your feedback.  5. Add “Download ELK format”
+      - Convert the in‑memory graph model (the same structure we hand to ELK) to
+        ELK JSON and offer a download button.
+      - Option: Download ELK (JSON) link near the current JSON/DOT/PNG links.
+      - Implementation: create a Blob from the ELK JSON and attach to a temporary        <a> for download.
+  6. Validation pass
+      - Run the three tuning presets and confirm:
+          - No ELK exception.
+          - Year/semester hierarchy visible.
+          - ALT groups show two nodes under a parent.
+          - Edges and node spacing feel better (less overlap/crossing).
+
+  Codex level recommendation
+
+  - Use “High/Careful” (slow, stepwise changes, verify each stage).
+    This is multi‑part, touches layout logic, and includes hierarchy changes that    can easily break ELK.
+
+  If you want, I can proceed with step 1 only first (fix the min‑crossings
+  error), then continue with steps 2–5 once that’s stable.
+
+
 ** <2026-02-04 mer. 15:46>  iteration on cyto and elk, nealry there
 cytoscape.3.33.1.min.js:23 You have set a custom wheel sensitivity.  This will make your app zoom unnaturally when using mainstream mice.  You should change this value from the default only if you can guarantee that all your users will use the same hardware and OS configuration as your current machine.
 at @ cytoscape.3.33.1.min.js:23

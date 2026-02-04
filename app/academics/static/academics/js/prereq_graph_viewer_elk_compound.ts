@@ -228,10 +228,10 @@
   /** Determine which layout mode is active from localStorage. */
   const getActiveMode = (): LayoutModeSelectionT => {
     const stored = localStorage.getItem(layoutModeKey);
-    if (stored === "elk" || stored === "elk-compound") {
-      return stored;
+    if (stored === "elk-compound" || stored === "elk") {
+      return "elk-compound";
     }
-    return "elk";
+    return "elk-compound";
   };
 
   /** Determine which tuning preset is active from localStorage. */
@@ -781,8 +781,14 @@
     },
   ];
 
+  /** Resolve the crossing strategy so parent/child graphs stay consistent. */
+  const getCrossingStrategy = (tuning: LayoutTuningT): string => {
+    return "LAYER_SWEEP";
+  };
+
   /** Run the ELK layered layout with compound semester parents. */
   const buildElkOptions = (tuning: LayoutTuningT): Record<string, unknown> => {
+    const crossingStrategy = getCrossingStrategy(tuning);
     const baseOptions: Record<string, unknown> = {
       algorithm: "layered",
       "elk.direction": "RIGHT",
@@ -792,15 +798,16 @@
       "elk.spacing.nodeNode": 30,
       "elk.layered.spacing.nodeNodeBetweenLayers": 70,
       // Reduce edge crossings where possible (default is already good).
-      "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+      "elk.layered.crossingMinimization.strategy": crossingStrategy,
       "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
     };
 
     if (tuning === "min-crossings") {
       return {
         ...baseOptions,
-        "elk.layered.crossingMinimization.strategy": "MEDIAN_LAYER_SWEEP",
         "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
+        "elk.layered.crossingMinimization.greedySwitchHierarchical.type":
+          "TWO_SIDED",
       };
     }
 
@@ -844,6 +851,9 @@
             // Constrain nodes into partitions (semesters) ordered along elk.direction.
             // See ELK's layered partitioning options.
             "elk.partitioning.partition": String(partition),
+            // Keep crossing minimization strategy aligned with the root graph.
+            "elk.layered.crossingMinimization.strategy":
+              getCrossingStrategy(getActiveTuning()),
           };
         },
         elk: {

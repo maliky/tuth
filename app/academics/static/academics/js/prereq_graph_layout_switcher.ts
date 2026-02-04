@@ -20,17 +20,13 @@
     "graph-elk-compound"
   ) as HTMLElement | null;
 
-  if (!layoutSelect) {
-    return;
-  }
-
   /** Parse the saved layout mode or fall back to a sensible default. */
   const getStoredMode = (): LayoutModeT => {
     const stored = localStorage.getItem(layoutModeKey);
-    if (stored === "elk" || stored === "elk-compound") {
+    if (stored === "elk-compound") {
       return stored;
     }
-    return "elk";
+    return "elk-compound";
   };
 
   /** Persist the chosen mode and keep legacy force/dag preference in sync. */
@@ -48,10 +44,15 @@
     }
   };
 
-  const initialMode = getStoredMode();
-  storeMode(initialMode);
-  layoutSelect.value = initialMode;
-  applyVisibility(initialMode);
+  if (layoutSelect) {
+    const initialMode = getStoredMode();
+    storeMode(initialMode);
+    layoutSelect.value = initialMode;
+    applyVisibility(initialMode);
+  } else {
+    storeMode("elk-compound");
+    applyVisibility("elk-compound");
+  }
 
   /** Parse the saved layout tuning or fall back to a sensible default. */
   const getStoredTuning = (): LayoutTuningT => {
@@ -89,13 +90,15 @@
   }
 
   // Notify viewers on change so they can re-render in the new mode.
-  layoutSelect.addEventListener("change", () => {
-    const raw = layoutSelect.value;
-    const mode = raw === "elk-compound" ? "elk-compound" : "elk";
-    storeMode(mode);
-    applyVisibility(mode);
-    window.dispatchEvent(
-      new CustomEvent("prereq-layout-change", { detail: { mode } })
-    );
-  });
+  if (layoutSelect) {
+    layoutSelect.addEventListener("change", () => {
+      const raw = layoutSelect.value;
+      const mode = raw === "elk-compound" ? "elk-compound" : "elk";
+      storeMode(mode);
+      applyVisibility(mode);
+      window.dispatchEvent(
+        new CustomEvent("prereq-layout-change", { detail: { mode } })
+      );
+    });
+  }
 })();

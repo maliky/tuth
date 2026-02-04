@@ -140,11 +140,7 @@
     <header>
       <h1>Prerequisite Graph – {{ slug }}</h1>
       <div class="actions">
-        <label for="layout-select">Layout</label>
-        <select id="layout-select">
-          <option value="elk">ELK (layered)</option>
-          <option value="elk-compound">ELK (compound semesters)</option>
-        </select>
+        <!-- Legacy layouts are disabled; compound ELK is the only active layout. -->
         <label for="layout-tuning">Tuning</label>
         <select id="layout-tuning">
           <option value="balanced">Balanced</option>
@@ -158,13 +154,8 @@
     </header>
     <div id="graph-error"></div>
     <div
-      id="graph-elk"
-      class="graph-pane"
-      data-json-url="{{ json_url }}"
-    ></div>
-    <div
       id="graph-elk-compound"
-      class="graph-pane is-hidden"
+      class="graph-pane"
       data-json-url="{{ json_url }}"
     ></div>
 
@@ -180,10 +171,6 @@
     <script
       defer
       src="{% static 'academics/js/cytoscape-elk.2.3.0.js' %}"
-    ></script>
-    <script
-      defer
-      src="{% static 'build/academics/static/academics/js/prereq_graph_viewer_elk.js' %}"
     ></script>
     <script
       defer

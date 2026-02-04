@@ -1,4 +1,9 @@
 // Prerequisite graph viewer using Cytoscape.js + ELK (layered DAG layout).
+// DEAD CODE: this layered layout is unplugged from the UI as of 2026-02-04.
+// To resurrect: re-add the `#graph-elk` container + layout option in
+// `app/academics/templates/academics/prereq_graph.html`, include the compiled
+// `build/academics/static/academics/js/prereq_graph_viewer_elk.js` script, and
+// wire the mode back into `prereq_graph_layout_switcher.ts`.
 //
 // We intentionally keep this as a plain browser script (no bundler, no imports)
 // because Tusis serves static assets directly via Django.
