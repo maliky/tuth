@@ -17,6 +17,8 @@
     color?: string;
     level_number?: number | null;
     is_in_curriculum?: boolean;
+    group_number?: number;
+    course_id?: number;
   };
 
   type GraphLinkT = {
@@ -68,6 +70,8 @@
     nodeDimensionsIncludeLabels?: boolean;
     elk?: Record<string, unknown>;
     nodeLayoutOptions?: (node: unknown) => Record<string, unknown>;
+    ready?: () => void;
+    stop?: () => void;
   };
 
   type CyLayoutRunT = {
@@ -93,7 +97,18 @@
       selector: string,
       handler: (event: CyEventT) => void
     ) => void;
+    nodes: () => CyNodeCollectionT;
     resize: () => void;
+  };
+
+  type CyNodeT = {
+    data: (key?: string) => unknown;
+    position: (pos?: { x: number; y: number }) => { x: number; y: number };
+  };
+
+  type CyNodeCollectionT = {
+    forEach: (fn: (node: CyNodeT) => void) => void;
+    ungrabify: () => void;
   };
 
   type CytoscapeFactoryT = (options: {
@@ -233,7 +248,85 @@
     const links = Array.isArray(payload.links) ? payload.links : [];
 
     const elements: CyElementT[] = [];
+    const groupedNodeId = new Map<string, string>();
+    const groupMap = new Map<number, GraphNodeT[]>();
+
+    nodes.forEach((node) => {
+      const groupNumber = node.group_number;
+      if (typeof groupNumber === "number" && groupNumber > 0) {
+        if (!groupMap.has(groupNumber)) {
+          groupMap.set(groupNumber, []);
+        }
+        groupMap.get(groupNumber)?.push(node);
+      }
+    });
+
+    const groupLevelKey = (groupNodes: GraphNodeT[]): LevelKeyT => {
+      const numericLevels = groupNodes
+        .map((node) => node.level_number)
+        .filter(
+          (level): level is number =>
+            typeof level === "number" && Number.isFinite(level) && level > 0
+        );
+      if (numericLevels.length) {
+        return Math.min(...numericLevels);
+      }
+      return "NA";
+    };
+
+    const groupSortKey = (node: GraphNodeT): number | string =>
+      node.course_id ?? node.label ?? node.id;
+
+    groupMap.forEach((groupNodes, groupNumber) => {
+      const sortedNodes = [...groupNodes].sort((a, b) => {
+        const aKey = groupSortKey(a);
+        const bKey = groupSortKey(b);
+        if (typeof aKey === "number" && typeof bKey === "number") {
+          return aKey - bKey;
+        }
+        return String(aKey).localeCompare(String(bKey));
+      });
+
+      const levelKey = groupLevelKey(sortedNodes);
+      const partition = levelKeyToPartition(levelKey);
+      const labelLines = sortedNodes.map((node) =>
+        String(node.label || node.id)
+      );
+      const titleLines = sortedNodes.map((node) =>
+        String(node.title || node.label || node.id)
+      );
+      const groupId = `ALT${groupNumber}`;
+      const groupLabel = [`ALT ${groupNumber}`, ...labelLines].join("\n");
+      const groupTitle = `Alternatives: ${titleLines.join(" | ")}`;
+      const groupColor =
+        sortedNodes.find((node) => node.color)?.color || "#6c757d";
+      const isInCurriculum = sortedNodes.every(
+        (node) => node.is_in_curriculum !== false
+      );
+
+      elements.push({
+        group: "nodes",
+        data: {
+          id: groupId,
+          label: groupLabel,
+          title: groupTitle,
+          shape: "round-rectangle",
+          borderColor: String(groupColor),
+          isInCurriculum,
+          levelKey,
+          partition,
+        },
+      });
+
+      sortedNodes.forEach((node) => {
+        groupedNodeId.set(String(node.id), groupId);
+      });
+    });
+
     for (const node of nodes) {
+      if (groupedNodeId.has(String(node.id))) {
+        continue;
+      }
       const levelKey = normalizeLevelKey(node);
       const partition = levelKeyToPartition(levelKey);
       elements.push({
@@ -252,9 +345,24 @@
     }
 
     let edgeIndex = 0;
+    const edgeKeys = new Set<string>();
     for (const link of links) {
-      const source = String(link.source);
-      const target = String(link.target);
+      let source = String(link.source);
+      let target = String(link.target);
+      if (groupedNodeId.has(source)) {
+        source = groupedNodeId.get(source) as string;
+      }
+      if (groupedNodeId.has(target)) {
+        target = groupedNodeId.get(target) as string;
+      }
+      if (source === target) {
+        continue;
+      }
+      const key = `${source}|${target}`;
+      if (edgeKeys.has(key)) {
+        continue;
+      }
+      edgeKeys.add(key);
       elements.push({
         group: "edges",
         data: {
@@ -310,6 +418,65 @@
   ];
 
   /** Run the ELK layered layout with semester partitions (left-to-right). */
+  const buildLevelColumns = (
+    nodes: CyNodeCollectionT,
+    width: number,
+    paddingX: number
+  ): Map<LevelKeyT, number> => {
+    const numericLevels = new Set<number>();
+    let hasUnknown = false;
+
+    nodes.forEach((node) => {
+      const raw = node.data("levelKey");
+      if (typeof raw === "number" && Number.isFinite(raw)) {
+        numericLevels.add(Math.trunc(raw));
+      } else {
+        hasUnknown = true;
+      }
+    });
+
+    const sortedLevels = Array.from(numericLevels).sort((a, b) => a - b);
+    const levelKeys: LevelKeyT[] = [...sortedLevels];
+    if (hasUnknown) {
+      levelKeys.push("NA");
+    }
+
+    const levelCount = Math.max(levelKeys.length, 1);
+    const innerWidth = Math.max(width - paddingX * 2, 240);
+    const spacing = levelCount > 1 ? innerWidth / (levelCount - 1) : 0;
+
+    const columns = new Map<LevelKeyT, number>();
+    levelKeys.forEach((levelKey, index) => {
+      const x =
+        levelCount > 1 ? paddingX + index * spacing : paddingX + innerWidth / 2;
+      columns.set(levelKey, x);
+    });
+
+    return columns;
+  };
+
+  const applyLevelColumns = (): void => {
+    if (!cy || !graphEl) return;
+
+    const rect = graphEl.getBoundingClientRect();
+    const width = Math.max(rect.width || 0, 900);
+    const paddingX = 60;
+    const columns = buildLevelColumns(cy.nodes(), width, paddingX);
+
+    cy.nodes().forEach((node) => {
+      const levelKey = node.data("levelKey");
+      const key =
+        typeof levelKey === "number" && Number.isFinite(levelKey)
+          ? Math.trunc(levelKey)
+          : "NA";
+      const x = columns.get(key) ?? columns.get("NA");
+      if (typeof x === "number") {
+        const pos = node.position();
+        node.position({ x, y: pos.y });
+      }
+    });
+  };
+
   const runElkLayout = (): void => {
     if (!cy) return;
     if (!windowWithCyto.ELK) {
@@ -347,6 +514,16 @@
           "elk.layered.spacing.nodeNodeBetweenLayers": 60,
           // Reduce edge crossings where possible (default is already good).
           "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+        },
+        stop: () => {
+          // Snap nodes horizontally to their semester columns while keeping
+          // ELK's vertical ordering to reduce edge crossings.
+          window.requestAnimationFrame(() => {
+            applyLevelColumns();
+            if (cy) {
+              cy.fit(undefined, 24);
+            }
+          });
         },
       }).run();
     } catch (err) {
@@ -402,6 +579,7 @@
       userPanningEnabled: true,
       boxSelectionEnabled: false,
     });
+    cy.nodes().ungrabify();
 
     // Hover tooltip: show full course title.
     cy.on("mouseover", "node", (event) => {
