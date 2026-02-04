@@ -8,6 +8,7 @@
 
   type LevelKeyT = number | "NA";
   type LayoutModeSelectionT = "elk" | "elk-compound";
+  type LayoutTuningT = "balanced" | "min-crossings" | "straight-edges";
 
   type GraphNodeT = {
     id: string;
@@ -49,6 +50,11 @@
     source: string;
     target: string;
     type: string;
+  };
+
+  type CyElementHandleT = {
+    addClass: (name: string) => void;
+    removeClass: (name: string) => void;
   };
 
   type CyNodeElementT = {
@@ -100,6 +106,7 @@
       selector: string,
       handler: (event: CyEventT) => void
     ) => void;
+    getElementById: (id: string) => CyElementHandleT;
     nodes: () => CyNodeCollectionT;
     resize: () => void;
   };
@@ -114,6 +121,13 @@
   type CyNodeCollectionT = {
     forEach: (fn: (node: CyNodeT) => void) => void;
     ungrabify: () => void;
+  };
+
+  type GraphIndexT = {
+    nodeIds: string[];
+    edgeIds: string[];
+    incomingByTarget: Map<string, Set<string>>;
+    edgeIdByKey: Map<string, string>;
   };
 
   type CytoscapeFactoryT = (options: {
@@ -135,6 +149,7 @@
   const graphEl = document.getElementById("graph-elk");
   const errorBox = document.getElementById("graph-error");
   const layoutModeKey = "prereq-graph-layout-mode";
+  const layoutTuningKey = "prereq-graph-layout-tuning";
 
   /** Display a banner error message in the UI. */
   const showError = (message: string): void => {
@@ -189,6 +204,7 @@
 
   let cy: CytoscapeInstanceT | null = null;
   let cachedPayload: GraphPayloadT | null = null;
+  let graphIndex: GraphIndexT | null = null;
 
   /** Toggle visibility for the ELK graph container. */
   const setGraphVisible = (isVisible: boolean): void => {
@@ -205,6 +221,19 @@
       return stored;
     }
     return "elk";
+  };
+
+  /** Determine which tuning preset is active from localStorage. */
+  const getActiveTuning = (): LayoutTuningT => {
+    const stored = localStorage.getItem(layoutTuningKey);
+    if (
+      stored === "balanced" ||
+      stored === "min-crossings" ||
+      stored === "straight-edges"
+    ) {
+      return stored;
+    }
+    return "balanced";
   };
 
   setGraphVisible(getActiveMode() === "elk");
@@ -518,6 +547,98 @@
     return elements;
   };
 
+  /** Build adjacency and element indexes for ancestor highlighting. */
+  const buildGraphIndex = (elements: CyElementT[]): GraphIndexT => {
+    const nodeIds: string[] = [];
+    const edgeIds: string[] = [];
+    const incomingByTarget = new Map<string, Set<string>>();
+    const edgeIdByKey = new Map<string, string>();
+
+    elements.forEach((element) => {
+      if (element.group === "nodes") {
+        nodeIds.push(String(element.data.id));
+        return;
+      }
+      const source = String(element.data.source);
+      const target = String(element.data.target);
+      edgeIds.push(String(element.data.id));
+      if (!incomingByTarget.has(target)) {
+        incomingByTarget.set(target, new Set());
+      }
+      incomingByTarget.get(target)?.add(source);
+      edgeIdByKey.set(`${source}|${target}`, String(element.data.id));
+    });
+
+    return { nodeIds, edgeIds, incomingByTarget, edgeIdByKey };
+  };
+
+  /** Collect ancestor nodes + edges for a selected node. */
+  const collectAncestors = (
+    startId: string,
+    index: GraphIndexT
+  ): { nodes: Set<string>; edges: Set<string> } => {
+    const nodes = new Set<string>();
+    const edges = new Set<string>();
+    const visited = new Set<string>([startId]);
+    const stack = [startId];
+
+    while (stack.length) {
+      const current = stack.pop() as string;
+      const parents = index.incomingByTarget.get(current);
+      if (!parents) {
+        continue;
+      }
+      parents.forEach((parentId) => {
+        nodes.add(parentId);
+        const edgeId = index.edgeIdByKey.get(`${parentId}|${current}`);
+        if (edgeId) {
+          edges.add(edgeId);
+        }
+        if (!visited.has(parentId)) {
+          visited.add(parentId);
+          stack.push(parentId);
+        }
+      });
+    }
+
+    return { nodes, edges };
+  };
+
+  /** Clear any ancestor highlighting. */
+  const clearHighlight = (): void => {
+    if (!cy || !graphIndex) {
+      return;
+    }
+    graphIndex.nodeIds.forEach((nodeId) => {
+      const element = cy?.getElementById(nodeId);
+      element?.removeClass("is-ancestor");
+      element?.removeClass("is-selected");
+    });
+    graphIndex.edgeIds.forEach((edgeId) => {
+      const element = cy?.getElementById(edgeId);
+      element?.removeClass("is-ancestor");
+    });
+  };
+
+  /** Highlight the ancestors of a node in the graph. */
+  const highlightAncestors = (nodeId: string): void => {
+    if (!cy || !graphIndex) {
+      return;
+    }
+    clearHighlight();
+    const { nodes, edges } = collectAncestors(nodeId, graphIndex);
+    nodes.forEach((ancestorId) => {
+      const element = cy?.getElementById(ancestorId);
+      element?.addClass("is-ancestor");
+    });
+    edges.forEach((edgeId) => {
+      const element = cy?.getElementById(edgeId);
+      element?.addClass("is-ancestor");
+    });
+    const selected = cy?.getElementById(nodeId);
+    selected?.addClass("is-selected");
+  };
+
   /** Default Cytoscape stylesheet (kept in JS to avoid CSS specificity fights). */
   const buildStyles = (): unknown[] => [
     {
@@ -546,6 +667,26 @@
       },
     },
     {
+      selector: "node.is-ancestor",
+      style: {
+        "border-color": "#0d6efd",
+        "border-width": 3,
+        "shadow-color": "#0d6efd",
+        "shadow-opacity": 0.25,
+        "shadow-blur": 12,
+      },
+    },
+    {
+      selector: "node.is-selected",
+      style: {
+        "border-color": "#0d6efd",
+        "border-width": 3,
+        "shadow-color": "#0d6efd",
+        "shadow-opacity": 0.4,
+        "shadow-blur": 18,
+      },
+    },
+    {
       selector: "edge",
       style: {
         width: 1.6,
@@ -554,6 +695,14 @@
         "target-arrow-shape": "triangle",
         "arrow-scale": 0.9,
         "curve-style": "bezier",
+      },
+    },
+    {
+      selector: "edge.is-ancestor",
+      style: {
+        width: 2.4,
+        "line-color": "#0d6efd",
+        "target-arrow-color": "#0d6efd",
       },
     },
   ];
@@ -697,6 +846,38 @@
     applyColumnSpacing(columnNodes, minGap);
   };
 
+  const buildElkOptions = (tuning: LayoutTuningT): Record<string, unknown> => {
+    const baseOptions: Record<string, unknown> = {
+      algorithm: "layered",
+      "elk.direction": "RIGHT",
+      "elk.partitioning.activate": true,
+      // Slightly more breathing room for course graphs.
+      "elk.spacing.nodeNode": 30,
+      "elk.layered.spacing.nodeNodeBetweenLayers": 60,
+      // Reduce edge crossings where possible (default is already good).
+      "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+      "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+    };
+
+    if (tuning === "min-crossings") {
+      return {
+        ...baseOptions,
+        "elk.layered.crossingMinimization.strategy": "MEDIAN_LAYER_SWEEP",
+        "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
+      };
+    }
+
+    if (tuning === "straight-edges") {
+      return {
+        ...baseOptions,
+        "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
+        "elk.layered.nodePlacement.favorStraightEdges": true,
+      };
+    }
+
+    return baseOptions;
+  };
+
   const runElkLayout = (): void => {
     if (!cy) return;
     if (!windowWithCyto.ELK) {
@@ -729,14 +910,7 @@
           };
         },
         elk: {
-          algorithm: "layered",
-          "elk.direction": "RIGHT",
-          "elk.partitioning.activate": true,
-          // Slightly more breathing room for course graphs.
-          "elk.spacing.nodeNode": 30,
-          "elk.layered.spacing.nodeNodeBetweenLayers": 60,
-          // Reduce edge crossings where possible (default is already good).
-          "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+          ...buildElkOptions(getActiveTuning()),
         },
         stop: () => {
           // Snap nodes horizontally to their semester columns while keeping
@@ -795,6 +969,7 @@
       showError("Graph payload is empty.");
       return;
     }
+    graphIndex = buildGraphIndex(elements);
 
     cy = cytoscape({
       container: graphEl as HTMLElement,
@@ -817,6 +992,12 @@
     });
     cy.on("mouseout", "node", () => {
       hideTooltip();
+    });
+    cy.on("tap", "node", (event) => {
+      const nodeId = String(event.target.data("id") || "");
+      if (nodeId) {
+        highlightAncestors(nodeId);
+      }
     });
 
     runElkLayout();
@@ -865,6 +1046,19 @@
     if (cy) {
       cy.destroy();
       cy = null;
+    }
+  });
+
+  window.addEventListener("prereq-layout-tuning-change", (event) => {
+    const tuningEvent = event as CustomEvent<{ tuning?: LayoutTuningT }>;
+    if (!tuningEvent.detail?.tuning) {
+      return;
+    }
+    if (getActiveMode() !== "elk") {
+      return;
+    }
+    if (cy) {
+      runElkLayout();
     }
   });
 

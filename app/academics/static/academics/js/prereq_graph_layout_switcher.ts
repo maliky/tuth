@@ -5,10 +5,15 @@
   "use strict";
 
   type LayoutModeT = "elk" | "elk-compound";
+  type LayoutTuningT = "balanced" | "min-crossings" | "straight-edges";
 
   const layoutModeKey = "prereq-graph-layout-mode";
+  const layoutTuningKey = "prereq-graph-layout-tuning";
   const layoutSelect = document.getElementById(
     "layout-select"
+  ) as HTMLSelectElement | null;
+  const layoutTuningSelect = document.getElementById(
+    "layout-tuning"
   ) as HTMLSelectElement | null;
   const graphElk = document.getElementById("graph-elk") as HTMLElement | null;
   const graphElkCompound = document.getElementById(
@@ -47,6 +52,41 @@
   storeMode(initialMode);
   layoutSelect.value = initialMode;
   applyVisibility(initialMode);
+
+  /** Parse the saved layout tuning or fall back to a sensible default. */
+  const getStoredTuning = (): LayoutTuningT => {
+    const stored = localStorage.getItem(layoutTuningKey);
+    if (
+      stored === "balanced" ||
+      stored === "min-crossings" ||
+      stored === "straight-edges"
+    ) {
+      return stored;
+    }
+    return "balanced";
+  };
+
+  /** Persist the chosen tuning preset. */
+  const storeTuning = (tuning: LayoutTuningT): void => {
+    localStorage.setItem(layoutTuningKey, tuning);
+  };
+
+  if (layoutTuningSelect) {
+    const initialTuning = getStoredTuning();
+    storeTuning(initialTuning);
+    layoutTuningSelect.value = initialTuning;
+    layoutTuningSelect.addEventListener("change", () => {
+      const raw = layoutTuningSelect.value;
+      const tuning =
+        raw === "min-crossings" || raw === "straight-edges" ? raw : "balanced";
+      storeTuning(tuning);
+      window.dispatchEvent(
+        new CustomEvent("prereq-layout-tuning-change", {
+          detail: { tuning },
+        })
+      );
+    });
+  }
 
   // Notify viewers on change so they can re-render in the new mode.
   layoutSelect.addEventListener("change", () => {
