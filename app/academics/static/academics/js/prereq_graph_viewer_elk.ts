@@ -243,6 +243,52 @@
     }
   };
 
+  /** Convert a semester index into a year/semester label. */
+  const formatLevelLabel = (level: number): string => {
+    const year = Math.ceil(level / 2);
+    const semester = level % 2 === 0 ? 2 : 1;
+    return `Y${year} S${semester}`;
+  };
+
+  /** Extract sorted semester levels from the payload for band rendering. */
+  const extractLevelNumbers = (payload: GraphPayloadT): number[] => {
+    const nodes = Array.isArray(payload.nodes) ? payload.nodes : [];
+    const levels = new Set<number>();
+    nodes.forEach((node) => {
+      const level = node.level_number;
+      if (typeof level === "number" && Number.isFinite(level)) {
+        levels.add(Math.trunc(level));
+      }
+    });
+    return Array.from(levels).sort((a, b) => a - b);
+  };
+
+  /** Render vertical semester bands behind the graph for visual grouping. */
+  const renderLevelBands = (levels: number[]): void => {
+    if (!graphEl) {
+      return;
+    }
+    const existing = graphEl.querySelector(".graph-bands");
+    if (existing) {
+      existing.remove();
+    }
+    if (!levels.length) {
+      return;
+    }
+    const container = document.createElement("div");
+    container.className = "graph-bands";
+    levels.forEach((level) => {
+      const band = document.createElement("div");
+      band.className = "graph-band";
+      const label = document.createElement("div");
+      label.className = "graph-band-label";
+      label.textContent = formatLevelLabel(level);
+      band.appendChild(label);
+      container.appendChild(band);
+    });
+    graphEl.prepend(container);
+  };
+
   /** Build Cytoscape elements from the exported JSON format. */
   const buildElements = (payload: GraphPayloadT): CyElementT[] => {
     const nodes = Array.isArray(payload.nodes) ? payload.nodes : [];
@@ -586,6 +632,9 @@
       cy.destroy();
       cy = null;
     }
+
+    const levelNumbers = extractLevelNumbers(payload);
+    renderLevelBands(levelNumbers);
 
     const elements = buildElements(payload);
     if (elements.length === 0) {

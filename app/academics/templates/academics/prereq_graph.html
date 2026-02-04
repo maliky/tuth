@@ -77,6 +77,45 @@
       .graph-pane.is-hidden {
         display: none;
       }
+      #graph-elk {
+        position: relative;
+      }
+      #graph-elk .cytoscape-container {
+        position: relative;
+        z-index: 1;
+      }
+      .graph-bands {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        z-index: 0;
+        pointer-events: none;
+      }
+      .graph-band {
+        flex: 1;
+        position: relative;
+        border-right: 1px solid #e9ecef;
+      }
+      .graph-band:nth-child(odd) {
+        background: #f8f9fa;
+      }
+      .graph-band:nth-child(even) {
+        background: #ffffff;
+      }
+      .graph-band:last-child {
+        border-right: none;
+      }
+      .graph-band-label {
+        position: absolute;
+        top: 10px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 12px;
+        color: #6c757d;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+      }
       .node rect,
       .node ellipse,
       .node polygon,
