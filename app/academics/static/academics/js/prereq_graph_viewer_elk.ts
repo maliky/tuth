@@ -329,7 +329,9 @@
           // We only need node.data("partition") here.
           const dataFn = (node as { data?: (key: string) => unknown }).data;
           const partition =
-            typeof dataFn === "function" ? dataFn("partition") : "99";
+            typeof dataFn === "function"
+              ? dataFn.call(node, "partition")
+              : "99";
           return {
             // Constrain nodes into partitions (semesters) ordered along elk.direction.
             // See ELK's layered partitioning options.
