@@ -878,7 +878,6 @@
       style: {
         shape: "round-rectangle",
         "background-color": "data(bandColor)",
-        "background-opacity": "data(bandOpacity)",
         "border-width": 1,
         "border-color": "#ced4da",
         "border-style": "solid",
