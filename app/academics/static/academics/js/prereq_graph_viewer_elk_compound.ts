@@ -386,7 +386,6 @@
     return levels.map((level, index) => {
       const isFirstSemester = level % 2 === 1;
       const bandColor = isFirstSemester ? "#d1e7dd" : "#cfe2ff";
-      const bandOpacity = 0.9;
       const year = levelToYear(level);
       return {
         group: "nodes",
@@ -394,7 +393,6 @@
           id: `SEM${level}`,
           label: formatLevelLabel(level),
           bandColor,
-          bandOpacity,
           levelKey: level,
           partition: levelKeyToPartition(level),
           isParent: true,
