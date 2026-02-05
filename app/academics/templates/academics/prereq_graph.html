@@ -141,14 +141,11 @@
       <h1>Prerequisite Graph – {{ slug }}</h1>
       <div class="actions">
         <!-- Legacy layouts are disabled; compound ELK is the only active layout. -->
-        <label for="layout-tuning">Tuning</label>
-        <select id="layout-tuning">
-          <option value="balanced">Balanced</option>
-          <option value="min-crossings">Min crossings</option>
-          <option value="straight-edges">Straight edges</option>
-        </select>
-        <a href="{{ json_url }}">Download JSON</a>
-        <a href="{{ dot_url }}">Download DOT</a>
+        <!-- Layout tuning controls removed (balanced layout is fixed). -->
+        <button id="download-elk-json" type="button">Download ELK JSON</button>
+        <button id="toggle-non-curriculum" type="button">
+          Hide non-curriculum
+        </button>
         <a href="{{ png_url }}">Download PNG</a>
       </div>
     </header>

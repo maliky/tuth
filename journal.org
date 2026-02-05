@@ -51,26 +51,16 @@
           - "elk.layered.spacing.edgeNodeBetweenLayers"
           - "elk.layered.spacing.edgeEdgeBetweenLayers"
       - Expose them in the same presets or keep them hard‑coded initially.
-      - Test if tighter spacing increases crossings; tune based on your feedback.  5. Add “Download ELK format”
+      - Test if tighter spacing increases crossings; tune based on your feedback.
+
+
+   5. Add “Download ELK format”
       - Convert the in‑memory graph model (the same structure we hand to ELK) to
         ELK JSON and offer a download button.
-      - Option: Download ELK (JSON) link near the current JSON/DOT/PNG links.
+      - Option: Download ELK TXT link near the current JSON/DOT/PNG links.
       - Implementation: create a Blob from the ELK JSON and attach to a temporary        <a> for download.
-  6. Validation pass
-      - Run the three tuning presets and confirm:
-          - No ELK exception.
-          - Year/semester hierarchy visible.
-          - ALT groups show two nodes under a parent.
-          - Edges and node spacing feel better (less overlap/crossing).
-
-  Codex level recommendation
-
-  - Use “High/Careful” (slow, stepwise changes, verify each stage).
-    This is multi‑part, touches layout logic, and includes hierarchy changes that    can easily break ELK.
-
-  If you want, I can proceed with step 1 only first (fix the min‑crossings
-  error), then continue with steps 2–5 once that’s stable.
-
+	if elk txt is not something native to the js library, provind the elk json, instead of the current json.  the dot can go too but keep the png download.
+	
 
 ** <2026-02-04 mer. 15:46>  iteration on cyto and elk, nealry there
 cytoscape.3.33.1.min.js:23 You have set a custom wheel sensitivity.  This will make your app zoom unnaturally when using mainstream mice.  You should change this value from the default only if you can guarantee that all your users will use the same hardware and OS configuration as your current machine.

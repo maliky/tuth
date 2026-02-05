@@ -8,7 +8,6 @@
 
   type LevelKeyT = number | "NA";
   type LayoutModeSelectionT = "elk" | "elk-compound";
-  type LayoutTuningT = "balanced" | "min-crossings" | "straight-edges";
 
   type GraphNodeT = {
     id: string;
@@ -43,15 +42,20 @@
     levelKey: LevelKeyT;
     partition: string;
     parent?: string;
+    width: number;
+    height: number;
+    labelOffsetY: number;
   };
 
   type CyParentDataT = {
     id: string;
     label: string;
     bandColor: string;
+    bandOpacity?: number;
     levelKey: LevelKeyT;
     partition: string;
     isParent: boolean;
+    parent?: string;
   };
 
   type CyEdgeDataT = {
@@ -64,6 +68,7 @@
   type CyElementHandleT = {
     addClass: (name: string) => void;
     removeClass: (name: string) => void;
+    remove: () => void;
   };
 
   type CyNodeElementT = {
@@ -82,6 +87,32 @@
     group: "edges";
     data: CyEdgeDataT;
     classes?: string;
+  };
+
+  type ElkLabelT = {
+    text: string;
+  };
+
+  type ElkNodeT = {
+    id: string;
+    labels?: ElkLabelT[];
+    width?: number;
+    height?: number;
+    children?: ElkNodeT[];
+    properties?: Record<string, unknown>;
+  };
+
+  type ElkEdgeT = {
+    id: string;
+    sources: string[];
+    targets: string[];
+  };
+
+  type ElkGraphT = {
+    id: string;
+    layoutOptions: Record<string, unknown>;
+    children: ElkNodeT[];
+    edges: ElkEdgeT[];
   };
 
   type CyElementT = CyNodeElementT | CyParentElementT | CyEdgeElementT;
@@ -113,6 +144,7 @@
   };
 
   type CytoscapeInstanceT = {
+    add: (elements: CyElementT[]) => void;
     destroy: () => void;
     fit: (elements?: unknown, padding?: number) => void;
     layout: (options: CyLayoutOptionsT) => CyLayoutRunT;
@@ -155,7 +187,12 @@
   const graphEl = document.getElementById("graph-elk-compound");
   const errorBox = document.getElementById("graph-error");
   const layoutModeKey = "prereq-graph-layout-mode";
-  const layoutTuningKey = "prereq-graph-layout-tuning";
+  const downloadElkButton = document.getElementById(
+    "download-elk-json"
+  ) as HTMLButtonElement | null;
+  const toggleNonCurriculumButton = document.getElementById(
+    "toggle-non-curriculum"
+  ) as HTMLButtonElement | null;
 
   /** Display a banner error message in the UI. */
   const showError = (message: string): void => {
@@ -216,6 +253,9 @@
   let cy: CytoscapeInstanceT | null = null;
   let cachedPayload: GraphPayloadT | null = null;
   let graphIndex: GraphIndexT | null = null;
+  let cachedElements: CyElementT[] | null = null;
+  let showNonCurriculum = true;
+  let nonCurriculumHidden = false;
 
   /** Toggle visibility for the ELK compound graph container. */
   const setGraphVisible = (isVisible: boolean): void => {
@@ -232,19 +272,6 @@
       return "elk-compound";
     }
     return "elk-compound";
-  };
-
-  /** Determine which tuning preset is active from localStorage. */
-  const getActiveTuning = (): LayoutTuningT => {
-    const stored = localStorage.getItem(layoutTuningKey);
-    if (
-      stored === "balanced" ||
-      stored === "min-crossings" ||
-      stored === "straight-edges"
-    ) {
-      return stored;
-    }
-    return "balanced";
   };
 
   setGraphVisible(getActiveMode() === "elk-compound");
@@ -270,6 +297,8 @@
   /** Map DOT-ish node shapes to a Cytoscape supported shape. */
   const normalizeNodeShape = (shape: string | undefined): string => {
     switch ((shape || "box").toLowerCase()) {
+      case "circle":
+        return "ellipse";
       case "ellipse":
         return "ellipse";
       case "triangle":
@@ -286,12 +315,58 @@
     }
   };
 
-  /** Convert a semester index into a year/semester label. */
-  const formatLevelLabel = (level: number): string => {
-    const year = Math.ceil(level / 2);
-    const semester = level % 2 === 0 ? 2 : 1;
-    return `Y${year} S${semester}`;
+  /** Determine per-node sizing and label offset based on shape. */
+  const getNodeVisual = (
+    node: GraphNodeT
+  ): {
+    shape: string;
+    width: number;
+    height: number;
+    labelOffsetY: number;
+  } => {
+    const rawShape = (node.shape || "box").toLowerCase();
+    const labelText = String(node.label || "");
+    const titleText = String(node.title || "");
+    const courseToken = `${labelText} ${titleText} ${node.id}`.toUpperCase();
+    const isCOBA = courseToken.includes("COBA");
+
+    if (isCOBA) {
+      return {
+        shape: "diamond",
+        width: 90,
+        height: 90,
+        labelOffsetY: 0,
+      };
+    }
+
+    const isCompactShape = rawShape === "house" || rawShape === "circle";
+    const shape = normalizeNodeShape(rawShape);
+    const width = isCompactShape ? 90 : 110;
+    const height = isCompactShape ? 90 : 44;
+    const labelOffsetY = rawShape === "triangle" ? 2 : 0;
+    return { shape, width, height, labelOffsetY };
   };
+
+  /** Convert a semester index into a semester label. */
+  const formatLevelLabel = (level: number): string => {
+    const semester = level % 2 === 0 ? 2 : 1;
+    return `S${semester}`;
+  };
+
+  /** Convert a semester year index into a year label. */
+  const formatYearLabel = (year: number): string => {
+    const yearLabels: Record<number, string> = {
+      1: "Freshman",
+      2: "Sophomore",
+      3: "Junior",
+      4: "Senior 1",
+      5: "Senior 2",
+    };
+    return yearLabels[year] ?? `Year ${year}`;
+  };
+
+  /** Convert a semester index into a year number. */
+  const levelToYear = (level: number): number => Math.ceil(level / 2);
 
   /** Extract sorted semester levels from the payload for band rendering. */
   const extractLevelNumbers = (payload: GraphPayloadT): number[] => {
@@ -309,19 +384,49 @@
   /** Build the compound semester parent nodes used by the layout. */
   const buildSemesterParents = (levels: number[]): CyParentElementT[] => {
     return levels.map((level, index) => {
-      const isOdd = index % 2 === 0;
-      const bandColor = isOdd ? "#f8f9fa" : "#ffffff";
+      const isFirstSemester = level % 2 === 1;
+      const bandColor = isFirstSemester ? "#d1e7dd" : "#cfe2ff";
+      const bandOpacity = 0.9;
+      const year = levelToYear(level);
       return {
         group: "nodes",
         data: {
           id: `SEM${level}`,
           label: formatLevelLabel(level),
           bandColor,
+          bandOpacity,
           levelKey: level,
           partition: levelKeyToPartition(level),
           isParent: true,
+          parent: `YEAR${year}`,
         },
         classes: "semester-group",
+      };
+    });
+  };
+
+  /** Build the compound year parent nodes used by the layout. */
+  const buildYearParents = (levels: number[]): CyParentElementT[] => {
+    const years = Array.from(
+      new Set(levels.map((level) => levelToYear(level)))
+    ).sort((a, b) => a - b);
+    // Phoenix Gold with increasing opacity for year grouping.
+    const yearBandOpacities = [0.2, 0.4, 0.6, 0.8];
+
+    return years.map((year, index) => {
+      const bandOpacity = yearBandOpacities[index % yearBandOpacities.length];
+      return {
+        group: "nodes",
+        data: {
+          id: `YEAR${year}`,
+          label: formatYearLabel(year),
+          bandColor: "#ffc107",
+          bandOpacity,
+          levelKey: year,
+          partition: levelKeyToPartition(year),
+          isParent: true,
+        },
+        classes: "year-group",
       };
     });
   };
@@ -343,6 +448,20 @@
   /** Stable sort key for alternative group nodes. */
   const groupSortKey = (node: GraphNodeT): number | string =>
     node.course_id ?? node.label ?? node.id;
+
+  /** Map alternative group members to their group's level key. */
+  const buildGroupLevelKeyById = (
+    groupMap: Map<number, GraphNodeT[]>
+  ): Map<string, LevelKeyT> => {
+    const groupLevelKeyById = new Map<string, LevelKeyT>();
+    groupMap.forEach((groupNodes) => {
+      const levelKey = groupLevelKey(groupNodes);
+      groupNodes.forEach((node) => {
+        groupLevelKeyById.set(String(node.id), levelKey);
+      });
+    });
+    return groupLevelKeyById;
+  };
 
   /** Group nodes by alternative group_number. */
   const buildGroupMap = (nodes: GraphNodeT[]): Map<number, GraphNodeT[]> => {
@@ -370,44 +489,22 @@
     return nodeLevelKeyById;
   };
 
-  /** Map alternative group members to their group ids + level keys. */
-  const buildGroupMappings = (
-    groupMap: Map<number, GraphNodeT[]>
-  ): {
-    groupedNodeId: Map<string, string>;
-    groupLevelKeyById: Map<string, LevelKeyT>;
-  } => {
-    const groupedNodeId = new Map<string, string>();
-    const groupLevelKeyById = new Map<string, LevelKeyT>();
-    groupMap.forEach((groupNodes, groupNumber) => {
-      const groupId = `ALT${groupNumber}`;
-      groupNodes.forEach((node) => {
-        groupedNodeId.set(String(node.id), groupId);
-      });
-      groupLevelKeyById.set(groupId, groupLevelKey(groupNodes));
-    });
-    return { groupedNodeId, groupLevelKeyById };
-  };
-
   /** Build target semester levels for nodes missing a level number. */
   const buildTargetLevelsBySource = (
     links: GraphLinkT[],
-    groupedNodeId: Map<string, string>,
     nodeLevelKeyById: Map<string, LevelKeyT>,
     groupLevelKeyById: Map<string, LevelKeyT>
   ): Map<string, number[]> => {
     const targetLevelsBySource = new Map<string, number[]>();
     links.forEach((link) => {
-      let sourceId = String(link.source);
-      let targetId = String(link.target);
-      if (groupedNodeId.has(sourceId)) {
-        sourceId = groupedNodeId.get(sourceId) as string;
-      }
-      if (groupedNodeId.has(targetId)) {
-        targetId = groupedNodeId.get(targetId) as string;
-      }
+      const sourceId = String(link.source);
+      const targetId = String(link.target);
+      const rawTargetLevelKey = nodeLevelKeyById.get(targetId);
+      const groupTargetLevelKey = groupLevelKeyById.get(targetId);
       const targetLevelKey =
-        groupLevelKeyById.get(targetId) ?? nodeLevelKeyById.get(targetId);
+        typeof rawTargetLevelKey === "number"
+          ? rawTargetLevelKey
+          : groupTargetLevelKey;
       if (typeof targetLevelKey === "number") {
         if (!targetLevelsBySource.has(sourceId)) {
           targetLevelsBySource.set(sourceId, []);
@@ -428,6 +525,39 @@
       return undefined;
     }
     return Math.min(...levels);
+  };
+
+  const minGroupTargetLevel = (
+    groupNodes: GraphNodeT[],
+    targetLevelsBySource: Map<string, number[]>
+  ): number | undefined => {
+    const levels: number[] = [];
+    groupNodes.forEach((node) => {
+      const nodeLevels = targetLevelsBySource.get(String(node.id));
+      if (nodeLevels) {
+        levels.push(...nodeLevels);
+      }
+    });
+    if (!levels.length) {
+      return undefined;
+    }
+    return Math.min(...levels);
+  };
+
+  const resolveEffectiveLevelKey = (
+    nodeId: string,
+    nodeLevelKeyById: Map<string, LevelKeyT>,
+    groupLevelKeyById: Map<string, LevelKeyT>
+  ): LevelKeyT => {
+    const nodeLevelKey = nodeLevelKeyById.get(nodeId);
+    if (typeof nodeLevelKey === "number") {
+      return nodeLevelKey;
+    }
+    const groupLevelKey = groupLevelKeyById.get(nodeId);
+    if (typeof groupLevelKey === "number") {
+      return groupLevelKey;
+    }
+    return nodeLevelKey ?? "NA";
   };
 
   /** Resolve the semester column for nodes that do not have a level number. */
@@ -459,17 +589,18 @@
     const elements: CyElementT[] = [];
     const groupMap = buildGroupMap(nodes);
     const nodeLevelKeyById = buildNodeLevelKeyById(nodes);
-    const { groupedNodeId, groupLevelKeyById } = buildGroupMappings(groupMap);
+    const groupLevelKeyById = buildGroupLevelKeyById(groupMap);
     const targetLevelsBySource = buildTargetLevelsBySource(
       links,
-      groupedNodeId,
       nodeLevelKeyById,
       groupLevelKeyById
     );
     const levels = extractLevelNumbers(payload);
+    const yearParents = buildYearParents(levels);
     const parentNodes = buildSemesterParents(levels);
     const fallbackLevel = levels.length ? levels[0] : null;
 
+    yearParents.forEach((parent) => elements.push(parent));
     parentNodes.forEach((parent) => elements.push(parent));
 
     const resolveParentId = (level: number | null): string | undefined => {
@@ -490,11 +621,11 @@
       });
 
       const levelKey = groupLevelKey(sortedNodes);
-      const groupId = `ALT${groupNumber}`;
+      const groupId = `ALTGROUP${groupNumber}`;
       const groupTargetLevel =
         typeof levelKey === "number"
           ? undefined
-          : minTargetLevel(targetLevelsBySource, groupId);
+          : minGroupTargetLevel(sortedNodes, targetLevelsBySource);
       const anchorLevel =
         typeof levelKey === "number"
           ? levelKey
@@ -502,42 +633,71 @@
       const partitionLevel =
         typeof anchorLevel === "number" ? anchorLevel : levelKey;
       const partition = levelKeyToPartition(partitionLevel);
-      const labelLines = sortedNodes.map((node) =>
-        String(node.label || node.id)
-      );
-      const titleLines = sortedNodes.map((node) =>
-        String(node.title || node.label || node.id)
-      );
-      const groupLabel = [`ALT ${groupNumber}`, ...labelLines].join("\n");
-      const groupTitle = `Alternatives: ${titleLines.join(" | ")}`;
-      const groupColor =
-        sortedNodes.find((node) => node.color)?.color || "#6c757d";
-      const isInCurriculum = sortedNodes.every(
-        (node) => node.is_in_curriculum !== false
-      );
-      const groupClasses = isInCurriculum ? "" : "is-outside-curriculum";
 
       elements.push({
         group: "nodes",
         data: {
           id: groupId,
-          label: groupLabel,
-          title: groupTitle,
-          shape: "rectangle",
-          borderColor: String(groupColor),
-          isInCurriculum,
+          label: `ALT ${groupNumber}`,
+          bandColor: "#f8f9fa",
+          bandOpacity: 0.4,
           levelKey,
           partition,
+          isParent: true,
           parent: resolveParentId(anchorLevel),
         },
-        classes: groupClasses,
+        classes: "alt-group",
+      });
+
+      sortedNodes.forEach((node) => {
+        const visuals = getNodeVisual(node);
+        const nodeId = String(node.id);
+        const effectiveLevelKey = resolveEffectiveLevelKey(
+          nodeId,
+          nodeLevelKeyById,
+          groupLevelKeyById
+        );
+        const nodeTargetLevel =
+          typeof effectiveLevelKey === "number"
+            ? undefined
+            : minTargetLevel(targetLevelsBySource, nodeId);
+        const nodeAnchorLevel =
+          typeof effectiveLevelKey === "number"
+            ? effectiveLevelKey
+            : (resolveAnchorLevel(nodeTargetLevel, levels) ?? anchorLevel);
+        const nodePartitionLevel =
+          typeof nodeAnchorLevel === "number"
+            ? nodeAnchorLevel
+            : effectiveLevelKey;
+        const nodePartition = levelKeyToPartition(nodePartitionLevel);
+        const nodeClasses =
+          node.is_in_curriculum !== false ? "" : "is-outside-curriculum";
+        elements.push({
+          group: "nodes",
+          data: {
+            id: nodeId,
+            label: String(node.label || node.id),
+            title: String(node.title || node.label || node.id),
+            shape: visuals.shape,
+            borderColor: String(node.color || "#6c757d"),
+            isInCurriculum: node.is_in_curriculum !== false,
+            levelKey: effectiveLevelKey,
+            partition: nodePartition,
+            parent: groupId,
+            width: visuals.width,
+            height: visuals.height,
+            labelOffsetY: visuals.labelOffsetY,
+          },
+          classes: nodeClasses,
+        });
       });
     });
 
     for (const node of nodes) {
-      if (groupedNodeId.has(String(node.id))) {
+      if (typeof node.group_number === "number" && node.group_number > 0) {
         continue;
       }
+      const visuals = getNodeVisual(node);
       const levelKey = normalizeLevelKey(node);
       const nodeTargetLevel =
         typeof levelKey === "number"
@@ -558,12 +718,15 @@
           id: String(node.id),
           label: String(node.label || node.id),
           title: String(node.title || node.label || node.id),
-          shape: normalizeNodeShape(node.shape),
+          shape: visuals.shape,
           borderColor: String(node.color || "#6c757d"),
           isInCurriculum: node.is_in_curriculum !== false,
           levelKey,
           partition,
           parent: resolveParentId(anchorLevel),
+          width: visuals.width,
+          height: visuals.height,
+          labelOffsetY: visuals.labelOffsetY,
         },
         classes: nodeClasses,
       });
@@ -572,14 +735,8 @@
     let edgeIndex = 0;
     const edgeKeys = new Set<string>();
     for (const link of links) {
-      let source = String(link.source);
-      let target = String(link.target);
-      if (groupedNodeId.has(source)) {
-        source = groupedNodeId.get(source) as string;
-      }
-      if (groupedNodeId.has(target)) {
-        target = groupedNodeId.get(target) as string;
-      }
+      const source = String(link.source);
+      const target = String(link.target);
       if (source === target) {
         continue;
       }
@@ -700,8 +857,8 @@
       selector: "node",
       style: {
         shape: "data(shape)",
-        width: 110,
-        height: 44,
+        width: "data(width)",
+        height: "data(height)",
         "background-color": "#ffffff",
         "border-width": 2,
         "border-color": "data(borderColor)",
@@ -709,6 +866,7 @@
         label: "data(label)",
         color: "#212529",
         "font-size": 12,
+        "text-margin-y": "data(labelOffsetY)",
         "text-valign": "center",
         "text-halign": "center",
         "text-wrap": "wrap",
@@ -720,8 +878,9 @@
       style: {
         shape: "round-rectangle",
         "background-color": "data(bandColor)",
+        "background-opacity": "data(bandOpacity)",
         "border-width": 1,
-        "border-color": "#dee2e6",
+        "border-color": "#ced4da",
         "border-style": "solid",
         padding: 16,
         "text-valign": "top",
@@ -729,8 +888,51 @@
         "text-margin-y": 6,
         "font-size": 12,
         "font-weight": 600,
+        color: "#134529",
         "text-wrap": "wrap",
         "text-max-width": 140,
+        "compound-sizing-wrt-labels": "include",
+      },
+    },
+    {
+      selector: "node.alt-group",
+      style: {
+        shape: "round-rectangle",
+        "background-color": "data(bandColor)",
+        "background-opacity": "data(bandOpacity)",
+        "border-width": 1,
+        "border-color": "#ced4da",
+        "border-style": "dashed",
+        padding: 12,
+        "text-valign": "top",
+        "text-halign": "center",
+        "text-margin-y": 6,
+        "font-size": 11,
+        "font-weight": 600,
+        color: "#134529",
+        "text-wrap": "wrap",
+        "text-max-width": 140,
+        "compound-sizing-wrt-labels": "include",
+      },
+    },
+    {
+      selector: "node.year-group",
+      style: {
+        shape: "round-rectangle",
+        "background-color": "data(bandColor)",
+        "background-opacity": "data(bandOpacity)",
+        "border-width": 1.5,
+        "border-color": "#ced4da",
+        "border-style": "solid",
+        padding: 26,
+        "text-valign": "top",
+        "text-halign": "center",
+        "text-margin-y": 6,
+        "font-size": 14,
+        "font-weight": 700,
+        color: "#134529",
+        "text-wrap": "wrap",
+        "text-max-width": 160,
         "compound-sizing-wrt-labels": "include",
       },
     },
@@ -761,6 +963,12 @@
       },
     },
     {
+      selector: "node.is-hidden",
+      style: {
+        display: "none",
+      },
+    },
+    {
       selector: "edge",
       style: {
         width: 1.6,
@@ -779,47 +987,199 @@
         "target-arrow-color": "#0d6efd",
       },
     },
+    {
+      selector: "edge.is-hidden",
+      style: {
+        display: "none",
+      },
+    },
   ];
 
   /** Resolve the crossing strategy so parent/child graphs stay consistent. */
-  const getCrossingStrategy = (tuning: LayoutTuningT): string => {
+  const getCrossingStrategy = (): string => {
     return "LAYER_SWEEP";
   };
 
   /** Run the ELK layered layout with compound semester parents. */
-  const buildElkOptions = (tuning: LayoutTuningT): Record<string, unknown> => {
-    const crossingStrategy = getCrossingStrategy(tuning);
+  const buildElkOptions = (): Record<string, unknown> => {
+    const crossingStrategy = getCrossingStrategy();
     const baseOptions: Record<string, unknown> = {
       algorithm: "layered",
       "elk.direction": "RIGHT",
       "elk.partitioning.activate": true,
       "elk.hierarchyHandling": "INCLUDE_CHILDREN",
-      // Slightly more breathing room for course graphs.
+      // Default spacing for course graphs.
       "elk.spacing.nodeNode": 30,
+      "elk.spacing.edgeNode": 18,
+      "elk.spacing.edgeEdge": 12,
       "elk.layered.spacing.nodeNodeBetweenLayers": 70,
+      "elk.layered.spacing.edgeNodeBetweenLayers": 0,
+      "elk.layered.spacing.edgeEdgeBetweenLayers": 0,
       // Reduce edge crossings where possible (default is already good).
       "elk.layered.crossingMinimization.strategy": crossingStrategy,
       "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
     };
 
-    if (tuning === "min-crossings") {
-      return {
-        ...baseOptions,
-        "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
-        "elk.layered.crossingMinimization.greedySwitchHierarchical.type":
-          "TWO_SIDED",
-      };
-    }
-
-    if (tuning === "straight-edges") {
-      return {
-        ...baseOptions,
-        "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
-        "elk.layered.nodePlacement.favorStraightEdges": true,
-      };
-    }
-
     return baseOptions;
+  };
+
+  /** Build an ELK graph JSON payload from the Cytoscape elements. */
+  const buildElkGraph = (elements: CyElementT[]): ElkGraphT => {
+    const nodeMap = new Map<string, ElkNodeT>();
+    const childrenByParent = new Map<string, ElkNodeT[]>();
+    const rootChildren: ElkNodeT[] = [];
+
+    elements.forEach((element) => {
+      if (element.group !== "nodes") {
+        return;
+      }
+      const data = element.data;
+      const nodeId = String(data.id);
+      const labelText = data.label ? String(data.label) : nodeId;
+      const isParent = Boolean((data as CyParentDataT).isParent);
+      const elkNode: ElkNodeT = {
+        id: nodeId,
+        labels: [{ text: labelText }],
+        properties: data.partition
+          ? { "elk.partitioning.partition": String(data.partition) }
+          : undefined,
+      };
+      if (typeof (data as CyNodeDataT).width === "number") {
+        elkNode.width = (data as CyNodeDataT).width;
+      } else {
+        elkNode.width = isParent ? 180 : 110;
+      }
+      if (typeof (data as CyNodeDataT).height === "number") {
+        elkNode.height = (data as CyNodeDataT).height;
+      } else {
+        elkNode.height = isParent ? 120 : 44;
+      }
+      nodeMap.set(nodeId, elkNode);
+      const parentId = data.parent ? String(data.parent) : null;
+      if (parentId) {
+        if (!childrenByParent.has(parentId)) {
+          childrenByParent.set(parentId, []);
+        }
+        childrenByParent.get(parentId)?.push(elkNode);
+      } else {
+        rootChildren.push(elkNode);
+      }
+    });
+
+    childrenByParent.forEach((children, parentId) => {
+      const parent = nodeMap.get(parentId);
+      if (parent) {
+        parent.children = children;
+      } else {
+        rootChildren.push(...children);
+      }
+    });
+
+    const edges: ElkEdgeT[] = [];
+    elements.forEach((element) => {
+      if (element.group !== "edges") {
+        return;
+      }
+      edges.push({
+        id: String(element.data.id),
+        sources: [String(element.data.source)],
+        targets: [String(element.data.target)],
+      });
+    });
+
+    return {
+      id: "prereq-graph",
+      layoutOptions: buildElkOptions(),
+      children: rootChildren,
+      edges,
+    };
+  };
+
+  /** Download the ELK JSON payload using a temporary Blob URL. */
+  const downloadElkJson = (): void => {
+    const elements =
+      cachedElements || (cachedPayload ? buildElements(cachedPayload) : null);
+    if (!elements) {
+      showError("Unable to export ELK JSON: graph data is missing.");
+      return;
+    }
+    const elkGraph = buildElkGraph(elements);
+    const blob = new Blob([JSON.stringify(elkGraph, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "prereq_graph_elk.json";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const buildNonCurriculumElements = (): {
+    nodes: CyNodeElementT[];
+    edges: CyEdgeElementT[];
+  } => {
+    if (!cachedElements) {
+      return { nodes: [], edges: [] };
+    }
+    const nodes = cachedElements.filter(
+      (element): element is CyNodeElementT =>
+        element.group === "nodes" &&
+        Boolean(element.classes?.includes("is-outside-curriculum"))
+    );
+    const nodeIds = new Set(nodes.map((node) => String(node.data.id)));
+    const edges = cachedElements.filter(
+      (element): element is CyEdgeElementT =>
+        element.group === "edges" &&
+        (nodeIds.has(String(element.data.source)) ||
+          nodeIds.has(String(element.data.target)))
+    );
+    return { nodes, edges };
+  };
+
+  const hideNonCurriculum = (): void => {
+    if (!cy || nonCurriculumHidden) {
+      return;
+    }
+    const { nodes, edges } = buildNonCurriculumElements();
+    edges.forEach((edge) => {
+      cy?.getElementById(String(edge.data.id))?.remove();
+    });
+    nodes.forEach((node) => {
+      cy?.getElementById(String(node.data.id))?.remove();
+    });
+    nonCurriculumHidden = true;
+  };
+
+  const showNonCurriculumNodes = (): void => {
+    if (!cy || !nonCurriculumHidden) {
+      return;
+    }
+    const { nodes, edges } = buildNonCurriculumElements();
+    cy.add([...nodes, ...edges]);
+    nonCurriculumHidden = false;
+  };
+
+  const applyNonCurriculumVisibility = (show: boolean): void => {
+    if (show) {
+      showNonCurriculumNodes();
+    } else {
+      hideNonCurriculum();
+    }
+    if (cy) {
+      runElkLayout();
+    }
+  };
+
+  const updateNonCurriculumButton = (): void => {
+    if (!toggleNonCurriculumButton) {
+      return;
+    }
+    toggleNonCurriculumButton.textContent = showNonCurriculum
+      ? "Hide non-curriculum"
+      : "Show non-curriculum";
   };
 
   const runElkLayout = (): void => {
@@ -852,12 +1212,11 @@
             // See ELK's layered partitioning options.
             "elk.partitioning.partition": String(partition),
             // Keep crossing minimization strategy aligned with the root graph.
-            "elk.layered.crossingMinimization.strategy":
-              getCrossingStrategy(getActiveTuning()),
+            "elk.layered.crossingMinimization.strategy": getCrossingStrategy(),
           };
         },
         elk: {
-          ...buildElkOptions(getActiveTuning()),
+          ...buildElkOptions(),
         },
       }).run();
     } catch (err) {
@@ -903,6 +1262,7 @@
       showError("Graph payload is empty.");
       return;
     }
+    cachedElements = elements;
     graphIndex = buildGraphIndex(elements);
 
     cy = cytoscape({
@@ -939,6 +1299,7 @@
     });
 
     runElkLayout();
+    applyNonCurriculumVisibility(showNonCurriculum);
   };
 
   window.addEventListener("resize", () => {
@@ -988,18 +1349,20 @@
     }
   });
 
-  window.addEventListener("prereq-layout-tuning-change", (event) => {
-    const tuningEvent = event as CustomEvent<{ tuning?: LayoutTuningT }>;
-    if (!tuningEvent.detail?.tuning) {
-      return;
-    }
-    if (getActiveMode() !== "elk-compound") {
-      return;
-    }
-    if (cy) {
-      runElkLayout();
-    }
-  });
+  if (downloadElkButton) {
+    downloadElkButton.addEventListener("click", () => {
+      downloadElkJson();
+    });
+  }
+
+  if (toggleNonCurriculumButton) {
+    updateNonCurriculumButton();
+    toggleNonCurriculumButton.addEventListener("click", () => {
+      showNonCurriculum = !showNonCurriculum;
+      applyNonCurriculumVisibility(showNonCurriculum);
+      updateNonCurriculumButton();
+    });
+  }
 
   void loadAndRender();
 })();
