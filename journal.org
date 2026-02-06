@@ -1,6 +1,51 @@
 
 
 
+* <2026-02-05 jeu.> back to UX
+• Here’s a focused code‑review for registration/finance interfaces against the TU UX guide. Findings first (severity‑ordered, file‑level only), then questions, then a
+  brief change summary.
+
+  Findings
+
+  - [P2] Missing skip link on student portal pages — app/website/templates/website/student_portal_base.html
+    The guide requires skip links, but the student portal base doesn’t include one or a main target. This affects all student finance/registration pages that extend
+    this base.
+  - [P2] Brand palette drift in action buttons (blue “primary/outline”) —
+N    app/website/templates/website/student_invoice_statement.html,
+    app/website/templates/website/student_payment_receipt.html,
+    app/website/templates/enrollment/student_list.html,
+    app/website/templates/enrollment/student_admin_edit.html,
+    app/website/templates/website/portal_login.html
+    These pages use Bootstrap’s default blue btn-primary/btn-outline-primary, which conflicts with the evergreen/gold palette. The guide expects evergreen (#134529)
+    and gold (#ffc107) for primary/accent actions.
+  - [P3] Data tables don’t apply the guide’s table styling conventions —
+    app/website/templates/website/student_invoice_statement.html,
+    app/website/templates/website/student_payment_receipt.html
+    The guide specifies table-striped table-bordered table-hover ... for dense data tables. These tables are plain Bootstrap tables, reducing scanability and visual
+    consistency.
+  - [P3] Staff dashboard breadcrumbs lack hover underline — static/css/staff-dashboard.css
+    The guide requires hover underlines for link affordance. Breadcrumb links are styled without hover underlines; this impacts staff pages (including enrollment admin    views).
+  - [P3] Inter/Source Sans not loaded for non‑portal pages — app/website/templates/website/base.html
+    The base layout doesn’t load the font stack, so staff/login pages fall back to system fonts, diverging from the typography spec.
+
+  Open questions / assumptions
+
+  - Should we override Bootstrap’s primary/outline colors globally (site‑wide), or only for staff + student portal views?
+    No only for staff + students
+  - Do you want the skip link in student_portal_base.html to mirror the one in website/base.html exactly (same styling/placement)?
+    No do not skip it
+  - For the finance tables, do you want full DataTables‑style classes or just the visual table classes (striped/bordered/hover)?
+    if datatable style classes increas scanability and visual consistency implement them
+
+  Change summary (if you want me to implement)
+
+  - Add skip link + main target in student_portal_base.html. yes
+  - Replace blue buttons with evergreen/gold theme (on custom classes). 
+  - Apply table classes per guide on student finance tables. yes
+  - Add hover underline to .staff-shell__breadcrumbs a. yes
+  - Load Inter/Source Sans in website/base.html. yes
+
+
 * <2026-02-04 mer. 07:32>  network
 ** <2026-02-04 mer. 23:11>  paufinage elk
   Root cause (why the min‑crossings error happens)
@@ -61,7 +106,6 @@
       - Implementation: create a Blob from the ELK JSON and attach to a temporary        <a> for download.
 	if elk txt is not something native to the js library, provind the elk json, instead of the current json.  the dot can go too but keep the png download.
 	
-
 ** <2026-02-04 mer. 15:46>  iteration on cyto and elk, nealry there
 cytoscape.3.33.1.min.js:23 You have set a custom wheel sensitivity.  This will make your app zoom unnaturally when using mainstream mice.  You should change this value from the default only if you can guarantee that all your users will use the same hardware and OS configuration as your current machine.
 at @ cytoscape.3.33.1.min.js:23

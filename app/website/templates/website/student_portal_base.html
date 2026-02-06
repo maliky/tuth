@@ -5,12 +5,14 @@
     <meta charset="utf-8" />
     <title>{% block page_title %}Tusis Student Portal{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{% static 'css/fonts.css' %}" />
     <link rel="icon" href="{% static 'favicon.ico' %}" />
     <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}" />
     <link rel="stylesheet" href="{% static 'css/student_portal.css' %}" />
     {% block extra_css %}{% endblock %}
   </head>
   <body class="portal-body">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
     <div class="portal-shell">
       <aside class="portal-sidebar">
         <div class="student-chip">
@@ -48,7 +50,7 @@
         </div>
       </aside>
 
-      <main class="portal-content">
+      <main class="portal-content" id="main-content">
         <header class="portal-header">
           <div>
             <p class="eyebrow mb-1 text-uppercase">Welcome back</p>
@@ -56,7 +58,9 @@
           </div>
           <div class="header-actions">
             {# Support button removed per dashboard header cleanup. #}
-            <a class="btn btn-warning btn-sm" href="{% url 'portal_logout' %}">Log out</a>
+            <a class="btn portal-btn-accent btn-sm" href="{% url 'portal_logout' %}">
+              Log out
+            </a>
           </div>
         </header>
 

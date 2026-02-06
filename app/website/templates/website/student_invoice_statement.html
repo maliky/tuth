@@ -17,7 +17,7 @@
           <p class="text-uppercase small text-muted mb-1">Total Due</p>
           <div class="h4 mb-0">{{ currency }} {{ total_due|floatformat:2 }}</div>
           <p class="text-muted mb-0">Outstanding invoices only</p>
-          <a class="btn btn-outline-primary btn-sm mt-2" href="{% url 'student_invoice_snapshot_pdf' %}">
+          <a class="btn portal-btn-outline btn-sm mt-2" href="{% url 'student_invoice_snapshot_pdf' %}">
             Download PDF
           </a>
         </div>
@@ -28,7 +28,7 @@
   <section class="mb-5">
     {% if statement_rows %}
       <div class="table-responsive bg-white rounded-3 shadow-sm">
-        <table class="table mb-0 align-middle">
+        <table class="table table-striped table-bordered table-hover table-checkable order-column mb-0 align-middle portal-table">
           <thead>
             <tr>
               <th>Semester</th>

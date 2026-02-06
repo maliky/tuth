@@ -224,6 +224,7 @@ LOGGING = {
 
 LOGIN_REDIRECT_URL = "/portal/"
 LOGIN_URL = "/auth/login/"
+LOGOUT_REDIRECT_URL = "/auth/login/"
 
 IMPERSONATE = {
     "CUSTOM_USER_QUERYSET": "app.people.impersonation.get_role_representatives",
