@@ -62,9 +62,13 @@ class CourseFeeStackInline(admin.TabularInline):
     fk_name = "course"
     verbose_name_plural = "Fee stacks"
     extra = 0
-    autocomplete_fields = ("fee_stack",)
-    fields = ("fee_stack",)
-    ordering = ("fee_stack__name",)
+    autocomplete_fields = (
+        "fee_stack",
+        "effective_from_semester",
+        "effective_to_semester",
+    )
+    fields = ("fee_stack", "effective_from_semester", "effective_to_semester")
+    ordering = ("effective_from_semester__start_date", "fee_stack__name")
 
 
 class CurriculumCourseSummaryFormSet(BaseInlineFormSet):

@@ -131,9 +131,7 @@ def _resolve_fee_map(
     curriculum_course: "CurriculumCourse", semester: "Semester | None"
 ) -> tuple[FeeMapT, FeeLabelMapT]:
     """Resolve fee amounts from stacks attached to the course."""
-    # Semester is ignored by the fee-stack model; kept for call signature stability.
-    _ = semester
-    return resolve_course_fee_stack_map(curriculum_course.course)
+    return resolve_course_fee_stack_map(curriculum_course.course, semester)
 
 
 def _format_currency(amount: Decimal) -> str:

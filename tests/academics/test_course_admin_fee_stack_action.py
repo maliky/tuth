@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from decimal import Decimal
 from typing import TypeAlias
 
@@ -40,10 +41,12 @@ def _fee_type(code: str, label: str) -> FeeType:
 
 def test_attach_fee_stacks_action_attaches_multiple_stacks_to_courses(
     course_factory,
+    semester_factory,
 ) -> None:
     """Bulk action should attach selected stacks to selected courses."""
     course_one = course_factory("601")
     course_two = course_factory("602")
+    semester = semester_factory(1, datetime(2024, 9, 1))
     lab_fee_type = _fee_type("lab", "Laboratory")
     reg_fee_type = _fee_type("registration", "Registration")
 
@@ -67,6 +70,7 @@ def test_attach_fee_stacks_action_attaches_multiple_stacks_to_courses(
             "apply": "yes",
             "_selected_action": [str(course_one.pk), str(course_two.pk)],
             "fee_stacks": [str(first_stack.pk), str(second_stack.pk)],
+            "effective_from_semester": str(semester.pk),
         },
     )
     queryset = Course.objects.filter(pk__in=[course_one.pk, course_two.pk])
@@ -91,6 +95,11 @@ def test_attach_fee_stacks_action_attaches_multiple_stacks_to_courses(
         course=course_two,
         fee_stack=second_stack,
     ).exists()
+    assert CourseFeeStack.objects.filter(
+        course=course_one,
+        fee_stack=first_stack,
+        effective_from_semester=semester,
+    ).exists()
     assert any(
         "Attached 4 course/stack link(s)." in msg for msg, _ in model_admin.messages
     )
@@ -98,9 +107,11 @@ def test_attach_fee_stacks_action_attaches_multiple_stacks_to_courses(
 
 def test_attach_fee_stacks_action_skips_existing_and_invalid_links(
     course_factory,
+    semester_factory,
 ) -> None:
     """Bulk action should skip existing and overlap-invalid attachments."""
     course = course_factory("603")
+    semester = semester_factory(1, datetime(2024, 9, 1))
     lab_fee_type = _fee_type("lab", "Laboratory")
     reg_fee_type = _fee_type("registration", "Registration")
 
@@ -122,7 +133,11 @@ def test_attach_fee_stacks_action_skips_existing_and_invalid_links(
         fee_type=reg_fee_type,
         amount=Decimal("5.00"),
     )
-    CourseFeeStack.objects.create(course=course, fee_stack=existing_stack)
+    CourseFeeStack.objects.create(
+        course=course,
+        fee_stack=existing_stack,
+        effective_from_semester=semester,
+    )
 
     request_factory = RequestFactory()
     request = request_factory.post(
@@ -135,6 +150,7 @@ def test_attach_fee_stacks_action_skips_existing_and_invalid_links(
                 str(conflict_stack.pk),
                 str(valid_stack.pk),
             ],
+            "effective_from_semester": str(semester.pk),
         },
     )
     queryset = Course.objects.filter(pk=course.pk)

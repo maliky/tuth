@@ -195,10 +195,7 @@ class CurriculumCourse(models.Model):
 
     def total_fee(self, semester) -> Decimal:
         """Return tuition plus resolved additional fees for a semester."""
-        # Semester is currently ignored because stacks are course-level bundles.
-        _ = semester
-        # Semester no longer changes fee resolution; stacks are attached to courses.
-        fee_map, _ = resolve_course_fee_stack_map(self.course)
+        fee_map, _ = resolve_course_fee_stack_map(self.course, semester)
         fee_total = sum(fee_map.values(), Decimal("0.00"))
         return self.tuition_for() + fee_total
 

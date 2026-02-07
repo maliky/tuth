@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+from datetime import date
 from decimal import Decimal
-from typing import TypeAlias
+from typing import TYPE_CHECKING, TypeAlias
 
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Sum
 from simple_history.models import HistoricalRecords
+
+if TYPE_CHECKING:
+    from app.timetable.models.semester import Semester
 
 
 FeeTypeCodeSetT: TypeAlias = set[str]
@@ -25,16 +29,60 @@ def _fee_type_codes_for_stack(stack_id: int) -> FeeTypeCodeSetT:
     )
 
 
-def resolve_course_fee_stack_map(course) -> tuple[FeeMapT, FeeLabelMapT]:
-    """Return fee amounts/labels resolved from stacks attached to a course."""
+def _semester_start_date(semester: "Semester | None") -> date | None:
+    """Return semester start date for comparisons."""
+    if semester is None:
+        return None
+    return getattr(semester, "start_date", None)
+
+
+def _ranges_overlap(
+    first_start: date,
+    first_end: date | None,
+    second_start: date,
+    second_end: date | None,
+) -> bool:
+    """Return True when two date ranges overlap (inclusive)."""
+    first_upper = first_end or date.max
+    second_upper = second_end or date.max
+    return first_start <= second_upper and second_start <= first_upper
+
+
+def resolve_course_fee_stack_map(course, semester) -> tuple[FeeMapT, FeeLabelMapT]:
+    """Return fee amounts/labels resolved from course stacks active in a semester."""
+    semester_start = _semester_start_date(semester)
+    if semester_start is None:
+        return {}, {}
+
     fee_map: FeeMapT = {}
     label_map: FeeLabelMapT = {}
+    stack_links_manager = getattr(course, "course_fee_stacks", None)
     stack_links = (
-        CourseFeeStack.objects.filter(course=course)
-        .select_related()
-        .prefetch_related("fee_stack__fees__fee_type")
+        list(
+            stack_links_manager.select_related(
+                "effective_from_semester",
+                "effective_to_semester",
+                "fee_stack",
+            ).prefetch_related("fee_stack__fees__fee_type")
+        )
+        if stack_links_manager is not None
+        else list(
+            CourseFeeStack.objects.filter(course=course)
+            .select_related(
+                "effective_from_semester",
+                "effective_to_semester",
+                "fee_stack",
+            )
+            .prefetch_related("fee_stack__fees__fee_type")
+        )
     )
     for stack_link in stack_links:
+        link_start = _semester_start_date(stack_link.effective_from_semester)
+        link_end = _semester_start_date(stack_link.effective_to_semester)
+        if link_start is None or link_start > semester_start:
+            continue
+        if link_end is not None and link_end < semester_start:
+            continue
         for fee_line in stack_link.fee_stack.fees.all():
             fee_type_code = fee_line.fee_type.code
             # Defensive add to keep totals correct even if legacy duplicates exist.
@@ -47,13 +95,33 @@ def resolve_course_fee_stack_map(course) -> tuple[FeeMapT, FeeLabelMapT]:
 
 def _fee_type_codes_for_course_stacks(
     course_id: int,
+    effective_start: date,
+    effective_end: date | None,
     exclude_link_id: int | None,
 ) -> FeeTypeCodeSetT:
-    """Return fee type codes already attached to a course via other stacks."""
-    stack_links = CourseFeeStack.objects.filter(course_id=course_id)
+    """Return fee type codes attached to a course in overlapping time windows."""
+    stack_links = CourseFeeStack.objects.filter(course_id=course_id).select_related(
+        "effective_from_semester",
+        "effective_to_semester",
+    )
     if exclude_link_id:
         stack_links = stack_links.exclude(pk=exclude_link_id)
-    linked_stack_ids = stack_links.values_list("fee_stack_id", flat=True)
+    linked_stack_ids: list[int] = []
+    for stack_link in stack_links:
+        link_start = _semester_start_date(stack_link.effective_from_semester)
+        if link_start is None:
+            continue
+        link_end = _semester_start_date(stack_link.effective_to_semester)
+        if not _ranges_overlap(
+            first_start=effective_start,
+            first_end=effective_end,
+            second_start=link_start,
+            second_end=link_end,
+        ):
+            continue
+        linked_stack_ids.append(stack_link.fee_stack_id)
+    if not linked_stack_ids:
+        return set()
     return set(
         FeeStackLine.objects.filter(fee_stack_id__in=linked_stack_ids).values_list(
             "fee_type__code", flat=True
@@ -131,6 +199,18 @@ class CourseFeeStack(models.Model):
         on_delete=models.CASCADE,
         related_name="course_fee_stacks",
     )
+    effective_from_semester = models.ForeignKey(
+        "timetable.Semester",
+        on_delete=models.PROTECT,
+        related_name="course_fee_stacks_from",
+    )
+    effective_to_semester = models.ForeignKey(
+        "timetable.Semester",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="course_fee_stacks_to",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     history = HistoricalRecords()
@@ -141,10 +221,30 @@ class CourseFeeStack(models.Model):
         if not self.course_id or not self.fee_stack_id:
             return
 
+        effective_start = _semester_start_date(self.effective_from_semester)
+        if effective_start is None:
+            raise ValidationError(
+                {"effective_from_semester": "Effective from semester is required."}
+            )
+        effective_end = _semester_start_date(self.effective_to_semester)
+        if effective_end is not None and effective_end < effective_start:
+            raise ValidationError(
+                {
+                    "effective_to_semester": (
+                        "Effective to semester cannot be before effective from semester."
+                    )
+                }
+            )
+
         target_codes = _fee_type_codes_for_stack(self.fee_stack_id)
         if not target_codes:
             return
-        linked_codes = _fee_type_codes_for_course_stacks(self.course_id, self.pk)
+        linked_codes = _fee_type_codes_for_course_stacks(
+            course_id=self.course_id,
+            effective_start=effective_start,
+            effective_end=effective_end,
+            exclude_link_id=self.pk,
+        )
         conflicting_codes = sorted(target_codes.intersection(linked_codes))
         if not conflicting_codes:
             return
@@ -171,8 +271,8 @@ class CourseFeeStack(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["course", "fee_stack"],
-                name="uniq_fee_stack_per_course",
+                fields=["course", "fee_stack", "effective_from_semester"],
+                name="uniq_fee_stack_per_course_and_start_semester",
             )
         ]
-        ordering = ["course", "fee_stack"]
+        ordering = ["course", "effective_from_semester", "fee_stack"]

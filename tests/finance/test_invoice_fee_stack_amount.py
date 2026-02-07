@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from decimal import Decimal
 
 import pytest
@@ -9,6 +10,7 @@ import pytest
 from app.finance.models.fee_stack import CourseFeeStack, FeeStack, FeeStackLine
 from app.finance.models.invoice import Invoice
 from app.finance.models.status_types_methods import FeeType
+from app.timetable.models.section import Section
 
 
 pytestmark = pytest.mark.django_db
@@ -21,35 +23,68 @@ def _fee_type(code: str, label: str) -> FeeType:
 
 
 def test_invoice_initial_amount_is_not_changed_by_later_fee_stack_update(
-    section,
+    curriculum_course_factory,
+    semester_factory,
     student,
 ) -> None:
     """Invoice stores initial amount and does not retroactively follow fee edits."""
-    student.curriculum = section.curriculum
+    curriculum_course = curriculum_course_factory("701", "CURR_STACK_INVOICE")
+    semester_old = semester_factory(1, datetime(2024, 9, 1))
+    semester_new = semester_factory(1, datetime(2025, 9, 1))
+    section_old = Section.objects.create(
+        semester=semester_old,
+        curriculum_course=curriculum_course,
+        number=1,
+    )
+    section_new = Section.objects.create(
+        semester=semester_new,
+        curriculum_course=curriculum_course,
+        number=1,
+    )
+
+    student.curriculum = curriculum_course.curriculum
     student.save(update_fields=["curriculum"])
 
-    fee_stack = FeeStack.objects.create(name="Invoice Stack")
-    fee_line = FeeStackLine.objects.create(
-        fee_stack=fee_stack,
+    old_stack = FeeStack.objects.create(name="Invoice Stack Old")
+    old_fee_line = FeeStackLine.objects.create(
+        fee_stack=old_stack,
         fee_type=_fee_type("registration", "Registration"),
         amount=Decimal("10.00"),
     )
-    CourseFeeStack.objects.create(course=section.course, fee_stack=fee_stack)
+    CourseFeeStack.objects.create(
+        course=curriculum_course.course,
+        fee_stack=old_stack,
+        effective_from_semester=semester_old,
+        effective_to_semester=semester_old,
+    )
 
-    initial_due = section.fee_total_amount()
+    initial_due = section_old.fee_total_amount()
     invoice = Invoice.objects.create(
-        curriculum_course=section.curriculum_course,
+        curriculum_course=section_old.curriculum_course,
         student=student,
-        semester=section.semester,
+        semester=section_old.semester,
         initial_amount_due=initial_due,
         balance=initial_due,
     )
 
-    fee_line.amount = Decimal("18.00")
-    fee_line.save(update_fields=["amount"])
-    updated_due = section.fee_total_amount()
+    new_stack = FeeStack.objects.create(name="Invoice Stack New")
+    FeeStackLine.objects.create(
+        fee_stack=new_stack,
+        fee_type=_fee_type("registration", "Registration"),
+        amount=Decimal("18.00"),
+    )
+    old_fee_line.amount = Decimal("12.00")
+    old_fee_line.save(update_fields=["amount"])
+    CourseFeeStack.objects.create(
+        course=curriculum_course.course,
+        fee_stack=new_stack,
+        effective_from_semester=semester_new,
+    )
+    updated_due_old = section_old.fee_total_amount()
+    updated_due_new = section_new.fee_total_amount()
 
-    assert updated_due > initial_due
+    assert updated_due_old > initial_due
+    assert updated_due_new > updated_due_old
     invoice.refresh_from_db()
     assert invoice.initial_amount_due == initial_due
     assert invoice.balance == initial_due

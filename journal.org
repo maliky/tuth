@@ -4,6 +4,11 @@
 
 * <2026-02-07 sam.>  fixing the fee model
 
+** <2026-02-07 sam.>  update
+make sure you update also the dbreset script with the new models to create and pdate.
+
+
+
 ** <2026-02-07 sam.>  tests
   2. Fee computation tests (tests/academics/test_curriculum_course_fee_stack.py)
 

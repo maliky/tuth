@@ -343,8 +343,9 @@ class CourseFeeStackInline(admin.TabularInline):
     model = CourseFeeStack
     fk_name = "fee_stack"
     extra = 0
-    autocomplete_fields = ("course",)
-    fields = ("course",)
+    autocomplete_fields = ("course", "effective_from_semester", "effective_to_semester")
+    fields = ("course", "effective_from_semester", "effective_to_semester")
+    ordering = ("effective_from_semester__start_date", "course__short_code")
 
 
 @admin.register(FeeStack)
@@ -377,8 +378,19 @@ class FeeStackLineAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
 class CourseFeeStackAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin settings for CourseFeeStack."""
 
-    list_display = ("course", "fee_stack", "updated_at")
-    autocomplete_fields = ("course", "fee_stack")
+    list_display = (
+        "course",
+        "fee_stack",
+        "effective_from_semester",
+        "effective_to_semester",
+        "updated_at",
+    )
+    autocomplete_fields = (
+        "course",
+        "fee_stack",
+        "effective_from_semester",
+        "effective_to_semester",
+    )
     search_fields = (
         "course__short_code",
         "course__code",
