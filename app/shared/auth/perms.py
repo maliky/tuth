@@ -50,9 +50,11 @@ APP_MODELS = {
     "finance": [
         "invoice",
         "scholarship",
-        "coursefee",
-        "curriculumcoursefee",
-        "clearancestatus",
+        "feestack",
+        "feestackline",
+        "coursefeestack",
+        "invoicestatus",
+        "paymentstatus",
         "paymentmethod",
         "feetype",
         "payment",
@@ -667,6 +669,12 @@ def expand_rights(models: list[str]) -> list[str]:
     ``college``.
     """
     expanded: list[str] = []
+    # Legacy aliases keep historical role_matrix entries valid after fee-model refactor.
+    legacy_alias_map = {
+        "coursefee": ["coursefeestack", "feestack", "feestackline"],
+        "curriculumcoursefee": ["coursefeestack", "feestack", "feestackline"],
+        "clearancestatus": ["invoicestatus"],
+    }
     for item in models:
         if not item:
             continue
@@ -676,9 +684,12 @@ def expand_rights(models: list[str]) -> list[str]:
             app_label = parts[0].lower()
             exclusions = set(parts[1:])
             expanded += [m for m in APP_MODELS.get(app_label, []) if m not in exclusions]
+        elif item in legacy_alias_map:
+            expanded += legacy_alias_map[item]
         elif item == "documents":
             expanded += [m for m in APP_MODELS["registry"] if m.startswith("document")]
         else:
             expanded += [item]
 
-    return expanded
+    # Keep deterministic order while avoiding duplicate permission lookups.
+    return list(dict.fromkeys(expanded))
