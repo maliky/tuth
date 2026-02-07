@@ -11,7 +11,6 @@ from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.finance.models.fee_stack import CourseFeeStack, FeeStack
-from app.timetable.models.semester import Semester
 
 
 @admin.action(description="Bulk update departments")
@@ -170,41 +169,11 @@ def attach_fee_stacks(modeladmin, request, queryset):
             label="Fee stacks to attach",
             required=True,
         )
-        effective_from_semester = forms.ModelChoiceField(
-            queryset=Semester.objects.select_related("academic_year").order_by(
-                "-start_date"
-            ),
-            label="Effective from semester",
-            required=True,
-        )
-        effective_to_semester = forms.ModelChoiceField(
-            queryset=Semester.objects.select_related("academic_year").order_by(
-                "-start_date"
-            ),
-            label="Effective to semester",
-            required=False,
-        )
-
-        def clean(self):
-            """Validate semester window bounds."""
-            cleaned_data = super().clean() or {}
-            effective_from_semester = cleaned_data.get("effective_from_semester")
-            effective_to_semester = cleaned_data.get("effective_to_semester")
-            from_start = getattr(effective_from_semester, "start_date", None)
-            to_start = getattr(effective_to_semester, "start_date", None)
-            if from_start and to_start and to_start < from_start:
-                self.add_error(
-                    "effective_to_semester",
-                    "Effective to semester cannot be before effective from semester.",
-                )
-            return cleaned_data
 
     if "apply" in request.POST:
         form = _FeeStackAttachForm(request.POST)
         if form.is_valid():
             selected_stacks = list(form.cleaned_data["fee_stacks"])
-            effective_from_semester = form.cleaned_data["effective_from_semester"]
-            effective_to_semester = form.cleaned_data["effective_to_semester"]
             attached_count = 0
             skipped_existing_count = 0
             skipped_invalid_count = 0
@@ -213,7 +182,6 @@ def attach_fee_stacks(modeladmin, request, queryset):
                     if CourseFeeStack.objects.filter(
                         course=course,
                         fee_stack=fee_stack,
-                        effective_from_semester=effective_from_semester,
                     ).exists():
                         skipped_existing_count += 1
                         continue
@@ -222,8 +190,6 @@ def attach_fee_stacks(modeladmin, request, queryset):
                         CourseFeeStack.objects.create(
                             course=course,
                             fee_stack=fee_stack,
-                            effective_from_semester=effective_from_semester,
-                            effective_to_semester=effective_to_semester,
                         )
                     except ValidationError:
                         skipped_invalid_count += 1

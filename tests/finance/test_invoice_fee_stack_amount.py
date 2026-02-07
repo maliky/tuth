@@ -50,13 +50,9 @@ def test_invoice_initial_amount_is_not_changed_by_later_fee_stack_update(
         fee_stack=old_stack,
         fee_type=_fee_type("registration", "Registration"),
         amount=Decimal("10.00"),
+        effective_from_semester=None,
     )
-    CourseFeeStack.objects.create(
-        course=curriculum_course.course,
-        fee_stack=old_stack,
-        effective_from_semester=semester_old,
-        effective_to_semester=semester_old,
-    )
+    CourseFeeStack.objects.create(course=curriculum_course.course, fee_stack=old_stack)
 
     initial_due = section_old.fee_total_amount()
     invoice = Invoice.objects.create(
@@ -67,19 +63,14 @@ def test_invoice_initial_amount_is_not_changed_by_later_fee_stack_update(
         balance=initial_due,
     )
 
-    new_stack = FeeStack.objects.create(name="Invoice Stack New")
     FeeStackLine.objects.create(
-        fee_stack=new_stack,
+        fee_stack=old_stack,
         fee_type=_fee_type("registration", "Registration"),
         amount=Decimal("18.00"),
+        effective_from_semester=semester_new,
     )
     old_fee_line.amount = Decimal("12.00")
     old_fee_line.save(update_fields=["amount"])
-    CourseFeeStack.objects.create(
-        course=curriculum_course.course,
-        fee_stack=new_stack,
-        effective_from_semester=semester_new,
-    )
     updated_due_old = section_old.fee_total_amount()
     updated_due_new = section_new.fee_total_amount()
 

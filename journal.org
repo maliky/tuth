@@ -2,14 +2,17 @@
 
 
 
-* <2026-02-07 sam.>  fixing the fee model
+* DONE <2026-02-07 sam.>  fixing the fee model
+CLOSED: [2026-02-07 sam. 13:50]
 
-** <2026-02-07 sam.>  update
+** DONE <2026-02-07 sam.>  update
+CLOSED: [2026-02-07 sam. 13:49]
 make sure you update also the dbreset script with the new models to create and pdate.
 
 
 
-** <2026-02-07 sam.>  tests
+** DONE <2026-02-07 sam.>  tests
+CLOSED: [2026-02-07 sam. 13:49]
   2. Fee computation tests (tests/academics/test_curriculum_course_fee_stack.py)
 
   - Course with no attached stack returns tuition only.
@@ -19,7 +22,8 @@ make sure you update also the dbreset script with the new models to create and p
   - semester argument does not change result (current design).
 
 
-** <2026-02-07 sam. 11:05> Clarification
+** DONE <2026-02-07 sam. 11:05> Clarification
+CLOSED: [2026-02-07 sam. 13:49]
 the fee_type constraint should be enforced at app level through the clean before attach.
 totaly drop the locking constrains on initial_amount_due, my concern was updated fee with retroactive changesin invoice but the invoice_amount is stored and will not be changed after a fee update.
 If this is clear an no more question, you can start implementing the plan up to 4 (included)
@@ -42,12 +46,14 @@ a course     (app-level first; DB trigger later if required).
 
 
 
-** <2026-02-07 sam. 10:37> constraints
+** DONE <2026-02-07 sam. 10:37> constraints
+CLOSED: [2026-02-07 sam. 13:50]
 a feestack should not contain the same fee_type twice
 for the invoice, only lock the inital_amount_due. 
 
 
-** plan
+** DONE plan
+CLOSED: [2026-02-07 sam. 13:50]
   - P2 Invoice amount freezing exists by behavior at creation so leave it so. let's not create additional locking mechanism.
   - P2 Bulk operation “select courses, attach one or more stacks” is not
     implemented in course admin.
@@ -97,7 +103,8 @@ for the invoice, only lock the inital_amount_due.
     courses, then optionally tighten default requirement.
 
 
-** <2026-02-07 sam. 10:24>
+** DONE <2026-02-07 sam. 10:24>
+CLOSED: [2026-02-07 sam. 13:50]
 - Link a course to a fee stack, one per default but  several are possible.
 - A fee stack a set of fees (feetype + amount)
 - Do not care about fee effective dates, only check that the invoices created store the amount to be paid  internaly and that this field is locked together when the registration periode is closed.
@@ -112,8 +119,7 @@ Does this model makes sens ? if so review the current situation and plan what ne
 
 
 * <2026-02-06 ven.> colors and ux functions
-** 
-** <2026-02-06 ven. 23:52> Plan proposition
+ P** TODO <2026-02-06 ven. 23:52> Plan proposition
 
 *** Lock the target behavior
 

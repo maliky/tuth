@@ -1,14 +1,11 @@
 """Management command for resetting the database."""
 
 from pathlib import Path
-from decimal import Decimal
 
 from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
-from app.finance.models.fee_stack import FeeStack, FeeStackLine
-from app.finance.models.status_types_methods import FeeType
 from app.shared.auth.helpers import ensure_superuser
 from app.shared.file_utils import iter_migration_files
 
@@ -81,34 +78,7 @@ class Command(BaseCommand):
 
         if not opts["no_seed"]:
             call_command("create_states")
-            self._sync_default_fee_stacks()
             call_command("load_roles", verbosity=0)
-
-    def _sync_default_fee_stacks(self) -> None:
-        """Ensure one default fee stack/line exists for each fee type."""
-        created_stack_count = 0
-        created_line_count = 0
-        for fee_type in FeeType.objects.all().order_by("code"):
-            stack_name = fee_type.label or fee_type.code
-            fee_stack, stack_created = FeeStack.objects.get_or_create(name=stack_name)
-            if stack_created:
-                created_stack_count += 1
-
-            # Keep default fee stacks editable by seeding with zero amount.
-            _, line_created = FeeStackLine.objects.get_or_create(
-                fee_stack=fee_stack,
-                fee_type=fee_type,
-                defaults={"amount": Decimal("0.00")},
-            )
-            if line_created:
-                created_line_count += 1
-
-        self.stdout.write(
-            self.style.SUCCESS(
-                "Default fee stacks synced: "
-                f"{created_stack_count} stack(s), {created_line_count} line(s)."
-            )
-        )
 
     def _delete_migrations(self, project_root):
         """Delete unlink the files."""

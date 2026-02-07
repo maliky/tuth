@@ -3,6 +3,7 @@
 from django.core.management.base import BaseCommand
 
 from app.academics.models.curriculum import CurriculumStatus
+from app.finance.fee_stack_defaults import ensure_default_fee_stacks_from_fee_types
 from app.finance.models.status_types_methods import (
     AccountChartType,
     AccountType,
@@ -49,5 +50,16 @@ class Command(BaseCommand):
             if callable(populate):
                 populate()
             self.stdout.write((f" - Defaults for {name} Created"))
+
+        created_stack_count, created_line_count = (
+            ensure_default_fee_stacks_from_fee_types()
+        )
+        self.stdout.write(
+            (
+                " - Default fee stacks synced "
+                f"({created_stack_count} created stack(s), "
+                f"{created_line_count} created line(s))"
+            )
+        )
 
         self.stdout.write(self.style.SUCCESS("Defaults states and status Created"))

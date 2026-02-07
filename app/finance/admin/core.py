@@ -333,8 +333,8 @@ class FeeStackLineInline(admin.TabularInline):
 
     model = FeeStackLine
     extra = 0
-    autocomplete_fields = ("fee_type",)
-    fields = ("fee_type", "amount")
+    autocomplete_fields = ("fee_type", "effective_from_semester")
+    fields = ("fee_type", "amount", "effective_from_semester")
 
 
 class CourseFeeStackInline(admin.TabularInline):
@@ -343,9 +343,9 @@ class CourseFeeStackInline(admin.TabularInline):
     model = CourseFeeStack
     fk_name = "fee_stack"
     extra = 0
-    autocomplete_fields = ("course", "effective_from_semester", "effective_to_semester")
-    fields = ("course", "effective_from_semester", "effective_to_semester")
-    ordering = ("effective_from_semester__start_date", "course__short_code")
+    autocomplete_fields = ("course",)
+    fields = ("course",)
+    ordering = ("course__short_code",)
 
 
 @admin.register(FeeStack)
@@ -369,8 +369,14 @@ class FeeStackAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
 class FeeStackLineAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin settings for FeeStackLine."""
 
-    list_display = ("fee_stack", "fee_type", "amount", "updated_at")
-    autocomplete_fields = ("fee_stack", "fee_type")
+    list_display = (
+        "fee_stack",
+        "fee_type",
+        "amount",
+        "effective_from_semester",
+        "updated_at",
+    )
+    autocomplete_fields = ("fee_stack", "fee_type", "effective_from_semester")
     search_fields = ("fee_stack__name", "fee_type__code", "fee_type__label")
 
 
@@ -378,19 +384,8 @@ class FeeStackLineAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
 class CourseFeeStackAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin settings for CourseFeeStack."""
 
-    list_display = (
-        "course",
-        "fee_stack",
-        "effective_from_semester",
-        "effective_to_semester",
-        "updated_at",
-    )
-    autocomplete_fields = (
-        "course",
-        "fee_stack",
-        "effective_from_semester",
-        "effective_to_semester",
-    )
+    list_display = ("course", "fee_stack", "updated_at")
+    autocomplete_fields = ("course", "fee_stack")
     search_fields = (
         "course__short_code",
         "course__code",

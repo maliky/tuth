@@ -29,9 +29,8 @@ def student_invoice_snapshot_pdf(request: HttpRequest) -> HttpResponse:
             "semester__academic_year",
         )
         .prefetch_related(
-            "curriculum_course__course__course_fee_stacks__effective_from_semester",
-            "curriculum_course__course__course_fee_stacks__effective_to_semester",
             "curriculum_course__course__course_fee_stacks__fee_stack__fees__fee_type",
+            "curriculum_course__course__course_fee_stacks__fee_stack__fees__effective_from_semester",
         )
     )
     if semester_id:

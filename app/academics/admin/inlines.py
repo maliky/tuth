@@ -8,11 +8,13 @@ from django.db.models import Count
 from django.forms.models import BaseInlineFormSet
 from django.urls import reverse
 from django.utils.html import format_html
+from django.utils import timezone
 
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.course import Course
 from app.academics.models.curriculum_course import CurriculumCourse
 from app.finance.models.fee_stack import CourseFeeStack
+from app.timetable.models.semester import Semester
 
 
 class RequiresInline(admin.TabularInline):
@@ -62,13 +64,34 @@ class CourseFeeStackInline(admin.TabularInline):
     fk_name = "course"
     verbose_name_plural = "Fee stacks"
     extra = 0
-    autocomplete_fields = (
-        "fee_stack",
-        "effective_from_semester",
-        "effective_to_semester",
-    )
-    fields = ("fee_stack", "effective_from_semester", "effective_to_semester")
-    ordering = ("effective_from_semester__start_date", "fee_stack__name")
+    autocomplete_fields = ("fee_stack",)
+    fields = ("fee_stack", "current_stack_total")
+    readonly_fields = ("current_stack_total",)
+    ordering = ("fee_stack__name",)
+
+    _semester_cache: Semester | None = None
+
+    def _resolved_semester(self) -> Semester | None:
+        """Return the latest started semester (or latest available)."""
+        if self._semester_cache is not None:
+            return self._semester_cache
+        today = timezone.now().date()
+        semester = (
+            Semester.objects.filter(start_date__lte=today).order_by("-start_date").first()
+        )
+        if semester is None:
+            semester = Semester.objects.order_by("-start_date").first()
+        self._semester_cache = semester
+        return semester
+
+    @admin.display(description="Current stack total")
+    def current_stack_total(self, obj: CourseFeeStack) -> str:
+        """Show resolved stack total for the current semester context."""
+        semester = self._resolved_semester()
+        if obj is None or not obj.fee_stack_id:
+            return "-"
+        total = obj.fee_stack.total_amount_for_semester(semester)
+        return f"{total:.2f}"
 
 
 class CurriculumCourseSummaryFormSet(BaseInlineFormSet):
