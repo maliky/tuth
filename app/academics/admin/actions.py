@@ -4,11 +4,13 @@
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
+from django.core.exceptions import ValidationError
 from django.shortcuts import redirect, render
 
 from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
+from app.finance.models.fee_stack import CourseFeeStack, FeeStack
 
 
 @admin.action(description="Bulk update departments")
@@ -147,4 +149,91 @@ def update_college(modeladmin, request, queryset):
         request,
         "admin/update_college.html",
         dict(items=queryset, form=form, title="Bulk-set college"),
+    )
+
+
+@admin.action(description="Attach fee stack(s) to selected courses")
+def attach_fee_stacks(modeladmin, request, queryset):
+    """Attach one or more fee stacks to selected courses."""
+
+    class HiddenIdListField(forms.MultipleChoiceField):
+        def validate(self, value):
+            pass
+
+    class _FeeStackAttachForm(forms.Form):
+        """Collect fee stacks to attach to the selected courses."""
+
+        _selected_action = HiddenIdListField(widget=forms.MultipleHiddenInput)
+        fee_stacks = forms.ModelMultipleChoiceField(
+            queryset=FeeStack.objects.all().order_by("name"),
+            label="Fee stacks to attach",
+            required=True,
+        )
+
+    if "apply" in request.POST:
+        form = _FeeStackAttachForm(request.POST)
+        if form.is_valid():
+            selected_stacks = list(form.cleaned_data["fee_stacks"])
+            attached_count = 0
+            skipped_existing_count = 0
+            skipped_invalid_count = 0
+            for course in queryset:
+                for fee_stack in selected_stacks:
+                    if CourseFeeStack.objects.filter(
+                        course=course,
+                        fee_stack=fee_stack,
+                    ).exists():
+                        skipped_existing_count += 1
+                        continue
+                    try:
+                        # Keep rule checks centralized in CourseFeeStack.clean().
+                        CourseFeeStack.objects.create(course=course, fee_stack=fee_stack)
+                    except ValidationError:
+                        skipped_invalid_count += 1
+                        continue
+                    attached_count += 1
+
+            if attached_count:
+                modeladmin.message_user(
+                    request,
+                    f"Attached {attached_count} course/stack link(s).",
+                    level=messages.SUCCESS,
+                )
+            if skipped_existing_count:
+                modeladmin.message_user(
+                    request,
+                    (
+                        f"Skipped {skipped_existing_count} existing course/stack "
+                        "link(s)."
+                    ),
+                    level=messages.INFO,
+                )
+            if skipped_invalid_count:
+                modeladmin.message_user(
+                    request,
+                    (
+                        f"Skipped {skipped_invalid_count} link(s) because fee types "
+                        "would duplicate on a course."
+                    ),
+                    level=messages.WARNING,
+                )
+            return redirect(request.get_full_path())
+    else:
+        form = _FeeStackAttachForm(
+            initial={
+                "_selected_action": request.POST.getlist(
+                    admin.helpers.ACTION_CHECKBOX_NAME
+                )
+            }
+        )
+
+    return render(
+        request,
+        "admin/attach_fee_stacks.html",
+        context={
+            "courses": queryset,
+            "form": form,
+            "title": "Attach fee stacks to selected courses",
+            "action_checkbox_name": admin.helpers.ACTION_CHECKBOX_NAME,
+        },
     )

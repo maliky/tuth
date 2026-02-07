@@ -12,7 +12,7 @@ from django.utils.html import format_html
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.course import Course
 from app.academics.models.curriculum_course import CurriculumCourse
-from app.finance.models.course_fee import CourseFee, CurriculumCourseFee
+from app.finance.models.fee_stack import CourseFeeStack
 
 
 class RequiresInline(admin.TabularInline):
@@ -55,28 +55,16 @@ class CourseCurriculumInline(admin.TabularInline):
     )
 
 
-class CourseFeeInline(admin.TabularInline):
-    """Inline editor for course fees."""
+class CourseFeeStackInline(admin.TabularInline):
+    """Inline editor for linking fee stacks to courses."""
 
-    model = CourseFee
+    model = CourseFeeStack
     fk_name = "course"
-    verbose_name_plural = "Course fees"
+    verbose_name_plural = "Fee stacks"
     extra = 0
-    autocomplete_fields = ("semester", "fee_type")
-    fields = ("fee_type", "amount", "semester")
-    ordering = ("semester",)
-
-
-class CurriculumCourseFeeInline(admin.TabularInline):
-    """Inline editor for curriculum course fees."""
-
-    model = CurriculumCourseFee
-    fk_name = "curriculum_course"
-    verbose_name_plural = "Curriculum course fees"
-    extra = 0
-    autocomplete_fields = ("semester", "fee_type")
-    fields = ("fee_type", "amount", "semester")
-    ordering = ("semester",)
+    autocomplete_fields = ("fee_stack",)
+    fields = ("fee_stack",)
+    ordering = ("fee_stack__name",)
 
 
 class CurriculumCourseSummaryFormSet(BaseInlineFormSet):

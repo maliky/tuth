@@ -15,12 +15,12 @@ If this is clear an no more question, you can start implementing the plan up to 
      unique (fee_stack, fee_type).
   3. Introduce through model linking Course to FeeStack (timestamps/history optional).
   4. Implement admin CRUD for stacks and stack lines.
-  5. Implement course-admin bulk action: attach one/many stacks to selected courses (add
-     mode).
-  6. Add validation to block attaching stacks that would duplicate a fee_type on a course     (app-level first; DB trigger later if required).
+a course     (app-level first; DB trigger later if required).
+  6. Add validation to block attaching stacks that would duplicate a fee_type on
+
+  5. Implement course-admin bulk action: attach one/many stacks to selected courses (add     mode).
   7. Update fee computation (CurriculumCourse.total_fee) to use attached stacks + tuition     only.
-  8. Remove obsolete paths: group-based fee code and old CourseFee/CurriculumCourseFee
-     model/admin/resources/usages.
+  8. Remove obsolete paths: group-based fee code and old CourseFee/CurriculumCourseFee     model/admin/resources/usages.
   9. Keep existing invoice amount-freeze behavior; optionally add minimal guard to lock
      only initial_amount_due.
 

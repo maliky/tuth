@@ -2,12 +2,6 @@
 
 from typing import Optional
 
-from app.finance.models.course_fee import (
-    CourseFee,
-    CourseFeeGroup,
-    CourseFeeGroupFee,
-    CurriculumCourseFee,
-)
 from app.finance.models.fee_stack import CourseFeeStack, FeeStack, FeeStackLine
 from app.finance.models.status_types_methods import (
     FeeType,
@@ -27,8 +21,6 @@ from simple_history.admin import SimpleHistoryAdmin
 
 from app.academics.models.curriculum_course import CurriculumCourse
 from app.finance.admin.resources import (
-    CourseFeeResource,
-    CurriculumCourseFeeResource,
     InvoiceResource,
     PaymentResource,
 )
@@ -336,21 +328,6 @@ class ScholarshipAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     autocomplete_fields = ("donor", "student")
 
 
-class BaseCourseFeeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
-    """Shared admin settings for course fee lookups."""
-
-    list_display: tuple[str, ...] = ("semester", "amount")
-
-    def get_changeform_initial_data(self, request):
-        """Preset the semester to the current one for new fee entries."""
-        initial = super().get_changeform_initial_data(request)
-        if "semester" not in initial:
-            current_semester = Semester.get_current_semester()
-            if current_semester:
-                initial["semester"] = current_semester.id
-        return initial
-
-
 class FeeStackLineInline(admin.TabularInline):
     """Inline editor for fee lines in a fee stack."""
 
@@ -407,68 +384,4 @@ class CourseFeeStackAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
         "course__code",
         "course__title",
         "fee_stack__name",
-    )
-
-
-class CourseFeeGroupFeeInline(admin.TabularInline):
-    """Inline editor for semester-effective fee rules."""
-
-    model = CourseFeeGroupFee
-    fk_name = "course_fee_group"
-    extra = 0
-    autocomplete_fields = ("fee_type", "effective_from_semester")
-    fields = ("fee_type", "amount", "effective_from_semester")
-    ordering = ("effective_from_semester__start_date", "fee_type__code")
-
-
-@admin.register(CourseFeeGroup)
-class CourseFeeGroupAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
-    """Admin settings for CourseFeeGroup."""
-
-    list_display = ("name", "is_active", "course_count")
-    search_fields = ("name", "courses__short_code", "courses__code", "courses__title")
-    filter_horizontal = ("courses",)
-    inlines = [CourseFeeGroupFeeInline]
-
-    def course_count(self, obj: CourseFeeGroup) -> int:
-        """Return the number of courses in the group."""
-        return obj.courses.count()
-
-
-@admin.register(CourseFeeGroupFee)
-class CourseFeeGroupFeeAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
-    """Admin settings for CourseFeeGroupFee."""
-
-    list_display = ("course_fee_group", "fee_type", "amount", "effective_from_semester")
-    autocomplete_fields = ("course_fee_group", "fee_type", "effective_from_semester")
-    search_fields = ("course_fee_group__name", "fee_type__code", "fee_type__label")
-
-
-@admin.register(CourseFee)
-class CourseFeeAdmin(BaseCourseFeeAdmin):
-    """Admin settings for CourseFee."""
-
-    resource_class = CourseFeeResource
-    list_display = ("course", "semester", "fee_type", "amount")
-    autocomplete_fields = ("course",)
-    search_fields = (
-        "course__short_code",
-        "course__code",
-        "course__title",
-    )
-
-
-@admin.register(CurriculumCourseFee)
-class CurriculumCourseFeeAdmin(BaseCourseFeeAdmin):
-    """Admin settings for CurriculumCourseFee."""
-
-    resource_class = CurriculumCourseFeeResource
-    list_display = ("curriculum_course", "semester", "fee_type", "amount")
-    autocomplete_fields = ("curriculum_course",)
-    search_fields = (
-        "curriculum_course__course__short_code",
-        "curriculum_course__course__code",
-        "curriculum_course__course__title",
-        "curriculum_course__curriculum__short_name",
-        "curriculum_course__curriculum__long_name",
     )

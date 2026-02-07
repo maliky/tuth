@@ -4,139 +4,19 @@ from __future__ import annotations
 
 from import_export import fields, resources
 
-from app.academics.admin.widgets import CourseWidget, CurriculumCourseWidget
+from app.academics.admin.widgets import CurriculumCourseWidget
 from app.finance.admin.widgets import (
-    FeeTypeWidget,
     InvoiceStatusWidget,
     InvoiceWidget,
     PaymentMethodWidget,
     PaymentStatusWidget,
     StaffWidget,
 )
-from app.finance.models.course_fee import CourseFee, CurriculumCourseFee
 from app.finance.models.invoice import Invoice
 from app.finance.models.payment import Payment
 from app.people.admin.widgets import StudentUserWidget
 from app.shared.utils import parse_str
 from app.timetable.admin.core_widgets import SemesterWidget
-
-
-class CourseFeeResource(resources.ModelResource):
-    """Import/export resource for CourseFee with human-readable keys."""
-
-    course = fields.Field(
-        column_name="course_no",
-        attribute="course",
-        widget=CourseWidget(),
-    )
-    semester = fields.Field(
-        column_name="semester_no",
-        attribute="semester",
-        widget=SemesterWidget(),
-    )
-    fee_type = fields.Field(
-        column_name="fee_type",
-        attribute="fee_type",
-        widget=FeeTypeWidget(),
-    )
-    academic_year = fields.Field(attribute=None, column_name="academic_year")
-    dept_code = fields.Field(attribute=None, column_name="dept_code")
-    college_code = fields.Field(attribute=None, column_name="college_code")
-    course_title = fields.Field(attribute=None, column_name="course_title")
-
-    class Meta:
-        model = CourseFee
-        import_id_fields = ("course", "semester", "fee_type")
-        fields = (
-            "course",
-            "semester",
-            "fee_type",
-            "amount",
-            "academic_year",
-            "dept_code",
-            "college_code",
-            "course_title",
-        )
-
-    def dehydrate_academic_year(self, obj):
-        semester = getattr(obj, "semester", None)
-        return str(semester.academic_year.code) if semester else ""
-
-    def dehydrate_dept_code(self, obj):
-        course = getattr(obj, "course", None)
-        department = getattr(course, "department", None)
-        return getattr(department, "code", "") if department else ""
-
-    def dehydrate_college_code(self, obj):
-        course = getattr(obj, "course", None)
-        department = getattr(course, "department", None)
-        college = getattr(department, "college", None)
-        return getattr(college, "code", "") if college else ""
-
-    def dehydrate_course_title(self, obj):
-        course = getattr(obj, "course", None)
-        return getattr(course, "title", "") if course else ""
-
-
-class CurriculumCourseFeeResource(resources.ModelResource):
-    """Import/export resource for CurriculumCourseFee with readable keys."""
-
-    curriculum_course = fields.Field(
-        column_name="curriculum",
-        attribute="curriculum_course",
-        widget=CurriculumCourseWidget(),
-    )
-    semester = fields.Field(
-        column_name="semester_no",
-        attribute="semester",
-        widget=SemesterWidget(),
-    )
-    fee_type = fields.Field(
-        column_name="fee_type",
-        attribute="fee_type",
-        widget=FeeTypeWidget(),
-    )
-    academic_year = fields.Field(attribute=None, column_name="academic_year")
-    course_no = fields.Field(attribute=None, column_name="course_no")
-    dept_code = fields.Field(attribute=None, column_name="dept_code")
-    college_code = fields.Field(attribute=None, column_name="college_code")
-
-    class Meta:
-        model = CurriculumCourseFee
-        import_id_fields = ("curriculum_course", "semester", "fee_type")
-        fields = (
-            "curriculum_course",
-            "semester",
-            "fee_type",
-            "amount",
-            "academic_year",
-            "course_no",
-            "dept_code",
-            "college_code",
-        )
-
-    def dehydrate_academic_year(self, obj):
-        semester = getattr(obj, "semester", None)
-        return str(semester.academic_year.code) if semester else ""
-
-    def dehydrate_course_no(self, obj):
-        course = getattr(obj.curriculum_course, "course", None)
-        return getattr(course, "number", "") if course else ""
-
-    def dehydrate_dept_code(self, obj):
-        course = getattr(obj.curriculum_course, "course", None)
-        department = getattr(course, "department", None)
-        return getattr(department, "code", "") if department else ""
-
-    def dehydrate_college_code(self, obj):
-        course = getattr(obj.curriculum_course, "course", None)
-        department = getattr(course, "department", None)
-        college = getattr(department, "college", None)
-        return getattr(college, "code", "") if college else ""
-
-    def dehydrate_curriculum_course(self, obj):
-        curriculum = getattr(obj.curriculum_course, "curriculum", None)
-        return getattr(curriculum, "short_name", "") if curriculum else ""
 
 
 class InvoiceResource(resources.ModelResource):

@@ -17,11 +17,7 @@ if TYPE_CHECKING:
     from app.people.models.student import Student
     from app.timetable.models.semester import Semester
 
-from app.finance.models.course_fee import (
-    CourseFee,
-    CurriculumCourseFee,
-    resolve_course_fee_group_map,
-)
+from app.finance.models.fee_stack import resolve_course_fee_stack_map
 from app.finance.models.invoice import Invoice
 from app.finance.models.invoice_snapshot import InvoiceSnapshot
 from app.finance.models.payment import Payment
@@ -131,116 +127,13 @@ def create_pending_payments(
     return summary
 
 
-def _fee_map_from_queryset(
-    fees: Iterable[CourseFee | CurriculumCourseFee],
-) -> tuple[FeeMapT, FeeLabelMapT]:
-    """Return fee amounts and labels keyed by fee type code."""
-    fee_map: FeeMapT = {}
-    label_map: FeeLabelMapT = {}
-    for fee in fees:
-        fee_type = getattr(fee, "fee_type", None)
-        if not fee_type:
-            continue
-        fee_map[fee_type.code] = fee.amount
-        label_map[fee_type.code] = fee_type.label or fee_type.code
-    return fee_map, label_map
-
-
-def _merge_fee_maps(
-    target: FeeMapT,
-    target_labels: FeeLabelMapT,
-    override: FeeMapT,
-    override_labels: FeeLabelMapT,
-) -> None:
-    """Merge fee maps, overwriting existing values."""
-    for fee_type, amount in override.items():
-        target[fee_type] = amount
-        label = override_labels.get(fee_type)
-        if label:
-            target_labels[fee_type] = label
-
-
-def _stack_fee_maps(
-    target: FeeMapT,
-    target_labels: FeeLabelMapT,
-    source: FeeMapT,
-    source_labels: FeeLabelMapT,
-) -> None:
-    """Stack fee maps by summing matching fee types."""
-    for fee_type, amount in source.items():
-        target[fee_type] = target.get(fee_type, Decimal("0.00")) + amount
-        label = source_labels.get(fee_type)
-        if label:
-            target_labels[fee_type] = label
-
-
-def _effective_fee_maps(
-    default_fees: list[CourseFee | CurriculumCourseFee],
-    semester_fees: list[CourseFee | CurriculumCourseFee],
-) -> tuple[FeeMapT, FeeLabelMapT]:
-    """Return the merged default+semester fee map for one source."""
-    default_map, default_labels = _fee_map_from_queryset(default_fees)
-    semester_map, semester_labels = _fee_map_from_queryset(semester_fees)
-    effective_map = dict(default_map)
-    effective_labels = dict(default_labels)
-    _merge_fee_maps(effective_map, effective_labels, semester_map, semester_labels)
-    return effective_map, effective_labels
-
-
 def _resolve_fee_map(
     curriculum_course: "CurriculumCourse", semester: "Semester | None"
 ) -> tuple[FeeMapT, FeeLabelMapT]:
-    """Resolve fee amounts for a curriculum course and semester."""
-    curriculum_fees_manager = getattr(curriculum_course, "curriculum_fees", None)
-    course_fees_manager = getattr(curriculum_course.course, "course_fees", None)
-    curriculum_fees = (
-        list(curriculum_fees_manager.all()) if curriculum_fees_manager else []
-    )
-    course_fees = list(course_fees_manager.all()) if course_fees_manager else []
-
-    curriculum_default = [fee for fee in curriculum_fees if fee.semester_id is None]
-    curriculum_semester = (
-        [
-            fee
-            for fee in curriculum_fees
-            if fee.semester_id == getattr(semester, "id", None)
-        ]
-        if semester
-        else []
-    )
-    course_default = [fee for fee in course_fees if fee.semester_id is None]
-    course_semester = (
-        [fee for fee in course_fees if fee.semester_id == getattr(semester, "id", None)]
-        if semester
-        else []
-    )
-
-    fee_map: FeeMapT = {}
-    fee_labels: FeeLabelMapT = {}
-    group_map, group_labels = resolve_course_fee_group_map(
-        curriculum_course.course, semester
-    )
-
-    course_effective_map, course_effective_labels = _effective_fee_maps(
-        course_default,
-        course_semester,
-    )
-    _merge_fee_maps(
-        course_effective_map, course_effective_labels, group_map, group_labels
-    )
-    curriculum_effective_map, curriculum_effective_labels = _effective_fee_maps(
-        curriculum_default,
-        curriculum_semester,
-    )
-
-    _stack_fee_maps(fee_map, fee_labels, course_effective_map, course_effective_labels)
-    _stack_fee_maps(
-        fee_map,
-        fee_labels,
-        curriculum_effective_map,
-        curriculum_effective_labels,
-    )
-    return fee_map, fee_labels
+    """Resolve fee amounts from stacks attached to the course."""
+    # Semester is ignored by the fee-stack model; kept for call signature stability.
+    _ = semester
+    return resolve_course_fee_stack_map(curriculum_course.course)
 
 
 def _format_currency(amount: Decimal) -> str:

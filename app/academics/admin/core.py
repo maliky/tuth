@@ -25,7 +25,7 @@ from app.shared.admin.filters import BaseCollegeFilter
 from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
 from app.people.admin.mixins import MergeWizardMixin, ModelT
 
-from .actions import update_curriculum, update_department
+from .actions import attach_fee_stacks, update_curriculum, update_department
 from .filters import (
     CourseCollegeFilter,
     CourseCurriculumFilter,
@@ -36,9 +36,8 @@ from .filters import (
 )
 from .inlines import (
     CourseCurriculumInline,
-    CourseFeeInline,
+    CourseFeeStackInline,
     CurriculumCourseInline,
-    CurriculumCourseFeeInline,
     DepartmentCourseInline,
     PrerequisiteInline,
     RequiresInline,
@@ -199,7 +198,7 @@ class CourseAdmin(DepartmentRestrictedAdmin):
     # Use list filters for curricula to avoid reverse M2M autocomplete errors.
     # > TODO: Add the list of student enrolled in this course the current semester.
     inlines = [
-        CourseFeeInline,
+        CourseFeeStackInline,
         RequiresInline,
         PrerequisiteInline,
         CourseCurriculumInline,
@@ -221,6 +220,7 @@ class CourseAdmin(DepartmentRestrictedAdmin):
     # Actions include manual merge and short_code-based merge helpers.
     actions = [
         update_department,
+        attach_fee_stacks,
         merge_courses_action,
         merge_courses_by_short_code_action,
     ]
@@ -479,7 +479,7 @@ class CurriculumCourseAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
 
     # Optional inline to list all curricula for this curriculum_course.
     # inlines = [CurriculumCourseInline]
-    inlines = [CurriculumCourseFeeInline]
+    inlines = ()
 
     ordering = ("course__short_code",)
     actions = [update_curriculum]

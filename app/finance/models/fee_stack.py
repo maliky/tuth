@@ -12,6 +12,8 @@ from simple_history.models import HistoricalRecords
 
 
 FeeTypeCodeSetT: TypeAlias = set[str]
+FeeMapT: TypeAlias = dict[str, Decimal]
+FeeLabelMapT: TypeAlias = dict[str, str]
 
 
 def _fee_type_codes_for_stack(stack_id: int) -> FeeTypeCodeSetT:
@@ -21,6 +23,26 @@ def _fee_type_codes_for_stack(stack_id: int) -> FeeTypeCodeSetT:
             "fee_type__code", flat=True
         )
     )
+
+
+def resolve_course_fee_stack_map(course) -> tuple[FeeMapT, FeeLabelMapT]:
+    """Return fee amounts/labels resolved from stacks attached to a course."""
+    fee_map: FeeMapT = {}
+    label_map: FeeLabelMapT = {}
+    stack_links = (
+        CourseFeeStack.objects.filter(course=course)
+        .select_related()
+        .prefetch_related("fee_stack__fees__fee_type")
+    )
+    for stack_link in stack_links:
+        for fee_line in stack_link.fee_stack.fees.all():
+            fee_type_code = fee_line.fee_type.code
+            # Defensive add to keep totals correct even if legacy duplicates exist.
+            fee_map[fee_type_code] = fee_map.get(fee_type_code, Decimal("0.00")) + (
+                fee_line.amount
+            )
+            label_map[fee_type_code] = fee_line.fee_type.label or fee_type_code
+    return fee_map, label_map
 
 
 def _fee_type_codes_for_course_stacks(
