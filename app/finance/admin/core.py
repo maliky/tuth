@@ -2,7 +2,13 @@
 
 from typing import Optional
 
-from app.finance.models.course_fee import CourseFee, CurriculumCourseFee
+from app.finance.models.course_fee import (
+    CourseFee,
+    CourseFeeGroup,
+    CourseFeeGroupFee,
+    CurriculumCourseFee,
+)
+from app.finance.models.fee_stack import CourseFeeStack, FeeStack, FeeStackLine
 from app.finance.models.status_types_methods import (
     FeeType,
     PaymentMethod,
@@ -343,6 +349,99 @@ class BaseCourseFeeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedMode
             if current_semester:
                 initial["semester"] = current_semester.id
         return initial
+
+
+class FeeStackLineInline(admin.TabularInline):
+    """Inline editor for fee lines in a fee stack."""
+
+    model = FeeStackLine
+    extra = 0
+    autocomplete_fields = ("fee_type",)
+    fields = ("fee_type", "amount")
+
+
+class CourseFeeStackInline(admin.TabularInline):
+    """Inline editor for attaching courses to a fee stack."""
+
+    model = CourseFeeStack
+    fk_name = "fee_stack"
+    extra = 0
+    autocomplete_fields = ("course",)
+    fields = ("course",)
+
+
+@admin.register(FeeStack)
+class FeeStackAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
+    """Admin settings for FeeStack."""
+
+    list_display = ("name", "fee_line_count", "course_count", "updated_at")
+    search_fields = ("name", "courses__short_code", "courses__code", "courses__title")
+    inlines = [FeeStackLineInline, CourseFeeStackInline]
+
+    def fee_line_count(self, obj: FeeStack) -> int:
+        """Return the number of fee lines in the stack."""
+        return obj.fees.count()
+
+    def course_count(self, obj: FeeStack) -> int:
+        """Return how many courses are linked to the stack."""
+        return obj.courses.count()
+
+
+@admin.register(FeeStackLine)
+class FeeStackLineAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
+    """Admin settings for FeeStackLine."""
+
+    list_display = ("fee_stack", "fee_type", "amount", "updated_at")
+    autocomplete_fields = ("fee_stack", "fee_type")
+    search_fields = ("fee_stack__name", "fee_type__code", "fee_type__label")
+
+
+@admin.register(CourseFeeStack)
+class CourseFeeStackAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
+    """Admin settings for CourseFeeStack."""
+
+    list_display = ("course", "fee_stack", "updated_at")
+    autocomplete_fields = ("course", "fee_stack")
+    search_fields = (
+        "course__short_code",
+        "course__code",
+        "course__title",
+        "fee_stack__name",
+    )
+
+
+class CourseFeeGroupFeeInline(admin.TabularInline):
+    """Inline editor for semester-effective fee rules."""
+
+    model = CourseFeeGroupFee
+    fk_name = "course_fee_group"
+    extra = 0
+    autocomplete_fields = ("fee_type", "effective_from_semester")
+    fields = ("fee_type", "amount", "effective_from_semester")
+    ordering = ("effective_from_semester__start_date", "fee_type__code")
+
+
+@admin.register(CourseFeeGroup)
+class CourseFeeGroupAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
+    """Admin settings for CourseFeeGroup."""
+
+    list_display = ("name", "is_active", "course_count")
+    search_fields = ("name", "courses__short_code", "courses__code", "courses__title")
+    filter_horizontal = ("courses",)
+    inlines = [CourseFeeGroupFeeInline]
+
+    def course_count(self, obj: CourseFeeGroup) -> int:
+        """Return the number of courses in the group."""
+        return obj.courses.count()
+
+
+@admin.register(CourseFeeGroupFee)
+class CourseFeeGroupFeeAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
+    """Admin settings for CourseFeeGroupFee."""
+
+    list_display = ("course_fee_group", "fee_type", "amount", "effective_from_semester")
+    autocomplete_fields = ("course_fee_group", "fee_type", "effective_from_semester")
+    search_fields = ("course_fee_group__name", "fee_type__code", "fee_type__label")
 
 
 @admin.register(CourseFee)

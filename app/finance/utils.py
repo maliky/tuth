@@ -17,7 +17,11 @@ if TYPE_CHECKING:
     from app.people.models.student import Student
     from app.timetable.models.semester import Semester
 
-from app.finance.models.course_fee import CourseFee, CurriculumCourseFee
+from app.finance.models.course_fee import (
+    CourseFee,
+    CurriculumCourseFee,
+    resolve_course_fee_group_map,
+)
 from app.finance.models.invoice import Invoice
 from app.finance.models.invoice_snapshot import InvoiceSnapshot
 from app.finance.models.payment import Payment
@@ -156,6 +160,33 @@ def _merge_fee_maps(
             target_labels[fee_type] = label
 
 
+def _stack_fee_maps(
+    target: FeeMapT,
+    target_labels: FeeLabelMapT,
+    source: FeeMapT,
+    source_labels: FeeLabelMapT,
+) -> None:
+    """Stack fee maps by summing matching fee types."""
+    for fee_type, amount in source.items():
+        target[fee_type] = target.get(fee_type, Decimal("0.00")) + amount
+        label = source_labels.get(fee_type)
+        if label:
+            target_labels[fee_type] = label
+
+
+def _effective_fee_maps(
+    default_fees: list[CourseFee | CurriculumCourseFee],
+    semester_fees: list[CourseFee | CurriculumCourseFee],
+) -> tuple[FeeMapT, FeeLabelMapT]:
+    """Return the merged default+semester fee map for one source."""
+    default_map, default_labels = _fee_map_from_queryset(default_fees)
+    semester_map, semester_labels = _fee_map_from_queryset(semester_fees)
+    effective_map = dict(default_map)
+    effective_labels = dict(default_labels)
+    _merge_fee_maps(effective_map, effective_labels, semester_map, semester_labels)
+    return effective_map, effective_labels
+
+
 def _resolve_fee_map(
     curriculum_course: "CurriculumCourse", semester: "Semester | None"
 ) -> tuple[FeeMapT, FeeLabelMapT]:
@@ -186,16 +217,29 @@ def _resolve_fee_map(
 
     fee_map: FeeMapT = {}
     fee_labels: FeeLabelMapT = {}
+    group_map, group_labels = resolve_course_fee_group_map(
+        curriculum_course.course, semester
+    )
 
-    course_default_map, course_default_labels = _fee_map_from_queryset(course_default)
-    course_sem_map, course_sem_labels = _fee_map_from_queryset(course_semester)
-    curr_default_map, curr_default_labels = _fee_map_from_queryset(curriculum_default)
-    curr_sem_map, curr_sem_labels = _fee_map_from_queryset(curriculum_semester)
+    course_effective_map, course_effective_labels = _effective_fee_maps(
+        course_default,
+        course_semester,
+    )
+    _merge_fee_maps(
+        course_effective_map, course_effective_labels, group_map, group_labels
+    )
+    curriculum_effective_map, curriculum_effective_labels = _effective_fee_maps(
+        curriculum_default,
+        curriculum_semester,
+    )
 
-    _merge_fee_maps(fee_map, fee_labels, course_default_map, course_default_labels)
-    _merge_fee_maps(fee_map, fee_labels, course_sem_map, course_sem_labels)
-    _merge_fee_maps(fee_map, fee_labels, curr_default_map, curr_default_labels)
-    _merge_fee_maps(fee_map, fee_labels, curr_sem_map, curr_sem_labels)
+    _stack_fee_maps(fee_map, fee_labels, course_effective_map, course_effective_labels)
+    _stack_fee_maps(
+        fee_map,
+        fee_labels,
+        curriculum_effective_map,
+        curriculum_effective_labels,
+    )
     return fee_map, fee_labels
 
 

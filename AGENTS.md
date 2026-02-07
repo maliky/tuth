@@ -28,7 +28,7 @@ Do not change existing variable names
 ### Documentation & comments
 - Pay close attention to comment using '# >' markers they are specificaly for agents.  You should read them but not write or delete them yourself.
 - When editing code, do not remove commented lines.  Add a comment to explain why you suggest removing them, instead.
-- Comment your additions, especially if removing code
+- Comment your additions with concise inline comments on key logic blocks, especially when removing or replacing code.
 - Document succintly new class, methods, or functions even internal ones
 - In the reports, do not add line precision, file precision is enough
 
@@ -36,11 +36,14 @@ Do not change existing variable names
 - Typing: prefer explicit TypeAliases ending with `T` (e.g., `StrIntMapT`), avoid `Any`, and keep mypy happy (no implicit Optional where a concrete type is expected).
 - Prefer functional-style helpers (small pure functions) and reuse existing utilities before adding new logic.
 - Factor common routines rather than duplicating blocks; keep new code composable.
-- For app import prefere three level deep.  using __init___ and __all__ in case of deeper nesting.
+- For app imports, prefer up to three levels when practical.
+- It is acceptable to use deeper imports (e.g., `from app.finance.models.course_fee import ...`) when needed for clarity or to avoid circular imports.
+- Use `__init__` and `__all__` to simplify import paths when it improves maintainability.
 - Trying keep python files size under 300 lines for readability.  They can be bundled together latter at deployment or production stage.
 
 ### Linting and checks
 - Check that the code pass with `py_compile`,  `black`, `flake8`, and `mypy` at the end of your edits. 
+- If a model change requires migrations, stop at code changes and report the required migration; do not create or edit migration files unless explicitly asked.
 
 ## Codebase style snapshot
 - Favor small functional helpers (`ensure_*`, `normalize_*`, `pipeline`, widgets) and `get_or_create`/`update_or_create` patterns with in-memory caches for imports and admin helpers.

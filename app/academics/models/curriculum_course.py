@@ -11,7 +11,11 @@ from simple_history.models import HistoricalRecords
 from app.academics.choices import LEVEL_NUMBER
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
-from app.finance.models.course_fee import CourseFee, CurriculumCourseFee
+from app.finance.models.course_fee import (
+    CourseFee,
+    CurriculumCourseFee,
+    resolve_course_fee_group_map,
+)
 from app.registry.models import CreditHour
 from app.shared.types import FacultyQuery, StudentQuery
 from app.timetable.choices import SEMESTER_NUMBER
@@ -195,48 +199,50 @@ class CurriculumCourse(models.Model):
 
     def total_fee(self, semester) -> Decimal:
         """Return tuition plus resolved additional fees for a semester."""
-        curriculum_semester_fees = (
+
+        def _fee_code_map(fees) -> dict[str, Decimal]:
+            """Return fee amounts keyed by non-empty fee type code."""
+            fee_map: dict[str, Decimal] = {}
+            for fee in fees:
+                fee_type = getattr(fee, "fee_type", None)
+                if not fee_type:
+                    continue
+                fee_map[fee_type.code] = fee.amount
+            return fee_map
+
+        curriculum_default_qs = CurriculumCourseFee.objects.filter(
+            curriculum_course=self,
+            semester__isnull=True,
+        )
+        curriculum_semester_qs = (
             CurriculumCourseFee.objects.filter(curriculum_course=self, semester=semester)
             if semester
             else CurriculumCourseFee.objects.none()
         )
-        curriculum_default_fees = CurriculumCourseFee.objects.filter(
-            curriculum_course=self, semester__isnull=True
+        curriculum_default_map = _fee_code_map(curriculum_default_qs)
+        curriculum_semester_map = _fee_code_map(curriculum_semester_qs)
+        curriculum_effective_map = dict(curriculum_default_map)
+        curriculum_effective_map.update(curriculum_semester_map)
+
+        course_default_qs = CourseFee.objects.filter(
+            course=self.course,
+            semester__isnull=True,
         )
-        course_semester_fees = (
+        course_semester_qs = (
             CourseFee.objects.filter(course=self.course, semester=semester)
             if semester
             else CourseFee.objects.none()
         )
-        course_default_fees = CourseFee.objects.filter(
-            course=self.course, semester__isnull=True
-        )
-
-        def _fee_map(fees):
-            return {fee.fee_type_id: fee.amount for fee in fees}
-
-        curriculum_semester_map = _fee_map(curriculum_semester_fees)
-        curriculum_default_map = _fee_map(curriculum_default_fees)
-        course_semester_map = _fee_map(course_semester_fees)
-        course_default_map = _fee_map(course_default_fees)
-
-        fee_types = set()
-        fee_types.update(curriculum_semester_map)
-        fee_types.update(curriculum_default_map)
-        fee_types.update(course_semester_map)
-        fee_types.update(course_default_map)
+        course_default_map = _fee_code_map(course_default_qs)
+        course_semester_map = _fee_code_map(course_semester_qs)
+        course_effective_map = dict(course_default_map)
+        course_effective_map.update(course_semester_map)
+        group_fee_map, _ = resolve_course_fee_group_map(self.course, semester)
+        course_effective_map.update(group_fee_map)
 
         fee_total = Decimal("0.00")
-        for fee_type_id in fee_types:
-            if fee_type_id in curriculum_semester_map:
-                fee_total += curriculum_semester_map[fee_type_id]
-            elif fee_type_id in curriculum_default_map:
-                fee_total += curriculum_default_map[fee_type_id]
-            elif fee_type_id in course_semester_map:
-                fee_total += course_semester_map[fee_type_id]
-            elif fee_type_id in course_default_map:
-                fee_total += course_default_map[fee_type_id]
-
+        fee_total += sum(course_effective_map.values(), Decimal("0.00"))
+        fee_total += sum(curriculum_effective_map.values(), Decimal("0.00"))
         return self.tuition_for() + fee_total
 
     def save(self, *args, **kwargs):

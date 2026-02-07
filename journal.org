@@ -1,6 +1,236 @@
 
 
 
+
+* <2026-02-07 sam.>  fixing the fee model
+
+** <2026-02-07 sam. 11:05> Clarification
+the fee_type constraint should be enforced at app level through the clean before attach.
+totaly drop the locking constrains on initial_amount_due, my concern was updated fee with retroactive changesin invoice but the invoice_amount is stored and will not be changed after a fee update.
+If this is clear an no more question, you can start implementing the plan up to 4 (included)
+
+
+  1. Introduce FeeStack (name, timestamps, history).
+  2. Introduce FeeStackLine (fee_stack, fee_type, amount, timestamps, history) with
+     unique (fee_stack, fee_type).
+  3. Introduce through model linking Course to FeeStack (timestamps/history optional).
+  4. Implement admin CRUD for stacks and stack lines.
+  5. Implement course-admin bulk action: attach one/many stacks to selected courses (add
+     mode).
+  6. Add validation to block attaching stacks that would duplicate a fee_type on a course     (app-level first; DB trigger later if required).
+  7. Update fee computation (CurriculumCourse.total_fee) to use attached stacks + tuition     only.
+  8. Remove obsolete paths: group-based fee code and old CourseFee/CurriculumCourseFee
+     model/admin/resources/usages.
+  9. Keep existing invoice amount-freeze behavior; optionally add minimal guard to lock
+     only initial_amount_due.
+
+
+
+
+** <2026-02-07 sam. 10:37> constraints
+a feestack should not contain the same fee_type twice
+for the invoice, only lock the inital_amount_due. 
+
+
+** plan
+  - P2 Invoice amount freezing exists by behavior at creation so leave it so. let's not create additional locking mechanism.
+  - P2 Bulk operation “select courses, attach one or more stacks” is not
+    implemented in course admin.
+  - P3 Existing fee admin/resources are row-centric (CourseFee/CurriculumCourseFee)    and not optimized for package-level maintenance.
+
+  Updated plan (no edits)
+
+  1. Define one canonical fee model path.
+
+  - Introduce FeeStack (name, timestamps, history).
+  - Introduce FeeStackLine and drop course_fee. (fee_stack, fee_type, amount, history) 
+  - Link courses to stacks via M2M (through table recommended for future metadata) yes.
+  2. Keep course linkage initially optional.
+  - Allow course with zero stacks at first (as requested).
+  - Add app-level warning/report for courses with no stacks.
+  - Later tighten to “default stack required” using a staged migration + validation    (not immediate DB hard constraint on M2M min-count).
+
+  4. Implement bulk admin workflow from course view.
+
+  - Custom course admin action: “Attach fee stack(s) to selected courses”.
+  - Intermediate form to choose one or multiple stacks.
+  - Support add mode first; optional replace mode later.
+
+  5. Simplify fee calculation path.
+
+  - CurriculumCourse.total_fee() should read course stacks only (plus tuition).
+  - If same fee_type appears in multiple attached stacks. Not allowed. stop ad db level when creating the relation.
+  - ignore previous mention of  dependency on effective-date logic
+
+  6. Remove dead/obsolete fee paths.
+
+  - Remove the in-progress group-based path and related resolver branches.
+  - Decide fate of CourseFee/CurriculumCourseFee: drop them
+      - fully replaced by stacks: delete models/admin/resources/tests.
+
+
+  7. Admin ergonomics for initial rollout.
+
+  - CRUD screens for FeeStack and FeeStackLine.
+  - Show “attached stacks count” in course list for quick auditing.
+  - Add a simple report/filter: courses without stack. ok 
+
+  8. Tests and rollout. ignore for now
+
+  - Tests: stack total calculation, bulk attach action, invoice amount freeze, lock    after registration close.
+  - Fresh DB rollout: create schema, create initial stacks, attach stacks to
+    courses, then optionally tighten default requirement.
+
+
+** <2026-02-07 sam. 10:24>
+- Link a course to a fee stack, one per default but  several are possible.
+- A fee stack a set of fees (feetype + amount)
+- Do not care about fee effective dates, only check that the invoices created store the amount to be paid  internaly and that this field is locked together when the registration periode is closed.
+- for bulk action, from the course view, select one or several courses adn attached one or several fee stacks
+- since we are creating this new feestack model, let's allow course to be connected to non at first, then I will do the linkage and then we will tighten to set a default, or if it is possible to set the default at migration taime we cand o that also after having created the default feestack.
+a feestack, has a name and a set of fee and a creation date and modification date, we track it changes with the history mixing
+
+The fee ahas a creation and modification date, it uses the history mixing too to track changes.
+
+Does this model makes sens ? if so review the current situation and plan what needs to be upgrade / removed.
+
+
+
+* <2026-02-06 ven.> colors and ux functions
+** 
+** <2026-02-06 ven. 23:52> Plan proposition
+
+*** Lock the target behavior
+
+  - CourseFee remains the canonical fee rule table.
+  - A fee change is always a new row with a new effective point (no in-place
+    overwrite of old rows).
+  - Fees stack by fee_type across a course.
+  - Existing invoices stay unchanged (no retroactive recalculation).
+
+*** Remove dead group/package path completely
+
+  - Drop CourseFeeGroup and CourseFeeGroupFee model path and related admin/resolver    code from the prior attempt.
+  - Remove any “group fallback” branches in fee resolution so logic is clean and
+    single-path.
+  - Keep only direct course-to-fee rules.
+
+*** Keep CourseFee model, define effective semantics clearly
+
+  - Use existing semester as effective-from semester (recommended for your domain).
+  - Rule selection: for invoice semester S, pick latest CourseFee per (course,
+    fee_type) where fee.semester.start_date <= S.start_date (plus optional default/    null handling if you keep it).
+  - Sum selected fee types for total additional fees.
+
+*** Build a bulk admin workflow (core feature)
+
+  - Add a custom admin action with intermediate form:
+      - Target rows: selected courses (or selected CourseFee rows deduped to unique        courses).
+      - Inputs: effective_semester + formset of (fee_type, amount) lines (one or
+        many).
+  - On submit, create new CourseFee rows for each selected course and each line.
+  - Idempotency guard: skip duplicates on (course, fee_type, semester) and report
+    counts.
+
+*** Adjust admin UI to support “one line per course” workflow
+
+  - Recommended: expose a finance admin page backed by Course (or proxy) for fee
+    operations, so you truly get one selectable row per course.
+  - Keep CourseFee admin for rule history/details only.
+  - This avoids needing fake/placeholder CourseFee rows.
+
+  6. Keep invoice non-retroactive by design
+
+  - Invoice creation reads effective fees once and writes initial_amount_due.
+  - Fee edits/additions never update existing invoices.
+  - Optional safeguard: block any management/admin command that recomputes
+    historical invoice totals unless explicitly forced.
+
+  7. Tests to add/update
+
+  - Bulk action creates correct number of rows for multiple courses and multiple
+    fee lines.
+  - Semester-effective selection picks latest valid rule only.
+  - Stacking works for multiple fee types.
+  - Existing invoice unchanged after later fee increase; new invoice uses new fee.
+
+  8. Migration/rollout for your fresh DB
+
+  - Since DB is empty: remove dead models/branches directly in schema/code (no data    migration complexity).
+  - Run checks: py_compile, black, flake8, mypy, targeted finance tests.
+  - Seed minimal fee types only; no package seeding needed.
+
+  If you want, next step is a file-by-file implementation checklist for this exact
+  plan (models/admin/actions/resolver/tests).
+
+ 
+
+** <2026-02-06 ven. 22:55> clarification
+  Let me restate:
+  Several course share sets of fees from which invoice are made for specfici
+  semesters
+  if a fee increase I would like to be able to update it(or create a new one) with
+  the new amount only applicable to new courses.  if that fee is in a group the
+  future invoice containing those course should be updated accordingly.
+  review the code base, in particular that related to fee.  I want to redo/update
+  a coursefee model to facilitated the maintenance of the fee.  I expect courses
+  fees to vary by semester
+  fees are stacakble.
+  fees should not apply retroactively.   Make a plan (no edit) of what should
+  change to the present situation
+  
+
+** <2026-02-06 ven. 18:57>  DB course fee structure
+I expect courses fees to vary by semester
+fees are stacakble.
+fee should not apply retroactively
+
+We can have a model for coursefeegroup: name and M2M to courses
+then another linking coursefeegroup to M2M feetypes
+** <2026-02-06 ven. 11:21> small fixes + structural and registrat improvement
+- find a better color than white for the continue button of the login portal. (eg blue / yelow if in accordance with our color templates)
+- harmonize registrar ux as for the student with a green left side bar.
+- in the regirar grades.  let the registrar select on or several row (down to semester level)     for one or several users (using shift+ start .. .shift+end or ctr+elt classical control for multiple selction), before printing.  So need a print gradesheet button.  The idea is to keep the 'menu/action/ green side bar on all screens even for staff. but put the print button somewhere a the top of the registrar/grades dashboard (next to filter/ just below ?)
+  
+
+  1. Portal login button color (Continue)
+      - Locate app/website/templates/website/portal_login.html and the button class.
+      - Update to a brand‑compliant class (prefer portal-btn-accent or a new portal-btn-gold if you want brighter
+        contrast).
+      - Adjust CSS in static/css/student_portal.css (or landing.css if the login page uses base styling) to ensure
+        hover/focus are accessible.
+  2. Registrar UX: green left sidebar
+      - Identify the registrar templates/pages (likely app/website/templates/website/registrar_windows.html and
+        related views/pages).
+      - Create a shared “staff shell with sidebar” layout (or extend existing website/staff/base.html) that adds a
+        left green sidebar.
+      - Apply it to registrar screens so the left green nav persists across registrar workflows.
+      - Reuse existing portal sidebar styles or extract a staff‑friendly variant in CSS to avoid duplication.
+  3. Registrar grades: multi‑select rows + print
+      - Find registrar grades template and JS (likely a template under app/website/templates/website/ or app/
+        registry/templates/).
+      - Add a “Print gradesheet” button near the filters (top area).
+      - Implement row selection:
+          - Click to select a row.
+          - Shift+click range selection.
+          - Ctrl/Cmd click to toggle single rows.
+      - Capture selected rows (including semester context) and expose them to the print action.
+      - Print action:
+          - Use a POST to a print endpoint (or open a new window with selected IDs in query params).
+          - Render a print‑friendly gradesheet template using the selected row IDs.
+  4. Keep green sidebar across staff screens
+      - Extend the new sidebar layout to other staff pages (registrar + grades pages first).
+      - Ensure the sidebar doesn’t break existing headers/actions; keep “Print” near filters or just below them as
+        requested.
+  5. Validation
+      - Visual check: login button contrast + hover.
+      - Registrar pages: sidebar is consistent, print button visible.
+      - Multi‑select: test shift‑range and ctrl‑toggle selections.
+      - Print: confirm it prints only selected rows.
+
+
+  
+
 * <2026-02-05 jeu.> back to UX
 • Here’s a focused code‑review for registration/finance interfaces against the TU UX guide. Findings first (severity‑ordered, file‑level only), then questions, then a
   brief change summary.

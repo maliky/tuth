@@ -1,0 +1,42 @@
+<aside class="portal-sidebar">
+  <div class="student-chip">
+    <div class="student-avatar">
+      {% if sidebar_avatar_url %}
+        <img src="{{ sidebar_avatar_url }}" alt="{{ sidebar_title }}" />
+      {% else %}
+        <span>{{ sidebar_avatar_initial|default:"TU"|slice:":1" }}</span>
+      {% endif %}
+    </div>
+    <div>
+      <p class="student-name mb-0">{{ sidebar_title|default:"Workspace" }}</p>
+      <p class="student-id mb-0">{{ sidebar_subtitle|default:"" }}</p>
+    </div>
+  </div>
+
+  <nav class="portal-nav">
+    <span class="nav-label">{{ sidebar_nav_label|default:"Navigation" }}</span>
+    <ul>
+      {% if sidebar_links %}
+        {% for link in sidebar_links %}
+          <li>
+            <a class="{% if link.active %}active{% endif %}" href="{{ link.href }}">
+              {% if link.icon %}<i class="bi {{ link.icon }}"></i>{% endif %}
+              {{ link.label }}
+            </a>
+          </li>
+        {% endfor %}
+      {% else %}
+        <li><span class="text-muted">No links configured</span></li>
+      {% endif %}
+    </ul>
+  </nav>
+
+  <div class="sidebar-footer">
+    <p class="mb-1 text-uppercase small text-muted">
+      {{ sidebar_footer_title|default:"Need help?" }}
+    </p>
+    <p class="mb-0 text-white-50">
+      {{ sidebar_footer_text|default:"it.support@tusis.edu" }}
+    </p>
+  </div>
+</aside>
