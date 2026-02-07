@@ -4,6 +4,16 @@
 
 * <2026-02-07 sam.>  fixing the fee model
 
+** <2026-02-07 sam.>  tests
+  2. Fee computation tests (tests/academics/test_curriculum_course_fee_stack.py)
+
+  - Course with no attached stack returns tuition only.
+  - Course with one stack returns tuition + sum(stack lines).
+  - Course with multiple stacks (disjoint fee types) returns tuition + total
+    stacked fees.
+  - semester argument does not change result (current design).
+
+
 ** <2026-02-07 sam. 11:05> Clarification
 the fee_type constraint should be enforced at app level through the clean before attach.
 totaly drop the locking constrains on initial_amount_due, my concern was updated fee with retroactive changesin invoice but the invoice_amount is stored and will not be changed after a fee update.
