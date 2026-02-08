@@ -8,6 +8,7 @@ This guide explains how to spin up the development stack, run checks, write test
 ## 2 · Conventions
 
 - Growing codebase habit: re-read AGENTS.md and related task files regularly to align with evolving patterns and instructions.
+- Do not create commits unless the user explicitly asks for a commit in the current conversation.
 
 ### Files to leave untouched unless asked
 The folders: 
