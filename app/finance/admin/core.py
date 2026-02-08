@@ -1,32 +1,47 @@
 """Core module."""
 
+from decimal import Decimal
 from typing import Optional
 
 from app.finance.models.fee_stack import CourseFeeStack, FeeStack, FeeStackLine
 from app.finance.models.status_types_methods import (
     FeeType,
+    Payer,
     PaymentMethod,
     PaymentStatus,
     InvoiceStatus,
 )
 from django import forms
 from django.contrib import admin, messages
-from django.db.models import Count, F
+from django.db.models import (
+    Count,
+    DecimalField,
+    F,
+    Value,
+)
+from django.db.models.expressions import RawSQL
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.http import urlencode
+from django.utils import timezone
+from django.db.models.functions import Coalesce
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from app.academics.models.curriculum_course import CurriculumCourse
-from app.finance.admin.resources import (
-    InvoiceResource,
-    PaymentResource,
+from app.finance.admin.resources import InvoiceResource, PaymentResource
+from app.finance.admin.filters import (
+    EffectiveSemesterFilterAC,
+    FeeStackFilterAC,
+    FeeTypeFilterAC,
 )
-from app.finance.admin.inlines import InvoicePaymentInline
+from app.finance.admin.inlines import (
+    InvoicePaymentInline,
+    StudentSemesterCourseInvoiceInline,
+)
 from app.finance.models.payment import Payment
-from app.finance.models.invoice import Invoice
+from app.finance.models.invoice import CourseInvoice, StudentSemesterInvoice
 from app.finance.models.scholarship import Scholarship
 from app.finance.utils import create_pending_payments
 from app.people.models.staffs import Staff
@@ -79,20 +94,21 @@ class AmountDueFilter(admin.SimpleListFilter):
         return queryset.filter(pk__in=invoice_ids)
 
 
-@admin.register(Invoice)
-class InvoiceAdmin(
+@admin.register(CourseInvoice)
+class CourseInvoiceAdmin(
     ScopedAutocompleteAdminMixin,
     SimpleHistoryAdmin,
     ImportExportModelAdmin,
     GuardedModelAdmin,
 ):
-    """Admin settings for Payment."""
+    """Admin settings for course invoices."""
 
     resource_class = InvoiceResource
     list_display = (
         "student_label",
         "curriculum_course",
         "semester_label",
+        "student_semester_invoice",
         "balance",
         "payments_link",
         "created_at",
@@ -104,10 +120,11 @@ class InvoiceAdmin(
         "student__user",
         "semester",
         "curriculum_course",
+        "student_semester_invoice",
         # "recorded_by",
     )
     readonly_fields = ("created_at",)
-    inlines = (InvoicePaymentInline,)
+    inlines = ()
     search_fields = (
         "curriculum_course__course__short_code",
         "curriculum_course__course__code",
@@ -126,20 +143,23 @@ class InvoiceAdmin(
     def get_queryset(self, request):
         """Annotate payment counts for list display."""
         queryset = super().get_queryset(request)
-        return queryset.annotate(payments_count=Count("payments"))
+        return queryset.annotate(
+            payments_count=Count("student_semester_invoice__payments", distinct=True)
+        )
 
     @admin.display(description="Payments")
-    def payments_link(self, obj: Invoice) -> str:
+    def payments_link(self, obj: CourseInvoice) -> str:
         """Return a clickable payment count for the invoice."""
         count = getattr(obj, "payments_count", 0)
-        if not count:
+        parent_invoice_id = obj.student_semester_invoice_id
+        if not count or parent_invoice_id is None:
             return "0"
         base_url = reverse("admin:finance_payment_changelist")
-        query = urlencode({"invoice__id__exact": obj.id})
+        query = urlencode({"student_semester_invoice__id__exact": parent_invoice_id})
         return format_html('<a href="{}?{}">{}</a>', base_url, query, count)
 
     @admin.display(description="Student")
-    def student_label(self, obj: Invoice) -> str:
+    def student_label(self, obj: CourseInvoice) -> str:
         """Return the student name and ID for display."""
         student = obj.student
         name = student.long_name or student.user.get_full_name() or student.student_id
@@ -147,7 +167,7 @@ class InvoiceAdmin(
         return f"{name} ({student_id})"
 
     @admin.display(description="Semester")
-    def semester_label(self, obj: Invoice) -> str:
+    def semester_label(self, obj: CourseInvoice) -> str:
         """Return the invoice semester label."""
         return str(obj.semester)
 
@@ -272,7 +292,51 @@ class InvoiceAdmin(
         super().save_model(request, obj, form, change)
 
 
-@admin.register(PaymentStatus, InvoiceStatus, FeeType, PaymentMethod)
+@admin.register(StudentSemesterInvoice)
+class StudentSemesterInvoiceAdmin(
+    ScopedAutocompleteAdminMixin,
+    SimpleHistoryAdmin,
+    GuardedModelAdmin,
+):
+    """Admin settings for parent student-semester invoices."""
+
+    list_display = (
+        "student",
+        "semester",
+        "course_tuition_payer",
+        "fee_payer",
+        "required_deposit_percent",
+        "required_deposit_amount",
+        "initial_amount_due",
+        "balance",
+        "status",
+        "updated_at",
+    )
+    list_filter = (SemesterFilterAC, AmountDueFilter)
+    search_fields = (
+        "student__student_id",
+        "student__long_name",
+        "student__user__first_name",
+        "student__user__last_name",
+        "semester__academic_year__code",
+    )
+    list_select_related = ("student", "semester", "status")
+    autocomplete_fields = ("student", "semester", "fee_stacks")
+    inlines = (StudentSemesterCourseInvoiceInline, InvoicePaymentInline)
+    readonly_fields = ("created_at", "updated_at")
+
+    def save_model(self, request, obj, form, change):
+        """Keep parent totals aligned after manual admin edits."""
+        super().save_model(request, obj, form, change)
+        obj.refresh_totals_from_sources(save_model=True)
+
+    def save_related(self, request, form, formsets, change):
+        """Refresh totals after fee-stack and payment inline changes."""
+        super().save_related(request, form, formsets, change)
+        form.instance.refresh_totals_from_sources(save_model=True)
+
+
+@admin.register(PaymentStatus, InvoiceStatus, FeeType, PaymentMethod, Payer)
 class LookupAdmin(admin.ModelAdmin):
     """Basic admin for finance lookup tables."""
 
@@ -290,14 +354,27 @@ class PaymentAdmin(
     """Admin interface for :class:`~app.finance.models.Payment`."""
 
     resource_class = PaymentResource
-    list_display = ("invoice", "amount_paid", "payment_method", "status", "recorded_by")
-    autocomplete_fields = ("payment_method", "invoice", "status")
+    list_display = (
+        "student_semester_invoice",
+        "payer",
+        "amount_paid",
+        "payment_method",
+        "status",
+        "recorded_by",
+    )
+    autocomplete_fields = (
+        "payment_method",
+        "student_semester_invoice",
+        "status",
+        "payer",
+    )
     exclude = ("recorded_by",)
     list_filter = (SemesterFilterAC,)
     list_select_related = (
-        "invoice",
-        "invoice__semester",
-        "invoice__student",
+        "student_semester_invoice",
+        "student_semester_invoice__semester",
+        "student_semester_invoice__student",
+        "payer",
         "payment_method",
         "status",
     )
@@ -333,8 +410,9 @@ class FeeStackLineInline(admin.TabularInline):
 
     model = FeeStackLine
     extra = 0
-    autocomplete_fields = ("fee_type", "effective_from_semester")
-    fields = ("fee_type", "amount", "effective_from_semester")
+    show_change_link = True
+    autocomplete_fields = ("fee_type", "payer", "effective_from_semester")
+    fields = ("fee_type", "amount", "payer", "effective_from_semester")
 
 
 class CourseFeeStackInline(admin.TabularInline):
@@ -352,17 +430,89 @@ class CourseFeeStackInline(admin.TabularInline):
 class FeeStackAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin settings for FeeStack."""
 
-    list_display = ("name", "fee_line_count", "course_count", "updated_at")
+    list_display = (
+        "name",
+        "payer",
+        "current_semester_total",
+        "fee_line_count",
+        "course_count",
+    )
     search_fields = ("name", "courses__short_code", "courses__code", "courses__title")
     inlines = [FeeStackLineInline, CourseFeeStackInline]
+    _current_semester_cache: Optional[Semester] = None
+    _current_semester_loaded = False
 
+    def _resolved_current_semester(self) -> Optional[Semester]:
+        """Return the current semester, or the latest one when none is active."""
+        if self._current_semester_loaded:
+            return self._current_semester_cache
+        today = timezone.now().date()
+        semester = (
+            Semester.objects.filter(start_date__lte=today).order_by("-start_date").first()
+        )
+        if semester is None:
+            semester = Semester.objects.order_by("-start_date").first()
+        self._current_semester_cache = semester
+        self._current_semester_loaded = True
+        return semester
+
+    def get_queryset(self, request):
+        """Annotate sortable totals and counts for fee stack changelist."""
+        queryset = super().get_queryset(request)
+        semester = self._resolved_current_semester()
+        cutoff_date = getattr(semester, "start_date", None)
+        current_total_sql = """
+            SELECT COALESCE(SUM(chosen.amount), 0.00)
+            FROM (
+                SELECT DISTINCT ON (fsl.fee_type_id) fsl.amount
+                FROM finance_feestackline fsl
+                LEFT JOIN timetable_semester sem
+                    ON sem.id = fsl.effective_from_semester_id
+                WHERE fsl.fee_stack_id = finance_feestack.id
+                  AND (
+                      %s::date IS NULL
+                      OR fsl.effective_from_semester_id IS NULL
+                      OR sem.start_date <= %s::date
+                  )
+                ORDER BY
+                    fsl.fee_type_id,
+                    CASE WHEN fsl.effective_from_semester_id IS NULL THEN 1 ELSE 0 END,
+                    sem.start_date DESC NULLS LAST,
+                    fsl.id DESC
+            ) AS chosen
+        """
+
+        return queryset.annotate(
+            annotated_fee_line_count=Count("fees", distinct=True),
+            annotated_course_count=Count("courses", distinct=True),
+            current_total_amount=Coalesce(
+                RawSQL(
+                    current_total_sql,
+                    [cutoff_date, cutoff_date],
+                    output_field=DecimalField(),
+                ),
+                Value(Decimal("0.00"), output_field=DecimalField()),
+            ),
+        )
+
+    @admin.display(description="Fee lines", ordering="annotated_fee_line_count")
     def fee_line_count(self, obj: FeeStack) -> int:
         """Return the number of fee lines in the stack."""
-        return obj.fees.count()
+        return int(getattr(obj, "annotated_fee_line_count", obj.fees.count()))
 
+    @admin.display(description="Current total", ordering="current_total_amount")
+    def current_semester_total(self, obj: FeeStack) -> str:
+        """Return stack total resolved for the current semester context."""
+        total = getattr(obj, "current_total_amount", None)
+        if total is None:
+            semester = self._resolved_current_semester()
+            total = obj.total_amount_for_semester(semester)
+        return f"{Decimal(total):.2f}"
+
+    @admin.display(description="Courses", ordering="annotated_course_count")
     def course_count(self, obj: FeeStack) -> int:
         """Return how many courses are linked to the stack."""
-        return obj.courses.count()
+        return int(getattr(obj, "annotated_course_count", obj.courses.count()))
 
 
 @admin.register(FeeStackLine)
@@ -373,18 +523,23 @@ class FeeStackLineAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
         "fee_stack",
         "fee_type",
         "amount",
+        "payer",
         "effective_from_semester",
-        "updated_at",
     )
-    autocomplete_fields = ("fee_stack", "fee_type", "effective_from_semester")
+    autocomplete_fields = ("fee_stack", "fee_type", "payer", "effective_from_semester")
     search_fields = ("fee_stack__name", "fee_type__code", "fee_type__label")
+    list_filter = (
+        FeeStackFilterAC,
+        FeeTypeFilterAC,
+        EffectiveSemesterFilterAC,
+    )
 
 
 @admin.register(CourseFeeStack)
 class CourseFeeStackAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin settings for CourseFeeStack."""
 
-    list_display = ("course", "fee_stack", "updated_at")
+    list_display = ("course", "fee_stack")
     autocomplete_fields = ("course", "fee_stack")
     search_fields = (
         "course__short_code",

@@ -12,7 +12,7 @@ from django.shortcuts import render
 from django.urls import NoReverseMatch, reverse
 
 from app.academics.models.curriculum import Curriculum
-from app.finance.models.invoice import Invoice
+from app.finance.models.invoice import CourseInvoice
 from app.finance.models.payment import Payment
 from app.finance.models.scholarship import (
     ScholarshipLetterTemplate,
@@ -585,9 +585,9 @@ def _build_scholarship_context(_: HttpRequest) -> dict:
 
 def _build_finance_context(_: HttpRequest) -> dict:
     pending_payments = Payment.objects.filter(status__code="pending").count()
-    invoice_count = Invoice.objects.count()
+    invoice_count = CourseInvoice.objects.count()
     actions = []
-    invoice_admin = _maybe_reverse("admin:finance_invoice_changelist")
+    invoice_admin = _maybe_reverse("admin:finance_courseinvoice_changelist")
     if invoice_admin:
         actions.append(
             {

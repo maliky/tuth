@@ -8,10 +8,11 @@ from typing import Optional
 from import_export import widgets
 
 from app.academics.admin.widgets import CurriculumCourseWidget
-from app.finance.models.invoice import Invoice
+from app.finance.models.invoice import CourseInvoice, StudentSemesterInvoice
 from app.finance.models.status_types_methods import (
     FeeType,
     InvoiceStatus,
+    Payer,
     PaymentMethod,
     PaymentStatus,
 )
@@ -64,11 +65,18 @@ class InvoiceStatusWidget(SimpleCodeWidget):
         super().__init__(InvoiceStatus, field="code")
 
 
-class InvoiceWidget(widgets.ForeignKeyWidget):
-    """Resolve invoices using student, curriculum course, and semester columns."""
+class PayerWidget(SimpleCodeWidget):
+    """Resolve Payer entries by code."""
 
     def __init__(self):
-        super().__init__(Invoice)
+        super().__init__(Payer, field="code")
+
+
+class InvoiceWidget(widgets.ForeignKeyWidget):
+    """Resolve course invoices using student, curriculum course, and semester."""
+
+    def __init__(self):
+        super().__init__(CourseInvoice)
         self.student_w = StudentUserWidget()
         self.curriculum_course_w = CurriculumCourseWidget()
         self.semester_w = SemesterWidget()
@@ -82,7 +90,7 @@ class InvoiceWidget(widgets.ForeignKeyWidget):
         except (TypeError, ValueError):
             return Decimal("0.00")
 
-    def clean(self, value, row=None, *args, **kwargs) -> Optional[Invoice]:
+    def clean(self, value, row=None, *args, **kwargs) -> Optional[CourseInvoice]:
         """Return or create an invoice using human-readable row columns."""
         student_value = get_in_row("student_id", row)
         curriculum_value = get_in_row("curriculum", row)
@@ -95,7 +103,7 @@ class InvoiceWidget(widgets.ForeignKeyWidget):
         if not (student and curriculum_course and semester):
             return None
 
-        invoice = Invoice.objects.filter(
+        invoice = CourseInvoice.objects.filter(
             student=student,
             curriculum_course=curriculum_course,
             semester=semester,
@@ -106,13 +114,36 @@ class InvoiceWidget(widgets.ForeignKeyWidget):
         initial_due = self._parse_amount(get_in_row("initial_amount_due", row))
         balance = self._parse_amount(get_in_row("balance", row)) or initial_due
 
-        return Invoice.objects.create(
+        return CourseInvoice.objects.create(
             student=student,
             curriculum_course=curriculum_course,
             semester=semester,
             initial_amount_due=initial_due,
             balance=balance,
         )
+
+
+class StudentSemesterInvoiceWidget(widgets.ForeignKeyWidget):
+    """Resolve parent invoices using student and semester columns."""
+
+    def __init__(self):
+        super().__init__(StudentSemesterInvoice)
+        self.student_w = StudentUserWidget()
+        self.semester_w = SemesterWidget()
+
+    def clean(self, value, row=None, *args, **kwargs) -> Optional[StudentSemesterInvoice]:
+        """Return or create a parent invoice from student+semester row columns."""
+        student_value = get_in_row("student_id", row)
+        semester_value = get_in_row("semester_no", row) or get_in_row("semester", row)
+        student = self.student_w.clean(student_value, row=row)
+        semester = self.semester_w.clean(semester_value, row=row)
+        if not (student and semester):
+            return None
+        parent_invoice, _ = StudentSemesterInvoice.objects.get_or_create(
+            student=student,
+            semester=semester,
+        )
+        return parent_invoice
 
 
 class StaffWidget(StaffProfileWidget):

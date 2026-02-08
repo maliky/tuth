@@ -7,12 +7,13 @@ from import_export import fields, resources
 from app.academics.admin.widgets import CurriculumCourseWidget
 from app.finance.admin.widgets import (
     InvoiceStatusWidget,
-    InvoiceWidget,
+    PayerWidget,
     PaymentMethodWidget,
     PaymentStatusWidget,
     StaffWidget,
+    StudentSemesterInvoiceWidget,
 )
-from app.finance.models.invoice import Invoice
+from app.finance.models.invoice import CourseInvoice
 from app.finance.models.payment import Payment
 from app.people.admin.widgets import StudentUserWidget
 from app.shared.utils import parse_str
@@ -20,7 +21,7 @@ from app.timetable.admin.core_widgets import SemesterWidget
 
 
 class InvoiceResource(resources.ModelResource):
-    """Import/export resource for Invoice using readable columns."""
+    """Import/export resource for CourseInvoice using readable columns."""
 
     student = fields.Field(
         column_name="student_id",
@@ -54,7 +55,7 @@ class InvoiceResource(resources.ModelResource):
     student_name = fields.Field(attribute=None, column_name="student_name")
 
     class Meta:
-        model = Invoice
+        model = CourseInvoice
         import_id_fields = ("student", "curriculum_course", "semester")
         fields = (
             "student",
@@ -110,15 +111,20 @@ class InvoiceResource(resources.ModelResource):
 class PaymentResource(resources.ModelResource):
     """Import/export resource for Payment with readable invoice keys."""
 
-    invoice = fields.Field(
-        column_name="invoice",
-        attribute="invoice",
-        widget=InvoiceWidget(),
+    student_semester_invoice = fields.Field(
+        column_name="student_semester_invoice",
+        attribute="student_semester_invoice",
+        widget=StudentSemesterInvoiceWidget(),
     )
     payment_method = fields.Field(
         column_name="payment_method",
         attribute="payment_method",
         widget=PaymentMethodWidget(),
+    )
+    payer = fields.Field(
+        column_name="payer",
+        attribute="payer",
+        widget=PayerWidget(),
     )
     status = fields.Field(
         column_name="status",
@@ -140,9 +146,16 @@ class PaymentResource(resources.ModelResource):
 
     class Meta:
         model = Payment
-        import_id_fields = ("invoice", "amount_paid", "payment_method", "status")
+        import_id_fields = (
+            "student_semester_invoice",
+            "payer",
+            "amount_paid",
+            "payment_method",
+            "status",
+        )
         fields = (
-            "invoice",
+            "student_semester_invoice",
+            "payer",
             "amount_paid",
             "payment_method",
             "status",
@@ -157,7 +170,7 @@ class PaymentResource(resources.ModelResource):
         )
 
     def _invoice_value(self, obj, field):
-        invoice = getattr(obj, "invoice", None)
+        invoice = getattr(obj, "student_semester_invoice", None)
         if not invoice:
             return ""
         return parse_str(field(invoice))
@@ -166,22 +179,18 @@ class PaymentResource(resources.ModelResource):
         return self._invoice_value(obj, lambda inv: inv.student.student_id)
 
     def dehydrate_curriculum(self, obj):
-        return self._invoice_value(
-            obj, lambda inv: inv.curriculum_course.curriculum.short_name
-        )
+        # Parent invoices can span multiple curricula, so keep this export column blank.
+        return ""
 
     def dehydrate_course_no(self, obj):
-        return self._invoice_value(obj, lambda inv: inv.curriculum_course.course.number)
+        # Parent invoices can span multiple courses, so keep this export column blank.
+        return ""
 
     def dehydrate_dept_code(self, obj):
-        return self._invoice_value(
-            obj, lambda inv: inv.curriculum_course.course.department.code
-        )
+        return ""
 
     def dehydrate_college_code(self, obj):
-        return self._invoice_value(
-            obj, lambda inv: inv.curriculum_course.course.department.college.code
-        )
+        return ""
 
     def dehydrate_semester_no(self, obj):
         return self._invoice_value(obj, lambda inv: inv.semester.number)

@@ -16,9 +16,9 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from app.finance.models.invoice import Invoice
+from app.finance.models.invoice import CourseInvoice
 from app.finance.models.payment import Payment
-from app.finance.models.status_types_methods import PaymentMethod, PaymentStatus
+from app.finance.models.status_types_methods import Payer, PaymentMethod, PaymentStatus
 from app.finance.utils import create_pending_payments
 from app.shared.auth.perms import UserRole
 from app.shared.utils import parse_str
@@ -93,7 +93,7 @@ def finance_officer_create_payments(request: HttpRequest) -> HttpResponse:
         return redirect(request.POST.get("next") or reverse("finance_officer_invoices"))
 
     if invoice_ids:
-        invoices = Invoice.objects.filter(id__in=invoice_ids)
+        invoices = CourseInvoice.objects.filter(id__in=invoice_ids)
     else:
         if student_id is None:
             # >  cannot reach heare because not invoice_ids and not student_id
@@ -101,7 +101,7 @@ def finance_officer_create_payments(request: HttpRequest) -> HttpResponse:
             return redirect(
                 request.POST.get("next") or reverse("finance_officer_invoices")
             )
-        invoices = Invoice.objects.filter(student_id=student_id, balance__gt=0)
+        invoices = CourseInvoice.objects.filter(student_id=student_id, balance__gt=0)
     staff = getattr(request.user, "staff", None)
     summary = create_pending_payments(invoices, recorded_by=staff)
     created = summary.get("created", 0)
@@ -139,12 +139,13 @@ def finance_officer_update_payments(request: HttpRequest) -> HttpResponse:
         return redirect(request.POST.get("next") or reverse("finance_officer_invoices"))
     payments = Payment.objects.filter(id__in=payment_ids)
     if student_id:
-        payments = payments.filter(invoice__student_id=student_id)
+        payments = payments.filter(student_semester_invoice__student_id=student_id)
     if not payments.exists():
         messages.warning(request, "No payments found for the selection.")
         return redirect(request.POST.get("next") or reverse("finance_officer_invoices"))
 
     staff = getattr(request.user, "staff", None)
+    valid_payer_ids = set(Payer.objects.values_list("code", flat=True))
     updated = 0
     invalid = 0
     with transaction.atomic():
@@ -152,9 +153,13 @@ def finance_officer_update_payments(request: HttpRequest) -> HttpResponse:
             amount_value = _parse_decimal(request.POST.get(f"amount_paid_{payment.id}"))
             status_id = parse_str(request.POST.get(f"status_{payment.id}"))
             method_id = parse_str(request.POST.get(f"method_{payment.id}"))
-            if amount_value is None and not status_id and not method_id:
+            payer_id = parse_str(request.POST.get(f"payer_{payment.id}"))
+            if amount_value is None and not status_id and not method_id and not payer_id:
                 continue
             if amount_value is not None and amount_value < 0:
+                invalid += 1
+                continue
+            if payer_id and payer_id not in valid_payer_ids:
                 invalid += 1
                 continue
             if amount_value is not None:
@@ -163,6 +168,8 @@ def finance_officer_update_payments(request: HttpRequest) -> HttpResponse:
                 payment.status_id = status_id
             if method_id:
                 payment.payment_method_id = method_id
+            if payer_id:
+                payment.payer_id = payer_id
             if staff and not payment.recorded_by_id:
                 payment.recorded_by = staff
             payment.save()
@@ -269,6 +276,10 @@ def finance_officer_invoices(request: HttpRequest) -> HttpResponse:
         {"code": method.code, "label": method.label}
         for method in PaymentMethod.objects.order_by("label")
     ]
+    payer_options = [
+        {"code": payer.code, "label": payer.label}
+        for payer in Payer.objects.order_by("label")
+    ]
     semester_options = [
         {
             "value": "all",
@@ -303,6 +314,7 @@ def finance_officer_invoices(request: HttpRequest) -> HttpResponse:
         "payment_status_options": payment_status_options,
         "payment_status_choices": payment_status_choices,
         "payment_method_options": payment_method_options,
+        "payer_options": payer_options,
         "semester_options": semester_options,
         "invoice_groups": invoice_groups,
         "payment_groups": payment_groups,

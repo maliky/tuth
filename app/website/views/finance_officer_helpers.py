@@ -7,7 +7,7 @@ from typing import Iterable, Optional, TypedDict
 
 from django.db.models import Q, QuerySet
 
-from app.finance.models.invoice import Invoice
+from app.finance.models.invoice import CourseInvoice
 from app.finance.models.payment import Payment
 from app.people.models.student import Student
 
@@ -24,7 +24,7 @@ class InvoiceGroupT(TypedDict):
     """Invoice group keyed by student."""
 
     student: Student
-    rows: list[Invoice]
+    rows: list[CourseInvoice]
     total_due: Decimal
 
 
@@ -39,8 +39,10 @@ class PaymentGroupT(TypedDict):
 
 def finance_student_ids() -> set[int]:
     """Return student IDs with invoices or payments."""
-    invoice_ids = set(Invoice.objects.values_list("student_id", flat=True))
-    payment_ids = set(Payment.objects.values_list("invoice__student_id", flat=True))
+    invoice_ids = set(CourseInvoice.objects.values_list("student_id", flat=True))
+    payment_ids = set(
+        Payment.objects.values_list("student_semester_invoice__student_id", flat=True)
+    )
     return invoice_ids | payment_ids
 
 
@@ -89,10 +91,11 @@ def build_student_options(
     return options
 
 
-def group_invoices(invoices: Iterable[Invoice]) -> list[InvoiceGroupT]:
+def group_invoices(invoices: Iterable[CourseInvoice]) -> list[InvoiceGroupT]:
     """Group invoices by student preserving the incoming order."""
     groups: list[InvoiceGroupT] = []
     group_lookup: dict[int, InvoiceGroupT] = {}
+    parent_seen_by_student: dict[int, set[int]] = {}
     for invoice in invoices:
         student_id = invoice.student_id
         group = group_lookup.get(student_id)
@@ -104,8 +107,20 @@ def group_invoices(invoices: Iterable[Invoice]) -> list[InvoiceGroupT]:
             }
             group_lookup[student_id] = group
             groups.append(group)
+            parent_seen_by_student[student_id] = set()
         group["rows"].append(invoice)
-        group["total_due"] += invoice.get_balance()
+        parent_invoice_id = invoice.student_semester_invoice_id
+        if parent_invoice_id is None:
+            group["total_due"] += invoice.get_balance()
+            continue
+        if parent_invoice_id in parent_seen_by_student[student_id]:
+            continue
+        parent_seen_by_student[student_id].add(parent_invoice_id)
+        parent_invoice = invoice.student_semester_invoice
+        if parent_invoice is None:
+            group["total_due"] += invoice.get_balance()
+            continue
+        group["total_due"] += parent_invoice.get_balance()
     return groups
 
 
@@ -114,7 +129,7 @@ def group_payments(payments: Iterable[Payment]) -> list[PaymentGroupT]:
     groups: list[PaymentGroupT] = []
     group_lookup: dict[int, PaymentGroupT] = {}
     for payment in payments:
-        student = payment.invoice.student
+        student = payment.student_semester_invoice.student
         student_id = student.id
         group = group_lookup.get(student_id)
         if group is None:
@@ -137,13 +152,14 @@ def invoice_queryset(
     selected_student_id: Optional[int],
     status_filter: str,
     semester_id: Optional[int],
-) -> QuerySet[Invoice]:
+) -> QuerySet[CourseInvoice]:
     """Return the base invoice queryset for the finance officer view."""
-    qs = Invoice.objects.select_related(
+    qs = CourseInvoice.objects.select_related(
         "student",
         "student__user",
         "semester",
         "curriculum_course__course",
+        "student_semester_invoice",
     ).order_by("-created_at")
     if selected_student_id:
         qs = qs.filter(student_id=selected_student_id)
@@ -161,17 +177,17 @@ def payment_queryset(
 ) -> QuerySet[Payment]:
     """Return the base payment queryset for the finance officer view."""
     qs = Payment.objects.select_related(
-        "invoice__student",
-        "invoice__student__user",
-        "invoice__semester",
-        "invoice__curriculum_course__course",
+        "student_semester_invoice__student",
+        "student_semester_invoice__student__user",
+        "student_semester_invoice__semester",
+        "payer",
         "status",
         "payment_method",
     ).order_by("-id")
     if selected_student_id:
-        qs = qs.filter(invoice__student_id=selected_student_id)
+        qs = qs.filter(student_semester_invoice__student_id=selected_student_id)
     if semester_id:
-        qs = qs.filter(invoice__semester_id=semester_id)
+        qs = qs.filter(student_semester_invoice__semester_id=semester_id)
     if status_filter and status_filter != "all":
         qs = qs.filter(status_id=status_filter)
     return qs

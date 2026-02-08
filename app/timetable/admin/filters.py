@@ -29,6 +29,7 @@ SEMESTER_FIELD_LOOKPS = (
     ("sections", "sections__semester"),
     ("student_registrations", "student_registrations__section__semester"),
     ("invoice", "invoice__semester"),
+    ("student_semester_invoice", "student_semester_invoice__semester"),
     ("payment", "payment_student__last_enrolled_semester"),
     ("student", "student__last_enrolled_semester"),
 )
