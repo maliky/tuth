@@ -118,6 +118,28 @@
               {% if current_semester %}
                 <input type="hidden" name="semester_id" value="{{ current_semester.id }}" />
               {% endif %}
+              {% if optional_fee_stack_options %}
+                <div>
+                  <label class="form-label small mb-1" for="optional-fee-stacks">
+                    Optional semester fees
+                  </label>
+                  <select
+                    id="optional-fee-stacks"
+                    class="form-select form-select-sm"
+                    name="optional_fee_stack_ids"
+                    multiple
+                  >
+                    {% for option in optional_fee_stack_options %}
+                      <option value="{{ option.id }}" {% if option.selected %}selected{% endif %}>
+                        {{ option.name }} ({{ registration_limits.currency }} {{ option.amount }})
+                      </option>
+                    {% endfor %}
+                  </select>
+                  <small class="text-muted">
+                    Selected options are added to your semester invoice.
+                  </small>
+                </div>
+              {% endif %}
               <button class="btn btn-success" type="submit" data-register-submit>
                 Save registration
               </button>

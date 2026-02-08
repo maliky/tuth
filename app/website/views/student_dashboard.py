@@ -22,7 +22,12 @@ from django.views.decorators.http import require_POST
 from app.academics.constants import MAX_STUDENT_CREDITS
 from app.academics.models.curriculum_course import CurriculumCourse
 from app.academics.models.prerequisite import Prerequisite
-from app.finance.models.invoice import Invoice
+from app.finance.fee_assignment import (
+    FeeAssignmentSummaryT,
+    attach_semester_fee_stacks,
+    optional_semester_stack_choices,
+)
+from app.finance.models.invoice import CourseInvoice, StudentSemesterInvoice
 from app.finance.models.payment import Payment
 from app.people.models.student import Student
 from app.registry.gpa import get_cumulative_gpa, get_grade_points_and_credits
@@ -74,7 +79,7 @@ def student_invoice_statement(request: HttpRequest) -> HttpResponse:
     """Render the invoice statement for the current student."""
     student = _require_student(request.user)
     invoices = list(
-        Invoice.objects.filter(student=student, balance__gt=0)
+        CourseInvoice.objects.filter(student=student, balance__gt=0)
         .select_related(
             "curriculum_course__course",
             "curriculum_course__credit_hours",
@@ -82,7 +87,9 @@ def student_invoice_statement(request: HttpRequest) -> HttpResponse:
         )
         .order_by("semester__start_date", "curriculum_course__course__short_code")
     )
-    total_due = sum((invoice.get_balance() for invoice in invoices), Decimal("0.00"))
+    total_due = StudentSemesterInvoice.objects.filter(student=student).aggregate(
+        total=Sum("balance")
+    ).get("total") or Decimal("0.00")
     currency = getattr(settings, "FINANCE_DEFAULT_CURRENCY", "USD")
     statement_rows = [
         {"invoice": invoice, "created_at": format_datetime(invoice.created_at)}
@@ -139,7 +146,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     def _ensure_invoice_for_section(section: Section) -> None:
         """Create or patch invoices so initial_amount_due is always set."""
         amount_due = section.fee_total_amount()
-        invoice, created = Invoice.objects.get_or_create(
+        invoice, created = CourseInvoice.objects.get_or_create(
             student=student,
             curriculum_course=section.curriculum_course,
             semester=section.semester,
@@ -171,6 +178,16 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     def _max_credit_hours(student_obj: Student) -> int:
         """Return the per-student credit limit for the current semester."""
         return int(getattr(student_obj, "max_credit_hours", 0) or MAX_STUDENT_CREDITS)
+
+    def _parse_optional_stack_ids(raw_ids: list[str]) -> set[int]:
+        """Parse selected optional fee-stack ids from POST payload."""
+        parsed_ids: set[int] = set()
+        for raw_id in raw_ids:
+            try:
+                parsed_ids.add(int(raw_id))
+            except (TypeError, ValueError):
+                continue
+        return parsed_ids
 
     def _attempt_blocked_courses(
         student_obj: Student, semester_obj: Optional[Semester]
@@ -219,11 +236,23 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             locks[course_id] = history_date + timedelta(hours=48)
         return locks
 
+    def _has_non_reversible_payment_history(parent_invoice_id: int) -> bool:
+        """Return True when a parent invoice has cleared payment history."""
+        return bool(
+            Payment.history.filter(
+                student_semester_invoice_id=parent_invoice_id,
+                status_id="cleared",
+            ).exists()
+        )
+
     if request.method == "POST":
         action = request.POST.get("action")
         if action == "register":
             raw_ids = request.POST.get("section_ids", "")
             section_ids = _parse_section_ids(raw_ids)
+            optional_stack_ids = _parse_optional_stack_ids(
+                request.POST.getlist("optional_fee_stack_ids")
+            )
             if not section_ids:
                 if _is_ajax_request():
                     return JsonResponse(
@@ -315,6 +344,11 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             )
             cooldown_courses = set(cooldown_course_locks_for_register)
             selection_course_ids: set[int] = set()
+            fee_assignment_summary: FeeAssignmentSummaryT = {
+                "added": 0,
+                "removed_optional": 0,
+                "ignored_optional": 0,
+            }
             with transaction.atomic():
                 for section in sections:
                     if section.curriculum_course.course_id not in allowed_course_ids:
@@ -353,10 +387,24 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                         _ensure_invoice_for_section(section)
                     else:
                         skipped += 1
+                if semester is not None:
+                    fee_assignment_summary = attach_semester_fee_stacks(
+                        student=student,
+                        semester=semester,
+                        optional_stack_ids=optional_stack_ids,
+                    )
             if created or updated:
                 _push_message(
                     "success",
                     f"Saved {created + updated} registration(s).",
+                )
+            if fee_assignment_summary["ignored_optional"]:
+                _push_message(
+                    "warning",
+                    (
+                        "Some optional fee selections were ignored because they are "
+                        "not configured for student self-service."
+                    ),
                 )
             if duplicate_course_skipped:
                 _push_message(
@@ -428,13 +476,18 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                     )
                 messages.error(request, "Canceled status is not configured.")
                 return _redirect_to_semester()
-            invoice_qs = Invoice.objects.filter(
+            invoice_qs = CourseInvoice.objects.filter(
                 student=student,
                 curriculum_course=registration.section.curriculum_course,
                 semester=registration.section.semester,
             )
-            invoice_ids = list(invoice_qs.values_list("id", flat=True))
-            payments_qs = Payment.objects.filter(invoice_id__in=invoice_ids)
+            parent_invoice_ids = list(
+                invoice_qs.values_list("student_semester_invoice_id", flat=True)
+            )
+            parent_invoice_ids = [value for value in parent_invoice_ids if value]
+            payments_qs = Payment.objects.filter(
+                student_semester_invoice_id__in=parent_invoice_ids
+            )
             if payments_qs.exclude(status_id="pending").exists():
                 if _is_ajax_request():
                     return JsonResponse(
@@ -452,9 +505,31 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             with transaction.atomic():
                 registration.status = canceled_status
                 registration.save(update_fields=["status"])
-                if invoice_ids:
-                    payments_qs.delete()
+                if parent_invoice_ids:
                     invoice_qs.delete()
+                    for parent_invoice in StudentSemesterInvoice.objects.filter(
+                        id__in=parent_invoice_ids
+                    ):
+                        has_semester_fees = parent_invoice.fee_stacks.exists()
+                        has_non_reversible_history = _has_non_reversible_payment_history(
+                            parent_invoice.id
+                        )
+                        if (
+                            parent_invoice.course_invoices.exists()
+                            or has_semester_fees
+                            or has_non_reversible_history
+                        ):
+                            parent_invoice.refresh_totals_from_sources(save_model=True)
+                            continue
+                        Payment.objects.filter(
+                            student_semester_invoice=parent_invoice,
+                            status_id="pending",
+                        ).delete()
+                        if parent_invoice.payments.exists():
+                            # Keep SSI when non-pending payments are still present.
+                            parent_invoice.refresh_totals_from_sources(save_model=True)
+                            continue
+                        parent_invoice.delete()
             _push_message("success", "Registration canceled.")
             if not _is_ajax_request():
                 return _redirect_to_semester()
@@ -516,22 +591,32 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     )
     history_dates = {row["id"]: row["last_change"] for row in history_rows}
 
-    invoices = Invoice.objects.filter(student=student)
+    invoices = CourseInvoice.objects.filter(student=student)
     invoice_key_rows = list(
-        invoices.values_list("curriculum_course_id", "semester_id", "id")
+        invoices.values_list(
+            "curriculum_course_id",
+            "semester_id",
+            "id",
+            "student_semester_invoice_id",
+        )
     )
     invoice_keys = {(row[0], row[1]) for row in invoice_key_rows}
     invoice_id_by_key = {(row[0], row[1]): row[2] for row in invoice_key_rows}
-    invoice_ids = [row[2] for row in invoice_key_rows if row[2]]
+    parent_invoice_id_by_invoice_id = {
+        row[2]: row[3]
+        for row in invoice_key_rows
+        if row[2] is not None and row[3] is not None
+    }
     payment_last_updates: dict[int, datetime] = {}
-    if invoice_ids:
+    parent_invoice_ids = [row[3] for row in invoice_key_rows if row[3] is not None]
+    if parent_invoice_ids:
         payment_history_rows = (
-            Payment.history.filter(invoice_id__in=invoice_ids)
-            .values("invoice_id")
+            Payment.history.filter(student_semester_invoice_id__in=parent_invoice_ids)
+            .values("student_semester_invoice_id")
             .annotate(last_change=Max("history_date"))
         )
         payment_last_updates = {
-            row["invoice_id"]: row["last_change"]
+            row["student_semester_invoice_id"]: row["last_change"]
             for row in payment_history_rows
             if row["last_change"]
         }
@@ -552,9 +637,12 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         invoice_id = invoice_id_by_key.get(
             (section.curriculum_course_id, section.semester_id)
         )
+        parent_invoice_id = (
+            parent_invoice_id_by_invoice_id.get(invoice_id) if invoice_id else None
+        )
         payment_last_update = (
-            format_datetime(payment_last_updates[invoice_id])
-            if invoice_id and invoice_id in payment_last_updates
+            format_datetime(payment_last_updates[parent_invoice_id])
+            if parent_invoice_id and parent_invoice_id in payment_last_updates
             else "-"
         )
         course_status_rows.append(
@@ -762,12 +850,14 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     gpa_result = get_cumulative_gpa(student=student, curriculum=student.curriculum)
     gpa = gpa_result["gpa"]
 
-    total_due = invoices.aggregate(total=Sum("balance")).get("total") or Decimal("0.00")
-    payments = Payment.objects.filter(invoice__student=student)
+    total_due = StudentSemesterInvoice.objects.filter(student=student).aggregate(
+        total=Sum("balance")
+    ).get("total") or Decimal("0.00")
+    payments = Payment.objects.filter(student_semester_invoice__student=student)
     # Receipt availability is driven by any recorded payment amount.
     cleared_invoice_semester_ids = set(
         payments.filter(amount_paid__gt=0).values_list(
-            "invoice__semester_id",
+            "student_semester_invoice__semester_id",
             flat=True,
         )
     )
@@ -793,9 +883,13 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     )
     has_pending_registrations = bool(pending_registrations_list)
     outstanding = total_due + pending_total
-    last_payment = payments.order_by("-id").select_related("invoice").first()
-    if last_payment and hasattr(last_payment.invoice, "created_at"):
-        last_payment_label = last_payment.invoice.created_at.strftime("%b %d, %Y")
+    last_payment = (
+        payments.order_by("-id").select_related("student_semester_invoice").first()
+    )
+    if last_payment and hasattr(last_payment.student_semester_invoice, "created_at"):
+        last_payment_label = last_payment.student_semester_invoice.created_at.strftime(
+            "%b %d, %Y"
+        )
     else:
         last_payment_label = "No payments recorded"
 
@@ -978,6 +1072,11 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         }
         for sem in open_semesters
     ]
+    optional_fee_stack_options = (
+        optional_semester_stack_choices(student=student, semester=semester)
+        if semester is not None
+        else []
+    )
 
     context = {
         "student_profile": student_profile,
@@ -998,6 +1097,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         "current_semester": semester,
         "registration_open": registration_open,
         "semester_options": semester_options,
+        "optional_fee_stack_options": optional_fee_stack_options,
         "locked_courses": locked_courses,
         "has_pending_registrations": has_pending_registrations,
     }
