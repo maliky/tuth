@@ -7,10 +7,11 @@ from app.finance.fee_stack_defaults import ensure_default_fee_stacks_from_fee_ty
 from app.finance.models.status_types_methods import (
     AccountChartType,
     AccountType,
-    PaymentStatus,
-    InvoiceStatus,
     FeeType,
+    InvoiceStatus,
+    Payer,
     PaymentMethod,
+    PaymentStatus,
 )
 from app.people.admin.resources import StudentResource
 from app.registry.models.document import DocumentStatus, DocumentType
@@ -38,6 +39,7 @@ class Command(BaseCommand):
             ("DocumentStatus", DocumentStatus),
             ("DocumentType", DocumentType),
             ("FeeType", FeeType),
+            ("Payer", Payer),
             ("PaymentMethod", PaymentMethod),
             ("RegistrationStatus", RegistrationStatus),
             ("SemesterStatus", SemesterStatus),

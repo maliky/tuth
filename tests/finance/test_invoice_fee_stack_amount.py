@@ -8,7 +8,7 @@ from decimal import Decimal
 import pytest
 
 from app.finance.models.fee_stack import CourseFeeStack, FeeStack, FeeStackLine
-from app.finance.models.invoice import Invoice
+from app.finance.models.invoice import CourseInvoice
 from app.finance.models.status_types_methods import FeeType
 from app.timetable.models.section import Section
 
@@ -55,7 +55,7 @@ def test_invoice_initial_amount_is_not_changed_by_later_fee_stack_update(
     CourseFeeStack.objects.create(course=curriculum_course.course, fee_stack=old_stack)
 
     initial_due = section_old.fee_total_amount()
-    invoice = Invoice.objects.create(
+    invoice = CourseInvoice.objects.create(
         curriculum_course=section_old.curriculum_course,
         student=student,
         semester=section_old.semester,

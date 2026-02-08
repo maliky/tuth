@@ -8,16 +8,16 @@ from typing import Callable, TypeAlias
 import pytest
 
 from app.academics.models.curriculum_course import CurriculumCourse
-from app.finance.models.invoice import Invoice
+from app.finance.models.invoice import CourseInvoice
 from app.finance.models.payment import Payment
 from app.people.models.student import Student
 from app.timetable.models.semester import Semester
 from tests.constants import D25, D100
 
 StudentInvoiceFactoryT: TypeAlias = Callable[
-    [Student, Semester, Decimal, CurriculumCourse | None], Invoice
+    [Student, Semester, Decimal, CurriculumCourse | None], CourseInvoice
 ]
-PaymentFactoryT: TypeAlias = Callable[[Invoice, Decimal], Payment]
+PaymentFactoryT: TypeAlias = Callable[[CourseInvoice, Decimal], Payment]
 
 
 @pytest.fixture
@@ -29,9 +29,9 @@ def student_invoice_factory() -> StudentInvoiceFactoryT:
         semester: Semester,
         amount: Decimal = D100,
         curriculum_course: CurriculumCourse | None = None,
-    ) -> Invoice:
+    ) -> CourseInvoice:
         course = curriculum_course or CurriculumCourse.get_default()
-        return Invoice.objects.create(
+        return CourseInvoice.objects.create(
             curriculum_course=course,
             student=student,
             semester=semester,
@@ -46,7 +46,12 @@ def student_invoice_factory() -> StudentInvoiceFactoryT:
 def payment_factory() -> PaymentFactoryT:
     """Return a callable to create payments for an invoice."""
 
-    def _make(invoice: Invoice, amount: Decimal = D25) -> Payment:
-        return Payment.objects.create(invoice=invoice, amount_paid=amount)
+    def _make(invoice: CourseInvoice, amount: Decimal = D25) -> Payment:
+        parent_invoice = invoice.student_semester_invoice
+        assert parent_invoice is not None
+        return Payment.objects.create(
+            student_semester_invoice=parent_invoice,
+            amount_paid=amount,
+        )
 
     return _make

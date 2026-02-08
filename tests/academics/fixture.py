@@ -12,7 +12,7 @@ from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.academics.models.curriculum_course import CurriculumCourse
 from app.academics.models.concentration import Major, Minor
-from app.finance.models.invoice import Invoice
+from app.finance.models.invoice import CourseInvoice
 from app.people.models.student import Student
 from app.registry.models.credit_hours import CreditHour
 from app.timetable.models.academic_year import AcademicYear
@@ -26,7 +26,7 @@ DepartmentFactoryT: TypeAlias = Callable[[str], Department]
 CurriculumCourseFactoryT: TypeAlias = Callable[[str, str], CurriculumCourse]
 CreditHourFactoryT: TypeAlias = Callable[[int], CreditHour]
 
-InvoiceFactoryT: TypeAlias = Callable[[CurriculumCourse], Invoice]
+InvoiceFactoryT: TypeAlias = Callable[[CurriculumCourse], CourseInvoice]
 
 
 @pytest.fixture
@@ -152,10 +152,10 @@ def credit_hour_factory() -> CreditHourFactoryT:
 def invoice_factory(default_semester: Semester) -> InvoiceFactoryT:
     """Return a callable to create invoices for curriculum courses."""
 
-    def _make(curriculum_course: CurriculumCourse) -> Invoice:
+    def _make(curriculum_course: CurriculumCourse) -> CourseInvoice:
         student = Student.get_default()
         amount = D10
-        return Invoice.objects.create(
+        return CourseInvoice.objects.create(
             curriculum_course=curriculum_course,
             student=student,
             semester=default_semester,
