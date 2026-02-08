@@ -2,40 +2,42 @@
 
 from __future__ import annotations
 
-from decimal import Decimal
-from typing import TYPE_CHECKING
-
 from django.db import models, transaction
 from simple_history.models import HistoricalRecords
 
 from app.finance.models.status_types_methods import PaymentMethod, PaymentStatus
 from app.shared.mixins import StatusableMixin
 
-if TYPE_CHECKING:
-    from app.finance.models.invoice import Invoice
-
 
 class Payment(StatusableMixin, models.Model):
-    """Payment for an Invoice by a student.
+    """Payment for a student-semester invoice.
 
     Store the payments made by students. The payment have default pending status.
     Payment can only be created by authorized staff.
 
     Attributes:
-        invoice: Invoice linked to the payment.
+        student_semester_invoice: Parent invoice linked to the payment.
+        payer: Party funding the payment.
         amount_paid: Amount recorded for the payment.
         recorded_by: Staff member who logged the payment.
 
     Example:
-        >>> from app.finance.models.invoice import Invoice
-        # >>> invoice = Invoice.get_default()
-        >>> invoice.save(update_fields=["initial_amount_due", "balance"])
-        >>> Payment.objects.create(invoice=invoice)
+        >>> from app.finance.models.invoice import StudentSemesterInvoice
+        >>> invoice = StudentSemesterInvoice.objects.first()
+        >>> Payment.objects.create(student_semester_invoice=invoice)
     """
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
-    invoice = models.ForeignKey(
-        "finance.Invoice", on_delete=models.PROTECT, related_name="payments"
+    student_semester_invoice = models.ForeignKey(
+        "finance.StudentSemesterInvoice",
+        on_delete=models.PROTECT,
+        related_name="payments",
+    )
+    payer = models.ForeignKey(
+        "finance.Payer",
+        on_delete=models.PROTECT,
+        related_name="payments",
+        default="student",
     )
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     # ~~~~ Auto-filled ~~~~
@@ -81,6 +83,14 @@ class Payment(StatusableMixin, models.Model):
         self._ensure_status()
         with transaction.atomic():
             result = super().save(*args, **kwargs)
-            # the invoice must exist before the payment
-            self.invoice.update_balance(amount_paid=self.amount_paid)
+            # Payment edits must keep the parent invoice totals in sync.
+            self.student_semester_invoice.refresh_totals_from_sources(save_model=True)
+        return result
+
+    def delete(self, *args, **kwargs):
+        """Keep parent invoice totals in sync after payment deletion."""
+        parent_invoice = self.student_semester_invoice
+        with transaction.atomic():
+            result = super().delete(*args, **kwargs)
+            parent_invoice.refresh_totals_from_sources(save_model=True)
         return result

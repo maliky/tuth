@@ -17,6 +17,8 @@ if TYPE_CHECKING:
 FeeTypeCodeSetT: TypeAlias = set[str]
 FeeMapT: TypeAlias = dict[str, Decimal]
 FeeLabelMapT: TypeAlias = dict[str, str]
+PayerCodeSetT: TypeAlias = set[str]
+PAYER_STUDENT_CODE = "student"
 
 
 def _fee_type_codes_for_stack(stack_id: int) -> FeeTypeCodeSetT:
@@ -62,6 +64,50 @@ def _resolve_stack_fee_lines_for_semester(
             selected_lines[fee_type_code] = fee_line
             selected_starts[fee_type_code] = line_start
     return list(selected_lines.values())
+
+
+def _resolve_line_payer(
+    fee_line: "FeeStackLine",
+    fallback_payer: str | None,
+) -> str:
+    """Resolve one line payer using line -> stack -> fallback order."""
+    return (
+        fee_line.payer_id
+        or fee_line.fee_stack.payer_id
+        or fallback_payer
+        or PAYER_STUDENT_CODE
+    )
+
+
+def resolve_fee_stack_line_payers(
+    fee_stacks: list["FeeStack"],
+    semester: "Semester | None",
+    fallback_payer: str | None,
+) -> PayerCodeSetT:
+    """Return resolved payer codes for attached fee stacks and semester context."""
+    semester_start = _semester_start_date(semester)
+    payer_codes: PayerCodeSetT = set()
+    for fee_stack in fee_stacks:
+        resolved_lines = _resolve_stack_fee_lines_for_semester(
+            fee_stack.fees.select_related("fee_type", "effective_from_semester"),
+            semester_start,
+        )
+        for fee_line in resolved_lines:
+            payer_codes.add(_resolve_line_payer(fee_line, fallback_payer))
+    return payer_codes
+
+
+def _refresh_parent_invoices_for_stack(stack_id: int | None) -> None:
+    """Refresh parent invoice totals affected by one fee-stack change."""
+    if stack_id is None:
+        return
+    from app.finance.models.invoice import StudentSemesterInvoice
+
+    parent_invoices = StudentSemesterInvoice.objects.filter(
+        fee_stacks__id=stack_id
+    ).distinct()
+    for parent_invoice in parent_invoices:
+        parent_invoice.refresh_totals_from_sources(save_model=True)
 
 
 def resolve_course_fee_stack_map(course, semester) -> tuple[FeeMapT, FeeLabelMapT]:
@@ -126,6 +172,13 @@ class FeeStack(models.Model):
     """Named reusable set of fee lines that can be attached to many courses."""
 
     name = models.CharField(max_length=120, unique=True)
+    payer = models.ForeignKey(
+        "finance.Payer",
+        on_delete=models.PROTECT,
+        related_name="fee_stacks",
+        null=True,
+        blank=True,
+    )
     courses = models.ManyToManyField(
         "academics.Course",
         through="finance.CourseFeeStack",
@@ -149,6 +202,12 @@ class FeeStack(models.Model):
         """Return stack amount as of the latest configured effective lines."""
         return self.total_amount_for_semester(semester=None)
 
+    def save(self, *args, **kwargs):
+        """Save the stack and refresh parent invoice aggregates."""
+        save_result = super().save(*args, **kwargs)
+        _refresh_parent_invoices_for_stack(self.pk)
+        return save_result
+
     def __str__(self) -> str:  # pragma: no cover
         return self.name
 
@@ -170,6 +229,13 @@ class FeeStackLine(models.Model):
         related_name="fee_stack_lines",
     )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payer = models.ForeignKey(
+        "finance.Payer",
+        on_delete=models.PROTECT,
+        related_name="fee_stack_lines",
+        null=True,
+        blank=True,
+    )
     effective_from_semester = models.ForeignKey(
         "timetable.Semester",
         on_delete=models.PROTECT,
@@ -217,7 +283,16 @@ class FeeStackLine(models.Model):
     def save(self, *args, **kwargs):
         """Validate effective-semester rules before saving a fee line."""
         self.full_clean()
-        return super().save(*args, **kwargs)
+        save_result = super().save(*args, **kwargs)
+        _refresh_parent_invoices_for_stack(self.fee_stack_id)
+        return save_result
+
+    def delete(self, *args, **kwargs):
+        """Refresh parent invoice aggregates after deleting a fee line."""
+        stack_id = self.fee_stack_id
+        delete_result = super().delete(*args, **kwargs)
+        _refresh_parent_invoices_for_stack(stack_id)
+        return delete_result
 
     def __str__(self) -> str:  # pragma: no cover
         return (

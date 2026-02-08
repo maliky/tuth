@@ -81,9 +81,11 @@ def _build_sidebar_links(
     payment_semester_id = None
     if student is not None:
         payment_semester_id = (
-            Payment.objects.filter(invoice__student=student, amount_paid__gt=0)
+            Payment.objects.filter(
+                student_semester_invoice__student=student, amount_paid__gt=0
+            )
             .order_by("-id")
-            .values_list("invoice__semester_id", flat=True)
+            .values_list("student_semester_invoice__semester_id", flat=True)
             .first()
         )
     if payment_semester_id:

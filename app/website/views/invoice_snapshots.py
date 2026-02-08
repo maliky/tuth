@@ -21,16 +21,16 @@ def student_invoice_snapshot_pdf(request: HttpRequest) -> HttpResponse:
     semester_id = request.GET.get("semester")
     semester = None
     invoice_qs = (
-        Invoice.objects.filter(student=student, balance__gt=0)
+        Invoice.objects.filter(student=student)
         .select_related(
             "curriculum_course__course",
             "curriculum_course__credit_hours",
             "semester",
             "semester__academic_year",
+            "student_semester_invoice",
         )
         .prefetch_related(
-            "curriculum_course__course__course_fee_stacks__fee_stack__fees__fee_type",
-            "curriculum_course__course__course_fee_stacks__fee_stack__fees__effective_from_semester",
+            "student_semester_invoice__fee_stacks",
         )
     )
     if semester_id:

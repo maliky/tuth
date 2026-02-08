@@ -237,7 +237,7 @@
 
     <div class="instructions">
       <div><strong>Payment Instructions</strong></div>
-      <div>To complete your registration, pay 40% ({{ totals.currency }} {{ payload.required_deposit }}) of your fees.</div>
+      <div>To complete your registration, pay {{ payload.required_deposit_rule }} ({{ totals.currency }} {{ payload.required_deposit }}).</div>
       <div>All payments must be made at {{ payload.bank_account_name }}.</div>
       <div>Account No (USD): {{ payload.bank_account_number }}</div>
       <div>Deposit Amt.: {{ totals.currency }} {{ payload.required_deposit }}</div>

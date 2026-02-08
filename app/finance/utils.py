@@ -12,19 +12,18 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 if TYPE_CHECKING:
-    from app.academics.models.curriculum_course import CurriculumCourse
     from app.people.models.staffs import Staff
     from app.people.models.student import Student
     from app.timetable.models.semester import Semester
 
-from app.finance.models.fee_stack import resolve_course_fee_stack_map
-from app.finance.models.invoice import Invoice
+from app.finance.models.invoice import CourseInvoice, StudentSemesterInvoice
 from app.finance.models.invoice_snapshot import InvoiceSnapshot
 from app.finance.models.payment import Payment
-from app.academics.models.curriculum_course import TUITION_RATE_PER_CREDIT
 
 
 PaymentCreateSummaryT = dict[str, int]
+PAYER_STUDENT_CODE = "student"
+PAYER_MIXED_CODE = "mixed"
 
 
 class InvoiceSnapshotLineT(TypedDict):
@@ -69,6 +68,7 @@ class InvoiceSnapshotPayloadT(TypedDict):
     payments: str
     balance: str
     required_deposit: str
+    required_deposit_rule: str
     bank_account_name: str
     bank_account_number: str
     deposit_by_label: str
@@ -91,10 +91,10 @@ FEE_TYPE_ORDER = [
 
 
 def create_pending_payments(
-    invoices: Iterable[Invoice],
+    invoices: Iterable[CourseInvoice],
     recorded_by: Optional["Staff"] = None,
 ) -> PaymentCreateSummaryT:
-    """Create pending full payments for invoices when none exist.
+    """Create pending full payments for parent student-semester invoices.
 
     Args:
         invoices: Iterable of invoices to receive pending payments.
@@ -108,30 +108,39 @@ def create_pending_payments(
         "skipped_existing": 0,
         "skipped_closed": 0,
     }
-    invoice_list = list(invoices)
-    if not invoice_list:
+    parent_invoice_ids = {
+        invoice.student_semester_invoice_id
+        for invoice in invoices
+        if invoice.student_semester_invoice_id
+    }
+    if not parent_invoice_ids:
         return summary
+    parent_invoices = list(
+        StudentSemesterInvoice.objects.filter(id__in=parent_invoice_ids).only(
+            "id",
+            "balance",
+            "initial_amount_due",
+        )
+    )
     with transaction.atomic():
-        for invoice in invoice_list:
-            balance = invoice.get_balance()
+        for parent_invoice in parent_invoices:
+            balance = parent_invoice.get_balance()
             if balance <= 0:
                 summary["skipped_closed"] += 1
                 continue
-            if Payment.objects.filter(invoice=invoice, status_id="pending").exists():
+            if Payment.objects.filter(
+                student_semester_invoice=parent_invoice, status_id="pending"
+            ).exists():
                 summary["skipped_existing"] += 1
                 continue
             Payment.objects.create(
-                invoice=invoice, amount_paid=balance, recorded_by=recorded_by
+                student_semester_invoice=parent_invoice,
+                payer_id=_default_payment_payer_id(parent_invoice),
+                amount_paid=balance,
+                recorded_by=recorded_by,
             )
             summary["created"] += 1
     return summary
-
-
-def _resolve_fee_map(
-    curriculum_course: "CurriculumCourse", semester: "Semester | None"
-) -> tuple[FeeMapT, FeeLabelMapT]:
-    """Resolve fee amounts from stacks attached to the course."""
-    return resolve_course_fee_stack_map(curriculum_course.course, semester)
 
 
 def _format_currency(amount: Decimal) -> str:
@@ -139,8 +148,48 @@ def _format_currency(amount: Decimal) -> str:
     return f"{amount:.2f}"
 
 
+def _default_payment_payer_id(parent_invoice: StudentSemesterInvoice) -> str:
+    """Resolve the default payer for newly created payments."""
+    candidate_codes = (
+        parent_invoice.fee_payer_id,
+        parent_invoice.course_tuition_payer_id,
+    )
+    for candidate_code in candidate_codes:
+        if candidate_code and candidate_code != PAYER_MIXED_CODE:
+            return candidate_code
+    return PAYER_STUDENT_CODE
+
+
+def _ordered_fee_lines(
+    fee_totals: FeeMapT,
+    fee_labels: FeeLabelMapT,
+) -> list[InvoiceSnapshotFeeT]:
+    """Return fee lines in a stable order for snapshot rendering."""
+    ordered_fee_lines: list[InvoiceSnapshotFeeT] = []
+    for fee_code in FEE_TYPE_ORDER:
+        if fee_code not in fee_totals:
+            continue
+        ordered_fee_lines.append(
+            {
+                "label": fee_labels.get(fee_code, fee_code.replace("_", " ").title()),
+                "amount": _format_currency(fee_totals[fee_code]),
+            }
+        )
+    remaining_fee_codes = [code for code in fee_totals if code not in FEE_TYPE_ORDER]
+    for fee_code in sorted(
+        remaining_fee_codes, key=lambda code: fee_labels.get(code, code)
+    ):
+        ordered_fee_lines.append(
+            {
+                "label": fee_labels.get(fee_code, fee_code.replace("_", " ").title()),
+                "amount": _format_currency(fee_totals[fee_code]),
+            }
+        )
+    return ordered_fee_lines
+
+
 def build_invoice_snapshot(
-    invoices: Iterable[Invoice],
+    invoices: Iterable[CourseInvoice],
     *,
     student: "Student",
     semester: "Semester | None" = None,
@@ -191,19 +240,38 @@ def build_invoice_snapshot(
     else:
         academic_semester = "All semesters"
 
+    parent_invoice_ids = {
+        invoice.student_semester_invoice_id
+        for invoice in invoice_list
+        if invoice.student_semester_invoice_id
+    }
+    parent_invoices_qs = StudentSemesterInvoice.objects.filter(student=student)
+    if semester:
+        parent_invoices_qs = parent_invoices_qs.filter(semester=semester)
+    elif parent_invoice_ids:
+        parent_invoices_qs = parent_invoices_qs.filter(id__in=parent_invoice_ids)
+    else:
+        parent_invoices_qs = parent_invoices_qs.none()
+    parent_invoices = list(
+        parent_invoices_qs.select_related("semester").prefetch_related("fee_stacks")
+    )
+
     fee_totals: FeeMapT = {}
     fee_labels: FeeLabelMapT = {}
     lines: list[InvoiceSnapshotLineT] = []
     tuition_total = Decimal("0.00")
+    course_total = Decimal("0.00")
     total_credit_hours = 0
 
     for invoice in invoice_list:
         curriculum_course = invoice.curriculum_course
         course = curriculum_course.course
         credits = int(curriculum_course.credit_hours.code)
-        cost_per_credit = TUITION_RATE_PER_CREDIT
-        course_cost = cost_per_credit * credits
-        tuition_total += course_cost
+        tuition_amount = curriculum_course.tuition_for()
+        course_cost = Decimal(invoice.initial_amount_due or Decimal("0.00"))
+        cost_per_credit = (course_cost / Decimal(credits)) if credits else Decimal("0.00")
+        tuition_total += tuition_amount
+        course_total += course_cost
         total_credit_hours += credits
         lines.append(
             {
@@ -216,44 +284,80 @@ def build_invoice_snapshot(
                 "semester_label": str(invoice.semester),
             }
         )
-        fee_map, label_map = _resolve_fee_map(curriculum_course, invoice.semester)
-        for fee_type, amount in fee_map.items():
-            fee_totals[fee_type] = fee_totals.get(fee_type, Decimal("0.00")) + amount
-        for fee_type, label in label_map.items():
-            fee_labels[fee_type] = label
 
-    ordered_fee_lines: list[InvoiceSnapshotFeeT] = []
-    for fee_code in FEE_TYPE_ORDER:
-        if fee_code in fee_totals:
-            ordered_fee_lines.append(
-                {
-                    "label": fee_labels.get(fee_code, fee_code.replace("_", " ").title()),
-                    "amount": _format_currency(fee_totals[fee_code]),
-                }
+    for parent_invoice in parent_invoices:
+        for fee_stack in parent_invoice.fee_stacks.all():
+            stack_amount = fee_stack.total_amount_for_semester(parent_invoice.semester)
+            if stack_amount <= Decimal("0.00"):
+                continue
+            stack_key = f"semester_stack_{fee_stack.id}"
+            fee_totals[stack_key] = (
+                fee_totals.get(stack_key, Decimal("0.00")) + stack_amount
             )
-    remaining_fee_codes = [code for code in fee_totals if code not in FEE_TYPE_ORDER]
-    for fee_code in sorted(remaining_fee_codes):
-        ordered_fee_lines.append(
-            {
-                "label": fee_labels.get(fee_code, fee_code.replace("_", " ").title()),
-                "amount": _format_currency(fee_totals[fee_code]),
-            }
-        )
+            fee_labels[stack_key] = fee_stack.name
 
+    course_fee_total = course_total - tuition_total
+    if course_fee_total > Decimal("0.00"):
+        fee_totals["course_linked_fees"] = course_fee_total
+        fee_labels["course_linked_fees"] = "Course-linked fees"
+
+    ordered_fee_lines = _ordered_fee_lines(fee_totals, fee_labels)
     fees_total = sum(fee_totals.values(), Decimal("0.00"))
     total_bill = tuition_total + fees_total
 
     arrears = Decimal("0.00")
     if semester:
-        arrears = Invoice.objects.filter(student=student).exclude(
+        arrears = StudentSemesterInvoice.objects.filter(student=student).exclude(
             semester=semester
         ).aggregate(total=Sum("balance")).get("total") or Decimal("0.00")
     payments_total = Decimal("0.00")
-    if invoice_list:
+    if parent_invoices:
         payments_total = Payment.objects.filter(
-            invoice_id__in=[inv.id for inv in invoice_list]
+            student_semester_invoice_id__in=[parent.id for parent in parent_invoices],
+            status_id="cleared",
         ).aggregate(total=Sum("amount_paid")).get("total") or Decimal("0.00")
+
+    required_deposit = total_bill * Decimal("0.40")
+    required_deposit_rule = "40.00% of your fees"
     balance = total_bill + arrears - payments_total
+
+    if parent_invoices:
+        total_bill = sum(
+            (parent_invoice.initial_amount_due for parent_invoice in parent_invoices),
+            Decimal("0.00"),
+        )
+        fees_total = max(total_bill - tuition_total, Decimal("0.00"))
+        required_deposit = sum(
+            (
+                parent_invoice.required_deposit_amount
+                for parent_invoice in parent_invoices
+            ),
+            Decimal("0.00"),
+        )
+        distinct_deposit_percents = {
+            _format_currency(parent_invoice.required_deposit_percent)
+            for parent_invoice in parent_invoices
+        }
+        if len(distinct_deposit_percents) == 1:
+            required_deposit_rule = (
+                f"{next(iter(distinct_deposit_percents))}% of your fees"
+            )
+        else:
+            required_deposit_rule = "the semester-specific required percentage"
+        balance = (
+            sum(
+                (parent_invoice.get_balance() for parent_invoice in parent_invoices),
+                Decimal("0.00"),
+            )
+            + arrears
+        )
+
+    fee_line_total = sum(fee_totals.values(), Decimal("0.00"))
+    if fee_line_total != fees_total:
+        fee_totals["snapshot_adjustment"] = fees_total - fee_line_total
+        fee_labels["snapshot_adjustment"] = "Semester adjustments"
+        ordered_fee_lines = _ordered_fee_lines(fee_totals, fee_labels)
+
     if balance < Decimal("0.00"):
         balance = Decimal("0.00")
 
@@ -289,7 +393,8 @@ def build_invoice_snapshot(
         "arrears": _format_currency(arrears),
         "payments": _format_currency(payments_total),
         "balance": _format_currency(balance),
-        "required_deposit": _format_currency(total_bill * Decimal("0.40")),
+        "required_deposit": _format_currency(required_deposit),
+        "required_deposit_rule": required_deposit_rule,
         "bank_account_name": str(bank_account_name),
         "bank_account_number": str(bank_account_number),
         "deposit_by_label": f"{student.student_id} {student.long_name}",

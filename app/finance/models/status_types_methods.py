@@ -209,3 +209,20 @@ class PaymentMethod(SimpleTableMixin):
             code="cash",
         )
         return cast(Self, deft)
+
+
+class Payer(SimpleTableMixin):
+    """Payer lookup values shared by invoices, fee stacks, and payments."""
+
+    DEFAULT_VALUES = [
+        ("student", "Student"),
+        ("gov", "Government"),
+        ("scholarship", "Scholarship"),
+        ("other", "Other"),
+        ("mixed", "Mixed"),
+    ]
+
+    @classmethod
+    def get_default(cls) -> Self:
+        """Return the default payer used for direct student payments."""
+        return cls.get_by_code("student")

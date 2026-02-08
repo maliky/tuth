@@ -12,7 +12,7 @@ from django.db.models import Max
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
-from app.finance.models.invoice import Invoice
+from app.finance.models.invoice import CourseInvoice, StudentSemesterInvoice
 from app.finance.models.payment import Payment
 from app.timetable.models.semester import Semester
 from app.timetable.utils import format_datetime
@@ -27,7 +27,7 @@ from .student_helpers import (
 class ReceiptRowT(TypedDict):
     """Row details for a receipt line item."""
 
-    invoice: Invoice
+    invoice: CourseInvoice
     paid_total: Decimal
     paid_on: str
 
@@ -48,62 +48,59 @@ def student_payment_receipt(
     if semester is None:
         raise Http404("Semester not found.")
 
-    payments = (
+    parent_invoice = (
+        StudentSemesterInvoice.objects.filter(student=student, semester=semester)
+        .select_related("student", "semester__academic_year")
+        .first()
+    )
+    if parent_invoice is None:
+        raise Http404("No invoice found for this semester.")
+    payments = list(
         Payment.objects.filter(
-            invoice__student=student,
-            invoice__semester=semester,
+            student_semester_invoice=parent_invoice,
             amount_paid__gt=0,
-        )
-        .select_related(
-            "invoice__curriculum_course__course",
-            "invoice__curriculum_course__credit_hours",
-            "invoice__semester__academic_year",
-        )
-        .order_by("invoice__curriculum_course__course__short_code")
+        ).order_by("id")
+    )
+    invoices = list(
+        parent_invoice.course_invoices.select_related(
+            "curriculum_course__course",
+            "curriculum_course__credit_hours",
+            "semester__academic_year",
+        ).order_by("curriculum_course__course__short_code")
     )
 
     receipt_rows: list[ReceiptRowT] = []
-    total_paid = Decimal("0.00")
-    invoice_totals: dict[int, Decimal] = {}
-    invoice_lookup: dict[int, Invoice] = {}
-    invoice_ids: list[int] = []
-    for payment in payments:
-        invoice = payment.invoice
-        if invoice.id not in invoice_lookup:
-            invoice_lookup[invoice.id] = invoice
-            invoice_ids.append(invoice.id)
-        invoice_totals[invoice.id] = invoice_totals.get(invoice.id, Decimal("0.00")) + (
-            payment.amount_paid
-        )
+    total_paid = sum((payment.amount_paid for payment in payments), Decimal("0.00"))
     payment_last_updates: PaymentUpdateMapT = {}
-    if invoice_ids:
-        payment_history_rows = (
-            Payment.history.filter(invoice_id__in=invoice_ids)
-            .values("invoice_id")
+    if payments:
+        payment_history_row = (
+            Payment.history.filter(student_semester_invoice_id=parent_invoice.id)
+            .values("student_semester_invoice_id")
             .annotate(last_change=Max("history_date"))
+            .first()
         )
-        payment_last_updates = {
-            row["invoice_id"]: row["last_change"]
-            for row in payment_history_rows
-            if row["last_change"]
-        }
-
-    for invoice_id in invoice_ids:
-        invoice = invoice_lookup[invoice_id]
-        paid_total = invoice_totals.get(invoice_id, Decimal("0.00"))
-        paid_on = (
-            format_datetime(payment_last_updates[invoice_id])
-            if invoice_id in payment_last_updates
+        if payment_history_row and payment_history_row.get("last_change"):
+            payment_last_updates[parent_invoice.id] = payment_history_row["last_change"]
+        paid_on_label = (
+            format_datetime(payment_last_updates[parent_invoice.id])
+            if parent_invoice.id in payment_last_updates
             else "-"
         )
-        receipt_rows.append(
-            {
-                "invoice": invoice,
-                "paid_total": paid_total,
-                "paid_on": paid_on,
-            }
-        )
-        total_paid += paid_total
+
+        remaining_paid = total_paid
+        for invoice in invoices:
+            applied_paid = min(invoice.initial_amount_due, remaining_paid)
+            remaining_paid -= applied_paid
+            amount_due = invoice.initial_amount_due - applied_paid
+            # Template expects an amount_due attribute on each invoice row.
+            invoice.amount_due = amount_due  # type: ignore[attr-defined]
+            receipt_rows.append(
+                {
+                    "invoice": invoice,
+                    "paid_total": applied_paid,
+                    "paid_on": paid_on_label,
+                }
+            )
 
     currency = getattr(settings, "FINANCE_DEFAULT_CURRENCY", "USD")
     semester_label = f"{semester.academic_year.code} · Semester {semester.number}"

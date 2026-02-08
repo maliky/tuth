@@ -51,7 +51,7 @@
                 </td>
                 <td>{{ invoice.curriculum_course.credit_hours.code }}</td>
                 <td>{{ row.created_at }}</td>
-                <td class="text-end">{{ currency }} {{ invoice.amount_due|floatformat:2 }}</td>
+                <td class="text-end">{{ currency }} {{ invoice.balance|floatformat:2 }}</td>
               </tr>
               {% endwith %}
             {% endfor %}
