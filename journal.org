@@ -1,9 +1,245 @@
 
+* <2026-02-08 dim.>  backend invoice/fee/payment
+
+** <2026-02-08 dim. 11:47>  Plan to create full blown invoices
+  - P1 Pending payments are treated as settled money in balance math. app/finance/models/invoice.py sums all payments in refresh_totals_from_sources, while app/finance/utils.py creates full-
+    amount pending payments. Result: creating a pending payment can zero balances and flip invoice/registration statuses too early.
+
+  - P1 Student-facing invoice outputs are inconsistent with the new parent invoice model. app/finance/utils.py build_invoice_snapshot uses only course stacks and hardcodes 40%; it does not
+    include StudentSemesterInvoice.fee_stacks totals or required_deposit_percent.
+    
+  - P1 Registration cancel flow can drop valid semester-level charges. In app/website/views/student_dashboard.py, parent invoice deletion is based on “no course invoices” and can remove
+    invoice context even when semester fee stacks should remain.
+    
+  - P2 The “default general fee stack once per semester” use case is still manual. Invoice creation path in app/website/views/student_dashboard.py creates course invoices, but no policy/
+    service auto-attaches semester/global stacks.
+    
+  - P2 Payer data is modeled but not enforced in workflow. Payment defaults to student in app/finance/models/payment.py, and create_pending_payments in app/finance/utils.py does not derive
+    payer from SSI context; finance officer bulk update view does not edit payer either.
+    
+  - P2 Permissions are still alias-heavy and fragile. app/shared/auth/perms.py relies on legacy aliases (invoice, coursefee, curriculumcoursefee) that now fan out to multiple models; this is
+    easy to misconfigure and hard to audit.
+    
+  - P2 Test suite still contains obsolete old-API usage. tests/finance/test_payment.py and tests/selenium/fixtures_finance.py still create Payment(invoice=...) although payments now attach to
+    StudentSemesterInvoice.
+    
+  - P3 Current worktree has referenced-but-untracked admin filter code (app/finance/admin/filters.py). If not committed, deploy/import can break.
+
+  Updated Fix Plan
+
+  1. Define payment accounting semantics explicitly: only cleared payments affect StudentSemesterInvoice.balance; pending remains informational. OK
+  2. Refactor invoice rendering/snapshot to parent-first computation: include semester fee stacks, SSI deposit percent, and keep child course lines as breakdown only. OK
+  3. Harden cancellation lifecycle: never delete SSI when semester-level fees or non-reversible payment history exist; recalculate instead. OK
+  4. Add a fee-assignment service for invoice generation: auto-attach default semester stacks idempotently, plus optional stacks (dormitory-like) from explicit student choice. OK
+  5. Complete payer workflow: keep payer FK model, but propagate payer defaults from SSI into payment creation and expose payer in finance officer update flow.
+  6. Clean permissions matrix to explicit current models (no legacy aliases), then validate with load_roles. OK
+  7. Refresh tests: remove old Payment.invoice tests, add targeted tests for pending-vs-cleared balance behavior, SSI snapshot totals, cancellation retention rules, and auto-attach     idempotency. OK
+  8. Finish rollout hygiene on dev/preprod: ensure migrations applied, ensure seed commands create payer/fee-stack defaults, and commit currently untracked required files. OK
 
 
+
+** <2026-02-08 dim. 11:14> How to create the nivoice with the genera stack feee
+When generating the invoice, we need to include the course tuitions, depends on course ch and ch cost. this will be taken care by gove for liberian students
+we need to add speaclia stack fee dependent on the course type, eg lab fees for some bio or medical courses
+we need to add genereal fee like registration fee
+on some semesster we need to ad d some other fee for some courses eg pe has a uniforme fee every first semester of the yesar if you take that course.
+
+I did attache the sepcific courses fee package to the special courses (la/enterpreneruship ect...) but for the genera fee this need to be adde when the use creates his invoice has some genera fees depend on the semester and on option of the user.   in fact I am remembering that we neeed to incle dormitory fee for stends who pay dormiroty. wher do they make ta selection ? and where is this store.  I line toward the invoice table for the storage space. for the selection f, should be done at teh student ux level in a different panel from the course registration. or jsut a checkbox for the dormitory. I understna the dormitory are the only addition fee that cannot be deducted from course and semester.
+
+
+** <2026-02-08 dim. 09:12>
+
+• 1. Finalize the payer contract and naming.
+
+  - Rename Invoice to CourseInvoice.
+  - Keep payer fields only on StudentSemesterInvoice: course_tuition_payer (default gov) and
+    fee_payer (default student).
+  - Add nullable payer on FeeStack and FeeStackLine, with choices including mixed.
+
+  2. Implement one payer-resolution rule for fees.
+
+  - Resolve each fee line payer as: FeeStackLine.payer -> FeeStack.payer ->
+    StudentSemesterInvoice.fee_payer.
+  - Tuition payer always comes from StudentSemesterInvoice.course_tuition_payer.
+
+  3. Make StudentSemesterInvoice.fee_payer auto-derived when needed.
+
+  - Compute the set of effective fee-line payers for the semester.
+  - If set size > 1, force fee_payer = mixed.
+  - If set size = 1, set fee_payer to that payer.
+  - If no line payer resolves, keep the non-null default behavior.
+
+  4. Keep parent-invoice architecture as source of truth.
+
+  - One StudentSemesterInvoice per (student, semester).
+  - CourseInvoice linked under it.
+  - Payments linked to parent invoice only.
+  - Parent totals/status computed from child course totals + attached semester fees + payments.
+  5. Preserve manual governance (no hard guard after payment).
+
+  - Admin can still edit payer/deposit fields after payments.
+  - History remains the audit trail.
+  - No additional lock mechanism.
+
+  6. Validate with focused scenario checks before rollout.
+
+  - Single-payer stack set -> parent fee_payer single value.
+  - Multi-payer stack lines -> parent fee_payer = mixed.
+  - Null payer fallback chain works at all three levels.
+  - Tuition payer independent from fee payer.
+
+
+› 
+
+** <2026-02-08 dim. 09:07> refinement on payer
+default_fee_payer (call it fee_payer ) in StudentSemesterInvoice should be set to mixed if the se of feestackline.payer has more than one payer.
+** <2026-02-08 dim. 08:24> defining the payer types
+Remove the payer_type from courseInvoice and move it to StuddentSemesterInvoice level. call it course_tuition_payer (non nullable default to gov). add also a default_fee_payer (non nullable) (default to student).
+We need to add a payer field to the feeStacks line (nulllable)  and feestack (nullable).
+The rational is that sometime we may have the governement taking care of tution, and 3rd partie taking care of one or 2 items of a feestack. option for payer (not payer type) should include mixed.
+The fee rule should be as follow, if null check the level above for a payer and use that as default.  the default for top level is always set
+** <2026-02-08 dim. 07:56> update on model for better invoice/fee management
+We are still  reflecting, no edit.
+1. we can drop the guards even after first payment. Control will be manualy by admin
+2. do not mention  details for code areas or migration changes.
+3. Rename the invoice model to CourseInvoice in DB and UI.
+4. your steps 2  to 6 are correct
+
+   
 
 * DONE <2026-02-07 sam.>  fixing the fee model
 CLOSED: [2026-02-07 sam. 13:50]
+
+** <2026-02-07 sam. 23:21>
+
+  1. Parent invoice model
+
+  - Add StudentSemesterInvoice with unique (student, semester).
+  - Rename InvoiceModel to CourseInvoice. Update admin/UI labels too.
+  - Add nullable FK Invoice.student_semester_invoice.
+
+  2. Payments moved to parent
+
+  - Add Payment.student_semester_invoice.
+  - Keep Payment.invoice only during transition, then remove it.
+  - All new payment creation/update paths use parent invoice only.
+  - Parent balance/status become authoritative.
+
+  3. Semester fees on parent
+
+  - Add M2M StudentSemesterInvoice.fee_stacks.
+  - No snapshot layer
+  - semester_fee_total is computed dynamically from those stacks using semester-aware
+    FeeStackLine rules.
+
+  4. Payer type on course invoice
+
+  - Add Invoice.payer_type with choices:
+      - student, gov, scholarship, other
+  - Default student.
+  - Reporting/workflow only (no immediate accounting split logic).
+
+  5. 40% rule on parent
+
+  - Add on StudentSemesterInvoice:
+      - required_deposit_percent
+      - required_deposit_amount
+  - Percent default should come from semester config (add field on Semester, e.g.
+    deposit_percent_default).
+  - required_deposit_amount recalculates whenever totals or percent change.
+
+  6. Totals/status centralization
+
+  - Parent computed totals:
+      - course_total = sum(child invoices initial_amount_due)
+      - semester_fee_total = resolved fee stacks total
+      - initial_amount_due = course_total + semester_fee_total
+  - Parent balance/status driven by parent payments.
+  - Child invoice statuses stay informational (not payment-authoritative).
+
+  7. Code areas
+
+  - app/finance/models/invoice.py
+  - app/finance/models/payment.py
+  - app/finance/utils.py
+  - app/website/views/student_dashboard.py
+  - finance admin screens/forms/actions
+  - invoice snapshot rendering
+  - import/export resources + tests
+
+  8. Do not do the Migrations.
+
+  no guards on invoice for now, not even after first payment is made.
+
+› 
+
+** <2026-02-07 sam. 22:53> improving the invoice to take the fee stacks
+*** Introduce parent invoice level
+
+  - Add StudentSemesterInvoice with unique (student, semester).
+  - Keep current Invoice as course-level invoice (rename as courseinvoice)
+  - Add nullable FK CourseInvoice.student_semester_invoice.
+
+*** Move payments to parent invoice
+
+  - Add FK Payment.student_semester_invoice.
+  - Remove  Payment.invoice temporarily for migration only
+  - Update all payment creation/update logic to use parent invoice balance/status.
+
+*** Add semester-fee attachment on parent
+
+  - Add M2M from StudentSemesterInvoice to FeeStack.
+  - we let history mixing keep care of tracking changes and drop our big non change constrainte.
+
+*** Add payer field on course invoice
+
+  - Add Invoice.payer_type with hardcoded choices: student, gov, scholarship, other. 
+  - Default student.
+  - Use this for reporting/workflow;
+
+*** Put 40% rule on parent
+
+  - Add on StudentSemesterInvoice:
+      - required_deposit_percent (e.g. default 40.00)
+      - required_deposit_amount (stored value derived from percent)
+  - no specific guard here.  if the invoice change, then this can be updated and should.  we track in history the changes.
+
+*** Centralize totals/status logic
+
+  - Parent totals:
+      - course_total = sum(child Invoice.initial_amount_due)
+      - semester_fee_total = snapshot total
+      - initial_amount_due = course_total + semester_fee_total
+  # clarify the points below	
+  - Parent balance/status driven by payments.
+  - Child invoice statuses can remain informational or be derived from parent policy.
+
+
+*** Probable Code areas to update
+
+  - app/finance/models/invoice.py
+  - app/finance/models/payment.py
+  - app/finance/utils.py
+  - app/website/views/student_dashboard.py
+  - finance admin for invoice/payment flows
+  - invoice snapshot rendering (parent + child breakdown)
+  - imports/resources and tests
+
+*** Critical design warning
+
+  - If parent only keeps M2M to FeeStack without snapshots, future stack edits will retroactively alter old semester invoices.
+# > note that future stack edit should change the invoice. The only time they should not propagate the fee change backward is if they set a date of effect younger that the one when the action took place.
+  - Lets drop the strong non-retroactive requirement. and trust admin and history log.
+
+*** Questions before implementation
+
+  1. We should the required_deposit_percent default to be configurable per semester
+  2. After first payment, do you want percent edits blocked automatically? yes but no service
+  3. For existing data migration, should parent status be recalculated from migrated payments only, or copied from current child statuses when conflict exists?
+# migration should be ok as I do not hae record of payment or invoice in my db.(only tests sets small.
+
+
+
 
 ** DONE <2026-02-07 sam.>  update
 CLOSED: [2026-02-07 sam. 13:49]
@@ -118,8 +354,10 @@ Does this model makes sens ? if so review the current situation and plan what ne
 
 
 
-* <2026-02-06 ven.> colors and ux functions
- P** TODO <2026-02-06 ven. 23:52> Plan proposition
+
+* DONE <2026-02-06 ven.> colors and ux functions
+CLOSED: [2026-02-08 dim. 11:13]
+** TODO <2026-02-06 ven. 23:52> Plan proposition
 
 *** Lock the target behavior
 
@@ -252,7 +490,8 @@ then another linking coursefeegroup to M2M feetypes
 
   
 
-* <2026-02-05 jeu.> back to UX
+* DONE <2026-02-05 jeu.> back to UX
+CLOSED: [2026-02-08 dim. 11:13]
 • Here’s a focused code‑review for registration/finance interfaces against the TU UX guide. Findings first (severity‑ordered, file‑level only), then questions, then a
   brief change summary.
 
@@ -297,7 +536,8 @@ N    app/website/templates/website/student_invoice_statement.html,
   - Load Inter/Source Sans in website/base.html. yes
 
 
-* <2026-02-04 mer. 07:32>  network
+* DONE <2026-02-04 mer. 07:32>  network
+CLOSED: [2026-02-08 dim. 11:13]
 ** <2026-02-04 mer. 23:11>  paufinage elk
   Root cause (why the min‑crossings error happens)
 
@@ -469,7 +709,8 @@ With that said, I am ready to do a third proposition of layout using what would 
 Plan the creation of this third option
 
 
-* <2026-02-03 mar. 23:14>
+* DONE <2026-02-03 mar. 23:14>
+CLOSED: [2026-02-08 dim. 11:13]
 This is probably a good source of something working  and close to what we want '''https://observablehq.com/@erikbrinkman/d3-dag-sugiyama''' The code is now working but we need to improve it a little:
 - add vertical rectangle to show the semester.
 - organise them from left to right.
@@ -479,7 +720,8 @@ This is probably a good source of something working  and close to what we want '
   
 
 
-* <2026-02-03 mar. 16:28> TS debuging
+* DONE <2026-02-03 mar. 16:28> TS debuging
+CLOSED: [2026-02-08 dim. 11:14]
 ** <2026-02-03 mar. 17:01> Questions
 What is IIFE ?  lambda expresion
 Why not bundle @types/d3 ?
@@ -556,7 +798,8 @@ window.d3.graphStratify
 So it is a function and I still see the message.  so how do I clear the cache ? I did ctrl + shit + reload, rebuilt, restsarted the container zeb.  should I restart the js container too (find it strage if so).   where can the old code be cached ?  browser ? nginx server ? npm cache  ?  router ?
 
 
-* <2026-02-03 mar. 09:04> Dev tools for tsjs
+* DONE <2026-02-03 mar. 09:04> Dev tools for tsjs
+CLOSED: [2026-02-08 dim. 11:14]
 recompile emacs with tree-sitter (should be availabel from emacs 29)
 
 
@@ -570,7 +813,8 @@ recompile emacs with tree-sitter (should be availabel from emacs 29)
      fine/safer)
 
      
-* <2026-02-02 lun. 16:55> JS docker for js dev
+* DONE <2026-02-02 lun. 16:55> JS docker for js dev
+CLOSED: [2026-02-08 dim. 11:14]
 docker compose -f docker-compose-preprod.yml up -d js-tools
 docker compose -f docker-compose-preprod.yml exec -T js-tools npm ci
 docker compose -f docker-compose-preprod.yml exec -T js-tools npm run lint:js
