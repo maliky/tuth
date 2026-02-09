@@ -506,7 +506,9 @@
     const coreqGroupLabelById = new Map<string, string>();
 
     coreqGroups.forEach((group, index) => {
-      const memberIdsRaw = Array.isArray(group.member_ids) ? group.member_ids : [];
+      const memberIdsRaw = Array.isArray(group.member_ids)
+        ? group.member_ids
+        : [];
       const memberIds = Array.from(
         new Set(memberIdsRaw.map((nodeId) => String(nodeId)))
       );
@@ -519,7 +521,10 @@
       const groupKey = String(group.id || group.group_id || `COREQ_${index}`);
       const parentId = `COREQGROUP_${groupKey}`;
       coreqGroupNodesById.set(parentId, memberNodes);
-      coreqGroupLabelById.set(parentId, String(group.label || `COREQ ${groupKey}`));
+      coreqGroupLabelById.set(
+        parentId,
+        String(group.label || `COREQ ${groupKey}`)
+      );
 
       memberNodes.forEach((node) => {
         const nodeId = String(node.id);
