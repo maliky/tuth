@@ -27,9 +27,18 @@
     type?: string;
   };
 
+  type GraphCoreqGroupT = {
+    id: string;
+    group_id?: number;
+    kind?: string;
+    label?: string;
+    member_ids?: string[];
+  };
+
   type GraphPayloadT = {
     nodes?: GraphNodeT[];
     links?: GraphLinkT[];
+    coreq_groups?: GraphCoreqGroupT[];
   };
 
   type CyNodeDataT = {
@@ -45,6 +54,7 @@
     width: number;
     height: number;
     labelOffsetY: number;
+    coreqGroupId?: string;
   };
 
   type CyParentDataT = {
@@ -168,6 +178,7 @@
     incomingByTarget: Map<string, Set<string>>;
     outgoingBySource: Map<string, Set<string>>;
     edgeIdByKey: Map<string, string>;
+    highlightRootByNode: Map<string, string>;
   };
 
   type CytoscapeFactoryT = (options: {
@@ -477,6 +488,54 @@
     return groupMap;
   };
 
+  type CoreqGroupMapResultT = {
+    nodeToCoreqGroupId: Map<string, string>;
+    coreqGroupNodesById: Map<string, GraphNodeT[]>;
+    coreqGroupLabelById: Map<string, string>;
+  };
+
+  /** Build corequisite groups from exported payload and map node membership. */
+  const buildCoreqGroupMap = (
+    nodes: GraphNodeT[],
+    coreqGroups: GraphCoreqGroupT[]
+  ): CoreqGroupMapResultT => {
+    const nodeById = new Map<string, GraphNodeT>();
+    nodes.forEach((node) => nodeById.set(String(node.id), node));
+    const nodeToCoreqGroupId = new Map<string, string>();
+    const coreqGroupNodesById = new Map<string, GraphNodeT[]>();
+    const coreqGroupLabelById = new Map<string, string>();
+
+    coreqGroups.forEach((group, index) => {
+      const memberIdsRaw = Array.isArray(group.member_ids) ? group.member_ids : [];
+      const memberIds = Array.from(
+        new Set(memberIdsRaw.map((nodeId) => String(nodeId)))
+      );
+      const memberNodes = memberIds
+        .map((nodeId) => nodeById.get(nodeId))
+        .filter((node): node is GraphNodeT => Boolean(node));
+      if (memberNodes.length < 2) {
+        return;
+      }
+      const groupKey = String(group.id || group.group_id || `COREQ_${index}`);
+      const parentId = `COREQGROUP_${groupKey}`;
+      coreqGroupNodesById.set(parentId, memberNodes);
+      coreqGroupLabelById.set(parentId, String(group.label || `COREQ ${groupKey}`));
+
+      memberNodes.forEach((node) => {
+        const nodeId = String(node.id);
+        if (!nodeToCoreqGroupId.has(nodeId)) {
+          nodeToCoreqGroupId.set(nodeId, parentId);
+        }
+      });
+    });
+
+    return {
+      nodeToCoreqGroupId,
+      coreqGroupNodesById,
+      coreqGroupLabelById,
+    };
+  };
+
   /** Resolve original node ids to their level keys. */
   const buildNodeLevelKeyById = (
     nodes: GraphNodeT[]
@@ -584,8 +643,12 @@
   const buildElements = (payload: GraphPayloadT): CyElementT[] => {
     const nodes = Array.isArray(payload.nodes) ? payload.nodes : [];
     const links = Array.isArray(payload.links) ? payload.links : [];
+    const coreqGroups = Array.isArray(payload.coreq_groups)
+      ? payload.coreq_groups
+      : [];
 
     const elements: CyElementT[] = [];
+    const coreqMap = buildCoreqGroupMap(nodes, coreqGroups);
     const groupMap = buildGroupMap(nodes);
     const nodeLevelKeyById = buildNodeLevelKeyById(nodes);
     const groupLevelKeyById = buildGroupLevelKeyById(groupMap);
@@ -598,6 +661,7 @@
     const yearParents = buildYearParents(levels);
     const parentNodes = buildSemesterParents(levels);
     const fallbackLevel = levels.length ? levels[0] : null;
+    const assignedNodeIds = new Set<string>();
 
     yearParents.forEach((parent) => elements.push(parent));
     parentNodes.forEach((parent) => elements.push(parent));
@@ -609,8 +673,99 @@
       return undefined;
     };
 
-    groupMap.forEach((groupNodes, groupNumber) => {
+    coreqMap.coreqGroupNodesById.forEach((groupNodes, groupId) => {
       const sortedNodes = [...groupNodes].sort((a, b) => {
+        const aKey = groupSortKey(a);
+        const bKey = groupSortKey(b);
+        if (typeof aKey === "number" && typeof bKey === "number") {
+          return aKey - bKey;
+        }
+        return String(aKey).localeCompare(String(bKey));
+      });
+      const levelKey = groupLevelKey(sortedNodes);
+      const groupTargetLevel =
+        typeof levelKey === "number"
+          ? undefined
+          : minGroupTargetLevel(sortedNodes, targetLevelsBySource);
+      const anchorLevel =
+        typeof levelKey === "number"
+          ? levelKey
+          : (resolveAnchorLevel(groupTargetLevel, levels) ?? fallbackLevel);
+      const partitionLevel =
+        typeof anchorLevel === "number" ? anchorLevel : levelKey;
+      const partition = levelKeyToPartition(partitionLevel);
+      const groupLabel =
+        coreqMap.coreqGroupLabelById.get(groupId) || `COREQ ${groupId}`;
+
+      elements.push({
+        group: "nodes",
+        data: {
+          id: groupId,
+          label: groupLabel,
+          bandColor: "#e8f5ee",
+          bandOpacity: 0.5,
+          levelKey,
+          partition,
+          isParent: true,
+          parent: resolveParentId(anchorLevel),
+        },
+        classes: "coreq-group",
+      });
+
+      sortedNodes.forEach((node) => {
+        const visuals = getNodeVisual(node);
+        const nodeId = String(node.id);
+        assignedNodeIds.add(nodeId);
+        const effectiveLevelKey = resolveEffectiveLevelKey(
+          nodeId,
+          nodeLevelKeyById,
+          groupLevelKeyById
+        );
+        const nodeTargetLevel =
+          typeof effectiveLevelKey === "number"
+            ? undefined
+            : minTargetLevel(targetLevelsBySource, nodeId);
+        const nodeAnchorLevel =
+          typeof effectiveLevelKey === "number"
+            ? effectiveLevelKey
+            : (resolveAnchorLevel(nodeTargetLevel, levels) ?? anchorLevel);
+        const nodePartitionLevel =
+          typeof nodeAnchorLevel === "number"
+            ? nodeAnchorLevel
+            : effectiveLevelKey;
+        const nodePartition = levelKeyToPartition(nodePartitionLevel);
+        const nodeClasses =
+          node.is_in_curriculum !== false ? "" : "is-outside-curriculum";
+        elements.push({
+          group: "nodes",
+          data: {
+            id: nodeId,
+            label: String(node.label || node.id),
+            title: String(node.title || node.label || node.id),
+            shape: visuals.shape,
+            borderColor: String(node.color || "#6c757d"),
+            isInCurriculum: node.is_in_curriculum !== false,
+            levelKey: effectiveLevelKey,
+            partition: nodePartition,
+            parent: groupId,
+            width: visuals.width,
+            height: visuals.height,
+            labelOffsetY: visuals.labelOffsetY,
+            coreqGroupId: groupId,
+          },
+          classes: nodeClasses,
+        });
+      });
+    });
+
+    groupMap.forEach((groupNodes, groupNumber) => {
+      const freeNodes = groupNodes.filter((node) => {
+        return !coreqMap.nodeToCoreqGroupId.has(String(node.id));
+      });
+      if (freeNodes.length < 2) {
+        return;
+      }
+      const sortedNodes = [...freeNodes].sort((a, b) => {
         const aKey = groupSortKey(a);
         const bKey = groupSortKey(b);
         if (typeof aKey === "number" && typeof bKey === "number") {
@@ -649,8 +804,12 @@
       });
 
       sortedNodes.forEach((node) => {
-        const visuals = getNodeVisual(node);
         const nodeId = String(node.id);
+        if (assignedNodeIds.has(nodeId)) {
+          return;
+        }
+        const visuals = getNodeVisual(node);
+        assignedNodeIds.add(nodeId);
         const effectiveLevelKey = resolveEffectiveLevelKey(
           nodeId,
           nodeLevelKeyById,
@@ -693,7 +852,8 @@
     });
 
     for (const node of nodes) {
-      if (typeof node.group_number === "number" && node.group_number > 0) {
+      const nodeId = String(node.id);
+      if (assignedNodeIds.has(nodeId)) {
         continue;
       }
       const visuals = getNodeVisual(node);
@@ -701,7 +861,7 @@
       const nodeTargetLevel =
         typeof levelKey === "number"
           ? undefined
-          : minTargetLevel(targetLevelsBySource, String(node.id));
+          : minTargetLevel(targetLevelsBySource, nodeId);
       const anchorLevel =
         typeof levelKey === "number"
           ? levelKey
@@ -714,7 +874,7 @@
       elements.push({
         group: "nodes",
         data: {
-          id: String(node.id),
+          id: nodeId,
           label: String(node.label || node.id),
           title: String(node.title || node.label || node.id),
           shape: visuals.shape,
@@ -734,8 +894,20 @@
     let edgeIndex = 0;
     const edgeKeys = new Set<string>();
     for (const link of links) {
-      const source = String(link.source);
-      const target = String(link.target);
+      const sourceNodeId = String(link.source);
+      const targetNodeId = String(link.target);
+      const sourceCoreqGroupId =
+        coreqMap.nodeToCoreqGroupId.get(sourceNodeId) || null;
+      const targetCoreqGroupId =
+        coreqMap.nodeToCoreqGroupId.get(targetNodeId) || null;
+      const source =
+        sourceCoreqGroupId && sourceCoreqGroupId !== targetCoreqGroupId
+          ? sourceCoreqGroupId
+          : sourceNodeId;
+      const target =
+        targetCoreqGroupId && sourceCoreqGroupId !== targetCoreqGroupId
+          ? targetCoreqGroupId
+          : targetNodeId;
       if (source === target) {
         continue;
       }
@@ -765,10 +937,18 @@
     const incomingByTarget = new Map<string, Set<string>>();
     const outgoingBySource = new Map<string, Set<string>>();
     const edgeIdByKey = new Map<string, string>();
+    const highlightRootByNode = new Map<string, string>();
 
     elements.forEach((element) => {
       if (element.group === "nodes") {
-        nodeIds.push(String(element.data.id));
+        const nodeId = String(element.data.id);
+        nodeIds.push(nodeId);
+        const coreqGroupId = (element.data as CyNodeDataT).coreqGroupId;
+        if (coreqGroupId) {
+          highlightRootByNode.set(nodeId, String(coreqGroupId));
+        } else {
+          highlightRootByNode.set(nodeId, nodeId);
+        }
         return;
       }
       const source = String(element.data.source);
@@ -791,6 +971,7 @@
       incomingByTarget,
       outgoingBySource,
       edgeIdByKey,
+      highlightRootByNode,
     };
   };
 
@@ -881,9 +1062,10 @@
     if (!cy || !graphIndex) {
       return;
     }
+    const startId = graphIndex.highlightRootByNode.get(nodeId) || nodeId;
     clearHighlight();
-    const ancestors = collectAncestors(nodeId, graphIndex);
-    const descendants = collectDescendants(nodeId, graphIndex);
+    const ancestors = collectAncestors(startId, graphIndex);
+    const descendants = collectDescendants(startId, graphIndex);
 
     ancestors.nodes.forEach((ancestorId) => {
       const element = cy?.getElementById(ancestorId);
@@ -906,7 +1088,7 @@
       element?.addClass("is-descendant");
     });
 
-    const selected = cy?.getElementById(nodeId);
+    const selected = cy?.getElementById(startId);
     selected?.addClass("is-selected");
   };
 
@@ -949,6 +1131,27 @@
         color: "#134529",
         "text-wrap": "wrap",
         "text-max-width": 140,
+        "compound-sizing-wrt-labels": "include",
+      },
+    },
+    {
+      selector: "node.coreq-group",
+      style: {
+        shape: "round-rectangle",
+        "background-color": "data(bandColor)",
+        "background-opacity": "data(bandOpacity)",
+        "border-width": 2,
+        "border-color": "#198754",
+        "border-style": "dashed",
+        padding: 12,
+        "text-valign": "top",
+        "text-halign": "center",
+        "text-margin-y": 6,
+        "font-size": 11,
+        "font-weight": 700,
+        color: "#134529",
+        "text-wrap": "wrap",
+        "text-max-width": 160,
         "compound-sizing-wrt-labels": "include",
       },
     },
