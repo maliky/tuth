@@ -1,3 +1,100 @@
+* <2026-02-09 Mon> Tests
+
+  - 1e355b1 (finance core SSI refactor)
+  - 1164560 (student dashboard fee-stack wiring)
+  - 72211f6 (finance officer/admin workflow update)
+
+  ## Key gap pattern from recent commits
+
+  The biggest finance changes landed with little/no direct test additions (especially 1164560 and 72211f6).
+  Current tests cover some SSI behavior (tests/finance/test_fee_assignment.py, test_invoice_snapshot.py,
+  test_payment.py, and one website cancellation suite), but there are major holes in DB invariants, finance officer
+  business rules, and UX flows.
+
+  ———
+
+  ## Loopholes by test category (with finitude level)
+
+  ### 1) DB tests — High finitude (deterministic, strict assertions)
+
+  Missing coverage around:
+
+  - app/finance/models/invoice.py parent/child synchronization rules
+  - StudentSemesterInvoice uniqueness and auto-linking from CourseInvoice
+  - M2M fee-stack signal recomputation (refresh_parent_invoice_after_fee_stack_change)
+:Comment:
+M2M fee-stack signal recomputation in your code means:
+  - StudentSemesterInvoice has a many-to-many fee_stacks relation in app/finance/models/invoice.py.
+  - A Django m2m_changed receiver (refresh_parent_invoice_after_fee_stack_change) runs on post_add, post_remove, post_clear.
+  - That receiver calls refresh_totals_from_sources() on the parent invoice.
+
+  What refresh_totals_from_sources() recomputes in app/finance/models/invoice.py:
+
+  - Parent initial_amount_due = sum(course invoices) + sum(attached semester fee stacks).
+  - required_deposit_amount, balance, status, and fee_payer resolution (student/gov/mixed).
+  - Child course invoice balances/statuses are re-distributed from the parent total.
+  - Registration status is updated from child invoice status.
+
+  So the signal is there to keep totals consistent when someone changes fee-stack links from anywhere (admin, dashboard, scripts).
+
+  Pragmatic alternative (signal-light):
+  1. Move recomputation to an explicit service like recompute_student_semester_invoice(invoice_id, reason).
+  2. Call it directly from write paths (attach_semester_fee_stacks, fee-stack line mutations, payment writes).
+  3. Keep a minimal signal only as a safety net (or remove signals after coverage is strong).
+  4. Batch operations should recompute once at the end, not per link mutation.
+
+  If you want, I can draft that refactor in this repo with a backward-compatible transition (service first, then thin signals, then optional signal removal).
+:END:
+
+  - Payment.save() / Payment.delete() recalc behavior in app/finance/models/payment.py
+  - payer-resolution edge cases (student/gov/mixed)
+
+  ### 2) Business logic tests — Medium finitude (scenario matrix)
+
+  Missing coverage around:
+
+  - app/finance/utils.py:create_pending_payments (skip existing, skip closed, payer defaults)
+  - app/website/views/finance_officer_helpers.py grouping/filter logic (group_invoices, group_payments,
+    invoice_queryset, payment_queryset)
+  - app/website/views/finance_officer.py POST handlers (invalid amounts, invalid payer, no selections, permission
+    gating)
+  - app/website/views/student_dashboard.py optional fee-stack registration path (new in 1164560) is effectively
+    untested
+
+  ### 3) UX tests — Lower finitude (critical path, tolerant assertions)
+
+  Missing coverage around:
+
+  - Finance Officer Console end-to-end flow (finance_officer_invoices.html) for:
+      - filtering by student/semester/status
+      - creating pending payments
+      - editing payment fields and validation feedback
+  - Student dashboard optional fee-stack selection UX
+  - Prerequisite graph TypeScript UI updates (many commits, almost no UI assertions beyond backend export test)
+
+  ## Action plan (practical sequence)
+
+  ### Phase 1 (now): stabilize finance core (DB + business logic)
+
+  1. Add tests/finance/test_student_semester_invoice.py for SSI invariants and recalc triggers.
+  2. Add tests/finance/test_create_pending_payments.py for utility scenarios.
+  3. Add tests/website/test_finance_officer_views.py (Django client) for permission + POST validation paths.
+
+  ### Phase 2: close regressions from recent commits
+
+  4. Extend tests/website/test_student_dashboard_cancellation.py with optional fee-stack register scenarios (from
+     1164560).
+  5. Add focused tests for finance helper grouping/filtering (tests/website/test_finance_officer_helpers.py).
+
+  ### Phase 3: UX confidence
+
+  6. Add BDD/Selenium scenarios for finance officer workflows (create/update payment flows + filter persistence).
+  7. Add one smoke UI test for prereq graph layout switcher behavior (not full rendering fidelity, just interaction/
+     assertable DOM state).
+
+     # > The problem I have here is to set up the infrastructure to run selenium test effectively ( in parallele on a grid for eg.)
+
+
 
 * <2026-02-09 lun.>  UX
 
@@ -182,22 +279,22 @@ department names or curriculum/prgram names starting with
 
   - P1 Student-facing invoice outputs are inconsistent with the new parent invoice model. app/finance/utils.py build_invoice_snapshot uses only course stacks and hardcodes 40%; it does not
     include StudentSemesterInvoice.fee_stacks totals or required_deposit_percent.
-    
+
   - P1 Registration cancel flow can drop valid semester-level charges. In app/website/views/student_dashboard.py, parent invoice deletion is based on “no course invoices” and can remove
     invoice context even when semester fee stacks should remain.
-    
+
   - P2 The “default general fee stack once per semester” use case is still manual. Invoice creation path in app/website/views/student_dashboard.py creates course invoices, but no policy/
     service auto-attaches semester/global stacks.
-    
+
   - P2 Payer data is modeled but not enforced in workflow. Payment defaults to student in app/finance/models/payment.py, and create_pending_payments in app/finance/utils.py does not derive
     payer from SSI context; finance officer bulk update view does not edit payer either.
-    
+
   - P2 Permissions are still alias-heavy and fragile. app/shared/auth/perms.py relies on legacy aliases (invoice, coursefee, curriculumcoursefee) that now fan out to multiple models; this is
     easy to misconfigure and hard to audit.
-    
+
   - P2 Test suite still contains obsolete old-API usage. tests/finance/test_payment.py and tests/selenium/fixtures_finance.py still create Payment(invoice=...) although payments now attach to
     StudentSemesterInvoice.
-    
+
   - P3 Current worktree has referenced-but-untracked admin filter code (app/finance/admin/filters.py). If not committed, deploy/import can break.
 
   Updated Fix Plan
@@ -264,7 +361,7 @@ I did attache the sepcific courses fee package to the special courses (la/enterp
   - Tuition payer independent from fee payer.
 
 
-› 
+›
 
 ** <2026-02-08 dim. 09:07> refinement on payer
 default_fee_payer (call it fee_payer ) in StudentSemesterInvoice should be set to mixed if the se of feestackline.payer has more than one payer.
@@ -280,781 +377,8 @@ We are still  reflecting, no edit.
 3. Rename the invoice model to CourseInvoice in DB and UI.
 4. your steps 2  to 6 are correct
 
-   
 
-* DONE <2026-02-07 sam.>  fixing the fee model
-CLOSED: [2026-02-07 sam. 13:50]
 
-** <2026-02-07 sam. 23:21>
-
-  1. Parent invoice model
-
-  - Add StudentSemesterInvoice with unique (student, semester).
-  - Rename InvoiceModel to CourseInvoice. Update admin/UI labels too.
-  - Add nullable FK Invoice.student_semester_invoice.
-
-  2. Payments moved to parent
-
-  - Add Payment.student_semester_invoice.
-  - Keep Payment.invoice only during transition, then remove it.
-  - All new payment creation/update paths use parent invoice only.
-  - Parent balance/status become authoritative.
-
-  3. Semester fees on parent
-
-  - Add M2M StudentSemesterInvoice.fee_stacks.
-  - No snapshot layer
-  - semester_fee_total is computed dynamically from those stacks using semester-aware
-    FeeStackLine rules.
-
-  4. Payer type on course invoice
-
-  - Add Invoice.payer_type with choices:
-      - student, gov, scholarship, other
-  - Default student.
-  - Reporting/workflow only (no immediate accounting split logic).
-
-  5. 40% rule on parent
-
-  - Add on StudentSemesterInvoice:
-      - required_deposit_percent
-      - required_deposit_amount
-  - Percent default should come from semester config (add field on Semester, e.g.
-    deposit_percent_default).
-  - required_deposit_amount recalculates whenever totals or percent change.
-
-  6. Totals/status centralization
-
-  - Parent computed totals:
-      - course_total = sum(child invoices initial_amount_due)
-      - semester_fee_total = resolved fee stacks total
-      - initial_amount_due = course_total + semester_fee_total
-  - Parent balance/status driven by parent payments.
-  - Child invoice statuses stay informational (not payment-authoritative).
-
-  7. Code areas
-
-  - app/finance/models/invoice.py
-  - app/finance/models/payment.py
-  - app/finance/utils.py
-  - app/website/views/student_dashboard.py
-  - finance admin screens/forms/actions
-  - invoice snapshot rendering
-  - import/export resources + tests
-
-  8. Do not do the Migrations.
-
-  no guards on invoice for now, not even after first payment is made.
-
-› 
-
-** <2026-02-07 sam. 22:53> improving the invoice to take the fee stacks
-*** Introduce parent invoice level
-
-  - Add StudentSemesterInvoice with unique (student, semester).
-  - Keep current Invoice as course-level invoice (rename as courseinvoice)
-  - Add nullable FK CourseInvoice.student_semester_invoice.
-
-*** Move payments to parent invoice
-
-  - Add FK Payment.student_semester_invoice.
-  - Remove  Payment.invoice temporarily for migration only
-  - Update all payment creation/update logic to use parent invoice balance/status.
-
-*** Add semester-fee attachment on parent
-
-  - Add M2M from StudentSemesterInvoice to FeeStack.
-  - we let history mixing keep care of tracking changes and drop our big non change constrainte.
-
-*** Add payer field on course invoice
-
-  - Add Invoice.payer_type with hardcoded choices: student, gov, scholarship, other. 
-  - Default student.
-  - Use this for reporting/workflow;
-
-*** Put 40% rule on parent
-
-  - Add on StudentSemesterInvoice:
-      - required_deposit_percent (e.g. default 40.00)
-      - required_deposit_amount (stored value derived from percent)
-  - no specific guard here.  if the invoice change, then this can be updated and should.  we track in history the changes.
-
-*** Centralize totals/status logic
-
-  - Parent totals:
-      - course_total = sum(child Invoice.initial_amount_due)
-      - semester_fee_total = snapshot total
-      - initial_amount_due = course_total + semester_fee_total
-  # clarify the points below	
-  - Parent balance/status driven by payments.
-  - Child invoice statuses can remain informational or be derived from parent policy.
-
-
-*** Probable Code areas to update
-
-  - app/finance/models/invoice.py
-  - app/finance/models/payment.py
-  - app/finance/utils.py
-  - app/website/views/student_dashboard.py
-  - finance admin for invoice/payment flows
-  - invoice snapshot rendering (parent + child breakdown)
-  - imports/resources and tests
-
-*** Critical design warning
-
-  - If parent only keeps M2M to FeeStack without snapshots, future stack edits will retroactively alter old semester invoices.
-# > note that future stack edit should change the invoice. The only time they should not propagate the fee change backward is if they set a date of effect younger that the one when the action took place.
-  - Lets drop the strong non-retroactive requirement. and trust admin and history log.
-
-*** Questions before implementation
-
-  1. We should the required_deposit_percent default to be configurable per semester
-  2. After first payment, do you want percent edits blocked automatically? yes but no service
-  3. For existing data migration, should parent status be recalculated from migrated payments only, or copied from current child statuses when conflict exists?
-# migration should be ok as I do not hae record of payment or invoice in my db.(only tests sets small.
-
-
-
-
-** DONE <2026-02-07 sam.>  update
-CLOSED: [2026-02-07 sam. 13:49]
-make sure you update also the dbreset script with the new models to create and pdate.
-
-
-
-** DONE <2026-02-07 sam.>  tests
-CLOSED: [2026-02-07 sam. 13:49]
-  2. Fee computation tests (tests/academics/test_curriculum_course_fee_stack.py)
-
-  - Course with no attached stack returns tuition only.
-  - Course with one stack returns tuition + sum(stack lines).
-  - Course with multiple stacks (disjoint fee types) returns tuition + total
-    stacked fees.
-  - semester argument does not change result (current design).
-
-
-** DONE <2026-02-07 sam. 11:05> Clarification
-CLOSED: [2026-02-07 sam. 13:49]
-the fee_type constraint should be enforced at app level through the clean before attach.
-totaly drop the locking constrains on initial_amount_due, my concern was updated fee with retroactive changesin invoice but the invoice_amount is stored and will not be changed after a fee update.
-If this is clear an no more question, you can start implementing the plan up to 4 (included)
-
-
-  1. Introduce FeeStack (name, timestamps, history).
-  2. Introduce FeeStackLine (fee_stack, fee_type, amount, timestamps, history) with
-     unique (fee_stack, fee_type).
-  3. Introduce through model linking Course to FeeStack (timestamps/history optional).
-  4. Implement admin CRUD for stacks and stack lines.
-a course     (app-level first; DB trigger later if required).
-  6. Add validation to block attaching stacks that would duplicate a fee_type on
-
-  5. Implement course-admin bulk action: attach one/many stacks to selected courses (add     mode).
-  7. Update fee computation (CurriculumCourse.total_fee) to use attached stacks + tuition     only.
-  8. Remove obsolete paths: group-based fee code and old CourseFee/CurriculumCourseFee     model/admin/resources/usages.
-  9. Keep existing invoice amount-freeze behavior; optionally add minimal guard to lock
-     only initial_amount_due.
-
-
-
-
-** DONE <2026-02-07 sam. 10:37> constraints
-CLOSED: [2026-02-07 sam. 13:50]
-a feestack should not contain the same fee_type twice
-for the invoice, only lock the inital_amount_due. 
-
-
-** DONE plan
-CLOSED: [2026-02-07 sam. 13:50]
-  - P2 Invoice amount freezing exists by behavior at creation so leave it so. let's not create additional locking mechanism.
-  - P2 Bulk operation “select courses, attach one or more stacks” is not
-    implemented in course admin.
-  - P3 Existing fee admin/resources are row-centric (CourseFee/CurriculumCourseFee)    and not optimized for package-level maintenance.
-
-  Updated plan (no edits)
-
-  1. Define one canonical fee model path.
-
-  - Introduce FeeStack (name, timestamps, history).
-  - Introduce FeeStackLine and drop course_fee. (fee_stack, fee_type, amount, history) 
-  - Link courses to stacks via M2M (through table recommended for future metadata) yes.
-  2. Keep course linkage initially optional.
-  - Allow course with zero stacks at first (as requested).
-  - Add app-level warning/report for courses with no stacks.
-  - Later tighten to “default stack required” using a staged migration + validation    (not immediate DB hard constraint on M2M min-count).
-
-  4. Implement bulk admin workflow from course view.
-
-  - Custom course admin action: “Attach fee stack(s) to selected courses”.
-  - Intermediate form to choose one or multiple stacks.
-  - Support add mode first; optional replace mode later.
-
-  5. Simplify fee calculation path.
-
-  - CurriculumCourse.total_fee() should read course stacks only (plus tuition).
-  - If same fee_type appears in multiple attached stacks. Not allowed. stop ad db level when creating the relation.
-  - ignore previous mention of  dependency on effective-date logic
-
-  6. Remove dead/obsolete fee paths.
-
-  - Remove the in-progress group-based path and related resolver branches.
-  - Decide fate of CourseFee/CurriculumCourseFee: drop them
-      - fully replaced by stacks: delete models/admin/resources/tests.
-
-
-  7. Admin ergonomics for initial rollout.
-
-  - CRUD screens for FeeStack and FeeStackLine.
-  - Show “attached stacks count” in course list for quick auditing.
-  - Add a simple report/filter: courses without stack. ok 
-
-  8. Tests and rollout. ignore for now
-
-  - Tests: stack total calculation, bulk attach action, invoice amount freeze, lock    after registration close.
-  - Fresh DB rollout: create schema, create initial stacks, attach stacks to
-    courses, then optionally tighten default requirement.
-
-
-** DONE <2026-02-07 sam. 10:24>
-CLOSED: [2026-02-07 sam. 13:50]
-- Link a course to a fee stack, one per default but  several are possible.
-- A fee stack a set of fees (feetype + amount)
-- Do not care about fee effective dates, only check that the invoices created store the amount to be paid  internaly and that this field is locked together when the registration periode is closed.
-- for bulk action, from the course view, select one or several courses adn attached one or several fee stacks
-- since we are creating this new feestack model, let's allow course to be connected to non at first, then I will do the linkage and then we will tighten to set a default, or if it is possible to set the default at migration taime we cand o that also after having created the default feestack.
-a feestack, has a name and a set of fee and a creation date and modification date, we track it changes with the history mixing
-
-The fee ahas a creation and modification date, it uses the history mixing too to track changes.
-
-Does this model makes sens ? if so review the current situation and plan what needs to be upgrade / removed.
-
-
-
-
-* DONE <2026-02-06 ven.> colors and ux functions
-CLOSED: [2026-02-08 dim. 11:13]
-** TODO <2026-02-06 ven. 23:52> Plan proposition
-
-*** Lock the target behavior
-
-  - CourseFee remains the canonical fee rule table.
-  - A fee change is always a new row with a new effective point (no in-place
-    overwrite of old rows).
-  - Fees stack by fee_type across a course.
-  - Existing invoices stay unchanged (no retroactive recalculation).
-
-*** Remove dead group/package path completely
-
-  - Drop CourseFeeGroup and CourseFeeGroupFee model path and related admin/resolver    code from the prior attempt.
-  - Remove any “group fallback” branches in fee resolution so logic is clean and
-    single-path.
-  - Keep only direct course-to-fee rules.
-
-*** Keep CourseFee model, define effective semantics clearly
-
-  - Use existing semester as effective-from semester (recommended for your domain).
-  - Rule selection: for invoice semester S, pick latest CourseFee per (course,
-    fee_type) where fee.semester.start_date <= S.start_date (plus optional default/    null handling if you keep it).
-  - Sum selected fee types for total additional fees.
-
-*** Build a bulk admin workflow (core feature)
-
-  - Add a custom admin action with intermediate form:
-      - Target rows: selected courses (or selected CourseFee rows deduped to unique        courses).
-      - Inputs: effective_semester + formset of (fee_type, amount) lines (one or
-        many).
-  - On submit, create new CourseFee rows for each selected course and each line.
-  - Idempotency guard: skip duplicates on (course, fee_type, semester) and report
-    counts.
-
-*** Adjust admin UI to support “one line per course” workflow
-
-  - Recommended: expose a finance admin page backed by Course (or proxy) for fee
-    operations, so you truly get one selectable row per course.
-  - Keep CourseFee admin for rule history/details only.
-  - This avoids needing fake/placeholder CourseFee rows.
-
-  6. Keep invoice non-retroactive by design
-
-  - Invoice creation reads effective fees once and writes initial_amount_due.
-  - Fee edits/additions never update existing invoices.
-  - Optional safeguard: block any management/admin command that recomputes
-    historical invoice totals unless explicitly forced.
-
-  7. Tests to add/update
-
-  - Bulk action creates correct number of rows for multiple courses and multiple
-    fee lines.
-  - Semester-effective selection picks latest valid rule only.
-  - Stacking works for multiple fee types.
-  - Existing invoice unchanged after later fee increase; new invoice uses new fee.
-
-  8. Migration/rollout for your fresh DB
-
-  - Since DB is empty: remove dead models/branches directly in schema/code (no data    migration complexity).
-  - Run checks: py_compile, black, flake8, mypy, targeted finance tests.
-  - Seed minimal fee types only; no package seeding needed.
-
-  If you want, next step is a file-by-file implementation checklist for this exact
-  plan (models/admin/actions/resolver/tests).
-
- 
-
-** <2026-02-06 ven. 22:55> clarification
-  Let me restate:
-  Several course share sets of fees from which invoice are made for specfici
-  semesters
-  if a fee increase I would like to be able to update it(or create a new one) with
-  the new amount only applicable to new courses.  if that fee is in a group the
-  future invoice containing those course should be updated accordingly.
-  review the code base, in particular that related to fee.  I want to redo/update
-  a coursefee model to facilitated the maintenance of the fee.  I expect courses
-  fees to vary by semester
-  fees are stacakble.
-  fees should not apply retroactively.   Make a plan (no edit) of what should
-  change to the present situation
-  
-
-** <2026-02-06 ven. 18:57>  DB course fee structure
-I expect courses fees to vary by semester
-fees are stacakble.
-fee should not apply retroactively
-
-We can have a model for coursefeegroup: name and M2M to courses
-then another linking coursefeegroup to M2M feetypes
-** <2026-02-06 ven. 11:21> small fixes + structural and registrat improvement
-- find a better color than white for the continue button of the login portal. (eg blue / yelow if in accordance with our color templates)
-- harmonize registrar ux as for the student with a green left side bar.
-- in the regirar grades.  let the registrar select on or several row (down to semester level)     for one or several users (using shift+ start .. .shift+end or ctr+elt classical control for multiple selction), before printing.  So need a print gradesheet button.  The idea is to keep the 'menu/action/ green side bar on all screens even for staff. but put the print button somewhere a the top of the registrar/grades dashboard (next to filter/ just below ?)
-  
-
-  1. Portal login button color (Continue)
-      - Locate app/website/templates/website/portal_login.html and the button class.
-      - Update to a brand‑compliant class (prefer portal-btn-accent or a new portal-btn-gold if you want brighter
-        contrast).
-      - Adjust CSS in static/css/student_portal.css (or landing.css if the login page uses base styling) to ensure
-        hover/focus are accessible.
-  2. Registrar UX: green left sidebar
-      - Identify the registrar templates/pages (likely app/website/templates/website/registrar_windows.html and
-        related views/pages).
-      - Create a shared “staff shell with sidebar” layout (or extend existing website/staff/base.html) that adds a
-        left green sidebar.
-      - Apply it to registrar screens so the left green nav persists across registrar workflows.
-      - Reuse existing portal sidebar styles or extract a staff‑friendly variant in CSS to avoid duplication.
-  3. Registrar grades: multi‑select rows + print
-      - Find registrar grades template and JS (likely a template under app/website/templates/website/ or app/
-        registry/templates/).
-      - Add a “Print gradesheet” button near the filters (top area).
-      - Implement row selection:
-          - Click to select a row.
-          - Shift+click range selection.
-          - Ctrl/Cmd click to toggle single rows.
-      - Capture selected rows (including semester context) and expose them to the print action.
-      - Print action:
-          - Use a POST to a print endpoint (or open a new window with selected IDs in query params).
-          - Render a print‑friendly gradesheet template using the selected row IDs.
-  4. Keep green sidebar across staff screens
-      - Extend the new sidebar layout to other staff pages (registrar + grades pages first).
-      - Ensure the sidebar doesn’t break existing headers/actions; keep “Print” near filters or just below them as
-        requested.
-  5. Validation
-      - Visual check: login button contrast + hover.
-      - Registrar pages: sidebar is consistent, print button visible.
-      - Multi‑select: test shift‑range and ctrl‑toggle selections.
-      - Print: confirm it prints only selected rows.
-
-
-  
-
-* DONE <2026-02-05 jeu.> back to UX
-CLOSED: [2026-02-08 dim. 11:13]
-• Here’s a focused code‑review for registration/finance interfaces against the TU UX guide. Findings first (severity‑ordered, file‑level only), then questions, then a
-  brief change summary.
-
-  Findings
-
-  - [P2] Missing skip link on student portal pages — app/website/templates/website/student_portal_base.html
-    The guide requires skip links, but the student portal base doesn’t include one or a main target. This affects all student finance/registration pages that extend
-    this base.
-  - [P2] Brand palette drift in action buttons (blue “primary/outline”) —
-N    app/website/templates/website/student_invoice_statement.html,
-    app/website/templates/website/student_payment_receipt.html,
-    app/website/templates/enrollment/student_list.html,
-    app/website/templates/enrollment/student_admin_edit.html,
-    app/website/templates/website/portal_login.html
-    These pages use Bootstrap’s default blue btn-primary/btn-outline-primary, which conflicts with the evergreen/gold palette. The guide expects evergreen (#134529)
-    and gold (#ffc107) for primary/accent actions.
-  - [P3] Data tables don’t apply the guide’s table styling conventions —
-    app/website/templates/website/student_invoice_statement.html,
-    app/website/templates/website/student_payment_receipt.html
-    The guide specifies table-striped table-bordered table-hover ... for dense data tables. These tables are plain Bootstrap tables, reducing scanability and visual
-    consistency.
-  - [P3] Staff dashboard breadcrumbs lack hover underline — static/css/staff-dashboard.css
-    The guide requires hover underlines for link affordance. Breadcrumb links are styled without hover underlines; this impacts staff pages (including enrollment admin    views).
-  - [P3] Inter/Source Sans not loaded for non‑portal pages — app/website/templates/website/base.html
-    The base layout doesn’t load the font stack, so staff/login pages fall back to system fonts, diverging from the typography spec.
-
-  Open questions / assumptions
-
-  - Should we override Bootstrap’s primary/outline colors globally (site‑wide), or only for staff + student portal views?
-    No only for staff + students
-  - Do you want the skip link in student_portal_base.html to mirror the one in website/base.html exactly (same styling/placement)?
-    No do not skip it
-  - For the finance tables, do you want full DataTables‑style classes or just the visual table classes (striped/bordered/hover)?
-    if datatable style classes increas scanability and visual consistency implement them
-
-  Change summary (if you want me to implement)
-
-  - Add skip link + main target in student_portal_base.html. yes
-  - Replace blue buttons with evergreen/gold theme (on custom classes). 
-  - Apply table classes per guide on student finance tables. yes
-  - Add hover underline to .staff-shell__breadcrumbs a. yes
-  - Load Inter/Source Sans in website/base.html. yes
-
-
-* DONE <2026-02-04 mer. 07:32>  network
-CLOSED: [2026-02-08 dim. 11:13]
-** <2026-02-04 mer. 23:11>  paufinage elk
-  Root cause (why the min‑crossings error happens)
-
-  - ELK throws that error when a hierarchical processor is used in a child graph
-    but the root graph does not declare the same hierarchical processor.
-  - In our case, the compound layout introduces hierarchy (semester parents), but    the min‑crossings preset changes the crossing minimization strategy only at
-    the root, so the child graphs still use a different processor. ELK refuses
-    this mismatch.
-
-  Plan (step‑by‑step, scoped to your requests)
-
-  1. Fix the min‑crossings error cleanly
-      - Ensure the root and child graphs use the same hierarchical processor for
-        crossing minimization when hierarchy is enabled.
-      - In practice: when tuning = min-crossings, set the same crossing
-        minimization strategy for all levels (root + child).
-      - I’ll implement this by adding a helper that:
-          - Always sets "elk.layered.crossingMinimization.strategy" to the same
-            value when hierarchy is active.
-          - Avoids mixed defaults by explicitly setting the same strategy in the
-            root graph options.
-      - We’ll verify by selecting Min Crossings and ensuring no ELK exception.
-  2. Add a Year compound node (Y1, Y2, …)
-      - Current structure: Semester parents SEM1, SEM2, …
-      - New structure:
-          - Year parents YEAR1, YEAR2, …
-          - Semester parents become children of their year node.
-          - Course nodes remain children of their semester node.
-      - This yields a two‑level compound hierarchy: Year → Semester → Courses.
-  3. Replace “ALT group” single node with a compound group
-      - Current: ALT{n} is a single node with combined label.
-      - New:
-          - Create a parent node ALTGROUP{n} (compound parent).
-          - Create two child nodes inside it (the actual alternatives), each a
-            real course node (with proper label/title/border).
-          - Edges:
-              - Incoming edges that previously targeted the ALT group now target
-                each child (or a single child if the source is specific).
-              - Outgoing edges from ALT group become outgoing edges from each
-                child.
-      - This keeps the actual choices visible and gives ELK more geometry to
-        reduce crossings.
-  4. Add edge/spacing tunables
-      - Add explicit ELK spacing knobs (root options) such as:
-          - "elk.spacing.edgeNode"
-          - "elk.spacing.edgeEdge"
-          - "elk.layered.spacing.edgeNodeBetweenLayers"
-          - "elk.layered.spacing.edgeEdgeBetweenLayers"
-      - Expose them in the same presets or keep them hard‑coded initially.
-      - Test if tighter spacing increases crossings; tune based on your feedback.
-
-
-   5. Add “Download ELK format”
-      - Convert the in‑memory graph model (the same structure we hand to ELK) to
-        ELK JSON and offer a download button.
-      - Option: Download ELK TXT link near the current JSON/DOT/PNG links.
-      - Implementation: create a Blob from the ELK JSON and attach to a temporary        <a> for download.
-	if elk txt is not something native to the js library, provind the elk json, instead of the current json.  the dot can go too but keep the png download.
-	
-** <2026-02-04 mer. 15:46>  iteration on cyto and elk, nealry there
-cytoscape.3.33.1.min.js:23 You have set a custom wheel sensitivity.  This will make your app zoom unnaturally when using mainstream mice.  You should change this value from the default only if you can guarantee that all your users will use the same hardware and OS configuration as your current machine.
-at @ cytoscape.3.33.1.min.js:23
-initRenderer @ cytoscape.3.33.1.min.js:31
-Eu @ cytoscape.3.33.1.min.js:31
-Uh @ cytoscape.3.33.1.min.js:31
-renderGraph @ prereq_graph_viewer_elk.ts:573
-(anonymous) @ prereq_graph_viewer_elk.ts:633
-(anonymous) @ prereq_graph_layout_switcher.ts:64
-handleMouseUp_ @ unknown
-cytoscape.3.33.1.min.js:23 The selector `node[isInCurriculum = false]`is invalid
-at @ cytoscape.3.33.1.min.js:23
-parse @ cytoscape.3.33.1.min.js:29
-as @ cytoscape.3.33.1.min.js:29
-mu.selector @ cytoscape.3.33.1.min.js:31
-appendFromJson @ cytoscape.3.33.1.min.js:31
-mu.append @ cytoscape.3.33.1.min.js:31
-(anonymous) @ cytoscape.3.33.1.min.js:31
-(anonymous) @ cytoscape.3.33.1.min.js:31
-Eu @ cytoscape.3.33.1.min.js:31
-Uh @ cytoscape.3.33.1.min.js:31
-renderGraph @ prereq_graph_viewer_elk.ts:573
-(anonymous) @ prereq_graph_viewer_elk.ts:633
-(anonymous) @ prereq_graph_layout_switcher.ts:64
-handleMouseUp_ @ unknown
-elkjs.0.11.0.bundled.js:6501 [Violation] 'setTimeout' handler took 65ms
-
-:::
-We are getting there
-::: a few twicks.
-nodes seem be well positioned on the x axis.  The courses with NA as level number, should arrange freely but with the constraint of not overlapping another course and been positionned so that the arrow is pointing to the right ( or oblic right).
-the border of tho node should be straight line for the nodes in the curriculum and dashedd only for those not in the curriculum. Currently all are dashed .  The legend for the shape is as follow but you may need to adapte it slight to match the available default form in the elk or cyto library
-
-- shapes use the following mapping:
-  - COAS box
-  - COHS egg/ pyramid
-  - CAFS triangle
-  - COET house/circle
-  - COED ellipse
-  - COAB diamond
-
- Finaly remove the constraint on not moving the node and add vertical lines do divide the semester level_numbers with asmall legend at the top or bottom
-
-** <2026-02-04 mer. 09:18> implemntation with cyto and elk
-  - TS: docker-compose -f docker-compose-preprod.yml exec -T js-tools npm run check:ts && docker-compose -f docker-compose-preprod.yml exec -T js-tools npm run build:ts
-  - Static: docker-compose -f docker-compose-preprod.yml exec -T web python manage.py collectstatic --noinput
-
-** <2026-02-04 mer. 08:21> Auestions
-compare cytoscape and 
-** <2026-02-04 mer. 08:19> proposed solution
-  - d3-dag isn’t “dead”, but the author explicitly calls it “light maintenance mode” (not expanding to new use cases).
-  - For your constraints (ranked DAG + low crossings + simple hover interactions, no dragging), I’d switch to Cytoscape.js + ELK via cytoscape-elk (hierarchical    “layered” layout) and keep your page as a plain Django template with <script> tags (no bundler). (js.cytoscape.org (https://js.cytoscape.org/index.html?    utm_source=openai))
-
-***  Plan (Third Layout Option)
-**** Vendor the runtime libs into Django static 
-  - Add these to a committed static folder (e.g. static/vendor/ or app/academics/static/academics/vendor/):
-      - Cytoscape.js (core renderer)
-      - elkjs last git push 2 years ?
-      - cytoscape-elk (adapter; supports the layered algorithm) (github.com      (https://github.com/cytoscape/cytoscape.js-elk))
-  - Optional: add an npm script later that copies the exact dist/ files from  node_modules/ into static/vendor/ so upgrades are repeatable.
-
-**** Add a new viewer
-
-  - Create app/academics/static/academics/js/prereq_graph_viewer_cytoscape.ts.
-  - Keep it as an IIFE (like your current viewer) and consume globals (window.cytoscape, window.ELK / elkjs) so you can keep plain <script defer>  tags.
-
-**** Build a deterministic “semester -> rank/layer” constraint using ELK  partitioning
-
-  - Use ELK’s partitioning to force left-to-right ordering by semester:
-      - Graph option: elk.partitioning.activate = true (eclipse.dev (https://eclipse.dev/elk/reference/options/org-eclipse-elk-partitioning-activate.html?utm_source=openai))
-      - Per-node option: elk.partitioning.partition = <semesterNumber>eclipse.dev (https://eclipse.dev/elk/reference/options/org-eclipse-elk-partitioning-partition.html?utm_source=openai))
-  - Run ELK “layered” with left-to-right direction (in cytoscape-elk: elk:algorithm: 'layered', 'elk.direction': 'RIGHT', ... }). (github.comhttps://github.com/cytoscape/cytoscape.js-elk))
-  - Map your existing level_number (or semester field) to an integer partition;put “NA” courses into a final partition.
-
-**** Render + interactions (the pieces you asked for)
-
-  - Edges: style with arrowheads (Cytoscape supports target arrows via style; noSVG marker work needed).
-  - Hover full title: implement a small HTML tooltip div that follows the cursoron mouseover/mousemove for nodes (canvas-based renderers can’t rely on SVG<title>).
-  - (Later) dependency highlighting: Cytoscape makes it easy to walk fan-in / fan-    out and apply a “highlight” class.
-
-**** Wire it into the template as “Option 3”
-
-  - Update app/academics/templates/academics/prereq_graph.html to add:
-      - A container div for Cytoscape (keep your existing SVG for d3 if you wantboth options side-by-side).
-      - Script order: cytoscape -> elkjs -> cytoscape-elk -> build/.../prereq_graph_viewer_cytoscape.js. (github.com (https://github.com/cytoscape/cytoscape.js-elk))
-      - A UI toggle that switches between “D3 viewer” and “Cytoscape+ELKviewer” (persist in localStorage, like you already do).
-
-**** Ensure Django will serve/collect the new assets
-
-  - npm run build:ts generates static/build/.../*.js.
-  - collectstatic will pick up:
-      - your compiled outputs under static/build/
-      - the vendored libs under static/vendor/ (or app/**/static/**)
-  - Production/preprod should only ever serve from {% static %} paths (so hashed/static storage works normally).
-
-
-
-** pb
-I think I have it wrong, we should not use d3-dag.  the createor are not maintaining it any more.  it is outdated and may even be an over kill for what I wnat to do.
-I think d3 is a well coded library and I am a bit familliar with it but for our purpose it may not be the best js library.
-
-I am quite satisfied with what dot / graphviw does but I want it in js to have a little more interacctivity ( full title on hover, or higligh of graph depedency for eg)
-
-maybe graphology and sigma.js are good match event if done to support bigger graphes
-There is also react flow but I am imagining that it is an over kill for too much interaction. I do not need to move the nodes arround.
-What I need is to constrain node in layers (ranks) and let the library find the best line for defined edges ( to minimise crossing for eg or edge lenght).  Add to this a little interaction for hovering and you have my requirements.
-
-With that said, I am ready to do a third proposition of layout using what would be a good js library for my use case and constraints.
-
-Plan the creation of this third option
-
-
-* DONE <2026-02-03 mar. 23:14>
-CLOSED: [2026-02-08 dim. 11:13]
-This is probably a good source of something working  and close to what we want '''https://observablehq.com/@erikbrinkman/d3-dag-sugiyama''' The code is now working but we need to improve it a little:
-- add vertical rectangle to show the semester.
-- organise them from left to right.
-- place the node in their respective semesters from left to right.
-- add the arrows and
-- finaly display full title of th enode on mouse hover.
-  
-
-
-* DONE <2026-02-03 mar. 16:28> TS debuging
-CLOSED: [2026-02-08 dim. 11:14]
-** <2026-02-03 mar. 17:01> Questions
-What is IIFE ?  lambda expresion
-Why not bundle @types/d3 ?
-Where is the WindowWithD3T used ?
-
-https://erikbrinkman.github.io/d3-dag/interfaces/LayeringLongestPath.html
-
-** Confirm the script order actually loaded
-Checked.
-** Check d3 is present
-  window.d3 && window.d3.version
-
-  Expected: "7.9.0" YES 
-
-** Check d3‑dag exports
-** Inspect what d3‑dag actually adds
-
-Object.keys(window.d3 || {}).filter(k => k.toLowerCase().includes("dag") || k.toLowerCase().includes("sugi") || k.toLowerCase().includes("graph"));
-
-(14) ['geoOrthographic', 'geoOrthographicRaw', 'geoStereographic', 'geoStereographicRaw', 'graph', 'graphConnect', 'graphHierarchy', 'graphJson', 'graphStratify', 'sugiNodeLength', 'sugifyCompact', 'sugifyLayer', 'sugiyama', 'unsugify']
-
-no dag stuf..
-
-** Verify the d3‑dag file actually loaded
-
-  const dagSrc = document.querySelector('script[src*="d3-dag"]')?.src;
-  dagSrc
-
-  Then:
-
-  fetch(dagSrc).then(r => [r.ok, r.status, r.url]);
-
-  I get ::
-  Promise {<pending>}
-[[Prototype]]: Promise
-[[PromiseState]]: "fulfilled"
-[[PromiseResult]]: Array(3)
-  0:true
-  1: 200
-  2: "https://tusis.koba.sarl/static/academics/js/d3-dag.iife.min.js"
-  length: 3
-[[  Prototype]]: Array(0)
-
-** Verify the viewer JS you’re running is the updated one
-
-  const viewerSrc = document.querySelector('script[src*="prereq_graph_viewer"]')?.src;
-  viewerSrc
-  points to '￼https://tusis.koba.sarl/static/build/academics/static/academics/js/prereq_graph_viewer.js'  . 
-  Then:
-
-fetch(viewerSrc).then(r => r.text()).then(t => t.includes("graphStratify"));
-
-Expected: true.  YES IT IS.
-
-*** If all of the above is correct but message still appears
-Here I did do a hard refresh to get graphStratify.
-  window.d3 && window.d3.graphStratify
-
-I get
-fetch(viewerSrc).then(r => r.text()).then(t => t.includes("graphStratify"));  
-Promise {<pending>}
-[[Prototype]]
-: 
-Promise
-[[PromiseState]]
-: 
-"fulfilled"
-[[PromiseResult]]
-: 
-true
-window.d3.graphStratify
-ƒ dr(...e){if(e.length)throw D`got arguments to graphStratify(${e}), but constructor takes no arguments; these were probably meant as data which should be called as \`graphStratify()(...)\``;return Nt(…
-
-So it is a function and I still see the message.  so how do I clear the cache ? I did ctrl + shit + reload, rebuilt, restsarted the container zeb.  should I restart the js container too (find it strage if so).   where can the old code be cached ?  browser ? nginx server ? npm cache  ?  router ?
-
-
-* DONE <2026-02-03 mar. 09:04> Dev tools for tsjs
-CLOSED: [2026-02-08 dim. 11:14]
-recompile emacs with tree-sitter (should be availabel from emacs 29)
-
-
-  Typical loop (dev/preprod)
-
-  1. Edit .ts
-  2. Run checks: npm run check:ts
-  3. Build compiled JS: npm run build:ts (generates static/build/**)
-  4. Run Django collectstatic (so the compiled static/build/** is collected into your configured static root)
-  5. Restart/reload the app container(s) if needed (depends on your setup; in many setups only step 3+4 is required, but restart is
-     fine/safer)
-
-     
-* DONE <2026-02-02 lun. 16:55> JS docker for js dev
-CLOSED: [2026-02-08 dim. 11:14]
-docker compose -f docker-compose-preprod.yml up -d js-tools
-docker compose -f docker-compose-preprod.yml exec -T js-tools npm ci
-docker compose -f docker-compose-preprod.yml exec -T js-tools npm run lint:js
-docker compose -f docker-compose-preprod.yml exec -T js-tools npm run format:check:js
-
-
-
-* DONE To convert to TJS
-CLOSED: [2026-02-03 mar. 15:35]
-  1. Inventory your own JS files vs Django/vendor JS; only convert your own.
-  2. For each converted file, update template script tags to the compiled path under static/build/....
-  3. If any file uses import/export, switch that <script> tag to type="module".
-     If it’s a plain script, it can stay a normal <script>.
-
-  Plan to convert your JS files
-
-  1. Start small: pick one “owned” file, rename to .ts, fix types, run tsc.
-  2. Replace its template reference with the compiled .js in static/build.
-  3. Repeat file-by-file. Keep existing variable names unchanged (per your guide).
-  4. Add docstrings/comments to any new functions/classes you create.
-
-  Making sure Django collects the compiled TS
-
-  - static/build lives under your project’s static/ directory, so collectstatic will include it as long as:
-      - It’s on disk when collectstatic runs.
-      - Templates refer to /static/build/... (via {% static %}).
-  - You can sanity‑check with python manage.py findstatic build/app/.../your.js.
-
-  Container vs native dev install (differences you’ll need to handle)
-
-  - Native dev:
-      - Install locally: npm i includes typescript.
-      - Run npx tsc -p tsconfig.json on your machine.
-      - Output is written to static/build on your filesystem for Django to pick up.
-  - Preprod / container tool suite:
-      - If JS tools run inside a container, TypeScript must be installed there too.
-      - The container must write static/build onto a shared/mounted volume that Django can see.
-      - If collectstatic runs in a different container, ensure static/build exists in that container’s filesystem at build time (either build inside the same container or share the volume).
-
-  If you want, I can:
-
-  1. Add the tsconfig.json and npm scripts (build:ts, typecheck:ts) now, or
-  2. Start with a small pilot conversion of one JS file and update its template reference.
-
-
-
-
-› 
-
-* DONE <2026-02-02 lun. 10:58>
-CLOSED: [2026-02-02 lun. 12:36]
-update the final display of node in the dot file and if possible in the js representation too.
-- shapes use the following mapping:
-  - COAS box
-  - COHS egg
-  - CAFS triangle
-  - COET house
-  - COED ellipse
-  - COAB diamond
-- dashed border if the course in not in the curriculum    
-- add invisible links between the level_number node to make sure their groups is arrragned in the correct order.
-
-  if this styles can be extended to the js representation qlso thqt would be good.
-
-Finaly when one clicks on the link resulting from the admin action I want the page with the js to load and a link to download the dot generated png
 * <2026-02-02 lun. 07:23> DB sync
 1. You run the dump on preprod (redirection happens on preprod)
 
@@ -1077,7 +401,7 @@ Finaly when one clicks on the link resulting from the admin action I want the pa
 
 
 * <2026-02-01 dim. 18:43> Test the prereq graph engine
-  
+
 
 * <2026-01-30 ven. 23:00> curriculum
 add a link from the dean dashboard to the curriculum admin, for him to edit curriculums
@@ -1089,7 +413,7 @@ the  students number  displayed in   admin/academic/curriculum for each row (cur
 
 * <2026-01-30 ven. 20:59> prerequisites
   If no curriculum set, then it as the default for the course.
-  
+
 * <2026-01-30 ven. 15:01> Invoice template
 # The snapshot should occure the first time the user access student_invoice_statement
 
@@ -1114,11 +438,11 @@ the  students number  displayed in   admin/academic/curriculum for each row (cur
   - Course table (line items):
       - Course Code  # it the course department for us
       - Course No # we have that
-	# the 2 above are replaced by our course short code
+        # the 2 above are replaced by our course short code
       - Course Title
       - Credit Hours # from  curriculum course
       - Cost Per Credit (US$) # fixed
-      - Cost of Course 
+      - Cost of Course
       - Total Credit Hours
   - Fee summary:
       - Activities / Library / Maintenance / Registration / Sports / Technology
@@ -1174,7 +498,7 @@ the  students number  displayed in   admin/academic/curriculum for each row (cur
   - DB: creating snapshot for empty invoices still writes a valid snapshot.
   - UX/BDD: clicking “Download PDF” returns a PDF, opens correctly, and layout
     matches the template.
-  
+
 
 * <2026-01-30 ven. 11:49>  Invoice
    :PROPERTIES:
@@ -1192,15 +516,15 @@ the  students number  displayed in   admin/academic/curriculum for each row (cur
       - Use a strict table for course lines (fixed column widths).
       - Use a second table for fees/summary with a right‑aligned totals column.
       - Lock fonts, sizes, and spacing with CSS to keep layout stable.
-	( see data file with attached id for on layout precision )
-  
+        ( see data file with attached id for on layout precision )
+
 -    After the invoice_snapshot creation:
 -    plan some test, db side and also ux bdd side
-    
+
 
 * <2026-01-27 Tue 17:08>  Fee and Payments
 
-  - need to find a clean way to import default course fix fee. 
+  - need to find a clean way to import default course fix fee.
 
 * <2026-01-23 Fri 23:01> Strange mergin and not faculty anymore ?
 - Need to adress the fee structure for courses.
@@ -1212,7 +536,7 @@ the  students number  displayed in   admin/academic/curriculum for each row (cur
   - [ ] it is already in the menu under payment statement.
   - [ ] rename the payment statement to payment receipt in the menu
 
-   
+
 
 * <2026-01-23 ven. 12:49>
 **  People: Merge + Admin Mixins
