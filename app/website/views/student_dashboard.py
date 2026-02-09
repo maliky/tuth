@@ -38,6 +38,12 @@ from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
 from app.timetable.utils import format_datetime, format_short_datetime
 
+from .course_requirements import (
+    RequirementCheckResultT,
+    build_requirement_context,
+    evaluate_curriculum_course_requirements,
+    requirement_failure_messages,
+)
 from .student_helpers import (
     _build_sidebar_links,
     _build_student_profile,
@@ -299,6 +305,9 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             sections = (
                 Section.objects.filter(id__in=section_ids, semester=semester)
                 .select_related("curriculum_course__course")
+                .prefetch_related(
+                    "curriculum_course__requirement_groups__members__required_course"
+                )
                 .order_by("id")
             )
             existing_regs = Registration.objects.filter(
@@ -309,6 +318,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             existing_by_section = {reg.section_id: reg for reg in existing_regs}
             new_credit_total = 0
             selected_course_ids: set[int] = set()
+            selected_curriculum_course_by_course_id: dict[int, CurriculumCourse] = {}
             for section in sections:
                 existing = existing_by_section.get(section.id)
                 if existing and existing.status_id not in {"canceled", "removed"}:
@@ -317,7 +327,33 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 if course_id in current_course_ids or course_id in selected_course_ids:
                     continue
                 selected_course_ids.add(course_id)
+                selected_curriculum_course_by_course_id[course_id] = (
+                    section.curriculum_course
+                )
                 new_credit_total += int(section.curriculum_course.credit_hours.code)
+            requirement_context = build_requirement_context(student)
+            blocked_by_requirements: dict[int, RequirementCheckResultT] = {}
+            requirement_errors_by_course: dict[int, str] = {}
+            for (
+                course_id,
+                curriculum_course,
+            ) in selected_curriculum_course_by_course_id.items():
+                requirement_result = evaluate_curriculum_course_requirements(
+                    student=student,
+                    curriculum_course=curriculum_course,
+                    selected_course_ids=selected_course_ids,
+                    context=requirement_context,
+                )
+                if requirement_result["ok"]:
+                    continue
+                blocked_by_requirements[course_id] = requirement_result
+                course_label = (
+                    curriculum_course.course.short_code or curriculum_course.course.code
+                )
+                reason_text = "; ".join(
+                    requirement_failure_messages(requirement_result["failures"])
+                )
+                requirement_errors_by_course[course_id] = f"{course_label}: {reason_text}"
             max_credit_hours = _max_credit_hours(student)
             # Enforce the per-student credit limit before persisting registrations.
             if current_credits + new_credit_total > max_credit_hours:
@@ -335,6 +371,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             cooldown_skipped = 0
             attempts_blocked = 0
             duplicate_course_skipped = 0
+            requirement_blocked = 0
             cooldown_cutoff = timezone.now() - timedelta(hours=48)
             blocked_courses = _attempt_blocked_courses(student, semester)
             cooldown_course_locks_for_register = _cooldown_courses(
@@ -367,6 +404,9 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                         or course_id in selection_course_ids
                     ):
                         duplicate_course_skipped += 1
+                        continue
+                    if course_id in blocked_by_requirements:
+                        requirement_blocked += 1
                         continue
                     selection_course_ids.add(course_id)
                     registration, was_created = Registration.objects.get_or_create(
@@ -432,6 +472,17 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                     f"{attempts_blocked} section(s) hit the two-attempt limit for this "
                     "semester.",
                 )
+            if requirement_blocked:
+                for message in requirement_errors_by_course.values():
+                    _push_message("error", message)
+                if _is_ajax_request() and not (created or updated):
+                    return JsonResponse(
+                        {
+                            "ok": False,
+                            "message": " ".join(requirement_errors_by_course.values()),
+                        },
+                        status=400,
+                    )
             if not _is_ajax_request():
                 return _redirect_to_semester()
         if action == "cancel_registration":
@@ -670,6 +721,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     curriculum_courses_qs = (
         CurriculumCourse.objects.filter(curriculum=student.curriculum)
         .select_related("course", "credit_hours")
+        .prefetch_related("requirement_groups__members__required_course")
         .order_by("course__short_code")
     )
     curriculum_courses = list(curriculum_courses_qs)
@@ -729,7 +781,8 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         cooldown_course_ids = set(cooldown_course_locks)
         attempt_blocked_course_ids = _attempt_blocked_courses(student, semester)
 
-    passed_course_ids = set(student.passed_courses().values_list("id", flat=True))
+    requirement_context = build_requirement_context(student)
+    passed_course_ids = requirement_context["passed_course_ids"]
     allowed_course_ids = set(student.allowed_courses().values_list("id", flat=True))
     prereqs: Iterable[Prerequisite] = []
     if course_ids:
@@ -763,6 +816,19 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         if not course_sections:
             continue
         prereq_data = prereq_map.get(course.id, [])
+        requirement_result = evaluate_curriculum_course_requirements(
+            student=student,
+            curriculum_course=cc,
+            selected_course_ids={course.id},
+            context=requirement_context,
+        )
+        requirement_failures = requirement_result["failures"]
+        blocking_failures = [
+            failure
+            for failure in requirement_failures
+            if failure.get("code") != "incomplete_coreq_all"
+        ]
+        requirement_reason_lines = requirement_failure_messages(requirement_failures)
         is_eligible = all(
             [
                 registration_open,
@@ -770,6 +836,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 course.id not in registered_course_ids,
                 course.id not in cooldown_course_ids,
                 course.id not in attempt_blocked_course_ids,
+                not blocking_failures,
             ]
         )
 
@@ -785,6 +852,8 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             reason = "Registration window is closed."
         elif missing:
             reason = f"Complete {', '.join(missing)} first."
+        elif requirement_reason_lines:
+            reason = requirement_reason_lines[0]
         elif not course_sections:
             reason = "No scheduled section this semester."
         elif course.id not in allowed_course_ids:
