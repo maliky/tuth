@@ -243,3 +243,67 @@ def test_dashboard_surfaces_coreq_reason_without_locking_initial_selection(
     target_payload = next(row for row in available_courses if row["code"] == target_code)
     assert target_payload["eligible"] is True
     assert "Must be selected together with" in target_payload["reason"]
+    assert any(
+        "Must be selected together with" in line
+        for line in target_payload["reason_lines"]
+    )
+
+
+def test_dashboard_surfaces_multiple_requirement_reason_lines(
+    client,
+    curriculum_course_factory,
+    semester_factory,
+    user_factory,
+) -> None:
+    """Locked courses should expose all grouped-requirement reason lines."""
+    semester = _open_registration_semester(semester_factory)
+    target = curriculum_course_factory("940", "CURRI_REASON_LINES")
+    target.min_validated_credits = 24
+    target.save(update_fields=["min_validated_credits"])
+    req_all = curriculum_course_factory("941", "CURRI_REASON_LINES")
+    req_any_a = curriculum_course_factory("942", "CURRI_REASON_LINES")
+    req_any_b = curriculum_course_factory("943", "CURRI_REASON_LINES")
+    req_all_label = req_all.course.short_code or req_all.course.code
+    req_any_a_label = req_any_a.course.short_code or req_any_a.course.code
+    req_any_b_label = req_any_b.course.short_code or req_any_b.course.code
+    _add_requirement_member_group(
+        target=target,
+        kind=RequirementKind.PREREQ_ALL,
+        required_courses=[req_all],
+    )
+    _add_requirement_member_group(
+        target=target,
+        kind=RequirementKind.PREREQ_ANY,
+        required_courses=[req_any_a, req_any_b],
+    )
+    student = _student_for_curriculum(
+        user_factory=user_factory,
+        curriculum=target.curriculum,
+        semester=semester,
+        username="reason_lines_student",
+    )
+    Section.objects.create(
+        semester=semester,
+        curriculum_course=target,
+        number=1,
+    )
+
+    client.force_login(student.user)
+    response = client.get(reverse("student_dashboard"), {"semester": semester.id})
+    assert response.status_code == 200
+
+    locked_courses = response.context["locked_courses"]
+    target_code = target.course.short_code or target.course.code
+    target_payload = next(row for row in locked_courses if row["code"] == target_code)
+    assert any(
+        "Requires at least 24 validated credits" in line
+        for line in target_payload["reason_lines"]
+    )
+    assert any(
+        f"Complete {req_all_label} first." in line
+        for line in target_payload["reason_lines"]
+    )
+    assert any(
+        f"Complete at least one of: {req_any_a_label}, {req_any_b_label}." in line
+        for line in target_payload["reason_lines"]
+    )

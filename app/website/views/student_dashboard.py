@@ -72,6 +72,14 @@ class SemesterGradeGroupT(TypedDict):
     courses: list[SemesterGradeRowT]
 
 
+def _append_reason_line(reason_lines: list[str], reason: str) -> None:
+    """Append a non-empty reason line once while preserving order."""
+    text = reason.strip()
+    if not text or text in reason_lines:
+        return
+    reason_lines.append(text)
+
+
 @login_required
 @require_POST
 def download_invoice_statement(request: HttpRequest) -> HttpResponse:
@@ -841,23 +849,28 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         )
 
         missing = [cast(str, p["label"]) for p in prereq_data if not p["met"]]
-        reason = ""
+        reason_lines: list[str] = []
         if course.id in attempt_blocked_course_ids:
-            reason = "Registration limit reached for this semester."
+            _append_reason_line(
+                reason_lines, "Registration limit reached for this semester."
+            )
         elif course.id in cooldown_course_ids:
-            reason = ""
+            pass
         elif course.id in registered_course_ids:
-            reason = ""
-        elif not registration_open:
-            reason = "Registration window is closed."
-        elif missing:
-            reason = f"Complete {', '.join(missing)} first."
-        elif requirement_reason_lines:
-            reason = requirement_reason_lines[0]
-        elif not course_sections:
-            reason = "No scheduled section this semester."
-        elif course.id not in allowed_course_ids:
-            reason = "Already completed or blocked."
+            pass
+        else:
+            if not registration_open:
+                _append_reason_line(reason_lines, "Registration window is closed.")
+            if missing:
+                _append_reason_line(reason_lines, f"Complete {', '.join(missing)} first.")
+            for requirement_line in requirement_reason_lines:
+                _append_reason_line(reason_lines, requirement_line)
+            if not course_sections:
+                _append_reason_line(reason_lines, "No scheduled section this semester.")
+            if course.id not in allowed_course_ids:
+                _append_reason_line(reason_lines, "Already completed or blocked.")
+
+        reason = reason_lines[0] if reason_lines else ""
 
         serialized_sections = [
             {
@@ -878,6 +891,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             "elective": cc.is_elective,
             "eligible": is_eligible,
             "reason": reason,
+            "reason_lines": reason_lines,
             "prerequisites": prereq_data,
             "sections": serialized_sections,
             "status_label": "",
