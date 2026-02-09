@@ -53,26 +53,27 @@ def student_payment_receipt(
         .select_related("student", "semester__academic_year")
         .first()
     )
-    if parent_invoice is None:
-        raise Http404("No invoice found for this semester.")
-    payments = list(
-        Payment.objects.filter(
-            student_semester_invoice=parent_invoice,
-            amount_paid__gt=0,
-        ).order_by("id")
-    )
-    invoices = list(
-        parent_invoice.course_invoices.select_related(
-            "curriculum_course__course",
-            "curriculum_course__credit_hours",
-            "semester__academic_year",
-        ).order_by("curriculum_course__course__short_code")
-    )
+    payments: list[Payment] = []
+    invoices: list[CourseInvoice] = []
+    if parent_invoice is not None:
+        payments = list(
+            Payment.objects.filter(
+                student_semester_invoice=parent_invoice,
+                amount_paid__gt=0,
+            ).order_by("id")
+        )
+        invoices = list(
+            parent_invoice.course_invoices.select_related(
+                "curriculum_course__course",
+                "curriculum_course__credit_hours",
+                "semester__academic_year",
+            ).order_by("curriculum_course__course__short_code")
+        )
 
     receipt_rows: list[ReceiptRowT] = []
     total_paid = sum((payment.amount_paid for payment in payments), Decimal("0.00"))
     payment_last_updates: PaymentUpdateMapT = {}
-    if payments:
+    if parent_invoice is not None and payments:
         payment_history_row = (
             Payment.history.filter(student_semester_invoice_id=parent_invoice.id)
             .values("student_semester_invoice_id")
