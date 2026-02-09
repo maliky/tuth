@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import shutil
 import subprocess
@@ -24,6 +25,7 @@ NodeAttrMapT: TypeAlias = dict[int, dict[str, str]]
 GroupMapT: TypeAlias = dict[int, list[int]]
 OwnerIdsT: TypeAlias = tuple[int, int]
 JsonPayloadT: TypeAlias = dict[str, object]
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -279,9 +281,22 @@ def _build_dot(payload: JsonPayloadT) -> str:
         if isinstance(group_number, int) and group_number > 0:
             group_map.setdefault(group_number, []).append(node)
 
+    record_group_map: dict[int, bool] = {}
     for group_number in sorted(group_map):
         group_nodes = group_map[group_number]
         group_nodes.sort(key=_course_id_sort_key)
+        use_record_group = len(group_nodes) > 1
+        record_group_map[group_number] = use_record_group
+        if not use_record_group:
+            node_label = str(group_nodes[0].get("label", "")) if group_nodes else ""
+            warning_msg = (
+                "Singleton required_group_number detected for DOT export: "
+                f"group={group_number}, node={node_label}. "
+                "Rendering as a simple node (no ALT record wrapper)."
+            )
+            logger.warning(warning_msg)
+            lines.append(f"  // WARNING: {warning_msg}")
+            continue
         ports = "|".join(
             f"<c{node.get('course_id')}> {node.get('label', '')}" for node in group_nodes
         )
@@ -296,11 +311,19 @@ def _build_dot(payload: JsonPayloadT) -> str:
         dst_node = node_by_id.get(dst_id)
         src_group = src_node.get("group_number") if src_node else None
         dst_group = dst_node.get("group_number") if dst_node else None
-        if isinstance(src_group, int) and src_group > 0:
+        if (
+            isinstance(src_group, int)
+            and src_group > 0
+            and record_group_map.get(src_group, False)
+        ):
             src_ref = f"ALT{src_group}:c{src}"
         else:
             src_ref = src_id
-        if isinstance(dst_group, int) and dst_group > 0:
+        if (
+            isinstance(dst_group, int)
+            and dst_group > 0
+            and record_group_map.get(dst_group, False)
+        ):
             dst_ref = f"ALT{dst_group}:c{dst}"
         else:
             dst_ref = dst_id
@@ -313,7 +336,12 @@ def _build_dot(payload: JsonPayloadT) -> str:
             node = node_by_id.get(node_id)
             group_number = node.get("group_number") if node else None
             course_id = node.get("course_id") if node else None
-            if isinstance(group_number, int) and group_number > 0 and course_id:
+            if (
+                isinstance(group_number, int)
+                and group_number > 0
+                and course_id
+                and record_group_map.get(group_number, False)
+            ):
                 level_nodes.append(f"ALT{group_number}:c{course_id}")
             else:
                 level_nodes.append(node_id)

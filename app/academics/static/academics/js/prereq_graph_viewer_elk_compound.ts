@@ -166,6 +166,7 @@
     nodeIds: string[];
     edgeIds: string[];
     incomingByTarget: Map<string, Set<string>>;
+    outgoingBySource: Map<string, Set<string>>;
     edgeIdByKey: Map<string, string>;
   };
 
@@ -762,6 +763,7 @@
     const nodeIds: string[] = [];
     const edgeIds: string[] = [];
     const incomingByTarget = new Map<string, Set<string>>();
+    const outgoingBySource = new Map<string, Set<string>>();
     const edgeIdByKey = new Map<string, string>();
 
     elements.forEach((element) => {
@@ -776,10 +778,20 @@
         incomingByTarget.set(target, new Set());
       }
       incomingByTarget.get(target)?.add(source);
+      if (!outgoingBySource.has(source)) {
+        outgoingBySource.set(source, new Set());
+      }
+      outgoingBySource.get(source)?.add(target);
       edgeIdByKey.set(`${source}|${target}`, String(element.data.id));
     });
 
-    return { nodeIds, edgeIds, incomingByTarget, edgeIdByKey };
+    return {
+      nodeIds,
+      edgeIds,
+      incomingByTarget,
+      outgoingBySource,
+      edgeIdByKey,
+    };
   };
 
   /** Collect ancestor nodes + edges for a selected node. */
@@ -814,6 +826,38 @@
     return { nodes, edges };
   };
 
+  /** Collect descendant nodes + edges for a selected node. */
+  const collectDescendants = (
+    startId: string,
+    index: GraphIndexT
+  ): { nodes: Set<string>; edges: Set<string> } => {
+    const nodes = new Set<string>();
+    const edges = new Set<string>();
+    const visited = new Set<string>([startId]);
+    const stack = [startId];
+
+    while (stack.length) {
+      const current = stack.pop() as string;
+      const children = index.outgoingBySource.get(current);
+      if (!children) {
+        continue;
+      }
+      children.forEach((childId) => {
+        nodes.add(childId);
+        const edgeId = index.edgeIdByKey.get(`${current}|${childId}`);
+        if (edgeId) {
+          edges.add(edgeId);
+        }
+        if (!visited.has(childId)) {
+          visited.add(childId);
+          stack.push(childId);
+        }
+      });
+    }
+
+    return { nodes, edges };
+  };
+
   /** Clear any ancestor highlighting. */
   const clearHighlight = (): void => {
     if (!cy || !graphIndex) {
@@ -822,29 +866,46 @@
     graphIndex.nodeIds.forEach((nodeId) => {
       const element = cy?.getElementById(nodeId);
       element?.removeClass("is-ancestor");
+      element?.removeClass("is-descendant");
       element?.removeClass("is-selected");
     });
     graphIndex.edgeIds.forEach((edgeId) => {
       const element = cy?.getElementById(edgeId);
       element?.removeClass("is-ancestor");
+      element?.removeClass("is-descendant");
     });
   };
 
-  /** Highlight the ancestors of a node in the graph. */
-  const highlightAncestors = (nodeId: string): void => {
+  /** Highlight both prerequisites (ancestors) and dependents (descendants). */
+  const highlightRelations = (nodeId: string): void => {
     if (!cy || !graphIndex) {
       return;
     }
     clearHighlight();
-    const { nodes, edges } = collectAncestors(nodeId, graphIndex);
-    nodes.forEach((ancestorId) => {
+    const ancestors = collectAncestors(nodeId, graphIndex);
+    const descendants = collectDescendants(nodeId, graphIndex);
+
+    ancestors.nodes.forEach((ancestorId) => {
       const element = cy?.getElementById(ancestorId);
       element?.addClass("is-ancestor");
     });
-    edges.forEach((edgeId) => {
+    ancestors.edges.forEach((edgeId) => {
       const element = cy?.getElementById(edgeId);
       element?.addClass("is-ancestor");
     });
+
+    descendants.nodes.forEach((descendantId) => {
+      if (descendantId === nodeId) {
+        return;
+      }
+      const element = cy?.getElementById(descendantId);
+      element?.addClass("is-descendant");
+    });
+    descendants.edges.forEach((edgeId) => {
+      const element = cy?.getElementById(edgeId);
+      element?.addClass("is-descendant");
+    });
+
     const selected = cy?.getElementById(nodeId);
     selected?.addClass("is-selected");
   };
@@ -950,6 +1011,16 @@
       },
     },
     {
+      selector: "node.is-descendant",
+      style: {
+        "border-color": "#198754",
+        "border-width": 3,
+        "shadow-color": "#198754",
+        "shadow-opacity": 0.25,
+        "shadow-blur": 12,
+      },
+    },
+    {
       selector: "node.is-selected",
       style: {
         "border-color": "#0d6efd",
@@ -982,6 +1053,14 @@
         width: 2.4,
         "line-color": "#0d6efd",
         "target-arrow-color": "#0d6efd",
+      },
+    },
+    {
+      selector: "edge.is-descendant",
+      style: {
+        width: 2.4,
+        "line-color": "#198754",
+        "target-arrow-color": "#198754",
       },
     },
     {
@@ -1291,7 +1370,7 @@
       }
       const nodeId = String(event.target.data("id") || "");
       if (nodeId) {
-        highlightAncestors(nodeId);
+        highlightRelations(nodeId);
       }
     });
 
