@@ -28,6 +28,7 @@ Replace the script name as needed:
 - =scripts/department_merge_conflicts.sql=
 - =scripts/student_merge_conflicts.sql=
 - =scripts/normalize_curriculumcourse_level_by_course.sql=
+- =scripts/repair_curriculumcourse_other_grouping.sql=
 
 You can also pipe the script directly into psql:
 
@@ -46,6 +47,19 @@ given course short_code (non-null and not 99). If it finds a single value,
 it copies that level_number into rows where level_number is null/99 and also
 syncs year_number/semester_number from the level. If no defined level exists
 or multiple values exist, it does nothing.
+
+To repair stale curriculum-course grouping for "other/undefined" rows:
+
+#+BEGIN_SRC bash
+cat scripts/repair_curriculumcourse_other_grouping.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+#+END_SRC
+
+This one-time repair moves rows with =level_number IS NULL=, =99=, or =<= 0=
+into the dedicated "other grouping" bucket by forcing:
+- =year_number = 99=
+- =semester_number = 0=
+
+The script is idempotent and only updates mismatched rows.
 
 ** Dev / native psql workflow
 

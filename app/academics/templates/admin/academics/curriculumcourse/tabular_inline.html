@@ -36,7 +36,11 @@
             <tr class="curriculum-course-group">
               <th colspan="{{ inline_admin_form|cell_count }}" class="curriculum-course-group-label">
                 <button type="button" class="group-toggle" aria-expanded="true" title="{% translate "Collapse group" %}">▾</button>
-                Year {{ inline_admin_form.original.get_year_number_display }} · Semester {{ inline_admin_form.original.get_semester_number_display }}
+                {% if inline_admin_form.original.year_number == 99 or inline_admin_form.original.semester_number == 0 %}
+                  Other grouping
+                {% else %}
+                  Year {{ inline_admin_form.original.get_year_number_display }} · Semester {{ inline_admin_form.original.get_semester_number_display }}
+                {% endif %}
                 — {{ inline_admin_form.original.group_course_count }} course(s) · {{ inline_admin_form.original.group_credit_total }} credit(s)
               </th>
             </tr>

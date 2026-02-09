@@ -150,10 +150,16 @@ class CurriculumCourse(models.Model):
     def _ensure_year_semester_from_level(self) -> None:
         """Autofill year/semester when a level number is provided."""
         level_value_raw = getattr(self, "level_number", None)
+        # Keep "other/undefined" rows in a dedicated bucket to avoid stale
+        # grouping when level_number is switched to 99 (or left blank).
         if level_value_raw is None:
+            self.year_number = LEVEL_NUMBER.UNDEF
+            self.semester_number = 0
             return
         level_value = int(level_value_raw)
         if level_value == int(LEVEL_NUMBER.UNDEF.value):
+            self.year_number = LEVEL_NUMBER.UNDEF
+            self.semester_number = 0
             return
         if level_value <= 0:
             self.year_number = LEVEL_NUMBER.UNDEF
