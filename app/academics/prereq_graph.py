@@ -429,7 +429,7 @@ def _build_dot(payload: JsonPayloadT) -> str:
                 [
                     f"  subgraph {cluster_name} {{",
                     f'    label="{cluster_label}";',
-                    "    style=rounded,dashed;",
+                    '    style="rounded,dashed";',
                     '    color="#6c757d";',
                     "    penwidth=1.4;",
                 ]
@@ -508,10 +508,17 @@ def _render_png(dot_path: Path, png_path: Path) -> None:
     """Call Graphviz dot to render a PNG from the dot file."""
     if not shutil.which("dot"):
         raise CommandError("Graphviz 'dot' not found in PATH.")
-    subprocess.run(
+    result = subprocess.run(
         ["dot", "-T", "png", str(dot_path), "-o", str(png_path)],
-        check=True,
+        capture_output=True,
+        text=True,
+        check=False,
     )
+    if result.returncode != 0:
+        err_text = (result.stderr or "").strip() or "dot failed without stderr output."
+        raise CommandError(
+            f"Graphviz dot failed for {dot_path.name}: {err_text}"
+        )
 
 
 def _resolve_owner_ids() -> OwnerIdsT:
