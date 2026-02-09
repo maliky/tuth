@@ -13,6 +13,10 @@ from django.utils import timezone
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.course import Course
 from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.requirement_group import (
+    CurriculumCourseRequirementGroup,
+    CurriculumCourseRequirementMember,
+)
 from app.finance.models.fee_stack import CourseFeeStack
 from app.timetable.models.semester import Semester
 
@@ -54,6 +58,7 @@ class CourseCurriculumInline(admin.TabularInline):
         "level_number",
         "required_group_number",
         "credit_hours",
+        "min_validated_credits",
     )
 
 
@@ -158,6 +163,7 @@ class CurriculumCourseInline(admin.TabularInline):
         "level_number",
         "required_group_number",
         "credit_hours",
+        "min_validated_credits",
     )
     readonly_fields = ()
 
@@ -222,6 +228,50 @@ class CurriculumCourseInline(admin.TabularInline):
         return formset
 
     # Student counts removed from inline to avoid slow/incorrect values.
+
+
+class CurriculumCourseRequirementMemberInline(admin.TabularInline):
+    """Inline editor for requirement group members."""
+
+    model = CurriculumCourseRequirementMember
+    fk_name = "group"
+    verbose_name = "Requirement member"
+    verbose_name_plural = "Requirement members"
+    extra = 0
+    autocomplete_fields = ("required_course",)
+    fields = ("required_course", "order")
+    ordering = ("order", "required_course__short_code", "required_course__code")
+
+
+class CurriculumCourseRequirementGroupInline(admin.TabularInline):
+    """Inline editor for requirement groups bound to a curriculum course."""
+
+    model = CurriculumCourseRequirementGroup
+    fk_name = "curriculum_course"
+    verbose_name = "Requirement group"
+    verbose_name_plural = "Requirement groups"
+    extra = 0
+    fields = ("kind", "label", "order", "member_count", "manage_members")
+    readonly_fields = ("member_count", "manage_members")
+    ordering = ("order", "id")
+
+    @admin.display(description="Members")
+    def member_count(self, obj: CurriculumCourseRequirementGroup) -> int:
+        """Return number of member courses in the group."""
+        if not getattr(obj, "pk", None):
+            return 0
+        return obj.members.count()
+
+    @admin.display(description="Manage members")
+    def manage_members(self, obj: CurriculumCourseRequirementGroup) -> str:
+        """Link to group change page where member inline is available."""
+        if not getattr(obj, "pk", None):
+            return "Save first"
+        # Django has no nested inlines; open the group page to edit member rows.
+        url = reverse(
+            "admin:academics_curriculumcourserequirementgroup_change", args=[obj.pk]
+        )
+        return format_html('<a href="{}">Open</a>', url)
 
 
 class DepartmentCourseInline(admin.TabularInline):

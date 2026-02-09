@@ -222,6 +222,11 @@ class CurriculumCourseResource(resources.ModelResource):
         column_name="required_group_number",
         default=0,
     )
+    min_validated_credits_f = fields.Field(
+        attribute="min_validated_credits",
+        column_name="min_validated_credits",
+        default=0,
+    )
 
     class Meta:
         model = CurriculumCourse
@@ -237,6 +242,7 @@ class CurriculumCourseResource(resources.ModelResource):
             "semester_number_f",
             "level_number_f",
             "required_group_number_f",
+            "min_validated_credits_f",
         )
         list_filter = ("curriculum_college", "curriculum")
         skip_unchanged = True

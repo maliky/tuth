@@ -106,5 +106,52 @@
         row = row.nextElementSibling;
       }
     });
+
+    var lastDeleteCheckbox = null;
+    document.addEventListener("click", function (event) {
+      var checkbox = event.target.closest(
+        "td.delete input[type='checkbox']"
+      );
+      if (!checkbox || checkbox.disabled) {
+        return;
+      }
+
+      if (!event.shiftKey || !lastDeleteCheckbox) {
+        lastDeleteCheckbox = checkbox;
+        return;
+      }
+
+      var currentBody = checkbox.closest("tbody");
+      var lastBody = lastDeleteCheckbox.closest("tbody");
+      if (!currentBody || !lastBody || currentBody !== lastBody) {
+        lastDeleteCheckbox = checkbox;
+        return;
+      }
+
+      var checkboxes = Array.prototype.slice.call(
+        currentBody.querySelectorAll("td.delete input[type='checkbox']")
+      ).filter(function (item) {
+        return !item.disabled;
+      });
+
+      var start = checkboxes.indexOf(lastDeleteCheckbox);
+      var end = checkboxes.indexOf(checkbox);
+      if (start === -1 || end === -1) {
+        lastDeleteCheckbox = checkbox;
+        return;
+      }
+
+      if (start > end) {
+        var tmp = start;
+        start = end;
+        end = tmp;
+      }
+
+      for (var i = start; i <= end; i++) {
+        checkboxes[i].checked = checkbox.checked;
+      }
+
+      lastDeleteCheckbox = checkbox;
+    });
   })();
 </script>

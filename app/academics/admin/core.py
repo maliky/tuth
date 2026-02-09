@@ -15,6 +15,7 @@ from app.academics.models.curriculum_course import CurriculumCourse
 from app.academics.models import (
     College,
     Course,
+    CurriculumCourseRequirementGroup,
     Curriculum,
     CurriculumStatus,
     Department,
@@ -38,6 +39,8 @@ from .inlines import (
     CourseCurriculumInline,
     CourseFeeStackInline,
     CurriculumCourseInline,
+    CurriculumCourseRequirementGroupInline,
+    CurriculumCourseRequirementMemberInline,
     DepartmentCourseInline,
     PrerequisiteInline,
     RequiresInline,
@@ -458,6 +461,8 @@ class CurriculumCourseAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         "department_link",
         "curriculum",
         "level_number",
+        "min_validated_credits",
+        "requirement_groups_link",
         "section_count_link",
         "faculties_links",
     )
@@ -478,8 +483,7 @@ class CurriculumCourseAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
     list_max_show_all = 500
 
     # Optional inline to list all curricula for this curriculum_course.
-    # inlines = [CurriculumCourseInline]
-    inlines = ()
+    inlines = [CurriculumCourseRequirementGroupInline]
 
     ordering = ("course__short_code",)
     actions = [update_curriculum]
@@ -528,6 +532,16 @@ class CurriculumCourseAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         if count is None:
             count = obj.sections.count()
         url = reverse("admin:timetable_section_changelist") + (
+            f"?curriculum_course__id__exact={obj.id}"
+        )
+        return format_html('<a href="{}">{}</a>', url, count)
+
+    @admin.display(description="Requirement groups")
+    def requirement_groups_link(self, obj: CurriculumCourse):
+        """Link to requirement groups filtered by curriculum course."""
+        count = obj.requirement_groups.count()
+        # Keep navigation one-click from the curriculum-course list to group editor.
+        url = reverse("admin:academics_curriculumcourserequirementgroup_changelist") + (
             f"?curriculum_course__id__exact={obj.id}"
         )
         return format_html('<a href="{}">{}</a>', url, count)
@@ -669,3 +683,40 @@ class PrerequisiteAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModel
     autocomplete_fields = ("course", "prerequisite_course", "curriculum")
     list_filter = (CurriculumFilterAC,)
     # search_fields = ("course", "prerequisite_course", "curriculum")
+
+
+@admin.register(CurriculumCourseRequirementGroup)
+class CurriculumCourseRequirementGroupAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
+    """Admin for grouped prerequisite/corequisite requirements."""
+
+    list_display = (
+        "curriculum_course",
+        "kind",
+        "label",
+        "order",
+        "member_count",
+    )
+    list_filter = (
+        "kind",
+        CurriculumFilterAC,
+        DepartmentFilterAC,
+    )
+    autocomplete_fields = ("curriculum_course",)
+    inlines = [CurriculumCourseRequirementMemberInline]
+    search_fields = (
+        "label",
+        "curriculum_course__curriculum__short_name",
+        "curriculum_course__course__short_code",
+        "curriculum_course__course__code",
+    )
+    list_select_related = (
+        "curriculum_course__curriculum",
+        "curriculum_course__course",
+        "curriculum_course__course__department",
+    )
+    ordering = ("curriculum_course__course__short_code", "kind", "order")
+
+    @admin.display(description="Members")
+    def member_count(self, obj: CurriculumCourseRequirementGroup) -> int:
+        """Return number of linked member courses."""
+        return obj.members.count()

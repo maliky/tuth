@@ -38,6 +38,11 @@ class Prerequisite(models.Model):
 
     def clean(self) -> None:
         """Prevent reciprocal prerequisites that would create a cycle."""
+        if self.course_id and self.prerequisite_course_id:
+            if self.course_id == self.prerequisite_course_id:
+                raise ValidationError(
+                    {"prerequisite_course": "A course cannot require itself."}
+                )
         if Prerequisite.objects.filter(
             course=self.prerequisite_course, prerequisite_course=self.course
         ).exists():

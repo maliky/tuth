@@ -119,6 +119,11 @@ class CurriculumCourse(models.Model):
         db_index=True,
         help_text="Group number for required elective selection (0 = none)",
     )
+    min_validated_credits = models.PositiveSmallIntegerField(
+        default=0,
+        db_index=True,
+        help_text="Minimum validated credits required before taking this course",
+    )
 
     @classmethod
     def get_default(cls, _course: Optional[Course] = None) -> Self:
@@ -141,7 +146,8 @@ class CurriculumCourse(models.Model):
 
     def _ensure_credit_hours(self):
         """Make sure the credit_hours is set."""
-        if not self.credit_hours_id:
+        # CreditHour(0) is valid; only default when FK is actually missing.
+        if self.credit_hours_id is None:
             self.credit_hours_id = 3
         CreditHour.objects.get_or_create(
             code=self.credit_hours_id, defaults={"label": str(self.credit_hours_id)}

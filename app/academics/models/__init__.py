@@ -7,6 +7,11 @@ from .curriculum import Curriculum, CurriculumStatus
 from .curriculum_course import CurriculumCourse
 from .department import Department
 from .prerequisite import Prerequisite
+from .requirement_group import (
+    CurriculumCourseRequirementGroup,
+    CurriculumCourseRequirementMember,
+    RequirementKind,
+)
 
 __all__ = [
     "College",
@@ -20,4 +25,7 @@ __all__ = [
     "Minor",
     "MinorCurriculumCourse",
     "Prerequisite",
+    "CurriculumCourseRequirementGroup",
+    "CurriculumCourseRequirementMember",
+    "RequirementKind",
 ]
