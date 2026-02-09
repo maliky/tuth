@@ -12,19 +12,25 @@ from pathlib import Path
 from typing import Iterable, TypeAlias
 
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.core.management.base import CommandError
 from django.utils.text import slugify
 
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.curriculum_course import CurriculumCourse
 from app.academics.models.prerequisite import Prerequisite
+from app.academics.models.requirement_group import (
+    CurriculumCourseRequirementGroup,
+    CurriculumCourseRequirementMember,
+    RequirementKind,
+)
 
 EdgeListT: TypeAlias = set[tuple[int, int]]
 NodeAttrMapT: TypeAlias = dict[int, dict[str, str]]
 GroupMapT: TypeAlias = dict[int, list[int]]
 OwnerIdsT: TypeAlias = tuple[int, int]
 JsonPayloadT: TypeAlias = dict[str, object]
+CoreqGroupPayloadT: TypeAlias = dict[str, object]
 logger = logging.getLogger(__name__)
 
 
@@ -129,6 +135,7 @@ def _build_course_maps(
 def _build_json_payload(
     curriculum: Curriculum,
     prerequisites: Iterable[Prerequisite],
+    coreq_groups: Iterable[CurriculumCourseRequirementGroup],
     course_map: dict[int, CurriculumCourse],
     node_attrs: NodeAttrMapT,
 ) -> JsonPayloadT:
@@ -190,6 +197,30 @@ def _build_json_payload(
             }
         )
 
+    coreq_payload: list[CoreqGroupPayloadT] = []
+    for group in coreq_groups:
+        target_course = group.curriculum_course.course
+        member_courses = [target_course]
+        member_courses.extend(member.required_course for member in group.members.all())
+        # Keep stable order while removing duplicates.
+        seen_member_ids: set[int] = set()
+        member_ids: list[str] = []
+        for course in member_courses:
+            if course.id in seen_member_ids:
+                continue
+            seen_member_ids.add(course.id)
+            _append_node(course, course.id in course_map)
+            member_ids.append(f"C{course.id}")
+        coreq_payload.append(
+            {
+                "id": f"COREQ{group.id}",
+                "group_id": group.id,
+                "kind": group.kind,
+                "label": group.label or f"COREQ {group.id}",
+                "member_ids": member_ids,
+            }
+        )
+
     payload: JsonPayloadT = {
         "meta": {
             "curriculum_id": curriculum.id,
@@ -200,6 +231,7 @@ def _build_json_payload(
         },
         "nodes": nodes,
         "links": links,
+        "coreq_groups": coreq_payload,
     }
     return payload
 
@@ -232,6 +264,7 @@ def _build_dot(payload: JsonPayloadT) -> str:
     lines: list[str] = [
         "digraph prereq {",
         "  rankdir=LR;",
+        "  compound=true;",
         "  node [shape=box];",
         f'  label="{safe_title}";',
         "  labelloc=top;",
@@ -240,7 +273,12 @@ def _build_dot(payload: JsonPayloadT) -> str:
 
     nodes = payload.get("nodes", [])
     links = payload.get("links", [])
-    if not isinstance(nodes, list) or not isinstance(links, list):
+    coreq_groups = payload.get("coreq_groups", [])
+    if (
+        not isinstance(nodes, list)
+        or not isinstance(links, list)
+        or not isinstance(coreq_groups, list)
+    ):
         raise CommandError("Invalid prerequisite graph payload.")
 
     node_by_id: dict[str, dict[str, object]] = {}
@@ -248,18 +286,18 @@ def _build_dot(payload: JsonPayloadT) -> str:
         if isinstance(node, dict):
             node_by_id[str(node.get("id", ""))] = node
 
-    for node in nodes:
-        node_id = str(node.get("id", ""))
+    def _node_line(node_id: str, indent: str = "  ") -> str:
+        node = node_by_id.get(node_id)
+        if not node:
+            return f"{indent}{node_id};"
         label = str(node.get("label", "")).replace('"', "'")
         shape = str(node.get("shape", "box"))
         color = str(node.get("color", "#6c757d"))
         is_in_curriculum = bool(node.get("is_in_curriculum", True))
         style_attr = ' style="dashed"' if not is_in_curriculum else ""
-        group_number = node.get("group_number")
-        if isinstance(group_number, int) and group_number > 0:
-            continue
-        lines.append(
-            f'  {node_id} [label="{label}" shape="{shape}" color="{color}"{style_attr}];'
+        return (
+            f'{indent}{node_id} [label="{label}" shape="{shape}" '
+            f'color="{color}"{style_attr}];'
         )
 
     edges = _build_edges(links)
@@ -275,76 +313,158 @@ def _build_dot(payload: JsonPayloadT) -> str:
             continue
         levels.setdefault(level_value, []).append(node_id)
 
-    group_map: dict[int, list[dict[str, object]]] = {}
+    alt_group_map: dict[int, list[str]] = {}
     for node in nodes:
         group_number = node.get("group_number")
         if isinstance(group_number, int) and group_number > 0:
-            group_map.setdefault(group_number, []).append(node)
+            alt_group_map.setdefault(group_number, []).append(str(node.get("id", "")))
 
-    record_group_map: dict[int, bool] = {}
-    for group_number in sorted(group_map):
-        group_nodes = group_map[group_number]
-        group_nodes.sort(key=_course_id_sort_key)
-        use_record_group = len(group_nodes) > 1
-        record_group_map[group_number] = use_record_group
-        if not use_record_group:
-            node_label = str(group_nodes[0].get("label", "")) if group_nodes else ""
+    node_to_coreq_cluster: dict[str, str] = {}
+    coreq_cluster_nodes: dict[str, list[str]] = {}
+    coreq_cluster_labels: dict[str, str] = {}
+    for group_entry in coreq_groups:
+        if not isinstance(group_entry, dict):
+            continue
+        cluster_name = f"cluster_COREQ{group_entry.get('group_id')}"
+        member_ids = group_entry.get("member_ids", [])
+        if not isinstance(member_ids, list):
+            continue
+        valid_member_ids = [
+            str(node_id)
+            for node_id in member_ids
+            if str(node_id) in node_by_id and str(node_id)
+        ]
+        deduped_member_ids = list(dict.fromkeys(valid_member_ids))
+        coreq_cluster_nodes[cluster_name] = deduped_member_ids
+        coreq_cluster_labels[cluster_name] = str(
+            group_entry.get("label") or group_entry.get("id") or "COREQ"
+        )
+
+    node_to_cluster: dict[str, str] = {}
+    cluster_nodes: dict[str, list[str]] = {}
+    cluster_labels: dict[str, str] = {}
+    cluster_types: dict[str, str] = {}
+
+    # Corequisite clusters get priority when a node belongs to both domains.
+    for cluster_name, member_ids in coreq_cluster_nodes.items():
+        free_member_ids: list[str] = []
+        for node_id in member_ids:
+            existing = node_to_coreq_cluster.get(node_id)
+            if existing and existing != cluster_name:
+                warning_msg = (
+                    "Node assigned to multiple corequisite groups in DOT export: "
+                    f"node={node_id}, keep={existing}, skip={cluster_name}."
+                )
+                logger.warning(warning_msg)
+                lines.append(f"  // WARNING: {warning_msg}")
+                continue
+            free_member_ids.append(node_id)
+        if len(free_member_ids) < 2:
+            node_label = (
+                str(node_by_id.get(free_member_ids[0], {}).get("label", ""))
+                if free_member_ids
+                else ""
+            )
             warning_msg = (
-                "Singleton required_group_number detected for DOT export: "
-                f"group={group_number}, node={node_label}. "
-                "Rendering as a simple node (no ALT record wrapper)."
+                "Singleton corequisite group detected for DOT export: "
+                f"group={cluster_name}, node={node_label}. "
+                "Rendering as simple node(s), no COREQ cluster."
             )
             logger.warning(warning_msg)
             lines.append(f"  // WARNING: {warning_msg}")
             continue
-        ports = "|".join(
-            f"<c{node.get('course_id')}> {node.get('label', '')}" for node in group_nodes
-        )
-        lines.append(
-            f'  ALT{group_number} [shape=record,label="{_dot_safe_label(ports)}"];'
-        )
+        cluster_nodes[cluster_name] = free_member_ids
+        cluster_labels[cluster_name] = coreq_cluster_labels.get(cluster_name, "COREQ")
+        cluster_types[cluster_name] = "coreq"
+        for node_id in free_member_ids:
+            node_to_coreq_cluster[node_id] = cluster_name
+            node_to_cluster[node_id] = cluster_name
+
+    for group_number in sorted(alt_group_map):
+        member_ids = sorted(alt_group_map[group_number])
+        member_ids = [
+            node_id for node_id in member_ids if node_id in node_by_id and node_id
+        ]
+        free_member_ids = [
+            node_id for node_id in member_ids if node_id not in node_to_cluster
+        ]
+        if len(free_member_ids) < 2:
+            node_label = (
+                str(node_by_id.get(free_member_ids[0], {}).get("label", ""))
+                if free_member_ids
+                else ""
+            )
+            warning_msg = (
+                "Singleton required_group_number detected for DOT export: "
+                f"group={group_number}, node={node_label}. "
+                "Rendering as simple node(s), no ALT cluster."
+            )
+            logger.warning(warning_msg)
+            lines.append(f"  // WARNING: {warning_msg}")
+            continue
+        cluster_name = f"cluster_ALT{group_number}"
+        cluster_nodes[cluster_name] = free_member_ids
+        cluster_labels[cluster_name] = f"ALT {group_number}"
+        cluster_types[cluster_name] = "alt"
+        for node_id in free_member_ids:
+            node_to_cluster[node_id] = cluster_name
+
+    for cluster_name in sorted(cluster_nodes):
+        cluster_label = _dot_safe_label(cluster_labels.get(cluster_name, cluster_name))
+        cluster_kind = cluster_types.get(cluster_name, "alt")
+        if cluster_kind == "coreq":
+            lines.extend(
+                [
+                    f"  subgraph {cluster_name} {{",
+                    f'    label="{cluster_label}";',
+                    "    style=rounded;",
+                    '    color="#198754";',
+                    "    penwidth=2;",
+                ]
+            )
+            member_text = " ".join(cluster_nodes[cluster_name])
+            lines.append(f"    {{ rank=same; {member_text}; }}")
+        else:
+            lines.extend(
+                [
+                    f"  subgraph {cluster_name} {{",
+                    f'    label="{cluster_label}";',
+                    '    style="rounded,dashed";',
+                    '    color="#6c757d";',
+                    "    penwidth=1.4;",
+                ]
+            )
+        for node_id in cluster_nodes[cluster_name]:
+            lines.append(_node_line(node_id, indent="    "))
+        lines.append("  }")
+
+    for node in nodes:
+        node_id = str(node.get("id", ""))
+        if not node_id or node_id in node_to_cluster:
+            continue
+        lines.append(_node_line(node_id))
 
     for src, dst in sorted(edges):
         src_id = f"C{src}"
         dst_id = f"C{dst}"
-        src_node = node_by_id.get(src_id)
-        dst_node = node_by_id.get(dst_id)
-        src_group = src_node.get("group_number") if src_node else None
-        dst_group = dst_node.get("group_number") if dst_node else None
-        if (
-            isinstance(src_group, int)
-            and src_group > 0
-            and record_group_map.get(src_group, False)
-        ):
-            src_ref = f"ALT{src_group}:c{src}"
-        else:
-            src_ref = src_id
-        if (
-            isinstance(dst_group, int)
-            and dst_group > 0
-            and record_group_map.get(dst_group, False)
-        ):
-            dst_ref = f"ALT{dst_group}:c{dst}"
-        else:
-            dst_ref = dst_id
-        lines.append(f"  {src_ref} -> {dst_ref};")
+        src_cluster = node_to_coreq_cluster.get(src_id)
+        dst_cluster = node_to_coreq_cluster.get(dst_id)
+        attrs: list[str] = []
+        # Use cluster boundary routing only for corequisite groups.
+        if src_cluster and src_cluster != dst_cluster:
+            attrs.append(f'ltail="{src_cluster}"')
+        if dst_cluster and src_cluster != dst_cluster:
+            attrs.append(f'lhead="{dst_cluster}"')
+        attrs_text = f" [{', '.join(attrs)}]" if attrs else ""
+        lines.append(f"  {src_id} -> {dst_id}{attrs_text};")
 
     level_values = sorted(levels)
     for level_value in level_values:
         level_nodes = []
         for node_id in sorted(levels[level_value]):
-            node = node_by_id.get(node_id)
-            group_number = node.get("group_number") if node else None
-            course_id = node.get("course_id") if node else None
-            if (
-                isinstance(group_number, int)
-                and group_number > 0
-                and course_id
-                and record_group_map.get(group_number, False)
-            ):
-                level_nodes.append(f"ALT{group_number}:c{course_id}")
-            else:
-                level_nodes.append(node_id)
+            if node_id not in node_by_id:
+                continue
+            level_nodes.append(node_id)
         lines.append(f'  L{level_value} [shape=plaintext label="S-{level_value}"];')
         lines.append(f"  {{ rank=same; L{level_value}; {' '.join(level_nodes)}; }}")
 
@@ -388,10 +508,17 @@ def _render_png(dot_path: Path, png_path: Path) -> None:
     """Call Graphviz dot to render a PNG from the dot file."""
     if not shutil.which("dot"):
         raise CommandError("Graphviz 'dot' not found in PATH.")
-    subprocess.run(
+    result = subprocess.run(
         ["dot", "-T", "png", str(dot_path), "-o", str(png_path)],
-        check=True,
+        capture_output=True,
+        text=True,
+        check=False,
     )
+    if result.returncode != 0:
+        err_text = (result.stderr or "").strip() or "dot failed without stderr output."
+        raise CommandError(
+            f"Graphviz dot failed for {dot_path.name}: {err_text}"
+        )
 
 
 def _resolve_owner_ids() -> OwnerIdsT:
@@ -428,6 +555,22 @@ def export_prereq_graph(curriculum: Curriculum) -> PrereqGraphPaths:
         )
         .order_by("course__short_code", "prerequisite_course__short_code")
     )
+    coreq_groups = (
+        CurriculumCourseRequirementGroup.objects.filter(
+            curriculum_course__curriculum=curriculum,
+            kind=RequirementKind.COREQ_ALL,
+        )
+        .select_related("curriculum_course__course__department__college")
+        .prefetch_related(
+            Prefetch(
+                "members",
+                queryset=CurriculumCourseRequirementMember.objects.select_related(
+                    "required_course__department__college"
+                ),
+            )
+        )
+        .order_by("id")
+    )
 
     output_dir = _output_dir()
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -440,7 +583,13 @@ def export_prereq_graph(curriculum: Curriculum) -> PrereqGraphPaths:
         if path.exists():
             path.unlink()
 
-    payload = _build_json_payload(curriculum, prerequisites, course_map, node_attrs)
+    payload = _build_json_payload(
+        curriculum,
+        prerequisites,
+        coreq_groups,
+        course_map,
+        node_attrs,
+    )
     json_path.write_text(
         json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8"
     )

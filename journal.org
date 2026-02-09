@@ -1,6 +1,91 @@
 
 * <2026-02-09 lun.>  UX
 
+** <2026-02-09 lun. 20:32> detail plan
+*** Add explicit requirement models (keep data structured, no encoded text field).
+
+  - Extend app/academics/models/curriculum_course.py with min_validated_credits (default 0).
+  - Add CurriculumCourseRequirementGroup model:
+      - FK to target CurriculumCourse
+      - kind choices: prereq_all, prereq_any, coreq_all
+      - ordering/display fields
+  - Add CurriculumCourseRequirementMember model:
+      - FK to group
+      - FK to required Course
+      - constraints: unique (group, required_course), no self-reference.
+
+*** Build clean admin UX for data entry.
+
+  - Register requirement-group admin with inline members.
+  - Add filters/search by curriculum, target course, kind.
+  - Add quick link/count from curriculum-course admin so staff can navigate requirements without coding
+    syntax.
+
+*** Implement requirement resolver in one shared helper.
+
+  - Create a functional helper in academics/website layer (no service class required).
+  - Inputs: student, target curriculum course, currently selected course IDs in this registration action.
+  - Outputs: pass/fail + machine-readable reasons:
+      - missing credits,
+      - missing prereq_all,
+      - unsatisfied prereq_any,
+      - incomplete coreq_all.
+
+*** Enforce strict coreq_all rule in registration flow.
+
+  - In student_dashboard registration POST path, require all coreq members to be selected in the same action.
+  - Do not treat previously passed courses as satisfying coreq_all (per your confirmation).
+  - Return clear user-facing messages per blocked course.
+
+*** Update availability display logic.
+
+  - In dashboard course eligibility/reason logic, surface:
+      - Requires at least X validated credits
+      - Must be selected together with ... for coreq failures
+      - prerequisite failures by group type.
+
+*** Update graph export/rendering for corequisites.
+for this make a new branch to test th feature.
+both alternate and corequesistes should be subgraph cluster in dot
+for alternate arrow go directly to the nodes in teh cluster
+for coreq the arrows to the cluster have lhead=<clustername> and those from ltail=<clustername>
+no need to add links between the nodes in teh cluster.  my only concern is how the cluster will position itslef amounb the other node. I experience that it had problem to keep the same rank as the other node of the same level. This is why I wnat this in a separate branch.
+for the elk, the difference to the current implemntation of alterante is mainly the heade and tail which should also not enter  the cluster for corequeiste and enter it for alternate.  then the hhighlight should be done around the corequsite as a whole and not just it's elements.
+
+  7. Transition strategy (manual migration by you).
+
+  - Manual DB migration creation/application for new field/models.
+  - Backfill script/command:
+      - convert existing Prerequisite rows into prereq_all groups.
+  - Keep old prerequisite read-path temporarily until backfill is validated, then remove legacy path.
+
+  8. Tests to add (recommended).
+
+  - Model validation:
+      - reject self member,
+      - reject duplicate member in same group.
+  - Rule evaluation:
+      - blocks when min_validated_credits not met,
+      - prereq_any passes with one member, fails with none,
+      - coreq_all fails on partial selection, passes on full same-action selection.
+  - View/integration:
+      - registration POST returns clear error when coreq set incomplete.
+  - Graph export:
+      - DOT output contains dir=none coreq ties,
+      - DOT output contains rank=same for each coreq group.
+
+
+** <2026-02-09 lun. 20:06> back to sofisticated prerequisites
+in my business logic
+- some course are lock until a certain number of credit hours has been validated
+- other courses have to be taken together. .
+  my model does not capture well this rules.
+  I know I coud simply put some rules in code for this but I am looking fo a clean ux for end user to enter those requirements.
+  mabye instead use the group of the course and if the group is a char/negative then the course are not alternative but need to be taken together.  this would show as a node containting them in elk and the containeing node would have dashed border for alternate mbember.  this is a suggestion. other are welcome.
+  for the elvel requirement, I see it as a new field attached to a course, specifying a number of credit to be obtained to do the course.
+  for practical resason all could be centralised in the gorup number converted to a textfield, zith this codeing positive capital letter coprerequisites, lowercqse letter alternate number positive, the number of credit that should have been validated.   could be done with different fields too. what do you propose ?
+
+
 ** <2026-02-09 lun. 13:26> twicks
 department names or curriculum/prgram names starting with 
 

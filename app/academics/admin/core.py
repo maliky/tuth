@@ -15,7 +15,6 @@ from app.academics.models.curriculum_course import CurriculumCourse
 from app.academics.models import (
     College,
     Course,
-    CurriculumCourseRequirementGroup,
     Curriculum,
     CurriculumStatus,
     Department,
@@ -39,8 +38,6 @@ from .inlines import (
     CourseCurriculumInline,
     CourseFeeStackInline,
     CurriculumCourseInline,
-    CurriculumCourseRequirementGroupInline,
-    CurriculumCourseRequirementMemberInline,
     DepartmentCourseInline,
     PrerequisiteInline,
     RequiresInline,
@@ -462,7 +459,6 @@ class CurriculumCourseAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         "curriculum",
         "level_number",
         "min_validated_credits",
-        "requirement_groups_link",
         "section_count_link",
         "faculties_links",
     )
@@ -483,7 +479,8 @@ class CurriculumCourseAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
     list_max_show_all = 500
 
     # Optional inline to list all curricula for this curriculum_course.
-    inlines = [CurriculumCourseRequirementGroupInline]
+    # Advanced requirement-group UI is intentionally hidden for now.
+    inlines = ()
 
     ordering = ("course__short_code",)
     actions = [update_curriculum]
@@ -536,15 +533,11 @@ class CurriculumCourseAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         )
         return format_html('<a href="{}">{}</a>', url, count)
 
+    # Advanced requirement-group link is kept dormant until the model is re-enabled.
     @admin.display(description="Requirement groups")
     def requirement_groups_link(self, obj: CurriculumCourse):
-        """Link to requirement groups filtered by curriculum course."""
-        count = obj.requirement_groups.count()
-        # Keep navigation one-click from the curriculum-course list to group editor.
-        url = reverse("admin:academics_curriculumcourserequirementgroup_changelist") + (
-            f"?curriculum_course__id__exact={obj.id}"
-        )
-        return format_html('<a href="{}">{}</a>', url, count)
+        """Return requirement-group count when dormant advanced UI is re-enabled."""
+        return obj.requirement_groups.count()
 
     @admin.display(description="Faculties")
     def faculties_links(self, obj):
@@ -685,38 +678,7 @@ class PrerequisiteAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModel
     # search_fields = ("course", "prerequisite_course", "curriculum")
 
 
-@admin.register(CurriculumCourseRequirementGroup)
-class CurriculumCourseRequirementGroupAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
-    """Admin for grouped prerequisite/corequisite requirements."""
-
-    list_display = (
-        "curriculum_course",
-        "kind",
-        "label",
-        "order",
-        "member_count",
-    )
-    list_filter = (
-        "kind",
-        CurriculumFilterAC,
-        DepartmentFilterAC,
-    )
-    autocomplete_fields = ("curriculum_course",)
-    inlines = [CurriculumCourseRequirementMemberInline]
-    search_fields = (
-        "label",
-        "curriculum_course__curriculum__short_name",
-        "curriculum_course__course__short_code",
-        "curriculum_course__course__code",
-    )
-    list_select_related = (
-        "curriculum_course__curriculum",
-        "curriculum_course__course",
-        "curriculum_course__course__department",
-    )
-    ordering = ("curriculum_course__course__short_code", "kind", "order")
-
-    @admin.display(description="Members")
-    def member_count(self, obj: CurriculumCourseRequirementGroup) -> int:
-        """Return number of linked member courses."""
-        return obj.members.count()
+# NOTE:
+# Advanced grouped prerequisite/corequisite admin stays intentionally unregistered.
+# Keep this implementation nearby for later re-activation once the simple model
+# transition is complete.
