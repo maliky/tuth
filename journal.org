@@ -26,8 +26,7 @@ Finaly when one clicks on the link resulting from the admin action I want the pa
 * <2026-02-02 lun. 07:23> DB sync
 1. You run the dump on preprod (redirection happens on preprod)
 
-  ssh jil@54.36.60.51 'cd Tusis/Tusis_app && docker compose -f docker-compose-preprod.yml exec
-  -T db pg_dump -Fc -Z 9 -U tusis_preprod -d tusis_preprod > /tmp/tusis_preprod.dump'
+  ssh jil@54.36.60.51 'cd Tusis/Tusis_app && docker compose -f docker-compose-preprod.yml exec -T db pg_dump -Fc -Z 9 -U tusis_preprod -d tusis_preprod > /tmp/tusis_preprod.dump'
 
   rsync jil@54.36.60.51:/tmp/tusis_preprod.dump /tmp/
 
