@@ -1,5 +1,95 @@
 
+* <2026-02-09 lun.>  UX
+
+** <2026-02-09 lun. 13:26> twicks
+department names or curriculum/prgram names starting with 
+
+** Curriculum UX <2026-02-09 lun. 13:25>
+  1. Update ELK graph interaction to support bidirectional highlighting.
+
+  - In app/academics/static/academics/js/prereq_graph_viewer_elk_compound.ts, extend graph indexing from only
+    incomingByTarget to both incomingByTarget and outgoingBySource.
+  - Keep current prerequisite highlight (ancestors) in blue.
+  - Add dependent-course highlight (descendants: courses that require the selected course) in green.
+
+  2. Add separate CSS classes for descendant nodes/edges.
+
+  - In app/academics/static/academics/js/prereq_graph_viewer_elk_compound.ts, add styles like node.is-
+    descendant and edge.is-descendant with green palette, while preserving is-ancestor in blue.
+  - Ensure selected node style remains distinct and not overridden.
+
+  3. Refactor highlight lifecycle to clear/apply both directions safely.
+
+  - Replace highlightAncestors with a combined handler (e.g., highlightRelations) that:
+      - clears prior highlight state,
+      - applies blue to ancestors,
+      - applies green to descendants,
+      - keeps selected node emphasized.
+  - Keep parent group nodes excluded from selection behavior as today.
+
+  4. Fix curriculum-course grouping behavior when level becomes “Other (99)”.
+
+  - In app/academics/models/curriculum_course.py, adjust level normalization so changing level_number to 99
+    explicitly resets grouping fields (year_number, semester_number) to the “other/undefined” bucket values.
+  - This prevents stale old year/semester grouping after a level change.
+
+  5. Make admin group label explicit for the “other” bucket.
+
+  - In app/academics/templates/admin/academics/curriculumcourse/tabular_inline.html, show a clear label like
+    “Other grouping” when row group corresponds to level 99/undefined bucket.
+  - Keep existing grouping/toggle UX unchanged.
+
+  6. Add a one-time data repair for existing inconsistent rows.
+
+  - Prepare a management command or migration-safe data script to realign existing CurriculumCourse rows where
+    level_number=99 but year_number/semester_number still point to prior groups.
+  - Run on preprod after deploy so old bad rows move into the new “other grouping” immediately.
+
+
+
 * <2026-02-08 dim.>  backend invoice/fee/payment
+
+** <2026-02-08 dim. 13:56>  tHNINKING / PREPARING TEMPLATE
+  For the integrated invoice/payment template editor, here is a compact implementation plan:
+
+  1. Add template configuration models
+
+  - DocumentTemplate (code, label, channel, active_version FK, timestamps, history).
+  - DocumentTemplateVersion (template FK, content, format, version_no, created_by, timestamps, is_active).
+  - Keep explicit template codes like invoice_snapshot, payment_receipt.
+
+  2. Add rendering abstraction
+
+  - One resolver function: render_finance_template(code, context) that fetches active version and renders
+    content.
+  - Fallback to filesystem template if no DB template exists.
+
+  3. Add finance/registrar editor UI
+
+  - Staff page under finance dashboard (not public admin raw model only).
+  - Features: list templates, edit content, duplicate version, activate version, rollback.
+  - Access restricted to finance/registrar roles.
+
+  4. Add preview + validation
+
+  - “Preview with sample context” button.
+  - Validate required placeholders before activation.
+  - Reject activation if required keys are missing.
+
+  5. Integrate current document outputs
+
+  - Wire invoice snapshot and payment receipt generation to resolver.
+  - Keep static template fallback during rollout to avoid downtime.
+
+  6. Guardrails + audit
+
+  - History on both template and versions.
+  - Activation log entry with actor/date.
+  - Optional “lock after activation” policy if needed later.
+
+  If you want, next step I can draft the exact model fields and admin/staff forms (no code edits yet) so you
+  can approve the schema before implementation.
+
 
 ** <2026-02-08 dim. 11:47>  Plan to create full blown invoices
   - P1 Pending payments are treated as settled money in balance math. app/finance/models/invoice.py sums all payments in refresh_totals_from_sources, while app/finance/utils.py creates full-
