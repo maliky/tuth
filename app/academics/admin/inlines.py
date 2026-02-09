@@ -233,6 +233,8 @@ class CurriculumCourseInline(admin.TabularInline):
 class CurriculumCourseRequirementMemberInline(admin.TabularInline):
     """Inline editor for requirement group members."""
 
+    # Dormant: this inline is intentionally not mounted in active admin screens.
+
     model = CurriculumCourseRequirementMember
     fk_name = "group"
     verbose_name = "Requirement member"
@@ -245,6 +247,8 @@ class CurriculumCourseRequirementMemberInline(admin.TabularInline):
 
 class CurriculumCourseRequirementGroupInline(admin.TabularInline):
     """Inline editor for requirement groups bound to a curriculum course."""
+
+    # Dormant: keep implementation for later re-enable of advanced requirements UI.
 
     model = CurriculumCourseRequirementGroup
     fk_name = "curriculum_course"
