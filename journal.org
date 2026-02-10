@@ -1,71 +1,30 @@
 * <2026-02-10 mar.> Tests local
 
-**  <2026-02-10 Tue 12:01> followup
+** <2026-02-10 Tue 16:07>  UX/UI tests failures to check latter BDD 
+  - 5 failed, 209 passed, 65 xfailed
+  - The date/datetime TypeError is not present in this latest run.
 
-  - Payer lookup values are defined in app/finance/models/status_types_methods.py and include student, gov, scholarship, other, mixed.
-  - Semester is date-based in app/timetable/models/semester.py (DateField), so your principle is correct.
-  - Current registrar labels in templates:
-      - app/website/templates/website/staff/registrar_grades_dashboard.html: Back to dashboard, Official transcript
-      - app/website/templates/website/staff/registrar_grade_transcript.html: Back to grades
-  - Locked-courses behavior currently in app/website/views/student_dashboard.py does not include all curriculum courses; many non-eligible courses are skipped instead of added to locked_courses.
+  Remaining failures are all Selenium/BDD:
 
-  For SQL check, use finance_payer (not tusis_payer unless you renamed tables):
+  1. Registrar dashboard UI flow failures (tests/bdd/test_registrar_grades_dashboard_bdd.py)
 
-  psql -U "$DJANGO_DB_USER" -h "$DJANGO_DB_HOST" -p "$DJANGO_DB_PORT" -d "$DJANGO_DB_NAME" -c "SELECT tablename FROM pg_tables WHERE
-  schemaname='public' AND tablename ILIKE '%payer%';"
-  psql -U "$DJANGO_DB_USER" -h "$DJANGO_DB_HOST" -p "$DJANGO_DB_PORT" -d "$DJANGO_DB_NAME" -c "SELECT code, label FROM finance_payer
-  ORDER BY code;"
+  - Timeout waiting for semester filter element.
+  - Timeout waiting for pagination area / go-to field.
+  - Missing "Official transcript" link.
+  - Pattern: expected UI elements are not present when the assertions run.
 
-  Questions to resolve remaining failing tests cleanly:
+  2. Student registration BDD failure (tests/bdd/test_student_registration_bdd.py)
 
-  1. For runtime payer auto-ensure, should we ensure all Payer.DEFAULT_VALUES on access, or only the minimum set (student/gov/mixed)?
-# > We should ensure all payer are there. This should be done at initialisation level at the DB. not realy during tests but as a fall back we can just make sure at runtime that all values are there.
-  2. For the locked-courses redesign, should registered, pending, and canceled courses stay in their own sections, or also appear in locked informational list?
-# well registered and pending are by definition not locked and should be in their own sections. canceled courses are lock but should be in their own section too.  locked categories are good. this should includ lockeb based on prerequistes or non availability at this semester.
-  3. For “show all curriculum courses in locked,” should courses with no section this semester be included with reason No scheduled section this semester?
-# > yes but only for the courses of that curriculum.  A curriculum has about 50-70 courses , this should be manageable on the interface with groups.
-  4. Registrar BDD failures are odd because labels still match template text; can you run one isolated test with -n 0 and share final  URL/page title when it fails?
-      - pytest tests/bdd/test_registrar_grades_dashboard_bdd.py::test_registrar_grades_default_semester_bdd -n 0 -vv -s --reuse-db
-# > leave this one for now      
-  5. Are you okay with a test strategy where BDD uses stable CSS/data attributes first, and link-text only as fallback assertions for  visible copy?
-# > What you want to do here is not clear to me.
-   
+  - Timeout after clicking register: selected section value does not clear.
+  - Pattern: submit action likely not completing successfully in UI flow (or UI state not updating).
 
-** <2026-02-10 Tue 11:00> global test review
-  - finance payer FK bootstrap issue
-    tests/academics/test_merges.py, tests/bdd/test_student_dashboard_links_bdd.py, and teardown in tests/finance/
-    test_invoice_fee_stack_amount.py all fail with course_tuition_payer_id='gov' missing in finance_payer when CourseInvoice.save()  auto-creates StudentSemesterInvoice (app/finance/models/invoice.py).
-  - date vs datetime bug
-    tests/finance/test_fee_stack.py and tests/finance/test_invoice_fee_stack_amount.py fail in app/finance/models/fee_stack.py  comparing date to datetime.
-  - dashboard requirements behavior mismatch
-    tests/website/test_course_requirements.py expects the target course in locked_courses, but it is absent (StopIteration).
-  - BDD UI locators/timeouts stale
-    tests/bdd/test_registrar_grades_dashboard_bdd.py and tests/bdd/test_student_registration_bdd.py fail on missing link text (Back to  dashboard, Official transcript) and waits timing out.
+  Notably:
 
-  Questions to unblock fixes:
+  - No Django internal server error tracebacks in this latest log; these look like UI-state/selector-flow issues, not    backend crash errors.
 
-  1. For payer defaults, do you want tests to always seed finance_payer (student/gov/mixed) in fixtures, or do you want model code to auto-ensure these rows at runtime?,
-# > We should  auto ensure theses rows at runtime. as it is done for other simple table mixin. The lookup values are in status_types_methods.Payer
-     
-  2. Are gov, student, and mixed still the canonical payer codes in your restored preprod DB?
-# >  well it should.  how can I check in sql  ?
-     #+BEGIN_SRC bash  -i
-psql -U "$DJANGO_DB_USER" -h "$DJANGO_DB_HOST" -p "$DJANGO_DB_PORT" -d "$DJANGO_DB_NAME" -c "SELECT * FROM tusis_payer ;" ?
-     #+END_SRC
-     
-  3. For semester handling, should code accept both datetime and date (normalize in model utility), or should fixtures be forced to  pass date only?
-# > What is the situation at the semester model level.  For me semester handling should be date based only. no need for datetime.
+  If you want, I can now debug these 2 buckets directly (start with registrar BDD page-state checks, then student
+  registration submit flow).
 
-  4. In course requirements, should that target course still appear in locked_courses, or has the dashboard logic intentionally moved it (e.g., hidden/not listed unless another condition)?
-# > Lets update the logic. We can show all the curriculum course in the locked section. This is informational for the students.  It will help them understand which course they can or cannot do.  We unlock only those for which registration is available (available/offered courses and prerequisites met)
-  5. Did the registrar page labels change from Back to dashboard / Official transcript to different text or buttons/icons?
-# > What do we have now ?     
-  6. Are you okay with me switching BDD selectors from link text to stable selectors (id/data-*) to reduce UI-text fragility?
-# > yes no problem. we can do that.     
-  7. Do you want me to fix only tests, or also patch app code where it is clearly a runtime bug (payer bootstrap + date normalization)?
-# > for now I just want to discuss the test,no edits at tests or app level.
-
-   
 
 ** <2026-02-10 mar. 09:27>  Copy from pre-prod to dev
 I want to focus a litte bit more on tests.  and set my local dev plateform to  debug effectively.  I've already copied the preprod db localy with a manual
