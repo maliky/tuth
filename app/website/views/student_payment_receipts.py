@@ -74,14 +74,11 @@ def student_payment_receipt(
     total_paid = sum((payment.amount_paid for payment in payments), Decimal("0.00"))
     payment_last_updates: PaymentUpdateMapT = {}
     if parent_invoice is not None and payments:
-        payment_history_row = (
-            Payment.history.filter(student_semester_invoice_id=parent_invoice.id)
-            .values("student_semester_invoice_id")
-            .annotate(last_change=Max("history_date"))
-            .first()
-        )
-        if payment_history_row and payment_history_row.get("last_change"):
-            payment_last_updates[parent_invoice.id] = payment_history_row["last_change"]
+        payment_history = Payment.history.filter(
+            student_semester_invoice_id=parent_invoice.id
+        ).aggregate(last_change=Max("history_date"))
+        if payment_history.get("last_change"):
+            payment_last_updates[parent_invoice.id] = payment_history["last_change"]
         paid_on_label = (
             format_datetime(payment_last_updates[parent_invoice.id])
             if parent_invoice.id in payment_last_updates
