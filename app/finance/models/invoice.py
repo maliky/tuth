@@ -10,7 +10,7 @@ from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from simple_history.models import HistoricalRecords
 
-from app.finance.models.status_types_methods import InvoiceStatus
+from app.finance.models.status_types_methods import InvoiceStatus, Payer
 from app.registry.models.registration import Registration
 from app.registry.models.status_types import RegistrationStatus
 from app.shared.mixins import StatusableMixin
@@ -30,6 +30,11 @@ def _clamp_non_negative(value: Decimal) -> Decimal:
     if value < Decimal("0.00"):
         return Decimal("0.00")
     return value
+
+
+def _ensure_payer_defaults() -> None:
+    """Ensure payer lookup values exist before invoice writes."""
+    Payer._populate_attributes_and_db()
 
 
 class StudentSemesterInvoice(StatusableMixin, models.Model):
@@ -206,6 +211,7 @@ class StudentSemesterInvoice(StatusableMixin, models.Model):
 
     def save(self, *args, **kwargs):
         """Keep monetary fields initialized before persisting."""
+        _ensure_payer_defaults()
         if self.balance is None:
             self.balance = self.initial_amount_due
         self.required_deposit_amount = self.initial_required_deposit()
@@ -311,6 +317,7 @@ class CourseInvoice(StatusableMixin, models.Model):
             return
         if not self.student_id or not self.semester_id:
             return
+        _ensure_payer_defaults()
         parent_invoice, _ = StudentSemesterInvoice.objects.get_or_create(
             student_id=self.student_id,
             semester_id=self.semester_id,
