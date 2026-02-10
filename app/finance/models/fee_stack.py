@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, TypeAlias
 
@@ -30,11 +30,16 @@ def _fee_type_codes_for_stack(stack_id: int) -> FeeTypeCodeSetT:
     )
 
 
-def _semester_start_date(semester: "Semester | None") -> date | None:
-    """Return semester start date for comparisons."""
+def _semester_start_date(semester: "Semester | date | datetime | None") -> date | None:
+    """Return normalized semester start date for comparisons."""
     if semester is None:
         return None
-    return getattr(semester, "start_date", None)
+    start_value = getattr(semester, "start_date", semester)
+    if isinstance(start_value, datetime):
+        return start_value.date()
+    if isinstance(start_value, date):
+        return start_value
+    return None
 
 
 def _is_newer_start(candidate: date | None, current: date | None) -> bool:
