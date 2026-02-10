@@ -1,4 +1,8 @@
 
+* <2026-02-10 mar.> DB migration
+** <2026-02-10 mar. 09:27>  Copy from pre-prod to dev
+I want to copy the db from my preprod plateform to my dev plateform.  I'm thinking of 'dump' from psql and then an import.  but I could also, may be, connect directly to the preprod db through ssh and copy it from them. I have the same user.
+
 * <2026-02-09 lun.>  UX
 
 ** <2026-02-09 lun. 20:32> detail plan
@@ -1058,7 +1062,7 @@ Finaly when one clicks on the link resulting from the admin action I want the pa
 * <2026-02-02 lun. 07:23> DB sync
 1. You run the dump on preprod (redirection happens on preprod)
 
-  ssh user@host 'cd Tusis/Tusis_app && docker compose -f docker-compose-preprod.yml exec
+  ssh user@host 'cd Tusis/Tusis_app && docker-compose -f docker-compose-preprod.yml exec
   -T db pg_dump -Fc -Z 9 -U tusis_preprod -d tusis_preprod > /tmp/tusis_preprod.dump'
 
   rsync user@host:/tmp/tusis_preprod.dump /tmp/
