@@ -307,3 +307,39 @@ def test_dashboard_surfaces_multiple_requirement_reason_lines(
         f"Complete at least one of: {req_any_a_label}, {req_any_b_label}." in line
         for line in target_payload["reason_lines"]
     )
+
+
+def test_dashboard_keeps_no_section_courses_in_locked_information_list(
+    client,
+    curriculum_course_factory,
+    semester_factory,
+    user_factory,
+) -> None:
+    """Courses without offered sections stay visible in locked informational cards."""
+    semester = _open_registration_semester(semester_factory)
+    target = curriculum_course_factory("950", "CURRI_NO_SECTION")
+    target.level_number = 3
+    target.save(update_fields=["level_number"])
+    student = _student_for_curriculum(
+        user_factory=user_factory,
+        curriculum=target.curriculum,
+        semester=semester,
+        username="no_section_student",
+    )
+
+    client.force_login(student.user)
+    response = client.get(reverse("student_dashboard"), {"semester": semester.id})
+    assert response.status_code == 200
+
+    target_code = target.course.short_code or target.course.code
+    available_codes = {row["code"] for row in response.context["available_courses"]}
+    assert target_code not in available_codes
+
+    locked_courses = response.context["locked_courses"]
+    target_payload = next(row for row in locked_courses if row["code"] == target_code)
+    assert target_payload["eligible"] is False
+    assert any(
+        line == "No scheduled section this semester."
+        for line in target_payload["reason_lines"]
+    )
+    assert target_payload["level_hint"] == "Level 3"

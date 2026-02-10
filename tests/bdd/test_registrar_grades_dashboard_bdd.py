@@ -9,7 +9,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from app.timetable.models.semester import Semester
 from tests.bdd.fixtures import RegistrarContext
 from tests.selenium.fixtures_portal import _login_to_portal
 
@@ -19,7 +18,10 @@ pytestmark = [
 ]
 
 
-@scenario("features/registrar_grades_dashboard.feature", "Defaults to current semester")
+@scenario(
+    "features/registrar_grades_dashboard.feature",
+    "Defaults to most recent semester with graded students",
+)
 def test_registrar_grades_default_semester_bdd():
     """Drive the default semester scenario."""
 
@@ -56,7 +58,44 @@ def registrar_user(registrar_context: RegistrarContext, registrar_user_factory) 
     registrar_context.user = registrar_user_factory("registrar_bdd")
 
 
-@given("the grades dashboard has a current semester with graded students")
+@given("the registrar data includes graded students in multiple semesters")
+def dashboard_has_graded_students_in_multiple_semesters(
+    registrar_context: RegistrarContext,
+    registrar_semester_pair_factory,
+    registrar_section_factory,
+    registrar_student_factory,
+    registrar_grade_factory,
+) -> None:
+    """Set up graded students in old/new semesters and keep the latest in context."""
+    _academic_year, previous, current = registrar_semester_pair_factory()
+    previous_section, previous_curriculum = registrar_section_factory(
+        previous,
+        course_number="100",
+        curriculum_short_name="CURRI_REG_MULTI",
+    )
+    previous_student = registrar_student_factory(
+        "student_bdd_previous",
+        previous_curriculum,
+        previous,
+    )
+    registrar_grade_factory(previous_student, previous_section)
+
+    current_section, current_curriculum = registrar_section_factory(
+        current,
+        course_number="101",
+        curriculum_short_name="CURRI_REG_MULTI",
+    )
+    current_student = registrar_student_factory(
+        "student_bdd_current",
+        current_curriculum,
+        current,
+    )
+    registrar_grade_factory(current_student, current_section)
+    registrar_context.semester = current
+    registrar_context.student = current_student
+
+
+@given("the registrar data includes graded students in the current semester")
 def dashboard_has_current_semester(
     registrar_context: RegistrarContext,
     registrar_semester_pair_factory,
@@ -64,7 +103,7 @@ def dashboard_has_current_semester(
     registrar_student_factory,
     registrar_grade_factory,
 ) -> None:
-    """Set up a semester, section, student, and grade."""
+    """Set up one graded student in the latest semester."""
     _academic_year, _previous, current = registrar_semester_pair_factory()
     section, curriculum = registrar_section_factory(current)
     student = registrar_student_factory("student_bdd", curriculum, current)
@@ -116,10 +155,13 @@ def registrar_opens_dashboard_filtered(
     selenium_driver.get(url)
 
 
-@then("the semester filter defaults to the current semester")
-def semester_filter_defaults(selenium_driver) -> None:
-    """Verify the default semester selection matches the current semester."""
-    expected_semester = Semester.get_current_semester()
+@then("the semester filter defaults to the most recent semester with graded students")
+def semester_filter_defaults(
+    registrar_context: RegistrarContext, selenium_driver
+) -> None:
+    """Verify the default semester selection matches the latest graded semester."""
+    assert registrar_context.semester is not None
+    expected_semester = registrar_context.semester
     expected_label = (
         f"{expected_semester.academic_year.code} · Semester {expected_semester.number}"
     )

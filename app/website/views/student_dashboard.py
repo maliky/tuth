@@ -80,6 +80,18 @@ def _append_reason_line(reason_lines: list[str], reason: str) -> None:
     reason_lines.append(text)
 
 
+def _curriculum_level_hint(curriculum_course: CurriculumCourse) -> str:
+    """Return a short curriculum placement hint for the course card UI."""
+    level_number = int(curriculum_course.level_number or 0)
+    if 1 <= level_number <= 10:
+        return f"Level {level_number}"
+    year_number = int(curriculum_course.year_number or 0)
+    semester_number = int(curriculum_course.semester_number or 0)
+    if 1 <= year_number <= 5 and semester_number in {1, 2}:
+        return f"Y{year_number}S{semester_number}"
+    return ""
+
+
 @login_required
 @require_POST
 def download_invoice_statement(request: HttpRequest) -> HttpResponse:
@@ -821,8 +833,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     for cc in curriculum_courses:
         course = cc.course
         course_sections = sections_by_course.get(course.id, [])
-        if not course_sections:
-            continue
+        has_scheduled_section = bool(course_sections)
         prereq_data = prereq_map.get(course.id, [])
         requirement_result = evaluate_curriculum_course_requirements(
             student=student,
@@ -845,6 +856,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 course.id not in cooldown_course_ids,
                 course.id not in attempt_blocked_course_ids,
                 not blocking_failures,
+                has_scheduled_section,
             ]
         )
 
@@ -865,7 +877,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 _append_reason_line(reason_lines, f"Complete {', '.join(missing)} first.")
             for requirement_line in requirement_reason_lines:
                 _append_reason_line(reason_lines, requirement_line)
-            if not course_sections:
+            if not has_scheduled_section:
                 _append_reason_line(reason_lines, "No scheduled section this semester.")
             if course.id not in allowed_course_ids:
                 _append_reason_line(reason_lines, "Already completed or blocked.")
@@ -894,6 +906,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             "reason_lines": reason_lines,
             "prerequisites": prereq_data,
             "sections": serialized_sections,
+            "level_hint": _curriculum_level_hint(cc),
             "status_label": "",
             "status_class": "bg-secondary",
             "locked_until": "",
@@ -925,10 +938,11 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 course_payload["status_label"] = "Canceled for semester"
             course_payload["status_class"] = "bg-secondary text-white"
             canceled_courses.append(course_payload)
-        elif course.id in attempt_blocked_course_ids:
-            locked_courses.append(course_payload)
         elif is_eligible:
             available_courses.append(course_payload)
+        else:
+            # Informational bucket: all non-selectable curriculum courses stay visible.
+            locked_courses.append(course_payload)
 
     gpa_result = get_cumulative_gpa(student=student, curriculum=student.curriculum)
     gpa = gpa_result["gpa"]

@@ -129,10 +129,7 @@ Load the environment variables from your local `.env-test` file, then run pytest
 #+BEGIN_SRC bash
 export $(grep -v '^#' .env | xargs)  # load variables
 pytest tests/
-#+END_SRC
-
-For parallel regression runs with reusable test DB and a saved log file:
-#+BEGIN_SRC bash
+# For parallel regression runs with reusable test DB and a saved log file:
 pytest ./tests -n 8  --dist=loadscope --reuse-db  -r fE 2>&1 | tee logs/tests.log
 #+END_SRC
 

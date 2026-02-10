@@ -72,6 +72,19 @@ def _clean_int(value: str | None) -> int | None:
         return None
 
 
+def _latest_graded_semester_id() -> int | None:
+    """Return the most recent semester id that has at least one grade."""
+    return (
+        Grade.objects.order_by(
+            "-section__semester__start_date",
+            "-section__semester__number",
+            "-section__semester_id",
+        )
+        .values_list("section__semester_id", flat=True)
+        .first()
+    )
+
+
 @login_required
 @permission_required("registry.view_grade", raise_exception=True)
 def registrar_student_autocomplete(request: HttpRequest) -> HttpResponse:
@@ -111,10 +124,8 @@ def registrar_grades_dashboard(request: HttpRequest) -> HttpResponse:
     if semester_param == "all":
         semester_id = None
     if not semester_param_present:
-        # Keep the default selection aligned with shared semester rules.
-        current_semester = Semester.get_current_semester()
-        if current_semester:
-            semester_id = current_semester.id
+        # Default to the latest semester that has graded students.
+        semester_id = _latest_graded_semester_id()
 
     students_qs = Student.objects.filter(grade__isnull=False).select_related("user")
     if semester_id:
@@ -259,8 +270,15 @@ def registrar_grades_dashboard(request: HttpRequest) -> HttpResponse:
                     f"{semester_gpa_points[semester_key] / sem_credits:.2f}"
                 )
 
+    all_semesters_selected = semester_param == "all" or (
+        not semester_param_present and semester_id is None
+    )
     semester_options = [
-        {"value": "all", "label": "All semesters", "selected": semester_param == "all"}
+        {
+            "value": "all",
+            "label": "All semesters",
+            "selected": all_semesters_selected,
+        }
     ]
     for sem in Semester.objects.select_related("academic_year").order_by(
         "-academic_year__start_date",

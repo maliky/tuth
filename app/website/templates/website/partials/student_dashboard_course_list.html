@@ -175,6 +175,9 @@
                 {% if course.elective %}
                   · <span class="badge bg-warning-subtle text-dark">Elective</span>
                 {% endif %}
+                {% if course.level_hint %}
+                  · <span class="small" title="Curriculum placement">{{ course.level_hint }}</span>
+                {% endif %}
               </p>
               <div class="course-meta">
                 {% for prereq in course.prerequisites %}
