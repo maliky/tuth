@@ -29,7 +29,7 @@ except ImportError as ie:
 
 DEBUG = os.getenv("DJANGO_DEBUG") == "True"
 # Allow large curriculum inlines in admin forms.
-DATA_UPLOAD_MAX_NUMBER_FIELDS = 6000
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 8000
 
 # python -c 'from django.core.management.utils import get_random_secret_key;
 # print(get_random_secret_key())'
