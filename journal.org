@@ -1,3 +1,29 @@
+* <2026-02-10 mar.> Tests local
+
+** <2026-02-10 mar. 09:27>  Copy from pre-prod to dev
+I want to focus a litte bit more on tests.  and set my local dev plateform to  debug effectively.  I've already copied the preprod db localy with a manual
+#+BEGIN_SRC bash
+  ssh user@host 'cd Tusis/Tusis_app && docker-compose -f docker-compose-preprod.yml exec
+  -T db pg_dump -Fc -Z 9 -U tusis_preprod -d tusis_preprod > /tmp/tusis_preprod.dump'
+  rsync user@host:/tmp/tusis_preprod.dump /tmp/
+  sudo -u postgres dropdb --if-exists --force tusis
+  sudo -u postgres createdb -O tusisuser tusis
+  sudo -u postgres pg_restore -v -d tusis --no-owner --no-privileges --role=tusisuser /tmp/tusis_preprod.dump
+#+END_SRC
+# Quick sanity check OK
+#+BEGIN_SRC bash  -i
+psql -U "$DJANGO_DB_USER" -h "$DJANGO_DB_HOST" -p "$DJANGO_DB_PORT" -d "$DJANGO_DB_NAME" -c "SELECT count(*) FROM django_migrations;"
+#+END_SRC
+
+Several things.
+Context, the machine is good Dell : 24 cpu /heart 16GB ram, graphic card with 8GB.  SSD disk.
+I am running mint.
+The main test I want to speed up are the UI/UX? tests using selenium ( grid option ?) the UX in particular tests should be Behavioral driven and I already started implementing some.
+I need help to finalise the setup.
+Secondly more practlicaly I just need a redicrect of the test output to a file for inspection.
+
+
+
 * <2026-02-09 Mon> Tests
 
   - 1e355b1 (finance core SSI refactor)
@@ -94,11 +120,6 @@ M2M fee-stack signal recomputation in your code means:
 
      # > The problem I have here is to set up the infrastructure to run selenium test effectively ( in parallele on a grid for eg.)
 
-
-
-* <2026-02-10 mar.> DB migration
-** <2026-02-10 mar. 09:27>  Copy from pre-prod to dev
-I want to copy the db from my preprod plateform to my dev plateform.  I'm thinking of 'dump' from psql and then an import.  but I could also, may be, connect directly to the preprod db through ssh and copy it from them. I have the same user.
 
 * <2026-02-09 lun.>  UX
 
