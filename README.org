@@ -131,6 +131,11 @@ export $(grep -v '^#' .env | xargs)  # load variables
 pytest tests/
 #+END_SRC
 
+For parallel regression runs with reusable test DB and a saved log file:
+#+BEGIN_SRC bash
+pytest ./tests -n 8  --dist=loadscope --reuse-db  -r fE 2>&1 | tee logs/tests.log
+#+END_SRC
+
 *** Browser UI smoke tests
 The Selenium suite exercises the public landing page and any future UI flows that require a real browser. Install the dev requirements, then run:
 #+BEGIN_SRC bash

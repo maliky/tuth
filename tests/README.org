@@ -71,6 +71,8 @@
    # Comment: distribute tests across workers; each worker requests a grid slot.
    - Run:
      - pytest tests/selenium -n 4
+   - Full-suite regression run (parallel + reusable DB + file log):
+     - pytest ./tests -n 8  --dist=loadscope --reuse-db  -r fE 2>&1 | tee logs/tests.log
    - Increase -n based on node slot count and CPU capacity.
    - If running multiple browsers, run per-browser batches:
      - SELENIUM_BROWSER=chrome pytest tests/selenium -n 2
