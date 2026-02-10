@@ -7,6 +7,7 @@ from datetime import date
 from typing import Any, Mapping, Optional, Self, cast
 
 from django.apps import apps
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Count
 from simple_history.models import HistoricalRecords
@@ -286,6 +287,11 @@ class Curriculum(StatusableMixin, models.Model):
         """Validate the curriculum and its current status."""
         super().clean()
         self.validate_status(CurriculumStatus.objects.all())
+        # Keep admin behavior explicit: active curricula must be approved.
+        if self.is_active and self.status_id != "approved":
+            raise ValidationError(
+                {"is_active": "Only approved curricula can be marked active."}
+            )
 
     class Meta:
         ordering = ["college", "short_name"]

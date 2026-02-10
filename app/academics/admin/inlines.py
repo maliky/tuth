@@ -17,6 +17,10 @@ from app.academics.models.requirement_group import (
     CurriculumCourseRequirementGroup,
     CurriculumCourseRequirementMember,
 )
+from app.academics.models.concentration import (
+    MajorCurriculumCourse,
+    MinorCurriculumCourse,
+)
 from app.finance.models.fee_stack import CourseFeeStack
 from app.timetable.models.semester import Semester
 
@@ -288,3 +292,31 @@ class DepartmentCourseInline(admin.TabularInline):
     autocomplet_fields = ("course",)
     fields = ("short_code", "number", "title")
     ordering = ("short_code",)
+
+
+class MajorCurriculumCourseInline(admin.TabularInline):
+    """Inline editor for major membership rows."""
+
+    model = MajorCurriculumCourse
+    fk_name = "major"
+    verbose_name_plural = "Major curriculum courses"
+    extra = 0
+    autocomplete_fields = ("curriculum_course",)
+    ordering = (
+        "curriculum_course__course__short_code",
+        "curriculum_course__course__code",
+    )
+
+
+class MinorCurriculumCourseInline(admin.TabularInline):
+    """Inline editor for minor membership rows."""
+
+    model = MinorCurriculumCourse
+    fk_name = "minor"
+    verbose_name_plural = "Minor curriculum courses"
+    extra = 0
+    autocomplete_fields = ("curriculum_course",)
+    ordering = (
+        "curriculum_course__course__short_code",
+        "curriculum_course__course__code",
+    )

@@ -1,0 +1,28 @@
+# Tusis Manual Draft
+
+This draft captures business and admin rules as they are implemented.
+It is a working document and should be updated when behavior changes.
+
+## Curriculum Rules
+
+- A curriculum can be marked active only when its validation status is `approved`.
+- Curriculum-course rows use `level_number` as the primary grouping input.
+- `level_number = 99` is treated as "other/undefined" and removed from normal level buckets.
+
+## Prerequisite and Requirement Rules
+
+- Direct prerequisite self-reference is invalid and should be rejected with a user-facing message.
+- Advanced requirement-group models are present for future use but can be hidden in admin when not active in current workflows.
+
+## Fee and Invoice Rules
+
+- Fees are stackable through fee stacks linked to courses and semester invoices.
+- Invoice amounts are stored values; changing fee definitions later does not automatically rewrite already stored invoice amounts.
+- Payment and invoice payer attribution uses payer entities (FK), not hardcoded text fields.
+
+## Admin Operating Rules
+
+- Bulk actions are preferred for mass updates (for example, attaching fee stacks to many courses).
+- Destructive operations should be explicit and auditable via history records where available.
+- Keep finance and curriculum admin screens aligned with current active models only.
+
