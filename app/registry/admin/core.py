@@ -4,7 +4,8 @@ from typing import Optional, TypeAlias, cast
 
 from django import forms
 from django.contrib import admin
-from django.db.models import Count, QuerySet
+from django.db.models import Case, CharField, Count, F, QuerySet, Value, When
+from django.db.models.functions import Cast, Concat
 from django.urls import path, reverse
 from django.utils.html import format_html
 from django.contrib.admin.widgets import FilteredSelectMultiple
@@ -266,7 +267,7 @@ class GradeAdmin(
     list_display = (
         "student",
         # "grade_code",
-        "section",
+        "section_short_code",
         "value__description",
         "section__semester",
         # "graded_on",
@@ -274,7 +275,12 @@ class GradeAdmin(
     # list_filter = ['section__semester', GradeSectionFilter]
     list_filter = [SemesterFilterAC, SectionBySemesterFilter, GradeStudentFilter]
     autocomplete_fields = ("student", "section", "value")
-    list_select_related = ("student__user", "section__semester", "value")
+    list_select_related = (
+        "student__user",
+        "section__semester",
+        "section__curriculum_course__course",
+        "value",
+    )
     search_fields = (
         "student__student_id",
         "student__long_name",
@@ -302,6 +308,38 @@ class GradeAdmin(
             )
         ]
         return custom + urls
+
+    def get_queryset(self, request):
+        """Annotate a sortable section short code for changelist ordering."""
+        qs = super().get_queryset(request)
+        section_code = Case(
+            When(
+                section__curriculum_course__course__short_code__isnull=True,
+                then=F("section__curriculum_course__course__code"),
+            ),
+            When(
+                section__curriculum_course__course__short_code="",
+                then=F("section__curriculum_course__course__code"),
+            ),
+            default=F("section__curriculum_course__course__short_code"),
+            output_field=CharField(),
+        )
+        # Keep a DB-level key so sorting is alphabetical on section short code.
+        return qs.annotate(
+            section_sort_code=Concat(
+                section_code,
+                Value(":s"),
+                Cast(F("section__number"), CharField()),
+            )
+        )
+
+    @admin.display(description="Section", ordering="section_sort_code")
+    def section_short_code(self, obj):
+        """Display the section short code and keep links in the FK field view."""
+        section = cast(Section | None, getattr(obj, "section", None))
+        if not section:
+            return "-"
+        return section.short_code
 
     @admin.display(description="Code")
     def grade_code(self, obj):

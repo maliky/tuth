@@ -34,7 +34,12 @@ from app.shared.admin.mixins import (
 )
 from app.people.admin.mixins import MergeWizardMixin, ModelT
 
-from .actions import attach_fee_stacks, update_curriculum, update_department
+from .actions import (
+    attach_fee_stacks,
+    update_curriculum,
+    update_department,
+    update_level_number,
+)
 from .filters import (
     CourseCollegeFilter,
     CourseCurriculumFilter,
@@ -909,7 +914,7 @@ class CurriculumCourseAdmin(
         "department_link",
         "curriculum",
         "level_number",
-        "min_validated_credits",
+        # Keep list compact; min_validated_credits remains editable on the form view.
         "section_count_link",
         "faculties_links",
     )
@@ -918,10 +923,11 @@ class CurriculumCourseAdmin(
         "curriculum__college",
         CurriculumFilterAC,
         DepartmentFilterAC,
+        "level_number",
         CurriculumCourseFacultyFilterAC,
     )
 
-    list_editable = ("curriculum",)
+    list_editable = ("curriculum", "level_number")
     autocomplete_fields = ("curriculum", "course")
     list_select_related = ("curriculum", "course")
     # Include short_code to support curriculum course autocomplete lookups.
@@ -934,7 +940,7 @@ class CurriculumCourseAdmin(
     inlines = ()
 
     ordering = ("course__short_code",)
-    actions = [update_curriculum]
+    actions = [update_curriculum, update_level_number]
 
     def get_queryset(self, request):
         """Annotate section totals and prefetch faculty for list_display."""

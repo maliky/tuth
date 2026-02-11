@@ -1,0 +1,21 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+  <h2>{{ title }}</h2>
+  <form method="post">
+    {% csrf_token %}
+
+    <input type="hidden" name="action" value="update_level_number">
+    {{ form.as_p }}
+
+    {% for cc in courses %}
+      <input type="hidden" name="{{ action_checkbox_name }}" value="{{ cc.pk }}">
+      <li>{{ cc.course.short_code }} -- {{ cc.course.title }} -- {{ cc.curriculum }}</li>
+    {% endfor %}
+
+    <button class="default" type="submit" name="apply" value="yes">
+      {% trans "Apply" %}
+    </button>
+  </form>
+{% endblock %}

@@ -10,6 +10,7 @@ from admin_searchable_dropdown.filters import (
 from django.contrib import admin
 from django.urls import reverse
 
+from app.academics.models.college import College
 from app.people.models.faculty import Faculty
 from app.shared.admin.filters import (
     BaseCollegeFilter,
@@ -34,6 +35,11 @@ SEMESTER_FIELD_LOOKPS = (
     ("student", "student__last_enrolled_semester"),
 )
 
+COLLEGE_FIELD_LOOKUPS = (
+    ("curriculum_course", "curriculum_course__curriculum__college"),
+    ("section", "section__curriculum_course__curriculum__college"),
+)
+
 SemesterAcademicYearFilterAc = AutocompleteFilterFactory(
     "Academic year",
     "academic_year",
@@ -44,6 +50,16 @@ SemesterAcademicYearFilterAc = AutocompleteFilterFactory(
 class SectionCollegeFilter(BaseCollegeFilter):
     field_path = "curriculum_course__curriculum__college"
     parameter_name = "curriculum_course__curriculum__college__id__exact"
+
+
+class CollegeFilterAC(ScopedAutocompleteFilter):
+    """Autocomplete filter constrained to colleges present in the queryset."""
+
+    title = "College"
+    parameter_name = "curriculum_course__curriculum__college"
+    field_name = "college"
+    lookup_map = COLLEGE_FIELD_LOOKUPS
+    target_model = College
 
 
 SectionFacultyFilterAc = AutocompleteFilterFactory("Faculty", "faculty")

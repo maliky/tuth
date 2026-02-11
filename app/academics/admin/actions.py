@@ -9,6 +9,7 @@ from django.shortcuts import redirect, render
 
 from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
+from app.academics.models.curriculum_course import CurriculumCourse
 from app.academics.models.department import Department
 from app.finance.models.fee_stack import CourseFeeStack, FeeStack
 
@@ -237,6 +238,66 @@ def attach_fee_stacks(modeladmin, request, queryset):
             "courses": queryset,
             "form": form,
             "title": "Attach fee stacks to selected courses",
+            "action_checkbox_name": admin.helpers.ACTION_CHECKBOX_NAME,
+        },
+    )
+
+
+@admin.action(description="Bulk update level number")
+def update_level_number(modeladmin, request, queryset):
+    """Bulk-update the level number on selected programmed courses."""
+
+    class HiddenIdListField(forms.MultipleChoiceField):
+        def validate(self, value):
+            pass  # allow any IDs
+
+    raw_level_choices = CurriculumCourse._meta.get_field("level_number").choices
+    level_choices = raw_level_choices if raw_level_choices is not None else ()
+
+    class _LevelNumberForm(forms.Form):
+        """Capture level number for the bulk curriculum-course update."""
+
+        _selected_action = HiddenIdListField(widget=forms.MultipleHiddenInput)
+        level_number = forms.TypedChoiceField(
+            choices=level_choices,
+            coerce=int,
+            label="Level number to apply",
+        )
+
+    if "apply" in request.POST:
+        form = _LevelNumberForm(request.POST)
+        if form.is_valid():
+            level_number = form.cleaned_data["level_number"]
+            updated = 0
+            for curriculum_course in queryset:
+                curriculum_course.level_number = level_number
+                # Keep year/semester derived values in sync via model save hook.
+                curriculum_course.save(
+                    update_fields=["level_number", "year_number", "semester_number"]
+                )
+                updated += 1
+            modeladmin.message_user(
+                request,
+                f"{updated} programmed course(s) updated to level {level_number}.",
+                messages.SUCCESS,
+            )
+            return redirect(request.get_full_path())
+    else:
+        form = _LevelNumberForm(
+            initial={
+                "_selected_action": request.POST.getlist(
+                    admin.helpers.ACTION_CHECKBOX_NAME
+                )
+            }
+        )
+
+    return render(
+        request,
+        "admin/update_level_number.html",
+        context={
+            "courses": queryset,
+            "form": form,
+            "title": "Bulk-set level number",
             "action_checkbox_name": admin.helpers.ACTION_CHECKBOX_NAME,
         },
     )
