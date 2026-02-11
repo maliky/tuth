@@ -23,6 +23,7 @@ from app.academics.admin.filters import CurriculumFilterAC, DepartmentFilterAC
 from app.people.admin.filters import (
     FacultyGroupFAC,
     FacultyTeachingDepartmentFilterAC,
+    StudentEnrolledCurriculumFilterAC,
     StudentCurriculumCourseFilterAC,
     StudentEntrySemFAC,
 )
@@ -608,6 +609,7 @@ class StudentAdmin(
     list_filter = (
         SemesterFilterAC,
         CurriculumFilterAC,
+        StudentEnrolledCurriculumFilterAC,
         StudentEntrySemFAC,
         StudentLevelFilter,
         StudentCurriculumCourseFilterAC,

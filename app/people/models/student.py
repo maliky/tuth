@@ -49,6 +49,12 @@ class Student(AbstractPerson):
     curriculum = models.ForeignKey(
         "academics.Curriculum", on_delete=models.CASCADE, related_name="students"
     )
+    curricula = models.ManyToManyField(
+        "academics.Curriculum",
+        through="people.StudentCurriculumEnrollment",
+        related_name="enrolled_students",
+        blank=True,
+    )
     history = HistoricalRecords()
 
     # ~~~~ Auto-filled ~~~~
@@ -180,6 +186,41 @@ class Student(AbstractPerson):
             self.curriculum = Curriculum.get_default()
 
         super().save(*args, **kwargs)
+        self._ensure_primary_curriculum_enrollment()
+
+    def _ensure_primary_curriculum_enrollment(self) -> None:
+        """Keep the through enrollment table aligned with current curriculum."""
+        from app.people.models.student_curriculum_enrollment import (
+            StudentCurriculumEnrollment,
+        )
+
+        entry_semester_id = self.entry_semester_id
+        enrollment, _ = StudentCurriculumEnrollment.objects.get_or_create(
+            student=self,
+            curriculum_id=self.curriculum_id,
+            defaults={
+                "entry_semester_id": entry_semester_id,
+                "is_primary": True,
+                "is_active": True,
+            },
+        )
+        update_fields: list[str] = []
+        if not enrollment.is_primary:
+            enrollment.is_primary = True
+            update_fields.append("is_primary")
+        if not enrollment.is_active:
+            enrollment.is_active = True
+            update_fields.append("is_active")
+        if entry_semester_id and enrollment.entry_semester_id != entry_semester_id:
+            enrollment.entry_semester_id = entry_semester_id
+            update_fields.append("entry_semester")
+        if update_fields:
+            enrollment.save(update_fields=update_fields)
+
+        StudentCurriculumEnrollment.objects.filter(
+            student=self,
+            is_primary=True,
+        ).exclude(curriculum_id=self.curriculum_id).update(is_primary=False)
 
     @classmethod
     def get_default(cls) -> "Student":
