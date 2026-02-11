@@ -1,11 +1,11 @@
 """Module with the merging function for academic objects."""
 
-from typing import TYPE_CHECKING, Literal, TypeAlias, no_type_check
+from typing import TYPE_CHECKING, Literal, TypeAlias, cast, no_type_check
 from collections import defaultdict
 
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import models, transaction
 from django.db.models import Count, Q
 from django.db.models.deletion import ProtectedError
 
@@ -34,6 +34,7 @@ CourseMergeSummaryT: TypeAlias = dict[str, int]
 ConflictChoiceT = Literal["keep_target", "keep_source", "merge", "skip"]
 ConflictChoiceByCourseIdT: TypeAlias = dict[int, ConflictChoiceT]
 ConflictCurriculumCoursePairT: TypeAlias = tuple[CurriculumCourse, CurriculumCourse]
+SectionMergeResultT: TypeAlias = dict[str, int]
 
 MERGE_CHOICE_KEEP_TARGET: ConflictChoiceT = "keep_target"
 MERGE_CHOICE_KEEP_SOURCE: ConflictChoiceT = "keep_source"
@@ -158,6 +159,15 @@ def merge_curricula_action(curriculum_admin: "CurriculumAdmin", request, queryse
                 f"{summary['is_elective_conflicts']} curriculum course(s)."
             ),
         )
+    if summary["sections_skipped_grade_conflict"]:
+        messages.warning(
+            request,
+            (
+                "Skipped "
+                f"{summary['sections_skipped_grade_conflict']} section merge(s) "
+                "because overlapping students had different grade values."
+            ),
+        )
     if summary["sections_retained_protected"]:
         messages.warning(
             request,
@@ -235,6 +245,7 @@ def _keep_target_curriculum_course(
         "sections_moved": 0,
         "sections_merged": 0,
         "sections_retained_protected": 0,
+        "sections_skipped_grade_conflict": 0,
         "source_retained_protected": 0,
     }
     _merge_curriculum_course_links(target, source)
@@ -256,6 +267,7 @@ def _merge_curriculum_course_conflict(
             "sections_moved": 0,
             "sections_merged": 0,
             "sections_retained_protected": 0,
+            "sections_skipped_grade_conflict": 0,
             "source_retained_protected": 0,
         }
     if choice == MERGE_CHOICE_KEEP_SOURCE:
@@ -292,6 +304,7 @@ def merge_curricula(
         "majors_moved": 0,
         "minors_moved": 0,
         "sections_retained_protected": 0,
+        "sections_skipped_grade_conflict": 0,
         "protected_deletes": 0,
         "conflicts_kept_target": 0,
         "conflicts_kept_source": 0,
@@ -349,6 +362,9 @@ def merge_curricula(
                 summary["sections_retained_protected"] += moved[
                     "sections_retained_protected"
                 ]
+                summary["sections_skipped_grade_conflict"] += moved[
+                    "sections_skipped_grade_conflict"
+                ]
                 if moved["source_retained_protected"]:
                     summary["protected_deletes"] += moved["source_retained_protected"]
                     skip_delete = True
@@ -387,21 +403,25 @@ def _merge_curriculum_course_to_target(
         "sections_moved": 0,
         "sections_merged": 0,
         "sections_retained_protected": 0,
+        "sections_skipped_grade_conflict": 0,
         "source_retained_protected": 0,
     }
     _merge_curriculum_course_links(target, source)
     source_sections = Section.objects.filter(curriculum_course=source)
     for section in source_sections:
-        conflict = Section.objects.filter(
-            curriculum_course=target,
-            semester_id=section.semester_id,
-            number=section.number,
-        ).first()
-        if conflict:
-            if _merge_sections(conflict, section):
-                summary["sections_merged"] += 1
+        conflict = _pick_section_merge_candidate(target, section)
+        if conflict is not None:
+            merge_result = _merge_sections(conflict, section)
+            if merge_result["sections_merged"]:
+                summary["sections_merged"] += merge_result["sections_merged"]
+            elif merge_result["sections_skipped_grade_conflict"]:
+                summary["sections_skipped_grade_conflict"] += merge_result[
+                    "sections_skipped_grade_conflict"
+                ]
             else:
-                summary["sections_retained_protected"] += 1
+                summary["sections_retained_protected"] += merge_result[
+                    "sections_retained_protected"
+                ]
             continue
         section.curriculum_course = target
         section.save(update_fields=["curriculum_course"])
@@ -515,6 +535,15 @@ def merge_courses_action(course_admin: "CourseAdmin", request, queryset):
             request,
             f"Skipped {summary['prerequisites_skipped']} prerequisite row(s).",
         )
+    if summary["sections_skipped_grade_conflict"]:
+        messages.warning(
+            request,
+            (
+                "Skipped "
+                f"{summary['sections_skipped_grade_conflict']} section merge(s) "
+                "because overlapping students had different grade values."
+            ),
+        )
     if summary["sections_retained_protected"]:
         messages.warning(
             request,
@@ -570,6 +599,7 @@ def merge_courses_by_short_code_action(
         "skipped_invoices": 0,
         "prerequisites_skipped": 0,
         "sections_retained_protected": 0,
+        "sections_skipped_grade_conflict": 0,
         "protected_deletes": 0,
     }
     for _short_code, items in grouped.items():
@@ -584,6 +614,9 @@ def merge_courses_by_short_code_action(
         summary["prerequisites_skipped"] += group_summary["prerequisites_skipped"]
         summary["sections_retained_protected"] += group_summary[
             "sections_retained_protected"
+        ]
+        summary["sections_skipped_grade_conflict"] += group_summary[
+            "sections_skipped_grade_conflict"
         ]
         summary["protected_deletes"] += group_summary["protected_deletes"]
 
@@ -606,6 +639,15 @@ def merge_courses_by_short_code_action(
         messages.info(
             request,
             f"Skipped {summary['prerequisites_skipped']} prerequisite row(s).",
+        )
+    if summary["sections_skipped_grade_conflict"]:
+        messages.warning(
+            request,
+            (
+                "Skipped "
+                f"{summary['sections_skipped_grade_conflict']} section merge(s) "
+                "because overlapping students had different grade values."
+            ),
         )
     if summary["sections_retained_protected"]:
         messages.warning(
@@ -648,6 +690,7 @@ def merge_courses(target: Course, sources):
         "prerequisites_moved": 0,
         "prerequisites_skipped": 0,
         "sections_retained_protected": 0,
+        "sections_skipped_grade_conflict": 0,
         "protected_deletes": 0,
     }
     target_cc_map = {
@@ -675,6 +718,9 @@ def merge_courses(target: Course, sources):
                 summary["sections_merged"] += moved["sections_merged"]
                 summary["sections_retained_protected"] += moved[
                     "sections_retained_protected"
+                ]
+                summary["sections_skipped_grade_conflict"] += moved[
+                    "sections_skipped_grade_conflict"
                 ]
                 summary["protected_deletes"] += moved["source_retained_protected"]
                 summary["curriculum_courses_merged"] += 1
@@ -829,6 +875,15 @@ def merge_curriculum_courses_action(course_admin, request, queryset):
                 f"{summary['is_elective_conflicts']} selection(s)."
             ),
         )
+    if summary["sections_skipped_grade_conflict"]:
+        messages.warning(
+            request,
+            (
+                "Skipped "
+                f"{summary['sections_skipped_grade_conflict']} section merge(s) "
+                "because overlapping students had different grade values."
+            ),
+        )
     if summary["sections_retained_protected"]:
         messages.warning(
             request,
@@ -869,6 +924,7 @@ def merge_curriculum_courses(target: CurriculumCourse, sources):
         "is_required_conflicts": 0,
         "is_elective_conflicts": 0,
         "sections_retained_protected": 0,
+        "sections_skipped_grade_conflict": 0,
         "protected_deletes": 0,
     }
     for src in sources:
@@ -892,16 +948,19 @@ def merge_curriculum_courses(target: CurriculumCourse, sources):
         _merge_curriculum_course_links(target, src)
         source_sections = Section.objects.filter(curriculum_course=src)
         for section in source_sections:
-            conflict = Section.objects.filter(
-                curriculum_course=target,
-                semester_id=section.semester_id,
-                number=section.number,
-            ).first()
-            if conflict:
-                if _merge_sections(conflict, section):
-                    summary["sections_merged"] += 1
+            conflict = _pick_section_merge_candidate(target, section)
+            if conflict is not None:
+                merge_result = _merge_sections(conflict, section)
+                if merge_result["sections_merged"]:
+                    summary["sections_merged"] += merge_result["sections_merged"]
+                elif merge_result["sections_skipped_grade_conflict"]:
+                    summary["sections_skipped_grade_conflict"] += merge_result[
+                        "sections_skipped_grade_conflict"
+                    ]
                 else:
-                    summary["sections_retained_protected"] += 1
+                    summary["sections_retained_protected"] += merge_result[
+                        "sections_retained_protected"
+                    ]
                 continue
             section.curriculum_course = target
             section.save(update_fields=["curriculum_course"])
@@ -935,13 +994,143 @@ def _merge_curriculum_course_links(
         minor_link.save(update_fields=["curriculum_course"])
 
 
-def _merge_sections(target: Section, source: Section) -> bool:
+def _pick_section_merge_candidate(
+    target_curriculum_course: CurriculumCourse,
+    source_section: Section,
+) -> Section | None:
+    """Return a deterministic section merge candidate for a source section."""
+    same_number = Section.objects.filter(
+        curriculum_course=target_curriculum_course,
+        semester_id=source_section.semester_id,
+        number=source_section.number,
+    ).first()
+    if same_number is not None:
+        return same_number
+    # > If only one target section exists in the semester, treat it as candidate.
+    same_semester = list(
+        Section.objects.filter(
+            curriculum_course=target_curriculum_course,
+            semester_id=source_section.semester_id,
+        ).order_by("number", "id")[:2]
+    )
+    if len(same_semester) == 1:
+        return same_semester[0]
+    return None
+
+
+def _grade_value_map_for_section(section: Section) -> dict[int, int | None]:
+    """Return grade values keyed by student id for a section."""
+    return {
+        student_id: value_id
+        for student_id, value_id in Grade.objects.filter(section=section).values_list(
+            "student_id",
+            "value_id",
+        )
+    }
+
+
+def _has_mergeable_grade_overlap(target: Section, source: Section) -> bool:
+    """Return True when overlapping student grades are compatible for merging."""
+    target_grade_map = _grade_value_map_for_section(target)
+    source_grade_map = _grade_value_map_for_section(source)
+    overlapping_students = set(target_grade_map).intersection(source_grade_map)
+    if not overlapping_students:
+        return True
+    for student_id in overlapping_students:
+        if target_grade_map[student_id] != source_grade_map[student_id]:
+            return False
+    return True
+
+
+def _section_default_value(field_name: str):
+    """Return the effective default value for a section model field."""
+    field = cast(models.Field, Section._meta.get_field(field_name))
+    if field.has_default():
+        return field.get_default()
+    if getattr(field, "null", False):
+        return None
+    return None
+
+
+def _is_non_default_section_value(field_name: str, value) -> bool:
+    """Return True when a section field value differs from its default."""
+    return bool(value != _section_default_value(field_name))
+
+
+def _append_section_merge_notes(target: Section, notes: list[str]) -> None:
+    """Append structured merge notes to the target section info field."""
+    if not notes:
+        return
+    existing_info = (target.info or "").strip()
+    note_block = "\n".join(notes)
+    target.info = (
+        f"{existing_info}\n{note_block}".strip() if existing_info else note_block
+    )
+
+
+def _reconcile_section_fields(target: Section, source: Section) -> list[str]:
+    """Reconcile section metadata and return update_fields for saving target."""
+    update_fields: set[str] = set()
+    notes: list[str] = []
+
+    lowest_number = min(int(target.number), int(source.number))
+    if int(target.number) != lowest_number:
+        target.number = lowest_number
+        update_fields.add("number")
+    if _is_non_default_section_value("number", source.number):
+        notes.append(f"[merge] source non-default number={source.number}")
+    if _is_non_default_section_value("number", target.number):
+        notes.append(f"[merge] target non-default number={target.number}")
+
+    field_names = ("faculty_id", "start_date", "end_date", "max_seats")
+    for field_name in field_names:
+        target_value = getattr(target, field_name)
+        source_value = getattr(source, field_name)
+        if target_value == source_value:
+            if _is_non_default_section_value(field_name, target_value):
+                notes.append(f"[merge] both non-default {field_name}={target_value}")
+            continue
+
+        target_non_default = _is_non_default_section_value(field_name, target_value)
+        source_non_default = _is_non_default_section_value(field_name, source_value)
+        if target_non_default:
+            notes.append(f"[merge] target non-default {field_name}={target_value}")
+        if source_non_default:
+            notes.append(f"[merge] source non-default {field_name}={source_value}")
+
+        if target_non_default and not source_non_default:
+            continue
+        if source_non_default and not target_non_default:
+            setattr(target, field_name, source_value)
+            update_fields.add(field_name.removesuffix("_id"))
+            continue
+        if target_non_default and source_non_default:
+            setattr(target, field_name, _section_default_value(field_name))
+            update_fields.add(field_name.removesuffix("_id"))
+
+    _append_section_merge_notes(target, notes)
+    if notes:
+        update_fields.add("info")
+    return sorted(update_fields)
+
+
+def _merge_sections(target: Section, source: Section) -> SectionMergeResultT:
     """Merge a conflicting section into target, moving related records.
 
     Returns:
-        bool: True when the source section was deleted, False when grades still
-        protect it and it must be retained.
+        SectionMergeResultT: Merge outcome counters keyed by result type.
     """
+    if not _has_mergeable_grade_overlap(target, source):
+        return {
+            "sections_merged": 0,
+            "sections_retained_protected": 0,
+            "sections_skipped_grade_conflict": 1,
+        }
+
+    updated_fields = _reconcile_section_fields(target, source)
+    if updated_fields:
+        target.save(update_fields=updated_fields)
+
     for session in source.sessions.all():
         schedule_id = session.schedule_id
         if schedule_id is not None:
@@ -966,6 +1155,14 @@ def _merge_sections(target: Section, source: Section) -> bool:
 
     try:
         source.delete()
-        return True
+        return {
+            "sections_merged": 1,
+            "sections_retained_protected": 0,
+            "sections_skipped_grade_conflict": 0,
+        }
     except ProtectedError:
-        return False
+        return {
+            "sections_merged": 0,
+            "sections_retained_protected": 1,
+            "sections_skipped_grade_conflict": 0,
+        }

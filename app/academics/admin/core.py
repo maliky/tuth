@@ -751,6 +751,16 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
                 f"Merged {summary['sections_merged']} conflicting section(s).",
                 level=messages.WARNING,
             )
+        if summary["sections_skipped_grade_conflict"]:
+            self.message_user(
+                request,
+                (
+                    "Skipped "
+                    f"{summary['sections_skipped_grade_conflict']} section merge(s) "
+                    "because overlapping students had different grade values."
+                ),
+                level=messages.WARNING,
+            )
         if summary["prerequisites_skipped"]:
             self.message_user(
                 request,
@@ -834,6 +844,9 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         return {
             "merged": summary.get("curricula_merged", 0),
             "sections_merged": summary.get("sections_merged", 0),
+            "sections_skipped_grade_conflict": summary.get(
+                "sections_skipped_grade_conflict", 0
+            ),
             "skipped_invoices": summary.get("skipped_invoices", 0),
             "credit_hours_conflicts": summary.get("credit_hours_conflicts", 0),
             "is_required_conflicts": summary.get("is_required_conflicts", 0),

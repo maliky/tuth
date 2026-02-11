@@ -74,6 +74,10 @@
         For each conflict: keep target row, keep source values, merge sections/grades,
         or skip this course (source curriculum remains retained for that conflict).
       </p>
+      <p>
+        Section merges are grade-aware: overlapping students must have matching
+        grade values in both sections. When merged, the lower section number is kept.
+      </p>
       {% if conflict_rows %}
         <table>
           <thead>

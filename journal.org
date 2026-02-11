@@ -14,24 +14,11 @@ I want to caputre this rule for merging section with grades between two distinc
   the info field of the merged section.
 
 *** discussion 2
-  - No, there is currently no DB constraint that enforces “one successful section
-    per course per student.”
-  - Existing constraints are only:
-      - Grade: unique (student, section) in app/registry/models/grade.py
-      - Registration: unique (student, section) in app/registry/models/registration.py
-  - So a student can still have multiple passed grades for the same course across different sections/curricula.
-  - Student.passed_courses() in app/people/models/student.py helps eligibility
-    logic, but it is not a hard DB guard.
-
-  Inconsistencies To Resolve
-
 # > keep lowest existing section number among merge candidates.
 # > “Merge section when grades are same” only for overlapping students with 2 section of the same course
 
 
-  One important note: the last commit 8e62fd3 also included pre-staged app/
-  academics/prereq_graph.py and journal.org. If you want, I can split/fix that
-  history in the next commit.
+
 
 
 *** discussion

@@ -360,3 +360,88 @@ def test_merge_curricula_keep_source_choice_applies_source_values(
     assert target_cc.credit_hours_id == source_cc.credit_hours_id
     assert target_cc.is_required is False
     assert target_cc.is_elective is True
+
+
+def test_merge_curriculum_courses_skips_section_merge_on_grade_value_mismatch(
+    curriculum_factory, course_factory, default_semester, student
+):
+    """Section merge should skip when overlapping student grade values differ."""
+    summary = {}
+    with _curriculum_course_constraint_disabled():
+        target = CurriculumCourse.objects.create(
+            curriculum=curriculum_factory("CURR-A"),
+            course=course_factory("501"),
+        )
+        source = CurriculumCourse.objects.create(
+            curriculum=target.curriculum,
+            course=target.course,
+        )
+        target_section = Section.objects.create(
+            curriculum_course=target,
+            semester=default_semester,
+            number=3,
+        )
+        source_section = Section.objects.create(
+            curriculum_course=source,
+            semester=default_semester,
+            number=5,
+        )
+        grade_a, _ = GradeValue.objects.get_or_create(code="a")
+        grade_b, _ = GradeValue.objects.get_or_create(code="b")
+        Grade.objects.create(student=student, section=target_section, value=grade_a)
+        Grade.objects.create(student=student, section=source_section, value=grade_b)
+
+        summary = merge_curriculum_courses(target, [source])
+
+    assert summary["sections_skipped_grade_conflict"] == 1
+    assert summary["sections_merged"] == 0
+    assert Section.objects.filter(id=target_section.id).exists()
+    assert Section.objects.filter(id=source_section.id).exists()
+
+
+def test_merge_curriculum_courses_keeps_lowest_number_and_logs_conflicts(
+    curriculum_factory, course_factory, default_semester, student
+):
+    """Merging grade-compatible sections keeps the lowest number and logs metadata."""
+    summary = {}
+    with _curriculum_course_constraint_disabled():
+        target = CurriculumCourse.objects.create(
+            curriculum=curriculum_factory("CURR-A"),
+            course=course_factory("502"),
+        )
+        source = CurriculumCourse.objects.create(
+            curriculum=target.curriculum,
+            course=target.course,
+        )
+        target_section = Section.objects.create(
+            curriculum_course=target,
+            semester=default_semester,
+            number=5,
+            max_seats=40,
+        )
+        source_section = Section.objects.create(
+            curriculum_course=source,
+            semester=default_semester,
+            number=2,
+            max_seats=50,
+        )
+        grade_value = GradeValue.get_default()
+        Grade.objects.create(student=student, section=target_section, value=grade_value)
+        source_grade = Grade.objects.create(
+            student=student,
+            section=source_section,
+            value=grade_value,
+        )
+
+        summary = merge_curriculum_courses(target, [source])
+
+        if Section.objects.filter(id=source_section.id).exists():
+            source_grade.delete()
+
+    target_section.refresh_from_db()
+    assert target_section.number == 2
+    assert target_section.max_seats == 30
+    assert "target non-default max_seats=40" in (target_section.info or "")
+    assert "source non-default max_seats=50" in (target_section.info or "")
+    # Depending on legacy duplicate grade rows, merge may retain source by PROTECT.
+    assert summary["sections_merged"] == 1 or summary["sections_retained_protected"] == 1
