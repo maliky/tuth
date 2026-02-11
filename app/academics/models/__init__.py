@@ -12,6 +12,7 @@ from .requirement_group import (
     CurriculumCourseRequirementMember,
     RequirementKind,
 )
+from .student_curriculum_enrollment import AcademicStudentCurriculumEnrollment
 
 __all__ = [
     "College",
@@ -28,4 +29,5 @@ __all__ = [
     "CurriculumCourseRequirementGroup",
     "CurriculumCourseRequirementMember",
     "RequirementKind",
+    "AcademicStudentCurriculumEnrollment",
 ]

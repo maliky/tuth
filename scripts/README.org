@@ -1,81 +1,173 @@
-# Merge Conflict SQL Scripts
+# SQL Scripts Guide
 
-These scripts are intended to be run *before* hard merges so you can review collisions (duplicate courses, section overlaps, invoice clashes, etc.) in advance.
-The level-number normalizer updates curriculum-course rows based on a unique
-course level, so you can align program levels across curricula without
-manual edits.
+This folder contains operational SQL scripts for merge prechecks, data repair,
+and one-time backfills.
 
-** Dockerized (preprod) workflow
+* How to run scripts
 
-Run `psql` inside the database container, then load a script.
+** Dockerized preprod
+
+Run a script with:
 
 #+BEGIN_SRC bash
-docker-compose -f docker-compose-preprod.yml exec db  psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+cat scripts/<script_name>.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
 #+END_SRC
 
-Inside the `psql` prompt:
+For scripts that need parameters:
+
+#+BEGIN_SRC bash
+cat scripts/<script_name>.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v source_id=1 -v target_id=2
+#+END_SRC
+
+** Dev / local
+
+With direct psql:
+
+#+BEGIN_SRC bash
+psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+#+END_SRC
+
+With Django dbshell:
+
+#+BEGIN_SRC bash
+python manage.py dbshell
+#+END_SRC
+
+Then run:
 
 #+BEGIN_SRC sql
-\set source_id 1
-\set target_id 2
-\i scripts/course_merge_conflicts.sql
+\i scripts/<script_name>.sql
 #+END_SRC
 
-Replace the script name as needed:
-- =scripts/course_merge_conflicts.sql=
-- =scripts/curriculumcourse_merge_conflicts.sql=
-- =scripts/curriculum_merge_conflicts.sql=
-- =scripts/department_merge_conflicts.sql=
-- =scripts/student_merge_conflicts.sql=
-- =scripts/normalize_curriculumcourse_level_by_course.sql=
-- =scripts/repair_curriculumcourse_other_grouping.sql=
+* Script catalog
 
-You can also pipe the script directly into psql:
+*** =backfill_student_curriculum_enrollment.sql=
+Short description:
+- Backfills =people_studentcurriculumenrollment= from =people_student.curriculum_id=.
+- Sets FK-linked enrollment as primary and keeps it active.
+- Safe to re-run (idempotent).
+
+Example:
+
+#+BEGIN_SRC bash
+cat scripts/backfill_student_curriculum_enrollment.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+#+END_SRC
+
+*** =course_merge_conflicts.sql=
+Short description:
+- Precheck for course merge conflicts between source and target course IDs.
+
+Example:
 
 #+BEGIN_SRC bash
 cat scripts/course_merge_conflicts.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v source_id=1 -v target_id=2
 #+END_SRC
 
-To normalize curriculum course level numbers by course short code:
+*** =curriculum_merge_conflicts.sql=
+Short description:
+- Precheck for curriculum merge conflicts (students, overlapping courses, section collisions).
+
+Example:
+
+#+BEGIN_SRC bash
+cat scripts/curriculum_merge_conflicts.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v source_id=1 -v target_id=2
+#+END_SRC
+
+*** =curriculumcourse_merge_conflicts.sql=
+Short description:
+- Precheck for merging two curriculum-course rows.
+
+Example:
+
+#+BEGIN_SRC bash
+cat scripts/curriculumcourse_merge_conflicts.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v source_id=1 -v target_id=2
+#+END_SRC
+
+*** =department_merge_conflicts.sql=
+Short description:
+- Precheck for department merge conflicts (course number collisions, staff/faculty links, roles).
+
+Example:
+
+#+BEGIN_SRC bash
+cat scripts/department_merge_conflicts.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v source_id=1 -v target_id=2
+#+END_SRC
+
+*** =student_merge_conflicts.sql=
+Short description:
+- Precheck for student merge conflicts (registrations, grades, invoices, docs).
+
+Example:
+
+#+BEGIN_SRC bash
+cat scripts/student_merge_conflicts.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v source_id=1 -v target_id=2
+#+END_SRC
+
+*** =merge_courses_by_short_code.sql=
+Short description:
+- Merges duplicate courses by =short_code= and rewires prerequisites/curriculum links.
+- Destructive data change script; use after backup and prechecks.
+
+Example:
+
+#+BEGIN_SRC bash
+cat scripts/merge_courses_by_short_code.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+#+END_SRC
+
+*** =normalize_curriculumcourse_level_by_course.sql=
+Short description:
+- If one defined level exists for a course short code, propagates it to undefined rows.
+- Also aligns year/semester from level number.
+
+Example:
 
 #+BEGIN_SRC bash
 cat scripts/normalize_curriculumcourse_level_by_course.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v course_short_code='ACCT-201'
 #+END_SRC
 
-The normalizer checks that exactly one defined level_number exists for the
-given course short_code (non-null and not 99). If it finds a single value,
-it copies that level_number into rows where level_number is null/99 and also
-syncs year_number/semester_number from the level. If no defined level exists
-or multiple values exist, it does nothing.
+*** =repair_curriculumcourse_other_grouping.sql=
+Short description:
+- Moves undefined/other curriculum-course rows into the dedicated "other" grouping.
+- Forces =year_number = 99= and =semester_number = 0= for target rows.
 
-To repair stale curriculum-course grouping for "other/undefined" rows:
+Example:
 
 #+BEGIN_SRC bash
 cat scripts/repair_curriculumcourse_other_grouping.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
 #+END_SRC
 
-This one-time repair moves rows with =level_number IS NULL=, =99=, or =<= 0=
-into the dedicated "other grouping" bucket by forcing:
-- =year_number = 99=
-- =semester_number = 0=
+*** =set_semester_end_dates.sql=
+Short description:
+- Recomputes semester start/end dates from academic year boundaries.
 
-The script is idempotent and only updates mismatched rows.
-
-** Dev / native psql workflow
-
-Use your local psql with the same environment variables used by Django.
+Example:
 
 #+BEGIN_SRC bash
-psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT"  -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+cat scripts/set_semester_end_dates.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
 #+END_SRC
-or user
+
+*** =populate_simpletable_defaults.sql=
+Short description:
+- Populates or updates default code/label rows for simple lookup tables.
+
+Example:
+
 #+BEGIN_SRC bash
-  python manage.py dbshell
+cat scripts/populate_simpletable_defaults.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
 #+END_SRC
 
-Then run the same `\set` + `\i` commands from the prompt.
+*** =update_course_short_code.sql=
+Short description:
+- Normalizes course code and short code formatting (hyphen cleanup and repair).
 
-** Notes
+Example:
 
-- The scripts assume the IDs are valid and exist.
-- Use =\q= to quit psql.
+#+BEGIN_SRC bash
+cat scripts/update_course_short_code.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+#+END_SRC
+
+* Notes
+
+- Use backups before running scripts that update/delete data.
+- For parameterized scripts, verify IDs before execution.
+- Use =\q= to leave psql.

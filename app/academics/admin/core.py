@@ -15,8 +15,8 @@ from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from app.academics.models.curriculum_course import CurriculumCourse
-from app.academics.models.concentration import Major, Minor
 from app.academics.models import (
+    AcademicStudentCurriculumEnrollment,
     College,
     Course,
     Curriculum,
@@ -53,8 +53,6 @@ from .inlines import (
     CourseFeeStackInline,
     CurriculumCourseInline,
     DepartmentCourseInline,
-    MajorCurriculumCourseInline,
-    MinorCurriculumCourseInline,
     PrerequisiteInline,
     RequiresInline,
 )
@@ -1042,28 +1040,33 @@ class CurriculumStatusAdmin(admin.ModelAdmin):
     list_display = ("code", "label")
 
 
-@admin.register(Major)
-class MajorAdmin(CollegeRestrictedAdmin):
-    """Admin interface for major concentration groups."""
+@admin.register(AcademicStudentCurriculumEnrollment)
+class StudentCurriculumEnrollmentAdmin(CollegeRestrictedAdmin):
+    """Admin interface for student program enrollments."""
 
     college_field = "curriculum__college"
-    list_display = ("name", "curriculum", "max_credit_hours", "course_count")
-    list_filter = ("curriculum__college", "curriculum")
-    search_fields = ("name", "curriculum__short_name", "curriculum__long_name")
-    autocomplete_fields = ("curriculum",)
-    inlines = [MajorCurriculumCourseInline]
-
-
-@admin.register(Minor)
-class MinorAdmin(CollegeRestrictedAdmin):
-    """Admin interface for minor concentration groups."""
-
-    college_field = "curriculum__college"
-    list_display = ("name", "curriculum", "max_credit_hours", "course_count")
-    list_filter = ("curriculum__college", "curriculum")
-    search_fields = ("name", "curriculum__short_name", "curriculum__long_name")
-    autocomplete_fields = ("curriculum",)
-    inlines = [MinorCurriculumCourseInline]
+    list_display = (
+        "student",
+        "curriculum",
+        "is_primary",
+        "is_active",
+        "entry_semester",
+        "exit_semester",
+    )
+    list_filter = (
+        "curriculum__college",
+        "curriculum",
+        "is_primary",
+        "is_active",
+    )
+    search_fields = (
+        "student__student_id",
+        "student__long_name",
+        "curriculum__short_name",
+        "curriculum__long_name",
+    )
+    autocomplete_fields = ("student", "curriculum", "entry_semester", "exit_semester")
+    list_select_related = ("student__user", "curriculum__college")
 
 
 @admin.register(Department)
