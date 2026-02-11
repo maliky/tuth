@@ -1,12 +1,13 @@
 """Module with the merging function for academic objects."""
 
-from typing import TYPE_CHECKING, TypeAlias, no_type_check
+from typing import TYPE_CHECKING, Literal, TypeAlias, no_type_check
 from collections import defaultdict
 
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Q
+from django.db.models.deletion import ProtectedError
 
 from app.academics.models.course import Course
 from app.academics.models.curriculum_course import CurriculumCourse
@@ -30,6 +31,14 @@ if TYPE_CHECKING:
     from app.academics.admin.core import CourseAdmin
 
 CourseMergeSummaryT: TypeAlias = dict[str, int]
+ConflictChoiceT = Literal["keep_target", "keep_source", "merge", "skip"]
+ConflictChoiceByCourseIdT: TypeAlias = dict[int, ConflictChoiceT]
+ConflictCurriculumCoursePairT: TypeAlias = tuple[CurriculumCourse, CurriculumCourse]
+
+MERGE_CHOICE_KEEP_TARGET: ConflictChoiceT = "keep_target"
+MERGE_CHOICE_KEEP_SOURCE: ConflictChoiceT = "keep_source"
+MERGE_CHOICE_MERGE: ConflictChoiceT = "merge"
+MERGE_CHOICE_SKIP: ConflictChoiceT = "skip"
 
 
 @admin.action(description="Merge selected departments into the first")
@@ -149,11 +158,123 @@ def merge_curricula_action(curriculum_admin: "CurriculumAdmin", request, queryse
                 f"{summary['is_elective_conflicts']} curriculum course(s)."
             ),
         )
+    if summary["sections_retained_protected"]:
+        messages.warning(
+            request,
+            (
+                "Retained "
+                f"{summary['sections_retained_protected']} conflicting section(s) "
+                "because grades still protect them."
+            ),
+        )
+    if summary["protected_deletes"]:
+        messages.warning(
+            request,
+            (
+                "Could not delete "
+                f"{summary['protected_deletes']} source object(s) because grades "
+                "protect related sections."
+            ),
+        )
+
+
+def list_curriculum_course_conflicts(
+    target: Curriculum, source: Curriculum
+) -> tuple[list[ConflictCurriculumCoursePairT], list[CurriculumCourse]]:
+    """Return conflicting and non-conflicting programmed courses for two curricula."""
+    target_rows = CurriculumCourse.objects.filter(curriculum=target).select_related(
+        "course",
+        "credit_hours",
+    )
+    source_rows = CurriculumCourse.objects.filter(curriculum=source).select_related(
+        "course",
+        "credit_hours",
+    )
+    target_by_course_id = {row.course_id: row for row in target_rows}
+    conflicts: list[ConflictCurriculumCoursePairT] = []
+    non_conflicting: list[CurriculumCourse] = []
+    for source_row in source_rows:
+        target_row = target_by_course_id.get(source_row.course_id)
+        if target_row is None:
+            non_conflicting.append(source_row)
+            continue
+        conflicts.append((target_row, source_row))
+    return conflicts, non_conflicting
+
+
+def _overlay_curriculum_course_fields(
+    target: CurriculumCourse, source: CurriculumCourse
+) -> None:
+    """Copy selected field values from source onto target before merge."""
+    updated_fields: list[str] = []
+    field_names = (
+        "credit_hours_id",
+        "is_required",
+        "is_elective",
+        "semester_number",
+        "level_number",
+        "year_number",
+        "required_group_number",
+        "min_validated_credits",
+    )
+    for field_name in field_names:
+        source_value = getattr(source, field_name)
+        if getattr(target, field_name) == source_value:
+            continue
+        setattr(target, field_name, source_value)
+        updated_fields.append(field_name.removesuffix("_id"))
+    if updated_fields:
+        target.save(update_fields=updated_fields)
+
+
+def _keep_target_curriculum_course(
+    target: CurriculumCourse, source: CurriculumCourse
+) -> dict[str, int]:
+    """Keep target programmed course and delete source when possible."""
+    summary = {
+        "sections_moved": 0,
+        "sections_merged": 0,
+        "sections_retained_protected": 0,
+        "source_retained_protected": 0,
+    }
+    _merge_curriculum_course_links(target, source)
+    try:
+        source.delete()
+    except ProtectedError:
+        summary["source_retained_protected"] = 1
+    return summary
+
+
+def _merge_curriculum_course_conflict(
+    target: CurriculumCourse,
+    source: CurriculumCourse,
+    choice: ConflictChoiceT,
+) -> dict[str, int]:
+    """Resolve one conflicting programmed course pair with a caller-selected mode."""
+    if choice == MERGE_CHOICE_SKIP:
+        return {
+            "sections_moved": 0,
+            "sections_merged": 0,
+            "sections_retained_protected": 0,
+            "source_retained_protected": 0,
+        }
+    if choice == MERGE_CHOICE_KEEP_SOURCE:
+        # Keep the target row id for FK stability, while applying source metadata.
+        _overlay_curriculum_course_fields(target, source)
+        return _merge_curriculum_course_to_target(target, source)
+    if choice == MERGE_CHOICE_KEEP_TARGET:
+        return _keep_target_curriculum_course(target, source)
+    return _merge_curriculum_course_to_target(target, source)
 
 
 @transaction.atomic
-def merge_curricula(target: Curriculum, sources):
+def merge_curricula(
+    target: Curriculum,
+    sources,
+    conflict_choices: ConflictChoiceByCourseIdT | None = None,
+):
     """Merge curricula: move attached records to the target curriculum."""
+    selected_choices: ConflictChoiceByCourseIdT = conflict_choices or {}
     summary = {
         "curricula_merged": 0,
         "curricula_retained": 0,
@@ -170,6 +291,12 @@ def merge_curricula(target: Curriculum, sources):
         "is_elective_conflicts": 0,
         "majors_moved": 0,
         "minors_moved": 0,
+        "sections_retained_protected": 0,
+        "protected_deletes": 0,
+        "conflicts_kept_target": 0,
+        "conflicts_kept_source": 0,
+        "conflicts_merged": 0,
+        "conflicts_skipped": 0,
     }
     for src in sources:
         if src.pk == target.pk:
@@ -201,6 +328,7 @@ def merge_curricula(target: Curriculum, sources):
                 curriculum=target, course=cc.course
             ).first()
             if existing:
+                selected_choice = selected_choices.get(cc.course_id, MERGE_CHOICE_MERGE)
                 if Invoice.objects.filter(curriculum_course=cc).exists():
                     summary["skipped_invoices"] += 1
                     skip_delete = True
@@ -211,9 +339,28 @@ def merge_curricula(target: Curriculum, sources):
                     summary["is_required_conflicts"] += 1
                 if cc.is_elective != existing.is_elective:
                     summary["is_elective_conflicts"] += 1
-                moved = _merge_curriculum_course_to_target(existing, cc)
+                moved = _merge_curriculum_course_conflict(
+                    existing,
+                    cc,
+                    selected_choice,
+                )
                 summary["sections_moved"] += moved["sections_moved"]
                 summary["sections_merged"] += moved["sections_merged"]
+                summary["sections_retained_protected"] += moved[
+                    "sections_retained_protected"
+                ]
+                if moved["source_retained_protected"]:
+                    summary["protected_deletes"] += moved["source_retained_protected"]
+                    skip_delete = True
+                if selected_choice == MERGE_CHOICE_KEEP_TARGET:
+                    summary["conflicts_kept_target"] += 1
+                elif selected_choice == MERGE_CHOICE_KEEP_SOURCE:
+                    summary["conflicts_kept_source"] += 1
+                elif selected_choice == MERGE_CHOICE_SKIP:
+                    summary["conflicts_skipped"] += 1
+                    skip_delete = True
+                else:
+                    summary["conflicts_merged"] += 1
                 summary["curriculum_courses_merged"] += 1
                 continue
             cc.curriculum = target
@@ -222,7 +369,12 @@ def merge_curricula(target: Curriculum, sources):
         if skip_delete:
             summary["curricula_retained"] += 1
             continue
-        src.delete()
+        try:
+            src.delete()
+        except ProtectedError:
+            summary["curricula_retained"] += 1
+            summary["protected_deletes"] += 1
+            continue
         summary["curricula_merged"] += 1
     return summary
 
@@ -231,7 +383,12 @@ def _merge_curriculum_course_to_target(
     target: CurriculumCourse, source: CurriculumCourse
 ) -> dict[str, int]:
     """Move section and concentration links from source to target."""
-    summary = {"sections_moved": 0, "sections_merged": 0}
+    summary = {
+        "sections_moved": 0,
+        "sections_merged": 0,
+        "sections_retained_protected": 0,
+        "source_retained_protected": 0,
+    }
     _merge_curriculum_course_links(target, source)
     source_sections = Section.objects.filter(curriculum_course=source)
     for section in source_sections:
@@ -241,13 +398,18 @@ def _merge_curriculum_course_to_target(
             number=section.number,
         ).first()
         if conflict:
-            _merge_sections(conflict, section)
-            summary["sections_merged"] += 1
+            if _merge_sections(conflict, section):
+                summary["sections_merged"] += 1
+            else:
+                summary["sections_retained_protected"] += 1
             continue
         section.curriculum_course = target
         section.save(update_fields=["curriculum_course"])
         summary["sections_moved"] += 1
-    source.delete()
+    try:
+        source.delete()
+    except ProtectedError:
+        summary["source_retained_protected"] += 1
     return summary
 
 
@@ -353,6 +515,24 @@ def merge_courses_action(course_admin: "CourseAdmin", request, queryset):
             request,
             f"Skipped {summary['prerequisites_skipped']} prerequisite row(s).",
         )
+    if summary["sections_retained_protected"]:
+        messages.warning(
+            request,
+            (
+                "Retained "
+                f"{summary['sections_retained_protected']} conflicting section(s) "
+                "because grades still protect them."
+            ),
+        )
+    if summary["protected_deletes"]:
+        messages.warning(
+            request,
+            (
+                "Could not delete "
+                f"{summary['protected_deletes']} source course(s) because grades "
+                "protect related sections."
+            ),
+        )
 
 
 def _select_course_merge_target(courses: list[Course]) -> Course:
@@ -389,6 +569,8 @@ def merge_courses_by_short_code_action(
         "merged": 0,
         "skipped_invoices": 0,
         "prerequisites_skipped": 0,
+        "sections_retained_protected": 0,
+        "protected_deletes": 0,
     }
     for _short_code, items in grouped.items():
         if len(items) < 2:
@@ -400,6 +582,10 @@ def merge_courses_by_short_code_action(
         summary["merged"] += group_summary["merged"]
         summary["skipped_invoices"] += group_summary["skipped_invoices"]
         summary["prerequisites_skipped"] += group_summary["prerequisites_skipped"]
+        summary["sections_retained_protected"] += group_summary[
+            "sections_retained_protected"
+        ]
+        summary["protected_deletes"] += group_summary["protected_deletes"]
 
     if summary["groups"] == 0:
         messages.info(request, "No duplicate short codes found in the selection.")
@@ -420,6 +606,24 @@ def merge_courses_by_short_code_action(
         messages.info(
             request,
             f"Skipped {summary['prerequisites_skipped']} prerequisite row(s).",
+        )
+    if summary["sections_retained_protected"]:
+        messages.warning(
+            request,
+            (
+                "Retained "
+                f"{summary['sections_retained_protected']} conflicting section(s) "
+                "because grades still protect them."
+            ),
+        )
+    if summary["protected_deletes"]:
+        messages.warning(
+            request,
+            (
+                "Could not delete "
+                f"{summary['protected_deletes']} source course(s) because grades "
+                "protect related sections."
+            ),
         )
 
 
@@ -443,6 +647,8 @@ def merge_courses(target: Course, sources):
         "sections_merged": 0,
         "prerequisites_moved": 0,
         "prerequisites_skipped": 0,
+        "sections_retained_protected": 0,
+        "protected_deletes": 0,
     }
     target_cc_map = {
         cc.curriculum_id: cc
@@ -467,6 +673,10 @@ def merge_courses(target: Course, sources):
                 moved = _merge_curriculum_course_to_target(existing, cc)
                 summary["sections_moved"] += moved["sections_moved"]
                 summary["sections_merged"] += moved["sections_merged"]
+                summary["sections_retained_protected"] += moved[
+                    "sections_retained_protected"
+                ]
+                summary["protected_deletes"] += moved["source_retained_protected"]
                 summary["curriculum_courses_merged"] += 1
                 continue
             cc.course = target
@@ -476,7 +686,11 @@ def merge_courses(target: Course, sources):
         prereq_summary = _merge_course_prerequisites(target, src)
         summary["prerequisites_moved"] += prereq_summary["prerequisites_moved"]
         summary["prerequisites_skipped"] += prereq_summary["prerequisites_skipped"]
-        src.delete()
+        try:
+            src.delete()
+        except ProtectedError:
+            summary["protected_deletes"] += 1
+            continue
         summary["merged"] += 1
     return summary
 
@@ -615,6 +829,24 @@ def merge_curriculum_courses_action(course_admin, request, queryset):
                 f"{summary['is_elective_conflicts']} selection(s)."
             ),
         )
+    if summary["sections_retained_protected"]:
+        messages.warning(
+            request,
+            (
+                "Retained "
+                f"{summary['sections_retained_protected']} conflicting section(s) "
+                "because grades still protect them."
+            ),
+        )
+    if summary["protected_deletes"]:
+        messages.warning(
+            request,
+            (
+                "Could not delete "
+                f"{summary['protected_deletes']} source programmed course(s) "
+                "because grades protect related sections."
+            ),
+        )
 
 
 @transaction.atomic
@@ -636,6 +868,8 @@ def merge_curriculum_courses(target: CurriculumCourse, sources):
         "credit_hours_conflicts": 0,
         "is_required_conflicts": 0,
         "is_elective_conflicts": 0,
+        "sections_retained_protected": 0,
+        "protected_deletes": 0,
     }
     for src in sources:
         if src.pk == target.pk:
@@ -664,13 +898,19 @@ def merge_curriculum_courses(target: CurriculumCourse, sources):
                 number=section.number,
             ).first()
             if conflict:
-                summary["sections_merged"] += 1
-                _merge_sections(conflict, section)
+                if _merge_sections(conflict, section):
+                    summary["sections_merged"] += 1
+                else:
+                    summary["sections_retained_protected"] += 1
                 continue
             section.curriculum_course = target
             section.save(update_fields=["curriculum_course"])
             summary["sections_moved"] += 1
-        src.delete()
+        try:
+            src.delete()
+        except ProtectedError:
+            summary["protected_deletes"] += 1
+            continue
         summary["merged"] += 1
     return summary
 
@@ -695,8 +935,13 @@ def _merge_curriculum_course_links(
         minor_link.save(update_fields=["curriculum_course"])
 
 
-def _merge_sections(target: Section, source: Section) -> None:
-    """Merge a conflicting section into target, moving related records."""
+def _merge_sections(target: Section, source: Section) -> bool:
+    """Merge a conflicting section into target, moving related records.
+
+    Returns:
+        bool: True when the source section was deleted, False when grades still
+        protect it and it must be retained.
+    """
     for session in source.sessions.all():
         schedule_id = session.schedule_id
         if schedule_id is not None:
@@ -719,4 +964,8 @@ def _merge_sections(target: Section, source: Section) -> None:
         registration.section = target
         registration.save(update_fields=["section"])
 
-    source.delete()
+    try:
+        source.delete()
+        return True
+    except ProtectedError:
+        return False

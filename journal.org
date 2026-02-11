@@ -6,7 +6,8 @@ three develop admin tools to reassign grades in bluck.  Thos tools should be adm
 
 ** <2026-02-11 mer. 11:44>  Plan
 
-*** Merge regression audit (no schema changes yet) <2026-02-11 mer. 12:05>
+*** DONE Merge regression audit (no schema changes yet) <2026-02-11 mer. 12:05>
+CLOSED: [2026-02-11 mer. 14:11]
 
   - P0 App cannot start because of unresolved merge markers in app/people/admin/resources.py; python manage.py check fails with SyntaxError.
   - P1 Merge artifacts in app/people/admin/widgets.py: duplicate UserWidget class and undefined names (parse_name, default_password, username) flagged by flake8.
@@ -22,7 +23,42 @@ Take origin/ts as reference, as it was working good on it.  so edit the current 
   - Update delete paths/admin messaging so users get explicit “protected by grades” errors instead of raw tracebacks.
   - You run migrations manually (makemigrations/migrate) on dev; I’ll stop at code-level migration-ready changes.
 
-  3. SQL reassignment scripts (source of truth in scripts/)
+**** <2026-02-11 mer. 14:28>  Comments on edits
+delete_model seems too  general to be only in timetable. move it to shared
+Same thing for deletequery set. discuss why not using it as a shared utils ? is ti because of the super() then pass the object as param.
+
+in fact I see the same (abstractidely ) functions in CurriculumAdmin
+
+under which condition can a protected model like section be deleted ?
+is it rather the object to which it is attached that is preotected, eg if a grade existe with a section x then section x cannot be deleted. but if no grade existe for section x then seection x can be deleted.
+
+**** protects courses grades <2026-02-11 mer. 14:04>
+Currently grades are = PROTECT,
+
+For your curriculum-merge UX request (manual conflict choices), that design is good and implementable. I would build it as:
+
+  1. Restrict action to exactly 2 curricula selected.
+  2. Show an intermediate admin form page after action click.
+  3. Form sections:
+
+  - target/source curriculum field choices,
+  - auto-move summary for non-conflicting courses,
+  - conflict table for overlapping courses with per-course choice.
+
+  4. Per-conflict choices:
+
+  - keep target programmed course,
+  - keep source programmed course,
+  - try merge sections/grades,
+  - skip (retain both, no destructive merge for that course).
+
+  5. Execute inside one transaction, then show a result report with moved/skipped/
+     protected counts.
+
+
+
+
+*** SQL reassignment scripts
 
   - Add SQL scripts for grade reassignment:
       - preview script: shows how many grades can move, conflicts, blocked rows.
@@ -31,7 +67,7 @@ Take origin/ts as reference, as it was working good on it.  so edit the current 
   - Add script docs in scripts/README with required params and examples.
   - Keep scripts idempotent and auditable (counts before/after).
 
-  4. Admin actions that call SQL scripts
+*** Admin actions that call SQL scripts
 
   - Add admin action(s) on CurriculumCourse (and optionally Section if needed) to
     trigger preview/apply scripts.

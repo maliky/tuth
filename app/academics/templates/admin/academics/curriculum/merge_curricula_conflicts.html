@@ -1,0 +1,125 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+  <h1>{{ title }}</h1>
+  <p>
+    This guided merge works with exactly two curricula. Pick the target,
+    choose curriculum field values, then resolve conflicting programmed courses.
+  </p>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <fieldset class="module aligned">
+      <h2>Target Selection</h2>
+      <div class="form-row">
+        {{ form.target_id.errors }}
+        <div>
+          {{ form.target_id.label_tag }}
+          {{ form.target_id }}
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="module aligned">
+      <h2>Curriculum Field Choices</h2>
+      {% for row in merge_field_rows %}
+        <div class="form-row">
+          {{ row.field.errors }}
+          <div>
+            <label>{{ row.label }}</label>
+            {{ row.field }}
+          </div>
+        </div>
+      {% empty %}
+        <p>No curriculum-level fields configured for merge overrides.</p>
+      {% endfor %}
+    </fieldset>
+
+    <fieldset class="module aligned">
+      <h2>Auto-Move Summary</h2>
+      <p>
+        {{ non_conflicting|length }} non-conflicting programmed course(s) will move
+        automatically from source to target.
+      </p>
+      {% if non_conflicting %}
+        <table>
+          <thead>
+            <tr>
+              <th>Course</th>
+              <th>Credit Hours</th>
+              <th>Required</th>
+              <th>Elective</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in non_conflicting %}
+              <tr>
+                <td>{{ row.course.short_code }} - {{ row.course.long_name }}</td>
+                <td>{{ row.credit_hours_id }}</td>
+                <td>{{ row.is_required|yesno:"Yes,No" }}</td>
+                <td>{{ row.is_elective|yesno:"Yes,No" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+    </fieldset>
+
+    <fieldset class="module aligned">
+      <h2>Conflicting Courses</h2>
+      <p>
+        For each conflict: keep target row, keep source values, merge sections/grades,
+        or skip this course (source curriculum remains retained for that conflict).
+      </p>
+      {% if conflict_rows %}
+        <table>
+          <thead>
+            <tr>
+              <th>Course</th>
+              <th>Target Row</th>
+              <th>Source Row</th>
+              <th>Source Invoices</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in conflict_rows %}
+              <tr>
+                <td>{{ row.target_row.course.short_code }} - {{ row.target_row.course.long_name }}</td>
+                <td>
+                  CH={{ row.target_row.credit_hours_id }},
+                  required={{ row.target_row.is_required|yesno:"Y,N" }},
+                  elective={{ row.target_row.is_elective|yesno:"Y,N" }},
+                  sections={{ row.target_sections }}
+                </td>
+                <td>
+                  CH={{ row.source_row.credit_hours_id }},
+                  required={{ row.source_row.is_required|yesno:"Y,N" }},
+                  elective={{ row.source_row.is_elective|yesno:"Y,N" }},
+                  sections={{ row.source_sections }}
+                </td>
+                <td>{{ row.source_invoices }}</td>
+                <td>
+                  {{ row.field.errors }}
+                  {{ row.field }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p>No conflicting programmed courses detected.</p>
+      {% endif %}
+    </fieldset>
+
+    {% for obj in objects %}
+      <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk }}">
+    {% endfor %}
+    <input type="hidden" name="action" value="{{ action_name }}">
+    <input type="hidden" name="apply_merge" value="1">
+    <button type="submit" class="default">Run merge</button>
+  </form>
+{% endblock %}

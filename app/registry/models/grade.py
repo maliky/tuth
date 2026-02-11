@@ -97,7 +97,8 @@ class Grade(models.Model):
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     student = models.ForeignKey("people.Student", on_delete=models.CASCADE)
-    section = models.ForeignKey("timetable.Section", on_delete=models.CASCADE)
+    # Keep grade rows immutable from section/curriculum cleanup operations.
+    section = models.ForeignKey("timetable.Section", on_delete=models.PROTECT)
     value = models.ForeignKey("registry.GradeValue", on_delete=models.CASCADE, null=True)
 
     # ~~~~ Auto-filled ~~~~

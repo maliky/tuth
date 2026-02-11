@@ -1,11 +1,14 @@
 """Core Admin module for academics."""
 
-from typing import Iterable, TypeAlias, cast, no_type_check
+from typing import Iterable, Literal, TypeAlias, cast, no_type_check
 
 from django import forms
 from django.contrib import admin, messages
+from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.db import transaction
+from django.db.models.deletion import ProtectedError
 from django.db.models import Count
+from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 from guardian.admin import GuardedModelAdmin
@@ -23,6 +26,7 @@ from app.academics.models import (
     Prerequisite,
 )
 from app.people.models.student import Student
+from app.finance.models.invoice import Invoice
 from app.shared.admin.filters import BaseCollegeFilter
 from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
 from app.people.admin.mixins import MergeWizardMixin, ModelT
@@ -47,11 +51,17 @@ from .inlines import (
     RequiresInline,
 )
 from .merges import (
+    MERGE_CHOICE_KEEP_SOURCE,
+    MERGE_CHOICE_KEEP_TARGET,
+    MERGE_CHOICE_MERGE,
+    MERGE_CHOICE_SKIP,
+    ConflictChoiceByCourseIdT,
     merge_courses_action,
     merge_courses_by_short_code_action,
     merge_curricula,
     merge_departments,
     merge_curriculum_courses,
+    list_curriculum_course_conflicts,
 )
 from app.academics.prereq_graph import export_prereq_graph
 from .resources import (
@@ -67,6 +77,119 @@ from django.conf import settings
 from app.timetable.admin.filters import SemesterFilterAC
 
 ModelChoiceFieldT: TypeAlias = forms.ModelChoiceField | forms.ModelMultipleChoiceField
+MergeFieldSourceChoiceT = Literal["target", "source"]
+
+
+class CurriculumMergeConflictForm(forms.Form):
+    """Collect target selection, curriculum field picks, and conflict decisions."""
+
+    FIELD_FROM_TARGET: MergeFieldSourceChoiceT = "target"
+    FIELD_FROM_SOURCE: MergeFieldSourceChoiceT = "source"
+    CONFLICT_FIELD_PREFIX = "conflict__"
+    MERGE_FIELD_PREFIX = "field__"
+
+    def __init__(
+        self,
+        *,
+        curricula: list[Curriculum],
+        merge_fields: tuple[str, ...],
+        conflict_course_ids: list[int],
+        data=None,
+    ) -> None:
+        super().__init__(data=data)
+        self._curriculum_map = {
+            str(item.pk): item for item in curricula if item.pk is not None
+        }
+        self._merge_fields = merge_fields
+        self._conflict_course_ids = conflict_course_ids
+        target_choices = [
+            (str(item.pk), self._curriculum_label(item))
+            for item in curricula
+            if item.pk is not None
+        ]
+        self.fields["target_id"] = forms.ChoiceField(
+            label="Target curriculum",
+            choices=target_choices,
+            required=True,
+        )
+        self.fields["target_id"].initial = (
+            target_choices[0][0] if target_choices else None
+        )
+        for field_name in merge_fields:
+            self.fields[self.merge_field_key(field_name)] = forms.ChoiceField(
+                label=self._field_label(field_name),
+                choices=(
+                    (self.FIELD_FROM_TARGET, "Keep target value"),
+                    (self.FIELD_FROM_SOURCE, "Use source value"),
+                ),
+                widget=forms.RadioSelect,
+                required=True,
+                initial=self.FIELD_FROM_TARGET,
+            )
+        for course_id in conflict_course_ids:
+            self.fields[self.conflict_field_key(course_id)] = forms.ChoiceField(
+                label=f"Conflict action for course #{course_id}",
+                choices=(
+                    (MERGE_CHOICE_KEEP_TARGET, "Keep target row"),
+                    (MERGE_CHOICE_KEEP_SOURCE, "Keep source values"),
+                    (MERGE_CHOICE_MERGE, "Merge sections/grades"),
+                    (MERGE_CHOICE_SKIP, "Skip this course"),
+                ),
+                required=True,
+                initial=MERGE_CHOICE_MERGE,
+            )
+
+    @staticmethod
+    def _curriculum_label(item: Curriculum) -> str:
+        """Build a compact curriculum label for merge choices."""
+        college_code = getattr(getattr(item, "college", None), "code", "-")
+        return f"{item.short_name} ({college_code})"
+
+    @classmethod
+    def merge_field_key(cls, field_name: str) -> str:
+        """Return the POST key used by one curriculum field merge choice."""
+        return f"{cls.MERGE_FIELD_PREFIX}{field_name}"
+
+    @classmethod
+    def conflict_field_key(cls, course_id: int) -> str:
+        """Return the POST key used by one conflicting course choice."""
+        return f"{cls.CONFLICT_FIELD_PREFIX}{course_id}"
+
+    @staticmethod
+    def _field_label(field_name: str) -> str:
+        """Convert a model field name to a readable admin label."""
+        return field_name.replace("_", " ").title()
+
+    def clean_target_id(self) -> str:
+        """Validate target_id against selected curricula."""
+        target_id = str(self.cleaned_data["target_id"])
+        if target_id not in self._curriculum_map:
+            raise forms.ValidationError("Selected target is not in the action selection.")
+        return target_id
+
+    def field_value_source(self, field_name: str) -> MergeFieldSourceChoiceT:
+        """Return whether a field should come from target or source curriculum."""
+        key = self.merge_field_key(field_name)
+        selected = self.cleaned_data.get(key, self.FIELD_FROM_TARGET)
+        if selected == self.FIELD_FROM_SOURCE:
+            return self.FIELD_FROM_SOURCE
+        return self.FIELD_FROM_TARGET
+
+    def get_conflict_choices(self) -> ConflictChoiceByCourseIdT:
+        """Return validated conflict choices keyed by course id."""
+        choices: ConflictChoiceByCourseIdT = {}
+        for course_id in self._conflict_course_ids:
+            field_name = self.conflict_field_key(course_id)
+            raw_choice = self.cleaned_data.get(field_name, MERGE_CHOICE_MERGE)
+            if raw_choice not in {
+                MERGE_CHOICE_KEEP_TARGET,
+                MERGE_CHOICE_KEEP_SOURCE,
+                MERGE_CHOICE_MERGE,
+                MERGE_CHOICE_SKIP,
+            }:
+                continue
+            choices[course_id] = raw_choice
+        return choices
 
 
 @admin.register(College)
@@ -452,6 +575,239 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
             level=messages.SUCCESS,
         )
 
+    def merge_records_action(self, request, queryset):
+        """Merge exactly two curricula with per-conflict decisions."""
+        selected_ids = request.POST.getlist(ACTION_CHECKBOX_NAME)
+        candidates = list(
+            queryset.filter(pk__in=selected_ids).select_related("college").order_by("id")
+        )
+        if len(candidates) != 2:
+            self.message_user(
+                request,
+                "Select exactly two curricula to run the guided merge.",
+                level=messages.WARNING,
+            )
+            return None
+
+        target_id_hint = request.POST.get("target_id")
+        target = candidates[0]
+        if target_id_hint:
+            hinted = next(
+                (item for item in candidates if str(item.pk) == str(target_id_hint)),
+                None,
+            )
+            if hinted is not None:
+                target = hinted
+        source = next(item for item in candidates if item.pk != target.pk)
+        conflicts, non_conflicting = list_curriculum_course_conflicts(target, source)
+        conflict_course_ids = [
+            source_row.course_id for _target_row, source_row in conflicts
+        ]
+        form_data = request.POST if request.POST.get("apply_merge") else None
+        form = CurriculumMergeConflictForm(
+            data=form_data,
+            curricula=candidates,
+            merge_fields=self.get_merge_fields(request),
+            conflict_course_ids=conflict_course_ids,
+        )
+        if request.POST.get("apply_merge") and form.is_valid():
+            target_id = form.cleaned_data["target_id"]
+            target = next(item for item in candidates if str(item.pk) == str(target_id))
+            source = next(item for item in candidates if item.pk != target.pk)
+            # Recompute conflicts for the selected target/source orientation.
+            conflicts, _ = list_curriculum_course_conflicts(target, source)
+            updated_fields: list[str] = []
+            merge_fields = self.get_merge_fields(request)
+            for field_name in merge_fields:
+                if form.field_value_source(field_name) != form.FIELD_FROM_SOURCE:
+                    continue
+                source_value = getattr(source, field_name)
+                if getattr(target, field_name) == source_value:
+                    continue
+                setattr(target, field_name, source_value)
+                updated_fields.append(field_name)
+            conflict_choices = form.get_conflict_choices()
+            # Keep a stable transaction for both target updates and merge moves.
+            with transaction.atomic():
+                if updated_fields:
+                    target.save(update_fields=updated_fields)
+                summary = merge_curricula(
+                    target,
+                    [source],
+                    conflict_choices=conflict_choices,
+                )
+            self._message_curriculum_merge_summary(request, target, summary)
+            return None
+
+        merge_field_rows = [
+            {
+                "label": field_name.replace("_", " ").title(),
+                "field": form[CurriculumMergeConflictForm.merge_field_key(field_name)],
+            }
+            for field_name in self.get_merge_fields(request)
+        ]
+        conflict_rows = []
+        for target_row, source_row in conflicts:
+            field_key = CurriculumMergeConflictForm.conflict_field_key(
+                source_row.course_id
+            )
+            conflict_rows.append(
+                {
+                    "target_row": target_row,
+                    "source_row": source_row,
+                    "target_sections": target_row.sections.count(),
+                    "source_sections": source_row.sections.count(),
+                    "source_invoices": Invoice.objects.filter(
+                        curriculum_course=source_row
+                    ).count(),
+                    "field": form[field_key],
+                }
+            )
+
+        context = {
+            "title": "Guided curriculum merge",
+            "form": form,
+            "objects": candidates,
+            "action_name": "merge_records_action",
+            "action_checkbox_name": ACTION_CHECKBOX_NAME,
+            "target": target,
+            "source": source,
+            "merge_field_rows": merge_field_rows,
+            "conflict_rows": conflict_rows,
+            "non_conflicting": non_conflicting,
+            "merge_choice_merge": MERGE_CHOICE_MERGE,
+            "merge_choice_keep_target": MERGE_CHOICE_KEEP_TARGET,
+            "merge_choice_keep_source": MERGE_CHOICE_KEEP_SOURCE,
+            "merge_choice_skip": MERGE_CHOICE_SKIP,
+        }
+        return TemplateResponse(
+            request,
+            "admin/academics/curriculum/merge_curricula_conflicts.html",
+            context,
+        )
+
+    merge_records_action.short_description = "Guided merge selected curricula"  # type: ignore[attr-defined]
+
+    def _message_curriculum_merge_summary(
+        self,
+        request,
+        target: Curriculum,
+        summary: dict[str, int],
+    ) -> None:
+        """Emit consistent merge feedback messages for curriculum merges."""
+        self.message_user(
+            request,
+            (
+                f"Merged {summary['curricula_merged']} curriculum/curricula into "
+                f"{target.short_name}."
+            ),
+            level=messages.SUCCESS,
+        )
+        if summary["curricula_retained"]:
+            self.message_user(
+                request,
+                (
+                    "Some source curricula were retained due to conflicts. "
+                    "Review the per-course choices and invoice blockers."
+                ),
+                level=messages.WARNING,
+            )
+        if summary["conflicts_merged"]:
+            self.message_user(
+                request,
+                f"Merged {summary['conflicts_merged']} conflicting course row(s).",
+                level=messages.INFO,
+            )
+        if summary["conflicts_kept_target"]:
+            self.message_user(
+                request,
+                (
+                    "Kept the target programmed course for "
+                    f"{summary['conflicts_kept_target']} conflict(s)."
+                ),
+                level=messages.INFO,
+            )
+        if summary["conflicts_kept_source"]:
+            self.message_user(
+                request,
+                (
+                    "Applied source programmed-course values for "
+                    f"{summary['conflicts_kept_source']} conflict(s)."
+                ),
+                level=messages.INFO,
+            )
+        if summary["conflicts_skipped"]:
+            self.message_user(
+                request,
+                f"Skipped {summary['conflicts_skipped']} conflict(s) by choice.",
+                level=messages.WARNING,
+            )
+        if summary["sections_merged"]:
+            self.message_user(
+                request,
+                f"Merged {summary['sections_merged']} conflicting section(s).",
+                level=messages.WARNING,
+            )
+        if summary["prerequisites_skipped"]:
+            self.message_user(
+                request,
+                f"Skipped {summary['prerequisites_skipped']} duplicate prerequisite(s).",
+                level=messages.WARNING,
+            )
+        if summary["skipped_invoices"]:
+            self.message_user(
+                request,
+                f"Skipped {summary['skipped_invoices']} curriculum course(s) with invoices.",
+                level=messages.WARNING,
+            )
+        if summary["credit_hours_conflicts"]:
+            self.message_user(
+                request,
+                (
+                    "Credit hours differ on "
+                    f"{summary['credit_hours_conflicts']} curriculum course(s)."
+                ),
+                level=messages.WARNING,
+            )
+        if summary["is_required_conflicts"]:
+            self.message_user(
+                request,
+                (
+                    "Required flag differs on "
+                    f"{summary['is_required_conflicts']} curriculum course(s)."
+                ),
+                level=messages.WARNING,
+            )
+        if summary["is_elective_conflicts"]:
+            self.message_user(
+                request,
+                (
+                    "Elective flag differs on "
+                    f"{summary['is_elective_conflicts']} curriculum course(s)."
+                ),
+                level=messages.WARNING,
+            )
+        if summary["sections_retained_protected"]:
+            self.message_user(
+                request,
+                (
+                    "Retained "
+                    f"{summary['sections_retained_protected']} conflicting section(s) "
+                    "because grades still protect them."
+                ),
+                level=messages.WARNING,
+            )
+        if summary["protected_deletes"]:
+            self.message_user(
+                request,
+                (
+                    "Could not delete "
+                    f"{summary['protected_deletes']} source object(s) because grades "
+                    "protect related sections."
+                ),
+                level=messages.WARNING,
+            )
+
     def merge_records(self, target: ModelT, sources: Iterable[ModelT]) -> dict[str, int]:
         """Merge curricula using the shared merge helper."""
         target_curriculum = cast(Curriculum, target)
@@ -570,6 +926,38 @@ class CurriculumCourseAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
             .prefetch_related("sections__faculty__staff_profile__user")
             .annotate(section_total=Count("sections", distinct=True))
         )
+
+    def delete_model(self, request, obj):
+        """Show a clear warning when grade-protected sections block deletion."""
+        try:
+            super().delete_model(request, obj)
+        except ProtectedError as exc:
+            protected_count = len(getattr(exc, "protected_objects", []))
+            self.message_user(
+                request,
+                (
+                    "Cannot delete programmed course because grades depend on one or "
+                    f"more related sections ({protected_count} protected record(s)). "
+                    "Reassign grades first."
+                ),
+                level=messages.ERROR,
+            )
+
+    def delete_queryset(self, request, queryset):
+        """Handle protected rows gracefully in bulk deletes."""
+        try:
+            super().delete_queryset(request, queryset)
+        except ProtectedError as exc:
+            protected_count = len(getattr(exc, "protected_objects", []))
+            self.message_user(
+                request,
+                (
+                    "Bulk delete stopped: some programmed courses still have "
+                    f"grade-protected sections ({protected_count} protected "
+                    "record(s)). Reassign grades first."
+                ),
+                level=messages.ERROR,
+            )
 
     def merge_object_label(self, obj) -> str:
         """Return a label for merge choices."""

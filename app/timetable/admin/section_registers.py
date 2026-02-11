@@ -1,7 +1,9 @@
 """app.timetable.admin.section_registers module."""
 
 from django.contrib import admin
+from django.contrib import messages
 from django.http import HttpRequest
+from django.db.models.deletion import ProtectedError
 from django.urls import reverse
 from django.utils.html import format_html
 
@@ -84,6 +86,36 @@ class SectionAdmin(CollegeRestrictedAdmin):
         except (AttributeError, Faculty.DoesNotExist):
             return qs.none()
         return qs.filter(faculty=faculty)
+
+    def delete_model(self, request, obj):
+        """Show a clear warning when grades protect section deletion."""
+        try:
+            super().delete_model(request, obj)
+        except ProtectedError as exc:
+            protected_count = len(getattr(exc, "protected_objects", []))
+            self.message_user(
+                request,
+                (
+                    "Cannot delete section because grades depend on it "
+                    f"({protected_count} protected record(s)). Reassign grades first."
+                ),
+                level=messages.ERROR,
+            )
+
+    def delete_queryset(self, request, queryset):
+        """Handle protected grade rows gracefully in bulk deletes."""
+        try:
+            super().delete_queryset(request, queryset)
+        except ProtectedError as exc:
+            protected_count = len(getattr(exc, "protected_objects", []))
+            self.message_user(
+                request,
+                (
+                    "Bulk delete stopped: some sections have grades attached "
+                    f"({protected_count} protected record(s)). Reassign grades first."
+                ),
+                level=messages.ERROR,
+            )
 
     def get_search_results(self, request, queryset, search_term):
         """Filter section autocomplete results by selected student when provided."""
