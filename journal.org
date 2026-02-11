@@ -3,6 +3,11 @@
 ** <2026-02-10 Tue 16:07>  UX/UI tests failures to check latter BDD 
   - 5 failed, 209 passed, 65 xfailed
   - The date/datetime TypeError is not present in this latest run.
+* <2026-01-01 jeu. 09:13> names parts
+  Could harden split_name with NameParts
+Make test for NameParts if I have empty parts.
+empty should be allowed and default to "" every where except in last_name.
+
 
   Remaining failures are all Selenium/BDD:
 
@@ -26,6 +31,7 @@
   registration submit flow).
 
 
+
 ** <2026-02-10 mar. 09:27>  Copy from pre-prod to dev
 I want to focus a litte bit more on tests.  and set my local dev plateform to  debug effectively.  I've already copied the preprod db localy with a manual
 #+BEGIN_SRC bash
@@ -39,6 +45,321 @@ I want to focus a litte bit more on tests.  and set my local dev plateform to  d
 # Quick sanity check OK
 #+BEGIN_SRC bash  -i
 psql -U "$DJANGO_DB_USER" -h "$DJANGO_DB_HOST" -p "$DJANGO_DB_PORT" -d "$DJANGO_DB_NAME" -c "SELECT count(*) FROM django_migrations;"
+
+
+
+* <2025-12-20 Sat 11:15> Importing matcher
+
+• I dug through the codebase:
+
+  - app/shared/fuzzy_matching.py defines name_similarity, but it currently calls    sim_name_token, which is commented out—so calling this function will raise a    NameError. It also relies on Python’s difflib.SequenceMatcher for both
+    surname and given-name scoring, with custom weighting/penalties.
+  - app/finance/utils.py doesn’t have any name-similarity logic; it only has
+    tuition helpers. The only other name-matching utilities live in app/shared/
+    importing/username_matching.py (Jaro-Winkler similarity for usernames) and
+    app/people/utils.py (name_distance, now order-insensitive and backed by
+    rapidfuzz Jaro-Winkler).
+
+  Given that, I prefer the Jaro-Winkler-based approach (as in people/utils.py or  shared/importing/username_matching.py) because:
+
+  - It uses a well-tested, fast C-backed implementation (rapidfuzz) instead of
+    Python-level SequenceMatcher.
+  - It produces a normalized distance/similarity, is symmetric, and—after
+    canonicalization/sorting tokens—handles name reordering more gracefully.
+  - It doesn’t depend on a missing helper (sim_name_token), so it won’t throw.
+
+  If you want to improve scalability for ~10k×10k name comparisons (100M pairs),  avoid Python loops and leverage vectorized/compiled distance routines:
+
+  - Use rapidfuzz.distance.JaroWinkler.cdist(left_list, right_list, workers=-1)
+    (or process.cdist) to compute a full similarity matrix in C with
+    multithreading. You can then threshold or keep top-k per row without holding    the full matrix by streaming/chunking.
+  - Pre-canonicalize and lowercase all names once; optionally sort tokens to
+    make comparisons order-insensitive as in people/utils.py.
+  - If 100M pairs is still too large to hold, block on simple keys (e.g., first
+    letter(s) of last name) to reduce candidate sets, then run cdist on each
+    block.
+
+  So: fix shared/fuzzy_matching.name_similarity by reinstating or replacing
+  sim_name_token (or swap to rapidfuzz), and for large-scale matching, use
+  rapidfuzz’s cdist/top-k utilities rather than Python loops.
+
+
+
+** ################
+  app/people/models/object_manager.py:66: error: Unexpected keyword argument
+  "limit" for "top_name_matches"  [call-arg]
+  app/shared/fuzzy_matching.py:54: note: "top_name_matches" defined here
+  app/people/admin/mixins.py:86: error: Unexpected keyword argument "limit" for
+  "top_name_matches"  [call-arg]
+  app/shared/fuzzy_matching.py:54: note: "top_name_matches" defined here
+  tests/people/test_utils.py:6: error: Module "app.people.utils" has no
+  attribute "name_distance"  [attr-defined]
+  tests/people/test_utils.py:6: error: Module "app.people.utils" has no
+  attribute "names_match"  [attr-defined]
+  tests/people/test_utils.py:6: error: Module "app.people.utils" has no
+  attribute "name_similarity_matrix"  [attr-defined]
+  Found 5 errors in 3 files (checked 256 source files)
+  (tusis) mlk@r1d05 ~/Tusis/Tusis_app $
+  ::: and update agents.md to help other agent work in our environment
+  
+
+*** proposed work
+I can’t apply the fixes directly because the filesystem is read-only, but here
+  are the exact changes to clear the mypy errors and add the requested guidance:
+
+  1) Allow limit in top_name_matches
+
+  - File: app/shared/fuzzy_matching.py
+  - Update the signature and slicing:
+
+  def top_name_matches(
+      base: str,
+      candidates: Iterable[_T],
+      token_fn: Callable[[_T], str] = identity,
+      threshold: float = 0.9,
+      top_n: int = 3,
+      limit: int | None = None,
+  ) -> list[tuple[_T, float]]:
+      ...
+      scored.sort(key=lambda t: t[1], reverse=True)
+      n = top_n if limit is None else limit
+      return scored[:n]
+
+  (best_name_match can stay as-is; it already passes top_n=1.)
+
+  2) Restore name-matching helpers in app/people/utils.py
+  Add these near the bottom (after canonicalize_name or grouped with the other
+  helpers):
+
+  def name_distance(name_a: str, name_b: str, *, prefix_weight: float = 0.1) ->
+  float:
+      """Return a normalized distance (0=identical, 1=different) between two
+  names."""
+      canonical_a = canonicalize_name(name_a)
+      canonical_b = canonicalize_name(name_b)
+      return float(
+          JaroWinkler.normalized_distance(
+              canonical_a, canonical_b, prefix_weight=prefix_weight
+          )
+      )
+
+
+  def names_match(name_a: str, name_b: str, *, threshold: float = 0.2, **kwargs)
+  -> bool:
+      """Return True when the distance between two names is within a given
+  threshold."""
+      return name_distance(name_a, name_b, **kwargs) <= threshold
+
+
+  def name_similarity_matrix(
+      left_names: Sequence[str],
+      right_names: Sequence[str],
+      *,
+      max_distance: float | None = None,
+      **kwargs,
+  ) -> list[dict[str, object]]:
+      """Return a list of similarity rows describing pairwise name distances."""
+      matrix: list[dict[str, object]] = []
+      for left in left_names:
+          for right in right_names:
+              dist = name_distance(left, right, **kwargs)
+              if max_distance is not None and dist > max_distance:
+                  continue
+              matrix.append({"left": left, "right": right, "distance": dist})
+      return matrix
+
+  3) Update AGENTS.md to help other agents
+  Add a short note such as:
+
+  - “You’ll see pyenv: cannot rehash warnings in this environment; they are
+    harmless.”
+  - “rg may be unavailable; fall back to python/grep.”
+  - “Filesystem may be read-only in some sessions; be prepared to provide patch
+    instructions instead of applying changes.”
+
+  After applying these, rerun mypy and the errors should disappear. Let me know
+  if you want me to apply the patches once write access is available.
+
+
+›    
+* <2025-12-18 jeu. 21:49> Terms for students
+  Define a rule to set the terms form the studentinfo import
+  something like for oldest for  first TermFirstEntered and newest for TermLastEnrolled
+
+* TODO <2025-12-18 Thu 17:06>
+2025-12-18 17:02:53,324  INFO      tusis.import :: Starting import for LegacyRegistration
+Importing LegacyRegistration: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 8735/8735 [00:01<00:00, 5286.91it/s]
+Row 1 failed: duplicate key value violates unique constraint "people_staff_staff_id_key"
+DETAIL:  Key (staff_id)=(DFT_STF0000) already exists.
+Row 2 failed: An error occurred in the current transaction. You can't execute queries until the end of the 'atomic' block.
+Row 3 failed: An error occurred in the current transaction. You can't execute queries until the end of the 'atomic' block.
+Row 4 failed: An error occurred in the current transaction. You can't execute queries until the end of the 'atomic' block.
+Row 5 failed: An error occurred in the current transaction. You can't execute queries until the end of the 'atomic' block.
+CommandError: LegacyRegistration import failed with 8735 errors and 0 invalid rows.
+* <2025-12-17 mer. 17:53>  fuzzy matching for curriculums
+** You did well but a few observation
+- do not abuse of .strip()  I take care of cleaning the data before reaching this deep in the code.
+- We should be improve the factoring and code  readability (it's already good but...)
+  - in curriculum find_fuzzy_match: the sequence in case of tie, could be factored in a function...
+  - The idea is to reuse
+
+- Do not forget to add documentation even if succint
+-
+** I want to refactor the usage of name_similarity
+See in this files
+app/people/admin/core.py
+31:from app.people.matching import name_similarity
+79:            score = name_similarity(base_name, other_name)
+app/people/admin/mixins.py
+10:from app.people.matching import name_similarity
+78:            score = name_similarity(base_name, other_name)
+app/people/matching.py
+42:def name_similarity(
+85:        score = name_similarity(base, name)
+app/people/models/object_manager.py
+ 9:from app.people.matching import name_similarity
+68:            score = name_similarity(base_name, candidate_name)
+
+We use a very similar algoritm.
+I want to factor it using a something like below:
+    # create the base name (tokenA)
+    # get candidates
+    # initialize storage
+    # Loop on the candidates
+    #  for each candidate C create the  a comparaison key (tokenB)
+    #  score tokenA -- TokenB distance
+    #  update storage based of threshold
+    # return
+
+    # vars, a function to get candidates or the candidate them selves
+    # a function to get tokenA or tokenA itself
+    # a function f to get the tokenB : f(C,*args) -> tokenB
+    # thresholds to update storage
+
+or even using the already defined function find_similar_names.
+
+Do your analysis on how we can make our code sweeter.
+
+* <2025-12-16 mar. 20:18> codex resume 019b1809-8544-7742-9f25-0c1f412f3aaf
+  - when importing UM_student
+    - need to do a proximity check on the curriculum with existing
+    - need to make sure that all student info is going to the model
+      - eg Aaron collins have middle name jumped, no adress inputed
+    - in the student admin view filter should only list the curriculum, years and college present in the students
+
+* <2025-12-15 lun. 23:53>  running the tests ?
+  working
+  need to
+    Tusis_app $ sudo -u postgres psql -d postgres
+    postgres=# grant create on database postgres to tusisuser;
+    sudo -u postgres psql -c "ALTER ROLE tusisuser CREATEDB;"
+
+
+
+* TODO <2025-11-11 Tue 17:09> View routing map
+
+ CLOSED: [2025-11-11 mar. 21:25]
+<2025-11-12 mer. 14:04> Getting there :
+Enrollement Desk create sutdent/news/ students/  should be removed to point direclty to the Adminj jump
+ #+BEGIN_SRC plantuml :results file link :file Docs/view_routing_map3.png
+@startuml
+skinparam actorStyle awesome
+left to right direction
+
+actor Visitor
+actor Student
+actor "Faculty & Staff" as Staff
+
+rectangle "Public Entry" {
+  [Landing\n(/)] as Landing
+}
+
+rectangle "Unified Portal" {
+  [Portal Login\n(/auth/login/)] as Login
+  [Role Router\n(/portal/)] as Router
+  [Logout\n(/auth/logout/)] as Logout
+}
+
+rectangle "Student Surface" {
+  [Student Dashboard\n(/student/dashboard/)] as StuDash
+  [Course Dashboard\n(/courses/)] as Courses
+}
+
+rectangle "Staff Dashboards\n(/staff/<role>/)" as StaffDashboards {
+  [VPAA Approval Hub\nrole=vpaa] as StaffVPAA
+  [Dean Oversight\nrole=dean] as StaffDean
+  [Chair Curriculum Center\nrole=chair] as StaffChair
+  [Instruction Hub\nrole=faculty] as StaffFaculty
+  [Registrar Officer Console\nrole=registrar_officer] as StaffRegistrarOfficer
+  [Registrar Lifecycle Ops\nrole=registrar] as StaffRegistrar
+  [Enrollment Officer Desk\nrole=enrollment_officer] as StaffEnrollOfficer
+  [Enrollment Desk\nrole=enrollment] as StaffEnroll
+  [Finance Officer Control\nrole=finance_officer] as StaffFinanceOfficer
+  [Finance & Holds\nrole=finance] as StaffFinance
+  [Cashier Station\nrole=cashier] as StaffCashier
+  [Scholarship Office\nrole=scholarship] as StaffScholarship
+  [IT Support\nrole=it] as StaffIT
+  [Staff Workspace\nrole=staff] as StaffGeneral
+}
+
+rectangle "Enrollment Tools" {
+  [Student Snapshot\n(/students/)] as StuList
+  [Student Detail\n(/students/<pk>)] as StuDetail
+  [Admin Jump\n(/students/admin-edit/)] as AdminJump
+  [Create Student CTA\n(/students/new/)] as StuNew
+  [Delete Student\n(/students/<pk>/delete/)] as StuDelete
+}
+
+rectangle "Registrar Tools" {
+  [Course Windows\n(/registrar/course-windows/)] as RegWin
+}
+
+rectangle "Admin" {
+  [Django Admin\n(/admin/)] as AdminPage
+}
+
+Visitor --> Landing
+Landing --> Login
+Student --> Login
+Staff --> Login
+
+Login --> Router
+Router --> StuDash
+Router --> StaffGeneral
+Router --> AdminPage
+
+StuDash --> Courses
+
+StaffGeneral --> StaffFaculty
+StaffGeneral --> StaffRegistrar
+StaffGeneral --> StaffFinance
+
+StaffVPAA --> StaffDean
+StaffDean --> StaffChair
+StaffChair --> StaffFaculty
+
+StaffRegistrarOfficer --> StaffRegistrar
+StaffEnrollOfficer --> StaffEnroll
+StaffFinanceOfficer --> StaffFinance
+
+StaffRegistrar --> RegWin
+StaffRegistrarOfficer --> RegWin
+StaffEnroll --> StuList
+StaffEnroll --> AdminJump
+StaffEnroll --> StuNew
+StuList --> StuDetail
+StuDetail --> StuDelete
+
+StaffDashboards --> AdminPage : Admin CTA (shared)
+StaffFinance --> AdminPage : Audit invoices
+StaffFinanceOfficer --> AdminPage
+AdminPage --> StaffGeneral : “Back to dashboard” link
+
+Student --> Logout
+Staff --> Logout
+
+@enduml
+>>>>>>> dev
 #+END_SRC
 
 Several things.

@@ -87,7 +87,6 @@ def test_faculty_import(long_name, prefix, first, middle, last, suffix, username
 
     user = faculty.staff_profile.user
     assert user.groups.filter(name=UserRole.FACULTY.value.label).exists()
-
     assert user.username == username, f"{user.username, username}"
 
 

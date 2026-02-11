@@ -57,3 +57,17 @@ Do not change existing variable names
 ### Selenium driver pin
 
 - Use the system `chromedriver` (currently 142.x) when running Selenium. The fixtures look for `/usr/bin/chromedriver` first; do not downgrade to the webdriver-manager default (114) because it breaks local browsers.
+=======
+## Improvement plan (do not implement without request)
+- Consolidate ensure helpers (e.g., semester/user creation) and centralize `get_user_model` typing to avoid command-specific casts.
+- Extract shared merge/dedup services for imports to replace per-command caches; add tests for same-ID/complementary-row merges.
+- Tighten typing (TypeAlias for user model, prefer `Mapping`/`TypedDict`/`dataclass` for row structures) to keep mypy strict without casts.
+- Centralize username collision policy in one helper used by widgets/commands to avoid divergent suffixing.
+- Standardize import logging: consistent CSV paths/messages, counts for skipped/merged rows, and consider structured logs for commands.
+- Debugging: check function/class signatures and expected types/formats early; prefer settings-driven defaults over hardcoded formats.
+- Growing codebase habit: re-read AGENTS.md and related task files regularly to align with evolving patterns and instructions.
+
+### Environment notes
+- You may see harmless `pyenv: cannot rehash` warnings in some environments.
+- `rg` (ripgrep) is not always available; fall back to `python`/`grep` when needed.
+- Some sessions can be read-only; if you cannot write files, provide patch instructions instead of applying changes.

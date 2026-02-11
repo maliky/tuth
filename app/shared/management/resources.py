@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections import OrderedDict
 from typing import Sequence
 
-from import_export import resources
 
 from app.academics.admin.resources import CourseResource, CurriculumCourseResource
 from app.people.admin.resources import (
@@ -16,7 +15,6 @@ from app.people.admin.resources import (
 )
 from app.people.models.staffs import Staff
 from app.registry.admin.resources_legacy import (
-    LegacyGradeSheetResource,
     LegacyRegistrationResource,
 )
 from app.shared.types import DirectoryResourceEntry, ModelResourceType

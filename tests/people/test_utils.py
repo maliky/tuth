@@ -7,9 +7,8 @@ from app.people.utils import (
     extract_id_num,
     mk_username,
     split_name,
-    # name_distance,
-    # names_match,
-    # name_similarity_matrix,
+    ensure_unique_usernames,
+    x,
 )
 
 
@@ -90,36 +89,3 @@ def test_split_name_initial_patterns(raw, prefix, first, middle, last, suffix):
 def test_extract_id_num(user_id, output):
     res = extract_id_num(user_id)
     assert res == output, f"{res} != {output}"
-
-
-# @pytest.mark.parametrize(
-#     "left,right,expected",
-#     [
-#         ("Abraham W. Harmon", "Harmon, Abraham W", 0.1),
-#         ("Virginia Blyee", "Blyee, Virginia", 0.1),
-#         ("Sylvester Nah", "Nah Sylvester", 0.3),
-#     ],
-# )
-# def test_name_distance_symmetry(left, right, expected):
-#     """Distance should be near zero for reordered/normalized names."""
-#     dist = name_distance(left, right)
-#     assert dist < expected, f"{left, right}: {dist} != {expected}"
-
-
-# @pytest.mark.parametrize(
-#     "left,right,expected",
-#     [
-#         ("Abubarkar Yaradua", "Yaradua Abubarkar", 1),
-#         ("Abubarkar Yaradua", "Yaradu Abubarkar", 1),
-#         ("Abubarkar Yaradua", "Abuabrkar Yardaua", 1),
-#         ("Abraham Gerard", "Virginia Blyee", 0.05),
-#     ],
-# )
-# def test_names_match_threshold(left, right, expected):
-#     """names_match should respect thresholds."""
-#     if expected == 1:
-#         assert names_match(left, right), f"{left, right}"
-#     else:
-#         assert not names_match(
-#             left, right, threshold=expected
-#         ), f"{left, right} - {names_match(left, right, threshold=expected)}"
