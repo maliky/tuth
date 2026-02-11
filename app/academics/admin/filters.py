@@ -10,6 +10,7 @@ from django.contrib import admin
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.people.models.faculty import Faculty
+from app.people.models.student import Student
 from app.shared.admin.filters import BaseCollegeFilter, ScopedAutocompleteFilter
 from app.shared.types import LookUpType
 
@@ -93,3 +94,13 @@ class CurriculumCourseFacultyFilterAC(ScopedAutocompleteFilter):
     field_name = "faculty"
     lookup_map: LookUpType = (("sections", "sections__faculty"),)
     target_model = Faculty
+
+
+class CurriculumCourseStudentFilterAC(ScopedAutocompleteFilter):
+    """Autocomplete filter constrained to students registered in course sections."""
+
+    title = "Student"
+    parameter_name = "sections__section_registrations__student"
+    field_name = "student"
+    lookup_map: LookUpType = (("sections", "sections__section_registrations__student"),)
+    target_model = Student

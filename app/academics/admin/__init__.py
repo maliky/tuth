@@ -7,7 +7,7 @@ from .core import (
     CurriculumAdmin,
     CurriculumCourseAdmin,
     PrerequisiteAdmin,
-    StudentCurriculumEnrollmentAdmin,
+    CurriculumStudentEnrollmentAdmin,
 )
 
 __all__ = [
@@ -18,5 +18,5 @@ __all__ = [
     "CurriculumAdmin",
     "CurriculumCourseAdmin",
     "PrerequisiteAdmin",
-    "StudentCurriculumEnrollmentAdmin",
+    "CurriculumStudentEnrollmentAdmin",
 ]

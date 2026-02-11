@@ -41,16 +41,20 @@ Then run:
 
 * Script catalog
 
-*** =backfill_student_curriculum_enrollment.sql=
+*** =backfill_curriculum_student_enrollment.sql=
 Short description:
-- Backfills =people_studentcurriculumenrollment= from =people_student.curriculum_id=.
-- Sets FK-linked enrollment as primary and keeps it active.
+- Backfills CurriculumStudentEnrollment data from both:
+  - =people_student.curriculum_id=
+  - curricula inferred from student grades (section -> curriculum course).
+- Writes to =people_curriculumstudentenrollment=.
+- Keeps =Student.curriculum= authoritative for primary enrollment.
+- Uses earliest graded semester as enrollment entry when inferred from grades.
 - Safe to re-run (idempotent).
 
 Example:
 
 #+BEGIN_SRC bash
-cat scripts/backfill_student_curriculum_enrollment.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+cat scripts/backfill_curriculum_student_enrollment.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
 #+END_SRC
 
 *** =course_merge_conflicts.sql=

@@ -16,7 +16,7 @@ from simple_history.admin import SimpleHistoryAdmin
 
 from app.academics.models.curriculum_course import CurriculumCourse
 from app.academics.models import (
-    AcademicStudentCurriculumEnrollment,
+    CurriculumStudentEnrollment,
     College,
     Course,
     Curriculum,
@@ -25,6 +25,7 @@ from app.academics.models import (
     Prerequisite,
 )
 from app.people.models.student import Student
+from app.people.models.student_curriculum_enrollment import StudentCurriculumEnrollment
 from app.finance.models.invoice import Invoice
 from app.shared.admin.filters import BaseCollegeFilter
 from app.shared.admin.mixins import (
@@ -45,6 +46,7 @@ from .filters import (
     CourseCurriculumFilter,
     CurriculumFilterAC,
     CurriculumCourseFacultyFilterAC,
+    CurriculumCourseStudentFilterAC,
     DepartmentCurriculumFilterAC,
     DepartmentFilterAC,
 )
@@ -923,6 +925,7 @@ class CurriculumCourseAdmin(
         DepartmentFilterAC,
         "level_number",
         CurriculumCourseFacultyFilterAC,
+        CurriculumCourseStudentFilterAC,
     )
 
     list_editable = ("curriculum", "level_number")
@@ -1040,8 +1043,8 @@ class CurriculumStatusAdmin(admin.ModelAdmin):
     list_display = ("code", "label")
 
 
-@admin.register(AcademicStudentCurriculumEnrollment)
-class StudentCurriculumEnrollmentAdmin(CollegeRestrictedAdmin):
+@admin.register(CurriculumStudentEnrollment)
+class CurriculumStudentEnrollmentAdmin(CollegeRestrictedAdmin):
     """Admin interface for student program enrollments."""
 
     college_field = "curriculum__college"
@@ -1051,11 +1054,10 @@ class StudentCurriculumEnrollmentAdmin(CollegeRestrictedAdmin):
         "is_primary",
         "is_active",
         "entry_semester",
-        "exit_semester",
     )
     list_filter = (
         "curriculum__college",
-        "curriculum",
+        CurriculumFilterAC,
         "is_primary",
         "is_active",
     )
@@ -1067,6 +1069,157 @@ class StudentCurriculumEnrollmentAdmin(CollegeRestrictedAdmin):
     )
     autocomplete_fields = ("student", "curriculum", "entry_semester", "exit_semester")
     list_select_related = ("student__user", "curriculum__college")
+    actions = ("merge_two_selected_rows", "merge_selected_rows_by_student_id")
+
+    @staticmethod
+    def _rows_blocked_by_entry_semester(
+        target_row: StudentCurriculumEnrollment,
+        source_row: StudentCurriculumEnrollment,
+    ) -> bool:
+        """Return True when both rows carry different non-null entry semesters."""
+        target_entry_id = target_row.entry_semester_id
+        source_entry_id = source_row.entry_semester_id
+        return bool(
+            target_entry_id and source_entry_id and target_entry_id != source_entry_id
+        )
+
+    @staticmethod
+    def _merge_row_pair(
+        target_row: StudentCurriculumEnrollment,
+        source_row: StudentCurriculumEnrollment,
+    ) -> bool:
+        """Merge source row into target row and delete source.
+
+        Returns:
+            bool: True when merge happened, False when blocked by entry semester rule.
+        """
+        if CurriculumStudentEnrollmentAdmin._rows_blocked_by_entry_semester(
+            target_row,
+            source_row,
+        ):
+            return False
+
+        update_fields: list[str] = []
+        # Keep the non-null semester when one side is missing, otherwise keep target.
+        if not target_row.entry_semester_id and source_row.entry_semester_id:
+            target_row.entry_semester_id = source_row.entry_semester_id
+            update_fields.append("entry_semester")
+        if not target_row.exit_semester_id and source_row.exit_semester_id:
+            target_row.exit_semester_id = source_row.exit_semester_id
+            update_fields.append("exit_semester")
+        if not target_row.is_primary and source_row.is_primary:
+            target_row.is_primary = True
+            update_fields.append("is_primary")
+        if not target_row.is_active and source_row.is_active:
+            target_row.is_active = True
+            update_fields.append("is_active")
+        if target_row.creation_date > source_row.creation_date:
+            target_row.creation_date = source_row.creation_date
+            update_fields.append("creation_date")
+
+        if target_row.is_primary:
+            StudentCurriculumEnrollment.objects.filter(
+                student_id=target_row.student_id,
+                is_primary=True,
+            ).exclude(pk=target_row.pk).update(is_primary=False)
+        if update_fields:
+            target_row.save(update_fields=update_fields)
+        source_row.delete()
+        return True
+
+    @admin.action(description="Merge 2 selected enrollment rows")
+    @transaction.atomic
+    def merge_two_selected_rows(self, request, queryset):
+        """Merge exactly two selected rows when semester rule allows it."""
+        rows = list(queryset.select_related("student", "entry_semester").order_by("id"))
+        if len(rows) != 2:
+            self.message_user(
+                request,
+                "Select exactly 2 rows for this merge action.",
+                level=messages.WARNING,
+            )
+            return
+        target_row, source_row = rows[0], rows[1]
+        if target_row.student_id != source_row.student_id:
+            self.message_user(
+                request,
+                "Selected rows belong to different students; merge cancelled.",
+                level=messages.WARNING,
+            )
+            return
+        merged = self._merge_row_pair(target_row, source_row)
+        if not merged:
+            self.message_user(
+                request,
+                "Merge blocked: both rows have different non-null entry semesters.",
+                level=messages.WARNING,
+            )
+            return
+        self.message_user(
+            request,
+            "Merged 2 enrollment rows into the lowest-id row.",
+            level=messages.SUCCESS,
+        )
+
+    @admin.action(description="Merge selected rows grouped by student id")
+    @transaction.atomic
+    def merge_selected_rows_by_student_id(self, request, queryset):
+        """Merge selected rows per student id using the same semester guard."""
+        rows = list(
+            queryset.select_related("student", "entry_semester")
+            .order_by("student_id", "id")
+            .all()
+        )
+        if len(rows) < 2:
+            self.message_user(
+                request,
+                "Select at least 2 rows to run grouped merge.",
+                level=messages.WARNING,
+            )
+            return
+
+        merged_count = 0
+        blocked_count = 0
+        grouped_count = 0
+        by_student_id: dict[int, list[StudentCurriculumEnrollment]] = {}
+        for row in rows:
+            by_student_id.setdefault(row.student_id, []).append(row)
+
+        for student_rows in by_student_id.values():
+            if len(student_rows) < 2:
+                continue
+            grouped_count += 1
+            target_row = student_rows[0]
+            for source_row in student_rows[1:]:
+                if self._merge_row_pair(target_row, source_row):
+                    merged_count += 1
+                    continue
+                blocked_count += 1
+
+        if merged_count:
+            self.message_user(
+                request,
+                (
+                    f"Merged {merged_count} row(s) across {grouped_count} student group(s)."
+                ),
+                level=messages.SUCCESS,
+            )
+        if blocked_count:
+            self.message_user(
+                request,
+                (
+                    "Skipped "
+                    f"{blocked_count} row(s) because entry semesters were both set and "
+                    "different."
+                ),
+                level=messages.WARNING,
+            )
+        if not merged_count and not blocked_count:
+            self.message_user(
+                request,
+                "No student groups with at least 2 selected rows were found.",
+                level=messages.INFO,
+            )
 
 
 @admin.register(Department)

@@ -3,7 +3,7 @@
 from app.people.models.student_curriculum_enrollment import StudentCurriculumEnrollment
 
 
-class AcademicStudentCurriculumEnrollment(StudentCurriculumEnrollment):
+class CurriculumStudentEnrollment(StudentCurriculumEnrollment):
     """Expose student-curriculum enrollments under the academics app in admin."""
 
     class Meta:
