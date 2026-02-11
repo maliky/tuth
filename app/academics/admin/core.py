@@ -4,6 +4,7 @@ from typing import Iterable, TypeAlias, cast, no_type_check
 
 from django import forms
 from django.contrib import admin, messages
+from django.db import transaction
 from django.db.models import Count
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
@@ -317,7 +318,7 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
     search_fields = ("short_name", "long_name")
     # Keep short_name out of the wizard to avoid active-name uniqueness collisions.
     merge_fields = ("long_name", "college", "status", "is_active", "description")
-    actions = ["export_prereq_graph_action"]
+    actions = ["export_prereq_graph_action", "copy_curriculum_action"]
 
     def student_count(self, obj):
         """Adding a link to the student number."""
@@ -375,6 +376,79 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         self.message_user(
             request,
             format_html("Generated prerequisite graphs: {}.", msg),
+            level=messages.SUCCESS,
+        )
+
+    def _build_copy_short_name(self, source: Curriculum) -> str:
+        """Return a readable short name for a copied curriculum."""
+        max_len = int(Curriculum._meta.get_field("short_name").max_length or 40)
+        base_seed = source.short_name.strip() or "Curriculum"
+        base = f"{base_seed} copy".strip()[:max_len]
+        candidate = base
+        idx = 2
+        while Curriculum.objects.filter(
+            college=source.college, short_name=candidate
+        ).exists():
+            suffix = f" {idx}"
+            keep_len = max(1, max_len - len(suffix))
+            candidate = f"{base[:keep_len]}{suffix}"
+            idx += 1
+        return candidate
+
+    @admin.action(description="Copy curriculum with courses")
+    def copy_curriculum_action(self, request, queryset):
+        """Duplicate selected curricula and clone their programmed courses."""
+        if not queryset:
+            self.message_user(request, "No curricula selected.", level=messages.WARNING)
+            return
+
+        created_rows: list[tuple[str, str, int]] = []
+        selected = queryset.select_related("college")
+        for source in selected:
+            try:
+                with transaction.atomic():
+                    target = Curriculum.objects.create(
+                        short_name=self._build_copy_short_name(source),
+                        long_name=source.long_name,
+                        college=source.college,
+                        description=source.description,
+                        status_id="pending",
+                        is_active=False,
+                    )
+                    source_rows = CurriculumCourse.objects.filter(curriculum=source)
+                    for row in source_rows:
+                        CurriculumCourse.objects.create(
+                            curriculum=target,
+                            course_id=row.course_id,
+                            is_required=row.is_required,
+                            is_elective=row.is_elective,
+                            credit_hours_id=row.credit_hours_id,
+                            semester_number=row.semester_number,
+                            level_number=row.level_number,
+                            year_number=row.year_number,
+                            required_group_number=row.required_group_number,
+                            min_validated_credits=row.min_validated_credits,
+                        )
+                    copy_count = source_rows.count()
+                copy_url = reverse("admin:academics_curriculum_change", args=[target.pk])
+                created_rows.append((copy_url, target.short_name, copy_count))
+            except Exception as exc:  # pragma: no cover - admin message path
+                self.message_user(
+                    request,
+                    f"Failed to copy {source.short_name}: {exc}",
+                    level=messages.ERROR,
+                )
+
+        if not created_rows:
+            return
+        links = format_html_join(
+            " · ",
+            '<a href="{}">{}</a> ({} courses)',
+            created_rows,
+        )
+        self.message_user(
+            request,
+            format_html("Created curriculum copies: {}.", links),
             level=messages.SUCCESS,
         )
 

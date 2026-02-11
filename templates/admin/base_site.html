@@ -3,6 +3,12 @@
 
 {% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {% trans 'Django site admin' %}{% endblock %}
 
+{% block extrahead %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'website/css/admin_changelist_filters.css' %}">
+  <script src="{% static 'website/js/admin_changelist_filters.js' %}" defer></script>
+{% endblock %}
+
 {% block branding %}
 <h1 id="site-name">
   <a href="{% url 'admin:index' %}">Tusis Administration</a>

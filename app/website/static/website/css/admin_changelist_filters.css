@@ -1,0 +1,16 @@
+/* Global changelist filter toggle styles for Django admin. */
+
+#tusis-filter-toggle {
+  margin: 0 0 0.75rem auto;
+  display: inline-block;
+}
+
+#changelist.tusis-filters-collapsed #changelist-filter {
+  display: none;
+}
+
+#changelist.tusis-filters-collapsed .changelist-form-container {
+  margin-right: 0;
+  width: 100%;
+}
+
