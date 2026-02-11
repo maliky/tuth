@@ -1,9 +1,7 @@
 """app.timetable.admin.section_registers module."""
 
 from django.contrib import admin
-from django.contrib import messages
 from django.http import HttpRequest
-from django.db.models.deletion import ProtectedError
 from django.urls import reverse
 from django.utils.html import format_html
 
@@ -12,7 +10,7 @@ from app.people.models.faculty import Faculty
 from app.people.models.student import Student
 from app.registry.admin.inlines import GradeInline
 from app.shared.admin.filters import BaseCollegeFilter
-from app.shared.admin.mixins import CollegeRestrictedAdmin
+from app.shared.admin.mixins import CollegeRestrictedAdmin, ProtectedDeleteAdminMixin
 from app.timetable.admin.filters import SectionFacultyFilterAc, SemesterFilterAC
 from app.timetable.admin.inlines import SecSessionInline
 from app.timetable.admin.section_resources import SectionResource
@@ -30,7 +28,7 @@ def _is_registration_lookup(request: HttpRequest) -> bool:
 
 
 @admin.register(Section)
-class SectionAdmin(CollegeRestrictedAdmin):
+class SectionAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
     """Admin interface for Section.
 
     list_display includes semester, course and faculty information while
@@ -87,35 +85,23 @@ class SectionAdmin(CollegeRestrictedAdmin):
             return qs.none()
         return qs.filter(faculty=faculty)
 
-    def delete_model(self, request, obj):
-        """Show a clear warning when grades protect section deletion."""
-        try:
-            super().delete_model(request, obj)
-        except ProtectedError as exc:
-            protected_count = len(getattr(exc, "protected_objects", []))
-            self.message_user(
-                request,
-                (
-                    "Cannot delete section because grades depend on it "
-                    f"({protected_count} protected record(s)). Reassign grades first."
-                ),
-                level=messages.ERROR,
-            )
+    def get_protected_delete_single_message(
+        self, request: HttpRequest, obj, protected_count: int
+    ) -> str:
+        """Return section-specific message for protected single deletes."""
+        return (
+            "Cannot delete section because grades depend on it "
+            f"({protected_count} protected record(s)). Reassign grades first."
+        )
 
-    def delete_queryset(self, request, queryset):
-        """Handle protected grade rows gracefully in bulk deletes."""
-        try:
-            super().delete_queryset(request, queryset)
-        except ProtectedError as exc:
-            protected_count = len(getattr(exc, "protected_objects", []))
-            self.message_user(
-                request,
-                (
-                    "Bulk delete stopped: some sections have grades attached "
-                    f"({protected_count} protected record(s)). Reassign grades first."
-                ),
-                level=messages.ERROR,
-            )
+    def get_protected_delete_bulk_message(
+        self, request: HttpRequest, protected_count: int
+    ) -> str:
+        """Return section-specific message for protected bulk deletes."""
+        return (
+            "Bulk delete stopped: some sections have grades attached "
+            f"({protected_count} protected record(s)). Reassign grades first."
+        )
 
     def get_search_results(self, request, queryset, search_term):
         """Filter section autocomplete results by selected student when provided."""

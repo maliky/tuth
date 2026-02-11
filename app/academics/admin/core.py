@@ -6,7 +6,6 @@ from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.db import transaction
-from django.db.models.deletion import ProtectedError
 from django.db.models import Count
 from django.template.response import TemplateResponse
 from django.urls import reverse
@@ -28,7 +27,11 @@ from app.academics.models import (
 from app.people.models.student import Student
 from app.finance.models.invoice import Invoice
 from app.shared.admin.filters import BaseCollegeFilter
-from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
+from app.shared.admin.mixins import (
+    CollegeRestrictedAdmin,
+    DepartmentRestrictedAdmin,
+    ProtectedDeleteAdminMixin,
+)
 from app.people.admin.mixins import MergeWizardMixin, ModelT
 
 from .actions import attach_fee_stacks, update_curriculum, update_department
@@ -869,7 +872,9 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
 
 
 @admin.register(CurriculumCourse)
-class CurriculumCourseAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
+class CurriculumCourseAdmin(
+    ProtectedDeleteAdminMixin, MergeWizardMixin, CollegeRestrictedAdmin
+):
     """Admin screen for :class:~app.academics.models.CurriculumCourse.
 
     list_display shows the curriculum and related course while
@@ -927,37 +932,22 @@ class CurriculumCourseAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
             .annotate(section_total=Count("sections", distinct=True))
         )
 
-    def delete_model(self, request, obj):
-        """Show a clear warning when grade-protected sections block deletion."""
-        try:
-            super().delete_model(request, obj)
-        except ProtectedError as exc:
-            protected_count = len(getattr(exc, "protected_objects", []))
-            self.message_user(
-                request,
-                (
-                    "Cannot delete programmed course because grades depend on one or "
-                    f"more related sections ({protected_count} protected record(s)). "
-                    "Reassign grades first."
-                ),
-                level=messages.ERROR,
-            )
+    def get_protected_delete_single_message(
+        self, request, obj, protected_count: int
+    ) -> str:
+        """Return curriculum-course specific message for protected single deletes."""
+        return (
+            "Cannot delete programmed course because grades depend on one or more "
+            f"related sections ({protected_count} protected record(s)). Reassign "
+            "grades first."
+        )
 
-    def delete_queryset(self, request, queryset):
-        """Handle protected rows gracefully in bulk deletes."""
-        try:
-            super().delete_queryset(request, queryset)
-        except ProtectedError as exc:
-            protected_count = len(getattr(exc, "protected_objects", []))
-            self.message_user(
-                request,
-                (
-                    "Bulk delete stopped: some programmed courses still have "
-                    f"grade-protected sections ({protected_count} protected "
-                    "record(s)). Reassign grades first."
-                ),
-                level=messages.ERROR,
-            )
+    def get_protected_delete_bulk_message(self, request, protected_count: int) -> str:
+        """Return curriculum-course specific message for protected bulk deletes."""
+        return (
+            "Bulk delete stopped: some programmed courses still have grade-protected "
+            f"sections ({protected_count} protected record(s)). Reassign grades first."
+        )
 
     def merge_object_label(self, obj) -> str:
         """Return a label for merge choices."""

@@ -21,7 +21,12 @@ class PeopleRepository:
     @transaction.atomic
     def get_or_create_faculty(name: str, college: College) -> Faculty:
         """Return an existing or new Faculty for the given name and college."""
-        prefix, first, middle, last, suffix = split_name(name)
+        name_parts = split_name(name)
+        prefix = name_parts.prefix
+        first = name_parts.first
+        middle = name_parts.middle
+        last = name_parts.last
+        suffix = name_parts.suffix
         username = mk_username(first, last, middle, prefix_len=2)
 
         faculty, _ = Faculty.objects.get_or_create(

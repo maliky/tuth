@@ -25,6 +25,6 @@ def test_top_n_name_matches():
     """Limit should cap the number of returned matches."""
     base = "john doe"
     cands = ["John Doe", "Jon Dough", "Jane Roe"]
-    matches = top_name_matches(base, cands, top_n=1)
+    matches = top_name_matches(base, cands, limit=1)
     assert len(matches) == 1, f"matches={matches}"
     assert matches[0][0].lower().startswith("john")

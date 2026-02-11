@@ -10,6 +10,8 @@ from rapidfuzz.distance import JaroWinkler
 
 from app.shared.types import AbstractPersonT, Score
 
+CandidateT = TypeVar("CandidateT")
+
 
 def identity(value: Any) -> Any:
     """Simple identity helper usable as a default token function."""
@@ -106,14 +108,14 @@ def name_similarity(
 
 def top_name_matches(
     base: str,
-    candidates: Iterable[AbstractPersonT],
-    token_fn: Callable[[AbstractPersonT], str] = identity,
+    candidates: Iterable[CandidateT],
+    token_fn: Callable[[CandidateT], str] = identity,
     threshold: float = 0.9,
     limit: int = 3,
-) -> list[tuple[AbstractPersonT, float]]:
+) -> list[tuple[CandidateT, float]]:
     """Return up to 'limit' candidates ordered by similarity >= threshold."""
 
-    scored: list[tuple[AbstractPersonT, float]] = []
+    scored: list[tuple[CandidateT, float]] = []
 
     for cand in candidates:
         token = token_fn(cand)
@@ -126,10 +128,10 @@ def top_name_matches(
 
 def best_name_match(
     base: str,
-    candidates: Iterable[AbstractPersonT],
-    token_fn: Callable[[AbstractPersonT], str],
+    candidates: Iterable[CandidateT],
+    token_fn: Callable[[CandidateT], str],
     threshold: float = 0.9,
-) -> tuple[AbstractPersonT | None, float]:
+) -> tuple[CandidateT | None, float]:
     """Return the best candidate and score meeting the threshold."""
     ranked = top_name_matches(
         base, candidates, token_fn=token_fn, threshold=threshold, limit=1

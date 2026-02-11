@@ -37,6 +37,8 @@ Do not change existing variable names
 - Typing: prefer explicit TypeAliases ending with `T` (e.g., `StrIntMapT`), avoid `Any`, and keep mypy happy (no implicit Optional where a concrete type is expected).
 - Prefer functional-style helpers (small pure functions) and reuse existing utilities before adding new logic.
 - Factor common routines rather than duplicating blocks; keep new code composable.
+- Favor abstraction and simplification together: remove redundant parameters/paths and centralize repeated behavior into shared units when it reduces duplication.
+- If two options express the same behavior (e.g., alias parameters), keep one canonical option and update call sites instead of carrying both.
 - For app imports, prefer up to three levels when practical.
 - It is acceptable to use deeper imports (e.g., `from app.finance.models.course_fee import ...`) when needed for clarity or to avoid circular imports.
 - Use `__init__` and `__all__` to simplify import paths when it improves maintainability.

@@ -7,8 +7,6 @@ from app.people.utils import (
     extract_id_num,
     mk_username,
     split_name,
-    ensure_unique_usernames,
-    x,
 )
 
 

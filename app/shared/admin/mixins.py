@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from typing import Optional, cast
 
+from django.contrib import messages
 from django.contrib.admin import ModelAdmin
 from django.http import HttpRequest
+from django.db.models.deletion import ProtectedError
 from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
@@ -15,6 +17,59 @@ from app.academics.models.department import Department
 from app.people.models.staffs import Staff
 from app.people.models.faculty import Faculty
 from app.shared.admin.filters import resolve_scoped_filter_lookups
+
+
+class ProtectedDeleteAdminMixin(ModelAdmin):
+    """Handle ProtectedError uniformly for admin single and bulk deletions."""
+
+    def get_protected_delete_single_message(
+        self, request: HttpRequest, obj, protected_count: int
+    ) -> str:
+        """Return the default single-delete error message."""
+        return (
+            "Cannot delete this record because dependent rows protect it "
+            f"({protected_count} protected record(s))."
+        )
+
+    def get_protected_delete_bulk_message(
+        self, request: HttpRequest, protected_count: int
+    ) -> str:
+        """Return the default bulk-delete error message."""
+        return (
+            "Bulk delete stopped because dependent rows protect some records "
+            f"({protected_count} protected record(s))."
+        )
+
+    @staticmethod
+    def _protected_count(exc: ProtectedError) -> int:
+        """Return the number of protected related objects in an error payload."""
+        return len(getattr(exc, "protected_objects", []))
+
+    def delete_model(self, request: HttpRequest, obj) -> None:
+        """Delete one row and convert ProtectedError into admin feedback."""
+        try:
+            super().delete_model(request, obj)
+        except ProtectedError as exc:
+            self.message_user(
+                request,
+                self.get_protected_delete_single_message(
+                    request, obj, self._protected_count(exc)
+                ),
+                level=messages.ERROR,
+            )
+
+    def delete_queryset(self, request: HttpRequest, queryset) -> None:
+        """Delete selected rows and convert ProtectedError into admin feedback."""
+        try:
+            super().delete_queryset(request, queryset)
+        except ProtectedError as exc:
+            self.message_user(
+                request,
+                self.get_protected_delete_bulk_message(
+                    request, self._protected_count(exc)
+                ),
+                level=messages.ERROR,
+            )
 
 
 class ScopedAutocompleteAdminMixin(ModelAdmin):
