@@ -516,9 +516,7 @@ def _render_png(dot_path: Path, png_path: Path) -> None:
     )
     if result.returncode != 0:
         err_text = (result.stderr or "").strip() or "dot failed without stderr output."
-        raise CommandError(
-            f"Graphviz dot failed for {dot_path.name}: {err_text}"
-        )
+        raise CommandError(f"Graphviz dot failed for {dot_path.name}: {err_text}")
 
 
 def _resolve_owner_ids() -> OwnerIdsT:

@@ -23,7 +23,15 @@ Take origin/ts as reference, as it was working good on it.  so edit the current 
   - Update delete paths/admin messaging so users get explicit “protected by grades” errors instead of raw tracebacks.
   - You run migrations manually (makemigrations/migrate) on dev; I’ll stop at code-level migration-ready changes.
 
-**** <2026-02-11 mer. 14:28>  Comments on edits
+**** DONE <2026-02-11 mer. 15:52> precision on mycorrection
+CLOSED: [2026-02-11 mer. 16:00]
+two importants words in all your edits should be abstraction and simplification.
+simplification means that things should not be duplicated. for exemple top_n and limit are redundant in fuzzy_matching.  we need to remove one (the most specific usualy)
+simplification can also be obtain through abstraction.
+In other words make elements simpler but do  not hesitate to assemble them in more abstract units.
+
+**** DONE <2026-02-11 mer. 14:28>  Comments on edits
+CLOSED: [2026-02-11 mer. 16:00]
 delete_model seems too  general to be only in timetable. move it to shared
 Same thing for deletequery set. discuss why not using it as a shared utils ? is ti because of the super() then pass the object as param.
 
@@ -32,7 +40,29 @@ in fact I see the same (abstractidely ) functions in CurriculumAdmin
 under which condition can a protected model like section be deleted ?
 is it rather the object to which it is attached that is preotected, eg if a grade existe with a section x then section x cannot be deleted. but if no grade existe for section x then seection x can be deleted.
 
-**** protects courses grades <2026-02-11 mer. 14:04>
+
+Other thing. I still have many mypy errors from the merge.  Corrected using origin/tx as references
+All done! ✨ 🍰 ✨
+1 file reformatted, 303 files left unchanged.
+app/people/repositories.py:24: error: "NameParts" object is not iterable  [misc]
+app/people/repositories.py:25: error: Cannot determine type of "first"  [has-type]
+app/people/repositories.py:25: error: Cannot determine type of "last"  [has-type]
+app/people/repositories.py:25: error: Cannot determine type of "middle"  [has-type]
+app/people/repositories.py:31: error: Cannot determine type of "first"  [has-type]
+app/people/repositories.py:32: error: Cannot determine type of "middle"  [has-type]
+app/people/repositories.py:33: error: Cannot determine type of "last"  [has-type]
+app/people/repositories.py:34: error: Cannot determine type of "prefix"  [has-type]
+app/people/repositories.py:35: error: Cannot determine type of "suffix"  [has-type]
+tests/shared/test_fuzzy_matching.py:28: error: Value of type variable "AbstractPersonT" of "top_name_matches" cannot be "str"  [type-var]
+tests/shared/test_fuzzy_matching.py:28: error: Unexpected keyword argument "top_n" for "top_name_matches"  [call-arg]
+app/shared/fuzzy_matching.py:107: note: "top_name_matches" defined here
+tests/people/test_utils.py:6: error: Module "app.people.utils" has no attribute "ensure_unique_usernames"  [attr-defined]
+tests/people/test_utils.py:6: error: Module "app.people.utils" has no attribute "x"  [attr-defined]
+Found 13 errors in 3 files (checked 342 source files)
+
+
+**** DONE protects courses grades <2026-02-11 mer. 14:04>
+CLOSED: [2026-02-11 mer. 16:01]
 Currently grades are = PROTECT,
 
 For your curriculum-merge UX request (manual conflict choices), that design is good and implementable. I would build it as:
