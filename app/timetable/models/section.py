@@ -71,7 +71,8 @@ class Section(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         """Return a human readable identifier for the section, with allocated rooms."""
-        return f"{self.short_code} | {self.space_codes}"
+        space = f" | {self.space_codes}" if self.space_codes else ""
+        return f"{self.short_code}{space}"
 
     @property
     def course(self) -> Course:

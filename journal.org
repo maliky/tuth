@@ -4,6 +4,78 @@ I want to switch to protect now. We will make that change on the dev branch. But
 two, update the code to protect the grades at teh DB level
 three develop admin tools to reassign grades in bluck.  Thos tools should be admin action calling sql scripts stored in scripts folder.
 
+** <2026-02-11 mer. 17:10>  merging grades/sections
+I want to caputre this rule for merging section with grades between two distinc
+  curriculum.  if the grades attached to the 2 sections attached to the same
+  course through the curriculum course have the same value, they must be merged.
+  keeping the lowest section number, and putting default in all other fields in
+  case of conflict on a field (2 differing non default values set for a field) the
+  set value always wins on the default.  all non default values must be logged in
+  the info field of the merged section.
+
+*** discussion 2
+  - No, there is currently no DB constraint that enforces “one successful section
+    per course per student.”
+  - Existing constraints are only:
+      - Grade: unique (student, section) in app/registry/models/grade.py
+      - Registration: unique (student, section) in app/registry/models/registration.py
+  - So a student can still have multiple passed grades for the same course across different sections/curricula.
+  - Student.passed_courses() in app/people/models/student.py helps eligibility
+    logic, but it is not a hard DB guard.
+
+  Inconsistencies To Resolve
+
+# > keep lowest existing section number among merge candidates.
+# > “Merge section when grades are same” only for overlapping students with 2 section of the same course
+
+
+  One important note: the last commit 8e62fd3 also included pre-staged app/
+  academics/prereq_graph.py and journal.org. If you want, I can split/fix that
+  history in the next commit.
+
+
+*** discussion
+  How far we are from your expected merge rule (2026-02-11 17:10):
+
+  - Already aligned:
+      - Reassignment behavior exists: sessions, grades, registrations are moved
+        from source section to target section.
+      - Protected retention exists: if grades remain on source, source section is
+        retained (delete blocked by PROTECT).
+  - Not aligned yet:
+      - No grade-value gate before section merge. Current logic does not require
+        “same grade value” to merge.
+      - No explicit “keep lowest section number” policy.
+      - No field-level conflict reconciliation policy for section fields.
+      - No default-vs-non-default resolver for section metadata.
+      - No logging of non-default source values into Section.info.
+
+  Inconsistencies/ambiguities in requested behavior:
+
+  1. “If grades … have the same value, they must be merged” is ambiguous:
+      - per overlapping student?
+      - across all grade rows globally?
+      - what if students differ between sections?
+# > No I am talking here of a student with 2 grades for the same course, but the course are in different program, so different curriculumcourses attached to the same course. This should not be allowed and merge.  The busines logic rule is that if a student redo a new curriculum where he has to repeat a course he already did, we use the garde of the first course and he does not have to repeat the course in practice	
+  2. “Put default in all other fields in case of conflict” conflicts with “set
+     value wins on default.”
+  3. Scope says “between two distinct curriculum,” but current merge utilities also  merge within same curriculum; confirm whether this new rule should apply only to cross-curriculum merges.
+     # > The case should not exists in one curriculum because we have unikness enforcement on course atttached in a curriculu. when we reconcile the uniq course we may end up with several section for that course and a specific student. that is where the problem lies. but in fact a student can have severa section of the same course when the first section was not validated. no grade enableing the section to be validated. in that case he will have to retake the course in another section (otehr semester). but if the section was validated, there is no reason to have additional sections. unless we accept that a student is allowed to redo as manyh times as he want what ever the reason a course.  Do we have uniauenss constraint stopign that currently in the db ?
+
+# >     That been said, to my konwledge this has never been the case we we should not see the case arise in the db. Therefore the rule must be enforce to limite eachstudent to one successfull section per course (what ever the curriculum)
+
+  4. “Keep lowest section number” needs scope:
+      - only when two sections are merge candidates?
+	# > yes
+      - or should it renumber non-conflicting sections too?
+	# > no
+
+# > The update rule is simply to set the section number to default (0 or 1)
+
+
+
+
+
 ** <2026-02-11 mer. 11:44>  Plan
 
 *** DONE Merge regression audit (no schema changes yet) <2026-02-11 mer. 12:05>
@@ -88,15 +160,6 @@ For your curriculum-merge UX request (manual conflict choices), that design is g
 
 
 
-*** SQL reassignment scripts
-
-  - Add SQL scripts for grade reassignment:
-      - preview script: shows how many grades can move, conflicts, blocked rows.
-      - apply script: performs reassignment in transaction, conflict-safe, returns
-	counts.
-  - Add script docs in scripts/README with required params and examples.
-  - Keep scripts idempotent and auditable (counts before/after).
-
 *** Admin actions that call SQL scripts
 
   - Add admin action(s) on CurriculumCourse (and optionally Section if needed) to
@@ -111,25 +174,12 @@ For your curriculum-merge UX request (manual conflict choices), that design is g
 
     # for this it may be convenient for report, or extract model check to run the action through the ORM.  Still I like the idea of having DB action script centralized in the script folder.  how can I get the best of both world ?  Should I ? Maybe one way is obviously better than the other.
 
-  5. Hardening and rollout on dev
+*** Hardening and rollout on dev
 
   - Add focused tests for protected delete behavior and reassignment action logic.
   - Validate grade import behavior after protection (no accidental duplicates,
     expected ProtectedError paths).
-  - Produce rollout checklist for preprod: backup, run migration, run preview
-    script, apply reassignment, verify counts.
 
-  6. Commit segmentation
-
-  - Commit A: regression fixes only.
-  - Commit B: grade protection model/admin behavior.
-  - Commit C: SQL scripts + docs.
-  - Commit D: admin actions wiring + tests.
-
-  Open decisions to lock before implementation:
-
-  1. Conflict policy when target already has (student, section) grade: skip source
-     or overwrite target?
   2. Mapping rule for reassignment: same semester + same section number, or
      explicit target section/course mapping per action?
 
