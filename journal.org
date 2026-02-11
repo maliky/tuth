@@ -1,6 +1,76 @@
+* <2026-02-11 mer.>  big merge
+merging curriculums/ keeping grades
+I want to switch to protect now. We will make that change on the dev branch. But I just merge the dev and tx branche probably introducing some regressions.  So the first task is review the merge and postnetial regressions.
+two, update the code to protect the grades at teh DB level
+three develop admin tools to reassign grades in bluck.  Thos tools should be admin action calling sql scripts stored in scripts folder.
+
+** <2026-02-11 mer. 11:44>  Plan
+
+*** Merge regression audit (no schema changes yet) <2026-02-11 mer. 12:05>
+
+  - P0 App cannot start because of unresolved merge markers in app/people/admin/resources.py; python manage.py check fails with SyntaxError.
+  - P1 Merge artifacts in app/people/admin/widgets.py: duplicate UserWidget class and undefined names (parse_name, default_password, username) flagged by flake8.
+     This is a high regression risk for people import/admin widget flows.
+  - P1 app/shared/fuzzy_matching.py is internally inconsistent: undefined top_n, undefined canonicalize_name, and call-site mismatch (top_name_matches(..., top_n=...) while function defines limit). Matching logic likely regressed for import/dedup flows.
+
+
+**** Lets fix P1 first.
+Take origin/ts as reference, as it was working good on it.  so edit the current code to make it match with branch origin/ts even thos we merged it.
+*** Protect grades at DB level
+
+  - Change Grade.section from CASCADE to PROTECT in model code.
+  - Update delete paths/admin messaging so users get explicit “protected by grades” errors instead of raw tracebacks.
+  - You run migrations manually (makemigrations/migrate) on dev; I’ll stop at code-level migration-ready changes.
+
+  3. SQL reassignment scripts (source of truth in scripts/)
+
+  - Add SQL scripts for grade reassignment:
+      - preview script: shows how many grades can move, conflicts, blocked rows.
+      - apply script: performs reassignment in transaction, conflict-safe, returns
+	counts.
+  - Add script docs in scripts/README with required params and examples.
+  - Keep scripts idempotent and auditable (counts before/after).
+
+  4. Admin actions that call SQL scripts
+
+  - Add admin action(s) on CurriculumCourse (and optionally Section if needed) to
+    trigger preview/apply scripts.
+  - Action flow:
+      - select sources + choose target,
+      - preview result first,
+      - confirm apply,
+      - show result counts in admin messages.
+  - Execute SQL via Django DB cursor, reading SQL text from scripts/ (no hardcoded
+    SQL blobs in admin code).
+
+    # for this it may be convenient for report, or extract model check to run the action through the ORM.  Still I like the idea of having DB action script centralized in the script folder.  how can I get the best of both world ?  Should I ? Maybe one way is obviously better than the other.
+
+  5. Hardening and rollout on dev
+
+  - Add focused tests for protected delete behavior and reassignment action logic.
+  - Validate grade import behavior after protection (no accidental duplicates,
+    expected ProtectedError paths).
+  - Produce rollout checklist for preprod: backup, run migration, run preview
+    script, apply reassignment, verify counts.
+
+  6. Commit segmentation
+
+  - Commit A: regression fixes only.
+  - Commit B: grade protection model/admin behavior.
+  - Commit C: SQL scripts + docs.
+  - Commit D: admin actions wiring + tests.
+
+  Open decisions to lock before implementation:
+
+  1. Conflict policy when target already has (student, section) grade: skip source
+     or overwrite target?
+  2. Mapping rule for reassignment: same semester + same section number, or
+     explicit target section/course mapping per action?
+
+
 * <2026-02-10 mar.> Tests local
 
-** <2026-02-10 Tue 16:07>  UX/UI tests failures to check latter BDD 
+** <2026-02-10 Tue 16:07>  UX/UI tests failures to check latter BDD
   - 5 failed, 209 passed, 65 xfailed
   - The date/datetime TypeError is not present in this latest run.
 * <2026-01-01 jeu. 09:13> names parts
@@ -101,7 +171,7 @@ psql -U "$DJANGO_DB_USER" -h "$DJANGO_DB_HOST" -p "$DJANGO_DB_PORT" -d "$DJANGO_
   Found 5 errors in 3 files (checked 256 source files)
   (tusis) mlk@r1d05 ~/Tusis/Tusis_app $
   ::: and update agents.md to help other agent work in our environment
-  
+
 
 *** proposed work
 I can’t apply the fixes directly because the filesystem is read-only, but here
@@ -138,9 +208,9 @@ I can’t apply the fixes directly because the filesystem is read-only, but here
       canonical_a = canonicalize_name(name_a)
       canonical_b = canonicalize_name(name_b)
       return float(
-          JaroWinkler.normalized_distance(
-              canonical_a, canonical_b, prefix_weight=prefix_weight
-          )
+	  JaroWinkler.normalized_distance(
+	      canonical_a, canonical_b, prefix_weight=prefix_weight
+	  )
       )
 
 
@@ -161,11 +231,11 @@ I can’t apply the fixes directly because the filesystem is read-only, but here
       """Return a list of similarity rows describing pairwise name distances."""
       matrix: list[dict[str, object]] = []
       for left in left_names:
-          for right in right_names:
-              dist = name_distance(left, right, **kwargs)
-              if max_distance is not None and dist > max_distance:
-                  continue
-              matrix.append({"left": left, "right": right, "distance": dist})
+	  for right in right_names:
+	      dist = name_distance(left, right, **kwargs)
+	      if max_distance is not None and dist > max_distance:
+		  continue
+	      matrix.append({"left": left, "right": right, "distance": dist})
       return matrix
 
   3) Update AGENTS.md to help other agents
@@ -181,7 +251,7 @@ I can’t apply the fixes directly because the filesystem is read-only, but here
   if you want me to apply the patches once write access is available.
 
 
-›    
+›
 * <2025-12-18 jeu. 21:49> Terms for students
   Define a rule to set the terms form the studentinfo import
   something like for oldest for  first TermFirstEntered and newest for TermLastEnrolled
@@ -359,7 +429,6 @@ Student --> Logout
 Staff --> Logout
 
 @enduml
->>>>>>> dev
 #+END_SRC
 
 Several things.
@@ -556,7 +625,7 @@ in my business logic
 
 
 ** <2026-02-09 lun. 13:26> twicks
-department names or curriculum/prgram names starting with 
+department names or curriculum/prgram names starting with
 
 ** Curriculum UX <2026-02-09 lun. 13:25>
   1. Update ELK graph interaction to support bidirectional highlighting.
@@ -810,7 +879,7 @@ the  students number  displayed in   admin/academic/curriculum for each row (cur
   - Course table (line items):
       - Course Code  # it the course department for us
       - Course No # we have that
-        # the 2 above are replaced by our course short code
+	# the 2 above are replaced by our course short code
       - Course Title
       - Credit Hours # from  curriculum course
       - Cost Per Credit (US$) # fixed
@@ -818,7 +887,7 @@ the  students number  displayed in   admin/academic/curriculum for each row (cur
       - Total Credit Hours
   - Fee summary:
       - Activities / Library / Maintenance / Registration / Sports / Technology
-        (fees list)  # we need to set this precisely. I may have that information in the DB.
+	(fees list)  # we need to set this precisely. I may have that information in the DB.
       - Fees total
       - Tuition total
       - Total Bill
@@ -860,7 +929,7 @@ the  students number  displayed in   admin/academic/curriculum for each row (cur
   - Store a template in DB (e.g., InvoiceTemplate model with html, css) and allow
     edits via a WYSIWYG:
       - Options: django‑ckeditor, django‑tinymce, or a lightweight HTML editor in
-        admin.
+	admin.
   - Use placeholder tokens like {{ student_name }} / {{ total_due }} and a preview    action.
   - Keep the locked layout CSS separate so users only edit content blocks.
 
@@ -888,7 +957,7 @@ the  students number  displayed in   admin/academic/curriculum for each row (cur
       - Use a strict table for course lines (fixed column widths).
       - Use a second table for fees/summary with a right‑aligned totals column.
       - Lock fonts, sizes, and spacing with CSS to keep layout stable.
-        ( see data file with attached id for on layout precision )
+	( see data file with attached id for on layout precision )
 
 -    After the invoice_snapshot creation:
 -    plan some test, db side and also ux bdd side

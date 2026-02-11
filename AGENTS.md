@@ -57,7 +57,7 @@ Do not change existing variable names
 ### Selenium driver pin
 
 - Use the system `chromedriver` (currently 142.x) when running Selenium. The fixtures look for `/usr/bin/chromedriver` first; do not downgrade to the webdriver-manager default (114) because it breaks local browsers.
-=======
+
 ## Improvement plan (do not implement without request)
 - Consolidate ensure helpers (e.g., semester/user creation) and centralize `get_user_model` typing to avoid command-specific casts.
 - Extract shared merge/dedup services for imports to replace per-command caches; add tests for same-ID/complementary-row merges.
