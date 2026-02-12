@@ -9,7 +9,7 @@ from django.shortcuts import redirect, render
 
 from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriCourse
 from app.academics.models.department import Department
 from app.finance.models.fee_stack import CourseFeeStack, FeeStack
 
@@ -66,7 +66,7 @@ def update_curriculum(modeladmin, request, queryset):
         def validate(self, value):
             pass  # allow any IDs
 
-    class _CurriculumForm(forms.Form):
+    class _CurriForm(forms.Form):
         """Capture the curriculum for the bulk action.
 
         The form keeps the primary keys of the selected element in
@@ -81,7 +81,7 @@ def update_curriculum(modeladmin, request, queryset):
         )
 
     if "apply" in request.POST:
-        form = _CurriculumForm(request.POST)
+        form = _CurriForm(request.POST)
         if form.is_valid():
             curriculum = form.cleaned_data["curriculum"]
             # selected_ids = form.cleaned_data["_selected_action"]
@@ -97,7 +97,7 @@ def update_curriculum(modeladmin, request, queryset):
             pass
 
     else:
-        form = _CurriculumForm(
+        form = _CurriForm(
             initial={
                 "_selected_action": request.POST.getlist(
                     admin.helpers.ACTION_CHECKBOX_NAME
@@ -119,7 +119,7 @@ def update_college(modeladmin, request, queryset):
     class _CollegeForm(forms.Form):
         """Collect the target college for the bulk update.
 
-        Like _CurriculumForm, this form stores the selection in
+        Like _CurriForm, this form stores the selection in
         _selected_action so the action can update the chosen course rows on
         submission.
         """
@@ -251,7 +251,7 @@ def update_level_number(modeladmin, request, queryset):
         def validate(self, value):
             pass  # allow any IDs
 
-    raw_level_choices = CurriculumCourse._meta.get_field("level_number").choices
+    raw_level_choices = CurriCourse._meta.get_field("level_number").choices
     level_choices = raw_level_choices if raw_level_choices is not None else ()
 
     class _LevelNumberForm(forms.Form):

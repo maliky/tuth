@@ -4,20 +4,20 @@ from __future__ import annotations
 
 from import_export import fields, resources
 
-from app.academics.admin.widgets import CurriculumCourseWidget
+from app.academics.admin.widgets import CurriCourseWgt
 from app.finance.admin.widgets import (
-    InvoiceStatusWidget,
-    PayerWidget,
-    PaymentMethodWidget,
-    PaymentStatusWidget,
-    StaffWidget,
-    StudentSemesterInvoiceWidget,
+    InvoiceStatusWgt,
+    PayerWgt,
+    PaymentMethodWgt,
+    PaymentStatusWgt,
+    StaffWgt,
+    StdSemesterInvoiceWgt,
 )
 from app.finance.models.invoice import CourseInvoice
 from app.finance.models.payment import Payment
-from app.people.admin.widgets import StudentUserWidget
+from app.people.admin.widgets import StdUserWgt
 from app.shared.utils import parse_str
-from app.timetable.admin.core_widgets import SemesterWidget
+from app.timetable.admin.core_widgets import SemesterWgt
 
 
 class InvoiceResource(resources.ModelResource):
@@ -26,27 +26,27 @@ class InvoiceResource(resources.ModelResource):
     student = fields.Field(
         column_name="student_id",
         attribute="student",
-        widget=StudentUserWidget(),
+        widget=StdUserWgt(),
     )
     curriculum_course = fields.Field(
         column_name="curriculum",
         attribute="curriculum_course",
-        widget=CurriculumCourseWidget(),
+        widget=CurriCourseWgt(),
     )
     semester = fields.Field(
         column_name="semester_no",
         attribute="semester",
-        widget=SemesterWidget(),
+        widget=SemesterWgt(),
     )
     status = fields.Field(
         column_name="status_code",
         attribute="status",
-        widget=InvoiceStatusWidget(),
+        widget=InvoiceStatusWgt(),
     )
     recorded_by = fields.Field(
         column_name="recorded_by",
         attribute="recorded_by",
-        widget=StaffWidget(),
+        widget=StaffWgt(),
     )
     academic_year = fields.Field(attribute=None, column_name="academic_year")
     course_no = fields.Field(attribute=None, column_name="course_no")
@@ -114,27 +114,27 @@ class PaymentResource(resources.ModelResource):
     student_semester_invoice = fields.Field(
         column_name="student_semester_invoice",
         attribute="student_semester_invoice",
-        widget=StudentSemesterInvoiceWidget(),
+        widget=StdSemesterInvoiceWgt(),
     )
     payment_method = fields.Field(
         column_name="payment_method",
         attribute="payment_method",
-        widget=PaymentMethodWidget(),
+        widget=PaymentMethodWgt(),
     )
     payer = fields.Field(
         column_name="payer",
         attribute="payer",
-        widget=PayerWidget(),
+        widget=PayerWgt(),
     )
     status = fields.Field(
         column_name="status",
         attribute="status",
-        widget=PaymentStatusWidget(),
+        widget=PaymentStatusWgt(),
     )
     recorded_by = fields.Field(
         column_name="recorded_by",
         attribute="recorded_by",
-        widget=StaffWidget(),
+        widget=StaffWgt(),
     )
     student_id = fields.Field(attribute=None, column_name="student_id")
     curriculum = fields.Field(attribute=None, column_name="curriculum")

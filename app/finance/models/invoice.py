@@ -37,7 +37,7 @@ def _ensure_payer_defaults() -> None:
     Payer._populate_attributes_and_db()
 
 
-class StudentSemesterInvoice(StatusableMixin, models.Model):
+class StdSemesterInvoice(StatusableMixin, models.Model):
     """Parent invoice level for one student and one semester."""
 
     student = models.ForeignKey(
@@ -234,12 +234,12 @@ class CourseInvoice(StatusableMixin, models.Model):
     """Course-level invoice attached to a student and semester."""
 
     curriculum_course = models.ForeignKey(
-        "academics.CurriculumCourse", on_delete=models.CASCADE
+        "academics.CurriCourse", on_delete=models.CASCADE
     )
     student = models.ForeignKey("people.Student", on_delete=models.PROTECT)
     semester = models.ForeignKey("timetable.Semester", on_delete=models.PROTECT)
     student_semester_invoice = models.ForeignKey(
-        "finance.StudentSemesterInvoice",
+        "finance.StdSemesterInvoice",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -318,7 +318,7 @@ class CourseInvoice(StatusableMixin, models.Model):
         if not self.student_id or not self.semester_id:
             return
         _ensure_payer_defaults()
-        parent_invoice, _ = StudentSemesterInvoice.objects.get_or_create(
+        parent_invoice, _ = StdSemesterInvoice.objects.get_or_create(
             student_id=self.student_id,
             semester_id=self.semester_id,
         )
@@ -358,7 +358,7 @@ class CourseInvoice(StatusableMixin, models.Model):
 Invoice = CourseInvoice
 
 
-@receiver(m2m_changed, sender=StudentSemesterInvoice.fee_stacks.through)
+@receiver(m2m_changed, sender=StdSemesterInvoice.fee_stacks.through)
 def refresh_parent_invoice_after_fee_stack_change(
     sender, instance, action, **kwargs
 ) -> None:

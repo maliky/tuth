@@ -20,14 +20,14 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from app.academics.constants import MAX_STUDENT_CREDITS
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriCourse
 from app.academics.models.prerequisite import Prerequisite
 from app.finance.fee_assignment import (
     FeeAssignmentSummaryT,
     attach_semester_fee_stacks,
     optional_semester_stack_choices,
 )
-from app.finance.models.invoice import CourseInvoice, StudentSemesterInvoice
+from app.finance.models.invoice import CourseInvoice, StdSemesterInvoice
 from app.finance.models.payment import Payment
 from app.people.models.student import Student
 from app.registry.gpa import get_cumulative_gpa, get_grade_points_and_credits
@@ -61,7 +61,7 @@ class SemesterGradeRowT(TypedDict):
     grade: str
 
 
-class SemesterGradeGroupT(TypedDict):
+class SemesterGradeGpT(TypedDict):
     """Grade grouping details for a single semester."""
 
     semester_id: int
@@ -80,7 +80,7 @@ def _append_reason_line(reason_lines: list[str], reason: str) -> None:
     reason_lines.append(text)
 
 
-def _curriculum_level_hint(curriculum_course: CurriculumCourse) -> str:
+def _curriculum_level_hint(curriculum_course: CurriCourse) -> str:
     """Return a short curriculum placement hint for the course card UI."""
     level_number = int(curriculum_course.level_number or 0)
     if 1 <= level_number <= 10:
@@ -113,7 +113,7 @@ def student_invoice_statement(request: HttpRequest) -> HttpResponse:
         )
         .order_by("semester__start_date", "curriculum_course__course__short_code")
     )
-    total_due = StudentSemesterInvoice.objects.filter(student=student).aggregate(
+    total_due = StdSemesterInvoice.objects.filter(student=student).aggregate(
         total=Sum("balance")
     ).get("total") or Decimal("0.00")
     currency = getattr(settings, "FINANCE_DEFAULT_CURRENCY", "USD")
@@ -338,7 +338,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             existing_by_section = {reg.section_id: reg for reg in existing_regs}
             new_credit_total = 0
             selected_course_ids: set[int] = set()
-            selected_curriculum_course_by_course_id: dict[int, CurriculumCourse] = {}
+            selected_curriculum_course_by_course_id: dict[int, CurriCourse] = {}
             for section in sections:
                 existing = existing_by_section.get(section.id)
                 if existing and existing.status_id not in {"canceled", "removed"}:
@@ -578,7 +578,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 registration.save(update_fields=["status"])
                 if parent_invoice_ids:
                     invoice_qs.delete()
-                    for parent_invoice in StudentSemesterInvoice.objects.filter(
+                    for parent_invoice in StdSemesterInvoice.objects.filter(
                         id__in=parent_invoice_ids
                     ):
                         has_semester_fees = parent_invoice.fee_stacks.exists()
@@ -739,7 +739,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         )
 
     curriculum_courses_qs = (
-        CurriculumCourse.objects.filter(curriculum=student.curriculum)
+        CurriCourse.objects.filter(curriculum=student.curriculum)
         .select_related("course", "credit_hours")
         .prefetch_related("requirement_groups__members__required_course")
         .order_by("course__short_code")
@@ -947,7 +947,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     gpa_result = get_cumulative_gpa(student=student, curriculum=student.curriculum)
     gpa = gpa_result["gpa"]
 
-    total_due = StudentSemesterInvoice.objects.filter(student=student).aggregate(
+    total_due = StdSemesterInvoice.objects.filter(student=student).aggregate(
         total=Sum("balance")
     ).get("total") or Decimal("0.00")
     payments = Payment.objects.filter(student_semester_invoice__student=student)
@@ -1002,8 +1002,8 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     student_profile["academic_year"] = _format_semester_label()
 
     completed_courses: list[SemesterGradeRowT] = []
-    semester_grade_groups: list[SemesterGradeGroupT] = []
-    semester_grade_lookup: dict[int, SemesterGradeGroupT] = {}
+    semester_grade_groups: list[SemesterGradeGpT] = []
+    semester_grade_lookup: dict[int, SemesterGradeGpT] = {}
     semester_gpa_points: DefaultDict[int, float] = defaultdict(float)
     semester_gpa_credits: DefaultDict[int, int] = defaultdict(int)
     # Track total credits per semester for display.

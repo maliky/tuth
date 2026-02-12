@@ -7,18 +7,18 @@ from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
 
-from app.academics.admin.filters import CurriculumFilterAC
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.admin.filters import CurriFltAC
+from app.academics.models.curriculum_course import CurriCourse
 from app.people.models.faculty import Faculty
 from app.people.models.student import Student
-from app.registry.admin.inlines import GradeInline
+from app.registry.admin.inlines import GradeIL
 from app.shared.admin.mixins import CollegeRestrictedAdmin, ProtectedDeleteAdminMixin
 from app.timetable.admin.filters import (
-    CollegeFilterAC,
-    SectionFacultyFilterAc,
-    SemesterFilterAC,
+    CollegeFltAC,
+    SectionFacultyFltAc,
+    SemesterFltAC,
 )
-from app.timetable.admin.inlines import SecSessionInline
+from app.timetable.admin.inlines import SecSessionIL
 from app.timetable.admin.section_resources import SectionResource
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
@@ -39,7 +39,7 @@ class SectionAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
 
     list_display includes semester, course and faculty information while
     inlines manage sessions and grade.
-    Filtering by curriculum is available through list_filter.
+    Flting by curriculum is available through list_filter.
     """
 
     resource_class = SectionResource
@@ -56,13 +56,13 @@ class SectionAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
     )
     # need to be a field of the section
     # list_editable = ("curriculum_course__curriculum",)
-    inlines = [SecSessionInline, GradeInline]
+    inlines = [SecSessionIL, GradeIL]
     # Added curriculum filtering per section list requirements.
     list_filter = [
-        CollegeFilterAC,
-        SectionFacultyFilterAc,
-        CurriculumFilterAC,
-        SemesterFilterAC,
+        CollegeFltAC,
+        SectionFacultyFltAc,
+        CurriFltAC,
+        SemesterFltAC,
     ]
     autocomplete_fields = ("semester", "faculty")
 
@@ -117,7 +117,7 @@ class SectionAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Sort curriculum course choices alphabetically by display components."""
         if db_field.name == "curriculum_course":
-            kwargs["queryset"] = CurriculumCourse.objects.select_related(
+            kwargs["queryset"] = CurriCourse.objects.select_related(
                 "course",
                 "curriculum__college",
             ).order_by(

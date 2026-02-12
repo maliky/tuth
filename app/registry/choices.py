@@ -22,5 +22,5 @@ class GradeChoice(TextChoices):
 
 
 # STATUS_CHOICES = list(
-#     set(list(DocumentStatus.choices) + list(StatusRegistration.choices))
+#     set(list(DocStatus.choices) + list(StatusRegistration.choices))
 # )

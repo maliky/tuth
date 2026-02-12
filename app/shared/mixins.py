@@ -29,7 +29,7 @@ class SimpleTableMixinManager(models.Manager):
 class SimpleTableMixin(models.Model):
     """Keep possible statuses for different classes.
 
-    Documents, curriculum, etc. Code is a primary str key and label is the
+    Docs, curriculum, etc. Code is a primary str key and label is the
     long format for display usage.
     """
 

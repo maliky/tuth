@@ -8,17 +8,17 @@ from django.contrib.admin.sites import AdminSite
 from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
 
 # register customized Group admin
-from app.shared.admin.group import GroupAdmin
+from app.shared.admin.group import GpAdmin
 
 __all__ = [
     "CollegeRestrictedAdmin",
     "DepartmentRestrictedAdmin",
-    "GroupAdmin",
+    "GpAdmin",
 ]
 
 
 ADMIN_GROUP_MODEL_LABELS = {
-    "academics.CurriculumStatus",
+    "academics.CurriStatus",
     "finance.AccountType",
     "finance.AccountChartType",
     "finance.FeeType",
@@ -31,8 +31,8 @@ ADMIN_GROUP_MODEL_LABELS = {
     "finance.FeeStack",
     "finance.FeeStackLine",
     "registry.CreditHour",
-    "registry.DocumentStatus",
-    "registry.DocumentType",
+    "registry.DocStatus",
+    "registry.DocType",
     "registry.GradeValue",
     "registry.RegistrationStatus",
     "registry.TranscriptRequestStatus",

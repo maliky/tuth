@@ -12,18 +12,18 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from import_export.admin import ImportExportModelAdmin
 
 from app.people.models.student import Student
-from app.registry.models.document import DocumentStatus, DocumentType
+from app.registry.models.document import DocStatus, DocType
 
-# from app.registry.admin.filters import GradeSectionFilter
+# from app.registry.admin.filters import GradeSectionFlt
 # from app.registry.admin.views import SectioGradeValueerAutocomplete
 from app.registry.models.grade import Grade, GradeValue
 from app.registry.admin.resources import GradeResource
-from app.registry.admin.filters import GradeStudentFilter
+from app.registry.admin.filters import GradeStdFlt
 from app.registry.models.registration import Registration, RegistrationStatus
 from app.registry.models.transcript import TranscriptRequest, TranscriptRequestStatus
 from app.timetable.admin.filters import (
-    SectionBySemesterFilter,
-    SemesterFilterAC,
+    SectionBySemesterFlt,
+    SemesterFltAC,
 )
 from app.timetable.admin.views import SectionBySemesterAutocomplete
 from app.timetable.models.semester import Semester
@@ -272,8 +272,8 @@ class GradeAdmin(
         "section__semester",
         # "graded_on",
     )
-    # list_filter = ['section__semester', GradeSectionFilter]
-    list_filter = [SemesterFilterAC, SectionBySemesterFilter, GradeStudentFilter]
+    # list_filter = ['section__semester', GradeSectionFlt]
+    list_filter = [SemesterFltAC, SectionBySemesterFlt, GradeStdFlt]
     autocomplete_fields = ("student", "section", "value")
     list_select_related = (
         "student__user",
@@ -364,7 +364,7 @@ class RegistrationAdmin(
         "section__curriculum_course__course__code",
         "section__number",
     )
-    list_filter = (SemesterFilterAC,)
+    list_filter = (SemesterFltAC,)
 
     def get_form(self, request, obj=None, **kwargs):
         """Select a bulk-add form for new registrations."""
@@ -439,12 +439,12 @@ class TranscriptRequestAdmin(
     autocomplete_fields = ("student", "status")
     search_fields = ("student", "status")
     # > See how I can make this a AC field and limit the number of semester to the used semesters
-    list_filter = (SemesterFilterAC,)
+    list_filter = (SemesterFltAC,)
 
 
-@admin.register(DocumentStatus, DocumentType, TranscriptRequestStatus)
-class CurriculumStatusAdmin(admin.ModelAdmin):
-    """Lookup admin for CurriculumStatus."""
+@admin.register(DocStatus, DocType, TranscriptRequestStatus)
+class CurriStatusAdmin(admin.ModelAdmin):
+    """Lookup admin for CurriStatus."""
 
     search_fields = ("code", "label")
     list_display = ("label",)

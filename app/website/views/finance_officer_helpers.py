@@ -12,7 +12,7 @@ from app.finance.models.payment import Payment
 from app.people.models.student import Student
 
 
-class StudentOptionT(TypedDict):
+class StdOptionT(TypedDict):
     """Dropdown option for finance officer student filters."""
 
     id: int
@@ -20,7 +20,7 @@ class StudentOptionT(TypedDict):
     selected: bool
 
 
-class InvoiceGroupT(TypedDict):
+class InvoiceGpT(TypedDict):
     """Invoice group keyed by student."""
 
     student: Student
@@ -28,7 +28,7 @@ class InvoiceGroupT(TypedDict):
     total_due: Decimal
 
 
-class PaymentGroupT(TypedDict):
+class PaymentGpT(TypedDict):
     """Payment group keyed by student."""
 
     student: Student
@@ -75,9 +75,9 @@ def finance_student_by_id(student_id: int) -> Optional[Student]:
 def build_student_options(
     students: Iterable[Student],
     selected_student_id: Optional[int],
-) -> list[StudentOptionT]:
+) -> list[StdOptionT]:
     """Build dropdown options for the student filter."""
-    options: list[StudentOptionT] = []
+    options: list[StdOptionT] = []
     for student in students:
         label = student.long_name or student.user.get_full_name() or student.student_id
         student_id = student.student_id or "Pending ID"
@@ -91,10 +91,10 @@ def build_student_options(
     return options
 
 
-def group_invoices(invoices: Iterable[CourseInvoice]) -> list[InvoiceGroupT]:
+def group_invoices(invoices: Iterable[CourseInvoice]) -> list[InvoiceGpT]:
     """Group invoices by student preserving the incoming order."""
-    groups: list[InvoiceGroupT] = []
-    group_lookup: dict[int, InvoiceGroupT] = {}
+    groups: list[InvoiceGpT] = []
+    group_lookup: dict[int, InvoiceGpT] = {}
     parent_seen_by_student: dict[int, set[int]] = {}
     for invoice in invoices:
         student_id = invoice.student_id
@@ -124,10 +124,10 @@ def group_invoices(invoices: Iterable[CourseInvoice]) -> list[InvoiceGroupT]:
     return groups
 
 
-def group_payments(payments: Iterable[Payment]) -> list[PaymentGroupT]:
+def group_payments(payments: Iterable[Payment]) -> list[PaymentGpT]:
     """Group payments by student preserving the incoming order."""
-    groups: list[PaymentGroupT] = []
-    group_lookup: dict[int, PaymentGroupT] = {}
+    groups: list[PaymentGpT] = []
+    group_lookup: dict[int, PaymentGpT] = {}
     for payment in payments:
         student = payment.student_semester_invoice.student
         student_id = student.id

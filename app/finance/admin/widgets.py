@@ -7,8 +7,8 @@ from typing import Optional
 
 from import_export import widgets
 
-from app.academics.admin.widgets import CurriculumCourseWidget
-from app.finance.models.invoice import CourseInvoice, StudentSemesterInvoice
+from app.academics.admin.widgets import CurriCourseWgt
+from app.finance.models.invoice import CourseInvoice, StdSemesterInvoice
 from app.finance.models.status_types_methods import (
     FeeType,
     InvoiceStatus,
@@ -16,12 +16,12 @@ from app.finance.models.status_types_methods import (
     PaymentMethod,
     PaymentStatus,
 )
-from app.people.admin.widgets import StaffProfileWidget, StudentUserWidget
+from app.people.admin.widgets import StaffProfileWgt, StdUserWgt
 from app.shared.utils import get_in_row, parse_str
-from app.timetable.admin.core_widgets import SemesterWidget
+from app.timetable.admin.core_widgets import SemesterWgt
 
 
-class SimpleCodeWidget(widgets.ForeignKeyWidget):
+class SimpleCodeWgt(widgets.ForeignKeyWidget):
     """Resolve simple lookup tables by their code."""
 
     def clean(self, value, row=None, *args, **kwargs):
@@ -37,49 +37,49 @@ class SimpleCodeWidget(widgets.ForeignKeyWidget):
         return getattr(value, "code", "") if value else ""
 
 
-class FeeTypeWidget(SimpleCodeWidget):
+class FeeTypeWgt(SimpleCodeWgt):
     """Resolve FeeType entries by code."""
 
     def __init__(self):
         super().__init__(FeeType, field="code")
 
 
-class PaymentMethodWidget(SimpleCodeWidget):
+class PaymentMethodWgt(SimpleCodeWgt):
     """Resolve PaymentMethod entries by code."""
 
     def __init__(self):
         super().__init__(PaymentMethod, field="code")
 
 
-class PaymentStatusWidget(SimpleCodeWidget):
+class PaymentStatusWgt(SimpleCodeWgt):
     """Resolve PaymentStatus entries by code."""
 
     def __init__(self):
         super().__init__(PaymentStatus, field="code")
 
 
-class InvoiceStatusWidget(SimpleCodeWidget):
+class InvoiceStatusWgt(SimpleCodeWgt):
     """Resolve InvoiceStatus entries by code."""
 
     def __init__(self):
         super().__init__(InvoiceStatus, field="code")
 
 
-class PayerWidget(SimpleCodeWidget):
+class PayerWgt(SimpleCodeWgt):
     """Resolve Payer entries by code."""
 
     def __init__(self):
         super().__init__(Payer, field="code")
 
 
-class InvoiceWidget(widgets.ForeignKeyWidget):
+class InvoiceWgt(widgets.ForeignKeyWidget):
     """Resolve course invoices using student, curriculum course, and semester."""
 
     def __init__(self):
         super().__init__(CourseInvoice)
-        self.student_w = StudentUserWidget()
-        self.curriculum_course_w = CurriculumCourseWidget()
-        self.semester_w = SemesterWidget()
+        self.student_w = StdUserWgt()
+        self.curriculum_course_w = CurriCourseWgt()
+        self.semester_w = SemesterWgt()
 
     def _parse_amount(self, value: str) -> Decimal:
         token = parse_str(value)
@@ -123,15 +123,15 @@ class InvoiceWidget(widgets.ForeignKeyWidget):
         )
 
 
-class StudentSemesterInvoiceWidget(widgets.ForeignKeyWidget):
+class StdSemesterInvoiceWgt(widgets.ForeignKeyWidget):
     """Resolve parent invoices using student and semester columns."""
 
     def __init__(self):
-        super().__init__(StudentSemesterInvoice)
-        self.student_w = StudentUserWidget()
-        self.semester_w = SemesterWidget()
+        super().__init__(StdSemesterInvoice)
+        self.student_w = StdUserWgt()
+        self.semester_w = SemesterWgt()
 
-    def clean(self, value, row=None, *args, **kwargs) -> Optional[StudentSemesterInvoice]:
+    def clean(self, value, row=None, *args, **kwargs) -> Optional[StdSemesterInvoice]:
         """Return or create a parent invoice from student+semester row columns."""
         student_value = get_in_row("student_id", row)
         semester_value = get_in_row("semester_no", row) or get_in_row("semester", row)
@@ -139,12 +139,12 @@ class StudentSemesterInvoiceWidget(widgets.ForeignKeyWidget):
         semester = self.semester_w.clean(semester_value, row=row)
         if not (student and semester):
             return None
-        parent_invoice, _ = StudentSemesterInvoice.objects.get_or_create(
+        parent_invoice, _ = StdSemesterInvoice.objects.get_or_create(
             student=student,
             semester=semester,
         )
         return parent_invoice
 
 
-class StaffWidget(StaffProfileWidget):
+class StaffWgt(StaffProfileWgt):
     """Alias for staff widget with a clearer name in finance resources."""

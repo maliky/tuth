@@ -1,4 +1,4 @@
-"""Widgets module."""
+"""Wgts module."""
 
 from typing import Any, Optional
 
@@ -11,7 +11,7 @@ from app.academics.models.concentration import Major
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriCourse
 from app.academics.utils import (
     expand_course_code,
     normalize_college_code,
@@ -28,20 +28,20 @@ from app.academics.ensures import (
 from app.shared.utils import asserts_keys, get_in_row, parse_str, to_int
 
 
-class CurriculumCourseWidget(widgets.ForeignKeyWidget):
-    """Create or CurriculumCourse from CSV rows.
+class CurriCourseWgt(widgets.ForeignKeyWidget):
+    """Create or CurriCourse from CSV rows.
 
     Use the curriculum_short name as the 'value'.
-    The widget delegates curriculum parsing to CurriculumWidget and course parsing
-    to CourseWidget then assembles a CurriculumCourse object from the results.
+    The widget delegates curriculum parsing to CurriWgt and course parsing
+    to CourseWgt then assembles a CurriCourse object from the results.
     """
 
     def __init__(self):
-        super().__init__(CurriculumCourse)
-        self.curriculum_w = CurriculumWidget()
-        self.course_w = CourseWidget()
+        super().__init__(CurriCourse)
+        self.curriculum_w = CurriWgt()
+        self.course_w = CourseWgt()
 
-    def clean(self, value, row=None, *args, **kwargs) -> CurriculumCourse:
+    def clean(self, value, row=None, *args, **kwargs) -> CurriCourse:
         """Assemble course_dept, curriculum and course to return a curriculum course."""
         # we don't use value.  We always get a curriculum course back
 
@@ -69,7 +69,7 @@ class CurriculumCourseWidget(widgets.ForeignKeyWidget):
         )
 
 
-class CurriculumWidget(widgets.ForeignKeyWidget):
+class CurriWgt(widgets.ForeignKeyWidget):
     """Look up or create a Curriculum from a short name.
 
     The associated college is determined from row['college_code'] when
@@ -82,7 +82,7 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
         # set the look_up field to uniquely identify the Curriculum to short_name.
         self.fuzzy_threshold = fuzzy_threshold
         super().__init__(Curriculum, field="short_name")
-        self.college_w = CollegeWidget()
+        self.college_w = CollegeWgt()
 
     def clean(
         self, value, row=None, fuzzy_threshold: float = 1.0, *args, **kwargs
@@ -107,7 +107,7 @@ class CurriculumWidget(widgets.ForeignKeyWidget):
         return curriculum
 
 
-class CourseWidget(widgets.ForeignKeyWidget):
+class CourseWgt(widgets.ForeignKeyWidget):
     """Convert course_* CSV columns into a Course.
 
     course_dept and course_no identify the course while college is
@@ -117,8 +117,8 @@ class CourseWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
         super().__init__(Course, field="code")
-        self.department_w = DepartmentWidget()
-        self.college_w = CollegeWidget()
+        self.department_w = DepartmentWgt()
+        self.college_w = CollegeWgt()
 
     def clean(
         self,
@@ -154,16 +154,16 @@ class CourseWidget(widgets.ForeignKeyWidget):
         return crs_obj
 
 
-class CourseManyWidget(widgets.ManyToManyWidget):
+class CourseManyWgt(widgets.ManyToManyWidget):
     """Parse list_courses and return a list of Course objects.
 
     The widget splits the CSV column on ; and delegates parsing of each
-    token to CourseWidget, creating courses on the fly when needed.
+    token to CourseWgt, creating courses on the fly when needed.
     """
 
     def __init__(self):
         super().__init__(Course, separator=";", field="code")
-        self.course_w = CourseWidget()
+        self.course_w = CourseWgt()
 
     def clean(self, value, row=None, *args, **kwargs) -> list[Course]:
         """Returns a list of Course instances parsed from the provided CSV value.
@@ -177,7 +177,7 @@ class CourseManyWidget(widgets.ManyToManyWidget):
         for token in str(value).split(self.separator):
             token = token.strip()
             if token:
-                # Delegate to CourseCodeWidget to parse/create individual course
+                # Delegate to CourseCodeWgt to parse/create individual course
                 course = self.course_w.clean(token, row)
                 if course:
                     courses.append(course)
@@ -198,7 +198,7 @@ class CourseManyWidget(widgets.ManyToManyWidget):
         return self.separator.join(codes)
 
 
-class CourseCodeWidget(widgets.ForeignKeyWidget):
+class CourseCodeWgt(widgets.ForeignKeyWidget):
     """Resolve a course code  into a Course.
 
     A Course code is <college_code>-<dept_code><course_no>.
@@ -206,7 +206,7 @@ class CourseCodeWidget(widgets.ForeignKeyWidget):
 
     def __init__(self):
         super().__init__(Course, field="code")
-        self.department_w = DepartmentWidget()
+        self.department_w = DepartmentWgt()
 
     def clean(
         self, value, row=None, credit_field: str | None = None, *args, **kwargs
@@ -243,7 +243,7 @@ class CourseCodeWidget(widgets.ForeignKeyWidget):
         return course
 
 
-class CollegeWidget(widgets.ForeignKeyWidget):
+class CollegeWgt(widgets.ForeignKeyWidget):
     """Return or create the College referenced by college_code."""
 
     def __init__(self):
@@ -266,12 +266,12 @@ class CollegeWidget(widgets.ForeignKeyWidget):
         return college
 
 
-class DepartmentWidget(widgets.ForeignKeyWidget):
+class DepartmentWgt(widgets.ForeignKeyWidget):
     """Return or create the Department referenced by course_dept and college_code."""
 
     def __init__(self):
         super().__init__(Department, field="code")
-        self.college_w = CollegeWidget()
+        self.college_w = CollegeWgt()
 
     def clean(self, value, row=None, *args, **kwargs) -> Department:
         """Return or create the Department using course_dept and college_code.

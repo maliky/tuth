@@ -7,9 +7,9 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
-from app.timetable.admin.inlines import SecSessionInline
+from app.timetable.admin.inlines import SecSessionIL
 from app.timetable.admin.session_resources import ScheduleResource, SecSessionResource
-from app.timetable.admin.filters import SecSessionFacultyFilterAc
+from app.timetable.admin.filters import SecSessionFacultyFltAc
 from app.timetable.models.schedule import Schedule
 from app.timetable.models.session import SecSession
 
@@ -39,7 +39,7 @@ class SecSessionAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAd
         "section__faculty__staff_profile__user__first_name",
         "section__faculty__staff_profile__user__last_name",
     )
-    list_filter = ("schedule__weekday", "room__space", SecSessionFacultyFilterAc)
+    list_filter = ("schedule__weekday", "room__space", SecSessionFacultyFltAc)
     # useful when creating new schedules
     autocomplete_fields = (
         "section",
@@ -84,4 +84,4 @@ class ScheduleAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
     list_display = ("weekday", "start_time", "end_time")
     list_filter = ("weekday",)
     search_fields = ("weekday",)
-    inlines = [SecSessionInline]
+    inlines = [SecSessionIL]

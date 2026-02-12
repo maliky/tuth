@@ -21,7 +21,7 @@ from app.timetable.models.semester import Semester, SemesterStatus
 from app.timetable.utils import format_datetime
 
 
-class RegistrarGradeRowT(TypedDict):
+class RegGradeRowT(TypedDict):
     """Details for a registrar grade row."""
 
     course_code: str
@@ -31,28 +31,28 @@ class RegistrarGradeRowT(TypedDict):
     faculty: str
 
 
-class RegistrarSemesterGroupT(TypedDict):
-    """Grouped grade rows for a semester."""
+class RegSemesterGpT(TypedDict):
+    """Gped grade rows for a semester."""
 
     semester: Semester
     label: str
-    rows: list[RegistrarGradeRowT]
+    rows: list[RegGradeRowT]
     credits_total: int
     gpa: str
 
 
-class RegistrarStudentGroupT(TypedDict):
-    """Grouped grade rows for a student."""
+class RegStdGpT(TypedDict):
+    """Gped grade rows for a student."""
 
     student: Student
     student_label: str
     student_id: str
-    semesters: list[RegistrarSemesterGroupT]
+    semesters: list[RegSemesterGpT]
     credits_total: int
     gpa: str
 
 
-class RegistrarTranscriptRowT(TypedDict):
+class RegTranscriptRowT(TypedDict):
     """Row details for the official grade transcript."""
 
     semester_label: str
@@ -163,16 +163,16 @@ def registrar_grades_dashboard(request: HttpRequest) -> HttpResponse:
     if semester_id:
         grades_qs = grades_qs.filter(section__semester_id=semester_id)
 
-    student_groups: list[RegistrarStudentGroupT] = []
-    student_lookup: dict[int, RegistrarStudentGroupT] = {}
-    semester_lookup_map: dict[int, dict[int, RegistrarSemesterGroupT]] = {}
+    student_groups: list[RegStdGpT] = []
+    student_lookup: dict[int, RegStdGpT] = {}
+    semester_lookup_map: dict[int, dict[int, RegSemesterGpT]] = {}
     student_gpa_points: dict[int, float] = {}
     student_gpa_credits: dict[int, int] = {}
     semester_gpa_points: dict[tuple[int, int], float] = {}
     semester_gpa_credits: dict[tuple[int, int], int] = {}
     for student in page_obj:
         student_group = cast(
-            RegistrarStudentGroupT,
+            RegStdGpT,
             {
                 "student": student,
                 "student_label": student.long_name or student.user.get_full_name(),
@@ -199,7 +199,7 @@ def registrar_grades_dashboard(request: HttpRequest) -> HttpResponse:
         semester_group_opt = semester_group_lookup.get(semester.id)
         if semester_group_opt is None:
             semester_group = cast(
-                RegistrarSemesterGroupT,
+                RegSemesterGpT,
                 {
                     "semester": semester,
                     "label": (
@@ -355,7 +355,7 @@ def registrar_grade_transcript(
             "section__curriculum_course__course__short_code",
         )
     )
-    transcript_rows: list[RegistrarTranscriptRowT] = []
+    transcript_rows: list[RegTranscriptRowT] = []
     for grade in grades:
         semester = grade.section.semester
         course = grade.section.curriculum_course.course

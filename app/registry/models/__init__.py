@@ -1,13 +1,13 @@
 """Initialization for the models package."""
 
 from .document import (
-    DocumentStaff,
-    DocumentDonor,
-    DocumentStudent,
+    DocStaff,
+    DocDonor,
+    DocStd,
 )
 from .status_types import (
-    DocumentStatus,
-    DocumentType,
+    DocStatus,
+    DocType,
     RegistrationStatus,
     TranscriptRequestStatus,
 )
@@ -18,11 +18,11 @@ from .credit_hours import CreditHour
 
 __all__ = [
     "CreditHour",
-    "DocumentStaff",
-    "DocumentType",
-    "DocumentStatus",
-    "DocumentDonor",
-    "DocumentStudent",
+    "DocStaff",
+    "DocType",
+    "DocStatus",
+    "DocDonor",
+    "DocStd",
     "Registration",
     "RegistrationStatus",
     "Grade",

@@ -12,7 +12,7 @@ from app.timetable.models.semester import Semester
 from app.timetable.utils import parse_semester_code
 
 
-class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
+class AcademicYearCodeWgt(widgets.ForeignKeyWidget):
     """Convert YY-YY codes into :class:AcademicYear objects."""
 
     def __init__(self, *args, **kwargs):
@@ -48,13 +48,13 @@ class AcademicYearCodeWidget(widgets.ForeignKeyWidget):
         return ay
 
 
-class SemesterWidget(widgets.ForeignKeyWidget):
+class SemesterWgt(widgets.ForeignKeyWidget):
     """Build a Semester from its number and academic year."""
 
     def __init__(self):
         # using pk until start_date can be proven to be uniq
         super().__init__(Semester)
-        self.ay_w = AcademicYearCodeWidget()
+        self.ay_w = AcademicYearCodeWgt()
 
     def clean(
         self,
@@ -81,7 +81,7 @@ class SemesterWidget(widgets.ForeignKeyWidget):
         return semester
 
 
-class SemesterCodeWidget(widgets.ForeignKeyWidget):
+class SemesterCodeWgt(widgets.ForeignKeyWidget):
     """Parse YY-YY_SemN like strings into :class:Semester objects."""
 
     def __init__(self, pat: str | None = None):

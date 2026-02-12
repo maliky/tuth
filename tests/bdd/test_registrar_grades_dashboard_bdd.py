@@ -9,7 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from tests.bdd.fixtures import RegistrarContext
+from tests.bdd.fixtures import RegContext
 from tests.selenium.fixtures_portal import _login_to_portal
 
 pytestmark = [
@@ -53,14 +53,14 @@ def test_registrar_grades_go_to_preserves_bdd():
 
 
 @given("a registrar user")
-def registrar_user(registrar_context: RegistrarContext, registrar_user_factory) -> None:
+def registrar_user(registrar_context: RegContext, registrar_user_factory) -> None:
     """Provision a registrar with grade permissions."""
     registrar_context.user = registrar_user_factory("registrar_bdd")
 
 
 @given("the registrar data includes graded students in multiple semesters")
 def dashboard_has_graded_students_in_multiple_semesters(
-    registrar_context: RegistrarContext,
+    registrar_context: RegContext,
     registrar_semester_pair_factory,
     registrar_section_factory,
     registrar_student_factory,
@@ -97,7 +97,7 @@ def dashboard_has_graded_students_in_multiple_semesters(
 
 @given("the registrar data includes graded students in the current semester")
 def dashboard_has_current_semester(
-    registrar_context: RegistrarContext,
+    registrar_context: RegContext,
     registrar_semester_pair_factory,
     registrar_section_factory,
     registrar_student_factory,
@@ -114,7 +114,7 @@ def dashboard_has_current_semester(
 
 @given("the grades dashboard has two graded students in the current semester")
 def dashboard_has_two_students(
-    registrar_context: RegistrarContext,
+    registrar_context: RegContext,
     registrar_semester_pair_factory,
     registrar_section_factory,
     registrar_student_factory,
@@ -134,7 +134,7 @@ def dashboard_has_two_students(
 
 @when("the registrar opens the grades dashboard")
 def registrar_opens_dashboard(
-    registrar_context: RegistrarContext, live_server, selenium_driver
+    registrar_context: RegContext, live_server, selenium_driver
 ) -> None:
     """Open the grades dashboard after login."""
     assert registrar_context.user is not None
@@ -144,7 +144,7 @@ def registrar_opens_dashboard(
 
 @when("the registrar opens the grades dashboard filtered by the current semester")
 def registrar_opens_dashboard_filtered(
-    registrar_context: RegistrarContext, live_server, selenium_driver
+    registrar_context: RegContext, live_server, selenium_driver
 ) -> None:
     """Open the grades dashboard with the semester filter applied."""
     assert registrar_context.user is not None
@@ -156,9 +156,7 @@ def registrar_opens_dashboard_filtered(
 
 
 @then("the semester filter defaults to the most recent semester with graded students")
-def semester_filter_defaults(
-    registrar_context: RegistrarContext, selenium_driver
-) -> None:
+def semester_filter_defaults(registrar_context: RegContext, selenium_driver) -> None:
     """Verify the default semester selection matches the latest graded semester."""
     assert registrar_context.semester is not None
     expected_semester = registrar_context.semester
@@ -180,9 +178,7 @@ def dashboard_link_visible(selenium_driver) -> None:
 
 
 @then("the registrar can expand the student row")
-def registrar_can_expand_row(
-    registrar_context: RegistrarContext, selenium_driver
-) -> None:
+def registrar_can_expand_row(registrar_context: RegContext, selenium_driver) -> None:
     """Expand the row for the prepared student."""
     assert registrar_context.student is not None
     # Cache the id to keep type narrowing inside the nested callback.
@@ -215,7 +211,7 @@ def pagination_shows_counts(selenium_driver) -> None:
 
 
 @then("the official transcript page is shown for the student")
-def transcript_page_shown(registrar_context: RegistrarContext, selenium_driver) -> None:
+def transcript_page_shown(registrar_context: RegContext, selenium_driver) -> None:
     """Open and verify the transcript preview."""
     assert registrar_context.student is not None
     transcript_link = selenium_driver.find_element(By.LINK_TEXT, "Official transcript")
@@ -229,7 +225,7 @@ def transcript_page_shown(registrar_context: RegistrarContext, selenium_driver) 
 
 @then("the go-to pagination keeps the semester filter")
 def pagination_keeps_semester_filter(
-    registrar_context: RegistrarContext, selenium_driver
+    registrar_context: RegContext, selenium_driver
 ) -> None:
     """Ensure the hidden semester input preserves the selected semester."""
     assert registrar_context.semester is not None

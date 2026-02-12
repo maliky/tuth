@@ -14,7 +14,7 @@ from simple_history.models import HistoricalRecords
 from app.academics.choices import LEVEL_NUMBER
 from app.academics.constants import MAX_STUDENT_CREDITS
 from app.academics.models.course import Course
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriCourse
 
 from app.academics.models.curriculum import Curriculum
 from app.people.models.core import AbstractPerson
@@ -42,7 +42,7 @@ class Student(AbstractPerson):
     ID_FIELD = "student_id"
     ID_PREFIX = "TU-STD"
     EMAIL_SUFFIX = ".stud@tubmanu.edu.lr"
-    GROUP = "Student"  # must match the UserRole Groups
+    GROUP = "Student"  # must match the UserRole Gps
     STAFF_STATUS = False
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
@@ -51,7 +51,7 @@ class Student(AbstractPerson):
     )
     curricula = models.ManyToManyField(
         "academics.Curriculum",
-        through="people.StudentCurriculumEnrollment",
+        through="people.StdCurriEnroll",
         related_name="enrolled_students",
         blank=True,
     )
@@ -117,7 +117,7 @@ class Student(AbstractPerson):
     def completed_credits(self) -> int:
         """Return sum of credit hours successfully completed."""
         passed_ids = self.passed_courses().values_list("id", flat=True)
-        agg = CurriculumCourse.objects.filter(
+        agg = CurriCourse.objects.filter(
             curriculum=self.curriculum, course_id__in=passed_ids
         ).aggregate(total=Sum("credit_hours"))
         return agg.get("total") or 0
@@ -191,11 +191,11 @@ class Student(AbstractPerson):
     def _ensure_primary_curriculum_enrollment(self) -> None:
         """Keep the through enrollment table aligned with current curriculum."""
         from app.people.models.student_curriculum_enrollment import (
-            StudentCurriculumEnrollment,
+            StdCurriEnroll,
         )
 
         entry_semester_id = self.entry_semester_id
-        enrollment, _ = StudentCurriculumEnrollment.objects.get_or_create(
+        enrollment, _ = StdCurriEnroll.objects.get_or_create(
             student=self,
             curriculum_id=self.curriculum_id,
             defaults={
@@ -217,10 +217,12 @@ class Student(AbstractPerson):
         if update_fields:
             enrollment.save(update_fields=update_fields)
 
-        StudentCurriculumEnrollment.objects.filter(
+        StdCurriEnroll.objects.filter(
             student=self,
             is_primary=True,
-        ).exclude(curriculum_id=self.curriculum_id).update(is_primary=False)
+        ).exclude(
+            curriculum_id=self.curriculum_id
+        ).update(is_primary=False)
 
     @classmethod
     def get_default(cls) -> "Student":

@@ -1,6 +1,6 @@
-"""Inlines for the registry admin interface."""
+"""ILs for the registry admin interface."""
 
-from app.registry.models.document import DocumentStudent, DocumentStaff, DocumentDonor
+from app.registry.models.document import DocStd, DocStaff, DocDonor
 from django.contrib import admin
 from django.db.models import Prefetch
 from django.urls import reverse
@@ -25,7 +25,7 @@ def _format_section_semester(section):
     return section.semester
 
 
-class GradeInline(admin.TabularInline):
+class GradeIL(admin.TabularInline):
     """Inline editor for Grade records in a section."""
 
     model = Grade
@@ -37,7 +37,7 @@ class GradeInline(admin.TabularInline):
     autocomplete_fields = ("student",)
 
 
-class StudentRegistrationInline(admin.TabularInline):
+class StdRegistrationIL(admin.TabularInline):
     """Inline list of student registrations with grade summaries."""
 
     model = Registration
@@ -83,7 +83,7 @@ class StudentRegistrationInline(admin.TabularInline):
         return code.upper() if code else "-"
 
 
-class StudentGradeInline(admin.TabularInline):
+class StdGradeIL(admin.TabularInline):
     """Inline list of grades attached to a student."""
 
     model = Grade
@@ -111,19 +111,19 @@ class StudentGradeInline(admin.TabularInline):
         return _format_section_semester(obj.section)
 
 
-class DocumentStaffInline(admin.TabularInline):  # StackedInline
-    model = DocumentStaff
+class DocStaffIL(admin.TabularInline):  # StackedIL
+    model = DocStaff
     classes = ["collapse"]
     can_delete = True
 
 
-class DocumentStudentInline(admin.TabularInline):  # StackedInline
-    model = DocumentStudent
+class DocStdIL(admin.TabularInline):  # StackedIL
+    model = DocStd
     classes = ["collapse"]
     can_delete = True
 
 
-class DocumentDonorInline(admin.TabularInline):  # StackedInline
-    model = DocumentDonor
+class DocDonorIL(admin.TabularInline):  # StackedIL
+    model = DocDonor
     classes = ["collapse"]
     can_delete = True

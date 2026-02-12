@@ -14,20 +14,20 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriCourse
 from app.academics.models import (
-    CurriculumStudentEnrollment,
+    CurriStdEnroll,
     College,
     Course,
     Curriculum,
-    CurriculumStatus,
+    CurriStatus,
     Department,
     Prerequisite,
 )
 from app.people.models.student import Student
-from app.people.models.student_curriculum_enrollment import StudentCurriculumEnrollment
+from app.people.models.student_curriculum_enrollment import StdCurriEnroll
 from app.finance.models.invoice import Invoice
-from app.shared.admin.filters import BaseCollegeFilter
+from app.shared.admin.filters import BaseCollegeFlt
 from app.shared.admin.mixins import (
     CollegeRestrictedAdmin,
     DepartmentRestrictedAdmin,
@@ -42,21 +42,21 @@ from .actions import (
     update_level_number,
 )
 from .filters import (
-    CourseCollegeFilter,
-    CourseCurriculumFilter,
-    CurriculumFilterAC,
-    CurriculumCourseFacultyFilterAC,
-    CurriculumCourseStudentFilterAC,
-    DepartmentCurriculumFilterAC,
-    DepartmentFilterAC,
+    CourseCollegeFlt,
+    CourseCurriFlt,
+    CurriFltAC,
+    CurriCourseFacultyFltAC,
+    CurriCourseStdFltAC,
+    DepartmentCurriFltAC,
+    DepartmentFltAC,
 )
 from .inlines import (
-    CourseCurriculumInline,
-    CourseFeeStackInline,
-    CurriculumCourseInline,
-    DepartmentCourseInline,
-    PrerequisiteInline,
-    RequiresInline,
+    CourseCurriIL,
+    CourseFeeStackIL,
+    CurriCourseIL,
+    DepartmentCourseIL,
+    PrerequisiteIL,
+    RequiresIL,
 )
 from .merges import (
     MERGE_CHOICE_KEEP_SOURCE,
@@ -64,31 +64,34 @@ from .merges import (
     MERGE_CHOICE_MERGE,
     MERGE_CHOICE_SKIP,
     ConflictChoiceByCourseIdT,
+    StdCurriRecordMergeSummaryT,
+    empty_student_curriculum_record_summary,
     merge_courses_action,
     merge_courses_by_short_code_action,
     merge_curricula,
     merge_departments,
     merge_curriculum_courses,
+    merge_student_enrollment_pair,
     list_curriculum_course_conflicts,
 )
 from app.academics.prereq_graph import export_prereq_graph
 from .resources import (
     CollegeResource,
     CourseResource,
-    CurriculumCourseResource,
-    CurriculumResource,
+    CurriCourseResource,
+    CurriResource,
     DepartmentResource,
     PrerequisiteResource,
 )
 from django.utils.text import Truncator
 from django.conf import settings
-from app.timetable.admin.filters import SemesterFilterAC
+from app.timetable.admin.filters import SemesterFltAC
 
 ModelChoiceFieldT: TypeAlias = forms.ModelChoiceField | forms.ModelMultipleChoiceField
 MergeFieldSourceChoiceT = Literal["target", "source"]
 
 
-class CurriculumMergeConflictForm(forms.Form):
+class CurriMergeConflictForm(forms.Form):
     """Collect target selection, curriculum field picks, and conflict decisions."""
 
     FIELD_FROM_TARGET: MergeFieldSourceChoiceT = "target"
@@ -293,7 +296,7 @@ class CollegeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
     fields = ("code", "long_name", "active_curricula_list", "inactive_curricula_list")
     readonly_fields = ("active_curricula_list", "inactive_curricula_list")
 
-    @admin.display(description="Students by level")
+    @admin.display(description="Stds by level")
     def student_counts_by_level_link(self, obj: College):
         """Link to students filtered by college and computed level."""
         rows = []
@@ -333,18 +336,18 @@ class CourseAdmin(DepartmentRestrictedAdmin):
     # Use list filters for curricula to avoid reverse M2M autocomplete errors.
     # > TODO: Add the list of student enrolled in this course the current semester.
     inlines = [
-        CourseFeeStackInline,
-        RequiresInline,
-        PrerequisiteInline,
-        CourseCurriculumInline,
+        CourseFeeStackIL,
+        RequiresIL,
+        PrerequisiteIL,
+        CourseCurriIL,
     ]
     list_select_related = ("department",)
     list_editable = ("department",)
     list_filter = (
-        SemesterFilterAC,
-        DepartmentFilterAC,
-        CourseCurriculumFilter,
-        CourseCollegeFilter,
+        SemesterFltAC,
+        DepartmentFltAC,
+        CourseCurriFlt,
+        CourseCollegeFlt,
     )
 
     list_per_page = 100
@@ -419,7 +422,7 @@ class CourseAdmin(DepartmentRestrictedAdmin):
 
 
 @admin.register(Curriculum)
-class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
+class CurriAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
     """Admin options for Curriculum.
 
     Key features:
@@ -428,7 +431,7 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
     - list_filter allows filtering by college and active state.
     """
 
-    resource_class = CurriculumResource
+    resource_class = CurriResource
     # add the action button on the import form
     list_display = (
         "short_name",
@@ -439,10 +442,10 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         "course_count_link",
         "student_count",
     )
-    list_filter = (SemesterFilterAC, "college")
+    list_filter = (SemesterFltAC, "college")
     list_editable = ("status", "is_active", "college")
     autocomplete_fields = ("college",)
-    inlines = [CurriculumCourseInline]
+    inlines = [CurriCourseIL]
 
     # list_selected_relate reduces the number of queries in db
     list_select_related = ("college",)
@@ -546,9 +549,9 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
                         status_id="pending",
                         is_active=False,
                     )
-                    source_rows = CurriculumCourse.objects.filter(curriculum=source)
+                    source_rows = CurriCourse.objects.filter(curriculum=source)
                     for row in source_rows:
-                        CurriculumCourse.objects.create(
+                        CurriCourse.objects.create(
                             curriculum=target,
                             course_id=row.course_id,
                             is_required=row.is_required,
@@ -612,7 +615,7 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
             source_row.course_id for _target_row, source_row in conflicts
         ]
         form_data = request.POST if request.POST.get("apply_merge") else None
-        form = CurriculumMergeConflictForm(
+        form = CurriMergeConflictForm(
             data=form_data,
             curricula=candidates,
             merge_fields=self.get_merge_fields(request),
@@ -650,15 +653,13 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         merge_field_rows = [
             {
                 "label": field_name.replace("_", " ").title(),
-                "field": form[CurriculumMergeConflictForm.merge_field_key(field_name)],
+                "field": form[CurriMergeConflictForm.merge_field_key(field_name)],
             }
             for field_name in self.get_merge_fields(request)
         ]
         conflict_rows = []
         for target_row, source_row in conflicts:
-            field_key = CurriculumMergeConflictForm.conflict_field_key(
-                source_row.course_id
-            )
+            field_key = CurriMergeConflictForm.conflict_field_key(source_row.course_id)
             conflict_rows.append(
                 {
                     "target_row": target_row,
@@ -872,11 +873,11 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         source_ids = [cur.pk for cur in sources if cur.pk]
         if not source_ids or not target.pk:
             return
-        overlap_count = CurriculumCourse.objects.filter(
+        overlap_count = CurriCourse.objects.filter(
             curriculum=target,
-            course_id__in=CurriculumCourse.objects.filter(
-                curriculum_id__in=source_ids
-            ).values("course_id"),
+            course_id__in=CurriCourse.objects.filter(curriculum_id__in=source_ids).values(
+                "course_id"
+            ),
         ).count()
         if overlap_count:
             self.message_user(
@@ -889,18 +890,18 @@ class CurriculumAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
             )
 
 
-@admin.register(CurriculumCourse)
-class CurriculumCourseAdmin(
+@admin.register(CurriCourse)
+class CurriCourseAdmin(
     ProtectedDeleteAdminMixin, MergeWizardMixin, CollegeRestrictedAdmin
 ):
-    """Admin screen for :class:~app.academics.models.CurriculumCourse.
+    """Admin screen for :class:~app.academics.models.CurriCourse.
 
     list_display shows the curriculum and related course while
     autocomplete_fields make lookups faster. list_select_related joins
     both relations for efficient queries.
     """
 
-    resource_class = CurriculumCourseResource
+    resource_class = CurriCourseResource
     college_field = "curriculum__college"
     merge_fields = (
         "curriculum",
@@ -919,13 +920,13 @@ class CurriculumCourseAdmin(
         "faculties_links",
     )
     list_filter = (
-        SemesterFilterAC,
+        SemesterFltAC,
         "curriculum__college",
-        CurriculumFilterAC,
-        DepartmentFilterAC,
+        CurriFltAC,
+        DepartmentFltAC,
         "level_number",
-        CurriculumCourseFacultyFilterAC,
-        CurriculumCourseStudentFilterAC,
+        CurriCourseFacultyFltAC,
+        CurriCourseStdFltAC,
     )
 
     list_editable = ("curriculum", "level_number")
@@ -971,7 +972,7 @@ class CurriculumCourseAdmin(
 
     def merge_object_label(self, obj) -> str:
         """Return a label for merge choices."""
-        curriculum_course = cast(CurriculumCourse, obj)
+        curriculum_course = cast(CurriCourse, obj)
         course = curriculum_course.course
         curriculum = curriculum_course.curriculum
         course_label = course.short_code or course.code or str(course)
@@ -980,16 +981,16 @@ class CurriculumCourseAdmin(
 
     def merge_records(self, target, sources):
         """Merge curriculum courses into the target selection."""
-        target_course = cast(CurriculumCourse, target)
+        target_course = cast(CurriCourse, target)
         return merge_curriculum_courses(target_course, sources)
 
     @admin.display(description="Course")
-    def course_display(self, obj: CurriculumCourse) -> str:
+    def course_display(self, obj: CurriCourse) -> str:
         """Truncate course display to avoid very long values in list view."""
         return Truncator(str(obj.course)).chars(50)
 
     @admin.display(description="Department")
-    def department_link(self, obj: CurriculumCourse):
+    def department_link(self, obj: CurriCourse):
         """Link to departments filtered to this course's department."""
         dept = getattr(obj.course, "department", None)
         if not dept:
@@ -1010,7 +1011,7 @@ class CurriculumCourseAdmin(
 
     # Advanced requirement-group link is kept dormant until the model is re-enabled.
     @admin.display(description="Requirement groups")
-    def requirement_groups_link(self, obj: CurriculumCourse):
+    def requirement_groups_link(self, obj: CurriCourse):
         """Return requirement-group count when dormant advanced UI is re-enabled."""
         return obj.requirement_groups.count()
 
@@ -1035,16 +1036,16 @@ class CurriculumCourseAdmin(
         return format_html_join(", ", '<a href="{}">{}</a>', faculties)
 
 
-@admin.register(CurriculumStatus)
-class CurriculumStatusAdmin(admin.ModelAdmin):
-    """Lookup admin for CurriculumStatus."""
+@admin.register(CurriStatus)
+class CurriStatusAdmin(admin.ModelAdmin):
+    """Lookup admin for CurriStatus."""
 
     search_fields = ("code", "label")
     list_display = ("code", "label")
 
 
-@admin.register(CurriculumStudentEnrollment)
-class CurriculumStudentEnrollmentAdmin(CollegeRestrictedAdmin):
+@admin.register(CurriStdEnroll)
+class CurriStdEnrollAdmin(CollegeRestrictedAdmin):
     """Admin interface for student program enrollments."""
 
     college_field = "curriculum__college"
@@ -1057,7 +1058,7 @@ class CurriculumStudentEnrollmentAdmin(CollegeRestrictedAdmin):
     )
     list_filter = (
         "curriculum__college",
-        CurriculumFilterAC,
+        CurriFltAC,
         "is_primary",
         "is_active",
     )
@@ -1072,60 +1073,66 @@ class CurriculumStudentEnrollmentAdmin(CollegeRestrictedAdmin):
     actions = ("merge_two_selected_rows", "merge_selected_rows_by_student_id")
 
     @staticmethod
-    def _rows_blocked_by_entry_semester(
-        target_row: StudentCurriculumEnrollment,
-        source_row: StudentCurriculumEnrollment,
-    ) -> bool:
-        """Return True when both rows carry different non-null entry semesters."""
-        target_entry_id = target_row.entry_semester_id
-        source_entry_id = source_row.entry_semester_id
-        return bool(
-            target_entry_id and source_entry_id and target_entry_id != source_entry_id
+    def _accumulate_student_record_summary(
+        aggregate: StdCurriRecordMergeSummaryT,
+        current: StdCurriRecordMergeSummaryT,
+    ) -> None:
+        """Merge current counters into aggregate in place."""
+        for key, value in current.items():
+            aggregate[key] += value
+
+    @staticmethod
+    def _reconciled_student_record_count(
+        summary: StdCurriRecordMergeSummaryT,
+    ) -> int:
+        """Return the number of auto-reconciled student records."""
+        return (
+            summary["grades_moved"]
+            + summary["grades_deduped"]
+            + summary["registrations_moved"]
+            + summary["registrations_deduped"]
         )
 
     @staticmethod
-    def _merge_row_pair(
-        target_row: StudentCurriculumEnrollment,
-        source_row: StudentCurriculumEnrollment,
-    ) -> bool:
-        """Merge source row into target row and delete source.
+    def _unresolved_student_record_count(
+        summary: StdCurriRecordMergeSummaryT,
+    ) -> int:
+        """Return the number of manual-review student records."""
+        return (
+            summary["grade_conflicts"]
+            + summary["grades_unresolved"]
+            + summary["registrations_unresolved"]
+        )
 
-        Returns:
-            bool: True when merge happened, False when blocked by entry semester rule.
-        """
-        if CurriculumStudentEnrollmentAdmin._rows_blocked_by_entry_semester(
-            target_row,
-            source_row,
-        ):
-            return False
-
-        update_fields: list[str] = []
-        # Keep the non-null semester when one side is missing, otherwise keep target.
-        if not target_row.entry_semester_id and source_row.entry_semester_id:
-            target_row.entry_semester_id = source_row.entry_semester_id
-            update_fields.append("entry_semester")
-        if not target_row.exit_semester_id and source_row.exit_semester_id:
-            target_row.exit_semester_id = source_row.exit_semester_id
-            update_fields.append("exit_semester")
-        if not target_row.is_primary and source_row.is_primary:
-            target_row.is_primary = True
-            update_fields.append("is_primary")
-        if not target_row.is_active and source_row.is_active:
-            target_row.is_active = True
-            update_fields.append("is_active")
-        if target_row.creation_date > source_row.creation_date:
-            target_row.creation_date = source_row.creation_date
-            update_fields.append("creation_date")
-
-        if target_row.is_primary:
-            StudentCurriculumEnrollment.objects.filter(
-                student_id=target_row.student_id,
-                is_primary=True,
-            ).exclude(pk=target_row.pk).update(is_primary=False)
-        if update_fields:
-            target_row.save(update_fields=update_fields)
-        source_row.delete()
-        return True
+    def _notify_student_record_summary(
+        self,
+        request,
+        summary: StdCurriRecordMergeSummaryT,
+    ) -> None:
+        """Show one consistent reconciliation summary in admin messages."""
+        if self._reconciled_student_record_count(summary):
+            self.message_user(
+                request,
+                (
+                    "Reconciled student records: "
+                    f"{summary['grades_moved']} grade(s) moved, "
+                    f"{summary['grades_deduped']} grade duplicate(s) removed, "
+                    f"{summary['registrations_moved']} registration(s) moved, "
+                    f"{summary['registrations_deduped']} registration duplicate(s) removed."
+                ),
+                level=messages.INFO,
+            )
+        if self._unresolved_student_record_count(summary):
+            self.message_user(
+                request,
+                (
+                    "Manual review required: "
+                    f"{summary['grade_conflicts']} grade conflict(s), "
+                    f"{summary['grades_unresolved']} grade(s) without target section match, "
+                    f"{summary['registrations_unresolved']} registration(s) without target section match."
+                ),
+                level=messages.WARNING,
+            )
 
     @admin.action(description="Merge 2 selected enrollment rows")
     @transaction.atomic
@@ -1147,7 +1154,10 @@ class CurriculumStudentEnrollmentAdmin(CollegeRestrictedAdmin):
                 level=messages.WARNING,
             )
             return
-        merged = self._merge_row_pair(target_row, source_row)
+        merged, student_record_summary = merge_student_enrollment_pair(
+            target_row,
+            source_row,
+        )
         if not merged:
             self.message_user(
                 request,
@@ -1160,6 +1170,7 @@ class CurriculumStudentEnrollmentAdmin(CollegeRestrictedAdmin):
             "Merged 2 enrollment rows into the lowest-id row.",
             level=messages.SUCCESS,
         )
+        self._notify_student_record_summary(request, student_record_summary)
 
     @admin.action(description="Merge selected rows grouped by student id")
     @transaction.atomic
@@ -1181,7 +1192,8 @@ class CurriculumStudentEnrollmentAdmin(CollegeRestrictedAdmin):
         merged_count = 0
         blocked_count = 0
         grouped_count = 0
-        by_student_id: dict[int, list[StudentCurriculumEnrollment]] = {}
+        aggregate_student_summary = empty_student_curriculum_record_summary()
+        by_student_id: dict[int, list[StdCurriEnroll]] = {}
         for row in rows:
             by_student_id.setdefault(row.student_id, []).append(row)
 
@@ -1191,7 +1203,15 @@ class CurriculumStudentEnrollmentAdmin(CollegeRestrictedAdmin):
             grouped_count += 1
             target_row = student_rows[0]
             for source_row in student_rows[1:]:
-                if self._merge_row_pair(target_row, source_row):
+                merged, student_record_summary = merge_student_enrollment_pair(
+                    target_row,
+                    source_row,
+                )
+                self._accumulate_student_record_summary(
+                    aggregate_student_summary,
+                    student_record_summary,
+                )
+                if merged:
                     merged_count += 1
                     continue
                 blocked_count += 1
@@ -1214,6 +1234,7 @@ class CurriculumStudentEnrollmentAdmin(CollegeRestrictedAdmin):
                 ),
                 level=messages.WARNING,
             )
+        self._notify_student_record_summary(request, aggregate_student_summary)
         if not merged_count and not blocked_count:
             self.message_user(
                 request,
@@ -1241,11 +1262,11 @@ class DepartmentAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
     )
     list_filter = [
         "college",
-        DepartmentCurriculumFilterAC,
+        DepartmentCurriFltAC,
     ]
     list_editable = ("college",)
     search_fields = ("code", "long_name", "college")
-    inlines = [DepartmentCourseInline]
+    inlines = [DepartmentCourseIL]
 
     def get_queryset(self, request):
         # > explain the djangonic logic here
@@ -1314,7 +1335,7 @@ class PrerequisiteAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModel
 
     Options configured:
     - list_display shows the course, the prerequisite and the curriculum.
-    - list_filter uses :class:CurriculumFilter to narrow by curriculum.
+    - list_filter uses :class:CurriFlt to narrow by curriculum.
     - actions provides update_curriculum for bulk updates.
 
     Example:
@@ -1328,7 +1349,7 @@ class PrerequisiteAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModel
     # search_fields = ("course", "prerequisite_course") # not permitted no search of fk
     list_display = ("course", "prerequisite_course", "curriculum")
     autocomplete_fields = ("course", "prerequisite_course", "curriculum")
-    list_filter = (CurriculumFilterAC,)
+    list_filter = (CurriFltAC,)
     # search_fields = ("course", "prerequisite_course", "curriculum")
 
 

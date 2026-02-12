@@ -17,20 +17,20 @@ from django.core.management.base import CommandError
 from django.utils.text import slugify
 
 from app.academics.models.curriculum import Curriculum
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriCourse
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.requirement_group import (
-    CurriculumCourseRequirementGroup,
-    CurriculumCourseRequirementMember,
+    CurriCourseRequirementGp,
+    CurriCourseRequirementMember,
     RequirementKind,
 )
 
 EdgeListT: TypeAlias = set[tuple[int, int]]
 NodeAttrMapT: TypeAlias = dict[int, dict[str, str]]
-GroupMapT: TypeAlias = dict[int, list[int]]
+GpMapT: TypeAlias = dict[int, list[int]]
 OwnerIdsT: TypeAlias = tuple[int, int]
 JsonPayloadT: TypeAlias = dict[str, object]
-CoreqGroupPayloadT: TypeAlias = dict[str, object]
+CoreqGpPayloadT: TypeAlias = dict[str, object]
 logger = logging.getLogger(__name__)
 
 
@@ -109,13 +109,13 @@ def _safe_curriculum_slug(curriculum: Curriculum) -> str:
 
 def _build_course_maps(
     curriculum: Curriculum,
-) -> tuple[dict[int, CurriculumCourse], NodeAttrMapT]:
+) -> tuple[dict[int, CurriCourse], NodeAttrMapT]:
     """Return curriculum course map and node attributes."""
-    course_map: dict[int, CurriculumCourse] = {}
+    course_map: dict[int, CurriCourse] = {}
     node_attrs: NodeAttrMapT = {}
 
     qs = (
-        CurriculumCourse.objects.filter(curriculum=curriculum)
+        CurriCourse.objects.filter(curriculum=curriculum)
         .select_related("course__department__college")
         .order_by("course__short_code")
     )
@@ -135,8 +135,8 @@ def _build_course_maps(
 def _build_json_payload(
     curriculum: Curriculum,
     prerequisites: Iterable[Prerequisite],
-    coreq_groups: Iterable[CurriculumCourseRequirementGroup],
-    course_map: dict[int, CurriculumCourse],
+    coreq_groups: Iterable[CurriCourseRequirementGp],
+    course_map: dict[int, CurriCourse],
     node_attrs: NodeAttrMapT,
 ) -> JsonPayloadT:
     """Build JSON payload for a curriculum prerequisite graph."""
@@ -197,7 +197,7 @@ def _build_json_payload(
             }
         )
 
-    coreq_payload: list[CoreqGroupPayloadT] = []
+    coreq_payload: list[CoreqGpPayloadT] = []
     for group in coreq_groups:
         target_course = group.curriculum_course.course
         member_courses = [target_course]
@@ -554,7 +554,7 @@ def export_prereq_graph(curriculum: Curriculum) -> PrereqGraphPaths:
         .order_by("course__short_code", "prerequisite_course__short_code")
     )
     coreq_groups = (
-        CurriculumCourseRequirementGroup.objects.filter(
+        CurriCourseRequirementGp.objects.filter(
             curriculum_course__curriculum=curriculum,
             kind=RequirementKind.COREQ_ALL,
         )
@@ -562,7 +562,7 @@ def export_prereq_graph(curriculum: Curriculum) -> PrereqGraphPaths:
         .prefetch_related(
             Prefetch(
                 "members",
-                queryset=CurriculumCourseRequirementMember.objects.select_related(
+                queryset=CurriCourseRequirementMember.objects.select_related(
                     "required_course__department__college"
                 ),
             )

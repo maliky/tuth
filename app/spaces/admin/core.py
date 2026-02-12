@@ -7,7 +7,7 @@ from simple_history.admin import SimpleHistoryAdmin
 
 
 from app.spaces.models import Room, Space
-from app.timetable.admin.inlines import SecSessionInline
+from app.timetable.admin.inlines import SecSessionIL
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
 
@@ -41,7 +41,7 @@ class RoomAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Admin configuration for :class:~app.spaces.models.Room.
 
     list_display shows the room code and capacities. SecSessions are edited via
-    SecSessionInline. The full_code field is read‑only and the space
+    SecSessionIL. The full_code field is read‑only and the space
     relation uses autocomplete.
     """
 
@@ -56,4 +56,4 @@ class RoomAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     list_filter = ("space",)
     search_fields = ("space__code", "code")
     autocomplete_fields = ["space"]
-    inlines = [SecSessionInline]  #
+    inlines = [SecSessionIL]  #

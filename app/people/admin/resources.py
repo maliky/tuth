@@ -8,7 +8,7 @@ import re
 from import_export import fields, resources
 from import_export.widgets import DateTimeWidget, Widget
 
-from app.academics.admin.widgets import CurriculumWidget
+from app.academics.admin.widgets import CurriWgt
 from app.people.admin.resources_mapping import (
     FACULTY_HEADER_MAP,
     GENDER_MAP,
@@ -16,9 +16,9 @@ from app.people.admin.resources_mapping import (
     USER_HEADER_MAP,
 )
 from app.people.admin.widgets import (
-    StaffProfileWidget,
-    UserStudentWidget,
-    UserWidget,
+    StaffProfileWgt,
+    UserStdWgt,
+    UserWgt,
 )
 from app.people.models.donor import Donor
 from app.people.models.faculty import Faculty
@@ -26,7 +26,7 @@ from app.people.models.staffs import Staff
 from app.people.models.student import Student
 from app.shared.auth.perms import UserRole
 from app.shared.utils import get_in_row
-from app.timetable.admin.core_widgets import SemesterCodeWidget
+from app.timetable.admin.core_widgets import SemesterCodeWgt
 from app.timetable.ensures import ensure_academic_year_code
 from app.timetable.models.semester import Semester
 from app.timetable.utils import (
@@ -41,7 +41,7 @@ class StaffResource(resources.ModelResource):
     """Import staff directory rows and create/update Staff profiles."""
 
     user = fields.Field(
-        column_name="username", attribute="user", widget=UserWidget(model=Staff)
+        column_name="username", attribute="user", widget=UserWgt(model=Staff)
     )
 
     class Meta:
@@ -74,7 +74,7 @@ class FacultyResource(resources.ModelResource):
     staff_profile = fields.Field(
         column_name="username",
         attribute="staff_profile",
-        widget=StaffProfileWidget(),
+        widget=StaffProfileWgt(),
     )
 
     class Meta:
@@ -101,18 +101,16 @@ class FacultyResource(resources.ModelResource):
         return super().after_save_instance(instance, row, **kwargs)
 
 
-class StudentResource(resources.ModelResource):
+class StdResource(resources.ModelResource):
     """Resource for importing Student objects from different csv files."""
 
     # Columns needs to be created on the fly
-    user = fields.Field(
-        column_name="username", attribute="user", widget=UserStudentWidget()
-    )
+    user = fields.Field(column_name="username", attribute="user", widget=UserStdWgt())
     # to be taken from gp table StudentInfo
     curriculum = fields.Field(
         column_name="curriculum_shortname",
         attribute="curriculum",
-        widget=CurriculumWidget(),
+        widget=CurriWgt(),
     )
     birth_date = fields.Field(
         column_name="birth_date", attribute="birth_date", widget=DateTimeWidget()
@@ -120,12 +118,12 @@ class StudentResource(resources.ModelResource):
     entry_semester = fields.Field(
         column_name="entry_semester_no",
         attribute="entry_semester",
-        widget=SemesterCodeWidget(),
+        widget=SemesterCodeWgt(),
     )
     last_enrolled_semester = fields.Field(
         column_name="last_enrolled_semester",
         attribute="last_enrolled_semester",
-        widget=SemesterCodeWidget(),
+        widget=SemesterCodeWgt(),
     )
 
     class Meta:
@@ -244,7 +242,7 @@ class DonorResource(resources.ModelResource):
     """Import donors from a simple list of names."""
 
     user = fields.Field(
-        column_name="username", attribute="user", widget=UserWidget(model=Donor)
+        column_name="username", attribute="user", widget=UserWgt(model=Donor)
     )
 
     class Meta:

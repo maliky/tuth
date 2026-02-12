@@ -2,7 +2,7 @@
 
 from django.core.management.base import BaseCommand
 
-from app.academics.models.curriculum import CurriculumStatus
+from app.academics.models.curriculum import CurriStatus
 from app.finance.fee_stack_defaults import ensure_default_fee_stacks_from_fee_types
 from app.finance.models.status_types_methods import (
     AccountChartType,
@@ -13,8 +13,8 @@ from app.finance.models.status_types_methods import (
     PaymentMethod,
     PaymentStatus,
 )
-from app.people.admin.resources import StudentResource
-from app.registry.models.document import DocumentStatus, DocumentType
+from app.people.admin.resources import StdResource
+from app.registry.models.document import DocStatus, DocType
 from app.registry.models.grade import GradeValue
 from app.registry.models.registration import RegistrationStatus
 from app.registry.models import CreditHour
@@ -35,9 +35,9 @@ class Command(BaseCommand):
             ("PaymentStatus", PaymentStatus),
             ("InvoiceStatus", InvoiceStatus),
             ("CreditHour", CreditHour),
-            ("CurriculumStatus", CurriculumStatus),
-            ("DocumentStatus", DocumentStatus),
-            ("DocumentType", DocumentType),
+            ("CurriStatus", CurriStatus),
+            ("DocStatus", DocStatus),
+            ("DocType", DocType),
             ("FeeType", FeeType),
             ("Payer", Payer),
             ("PaymentMethod", PaymentMethod),

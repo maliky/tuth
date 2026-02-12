@@ -19,13 +19,13 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
-from app.academics.admin.filters import CurriculumFilterAC, DepartmentFilterAC
+from app.academics.admin.filters import CurriFltAC, DepartmentFltAC
 from app.people.admin.filters import (
-    FacultyGroupFAC,
-    FacultyTeachingDepartmentFilterAC,
-    StudentEnrolledCurriculumFilterAC,
-    StudentCurriculumCourseFilterAC,
-    StudentEntrySemFAC,
+    FacultyGpFAC,
+    FacultyTeachingDepartmentFltAC,
+    StdEnrolledCurriFltAC,
+    StdCurriCourseFltAC,
+    StdEntrySemFAC,
 )
 from app.people.admin.mixins import (
     DuplicatePreviewMixin,
@@ -37,7 +37,7 @@ from app.people.forms.faculty import FacultyForm
 from app.people.forms.person import (
     DonorForm,
     StaffForm,
-    StudentForm,
+    StdForm,
 )
 from app.people.models.donor import Donor
 from app.people.models.faculty import Faculty
@@ -46,22 +46,22 @@ from app.people.models.staffs import Staff
 from app.people.models.student import Student
 from app.people.services.merge_people import merge_people, merge_users
 from app.registry.admin import (
-    DocumentStaffInline,
-    DocumentStudentInline,
+    DocStaffIL,
+    DocStdIL,
 )
 from app.registry.admin.core import _available_sections_for_student
 
 # GPA should ignore non-final grade codes (kept in registry.constants).
 from app.registry.constants import GPA_EXCLUDED_CODES
 from app.registry.models.registration import Registration, RegistrationStatus
-from app.shared.admin.filters import StudentLevelFilter
+from app.shared.admin.filters import StdLevelFlt
 from app.shared.admin.mixins import (
     CollegeRestrictedAdmin,
     DepartmentRestrictedAdmin,
     ScopedAutocompleteAdminMixin,
 )
-from app.timetable.admin.filters import SemesterFilterAC
-from app.timetable.admin.inlines import SectionInline
+from app.timetable.admin.filters import SemesterFltAC
+from app.timetable.admin.inlines import SectionIL
 from app.timetable.models.section import Section
 
 User = get_user_model()
@@ -238,9 +238,9 @@ class FacultyAdmin(MergeWizardMixin, DuplicatePreviewMixin, CollegeRestrictedAdm
         "possible_duplicates",
     )
     list_filter = [
-        DepartmentFilterAC,
-        FacultyTeachingDepartmentFilterAC,
-        FacultyGroupFAC,
+        DepartmentFltAC,
+        FacultyTeachingDepartmentFltAC,
+        FacultyGpFAC,
         "college",
     ]
 
@@ -252,7 +252,7 @@ class FacultyAdmin(MergeWizardMixin, DuplicatePreviewMixin, CollegeRestrictedAdm
         "academic_rank",
     )
     autocomplete_fields = ("staff_profile", "college")
-    inlines = [SectionInline]
+    inlines = [SectionIL]
     readonly_fields = ("staff_bio",)
     fieldsets = [
         (
@@ -453,7 +453,7 @@ class StaffAdmin(MergeWizardMixin, DuplicatePreviewMixin, DepartmentRestrictedAd
     list_filter = ("user__groups",)
     ordering = ("staff_id",)
     readonly_fields = ("staff_id",)
-    inlines = [DocumentStaffInline]
+    inlines = [DocStaffIL]
     fieldsets = [
         (
             "User Account",
@@ -492,7 +492,7 @@ class StaffAdmin(MergeWizardMixin, DuplicatePreviewMixin, DepartmentRestrictedAd
             merge_people(target_staff, cast(Staff, source))
 
 
-class StudentRegistrationForm(StudentForm):
+class StdRegistrationForm(StdForm):
     """Student form that supports bulk registration selection."""
 
     registration_sections = forms.ModelMultipleChoiceField(
@@ -520,7 +520,7 @@ class StudentRegistrationForm(StudentForm):
 
 
 @admin.register(Student)
-class StudentAdmin(
+class StdAdmin(
     ScopedAutocompleteAdminMixin,
     MergeWizardMixin,
     DuplicatePreviewMixin,
@@ -534,7 +534,7 @@ class StudentAdmin(
     on both fields. Import/export is supported via ImportExportModelAdmin.
     """
 
-    form = StudentRegistrationForm
+    form = StdRegistrationForm
     merge_fields = (
         "user__first_name",
         "user__last_name",
@@ -607,16 +607,16 @@ class StudentAdmin(
     )
     # list_editable = ("curriculum",)
     list_filter = (
-        SemesterFilterAC,
-        CurriculumFilterAC,
-        StudentEnrolledCurriculumFilterAC,
-        StudentEntrySemFAC,
-        StudentLevelFilter,
-        StudentCurriculumCourseFilterAC,
+        SemesterFltAC,
+        CurriFltAC,
+        StdEnrolledCurriFltAC,
+        StdEntrySemFAC,
+        StdLevelFlt,
+        StdCurriCourseFltAC,
         "curriculum__college",
     )
     readonly_fields = ("student_id",)
-    inlines = [DocumentStudentInline]
+    inlines = [DocStdIL]
     list_select_related = ("curriculum", "entry_semester", "last_enrolled_semester")
     fieldsets = [
         (
@@ -789,7 +789,7 @@ class RoleAssignmentAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
 
 
 @dj_admin.register(Group)
-class GroupAdmin(dj_admin.ModelAdmin):
+class GpAdmin(dj_admin.ModelAdmin):
     """Group admin with user counts."""
 
     list_display = ("name", "user_count_link")

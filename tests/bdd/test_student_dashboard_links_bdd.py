@@ -11,7 +11,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from app.people.models.student import Student
 from app.timetable.models.semester import Semester
-from tests.bdd.fixtures import StudentContext
+from tests.bdd.fixtures import StdContext
 from tests.selenium.fixtures_portal import _login_to_portal
 from tests.constants import D25
 
@@ -41,7 +41,7 @@ def test_student_payment_receipt_date_paid_bdd():
 
 @given("a student with an active semester")
 def student_with_active_semester(
-    student_context: StudentContext, portal_user_factory
+    student_context: StdContext, portal_user_factory
 ) -> None:
     """Provision a student tied to the current academic term."""
     current_semester = Semester.get_current_semester()
@@ -58,7 +58,7 @@ def student_with_active_semester(
 
 @given("a student with a paid invoice")
 def student_with_paid_invoice(
-    student_context: StudentContext,
+    student_context: StdContext,
     portal_user_factory,
     student_invoice_factory,
     payment_factory,
@@ -80,9 +80,7 @@ def student_with_paid_invoice(
 
 
 @when("the student logs in to the portal")
-def student_logs_in(
-    student_context: StudentContext, selenium_driver, live_server
-) -> None:
+def student_logs_in(student_context: StdContext, selenium_driver, live_server) -> None:
     """Log in and open the student dashboard."""
     assert student_context.user is not None
     _login_to_portal(selenium_driver, live_server, student_context.user.username)
@@ -90,7 +88,7 @@ def student_logs_in(
 
 
 @then("the sidebar shows invoice and payment statement links")
-def sidebar_links_present(student_context: StudentContext, selenium_driver) -> None:
+def sidebar_links_present(student_context: StdContext, selenium_driver) -> None:
     """Ensure sidebar links are present for invoices and payments."""
     assert student_context.semester is not None
     invoice_path = reverse("student_invoice_statement")
@@ -123,7 +121,7 @@ def invoice_statement_visible(selenium_driver) -> None:
 
 @when("the student opens the payment receipt")
 def open_payment_receipt(
-    student_context: StudentContext, selenium_driver, live_server
+    student_context: StdContext, selenium_driver, live_server
 ) -> None:
     """Open the payment receipt link."""
     assert student_context.semester is not None

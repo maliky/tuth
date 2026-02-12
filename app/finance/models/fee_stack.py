@@ -106,9 +106,9 @@ def _refresh_parent_invoices_for_stack(stack_id: int | None) -> None:
     """Refresh parent invoice totals affected by one fee-stack change."""
     if stack_id is None:
         return
-    from app.finance.models.invoice import StudentSemesterInvoice
+    from app.finance.models.invoice import StdSemesterInvoice
 
-    parent_invoices = StudentSemesterInvoice.objects.filter(
+    parent_invoices = StdSemesterInvoice.objects.filter(
         fee_stacks__id=stack_id
     ).distinct()
     for parent_invoice in parent_invoices:

@@ -1,4 +1,4 @@
-"""Widgets module."""
+"""Wgts module."""
 
 from import_export import widgets
 
@@ -6,7 +6,7 @@ from app.shared.utils import get_in_row, parse_str
 from app.spaces.models.core import Room, Space
 
 
-class SpaceWidget(widgets.ForeignKeyWidget):
+class SpaceWgt(widgets.ForeignKeyWidget):
 
     def __init__(self):
         super().__init__(Space, field="code")
@@ -34,12 +34,12 @@ class SpaceWidget(widgets.ForeignKeyWidget):
         return space
 
 
-class RoomWidget(widgets.ForeignKeyWidget):
+class RoomWgt(widgets.ForeignKeyWidget):
     """Resolve or create a :class:Room using room_code and space."""
 
     def __init__(self):
         super().__init__(Room, field="code")
-        self.space_w = SpaceWidget()
+        self.space_w = SpaceWgt()
 
     def clean(
         self,
@@ -60,12 +60,12 @@ class RoomWidget(widgets.ForeignKeyWidget):
         return room
 
 
-class RoomCodeWidget(widgets.ForeignKeyWidget):
+class RoomCodeWgt(widgets.ForeignKeyWidget):
     """Create a :class:Room from values like "AA-01"."""
 
     def __init__(self):
         super().__init__(Room, field="code")
-        self.space_w = SpaceWidget()
+        self.space_w = SpaceWgt()
 
     def clean(
         self,

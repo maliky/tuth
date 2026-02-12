@@ -345,7 +345,7 @@ def _resolve_curriculum_course_id(row: RowStrOptT) -> int:
         row: Row with dept_code/course_dept, course_no, curriculum, credit.
 
     Returns:
-        CurriculumCourse id.
+        CurriCourse id.
 
     Raises:
         ValueError: When required dept_code or course_no values are missing.

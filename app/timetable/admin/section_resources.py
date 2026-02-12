@@ -2,9 +2,9 @@
 
 from import_export import fields, resources
 
-from app.academics.admin.widgets import CurriculumCourseWidget
-from app.people.admin.widgets import FacultyUsernameWidget
-from app.timetable.admin.core_widgets import SemesterWidget
+from app.academics.admin.widgets import CurriCourseWgt
+from app.people.admin.widgets import FacultyUsernameWgt
+from app.timetable.admin.core_widgets import SemesterWgt
 from app.timetable.models.section import Section
 
 
@@ -23,20 +23,20 @@ class SectionResource(resources.ModelResource):
     semester = fields.Field(
         attribute="semester",
         column_name="semester_no",
-        widget=SemesterWidget(),
+        widget=SemesterWgt(),
     )
     curriculum_course = fields.Field(
         # could be other course columns
         attribute="curriculum_course",
         column_name="curriculum",
-        widget=CurriculumCourseWidget(),
+        widget=CurriCourseWgt(),
     )
     number = fields.Field(attribute="number", column_name="section_no")
 
     faculty = fields.Field(
         column_name="faculty",
         attribute="faculty",
-        widget=FacultyUsernameWidget(),
+        widget=FacultyUsernameWgt(),
     )
 
     class Meta:

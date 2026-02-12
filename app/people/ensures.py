@@ -9,7 +9,7 @@ from app.people.models.student import Student
 from app.shared.types import StrIntMapT
 from app.shared.utils import parse_str
 
-StudentIdT: TypeAlias = str
+StdIdT: TypeAlias = str
 
 STUDENT_ID_CACHE: StrIntMapT = {}
 
@@ -22,7 +22,7 @@ def _prime_student_id_cache() -> None:
         STUDENT_ID_CACHE[student_id] = pk
 
 
-# def ensure_student(student_id_raw: StudentIdT) -> int:
+# def ensure_student(student_id_raw: StdIdT) -> int:
 #     """Return a student id, creating the record if missing."""
 #     # > we need to search student on student id direclty as
 #     # > it is also a primary key for the model
@@ -61,7 +61,7 @@ def _prime_student_id_cache() -> None:
 #     return int(student.pk)
 
 
-def ensure_student_sid(student_id_raw: StudentIdT) -> int:
+def ensure_student_sid(student_id_raw: StdIdT) -> int:
     """Return a student id, creating the record if missing."""
     # > we need to search student on student id direclty as
     # > it is also a primary key for the model

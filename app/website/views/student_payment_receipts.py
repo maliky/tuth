@@ -12,7 +12,7 @@ from django.db.models import Max
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
-from app.finance.models.invoice import CourseInvoice, StudentSemesterInvoice
+from app.finance.models.invoice import CourseInvoice, StdSemesterInvoice
 from app.finance.models.payment import Payment
 from app.timetable.models.semester import Semester
 from app.timetable.utils import format_datetime
@@ -49,7 +49,7 @@ def student_payment_receipt(
         raise Http404("Semester not found.")
 
     parent_invoice = (
-        StudentSemesterInvoice.objects.filter(student=student, semester=semester)
+        StdSemesterInvoice.objects.filter(student=student, semester=semester)
         .select_related("student", "semester__academic_year")
         .first()
     )

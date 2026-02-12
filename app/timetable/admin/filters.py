@@ -1,4 +1,4 @@
-"""Filters for the registry models in Admin."""
+"""Flts for the registry models in Admin."""
 
 from urllib.parse import urlencode
 
@@ -13,7 +13,7 @@ from django.urls import reverse
 from app.academics.models.college import College
 from app.people.models.faculty import Faculty
 from app.shared.admin.filters import (
-    BaseCollegeFilter,
+    BaseCollegeFlt,
     ScopedAutocompleteFilter,
     _filter_queryset_by_value,
     _get_lookup_path,
@@ -40,19 +40,19 @@ COLLEGE_FIELD_LOOKUPS = (
     ("section", "section__curriculum_course__curriculum__college"),
 )
 
-SemesterAcademicYearFilterAc = AutocompleteFilterFactory(
+SemesterAcademicYearFltAc = AutocompleteFilterFactory(
     "Academic year",
     "academic_year",
     use_pk_exact=False,  # > what advantages is there to use_pk_exact ?
 )
 
 
-class SectionCollegeFilter(BaseCollegeFilter):
+class SectionCollegeFlt(BaseCollegeFlt):
     field_path = "curriculum_course__curriculum__college"
     parameter_name = "curriculum_course__curriculum__college__id__exact"
 
 
-class CollegeFilterAC(ScopedAutocompleteFilter):
+class CollegeFltAC(ScopedAutocompleteFilter):
     """Autocomplete filter constrained to colleges present in the queryset."""
 
     title = "College"
@@ -62,10 +62,10 @@ class CollegeFilterAC(ScopedAutocompleteFilter):
     target_model = College
 
 
-SectionFacultyFilterAc = AutocompleteFilterFactory("Faculty", "faculty")
+SectionFacultyFltAc = AutocompleteFilterFactory("Faculty", "faculty")
 
 
-class SecSessionFacultyFilterAc(ScopedAutocompleteFilter):
+class SecSessionFacultyFltAc(ScopedAutocompleteFilter):
     """Autocomplete filter for session sections by faculty."""
 
     title = "Faculty"
@@ -75,7 +75,7 @@ class SecSessionFacultyFilterAc(ScopedAutocompleteFilter):
     target_model = Faculty
 
 
-class SectionBySemesterFilter(AutocompleteFilter):
+class SectionBySemesterFlt(AutocompleteFilter):
     """Dropdow for Section dependings on Semester filter."""
 
     title = "Section"
@@ -92,7 +92,7 @@ class SectionBySemesterFilter(AutocompleteFilter):
         )
 
 
-class SemesterFilterAC(ScopedAutocompleteFilter):
+class SemesterFltAC(ScopedAutocompleteFilter):
     """Autocomplete filter constrained to semesters present in the queryset."""
 
     title = "Semester"

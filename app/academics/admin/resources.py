@@ -4,22 +4,22 @@ from django.contrib import messages
 from import_export import fields, resources
 
 from app.academics.admin.widgets import (
-    CollegeWidget,
-    CourseManyWidget,
-    CourseWidget,
-    CurriculumWidget,
-    DepartmentWidget,
+    CollegeWgt,
+    CourseManyWgt,
+    CourseWgt,
+    CurriWgt,
+    DepartmentWgt,
 )
 
 from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriCourse
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.department import Department
 
 
-class CurriculumResource(resources.ModelResource):
+class CurriResource(resources.ModelResource):
     """Columns expected in the CSV: short_name, title, college, list_courses."""
 
     def __init__(self, *args, **kwargs):
@@ -40,12 +40,12 @@ class CurriculumResource(resources.ModelResource):
     college_f = fields.Field(
         column_name="college_code",
         attribute="college",
-        widget=CollegeWidget(),
+        widget=CollegeWgt(),
     )
     list_courses_f = fields.Field(
         column_name="list_courses",
         attribute="courses",
-        widget=CourseManyWidget(),
+        widget=CourseManyWgt(),
     )
     short_name_f = fields.Field(attribute="short_name", column_name="curriculum")
 
@@ -122,12 +122,12 @@ class CourseResource(resources.ModelResource):
     title_f = fields.Field(attribute="title", column_name="course_title")
 
     department_f = fields.Field(
-        attribute="department", column_name="course_dept", widget=DepartmentWidget()
+        attribute="department", column_name="course_dept", widget=DepartmentWgt()
     )
     prerequisite_f = fields.Field(
         attribute="prerequisites",
         column_name="prerequisites",
-        widget=CourseManyWidget(),
+        widget=CourseManyWgt(),
     )
 
     def __init__(self, *args, **kwargs):
@@ -154,15 +154,15 @@ class PrerequisiteResource(resources.ModelResource):
     curriculum_f = fields.Field(
         column_name="curriculum",
         attribute="curriculum",
-        widget=CurriculumWidget(),
+        widget=CurriWgt(),
     )
     course_f = fields.Field(
-        column_name="course_dept", attribute="course", widget=CourseWidget()
+        column_name="course_dept", attribute="course", widget=CourseWgt()
     )
     prerequisite_course_f = fields.Field(
         column_name="prerequisite",
         attribute="prerequisite_course",
-        widget=CourseWidget(),
+        widget=CourseWgt(),
     )
 
     class Meta:
@@ -179,7 +179,7 @@ class CollegeResource(resources.ModelResource):
     """Simple import-export resource for College."""
 
     college_f = fields.Field(
-        attribute="code", column_name="college_code", widget=CollegeWidget()
+        attribute="code", column_name="college_code", widget=CollegeWgt()
     )
 
     class Meta:
@@ -191,19 +191,19 @@ class CollegeResource(resources.ModelResource):
         )
 
 
-class CurriculumCourseResource(resources.ModelResource):
+class CurriCourseResource(resources.ModelResource):
     """Import a curriculum_course  curriculum name and course no and dept."""
 
     curriculum_f = fields.Field(
         attribute="curriculum",
         column_name="curriculum",
-        widget=CurriculumWidget(),
+        widget=CurriWgt(),
     )
     # requires course_no columns too
     course_f = fields.Field(
         attribute="course",
         column_name="course_dept",
-        widget=CourseWidget(),
+        widget=CourseWgt(),
     )
     credit_hours_f = fields.Field(
         attribute="credit_hours", column_name="credit_hours", default=3
@@ -229,7 +229,7 @@ class CurriculumCourseResource(resources.ModelResource):
     )
 
     class Meta:
-        model = CurriculumCourse
+        model = CurriCourse
         import_id_fields = (
             "curriculum_f",
             "course_f",

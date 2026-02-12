@@ -29,7 +29,7 @@ class StaffForm(PersonFormMixin, forms.ModelForm):
         fields: FieldT = []
 
 
-class StudentForm(PersonFormMixin, forms.ModelForm):
+class StdForm(PersonFormMixin, forms.ModelForm):
     SPECIFIC_FIELDS = (
         "student_id",
         "curriculum",

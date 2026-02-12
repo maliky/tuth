@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Iterable, TypeAlias, TypedDict
 
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriCourse
 from app.academics.models.requirement_group import (
-    CurriculumCourseRequirementGroup,
+    CurriCourseRequirementGp,
     RequirementKind,
 )
 from app.people.models.student import Student
@@ -53,7 +53,7 @@ def build_requirement_context(student: Student) -> RequirementContextT:
 
 
 def _group_member_pairs(
-    group: CurriculumCourseRequirementGroup,
+    group: CurriCourseRequirementGp,
 ) -> list[CourseLabelPairT]:
     """Return `(course_id, display_label)` pairs for one requirement group."""
     return [
@@ -68,7 +68,7 @@ def _group_member_pairs(
 def evaluate_curriculum_course_requirements(
     *,
     student: Student,
-    curriculum_course: CurriculumCourse,
+    curriculum_course: CurriCourse,
     selected_course_ids: Iterable[int],
     context: RequirementContextT | None = None,
 ) -> RequirementCheckResultT:

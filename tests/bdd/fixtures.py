@@ -20,7 +20,7 @@ class PortalUserT(Protocol):
 
 
 @dataclass
-class StudentContext:
+class StdContext:
     """Shared state for student dashboard BDD steps."""
 
     user: PortalUserT | None = None
@@ -31,9 +31,9 @@ class StudentContext:
 
 
 @pytest.fixture
-def student_context() -> StudentContext:
+def student_context() -> StdContext:
     """State container for BDD steps in this module."""
-    return StudentContext()
+    return StdContext()
 
 
 @dataclass
@@ -51,7 +51,7 @@ def portal_context() -> PortalContext:
 
 
 @dataclass
-class RegistrarContext:
+class RegContext:
     """Shared state for registrar dashboard BDD steps."""
 
     user: PortalUserT | None = None
@@ -60,6 +60,6 @@ class RegistrarContext:
 
 
 @pytest.fixture
-def registrar_context() -> RegistrarContext:
+def registrar_context() -> RegContext:
     """State container for registrar dashboard BDD steps."""
-    return RegistrarContext()
+    return RegContext()

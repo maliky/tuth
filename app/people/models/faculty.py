@@ -100,7 +100,7 @@ class Faculty(models.Model):
     college = models.ForeignKey(
         "academics.College", on_delete=models.CASCADE, null=True, blank=True
     )
-    # We can get all the colleges of the facutly via section->CurriculumCourse->..
+    # We can get all the colleges of the facutly via section->CurriCourse->..
     google_profile = models.URLField(blank=True)
     personal_website = models.URLField(blank=True)
     academic_rank = models.CharField(max_length=50, null=True, blank=True)

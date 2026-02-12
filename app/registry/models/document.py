@@ -8,7 +8,7 @@ from typing import Optional, Self, cast
 from django.db import models
 from simple_history.models import HistoricalRecords
 
-from app.registry.models.status_types import DocumentStatus, DocumentType
+from app.registry.models.status_types import DocStatus, DocType
 from app.shared.mixins import SimpleTableMixin, StatusableMixin, StatusHistory
 
 
@@ -21,7 +21,7 @@ def set_document_path(instance, filename: str) -> str:
     return str(Path(instance_name) / str(instance.person) / filename)
 
 
-class AbstractDocument(StatusableMixin, models.Model):
+class AbstractDoc(StatusableMixin, models.Model):
     """Abstract / factorize some of the documents common methods.
 
     I'm not abstracting all because historicalRecords need concreet class.
@@ -35,7 +35,7 @@ class AbstractDocument(StatusableMixin, models.Model):
     # ~~~~ Auto-filled ~~~~
     data_file = models.FileField(upload_to=set_document_path)
     status = models.ForeignKey(
-        "registry.DocumentStatus",
+        "registry.DocStatus",
         on_delete=models.PROTECT,
         related_name="%(class)s",
         related_query_name="%(class)s",
@@ -43,7 +43,7 @@ class AbstractDocument(StatusableMixin, models.Model):
     )
 
     document_type = models.ForeignKey(
-        "registry.DocumentType",
+        "registry.DocType",
         on_delete=models.PROTECT,
         related_name="%(class)s",
         related_query_name="%(class)s",
@@ -55,18 +55,18 @@ class AbstractDocument(StatusableMixin, models.Model):
         return cast(Optional[StatusHistory], self.status_history.first())
 
     def clean(self) -> None:
-        """Validating the change of DocumentStatus."""
+        """Validating the change of DocStatus."""
         super().clean()
 
     def _ensure_document_status(self):
         """Ensure we have a document Status."""
         if not self.status_id:
-            self.status = DocumentStatus.get_default()
+            self.status = DocStatus.get_default()
 
     def _ensure_document_type(self):
         """Ensure we have a document Type."""
         if not self.document_type_id:
-            self.document_type = DocumentType.get_default()
+            self.document_type = DocType.get_default()
 
     # need to set a default for status when saving.
     def save(self, *args, **kwargs):
@@ -79,7 +79,7 @@ class AbstractDocument(StatusableMixin, models.Model):
     # I think not because the class is neve insta..
 
 
-class DocumentStudent(AbstractDocument):
+class DocStd(AbstractDoc):
     """Store the students documents."""
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
@@ -92,7 +92,7 @@ class DocumentStudent(AbstractDocument):
     history = HistoricalRecords()
 
 
-class DocumentDonor(AbstractDocument):
+class DocDonor(AbstractDoc):
     """Store the donors documents."""
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
@@ -105,7 +105,7 @@ class DocumentDonor(AbstractDocument):
     history = HistoricalRecords()
 
 
-class DocumentStaff(AbstractDocument):
+class DocStaff(AbstractDoc):
     """Store the staffs documents."""
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
@@ -118,7 +118,7 @@ class DocumentStaff(AbstractDocument):
     history = HistoricalRecords()
 
 
-class DocumentPayment(AbstractDocument):
+class DocPayment(AbstractDoc):
     """Store attachments related to finance payments."""
 
     payment = models.ForeignKey(

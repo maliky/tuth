@@ -2,7 +2,7 @@
 
 from import_export import fields, resources
 
-from app.timetable.admin.core_widgets import AcademicYearCodeWidget
+from app.timetable.admin.core_widgets import AcademicYearCodeWgt
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester
 
@@ -11,7 +11,7 @@ class SemesterResource(resources.ModelResource):
     academic_year = fields.Field(
         column_name="academic_year",
         attribute="academic_year",
-        widget=AcademicYearCodeWidget(),
+        widget=AcademicYearCodeWgt(),
     )
     number = fields.Field(
         column_name="semester_no",

@@ -8,11 +8,11 @@ from typing import Callable, Generator, TypeAlias
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from app.registry.models.document import DocumentType
+from app.registry.models.document import DocType
 from app.registry.models import (
-    DocumentStudent,
-    DocumentStaff,
-    DocumentDonor,
+    DocStd,
+    DocStaff,
+    DocDonor,
     Grade,
     Registration,
 )
@@ -21,10 +21,10 @@ from tests.constants import D90
 
 RegistrationFactoryT: TypeAlias = Callable[[str, str, str, int], Registration]
 GradeFactoryT: TypeAlias = Callable[[str, str, str, str, Decimal], Grade]
-DocumentStudentFactoryT: TypeAlias = Callable[[str, str], DocumentStudent]
-DocumentStaffFactoryT: TypeAlias = Callable[[str], DocumentStaff]
-DocumentDonorFactoryT: TypeAlias = Callable[[str], DocumentDonor]
-DocumentTypeFactoryT: TypeAlias = Callable[[str], Generator[DocumentType, None, None]]
+DocStdFactoryT: TypeAlias = Callable[[str, str], DocStd]
+DocStaffFactoryT: TypeAlias = Callable[[str], DocStaff]
+DocDonorFactoryT: TypeAlias = Callable[[str], DocDonor]
+DocTypeFactoryT: TypeAlias = Callable[[str], Generator[DocType, None, None]]
 
 
 @pytest.fixture
@@ -53,21 +53,21 @@ def grade(student, section, grade_value) -> Grade:
 
 
 @pytest.fixture
-def documentType() -> Generator[DocumentType, None, None]:
+def documentType() -> Generator[DocType, None, None]:
     """Return a default documentType."""
-    _doc_type = DocumentType.get_default()
+    _doc_type = DocType.get_default()
     yield _doc_type
     _doc_type.delete()
 
 
 @pytest.fixture
-def documentStudent(
+def documentStd(
     student, data_file, documenttype_factory
-) -> Generator[DocumentStudent, None, None]:
+) -> Generator[DocStd, None, None]:
     """Default document attached to a student."""
     waec = documenttype_factory("waec")
 
-    _doc_stud = DocumentStudent.objects.create(
+    _doc_stud = DocStd.objects.create(
         person=student, data_file=data_file, document_type=waec
     )
     yield _doc_stud
@@ -77,10 +77,10 @@ def documentStudent(
 @pytest.fixture
 def documentDonor(
     donor, data_file, documenttype_factory
-) -> Generator[DocumentDonor, None, None]:
+) -> Generator[DocDonor, None, None]:
     """Default document attached to a student."""
     acc_letter = documenttype_factory("letter_of_accredidation")
-    _doc_donor = DocumentDonor.objects.create(
+    _doc_donor = DocDonor.objects.create(
         person=donor, data_file=data_file, document_type=acc_letter
     )
     yield _doc_donor
@@ -90,10 +90,10 @@ def documentDonor(
 @pytest.fixture
 def documentStaff(
     staff, data_file, documenttype_factory
-) -> Generator[DocumentStaff, None, None]:
+) -> Generator[DocStaff, None, None]:
     """Default document attached to a student."""
     ref_letter = documenttype_factory("letter_of_reference")
-    _doc_staff = DocumentStaff.objects.create(
+    _doc_staff = DocStaff.objects.create(
         person=staff, data_file=data_file, document_type=ref_letter
     )
     yield _doc_staff
@@ -146,11 +146,11 @@ def grade_factory(student_factory, section_factory) -> GradeFactoryT:
 
 
 @pytest.fixture
-def documenttype_factory() -> DocumentTypeFactoryT:
+def documenttype_factory() -> DocTypeFactoryT:
     """Return a callable to build document type."""
 
-    def _make(code="other") -> Generator[DocumentType, None, None]:
-        _doc_type = DocumentType.objects.create(code=code)
+    def _make(code="other") -> Generator[DocType, None, None]:
+        _doc_type = DocType.objects.create(code=code)
         yield _doc_type
         _doc_type.delete()
 
@@ -160,14 +160,14 @@ def documenttype_factory() -> DocumentTypeFactoryT:
 @pytest.fixture
 def documentstudent_factory(
     student_factory, documenttype_factory, data_file
-) -> DocumentStudentFactoryT:
-    """Return a callable to build documents for Students."""
+) -> DocStdFactoryT:
+    """Return a callable to build documents for Stds."""
 
-    def _make(student_uname: str, curri_short_name: str) -> DocumentStudent:
+    def _make(student_uname: str, curri_short_name: str) -> DocStd:
         student = student_factory(student_uname, curri_short_name)
         waec = documenttype_factory("waec")
 
-        return DocumentStudent.objects.create(
+        return DocStd.objects.create(
             person=student,
             data_file=data_file,
             document_type=waec,
@@ -179,14 +179,14 @@ def documentstudent_factory(
 @pytest.fixture
 def documentdonor_factory(
     donor_factory, documenttype_factory, data_file
-) -> DocumentDonorFactoryT:
+) -> DocDonorFactoryT:
     """Return a callable to build documents for donors."""
 
-    def _make(donor_uname: str) -> DocumentDonor:
+    def _make(donor_uname: str) -> DocDonor:
         donor = donor_factory(donor_uname)
         acc_letter = documenttype_factory("letter_of_accreditation")
 
-        return DocumentDonor.objects.create(
+        return DocDonor.objects.create(
             person=donor, data_file=data_file, document_type=acc_letter
         )
 
@@ -196,14 +196,14 @@ def documentdonor_factory(
 @pytest.fixture
 def documentstaff_factory(
     staff_factory, documenttype_factory, data_file
-) -> DocumentStaffFactoryT:
+) -> DocStaffFactoryT:
     """Return a callable to build documents for Staff."""
 
-    def _make(staff_uname: str) -> DocumentStaff:
+    def _make(staff_uname: str) -> DocStaff:
         staff = staff_factory(staff_uname)
         ref_letter = documenttype_factory("letter_of_reference")
 
-        return DocumentStaff.objects.create(
+        return DocStaff.objects.create(
             person=staff, data_file=data_file, document_type=ref_letter
         )
 

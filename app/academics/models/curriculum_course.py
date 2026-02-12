@@ -13,7 +13,7 @@ from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.finance.models.fee_stack import resolve_course_fee_stack_map
 from app.registry.models import CreditHour
-from app.shared.types import FacultyQuery, StudentQuery
+from app.shared.types import FacultyQuery, StdQuery
 from app.timetable.choices import SEMESTER_NUMBER
 from app.timetable.models.semester import Semester
 
@@ -62,12 +62,12 @@ LEVEL_NUMBER_CHOICES = tuple(
 )
 
 
-class CurriculumCourse(models.Model):
+class CurriCourse(models.Model):
     """Map Curriculum instances to their constituent courses.
 
     It can be called a 'program'
     Example:
-        >>> CurriculumCourse.objects.create(curriculum=curriculum, course=course)
+        >>> CurriCourse.objects.create(curriculum=curriculum, course=course)
 
     Side Effects:
         save() defaults credit_hours to the course value when missing.
@@ -127,7 +127,7 @@ class CurriculumCourse(models.Model):
 
     @classmethod
     def get_default(cls, _course: Optional[Course] = None) -> Self:
-        """Returns a default CurriculumCourse."""
+        """Returns a default CurriCourse."""
         def_pg, _ = cls.objects.get_or_create(
             curriculum=Curriculum.get_default(),
             course=(_course or Course.get_default()),
@@ -136,7 +136,7 @@ class CurriculumCourse(models.Model):
 
     @classmethod
     def get_unique_default(cls) -> Self:
-        """Returns a default unique CurriculumCourse."""
+        """Returns a default unique CurriCourse."""
         u_course = Course.get_unique_default()
         return cls.get_default(_course=u_course)
 
@@ -188,8 +188,8 @@ class CurriculumCourse(models.Model):
         ).distinct()
         return faculty_qs
 
-    def current_students(self) -> StudentQuery:
-        """Students enrolled in this curriculum course during the current semester."""
+    def current_students(self) -> StdQuery:
+        """Stds enrolled in this curriculum course during the current semester."""
         from app.people.models.student import Student
 
         semester = Semester.get_current_semester()

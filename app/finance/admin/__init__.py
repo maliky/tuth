@@ -5,7 +5,7 @@ from app.finance.admin.core import (
     LookupAdmin,
     PaymentAdmin,
     ScholarshipAdmin,
-    StudentSemesterInvoiceAdmin,
+    StdSemesterInvoiceAdmin,
 )
 
 
@@ -14,5 +14,5 @@ __all__ = [
     "LookupAdmin",
     "PaymentAdmin",
     "ScholarshipAdmin",
-    "StudentSemesterInvoiceAdmin",
+    "StdSemesterInvoiceAdmin",
 ]

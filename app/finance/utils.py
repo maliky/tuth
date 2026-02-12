@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from app.people.models.student import Student
     from app.timetable.models.semester import Semester
 
-from app.finance.models.invoice import CourseInvoice, StudentSemesterInvoice
+from app.finance.models.invoice import CourseInvoice, StdSemesterInvoice
 from app.finance.models.invoice_snapshot import InvoiceSnapshot
 from app.finance.models.payment import Payment
 
@@ -116,7 +116,7 @@ def create_pending_payments(
     if not parent_invoice_ids:
         return summary
     parent_invoices = list(
-        StudentSemesterInvoice.objects.filter(id__in=parent_invoice_ids).only(
+        StdSemesterInvoice.objects.filter(id__in=parent_invoice_ids).only(
             "id",
             "balance",
             "initial_amount_due",
@@ -148,7 +148,7 @@ def _format_currency(amount: Decimal) -> str:
     return f"{amount:.2f}"
 
 
-def _default_payment_payer_id(parent_invoice: StudentSemesterInvoice) -> str:
+def _default_payment_payer_id(parent_invoice: StdSemesterInvoice) -> str:
     """Resolve the default payer for newly created payments."""
     candidate_codes = (
         parent_invoice.fee_payer_id,
@@ -245,7 +245,7 @@ def build_invoice_snapshot(
         for invoice in invoice_list
         if invoice.student_semester_invoice_id
     }
-    parent_invoices_qs = StudentSemesterInvoice.objects.filter(student=student)
+    parent_invoices_qs = StdSemesterInvoice.objects.filter(student=student)
     if semester:
         parent_invoices_qs = parent_invoices_qs.filter(semester=semester)
     elif parent_invoice_ids:
@@ -307,7 +307,7 @@ def build_invoice_snapshot(
 
     arrears = Decimal("0.00")
     if semester:
-        arrears = StudentSemesterInvoice.objects.filter(student=student).exclude(
+        arrears = StdSemesterInvoice.objects.filter(student=student).exclude(
             semester=semester
         ).aggregate(total=Sum("balance")).get("total") or Decimal("0.00")
     payments_total = Decimal("0.00")

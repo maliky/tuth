@@ -9,7 +9,7 @@ from django.db.models import Q
 from simple_history.models import HistoricalRecords
 
 
-class StudentCurriculumEnrollment(models.Model):
+class StdCurriEnroll(models.Model):
     """Enrollment link between a student and a curriculum."""
 
     student = models.ForeignKey(

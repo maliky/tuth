@@ -1,7 +1,7 @@
 """Convenience exports for finance app models."""
 
 from app.finance.models.fee_stack import CourseFeeStack, FeeStack, FeeStackLine
-from app.finance.models.invoice import CourseInvoice, Invoice, StudentSemesterInvoice
+from app.finance.models.invoice import CourseInvoice, Invoice, StdSemesterInvoice
 from app.finance.models.invoice_snapshot import InvoiceSnapshot
 from app.finance.models.payment import Payment
 from app.finance.models.scholarship import (
@@ -32,7 +32,7 @@ __all__ = [
     "Payment",
     "PaymentStatus",
     "PaymentMethod",
-    "StudentSemesterInvoice",
+    "StdSemesterInvoice",
     "Scholarship",
     "ScholarshipLetterTemplate",
     "ScholarshipTermSnapshot",

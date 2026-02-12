@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date, time
 from typing import Dict, Optional, Tuple
 
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriCourse
 from app.shared.types import (
     RoomCacheT,
     RoomKeyT,
@@ -167,7 +167,7 @@ def ensure_semester_id(
 
 def ensure_section(
     semester: Semester,
-    curriculum_course: CurriculumCourse,
+    curriculum_course: CurriCourse,
     number: int,
     faculty_id: int | None = None,
 ) -> Section:

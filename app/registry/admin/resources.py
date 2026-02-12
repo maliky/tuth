@@ -2,14 +2,14 @@
 
 from import_export import fields, resources
 
-from app.people.admin.widgets import StudentGradeWidget, StudentUserWidget
+from app.people.admin.widgets import StdGradeWgt, StdUserWgt
 from app.registry.admin.resources_mapping import GRADE_HEADER_MAP
-from app.registry.admin.widgets import GradeValueWidget
+from app.registry.admin.widgets import GradeValueWgt
 from app.registry.models.grade import Grade, GradeValue
 from app.registry.models.registration import Registration
 from app.shared.utils import get_in_row
 from app.timetable.admin.resource_mapping import SECTION_HEADER_MAP
-from app.timetable.admin.section_widgets import SectionWidget
+from app.timetable.admin.section_widgets import SectionWgt
 from app.timetable.utils import normalize_academic_year
 
 
@@ -24,13 +24,13 @@ class GradeResource(resources.ModelResource):
     student = fields.Field(
         column_name="student_id",
         attribute="student",
-        widget=StudentUserWidget(),
+        widget=StdUserWgt(),
     )
     student_name = fields.Field(attribute=None, column_name="student_name")
     section = fields.Field(
         column_name="section_no",
         attribute="section",
-        widget=SectionWidget(fuzzy_threshold=1.0),
+        widget=SectionWgt(fuzzy_threshold=1.0),
     )
     curriculum = fields.Field(attribute=None, column_name="curriculum")
     course_no = fields.Field(attribute=None, column_name="course_no")
@@ -39,7 +39,7 @@ class GradeResource(resources.ModelResource):
     semester_no = fields.Field(attribute=None, column_name="semester_no")
     academic_year = fields.Field(attribute=None, column_name="academic_year")
     value = fields.Field(
-        attribute="value", column_name="grade_code", widget=GradeValueWidget()
+        attribute="value", column_name="grade_code", widget=GradeValueWgt()
     )
 
     class Meta:

@@ -1,4 +1,4 @@
-"""Filters module."""
+"""Flts module."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.people.models.faculty import Faculty
 from app.people.models.student import Student
-from app.shared.admin.filters import BaseCollegeFilter, ScopedAutocompleteFilter
+from app.shared.admin.filters import BaseCollegeFlt, ScopedAutocompleteFilter
 from app.shared.types import LookUpType
 
 DEPARTMENT_FIELD_LOOKUPS: LookUpType = (
@@ -33,12 +33,12 @@ DEPARTMENT_CURRICULUM_LOOKUPS: LookUpType = (
 )
 
 
-class CourseCollegeFilter(BaseCollegeFilter):
+class CourseCollegeFlt(BaseCollegeFlt):
     field_path = "department__college"
     parameter_name = "department__college"
 
 
-class DepartmentFilterAC(ScopedAutocompleteFilter):
+class DepartmentFltAC(ScopedAutocompleteFilter):
     """Autocomplete filter constrained to departments present in the queryset."""
 
     title = "Department"
@@ -48,7 +48,7 @@ class DepartmentFilterAC(ScopedAutocompleteFilter):
     target_model = Department
 
 
-class CurriculumFilterAC(ScopedAutocompleteFilter):
+class CurriFltAC(ScopedAutocompleteFilter):
     """Autocomplete filter constrained to curricula present in the queryset."""
 
     title = "Curriculum"
@@ -58,7 +58,7 @@ class CurriculumFilterAC(ScopedAutocompleteFilter):
     target_model = Curriculum
 
 
-class DepartmentCurriculumFilterAC(ScopedAutocompleteFilter):
+class DepartmentCurriFltAC(ScopedAutocompleteFilter):
     """Autocomplete filter for curricula linked through department courses."""
 
     title = "Curriculum"
@@ -68,7 +68,7 @@ class DepartmentCurriculumFilterAC(ScopedAutocompleteFilter):
     target_model = Curriculum
 
 
-class CourseCurriculumFilter(admin.SimpleListFilter):
+class CourseCurriFlt(admin.SimpleListFilter):
     """Curriculum filter for courses (avoids reverse M2M autocomplete errors)."""
 
     title = "By Curriculum"
@@ -86,7 +86,7 @@ class CourseCurriculumFilter(admin.SimpleListFilter):
         return queryset
 
 
-class CurriculumCourseFacultyFilterAC(ScopedAutocompleteFilter):
+class CurriCourseFacultyFltAC(ScopedAutocompleteFilter):
     """Autocomplete filter constrained to faculty teaching curriculum courses."""
 
     title = "Faculty"
@@ -96,7 +96,7 @@ class CurriculumCourseFacultyFilterAC(ScopedAutocompleteFilter):
     target_model = Faculty
 
 
-class CurriculumCourseStudentFilterAC(ScopedAutocompleteFilter):
+class CurriCourseStdFltAC(ScopedAutocompleteFilter):
     """Autocomplete filter constrained to students registered in course sections."""
 
     title = "Student"

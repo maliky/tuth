@@ -5,7 +5,7 @@ from import_export import widgets
 from app.registry.models.grade import GradeValue
 
 
-class GradeValueWidget(widgets.ForeignKeyWidget):
+class GradeValueWgt(widgets.ForeignKeyWidget):
     """Look up or create a GradeValue from a CSV grade code."""
 
     def __init__(self, *args, **kwargs) -> None:

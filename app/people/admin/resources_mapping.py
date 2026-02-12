@@ -18,7 +18,7 @@ USER_HEADER_MAP = {
     "MiddleName": "middle_name",
     "LastName": "last_name",
     "fullname": "long_name",
-    # "UserGroup" : "bio_usergroup",  # empty
+    # "UserGp" : "bio_usergroup",  # empty
 }
 
 GENDER_MAP = {
@@ -38,8 +38,8 @@ STUDENT_HEADER_MAP = {
     "Dept": "department",
     "EmergencyContact": "emergency_contact",
     "Enrolled": "bio_Enrolled",
-    "EnrollmentStatusID": "bio_enrollmentstatusid",
-    "EnrollmentType": "bio_EnrollmentType",
+    "EnrollStatusID": "bio_enrollmentstatusid",
+    "EnrollType": "bio_EnrollType",
     "FatherAddress": "father_address",
     "FatherName": "father_name",
     "HomeCountry": "bio_homecountry",

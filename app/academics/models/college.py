@@ -11,7 +11,7 @@ from app.shared.auth.perms import UserRole
 
 
 class College(models.Model):
-    """Institutional unit responsible for a set of Curriculums/Programs.
+    """Institutional unit responsible for a set of Curris/Programs.
 
     Example: See get_default
 

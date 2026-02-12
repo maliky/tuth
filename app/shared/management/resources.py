@@ -6,12 +6,12 @@ from collections import OrderedDict
 from typing import Sequence
 
 
-from app.academics.admin.resources import CourseResource, CurriculumCourseResource
+from app.academics.admin.resources import CourseResource, CurriCourseResource
 from app.people.admin.resources import (
     DonorResource,
     FacultyResource,
     StaffResource,
-    StudentResource,
+    StdResource,
 )
 from app.people.models.staffs import Staff
 from app.registry.admin.resources_legacy import (
@@ -29,15 +29,15 @@ DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
     ("Staff", StaffResource, ("people_full_staff.tsv",)),
     ("Donor", DonorResource, ("people_donors.csv",)),
     ("Faculty", FacultyResource, ("people_full_faculty.tsv",)),
-    ("Student", StudentResource, ("people_full_student.tsv",)),
+    ("Student", StdResource, ("people_full_student.tsv",)),
     ("Course", CourseResource, ("academic_course.csv",)),
     ("SecSession", SecSessionResource, ("timetable_sessions_25-26s2.tsv",)),
-    ("CurriculumCourse", CurriculumCourseResource, ("academic_curriculum_course.csv",)),
+    ("CurriCourse", CurriCourseResource, ("academic_curriculum_course.csv",)),
     (
         "LegacyRegistration",
         LegacyRegistrationResource,
         (
-            "UM_StudentsCourses.csv",
+            "UM_StudentsCrs.csv",
             "registry_registration.csv",
             "studentcourses.csv",
         ),

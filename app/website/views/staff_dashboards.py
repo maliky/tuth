@@ -20,7 +20,7 @@ from app.finance.models.scholarship import (
 )
 from app.people.models.faculty import Faculty, FacultyWorkloadSnapshot
 from app.people.models.student import Student
-from app.registry.models.document import DocumentStudent
+from app.registry.models.document import DocStd
 from app.registry.models.grade import Grade
 from app.registry.models.registration import Registration
 from app.registry.models.transcript import TranscriptRequest
@@ -407,7 +407,7 @@ def _build_enrollment_context(_: HttpRequest) -> dict:
     students_qs = Student.objects.select_related("curriculum")
     total_students = students_qs.count()
     onboarding = students_qs.filter(last_enrolled_semester__isnull=True).count()
-    pending_docs = DocumentStudent.objects.filter(status__code="pending").count()
+    pending_docs = DocStd.objects.filter(status__code="pending").count()
     recent_students = list(students_qs.order_by("-id")[:6])
     student_items = [
         {

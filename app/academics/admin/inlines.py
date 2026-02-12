@@ -1,4 +1,4 @@
-"""Inlines module."""
+"""ILs module."""
 
 from django.contrib import admin
 from collections import defaultdict
@@ -12,20 +12,20 @@ from django.utils import timezone
 
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.course import Course
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriCourse
 from app.academics.models.requirement_group import (
-    CurriculumCourseRequirementGroup,
-    CurriculumCourseRequirementMember,
+    CurriCourseRequirementGp,
+    CurriCourseRequirementMember,
 )
 from app.academics.models.concentration import (
-    MajorCurriculumCourse,
-    MinorCurriculumCourse,
+    MajorCurriCourse,
+    MinorCurriCourse,
 )
 from app.finance.models.fee_stack import CourseFeeStack
 from app.timetable.models.semester import Semester
 
 
-class RequiresInline(admin.TabularInline):
+class RequiresIL(admin.TabularInline):
     """Inline editor for Prerequisite needed by a course."""
 
     model = Prerequisite
@@ -36,7 +36,7 @@ class RequiresInline(admin.TabularInline):
     ordering = ("prerequisite_course",)
 
 
-class PrerequisiteInline(admin.TabularInline):
+class PrerequisiteIL(admin.TabularInline):
     """Inline showing courses that depend on the current course."""
 
     model = Prerequisite
@@ -47,10 +47,10 @@ class PrerequisiteInline(admin.TabularInline):
     ordering = ("course",)
 
 
-class CourseCurriculumInline(admin.TabularInline):
+class CourseCurriIL(admin.TabularInline):
     """Inline for linking  curriculum to course."""
 
-    model = CurriculumCourse
+    model = CurriCourse
     fk_name = "course"
     verbose_name_plural = "Curricula with this course."
     extra = 0
@@ -66,7 +66,7 @@ class CourseCurriculumInline(admin.TabularInline):
     )
 
 
-class CourseFeeStackInline(admin.TabularInline):
+class CourseFeeStackIL(admin.TabularInline):
     """Inline editor for linking fee stacks to courses."""
 
     model = CourseFeeStack
@@ -103,13 +103,11 @@ class CourseFeeStackInline(admin.TabularInline):
         return f"{total:.2f}"
 
 
-class CurriculumCourseSummaryFormSet(BaseInlineFormSet):
+class CurriCourseSummaryFormSet(BaseInlineFormSet):
     """Inline formset that annotates group summary values."""
 
-    summary_builder: Callable[
-        [list[CurriculumCourse]], dict[tuple[int, int], dict[str, int]]
-    ]
-    group_key_builder: Callable[[CurriculumCourse], tuple[int, int]]
+    summary_builder: Callable[[list[CurriCourse]], dict[tuple[int, int], dict[str, int]]]
+    group_key_builder: Callable[[CurriCourse], tuple[int, int]]
 
     def get_queryset(self):
         """Attach summary attributes used by the inline template."""
@@ -146,10 +144,10 @@ class CurriculumCourseSummaryFormSet(BaseInlineFormSet):
         return qs
 
 
-class CurriculumCourseInline(admin.TabularInline):
+class CurriCourseIL(admin.TabularInline):
     """Inline for linking courses to a curriculum."""
 
-    model = CurriculumCourse
+    model = CurriCourse
     fk_name = "curriculum"
     verbose_name_plural = "Courses in this curriculum."
     extra = 0
@@ -161,7 +159,7 @@ class CurriculumCourseInline(admin.TabularInline):
         "course__code",
     )
     template = "admin/academics/curriculumcourse/tabular_inline.html"
-    formset = CurriculumCourseSummaryFormSet
+    formset = CurriCourseSummaryFormSet
     fields = (
         "course",
         "level_number",
@@ -178,7 +176,7 @@ class CurriculumCourseInline(admin.TabularInline):
             form_field.label = "Required group"
         return form_field
 
-    def _group_key(self, curriculum_course: CurriculumCourse) -> tuple[int, int]:
+    def _group_key(self, curriculum_course: CurriCourse) -> tuple[int, int]:
         """Return the (year, semester) key for summary grouping."""
         return (
             int(getattr(curriculum_course, "year_number", 0) or 0),
@@ -186,11 +184,11 @@ class CurriculumCourseInline(admin.TabularInline):
         )
 
     def _build_group_summary(
-        self, rows: list[CurriculumCourse]
+        self, rows: list[CurriCourse]
     ) -> dict[tuple[int, int], dict[str, int]]:
         """Return summary stats keyed by year/semester."""
         summary_map: dict[tuple[int, int], dict[str, int]] = {}
-        grouped: dict[tuple[int, int], list[CurriculumCourse]] = defaultdict(list)
+        grouped: dict[tuple[int, int], list[CurriCourse]] = defaultdict(list)
         for row in rows:
             grouped[self._group_key(row)].append(row)
 
@@ -234,12 +232,12 @@ class CurriculumCourseInline(admin.TabularInline):
     # Student counts removed from inline to avoid slow/incorrect values.
 
 
-class CurriculumCourseRequirementMemberInline(admin.TabularInline):
+class CurriCourseRequirementMemberIL(admin.TabularInline):
     """Inline editor for requirement group members."""
 
     # Dormant: this inline is intentionally not mounted in active admin screens.
 
-    model = CurriculumCourseRequirementMember
+    model = CurriCourseRequirementMember
     fk_name = "group"
     verbose_name = "Requirement member"
     verbose_name_plural = "Requirement members"
@@ -249,12 +247,12 @@ class CurriculumCourseRequirementMemberInline(admin.TabularInline):
     ordering = ("order", "required_course__short_code", "required_course__code")
 
 
-class CurriculumCourseRequirementGroupInline(admin.TabularInline):
+class CurriCourseRequirementGpIL(admin.TabularInline):
     """Inline editor for requirement groups bound to a curriculum course."""
 
     # Dormant: keep implementation for later re-enable of advanced requirements UI.
 
-    model = CurriculumCourseRequirementGroup
+    model = CurriCourseRequirementGp
     fk_name = "curriculum_course"
     verbose_name = "Requirement group"
     verbose_name_plural = "Requirement groups"
@@ -264,14 +262,14 @@ class CurriculumCourseRequirementGroupInline(admin.TabularInline):
     ordering = ("order", "id")
 
     @admin.display(description="Members")
-    def member_count(self, obj: CurriculumCourseRequirementGroup) -> int:
+    def member_count(self, obj: CurriCourseRequirementGp) -> int:
         """Return number of member courses in the group."""
         if not getattr(obj, "pk", None):
             return 0
         return obj.members.count()
 
     @admin.display(description="Manage members")
-    def manage_members(self, obj: CurriculumCourseRequirementGroup) -> str:
+    def manage_members(self, obj: CurriCourseRequirementGp) -> str:
         """Link to group change page where member inline is available."""
         if not getattr(obj, "pk", None):
             return "Save first"
@@ -282,7 +280,7 @@ class CurriculumCourseRequirementGroupInline(admin.TabularInline):
         return format_html('<a href="{}">Open</a>', url)
 
 
-class DepartmentCourseInline(admin.TabularInline):
+class DepartmentCourseIL(admin.TabularInline):
     """Inline courses of a department."""
 
     model = Course
@@ -294,10 +292,10 @@ class DepartmentCourseInline(admin.TabularInline):
     ordering = ("short_code",)
 
 
-class MajorCurriculumCourseInline(admin.TabularInline):
+class MajorCurriCourseIL(admin.TabularInline):
     """Inline editor for major membership rows."""
 
-    model = MajorCurriculumCourse
+    model = MajorCurriCourse
     fk_name = "major"
     verbose_name_plural = "Major curriculum courses"
     extra = 0
@@ -308,10 +306,10 @@ class MajorCurriculumCourseInline(admin.TabularInline):
     )
 
 
-class MinorCurriculumCourseInline(admin.TabularInline):
+class MinorCurriCourseIL(admin.TabularInline):
     """Inline editor for minor membership rows."""
 
-    model = MinorCurriculumCourse
+    model = MinorCurriCourse
     fk_name = "minor"
     verbose_name_plural = "Minor curriculum courses"
     extra = 0

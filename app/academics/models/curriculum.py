@@ -20,7 +20,7 @@ from app.shared.utils import as_title
 logger = logging.getLogger(__name__)
 
 
-class CurriculumStatus(SimpleTableMixin):
+class CurriStatus(SimpleTableMixin):
     """Code/label pairs for curriculum validation status."""
 
     DEFAULT_VALUES = [
@@ -34,7 +34,7 @@ class CurriculumStatus(SimpleTableMixin):
         verbose_name_plural = "Curriculum Status"
 
 
-class CurriculumManager(models.Manager["Curriculum"]):
+class CurriManager(models.Manager["Curriculum"]):
     """Manager with fuzzy lookup to reduce near-duplicates."""
 
     def _token(self, short_name: str, long_name: str | None) -> str:
@@ -161,7 +161,7 @@ class Curriculum(StatusableMixin, models.Model):
     is_active = models.BooleanField(default=False)
 
     status = models.ForeignKey(
-        "academics.CurriculumStatus",
+        "academics.CurriStatus",
         on_delete=models.PROTECT,
         default="pending",
         related_name="curricula",
@@ -184,13 +184,13 @@ class Curriculum(StatusableMixin, models.Model):
 
     curriculum_course = models.ManyToManyField(
         "academics.Course",
-        through="academics.CurriculumCourse",
+        through="academics.CurriCourse",
         related_name="curricula",  # <-- reverse accessor course.curricula
         blank=True,
     )
     description = models.TextField(blank=True)
 
-    objects: CurriculumManager = CurriculumManager()
+    objects: CurriManager = CurriManager()
 
     @property
     def courses(self):
@@ -241,7 +241,7 @@ class Curriculum(StatusableMixin, models.Model):
             # oui si on veux pas faire self.status.code
             self.status_id = "pending"
         # just to make sure it is created.
-        CurriculumStatus.objects.get_or_create(
+        CurriStatus.objects.get_or_create(
             code=self.status_id,
             defaults={"label": as_title(self.status_id)},
         )
@@ -285,7 +285,7 @@ class Curriculum(StatusableMixin, models.Model):
     def clean(self) -> None:
         """Validate the curriculum and its current status."""
         super().clean()
-        self.validate_status(CurriculumStatus.objects.all())
+        self.validate_status(CurriStatus.objects.all())
         # Keep admin behavior explicit: active curricula must be approved.
         if self.is_active and self.status_id != "approved":
             raise ValidationError(

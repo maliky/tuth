@@ -7,14 +7,14 @@ from django.contrib import admin
 
 from app.timetable.models.section import Section
 from app.timetable.admin.section_registers import SectionAdmin
-from app.registry.admin.inlines import GradeInline
+from app.registry.admin.inlines import GradeIL
 
 
 @pytest.mark.django_db
 def test_section_admin_has_grade_inline():
     """Check that the admin section shows the grades."""
     admin_obj = SectionAdmin(Section, admin.site)
-    assert GradeInline in admin_obj.inlines
+    assert GradeIL in admin_obj.inlines
 
 
 # # Where is the admin_client coming from?

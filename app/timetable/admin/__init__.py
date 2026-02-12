@@ -3,11 +3,11 @@
 from .core_registers import AcademicYearAdmin, SemesterAdmin, TermAdmin
 from .core_resources import AcademicYearResource, SemesterResource
 from .filters import (
-    SectionBySemesterFilter,
-    SectionFacultyFilterAc,
-    SemesterFilterAC,
+    SectionBySemesterFlt,
+    SectionFacultyFltAc,
+    SemesterFltAC,
 )
-from .inlines import SectionInline, SemesterInline
+from .inlines import SectionIL, SemesterIL
 from .section_registers import SectionAdmin
 from .section_resources import SectionResource
 from .session_resources import ScheduleResource, SecSessionResource
@@ -28,11 +28,11 @@ __all__ = [
     "SectionResource",
     "SemesterResource",
     # Inline
-    "SectionInline",
-    "SemesterInline",
-    # Filters
+    "SectionIL",
+    "SemesterIL",
+    # Flts
     "SectionBySemesterAutocom",
-    "SectionBySemesterFilter",
-    "SectionFacultyFilterAc",
-    "SemesterFilterAC",
+    "SectionBySemesterFlt",
+    "SectionFacultyFltAc",
+    "SemesterFltAC",
 ]

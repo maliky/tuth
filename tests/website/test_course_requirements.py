@@ -8,10 +8,10 @@ from typing import cast
 import pytest
 from django.urls import reverse
 
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriCourse
 from app.academics.models.requirement_group import (
-    CurriculumCourseRequirementGroup,
-    CurriculumCourseRequirementMember,
+    CurriCourseRequirementGp,
+    CurriCourseRequirementMember,
     RequirementKind,
 )
 from app.finance.models.status_types_methods import InvoiceStatus, Payer
@@ -64,17 +64,17 @@ def _student_for_curriculum(
 
 def _add_requirement_member_group(
     *,
-    target: CurriculumCourse,
+    target: CurriCourse,
     kind: str,
-    required_courses: list[CurriculumCourse],
+    required_courses: list[CurriCourse],
 ) -> None:
     """Create one requirement group and populate all member courses."""
-    group = CurriculumCourseRequirementGroup.objects.create(
+    group = CurriCourseRequirementGp.objects.create(
         curriculum_course=target,
         kind=kind,
     )
     for index, required in enumerate(required_courses):
-        CurriculumCourseRequirementMember.objects.create(
+        CurriCourseRequirementMember.objects.create(
             group=group,
             required_course=required.course,
             order=index,

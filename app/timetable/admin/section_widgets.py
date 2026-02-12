@@ -5,26 +5,26 @@ from typing import Optional, cast
 from import_export import widgets
 
 from app.academics.admin.widgets import (
-    CourseWidget,
-    CurriculumCourseWidget,
-    CurriculumWidget,
+    CourseWgt,
+    CurriCourseWgt,
+    CurriWgt,
 )
-from app.people.admin.widgets import FacultyFullnameWidget
+from app.people.admin.widgets import FacultyFullnameWgt
 from app.timetable.ensures import ensure_semester, ensure_section, ensure_semester_code
 from app.shared.utils import get_in_row, asserts_keys, to_int
-from app.timetable.admin.core_widgets import SemesterCodeWidget, SemesterWidget
+from app.timetable.admin.core_widgets import SemesterCodeWgt, SemesterWgt
 from app.timetable.utils import parse_semester_code
 from app.timetable.models.section import Section
 
 
-class SectionWidget(widgets.ForeignKeyWidget):
+class SectionWgt(widgets.ForeignKeyWidget):
     """Create a Section from multiple CSV columns."""
 
     def __init__(self, *, fuzzy_threshold: float = 1.0):
         super().__init__(Section)  # using pk until export is done
-        self.curriculum_course_w = CurriculumCourseWidget()
-        self.sem_w = SemesterWidget()
-        self.faculty_w = FacultyFullnameWidget()
+        self.curriculum_course_w = CurriCourseWgt()
+        self.sem_w = SemesterWgt()
+        self.faculty_w = FacultyFullnameWgt()
         self.fuzzy_threshold = fuzzy_threshold
         self._cache: dict[tuple[int, int, int, int | None], Section] = {}
 
@@ -79,12 +79,12 @@ class SectionWidget(widgets.ForeignKeyWidget):
         return f"{value.semester}:{value.course.code}:s{value.number}"
 
 
-class SectionCodeWidget(widgets.Widget):
+class SectionCodeWgt(widgets.Widget):
     """Resolve YY-YY_SemN:sec_no codes into :class:Section objects."""
 
     def __init__(self) -> None:
         super().__init__(Section)
-        self.crs_w = CourseWidget()
+        self.crs_w = CourseWgt()
 
     def clean(
         self,

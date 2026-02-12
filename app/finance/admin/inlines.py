@@ -12,7 +12,7 @@ from app.finance.models.invoice import CourseInvoice
 from app.finance.models.payment import Payment
 
 
-class StudentInvoiceInline(admin.TabularInline):
+class StdInvoiceIL(admin.TabularInline):
     """Inline list of student invoices with payment counts."""
 
     model = CourseInvoice
@@ -48,7 +48,7 @@ class StudentInvoiceInline(admin.TabularInline):
         return format_html('<a href="{}?{}">{}</a>', base_url, query, count)
 
 
-class StudentSemesterInvoicePaymentInline(admin.TabularInline):
+class StdSemesterInvoicePaymentIL(admin.TabularInline):
     """Inline list of payments attached to a student-semester invoice."""
 
     model = Payment
@@ -59,7 +59,7 @@ class StudentSemesterInvoicePaymentInline(admin.TabularInline):
     fields = ("amount_paid", "status", "payment_method", "recorded_by")
 
 
-class StudentSemesterCourseInvoiceInline(admin.TabularInline):
+class StdSemesterCourseInvoiceIL(admin.TabularInline):
     """Inline list of course invoices attached to a student-semester invoice."""
 
     model = CourseInvoice
@@ -79,4 +79,4 @@ class StudentSemesterCourseInvoiceInline(admin.TabularInline):
 
 
 # Backward-compatible alias for existing admin imports.
-InvoicePaymentInline = StudentSemesterInvoicePaymentInline
+InvoicePaymentIL = StdSemesterInvoicePaymentIL

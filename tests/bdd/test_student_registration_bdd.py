@@ -12,7 +12,7 @@ from app.finance.models.invoice import Invoice
 from app.people.models.student import Student
 from app.registry.models.registration import Registration
 from app.timetable.models.semester import SemesterStatus
-from tests.bdd.fixtures import StudentContext
+from tests.bdd.fixtures import StdContext
 from tests.selenium.fixtures_portal import _login_to_portal
 
 
@@ -33,7 +33,7 @@ def test_student_registration_bdd():
 
 @given("a student with an open registration semester")
 def student_with_open_registration_semester(
-    student_context: StudentContext,
+    student_context: StdContext,
     portal_user_factory,
     registrar_semester_pair_factory,
 ) -> None:
@@ -58,7 +58,7 @@ def student_with_open_registration_semester(
 
 @given("a curriculum section available for registration")
 def curriculum_section_available(
-    student_context: StudentContext,
+    student_context: StdContext,
     registrar_section_factory,
 ) -> None:
     """Create an eligible section in the student's curriculum."""
@@ -74,7 +74,7 @@ def curriculum_section_available(
 
 @when("the student selects the section and saves the registration")
 def student_saves_registration(
-    student_context: StudentContext,
+    student_context: StdContext,
     selenium_driver,
     live_server,
 ) -> None:
@@ -103,7 +103,7 @@ def student_saves_registration(
 
 @then("an invoice is created with the initial amount due")
 def invoice_created_with_initial_amount_due(
-    student_context: StudentContext,
+    student_context: StdContext,
     selenium_driver,
 ) -> None:
     """Ensure the registration produces a consistent invoice total."""

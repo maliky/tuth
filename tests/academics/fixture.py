@@ -10,7 +10,7 @@ from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriCourse
 from app.academics.models.concentration import Major, Minor
 from app.finance.models.invoice import CourseInvoice
 from app.people.models.student import Student
@@ -21,12 +21,12 @@ from tests.constants import D10
 
 CollegeFactoryT: TypeAlias = Callable[[str], College]
 CourseFactoryT: TypeAlias = Callable[[str], Course]
-CurriculumFactoryT: TypeAlias = Callable[[str], Curriculum]
+CurriFactoryT: TypeAlias = Callable[[str], Curriculum]
 DepartmentFactoryT: TypeAlias = Callable[[str], Department]
-CurriculumCourseFactoryT: TypeAlias = Callable[[str, str], CurriculumCourse]
+CurriCourseFactoryT: TypeAlias = Callable[[str, str], CurriCourse]
 CreditHourFactoryT: TypeAlias = Callable[[int], CreditHour]
 
-InvoiceFactoryT: TypeAlias = Callable[[CurriculumCourse], CourseInvoice]
+InvoiceFactoryT: TypeAlias = Callable[[CurriCourse], CourseInvoice]
 
 
 @pytest.fixture
@@ -50,8 +50,8 @@ def department() -> Department:
 
 
 @pytest.fixture
-def curriculum_course() -> CurriculumCourse:
-    return CurriculumCourse.get_default()
+def curriculum_course() -> CurriCourse:
+    return CurriCourse.get_default()
 
 
 # ~~~~~~~~~~~~~~~~ DB Constraints  ~~~~~~~~~~~~~~~~
@@ -75,7 +75,7 @@ def department_factory() -> DepartmentFactoryT:
 
 
 @pytest.fixture
-def curriculum_factory() -> CurriculumFactoryT:
+def curriculum_factory() -> CurriFactoryT:
     def _make(short_name: str = "CURRI_TEST") -> Curriculum:
         return Curriculum.get_default(short_name)
 
@@ -92,15 +92,11 @@ def course_factory() -> CourseFactoryT:
 
 
 @pytest.fixture
-def curriculum_course_factory(
-    course_factory, curriculum_factory
-) -> CurriculumCourseFactoryT:
-    def _make(
-        course_num="111", curriculum_short_name: str = "CURRI_TEST"
-    ) -> CurriculumCourse:
+def curriculum_course_factory(course_factory, curriculum_factory) -> CurriCourseFactoryT:
+    def _make(course_num="111", curriculum_short_name: str = "CURRI_TEST") -> CurriCourse:
         course = course_factory(course_num)
         curriculum = curriculum_factory(curriculum_short_name)
-        curriculum_course, _ = CurriculumCourse.objects.get_or_create(
+        curriculum_course, _ = CurriCourse.objects.get_or_create(
             course=course, curriculum=curriculum
         )
         return curriculum_course
@@ -152,7 +148,7 @@ def credit_hour_factory() -> CreditHourFactoryT:
 def invoice_factory(default_semester: Semester) -> InvoiceFactoryT:
     """Return a callable to create invoices for curriculum courses."""
 
-    def _make(curriculum_course: CurriculumCourse) -> CourseInvoice:
+    def _make(curriculum_course: CurriCourse) -> CourseInvoice:
         student = Student.get_default()
         amount = D10
         return CourseInvoice.objects.create(

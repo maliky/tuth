@@ -1,4 +1,4 @@
-"""app.timetable.Inlines modules."""
+"""app.timetable.ILs modules."""
 
 from django.contrib import admin
 from django.db.models import Count
@@ -8,7 +8,7 @@ from app.timetable.models.semester import Semester
 from app.timetable.models.session import SecSession
 
 
-class SemesterInline(admin.TabularInline):
+class SemesterIL(admin.TabularInline):
     """Inline for managing Semester rows."""
 
     model = Semester
@@ -18,7 +18,7 @@ class SemesterInline(admin.TabularInline):
     ordering = ("start_date",)
 
 
-class SecSessionInline(admin.TabularInline):
+class SecSessionIL(admin.TabularInline):
     """Inline editor for SecSession rows."""
 
     model = SecSession
@@ -44,7 +44,7 @@ class SecSessionInline(admin.TabularInline):
         return obj.section.semester
 
 
-class SectionInline(admin.TabularInline):
+class SectionIL(admin.TabularInline):
     """Inline for creating Section rows."""
 
     model = Section

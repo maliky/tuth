@@ -3,7 +3,7 @@
 import pytest
 from django.db import IntegrityError, transaction
 
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriCourse
 
 pytestmark = pytest.mark.django_db
 
@@ -20,6 +20,6 @@ def test_curriculum_course_unique_course_per_curriculum(curriculum_course):
     """
     with pytest.raises(IntegrityError):
         with transaction.atomic():
-            CurriculumCourse.objects.create(
+            CurriCourse.objects.create(
                 curriculum=curriculum_course.curriculum, course=curriculum_course.course
             )

@@ -1,18 +1,18 @@
 """Initialization for the admin package."""
 
-from .filters import FacultyGroupFAC, StudentEntrySemFAC
-from .resources import DonorResource, FacultyResource, StudentResource
-from .core import StudentAdmin, DonorAdmin, FacultyAdmin
+from .filters import FacultyGpFAC, StdEntrySemFAC
+from .resources import DonorResource, FacultyResource, StdResource
+from .core import StdAdmin, DonorAdmin, FacultyAdmin
 
 
 __all__ = [
     "DonorAdmin",
     "DonorResource",
     "FacultyAdmin",
-    "FacultyGroupFAC",
+    "FacultyGpFAC",
     "FacultyResource",
     "RoleAssignmentAdmin",
-    "StudentAdmin",
-    "StudentEntrySemFAC",
-    "StudentResource",
+    "StdAdmin",
+    "StdEntrySemFAC",
+    "StdResource",
 ]

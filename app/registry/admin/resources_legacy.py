@@ -6,7 +6,7 @@ from functools import cached_property
 
 from import_export import fields, widgets
 
-from app.people.admin.widgets import StudentGradeWidget
+from app.people.admin.widgets import StdGradeWgt
 from app.registry.admin.resources import GradeResource, RegistrationResource
 from app.registry.models.registration import RegistrationStatus
 from app.shared.data import legacy_registration_rows
@@ -22,7 +22,7 @@ from app.shared.importing import (
     setdefault_field,
 )
 from app.shared.utils import get_in_row, parse_str
-from app.timetable.admin.section_widgets import SectionWidget
+from app.timetable.admin.section_widgets import SectionWgt
 from app.timetable.utils import normalize_academic_year
 
 SEM_MAP = {
@@ -209,12 +209,12 @@ class LegacyRegistrationResource(RegistrationResource):
     student = fields.Field(
         attribute="student",
         column_name="student_id",
-        widget=StudentGradeWidget(),
+        widget=StdGradeWgt(),
     )
     section = fields.Field(
         attribute="section",
         column_name="section_no",
-        widget=SectionWidget(),
+        widget=SectionWgt(),
     )
     status = fields.Field(
         attribute="status",

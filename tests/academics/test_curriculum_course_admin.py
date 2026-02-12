@@ -1,4 +1,4 @@
-"""Focused tests for CurriculumCourse admin protected-delete behavior."""
+"""Focused tests for CurriCourse admin protected-delete behavior."""
 
 from unittest.mock import patch
 
@@ -6,8 +6,8 @@ import pytest
 from django.contrib import admin
 from django.test import RequestFactory
 
-from app.academics.admin.core import CurriculumCourseAdmin
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.admin.core import CurriCourseAdmin
+from app.academics.models.curriculum_course import CurriCourse
 from app.registry.models.grade import Grade, GradeValue
 from app.timetable.models.section import Section
 
@@ -32,12 +32,12 @@ def test_curriculum_course_delete_shows_protected_message(
         number=99,
     )
     Grade.objects.create(student=student, section=section, value=GradeValue.get_default())
-    admin_obj = CurriculumCourseAdmin(CurriculumCourse, admin.site)
+    admin_obj = CurriCourseAdmin(CurriCourse, admin.site)
     request = _request_with_user(superuser)
 
     with patch.object(admin_obj, "message_user") as message_user:
         admin_obj.delete_model(request, curriculum_course)
 
-    assert CurriculumCourse.objects.filter(id=curriculum_course.id).exists()
+    assert CurriCourse.objects.filter(id=curriculum_course.id).exists()
     assert message_user.call_count == 1
     assert "Cannot delete programmed course" in str(message_user.call_args.args[1])

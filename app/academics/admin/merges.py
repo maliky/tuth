@@ -10,36 +10,51 @@ from django.db.models import Count, Q
 from django.db.models.deletion import ProtectedError
 
 from app.academics.models.course import Course
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriCourse
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.concentration import Major, Minor
 from app.academics.models.department import Department
 from app.academics.models.concentration import (
-    MajorCurriculumCourse,
-    MinorCurriculumCourse,
+    MajorCurriCourse,
+    MinorCurriCourse,
 )
 from app.finance.models.invoice import Invoice
 from app.people.models import RoleAssignment, Staff
 from app.people.models.student import Student
+from app.people.models.student_curriculum_enrollment import StdCurriEnroll
 from app.registry.models.grade import Grade
 from app.registry.models.registration import Registration
 from app.timetable.models.section import Section
 
 if TYPE_CHECKING:
-    from app.academics.admin.core import CurriculumAdmin, DepartmentAdmin
+    from app.academics.admin.core import CurriAdmin, DepartmentAdmin
     from app.academics.admin.core import CourseAdmin
 
 CourseMergeSummaryT: TypeAlias = dict[str, int]
 ConflictChoiceT = Literal["keep_target", "keep_source", "merge", "skip"]
 ConflictChoiceByCourseIdT: TypeAlias = dict[int, ConflictChoiceT]
-ConflictCurriculumCoursePairT: TypeAlias = tuple[CurriculumCourse, CurriculumCourse]
+ConflictCurriCoursePairT: TypeAlias = tuple[CurriCourse, CurriCourse]
 SectionMergeResultT: TypeAlias = dict[str, int]
+StdCurriRecordMergeSummaryT: TypeAlias = dict[str, int]
 
 MERGE_CHOICE_KEEP_TARGET: ConflictChoiceT = "keep_target"
 MERGE_CHOICE_KEEP_SOURCE: ConflictChoiceT = "keep_source"
 MERGE_CHOICE_MERGE: ConflictChoiceT = "merge"
 MERGE_CHOICE_SKIP: ConflictChoiceT = "skip"
+
+
+def empty_student_curriculum_record_summary() -> StdCurriRecordMergeSummaryT:
+    """Return the default counters for student-scoped curriculum reconciliation."""
+    return {
+        "grades_moved": 0,
+        "grades_deduped": 0,
+        "grade_conflicts": 0,
+        "grades_unresolved": 0,
+        "registrations_moved": 0,
+        "registrations_deduped": 0,
+        "registrations_unresolved": 0,
+    }
 
 
 @admin.action(description="Merge selected departments into the first")
@@ -84,7 +99,7 @@ def merge_departments_action(dept_admin: "DepartmentAdmin", request, queryset):
 
 
 @admin.action(description="Merge selected curricula into the chosen target")
-def merge_curricula_action(curriculum_admin: "CurriculumAdmin", request, queryset):
+def merge_curricula_action(curriculum_admin: "CurriAdmin", request, queryset):
     """Merge curricula, moving students and programmed courses into the target."""
     if queryset.count() < 2:
         messages.warning(request, "Select at least two curricula to merge.")
@@ -190,19 +205,19 @@ def merge_curricula_action(curriculum_admin: "CurriculumAdmin", request, queryse
 
 def list_curriculum_course_conflicts(
     target: Curriculum, source: Curriculum
-) -> tuple[list[ConflictCurriculumCoursePairT], list[CurriculumCourse]]:
+) -> tuple[list[ConflictCurriCoursePairT], list[CurriCourse]]:
     """Return conflicting and non-conflicting programmed courses for two curricula."""
-    target_rows = CurriculumCourse.objects.filter(curriculum=target).select_related(
+    target_rows = CurriCourse.objects.filter(curriculum=target).select_related(
         "course",
         "credit_hours",
     )
-    source_rows = CurriculumCourse.objects.filter(curriculum=source).select_related(
+    source_rows = CurriCourse.objects.filter(curriculum=source).select_related(
         "course",
         "credit_hours",
     )
     target_by_course_id = {row.course_id: row for row in target_rows}
-    conflicts: list[ConflictCurriculumCoursePairT] = []
-    non_conflicting: list[CurriculumCourse] = []
+    conflicts: list[ConflictCurriCoursePairT] = []
+    non_conflicting: list[CurriCourse] = []
     for source_row in source_rows:
         target_row = target_by_course_id.get(source_row.course_id)
         if target_row is None:
@@ -212,9 +227,7 @@ def list_curriculum_course_conflicts(
     return conflicts, non_conflicting
 
 
-def _overlay_curriculum_course_fields(
-    target: CurriculumCourse, source: CurriculumCourse
-) -> None:
+def _overlay_curriculum_course_fields(target: CurriCourse, source: CurriCourse) -> None:
     """Copy selected field values from source onto target before merge."""
     updated_fields: list[str] = []
     field_names = (
@@ -238,7 +251,7 @@ def _overlay_curriculum_course_fields(
 
 
 def _keep_target_curriculum_course(
-    target: CurriculumCourse, source: CurriculumCourse
+    target: CurriCourse, source: CurriCourse
 ) -> dict[str, int]:
     """Keep target programmed course and delete source when possible."""
     summary = {
@@ -257,8 +270,8 @@ def _keep_target_curriculum_course(
 
 
 def _merge_curriculum_course_conflict(
-    target: CurriculumCourse,
-    source: CurriculumCourse,
+    target: CurriCourse,
+    source: CurriCourse,
     choice: ConflictChoiceT,
 ) -> dict[str, int]:
     """Resolve one conflicting programmed course pair with a caller-selected mode."""
@@ -335,9 +348,9 @@ def merge_curricula(
             prereq.curriculum = target
             prereq.save(update_fields=["curriculum"])
             summary["prerequisites_moved"] += 1
-        for cc in CurriculumCourse.objects.filter(curriculum=src):
+        for cc in CurriCourse.objects.filter(curriculum=src):
             # Avoid duplicate course entries on the target curriculum.
-            existing = CurriculumCourse.objects.filter(
+            existing = CurriCourse.objects.filter(
                 curriculum=target, course=cc.course
             ).first()
             if existing:
@@ -396,7 +409,7 @@ def merge_curricula(
 
 
 def _merge_curriculum_course_to_target(
-    target: CurriculumCourse, source: CurriculumCourse
+    target: CurriCourse, source: CurriCourse
 ) -> dict[str, int]:
     """Move section and concentration links from source to target."""
     summary = {
@@ -695,15 +708,13 @@ def merge_courses(target: Course, sources):
     }
     target_cc_map = {
         cc.curriculum_id: cc
-        for cc in CurriculumCourse.objects.filter(course=target).select_related(
-            "curriculum"
-        )
+        for cc in CurriCourse.objects.filter(course=target).select_related("curriculum")
     }
     for src in sources:
         if src.pk == target.pk:
             continue
         source_curriculum_courses = list(
-            CurriculumCourse.objects.filter(course=src).select_related("curriculum")
+            CurriCourse.objects.filter(course=src).select_related("curriculum")
         )
         if _course_merge_has_invoice_conflict(source_curriculum_courses, target_cc_map):
             summary["skipped_invoices"] += 1
@@ -742,8 +753,8 @@ def merge_courses(target: Course, sources):
 
 
 def _course_merge_has_invoice_conflict(
-    source_curriculum_courses: list[CurriculumCourse],
-    target_cc_map: dict[int, CurriculumCourse],
+    source_curriculum_courses: list[CurriCourse],
+    target_cc_map: dict[int, CurriCourse],
 ) -> bool:
     """Return True when invoices block merging source curriculum courses.
 
@@ -905,8 +916,8 @@ def merge_curriculum_courses_action(course_admin, request, queryset):
 
 
 @transaction.atomic
-def merge_curriculum_courses(target: CurriculumCourse, sources):
-    """Merge CurriculumCourse rows into target.
+def merge_curriculum_courses(target: CurriCourse, sources):
+    """Merge CurriCourse rows into target.
 
     Rules:
     - Only merge rows with the same curriculum and course.
@@ -974,19 +985,17 @@ def merge_curriculum_courses(target: CurriculumCourse, sources):
     return summary
 
 
-def _merge_curriculum_course_links(
-    target: CurriculumCourse, source: CurriculumCourse
-) -> None:
+def _merge_curriculum_course_links(target: CurriCourse, source: CurriCourse) -> None:
     """Move concentration links from a source curriculum course to the target."""
-    for major_link in MajorCurriculumCourse.objects.filter(curriculum_course=source):
-        if MajorCurriculumCourse.objects.filter(
+    for major_link in MajorCurriCourse.objects.filter(curriculum_course=source):
+        if MajorCurriCourse.objects.filter(
             major_id=major_link.major_id, curriculum_course=target
         ).exists():
             continue
         major_link.curriculum_course = target
         major_link.save(update_fields=["curriculum_course"])
-    for minor_link in MinorCurriculumCourse.objects.filter(curriculum_course=source):
-        if MinorCurriculumCourse.objects.filter(
+    for minor_link in MinorCurriCourse.objects.filter(curriculum_course=source):
+        if MinorCurriCourse.objects.filter(
             minor_id=minor_link.minor_id, curriculum_course=target
         ).exists():
             continue
@@ -995,7 +1004,7 @@ def _merge_curriculum_course_links(
 
 
 def _pick_section_merge_candidate(
-    target_curriculum_course: CurriculumCourse,
+    target_curriculum_course: CurriCourse,
     source_section: Section,
 ) -> Section | None:
     """Return a deterministic section merge candidate for a source section."""
@@ -1117,6 +1126,10 @@ def _reconcile_section_fields(target: Section, source: Section) -> list[str]:
 def _merge_sections(target: Section, source: Section) -> SectionMergeResultT:
     """Merge a conflicting section into target, moving related records.
 
+    Scope note:
+        This is a section-wide merge used by global curriculum/course merges.
+        It can move grades/registrations for multiple students in one call.
+
     Returns:
         SectionMergeResultT: Merge outcome counters keyed by result type.
     """
@@ -1166,3 +1179,140 @@ def _merge_sections(target: Section, source: Section) -> SectionMergeResultT:
             "sections_retained_protected": 1,
             "sections_skipped_grade_conflict": 0,
         }
+
+
+def _entry_semester_merge_blocked(
+    target_row: StdCurriEnroll,
+    source_row: StdCurriEnroll,
+) -> bool:
+    """Return True when both rows have different non-null entry semesters."""
+    target_entry_id = target_row.entry_semester_id
+    source_entry_id = source_row.entry_semester_id
+    return bool(
+        target_entry_id and source_entry_id and target_entry_id != source_entry_id
+    )
+
+
+def merge_student_enrollment_pair(
+    target_row: StdCurriEnroll,
+    source_row: StdCurriEnroll,
+) -> tuple[bool, StdCurriRecordMergeSummaryT]:
+    """Merge one source enrollment row into a target enrollment row.
+
+    Scope note:
+        This helper is student-scoped and intentionally does not call section-wide
+        merges, because enrollment actions must not move records for other students.
+    """
+    summary = empty_student_curriculum_record_summary()
+    if target_row.student_id != source_row.student_id:
+        return False, summary
+    if _entry_semester_merge_blocked(target_row, source_row):
+        return False, summary
+
+    # Reconcile student-scoped grade/registration duplicates before row collapse.
+    summary = reconcile_student_curriculum_records(
+        student=target_row.student,
+        target_curriculum=target_row.curriculum,
+        source_curriculum=source_row.curriculum,
+    )
+
+    update_fields: list[str] = []
+    if not target_row.entry_semester_id and source_row.entry_semester_id:
+        target_row.entry_semester_id = source_row.entry_semester_id
+        update_fields.append("entry_semester")
+    if not target_row.exit_semester_id and source_row.exit_semester_id:
+        target_row.exit_semester_id = source_row.exit_semester_id
+        update_fields.append("exit_semester")
+    if not target_row.is_primary and source_row.is_primary:
+        target_row.is_primary = True
+        update_fields.append("is_primary")
+    if not target_row.is_active and source_row.is_active:
+        target_row.is_active = True
+        update_fields.append("is_active")
+    if target_row.creation_date > source_row.creation_date:
+        target_row.creation_date = source_row.creation_date
+        update_fields.append("creation_date")
+
+    if target_row.is_primary:
+        StdCurriEnroll.objects.filter(
+            student_id=target_row.student_id,
+            is_primary=True,
+        ).exclude(pk=target_row.pk).update(is_primary=False)
+    if update_fields:
+        target_row.save(update_fields=update_fields)
+    source_row.delete()
+    return True, summary
+
+
+def reconcile_student_curriculum_records(
+    student: Student,
+    target_curriculum: Curriculum,
+    source_curriculum: Curriculum,
+) -> StdCurriRecordMergeSummaryT:
+    """Reconcile one student's records between two curricula by matching courses.
+
+    The function is intentionally student-scoped: it never merges whole sections,
+    and only moves/de-duplicates this student's grade/registration rows.
+    Global curriculum merges use section-wide helpers for batch performance.
+    """
+    summary = empty_student_curriculum_record_summary()
+    target_cc_by_course_id = {
+        cc.course_id: cc
+        for cc in CurriCourse.objects.filter(curriculum=target_curriculum)
+    }
+    source_curriculum_courses = CurriCourse.objects.filter(curriculum=source_curriculum)
+    for source_cc in source_curriculum_courses:
+        target_cc = target_cc_by_course_id.get(source_cc.course_id)
+        if target_cc is None:
+            continue
+        source_sections = (
+            Section.objects.filter(curriculum_course=source_cc)
+            .filter(Q(grade__student=student) | Q(section_registrations__student=student))
+            .distinct()
+        )
+        for source_section in source_sections:
+            target_section = _pick_section_merge_candidate(target_cc, source_section)
+            source_grade = Grade.objects.filter(
+                student=student,
+                section=source_section,
+            ).first()
+            target_course_grades = Grade.objects.filter(
+                student=student,
+                section__curriculum_course=target_cc,
+            )
+            if source_grade is not None:
+                # If same-value grade already exists on target curriculum/course, drop duplicate.
+                if target_course_grades.filter(value_id=source_grade.value_id).exists():
+                    source_grade.delete()
+                    summary["grades_deduped"] += 1
+                elif target_course_grades.exists():
+                    # Conflicting values are left untouched for manual resolution.
+                    summary["grade_conflicts"] += 1
+                elif target_section is not None:
+                    source_grade.section = target_section
+                    source_grade.save(update_fields=["section"])
+                    summary["grades_moved"] += 1
+                else:
+                    summary["grades_unresolved"] += 1
+
+            source_registration = Registration.objects.filter(
+                student=student,
+                section=source_section,
+            ).first()
+            if source_registration is None:
+                continue
+            target_course_registrations = Registration.objects.filter(
+                student=student,
+                section__curriculum_course=target_cc,
+            )
+            if target_course_registrations.exists():
+                source_registration.delete()
+                summary["registrations_deduped"] += 1
+                continue
+            if target_section is None:
+                summary["registrations_unresolved"] += 1
+                continue
+            source_registration.section = target_section
+            source_registration.save(update_fields=["section"])
+            summary["registrations_moved"] += 1
+    return summary

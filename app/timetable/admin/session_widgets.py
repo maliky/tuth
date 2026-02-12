@@ -3,19 +3,19 @@
 from import_export import widgets
 
 from app.shared.utils import get_in_row, parse_str
-from app.spaces.admin.widgets import RoomCodeWidget
+from app.spaces.admin.widgets import RoomCodeWgt
 from app.timetable.choices import WEEKDAYS_NUMBER
 from app.timetable.models.schedule import Schedule
 from app.timetable.models.session import SecSession
 
 
-class SecSessionWidget(widgets.ForeignKeyWidget):
+class SecSessionWgt(widgets.ForeignKeyWidget):
     """Create a :class:SecSession from room and section."""
 
     def __init__(self):
         super().__init__(SecSession)  # va exporter session.pk
-        self.room_w = RoomCodeWidget()
-        self.schedule_w = ScheduleWidget()
+        self.room_w = RoomCodeWgt()
+        self.schedule_w = ScheduleWgt()
 
     def clean(self, value, row=None, *args, **kwargs) -> SecSession | None:
         """Value should be the room?"""
@@ -37,12 +37,12 @@ class SecSessionWidget(widgets.ForeignKeyWidget):
         return session
 
 
-class ScheduleWidget(widgets.ForeignKeyWidget):
+class ScheduleWgt(widgets.ForeignKeyWidget):
     """Return a :class:Schedule based on weekday and times."""
 
     def __init__(self):
         super().__init__(Schedule)
-        self.weekday_w = WeekdayWidget()
+        self.weekday_w = WeekdayWgt()
 
     def clean(self, value, row=None, *args, **kwargs) -> Schedule | None:
         """Return an existing Schedule using data from the import row."""
@@ -64,7 +64,7 @@ class ScheduleWidget(widgets.ForeignKeyWidget):
         return schedule
 
 
-class WeekdayWidget(widgets.IntegerWidget):
+class WeekdayWgt(widgets.IntegerWidget):
     """Accept either the integer 1-7 or the English weekday name."""
 
     def clean(self, value, row=None, *args, **kwargs) -> int | None:

@@ -13,7 +13,7 @@ UserModel = get_user_model()
 def get_role_representatives(request):
     """Limit impersonation targets to a single active user per group.
 
-    Groups are treated as the role definition inside Tusis. To keep the
+    Gps are treated as the role definition inside Tusis. To keep the
     impersonation feature manageable we only show the first active member of
     each group, skipping duplicates across groups.
     """

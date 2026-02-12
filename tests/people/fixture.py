@@ -11,12 +11,12 @@ from app.people.models.donor import Donor
 from app.people.models.staffs import Staff
 from app.people.models.faculty import Faculty
 from app.people.models.student import Student
-from tests.academics.fixture import CurriculumFactoryT
+from tests.academics.fixture import CurriFactoryT
 
 UserFactoryT: TypeAlias = Callable[[str], User]
-GroupFactoryT: TypeAlias = Callable[[str], Group]
+GpFactoryT: TypeAlias = Callable[[str], Group]
 StaffFactoryT: TypeAlias = Callable[[str], Staff]
-StudentFactoryT: TypeAlias = Callable[[str, str], Student]
+StdFactoryT: TypeAlias = Callable[[str, str], Student]
 DonorFactoryT: TypeAlias = Callable[[str], Donor]
 FacultyFactoryT: TypeAlias = Callable[[str], Faculty]
 
@@ -75,7 +75,7 @@ def student(semester, curriculum) -> Student:
 
 
 @pytest.fixture
-def group_factory() -> GroupFactoryT:
+def group_factory() -> GpFactoryT:
     """Factory to create a group with name."""
 
     def _make(name: str) -> Group:
@@ -123,8 +123,8 @@ def faculty_factory() -> FacultyFactoryT:
 
 @pytest.fixture
 def student_factory(
-    curriculum_factory: CurriculumFactoryT,
-) -> StudentFactoryT:
+    curriculum_factory: CurriFactoryT,
+) -> StdFactoryT:
     """Return a callable for making extra Student objects on demand.
 
     my_student = student_factory("joe", some_curriculum short name)

@@ -7,30 +7,30 @@ from typing import Callable, TypeAlias
 
 import pytest
 
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriCourse
 from app.finance.models.invoice import CourseInvoice
 from app.finance.models.payment import Payment
 from app.people.models.student import Student
 from app.timetable.models.semester import Semester
 from tests.constants import D25, D100
 
-StudentInvoiceFactoryT: TypeAlias = Callable[
-    [Student, Semester, Decimal, CurriculumCourse | None], CourseInvoice
+StdInvoiceFactoryT: TypeAlias = Callable[
+    [Student, Semester, Decimal, CurriCourse | None], CourseInvoice
 ]
 PaymentFactoryT: TypeAlias = Callable[[CourseInvoice, Decimal], Payment]
 
 
 @pytest.fixture
-def student_invoice_factory() -> StudentInvoiceFactoryT:
+def student_invoice_factory() -> StdInvoiceFactoryT:
     """Return a callable to create invoices for students in a semester."""
 
     def _make(
         student: Student,
         semester: Semester,
         amount: Decimal = D100,
-        curriculum_course: CurriculumCourse | None = None,
+        curriculum_course: CurriCourse | None = None,
     ) -> CourseInvoice:
-        course = curriculum_course or CurriculumCourse.get_default()
+        course = curriculum_course or CurriCourse.get_default()
         return CourseInvoice.objects.create(
             curriculum_course=course,
             student=student,

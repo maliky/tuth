@@ -29,24 +29,24 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriCourse
 from app.finance.admin.resources import InvoiceResource, PaymentResource
 from app.finance.admin.filters import (
-    EffectiveSemesterFilterAC,
-    FeeStackFilterAC,
-    FeeTypeFilterAC,
+    EffectiveSemesterFltAC,
+    FeeStackFltAC,
+    FeeTypeFltAC,
 )
 from app.finance.admin.inlines import (
-    InvoicePaymentInline,
-    StudentSemesterCourseInvoiceInline,
+    InvoicePaymentIL,
+    StdSemesterCourseInvoiceIL,
 )
 from app.finance.models.payment import Payment
-from app.finance.models.invoice import CourseInvoice, StudentSemesterInvoice
+from app.finance.models.invoice import CourseInvoice, StdSemesterInvoice
 from app.finance.models.scholarship import Scholarship
 from app.finance.utils import create_pending_payments
 from app.people.models.staffs import Staff
 from app.shared.admin.mixins import ScopedAutocompleteAdminMixin
-from app.timetable.admin.filters import SemesterFilterAC
+from app.timetable.admin.filters import SemesterFltAC
 from app.timetable.models.semester import Semester
 
 
@@ -57,7 +57,7 @@ class StaffChoiceField(forms.ModelChoiceField):
         return obj.long_name or str(obj)
 
 
-class AmountDueFilter(admin.SimpleListFilter):
+class AmountDueFlt(admin.SimpleListFilter):
     """Filter invoices by remaining balance."""
 
     title = "Amount due"
@@ -114,7 +114,7 @@ class CourseInvoiceAdmin(
         "created_at",
         # "recorded_by_name",
     )
-    list_filter = (SemesterFilterAC, AmountDueFilter)
+    list_filter = (SemesterFltAC, AmountDueFlt)
     list_select_related = (
         "student",
         "student__user",
@@ -251,11 +251,11 @@ class CourseInvoiceAdmin(
             open_semester = self._get_open_registration_semester(request)
             # Only allow curriculum courses with sections in the open semester.
             if open_semester:
-                kwargs["queryset"] = CurriculumCourse.objects.filter(
+                kwargs["queryset"] = CurriCourse.objects.filter(
                     sections__semester=open_semester
                 ).distinct()
             else:
-                kwargs["queryset"] = CurriculumCourse.objects.none()
+                kwargs["queryset"] = CurriCourse.objects.none()
 
         if db_field.name == "recorded_by":
             kwargs["form_class"] = StaffChoiceField
@@ -292,8 +292,8 @@ class CourseInvoiceAdmin(
         super().save_model(request, obj, form, change)
 
 
-@admin.register(StudentSemesterInvoice)
-class StudentSemesterInvoiceAdmin(
+@admin.register(StdSemesterInvoice)
+class StdSemesterInvoiceAdmin(
     ScopedAutocompleteAdminMixin,
     SimpleHistoryAdmin,
     GuardedModelAdmin,
@@ -312,7 +312,7 @@ class StudentSemesterInvoiceAdmin(
         "status",
         "updated_at",
     )
-    list_filter = (SemesterFilterAC, AmountDueFilter)
+    list_filter = (SemesterFltAC, AmountDueFlt)
     search_fields = (
         "student__student_id",
         "student__long_name",
@@ -322,7 +322,7 @@ class StudentSemesterInvoiceAdmin(
     )
     list_select_related = ("student", "semester", "status")
     autocomplete_fields = ("student", "semester", "fee_stacks")
-    inlines = (StudentSemesterCourseInvoiceInline, InvoicePaymentInline)
+    inlines = (StdSemesterCourseInvoiceIL, InvoicePaymentIL)
     readonly_fields = ("created_at", "updated_at")
 
     def save_model(self, request, obj, form, change):
@@ -369,7 +369,7 @@ class PaymentAdmin(
         "payer",
     )
     exclude = ("recorded_by",)
-    list_filter = (SemesterFilterAC,)
+    list_filter = (SemesterFltAC,)
     list_select_related = (
         "student_semester_invoice",
         "student_semester_invoice__semester",
@@ -405,7 +405,7 @@ class ScholarshipAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     autocomplete_fields = ("donor", "student")
 
 
-class FeeStackLineInline(admin.TabularInline):
+class FeeStackLineIL(admin.TabularInline):
     """Inline editor for fee lines in a fee stack."""
 
     model = FeeStackLine
@@ -415,7 +415,7 @@ class FeeStackLineInline(admin.TabularInline):
     fields = ("fee_type", "amount", "payer", "effective_from_semester")
 
 
-class CourseFeeStackInline(admin.TabularInline):
+class CourseFeeStackIL(admin.TabularInline):
     """Inline editor for attaching courses to a fee stack."""
 
     model = CourseFeeStack
@@ -438,7 +438,7 @@ class FeeStackAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
         "course_count",
     )
     search_fields = ("name", "courses__short_code", "courses__code", "courses__title")
-    inlines = [FeeStackLineInline, CourseFeeStackInline]
+    inlines = [FeeStackLineIL, CourseFeeStackIL]
     _current_semester_cache: Optional[Semester] = None
     _current_semester_loaded = False
 
@@ -529,9 +529,9 @@ class FeeStackLineAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     autocomplete_fields = ("fee_stack", "fee_type", "payer", "effective_from_semester")
     search_fields = ("fee_stack__name", "fee_type__code", "fee_type__label")
     list_filter = (
-        FeeStackFilterAC,
-        FeeTypeFilterAC,
-        EffectiveSemesterFilterAC,
+        FeeStackFltAC,
+        FeeTypeFltAC,
+        EffectiveSemesterFltAC,
     )
 
 

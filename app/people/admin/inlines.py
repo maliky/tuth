@@ -1,11 +1,11 @@
-"""Inlines forms for the admin interface of people."""
+"""ILs forms for the admin interface of people."""
 
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 
 
-class UserInline(admin.StackedInline):
+class UserIL(admin.StackedInline):
     model = User
     form = UserCreationForm
     can_delete = False

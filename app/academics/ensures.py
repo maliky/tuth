@@ -8,7 +8,7 @@ from app.academics.choices import COLLEGE_LONG_NAME
 from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriCourse
 from app.academics.models.department import Department
 from app.academics.utils import normalize_college_code, normalize_department_code
 from app.shared.models import CreditHour
@@ -19,7 +19,7 @@ COLLEGE_CACHE: Dict[str, College] = {}
 DEPARTMENT_CACHE: Dict[Tuple[str, int], Department] = {}
 COURSE_CACHE: Dict[Tuple[int, str], Course] = {}
 CURRICULUM_CACHE: Dict[Tuple[str, Optional[int]], Curriculum] = {}
-CURRICULUM_COURSE_CACHE: Dict[Tuple[int, int], CurriculumCourse] = {}
+CURRICULUM_COURSE_CACHE: Dict[Tuple[int, int], CurriCourse] = {}
 CREDIT_HOUR_CACHE: Dict[int, CreditHour] = {}
 
 COLLEGE_ID_CACHE: StrIntMapT = {}
@@ -82,7 +82,7 @@ def _prime_curriculum_course_id_cache() -> None:
     """Load curriculum course ids into the local cache if empty."""
     if CURRICULUM_COURSE_ID_CACHE:
         return
-    for curriculum_id, course_id, pk in CurriculumCourse.objects.values_list(
+    for curriculum_id, course_id, pk in CurriCourse.objects.values_list(
         "curriculum_id", "course_id", "id"
     ):
         CURRICULUM_COURSE_ID_CACHE[(curriculum_id, course_id)] = pk
@@ -245,8 +245,8 @@ def ensure_curriculum_course(
     course: Course,
     credit_code: int = 3,
     is_required: bool | None = None,
-) -> CurriculumCourse:
-    """Provide a CurriculumCourse cached if available."""
+) -> CurriCourse:
+    """Provide a CurriCourse cached if available."""
     key = (curriculum.id, course.id)
     cached = CURRICULUM_COURSE_CACHE.get(key)
 
@@ -263,7 +263,7 @@ def ensure_curriculum_course(
         credit, _ = CreditHour.objects.get_or_create(code=credit_code)
         CREDIT_HOUR_CACHE[credit_code] = credit
 
-    ccur, _ = CurriculumCourse.objects.get_or_create(
+    ccur, _ = CurriCourse.objects.get_or_create(
         curriculum=curriculum,
         course=course,
         defaults={"credit_hours": credit, "is_required": is_required},

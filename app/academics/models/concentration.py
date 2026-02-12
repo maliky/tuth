@@ -9,7 +9,7 @@ from django.db import models
 from simple_history.models import HistoricalRecords
 
 from app.academics.models.curriculum import Curriculum
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriCourse
 
 
 class ConcentrationMixin(models.Model):
@@ -60,7 +60,7 @@ class ConcentrationMixin(models.Model):
         # will return 0 if the object is not saved.
         self._ensure_saved()
         courses = cast(
-            "models.Manager[CurriculumCourse]",
+            "models.Manager[CurriCourse]",
             getattr(
                 self, "curriculum_courses"
             ),  # Check if curriculum_courses is attribute of ContentrationMixing
@@ -82,7 +82,7 @@ class ConcentrationMixin(models.Model):
             curriculum=Curriculum.get_default(),
             description=f"This is a default {cls.RELATED_NAME}",
         )
-        pg = CurriculumCourse.get_default()
+        pg = CurriCourse.get_default()
         dft_concentration.curriculum_courses.add(pg)
         dft_concentration.save()  # ? is the save necessary
 
@@ -98,8 +98,8 @@ class Major(ConcentrationMixin):
     RELATED_NAME: str = "major"
 
     curriculum_courses = models.ManyToManyField(
-        "academics.CurriculumCourse",
-        through="academics.MajorCurriculumCourse",
+        "academics.CurriCourse",
+        through="academics.MajorCurriCourse",
         related_name="majors",
     )
     max_credit_hours = models.PositiveIntegerField(default=50)
@@ -114,8 +114,8 @@ class Minor(ConcentrationMixin):
 
     RELATED_NAME: str = "minor"
     curriculum_courses = models.ManyToManyField(
-        "academics.CurriculumCourse",
-        through="academics.MinorCurriculumCourse",
+        "academics.CurriCourse",
+        through="academics.MinorCurriCourse",
         related_name="minors",
     )
     max_credit_hours = models.PositiveIntegerField(default=20)
@@ -126,13 +126,13 @@ class Minor(ConcentrationMixin):
 
 
 # ##  TODO make sure Minor curriculum_course can be in several curriculms?
-class MajorCurriculumCourse(models.Model):
+class MajorCurriCourse(models.Model):
     """A table joining the Major table with the curriculum_course table."""
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     major = models.ForeignKey("Major", on_delete=models.CASCADE, related_name="courses")
     curriculum_course = models.ForeignKey(
-        "academics.CurriculumCourse", on_delete=models.CASCADE, related_name="major_link"
+        "academics.CurriCourse", on_delete=models.CASCADE, related_name="major_link"
     )
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()
@@ -146,13 +146,13 @@ class MajorCurriculumCourse(models.Model):
         ]
 
 
-class MinorCurriculumCourse(models.Model):
+class MinorCurriCourse(models.Model):
     """A table joining the Major table with the curriculum_course table."""
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     minor = models.ForeignKey("Minor", on_delete=models.CASCADE, related_name="courses")
     curriculum_course = models.ForeignKey(
-        "academics.CurriculumCourse", on_delete=models.CASCADE, related_name="minor_links"
+        "academics.CurriCourse", on_delete=models.CASCADE, related_name="minor_links"
     )
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()

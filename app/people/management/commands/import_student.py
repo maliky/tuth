@@ -1,4 +1,4 @@
-"""Import students quickly using StudentResource with bulk operations."""
+"""Import students quickly using StdResource with bulk operations."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from typing import Iterable
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from tablib import Dataset
 
-from app.people.admin.resources import StudentResource
+from app.people.admin.resources import StdResource
 from app.people.admin.resources_mapping import STUDENT_HEADER_MAP
 from app.shared.file_utils import read_text_file
 from app.shared.management.commands.import_resources import _load_dataset
@@ -59,7 +59,7 @@ def _run_student_import(
     headers = dataset.headers or []
     dataset.headers = [STUDENT_HEADER_MAP.get(h, h) for h in headers]
 
-    resource = StudentResource()
+    resource = StdResource()
     if hasattr(resource._meta, "use_bulk"):
         resource._meta.use_bulk = True
     if hasattr(resource._meta, "use_bulk_update"):

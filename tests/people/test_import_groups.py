@@ -9,7 +9,7 @@ from django.contrib.auth import get_user_model
 from app.people.admin.resources import (
     DonorResource,
     StaffResource,
-    StudentResource,
+    StdResource,
     FacultyResource,
 )
 from app.people.models.faculty import Faculty
@@ -41,7 +41,7 @@ def test_student_import(student_id, long_name, username, curriculum, group_facto
     _n = name_parts_from_row(row, fullname_key="long_name", fallback_last="Student")
     username = Student.mk_username(*_n.parts())
 
-    res = StudentResource().import_data(ds, dry_run=False)
+    res = StdResource().import_data(ds, dry_run=False)
     assert not res.has_errors(), res.row_errors()
 
     student = Student.objects.get(student_id="ST10007")

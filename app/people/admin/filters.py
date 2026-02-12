@@ -3,15 +3,15 @@
 from admin_searchable_dropdown.filters import AutocompleteFilterFactory
 
 from app.academics.models.curriculum import Curriculum
-from app.academics.models.curriculum_course import CurriculumCourse
+from app.academics.models.curriculum_course import CurriCourse
 from app.academics.models.department import Department
 from app.shared.admin.filters import ScopedAutocompleteFilter
 
-StudentEntrySemFAC = AutocompleteFilterFactory("Entry Semester", "entry_semester")
-FacultyGroupFAC = AutocompleteFilterFactory("Group", "staff_profile__user__groups")
+StdEntrySemFAC = AutocompleteFilterFactory("Entry Semester", "entry_semester")
+FacultyGpFAC = AutocompleteFilterFactory("Group", "staff_profile__user__groups")
 
 
-class FacultyTeachingDepartmentFilterAC(ScopedAutocompleteFilter):
+class FacultyTeachingDepartmentFltAC(ScopedAutocompleteFilter):
     """Autocomplete filter for departments taught by a faculty."""
 
     title = "Teaching Department"
@@ -21,7 +21,7 @@ class FacultyTeachingDepartmentFilterAC(ScopedAutocompleteFilter):
     target_model = Department
 
 
-class StudentCurriculumCourseFilterAC(ScopedAutocompleteFilter):
+class StdCurriCourseFltAC(ScopedAutocompleteFilter):
     """Autocomplete filter for students by registered curriculum course."""
 
     title = "Curriculum course"
@@ -30,10 +30,10 @@ class StudentCurriculumCourseFilterAC(ScopedAutocompleteFilter):
     lookup_map = (
         ("student_registrations", "student_registrations__section__curriculum_course"),
     )
-    target_model = CurriculumCourse
+    target_model = CurriCourse
 
 
-class StudentEnrolledCurriculumFilterAC(ScopedAutocompleteFilter):
+class StdEnrolledCurriFltAC(ScopedAutocompleteFilter):
     """Autocomplete filter for students by enrolled curriculum (via registrations)."""
 
     title = "Enrolled Curriculum"

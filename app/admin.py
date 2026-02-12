@@ -6,11 +6,11 @@ from django import forms
 from django.contrib import admin
 from django.contrib.admin.sites import AdminSite
 from django.contrib.admin.widgets import FilteredSelectMultiple
-from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
+from django.contrib.auth.admin import GroupAdmin as BaseGpAdmin
 from django.contrib.auth.models import Group, User
 
 
-class GroupAdminForm(forms.ModelForm):
+class GpAdminForm(forms.ModelForm):
     users = forms.ModelMultipleChoiceField(
         queryset=User.objects.all(),
         required=False,
@@ -33,16 +33,16 @@ class GroupAdminForm(forms.ModelForm):
         self.instance.user_set.set(self.cleaned_data["users"])
 
 
-class GroupAdmin(BaseGroupAdmin):
-    form = GroupAdminForm
+class GpAdmin(BaseGpAdmin):
+    form = GpAdminForm
     filter_horizontal = ("users",)
 
 
 admin.site.unregister(Group)
-admin.site.register(Group, GroupAdmin)
+admin.site.register(Group, GpAdmin)
 
 ADMIN_GROUP_MODEL_LABELS = {
-    "academics.CurriculumStatus",
+    "academics.CurriStatus",
     "finance.AccountType",
     "finance.AccountChartType",
     "finance.FeeType",
@@ -55,8 +55,8 @@ ADMIN_GROUP_MODEL_LABELS = {
     "finance.FeeStack",
     "finance.FeeStackLine",
     "registry.CreditHour",
-    "registry.DocumentStatus",
-    "registry.DocumentType",
+    "registry.DocStatus",
+    "registry.DocType",
     "registry.GradeValue",
     "registry.RegistrationStatus",
     "registry.TranscriptRequestStatus",

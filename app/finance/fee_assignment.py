@@ -8,7 +8,7 @@ from typing import TypedDict, TypeAlias
 from django.conf import settings
 
 from app.finance.models.fee_stack import FeeStack
-from app.finance.models.invoice import StudentSemesterInvoice
+from app.finance.models.invoice import StdSemesterInvoice
 
 DEFAULT_SEMESTER_STACKS_SETTING = "FINANCE_DEFAULT_SEMESTER_FEE_STACK_NAMES"
 OPTIONAL_SEMESTER_STACKS_SETTING = "FINANCE_OPTIONAL_SEMESTER_FEE_STACK_NAMES"
@@ -93,7 +93,7 @@ def optional_semester_stack_choices(
         return []
 
     stack_amounts = _stack_amounts_for_semester(optional_stacks, semester)
-    parent_invoice = StudentSemesterInvoice.objects.filter(
+    parent_invoice = StdSemesterInvoice.objects.filter(
         student=student,
         semester=semester,
     ).first()
@@ -127,7 +127,7 @@ def attach_semester_fee_stacks(
     optional_stack_ids: set[int] | None = None,
 ) -> FeeAssignmentSummaryT:
     """Attach configured default stacks and selected optional stacks idempotently."""
-    parent_invoice = StudentSemesterInvoice.objects.filter(
+    parent_invoice = StdSemesterInvoice.objects.filter(
         student=student,
         semester=semester,
     ).first()

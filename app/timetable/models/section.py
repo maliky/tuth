@@ -15,7 +15,7 @@ from app.academics.models.curriculum import Curriculum
 
 if TYPE_CHECKING:
     from app.spaces.models.core import Room
-    from app.academics.models.curriculum_course import CurriculumCourse
+    from app.academics.models.curriculum_course import CurriCourse
 
 
 class Section(models.Model):
@@ -40,7 +40,7 @@ class Section(models.Model):
     # ~~~~~~~~ Mandatory ~~~~~~~~
     semester = models.ForeignKey("timetable.Semester", on_delete=models.PROTECT)
     curriculum_course = models.ForeignKey(
-        "academics.CurriculumCourse", on_delete=models.CASCADE, related_name="sections"
+        "academics.CurriCourse", on_delete=models.CASCADE, related_name="sections"
     )
     number = models.PositiveIntegerField(
         "Section #", default=1, validators=[MinValueValidator(1)]

@@ -15,7 +15,7 @@ from app.academics.models import College, Curriculum, Department
 from app.people.models import Student
 from app.shared.types import LookUpType, ModelT
 
-ListFilterT: TypeAlias = Sequence[object]
+ListFltT: TypeAlias = Sequence[object]
 
 
 def _get_lookup_path(
@@ -29,9 +29,7 @@ def _get_lookup_path(
     return None
 
 
-def resolve_scoped_filter_lookups(
-    model: type[Model], list_filter: ListFilterT
-) -> set[str]:
+def resolve_scoped_filter_lookups(model: type[Model], list_filter: ListFltT) -> set[str]:
     """Return lookup parameter names for scoped autocomplete filters.
 
     Args:
@@ -42,7 +40,7 @@ def resolve_scoped_filter_lookups(
         Set of lookup paths to allow in query parameters.
 
     Example:
-        >>> resolve_scoped_filter_lookups(Section, [DepartmentFilterAC])
+        >>> resolve_scoped_filter_lookups(Section, [DepartmentFltAC])
         {'curriculum_course__course__department'}
     """
     lookups: set[str] = set()
@@ -117,7 +115,7 @@ def _filter_queryset_by_value(
     return queryset.filter(**{lookup_path: selected_id})
 
 
-class BaseCollegeFilter(admin.SimpleListFilter):
+class BaseCollegeFlt(admin.SimpleListFilter):
     """Generic college filter with configurable field path."""
 
     title = "college"
@@ -134,7 +132,7 @@ class BaseCollegeFilter(admin.SimpleListFilter):
         return queryset
 
 
-class StudentLevelFilter(admin.SimpleListFilter):
+class StdLevelFlt(admin.SimpleListFilter):
     """Filter students by computed class level (credits-based)."""
 
     title = "level"

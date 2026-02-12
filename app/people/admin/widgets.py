@@ -1,13 +1,13 @@
-"""People.Admin.Widgets module.
+"""People.Admin.Wgts module.
 
 Usage::
 
-    >>> from app.people.admin.widgets import StaffProfileWidget
-    >>> widget = StaffProfileWidget()
+    >>> from app.people.admin.widgets import StaffProfileWgt
+    >>> widget = StaffProfileWgt()
     >>> staff = widget.clean("Dr. Jane Doe")
     >>> print(staff.long_name)
 
-Namnig Convetion XYWidget return a X instance for a YRessource Call.
+Namnig Convetion XYWgt return a X instance for a YRessource Call.
 """
 
 from typing import Any, Hashable, Optional, cast
@@ -15,7 +15,7 @@ from typing import Any, Hashable, Optional, cast
 from django.contrib.auth.models import User
 from import_export import widgets
 
-from app.academics.admin.widgets import CurriculumWidget
+from app.academics.admin.widgets import CurriWgt
 from app.academics.models.curriculum import Curriculum
 from app.people.ensure_people import ensure_faculty
 from app.people.models.core import AbstractPerson
@@ -33,7 +33,7 @@ from app.people.utils import (
 from app.shared.utils import get_in_row, parse_str
 
 
-class StaffProfileWidget(widgets.ForeignKeyWidget):
+class StaffProfileWgt(widgets.ForeignKeyWidget):
 
     def __init__(self):
         self._cache_staff: dict[Hashable, Staff] = {}
@@ -73,7 +73,7 @@ class StaffProfileWidget(widgets.ForeignKeyWidget):
         self.cache_staff = dict()
 
 
-class UserWidget(widgets.ForeignKeyWidget):
+class UserWgt(widgets.ForeignKeyWidget):
     """Create or resolve a User from a username or the name in ther row."""
 
     def __init__(self, model: type[AbstractPerson] = Staff):
@@ -114,7 +114,7 @@ class UserWidget(widgets.ForeignKeyWidget):
         self.cache_user = dict()
 
 
-class FacultyUsernameWidget(widgets.ForeignKeyWidget):
+class FacultyUsernameWgt(widgets.ForeignKeyWidget):
     """Get a Faculty give a username or a name in the row."""
 
     def __init__(self):
@@ -139,7 +139,7 @@ class FacultyUsernameWidget(widgets.ForeignKeyWidget):
         return faculty_obj
 
 
-class FacultyFullnameWidget(widgets.ForeignKeyWidget):
+class FacultyFullnameWgt(widgets.ForeignKeyWidget):
     """Ensure a Faculty entry exists for the given username."""
 
     def __init__(self):
@@ -159,7 +159,7 @@ class FacultyFullnameWidget(widgets.ForeignKeyWidget):
         return faculty_obj
 
 
-class StudentUserWidget(widgets.ForeignKeyWidget):
+class StdUserWgt(widgets.ForeignKeyWidget):
     """Ensure a Student User given a username, stid or name."""
 
     def __init__(self):
@@ -210,13 +210,13 @@ class StudentUserWidget(widgets.ForeignKeyWidget):
         self.cache_student = dict()
 
 
-class StudentGradeWidget(widgets.ForeignKeyWidget):
+class StdGradeWgt(widgets.ForeignKeyWidget):
     """Create or resolve a Student using a student_id when missing."""
 
     def __init__(self):
         super().__init__(Student, field="student_id")
         self._cache_student: dict[Hashable, Student] = {}
-        self.curriculum_w = CurriculumWidget()
+        self.curriculum_w = CurriWgt()
 
     def clean(self, value, row=None, *args, **kwargs) -> Student:
         """Return the Student tied to the identifier, creating it if needed."""
@@ -267,7 +267,7 @@ class StudentGradeWidget(widgets.ForeignKeyWidget):
         return student
 
 
-class UserDonorWidget(widgets.ForeignKeyWidget):
+class UserDonorWgt(widgets.ForeignKeyWidget):
     """Create or resolve a User for Donor imports."""
 
     def __init__(self):
@@ -291,7 +291,7 @@ class UserDonorWidget(widgets.ForeignKeyWidget):
         return donor_obj.user
 
 
-class UserStudentWidget(widgets.ForeignKeyWidget):
+class UserStdWgt(widgets.ForeignKeyWidget):
     """Import a User for an existing student based on username, id or name."""
 
     def __init__(self):

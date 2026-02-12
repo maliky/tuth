@@ -18,7 +18,7 @@ from app.people.models.student import Student
 from app.shared.utils import parse_str
 
 
-class StudentAdminLookupForm(forms.Form):
+class StdAdminLookupForm(forms.Form):
     """Small helper form that jumps to the Django admin edit screen."""
 
     student = forms.IntegerField(widget=forms.HiddenInput(), required=False)
@@ -125,7 +125,7 @@ def student_delete(request: HttpRequest, pk: int) -> HttpResponse:
 @permission_required("people.view_student", raise_exception=True)
 def student_admin_edit(request: HttpRequest) -> HttpResponse:
     """Provide a simple selector that jumps to the Django admin edit form."""
-    form = StudentAdminLookupForm(request.POST or None)
+    form = StdAdminLookupForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         student_pk = form.cleaned_data["student"]
         student = get_object_or_404(Student, pk=student_pk)

@@ -2,7 +2,7 @@
 
 from app.people.models.donor import Donor
 from app.people.models.student import Student
-from app.people.models.student_curriculum_enrollment import StudentCurriculumEnrollment
+from app.people.models.student_curriculum_enrollment import StdCurriEnroll
 from app.people.models.staffs import Staff
 from app.people.models.faculty import Faculty, FacultyManager, FacultyWorkloadSnapshot
 from app.people.models.object_manager import PersonManager
@@ -17,5 +17,5 @@ __all__ = [
     "RoleAssignment",
     "Staff",
     "Student",
-    "StudentCurriculumEnrollment",
+    "StdCurriEnroll",
 ]

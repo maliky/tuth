@@ -4,7 +4,7 @@ from typing import Self, cast
 from app.shared.mixins import SimpleTableMixin
 
 
-class DocumentType(SimpleTableMixin):
+class DocType(SimpleTableMixin):
 
     DEFAULT_VALUES = [
         ("photo", "Photo"),
@@ -30,7 +30,7 @@ class DocumentType(SimpleTableMixin):
         return cast(Self, deft)
 
 
-class DocumentStatus(SimpleTableMixin):
+class DocStatus(SimpleTableMixin):
     DEFAULT_VALUES = [
         ("pending", "Pending"),
         ("approved", "Approved"),

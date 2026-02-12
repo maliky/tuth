@@ -22,14 +22,14 @@ class Payment(StatusableMixin, models.Model):
         recorded_by: Staff member who logged the payment.
 
     Example:
-        >>> from app.finance.models.invoice import StudentSemesterInvoice
-        >>> invoice = StudentSemesterInvoice.objects.first()
+        >>> from app.finance.models.invoice import StdSemesterInvoice
+        >>> invoice = StdSemesterInvoice.objects.first()
         >>> Payment.objects.create(student_semester_invoice=invoice)
     """
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     student_semester_invoice = models.ForeignKey(
-        "finance.StudentSemesterInvoice",
+        "finance.StdSemesterInvoice",
         on_delete=models.PROTECT,
         related_name="payments",
     )
