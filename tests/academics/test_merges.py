@@ -10,6 +10,7 @@ from django.db import connection
 
 from app.academics.admin.merges import (
     MERGE_CHOICE_KEEP_SOURCE,
+    list_curriculum_course_conflicts,
     merge_curricula,
     merge_curriculum_courses,
     merge_courses,
@@ -155,6 +156,28 @@ def test_merge_curricula_overlapping_course_conflicts(
     assert target_cc.credit_hours_id == 3
     assert target_cc.is_required is True
     assert target_cc.is_elective is False
+
+
+def test_list_curriculum_course_conflicts_uses_department_number_identity(
+    curriculum_factory, course_factory
+):
+    """Conflict detection should match equivalent courses by department+number."""
+    target = curriculum_factory("CURR-T-ID")
+    source = curriculum_factory("CURR-S-ID")
+    target_course = course_factory("981")
+    source_course = Course.objects.create(
+        department=target_course.department,
+        number=target_course.number,
+        code=f"ALT{target_course.id}",
+        short_code=f"ALT{target_course.number}",
+    )
+    target_cc = CurriCourse.objects.create(curriculum=target, course=target_course)
+    source_cc = CurriCourse.objects.create(curriculum=source, course=source_course)
+
+    conflicts, non_conflicting = list_curriculum_course_conflicts(target, source)
+
+    assert conflicts == [(target_cc, source_cc)]
+    assert non_conflicting == []
 
 
 def test_merge_curricula_invoice_conflict_retains_source(
@@ -531,3 +554,54 @@ def test_reconcile_student_curriculum_records_flags_conflicting_grade_values(
     assert summary["grade_conflicts"] == 1
     assert summary["grades_moved"] == 0
     assert Grade.objects.filter(id=source_grade.id, section=source_section).exists()
+
+
+def test_reconcile_student_records_uses_department_number_identity(
+    curriculum_factory,
+    course_factory,
+    default_semester,
+    student,
+):
+    """Reconciliation should dedupe same-value grades across duplicate course ids."""
+    target_curriculum = curriculum_factory("CURR-T-IDENTITY")
+    source_curriculum = curriculum_factory("CURR-S-IDENTITY")
+    target_course = course_factory("982")
+    source_course = Course.objects.create(
+        department=target_course.department,
+        number=target_course.number,
+        code=f"ALT{target_course.id}",
+        short_code=f"ALT{target_course.number}",
+    )
+    target_cc = CurriCourse.objects.create(
+        curriculum=target_curriculum, course=target_course
+    )
+    source_cc = CurriCourse.objects.create(
+        curriculum=source_curriculum, course=source_course
+    )
+    target_section = Section.objects.create(
+        curriculum_course=target_cc,
+        semester=default_semester,
+        number=1,
+    )
+    source_section = Section.objects.create(
+        curriculum_course=source_cc,
+        semester=default_semester,
+        number=1,
+    )
+    grade_value, _ = GradeValue.objects.get_or_create(code="a")
+    Grade.objects.create(student=student, section=target_section, value=grade_value)
+    source_grade = Grade.objects.create(
+        student=student,
+        section=source_section,
+        value=grade_value,
+    )
+
+    summary = reconcile_student_curriculum_records(
+        student=student,
+        target_curriculum=target_curriculum,
+        source_curriculum=source_curriculum,
+    )
+
+    assert summary["grades_deduped"] == 1
+    assert summary["grade_conflicts"] == 0
+    assert not Grade.objects.filter(id=source_grade.id).exists()
