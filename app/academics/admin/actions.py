@@ -7,11 +7,45 @@ from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.core.exceptions import ValidationError
 from django.shortcuts import redirect, render
 
+from app.academics.admin.merges import merge_courses
 from app.academics.models.college import College
+from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.curriculum_course import CurriCourse
 from app.academics.models.department import Department
 from app.finance.models.fee_stack import CourseFeeStack, FeeStack
+
+
+def _empty_department_update_summary() -> dict[str, int]:
+    """Return default counters for the bulk department update action."""
+    return {
+        "updated": 0,
+        "merged_collisions": 0,
+        "already_in_target": 0,
+        "skipped_invoices": 0,
+        "prerequisites_skipped": 0,
+        "sections_merged": 0,
+        "sections_retained_protected": 0,
+        "sections_skipped_grade_conflict": 0,
+        "protected_deletes": 0,
+    }
+
+
+def _add_course_merge_summary(
+    summary: dict[str, int], merge_summary: dict[str, int]
+) -> None:
+    """Accumulate relevant merge counters into department action counters."""
+    summary["merged_collisions"] += merge_summary.get("merged", 0)
+    summary["skipped_invoices"] += merge_summary.get("skipped_invoices", 0)
+    summary["prerequisites_skipped"] += merge_summary.get("prerequisites_skipped", 0)
+    summary["sections_merged"] += merge_summary.get("sections_merged", 0)
+    summary["sections_retained_protected"] += merge_summary.get(
+        "sections_retained_protected", 0
+    )
+    summary["sections_skipped_grade_conflict"] += merge_summary.get(
+        "sections_skipped_grade_conflict", 0
+    )
+    summary["protected_deletes"] += merge_summary.get("protected_deletes", 0)
 
 
 @admin.action(description="Bulk update departments")
@@ -31,12 +65,122 @@ def update_department(modeladmin, request, queryset):
         form = _DepartmentUpdateForm(request.POST)
         if form.is_valid():
             new_dept = form.cleaned_data["dept"]
-            count = queryset.update(department=new_dept)
-            modeladmin.message_user(
-                request,
-                f"{count} course(s) updated to {new_dept}.",
-                messages.SUCCESS,
-            )
+            summary = _empty_department_update_summary()
+            selected_ids = list(queryset.order_by("id").values_list("id", flat=True))
+            # Keep a lookup of existing target department courses by number so we
+            # can merge collisions instead of violating unique constraints.
+            target_by_number = {
+                course.number: course
+                for course in Course.objects.filter(department=new_dept).order_by("id")
+            }
+            for course_id in selected_ids:
+                course = Course.objects.filter(pk=course_id).first()
+                if course is None:
+                    continue
+                if course.department_id == new_dept.id:
+                    target_by_number.setdefault(course.number, course)
+                    summary["already_in_target"] += 1
+                    continue
+                collision_target = target_by_number.get(course.number)
+                if collision_target is not None and collision_target.pk != course.pk:
+                    # Reuse the shared merge path so section/grade dedupe and
+                    # conflict reporting stay consistent with other admin merges.
+                    merge_summary = merge_courses(collision_target, [course])
+                    _add_course_merge_summary(summary, merge_summary)
+                    continue
+                course.department = new_dept
+                course.code = ""
+                course.short_code = ""
+                course.save(update_fields=["department", "code", "short_code"])
+                target_by_number[course.number] = course
+                summary["updated"] += 1
+
+            if summary["updated"]:
+                modeladmin.message_user(
+                    request,
+                    f"Moved {summary['updated']} course(s) to {new_dept}.",
+                    messages.SUCCESS,
+                )
+            if summary["merged_collisions"]:
+                modeladmin.message_user(
+                    request,
+                    (
+                        "Merged "
+                        f"{summary['merged_collisions']} colliding course(s) "
+                        f"into existing {new_dept} course(s)."
+                    ),
+                    messages.SUCCESS,
+                )
+            if summary["already_in_target"]:
+                modeladmin.message_user(
+                    request,
+                    (
+                        f"Skipped {summary['already_in_target']} course(s) already "
+                        f"linked to {new_dept}."
+                    ),
+                    messages.INFO,
+                )
+            if summary["skipped_invoices"]:
+                modeladmin.message_user(
+                    request,
+                    (
+                        f"Skipped {summary['skipped_invoices']} collision merge(s) "
+                        "because source curriculum courses have invoices."
+                    ),
+                    messages.WARNING,
+                )
+            if summary["sections_merged"]:
+                modeladmin.message_user(
+                    request,
+                    f"Merged {summary['sections_merged']} section conflict(s).",
+                    messages.INFO,
+                )
+            if summary["prerequisites_skipped"]:
+                modeladmin.message_user(
+                    request,
+                    (
+                        f"Skipped {summary['prerequisites_skipped']} duplicate "
+                        "prerequisite row(s)."
+                    ),
+                    messages.INFO,
+                )
+            if summary["sections_skipped_grade_conflict"]:
+                modeladmin.message_user(
+                    request,
+                    (
+                        "Skipped "
+                        f"{summary['sections_skipped_grade_conflict']} section "
+                        "merge(s) because overlapping students had different "
+                        "grade values."
+                    ),
+                    messages.WARNING,
+                )
+            if summary["sections_retained_protected"]:
+                modeladmin.message_user(
+                    request,
+                    (
+                        "Retained "
+                        f"{summary['sections_retained_protected']} section(s) "
+                        "because grades still protect them."
+                    ),
+                    messages.WARNING,
+                )
+            if summary["protected_deletes"]:
+                modeladmin.message_user(
+                    request,
+                    (
+                        "Could not delete "
+                        f"{summary['protected_deletes']} source course(s) because "
+                        "protected related rows still exist."
+                    ),
+                    messages.WARNING,
+                )
+            if all(value == 0 for value in summary.values()):
+                modeladmin.message_user(
+                    request,
+                    "No course changed for this action.",
+                    messages.INFO,
+                )
             return redirect(request.get_full_path())
     else:
         form = _DepartmentUpdateForm()

@@ -236,7 +236,7 @@ class Faculty(models.Model):
 
 
 class FacultyWorkloadSnapshot(models.Model):
-    """Historical workload metrics captured per semester for auditing overloads."""
+    """Histo workload metrics captured per semester for auditing overloads."""
 
     faculty = models.ForeignKey(
         "people.Faculty",

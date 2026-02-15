@@ -20,9 +20,9 @@ from app.academics.models.curriculum import Curriculum
 from app.academics.models.curriculum_course import CurriCourse
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.requirement_group import (
-    CurriCourseRequirementGp,
-    CurriCourseRequirementMember,
-    RequirementKind,
+    CurriCourseReqGp,
+    CurriCourseReqMember,
+    ReqKind,
 )
 
 EdgeListT: TypeAlias = set[tuple[int, int]]
@@ -135,7 +135,7 @@ def _build_course_maps(
 def _build_json_payload(
     curriculum: Curriculum,
     prerequisites: Iterable[Prerequisite],
-    coreq_groups: Iterable[CurriCourseRequirementGp],
+    coreq_groups: Iterable[CurriCourseReqGp],
     course_map: dict[int, CurriCourse],
     node_attrs: NodeAttrMapT,
 ) -> JsonPayloadT:
@@ -554,15 +554,15 @@ def export_prereq_graph(curriculum: Curriculum) -> PrereqGraphPaths:
         .order_by("course__short_code", "prerequisite_course__short_code")
     )
     coreq_groups = (
-        CurriCourseRequirementGp.objects.filter(
+        CurriCourseReqGp.objects.filter(
             curriculum_course__curriculum=curriculum,
-            kind=RequirementKind.COREQ_ALL,
+            kind=ReqKind.COREQ_ALL,
         )
         .select_related("curriculum_course__course__department__college")
         .prefetch_related(
             Prefetch(
                 "members",
-                queryset=CurriCourseRequirementMember.objects.select_related(
+                queryset=CurriCourseReqMember.objects.select_related(
                     "required_course__department__college"
                 ),
             )

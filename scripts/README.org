@@ -97,6 +97,103 @@ Example:
 cat scripts/department_merge_conflicts.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v source_id=1 -v target_id=2
 #+END_SRC
 
+*** =dedupe_student_course_grades.sql=
+Short description:
+- One-time cleanup: deduplicates =registry_grade= rows per =(student, course)=
+  across curriculum/semester boundaries.
+- Keeps one canonical row by rule:
+  - final letter grade first (A/B/C/D/E) when present,
+  - earliest semester,
+  - then section with fewer default-valued fields,
+  - then lowest section number/id.
+- Includes:
+  - duplicate preview,
+  - true-conflict preview (multiple distinct final letter grades),
+  - safe auto-collapse only; true conflicts are skipped,
+  - dry-run by default; apply with =-v apply=1=.
+
+Example:
+
+#+BEGIN_SRC bash
+cat scripts/dedupe_student_course_grades.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+#+END_SRC
+
+Apply mode:
+
+#+BEGIN_SRC bash
+cat scripts/dedupe_student_course_grades.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v apply=1
+#+END_SRC
+
+*** =dedupe_student_course_identical_final_grade.sql=
+Short description:
+- One-time cleanup: deduplicates only exact duplicates where
+  =(student, course, final_grade)= are identical.
+- Final grade domain for this script is =A/B/C/D/E= (F excluded).
+- Semester/curriculum/course level differences are ignored for matching.
+- Keep policy uses earliest semester first, then richer section metadata.
+- Dry-run by default; apply with =-v apply=1=.
+
+Example:
+
+#+BEGIN_SRC bash
+cat scripts/dedupe_student_course_identical_final_grade.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+#+END_SRC
+
+Apply mode:
+
+#+BEGIN_SRC bash
+cat scripts/dedupe_student_course_identical_final_grade.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v apply=1
+#+END_SRC
+
+*** =dedupe_single_student_same_grade_courses.sql=
+Short description:
+- One-student cleanup: collapses duplicate final-grade rows when grade value
+  matches and course identity matches by canonical code:
+  - =UPPER(TRIM(course.short_code))= when available,
+  - fallback to =UPPER(TRIM(course.code))=.
+- Handles rows where the same logical short code maps to different underlying
+  course IDs/codes.
+- Dry-run by default; apply with =-v apply=1=.
+- Ambiguous groups (same canonical key+grade but different course numbers) are
+  reported and skipped.
+
+Example (dry-run):
+
+#+BEGIN_SRC bash
+cat scripts/dedupe_single_student_same_grade_courses.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v student_id=123
+#+END_SRC
+
+Example (apply):
+
+#+BEGIN_SRC bash
+cat scripts/dedupe_single_student_same_grade_courses.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v student_id=123 -v apply=1
+#+END_SRC
+
+*** =dedupe_all_students_same_grade_courses.sql=
+Short description:
+- Global cleanup for all students: collapses duplicate final-grade rows when
+  grade value matches and course identity matches by canonical code:
+  - =UPPER(TRIM(course.short_code))= when available,
+  - fallback to =UPPER(TRIM(course.code))=,
+  - fallback to synthetic =COURSE_ID#<id>= when both are empty.
+- Useful when logical course duplicates exist under different underlying course
+  IDs/codes.
+- Dry-run by default; apply with =-v apply=1=.
+- Ambiguous groups (same student + canonical key + grade but different course
+  numbers) are reported and skipped.
+
+Example (dry-run):
+
+#+BEGIN_SRC bash
+cat scripts/dedupe_all_students_same_grade_courses.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+#+END_SRC
+
+Example (apply):
+
+#+BEGIN_SRC bash
+cat scripts/dedupe_all_students_same_grade_courses.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v apply=1
+#+END_SRC
+
 *** =student_merge_conflicts.sql=
 Short description:
 - Precheck for student merge conflicts (registrations, grades, invoices, docs).
@@ -168,6 +265,25 @@ Example:
 
 #+BEGIN_SRC bash
 cat scripts/update_course_short_code.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+#+END_SRC
+
+*** =align_course_code_with_department_code.sql=
+Short description:
+- Aligns =academics_course.code= to =UPPER(department.code || course.number)=.
+- Dry-run by default; apply with =-v apply=1=.
+- Rows that conflict on duplicate =(department_id, number)= are skipped and printed
+  to stdout for manual review.
+
+Example (dry-run):
+
+#+BEGIN_SRC bash
+cat scripts/align_course_code_with_department_code.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+#+END_SRC
+
+Example (apply):
+
+#+BEGIN_SRC bash
+cat scripts/align_course_code_with_department_code.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v apply=1
 #+END_SRC
 
 * Notes

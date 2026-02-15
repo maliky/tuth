@@ -14,8 +14,8 @@ from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.course import Course
 from app.academics.models.curriculum_course import CurriCourse
 from app.academics.models.requirement_group import (
-    CurriCourseRequirementGp,
-    CurriCourseRequirementMember,
+    CurriCourseReqGp,
+    CurriCourseReqMember,
 )
 from app.academics.models.concentration import (
     MajorCurriCourse,
@@ -232,12 +232,12 @@ class CurriCourseIL(admin.TabularInline):
     # Student counts removed from inline to avoid slow/incorrect values.
 
 
-class CurriCourseRequirementMemberIL(admin.TabularInline):
+class CurriCourseReqMemberIL(admin.TabularInline):
     """Inline editor for requirement group members."""
 
     # Dormant: this inline is intentionally not mounted in active admin screens.
 
-    model = CurriCourseRequirementMember
+    model = CurriCourseReqMember
     fk_name = "group"
     verbose_name = "Requirement member"
     verbose_name_plural = "Requirement members"
@@ -247,12 +247,12 @@ class CurriCourseRequirementMemberIL(admin.TabularInline):
     ordering = ("order", "required_course__short_code", "required_course__code")
 
 
-class CurriCourseRequirementGpIL(admin.TabularInline):
+class CurriCourseReqGpIL(admin.TabularInline):
     """Inline editor for requirement groups bound to a curriculum course."""
 
     # Dormant: keep implementation for later re-enable of advanced requirements UI.
 
-    model = CurriCourseRequirementGp
+    model = CurriCourseReqGp
     fk_name = "curriculum_course"
     verbose_name = "Requirement group"
     verbose_name_plural = "Requirement groups"
@@ -262,14 +262,14 @@ class CurriCourseRequirementGpIL(admin.TabularInline):
     ordering = ("order", "id")
 
     @admin.display(description="Members")
-    def member_count(self, obj: CurriCourseRequirementGp) -> int:
+    def member_count(self, obj: CurriCourseReqGp) -> int:
         """Return number of member courses in the group."""
         if not getattr(obj, "pk", None):
             return 0
         return obj.members.count()
 
     @admin.display(description="Manage members")
-    def manage_members(self, obj: CurriCourseRequirementGp) -> str:
+    def manage_members(self, obj: CurriCourseReqGp) -> str:
         """Link to group change page where member inline is available."""
         if not getattr(obj, "pk", None):
             return "Save first"

@@ -7,7 +7,7 @@ from django.db import models
 from simple_history.models import HistoricalRecords
 
 
-class RequirementKind(models.TextChoices):
+class ReqKind(models.TextChoices):
     """Requirement semantics attached to a curriculum course."""
 
     PREREQ_ALL = "prereq_all", "Prerequisite (all)"
@@ -15,7 +15,7 @@ class RequirementKind(models.TextChoices):
     COREQ_ALL = "coreq_all", "Corequisite (all together)"
 
 
-class CurriCourseRequirementGp(models.Model):
+class CurriCourseReqGp(models.Model):
     """Group prerequisite/corequisite rules for one curriculum course."""
 
     curriculum_course = models.ForeignKey(
@@ -25,8 +25,8 @@ class CurriCourseRequirementGp(models.Model):
     )
     kind = models.CharField(
         max_length=20,
-        choices=RequirementKind.choices,
-        default=RequirementKind.PREREQ_ALL,
+        choices=ReqKind.choices,
+        default=ReqKind.PREREQ_ALL,
         db_index=True,
     )
     label = models.CharField(max_length=80, blank=True)
@@ -44,9 +44,7 @@ class CurriCourseRequirementGp(models.Model):
             return
         # Keep labels deterministic so admin lists stay readable without manual input.
         next_index = (
-            CurriCourseRequirementGp.objects.filter(
-                curriculum_course=self.curriculum_course
-            )
+            CurriCourseReqGp.objects.filter(curriculum_course=self.curriculum_course)
             .exclude(pk=self.pk)
             .count()
             + 1
@@ -62,7 +60,7 @@ class CurriCourseRequirementGp(models.Model):
         ordering = ["curriculum_course", "order", "id"]
 
 
-class CurriCourseRequirementMember(models.Model):
+class CurriCourseReqMember(models.Model):
     """Single course member inside a requirement group.
 
     This explicit member model is effectively a through table. We could model
@@ -72,7 +70,7 @@ class CurriCourseRequirementMember(models.Model):
     """
 
     group = models.ForeignKey(
-        "academics.CurriCourseRequirementGp",
+        "academics.CurriCourseReqGp",
         on_delete=models.CASCADE,
         related_name="members",
     )

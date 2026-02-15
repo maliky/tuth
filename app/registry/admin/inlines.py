@@ -89,26 +89,35 @@ class StdGradeIL(admin.TabularInline):
     model = Grade
     classes = ["collapse"]
     fk_name = "student"
+    verbose_name = "Grade"
+    verbose_name_plural = "Grades by course level"
     extra = 0
     classes = ["collapse"]
     can_delete = False
-    fields = ("section_link", "section_semester", "value")
-    readonly_fields = ("section_link", "section_semester", "value")
+    fields = ("section_link", "value")
+    readonly_fields = ("section_link", "value")
+    template = "admin/registry/studentgrade/tabular_inline.html"
 
     def get_queryset(self, request):
-        """Select related data for section and grade value."""
+        """Select related data and sort rows so levels stay grouped."""
         qs = super().get_queryset(request)
-        return qs.select_related("section__semester", "value")
+        # Keep a stable order so template groups by semester + level.
+        return qs.select_related(
+            "section__semester",
+            "section__curriculum_course__course",
+            "value",
+        ).order_by(
+            "-section__semester__start_date",
+            "-section__semester__number",
+            "section__curriculum_course__level_number",
+            "section__curriculum_course__course__short_code",
+            "section__number",
+        )
 
     @admin.display(description="Section")
     def section_link(self, obj):
         """Link to the related section change page."""
         return _format_section_link(obj.section)
-
-    @admin.display(description="Semester")
-    def section_semester(self, obj):
-        """Show the semester for the linked section."""
-        return _format_section_semester(obj.section)
 
 
 class DocStaffIL(admin.TabularInline):  # StackedIL

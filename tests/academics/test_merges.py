@@ -13,6 +13,7 @@ from app.academics.admin.merges import (
     merge_curricula,
     merge_curriculum_courses,
     merge_courses,
+    reconcile_student_curriculum_records,
 )
 from app.academics.models.course import Course
 from app.academics.models.curriculum_course import CurriCourse
@@ -443,3 +444,90 @@ def test_merge_curriculum_courses_keeps_lowest_number_and_logs_conflicts(
     assert "source non-default max_seats=50" in (target_section.info or "")
     # Depending on legacy duplicate grade rows, merge may retain source by PROTECT.
     assert summary["sections_merged"] == 1 or summary["sections_retained_protected"] == 1
+
+
+def test_reconcile_student_curriculum_records_dedupes_same_grade_value(
+    curriculum_factory,
+    course_factory,
+    default_semester,
+    student,
+):
+    """Student-scoped reconciliation should drop duplicate same-value grades/regs."""
+    target_curriculum = curriculum_factory("CURR-T-DEDUPE")
+    source_curriculum = curriculum_factory("CURR-S-DEDUPE")
+    course = course_factory("601")
+    target_cc = CurriCourse.objects.create(curriculum=target_curriculum, course=course)
+    source_cc = CurriCourse.objects.create(curriculum=source_curriculum, course=course)
+    target_section = Section.objects.create(
+        curriculum_course=target_cc,
+        semester=default_semester,
+        number=1,
+    )
+    source_section = Section.objects.create(
+        curriculum_course=source_cc,
+        semester=default_semester,
+        number=1,
+    )
+    grade_value, _ = GradeValue.objects.get_or_create(code="a")
+    Grade.objects.create(student=student, section=target_section, value=grade_value)
+    source_grade = Grade.objects.create(
+        student=student,
+        section=source_section,
+        value=grade_value,
+    )
+    Registration.objects.create(student=student, section=target_section)
+    source_registration = Registration.objects.create(
+        student=student, section=source_section
+    )
+
+    summary = reconcile_student_curriculum_records(
+        student=student,
+        target_curriculum=target_curriculum,
+        source_curriculum=source_curriculum,
+    )
+
+    assert summary["grades_deduped"] == 1
+    assert summary["registrations_deduped"] == 1
+    assert summary["grade_conflicts"] == 0
+    assert not Grade.objects.filter(id=source_grade.id).exists()
+    assert not Registration.objects.filter(id=source_registration.id).exists()
+
+
+def test_reconcile_student_curriculum_records_flags_conflicting_grade_values(
+    curriculum_factory,
+    course_factory,
+    default_semester,
+    student,
+):
+    """Student-scoped reconciliation should keep different-value grade conflicts."""
+    target_curriculum = curriculum_factory("CURR-T-CONFLICT")
+    source_curriculum = curriculum_factory("CURR-S-CONFLICT")
+    course = course_factory("602")
+    target_cc = CurriCourse.objects.create(curriculum=target_curriculum, course=course)
+    source_cc = CurriCourse.objects.create(curriculum=source_curriculum, course=course)
+    target_section = Section.objects.create(
+        curriculum_course=target_cc,
+        semester=default_semester,
+        number=1,
+    )
+    source_section = Section.objects.create(
+        curriculum_course=source_cc,
+        semester=default_semester,
+        number=1,
+    )
+    grade_a, _ = GradeValue.objects.get_or_create(code="a")
+    grade_b, _ = GradeValue.objects.get_or_create(code="b")
+    Grade.objects.create(student=student, section=target_section, value=grade_b)
+    source_grade = Grade.objects.create(
+        student=student, section=source_section, value=grade_a
+    )
+
+    summary = reconcile_student_curriculum_records(
+        student=student,
+        target_curriculum=target_curriculum,
+        source_curriculum=source_curriculum,
+    )
+
+    assert summary["grade_conflicts"] == 1
+    assert summary["grades_moved"] == 0
+    assert Grade.objects.filter(id=source_grade.id, section=source_section).exists()

@@ -12,9 +12,9 @@ from app.academics.models.course import Course
 from app.academics.models.curriculum_course import CurriCourse
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.requirement_group import (
-    CurriCourseRequirementGp,
-    CurriCourseRequirementMember,
-    RequirementKind,
+    CurriCourseReqGp,
+    CurriCourseReqMember,
+    ReqKind,
 )
 
 
@@ -114,12 +114,12 @@ def test_export_prereq_graph_coreq_clusters_and_alt_clusters(
         prerequisite_course=cc_anchor.course,
     )
 
-    coreq_group = CurriCourseRequirementGp.objects.create(
+    coreq_group = CurriCourseReqGp.objects.create(
         curriculum_course=cc_coreq_a,
-        kind=RequirementKind.COREQ_ALL,
+        kind=ReqKind.COREQ_ALL,
         label="Coreq Bundle",
     )
-    CurriCourseRequirementMember.objects.create(
+    CurriCourseReqMember.objects.create(
         group=coreq_group,
         required_course=cc_coreq_b.course,
     )

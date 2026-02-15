@@ -1027,6 +1027,35 @@ def _pick_section_merge_candidate(
     return None
 
 
+def _index_section_merge_candidates(
+    sections: list[Section],
+) -> tuple[dict[tuple[int, int], Section], dict[int, list[Section]]]:
+    """Index target sections for deterministic merge-candidate resolution."""
+    by_semester_number: dict[tuple[int, int], Section] = {}
+    by_semester: dict[int, list[Section]] = defaultdict(list)
+    for section in sections:
+        by_semester_number[(section.semester_id, section.number)] = section
+        by_semester[section.semester_id].append(section)
+    return by_semester_number, by_semester
+
+
+def _pick_section_merge_candidate_from_index(
+    source_section: Section,
+    by_semester_number: dict[tuple[int, int], Section],
+    by_semester: dict[int, list[Section]],
+) -> Section | None:
+    """Return merge candidate using in-memory indexes (no extra DB query)."""
+    same_number = by_semester_number.get(
+        (source_section.semester_id, source_section.number)
+    )
+    if same_number is not None:
+        return same_number
+    same_semester = by_semester.get(source_section.semester_id, [])
+    if len(same_semester) == 1:
+        return same_semester[0]
+    return None
+
+
 def _grade_value_map_for_section(section: Section) -> dict[int, int | None]:
     """Return grade values keyed by student id for a section."""
     return {
@@ -1256,63 +1285,176 @@ def reconcile_student_curriculum_records(
     Global curriculum merges use section-wide helpers for batch performance.
     """
     summary = empty_student_curriculum_record_summary()
+
+    target_curriculum_courses = list(
+        CurriCourse.objects.filter(curriculum=target_curriculum).only("id", "course_id")
+    )
     target_cc_by_course_id = {
-        cc.course_id: cc
-        for cc in CurriCourse.objects.filter(curriculum=target_curriculum)
+        curriculum_course.course_id: curriculum_course
+        for curriculum_course in target_curriculum_courses
     }
-    source_curriculum_courses = CurriCourse.objects.filter(curriculum=source_curriculum)
-    for source_cc in source_curriculum_courses:
-        target_cc = target_cc_by_course_id.get(source_cc.course_id)
+    if not target_cc_by_course_id:
+        return summary
+
+    source_curriculum_courses = list(
+        CurriCourse.objects.filter(curriculum=source_curriculum).only("id", "course_id")
+    )
+    source_course_id_by_curriculum_course_id = {
+        curriculum_course.id: curriculum_course.course_id
+        for curriculum_course in source_curriculum_courses
+    }
+    source_curriculum_course_ids = [
+        curriculum_course.id
+        for curriculum_course in source_curriculum_courses
+        if curriculum_course.course_id in target_cc_by_course_id
+    ]
+    if not source_curriculum_course_ids:
+        return summary
+
+    # Gather all section ids touched by the student once to avoid per-course joins.
+    source_grade_by_section_id = {
+        grade.section_id: grade
+        for grade in Grade.objects.filter(
+            student=student,
+            section__curriculum_course_id__in=source_curriculum_course_ids,
+        )
+    }
+    source_registration_by_section_id = {
+        registration.section_id: registration
+        for registration in Registration.objects.filter(
+            student=student,
+            section__curriculum_course_id__in=source_curriculum_course_ids,
+        )
+    }
+    source_section_ids = set(source_grade_by_section_id).union(
+        source_registration_by_section_id
+    )
+    if not source_section_ids:
+        return summary
+
+    source_sections = list(
+        Section.objects.filter(id__in=source_section_ids)
+        .only("id", "semester_id", "number", "curriculum_course_id")
+        .order_by("curriculum_course_id", "semester_id", "number", "id")
+    )
+    source_semesters_by_target_curriculum_course_id: dict[int, set[int]] = defaultdict(
+        set
+    )
+    for source_section in source_sections:
+        source_course_id = source_course_id_by_curriculum_course_id.get(
+            source_section.curriculum_course_id
+        )
+        if source_course_id is None:
+            continue
+        target_curriculum_course = target_cc_by_course_id.get(source_course_id)
+        if target_curriculum_course is None:
+            continue
+        source_semesters_by_target_curriculum_course_id[
+            target_curriculum_course.id
+        ].add(source_section.semester_id)
+
+    target_curriculum_course_ids = list(source_semesters_by_target_curriculum_course_id)
+    if not target_curriculum_course_ids:
+        return summary
+
+    target_grade_values_by_course_id: dict[int, set[int | None]] = defaultdict(set)
+    for course_id, value_id in Grade.objects.filter(
+        student=student,
+        section__curriculum_course_id__in=target_curriculum_course_ids,
+    ).values_list("section__curriculum_course__course_id", "value_id"):
+        target_grade_values_by_course_id[course_id].add(value_id)
+    target_has_grade_course_ids = set(target_grade_values_by_course_id)
+
+    target_registration_course_ids = set(
+        Registration.objects.filter(
+            student=student,
+            section__curriculum_course_id__in=target_curriculum_course_ids,
+        ).values_list("section__curriculum_course__course_id", flat=True)
+    )
+
+    target_sections_filter = Q(pk__in=[])
+    for (
+        target_curriculum_course_id,
+        source_semester_ids,
+    ) in source_semesters_by_target_curriculum_course_id.items():
+        target_sections_filter |= Q(
+            curriculum_course_id=target_curriculum_course_id,
+            semester_id__in=source_semester_ids,
+        )
+
+    target_sections_by_curriculum_course_id: dict[int, list[Section]] = defaultdict(list)
+    for section in Section.objects.filter(target_sections_filter).only(
+        "id", "semester_id", "number", "curriculum_course_id"
+    ):
+        target_sections_by_curriculum_course_id[section.curriculum_course_id].append(
+            section
+        )
+    indexed_target_sections: dict[
+        int, tuple[dict[tuple[int, int], Section], dict[int, list[Section]]]
+    ] = {}
+    for (
+        target_curriculum_course_id,
+        sections,
+    ) in target_sections_by_curriculum_course_id.items():
+        indexed_target_sections[target_curriculum_course_id] = (
+            _index_section_merge_candidates(sections)
+        )
+
+    for source_section in source_sections:
+        source_course_id = source_course_id_by_curriculum_course_id.get(
+            source_section.curriculum_course_id
+        )
+        if source_course_id is None:
+            continue
+        target_cc = target_cc_by_course_id.get(source_course_id)
         if target_cc is None:
             continue
-        source_sections = (
-            Section.objects.filter(curriculum_course=source_cc)
-            .filter(Q(grade__student=student) | Q(section_registrations__student=student))
-            .distinct()
-        )
-        for source_section in source_sections:
-            target_section = _pick_section_merge_candidate(target_cc, source_section)
-            source_grade = Grade.objects.filter(
-                student=student,
-                section=source_section,
-            ).first()
-            target_course_grades = Grade.objects.filter(
-                student=student,
-                section__curriculum_course=target_cc,
-            )
-            if source_grade is not None:
-                # If same-value grade already exists on target curriculum/course, drop duplicate.
-                if target_course_grades.filter(value_id=source_grade.value_id).exists():
-                    source_grade.delete()
-                    summary["grades_deduped"] += 1
-                elif target_course_grades.exists():
-                    # Conflicting values are left untouched for manual resolution.
-                    summary["grade_conflicts"] += 1
-                elif target_section is not None:
-                    source_grade.section = target_section
-                    source_grade.save(update_fields=["section"])
-                    summary["grades_moved"] += 1
-                else:
-                    summary["grades_unresolved"] += 1
 
-            source_registration = Registration.objects.filter(
-                student=student,
-                section=source_section,
-            ).first()
-            if source_registration is None:
-                continue
-            target_course_registrations = Registration.objects.filter(
-                student=student,
-                section__curriculum_course=target_cc,
+        target_section: Section | None = None
+        indexed_sections = indexed_target_sections.get(target_cc.id)
+        if indexed_sections is not None:
+            by_semester_number, by_semester = indexed_sections
+            target_section = _pick_section_merge_candidate_from_index(
+                source_section,
+                by_semester_number,
+                by_semester,
             )
-            if target_course_registrations.exists():
-                source_registration.delete()
-                summary["registrations_deduped"] += 1
-                continue
-            if target_section is None:
-                summary["registrations_unresolved"] += 1
-                continue
-            source_registration.section = target_section
-            source_registration.save(update_fields=["section"])
-            summary["registrations_moved"] += 1
+
+        source_grade = source_grade_by_section_id.get(source_section.id)
+        if source_grade is not None:
+            target_grade_values = target_grade_values_by_course_id.get(
+                source_course_id, set()
+            )
+            # If same-value grade already exists on target curriculum/course, drop duplicate.
+            if source_grade.value_id in target_grade_values:
+                source_grade.delete()
+                summary["grades_deduped"] += 1
+            elif source_course_id in target_has_grade_course_ids:
+                # Conflicting values are left untouched for manual resolution.
+                summary["grade_conflicts"] += 1
+            elif target_section is not None:
+                source_grade.section = target_section
+                source_grade.save(update_fields=["section"])
+                target_grade_values_by_course_id[source_course_id].add(
+                    source_grade.value_id
+                )
+                target_has_grade_course_ids.add(source_course_id)
+                summary["grades_moved"] += 1
+            else:
+                summary["grades_unresolved"] += 1
+
+        source_registration = source_registration_by_section_id.get(source_section.id)
+        if source_registration is None:
+            continue
+        if source_course_id in target_registration_course_ids:
+            source_registration.delete()
+            summary["registrations_deduped"] += 1
+            continue
+        if target_section is None:
+            summary["registrations_unresolved"] += 1
+            continue
+        source_registration.section = target_section
+        source_registration.save(update_fields=["section"])
+        target_registration_course_ids.add(source_course_id)
+        summary["registrations_moved"] += 1
     return summary

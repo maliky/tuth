@@ -1,8 +1,19 @@
+
+* <2026-02-15 dim.>  Understanding duplications problems
+This student Cletus Gray (cletus.gray) 261218 has 2 grades for pe101 the proble is that 19-20 is failed when 18-19 is good. Why is that ?
+
+What is stoping the merging of grade 338995 and 141394 ?  I would like to merge curricourse 5974 and 1437 or course 2767 and 166 or curriculum 31 and 206.
+reall the perceived objective, then query the db to retreive info on the element mentionned, then propose a wayt to fullfill the objective in a elegant manner.
+
+
+* <2026-02-12 jeu.> Solving renaming pb
 * <2026-02-11 mer.>  big merge
 merging curriculums/ keeping grades
 I want to switch to protect now. We will make that change on the dev branch. But I just merge the dev and tx branche probably introducing some regressions.  So the first task is review the merge and postnetial regressions.
 two, update the code to protect the grades at teh DB level
 three develop admin tools to reassign grades in bluck.  Thos tools should be admin action calling sql scripts stored in scripts folder.
+
+** 
 
 ** <2026-02-11 mer. 17:10>  merging grades/sections
 I want to caputre this rule for merging section with grades between two distinc

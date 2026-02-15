@@ -48,6 +48,7 @@ from app.people.services.merge_people import merge_people, merge_users
 from app.registry.admin import (
     DocStaffIL,
     DocStdIL,
+    StdGradeIL,
 )
 from app.registry.admin.core import _available_sections_for_student
 
@@ -616,7 +617,7 @@ class StdAdmin(
         "curriculum__college",
     )
     readonly_fields = ("student_id",)
-    inlines = [DocStdIL]
+    inlines = [StdGradeIL, DocStdIL]
     list_select_related = ("curriculum", "entry_semester", "last_enrolled_semester")
     fieldsets = [
         (

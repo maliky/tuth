@@ -6,24 +6,24 @@ from typing import Iterable, TypeAlias, TypedDict
 
 from app.academics.models.curriculum_course import CurriCourse
 from app.academics.models.requirement_group import (
-    CurriCourseRequirementGp,
-    RequirementKind,
+    CurriCourseReqGp,
+    ReqKind,
 )
 from app.people.models.student import Student
 
 CourseIdsT: TypeAlias = set[int]
 CourseLabelPairT: TypeAlias = tuple[int, str]
-RequirementFailureListT: TypeAlias = list["RequirementFailureT"]
+ReqFailureListT: TypeAlias = list["ReqFailureT"]
 
 
-class RequirementContextT(TypedDict):
+class ReqContextT(TypedDict):
     """Cached student requirement facts shared across evaluations."""
 
     passed_course_ids: CourseIdsT
     validated_credits: int
 
 
-class RequirementFailureT(TypedDict, total=False):
+class ReqFailureT(TypedDict, total=False):
     """Machine-readable detail for one failed requirement rule."""
 
     code: str
@@ -36,14 +36,14 @@ class RequirementFailureT(TypedDict, total=False):
     validated_credits: int
 
 
-class RequirementCheckResultT(TypedDict):
+class ReqCheckResultT(TypedDict):
     """Structured requirement-evaluation result."""
 
     ok: bool
-    failures: RequirementFailureListT
+    failures: ReqFailureListT
 
 
-def build_requirement_context(student: Student) -> RequirementContextT:
+def build_requirement_context(student: Student) -> ReqContextT:
     """Build shared student facts used by all course requirement checks."""
     passed_course_ids = set(student.passed_courses().values_list("id", flat=True))
     return {
@@ -53,7 +53,7 @@ def build_requirement_context(student: Student) -> RequirementContextT:
 
 
 def _group_member_pairs(
-    group: CurriCourseRequirementGp,
+    group: CurriCourseReqGp,
 ) -> list[CourseLabelPairT]:
     """Return `(course_id, display_label)` pairs for one requirement group."""
     return [
@@ -70,15 +70,15 @@ def evaluate_curriculum_course_requirements(
     student: Student,
     curriculum_course: CurriCourse,
     selected_course_ids: Iterable[int],
-    context: RequirementContextT | None = None,
-) -> RequirementCheckResultT:
+    context: ReqContextT | None = None,
+) -> ReqCheckResultT:
     """Evaluate credit/prerequisite/corequisite rules for one curriculum course."""
     eval_context = context or build_requirement_context(student)
     selected_ids = set(selected_course_ids)
     passed_ids = eval_context["passed_course_ids"]
     validated_credits = int(eval_context["validated_credits"])
 
-    failures: RequirementFailureListT = []
+    failures: ReqFailureListT = []
 
     min_credits = int(curriculum_course.min_validated_credits or 0)
     if validated_credits < min_credits:
@@ -98,13 +98,13 @@ def evaluate_curriculum_course_requirements(
         member_pairs = _group_member_pairs(group)
         if not member_pairs:
             continue
-        group_common: RequirementFailureT = {
+        group_common: ReqFailureT = {
             "group_id": group.id,
             "group_kind": group.kind,
             "group_label": group.label,
         }
 
-        if group.kind == RequirementKind.PREREQ_ALL:
+        if group.kind == ReqKind.PREREQ_ALL:
             missing_pairs = [
                 (course_id, label)
                 for course_id, label in member_pairs
@@ -123,7 +123,7 @@ def evaluate_curriculum_course_requirements(
                 )
             continue
 
-        if group.kind == RequirementKind.PREREQ_ANY:
+        if group.kind == ReqKind.PREREQ_ANY:
             has_any_match = any(course_id in passed_ids for course_id, _ in member_pairs)
             if not has_any_match:
                 failures.append(
@@ -138,7 +138,7 @@ def evaluate_curriculum_course_requirements(
                 )
             continue
 
-        if group.kind == RequirementKind.COREQ_ALL:
+        if group.kind == ReqKind.COREQ_ALL:
             missing_pairs = [
                 (course_id, label)
                 for course_id, label in member_pairs
@@ -160,7 +160,7 @@ def evaluate_curriculum_course_requirements(
 
 
 def requirement_failure_messages(
-    failures: RequirementFailureListT,
+    failures: ReqFailureListT,
 ) -> list[str]:
     """Convert machine-readable failures into user-facing message lines."""
     messages: list[str] = []

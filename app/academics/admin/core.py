@@ -354,7 +354,8 @@ class CourseAdmin(DepartmentRestrictedAdmin):
     list_max_show_all = 500
 
     search_fields = ("short_code", "department__code", "title")
-    fields = ("short_code", "department", "number", "title", "description")
+    fields = ("code", "short_code", "department", "number", "title", "description")
+    readonly_fields = ("code",)
     # Actions include manual merge and short_code-based merge helpers.
     actions = [
         update_department,

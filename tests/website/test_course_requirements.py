@@ -10,9 +10,9 @@ from django.urls import reverse
 
 from app.academics.models.curriculum_course import CurriCourse
 from app.academics.models.requirement_group import (
-    CurriCourseRequirementGp,
-    CurriCourseRequirementMember,
-    RequirementKind,
+    CurriCourseReqGp,
+    CurriCourseReqMember,
+    ReqKind,
 )
 from app.finance.models.status_types_methods import InvoiceStatus, Payer
 from app.people.models.student import Student
@@ -69,12 +69,12 @@ def _add_requirement_member_group(
     required_courses: list[CurriCourse],
 ) -> None:
     """Create one requirement group and populate all member courses."""
-    group = CurriCourseRequirementGp.objects.create(
+    group = CurriCourseReqGp.objects.create(
         curriculum_course=target,
         kind=kind,
     )
     for index, required in enumerate(required_courses):
-        CurriCourseRequirementMember.objects.create(
+        CurriCourseReqMember.objects.create(
             group=group,
             required_course=required.course,
             order=index,
@@ -105,17 +105,17 @@ def test_requirement_resolver_returns_machine_readable_failure_codes(
 
     _add_requirement_member_group(
         target=target,
-        kind=RequirementKind.PREREQ_ALL,
+        kind=ReqKind.PREREQ_ALL,
         required_courses=[prereq_all_a, prereq_all_b],
     )
     _add_requirement_member_group(
         target=target,
-        kind=RequirementKind.PREREQ_ANY,
+        kind=ReqKind.PREREQ_ANY,
         required_courses=[prereq_any_a, prereq_any_b],
     )
     _add_requirement_member_group(
         target=target,
-        kind=RequirementKind.COREQ_ALL,
+        kind=ReqKind.COREQ_ALL,
         required_courses=[coreq_member],
     )
 
@@ -144,7 +144,7 @@ def test_register_post_requires_coreq_group_in_same_action(
     coreq_member = curriculum_course_factory("921", "CURRI_COREQ")
     _add_requirement_member_group(
         target=target,
-        kind=RequirementKind.COREQ_ALL,
+        kind=ReqKind.COREQ_ALL,
         required_courses=[coreq_member],
     )
     student = _student_for_curriculum(
@@ -214,7 +214,7 @@ def test_dashboard_surfaces_coreq_reason_without_locking_initial_selection(
     coreq_member = curriculum_course_factory("931", "CURRI_COREQ_UI")
     _add_requirement_member_group(
         target=target,
-        kind=RequirementKind.COREQ_ALL,
+        kind=ReqKind.COREQ_ALL,
         required_courses=[coreq_member],
     )
     student = _student_for_curriculum(
@@ -268,12 +268,12 @@ def test_dashboard_surfaces_multiple_requirement_reason_lines(
     req_any_b_label = req_any_b.course.short_code or req_any_b.course.code
     _add_requirement_member_group(
         target=target,
-        kind=RequirementKind.PREREQ_ALL,
+        kind=ReqKind.PREREQ_ALL,
         required_courses=[req_all],
     )
     _add_requirement_member_group(
         target=target,
-        kind=RequirementKind.PREREQ_ANY,
+        kind=ReqKind.PREREQ_ANY,
         required_courses=[req_any_a, req_any_b],
     )
     student = _student_for_curriculum(

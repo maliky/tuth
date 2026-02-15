@@ -39,7 +39,7 @@ from app.timetable.models.semester import Semester
 from app.timetable.utils import format_datetime, format_short_datetime
 
 from .course_requirements import (
-    RequirementCheckResultT,
+    ReqCheckResultT,
     build_requirement_context,
     evaluate_curriculum_course_requirements,
     requirement_failure_messages,
@@ -352,7 +352,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 )
                 new_credit_total += int(section.curriculum_course.credit_hours.code)
             requirement_context = build_requirement_context(student)
-            blocked_by_requirements: dict[int, RequirementCheckResultT] = {}
+            blocked_by_requirements: dict[int, ReqCheckResultT] = {}
             requirement_errors_by_course: dict[int, str] = {}
             for (
                 course_id,

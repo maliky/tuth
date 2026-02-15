@@ -8,9 +8,9 @@ from .curriculum_course import CurriCourse
 from .department import Department
 from .prerequisite import Prerequisite
 from .requirement_group import (
-    CurriCourseRequirementGp,
-    CurriCourseRequirementMember,
-    RequirementKind,
+    CurriCourseReqGp,
+    CurriCourseReqMember,
+    ReqKind,
 )
 from .student_curriculum_enrollment import CurriStdEnroll
 
@@ -26,8 +26,8 @@ __all__ = [
     "Minor",
     "MinorCurriCourse",
     "Prerequisite",
-    "CurriCourseRequirementGp",
-    "CurriCourseRequirementMember",
-    "RequirementKind",
+    "CurriCourseReqGp",
+    "CurriCourseReqMember",
+    "ReqKind",
     "CurriStdEnroll",
 ]
