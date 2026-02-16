@@ -34,7 +34,7 @@ from .helpers import (
     _id_by_curri_crs_id,
     _index_curri_crss_by_id,
     _merge_curri_crs_links,
-    empty_student_curriculum_record_summary,
+    empty_std_curri_record_summary,
 )
 from .section_merge import (
     _index_sec_merge_candidates,
@@ -43,7 +43,7 @@ from .section_merge import (
 )
 
 
-def list_curriculum_course_conflicts(
+def list_curri_crs_conflicts(
     target: Curriculum, source: Curriculum
 ) -> tuple[list[ConflictCurriCoursePairT], list[CurriCourse]]:
     """Return conflicting and non-conflicting programmed courses for two curricula."""
@@ -139,7 +139,7 @@ def _merge_curri_crs_conflict(
 
 
 @transaction.atomic
-def merge_curricula(
+def merge_curra(
     target: Curriculum,
     sources,
     conflict_choices: ConflictChoiceByCourseIdT | None = None,
@@ -277,19 +277,19 @@ def _entry_sem_merge_blocked(
     )
 
 
-def merge_student_enrollment_pair(
+def merge_std_enrollment_pair(
     target_row: StdCurriEnroll,
     source_row: StdCurriEnroll,
 ) -> tuple[bool, StdCurriRecordMergeSummaryT]:
     """Merge one source enrollment row into a target enrollment row."""
-    summary = empty_student_curriculum_record_summary()
+    summary = empty_std_curri_record_summary()
     if target_row.student_id != source_row.student_id:
         return False, summary
     if _entry_sem_merge_blocked(target_row, source_row):
         return False, summary
 
     # Reconcile student-scoped grade/registration duplicates before row collapse.
-    summary = reconcile_student_curriculum_records(
+    summary = reconcile_std_curri_records(
         student=target_row.student,
         target_curriculum=target_row.curriculum,
         source_curriculum=source_row.curriculum,
@@ -323,13 +323,13 @@ def merge_student_enrollment_pair(
     return True, summary
 
 
-def reconcile_student_curriculum_records(
+def reconcile_std_curri_records(
     student: Student,
     target_curriculum: Curriculum,
     source_curriculum: Curriculum,
 ) -> StdCurriRecordMergeSummaryT:
     """Reconcile one student's records between two curricula by matching courses."""
-    summary = empty_student_curriculum_record_summary()
+    summary = empty_std_curri_record_summary()
 
     target_curriculum_courses = list(
         CurriCourse.objects.filter(curriculum=target_curriculum)

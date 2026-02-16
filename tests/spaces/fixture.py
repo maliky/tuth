@@ -13,12 +13,12 @@ SpaceFactoryT: TypeAlias = Callable[[str], Space]
 
 @pytest.fixture
 def space() -> Space:
-    return Space.get_default()
+    return Space.get_dft()
 
 
 @pytest.fixture
 def room() -> Room:
-    return Room.get_default()
+    return Room.get_dft()
 
 
 # ~~~~~~~~~~~~~~~~ Factory ~~~~~~~~~~~~~~~~

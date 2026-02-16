@@ -35,36 +35,34 @@ def test_student_dashboard_links_bdd():
     "features/student_dashboard_links.feature",
     "Payment receipt shows the date paid column",
 )
-def test_student_payment_receipt_date_paid_bdd():
+def test_std_payment_receipt_date_paid_bdd():
     """Drive the payment receipt column scenario."""
 
 
 @given("a student with an active semester")
-def student_with_active_semester(
-    student_context: StdContext, portal_user_factory
-) -> None:
+def std_with_active_sem(std_context: StdContext, portal_user_factory) -> None:
     """Provision a student tied to the current academic term."""
-    current_semester = Semester.get_current_semester()
+    current_semester = Semester.get_current_sem()
     user = portal_user_factory(
         "student_links_bdd",
         student=True,
         groups=[],
         semester_override=current_semester,
     )
-    student_context.user = user
-    student_context.semester = current_semester
-    student_context.student = Student.objects.get(user=user)
+    std_context.user = user
+    std_context.semester = current_semester
+    std_context.student = Student.objects.get(user=user)
 
 
 @given("a student with a paid invoice")
-def student_with_paid_invoice(
-    student_context: StdContext,
+def std_with_paid_invoice(
+    std_context: StdContext,
     portal_user_factory,
-    student_invoice_factory,
+    std_invoice_factory,
     payment_factory,
 ) -> None:
     """Provision a student with a payment on file."""
-    current_semester = Semester.get_current_semester()
+    current_semester = Semester.get_current_sem()
     user = portal_user_factory(
         "student_receipt_bdd",
         student=True,
@@ -72,27 +70,27 @@ def student_with_paid_invoice(
         semester_override=current_semester,
     )
     student = Student.objects.get(user=user)
-    invoice = student_invoice_factory(student, current_semester)
+    invoice = std_invoice_factory(student, current_semester)
     payment_factory(invoice, D25)
-    student_context.user = user
-    student_context.semester = current_semester
-    student_context.student = student
+    std_context.user = user
+    std_context.semester = current_semester
+    std_context.student = student
 
 
 @when("the student logs in to the portal")
-def student_logs_in(student_context: StdContext, selenium_driver, live_server) -> None:
+def std_logs_in(std_context: StdContext, selenium_driver, live_server) -> None:
     """Log in and open the student dashboard."""
-    assert student_context.user is not None
-    _login_to_portal(selenium_driver, live_server, student_context.user.username)
+    assert std_context.user is not None
+    _login_to_portal(selenium_driver, live_server, std_context.user.username)
     selenium_driver.get(f"{live_server.url}{reverse('student_dashboard')}")
 
 
 @then("the sidebar shows invoice and payment statement links")
-def sidebar_links_present(student_context: StdContext, selenium_driver) -> None:
+def sidebar_links_present(std_context: StdContext, selenium_driver) -> None:
     """Ensure sidebar links are present for invoices and payments."""
-    assert student_context.semester is not None
-    invoice_path = reverse("student_invoice_statement")
-    payment_path = reverse("student_payment_receipt", args=[student_context.semester.id])
+    assert std_context.semester is not None
+    invoice_path = reverse("std_invoice_statement")
+    payment_path = reverse("std_payment_receipt", args=[std_context.semester.id])
 
     selenium_driver.find_element(
         By.CSS_SELECTOR, f".portal-nav a[href$='{invoice_path}']"
@@ -105,7 +103,7 @@ def sidebar_links_present(student_context: StdContext, selenium_driver) -> None:
 @when("the student opens the invoice statement")
 def open_invoice_statement(selenium_driver) -> None:
     """Open the invoice statement from the sidebar."""
-    invoice_path = reverse("student_invoice_statement")
+    invoice_path = reverse("std_invoice_statement")
     selenium_driver.find_element(
         By.CSS_SELECTOR, f".portal-nav a[href$='{invoice_path}']"
     ).click()
@@ -120,12 +118,10 @@ def invoice_statement_visible(selenium_driver) -> None:
 
 
 @when("the student opens the payment receipt")
-def open_payment_receipt(
-    student_context: StdContext, selenium_driver, live_server
-) -> None:
+def open_payment_receipt(std_context: StdContext, selenium_driver, live_server) -> None:
     """Open the payment receipt link."""
-    assert student_context.semester is not None
-    receipt_path = reverse("student_payment_receipt", args=[student_context.semester.id])
+    assert std_context.semester is not None
+    receipt_path = reverse("std_payment_receipt", args=[std_context.semester.id])
     selenium_driver.get(f"{live_server.url}{receipt_path}")
 
 

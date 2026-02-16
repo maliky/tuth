@@ -37,7 +37,7 @@ class CurriCourseDetailT(TypedDict):
 
 
 @login_required
-def student_curriculum_courses(request: HttpRequest) -> HttpResponse:
+def std_curri_crss(request: HttpRequest) -> HttpResponse:
     """Render an ordered list of curriculum courses for the current student."""
     student = _require_std(request.user)
     curriculum_courses = (
@@ -60,11 +60,11 @@ def student_curriculum_courses(request: HttpRequest) -> HttpResponse:
         "course_rows": course_rows,
         "curriculum_label": student.curriculum.long_name or student.curriculum.short_name,
     }
-    return render(request, "website/student_curriculum_courses.html", context)
+    return render(request, "website/std_curri_crss.html", context)
 
 
 @login_required
-def student_curriculum_course_detail(
+def std_curri_crs_detail(
     request: HttpRequest,
     curriculum_course_id: int,
 ) -> HttpResponse:
@@ -96,6 +96,6 @@ def student_curriculum_course_detail(
     }
     return render(
         request,
-        "website/student_curriculum_course_detail.html",
+        "website/std_curri_crs_detail.html",
         context,
     )

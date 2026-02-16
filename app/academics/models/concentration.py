@@ -75,14 +75,14 @@ class ConcentrationMixin(models.Model):
         return self.total_credit_hours() > self.max_credit_hours
 
     @classmethod
-    def get_default(cls) -> Self:
+    def get_dft(cls) -> Self:
         """Return a default concentration (Major or Minor) with one curriculum_course."""
         dft_concentration, _ = cls.objects.get_or_create(  # type: ignore[attr-defined]
             name=f"DFT {cls.RELATED_NAME}",
-            curriculum=Curriculum.get_default(),
+            curriculum=Curriculum.get_dft(),
             description=f"This is a default {cls.RELATED_NAME}",
         )
-        pg = CurriCourse.get_default()
+        pg = CurriCourse.get_dft()
         dft_concentration.curriculum_courses.add(pg)
         dft_concentration.save()  # ? is the save necessary
 
@@ -104,7 +104,7 @@ class Major(ConcentrationMixin):
     )
     max_credit_hours = models.PositiveIntegerField(default=50)
 
-    def course_count(self):
+    def crs_count(self):
         """Count the number of courses in this concentration."""
         return self.curriculum_courses.count()
 
@@ -120,7 +120,7 @@ class Minor(ConcentrationMixin):
     )
     max_credit_hours = models.PositiveIntegerField(default=20)
 
-    def course_count(self):
+    def crs_count(self):
         """Count the number of courses in this concentration."""
         return self.curriculum_courses.count()
 

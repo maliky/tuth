@@ -10,7 +10,7 @@ pytestmark = pytest.mark.django_db
 # ~~~~~~~~~~~~~~~~ DB Constraints ~~~~~~~~~~~~~~~~
 
 
-def test_term_unique_number_per_semester(semester):
+def test_term_unique_number_per_sem(semester):
     Term.objects.create(semester=semester, number=1)
     with pytest.raises(IntegrityError):
         with transaction.atomic():

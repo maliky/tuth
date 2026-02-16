@@ -11,7 +11,7 @@ StdEntrySemFAC = AutocompleteFilterFactory("Entry Semester", "entry_semester")
 FacultyGpFAC = AutocompleteFilterFactory("Group", "staff_profile__user__groups")
 
 
-class FacultyTeachingDepartmentFltAC(ScopedAutocompleteFilter):
+class FacultyTeachingDptFltAC(ScopedAutocompleteFilter):
     """Autocomplete filter for departments taught by a faculty."""
 
     title = "Teaching Department"

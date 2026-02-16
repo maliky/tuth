@@ -9,9 +9,9 @@ from django.urls import reverse
 
 
 @pytest.mark.django_db
-def test_registrar_officer_can_view_registrar_dashboard(client):
+def test_reg_officer_can_view_reg_dashboard(client):
     User = get_user_model()
-    user = User.objects.create_user("registrar_officer", password="PassW0rd!")
+    user = User.objects.create_user("reg_officer", password="PassW0rd!")
     officer_group, _ = Group.objects.get_or_create(name="Registrar Officer")
     user.groups.add(officer_group)
 

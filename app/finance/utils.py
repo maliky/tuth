@@ -35,7 +35,7 @@ class InvoiceSnapshotLineT(TypedDict):
     credits: int
     cost_per_credit: str
     course_cost: str
-    semester_label: str
+    sem_label: str
 
 
 class InvoiceSnapshotFeeT(TypedDict):
@@ -281,13 +281,13 @@ def build_invoice_snapshot(
                 "credits": credits,
                 "cost_per_credit": _format_currency(cost_per_credit),
                 "course_cost": _format_currency(course_cost),
-                "semester_label": str(invoice.semester),
+                "sem_label": str(invoice.semester),
             }
         )
 
     for parent_invoice in parent_invoices:
         for fee_stack in parent_invoice.fee_stacks.all():
-            stack_amount = fee_stack.total_amount_for_semester(parent_invoice.semester)
+            stack_amount = fee_stack.total_amount_for_sem(parent_invoice.semester)
             if stack_amount <= Decimal("0.00"):
                 continue
             stack_key = f"semester_stack_{fee_stack.id}"

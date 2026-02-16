@@ -165,7 +165,7 @@ class StdSemesterInvoice(StatusableMixin, models.Model):
                 balance=child_invoice.balance,
                 status_id=child_invoice.status_id,
             )
-            _update_registration_status(child_invoice)
+            _update_regio_status(child_invoice)
 
     def refresh_totals_from_sources(self, save_model: bool = True) -> None:
         """Recompute totals from child invoices, fee stacks, and payments."""
@@ -174,7 +174,7 @@ class StdSemesterInvoice(StatusableMixin, models.Model):
         ).get("total") or Decimal("0.00")
         semester_fee_total = sum(
             (
-                fee_stack.total_amount_for_semester(self.semester)
+                fee_stack.total_amount_for_sem(self.semester)
                 for fee_stack in self.fee_stacks.all()
             ),
             Decimal("0.00"),
@@ -292,7 +292,7 @@ class CourseInvoice(StatusableMixin, models.Model):
 
         self.balance = _clamp_non_negative(self.get_balance() - Decimal(amount_paid))
         self._update_status()
-        _update_registration_status(self)
+        _update_regio_status(self)
         self.save(update_fields=["balance", "status"])
         parent_invoice = self.student_semester_invoice
         if parent_invoice is not None:
@@ -367,7 +367,7 @@ def refresh_parent_invoice_after_fee_stack_change(
         instance.refresh_totals_from_sources(save_model=True)
 
 
-def _update_registration_status(invoice: "CourseInvoice") -> int:
+def _update_regio_status(invoice: "CourseInvoice") -> int:
     """Update registration status when the course-invoice status changes."""
     if not invoice:
         return 0

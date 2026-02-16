@@ -36,7 +36,7 @@ PaymentUpdateMapT: TypeAlias = dict[int, datetime]
 
 
 @login_required
-def student_payment_receipt(
+def std_payment_receipt(
     request: HttpRequest,
     semester_id: int,
 ) -> HttpResponse:
@@ -101,7 +101,7 @@ def student_payment_receipt(
             )
 
     currency = getattr(settings, "FINANCE_DEFAULT_CURRENCY", "USD")
-    semester_label = f"{semester.academic_year.code} · Semester {semester.number}"
+    sem_label = f"{semester.academic_year.code} · Semester {semester.number}"
     generated_at = format_datetime(timezone.now())
 
     context = {
@@ -109,7 +109,7 @@ def student_payment_receipt(
         "receipt_rows": receipt_rows,
         "currency": currency,
         "total_paid": total_paid,
-        "semester_label": semester_label,
+        "sem_label": sem_label,
         "generated_at": generated_at,
         "student_profile": _build_std_profile(student),
         "sidebar_links": _build_sidebar_links(
@@ -117,4 +117,4 @@ def student_payment_receipt(
             student=student,
         ),
     }
-    return render(request, "website/student_payment_receipt.html", context)
+    return render(request, "website/std_payment_receipt.html", context)

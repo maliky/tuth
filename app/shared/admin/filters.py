@@ -40,7 +40,7 @@ def resolve_scoped_filter_lookups(model: type[Model], list_filter: ListFltT) -> 
         Set of lookup paths to allow in query parameters.
 
     Example:
-        >>> resolve_scoped_filter_lookups(Section, [DepartmentFltAC])
+        >>> resolve_scoped_filter_lookups(Section, [DptFltAC])
         {'curriculum_course__course__department'}
     """
     lookups: set[str] = set()

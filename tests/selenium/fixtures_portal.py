@@ -54,7 +54,7 @@ def portal_user_factory(semester: Semester):
             Student.objects.update_or_create(
                 user=user,
                 defaults={
-                    "curriculum": Curriculum.get_default(),
+                    "curriculum": Curriculum.get_dft(),
                     "entry_semester": active_semester,
                     "last_enrolled_semester": active_semester,
                 },

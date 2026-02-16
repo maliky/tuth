@@ -7,10 +7,10 @@
 
 
 # @pytest.mark.django_db
-# def test_scholarship_links_donor_student(donor_factory, student_factory):
+# def test_scholarship_links_donor_student(donor_factory, std_factory):
 #     """Test the link of in scholarship between donor and students."""
 #     donor = donor_factory("Generous_donor")
-#     student = student_factory("Studious TU", "BSc Math")
+#     student = std_factory("Studious TU", "BSc Math")
 
 #     scholarship = Scholarship.objects.create(
 #         donor=donor,

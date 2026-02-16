@@ -5,7 +5,7 @@ from import_export.widgets import TimeWidget
 
 from app.people.admin.resources_mapping import STUDENT_HEADER_MAP
 from app.spaces.admin.widgets import RoomWgt
-from app.timetable.admin.section_widgets import SectionWgt
+from app.timetable.admin.section_widgets import SecWgt
 from app.timetable.admin.session_widgets import ScheduleWgt, WeekdayWgt
 from app.timetable.models.schedule import Schedule
 from app.timetable.models.session import SecSession
@@ -38,9 +38,7 @@ class SecSessionResource(resources.ModelResource):
     schedule = fields.Field(
         column_name="weekday", attribute="schedule", widget=ScheduleWgt()
     )
-    section = fields.Field(
-        column_name="section_no", attribute="section", widget=SectionWgt()
-    )
+    section = fields.Field(column_name="section_no", attribute="section", widget=SecWgt())
 
     class Meta:
         model = SecSession

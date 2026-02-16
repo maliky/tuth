@@ -26,10 +26,10 @@ class SecSessionAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAd
     list_display = (
         "schedule",
         "room",
-        "section_curriculum_course_link",
+        "sec_curri_crs_link",
         "section__semester",
         "section__number",
-        "section_faculty_link",
+        "sec_faculty_link",
     )
     # need to be 'real' fieds not FK,
     search_fields = (
@@ -55,14 +55,14 @@ class SecSessionAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAd
     )
 
     @admin.display(description="Curriculum Course")
-    def section_curriculum_course_link(self, obj):
+    def sec_curri_crs_link(self, obj):
         """Link to the curriculum course attached to the session section."""
         curriculum_course = obj.section.curriculum_course
         url = reverse("admin:academics_curricourse_change", args=[curriculum_course.pk])
         return format_html('<a href="{}">{}</a>', url, curriculum_course)
 
     @admin.display(description="Faculty")
-    def section_faculty_link(self, obj):
+    def sec_faculty_link(self, obj):
         """Link to the faculty profile attached to the session section."""
         faculty = obj.section.faculty
         if not faculty:

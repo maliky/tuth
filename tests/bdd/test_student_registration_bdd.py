@@ -32,13 +32,13 @@ def test_student_registration_bdd():
 
 
 @given("a student with an open registration semester")
-def student_with_open_registration_semester(
-    student_context: StdContext,
+def std_with_open_regio_sem(
+    std_context: StdContext,
     portal_user_factory,
-    registrar_semester_pair_factory,
+    reg_sem_pair_factory,
 ) -> None:
     """Provision a student tied to a semester that is open for registration."""
-    _academic_year, _previous, current = registrar_semester_pair_factory()
+    _academic_year, _previous, current = reg_sem_pair_factory()
     current.status = SemesterStatus.get_by_code("registration")
     current.save(update_fields=["status"])
     user = portal_user_factory(
@@ -51,38 +51,38 @@ def student_with_open_registration_semester(
     student.entry_semester = current
     student.last_enrolled_semester = current
     student.save(update_fields=["entry_semester", "last_enrolled_semester"])
-    student_context.user = user
-    student_context.semester = current
-    student_context.student = student
+    std_context.user = user
+    std_context.semester = current
+    std_context.student = student
 
 
 @given("a curriculum section available for registration")
-def curriculum_section_available(
-    student_context: StdContext,
-    registrar_section_factory,
+def curri_sec_available(
+    std_context: StdContext,
+    reg_sec_factory,
 ) -> None:
     """Create an eligible section in the student's curriculum."""
-    assert student_context.semester is not None
-    section, curriculum = registrar_section_factory(student_context.semester)
-    student = student_context.student
+    assert std_context.semester is not None
+    section, curriculum = reg_sec_factory(std_context.semester)
+    student = std_context.student
     assert student is not None
     student.curriculum = curriculum
     student.save(update_fields=["curriculum"])
-    student_context.section = section
-    student_context.fee_due = section.fee_total_amount()
+    std_context.section = section
+    std_context.fee_due = section.fee_total_amount()
 
 
 @when("the student selects the section and saves the registration")
-def student_saves_registration(
-    student_context: StdContext,
+def std_saves_regio(
+    std_context: StdContext,
     selenium_driver,
     live_server,
 ) -> None:
     """Select a section from the dashboard and submit the registration."""
-    assert student_context.user is not None
-    assert student_context.section is not None
-    section = student_context.section
-    _login_to_portal(selenium_driver, live_server, student_context.user.username)
+    assert std_context.user is not None
+    assert std_context.section is not None
+    section = std_context.section
+    _login_to_portal(selenium_driver, live_server, std_context.user.username)
     selenium_driver.get(f"{live_server.url}{reverse('student_dashboard')}")
 
     select_element = selenium_driver.find_element(By.CSS_SELECTOR, ".section-picker")
@@ -103,26 +103,26 @@ def student_saves_registration(
 
 @then("an invoice is created with the initial amount due")
 def invoice_created_with_initial_amount_due(
-    student_context: StdContext,
+    std_context: StdContext,
     selenium_driver,
 ) -> None:
     """Ensure the registration produces a consistent invoice total."""
-    assert student_context.student is not None
-    assert student_context.section is not None
-    assert student_context.fee_due is not None
-    section = student_context.section
+    assert std_context.student is not None
+    assert std_context.section is not None
+    assert std_context.fee_due is not None
+    section = std_context.section
 
-    def _registration_exists() -> bool:
+    def _regio_exists() -> bool:
         return Registration.objects.filter(
-            student=student_context.student,
+            student=std_context.student,
             section=section,
         ).exists()
 
-    WebDriverWait(selenium_driver, 10).until(lambda _driver: _registration_exists())
+    WebDriverWait(selenium_driver, 10).until(lambda _driver: _regio_exists())
     invoice = Invoice.objects.get(
-        student=student_context.student,
-        curriculum_course=student_context.section.curriculum_course,
-        semester=student_context.section.semester,
+        student=std_context.student,
+        curriculum_course=std_context.section.curriculum_course,
+        semester=std_context.section.semester,
     )
-    assert invoice.initial_amount_due == student_context.fee_due
-    assert invoice.balance == student_context.fee_due
+    assert invoice.initial_amount_due == std_context.fee_due
+    assert invoice.balance == std_context.fee_due

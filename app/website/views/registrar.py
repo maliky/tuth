@@ -31,7 +31,7 @@ class RegGradeRowT(TypedDict):
     faculty: str
 
 
-class RegSemesterGpT(TypedDict):
+class RegSemGpT(TypedDict):
     """Gped grade rows for a semester."""
 
     semester: Semester
@@ -45,9 +45,9 @@ class RegStdGpT(TypedDict):
     """Gped grade rows for a student."""
 
     student: Student
-    student_label: str
+    std_label: str
     student_id: str
-    semesters: list[RegSemesterGpT]
+    semesters: list[RegSemGpT]
     credits_total: int
     gpa: str
 
@@ -55,7 +55,7 @@ class RegStdGpT(TypedDict):
 class RegTranscriptRowT(TypedDict):
     """Row details for the official grade transcript."""
 
-    semester_label: str
+    sem_label: str
     course_code: str
     course_title: str
     credits: int
@@ -87,7 +87,7 @@ def _latest_graded_sem_id() -> int | None:
 
 @login_required
 @permission_required("registry.view_grade", raise_exception=True)
-def registrar_student_autocomplete(request: HttpRequest) -> HttpResponse:
+def reg_std_autocomplete(request: HttpRequest) -> HttpResponse:
     """Return student suggestions for the registrar grade dashboard."""
     query = parse_str(request.GET.get("q"))
     if not query:
@@ -115,7 +115,7 @@ def registrar_student_autocomplete(request: HttpRequest) -> HttpResponse:
 
 @login_required
 @permission_required("registry.view_grade", raise_exception=True)
-def registrar_grades_dashboard(request: HttpRequest) -> HttpResponse:
+def reg_grades_dashboard(request: HttpRequest) -> HttpResponse:
     """Render the registrar grade dashboard grouped by student and semester."""
     selected_student_id = _clean_int(request.GET.get("student_id"))
     semester_param = request.GET.get("semester")
@@ -165,7 +165,7 @@ def registrar_grades_dashboard(request: HttpRequest) -> HttpResponse:
 
     student_groups: list[RegStdGpT] = []
     student_lookup: dict[int, RegStdGpT] = {}
-    semester_lookup_map: dict[int, dict[int, RegSemesterGpT]] = {}
+    semester_lookup_map: dict[int, dict[int, RegSemGpT]] = {}
     student_gpa_points: dict[int, float] = {}
     student_gpa_credits: dict[int, int] = {}
     semester_gpa_points: dict[tuple[int, int], float] = {}
@@ -175,7 +175,7 @@ def registrar_grades_dashboard(request: HttpRequest) -> HttpResponse:
             RegStdGpT,
             {
                 "student": student,
-                "student_label": student.long_name or student.user.get_full_name(),
+                "std_label": student.long_name or student.user.get_full_name(),
                 "student_id": student.student_id or "Pending ID",
                 "semesters": [],
                 "credits_total": 0,
@@ -199,7 +199,7 @@ def registrar_grades_dashboard(request: HttpRequest) -> HttpResponse:
         semester_group_opt = semester_group_lookup.get(semester.id)
         if semester_group_opt is None:
             semester_group = cast(
-                RegSemesterGpT,
+                RegSemGpT,
                 {
                     "semester": semester,
                     "label": (
@@ -326,14 +326,14 @@ def registrar_grades_dashboard(request: HttpRequest) -> HttpResponse:
         "pagination_query": pagination_params.urlencode(),
         "pagination_hidden_fields": pagination_hidden_fields,
         "pagination_action": request.path,
-        "student_autocomplete_url": reverse("registrar_student_autocomplete"),
+        "student_autocomplete_url": reverse("reg_std_autocomplete"),
     }
-    return render(request, "website/staff/registrar_grades_dashboard.html", context)
+    return render(request, "website/staff/reg_grades_dashboard.html", context)
 
 
 @login_required
 @permission_required("registry.view_grade", raise_exception=True)
-def registrar_grade_transcript(
+def reg_grade_transcript(
     request: HttpRequest,
     student_id: int,
 ) -> HttpResponse:
@@ -364,7 +364,7 @@ def registrar_grade_transcript(
             grade_label = grade.value.code.upper()
         transcript_rows.append(
             {
-                "semester_label": (
+                "sem_label": (
                     f"{semester.academic_year.code} · Semester {semester.number}"
                 ),
                 "course_code": course.short_code or course.code or "",
@@ -378,7 +378,7 @@ def registrar_grade_transcript(
         "page_summary": "Registrar-issued transcript preview.",
         "eyebrow": "Registrar",
         "student": student,
-        "student_label": (
+        "std_label": (
             student.long_name or student.user.get_full_name() or student.student_id
         ),
         "curriculum_label": (
@@ -386,13 +386,13 @@ def registrar_grade_transcript(
         ),
         "generated_at": format_datetime(timezone.now()),
         "transcript_rows": transcript_rows,
-        "dashboard_url": reverse("registrar_grades_dashboard"),
+        "dashboard_url": reverse("reg_grades_dashboard"),
     }
-    return render(request, "website/staff/registrar_grade_transcript.html", context)
+    return render(request, "website/staff/reg_grade_transcript.html", context)
 
 
 @permission_required("timetable.change_semester", raise_exception=True)
-def registrar_course_windows(request: HttpRequest) -> HttpResponse:
+def reg_crs_wins(request: HttpRequest) -> HttpResponse:
     """Allow registrar staff to manage semester statuses."""
     semesters = (
         Semester.objects.select_related("academic_year", "status")
@@ -407,14 +407,14 @@ def registrar_course_windows(request: HttpRequest) -> HttpResponse:
         semester = get_object_or_404(Semester, pk=semester_id)
         if status_code not in {status.code for status in statuses}:
             messages.error(request, "Unknown status.")
-            return redirect("registrar_course_windows")
+            return redirect("reg_crs_wins")
         semester.status_id = status_code
         semester.save(update_fields=["status"])
         messages.success(
             request,
             f"{semester} status updated to {semester.status.label}.",
         )
-        return redirect("registrar_course_windows")
+        return redirect("reg_crs_wins")
 
     context = {
         "semesters": semesters,

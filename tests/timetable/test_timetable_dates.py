@@ -10,7 +10,7 @@ from app.timetable.models.semester import Semester
 from app.timetable.models.term import Term
 
 
-def make_semester(
+def make_sem(
     ay_start: date,
     sem_start: date,
     sem_end: date,
@@ -37,16 +37,16 @@ def make_term(
 
 
 @pytest.mark.django_db
-def test_semester_identical_start_end():
+def test_sem_identical_start_end():
     # may need to be replaced with fixtures
-    ay, sem = make_semester(date(2024, 8, 1), date(2024, 8, 15), date(2024, 8, 15))
+    ay, sem = make_sem(date(2024, 8, 1), date(2024, 8, 15), date(2024, 8, 15))
     sem.clean()
 
 
 @pytest.mark.django_db
-def test_semester_overlap():
-    ay, _ = make_semester(date(2024, 8, 1), date(2024, 8, 1), date(2025, 1, 1))
-    _, sem = make_semester(
+def test_sem_overlap():
+    ay, _ = make_sem(date(2024, 8, 1), date(2024, 8, 1), date(2025, 1, 1))
+    _, sem = make_sem(
         date(2024, 8, 1), date(2024, 12, 15), date(2025, 4, 1), sem_number=2, year=ay
     )
     with pytest.raises(ValidationError):
@@ -54,16 +54,16 @@ def test_semester_overlap():
 
 
 @pytest.mark.django_db
-def test_semester_out_of_range():
-    ay, sem = make_semester(date(2024, 8, 1), date(2025, 8, 1), date(2025, 9, 1))
+def test_sem_out_of_range():
+    ay, sem = make_sem(date(2024, 8, 1), date(2025, 8, 1), date(2025, 9, 1))
     with pytest.raises(ValidationError):
         sem.clean()
 
 
 @pytest.mark.django_db
-def test_semester_gap_allowed():
-    ay, _ = make_semester(date(2024, 8, 1), date(2024, 8, 1), date(2024, 12, 31))
-    _, sem = make_semester(
+def test_sem_gap_allowed():
+    ay, _ = make_sem(date(2024, 8, 1), date(2024, 8, 1), date(2024, 12, 31))
+    _, sem = make_sem(
         date(2024, 8, 1), date(2025, 1, 15), date(2025, 4, 30), sem_number=2, year=ay
     )
     sem.clean()
@@ -71,7 +71,7 @@ def test_semester_gap_allowed():
 
 @pytest.mark.django_db
 def test_term_overlap():
-    ay, sem = make_semester(date(2024, 8, 1), date(2024, 8, 1), date(2024, 12, 31))
+    ay, sem = make_sem(date(2024, 8, 1), date(2024, 8, 1), date(2024, 12, 31))
     make_term(sem, date(2024, 8, 1), date(2024, 10, 1), persist=True)
     term = make_term(sem, date(2024, 9, 15), date(2024, 11, 1), number=2)
     with pytest.raises(ValidationError):
@@ -80,7 +80,7 @@ def test_term_overlap():
 
 @pytest.mark.django_db
 def test_term_out_of_range():
-    ay, sem = make_semester(date(2024, 8, 1), date(2024, 8, 1), date(2024, 12, 31))
+    ay, sem = make_sem(date(2024, 8, 1), date(2024, 8, 1), date(2024, 12, 31))
     term = make_term(sem, date(2025, 1, 1), date(2025, 1, 10))
     with pytest.raises(ValidationError):
         term.clean()
@@ -88,7 +88,7 @@ def test_term_out_of_range():
 
 @pytest.mark.django_db
 def test_term_gap_allowed():
-    ay, sem = make_semester(date(2024, 8, 1), date(2024, 8, 1), date(2024, 12, 31))
+    ay, sem = make_sem(date(2024, 8, 1), date(2024, 8, 1), date(2024, 12, 31))
     make_term(sem, date(2024, 8, 1), date(2024, 9, 1), persist=True)
     term = make_term(sem, date(2024, 9, 15), date(2024, 10, 1), number=2)
     term.clean()
@@ -96,6 +96,6 @@ def test_term_gap_allowed():
 
 @pytest.mark.django_db
 def test_term_identical_start_end():
-    ay, sem = make_semester(date(2024, 8, 1), date(2024, 8, 1), date(2024, 12, 31))
+    ay, sem = make_sem(date(2024, 8, 1), date(2024, 8, 1), date(2024, 12, 31))
     term = make_term(sem, date(2024, 9, 1), date(2024, 9, 1))
     term.clean()

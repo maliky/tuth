@@ -22,7 +22,7 @@ class DocType(SimpleTableMixin):
     ]
 
     @classmethod
-    def get_default(cls) -> Self:
+    def get_dft(cls) -> Self:
         """Returns the default FeeType."""
         deft, _ = cls.objects.get_or_create(
             code="other", defaults={"label": "Other Document"}
@@ -42,7 +42,7 @@ class DocStatus(SimpleTableMixin):
         verbose_name_plural = "Document Status"
 
     @classmethod
-    def get_default(cls) -> Self:
+    def get_dft(cls) -> Self:
         """Returns the default FeeType."""
         deft, _ = cls.objects.get_or_create(code="pending", defaults={"label": "Pending"})
         return cast(Self, deft)
@@ -62,7 +62,7 @@ class TranscriptRequestStatus(SimpleTableMixin):
         verbose_name_plural = "Transcript Request Status"
 
     @classmethod
-    def get_default(cls):
+    def get_dft(cls):
         """Return the default status."""
         default, _ = cls.objects.get_or_create(
             code="pending", defaults={"label": "Pending"}
@@ -98,6 +98,6 @@ class RegistrationStatus(SimpleTableMixin):
         return cls.get_by_code("cleared")
 
     @classmethod
-    def get_default(cls) -> Self:
+    def get_dft(cls) -> Self:
         """Returns the default RegistrationStatus."""
         return cls.pending()

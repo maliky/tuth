@@ -7,9 +7,9 @@ from functools import cached_property
 from import_export import fields, widgets
 
 from app.people.admin.widgets import StdGradeWgt
-from app.registry.admin.resources import GradeResource, RegistrationResource
+from app.registry.admin.resources import GradeResource, RegioResource
 from app.registry.models.registration import RegistrationStatus
-from app.shared.data import legacy_registration_rows
+from app.shared.data import legacy_regio_rows
 from app.shared.importing import (
     CsvRowLogger,
     coerce_field,
@@ -18,11 +18,11 @@ from app.shared.importing import (
     normalize_field,
     pipeline,
     rename_headers,
-    set_course_codes,
-    setdefault_field,
+    set_crs_codes,
+    setdft_field,
 )
 from app.shared.utils import get_in_row, parse_str
-from app.timetable.admin.section_widgets import SectionWgt
+from app.timetable.admin.section_widgets import SecWgt
 from app.timetable.utils import normalize_academic_year
 
 SEM_MAP = {
@@ -46,7 +46,7 @@ LEGACY_INVALID_FIELDS = {
 }
 
 
-def normalize_semester(raw: str | None) -> str:
+def normalize_sem(raw: str | None) -> str:
     """Collapse textual semester labels to numeric slots."""
     token = parse_str(raw, "upper")
     return SEM_MAP.get(token, "1")
@@ -78,7 +78,7 @@ class LegacyGradeSheetResource(GradeResource):
         "semester": "semester_no",
         "studentid": "student_id",
     }
-    fallback_curriculum = "Legacy"
+    fallback_curri = "Legacy"
 
     def __init__(self, *args, **kwargs):
         """Track invalid rows skipped during import."""
@@ -119,17 +119,17 @@ class LegacyGradeSheetResource(GradeResource):
         self.invalid_logger.report(command)
 
     @cached_property
-    def registration_lookup(self) -> dict[tuple[str, str, str], tuple[str, str]]:
+    def regio_lookup(self) -> dict[tuple[str, str, str], tuple[str, str]]:
         """Map (student, academic_year, semester) to (major, college)."""
         lookup: dict[tuple[str, str, str], tuple[str, str]] = {}
-        for row in legacy_registration_rows():
+        for row in legacy_regio_rows():
             student_id = get_in_row("student_id", row) or get_in_row("StudentID", row)
             if not student_id:
                 continue
             year = normalize_academic_year(
                 get_in_row("academic_year", row) or get_in_row("AcademicYear", row)
             )
-            sem = normalize_semester(
+            sem = normalize_sem(
                 get_in_row("semester_no", row) or get_in_row("Semester", row)
             )
             if not year:
@@ -146,10 +146,10 @@ class LegacyGradeSheetResource(GradeResource):
             row,
             rename_headers(self.dataset_headers),
             normalize_field("academic_year", normalize_academic_year),
-            normalize_field("semester_no", normalize_semester),
+            normalize_field("semester_no", normalize_sem),
             coerce_field("credit_hours", default="0"),
         )
-        set_course_codes(row)
+        set_crs_codes(row)
         row["student_id"] = get_in_row("student_id", row)
         row["section_no"] = get_in_row("section_no", row)
         row["course_no"] = get_in_row("course_no", row)
@@ -159,12 +159,10 @@ class LegacyGradeSheetResource(GradeResource):
             row.get("academic_year", ""),
             row.get("semester_no", ""),
         )
-        major, college = self.registration_lookup.get(
-            key, ("", row.get("college_code", ""))
-        )
+        major, college = self.regio_lookup.get(key, ("", row.get("college_code", "")))
         current_curriculum = get_in_row("curriculum", row)
         if not current_curriculum:
-            current_curriculum = major or self.fallback_curriculum
+            current_curriculum = major or self.fallback_curri
         row["curriculum_long_name"] = current_curriculum
         row["curriculum"] = _truncate_curri_label(current_curriculum)
         if college:
@@ -190,7 +188,7 @@ class LegacyGradeSheetResource(GradeResource):
         )
 
 
-class LegacyRegistrationResource(RegistrationResource):
+class LegacyRegioResource(RegioResource):
     """Load SmartSchool registrations while ensuring statuses and widgets."""
 
     dataset_headers = {
@@ -214,7 +212,7 @@ class LegacyRegistrationResource(RegistrationResource):
     section = fields.Field(
         attribute="section",
         column_name="section_no",
-        widget=SectionWgt(),
+        widget=SecWgt(),
     )
     status = fields.Field(
         attribute="status",
@@ -228,30 +226,30 @@ class LegacyRegistrationResource(RegistrationResource):
             row,
             rename_headers(self.dataset_headers),
             normalize_field("academic_year", normalize_academic_year),
-            normalize_field("semester_no", normalize_semester),
+            normalize_field("semester_no", normalize_sem),
             coerce_field("credit_hours", default="0"),
         )
-        set_course_codes(row)
+        set_crs_codes(row)
         row["student_id"] = get_in_row("student_id", row)
         row["section_no"] = get_in_row("section_no", row)
         row["course_no"] = get_in_row("course_no", row)
-        current_curriculum = get_in_row("curriculum", row) or self.fallback_curriculum
+        current_curriculum = get_in_row("curriculum", row) or self.fallback_curri
         row["curriculum_long_name"] = current_curriculum
         row["curriculum"] = _truncate_curri_label(current_curriculum)
         pipeline(
             row,
-            setdefault_field(
+            setdft_field(
                 "status",
-                lambda _: RegistrationStatus.get_default().code,
+                lambda _: RegistrationStatus.get_dft().code,
             ),
         )
 
         return super().before_import_row(row, **kwargs)
 
     @property
-    def fallback_curriculum(self) -> str:
+    def fallback_curri(self) -> str:
         """Return a default curriculum label for registrations."""
-        return LegacyGradeSheetResource.fallback_curriculum
+        return LegacyGradeSheetResource.fallback_curri
 
     # ---------------- duplicate handling / logging ----------------
 

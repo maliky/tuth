@@ -45,7 +45,7 @@ def _resolve_sem(
 
     # or the student last enrolled semester or the current one
     if semester is None:
-        semester = student.last_enrolled_semester or Semester.get_current_semester()
+        semester = student.last_enrolled_semester or Semester.get_current_sem()
     return semester, list(open_semesters)
 
 
@@ -90,14 +90,14 @@ def _build_sidebar_links(
         )
     if payment_semester_id:
         payment_statement_url = reverse(
-            "student_payment_receipt",
+            "std_payment_receipt",
             args=[payment_semester_id],
         )
     else:
-        current_semester = Semester.get_current_semester()
+        current_semester = Semester.get_current_sem()
         if current_semester:
             payment_statement_url = reverse(
-                "student_payment_receipt",
+                "std_payment_receipt",
                 args=[current_semester.id],
             )
     links: list[dict[str, str | bool]] = [
@@ -119,7 +119,7 @@ def _build_sidebar_links(
         },
         {
             "label": "Invoice statement",
-            "href": reverse("student_invoice_statement"),
+            "href": reverse("std_invoice_statement"),
             "active": False,
         },
         {"label": "Support", "href": f"{dashboard_url}#support", "active": False},

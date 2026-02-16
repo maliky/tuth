@@ -3,7 +3,7 @@
 from admin_searchable_dropdown.filters import AutocompleteFilter
 
 
-class GradeSectionFlt(AutocompleteFilter):
+class GradeSecFlt(AutocompleteFilter):
     title = "Sections"
     field_name = "section"
 

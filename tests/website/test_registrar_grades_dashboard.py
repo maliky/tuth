@@ -19,60 +19,60 @@ def _selected_sem_value(response) -> str:
     return cast(str, selected_options[0]["value"])
 
 
-def test_dashboard_defaults_to_latest_semester_with_grades(
+def test_dashboard_dfts_to_latest_sem_with_grades(
     client,
-    registrar_user_factory,
-    registrar_semester_pair_factory,
-    registrar_section_factory,
-    registrar_student_factory,
-    registrar_grade_factory,
+    reg_user_factory,
+    reg_sem_pair_factory,
+    reg_sec_factory,
+    reg_std_factory,
+    reg_grade_factory,
 ) -> None:
     """Default semester should be the most recent semester that has grades."""
-    user = registrar_user_factory("registrar_dashboard_default")
-    _academic_year, previous, current = registrar_semester_pair_factory()
+    user = reg_user_factory("registrar_dashboard_default")
+    _academic_year, previous, current = reg_sem_pair_factory()
 
-    previous_section, curriculum = registrar_section_factory(
+    previous_section, curriculum = reg_sec_factory(
         previous,
         course_number="301",
         curriculum_short_name="CURRI_REG_VIEW",
     )
-    previous_student = registrar_student_factory(
+    previous_student = reg_std_factory(
         "registrar_view_prev",
         curriculum,
         previous,
     )
-    registrar_grade_factory(previous_student, previous_section)
+    reg_grade_factory(previous_student, previous_section)
 
-    current_section, _current_curriculum = registrar_section_factory(
+    current_section, _current_curriculum = reg_sec_factory(
         current,
         course_number="302",
         curriculum_short_name="CURRI_REG_VIEW",
     )
-    current_student = registrar_student_factory(
+    current_student = reg_std_factory(
         "registrar_view_current",
         curriculum,
         current,
     )
-    registrar_grade_factory(current_student, current_section)
+    reg_grade_factory(current_student, current_section)
 
     client.force_login(user)
-    response = client.get(reverse("registrar_grades_dashboard"))
+    response = client.get(reverse("reg_grades_dashboard"))
 
     assert response.status_code == 200
     assert _selected_sem_value(response) == str(current.id)
 
 
-def test_dashboard_defaults_to_all_semesters_without_grades(
+def test_dashboard_dfts_to_all_sems_without_grades(
     client,
-    registrar_user_factory,
-    registrar_semester_pair_factory,
+    reg_user_factory,
+    reg_sem_pair_factory,
 ) -> None:
     """Default semester should be 'All semesters' when no grades exist."""
-    user = registrar_user_factory("registrar_dashboard_no_grades")
-    registrar_semester_pair_factory()
+    user = reg_user_factory("registrar_dashboard_no_grades")
+    reg_sem_pair_factory()
 
     client.force_login(user)
-    response = client.get(reverse("registrar_grades_dashboard"))
+    response = client.get(reverse("reg_grades_dashboard"))
 
     assert response.status_code == 200
     assert _selected_sem_value(response) == "all"

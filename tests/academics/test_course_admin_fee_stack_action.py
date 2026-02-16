@@ -27,7 +27,7 @@ class DummyAdmin:
     def __init__(self) -> None:
         self.messages: list[MessageT] = []
 
-    def message_user(self, request, message, level=messages.INFO) -> None:
+    def msg_user(self, request, message, level=messages.INFO) -> None:
         """Store user-facing action messages for assertions."""
         self.messages.append((str(message), int(level)))
 
@@ -38,12 +38,12 @@ def _fee_type(code: str, label: str) -> FeeType:
     return fee_type
 
 
-def test_attach_fee_stacks_action_attaches_multiple_stacks_to_courses(
-    course_factory,
+def test_attach_fee_stacks_action_attaches_multiple_stacks_to_crss(
+    crs_factory,
 ) -> None:
     """Bulk action should attach selected stacks to selected courses."""
-    course_one = course_factory("601")
-    course_two = course_factory("602")
+    course_one = crs_factory("601")
+    course_two = crs_factory("602")
     lab_fee_type = _fee_type("lab", "Laboratory")
     reg_fee_type = _fee_type("registration", "Registration")
 
@@ -97,10 +97,10 @@ def test_attach_fee_stacks_action_attaches_multiple_stacks_to_courses(
 
 
 def test_attach_fee_stacks_action_skips_existing_and_invalid_links(
-    course_factory,
+    crs_factory,
 ) -> None:
     """Bulk action should skip existing and overlap-invalid attachments."""
-    course = course_factory("603")
+    course = crs_factory("603")
     lab_fee_type = _fee_type("lab", "Laboratory")
     reg_fee_type = _fee_type("registration", "Registration")
 

@@ -11,13 +11,13 @@ from app.finance.admin.widgets import (
     PaymentMethodWgt,
     PaymentStatusWgt,
     StaffWgt,
-    StdSemesterInvoiceWgt,
+    StdSemInvoiceWgt,
 )
 from app.finance.models.invoice import CourseInvoice
 from app.finance.models.payment import Payment
 from app.people.admin.widgets import StdUserWgt
 from app.shared.utils import parse_str
-from app.timetable.admin.core_widgets import SemesterWgt
+from app.timetable.admin.core_widgets import SemWgt
 
 
 class InvoiceResource(resources.ModelResource):
@@ -36,7 +36,7 @@ class InvoiceResource(resources.ModelResource):
     semester = fields.Field(
         column_name="semester_no",
         attribute="semester",
-        widget=SemesterWgt(),
+        widget=SemWgt(),
     )
     status = fields.Field(
         column_name="status_code",
@@ -76,7 +76,7 @@ class InvoiceResource(resources.ModelResource):
         semester = getattr(obj, "semester", None)
         return str(semester.academic_year.code) if semester else ""
 
-    def dehydrate_course_no(self, obj):
+    def dehydrate_crs_no(self, obj):
         course = getattr(obj.curriculum_course, "course", None)
         return getattr(course, "number", "") if course else ""
 
@@ -91,11 +91,11 @@ class InvoiceResource(resources.ModelResource):
         college = getattr(department, "college", None)
         return getattr(college, "code", "") if college else ""
 
-    def dehydrate_student_name(self, obj):
+    def dehydrate_std_name(self, obj):
         student = getattr(obj, "student", None)
         return getattr(student, "long_name", "") if student else ""
 
-    def dehydrate_curriculum_course(self, obj):
+    def dehydrate_curri_crs(self, obj):
         curriculum = getattr(obj.curriculum_course, "curriculum", None)
         return getattr(curriculum, "short_name", "") if curriculum else ""
 
@@ -114,7 +114,7 @@ class PaymentResource(resources.ModelResource):
     student_semester_invoice = fields.Field(
         column_name="student_semester_invoice",
         attribute="student_semester_invoice",
-        widget=StdSemesterInvoiceWgt(),
+        widget=StdSemInvoiceWgt(),
     )
     payment_method = fields.Field(
         column_name="payment_method",
@@ -175,14 +175,14 @@ class PaymentResource(resources.ModelResource):
             return ""
         return parse_str(field(invoice))
 
-    def dehydrate_student_id(self, obj):
+    def dehydrate_std_id(self, obj):
         return self._invoice_value(obj, lambda inv: inv.student.student_id)
 
-    def dehydrate_curriculum(self, obj):
+    def dehydrate_curri(self, obj):
         # Parent invoices can span multiple curricula, so keep this export column blank.
         return ""
 
-    def dehydrate_course_no(self, obj):
+    def dehydrate_crs_no(self, obj):
         # Parent invoices can span multiple courses, so keep this export column blank.
         return ""
 
@@ -192,7 +192,7 @@ class PaymentResource(resources.ModelResource):
     def dehydrate_college_code(self, obj):
         return ""
 
-    def dehydrate_semester_no(self, obj):
+    def dehydrate_sem_no(self, obj):
         return self._invoice_value(obj, lambda inv: inv.semester.number)
 
     def dehydrate_academic_year(self, obj):

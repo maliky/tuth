@@ -21,7 +21,7 @@ PaymentFactoryT: TypeAlias = Callable[[CourseInvoice, Decimal], Payment]
 
 
 @pytest.fixture
-def student_invoice_factory() -> StdInvoiceFactoryT:
+def std_invoice_factory() -> StdInvoiceFactoryT:
     """Return a callable to create invoices for students in a semester."""
 
     def _make(
@@ -30,7 +30,7 @@ def student_invoice_factory() -> StdInvoiceFactoryT:
         amount: Decimal = D100,
         curriculum_course: CurriCourse | None = None,
     ) -> CourseInvoice:
-        course = curriculum_course or CurriCourse.get_default()
+        course = curriculum_course or CurriCourse.get_dft()
         return CourseInvoice.objects.create(
             curriculum_course=course,
             student=student,

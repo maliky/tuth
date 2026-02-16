@@ -24,8 +24,8 @@ from app.academics.models.curriculum_course import CurriCourse
 from app.academics.models.prerequisite import Prerequisite
 from app.finance.fee_assignment import (
     FeeAssignmentSummaryT,
-    attach_semester_fee_stacks,
-    optional_semester_stack_choices,
+    attach_sem_fee_stacks,
+    optional_sem_stack_choices,
 )
 from app.finance.models.invoice import CourseInvoice, StdSemesterInvoice
 from app.finance.models.payment import Payment
@@ -40,9 +40,9 @@ from app.timetable.utils import format_datetime, format_short_datetime
 
 from .course_requirements import (
     ReqCheckResultT,
-    build_requirement_context,
-    evaluate_curriculum_course_requirements,
-    requirement_failure_messages,
+    build_req_context,
+    eval_curri_crs_reqs,
+    req_failure_msgs,
 )
 from .student_helpers import (
     _build_sidebar_links,
@@ -52,7 +52,7 @@ from .student_helpers import (
 )
 
 
-class SemesterGradeRowT(TypedDict):
+class SemGradeRowT(TypedDict):
     """Row details for a semester grade listing."""
 
     code: str
@@ -61,7 +61,7 @@ class SemesterGradeRowT(TypedDict):
     grade: str
 
 
-class SemesterGradeGpT(TypedDict):
+class SemGradeGpT(TypedDict):
     """Grade grouping details for a single semester."""
 
     semester_id: int
@@ -69,7 +69,7 @@ class SemesterGradeGpT(TypedDict):
     gpa: str
     credits_total: int
     receipt_url: str
-    courses: list[SemesterGradeRowT]
+    courses: list[SemGradeRowT]
 
 
 def _append_reason_line(reason_lines: list[str], reason: str) -> None:
@@ -97,11 +97,11 @@ def _curri_level_hint(curriculum_course: CurriCourse) -> str:
 def download_invoice_statement(request: HttpRequest) -> HttpResponse:
     """Redirect to the invoice statement view."""
     _require_std(request.user)
-    return redirect(reverse("student_invoice_statement"))
+    return redirect(reverse("std_invoice_statement"))
 
 
 @login_required
-def student_invoice_statement(request: HttpRequest) -> HttpResponse:
+def std_invoice_statement(request: HttpRequest) -> HttpResponse:
     """Render the invoice statement for the current student."""
     student = _require_std(request.user)
     invoices = list(
@@ -131,7 +131,7 @@ def student_invoice_statement(request: HttpRequest) -> HttpResponse:
         "student_profile": student_profile,
         "sidebar_links": sidebar_links,
     }
-    return render(request, "website/student_invoice_statement.html", context)
+    return render(request, "website/std_invoice_statement.html", context)
 
 
 @login_required
@@ -146,7 +146,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     """
     student = _require_std(request.user)
     semester, open_semesters = _resolve_sem(student, request.GET.get("semester"))
-    registration_open = bool(semester and semester.is_registration_open())
+    registration_open = bool(semester and semester.is_regio_open())
     registration: Optional[Registration] = None
     ajax_messages: list[dict[str, str]] = []
 
@@ -302,7 +302,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 messages.error(request, "Registration is not open for this semester.")
                 return _redirect_to_sem()
             # Pending registrations are cleaned up after 48 hours by a scheduled task.
-            pending_status = RegistrationStatus.get_default()
+            pending_status = RegistrationStatus.get_dft()
             current_registrations_qs = Registration.objects.filter(
                 student=student,
                 section__semester=semester,
@@ -319,9 +319,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 ).get("total")
                 or 0
             )
-            allowed_course_ids = set(
-                student.allowed_courses().values_list("id", flat=True)
-            )
+            allowed_course_ids = set(student.allowed_crss().values_list("id", flat=True))
             sections = (
                 Section.objects.filter(id__in=section_ids, semester=semester)
                 .select_related("curriculum_course__course")
@@ -351,14 +349,14 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                     section.curriculum_course
                 )
                 new_credit_total += int(section.curriculum_course.credit_hours.code)
-            requirement_context = build_requirement_context(student)
+            requirement_context = build_req_context(student)
             blocked_by_requirements: dict[int, ReqCheckResultT] = {}
             requirement_errors_by_course: dict[int, str] = {}
             for (
                 course_id,
                 curriculum_course,
             ) in selected_curriculum_course_by_course_id.items():
-                requirement_result = evaluate_curriculum_course_requirements(
+                requirement_result = eval_curri_crs_reqs(
                     student=student,
                     curriculum_course=curriculum_course,
                     selected_course_ids=selected_course_ids,
@@ -370,9 +368,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 course_label = (
                     curriculum_course.course.short_code or curriculum_course.course.code
                 )
-                reason_text = "; ".join(
-                    requirement_failure_messages(requirement_result["failures"])
-                )
+                reason_text = "; ".join(req_failure_msgs(requirement_result["failures"]))
                 requirement_errors_by_course[course_id] = f"{course_label}: {reason_text}"
             max_credit_hours = _max_credit_hours(student)
             # Enforce the per-student credit limit before persisting registrations.
@@ -448,7 +444,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                     else:
                         skipped += 1
                 if semester is not None:
-                    fee_assignment_summary = attach_semester_fee_stacks(
+                    fee_assignment_summary = attach_sem_fee_stacks(
                         student=student,
                         semester=semester,
                         optional_stack_ids=optional_stack_ids,
@@ -731,9 +727,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 "can_cancel": reg.status_id == "pending",
                 "can_view": can_view,
                 "section_url": (
-                    reverse("student_section_detail", args=[section.id])
-                    if can_view
-                    else ""
+                    reverse("std_sec_detail", args=[section.id]) if can_view else ""
                 ),
             }
         )
@@ -801,9 +795,9 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         cooldown_course_ids = set(cooldown_course_locks)
         attempt_blocked_course_ids = _attempt_blocked_crss(student, semester)
 
-    requirement_context = build_requirement_context(student)
+    requirement_context = build_req_context(student)
     passed_course_ids = requirement_context["passed_course_ids"]
-    allowed_course_ids = set(student.allowed_courses().values_list("id", flat=True))
+    allowed_course_ids = set(student.allowed_crss().values_list("id", flat=True))
     prereqs: Iterable[Prerequisite] = []
     if course_ids:
         prereqs = (
@@ -835,7 +829,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         course_sections = sections_by_course.get(course.id, [])
         has_scheduled_section = bool(course_sections)
         prereq_data = prereq_map.get(course.id, [])
-        requirement_result = evaluate_curriculum_course_requirements(
+        requirement_result = eval_curri_crs_reqs(
             student=student,
             curriculum_course=cc,
             selected_course_ids={course.id},
@@ -847,7 +841,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             for failure in requirement_failures
             if failure.get("code") != "incomplete_coreq_all"
         ]
-        requirement_reason_lines = requirement_failure_messages(requirement_failures)
+        requirement_reason_lines = req_failure_msgs(requirement_failures)
         is_eligible = all(
             [
                 registration_open,
@@ -1001,9 +995,9 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     student_profile = _build_std_profile(student)
     student_profile["academic_year"] = _format_sem_label()
 
-    completed_courses: list[SemesterGradeRowT] = []
-    semester_grade_groups: list[SemesterGradeGpT] = []
-    semester_grade_lookup: dict[int, SemesterGradeGpT] = {}
+    completed_courses: list[SemGradeRowT] = []
+    semester_grade_groups: list[SemGradeGpT] = []
+    semester_grade_lookup: dict[int, SemGradeGpT] = {}
     semester_gpa_points: DefaultDict[int, float] = defaultdict(float)
     semester_gpa_credits: DefaultDict[int, int] = defaultdict(int)
     # Track total credits per semester for display.
@@ -1057,7 +1051,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         grade_value = grade.value
         grade_code = grade_value.code.upper() if grade_value and grade_value.code else ""
 
-        row: SemesterGradeRowT = {
+        row: SemGradeRowT = {
             "code": course.short_code or course.code,
             "title": course.title or "",
             "credits": credits,
@@ -1092,7 +1086,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     for group in semester_grade_groups:
         if group["semester_id"] in cleared_invoice_semester_ids:
             group["receipt_url"] = reverse(
-                "student_payment_receipt",
+                "std_payment_receipt",
                 args=[group["semester_id"]],
             )
         group["courses"].sort(key=lambda row: row["code"] or "")
@@ -1124,7 +1118,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         {
             "title": f"{student.curriculum.short_name} curriculum overview",
             "description": f"{curriculum_course_count} mapped courses in your program.",
-            "cta": reverse("student_curriculum_courses"),
+            "cta": reverse("std_curri_crss"),
         },
         # Unofficial transcript card removed for the current dashboard scope.
         {
@@ -1155,7 +1149,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     current_semester_receipt_url = ""
     if semester and semester.id in cleared_invoice_semester_ids:
         current_semester_receipt_url = reverse(
-            "student_payment_receipt",
+            "std_payment_receipt",
             args=[semester.id],
         )
 
@@ -1170,7 +1164,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         for sem in open_semesters
     ]
     optional_fee_stack_options = (
-        optional_semester_stack_choices(student=student, semester=semester)
+        optional_sem_stack_choices(student=student, semester=semester)
         if semester is not None
         else []
     )

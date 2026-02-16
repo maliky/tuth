@@ -47,5 +47,5 @@ class TranscriptRequest(StatusableMixin, models.Model):
     def save(self, *args, **kwargs):
         """Ensure a default status exists before saving."""
         if not self.status_id:
-            self.status = TranscriptRequestStatus.get_default()
+            self.status = TranscriptRequestStatus.get_dft()
         return super().save(*args, **kwargs)

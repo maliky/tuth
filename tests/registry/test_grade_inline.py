@@ -6,14 +6,14 @@ import pytest
 from django.contrib import admin
 
 from app.timetable.models.section import Section
-from app.timetable.admin.section_registers import SectionAdmin
+from app.timetable.admin.section_registers import SecAdmin
 from app.registry.admin.inlines import GradeIL
 
 
 @pytest.mark.django_db
-def test_section_admin_has_grade_inline():
+def test_sec_admin_has_grade_inline():
     """Check that the admin section shows the grades."""
-    admin_obj = SectionAdmin(Section, admin.site)
+    admin_obj = SecAdmin(Section, admin.site)
     assert GradeIL in admin_obj.inlines
 
 
@@ -21,12 +21,12 @@ def test_section_admin_has_grade_inline():
 # @pytest.mark.django_db
 # def test_grade_inline_visible(
 #     admin_client,
-#     curriculum_course_factory,
-#     semester_factory,
+#     curri_crs_factory,
+#     sem_factory,
 # ):
 
-#     curriculum_course = curriculum_course_factory()
-#     semester = semester_factory()
+#     curriculum_course = curri_crs_factory()
+#     semester = sem_factory()
 #     section = Section.objects.create(
 #         curriculum_course=curriculum_course,
 #         semester=semester,

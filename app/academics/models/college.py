@@ -13,7 +13,7 @@ from app.shared.auth.perms import UserRole
 class College(models.Model):
     """Institutional unit responsible for a set of Curris/Programs.
 
-    Example: See get_default
+    Example: See get_dft
 
     Side Effects:
         save() sets long_name based on code.
@@ -34,7 +34,7 @@ class College(models.Model):
         return f"{self.code}"
 
     @classmethod
-    def get_default(cls) -> College:
+    def get_dft(cls) -> College:
         """Return the default college ie. COAS."""
         # will set the long_name by default on save
         def_clg, _ = cls.objects.get_or_create(code="DEFT")
@@ -56,7 +56,7 @@ class College(models.Model):
     # ------------------------------------------------------------------
 
     @property
-    def student_counts_by_level(self) -> str:
+    def std_counts_by_level(self) -> str:
         """Return number of students grouped by class level."""
         Student = apps.get_model("people", "Student")
 
@@ -75,12 +75,12 @@ class College(models.Model):
         return ", ".join(f"{lvl}: {cnt}" for lvl, cnt in counts.items())
 
     @property
-    def department_str(self) -> str:
+    def dpt_str(self) -> str:
         """Return departments of this college."""
         return ", ".join([f"{dept.code}" for dept in self.departments.all()])
 
     @property
-    def curricula_count(self) -> int:
+    def curra_count(self) -> int:
         """Return number of curricula under this college."""
         return int(self.curricula.count())
 
@@ -91,13 +91,13 @@ class College(models.Model):
         return int(Faculty.objects.filter(college=self).count())
 
     @property
-    def curricula_names(self) -> str:
+    def curra_names(self) -> str:
         """Return comma-separated curriculum short names for this college."""
         names = self.curricula.order_by("short_name").values_list("short_name", flat=True)
         return ", ".join(names)
 
     @property
-    def department_chairs(self) -> str:
+    def dpt_chairs(self) -> str:
         """Return comma-separated department codes with assigned chairs."""
         RoleAssignment = apps.get_model("people", "RoleAssignment")
         dept_codes = (
@@ -111,14 +111,14 @@ class College(models.Model):
         return ", ".join(dept_codes)
 
     @property
-    def course_count(self) -> int:
+    def crs_count(self) -> int:
         """Return number of distinct courses offered."""
-        return int(self.get_courses().count())
+        return int(self.get_crss().count())
 
-    def get_courses(self):
+    def get_crss(self):
         """Return the list of distinc courses for this college.
 
-        could be done with a loop on dept and dept.get_courses
+        could be done with a loop on dept and dept.get_crss
         but not too efficient.
         """
         Course = apps.get_model("academics", "Course")

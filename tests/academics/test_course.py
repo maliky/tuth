@@ -11,18 +11,18 @@ pytestmark = pytest.mark.django_db
 # ~~~~~~~~~~~~~~~~ DB Constraints ~~~~~~~~~~~~~~~~
 
 
-def test_course_number_per_department(course_factory):
+def test_crs_number_per_dpt(crs_factory):
     """In a department a course number should be unique."""
-    course = course_factory("101")
+    course = crs_factory("101")
 
     with pytest.raises(IntegrityError):
         with transaction.atomic():
             Course.objects.create(department=course.department, number="101")
 
 
-def test_course_get_or_create_respects_fuzzy_flag(department_factory):
+def test_crs_get_or_create_respects_fuzzy_flag(dpt_factory):
     """Fuzzy threshold reuses near-duplicates; default (1.0) creates a new course."""
-    dept = department_factory("FUZY")
+    dept = dpt_factory("FUZY")
     base, _ = Course.objects.get_or_create(
         department=dept, number="101", defaults={"title": "Calculus I"}
     )

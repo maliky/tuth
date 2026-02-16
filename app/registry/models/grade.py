@@ -74,7 +74,7 @@ class GradeValue(models.Model):
         super().save(*args, **kwargs)
 
     @classmethod
-    def get_default(cls) -> Self:
+    def get_dft(cls) -> Self:
         """Return a default Grade, IP."""
         def_grd, _ = cls.objects.get_or_create(code="ip")
         return cast(Self, def_grd)
@@ -90,7 +90,7 @@ class Grade(models.Model):
         >>> from app.registry.models.grade import Grade
         >>> Grade.objects.create(
         ...     student=student_profile,   # check test factories
-        ...     section=section_factory(1),
+        ...     section=sec_factory(1),
         ...     grade="A",
         ... )
     """

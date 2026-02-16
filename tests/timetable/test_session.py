@@ -11,7 +11,7 @@ pytestmark = pytest.mark.django_db  # replace the @pytest.mark.django_db decorat
 # ~~~~~~~~~~~~~~~~ DB Constraints ~~~~~~~~~~~~~~~~
 
 
-def test_uniq_schedule_per_section(room, section, schedule):
+def test_uniq_schedule_per_sec(room, section, schedule):
     """In session, a (section, schedule) pair may appear at most once in SecSession rows.
 
     1. First insert ⟶ OK

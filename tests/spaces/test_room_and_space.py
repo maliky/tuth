@@ -19,14 +19,14 @@ def test_unique_room_per_space():
 
 
 @pytest.mark.django_db(transaction=True)  # needed for the transaction=True
-def test_default_room_conflict():
+def test_dft_room_conflict():
     """Default blank rooms to TBA values.
 
     When code and space are blank the save() hook defaults to (space='TBA', code='TBA').
 
     Saving a second empty room violates the composite unique key.
     """
-    space = Space.get_default()
+    space = Space.get_dft()
     Room(code="1", space=space).save()  # first implicit “TBA / TBA”
     with pytest.raises(IntegrityError):
         with transaction.atomic():

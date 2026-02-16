@@ -23,10 +23,10 @@ from tqdm import tqdm
 from app.academics.choices import COLLEGE_CODE
 from app.academics.ensures import (
     ensure_college,
-    ensure_course,
-    ensure_curriculum,
-    ensure_curriculum_course,
-    ensure_department,
+    ensure_crs,
+    ensure_curri,
+    ensure_curri_crs,
+    ensure_dpt,
 )
 from app.academics.models.college import College
 from app.academics.models.course import Course
@@ -40,7 +40,7 @@ from app.people.utils import name_parts_from_row
 from app.registry.models import CreditHour
 from app.shared.utils import get_in_row, parse_str, to_int
 from app.spaces.models.core import Room, Space
-from app.timetable.ensures import ensure_semester
+from app.timetable.ensures import ensure_sem
 from app.timetable.models.schedule import Schedule
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
@@ -228,7 +228,7 @@ class Command(BaseCommand):
         created = not Semester.objects.filter(
             academic_year__code=ay_code, number=sem_no
         ).exists()
-        semester = ensure_semester(ay_code, sem_no)
+        semester = ensure_sem(ay_code, sem_no)
         if created:
             stats.semesters += 1
         return semester
@@ -245,7 +245,7 @@ class Command(BaseCommand):
         self, dept_code: str, college: College, stats: ImportStats
     ) -> Department:
         created = not Department.objects.filter(code=dept_code, college=college).exists()
-        department = ensure_department(dept_code, college)
+        department = ensure_dpt(dept_code, college)
         if created:
             stats.departments += 1
         return department
@@ -266,7 +266,7 @@ class Command(BaseCommand):
             return candidates[0]
 
         created = True
-        course = ensure_course(department, course_no, title=title)
+        course = ensure_crs(department, course_no, title=title)
         if created:
             stats.courses += 1
         return course
@@ -294,7 +294,7 @@ class Command(BaseCommand):
         if curriculum is not None:
             return curriculum
 
-        curriculum = ensure_curriculum("", college, fuzzy_threshold=1.0)
+        curriculum = ensure_curri("", college, fuzzy_threshold=1.0)
         stats.curricula += 1
         return curriculum
 
@@ -318,7 +318,7 @@ class Command(BaseCommand):
         created = not CurriCourse.objects.filter(
             curriculum=curriculum, course=course
         ).exists()
-        curriculum_course = ensure_curriculum_course(
+        curriculum_course = ensure_curri_crs(
             curriculum=curriculum,
             course=course,
             credit_code=credit_hours.code,
@@ -400,7 +400,7 @@ class Command(BaseCommand):
         space_code, room_code = split_location(location_str)
 
         if space_code == "TBA":
-            space = Space.get_default()
+            space = Space.get_dft()
         else:
             space, space_created = Space.objects.get_or_create(
                 code=space_code, defaults={"full_name": space_code}

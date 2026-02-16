@@ -62,7 +62,7 @@ class AcademicYear(models.Model):
         super().save(*args, **kwargs)
 
     @classmethod
-    def get_default(cls, today: date | None = None) -> "AcademicYear":
+    def get_dft(cls, today: date | None = None) -> "AcademicYear":
         """Return the current academic year.
 
         Uses Aug 1 as the rollover: dates on/after Aug 1 belong to the new academic year,

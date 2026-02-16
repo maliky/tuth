@@ -10,20 +10,20 @@ from app.academics.admin.widgets import (
     CurriWgt,
 )
 from app.people.admin.widgets import FacultyFullnameWgt
-from app.timetable.ensures import ensure_semester, ensure_section, ensure_semester_code
+from app.timetable.ensures import ensure_sem, ensure_sec, ensure_sem_code
 from app.shared.utils import get_in_row, asserts_keys, to_int
-from app.timetable.admin.core_widgets import SemesterCodeWgt, SemesterWgt
-from app.timetable.utils import parse_semester_code
+from app.timetable.admin.core_widgets import SemCodeWgt, SemWgt
+from app.timetable.utils import parse_sem_code
 from app.timetable.models.section import Section
 
 
-class SectionWgt(widgets.ForeignKeyWidget):
+class SecWgt(widgets.ForeignKeyWidget):
     """Create a Section from multiple CSV columns."""
 
     def __init__(self, *, fuzzy_threshold: float = 1.0):
         super().__init__(Section)  # using pk until export is done
         self.curriculum_course_w = CurriCourseWgt()
-        self.sem_w = SemesterWgt()
+        self.sem_w = SemWgt()
         self.faculty_w = FacultyFullnameWgt()
         self.fuzzy_threshold = fuzzy_threshold
         self._cache: dict[tuple[int, int, int, int | None], Section] = {}
@@ -47,7 +47,7 @@ class SectionWgt(widgets.ForeignKeyWidget):
         #  if we do not have semester_no or academic_year, we default to 25-26s2 sem.
         semester_value = get_in_row("semester_no", row)
         academic_value = get_in_row("academic_year", row)
-        semester = ensure_semester(academic_value, semester_value, default="25-26s2")
+        semester = ensure_sem(academic_value, semester_value, default="25-26s2")
 
         faculty_value = get_in_row("faculty", row)
         faculty = self.faculty_w.clean(faculty_value, row=row)
@@ -62,7 +62,7 @@ class SectionWgt(widgets.ForeignKeyWidget):
         if cached:
             return cached
 
-        section = ensure_section(
+        section = ensure_sec(
             semester=semester,
             curriculum_course=curriculum_course,
             number=sec_no,
@@ -79,7 +79,7 @@ class SectionWgt(widgets.ForeignKeyWidget):
         return f"{value.semester}:{value.course.code}:s{value.number}"
 
 
-class SectionCodeWgt(widgets.Widget):
+class SecCodeWgt(widgets.Widget):
     """Resolve YY-YY_SemN:sec_no codes into :class:Section objects."""
 
     def __init__(self) -> None:
@@ -100,12 +100,12 @@ class SectionCodeWgt(widgets.Widget):
 
         sem_code_value, _, sec_value = [v.strip() for v in value.partition(":")]
 
-        ay_code, sem_no = parse_semester_code(sem_code_value)
+        ay_code, sem_no = parse_sem_code(sem_code_value)
         if not ay_code and not sem_no:
             return None
 
         section, _ = Section.objects.get_or_create(
-            semester=ensure_semester_code(sem_code_value),
+            semester=ensure_sem_code(sem_code_value),
             course=course,
             number=to_int(sec_value),
         )

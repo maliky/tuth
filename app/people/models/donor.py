@@ -63,7 +63,7 @@ class Donor(AbstractPerson):
         )
 
     @classmethod
-    def get_default(cls) -> "Donor":
+    def get_dft(cls) -> "Donor":
         """Return a placeholder Donor for legacy imports."""
         user, created = User.objects.get_or_create(
             username="legacy_donor",

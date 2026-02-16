@@ -53,7 +53,7 @@ class CurriManager(models.Manager["Curriculum"]):
     ) -> tuple[Curriculum | None, float]:
         """Do a fuzzy curriclum search."""
         token = self._token(short_name, long_name)
-        college_code_dft = College.get_default().code
+        college_code_dft = College.get_dft().code
 
         best: tuple[Curriculum | None, float] = (None, 0.0)
         for cur in self.all():
@@ -211,11 +211,11 @@ class Curriculum(StatusableMixin, models.Model):
         return _prefix + self.short_name
 
     @classmethod
-    def get_default(
+    def get_dft(
         cls, short_name: str = "DFT_CUR", def_college: Optional[College] = None
     ) -> Self:
         """Returns a default curriculum."""
-        _college = College.get_default() if def_college is None else def_college
+        _college = College.get_dft() if def_college is None else def_college
         dft_curriculum, _ = cls.objects.get_or_create(
             short_name=short_name, long_name="Default Curriculum", college=_college
         )
@@ -246,11 +246,11 @@ class Curriculum(StatusableMixin, models.Model):
             defaults={"label": as_title(self.status_id)},
         )
 
-    def course_count(self):
+    def crs_count(self):
         """Count hown many courses attached to this curriculum."""
         return self.curriculum_course.count()
 
-    def registered_student_count(self):
+    def registered_std_count(self):
         """Count distinct students who ever registered for this curriculum."""
         Registration = apps.get_model("registry", "Registration")
         return (
@@ -262,7 +262,7 @@ class Curriculum(StatusableMixin, models.Model):
             .count()
         )
 
-    def current_student_count(self):
+    def current_std_count(self):
         """Count distinct students registered in the current semester."""
         StdCurriEnroll = apps.get_model("people", "StdCurriEnroll")
         # Use active curriculum enrollments to reflect current students.
@@ -279,7 +279,7 @@ class Curriculum(StatusableMixin, models.Model):
     def save(self, *args, **kwargs):
         """Save a curriculum instance while setting defaults."""
         if not self.college_id:
-            self.college = College.get_default()
+            self.college = College.get_dft()
         self._ensure_status()
         self._ensure_activity()
         self._ensure_code()

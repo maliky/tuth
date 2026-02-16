@@ -6,9 +6,9 @@ from django.urls import reverse
 pytestmark = pytest.mark.django_db
 
 
-def test_group_admin_shows_users(client, superuser, user_factory, group_factory):
+def test_gp_admin_shows_users(client, superuser, user_factory, gp_factory):
     """Group change page should display member usernames."""
-    group = group_factory("Editors")
+    group = gp_factory("Editors")
     user = user_factory("alice")
     group.user_set.add(user)
 

@@ -4,7 +4,7 @@ from admin_searchable_dropdown.views import AutocompleteJsonView
 from app.academics.models import Curriculum
 
 
-class CurriBySemester(AutocompleteJsonView):
+class CurriBySem(AutocompleteJsonView):
     """Returns the curriculums with section offered during a specific semester."""
 
     model_admin = None

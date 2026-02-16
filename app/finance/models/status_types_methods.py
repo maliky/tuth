@@ -27,7 +27,7 @@ class AccountType(SimpleTableMixin):
         verbose_name_plural = "Account Types"
 
     @classmethod
-    def get_default(cls) -> Self:
+    def get_dft(cls) -> Self:
         """Returns the default AccountType."""
         deft, _ = cls.objects.get_or_create(code="liability")
         return cast(Self, deft)
@@ -62,7 +62,7 @@ class AccountChartType(SimpleTableMixin):
         verbose_name_plural = "Account Types"
 
     @classmethod
-    def get_default(cls) -> Self:
+    def get_dft(cls) -> Self:
         """Returns the default AccountType."""
         deft, _ = cls.objects.get_or_create(code="other")
         return cast(Self, deft)
@@ -70,7 +70,7 @@ class AccountChartType(SimpleTableMixin):
     @classmethod
     def _populate_attributes_and_db(cls):
         """Ensure default rows are tied to a valid AccountType."""
-        account_type = AccountType.get_default()
+        account_type = AccountType.get_dft()
         for val, lbl in cls.DEFAULT_VALUES:
             cls.objects.get_or_create(
                 code=val,
@@ -119,7 +119,7 @@ class FeeType(SimpleTableMixin):
     ]
 
     @classmethod
-    def get_default(cls) -> Self:
+    def get_dft(cls) -> Self:
         """Returns the default FeeType."""
         deft, _ = cls.objects.get_or_create(code="other")
         return cast(Self, deft)
@@ -162,7 +162,7 @@ class InvoiceStatus(SimpleTableMixin):
         return cls.get_by_code("updated")
 
     @classmethod
-    def get_default(cls) -> Self:
+    def get_dft(cls) -> Self:
         """Returns the default InvoiceStatus."""
         return cls.initial()
 
@@ -187,7 +187,7 @@ class PaymentStatus(SimpleTableMixin):
         return cls.get_by_code(code="pending")
 
     @classmethod
-    def get_default(cls) -> Self:
+    def get_dft(cls) -> Self:
         """Returns the default PaymentStatus."""
         return cls.pending()
 
@@ -203,7 +203,7 @@ class PaymentMethod(SimpleTableMixin):
     ]
 
     @classmethod
-    def get_default(cls) -> Self:
+    def get_dft(cls) -> Self:
         """Returns the default PaymentMethod."""
         deft, _ = cls.objects.get_or_create(
             code="cash",
@@ -223,6 +223,6 @@ class Payer(SimpleTableMixin):
     ]
 
     @classmethod
-    def get_default(cls) -> Self:
+    def get_dft(cls) -> Self:
         """Return the default payer used for direct student payments."""
         return cls.get_by_code("student")

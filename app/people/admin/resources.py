@@ -26,12 +26,12 @@ from app.people.models.staffs import Staff
 from app.people.models.student import Student
 from app.shared.auth.perms import UserRole
 from app.shared.utils import get_in_row
-from app.timetable.admin.core_widgets import SemesterCodeWgt
+from app.timetable.admin.core_widgets import SemCodeWgt
 from app.timetable.ensures import ensure_academic_year_code
 from app.timetable.models.semester import Semester
 from app.timetable.utils import (
     get_academic_year,
-    normalize_semester_code,
+    normalize_sem_code,
 )
 
 # > widgets : columns name first (from the resource) and then the model field/attribute
@@ -118,12 +118,12 @@ class StdResource(resources.ModelResource):
     entry_semester = fields.Field(
         column_name="entry_semester_no",
         attribute="entry_semester",
-        widget=SemesterCodeWgt(),
+        widget=SemCodeWgt(),
     )
     last_enrolled_semester = fields.Field(
         column_name="last_enrolled_semester",
         attribute="last_enrolled_semester",
-        widget=SemesterCodeWgt(),
+        widget=SemCodeWgt(),
     )
 
     class Meta:
@@ -194,7 +194,7 @@ class StdResource(resources.ModelResource):
         entry_sem_val = get_in_row("entry_semester", row) or get_in_row(
             "entry_semester_no", row
         )
-        entry_sem_val = normalize_semester_code(
+        entry_sem_val = normalize_sem_code(
             entry_sem_val,
             year_value=entry_year_val,
             sem_value=get_in_row("entry_semester_no", row),
@@ -206,7 +206,7 @@ class StdResource(resources.ModelResource):
         last_sem_val = get_in_row("last_enrolled_semester", row) or get_in_row(
             "last_enrolled_semester_no", row
         )
-        last_sem_val = normalize_semester_code(
+        last_sem_val = normalize_sem_code(
             last_sem_val,
             year_value=get_academic_year(),
             sem_value=get_in_row("last_enrolled_semester_no", row),

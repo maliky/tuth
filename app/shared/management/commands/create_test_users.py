@@ -80,7 +80,7 @@ def get_app_label(model):
     raise Exception(f"model {model}  not found in perms.APP_MODELS")
 
 
-def sync_role_group(role_code: str, rights: dict[str, list[str]]) -> Group:
+def sync_role_gp(role_code: str, rights: dict[str, list[str]]) -> Group:
     """Ensure a Django group exists for this role and sync its permissions."""
     grp, _ = Group.objects.get_or_create(name=role_code.capitalize())
     perms = []

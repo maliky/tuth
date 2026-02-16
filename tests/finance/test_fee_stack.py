@@ -12,7 +12,7 @@ from app.finance.models.fee_stack import (
     CourseFeeStack,
     FeeStack,
     FeeStackLine,
-    resolve_course_fee_stack_map,
+    resolve_crs_fee_stack_map,
 )
 from app.finance.models.status_types_methods import FeeType
 
@@ -26,7 +26,7 @@ def _fee_type(code: str, label: str) -> FeeType:
     return fee_type
 
 
-def test_fee_stack_line_rejects_duplicate_default_line() -> None:
+def test_fee_stack_line_rejects_duplicate_dft_line() -> None:
     """A fee stack should keep a single default (null effective_from) line per fee type."""
     fee_stack = FeeStack.objects.create(name="Core Fees")
     fee_type = _fee_type("registration", "Registration")
@@ -46,11 +46,11 @@ def test_fee_stack_line_rejects_duplicate_default_line() -> None:
         )
 
 
-def test_fee_stack_line_requires_default_before_dated_line(semester_factory) -> None:
+def test_fee_stack_line_requires_dft_before_dated_line(sem_factory) -> None:
     """Dated fee lines require an existing default baseline line."""
     fee_stack = FeeStack.objects.create(name="No Baseline")
     fee_type = _fee_type("lab", "Laboratory")
-    semester = semester_factory(1, datetime(2024, 9, 1))
+    semester = sem_factory(1, datetime(2024, 9, 1))
 
     with pytest.raises(ValidationError):
         FeeStackLine.objects.create(
@@ -61,9 +61,9 @@ def test_fee_stack_line_requires_default_before_dated_line(semester_factory) -> 
         )
 
 
-def test_course_fee_stack_rejects_duplicate_fee_types(course_factory) -> None:
+def test_crs_fee_stack_rejects_duplicate_fee_types(crs_factory) -> None:
     """Attaching overlapping fee types from different stacks should fail."""
-    course = course_factory("501")
+    course = crs_factory("501")
     fee_type = _fee_type("lab", "Laboratory")
 
     first_stack = FeeStack.objects.create(name="Science Base")
@@ -86,9 +86,9 @@ def test_course_fee_stack_rejects_duplicate_fee_types(course_factory) -> None:
         CourseFeeStack.objects.create(course=course, fee_stack=second_stack)
 
 
-def test_course_fee_stack_allows_disjoint_fee_types(course_factory) -> None:
+def test_crs_fee_stack_allows_disjoint_fee_types(crs_factory) -> None:
     """A course can attach multiple stacks when fee types do not overlap."""
-    course = course_factory("502")
+    course = crs_factory("502")
     lab_fee_type = _fee_type("lab", "Laboratory")
     reg_fee_type = _fee_type("registration", "Registration")
 
@@ -113,15 +113,15 @@ def test_course_fee_stack_allows_disjoint_fee_types(course_factory) -> None:
     assert CourseFeeStack.objects.filter(course=course).count() == 2
 
 
-def test_resolve_course_fee_stack_map_depends_on_semester(
-    course_factory,
-    semester_factory,
+def test_resolve_crs_fee_stack_map_depends_on_sem(
+    crs_factory,
+    sem_factory,
 ) -> None:
     """Resolved fee map should use latest fee line effective for the semester."""
-    course = course_factory("503")
+    course = crs_factory("503")
     fee_type = _fee_type("registration", "Registration")
-    semester_old = semester_factory(1, datetime(2024, 9, 1))
-    semester_new = semester_factory(1, datetime(2025, 9, 1))
+    semester_old = sem_factory(1, datetime(2024, 9, 1))
+    semester_new = sem_factory(1, datetime(2025, 9, 1))
 
     stack = FeeStack.objects.create(name="Registration Versioned")
     FeeStackLine.objects.create(
@@ -138,8 +138,8 @@ def test_resolve_course_fee_stack_map_depends_on_semester(
     )
     CourseFeeStack.objects.create(course=course, fee_stack=stack)
 
-    old_map, _old_labels = resolve_course_fee_stack_map(course, semester_old)
-    new_map, _new_labels = resolve_course_fee_stack_map(course, semester_new)
+    old_map, _old_labels = resolve_crs_fee_stack_map(course, semester_old)
+    new_map, _new_labels = resolve_crs_fee_stack_map(course, semester_new)
 
     assert old_map["registration"] == Decimal("10.00")
     assert new_map["registration"] == Decimal("18.00")

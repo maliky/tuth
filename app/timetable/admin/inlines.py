@@ -8,7 +8,7 @@ from app.timetable.models.semester import Semester
 from app.timetable.models.session import SecSession
 
 
-class SemesterIL(admin.TabularInline):
+class SemIL(admin.TabularInline):
     """Inline for managing Semester rows."""
 
     model = Semester
@@ -25,7 +25,7 @@ class SecSessionIL(admin.TabularInline):
     extra = 0
     fields = (
         "section",
-        "section_semester",
+        "sec_sem",
         "room",
         "schedule",
     )
@@ -34,17 +34,17 @@ class SecSessionIL(admin.TabularInline):
         "room",
         "schedule",
     )
-    readonly_fields = ("section_semester",)
+    readonly_fields = ("sec_sem",)
 
     @admin.display(description="Semester")
-    def section_semester(self, obj):
+    def sec_sem(self, obj):
         """Show the semester for the inline section reference."""
         if not obj.section_id:
             return "-"
         return obj.section.semester
 
 
-class SectionIL(admin.TabularInline):
+class SecIL(admin.TabularInline):
     """Inline for creating Section rows."""
 
     model = Section

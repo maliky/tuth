@@ -28,7 +28,7 @@ def _prime_std_id_cache() -> None:
 #     # > it is also a primary key for the model
 #     sid = (student_id_raw or "").strip()
 #     if not sid:
-#         return int(Student.get_default().pk)
+#         return int(Student.get_dft().pk)
 
 #     _prime_std_id_cache()
 #     existing = STUDENT_ID_CACHE.get(sid)
@@ -54,20 +54,20 @@ def _prime_std_id_cache() -> None:
 #     student = Student(
 #         user=user,
 #         student_id=sid,
-#         curriculum=Curriculum.get_default(),
+#         curriculum=Curriculum.get_dft(),
 #     )
 #     student.save()
 #     STUDENT_ID_CACHE[sid] = int(student.pk)
 #     return int(student.pk)
 
 
-def ensure_student_sid(student_id_raw: StdIdT) -> int:
+def ensure_std_sid(student_id_raw: StdIdT) -> int:
     """Return a student id, creating the record if missing."""
     # > we need to search student on student id direclty as
     # > it is also a primary key for the model
     sid = parse_str(student_id_raw)
     if not sid:
-        return int(Student.get_default().pk)
+        return int(Student.get_dft().pk)
 
     _prime_std_id_cache()
     existing = STUDENT_ID_CACHE.get(sid)
@@ -86,7 +86,7 @@ def ensure_student_sid(student_id_raw: StdIdT) -> int:
         defaults={
             "first_name": "Student",
             "last_name": sid,
-            "curriculum": Curriculum.get_default(),
+            "curriculum": Curriculum.get_dft(),
         },
     )
 

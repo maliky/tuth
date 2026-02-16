@@ -77,7 +77,7 @@ def _id_by_curri_crs_id(
     return identity_by_curriculum_course_id
 
 
-def empty_student_curriculum_record_summary() -> StdCurriRecordMergeSummaryT:
+def empty_std_curri_record_summary() -> StdCurriRecordMergeSummaryT:
     """Return the default counters for student-scoped curriculum reconciliation."""
     return {
         "grades_moved": 0,
@@ -109,7 +109,7 @@ def _merge_curri_crs_links(target: CurriCourse, source: CurriCourse) -> None:
 
 
 @transaction.atomic
-def merge_departments(target: Department, sources):
+def merge_dpts(target: Department, sources):
     """Merge departments by reassigning dependent records to the target."""
     summary = {
         "merged": 0,
@@ -156,7 +156,7 @@ def _dpt_merge_collision_summary(target: Department, sources) -> dict[str, int]:
     collisions = (
         Course.objects.filter(department_id__in=dept_ids)
         .values("number")
-        .annotate(course_count=Count("id"))
+        .annotate(crs_count=Count("id"))
         .filter(course_count__gt=1)
     )
     return {

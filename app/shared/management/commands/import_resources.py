@@ -30,7 +30,7 @@ from app.people.admin import DonorResource, FacultyResource, StdResource
 from app.registry.admin import (
     GradeResource,
     LegacyGradeSheetResource,
-    LegacyRegistrationResource,
+    LegacyRegioResource,
 )
 from app.shared.auth.helpers import ensure_superuser  # noqa: F401
 from app.shared.file_utils import guess_tabular_format, read_text_file
@@ -46,8 +46,8 @@ from app.spaces.admin import RoomResource  # noqa: F401
 from app.timetable.admin import (
     ScheduleResource,
     SecSessionResource,
-    SectionResource,
-    SemesterResource,
+    SecResource,
+    SemResource,
 )  # noqa: F401
 
 

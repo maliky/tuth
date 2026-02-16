@@ -19,10 +19,10 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
-from app.academics.admin.filters import CurriFltAC, DepartmentFltAC
+from app.academics.admin.filters import CurriFltAC, DptFltAC
 from app.people.admin.filters import (
     FacultyGpFAC,
-    FacultyTeachingDepartmentFltAC,
+    FacultyTeachingDptFltAC,
     StdEnrolledCurriFltAC,
     StdCurriCourseFltAC,
     StdEntrySemFAC,
@@ -58,11 +58,11 @@ from app.registry.models.registration import Registration, RegistrationStatus
 from app.shared.admin.filters import StdLevelFlt
 from app.shared.admin.mixins import (
     CollegeRestrictedAdmin,
-    DepartmentRestrictedAdmin,
+    DptRestrictedAdmin,
     ScopedAutocompleteAdminMixin,
 )
-from app.timetable.admin.filters import SemesterFltAC
-from app.timetable.admin.inlines import SectionIL
+from app.timetable.admin.filters import SemFltAC
+from app.timetable.admin.inlines import SecIL
 from app.timetable.models.section import Section
 
 User = get_user_model()
@@ -235,12 +235,12 @@ class FacultyAdmin(MergeWizardMixin, DuplicatePreviewMixin, CollegeRestrictedAdm
         "academic_rank",
         "primary_assignment",
         "get_division",
-        "get_department",
+        "get_dpt",
         "possible_duplicates",
     )
     list_filter = [
-        DepartmentFltAC,
-        FacultyTeachingDepartmentFltAC,
+        DptFltAC,
+        FacultyTeachingDptFltAC,
         FacultyGpFAC,
         "college",
     ]
@@ -253,7 +253,7 @@ class FacultyAdmin(MergeWizardMixin, DuplicatePreviewMixin, CollegeRestrictedAdm
         "academic_rank",
     )
     autocomplete_fields = ("staff_profile", "college")
-    inlines = [SectionIL]
+    inlines = [SecIL]
     readonly_fields = ("staff_bio",)
     fieldsets = [
         (
@@ -405,7 +405,7 @@ class DonorAdmin(MergeWizardMixin, SimpleHistoryAdmin, GuardedModelAdmin):
 
 
 @admin.register(Staff)
-class StaffAdmin(MergeWizardMixin, DuplicatePreviewMixin, DepartmentRestrictedAdmin):
+class StaffAdmin(MergeWizardMixin, DuplicatePreviewMixin, DptRestrictedAdmin):
     """Admin management for :class:~app.people.models.Staff.
 
     Provides detailed fieldsets for personal and work information. Important
@@ -493,7 +493,7 @@ class StaffAdmin(MergeWizardMixin, DuplicatePreviewMixin, DepartmentRestrictedAd
             merge_people(target_staff, cast(Staff, source))
 
 
-class StdRegistrationForm(StdForm):
+class StdRegioForm(StdForm):
     """Student form that supports bulk registration selection."""
 
     registration_sections = forms.ModelMultipleChoiceField(
@@ -535,7 +535,7 @@ class StdAdmin(
     on both fields. Import/export is supported via ImportExportModelAdmin.
     """
 
-    form = StdRegistrationForm
+    form = StdRegioForm
     merge_fields = (
         "user__first_name",
         "user__last_name",
@@ -608,7 +608,7 @@ class StdAdmin(
     )
     # list_editable = ("curriculum",)
     list_filter = (
-        SemesterFltAC,
+        SemFltAC,
         CurriFltAC,
         StdEnrolledCurriFltAC,
         StdEntrySemFAC,
@@ -741,7 +741,7 @@ class StdAdmin(
         )
         if not sections:
             return
-        status = RegistrationStatus.get_default()
+        status = RegistrationStatus.get_dft()
         created_count = 0
         skipped_count = 0
         for section in sections:

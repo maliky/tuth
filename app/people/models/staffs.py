@@ -11,7 +11,7 @@ from simple_history.models import HistoricalRecords
 
 from app.academics.models.department import Department
 from app.people.models.core import AbstractPerson
-from app.people.utils import get_default_user
+from app.people.utils import get_dft_user
 
 User = get_user_model()
 
@@ -54,12 +54,12 @@ class Staff(AbstractPerson):
     position = models.CharField(max_length=50, blank=True)
 
     @classmethod
-    def get_default(cls, staff_id: int = 0) -> Self:
+    def get_dft(cls, staff_id: int = 0) -> Self:
         """Return a default Staff."""
         # Here again this construct whill allow duplicate staff_ids
         # duplicates have to be handle manualy latter
         staff_code = f"DFT_STF{staff_id:04d}"
-        default_user = get_default_user()
+        default_user = get_dft_user()
         existing = cast(Self, cls.objects.filter(staff_id=staff_code).first())
         if existing:
             if existing.user_id != default_user.id:
@@ -71,16 +71,16 @@ class Staff(AbstractPerson):
             staff_id=staff_code,
             user=default_user,
             employment_date=date.today(),
-            department=Department.get_default(),
+            department=Department.get_dft(),
             position=f"Joker {staff_id:04d}",
         )
         staff.save()
         return staff
 
     @classmethod
-    def get_unique_default(cls) -> Self:
+    def get_unique_dft(cls) -> Self:
         """Return a unique default Staff."""
-        return cls.get_default(staff_id=next(DEFAULT_STAFF_ID))
+        return cls.get_dft(staff_id=next(DEFAULT_STAFF_ID))
 
     @classmethod
     def mk_username(

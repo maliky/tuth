@@ -84,7 +84,7 @@ def test_import_grades_command_rows(
 
     assert Grade.objects.count() == expected_grades
     if expects_default_student and expected_grades:
-        default_student = Student.get_default()
+        default_student = Student.get_dft()
         created_grade = Grade.objects.first()
         assert created_grade is not None
         assert created_grade.student_id == default_student.id

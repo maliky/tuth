@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.shortcuts import redirect, render
 
-from app.academics.admin.merges import merge_courses, merge_curriculum_course_into_target
+from app.academics.admin.merges import merge_crss, merge_curri_crs_into_target
 from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
@@ -50,10 +50,10 @@ def _add_crs_merge_summary(
 
 
 @admin.action(description="Bulk update departments")
-def update_department(modeladmin, request, queryset):
+def update_dpt(modeladmin, request, queryset):
     """Bulk-update the Department of selected courses."""
 
-    class _DepartmentUpdateForm(forms.Form):
+    class _DptUpdateForm(forms.Form):
         """The Department for a bulk action."""
 
         dept = forms.ModelChoiceField(
@@ -63,7 +63,7 @@ def update_department(modeladmin, request, queryset):
         # forms.CharField(label="New Department Code", max_length=20)
 
     if "apply" in request.POST:
-        form = _DepartmentUpdateForm(request.POST)
+        form = _DptUpdateForm(request.POST)
         if form.is_valid():
             new_dept = form.cleaned_data["dept"]
             summary = _empty_dpt_update_summary()
@@ -86,7 +86,7 @@ def update_department(modeladmin, request, queryset):
                 if collision_target is not None and collision_target.pk != course.pk:
                     # Reuse the shared merge path so section/grade dedupe and
                     # conflict reporting stay consistent with other admin merges.
-                    merge_summary = merge_courses(collision_target, [course])
+                    merge_summary = merge_crss(collision_target, [course])
                     _add_crs_merge_summary(summary, merge_summary)
                     continue
                 course.department = new_dept
@@ -184,11 +184,11 @@ def update_department(modeladmin, request, queryset):
                 )
             return redirect(request.get_full_path())
     else:
-        form = _DepartmentUpdateForm()
+        form = _DptUpdateForm()
 
     return render(
         request,
-        "admin/update_department.html",
+        "admin/update_dpt.html",
         context={
             "courses": queryset,
             "form": form,
@@ -199,7 +199,7 @@ def update_department(modeladmin, request, queryset):
 
 
 @admin.action(description="Bulk curriculum update")
-def update_curriculum(modeladmin, request, queryset):
+def update_curri(modeladmin, request, queryset):
     """Bulk-update the curriculum FK on selected prerequisites.
 
     Works in two steps:
@@ -261,7 +261,7 @@ def update_curriculum(modeladmin, request, queryset):
                     duplicate_target is not None
                     and duplicate_target.pk != curriculum_course.pk
                 ):
-                    merge_summary = merge_curriculum_course_into_target(
+                    merge_summary = merge_curri_crs_into_target(
                         duplicate_target,
                         curriculum_course,
                     )
@@ -292,7 +292,7 @@ def update_curriculum(modeladmin, request, queryset):
                     )
                     if duplicate_target is None:
                         continue
-                    merge_summary = merge_curriculum_course_into_target(
+                    merge_summary = merge_curri_crs_into_target(
                         duplicate_target,
                         curriculum_course,
                     )
@@ -424,7 +424,7 @@ def update_curriculum(modeladmin, request, queryset):
 
     return render(
         request,
-        "admin/update_curriculum.html",
+        "admin/update_curri.html",
         context={"courses": queryset, "form": form, "title": "Bulk-set curriculum"},
     )
 

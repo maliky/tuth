@@ -5,14 +5,14 @@ from typing import Any
 import pytest
 
 from app.academics.models.college import College
-from app.academics.utils import expand_course_code
+from app.academics.utils import expand_crs_code
 from app.shared.auth import perms
 
-# from tests.fixtures.academics import department_factory, college
+# from tests.fixtures.academics import dpt_factory, college
 
 
 def test_expand_code_explicit_college():
-    result = expand_course_code("COET-MATH101", row={"college_code": "COAS"})
+    result = expand_crs_code("COET-MATH101", row={"college_code": "COAS"})
     assert result == (
         "COET",
         "MATH",
@@ -20,18 +20,18 @@ def test_expand_code_explicit_college():
     )
 
 
-def test_expand_code_defaults_to_row_college():
-    college, dept, num = expand_course_code("CHEM100", row={"college_code": "COAS"})
+def test_expand_code_dfts_to_row_college():
+    college, dept, num = expand_crs_code("CHEM100", row={"college_code": "COAS"})
     assert (college, dept, num) == ("COAS", "CHEM", "100")
 
 
 @pytest.mark.django_db
-def test_expand_code_to_defaults_when_row_missing(college, department_factory):
-    dept = department_factory("BIOL")
+def test_expand_code_to_dfts_when_row_missing(college, dpt_factory):
+    dept = dpt_factory("BIOL")
 
-    dft_college = College.get_default()
+    dft_college = College.get_dft()
 
-    college_code, dept_code, num = expand_course_code("BIOL105")
+    college_code, dept_code, num = expand_crs_code("BIOL105")
 
     assert college_code == dft_college.code
     assert dept_code == dept.code
@@ -40,14 +40,14 @@ def test_expand_code_to_defaults_when_row_missing(college, department_factory):
 
 def test_expand_code_invalid_format():
     with pytest.raises(AssertionError):
-        expand_course_code("MATH/101")
+        expand_crs_code("MATH/101")
 
 
 @pytest.mark.django_db
-def test_expand_code_accepts_underscore(college, department_factory):
+def test_expand_code_accepts_underscore(college, dpt_factory):
 
-    dept = department_factory("ACCT")
-    college_code, dept_shortname, num = expand_course_code("ACCT_404")
+    dept = dpt_factory("ACCT")
+    college_code, dept_shortname, num = expand_crs_code("ACCT_404")
 
     assert college_code == college.code
     assert dept_shortname == dept.code

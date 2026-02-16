@@ -63,7 +63,7 @@ class CreditHour(models.Model):
             obj, _ = cls.objects.get_or_create(code=val, defaults={"label": lbl})
 
     @classmethod
-    def get_default(cls) -> Self:
+    def get_dft(cls) -> Self:
         """Return the default credit hours."""
         def_ch, _ = cls.objects.get_or_create(code=3)
         return cast(Self, def_ch)

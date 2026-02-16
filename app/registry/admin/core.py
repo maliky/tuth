@@ -14,7 +14,7 @@ from import_export.admin import ImportExportModelAdmin
 from app.people.models.student import Student
 from app.registry.models.document import DocStatus, DocType
 
-# from app.registry.admin.filters import GradeSectionFlt
+# from app.registry.admin.filters import GradeSecFlt
 # from app.registry.admin.views import SectioGradeValueerAutocomplete
 from app.registry.models.grade import Grade, GradeValue
 from app.registry.admin.resources import GradeResource
@@ -22,10 +22,10 @@ from app.registry.admin.filters import GradeStdFlt
 from app.registry.models.registration import Registration, RegistrationStatus
 from app.registry.models.transcript import TranscriptRequest, TranscriptRequestStatus
 from app.timetable.admin.filters import (
-    SectionBySemesterFlt,
-    SemesterFltAC,
+    SecBySemFlt,
+    SemFltAC,
 )
-from app.timetable.admin.views import SectionBySemesterAutocomplete
+from app.timetable.admin.views import SecBySemAutocomplete
 from app.timetable.models.semester import Semester
 from app.timetable.models.section import Section
 from simple_history.admin import SimpleHistoryAdmin
@@ -36,9 +36,9 @@ SectionQueryT: TypeAlias = QuerySet[Section]
 SemesterT: TypeAlias = Semester
 
 
-def _open_registration_sem() -> Optional[SemesterT]:
+def _open_regio_sem() -> Optional[SemesterT]:
     """Return the single semester open for registration."""
-    semester, _ = Semester.registration_open_semester()
+    semester, _ = Semester.regio_open_sem()
     return semester
 
 
@@ -49,14 +49,14 @@ def _sec_queryset_for_std(student: Optional[Student]) -> SectionQueryT:
         "curriculum_course__course",
         "curriculum_course__curriculum",
     ).order_by("-semester__start_date", "curriculum_course__course__short_code")
-    open_semester = _open_registration_sem()
+    open_semester = _open_regio_sem()
     if not open_semester:
         return qs.none()
     if not student:
         return qs.none()
     return qs.filter(
         semester=open_semester,
-        curriculum_course__course__in=student.allowed_courses(),
+        curriculum_course__course__in=student.allowed_crss(),
     )
 
 
@@ -93,7 +93,7 @@ def _resolve_request_std(request) -> Optional[Student]:
     return registration.student if registration else None
 
 
-class RegistrationAdminForm(forms.ModelForm):
+class RegioAdminForm(forms.ModelForm):
     """Admin form for Registration that scopes sections to the selected student."""
 
     class Meta:
@@ -113,7 +113,7 @@ class RegistrationAdminForm(forms.ModelForm):
 
         status_field = self.fields.get("status")
         if status_field is not None and not getattr(self.instance, "pk", None):
-            status_field.initial = RegistrationStatus.get_default()
+            status_field.initial = RegistrationStatus.get_dft()
 
     def _resolve_std(self) -> Optional[Student]:
         """Return the selected student from bound data or the instance."""
@@ -142,8 +142,8 @@ class RegistrationAdminForm(forms.ModelForm):
         if section:
             student_obj = cast(Student, student)
             section_obj = cast(Section, section)
-            allowed_courses = student_obj.allowed_courses()
-            if not allowed_courses.filter(
+            allowed_crss = student_obj.allowed_crss()
+            if not allowed_crss.filter(
                 pk=section_obj.curriculum_course.course_id
             ).exists():
                 self.add_error(
@@ -153,7 +153,7 @@ class RegistrationAdminForm(forms.ModelForm):
         return cleaned
 
 
-class RegistrationBulkAddForm(forms.ModelForm):
+class RegioBulkAddForm(forms.ModelForm):
     """Admin form for adding multiple registrations at once."""
 
     sections = forms.ModelMultipleChoiceField(
@@ -179,7 +179,7 @@ class RegistrationBulkAddForm(forms.ModelForm):
             )
         status_field = self.fields.get("status")
         if status_field is not None and not getattr(self.instance, "pk", None):
-            status_field.initial = RegistrationStatus.get_default()
+            status_field.initial = RegistrationStatus.get_dft()
 
     def _resolve_std(self) -> Student | None:
         """Return the selected student from bound data or the instance."""
@@ -267,13 +267,13 @@ class GradeAdmin(
     list_display = (
         "student",
         # "grade_code",
-        "section_short_code",
+        "sec_short_code",
         "value__description",
         "section__semester",
         # "graded_on",
     )
-    # list_filter = ['section__semester', GradeSectionFlt]
-    list_filter = [SemesterFltAC, SectionBySemesterFlt, GradeStdFlt]
+    # list_filter = ['section__semester', GradeSecFlt]
+    list_filter = [SemFltAC, SecBySemFlt, GradeStdFlt]
     autocomplete_fields = ("student", "section", "value")
     list_select_related = (
         "student__user",
@@ -302,7 +302,7 @@ class GradeAdmin(
             path(
                 "section_by_semester_autocomplete/",
                 self.admin_site.admin_view(
-                    SectionBySemesterAutocomplete.as_view(model_admin=self)
+                    SecBySemAutocomplete.as_view(model_admin=self)
                 ),
                 name="section_by_semester_autocomplete",
             )
@@ -334,7 +334,7 @@ class GradeAdmin(
         )
 
     @admin.display(description="Section", ordering="section_sort_code")
-    def section_short_code(self, obj):
+    def sec_short_code(self, obj):
         """Display the section short code and keep links in the FK field view."""
         section = cast(Section | None, getattr(obj, "section", None))
         if not section:
@@ -348,7 +348,7 @@ class GradeAdmin(
 
 
 @admin.register(Registration)
-class RegistrationAdmin(
+class RegioAdmin(
     ScopedAutocompleteAdminMixin,
     SimpleHistoryAdmin,
     ImportExportModelAdmin,
@@ -356,7 +356,7 @@ class RegistrationAdmin(
 ):
     """Allow students to register only for eligible sections."""
 
-    form = RegistrationAdminForm
+    form = RegioAdminForm
     list_display = ("student", "section", "status", "date_registered")
     autocomplete_fields = ("student", "section")
     search_fields = (
@@ -364,17 +364,17 @@ class RegistrationAdmin(
         "section__curriculum_course__course__code",
         "section__number",
     )
-    list_filter = (SemesterFltAC,)
+    list_filter = (SemFltAC,)
 
     def get_form(self, request, obj=None, **kwargs):
         """Select a bulk-add form for new registrations."""
         if obj is None:
-            kwargs["form"] = RegistrationBulkAddForm
+            kwargs["form"] = RegioBulkAddForm
         return super().get_form(request, obj, **kwargs)
 
     def save_model(self, request, obj, form, change):
         """Create one or more registrations when bulk sections are provided."""
-        if not change and isinstance(form, RegistrationBulkAddForm):
+        if not change and isinstance(form, RegioBulkAddForm):
             student = cast(Student | None, form.cleaned_data.get("student"))
             sections_to_create = list(
                 cast(
@@ -382,7 +382,7 @@ class RegistrationAdmin(
                     form.cleaned_data.get("sections_to_create") or [],
                 )
             )
-            status = form.cleaned_data.get("status") or RegistrationStatus.get_default()
+            status = form.cleaned_data.get("status") or RegistrationStatus.get_dft()
             if not student or not sections_to_create:
                 return
             primary_section = sections_to_create[0]
@@ -439,7 +439,7 @@ class TranscriptRequestAdmin(
     autocomplete_fields = ("student", "status")
     search_fields = ("student", "status")
     # > See how I can make this a AC field and limit the number of semester to the used semesters
-    list_filter = (SemesterFltAC,)
+    list_filter = (SemFltAC,)
 
 
 @admin.register(DocStatus, DocType, TranscriptRequestStatus)
@@ -451,10 +451,10 @@ class CurriStatusAdmin(admin.ModelAdmin):
 
 
 @admin.register(RegistrationStatus)
-class RegistrationStatusAdmin(admin.ModelAdmin):
+class RegioStatusAdmin(admin.ModelAdmin):
     """Registration status admin with registration totals."""
 
-    list_display = ("label", "registration_count")
+    list_display = ("label", "regio_count")
 
     def get_queryset(self, request):
         """Annotate registration totals for list display."""
@@ -462,7 +462,7 @@ class RegistrationStatusAdmin(admin.ModelAdmin):
         return qs.annotate(registration_total=Count("registrations", distinct=True))
 
     @admin.display(description="Registrations", ordering="registration_total")
-    def registration_count(self, obj):
+    def regio_count(self, obj):
         """Return the number of registrations using this status."""
         count = getattr(obj, "registration_total", None)
         if count is None:

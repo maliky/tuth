@@ -61,12 +61,12 @@ class AbstractDoc(StatusableMixin, models.Model):
     def _ensure_document_status(self):
         """Ensure we have a document Status."""
         if not self.status_id:
-            self.status = DocStatus.get_default()
+            self.status = DocStatus.get_dft()
 
     def _ensure_document_type(self):
         """Ensure we have a document Type."""
         if not self.document_type_id:
-            self.document_type = DocType.get_default()
+            self.document_type = DocType.get_dft()
 
     # need to set a default for status when saving.
     def save(self, *args, **kwargs):

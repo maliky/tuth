@@ -43,9 +43,9 @@ class ReqCheckResultT(TypedDict):
     failures: ReqFailureListT
 
 
-def build_requirement_context(student: Student) -> ReqContextT:
+def build_req_context(student: Student) -> ReqContextT:
     """Build shared student facts used by all course requirement checks."""
-    passed_course_ids = set(student.passed_courses().values_list("id", flat=True))
+    passed_course_ids = set(student.passed_crss().values_list("id", flat=True))
     return {
         "passed_course_ids": passed_course_ids,
         "validated_credits": int(student.completed_credits or 0),
@@ -65,7 +65,7 @@ def _gp_member_pairs(
     ]
 
 
-def evaluate_curriculum_course_requirements(
+def eval_curri_crs_reqs(
     *,
     student: Student,
     curriculum_course: CurriCourse,
@@ -73,7 +73,7 @@ def evaluate_curriculum_course_requirements(
     context: ReqContextT | None = None,
 ) -> ReqCheckResultT:
     """Evaluate credit/prerequisite/corequisite rules for one curriculum course."""
-    eval_context = context or build_requirement_context(student)
+    eval_context = context or build_req_context(student)
     selected_ids = set(selected_course_ids)
     passed_ids = eval_context["passed_course_ids"]
     validated_credits = int(eval_context["validated_credits"])
@@ -159,7 +159,7 @@ def evaluate_curriculum_course_requirements(
     return {"ok": not failures, "failures": failures}
 
 
-def requirement_failure_messages(
+def req_failure_msgs(
     failures: ReqFailureListT,
 ) -> list[str]:
     """Convert machine-readable failures into user-facing message lines."""

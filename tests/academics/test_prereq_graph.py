@@ -22,13 +22,13 @@ pytestmark = [pytest.mark.django_db]
 
 
 def test_export_prereq_graph_includes_global_prereqs(
-    tmp_path, curriculum_factory, monkeypatch
+    tmp_path, curri_factory, monkeypatch
 ):
     """Global prerequisites should be included for curriculum courses."""
-    curriculum = curriculum_factory("BSC_ECON_TEST_GRAPH")
-    course = Course.get_unique_default()
-    prereq_course = Course.get_unique_default()
-    other_course = Course.get_unique_default()
+    curriculum = curri_factory("BSC_ECON_TEST_GRAPH")
+    course = Course.get_unique_dft()
+    prereq_course = Course.get_unique_dft()
+    other_course = Course.get_unique_dft()
     CurriCourse.objects.create(curriculum=curriculum, course=course)
     Prerequisite.objects.create(
         course=course, prerequisite_course=prereq_course, curriculum=None
@@ -58,15 +58,15 @@ def test_export_prereq_graph_includes_global_prereqs(
 
 
 def test_export_prereq_graph_coreq_clusters_and_alt_clusters(
-    tmp_path, curriculum_factory, monkeypatch
+    tmp_path, curri_factory, monkeypatch
 ):
     """Coreq edges should route via cluster boundaries while alt edges stay direct."""
-    curriculum = curriculum_factory("BSC_COREQ_ALT_GRAPH")
-    course_anchor = Course.get_unique_default()
-    course_coreq_a = Course.get_unique_default()
-    course_coreq_b = Course.get_unique_default()
-    course_alt_a = Course.get_unique_default()
-    course_alt_b = Course.get_unique_default()
+    curriculum = curri_factory("BSC_COREQ_ALT_GRAPH")
+    course_anchor = Course.get_unique_dft()
+    course_coreq_a = Course.get_unique_dft()
+    course_coreq_b = Course.get_unique_dft()
+    course_alt_a = Course.get_unique_dft()
+    course_alt_b = Course.get_unique_dft()
 
     cc_anchor = CurriCourse.objects.create(
         curriculum=curriculum,

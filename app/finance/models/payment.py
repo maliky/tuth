@@ -70,12 +70,12 @@ class Payment(StatusableMixin, models.Model):
     def _ensure_payment_method(self):
         """Ensure that we have a method set, otherway create a default one."""
         if not self.payment_method_id:
-            self.payment_method = PaymentMethod.get_default()
+            self.payment_method = PaymentMethod.get_dft()
 
     def _ensure_status(self):
         """Ensure that we have a status set, otherway create a default one."""
         if not self.status_id:
-            self.status = PaymentStatus.get_default()
+            self.status = PaymentStatus.get_dft()
 
     def save(self, *args, **kwargs):
         """Ensure the status exists before saving."""

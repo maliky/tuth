@@ -55,7 +55,7 @@ def grade(student, section, grade_value) -> Grade:
 @pytest.fixture
 def documentType() -> Generator[DocType, None, None]:
     """Return a default documentType."""
-    _doc_type = DocType.get_default()
+    _doc_type = DocType.get_dft()
     yield _doc_type
     _doc_type.delete()
 
@@ -104,7 +104,7 @@ def documentStaff(
 
 
 @pytest.fixture
-def registration_factory(student_factory, section_factory) -> RegistrationFactoryT:
+def regio_factory(std_factory, sec_factory) -> RegistrationFactoryT:
     """Return a callable to build registrations.
 
     Parameters allow customizing the semester of the created section.
@@ -116,15 +116,15 @@ def registration_factory(student_factory, section_factory) -> RegistrationFactor
         course_number: str,
         semester_number: int = 1,
     ) -> Registration:
-        _stud = student_factory(student_uname, curri_short_name)
-        _sect = section_factory(course_number, curri_short_name, 1, semester_number)
+        _stud = std_factory(student_uname, curri_short_name)
+        _sect = sec_factory(course_number, curri_short_name, 1, semester_number)
         return Registration.objects.create(student=_stud, section=_sect)
 
     return _make
 
 
 @pytest.fixture
-def grade_factory(student_factory, section_factory) -> GradeFactoryT:
+def grade_factory(std_factory, sec_factory) -> GradeFactoryT:
     """Return a callable to build grades."""
 
     def _make(
@@ -137,8 +137,8 @@ def grade_factory(student_factory, section_factory) -> GradeFactoryT:
 
         grade_value, _ = GradeValue.objects.get_or_create(code=letter)
         return Grade.objects.create(
-            student=student_factory(student_uname, curri_short_name),
-            section=section_factory(course_number, curri_short_name),
+            student=std_factory(student_uname, curri_short_name),
+            section=sec_factory(course_number, curri_short_name),
             value=grade_value,
         )
 
@@ -158,13 +158,11 @@ def documenttype_factory() -> DocTypeFactoryT:
 
 
 @pytest.fixture
-def documentstudent_factory(
-    student_factory, documenttype_factory, data_file
-) -> DocStdFactoryT:
+def documentstd_factory(std_factory, documenttype_factory, data_file) -> DocStdFactoryT:
     """Return a callable to build documents for Stds."""
 
     def _make(student_uname: str, curri_short_name: str) -> DocStd:
-        student = student_factory(student_uname, curri_short_name)
+        student = std_factory(student_uname, curri_short_name)
         waec = documenttype_factory("waec")
 
         return DocStd.objects.create(

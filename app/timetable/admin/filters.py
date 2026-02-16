@@ -47,7 +47,7 @@ SemesterAcademicYearFltAc = AutocompleteFilterFactory(
 )
 
 
-class SectionCollegeFlt(BaseCollegeFlt):
+class SecCollegeFlt(BaseCollegeFlt):
     field_path = "curriculum_course__curriculum__college"
     parameter_name = "curriculum_course__curriculum__college__id__exact"
 
@@ -75,7 +75,7 @@ class SecSessionFacultyFltAc(ScopedAutocompleteFilter):
     target_model = Faculty
 
 
-class SectionBySemesterFlt(AutocompleteFilter):
+class SecBySemFlt(AutocompleteFilter):
     """Dropdow for Section dependings on Semester filter."""
 
     title = "Section"
@@ -92,7 +92,7 @@ class SectionBySemesterFlt(AutocompleteFilter):
         )
 
 
-class SemesterFltAC(ScopedAutocompleteFilter):
+class SemFltAC(ScopedAutocompleteFilter):
     """Autocomplete filter constrained to semesters present in the queryset."""
 
     title = "Semester"

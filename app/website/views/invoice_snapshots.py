@@ -15,7 +15,7 @@ from .student_helpers import _require_std
 
 
 @login_required
-def student_invoice_snapshot_pdf(request: HttpRequest) -> HttpResponse:
+def std_invoice_snapshot_pdf(request: HttpRequest) -> HttpResponse:
     """Generate and download a PDF invoice snapshot for the student."""
     student = _require_std(request.user)
     semester_id = request.GET.get("semester")

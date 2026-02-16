@@ -29,7 +29,7 @@ def _freeze_now(monkeypatch: pytest.MonkeyPatch, target_date: date) -> None:
 
 
 # > Test 0 revoir
-def test_get_current_semester_uses_latest_started(monkeypatch: pytest.MonkeyPatch):
+def test_get_current_sem_uses_latest_started(monkeypatch: pytest.MonkeyPatch):
     """Select the closest semester whose start date is not in the future."""
     SemesterStatus._populate_attributes_and_db()
     today = date(2025, 10, 10)
@@ -51,4 +51,4 @@ def test_get_current_semester_uses_latest_started(monkeypatch: pytest.MonkeyPatc
         start_date=date(2025, 12, 1),
     )
 
-    assert Semester.get_current_semester() == current
+    assert Semester.get_current_sem() == current

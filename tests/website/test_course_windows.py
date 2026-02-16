@@ -28,7 +28,7 @@ def _ensure_sem_statuses():
 
 
 @pytest.mark.django_db
-def test_student_dashboard_prefers_open_semester(client):
+def test_std_dashboard_prefers_open_sem(client):
     """Student dashboard should show the semester with an open status."""
     _ensure_sem_statuses()
 
@@ -69,10 +69,10 @@ def test_student_dashboard_prefers_open_semester(client):
         "timetable.Section", semester=next_sem, curriculum_course=curriculum_course
     )
 
-    student_user = baker.make(User, username="stud1")
+    std_user = baker.make(User, username="stud1")
     baker.make(
         "people.Student",
-        user=student_user,
+        user=std_user,
         curriculum=curriculum,
         last_enrolled_semester=current_sem,
     )
@@ -80,7 +80,7 @@ def test_student_dashboard_prefers_open_semester(client):
     next_sem.status_id = "registration"
     next_sem.save(update_fields=["status"])
 
-    client.force_login(student_user)
+    client.force_login(std_user)
     response = client.get(reverse("student_dashboard"))
 
     assert response.status_code == 200
@@ -91,7 +91,7 @@ def test_student_dashboard_prefers_open_semester(client):
 
 
 @pytest.mark.django_db
-def test_registrar_dashboard_toggles_window(client):
+def test_reg_dashboard_toggles_win(client):
     """Registrar dashboard should update semester status."""
     _ensure_sem_statuses()
 
@@ -110,7 +110,7 @@ def test_registrar_dashboard_toggles_window(client):
     client.force_login(registrar)
 
     response = client.post(
-        reverse("registrar_course_windows"),
+        reverse("reg_crs_wins"),
         {"semester_id": semester.id, "status_code": "registration"},
         follow=True,
     )

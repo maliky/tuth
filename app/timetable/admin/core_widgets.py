@@ -6,10 +6,10 @@ from datetime import date
 from import_export import widgets
 
 from app.shared.utils import get_in_row
-from app.timetable.ensures import ensure_semester_code
+from app.timetable.ensures import ensure_sem_code
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester
-from app.timetable.utils import parse_semester_code
+from app.timetable.utils import parse_sem_code
 
 
 class AcademicYearCodeWgt(widgets.ForeignKeyWidget):
@@ -48,7 +48,7 @@ class AcademicYearCodeWgt(widgets.ForeignKeyWidget):
         return ay
 
 
-class SemesterWgt(widgets.ForeignKeyWidget):
+class SemWgt(widgets.ForeignKeyWidget):
     """Build a Semester from its number and academic year."""
 
     def __init__(self):
@@ -64,7 +64,7 @@ class SemesterWgt(widgets.ForeignKeyWidget):
         **kwargs,
     ) -> Semester | None:
         """Get the semester from a number and look-up for the academic year code."""
-        # may be good to use ensure_semester with a default
+        # may be good to use ensure_sem with a default
         if not value:
             return None
 
@@ -81,7 +81,7 @@ class SemesterWgt(widgets.ForeignKeyWidget):
         return semester
 
 
-class SemesterCodeWgt(widgets.ForeignKeyWidget):
+class SemCodeWgt(widgets.ForeignKeyWidget):
     """Parse YY-YY_SemN like strings into :class:Semester objects."""
 
     def __init__(self, pat: str | None = None):
@@ -99,10 +99,10 @@ class SemesterCodeWgt(widgets.ForeignKeyWidget):
         if not value:
             return None
 
-        ay_code, sem_code = parse_semester_code(value)
+        ay_code, sem_code = parse_sem_code(value)
         if not ay_code and not sem_code:
             return None
 
-        sem_obj = ensure_semester_code(value)
+        sem_obj = ensure_sem_code(value)
 
         return sem_obj

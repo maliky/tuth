@@ -3,7 +3,7 @@
 from django.db.models import IntegerChoices, TextChoices
 
 
-class DepartmentShortNameChoice(TextChoices):
+class DptShortNameChoice(TextChoices):
     ACCT = "ACCT", "ACCT"
     AGR = "AGR", "AGR"
     BFIN = "BFIN", "BFIN"
@@ -45,7 +45,7 @@ class DepartmentShortNameChoice(TextChoices):
     DEFT = "DEFT", "DEFT"  # Default
 
 
-class DepartmentLongNameChoice(TextChoices):
+class DptLongNameChoice(TextChoices):
     ACCT = "acct_long_name", "Accounting Department"
     AGR = "agr_long_name", "Agriculture Department"
     BFIN = "bfin_long_name", "Finance Department"

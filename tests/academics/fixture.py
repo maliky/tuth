@@ -31,27 +31,27 @@ InvoiceFactoryT: TypeAlias = Callable[[CurriCourse], CourseInvoice]
 
 @pytest.fixture
 def college() -> College:
-    return College.get_default()
+    return College.get_dft()
 
 
 @pytest.fixture
 def course() -> Course:
-    return Course.get_default("111")
+    return Course.get_dft("111")
 
 
 @pytest.fixture
 def curriculum() -> Curriculum:
-    return Curriculum.get_default()
+    return Curriculum.get_dft()
 
 
 @pytest.fixture
 def department() -> Department:
-    return Department.get_default("TSTD")
+    return Department.get_dft("TSTD")
 
 
 @pytest.fixture
 def curriculum_course() -> CurriCourse:
-    return CurriCourse.get_default()
+    return CurriCourse.get_dft()
 
 
 # ~~~~~~~~~~~~~~~~ DB Constraints  ~~~~~~~~~~~~~~~~
@@ -67,35 +67,35 @@ def college_factory() -> CollegeFactoryT:
 
 
 @pytest.fixture
-def department_factory() -> DepartmentFactoryT:
+def dpt_factory() -> DepartmentFactoryT:
     def _make(shortname: str = "DEPT_TEST") -> Department:
-        return Department.get_default(shortname)
+        return Department.get_dft(shortname)
 
     return _make
 
 
 @pytest.fixture
-def curriculum_factory() -> CurriFactoryT:
+def curri_factory() -> CurriFactoryT:
     def _make(short_name: str = "CURRI_TEST") -> Curriculum:
-        return Curriculum.get_default(short_name)
+        return Curriculum.get_dft(short_name)
 
     return _make
 
 
 @pytest.fixture
-def course_factory() -> CourseFactoryT:
+def crs_factory() -> CourseFactoryT:
     def _make(number: str = "101") -> Course:
-        course = Course.get_default(number)
+        course = Course.get_dft(number)
         return course
 
     return _make
 
 
 @pytest.fixture
-def curriculum_course_factory(course_factory, curriculum_factory) -> CurriCourseFactoryT:
+def curri_crs_factory(crs_factory, curri_factory) -> CurriCourseFactoryT:
     def _make(course_num="111", curriculum_short_name: str = "CURRI_TEST") -> CurriCourse:
-        course = course_factory(course_num)
-        curriculum = curriculum_factory(curriculum_short_name)
+        course = crs_factory(course_num)
+        curriculum = curri_factory(curriculum_short_name)
         curriculum_course, _ = CurriCourse.objects.get_or_create(
             course=course, curriculum=curriculum
         )
@@ -107,31 +107,31 @@ def curriculum_course_factory(course_factory, curriculum_factory) -> CurriCourse
 @pytest.fixture
 def major() -> Major:
     """Default major with one curriculum_course."""
-    return Major.get_default()
+    return Major.get_dft()
 
 
 @pytest.fixture
 def minor() -> Minor:
     """Default minor with one curriculum_course."""
-    return Minor.get_default()
+    return Minor.get_dft()
 
 
 @pytest.fixture
-def default_academic_year() -> AcademicYear:
+def dft_academic_year() -> AcademicYear:
     """Return the current academic year."""
-    return AcademicYear.get_default()
+    return AcademicYear.get_dft()
 
 
 @pytest.fixture
-def default_semester() -> Semester:
+def dft_sem() -> Semester:
     """Return the current semester."""
-    return Semester.get_default()
+    return Semester.get_dft()
 
 
 @pytest.fixture
 def credit_hour() -> CreditHour:
     """Return the default credit hour."""
-    return CreditHour.get_default()
+    return CreditHour.get_dft()
 
 
 @pytest.fixture
@@ -145,16 +145,16 @@ def credit_hour_factory() -> CreditHourFactoryT:
 
 
 @pytest.fixture
-def invoice_factory(default_semester: Semester) -> InvoiceFactoryT:
+def invoice_factory(dft_sem: Semester) -> InvoiceFactoryT:
     """Return a callable to create invoices for curriculum courses."""
 
     def _make(curriculum_course: CurriCourse) -> CourseInvoice:
-        student = Student.get_default()
+        student = Student.get_dft()
         amount = D10
         return CourseInvoice.objects.create(
             curriculum_course=curriculum_course,
             student=student,
-            semester=default_semester,
+            semester=dft_sem,
             initial_amount_due=amount,
             balance=amount,
         )

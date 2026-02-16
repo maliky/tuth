@@ -64,7 +64,7 @@ def coerce_field(
     return _apply
 
 
-def setdefault_field(key: str, provider: Callable[[Row], str]) -> Transform:
+def setdft_field(key: str, provider: Callable[[Row], str]) -> Transform:
     """Set a field using the provider when the current value is blank."""
 
     def _apply(row: Row) -> Row:
@@ -87,15 +87,15 @@ def first_value(row: Mapping[str, Any], keys: Sequence[str]) -> str:
     return ""
 
 
-def set_course_codes(row: Row) -> Row:
+def set_crs_codes(row: Row) -> Row:
     """Populate college_code/course_dept when absent by inspecting course columns."""
-    college_code, dept_code = extract_course_codes(row)
+    college_code, dept_code = extract_crs_codes(row)
     row.setdefault("college_code", college_code)
     row.setdefault("course_dept", dept_code)
     return row
 
 
-def extract_course_codes(row: Row) -> tuple[str, str]:
+def extract_crs_codes(row: Row) -> tuple[str, str]:
     """Return college/department codes derived from the row content.
 
     Assumptions are that course_code is the small MATH101,
@@ -103,7 +103,7 @@ def extract_course_codes(row: Row) -> tuple[str, str]:
     renaming should have been done before reaching here.
     We assure columns to be present in row.
     """
-    from app.academics.utils import expand_course_code  # defer import to avoid cycles
+    from app.academics.utils import expand_crs_code  # defer import to avoid cycles
 
     # > Check the stuff here
     # could also be dept_code no ?
@@ -115,7 +115,7 @@ def extract_course_codes(row: Row) -> tuple[str, str]:
         course_code = _dept_code + course_no
 
     try:
-        college_code, dept_code, _ = expand_course_code(course_code, row=row)
+        college_code, dept_code, _ = expand_crs_code(course_code, row=row)
     except AssertionError:
         return (get_in_row("college_code", row), course_code)
 

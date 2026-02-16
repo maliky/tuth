@@ -23,7 +23,7 @@ from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
 from app.timetable.models.session import SecSession
 from app.spaces.models.core import Room, Space
-from app.timetable.utils import normalize_academic_year, parse_semester_code
+from app.timetable.utils import normalize_academic_year, parse_sem_code
 
 # Simple in-memory caches keyed by normalized tokens
 SEMESTER_CACHE: Dict[Tuple[str, int], Semester] = {}
@@ -47,7 +47,7 @@ def _normalize_sem_key(
     academic_year: str, semester_no: str | int, default: str | None = None
 ) -> Tuple[str, int]:
     """Normalize semester inputs to a cache key."""
-    def_ay, def_sem = parse_semester_code(default)
+    def_ay, def_sem = parse_sem_code(default)
 
     ay_code = normalize_academic_year(academic_year or def_ay)
 
@@ -104,7 +104,7 @@ def ensure_academic_year_code(code: str | None) -> AcademicYear:
     """
     code = parse_str(code)
     if not code:
-        return AcademicYear.get_default()
+        return AcademicYear.get_dft()
 
     ys, _ = code.split("-")
     start = date(int("20" + ys), 9, 1)
@@ -119,7 +119,7 @@ def ensure_academic_year_code(code: str | None) -> AcademicYear:
     return ay_obj
 
 
-def ensure_semester(
+def ensure_sem(
     academic_year: str, semester_no: str | int, default: str | None = None
 ) -> Semester:
     """Look-up Semester object from an academics_year and semester_no.
@@ -145,13 +145,13 @@ def ensure_semester(
     return semester
 
 
-def ensure_semester_code(code: str | None) -> Semester:
+def ensure_sem_code(code: str | None) -> Semester:
     """Look-up Semester object from a semester code like '25-26_Sem2'."""
-    ay_code, sem_no = parse_semester_code(code)
-    return ensure_semester(ay_code, sem_no)
+    ay_code, sem_no = parse_sem_code(code)
+    return ensure_sem(ay_code, sem_no)
 
 
-def ensure_semester_id(
+def ensure_sem_id(
     academic_year: str, semester_no: str | int, default: str | None = None
 ) -> int:
     """Return a Semester id for the given academic year and semester."""
@@ -161,11 +161,11 @@ def ensure_semester_id(
     cached = SEMESTER_ID_CACHE.get(key)
     if cached:
         return cached
-    semester = ensure_semester(ay_code, sem_no)
+    semester = ensure_sem(ay_code, sem_no)
     return semester.id
 
 
-def ensure_section(
+def ensure_sec(
     semester: Semester,
     curriculum_course: CurriCourse,
     number: int,
@@ -194,7 +194,7 @@ def ensure_section(
     return sec
 
 
-def ensure_section_id(
+def ensure_sec_id(
     semester_id: int,
     curriculum_course_id: int,
     number: int,
@@ -254,7 +254,7 @@ def ensure_room_id(space_code: str, room_code: str) -> int:
     if cached:
         return cached
     if key[0] == "TBA":
-        space = Space.get_default()
+        space = Space.get_dft()
     else:
         space, _ = Space.objects.get_or_create(
             code=key[0],

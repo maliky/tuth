@@ -5,14 +5,14 @@ from typing import Any
 from django.contrib import admin
 from django.contrib.admin.sites import AdminSite
 
-from app.shared.admin.mixins import CollegeRestrictedAdmin, DepartmentRestrictedAdmin
+from app.shared.admin.mixins import CollegeRestrictedAdmin, DptRestrictedAdmin
 
 # register customized Group admin
 from app.shared.admin.group import GpAdmin
 
 __all__ = [
     "CollegeRestrictedAdmin",
-    "DepartmentRestrictedAdmin",
+    "DptRestrictedAdmin",
     "GpAdmin",
 ]
 

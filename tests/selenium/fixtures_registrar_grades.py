@@ -29,7 +29,7 @@ RegGradeFactoryT: TypeAlias = Callable[[Student, Section], Grade]
 
 
 @pytest.fixture
-def registrar_user_factory() -> RegUserFactoryT:
+def reg_user_factory() -> RegUserFactoryT:
     """Return a callable to build registrar users with grade permissions."""
     UserModel = get_user_model()
     permission = Permission.objects.get(codename="view_grade")
@@ -45,7 +45,7 @@ def registrar_user_factory() -> RegUserFactoryT:
 
 
 @pytest.fixture
-def registrar_semester_pair_factory() -> RegSemesterPairFactoryT:
+def reg_sem_pair_factory() -> RegSemesterPairFactoryT:
     """Return a callable to create a previous/current semester pair."""
 
     def _make(
@@ -55,7 +55,7 @@ def registrar_semester_pair_factory() -> RegSemesterPairFactoryT:
     ) -> tuple[AcademicYear, Semester, Semester]:
         SemesterStatus._populate_attributes_and_db()
         base_date = today or timezone.now().date()
-        academic_year = AcademicYear.get_default(base_date)
+        academic_year = AcademicYear.get_dft(base_date)
         previous = Semester.objects.create(
             academic_year=academic_year,
             number=1,
@@ -72,16 +72,16 @@ def registrar_semester_pair_factory() -> RegSemesterPairFactoryT:
 
 
 @pytest.fixture
-def registrar_semester_pair(
-    registrar_semester_pair_factory: RegSemesterPairFactoryT,
+def reg_sem_pair(
+    reg_sem_pair_factory: RegSemesterPairFactoryT,
 ) -> tuple[AcademicYear, Semester, Semester]:
     """Return a default previous/current semester pair."""
-    return registrar_semester_pair_factory(None, 90, 10)
+    return reg_sem_pair_factory(None, 90, 10)
 
 
 @pytest.fixture
-def registrar_section_factory(
-    curriculum_course_factory,
+def reg_sec_factory(
+    curri_crs_factory,
     credit_hour_factory,
 ) -> RegSectionFactoryT:
     """Return a callable to build sections tied to a supplied semester."""
@@ -91,7 +91,7 @@ def registrar_section_factory(
         course_number: str = "101",
         curriculum_short_name: str = "CURRI_TEST",
     ) -> tuple[Section, Curriculum]:
-        curriculum_course: CurriCourse = curriculum_course_factory(
+        curriculum_course: CurriCourse = curri_crs_factory(
             course_number, curriculum_short_name
         )
         if not curriculum_course.credit_hours_id:
@@ -106,7 +106,7 @@ def registrar_section_factory(
 
 
 @pytest.fixture
-def registrar_student_factory() -> RegStdFactoryT:
+def reg_std_factory() -> RegStdFactoryT:
     """Return a callable to build students for registrar grade flows."""
     UserModel = get_user_model()
 
@@ -128,11 +128,11 @@ def registrar_student_factory() -> RegStdFactoryT:
 
 
 @pytest.fixture
-def registrar_grade_factory() -> RegGradeFactoryT:
+def reg_grade_factory() -> RegGradeFactoryT:
     """Return a callable to create grade records for a student in a section."""
 
     def _make(student: Student, section: Section) -> Grade:
-        grade_value = GradeValue.get_default()
+        grade_value = GradeValue.get_dft()
         return Grade.objects.create(student=student, section=section, value=grade_value)
 
     return _make

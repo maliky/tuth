@@ -11,7 +11,7 @@ from app.finance.models.status_types_methods import FeeType
 CreatedCountsT: TypeAlias = tuple[int, int]
 
 
-def ensure_default_fee_stacks_from_fee_types() -> CreatedCountsT:
+def ensure_dft_fee_stacks_from_fee_types() -> CreatedCountsT:
     """Ensure one default stack/line (amount 0) exists for each fee type."""
     created_stacks = 0
     created_lines = 0

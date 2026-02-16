@@ -28,7 +28,7 @@ def _format_time(value: Optional[time]) -> str:
 
 
 @login_required
-def student_section_detail(
+def std_sec_detail(
     request: HttpRequest,
     section_id: int,
 ) -> HttpResponse:
@@ -97,4 +97,4 @@ def student_section_detail(
             "schedule_rows": schedule_rows,
         },
     }
-    return render(request, "website/student_section_detail.html", context)
+    return render(request, "website/std_sec_detail.html", context)

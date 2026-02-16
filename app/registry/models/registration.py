@@ -18,7 +18,7 @@ class Registration(StatusableMixin, models.Model):
         >>> from app.registry.models.registration import Registration
         >>> reg = Registration.objects.create(
         ...     student=student_profile,
-        ...     section=section_factory(1),
+        ...     section=sec_factory(1),
         ... )
     """
 
@@ -46,14 +46,14 @@ class Registration(StatusableMixin, models.Model):
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.student} - {self.section}:{self.status}"
 
-    def _ensure_registration_status(self):
+    def _ensure_regio_status(self):
         """Ensure a clearance status is set."""
         if not self.status_id:
-            self.status = RegistrationStatus.get_default()
+            self.status = RegistrationStatus.get_dft()
 
     def save(self, *args, **kwargs):
         """Check model before save."""
-        self._ensure_registration_status()
+        self._ensure_regio_status()
         return super().save(*args, **kwargs)
 
     class Meta:

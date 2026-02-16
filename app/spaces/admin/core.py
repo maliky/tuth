@@ -22,11 +22,11 @@ class SpaceAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """
 
     search_fields = ("code", "full_name")
-    list_display = ("code", "full_name", "current_sections")
+    list_display = ("code", "full_name", "current_secs")
 
-    def current_sections(self, obj):
+    def current_secs(self, obj):
         """Return sections scheduled in this space for the current semester."""
-        semester = Semester.get_current_semester()
+        semester = Semester.get_current_sem()
         sections = (
             Section.objects.filter(semester=semester, sessions__room__space=obj)
             .distinct()

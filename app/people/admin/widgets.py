@@ -50,7 +50,7 @@ class StaffProfileWgt(widgets.ForeignKeyWidget):
 
         if not username:
             if not name.last:
-                return None  # Staff.get_unique_default()
+                return None  # Staff.get_unique_dft()
             username = Staff.mk_username(*name.parts(), unique=False)
 
         cached = self._cache_staff.get(username)
@@ -88,7 +88,7 @@ class UserWgt(widgets.ForeignKeyWidget):
 
         if not username:
             if not _n.last:
-                return None  # Staff.get_unique_default()
+                return None  # Staff.get_unique_dft()
             # it is understood that same user name return the same user
             # even if prefix and suffix differ
             # for bare user there is no fuzzy search.
@@ -130,7 +130,7 @@ class FacultyUsernameWgt(widgets.ForeignKeyWidget):
 
         if not username:
             if not name.last:
-                return None  # Staff.get_unique_default()
+                return None  # Staff.get_unique_dft()
 
         faculty = create_person_factory(
             username, Faculty, name.to_dict(), lambda f: f.staff_profile.user
@@ -222,7 +222,7 @@ class StdGradeWgt(widgets.ForeignKeyWidget):
         """Return the Student tied to the identifier, creating it if needed."""
         student_id = parse_str(value)
         if not student_id:
-            return Student.get_default()
+            return Student.get_dft()
 
         cached = self._cache_student.get(student_id)
         if cached is not None:
@@ -238,7 +238,7 @@ class StdGradeWgt(widgets.ForeignKeyWidget):
         curriculum_value = get_in_row("curriculum", row)
         curriculum = self.curriculum_w.clean(value=curriculum_value, row=row)
         if curriculum is None:
-            curriculum = Curriculum.get_default()
+            curriculum = Curriculum.get_dft()
 
         first_name = get_in_row("student_first_name", row)
         last_name = get_in_row("student_last_name", row)
@@ -278,7 +278,7 @@ class UserDonorWgt(widgets.ForeignKeyWidget):
         """Return or create a User from the donor name."""
         raw_name = parse_str(value)
         if not raw_name:
-            return Donor.get_default().user
+            return Donor.get_dft().user
 
         _n = name_parts_from_row(row, raw_name=raw_name)
 

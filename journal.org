@@ -1,5 +1,57 @@
 
+* <2026-02-16 lun.>  Cleaning DB
+- I would like an admin action on curricourse which does the following : look at the department of the curricourse and reset the curricourse to the default curriculum of the college associated witht that department.  This change of curriculum should use the function we defined and whcih handles the merging of duplicates courses.
+
+** <2026-02-16 lun. 10:45> Renaming
+  - Course -> Crs (identifier-level where requested)
+  - Courses -> Crss (current consistency rule)
+  - Curricula -> Curra
+  - Curriculum -> Curri
+  - Default -> Dft
+  - Department -> Dpt
+  - Document -> Doc
+  - Enrollment -> Enroll
+  - Evaluate -> Eval
+  - Filter -> Flt
+  - Group -> Gp
+  - Historical -> Histo
+  - Identity -> Idty
+  - Inline -> IL
+  - Message -> Msg
+  - Registrar -> Reg
+  - Registration -> Regio
+  - Requirement -> Req
+  - Section -> Sec
+  - Semester -> Sem
+  - Student -> Std
+  - Widget -> Wgt
+  - Window -> Win
+
 * <2026-02-15 dim.>  Understanding duplications problems
+
+** <2026-02-15 dim. 22:38>
+cat scripts/curriculum_merge_with_audit.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v source_id=206 -v target_id=31 -v apply=0 -v run_label='curri_206_to_31_dry'
+
+
+  -- latest runs
+  SELECT run_id, run_label, apply_mode, status, started_at, finished_at
+  FROM scripts_curriculum_merge_run
+  ORDER BY run_id DESC
+  LIMIT 10;
+
+  -- full logs for one run (replace 8)
+  SELECT log_id, stage, entity, source_id, target_id, section_id, reason_code, detail
+  FROM scripts_curriculum_merge_log
+  WHERE run_id = 8
+  ORDER BY log_id;
+
+  -- blocker/conflict view for one run
+  SELECT *
+  FROM scripts_curriculum_merge_log
+  WHERE run_id = 8
+    AND (reason_code LIKE '%BLOCK%' OR reason_code LIKE '%CONFLICT%' OR reason_code LIKE '%PROTECTED%' OR reason_code LIKE '%SKIPPED%')
+  ORDER BY log_id;
+
 
 ** <2026-02-15 dim. 20:01> refactoring the academics/admin/merges
 That file is way to big and need to be split.  I see a split per action functionality + helpers + shared helpers
@@ -20,7 +72,6 @@ I want to switch to protect now. We will make that change on the dev branch. But
 two, update the code to protect the grades at teh DB level
 three develop admin tools to reassign grades in bluck.  Thos tools should be admin action calling sql scripts stored in scripts folder.
 
-** 
 
 ** <2026-02-11 mer. 17:10>  merging grades/sections
 I want to caputre this rule for merging section with grades between two distinc

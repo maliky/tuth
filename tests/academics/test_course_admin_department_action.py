@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.test import RequestFactory
 
-from app.academics.admin.actions import update_department
+from app.academics.admin.actions import update_dpt
 from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.academics.models.curriculum_course import CurriCourse
@@ -27,7 +27,7 @@ class DummyAdmin:
     def __init__(self) -> None:
         self.messages: list[MessageT] = []
 
-    def message_user(self, request, message, level=messages.INFO) -> None:
+    def msg_user(self, request, message, level=messages.INFO) -> None:
         """Store user-facing action messages for assertions."""
         self.messages.append((str(message), int(level)))
 
@@ -48,13 +48,13 @@ def _post_update_dpt(
         },
     )
     model_admin = DummyAdmin()
-    response = update_department(model_admin, request, queryset)
+    response = update_dpt(model_admin, request, queryset)
     return response, model_admin
 
 
-def test_update_department_moves_course_when_no_collision() -> None:
+def test_update_dpt_moves_crs_when_no_collision() -> None:
     """Bulk action should move a course directly when target has no collision."""
-    college = College.get_default()
+    college = College.get_dft()
     source_dept = Department.objects.create(code="SRC", college=college)
     target_dept = Department.objects.create(code="TGT", college=college)
     source_course = Course.objects.create(
@@ -80,11 +80,11 @@ def test_update_department_moves_course_when_no_collision() -> None:
     )
 
 
-def test_update_department_merges_collision_with_existing_course(
-    curriculum_factory,
+def test_update_dpt_merges_collision_with_existing_crs(
+    curri_factory,
 ) -> None:
     """Bulk action should merge into existing target-department course on collision."""
-    college = College.get_default()
+    college = College.get_dft()
     source_dept = Department.objects.create(code="SRC2", college=college)
     target_dept = Department.objects.create(code="TGT2", college=college)
     target_course = Course.objects.create(
@@ -98,11 +98,11 @@ def test_update_department_merges_collision_with_existing_course(
         title="Source course",
     )
     CurriCourse.objects.create(
-        curriculum=curriculum_factory("CURRI-TGT"),
+        curriculum=curri_factory("CURRI-TGT"),
         course=target_course,
     )
     source_curriculum_course = CurriCourse.objects.create(
-        curriculum=curriculum_factory("CURRI-SRC"),
+        curriculum=curri_factory("CURRI-SRC"),
         course=source_course,
     )
 
@@ -120,12 +120,12 @@ def test_update_department_merges_collision_with_existing_course(
     assert any("Merged 1 colliding course(s)" in msg for msg, _ in model_admin.messages)
 
 
-def test_update_department_skips_collision_merge_when_invoice_exists(
-    curriculum_factory,
+def test_update_dpt_skips_collision_merge_when_invoice_exists(
+    curri_factory,
     invoice_factory,
 ) -> None:
     """Invoices on source curriculum courses should block collision merges."""
-    college = College.get_default()
+    college = College.get_dft()
     source_dept = Department.objects.create(code="SRC3", college=college)
     target_dept = Department.objects.create(code="TGT3", college=college)
     target_course = Course.objects.create(
@@ -138,7 +138,7 @@ def test_update_department_skips_collision_merge_when_invoice_exists(
         number="301",
         title="Source course",
     )
-    curriculum = curriculum_factory("CURRI-INV")
+    curriculum = curri_factory("CURRI-INV")
     CurriCourse.objects.create(curriculum=curriculum, course=target_course)
     source_curriculum_course = CurriCourse.objects.create(
         curriculum=curriculum,

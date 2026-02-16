@@ -22,7 +22,7 @@ def _request_with_user(superuser):
     return request
 
 
-def test_curriculum_course_delete_shows_protected_message(
+def test_curri_crs_delete_shows_protected_msg(
     curriculum_course, semester, student, superuser
 ):
     """Deleting a programmed course with grade-linked sections should be blocked."""
@@ -31,13 +31,13 @@ def test_curriculum_course_delete_shows_protected_message(
         semester=semester,
         number=99,
     )
-    Grade.objects.create(student=student, section=section, value=GradeValue.get_default())
+    Grade.objects.create(student=student, section=section, value=GradeValue.get_dft())
     admin_obj = CurriCourseAdmin(CurriCourse, admin.site)
     request = _request_with_user(superuser)
 
-    with patch.object(admin_obj, "message_user") as message_user:
+    with patch.object(admin_obj, "msg_user") as msg_user:
         admin_obj.delete_model(request, curriculum_course)
 
     assert CurriCourse.objects.filter(id=curriculum_course.id).exists()
-    assert message_user.call_count == 1
-    assert "Cannot delete programmed course" in str(message_user.call_args.args[1])
+    assert msg_user.call_count == 1
+    assert "Cannot delete programmed course" in str(msg_user.call_args.args[1])

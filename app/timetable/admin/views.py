@@ -4,7 +4,7 @@ from admin_searchable_dropdown.views import AutocompleteJsonView
 from app.timetable.models.section import Section
 
 
-class SectionBySemesterAutocomplete(AutocompleteJsonView):
+class SecBySemAutocomplete(AutocompleteJsonView):
     """Returns the sections belonging to the semester passed in the query."""
 
     model_admin = None

@@ -10,7 +10,7 @@ from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.curriculum_course import CurriCourse
 from app.academics.models.department import Department
-from app.academics.utils import normalize_college_code, normalize_department_code
+from app.academics.utils import normalize_college_code, normalize_dpt_code
 from app.shared.models import CreditHour
 from app.shared.types import DeptCollegeMapT, DeptCourseMapT, StrIntMapT, TwoIntIntMapT
 from app.shared.utils import parse_str
@@ -156,9 +156,9 @@ def ensure_college(code_raw: str) -> College:
     return college
 
 
-def ensure_department(dept_code_raw: str, college: College) -> Department:
+def ensure_dpt(dept_code_raw: str, college: College) -> Department:
     """Return a department for the given dept_code and college."""
-    dept_code = normalize_department_code(dept_code_raw)
+    dept_code = normalize_dpt_code(dept_code_raw)
     key = (dept_code, college.id)
     cached = DEPARTMENT_CACHE.get(key)
     if cached:
@@ -172,12 +172,10 @@ def ensure_department(dept_code_raw: str, college: College) -> Department:
     return dept
 
 
-def ensure_curriculum(
-    name: str, college: College, fuzzy_threshold: float = 1.0
-) -> Curriculum:
+def ensure_curri(name: str, college: College, fuzzy_threshold: float = 1.0) -> Curriculum:
     """Return a Curriculum. Defaulting of the college curriculum if empyt name."""
     if not name:
-        curriculum = Curriculum.get_default(def_college=college)
+        curriculum = Curriculum.get_dft(def_college=college)
         CURRICULUM_BY_ID_CACHE[curriculum.id] = curriculum
         return curriculum
 
@@ -204,7 +202,7 @@ def ensure_curriculum(
     return curriculum
 
 
-def ensure_course(
+def ensure_crs(
     department: Department,
     course_no: str,
     title: str | None = None,
@@ -240,7 +238,7 @@ def ensure_course(
     return course
 
 
-def ensure_curriculum_course(
+def ensure_curri_crs(
     curriculum: Curriculum,
     course: Course,
     credit_code: int = 3,
@@ -284,20 +282,20 @@ def ensure_college_id(code_raw: str) -> int:
     return college.id
 
 
-def ensure_department_id(dept_code_raw: str, college_id: int) -> int:
+def ensure_dpt_id(dept_code_raw: str, college_id: int) -> int:
     """Return a department id for the given code and college id."""
-    dept_code = normalize_department_code(dept_code_raw)
+    dept_code = normalize_dpt_code(dept_code_raw)
     key = (dept_code, college_id)
     _prime_dpt_id_cache()
     cached = DEPARTMENT_ID_CACHE.get(key)
     if cached:
         return cached
     college = _get_college_by_id(college_id)
-    department = ensure_department(dept_code, college)
+    department = ensure_dpt(dept_code, college)
     return department.id
 
 
-def ensure_course_id(
+def ensure_crs_id(
     department_id: int,
     course_no_raw: str,
     title: str | None = None,
@@ -311,20 +309,18 @@ def ensure_course_id(
     if cached:
         return cached
     department = _get_dpt_by_id(department_id)
-    course = ensure_course(
+    course = ensure_crs(
         department, course_no, title=title, fuzzy_threshold=fuzzy_threshold
     )
     return course.id
 
 
-def ensure_curriculum_id(
-    name_raw: str, college_id: int, fuzzy_threshold: float = 1.0
-) -> int:
+def ensure_curri_id(name_raw: str, college_id: int, fuzzy_threshold: float = 1.0) -> int:
     """Return a curriculum id for the given name and college id."""
     name = parse_str(name_raw)
     if not name:
         college = _get_college_by_id(college_id)
-        curriculum = ensure_curriculum("", college, fuzzy_threshold=fuzzy_threshold)
+        curriculum = ensure_curri("", college, fuzzy_threshold=fuzzy_threshold)
         return curriculum.id
     key = name.lower()
     _prime_curri_id_cache()
@@ -332,11 +328,11 @@ def ensure_curriculum_id(
     if cached:
         return cached
     college = _get_college_by_id(college_id)
-    curriculum = ensure_curriculum(name, college, fuzzy_threshold=fuzzy_threshold)
+    curriculum = ensure_curri(name, college, fuzzy_threshold=fuzzy_threshold)
     return curriculum.id
 
 
-def ensure_curriculum_course_id(
+def ensure_curri_crs_id(
     curriculum_id: int,
     course_id: int,
     credit_code: int = 3,
@@ -350,7 +346,7 @@ def ensure_curriculum_course_id(
         return cached
     curriculum = _get_curri_by_id(curriculum_id)
     course = _get_crs_by_id(course_id)
-    curriculum_course = ensure_curriculum_course(
+    curriculum_course = ensure_curri_crs(
         curriculum=curriculum,
         course=course,
         credit_code=credit_code,

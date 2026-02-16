@@ -7,7 +7,7 @@ from app.academics.models.curriculum import Curriculum
 pytestmark = pytest.mark.django_db
 
 
-def test_curriculum_get_or_create_respects_fuzzy_threshold(college_factory):
+def test_curri_get_or_create_respects_fuzzy_threshold(college_factory):
     """Fuzzy threshold reuses near-duplicates; default (1.0) creates new."""
     college = college_factory("FUZC")
     base, _ = Curriculum.objects.get_or_create(

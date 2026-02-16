@@ -7,7 +7,7 @@ from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester
 
 
-class SemesterResource(resources.ModelResource):
+class SemResource(resources.ModelResource):
     academic_year = fields.Field(
         column_name="academic_year",
         attribute="academic_year",

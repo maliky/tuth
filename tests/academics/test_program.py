@@ -11,7 +11,7 @@ pytestmark = pytest.mark.django_db
 # ~~~~~~~~~~~~~~~~ DB Constraints ~~~~~~~~~~~~~~~~
 
 
-def test_curriculum_course_unique_course_per_curriculum(curriculum_course):
+def test_curri_crs_unique_crs_per_curri(curriculum_course):
     """In a curriculum_course binomes (course, curriculum) should be unique.
 
     I can have a course A in several curriculum

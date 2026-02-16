@@ -44,7 +44,7 @@ class PrereqGraphPaths:
     png_path: Path
 
 
-def resolve_curriculum(short_name: str) -> Curriculum:
+def resolve_curri(short_name: str) -> Curriculum:
     """Return curriculum for a short name, raising if not found."""
     curriculum = Curriculum.objects.filter(short_name=short_name).first()
     if curriculum is None:

@@ -13,7 +13,7 @@ from app.finance.models.status_types_methods import FeeType, Payer
 pytestmark = pytest.mark.django_db
 
 
-def test_create_states_seeds_payers_and_default_fee_stacks() -> None:
+def test_create_states_seeds_payers_and_dft_fee_stacks() -> None:
     """create_states should seed payer rows and default zero-amount fee stacks."""
     call_command("create_states", verbosity=0)
 

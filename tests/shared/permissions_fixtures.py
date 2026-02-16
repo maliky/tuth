@@ -50,7 +50,7 @@ def role_user_factory(college_factory, user_factory) -> RoleUserFactoryT:
 
 
 @pytest.fixture
-def registrar_officer(role_user_factory) -> User:
+def reg_officer(role_user_factory) -> User:
     """Return a User with role (group) registrar officer."""
     role_officer: User = role_user_factory(UserRole.REGISTRAR_OFFICER)
     return role_officer
@@ -94,10 +94,10 @@ def faculty_user(role_user_factory) -> User:
 
 
 @pytest.fixture
-def student_user(role_user_factory) -> User:
+def std_user(role_user_factory) -> User:
     """Return a User with role (group) student?"""
-    student_user: User = role_user_factory(UserRole.STUDENT)
-    return student_user
+    std_user: User = role_user_factory(UserRole.STUDENT)
+    return std_user
 
 
 @pytest.fixture

@@ -27,13 +27,13 @@ class Command(BaseCommand):
 
         # Iterate create, read, update, delete actions
         for ur in UserRole:
-            grp = sync_role_group(ur_group=ur.value.group, x_rights=ur.value.rights)
+            grp = sync_role_gp(ur_group=ur.value.group, x_rights=ur.value.rights)
             self.stdout.write(f" - Permissions for {grp} added.")
 
         self.stdout.write(self.style.SUCCESS("Permissions rebuilt!"))
 
 
-def sync_role_group(ur_group: Group, x_rights: dict[str, list[str]]) -> Group:
+def sync_role_gp(ur_group: Group, x_rights: dict[str, list[str]]) -> Group:
     """Ensure a Django group exists for this role and sync its permissions."""
     perms = []
 

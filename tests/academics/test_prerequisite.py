@@ -11,10 +11,10 @@ pytestmark = pytest.mark.django_db
 # ~~~~~~~~~~~~~~~~ DB Constraints ~~~~~~~~~~~~~~~~
 
 
-def test_prerequisite_unique_per_curriculum(course_factory, curriculum):
+def test_prerequisite_unique_per_curri(crs_factory, curriculum):
     """A prerequisite binome (ordered) exists only once as a prerequisite."""
-    course_a = course_factory("101")
-    course_b = course_factory("202")
+    course_a = crs_factory("101")
+    course_b = crs_factory("202")
 
     Prerequisite.objects.create(
         curriculum=curriculum, course=course_b, prerequisite_course=course_a
@@ -43,15 +43,15 @@ def test_prerequisite_no_self(course, curriculum):
 
 # ~~~~ need to implement this in code ~~~~
 
-# def test_cyclic_prerequisite_in_curriculum(course_factory, curriculum):
+# def test_cyclic_prerequisite_in_curriculum(crs_factory, curriculum):
 #     """If A prereq of -> B and B -> C, then we should not have C -> A.
 
 #     Probably needs to be implemented in the code.  not done now 28/06/25.
 #     """
 
-#     course_a = course_factory("101")
-#     course_b = course_factory("202")
-#     course_c = course_factory("303")
+#     course_a = crs_factory("101")
+#     course_b = crs_factory("202")
+#     course_c = crs_factory("303")
 
 #     Prerequisite.objects.bulk_create(
 #         [

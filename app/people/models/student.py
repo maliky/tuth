@@ -65,7 +65,7 @@ class Student(AbstractPerson):
         Semester,
         on_delete=models.PROTECT,
         null=True,
-        related_name="current_students",
+        related_name="current_stds",
     )
 
     entry_semester = models.ForeignKey(
@@ -105,7 +105,7 @@ class Student(AbstractPerson):
         """Return the student's current college."""
         return self.curriculum.college
 
-    def passed_courses(self) -> CourseQuery:
+    def passed_crss(self) -> CourseQuery:
         """Return courses the student completed with a passing grade."""
         return Course.objects.filter(
             in_curriculum_courses__sections__grade__student=self,
@@ -116,7 +116,7 @@ class Student(AbstractPerson):
     @property
     def completed_credits(self) -> int:
         """Return sum of credit hours successfully completed."""
-        passed_ids = self.passed_courses().values_list("id", flat=True)
+        passed_ids = self.passed_crss().values_list("id", flat=True)
         agg = CurriCourse.objects.filter(
             curriculum=self.curriculum, course_id__in=passed_ids
         ).aggregate(total=Sum("credit_hours"))
@@ -134,11 +134,11 @@ class Student(AbstractPerson):
             return LEVEL_NUMBER.THREE.label
         return LEVEL_NUMBER.FOUR.label
 
-    def allowed_courses(self) -> CourseQuery:
+    def allowed_crss(self) -> CourseQuery:
         """Return courses available for registration based on prerequisites."""
-        curriculum = self.curriculum or Curriculum.get_default()
-        all_courses = Course.for_curriculum(curriculum)
-        passed = self.passed_courses()
+        curriculum = self.curriculum or Curriculum.get_dft()
+        all_courses = Course.for_curri(curriculum)
+        passed = self.passed_crss()
         allowed_ids: list[int] = []
         passed_ids = set(passed.values_list("id", flat=True))
 
@@ -155,7 +155,7 @@ class Student(AbstractPerson):
         return Course.objects.filter(id__in=allowed_ids)
 
     @classmethod
-    def allowed_coursesmk_username(
+    def allowed_crssmk_username(
         cls,
         first,
         last,
@@ -183,7 +183,7 @@ class Student(AbstractPerson):
         ``entry_semester`` is empty, record today's date.
         """
         if not self.curriculum_id:
-            self.curriculum = Curriculum.get_default()
+            self.curriculum = Curriculum.get_dft()
 
         super().save(*args, **kwargs)
         self._ensure_primary_curri_enrollment()
@@ -225,7 +225,7 @@ class Student(AbstractPerson):
         ).update(is_primary=False)
 
     @classmethod
-    def get_default(cls) -> "Student":
+    def get_dft(cls) -> "Student":
         """Return a placeholder Student used for legacy imports."""
         user, _ = User.objects.get_or_create(
             username="default_student",
@@ -235,7 +235,7 @@ class Student(AbstractPerson):
             user=user,
             defaults={
                 "student_id": "TU-DFT",
-                "curriculum": Curriculum.get_default(),
+                "curriculum": Curriculum.get_dft(),
             },
         )
         return cast("Student", student)

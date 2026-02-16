@@ -444,7 +444,7 @@ def extract_id_num(user_id: str) -> int:
     return int(m.groups(0)[0])
 
 
-def get_default_user():
+def get_dft_user():
     """Return or create the default user record.
 
     Returns:

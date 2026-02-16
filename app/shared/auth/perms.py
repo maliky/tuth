@@ -123,7 +123,7 @@ class UserRole(Enum):
     FINANCE = RoleInfo("finance", "Finance", "people.Staff")
     FINANCE_OFFICER = RoleInfo("finance_officer", "Finance Officer", "people.Staff")
     REGISTRAR = RoleInfo("registrar", "Registrar", "people.Staff")
-    REGISTRAR_OFFICER = RoleInfo("registrar_officer", "Registrar Officer", "people.Staff")
+    REGISTRAR_OFFICER = RoleInfo("reg_officer", "Registrar Officer", "people.Staff")
     IT = RoleInfo("it", "It", "people.Staff")
 
 
@@ -429,7 +429,7 @@ ROLE_MATRIX = {
             "term",
         ],
     },
-    "registrar_officer": {
+    "reg_officer": {
         "add": [
             "grade",
             "documents",

@@ -26,18 +26,18 @@ def _check_all_visible(user, college, college_other):
 
 # TO REVIEW
 # def test_object_level_access_restricted(
-#     dean_user, chair_user, faculty_user, student_user, college, college_other
+#     dean_user, chair_user, faculty_user, std_user, college, college_other
 # ):
 #     """Users see only permitted object when using object-level perms."""
 
-#     for user in (dean_user, chair_user, faculty_user, student_user):
+#     for user in (dean_user, chair_user, faculty_user, std_user):
 #         _check_only_dft_visible(user, college)
 
 
 # def test_model_level_access(
-#     dean_user, chair_user, faculty_user, student_user, college, college_other
+#     dean_user, chair_user, faculty_user, std_user, college, college_other
 # ):
 #     """Model-level permissions via groups return all objects."""
 
-#     for user in (dean_user, chair_user, faculty_user, student_user):
+#     for user in (dean_user, chair_user, faculty_user, std_user):
 #         _check_all_visible(user, college, college_other)

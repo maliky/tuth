@@ -25,7 +25,7 @@ class SpaceWgt(widgets.ForeignKeyWidget):
         """
         space_val = parse_str(value)
         if not space_val:
-            return Space.get_default()
+            return Space.get_dft()
 
         space, _ = Space.objects.get_or_create(
             code=space_val,
@@ -55,7 +55,7 @@ class RoomWgt(widgets.ForeignKeyWidget):
 
         room, _ = Room.objects.get_or_create(
             code=room_code or "<TBA>",
-            space=space or Space.get_default(),
+            space=space or Space.get_dft(),
         )
         return room
 

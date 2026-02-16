@@ -17,7 +17,7 @@ def test_faculty_get_or_create() -> None:
     assert faculty.staff_profile is not None
     assert faculty.staff_profile.user.username == expected_username
     assert faculty.staff_profile.staff_id.startswith(faculty.staff_profile.ID_PREFIX)
-    assert faculty.college == College.get_default()
+    assert faculty.college == College.get_dft()
 
 
 @pytest.mark.django_db

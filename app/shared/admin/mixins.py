@@ -22,7 +22,7 @@ from app.shared.admin.filters import resolve_scoped_filter_lookups
 class ProtectedDeleteAdminMixin(ModelAdmin):
     """Handle ProtectedError uniformly for admin single and bulk deletions."""
 
-    def get_protected_delete_single_message(
+    def get_protected_delete_single_msg(
         self, request: HttpRequest, obj, protected_count: int
     ) -> str:
         """Return the default single-delete error message."""
@@ -31,7 +31,7 @@ class ProtectedDeleteAdminMixin(ModelAdmin):
             f"({protected_count} protected record(s))."
         )
 
-    def get_protected_delete_bulk_message(
+    def get_protected_delete_bulk_msg(
         self, request: HttpRequest, protected_count: int
     ) -> str:
         """Return the default bulk-delete error message."""
@@ -52,7 +52,7 @@ class ProtectedDeleteAdminMixin(ModelAdmin):
         except ProtectedError as exc:
             self.message_user(
                 request,
-                self.get_protected_delete_single_message(
+                self.get_protected_delete_single_msg(
                     request, obj, self._protected_count(exc)
                 ),
                 level=messages.ERROR,
@@ -65,9 +65,7 @@ class ProtectedDeleteAdminMixin(ModelAdmin):
         except ProtectedError as exc:
             self.message_user(
                 request,
-                self.get_protected_delete_bulk_message(
-                    request, self._protected_count(exc)
-                ),
+                self.get_protected_delete_bulk_msg(request, self._protected_count(exc)),
                 level=messages.ERROR,
             )
 
@@ -80,7 +78,7 @@ class ScopedAutocompleteAdminMixin(ModelAdmin):
     runtime, so we whitelist those resolved parameters here.
 
     Example:
-        class SectionAdmin(ScopedAutocompleteAdminMixin, CollegeRestrictedAdmin):
+        class SecAdmin(ScopedAutocompleteAdminMixin, CollegeRestrictedAdmin):
             ...
     """
 
@@ -140,7 +138,7 @@ class CollegeRestrictedAdmin(
         return qs.filter(**{self.college_field: college})
 
 
-class DepartmentRestrictedAdmin(
+class DptRestrictedAdmin(
     ScopedAutocompleteAdminMixin,
     SimpleHistoryAdmin,
     ImportExportModelAdmin,
@@ -150,7 +148,7 @@ class DepartmentRestrictedAdmin(
 
     department_field: str = "department"
 
-    def get_user_department(self, request) -> Optional["Department"]:
+    def get_user_dpt(self, request) -> Optional["Department"]:
         """Return the department assigned to the current faculty."""
         try:
             return cast(Department, request.user.staff.department)
@@ -160,7 +158,7 @@ class DepartmentRestrictedAdmin(
     def get_queryset(self, request):
         """Returns the query limited to the user's department if any."""
         qs = super().get_queryset(request)
-        dept = self.get_user_department(request)
+        dept = self.get_user_dpt(request)
 
         if request.user.is_superuser or dept is None:
             return qs

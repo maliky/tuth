@@ -13,22 +13,22 @@ from app.academics.models.curriculum import Curriculum
 
 from .course_merge import (
     _select_crs_merge_target,
-    merge_courses,
-    merge_curriculum_courses,
+    merge_crss,
+    merge_curri_crss,
 )
-from .curriculum_merge import merge_curricula
+from .curriculum_merge import merge_curra
 from .helpers import (
     CourseMergeSummaryT,
     _dpt_merge_collision_summary,
-    merge_departments,
+    merge_dpts,
 )
 
 if TYPE_CHECKING:
-    from app.academics.admin.core import CourseAdmin, CurriAdmin, DepartmentAdmin
+    from app.academics.admin.core import CourseAdmin, CurriAdmin, DptAdmin
 
 
 @admin.action(description="Merge selected departments into the first")
-def merge_departments_action(dept_admin: "DepartmentAdmin", request, queryset):
+def merge_dpts_action(dept_admin: "DptAdmin", request, queryset):
     """Merge departments and summarize potential collisions."""
     if queryset.count() < 2:
         messages.warning(request, "Select at least two departments to merge.")
@@ -55,7 +55,7 @@ def merge_departments_action(dept_admin: "DepartmentAdmin", request, queryset):
                 f"{collision_summary['source_role_count']} role assignment(s)."
             ),
         )
-    summary = merge_departments(target, sources)
+    summary = merge_dpts(target, sources)
     messages.success(
         request,
         f"Merged {summary['merged']} department(s) into {target.shortname}.",
@@ -63,7 +63,7 @@ def merge_departments_action(dept_admin: "DepartmentAdmin", request, queryset):
 
 
 @admin.action(description="Merge selected curricula into the chosen target")
-def merge_curricula_action(curriculum_admin: "CurriAdmin", request, queryset):
+def merge_curra_action(curriculum_admin: "CurriAdmin", request, queryset):
     """Merge curricula, moving students and programmed courses into the target."""
     if queryset.count() < 2:
         messages.warning(request, "Select at least two curricula to merge.")
@@ -82,7 +82,7 @@ def merge_curricula_action(curriculum_admin: "CurriAdmin", request, queryset):
         return
     sources = queryset.exclude(pk=target.pk)
     try:
-        summary = merge_curricula(target, sources)
+        summary = merge_curra(target, sources)
     except ValidationError as exc:
         messages.error(request, str(exc))
         return
@@ -168,14 +168,14 @@ def merge_curricula_action(curriculum_admin: "CurriAdmin", request, queryset):
 
 
 @admin.action(description="Merge selected courses into the first")
-def merge_courses_action(course_admin: "CourseAdmin", request, queryset):
+def merge_crss_action(course_admin: "CourseAdmin", request, queryset):
     """Merge courses: move curriculum-course links and sections to the first course."""
     if queryset.count() < 2:
         messages.warning(request, "Select at least two courses to merge.")
         return
     target = queryset.order_by("id").first()
     sources = queryset.exclude(pk=target.pk)
-    summary = merge_courses(target, sources)
+    summary = merge_crss(target, sources)
     messages.success(
         request,
         f"Merged {summary['merged']} course(s) into {target.short_code}.",
@@ -220,7 +220,7 @@ def merge_courses_action(course_admin: "CourseAdmin", request, queryset):
 
 
 @admin.action(description="Merge courses by short code")
-def merge_courses_by_short_code_action(
+def merge_crss_by_short_code_action(
     course_admin: "CourseAdmin",
     request,
     queryset,
@@ -251,7 +251,7 @@ def merge_courses_by_short_code_action(
         summary["groups"] += 1
         target = _select_crs_merge_target(items)
         sources = [course for course in items if course.id != target.id]
-        group_summary = merge_courses(target, sources)
+        group_summary = merge_crss(target, sources)
         summary["merged"] += group_summary["merged"]
         summary["skipped_invoices"] += group_summary["skipped_invoices"]
         summary["prerequisites_skipped"] += group_summary["prerequisites_skipped"]
@@ -313,14 +313,14 @@ def merge_courses_by_short_code_action(
 
 
 @admin.action(description="Merge selected curriculum courses into the first")
-def merge_curriculum_courses_action(course_admin, request, queryset):
+def merge_curri_crss_action(course_admin, request, queryset):
     """Merge curriculum courses with conflict checks and summary messages."""
     if queryset.count() < 2:
         messages.warning(request, "Select at least two curriculum courses to merge.")
         return
     target = queryset.order_by("id").first()
     sources = queryset.exclude(pk=target.pk)
-    summary = merge_curriculum_courses(target, sources)
+    summary = merge_curri_crss(target, sources)
     messages.success(
         request,
         f"Merged {summary['merged']} curriculum course(s) into {target}.",

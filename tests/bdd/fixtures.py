@@ -31,7 +31,7 @@ class StdContext:
 
 
 @pytest.fixture
-def student_context() -> StdContext:
+def std_context() -> StdContext:
     """State container for BDD steps in this module."""
     return StdContext()
 
@@ -60,6 +60,6 @@ class RegContext:
 
 
 @pytest.fixture
-def registrar_context() -> RegContext:
+def reg_context() -> RegContext:
     """State container for registrar dashboard BDD steps."""
     return RegContext()

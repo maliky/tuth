@@ -13,17 +13,17 @@ from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.academics.models.curriculum_course import CurriCourse
 from app.academics.utils import (
-    expand_course_code,
+    expand_crs_code,
     normalize_college_code,
-    normalize_department_code,
+    normalize_dpt_code,
 )
 from app.registry.models import CreditHour
 from app.academics.ensures import (
     ensure_college,
-    ensure_course,
-    ensure_curriculum,
-    ensure_curriculum_course,
-    ensure_department,
+    ensure_crs,
+    ensure_curri,
+    ensure_curri_crs,
+    ensure_dpt,
 )
 from app.shared.utils import asserts_keys, get_in_row, parse_str, to_int
 
@@ -49,7 +49,7 @@ class CurriCourseWgt(widgets.ForeignKeyWidget):
 
         curriculum = self.curriculum_w.clean(value=value, row=row)
         if curriculum is None:
-            curriculum = Curriculum.get_default()
+            curriculum = Curriculum.get_dft()
         course = self.course_w.clean(value=None, row=row)
 
         credit_hours_val = to_int(get_in_row("credit_hours", row))
@@ -61,7 +61,7 @@ class CurriCourseWgt(widgets.ForeignKeyWidget):
             else False
         )
 
-        return ensure_curriculum_course(
+        return ensure_curri_crs(
             curriculum=curriculum,
             course=course,
             credit_code=credit_hours.code,
@@ -98,9 +98,9 @@ class CurriWgt(widgets.ForeignKeyWidget):
         college = ensure_college(get_in_row("college_code", row))
 
         if not curr_value:
-            return Curriculum.get_default(def_college=college)
+            return Curriculum.get_dft(def_college=college)
 
-        curriculum = ensure_curriculum(
+        curriculum = ensure_curri(
             curr_value, college=college, fuzzy_threshold=fuzzy_threshold
         )
 
@@ -117,7 +117,7 @@ class CourseWgt(widgets.ForeignKeyWidget):
 
     def __init__(self):
         super().__init__(Course, field="code")
-        self.department_w = DepartmentWgt()
+        self.department_w = DptWgt()
         self.college_w = CollegeWgt()
 
     def clean(
@@ -137,15 +137,15 @@ class CourseWgt(widgets.ForeignKeyWidget):
         dept_code = get_in_row("dept_code", row)
 
         if not course_no or not dept_code:
-            return Course.get_unique_default()
+            return Course.get_unique_dft()
 
         college_code = get_in_row("college_code", row)
         college = ensure_college(college_code)  # verifier que 9a ne fait pas de doublons
-        department = ensure_department(dept_code, college)  # idem
+        department = ensure_dpt(dept_code, college)  # idem
 
         title = get_in_row("course_title", row)
 
-        crs_obj = ensure_course(
+        crs_obj = ensure_crs(
             department=department,
             course_no=course_no,
             title=title,
@@ -206,7 +206,7 @@ class CourseCodeWgt(widgets.ForeignKeyWidget):
 
     def __init__(self):
         super().__init__(Course, field="code")
-        self.department_w = DepartmentWgt()
+        self.department_w = DptWgt()
 
     def clean(
         self, value, row=None, credit_field: str | None = None, *args, **kwargs
@@ -223,10 +223,10 @@ class CourseCodeWgt(widgets.ForeignKeyWidget):
         if not value:
             return None
 
-        dept_code, course_no, college_code = expand_course_code(value, row=row)
+        dept_code, course_no, college_code = expand_crs_code(value, row=row)
         dept = self.department_w.clean(dept_code, row)
 
-        # course_code = make_course_code(dept, course_no)
+        # course_code = make_crs_code(dept, course_no)
 
         title_raw = row.get("course_title") if row else None
 
@@ -266,7 +266,7 @@ class CollegeWgt(widgets.ForeignKeyWidget):
         return college
 
 
-class DepartmentWgt(widgets.ForeignKeyWidget):
+class DptWgt(widgets.ForeignKeyWidget):
     """Return or create the Department referenced by course_dept and college_code."""
 
     def __init__(self):
@@ -279,9 +279,9 @@ class DepartmentWgt(widgets.ForeignKeyWidget):
         If nothing passed, return a default value.
         """
         if not value:
-            return Department.get_default()
+            return Department.get_dft()
 
-        dept_code = normalize_department_code(parse_str(value))
+        dept_code = normalize_dpt_code(parse_str(value))
 
         college = self.college_w.clean(get_in_row("college_code", row))
 

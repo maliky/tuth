@@ -12,7 +12,7 @@ from simple_history.models import HistoricalRecords
 from app.academics.choices import LEVEL_NUMBER
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
-from app.academics.utils import make_course_code
+from app.academics.utils import make_crs_code
 from app.registry.models import CreditHour
 from app.shared.fuzzy_matching import token_similarity
 from app.shared.types import CourseQuery
@@ -100,7 +100,7 @@ class Course(models.Model):
     """University catalogue entry describing a single course offering.
 
     Example:
-        >>> COAS = College.get_default()
+        >>> COAS = College.get_dft()
         >>> MATH = Departement.objects.create(code=MATH,college=COAS)
         >>> Course.objects.create(department=MATH,number="101",title="Algebra")
 
@@ -138,26 +138,26 @@ class Course(models.Model):
     )
 
     @classmethod
-    def for_curriculum(cls, curriculum) -> CourseQuery:
+    def for_curri(cls, curriculum) -> CourseQuery:
         """Return courses included in the given curriculum."""
         return cls.objects.filter(curricula=curriculum).distinct()
 
     @classmethod
-    def get_default(cls, number: str = "0000") -> Self:
+    def get_dft(cls, number: str = "0000") -> Self:
         """Return a default Course."""
         def_crs, _ = cls.objects.get_or_create(
-            department=Department.get_default(),
+            department=Department.get_dft(),
             number=number,
             defaults={"title": f"Default Course {number}"},
         )
         return cast(Self, def_crs)
 
     @classmethod
-    def get_unique_default(cls) -> Self:
+    def get_unique_dft(cls) -> Self:
         """Return a default Course which is unique."""
         # > where do I state the maximun number of courses to create ?
         number = f"{next(DEFAULT_COURSE_NO):04d}"
-        return cls.get_default(number=number)
+        return cls.get_dft(number=number)
 
     @property
     def level(self) -> str:
@@ -180,17 +180,17 @@ class Course(models.Model):
 
     def _ensure_codes(self):
         if not self.code:
-            self.code = make_course_code(self.department, number=self.number)
+            self.code = make_crs_code(self.department, number=self.number)
         if not self.short_code:
-            self.short_code = make_course_code(
+            self.short_code = make_crs_code(
                 self.department, number=self.number, short=True
             )
 
     def _ensure_dept(self):
         if not self.department_id:
-            self.department = Department.get_default()
+            self.department = Department.get_dft()
 
-    def list_curricula_str(self, sep: str = ", ") -> str:
+    def list_curra_str(self, sep: str = ", ") -> str:
         """Return the list of curricula including this course."""
         curricula = (
             self.in_curriculum_courses.select_related("curriculum")  # <- efficiency

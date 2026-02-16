@@ -18,7 +18,7 @@ from app.finance.models.status_types_methods import (
 )
 from app.people.admin.widgets import StaffProfileWgt, StdUserWgt
 from app.shared.utils import get_in_row, parse_str
-from app.timetable.admin.core_widgets import SemesterWgt
+from app.timetable.admin.core_widgets import SemWgt
 
 
 class SimpleCodeWgt(widgets.ForeignKeyWidget):
@@ -79,7 +79,7 @@ class InvoiceWgt(widgets.ForeignKeyWidget):
         super().__init__(CourseInvoice)
         self.student_w = StdUserWgt()
         self.curriculum_course_w = CurriCourseWgt()
-        self.semester_w = SemesterWgt()
+        self.semester_w = SemWgt()
 
     def _parse_amount(self, value: str) -> Decimal:
         token = parse_str(value)
@@ -123,13 +123,13 @@ class InvoiceWgt(widgets.ForeignKeyWidget):
         )
 
 
-class StdSemesterInvoiceWgt(widgets.ForeignKeyWidget):
+class StdSemInvoiceWgt(widgets.ForeignKeyWidget):
     """Resolve parent invoices using student and semester columns."""
 
     def __init__(self):
         super().__init__(StdSemesterInvoice)
         self.student_w = StdUserWgt()
-        self.semester_w = SemesterWgt()
+        self.semester_w = SemWgt()
 
     def clean(self, value, row=None, *args, **kwargs) -> Optional[StdSemesterInvoice]:
         """Return or create a parent invoice from student+semester row columns."""

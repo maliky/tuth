@@ -37,7 +37,7 @@ class PaymentGpT(TypedDict):
     pending_count: int
 
 
-def finance_student_ids() -> set[int]:
+def finance_std_ids() -> set[int]:
     """Return student IDs with invoices or payments."""
     invoice_ids = set(CourseInvoice.objects.values_list("student_id", flat=True))
     payment_ids = set(
@@ -46,9 +46,9 @@ def finance_student_ids() -> set[int]:
     return invoice_ids | payment_ids
 
 
-def finance_students(query: str | None = None) -> QuerySet[Student]:
+def finance_stds(query: str | None = None) -> QuerySet[Student]:
     """Return a queryset of finance-relevant students matching a query."""
-    student_ids = finance_student_ids()
+    student_ids = finance_std_ids()
     if not student_ids:
         return Student.objects.none()
     qs = Student.objects.filter(id__in=student_ids).select_related("user")
@@ -64,15 +64,15 @@ def finance_students(query: str | None = None) -> QuerySet[Student]:
     return qs.order_by("long_name")
 
 
-def finance_student_by_id(student_id: int) -> Optional[Student]:
+def finance_std_by_id(student_id: int) -> Optional[Student]:
     """Return a finance-relevant student by ID."""
-    student_ids = finance_student_ids()
+    student_ids = finance_std_ids()
     if not student_ids or student_id not in student_ids:
         return None
     return Student.objects.filter(id=student_id).select_related("user").first()
 
 
-def build_student_options(
+def build_std_options(
     students: Iterable[Student],
     selected_student_id: Optional[int],
 ) -> list[StdOptionT]:
@@ -91,7 +91,7 @@ def build_student_options(
     return options
 
 
-def group_invoices(invoices: Iterable[CourseInvoice]) -> list[InvoiceGpT]:
+def gp_invoices(invoices: Iterable[CourseInvoice]) -> list[InvoiceGpT]:
     """Group invoices by student preserving the incoming order."""
     groups: list[InvoiceGpT] = []
     group_lookup: dict[int, InvoiceGpT] = {}
@@ -124,7 +124,7 @@ def group_invoices(invoices: Iterable[CourseInvoice]) -> list[InvoiceGpT]:
     return groups
 
 
-def group_payments(payments: Iterable[Payment]) -> list[PaymentGpT]:
+def gp_payments(payments: Iterable[Payment]) -> list[PaymentGpT]:
     """Group payments by student preserving the incoming order."""
     groups: list[PaymentGpT] = []
     group_lookup: dict[int, PaymentGpT] = {}

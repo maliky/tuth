@@ -19,7 +19,7 @@ from app.people.utils import (
         ("", "Thot", "thot"),
     ],
 )
-def test_mk_username_default(first, last, username):
+def test_mk_username_dft(first, last, username):
     """Default username generation without uniqueness."""
     _uname = mk_username(first, last)
     assert _uname == username, f"{first} {last} -> {_uname} != {username}"

@@ -132,7 +132,7 @@ class Schedule(models.Model):
         return weekday_set and start_time_set and end_time_set
 
     @classmethod
-    def get_default(cls, day=WEEKDAYS_NUMBER.TBA) -> Self:
+    def get_dft(cls, day=WEEKDAYS_NUMBER.TBA) -> Self:
         """Return a default schedule."""
         def_schedule, _ = cls.objects.get_or_create(
             weekday=day,
@@ -142,7 +142,7 @@ class Schedule(models.Model):
         return cast(Self, def_schedule)
 
     @classmethod
-    def get_uniq_default(cls, day=WEEKDAYS_NUMBER.TBA) -> Self:
+    def get_uniq_dft(cls, day=WEEKDAYS_NUMBER.TBA) -> Self:
         """Return a uniqe default schedule.
 
         We suppose that there always a time slot available in TBA.

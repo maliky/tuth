@@ -9,7 +9,7 @@ from app.registry.models.grade import Grade, GradeValue
 from app.registry.models.registration import Registration
 from app.shared.utils import get_in_row
 from app.timetable.admin.resource_mapping import SECTION_HEADER_MAP
-from app.timetable.admin.section_widgets import SectionWgt
+from app.timetable.admin.section_widgets import SecWgt
 from app.timetable.utils import normalize_academic_year
 
 
@@ -30,7 +30,7 @@ class GradeResource(resources.ModelResource):
     section = fields.Field(
         column_name="section_no",
         attribute="section",
-        widget=SectionWgt(fuzzy_threshold=1.0),
+        widget=SecWgt(fuzzy_threshold=1.0),
     )
     curriculum = fields.Field(attribute=None, column_name="curriculum")
     course_no = fields.Field(attribute=None, column_name="course_no")
@@ -52,19 +52,19 @@ class GradeResource(resources.ModelResource):
         dataset.headers = [GRADE_HEADER_MAP.get(h, h) for h in headers]
         dataset.headers = [SECTION_HEADER_MAP.get(h, h) for h in headers]
 
-    def dehydrate_student(self, obj):
+    def dehydrate_std(self, obj):
         student = getattr(obj, "student", None)
         return getattr(student, "student_id", "") if student else ""
 
-    def dehydrate_student_name(self, obj):
+    def dehydrate_std_name(self, obj):
         student = getattr(obj, "student", None)
         return getattr(student, "long_name", "") if student else ""
 
-    def dehydrate_curriculum(self, obj):
+    def dehydrate_curri(self, obj):
         curriculum = getattr(obj.section.curriculum_course, "curriculum", None)
         return getattr(curriculum, "short_name", "") if curriculum else ""
 
-    def dehydrate_course_no(self, obj):
+    def dehydrate_crs_no(self, obj):
         course = getattr(obj.section.curriculum_course, "course", None)
         return getattr(course, "number", "") if course else ""
 
@@ -79,7 +79,7 @@ class GradeResource(resources.ModelResource):
         college = getattr(department, "college", None)
         return getattr(college, "code", "") if college else ""
 
-    def dehydrate_semester_no(self, obj):
+    def dehydrate_sem_no(self, obj):
         semester = getattr(obj.section, "semester", None)
         return getattr(semester, "number", "") if semester else ""
 
@@ -89,7 +89,7 @@ class GradeResource(resources.ModelResource):
         return getattr(academic_year, "code", "") if academic_year else ""
 
 
-class RegistrationResource(resources.ModelResource):
+class RegioResource(resources.ModelResource):
     """Resource for bulk importing :class:Registration rows."""
 
     class Meta:

@@ -99,7 +99,7 @@ class CourseFeeStackIL(admin.TabularInline):
         semester = self._resolved_sem()
         if obj is None or not obj.fee_stack_id:
             return "-"
-        total = obj.fee_stack.total_amount_for_semester(semester)
+        total = obj.fee_stack.total_amount_for_sem(semester)
         return f"{total:.2f}"
 
 
@@ -135,7 +135,7 @@ class CurriCourseSummaryFormSet(BaseInlineFormSet):
         summary_map = summary_builder(rows)
         for row in rows:
             summary = summary_map.get(group_key_builder(row), {})
-            row.group_course_count = summary.get("course_count", 0)
+            row.group_course_count = summary.get("crs_count", 0)
             row.group_credit_total = summary.get("credit_total", 0)
         # > Keep enriched rows so template can read summary values.
         qs_cache = cast(Any, qs)
@@ -206,7 +206,7 @@ class CurriCourseIL(admin.TabularInline):
                     continue
                 group_credit_map[key] = credit_value
             summary_map[group_key] = {
-                "course_count": len(group_credit_map),
+                "crs_count": len(group_credit_map),
                 "credit_total": sum(group_credit_map.values()),
             }
         return summary_map
@@ -281,7 +281,7 @@ class CurriCourseReqGpIL(admin.TabularInline):
         return format_html('<a href="{}">Open</a>', url)
 
 
-class DepartmentCourseIL(admin.TabularInline):
+class DptCourseIL(admin.TabularInline):
     """Inline courses of a department."""
 
     model = Course

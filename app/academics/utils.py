@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from app.academics.models.department import Department
 
 
-def expand_course_code(
+def expand_crs_code(
     code: str, *, row: Optional[Mapping[str, str]] = None
 ) -> Tuple[str, str, str]:
     """Parse a course code into its components.
@@ -25,9 +25,9 @@ def expand_course_code(
         Three values: college_code, dept_shortname, course_no.
 
     Examples:
-        >>> expand_course_code("CAFS-AGR121")
+        >>> expand_crs_code("CAFS-AGR121")
         ("CAFS", "AGR", "121")
-        >>> expand_course_code("AGR121", row={"college_code": "CAFS"})
+        >>> expand_crs_code("AGR121", row={"college_code": "CAFS"})
         ("CAFS", "AGR", "121")
     """
     assert "/" not in code
@@ -45,7 +45,7 @@ def expand_course_code(
         if row and "college_code" in row:
             college_code = row["college_code"]
         else:
-            college_code = College.get_default().code
+            college_code = College.get_dft().code
 
     return college_code, dept_shortname, course_no
 
@@ -56,12 +56,12 @@ def normalize_college_code(code_raw: str) -> str:
     return COLLEGE_CODE.get(token, "DEFT")
 
 
-def normalize_department_code(code_raw: str) -> str:
+def normalize_dpt_code(code_raw: str) -> str:
     """Normalize department codes to uppercase defaults."""
     return parse_str(code_raw, "upper", dft="DEFT")
 
 
-def make_course_code(dept: "Department", number: str, short=False) -> str:
+def make_crs_code(dept: "Department", number: str, short=False) -> str:
     """Build a course code from a department and a course number.
 
     Args:

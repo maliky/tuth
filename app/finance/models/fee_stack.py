@@ -115,7 +115,7 @@ def _refresh_parent_invoices_for_stack(stack_id: int | None) -> None:
         parent_invoice.refresh_totals_from_sources(save_model=True)
 
 
-def resolve_course_fee_stack_map(course, semester) -> tuple[FeeMapT, FeeLabelMapT]:
+def resolve_crs_fee_stack_map(course, semester) -> tuple[FeeMapT, FeeLabelMapT]:
     """Return fee amounts/labels resolved from course stacks active in a semester."""
     semester_start = _sem_start_date(semester)
     if semester_start is None:
@@ -194,7 +194,7 @@ class FeeStack(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     history = HistoricalRecords()
 
-    def total_amount_for_semester(self, semester: "Semester | None") -> Decimal:
+    def total_amount_for_sem(self, semester: "Semester | None") -> Decimal:
         """Return stack amount for one semester using line effective dates."""
         semester_start = _sem_start_date(semester)
         resolved_lines = _resolve_stack_fee_lines_for_sem(
@@ -205,7 +205,7 @@ class FeeStack(models.Model):
 
     def total_amount(self) -> Decimal:
         """Return stack amount as of the latest configured effective lines."""
-        return self.total_amount_for_semester(semester=None)
+        return self.total_amount_for_sem(semester=None)
 
     def save(self, *args, **kwargs):
         """Save the stack and refresh parent invoice aggregates."""

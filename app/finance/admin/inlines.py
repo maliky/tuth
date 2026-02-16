@@ -48,7 +48,7 @@ class StdInvoiceIL(admin.TabularInline):
         return format_html('<a href="{}?{}">{}</a>', base_url, query, count)
 
 
-class StdSemesterInvoicePaymentIL(admin.TabularInline):
+class StdSemInvoicePaymentIL(admin.TabularInline):
     """Inline list of payments attached to a student-semester invoice."""
 
     model = Payment
@@ -59,7 +59,7 @@ class StdSemesterInvoicePaymentIL(admin.TabularInline):
     fields = ("amount_paid", "status", "payment_method", "recorded_by")
 
 
-class StdSemesterCourseInvoiceIL(admin.TabularInline):
+class StdSemCourseInvoiceIL(admin.TabularInline):
     """Inline list of course invoices attached to a student-semester invoice."""
 
     model = CourseInvoice
@@ -79,4 +79,4 @@ class StdSemesterCourseInvoiceIL(admin.TabularInline):
 
 
 # Backward-compatible alias for existing admin imports.
-InvoicePaymentIL = StdSemesterInvoicePaymentIL
+InvoicePaymentIL = StdSemInvoicePaymentIL

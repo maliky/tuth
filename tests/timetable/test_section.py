@@ -10,7 +10,7 @@ pytestmark = pytest.mark.django_db
 # ~~~~~~~~~~~~~~~~ DB Constraints ~~~~~~~~~~~~~~~~
 
 
-def test_section_unique_per_curriculum_course(curriculum_course, semester):
+def test_sec_unique_per_curri_crs(curriculum_course, semester):
 
     Section.objects.create(
         semester=semester, curriculum_course=curriculum_course, number=1

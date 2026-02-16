@@ -75,7 +75,7 @@ def student(semester, curriculum) -> Student:
 
 
 @pytest.fixture
-def group_factory() -> GpFactoryT:
+def gp_factory() -> GpFactoryT:
     """Factory to create a group with name."""
 
     def _make(name: str) -> Group:
@@ -122,12 +122,12 @@ def faculty_factory() -> FacultyFactoryT:
 
 
 @pytest.fixture
-def student_factory(
-    curriculum_factory: CurriFactoryT,
+def std_factory(
+    curri_factory: CurriFactoryT,
 ) -> StdFactoryT:
     """Return a callable for making extra Student objects on demand.
 
-    my_student = student_factory("joe", some_curriculum short name)
+    my_student = std_factory("joe", some_curriculum short name)
     """
 
     def _make(uname: str, curri_short_name: str) -> Student:
@@ -135,7 +135,7 @@ def student_factory(
             Student,
             Student.objects.create(
                 user=User(username=uname),
-                curriculum=curriculum_factory(curri_short_name),
+                curriculum=curri_factory(curri_short_name),
             ),
         )
 

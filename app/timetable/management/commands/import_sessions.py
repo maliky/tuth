@@ -12,10 +12,10 @@ from django.db import transaction
 
 from app.academics.ensures import (
     ensure_college_id,
-    ensure_course_id,
-    ensure_curriculum_course_id,
-    ensure_curriculum_id,
-    ensure_department_id,
+    ensure_crs_id,
+    ensure_curri_crs_id,
+    ensure_curri_id,
+    ensure_dpt_id,
 )
 from app.people.ensure_people import ensure_faculty
 from app.people.utils import name_parts_from_row
@@ -28,7 +28,7 @@ from app.timetable.ensures import (
     ensure_room_id,
     ensure_session_id,
     ensure_schedule_id,
-    ensure_semester_id,
+    ensure_sem_id,
 )
 from app.timetable.models.section import Section
 from app.timetable.models.session import SecSession
@@ -330,12 +330,12 @@ def _resolve_sem_id(row: RowStrOptT, semester_code: str) -> int:
         semester_code: Fallback semester code like "25-26s2".
 
     Returns:
-        Semester id from ensure_semester_id.
+        Semester id from ensure_sem_id.
     """
     academic_year = get_in_row("academic_year", row)
     semester_no = get_in_row("semester_no", row)
     default = semester_code if semester_code else None
-    return ensure_semester_id(academic_year, semester_no, default=default)
+    return ensure_sem_id(academic_year, semester_no, default=default)
 
 
 def _resolve_curri_crs_id(row: RowStrOptT) -> int:
@@ -361,14 +361,14 @@ def _resolve_curri_crs_id(row: RowStrOptT) -> int:
         raise ValueError("Missing dept_code/course_no for session row")
 
     college_id = ensure_college_id(college_code)
-    department_id = ensure_department_id(dept_code, college_id)
-    course_id = ensure_course_id(
+    department_id = ensure_dpt_id(dept_code, college_id)
+    course_id = ensure_crs_id(
         department_id, course_no, get_in_row("course_title", row) or ""
     )
-    curriculum_id = ensure_curriculum_id(curriculum_name, college_id, fuzzy_threshold=1.0)
+    curriculum_id = ensure_curri_id(curriculum_name, college_id, fuzzy_threshold=1.0)
     credit_raw = get_in_row("credit", row) or get_in_row("credit_hours", row)
     credit_code = to_int(credit_raw, default=3)
-    return ensure_curriculum_course_id(curriculum_id, course_id, credit_code)
+    return ensure_curri_crs_id(curriculum_id, course_id, credit_code)
 
 
 def _resolve_faculty_id(row: RowStrOptT) -> int | None:

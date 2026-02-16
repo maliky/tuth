@@ -33,7 +33,7 @@ class Space(models.Model):
         return self.code
 
     @classmethod
-    def get_default(cls) -> Self:
+    def get_dft(cls) -> Self:
         """Returns a TBA instance of the Space."""
         tba_space, _ = cls.objects.get_or_create(
             code="TBA", defaults={"full_name": "Undefined space (TBA)"}
@@ -75,7 +75,7 @@ class Room(models.Model):
 
     def _ensure_space(self):
         if not self.space_id:
-            self.space = Space.get_default()
+            self.space = Space.get_dft()
 
     def save(self, *args, **kwargs):
         """Make sure we have a room even if it's TBA."""
@@ -84,16 +84,16 @@ class Room(models.Model):
         super().save(*args, **kwargs)
 
     @classmethod
-    def get_default(cls, code: int = 0) -> Self:
+    def get_dft(cls, code: int = 0) -> Self:
         """Returns a default Room."""
-        tba_space = Space.get_default()
+        tba_space = Space.get_dft()
         dft_room, _ = cls.objects.get_or_create(code=f"TBA{code:04d}", space=tba_space)
         return cast(Self, dft_room)
 
     @classmethod
-    def get_unique_default(cls) -> Self:
+    def get_unique_dft(cls) -> Self:
         """Returns a default unique Room."""
-        return cls.get_default(code=next(DEFAULT_ROOM_CODE))
+        return cls.get_dft(code=next(DEFAULT_ROOM_CODE))
 
     class Meta:
         constraints = [

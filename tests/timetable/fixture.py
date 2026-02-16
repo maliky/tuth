@@ -32,7 +32,7 @@ def academic_year() -> AcademicYear:
 @pytest.fixture
 def schedule() -> Schedule:
     """Get a Schedule object."""
-    return Schedule.get_default(day=1)
+    return Schedule.get_dft(day=1)
 
 
 def _ensure_sem_statuses() -> None:
@@ -74,7 +74,7 @@ def academic_year_factory() -> AcademicYearFactoryT:
 
 
 @pytest.fixture
-def semester_factory(academic_year_factory: AcademicYearFactoryT) -> SemesterFactoryT:
+def sem_factory(academic_year_factory: AcademicYearFactoryT) -> SemesterFactoryT:
     def _make(number: int, ay_start_date: datetime = DEF_DATE) -> Semester:
 
         _ensure_sem_statuses()
@@ -87,9 +87,9 @@ def semester_factory(academic_year_factory: AcademicYearFactoryT) -> SemesterFac
 
 
 @pytest.fixture
-def section_factory(
-    semester_factory: SemesterFactoryT,
-    curriculum_course_factory: CurriCourseFactoryT,
+def sec_factory(
+    sem_factory: SemesterFactoryT,
+    curri_crs_factory: CurriCourseFactoryT,
 ) -> SectionFactoryT:
     def _make(
         course_number: str = "111",
@@ -97,10 +97,8 @@ def section_factory(
         number: int = 1,
         semester_number: int = 1,
     ) -> Section:
-        semester = semester_factory(semester_number)
-        curriculum_course = curriculum_course_factory(
-            course_number, curriculum_short_name
-        )
+        semester = sem_factory(semester_number)
+        curriculum_course = curri_crs_factory(course_number, curriculum_short_name)
         return Section.objects.create(
             curriculum_course=curriculum_course, semester=semester, number=number
         )
@@ -109,12 +107,12 @@ def section_factory(
 
 
 @pytest.fixture
-def session_factory(section_factory: SectionFactoryT, room_factory) -> SecSessionFactoryT:
+def session_factory(sec_factory: SectionFactoryT, room_factory) -> SecSessionFactoryT:
     def _make(
         room_code: str, course_number: str, curriculum_short_name: str
     ) -> SecSession:
         room = room_factory(room_code="007")
-        section = section_factory(course_number, curriculum_short_name, 1, 1)
+        section = sec_factory(course_number, curriculum_short_name, 1, 1)
         return SecSession.objects.create(section=section, room=room)
 
     return _make

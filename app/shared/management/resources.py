@@ -15,17 +15,17 @@ from app.people.admin.resources import (
 )
 from app.people.models.staffs import Staff
 from app.registry.admin.resources_legacy import (
-    LegacyRegistrationResource,
+    LegacyRegioResource,
 )
 from app.shared.types import DirectoryResourceEntry, ModelResourceType
 from app.spaces.admin.resources import RoomResource
-from app.timetable.admin.core_resources import SemesterResource
+from app.timetable.admin.core_resources import SemResource
 from app.timetable.admin.session_resources import SecSessionResource
 
 # Unified directory-backed resources (legacy included)
 DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
     ("Room", RoomResource, ("space_room.csv",)),
-    ("Semester", SemesterResource, ("academicyear_semester.csv",)),
+    ("Semester", SemResource, ("academicyear_semester.csv",)),
     ("Staff", StaffResource, ("people_full_staff.tsv",)),
     ("Donor", DonorResource, ("people_donors.csv",)),
     ("Faculty", FacultyResource, ("people_full_faculty.tsv",)),
@@ -35,7 +35,7 @@ DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
     ("CurriCourse", CurriCourseResource, ("academic_curriculum_course.csv",)),
     (
         "LegacyRegistration",
-        LegacyRegistrationResource,
+        LegacyRegioResource,
         (
             "UM_StudentsCrs.csv",
             "registry_registration.csv",

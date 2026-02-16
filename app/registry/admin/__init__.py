@@ -6,15 +6,15 @@ from .inlines import (
     DocStdIL,
     GradeIL,
     StdGradeIL,
-    StdRegistrationIL,
+    StdRegioIL,
 )
 from .resources import GradeResource
 from .resources_legacy import (
     LegacyGradeSheetResource,
-    LegacyRegistrationResource,
+    LegacyRegioResource,
 )
 from .core import GradeAdmin
-from .filters import GradeSectionFlt
+from .filters import GradeSecFlt
 
 
 __all__ = [
@@ -24,9 +24,9 @@ __all__ = [
     "GradeAdmin",
     "GradeIL",
     "GradeResource",
-    "GradeSectionFlt",
+    "GradeSecFlt",
     "LegacyGradeSheetResource",
-    "LegacyRegistrationResource",
+    "LegacyRegioResource",
     "StdGradeIL",
-    "StdRegistrationIL",
+    "StdRegioIL",
 ]

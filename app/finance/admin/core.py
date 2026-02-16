@@ -38,7 +38,7 @@ from app.finance.admin.filters import (
 )
 from app.finance.admin.inlines import (
     InvoicePaymentIL,
-    StdSemesterCourseInvoiceIL,
+    StdSemCourseInvoiceIL,
 )
 from app.finance.models.payment import Payment
 from app.finance.models.invoice import CourseInvoice, StdSemesterInvoice
@@ -46,7 +46,7 @@ from app.finance.models.scholarship import Scholarship
 from app.finance.utils import create_pending_payments
 from app.people.models.staffs import Staff
 from app.shared.admin.mixins import ScopedAutocompleteAdminMixin
-from app.timetable.admin.filters import SemesterFltAC
+from app.timetable.admin.filters import SemFltAC
 from app.timetable.models.semester import Semester
 
 
@@ -105,16 +105,16 @@ class CourseInvoiceAdmin(
 
     resource_class = InvoiceResource
     list_display = (
-        "student_label",
+        "std_label",
         "curriculum_course",
-        "semester_label",
+        "sem_label",
         "student_semester_invoice",
         "balance",
         "payments_link",
         "created_at",
         # "recorded_by_name",
     )
-    list_filter = (SemesterFltAC, AmountDueFlt)
+    list_filter = (SemFltAC, AmountDueFlt)
     list_select_related = (
         "student",
         "student__user",
@@ -159,7 +159,7 @@ class CourseInvoiceAdmin(
         return format_html('<a href="{}?{}">{}</a>', base_url, query, count)
 
     @admin.display(description="Student")
-    def student_label(self, obj: CourseInvoice) -> str:
+    def std_label(self, obj: CourseInvoice) -> str:
         """Return the student name and ID for display."""
         student = obj.student
         name = student.long_name or student.user.get_full_name() or student.student_id
@@ -167,7 +167,7 @@ class CourseInvoiceAdmin(
         return f"{name} ({student_id})"
 
     @admin.display(description="Semester")
-    def semester_label(self, obj: CourseInvoice) -> str:
+    def sem_label(self, obj: CourseInvoice) -> str:
         """Return the invoice semester label."""
         return str(obj.semester)
 
@@ -203,17 +203,17 @@ class CourseInvoiceAdmin(
                 f"Skipped {skipped_closed} invoice(s) with no balance due.",
             )
 
-    def _get_open_registration_sem(self, request) -> Optional[Semester]:
+    def _get_open_regio_sem(self, request) -> Optional[Semester]:
         """Return the open registration semester, if available."""
         # It's not clear what we have in request and where _open_registration..
         # is coming from.
         if getattr(request, "_open_registration_semester_loaded", False):
-            return getattr(request, "_open_registration_sem", None)
+            return getattr(request, "_open_regio_sem", None)
 
-        semester, error_message = Semester.registration_open_semester()
+        semester, error_message = Semester.regio_open_sem()
         if error_message:
             messages.error(request, error_message)
-        request._open_registration_sem = semester
+        request._open_regio_sem = semester
         request._open_registration_semester_loaded = True
 
         return semester
@@ -237,7 +237,7 @@ class CourseInvoiceAdmin(
     def get_changeform_initial_data(self, request):
         """Set default semester/recorded_by values for invoice creation."""
         initial = super().get_changeform_initial_data(request)
-        open_semester = self._get_open_registration_sem(request)
+        open_semester = self._get_open_regio_sem(request)
         if open_semester and "semester" not in initial:
             initial["semester"] = str(open_semester.pk)
         staff = self._resolve_recorded_by_staff(request)
@@ -248,7 +248,7 @@ class CourseInvoiceAdmin(
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Customize foreign key fields for defaulting and scoping."""
         if db_field.name == "curriculum_course":
-            open_semester = self._get_open_registration_sem(request)
+            open_semester = self._get_open_regio_sem(request)
             # Only allow curriculum courses with sections in the open semester.
             if open_semester:
                 kwargs["queryset"] = CurriCourse.objects.filter(
@@ -266,7 +266,7 @@ class CourseInvoiceAdmin(
             return field
 
         if db_field.name == "semester":
-            open_semester = self._get_open_registration_sem(request)
+            open_semester = self._get_open_regio_sem(request)
             if open_semester and isinstance(field, forms.ModelChoiceField):
                 field.initial = open_semester.pk
 
@@ -286,14 +286,14 @@ class CourseInvoiceAdmin(
             if staff:
                 obj.recorded_by = staff
         if not obj.semester_id:
-            open_semester = self._get_open_registration_sem(request)
+            open_semester = self._get_open_regio_sem(request)
             if open_semester:
                 obj.semester = open_semester
         super().save_model(request, obj, form, change)
 
 
 @admin.register(StdSemesterInvoice)
-class StdSemesterInvoiceAdmin(
+class StdSemInvoiceAdmin(
     ScopedAutocompleteAdminMixin,
     SimpleHistoryAdmin,
     GuardedModelAdmin,
@@ -312,7 +312,7 @@ class StdSemesterInvoiceAdmin(
         "status",
         "updated_at",
     )
-    list_filter = (SemesterFltAC, AmountDueFlt)
+    list_filter = (SemFltAC, AmountDueFlt)
     search_fields = (
         "student__student_id",
         "student__long_name",
@@ -322,7 +322,7 @@ class StdSemesterInvoiceAdmin(
     )
     list_select_related = ("student", "semester", "status")
     autocomplete_fields = ("student", "semester", "fee_stacks")
-    inlines = (StdSemesterCourseInvoiceIL, InvoicePaymentIL)
+    inlines = (StdSemCourseInvoiceIL, InvoicePaymentIL)
     readonly_fields = ("created_at", "updated_at")
 
     def save_model(self, request, obj, form, change):
@@ -369,7 +369,7 @@ class PaymentAdmin(
         "payer",
     )
     exclude = ("recorded_by",)
-    list_filter = (SemesterFltAC,)
+    list_filter = (SemFltAC,)
     list_select_related = (
         "student_semester_invoice",
         "student_semester_invoice__semester",
@@ -433,9 +433,9 @@ class FeeStackAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     list_display = (
         "name",
         "payer",
-        "current_semester_total",
+        "current_sem_total",
         "fee_line_count",
-        "course_count",
+        "crs_count",
     )
     search_fields = ("name", "courses__short_code", "courses__code", "courses__title")
     inlines = [FeeStackLineIL, CourseFeeStackIL]
@@ -501,16 +501,16 @@ class FeeStackAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
         return int(getattr(obj, "annotated_fee_line_count", obj.fees.count()))
 
     @admin.display(description="Current total", ordering="current_total_amount")
-    def current_semester_total(self, obj: FeeStack) -> str:
+    def current_sem_total(self, obj: FeeStack) -> str:
         """Return stack total resolved for the current semester context."""
         total = getattr(obj, "current_total_amount", None)
         if total is None:
             semester = self._resolved_current_sem()
-            total = obj.total_amount_for_semester(semester)
+            total = obj.total_amount_for_sem(semester)
         return f"{Decimal(total):.2f}"
 
     @admin.display(description="Courses", ordering="annotated_course_count")
-    def course_count(self, obj: FeeStack) -> int:
+    def crs_count(self, obj: FeeStack) -> int:
         """Return how many courses are linked to the stack."""
         return int(getattr(obj, "annotated_course_count", obj.courses.count()))
 

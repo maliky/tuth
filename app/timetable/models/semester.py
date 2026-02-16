@@ -120,12 +120,12 @@ class Semester(StatusableMixin, models.Model):
         self._ensure_status()
         return super().save(*args, **kwargs)
 
-    def is_registration_open(self) -> bool:
+    def is_regio_open(self) -> bool:
         """Return True when the semester is open for course selection."""
         return self.status_id == self.REGISTRATION_OPEN_CODES
 
     @classmethod
-    def registration_open_semester(cls) -> OpenRegistrationSemesterResultT:
+    def regio_open_sem(cls) -> OpenRegistrationSemesterResultT:
         """Return the open registration semester, with error msg if more than one exists."""
         open_qs = cls.objects.filter(status_id=cls.REGISTRATION_OPEN_CODES)
         if open_qs.count() > 1:
@@ -133,13 +133,13 @@ class Semester(StatusableMixin, models.Model):
         return open_qs.first(), None
 
     @classmethod
-    def get_current_semester(cls) -> "Semester":
+    def get_current_sem(cls) -> "Semester":
         """Return the latest semester whose start date is on or before today."""
         today = timezone.now().date()
-        return cls.get_default(today)
+        return cls.get_dft(today)
 
     @classmethod
-    def get_default(cls, today: date | None = None) -> "Semester":
+    def get_dft(cls, today: date | None = None) -> "Semester":
         """Return the current semester or create one for the current academic year."""
         ref_date = today or timezone.now().date()
         semester = (
@@ -153,7 +153,7 @@ class Semester(StatusableMixin, models.Model):
 
         # Here it would be good to take the semster of the year with the start  date
         # or do a test on start date with default semster start dates
-        ay = AcademicYear.get_default(ref_date)
+        ay = AcademicYear.get_dft(ref_date)
 
         # Ensure statuses are present before creating a semester.
         SemesterStatus._populate_attributes_and_db()

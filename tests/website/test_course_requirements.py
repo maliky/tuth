@@ -20,7 +20,7 @@ from app.registry.models.registration import Registration, RegistrationStatus
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester, SemesterStatus
 from app.website.views.course_requirements import (
-    evaluate_curriculum_course_requirements,
+    eval_curri_crs_reqs,
 )
 
 pytestmark = pytest.mark.django_db
@@ -35,9 +35,9 @@ def _ensure_status_dfts() -> None:
     Payer._populate_attributes_and_db()
 
 
-def _open_registration_sem(semester_factory) -> Semester:
+def _open_regio_sem(sem_factory) -> Semester:
     """Return one semester marked as registration-open."""
-    semester = semester_factory(1, datetime(2026, 1, 1))
+    semester = sem_factory(1, datetime(2026, 1, 1))
     semester.status_id = "registration"
     semester.save(update_fields=["status"])
     return cast(Semester, semester)
@@ -81,21 +81,21 @@ def _add_req_member_gp(
         )
 
 
-def test_requirement_resolver_returns_machine_readable_failure_codes(
-    curriculum_course_factory,
-    semester_factory,
+def test_req_resolver_returns_machine_readable_failure_codes(
+    curri_crs_factory,
+    sem_factory,
     user_factory,
 ) -> None:
     """Resolver should expose all expected failure categories."""
-    semester = _open_registration_sem(semester_factory)
-    target = curriculum_course_factory("910", "CURRI_REQ")
+    semester = _open_regio_sem(sem_factory)
+    target = curri_crs_factory("910", "CURRI_REQ")
     target.min_validated_credits = 18
     target.save(update_fields=["min_validated_credits"])
-    prereq_all_a = curriculum_course_factory("911", "CURRI_REQ")
-    prereq_all_b = curriculum_course_factory("912", "CURRI_REQ")
-    prereq_any_a = curriculum_course_factory("913", "CURRI_REQ")
-    prereq_any_b = curriculum_course_factory("914", "CURRI_REQ")
-    coreq_member = curriculum_course_factory("915", "CURRI_REQ")
+    prereq_all_a = curri_crs_factory("911", "CURRI_REQ")
+    prereq_all_b = curri_crs_factory("912", "CURRI_REQ")
+    prereq_any_a = curri_crs_factory("913", "CURRI_REQ")
+    prereq_any_b = curri_crs_factory("914", "CURRI_REQ")
+    coreq_member = curri_crs_factory("915", "CURRI_REQ")
     student = _std_for_curri(
         user_factory=user_factory,
         curriculum=target.curriculum,
@@ -119,7 +119,7 @@ def test_requirement_resolver_returns_machine_readable_failure_codes(
         required_courses=[coreq_member],
     )
 
-    result = evaluate_curriculum_course_requirements(
+    result = eval_curri_crs_reqs(
         student=student,
         curriculum_course=target,
         selected_course_ids={target.course_id},
@@ -132,16 +132,16 @@ def test_requirement_resolver_returns_machine_readable_failure_codes(
     assert "incomplete_coreq_all" in failure_codes
 
 
-def test_register_post_requires_coreq_group_in_same_action(
+def test_register_post_requires_coreq_gp_in_same_action(
     client,
-    curriculum_course_factory,
-    semester_factory,
+    curri_crs_factory,
+    sem_factory,
     user_factory,
 ) -> None:
     """Registration POST must reject coreq_all partial selections."""
-    semester = _open_registration_sem(semester_factory)
-    target = curriculum_course_factory("920", "CURRI_COREQ")
-    coreq_member = curriculum_course_factory("921", "CURRI_COREQ")
+    semester = _open_regio_sem(sem_factory)
+    target = curri_crs_factory("920", "CURRI_COREQ")
+    coreq_member = curri_crs_factory("921", "CURRI_COREQ")
     _add_req_member_gp(
         target=target,
         kind=ReqKind.COREQ_ALL,
@@ -204,14 +204,14 @@ def test_register_post_requires_coreq_group_in_same_action(
 
 def test_dashboard_surfaces_coreq_reason_without_locking_initial_selection(
     client,
-    curriculum_course_factory,
-    semester_factory,
+    curri_crs_factory,
+    sem_factory,
     user_factory,
 ) -> None:
     """Dashboard should show coreq guidance while keeping initial course selectable."""
-    semester = _open_registration_sem(semester_factory)
-    target = curriculum_course_factory("930", "CURRI_COREQ_UI")
-    coreq_member = curriculum_course_factory("931", "CURRI_COREQ_UI")
+    semester = _open_regio_sem(sem_factory)
+    target = curri_crs_factory("930", "CURRI_COREQ_UI")
+    coreq_member = curri_crs_factory("931", "CURRI_COREQ_UI")
     _add_req_member_gp(
         target=target,
         kind=ReqKind.COREQ_ALL,
@@ -249,20 +249,20 @@ def test_dashboard_surfaces_coreq_reason_without_locking_initial_selection(
     )
 
 
-def test_dashboard_surfaces_multiple_requirement_reason_lines(
+def test_dashboard_surfaces_multiple_req_reason_lines(
     client,
-    curriculum_course_factory,
-    semester_factory,
+    curri_crs_factory,
+    sem_factory,
     user_factory,
 ) -> None:
     """Locked courses should expose all grouped-requirement reason lines."""
-    semester = _open_registration_sem(semester_factory)
-    target = curriculum_course_factory("940", "CURRI_REASON_LINES")
+    semester = _open_regio_sem(sem_factory)
+    target = curri_crs_factory("940", "CURRI_REASON_LINES")
     target.min_validated_credits = 24
     target.save(update_fields=["min_validated_credits"])
-    req_all = curriculum_course_factory("941", "CURRI_REASON_LINES")
-    req_any_a = curriculum_course_factory("942", "CURRI_REASON_LINES")
-    req_any_b = curriculum_course_factory("943", "CURRI_REASON_LINES")
+    req_all = curri_crs_factory("941", "CURRI_REASON_LINES")
+    req_any_a = curri_crs_factory("942", "CURRI_REASON_LINES")
+    req_any_b = curri_crs_factory("943", "CURRI_REASON_LINES")
     req_all_label = req_all.course.short_code or req_all.course.code
     req_any_a_label = req_any_a.course.short_code or req_any_a.course.code
     req_any_b_label = req_any_b.course.short_code or req_any_b.course.code
@@ -309,15 +309,15 @@ def test_dashboard_surfaces_multiple_requirement_reason_lines(
     )
 
 
-def test_dashboard_keeps_no_section_courses_in_locked_information_list(
+def test_dashboard_keeps_no_sec_crss_in_locked_information_list(
     client,
-    curriculum_course_factory,
-    semester_factory,
+    curri_crs_factory,
+    sem_factory,
     user_factory,
 ) -> None:
     """Courses without offered sections stay visible in locked informational cards."""
-    semester = _open_registration_sem(semester_factory)
-    target = curriculum_course_factory("950", "CURRI_NO_SECTION")
+    semester = _open_regio_sem(sem_factory)
+    target = curri_crs_factory("950", "CURRI_NO_SECTION")
     target.level_number = 3
     target.save(update_fields=["level_number"])
     student = _std_for_curri(

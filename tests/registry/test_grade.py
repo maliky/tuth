@@ -9,10 +9,10 @@ pytestmark = pytest.mark.django_db  # replace the @pytest.mark.django_db decorat
 # ~~~~~~~~~~~~~~~ DB constraints ~~~~~~~~~~~~~~~~
 
 
-def test_grade_unique_student_section(student_factory, section_factory):
+def test_grade_unique_std_sec(std_factory, sec_factory):
     """A student only have one grade for a section (the final grade)."""
-    student = student_factory("grad_student", "TestCURRI")
-    section = section_factory("007", "TestCURRI")
+    student = std_factory("grad_student", "TestCURRI")
+    section = sec_factory("007", "TestCURRI")
     grade_a = GradeValue.objects.create(code="A")
     grade_b = GradeValue.objects.create(code="B")
 

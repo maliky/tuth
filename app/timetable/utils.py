@@ -108,7 +108,7 @@ def normalize_academic_year(raw: Optional[str]) -> str:
     return token
 
 
-def get_semester_code(sem_value: str, year_value: str) -> str:
+def get_sem_code(sem_value: str, year_value: str) -> str:
     """Build a semester code from year and semester values.
 
     Args:
@@ -131,7 +131,7 @@ SEMESTER_CODE_RE = re.compile(
 )
 
 
-def parse_semester_code(code: Optional[str]) -> SemesterCodeT:
+def parse_sem_code(code: Optional[str]) -> SemesterCodeT:
     """Parse semester code strings into their year and number components.
 
     Args:
@@ -160,7 +160,7 @@ def parse_semester_code(code: Optional[str]) -> SemesterCodeT:
     return ay_code, sem_no
 
 
-def normalize_semester_code(
+def normalize_sem_code(
     sem_code: Optional[str],
     *,
     year_value: Optional[str] = None,
@@ -181,15 +181,15 @@ def normalize_semester_code(
         sem_code "2" with year_value "24-25" yields "24-25_Sem2".
         sem_value "1" with year_value "2024-2025" yields "24-25_Sem1".
     """
-    ay_code, sem_no = parse_semester_code(sem_code)
+    ay_code, sem_no = parse_sem_code(sem_code)
     if ay_code and sem_no:
         return f"{normalize_academic_year(ay_code)}_Sem{sem_no}"
 
     raw_value = parse_str(sem_code)
     if raw_value and year_value:
-        return get_semester_code(sem_value=raw_value, year_value=year_value)
+        return get_sem_code(sem_value=raw_value, year_value=year_value)
     if sem_value and year_value:
-        return get_semester_code(sem_value=sem_value, year_value=year_value)
+        return get_sem_code(sem_value=sem_value, year_value=year_value)
 
     return ""
 

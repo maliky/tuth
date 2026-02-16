@@ -8,7 +8,7 @@ from app.academics.admin.widgets import (
     CourseManyWgt,
     CourseWgt,
     CurriWgt,
-    DepartmentWgt,
+    DptWgt,
 )
 
 from app.academics.models.college import College
@@ -122,7 +122,7 @@ class CourseResource(resources.ModelResource):
     title_f = fields.Field(attribute="title", column_name="course_title")
 
     department_f = fields.Field(
-        attribute="department", column_name="course_dept", widget=DepartmentWgt()
+        attribute="department", column_name="course_dept", widget=DptWgt()
     )
     prerequisite_f = fields.Field(
         attribute="prerequisites",
@@ -249,7 +249,7 @@ class CurriCourseResource(resources.ModelResource):
         report_skipped = True
 
 
-class DepartmentResource(resources.ModelResource):
+class DptResource(resources.ModelResource):
     """Resource for Department."""
 
     class Meta:

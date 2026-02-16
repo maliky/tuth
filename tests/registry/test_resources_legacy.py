@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from app.registry.admin.resources_legacy import normalize_semester
+from app.registry.admin.resources_legacy import normalize_sem
 from app.timetable.utils import normalize_academic_year
-from app.shared.data import legacy_registration_rows
+from app.shared.data import legacy_regio_rows
 
 
 def test_normalize_year_formats():
@@ -17,15 +17,15 @@ def test_normalize_year_formats():
     assert normalize_academic_year("") == ""
 
 
-def test_normalize_semester_tokens():
-    assert normalize_semester("First") == "1"
-    assert normalize_semester("vac") == "3"
-    assert normalize_semester(None) == "1"
+def test_normalize_sem_tokens():
+    assert normalize_sem("First") == "1"
+    assert normalize_sem("vac") == "3"
+    assert normalize_sem(None) == "1"
 
 
 @pytest.mark.django_db
-def test_legacy_registration_rows_reads_override(tmp_path: Path):
-    cache_clear = getattr(legacy_registration_rows, "cache_clear")
+def test_legacy_regio_rows_reads_override(tmp_path: Path):
+    cache_clear = getattr(legacy_regio_rows, "cache_clear")
     cache_clear()
     csv_path = tmp_path / "legacy.csv"
     csv_path.write_text(
@@ -33,7 +33,7 @@ def test_legacy_registration_rows_reads_override(tmp_path: Path):
         "123,2020/2021,First,CS,COET\n",
         encoding="utf-8",
     )
-    rows = legacy_registration_rows(csv_path)
+    rows = legacy_regio_rows(csv_path)
     assert rows == (
         {
             "student_id": "123",

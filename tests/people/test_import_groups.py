@@ -26,7 +26,7 @@ User = get_user_model()
     ],
 )
 @pytest.mark.django_db
-def test_student_import(student_id, long_name, username, curriculum, group_factory):
+def test_std_import(student_id, long_name, username, curriculum, gp_factory):
     ds = Dataset()
 
     # username is mandatory for a student

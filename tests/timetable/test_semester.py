@@ -10,7 +10,7 @@ pytestmark = pytest.mark.django_db
 # ~~~~~~~~~~~~~~~~ DB Constraints ~~~~~~~~~~~~~~~~
 
 
-def test_semester_unique_number_per_year(academic_year):
+def test_sem_unique_number_per_year(academic_year):
     """In one academic year, we only have one semester."""
     Semester.objects.create(
         academic_year=academic_year,

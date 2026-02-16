@@ -24,12 +24,12 @@ from app.shared.auth.perms import UserRole
 from app.shared.utils import parse_str
 from app.timetable.models.semester import Semester
 from app.website.views.finance_officer_helpers import (
-    build_student_options,
+    build_std_options,
     clean_int,
-    finance_student_by_id,
-    finance_students,
-    group_invoices,
-    group_payments,
+    finance_std_by_id,
+    finance_stds,
+    gp_invoices,
+    gp_payments,
     invoice_queryset,
     payment_queryset,
 )
@@ -63,11 +63,11 @@ def _parse_decimal(value: str | None) -> Optional[Decimal]:
 
 
 @login_required
-def finance_officer_student_autocomplete(request: HttpRequest) -> HttpResponse:
+def finance_officer_std_autocomplete(request: HttpRequest) -> HttpResponse:
     """Return finance students for the select2 dropdown."""
     _require_finance_access(request)
     query = parse_str(request.GET.get("q"))
-    students = finance_students(query)[:15]
+    students = finance_stds(query)[:15]
     results = [
         {
             "id": student.id,
@@ -204,7 +204,7 @@ def finance_officer_invoices(request: HttpRequest) -> HttpResponse:
     if not selected_student_id and payment_status is None:
         payment_status = "pending"
     if not semester_param_present:
-        current_semester = Semester.get_current_semester()
+        current_semester = Semester.get_current_sem()
         if current_semester:
             semester_id = current_semester.id
 
@@ -232,9 +232,9 @@ def finance_officer_invoices(request: HttpRequest) -> HttpResponse:
     student_options = []
     selected_student_label = ""
     if selected_student_id:
-        selected_student = finance_student_by_id(selected_student_id)
+        selected_student = finance_std_by_id(selected_student_id)
         if selected_student:
-            student_options = build_student_options(
+            student_options = build_std_options(
                 [selected_student],
                 selected_student_id,
             )
@@ -255,8 +255,8 @@ def finance_officer_invoices(request: HttpRequest) -> HttpResponse:
     invoice_page = Paginator(invoice_qs, per_page).get_page(page_number)
     payment_page = Paginator(payment_qs, per_page).get_page(page_number)
 
-    invoice_groups = group_invoices(invoice_page)
-    payment_groups = group_payments(payment_page)
+    invoice_groups = gp_invoices(invoice_page)
+    payment_groups = gp_payments(payment_page)
 
     invoice_status_options = [
         {"value": "open", "label": "Open balance"},
@@ -326,7 +326,7 @@ def finance_officer_invoices(request: HttpRequest) -> HttpResponse:
         "pagination_query": pagination_params.urlencode(),
         "pagination_hidden_fields": pagination_hidden_fields,
         "pagination_action": request.path,
-        "student_autocomplete_url": reverse("finance_officer_student_autocomplete"),
+        "student_autocomplete_url": reverse("finance_officer_std_autocomplete"),
         "dashboard_url": reverse(
             "staff_role_dashboard",
             kwargs={"role": "finance_officer"},

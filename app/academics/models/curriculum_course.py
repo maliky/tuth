@@ -11,7 +11,7 @@ from simple_history.models import HistoricalRecords
 from app.academics.choices import LEVEL_NUMBER
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
-from app.finance.models.fee_stack import resolve_course_fee_stack_map
+from app.finance.models.fee_stack import resolve_crs_fee_stack_map
 from app.registry.models import CreditHour
 from app.shared.types import FacultyQuery, StdQuery
 from app.timetable.choices import SEMESTER_NUMBER
@@ -126,19 +126,19 @@ class CurriCourse(models.Model):
     )
 
     @classmethod
-    def get_default(cls, _course: Optional[Course] = None) -> Self:
+    def get_dft(cls, _course: Optional[Course] = None) -> Self:
         """Returns a default CurriCourse."""
         def_pg, _ = cls.objects.get_or_create(
-            curriculum=Curriculum.get_default(),
-            course=(_course or Course.get_default()),
+            curriculum=Curriculum.get_dft(),
+            course=(_course or Course.get_dft()),
         )
         return cast(Self, def_pg)
 
     @classmethod
-    def get_unique_default(cls) -> Self:
+    def get_unique_dft(cls) -> Self:
         """Returns a default unique CurriCourse."""
-        u_course = Course.get_unique_default()
-        return cls.get_default(_course=u_course)
+        u_course = Course.get_unique_dft()
+        return cls.get_dft(_course=u_course)
 
     def __str__(self) -> str:  # pragma: no cover
         """Return Curriculum <-> Course for readability."""
@@ -182,17 +182,17 @@ class CurriCourse(models.Model):
         """Get the list of faculty teaching this course in the current semester."""
         from app.people.models.faculty import Faculty
 
-        semester = Semester.get_current_semester()
+        semester = Semester.get_current_sem()
         faculty_qs = Faculty.objects.filter(
             section__semester=semester, section__curriculum_course=self
         ).distinct()
         return faculty_qs
 
-    def current_students(self) -> StdQuery:
+    def current_stds(self) -> StdQuery:
         """Stds enrolled in this curriculum course during the current semester."""
         from app.people.models.student import Student
 
-        semester = Semester.get_current_semester()
+        semester = Semester.get_current_sem()
         students_qs = Student.objects.filter(
             student_registrations__section__semester=semester,
             student_registrations__section__curriculum_course=self,
@@ -207,7 +207,7 @@ class CurriCourse(models.Model):
 
     def total_fee(self, semester) -> Decimal:
         """Return tuition plus resolved additional fees for a semester."""
-        fee_map, _ = resolve_course_fee_stack_map(self.course, semester)
+        fee_map, _ = resolve_crs_fee_stack_map(self.course, semester)
         fee_total = sum(fee_map.values(), Decimal("0.00"))
         return self.tuition_for() + fee_total
 

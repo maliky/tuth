@@ -33,7 +33,7 @@ def _select_crs_merge_target(courses: list[Course]) -> Course:
 
 
 @transaction.atomic
-def merge_courses(target: Course, sources):
+def merge_crss(target: Course, sources):
     """Merge source courses into the target course."""
     summary = {
         "merged": 0,
@@ -107,7 +107,7 @@ def _crs_merge_has_invoice_conflict(
     return Invoice.objects.filter(curriculum_course_id__in=conflict_ids).exists()
 
 
-def merge_curriculum_course_into_target(
+def merge_curri_crs_into_target(
     target: CurriCourse, source: CurriCourse
 ) -> dict[str, int]:
     """Merge one source curriculum-course into a target duplicate row.
@@ -200,7 +200,7 @@ def _merge_crs_prerequisites(target: Course, source: Course) -> dict[str, int]:
 
 
 @transaction.atomic
-def merge_curriculum_courses(target: CurriCourse, sources):
+def merge_curri_crss(target: CurriCourse, sources):
     """Merge CurriCourse rows into target."""
     summary = {
         "merged": 0,

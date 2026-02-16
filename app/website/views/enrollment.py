@@ -64,18 +64,18 @@ def _staff_breadcrumb(label: str) -> list[dict[str, str]]:
 
 
 @permission_required("people.add_student", raise_exception=True)
-def create_student(request: HttpRequest) -> HttpResponse:
+def create_std(request: HttpRequest) -> HttpResponse:
     """Point staff to the Django admin form."""
     context = {
         "page_title": "Create student",
         "page_summary": "Use the Django admin admissions form to capture the official record.",
         "breadcrumbs": _staff_breadcrumb("Create student"),
     }
-    return render(request, "website/create_student.html", context)
+    return render(request, "website/create_std.html", context)
 
 
 @permission_required("people.view_student", raise_exception=True)
-def student_list(request: HttpRequest) -> HttpResponse:
+def std_list(request: HttpRequest) -> HttpResponse:
     """Render a lightweight snapshot of recent students."""
     students = Student.objects.order_by("-id")[:25]
     context = {
@@ -84,11 +84,11 @@ def student_list(request: HttpRequest) -> HttpResponse:
         "page_summary": "This list shows the latest entries. Use Django admin for full search and filters.",
         "breadcrumbs": _staff_breadcrumb("Directory snapshot"),
     }
-    return render(request, "enrollment/student_list.html", context)
+    return render(request, "enrollment/std_list.html", context)
 
 
 @permission_required("people.view_student", raise_exception=True)
-def student_detail(request: HttpRequest, pk: int) -> HttpResponse:
+def std_detail(request: HttpRequest, pk: int) -> HttpResponse:
     """Render a student profile card."""
     student = get_object_or_404(Student, pk=pk)
     context = {
@@ -97,11 +97,11 @@ def student_detail(request: HttpRequest, pk: int) -> HttpResponse:
         "page_summary": f"Student ID {student.student_id}",
         "breadcrumbs": _staff_breadcrumb(student.long_name),
     }
-    return render(request, "enrollment/student_detail.html", context)
+    return render(request, "enrollment/std_detail.html", context)
 
 
 @permission_required("people.delete_student", raise_exception=True)
-def student_delete(request: HttpRequest, pk: int) -> HttpResponse:
+def std_delete(request: HttpRequest, pk: int) -> HttpResponse:
     """Delete a student after confirmation."""
     user = cast(User, request.user)
     if not user.groups.filter(name="Enrollment Officer").exists():
@@ -111,7 +111,7 @@ def student_delete(request: HttpRequest, pk: int) -> HttpResponse:
     if request.method == "POST":
         student.delete()
         messages.success(request, "Student deleted successfully.")
-        return redirect("student_list")
+        return redirect("std_list")
 
     context = {
         "student": student,
@@ -123,7 +123,7 @@ def student_delete(request: HttpRequest, pk: int) -> HttpResponse:
 
 
 @permission_required("people.view_student", raise_exception=True)
-def student_admin_edit(request: HttpRequest) -> HttpResponse:
+def std_admin_edit(request: HttpRequest) -> HttpResponse:
     """Provide a simple selector that jumps to the Django admin edit form."""
     form = StdAdminLookupForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
@@ -136,13 +136,13 @@ def student_admin_edit(request: HttpRequest) -> HttpResponse:
         "page_title": "Edit student in admin",
         "page_summary": "Pick an ID and Tusis will open the Django admin edit form in a new tab.",
         "breadcrumbs": _staff_breadcrumb("Edit student"),
-        "autocomplete_url": reverse("student_autocomplete"),
+        "autocomplete_url": reverse("std_autocomplete"),
     }
-    return render(request, "enrollment/student_admin_edit.html", context)
+    return render(request, "enrollment/std_admin_edit.html", context)
 
 
 @permission_required("people.view_student", raise_exception=True)
-def student_autocomplete(request: HttpRequest) -> HttpResponse:
+def std_autocomplete(request: HttpRequest) -> HttpResponse:
     """Provide JSON suggestions for the student lookup."""
     query = parse_str(request.GET.get("q"))
     students = Student.objects.filter(last_enrolled_semester__isnull=False)

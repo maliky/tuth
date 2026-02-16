@@ -12,12 +12,12 @@ from app.finance.models.status_types_methods import Payer
 pytestmark = pytest.mark.django_db
 
 
-def test_course_invoice_creation_bootstraps_all_payers(registration_factory) -> None:
+def test_crs_invoice_creation_bootstraps_all_payers(regio_factory) -> None:
     """Creating a course invoice should recreate all payer lookup defaults."""
     Payer.objects.all().delete()
     assert Payer.objects.count() == 0
 
-    reg = registration_factory("payer_bootstrap_student", "CURRI_TEST", "101", 1)
+    reg = regio_factory("payer_bootstrap_student", "CURRI_TEST", "101", 1)
     amount = Decimal("10.00")
     invoice = CourseInvoice.objects.create(
         curriculum_course=reg.section.curriculum_course,

@@ -11,13 +11,13 @@ from app.timetable.models.section import Section
 
 
 @pytest.mark.django_db
-def test_allowed_courses(student: Student, semester, curriculum_course_factory):
+def test_allowed_crss(student: Student, semester, curri_crs_factory):
     """We test that if a course A is a prerequisite to course B.
 
     then A must be passed to see B in allowed courses for the student.
     """
-    curriculum_course_a = curriculum_course_factory("101", student.curriculum.short_name)
-    curriculum_course_b = curriculum_course_factory("102", student.curriculum.short_name)
+    curriculum_course_a = curri_crs_factory("101", student.curriculum.short_name)
+    curriculum_course_b = curri_crs_factory("102", student.curriculum.short_name)
     course_a = curriculum_course_a.course
     course_b = curriculum_course_b.course
 
@@ -29,32 +29,32 @@ def test_allowed_courses(student: Student, semester, curriculum_course_factory):
         curriculum_course=curriculum_course_a, semester=semester, number=1
     )
 
-    allowed_initial = list(student.allowed_courses())
+    allowed_initial = list(student.allowed_crss())
 
     assert course_a in allowed_initial
 
     grade_value = GradeValue.objects.create(code="A")
     Grade.objects.create(student=student, section=sec_a, value=grade_value)
 
-    allowed = list(student.allowed_courses())
+    allowed = list(student.allowed_crss())
 
     assert course_b in allowed
     assert course_a not in allowed
 
 
 @pytest.mark.django_db
-def test_student_save_assigns_group(curriculum, student_factory):
+def test_std_save_assigns_gp(curriculum, std_factory):
     """Saving a Student shoul add the user to the student group."""
-    stud = student_factory("newstud", curriculum.short_name)
+    stud = std_factory("newstud", curriculum.short_name)
 
     assert stud.user.groups.filter(name=stud.GROUP).exists()
 
 
 @pytest.mark.django_db
-def test_student_email_uses_username_prefix():
+def test_std_email_uses_username_prefix():
     """Student email prefix matches username; no extra suffixes inserted."""
     student = Student.objects.create(
-        first_name="Jane", last_name="Doe", curriculum=Curriculum.get_default()
+        first_name="Jane", last_name="Doe", curriculum=Curriculum.get_dft()
     )
 
     email = student.mk_email()

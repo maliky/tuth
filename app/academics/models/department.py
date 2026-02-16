@@ -13,7 +13,7 @@ from app.academics.models.college import College
 class Department(models.Model):
     """Academic department belonging to a college.
 
-    Example: see get_default()
+    Example: see get_dft()
     """
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
@@ -42,18 +42,18 @@ class Department(models.Model):
     def _ensure_college(self) -> None:
         """Make sure to have a college for the department."""
         if not self.college_id:
-            self.college = College.get_default()
+            self.college = College.get_dft()
 
     def _ensure_long_name(self) -> None:
         """Make sure a title is set."""
         if not self.long_name:
             self.long_name = f"{self.code} department of {self.college}"
 
-    def get_courses(self) -> models.QuerySet:
+    def get_crss(self) -> models.QuerySet:
         """Return all the courses for this department."""
         return self.courses.all().order_by("number")
 
-    def course_count(self) -> int:
+    def crs_count(self) -> int:
         """Count the number of courses for this department."""
         return self.courses.count()
 
@@ -65,9 +65,9 @@ class Department(models.Model):
         super().save(*args, **kwargs)
 
     @classmethod
-    def get_default(cls, code="DFT") -> Self:
+    def get_dft(cls, code="DFT") -> Self:
         """Return the default Department."""
-        dft_college = College.get_default()
+        dft_college = College.get_dft()
         default_dept, _ = cls.objects.get_or_create(code=code, college=dft_college)
         return cast(Self, default_dept)
 

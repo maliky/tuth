@@ -34,7 +34,7 @@ def test_unique_role_per_period(user, college, department):
             )
 
 
-def test_enrollment_officer_group_has_permissions():
+def test_enrollment_officer_gp_has_permissions():
     """load_roles creates Enrollment Officer group with student perms."""
     call_command("load_roles")
     grp = UserRole.ENROLLMENT_OFFICER.value.group

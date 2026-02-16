@@ -16,20 +16,19 @@ pytestmark = pytest.mark.django_db
 
 
 def test_college_computed_fields(
-    department_factory,
-    curriculum_factory,
-    curriculum_course_factory,
+    dpt_factory,
+    curri_factory,
+    curri_crs_factory,
     faculty,
     user_factory,
-    student_factory,
+    std_factory,
 ):
     """College properties return expected aggregate information."""
-    dept = department_factory("SCI")
+    dept = dpt_factory("SCI")
     college = dept.college
-    curr1 = curriculum_factory("CUR1")
+    curr1 = curri_factory("CUR1")
     curriculum_courses = [
-        curriculum_course_factory(str(n), curr1.short_name)
-        for n in ["101", "102", "201", "202"]
+        curri_crs_factory(str(n), curr1.short_name) for n in ["101", "102", "201", "202"]
     ]
     for p in curriculum_courses:
         p.credit_hours = CreditHour.objects.get(code=10)
@@ -54,19 +53,17 @@ def test_college_computed_fields(
         start_date=date.today(),
     )
 
-    student = student_factory("stud", curr1.short_name)
+    student = std_factory("stud", curr1.short_name)
     grade_value = GradeValue.objects.create(code="A")
     for sec in sections:
         Grade.objects.create(student=student, section=sec, value=grade_value)
 
     assert college.faculty_count == 1
-    assert college.course_count == 4
+    assert college.crs_count == 4
     assert "CUR1" in [
         c.short_name for c in college.curricula.all()
     ], f"{college.curricula.all()}"
     assert "SCI" in [
         c.code for c in college.departments.all()
     ], f"{college.departments.all()}"
-    assert (
-        "sophomore: 1" in college.student_counts_by_level
-    ), f"{college.student_counts_by_level}"
+    assert "sophomore: 1" in college.std_counts_by_level, f"{college.std_counts_by_level}"

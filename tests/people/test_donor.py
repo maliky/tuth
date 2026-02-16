@@ -8,7 +8,7 @@ from app.people.utils import mk_username
 
 
 @pytest.mark.django_db
-def test_donor_creation_sets_id_and_group() -> None:
+def test_donor_creation_sets_id_and_gp() -> None:
     donor = Donor.objects.create(first_name="Dani", last_name="Cole")
 
     expected_username = mk_username("Dani", "Cole")

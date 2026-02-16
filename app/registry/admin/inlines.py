@@ -37,7 +37,7 @@ class GradeIL(admin.TabularInline):
     autocomplete_fields = ("student",)
 
 
-class StdRegistrationIL(admin.TabularInline):
+class StdRegioIL(admin.TabularInline):
     """Inline list of student registrations with grade summaries."""
 
     model = Registration
@@ -47,8 +47,8 @@ class StdRegistrationIL(admin.TabularInline):
     extra = 0
     # Allow staff to remove registrations directly from the student admin.
     can_delete = True
-    fields = ("section_link", "section_semester", "status", "grade_code")
-    readonly_fields = ("section_link", "section_semester", "grade_code")
+    fields = ("sec_link", "sec_sem", "status", "grade_code")
+    readonly_fields = ("sec_link", "sec_sem", "grade_code")
 
     def get_queryset(self, request):
         """Annotate registrations with grade codes for display."""
@@ -58,12 +58,12 @@ class StdRegistrationIL(admin.TabularInline):
         return qs.prefetch_related(Prefetch("section__grade_set", queryset=grade_qs))
 
     @admin.display(description="Section")
-    def section_link(self, obj):
+    def sec_link(self, obj):
         """Link to the related section change page."""
         return _format_sec_link(obj.section)
 
     @admin.display(description="Semester")
-    def section_semester(self, obj):
+    def sec_sem(self, obj):
         """Show the semester for the linked section."""
         return _format_sec_sem(obj.section)
 
@@ -94,8 +94,8 @@ class StdGradeIL(admin.TabularInline):
     extra = 0
     classes = ["collapse"]
     can_delete = False
-    fields = ("section_link", "value")
-    readonly_fields = ("section_link", "value")
+    fields = ("sec_link", "value")
+    readonly_fields = ("sec_link", "value")
     template = "admin/registry/studentgrade/tabular_inline.html"
 
     def get_queryset(self, request):
@@ -115,7 +115,7 @@ class StdGradeIL(admin.TabularInline):
         )
 
     @admin.display(description="Section")
-    def section_link(self, obj):
+    def sec_link(self, obj):
         """Link to the related section change page."""
         return _format_sec_link(obj.section)
 

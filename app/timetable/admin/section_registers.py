@@ -16,15 +16,15 @@ from app.shared.admin.mixins import CollegeRestrictedAdmin, ProtectedDeleteAdmin
 from app.timetable.admin.filters import (
     CollegeFltAC,
     SectionFacultyFltAc,
-    SemesterFltAC,
+    SemFltAC,
 )
 from app.timetable.admin.inlines import SecSessionIL
-from app.timetable.admin.section_resources import SectionResource
+from app.timetable.admin.section_resources import SecResource
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
 
 
-def _is_registration_lookup(request: HttpRequest) -> bool:
+def _is_regio_lookup(request: HttpRequest) -> bool:
     """Return True when the request targets registration section autocomplete."""
     return (
         request.GET.get("app_label") == "registry"
@@ -34,7 +34,7 @@ def _is_registration_lookup(request: HttpRequest) -> bool:
 
 
 @admin.register(Section)
-class SectionAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
+class SecAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
     """Admin interface for Section.
 
     list_display includes semester, course and faculty information while
@@ -42,16 +42,16 @@ class SectionAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
     Flting by curriculum is available through list_filter.
     """
 
-    resource_class = SectionResource
+    resource_class = SecResource
     college_field = "curriculum_course__curriculum__college"
     list_display = (
-        "curriculum_course_display",
+        "curri_crs_display",
         "session_count",
         "faculty_link",
         "space_codes",
         "available_seats",
         "credit_hours",
-        # "curriculum_display",
+        # "curri_display",
         "semester",
     )
     # need to be a field of the section
@@ -62,7 +62,7 @@ class SectionAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
         CollegeFltAC,
         SectionFacultyFltAc,
         CurriFltAC,
-        SemesterFltAC,
+        SemFltAC,
     ]
     autocomplete_fields = ("semester", "faculty")
 
@@ -97,9 +97,9 @@ class SectionAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
                 )
             )
         )
-        if _is_registration_lookup(request):
+        if _is_regio_lookup(request):
             # Scope registration lookups to the semester open for registration.
-            open_semester, error_message = Semester.registration_open_semester()
+            open_semester, error_message = Semester.regio_open_sem()
             if error_message:
                 # > need to do something with the error message
                 return qs.none()
@@ -128,7 +128,7 @@ class SectionAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
             )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
-    def get_protected_delete_single_message(
+    def get_protected_delete_single_msg(
         self, request: HttpRequest, obj, protected_count: int
     ) -> str:
         """Return section-specific message for protected single deletes."""
@@ -137,7 +137,7 @@ class SectionAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
             f"({protected_count} protected record(s)). Reassign grades first."
         )
 
-    def get_protected_delete_bulk_message(
+    def get_protected_delete_bulk_msg(
         self, request: HttpRequest, protected_count: int
     ) -> str:
         """Return section-specific message for protected bulk deletes."""
@@ -151,7 +151,7 @@ class SectionAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
         qs, use_distinct = super().get_search_results(request, queryset, search_term)
         # student_id = request.GET.get("student")
         # if not student_id:
-        #     if _is_registration_lookup(request):
+        #     if _is_regio_lookup(request):
         #         return qs.none(), use_distinct
         #     return qs, use_distinct
 
@@ -164,7 +164,7 @@ class SectionAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
         # if not student:
         #     return qs.none(), use_distinct
 
-        # qs = qs.filter(curriculum_course__course__in=student.allowed_courses())
+        # qs = qs.filter(curriculum_course__course__in=student.allowed_crss())
         return qs, use_distinct
 
     def lookup_allowed(self, lookup, value, request=None):
@@ -184,7 +184,7 @@ class SectionAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
         return f"{obj.number}/{obj.sessions.count()}"
 
     @admin.display(description="Curriculum Course", ordering="curriculum_course_str")
-    def curriculum_course_display(self, obj: Section) -> str:
+    def curri_crs_display(self, obj: Section) -> str:
         """Return the curriculum course label."""
         return str(obj.curriculum_course)
 
@@ -194,7 +194,7 @@ class SectionAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
         return obj.curriculum_course.credit_hours_id or 3
 
     @admin.display(description="Curriculum", ordering="curriculum_course__curriculum")
-    def curriculum_display(self, obj: Section) -> str:
+    def curri_display(self, obj: Section) -> str:
         """Return the curriculum name for the section listing."""
         return str(obj.curriculum_course.curriculum)
 

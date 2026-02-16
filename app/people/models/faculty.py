@@ -130,7 +130,7 @@ class Faculty(models.Model):
         """Returns the faculty division."""
         return self.staff_profile.division
 
-    def get_department(self):
+    def get_dpt(self):
         """Returns the faculty division."""
         return self.staff_profile.department
 
@@ -170,7 +170,7 @@ class Faculty(models.Model):
     def _ensure_college(self):
         """Make sure we have a college."""
         if not self.college_id:
-            self.college = College.get_default()
+            self.college = College.get_dft()
 
     def save(self, *args, **kwargs):
         """Check that we have a college for the staff before save."""
@@ -185,11 +185,11 @@ class Faculty(models.Model):
         return self.staff_profile.user
 
     @classmethod
-    def get_default(cls, profile=None) -> Self:
+    def get_dft(cls, profile=None) -> Self:
         """Returns a default Faculty."""
         if not profile:
-            profile = Staff.get_default()
-        college = College.get_default()
+            profile = Staff.get_dft()
+        college = College.get_dft()
 
         # The existing construct will silently handle
         # may objects when get_or_create will raise 'MultipleObjectsReturned'
@@ -203,10 +203,10 @@ class Faculty(models.Model):
         return faculty
 
     @classmethod
-    def get_unique_default(cls) -> Self:
+    def get_unique_dft(cls) -> Self:
         """Returns a unique default Faculty."""
-        unique_profile = Staff.get_unique_default()
-        return cls.get_default(unique_profile)
+        unique_profile = Staff.get_unique_dft()
+        return cls.get_dft(unique_profile)
 
     @classmethod
     def mk_username(

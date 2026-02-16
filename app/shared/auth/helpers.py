@@ -20,6 +20,6 @@ def ensure_superuser(cmd: BaseCommand) -> None:
     log(cmd, msg="✔ Superuser recreated.", style="SUCCESS")
 
 
-def ensure_role_groups() -> Dict[str, Group]:
+def ensure_role_gps() -> Dict[str, Group]:
     """Create missing Group objects for each user role."""
     return {user_role.value.code: user_role.value.group for user_role in UserRole}

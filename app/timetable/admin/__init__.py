@@ -1,38 +1,38 @@
 """Initialization for the admin package."""
 
-from .core_registers import AcademicYearAdmin, SemesterAdmin, TermAdmin
-from .core_resources import AcademicYearResource, SemesterResource
+from .core_registers import AcademicYearAdmin, SemAdmin, TermAdmin
+from .core_resources import AcademicYearResource, SemResource
 from .filters import (
-    SectionBySemesterFlt,
+    SecBySemFlt,
     SectionFacultyFltAc,
-    SemesterFltAC,
+    SemFltAC,
 )
-from .inlines import SectionIL, SemesterIL
-from .section_registers import SectionAdmin
-from .section_resources import SectionResource
+from .inlines import SecIL, SemIL
+from .section_registers import SecAdmin
+from .section_resources import SecResource
 from .session_resources import ScheduleResource, SecSessionResource
 from .session_registers import SecSessionAdmin
-from .views import SectionBySemesterAutocomplete
+from .views import SecBySemAutocomplete
 
 __all__ = [
     # Admin
     "AcademicYearAdmin",
     "SecSessionAdmin",
-    "SectionAdmin",
-    "SemesterAdmin",
+    "SecAdmin",
+    "SemAdmin",
     "TermAdmin",
     # Resource
     "AcademicYearResource",
     "SecSessionResource",
     "ScheduleResource",
-    "SectionResource",
-    "SemesterResource",
+    "SecResource",
+    "SemResource",
     # Inline
-    "SectionIL",
-    "SemesterIL",
+    "SecIL",
+    "SemIL",
     # Flts
     "SectionBySemesterAutocom",
-    "SectionBySemesterFlt",
+    "SecBySemFlt",
     "SectionFacultyFltAc",
-    "SemesterFltAC",
+    "SemFltAC",
 ]

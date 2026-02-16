@@ -4,11 +4,11 @@ from import_export import fields, resources
 
 from app.academics.admin.widgets import CurriCourseWgt
 from app.people.admin.widgets import FacultyUsernameWgt
-from app.timetable.admin.core_widgets import SemesterWgt
+from app.timetable.admin.core_widgets import SemWgt
 from app.timetable.models.section import Section
 
 
-class SectionResource(resources.ModelResource):
+class SecResource(resources.ModelResource):
 
     # just to keep it in headers and accessible for other.
 
@@ -23,7 +23,7 @@ class SectionResource(resources.ModelResource):
     semester = fields.Field(
         attribute="semester",
         column_name="semester_no",
-        widget=SemesterWgt(),
+        widget=SemWgt(),
     )
     curriculum_course = fields.Field(
         # could be other course columns
@@ -56,7 +56,7 @@ class SectionResource(resources.ModelResource):
         skip_unchanged = True
         use_bulk = False
 
-    def dehydrate_semester(self, obj):
+    def dehydrate_sem(self, obj):
         semester = getattr(obj, "semester", None)
         return getattr(semester, "number", "") if semester else ""
 
@@ -65,21 +65,21 @@ class SectionResource(resources.ModelResource):
         academic_year = getattr(semester, "academic_year", None)
         return getattr(academic_year, "code", "") if academic_year else ""
 
-    def dehydrate_curriculum_course(self, obj):
+    def dehydrate_curri_crs(self, obj):
         curriculum = getattr(obj.curriculum_course, "curriculum", None)
         return getattr(curriculum, "short_name", "") if curriculum else ""
 
-    def dehydrate_course_no(self, obj):
+    def dehydrate_crs_no(self, obj):
         course = getattr(obj.curriculum_course, "course", None)
         return getattr(course, "number", "") if course else ""
 
-    def dehydrate_course_dept(self, obj):
+    def dehydrate_crs_dept(self, obj):
         course = getattr(obj.curriculum_course, "course", None)
         department = getattr(course, "department", None)
         return getattr(department, "code", "") if department else ""
 
     def dehydrate_dept_code(self, obj):
-        return self.dehydrate_course_dept(obj)
+        return self.dehydrate_crs_dept(obj)
 
     def dehydrate_college_code(self, obj):
         course = getattr(obj.curriculum_course, "course", None)

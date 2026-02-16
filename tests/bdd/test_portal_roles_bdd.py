@@ -33,7 +33,7 @@ def test_portal_role_actions_bdd():
     "features/portal_roles.feature",
     "Registrar without officer permissions cannot manage semester windows",
 )
-def test_portal_registrar_action_restriction_bdd():
+def test_portal_reg_action_restriction_bdd():
     """Drive the registrar restriction scenario."""
 
 

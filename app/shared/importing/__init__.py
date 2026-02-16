@@ -10,8 +10,8 @@ from .rows import (
     normalize_field,
     pipeline,
     rename_headers,
-    set_course_codes,
-    setdefault_field,
+    set_crs_codes,
+    setdft_field,
 )
 
 __all__ = [
@@ -24,6 +24,6 @@ __all__ = [
     "normalize_field",
     "pipeline",
     "rename_headers",
-    "set_course_codes",
-    "setdefault_field",
+    "set_crs_codes",
+    "setdft_field",
 ]

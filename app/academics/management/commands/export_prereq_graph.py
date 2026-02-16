@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 from app.academics.prereq_graph import (
     export_prereq_graph,
-    resolve_curriculum,
+    resolve_curri,
 )
 
 
@@ -29,7 +29,7 @@ class Command(BaseCommand):
         if len(short_names) != 1:
             raise CommandError("Provide exactly one curriculum short name.")
 
-        curriculum = resolve_curriculum(short_names[0])
+        curriculum = resolve_curri(short_names[0])
         output = export_prereq_graph(curriculum)
 
         self.stdout.write(self.style.SUCCESS(f"JSON: {output.json_path}"))

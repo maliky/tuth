@@ -8,7 +8,7 @@ from decimal import Decimal
 import pytest
 from django.test import override_settings
 
-from app.finance.fee_assignment import attach_semester_fee_stacks
+from app.finance.fee_assignment import attach_sem_fee_stacks
 from app.finance.models.fee_stack import FeeStack, FeeStackLine
 from app.finance.models.invoice import CourseInvoice
 from app.finance.models.status_types_methods import (
@@ -41,14 +41,14 @@ def _fee_type(code: str, label: str) -> FeeType:
     FINANCE_DEFAULT_SEMESTER_FEE_STACK_NAMES=["Registration Base"],
     FINANCE_OPTIONAL_SEMESTER_FEE_STACK_NAMES=["Dormitory Fee"],
 )
-def test_attach_semester_fee_stacks_is_idempotent(
-    curriculum_course_factory,
-    semester_factory,
+def test_attach_sem_fee_stacks_is_idempotent(
+    curri_crs_factory,
+    sem_factory,
     student,
 ) -> None:
     """Default and optional stack attachments should be repeatable and stable."""
-    curriculum_course = curriculum_course_factory("881", "CURR_FEES")
-    semester = semester_factory(1, datetime(2026, 1, 1))
+    curriculum_course = curri_crs_factory("881", "CURR_FEES")
+    semester = sem_factory(1, datetime(2026, 1, 1))
     student.curriculum = curriculum_course.curriculum
     student.last_enrolled_semester = semester
     student.save(update_fields=["curriculum", "last_enrolled_semester"])
@@ -92,7 +92,7 @@ def test_attach_semester_fee_stacks_is_idempotent(
 
     parent_invoice.fee_stacks.add(manual_stack)
 
-    first_run = attach_semester_fee_stacks(
+    first_run = attach_sem_fee_stacks(
         student=student,
         semester=semester,
         optional_stack_ids={optional_stack.id, 999_999},
@@ -105,7 +105,7 @@ def test_attach_semester_fee_stacks_is_idempotent(
         optional_stack.id,
     }
 
-    second_run = attach_semester_fee_stacks(
+    second_run = attach_sem_fee_stacks(
         student=student,
         semester=semester,
         optional_stack_ids={optional_stack.id, 999_999},
@@ -118,7 +118,7 @@ def test_attach_semester_fee_stacks_is_idempotent(
         optional_stack.id,
     }
 
-    third_run = attach_semester_fee_stacks(
+    third_run = attach_sem_fee_stacks(
         student=student,
         semester=semester,
         optional_stack_ids=set(),

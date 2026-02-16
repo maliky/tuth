@@ -72,8 +72,7 @@ def _stack_amounts_for_sem(
 ) -> MoneyMapT:
     """Return semester amounts keyed by fee-stack id."""
     return {
-        fee_stack.id: fee_stack.total_amount_for_semester(semester)
-        for fee_stack in fee_stacks
+        fee_stack.id: fee_stack.total_amount_for_sem(semester) for fee_stack in fee_stacks
     }
 
 
@@ -82,7 +81,7 @@ def _quantized_amount_label(amount: Decimal) -> str:
     return f"{amount.quantize(PRESENTATION_MONEY_QUANT):.2f}"
 
 
-def optional_semester_stack_choices(
+def optional_sem_stack_choices(
     *,
     student,
     semester,
@@ -120,7 +119,7 @@ def optional_semester_stack_choices(
     ]
 
 
-def attach_semester_fee_stacks(
+def attach_sem_fee_stacks(
     *,
     student,
     semester,

@@ -51,7 +51,7 @@ def _read_rows(path: Path) -> tuple[dict[str, str], ...]:
 
 
 @lru_cache(maxsize=4)
-def legacy_registration_rows(
+def legacy_regio_rows(
     source_path: str | Path | None = None,
 ) -> tuple[dict[str, str], ...]:
     """Return cached rows from the trimmed registry_registration CSV if present."""

@@ -35,7 +35,7 @@ ROLE_PRIORITY: list[str] = [
     "dean",
     "chair",
     "faculty",
-    "registrar_officer",
+    "reg_officer",
     "registrar",
     "enrollment_officer",
     "enrollment",
@@ -426,7 +426,7 @@ def _build_enrollment_context(_: HttpRequest) -> dict:
     actions = [
         {
             "label": "Student snapshot",
-            "href": reverse("student_list"),
+            "href": reverse("std_list"),
             "description": "Review the latest arrivals without leaving Tusis.",
             "variant": "outline-primary",
         },
@@ -438,7 +438,7 @@ def _build_enrollment_context(_: HttpRequest) -> dict:
         },
         {
             "label": "Edit student in admin",
-            "href": reverse("student_admin_edit"),
+            "href": reverse("std_admin_edit"),
             "description": "Pick an ID and Tusis will send you straight to the admin edit screen.",
             "variant": "outline-secondary",
         },
@@ -476,7 +476,7 @@ def _build_enrollment_officer_context(request: HttpRequest) -> dict:
     return _with_actions(context, extras)
 
 
-def _build_registrar_context(_: HttpRequest) -> dict:
+def _build_reg_context(_: HttpRequest) -> dict:
     pending_qs = TranscriptRequest.objects.filter(status__code="pending")
     pending_transcripts = list(
         pending_qs.select_related("student").order_by("-requested_at")[:8]
@@ -496,7 +496,7 @@ def _build_registrar_context(_: HttpRequest) -> dict:
         ]
 
     actions = []
-    grades_url = _maybe_reverse("registrar_grades_dashboard")
+    grades_url = _maybe_reverse("reg_grades_dashboard")
     if grades_url:
         actions.append(
             {
@@ -524,12 +524,12 @@ def _build_registrar_context(_: HttpRequest) -> dict:
     }
 
 
-def _build_registrar_officer_context(request: HttpRequest) -> dict:
-    base = _build_registrar_context(request)
+def _build_reg_officer_context(request: HttpRequest) -> dict:
+    base = _build_reg_context(request)
     extras = [
         {
             "label": "Manage semester windows",
-            "href": reverse("registrar_course_windows"),
+            "href": reverse("reg_crs_wins"),
             "description": "Open or close registration and grading periods.",
             "variant": "warning",
         }
@@ -715,13 +715,13 @@ ROLE_CONFIG: dict[str, RoleConfig] = {
         "groups": {"Registrar"},
         "title": "Registrar Lifecycle Ops",
         "summary": "Transcript fulfillment and live enrollment checks.",
-        "builder": _build_registrar_context,
+        "builder": _build_reg_context,
     },
-    "registrar_officer": {
+    "reg_officer": {
         "groups": {"Registrar Officer"},
         "title": "Registrar Officer Console",
         "summary": "Semester windows and official roster controls.",
-        "builder": _build_registrar_officer_context,
+        "builder": _build_reg_officer_context,
     },
     "enrollment": {
         "groups": {"Enrollment"},

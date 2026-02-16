@@ -66,7 +66,7 @@ class SecSession(models.Model):
         super().clean()
 
         if self.schedule_id is None:
-            self.schedule = Schedule.get_uniq_default()
+            self.schedule = Schedule.get_uniq_dft()
 
         # ie overlap possible for TBA or start_time < 8:00 AM.
         if not self.room_id:

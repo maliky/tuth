@@ -11,17 +11,17 @@ from django.db import transaction
 
 from app.academics.ensures import (
     ensure_college_id,
-    ensure_course_id,
-    ensure_curriculum_course_id,
-    ensure_curriculum_id,
-    ensure_department_id,
+    ensure_crs_id,
+    ensure_curri_crs_id,
+    ensure_curri_id,
+    ensure_dpt_id,
 )
-from app.people.ensures import ensure_student_sid
+from app.people.ensures import ensure_std_sid
 from app.people.models.faculty import Faculty
 from app.registry.models.grade import Grade, GradeValue
 from app.shared.types import StrIntMapT
 from app.shared.utils import get_in_row, to_int
-from app.timetable.ensures import ensure_section_id, ensure_semester_id
+from app.timetable.ensures import ensure_sec_id, ensure_sem_id
 
 
 class Command(BaseCommand):
@@ -55,7 +55,7 @@ class Command(BaseCommand):
             code.upper(): pk for code, pk in GradeValue.objects.values_list("code", "id")
         }
 
-        default_faculty = Faculty.get_default()
+        default_faculty = Faculty.get_dft()
         default_faculty_id = default_faculty.id
 
         created_grades_total = 0
@@ -80,26 +80,26 @@ class Command(BaseCommand):
             reader = csv.DictReader(f, delimiter="\t")
             for _, row in enumerate(reader, start=1):
                 # > this ensure_student should student manager to find existing student with sid
-                student_pk = ensure_student_sid(get_in_row("student_id", row))
+                student_pk = ensure_std_sid(get_in_row("student_id", row))
 
                 # Looking for the section
-                sem_pk = ensure_semester_id(
+                sem_pk = ensure_sem_id(
                     get_in_row("academic_year", row), get_in_row("semester_no", row)
                 )
                 college_pk = ensure_college_id(get_in_row("college_code", row))
-                dept_pk = ensure_department_id(get_in_row("course_dept", row), college_pk)
-                course_pk = ensure_course_id(
+                dept_pk = ensure_dpt_id(get_in_row("course_dept", row), college_pk)
+                course_pk = ensure_crs_id(
                     dept_pk, get_in_row("course_no", row), get_in_row("course_title", row)
                 )
-                curriculum_pk = ensure_curriculum_id(
+                curriculum_pk = ensure_curri_id(
                     get_in_row("curriculum", row), college_pk, fuzzy_threshold=1.0
                 )
                 credit_code = to_int(get_in_row("credit_hours", row), default=3)
-                curr_course_pk = ensure_curriculum_course_id(
+                curr_course_pk = ensure_curri_crs_id(
                     curriculum_pk, course_pk, credit_code
                 )
                 sec_no = to_int(get_in_row("section_no", row))
-                section_pk = ensure_section_id(
+                section_pk = ensure_sec_id(
                     sem_pk, curr_course_pk, sec_no, default_faculty_id
                 )
 

@@ -38,7 +38,7 @@ class CourseCollegeFlt(BaseCollegeFlt):
     parameter_name = "department__college"
 
 
-class DepartmentFltAC(ScopedAutocompleteFilter):
+class DptFltAC(ScopedAutocompleteFilter):
     """Autocomplete filter constrained to departments present in the queryset."""
 
     title = "Department"
@@ -58,7 +58,7 @@ class CurriFltAC(ScopedAutocompleteFilter):
     target_model = Curriculum
 
 
-class DepartmentCurriFltAC(ScopedAutocompleteFilter):
+class DptCurriFltAC(ScopedAutocompleteFilter):
     """Autocomplete filter for curricula linked through department courses."""
 
     title = "Curriculum"

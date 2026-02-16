@@ -13,14 +13,14 @@ from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from app.timetable.admin.filters import SemesterAcademicYearFltAc
-from app.timetable.admin.inlines import SemesterIL
-from app.timetable.admin.core_resources import SemesterResource
+from app.timetable.admin.inlines import SemIL
+from app.timetable.admin.core_resources import SemResource
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester, SemesterStatus
 from app.timetable.models.term import Term
 
 
-class SemesterActionForm(forms.Form):
+class SemActionForm(forms.Form):
     """Form used to select a status for the bulk update step."""
 
     status = forms.ModelChoiceField(
@@ -33,7 +33,7 @@ class AcademicYearAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin settings for :class:~app.timetable.models.AcademicYear.
 
     Displays academic year information and embeds semesters via
-    SemesterIL. The listing is ordered by start date in descending
+    SemIL. The listing is ordered by start date in descending
     order and grouped by the start date hierarchy.
     """
 
@@ -42,11 +42,11 @@ class AcademicYearAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
         "start_date",
         "end_date",
         "code",
-        "section_count_link",
-        "student_count_link",
+        "sec_count_link",
+        "std_count_link",
     )
     date_hierarchy = "start_date"
-    inlines = [SemesterIL]
+    inlines = [SemIL]
     ordering = ("-start_date",)
 
     def get_queryset(self, request):
@@ -60,7 +60,7 @@ class AcademicYearAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
         )
 
     @admin.display(description="Sections", ordering="section_total")
-    def section_count_link(self, academic_year):
+    def sec_count_link(self, academic_year):
         """Link to sections scoped to this academic year."""
         count = getattr(academic_year, "section_total", None)
         if count is None:
@@ -76,7 +76,7 @@ class AcademicYearAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
         return format_html('<a href="{}">{}</a>', url, count)
 
     @admin.display(description="Stds", ordering="student_total")
-    def student_count_link(self, academic_year):
+    def std_count_link(self, academic_year):
         """Link to registrations for the academic year."""
         count = getattr(academic_year, "student_total", None)
         if count is None:
@@ -95,21 +95,21 @@ class AcademicYearAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
 
 
 @admin.register(Semester)
-class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
+class SemAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     """Admin configuration for :class:~app.timetable.models.Semester.
 
     Provides import/export support and filters semesters by academic year.
     list_display shows the academic year, number and date range.
     """
 
-    resource_class = SemesterResource
-    actions = ("set_semester_status",)
+    resource_class = SemResource
+    actions = ("set_sem_status",)
     list_display = (
         "academic_year",
         "status",
         "number",
-        "section_count_link",
-        "student_count_link",
+        "sec_count_link",
+        "std_count_link",
     )
     list_filter = (SemesterAcademicYearFltAc,)
     list_editable = ("status",)
@@ -118,11 +118,11 @@ class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
     ordering = ("academic_year", "number")
 
     @admin.action(description="Set status for selected semesters")
-    def set_semester_status(self, request, queryset):
+    def set_sem_status(self, request, queryset):
         """Bulk update semester status after a confirmation step."""
         selected_ids = request.POST.getlist(ACTION_CHECKBOX_NAME)
         form_data = request.POST if request.POST.get("apply_status") else None
-        form = SemesterActionForm(data=form_data)
+        form = SemActionForm(data=form_data)
         if request.POST.get("apply_status") and form.is_valid():
             status_obj = form.cleaned_data["status"]
             # > uniqueness of opensemester is done at db level
@@ -139,7 +139,7 @@ class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
             "title": "Set semester status",
             "queryset": queryset,
             "status_form": form,
-            "action": "set_semester_status",
+            "action": "set_sem_status",
             "action_checkbox_name": ACTION_CHECKBOX_NAME,
             "selected_ids": selected_ids,
             "select_across": request.POST.get("select_across", "0"),
@@ -160,7 +160,7 @@ class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
         )
 
     @admin.display(description="Sections", ordering="section_total")
-    def section_count_link(self, semester):
+    def sec_count_link(self, semester):
         count = getattr(semester, "section_total", None)
         if count is None:
             count = semester.section_set.count()
@@ -170,7 +170,7 @@ class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
         return format_html('<a href="{}">{}</a>', url, count)
 
     @admin.display(description="Stds", ordering="student_total")
-    def student_count_link(self, semester):
+    def std_count_link(self, semester):
         count = getattr(semester, "student_total", None)
         if count is None:
             count = (
@@ -189,7 +189,7 @@ class SemesterAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmi
 class TermAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     """Admin configuration for :class:`~app.timetable.models.Term`.
 
-    Mirrors :class:`SemesterAdmin` by listing each term's parent semester,
+    Mirrors :class:`SemAdmin` by listing each term's parent semester,
     number and date range. The ``number`` foreign key uses autocomplete to
     simplify selection.
     """
