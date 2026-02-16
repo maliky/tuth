@@ -19,7 +19,7 @@ from .curriculum_merge import (
     reconcile_std_curri_records,
 )
 from .helpers import (
-    CourseIdentityT,
+    CourseIdityT,
     CourseMergeSummaryT,
     ConflictChoiceByCourseIdT,
     ConflictChoiceT,
@@ -35,7 +35,7 @@ from .helpers import (
 )
 
 __all__ = [
-    "CourseIdentityT",
+    "CourseIdityT",
     "CourseMergeSummaryT",
     "ConflictChoiceByCourseIdT",
     "ConflictChoiceT",

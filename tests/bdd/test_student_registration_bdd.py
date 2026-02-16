@@ -27,7 +27,7 @@ pytestmark = [
     "features/student_registration.feature",
     "Student registers for an available section",
 )
-def test_student_registration_bdd():
+def test_std_regio_bdd():
     """Drive student registration from the dashboard."""
 
 

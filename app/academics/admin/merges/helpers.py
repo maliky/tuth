@@ -19,7 +19,7 @@ ConflictChoiceByCourseIdT: TypeAlias = dict[int, ConflictChoiceT]
 ConflictCurriCoursePairT: TypeAlias = tuple[CurriCourse, CurriCourse]
 SectionMergeResultT: TypeAlias = dict[str, int]
 StdCurriRecordMergeSummaryT: TypeAlias = dict[str, int]
-CourseIdentityT: TypeAlias = tuple[int, str]
+CourseIdityT: TypeAlias = tuple[int, str]
 
 MERGE_CHOICE_KEEP_TARGET: ConflictChoiceT = "keep_target"
 MERGE_CHOICE_KEEP_SOURCE: ConflictChoiceT = "keep_source"
@@ -27,9 +27,9 @@ MERGE_CHOICE_MERGE: ConflictChoiceT = "merge"
 MERGE_CHOICE_SKIP: ConflictChoiceT = "skip"
 
 
-def _build_crs_id(
+def _build_crs_idity(
     department_id: int | None, course_number: str | None
-) -> CourseIdentityT | None:
+) -> CourseIdityT | None:
     """Return the canonical identity key used for cross-curriculum reconciliation."""
     if not department_id:
         return None
@@ -41,40 +41,40 @@ def _build_crs_id(
     return (int(department_id), normalized_number)
 
 
-def _curri_crs_id(curriculum_course: CurriCourse) -> CourseIdentityT | None:
+def _curri_crs_idity(curriculum_course: CurriCourse) -> CourseIdityT | None:
     """Return a curriculum-course identity as (department_id, course_number)."""
     course = getattr(curriculum_course, "course", None)
     if course is None:
         return None
-    return _build_crs_id(course.department_id, course.number)
+    return _build_crs_idity(course.department_id, course.number)
 
 
-def _index_curri_crss_by_id(
+def _index_curri_crss_by_idity(
     curriculum_courses: list[CurriCourse],
-) -> dict[CourseIdentityT, CurriCourse]:
+) -> dict[CourseIdityT, CurriCourse]:
     """Index rows by identity while keeping the lowest-id row as canonical."""
-    identity_index: dict[CourseIdentityT, CurriCourse] = {}
+    idity_index: dict[CourseIdityT, CurriCourse] = {}
     for curriculum_course in sorted(curriculum_courses, key=lambda row: int(row.id)):
-        identity = _curri_crs_id(curriculum_course)
-        if identity is None:
+        idity = _curri_crs_idity(curriculum_course)
+        if idity is None:
             continue
-        if identity in identity_index:
+        if idity in idity_index:
             continue
-        identity_index[identity] = curriculum_course
-    return identity_index
+        idity_index[idity] = curriculum_course
+    return idity_index
 
 
-def _id_by_curri_crs_id(
+def _idity_by_curri_crs_id(
     curriculum_courses: list[CurriCourse],
-) -> dict[int, CourseIdentityT]:
+) -> dict[int, CourseIdityT]:
     """Build an id->identity lookup for already-fetched curriculum course rows."""
-    identity_by_curriculum_course_id: dict[int, CourseIdentityT] = {}
+    idity_by_curriculum_course_id: dict[int, CourseIdityT] = {}
     for curriculum_course in curriculum_courses:
-        identity = _curri_crs_id(curriculum_course)
-        if identity is None:
+        idity = _curri_crs_idity(curriculum_course)
+        if idity is None:
             continue
-        identity_by_curriculum_course_id[curriculum_course.id] = identity
-    return identity_by_curriculum_course_id
+        idity_by_curriculum_course_id[curriculum_course.id] = idity
+    return idity_by_curriculum_course_id
 
 
 def empty_std_curri_record_summary() -> StdCurriRecordMergeSummaryT:

@@ -23,16 +23,16 @@ from .helpers import (
     ConflictChoiceByCourseIdT,
     ConflictChoiceT,
     ConflictCurriCoursePairT,
-    CourseIdentityT,
+    CourseIdityT,
     MERGE_CHOICE_KEEP_SOURCE,
     MERGE_CHOICE_KEEP_TARGET,
     MERGE_CHOICE_MERGE,
     MERGE_CHOICE_SKIP,
     StdCurriRecordMergeSummaryT,
-    _build_crs_id,
-    _curri_crs_id,
-    _id_by_curri_crs_id,
-    _index_curri_crss_by_id,
+    _build_crs_idity,
+    _curri_crs_idity,
+    _idity_by_curri_crs_id,
+    _index_curri_crss_by_idity,
     _merge_curri_crs_links,
     empty_std_curri_record_summary,
 )
@@ -58,11 +58,11 @@ def list_curri_crs_conflicts(
         .order_by("id")
     )
     # > Reconciliation uses canonical identity (department, number), not raw course id.
-    target_by_course_identity = _index_curri_crss_by_id(target_rows)
+    target_by_course_identity = _index_curri_crss_by_idity(target_rows)
     conflicts: list[ConflictCurriCoursePairT] = []
     non_conflicting: list[CurriCourse] = []
     for source_row in source_rows:
-        source_identity = _curri_crs_id(source_row)
+        source_identity = _curri_crs_idity(source_row)
         target_row = (
             target_by_course_identity.get(source_identity)
             if source_identity is not None
@@ -179,7 +179,7 @@ def merge_curra(
             .select_related("course")
             .order_by("id")
         )
-        target_by_course_identity = _index_curri_crss_by_id(target_rows)
+        target_by_course_identity = _index_curri_crss_by_idity(target_rows)
         moved_students = Student.objects.filter(curriculum=src).update(curriculum=target)
         summary["students_moved"] += moved_students
         summary["majors_moved"] += Major.objects.filter(curriculum=src).update(
@@ -202,7 +202,7 @@ def merge_curra(
             summary["prerequisites_moved"] += 1
         for cc in CurriCourse.objects.filter(curriculum=src).select_related("course"):
             # > Avoid duplicate entries using canonical identity.
-            source_identity = _curri_crs_id(cc)
+            source_identity = _curri_crs_idity(cc)
             existing = (
                 target_by_course_identity.get(source_identity)
                 if source_identity is not None
@@ -337,7 +337,7 @@ def reconcile_std_curri_records(
         .only("id", "course_id", "course__department_id", "course__number")
     )
     # > Match target/source rows by canonical course identity.
-    target_cc_by_course_identity = _index_curri_crss_by_id(target_curriculum_courses)
+    target_cc_by_course_identity = _index_curri_crss_by_idity(target_curriculum_courses)
     if not target_cc_by_course_identity:
         return summary
 
@@ -346,7 +346,7 @@ def reconcile_std_curri_records(
         .select_related("course")
         .only("id", "course_id", "course__department_id", "course__number")
     )
-    source_course_identity_by_curriculum_course_id = _id_by_curri_crs_id(
+    source_course_identity_by_curriculum_course_id = _idity_by_curri_crs_id(
         source_curriculum_courses
     )
     source_curriculum_course_ids = [
@@ -406,7 +406,7 @@ def reconcile_std_curri_records(
     if not target_curriculum_course_ids:
         return summary
 
-    target_grade_values_by_course_identity: dict[CourseIdentityT, set[int | None]] = (
+    target_grade_values_by_course_identity: dict[CourseIdityT, set[int | None]] = (
         defaultdict(set)
     )
     for department_id, course_number, value_id in Grade.objects.filter(
@@ -417,13 +417,13 @@ def reconcile_std_curri_records(
         "section__curriculum_course__course__number",
         "value_id",
     ):
-        identity = _build_crs_id(department_id, course_number)
+        identity = _build_crs_idity(department_id, course_number)
         if identity is None:
             continue
         target_grade_values_by_course_identity[identity].add(value_id)
     target_has_grade_course_identities = set(target_grade_values_by_course_identity)
 
-    target_registration_course_identities: set[CourseIdentityT] = set()
+    target_registration_course_identities: set[CourseIdityT] = set()
     for department_id, course_number in Registration.objects.filter(
         student=student,
         section__curriculum_course_id__in=target_curriculum_course_ids,
@@ -431,7 +431,7 @@ def reconcile_std_curri_records(
         "section__curriculum_course__course__department_id",
         "section__curriculum_course__course__number",
     ):
-        identity = _build_crs_id(department_id, course_number)
+        identity = _build_crs_idity(department_id, course_number)
         if identity is None:
             continue
         target_registration_course_identities.add(identity)

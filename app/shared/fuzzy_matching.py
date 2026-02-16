@@ -13,7 +13,7 @@ from app.shared.types import AbstractPersonT, Score
 CandidateT = TypeVar("CandidateT")
 
 
-def identity(value: Any) -> Any:
+def idity(value: Any) -> Any:
     """Simple identity helper usable as a default token function."""
     return value
 
@@ -109,7 +109,7 @@ def name_similarity(
 def top_name_matches(
     base: str,
     candidates: Iterable[CandidateT],
-    token_fn: Callable[[CandidateT], str] = identity,
+    token_fn: Callable[[CandidateT], str] = idity,
     threshold: float = 0.9,
     limit: int = 3,
 ) -> list[tuple[CandidateT, float]]:
