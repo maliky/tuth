@@ -23,7 +23,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture(autouse=True)
-def _ensure_finance_payment_defaults() -> None:
+def _ensure_finance_payment_dfts() -> None:
     """Create lookup rows required by parent invoice foreign keys."""
     InvoiceStatus._populate_attributes_and_db()
     PaymentStatus._populate_attributes_and_db()

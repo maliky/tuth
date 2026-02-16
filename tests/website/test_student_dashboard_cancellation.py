@@ -26,7 +26,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture(autouse=True)
-def _ensure_finance_payment_defaults() -> None:
+def _ensure_finance_payment_dfts() -> None:
     """Create lookup rows required by parent invoice and payment foreign keys."""
     InvoiceStatus._populate_attributes_and_db()
     PaymentStatus._populate_attributes_and_db()
@@ -40,7 +40,7 @@ def _fee_type(code: str, label: str) -> FeeType:
     return fee_type
 
 
-def _student_registration_with_invoice(
+def _std_registration_with_invoice(
     *,
     curriculum_course_factory,
     semester_factory,
@@ -93,7 +93,7 @@ def test_cancel_keeps_parent_invoice_when_semester_fees_exist(
 ) -> None:
     """Cancellation should keep parent invoice when semester fee stacks are attached."""
     user, _student, registration, invoice, parent_invoice = (
-        _student_registration_with_invoice(
+        _std_registration_with_invoice(
             curriculum_course_factory=curriculum_course_factory,
             semester_factory=semester_factory,
             user_factory=user_factory,
@@ -130,7 +130,7 @@ def test_cancel_keeps_parent_invoice_when_cleared_history_exists(
 ) -> None:
     """Cancellation should keep parent invoice when payment history has a cleared state."""
     user, _student, registration, invoice, parent_invoice = (
-        _student_registration_with_invoice(
+        _std_registration_with_invoice(
             curriculum_course_factory=curriculum_course_factory,
             semester_factory=semester_factory,
             user_factory=user_factory,

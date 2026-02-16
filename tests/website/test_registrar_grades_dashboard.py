@@ -10,7 +10,7 @@ from django.urls import reverse
 pytestmark = pytest.mark.django_db
 
 
-def _selected_semester_value(response) -> str:
+def _selected_sem_value(response) -> str:
     """Return the selected semester value from dashboard context options."""
     selected_options = [
         option for option in response.context["semester_options"] if option["selected"]
@@ -59,7 +59,7 @@ def test_dashboard_defaults_to_latest_semester_with_grades(
     response = client.get(reverse("registrar_grades_dashboard"))
 
     assert response.status_code == 200
-    assert _selected_semester_value(response) == str(current.id)
+    assert _selected_sem_value(response) == str(current.id)
 
 
 def test_dashboard_defaults_to_all_semesters_without_grades(
@@ -75,4 +75,4 @@ def test_dashboard_defaults_to_all_semesters_without_grades(
     response = client.get(reverse("registrar_grades_dashboard"))
 
     assert response.status_code == 200
-    assert _selected_semester_value(response) == "all"
+    assert _selected_sem_value(response) == "all"

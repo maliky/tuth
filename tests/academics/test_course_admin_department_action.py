@@ -32,7 +32,7 @@ class DummyAdmin:
         self.messages.append((str(message), int(level)))
 
 
-def _post_update_department(
+def _post_update_dpt(
     *,
     selected_course_ids: list[int],
     department_id: int,
@@ -64,7 +64,7 @@ def test_update_department_moves_course_when_no_collision() -> None:
     )
 
     queryset = Course.objects.filter(pk=source_course.pk)
-    response, model_admin = _post_update_department(
+    response, model_admin = _post_update_dpt(
         selected_course_ids=[source_course.pk],
         department_id=target_dept.pk,
         queryset=queryset,
@@ -107,7 +107,7 @@ def test_update_department_merges_collision_with_existing_course(
     )
 
     queryset = Course.objects.filter(pk=source_course.pk)
-    response, model_admin = _post_update_department(
+    response, model_admin = _post_update_dpt(
         selected_course_ids=[source_course.pk],
         department_id=target_dept.pk,
         queryset=queryset,
@@ -147,7 +147,7 @@ def test_update_department_skips_collision_merge_when_invoice_exists(
     invoice_factory(source_curriculum_course)
 
     queryset = Course.objects.filter(pk=source_course.pk)
-    response, model_admin = _post_update_department(
+    response, model_admin = _post_update_dpt(
         selected_course_ids=[source_course.pk],
         department_id=target_dept.pk,
         queryset=queryset,

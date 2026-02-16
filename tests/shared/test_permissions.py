@@ -8,7 +8,7 @@ from app.academics.models.college import College
 pytestmark = pytest.mark.django_db
 
 
-def _check_only_default_visible(user, college):
+def _check_only_dft_visible(user, college):
     objs = get_objects_for_user(
         user,
         "academics.view_college",
@@ -31,7 +31,7 @@ def _check_all_visible(user, college, college_other):
 #     """Users see only permitted object when using object-level perms."""
 
 #     for user in (dean_user, chair_user, faculty_user, student_user):
-#         _check_only_default_visible(user, college)
+#         _check_only_dft_visible(user, college)
 
 
 # def test_model_level_access(

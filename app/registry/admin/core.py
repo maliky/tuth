@@ -36,20 +36,20 @@ SectionQueryT: TypeAlias = QuerySet[Section]
 SemesterT: TypeAlias = Semester
 
 
-def _open_registration_semester() -> Optional[SemesterT]:
+def _open_registration_sem() -> Optional[SemesterT]:
     """Return the single semester open for registration."""
     semester, _ = Semester.registration_open_semester()
     return semester
 
 
-def _section_queryset_for_student(student: Optional[Student]) -> SectionQueryT:
+def _sec_queryset_for_std(student: Optional[Student]) -> SectionQueryT:
     """Return sections scoped to a student or an empty queryset."""
     qs = Section.objects.select_related(
         "semester",
         "curriculum_course__course",
         "curriculum_course__curriculum",
     ).order_by("-semester__start_date", "curriculum_course__course__short_code")
-    open_semester = _open_registration_semester()
+    open_semester = _open_registration_sem()
     if not open_semester:
         return qs.none()
     if not student:
@@ -60,9 +60,9 @@ def _section_queryset_for_student(student: Optional[Student]) -> SectionQueryT:
     )
 
 
-def _available_sections_for_student(student: Student | None) -> SectionQueryT:
+def _available_secs_for_std(student: Student | None) -> SectionQueryT:
     """Return sections eligible for new registrations for the student."""
-    qs = _section_queryset_for_student(student)
+    qs = _sec_queryset_for_std(student)
     if not student:
         return qs
     registered_ids = Registration.objects.filter(student=student).values_list(
@@ -74,7 +74,7 @@ def _available_sections_for_student(student: Student | None) -> SectionQueryT:
     return qs.exclude(id__in=registered_ids)
 
 
-def _resolve_request_student(request) -> Optional[Student]:
+def _resolve_request_std(request) -> Optional[Student]:
     """Resolve a student from request data or the current registration."""
     student_id = request.POST.get("student") or request.GET.get("student")
     if student_id:
@@ -102,12 +102,12 @@ class RegistrationAdminForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        student = self._resolve_student()
+        student = self._resolve_std()
         section_field = self.fields.get("section")
         if section_field is not None and isinstance(
             section_field, forms.ModelChoiceField
         ):
-            section_field.queryset = _section_queryset_for_student(student)
+            section_field.queryset = _sec_queryset_for_std(student)
             section_field.widget.attrs["data-student-field"] = "id_student"
             section_field.help_text = "Select a student first to load available sections."
 
@@ -115,7 +115,7 @@ class RegistrationAdminForm(forms.ModelForm):
         if status_field is not None and not getattr(self.instance, "pk", None):
             status_field.initial = RegistrationStatus.get_default()
 
-    def _resolve_student(self) -> Optional[Student]:
+    def _resolve_std(self) -> Optional[Student]:
         """Return the selected student from bound data or the instance."""
         student_id = (
             self.data.get("student")
@@ -168,12 +168,12 @@ class RegistrationBulkAddForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        student = self._resolve_student()
+        student = self._resolve_std()
         sections_field = self.fields.get("sections")
         if sections_field is not None and isinstance(
             sections_field, forms.ModelMultipleChoiceField
         ):
-            sections_field.queryset = _available_sections_for_student(student)
+            sections_field.queryset = _available_secs_for_std(student)
             sections_field.help_text = (
                 "Select a student first to load available sections."
             )
@@ -181,7 +181,7 @@ class RegistrationBulkAddForm(forms.ModelForm):
         if status_field is not None and not getattr(self.instance, "pk", None):
             status_field.initial = RegistrationStatus.get_default()
 
-    def _resolve_student(self) -> Student | None:
+    def _resolve_std(self) -> Student | None:
         """Return the selected student from bound data or the instance."""
         student_id = (
             self.data.get("student")
@@ -210,7 +210,7 @@ class RegistrationBulkAddForm(forms.ModelForm):
             return cleaned
         student_obj = cast(Student, student)
         available_ids = set(
-            _available_sections_for_student(student_obj).values_list("id", flat=True)
+            _available_secs_for_std(student_obj).values_list("id", flat=True)
         )
         invalid = [section for section in sections if section.pk not in available_ids]
         if invalid:
@@ -418,9 +418,9 @@ class RegistrationAdmin(
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Override the form to limit sections to the student's curriculum_course."""
         if db_field.name == "section":
-            student = _resolve_request_student(request)
+            student = _resolve_request_std(request)
             if student:
-                kwargs["queryset"] = _section_queryset_for_student(student)
+                kwargs["queryset"] = _sec_queryset_for_std(student)
             else:
                 kwargs["queryset"] = Section.objects.none()
         return super().formfield_for_foreignkey(db_field, request, **kwargs)

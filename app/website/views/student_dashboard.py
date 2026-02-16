@@ -46,9 +46,9 @@ from .course_requirements import (
 )
 from .student_helpers import (
     _build_sidebar_links,
-    _build_student_profile,
-    _require_student,
-    _resolve_semester,
+    _build_std_profile,
+    _require_std,
+    _resolve_sem,
 )
 
 
@@ -80,7 +80,7 @@ def _append_reason_line(reason_lines: list[str], reason: str) -> None:
     reason_lines.append(text)
 
 
-def _curriculum_level_hint(curriculum_course: CurriCourse) -> str:
+def _curri_level_hint(curriculum_course: CurriCourse) -> str:
     """Return a short curriculum placement hint for the course card UI."""
     level_number = int(curriculum_course.level_number or 0)
     if 1 <= level_number <= 10:
@@ -96,14 +96,14 @@ def _curriculum_level_hint(curriculum_course: CurriCourse) -> str:
 @require_POST
 def download_invoice_statement(request: HttpRequest) -> HttpResponse:
     """Redirect to the invoice statement view."""
-    _require_student(request.user)
+    _require_std(request.user)
     return redirect(reverse("student_invoice_statement"))
 
 
 @login_required
 def student_invoice_statement(request: HttpRequest) -> HttpResponse:
     """Render the invoice statement for the current student."""
-    student = _require_student(request.user)
+    student = _require_std(request.user)
     invoices = list(
         CourseInvoice.objects.filter(student=student, balance__gt=0)
         .select_related(
@@ -121,7 +121,7 @@ def student_invoice_statement(request: HttpRequest) -> HttpResponse:
         {"invoice": invoice, "created_at": format_datetime(invoice.created_at)}
         for invoice in invoices
     ]
-    student_profile = _build_student_profile(student)
+    student_profile = _build_std_profile(student)
     sidebar_links = _build_sidebar_links("Download invoice statement", student=student)
     context = {
         "student": student,
@@ -144,13 +144,13 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     Returns:
         Rendered student dashboard response.
     """
-    student = _require_student(request.user)
-    semester, open_semesters = _resolve_semester(student, request.GET.get("semester"))
+    student = _require_std(request.user)
+    semester, open_semesters = _resolve_sem(student, request.GET.get("semester"))
     registration_open = bool(semester and semester.is_registration_open())
     registration: Optional[Registration] = None
     ajax_messages: list[dict[str, str]] = []
 
-    def _redirect_to_semester() -> HttpResponse:
+    def _redirect_to_sem() -> HttpResponse:
         """Redirect back to the dashboard with the current semester filter."""
         redirect_url = reverse("student_dashboard")
         selected_semester = request.POST.get("semester_id") or request.GET.get("semester")
@@ -162,14 +162,14 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         """Return True when the request expects JSON fragments."""
         return request.headers.get("x-requested-with") == "XMLHttpRequest"
 
-    def _push_message(level: str, text: str) -> None:
+    def _push_msg(level: str, text: str) -> None:
         """Queue a message for either AJAX or full-page responses."""
         if _is_ajax_request():
             ajax_messages.append({"level": level, "text": text})
             return
         getattr(messages, level)(request, text)
 
-    def _ensure_invoice_for_section(section: Section) -> None:
+    def _ensure_invoice_for_sec(section: Section) -> None:
         """Create or patch invoices so initial_amount_due is always set."""
         amount_due = section.fee_total_amount()
         invoice, created = CourseInvoice.objects.get_or_create(
@@ -188,7 +188,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 invoice.balance = amount_due
             invoice.save(update_fields=["initial_amount_due", "balance", "status"])
 
-    def _parse_section_ids(raw_ids: str) -> list[int]:
+    def _parse_sec_ids(raw_ids: str) -> list[int]:
         """Parse a comma-delimited list of section IDs into integers."""
         ids: list[int] = []
         for token in raw_ids.split(","):
@@ -215,7 +215,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 continue
         return parsed_ids
 
-    def _attempt_blocked_courses(
+    def _attempt_blocked_crss(
         student_obj: Student, semester_obj: Optional[Semester]
     ) -> set[int]:
         """Return course IDs blocked by repeated registration attempts."""
@@ -234,7 +234,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         )
         return {row["section__curriculum_course__course_id"] for row in attempt_rows}
 
-    def _cooldown_courses(
+    def _cooldown_crss(
         student_obj: Student,
         semester_obj: Optional[Semester],
         cutoff: datetime,
@@ -275,7 +275,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         action = request.POST.get("action")
         if action == "register":
             raw_ids = request.POST.get("section_ids", "")
-            section_ids = _parse_section_ids(raw_ids)
+            section_ids = _parse_sec_ids(raw_ids)
             optional_stack_ids = _parse_optional_stack_ids(
                 request.POST.getlist("optional_fee_stack_ids")
             )
@@ -289,7 +289,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                         status=400,
                     )
                 messages.warning(request, "Select at least one section to register.")
-                return _redirect_to_semester()
+                return _redirect_to_sem()
             if not semester or not registration_open:
                 if _is_ajax_request():
                     return JsonResponse(
@@ -300,7 +300,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                         status=400,
                     )
                 messages.error(request, "Registration is not open for this semester.")
-                return _redirect_to_semester()
+                return _redirect_to_sem()
             # Pending registrations are cleaned up after 48 hours by a scheduled task.
             pending_status = RegistrationStatus.get_default()
             current_registrations_qs = Registration.objects.filter(
@@ -384,7 +384,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 if _is_ajax_request():
                     return JsonResponse({"ok": False, "message": msg}, status=400)
                 messages.error(request, msg)
-                return _redirect_to_semester()
+                return _redirect_to_sem()
             created = 0
             updated = 0
             skipped = 0
@@ -393,8 +393,8 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             duplicate_course_skipped = 0
             requirement_blocked = 0
             cooldown_cutoff = timezone.now() - timedelta(hours=48)
-            blocked_courses = _attempt_blocked_courses(student, semester)
-            cooldown_course_locks_for_register = _cooldown_courses(
+            blocked_courses = _attempt_blocked_crss(student, semester)
+            cooldown_course_locks_for_register = _cooldown_crss(
                 student,
                 semester,
                 cooldown_cutoff,
@@ -437,14 +437,14 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                     if was_created:
                         created += 1
                         current_course_ids.add(course_id)
-                        _ensure_invoice_for_section(section)
+                        _ensure_invoice_for_sec(section)
                         continue
                     if registration.status_id in {"canceled", "removed"}:
                         registration.status = pending_status
                         registration.save(update_fields=["status"])
                         updated += 1
                         current_course_ids.add(course_id)
-                        _ensure_invoice_for_section(section)
+                        _ensure_invoice_for_sec(section)
                     else:
                         skipped += 1
                 if semester is not None:
@@ -454,12 +454,12 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                         optional_stack_ids=optional_stack_ids,
                     )
             if created or updated:
-                _push_message(
+                _push_msg(
                     "success",
                     f"Saved {created + updated} registration(s).",
                 )
             if fee_assignment_summary["ignored_optional"]:
-                _push_message(
+                _push_msg(
                     "warning",
                     (
                         "Some optional fee selections were ignored because they are "
@@ -467,7 +467,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                     ),
                 )
             if duplicate_course_skipped:
-                _push_message(
+                _push_msg(
                     "warning",
                     (
                         "Skipped "
@@ -476,25 +476,25 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                     ),
                 )
             if skipped:
-                _push_message(
+                _push_msg(
                     "info",
                     f"Skipped {skipped} section(s) already registered or unavailable.",
                 )
             if cooldown_skipped:
-                _push_message(
+                _push_msg(
                     "warning",
                     f"{cooldown_skipped} section(s) are locked for 48 hours after "
                     "cancelation.",
                 )
             if attempts_blocked:
-                _push_message(
+                _push_msg(
                     "error",
                     f"{attempts_blocked} section(s) hit the two-attempt limit for this "
                     "semester.",
                 )
             if requirement_blocked:
                 for message in requirement_errors_by_course.values():
-                    _push_message("error", message)
+                    _push_msg("error", message)
                 if _is_ajax_request() and not (created or updated):
                     return JsonResponse(
                         {
@@ -504,7 +504,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                         status=400,
                     )
             if not _is_ajax_request():
-                return _redirect_to_semester()
+                return _redirect_to_sem()
         if action == "cancel_registration":
             reg_id = request.POST.get("registration_id")
             if not reg_id:
@@ -514,7 +514,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                         status=400,
                     )
                 messages.error(request, "Select a registration to cancel.")
-                return _redirect_to_semester()
+                return _redirect_to_sem()
             registration = Registration.objects.filter(pk=reg_id, student=student).first()
             if not registration:
                 if _is_ajax_request():
@@ -523,7 +523,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                         status=404,
                     )
                 messages.error(request, "Registration not found.")
-                return _redirect_to_semester()
+                return _redirect_to_sem()
             if registration.status_id != "pending":
                 if _is_ajax_request():
                     return JsonResponse(
@@ -537,7 +537,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                     request,
                     "Only pending registrations can be canceled.",
                 )
-                return _redirect_to_semester()
+                return _redirect_to_sem()
             canceled_status = RegistrationStatus.objects.filter(code="canceled").first()
             if canceled_status is None:
                 if _is_ajax_request():
@@ -546,7 +546,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                         status=500,
                     )
                 messages.error(request, "Canceled status is not configured.")
-                return _redirect_to_semester()
+                return _redirect_to_sem()
             invoice_qs = CourseInvoice.objects.filter(
                 student=student,
                 curriculum_course=registration.section.curriculum_course,
@@ -572,7 +572,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                     request,
                     "This registration has cleared payments and cannot be canceled.",
                 )
-                return _redirect_to_semester()
+                return _redirect_to_sem()
             with transaction.atomic():
                 registration.status = canceled_status
                 registration.save(update_fields=["status"])
@@ -601,11 +601,11 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                             parent_invoice.refresh_totals_from_sources(save_model=True)
                             continue
                         parent_invoice.delete()
-            _push_message("success", "Registration canceled.")
+            _push_msg("success", "Registration canceled.")
             if not _is_ajax_request():
-                return _redirect_to_semester()
+                return _redirect_to_sem()
 
-    def _format_semester_label() -> str:
+    def _format_sem_label() -> str:
         """Return a display label for the selected semester."""
         if semester:
             return f"{semester.academic_year.code} · Semester {semester.number}"
@@ -793,13 +793,13 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                 )
             if reg.status_id == "pending":
                 pending_course_ids.add(course_id)
-        cooldown_course_locks = _cooldown_courses(
+        cooldown_course_locks = _cooldown_crss(
             student,
             semester,
             timezone.now() - timedelta(hours=48),
         )
         cooldown_course_ids = set(cooldown_course_locks)
-        attempt_blocked_course_ids = _attempt_blocked_courses(student, semester)
+        attempt_blocked_course_ids = _attempt_blocked_crss(student, semester)
 
     requirement_context = build_requirement_context(student)
     passed_course_ids = requirement_context["passed_course_ids"]
@@ -906,7 +906,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             "reason_lines": reason_lines,
             "prerequisites": prereq_data,
             "sections": serialized_sections,
-            "level_hint": _curriculum_level_hint(cc),
+            "level_hint": _curri_level_hint(cc),
             "status_label": "",
             "status_class": "bg-secondary",
             "locked_until": "",
@@ -998,8 +998,8 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         "last_payment": last_payment_label,
     }
 
-    student_profile = _build_student_profile(student)
-    student_profile["academic_year"] = _format_semester_label()
+    student_profile = _build_std_profile(student)
+    student_profile["academic_year"] = _format_sem_label()
 
     completed_courses: list[SemesterGradeRowT] = []
     semester_grade_groups: list[SemesterGradeGpT] = []

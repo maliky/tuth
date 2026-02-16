@@ -52,7 +52,7 @@ def resolve_curriculum(short_name: str) -> Curriculum:
     return curriculum
 
 
-def _course_display(course) -> str:
+def _crs_display(course) -> str:
     """Return the display short code for a course in prereq outputs."""
     return course.short_code or course.code or str(course)
 
@@ -62,7 +62,7 @@ def _dot_safe_label(value: str) -> str:
     return value.replace('"', "'")
 
 
-def _department_color(dept_code: str | None) -> str:
+def _dpt_color(dept_code: str | None) -> str:
     """Return a stable color for a department code."""
     if not dept_code:
         return "#6c757d"
@@ -102,12 +102,12 @@ def _output_dir() -> Path:
     return Path(settings.MEDIA_ROOT) / "Prereq"
 
 
-def _safe_curriculum_slug(curriculum: Curriculum) -> str:
+def _safe_curri_slug(curriculum: Curriculum) -> str:
     """Build a safe filename slug from curriculum short name."""
     return slugify(curriculum.short_name, allow_unicode=False) or str(curriculum.pk)
 
 
-def _build_course_maps(
+def _build_crs_maps(
     curriculum: Curriculum,
 ) -> tuple[dict[int, CurriCourse], NodeAttrMapT]:
     """Return curriculum course map and node attributes."""
@@ -127,7 +127,7 @@ def _build_course_maps(
         course_map[course.id] = curriculum_course
         node_attrs[course.id] = {
             "shape": _node_shape(True, college_code=college_code),
-            "color": _department_color(getattr(dept, "code", None) if dept else None),
+            "color": _dpt_color(getattr(dept, "code", None) if dept else None),
         }
     return course_map, node_attrs
 
@@ -160,7 +160,7 @@ def _build_json_payload(
             {
                 "id": f"C{course.id}",
                 "course_id": course.id,
-                "label": _course_display(course),
+                "label": _crs_display(course),
                 "title": title_text,
                 "level_number": (
                     int(curriculum_course.level_number)
@@ -174,9 +174,7 @@ def _build_json_payload(
                 "shape": attrs.get(
                     "shape", _node_shape(is_in_curriculum, college_code=college_code)
                 ),
-                "color": attrs.get(
-                    "color", _department_color(dept.code if dept else None)
-                ),
+                "color": attrs.get("color", _dpt_color(dept.code if dept else None)),
             }
         )
 
@@ -246,7 +244,7 @@ def _build_edges(links: Iterable[dict[str, str]]) -> EdgeListT:
     return edges
 
 
-def _course_id_sort_key(node: dict[str, object]) -> int:
+def _crs_id_sort_key(node: dict[str, object]) -> int:
     """Return a course id for stable group sorting."""
     course_id = node.get("course_id")
     return course_id if isinstance(course_id, int) else 0
@@ -541,7 +539,7 @@ def _apply_owner(paths: Iterable[Path]) -> None:
 
 def export_prereq_graph(curriculum: Curriculum) -> PrereqGraphPaths:
     """Export prerequisite JSON + DOT + PNG for a curriculum."""
-    course_map, node_attrs = _build_course_maps(curriculum)
+    course_map, node_attrs = _build_crs_maps(curriculum)
     curriculum_course_ids = list(course_map.keys())
 
     prerequisites = (
@@ -572,7 +570,7 @@ def export_prereq_graph(curriculum: Curriculum) -> PrereqGraphPaths:
 
     output_dir = _output_dir()
     output_dir.mkdir(parents=True, exist_ok=True)
-    slug = _safe_curriculum_slug(curriculum)
+    slug = _safe_curri_slug(curriculum)
     json_path = output_dir / f"{slug}.json"
     js_path = output_dir / f"{slug}.js"
     dot_path = output_dir / f"{slug}.dot"

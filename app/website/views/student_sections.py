@@ -14,8 +14,8 @@ from app.timetable.choices import WEEKDAYS_NUMBER
 
 from .student_helpers import (
     _build_sidebar_links,
-    _build_student_profile,
-    _require_student,
+    _build_std_profile,
+    _require_std,
 )
 
 
@@ -33,7 +33,7 @@ def student_section_detail(
     section_id: int,
 ) -> HttpResponse:
     """Render a cleared section detail view for the current student."""
-    student = _require_student(request.user)
+    student = _require_std(request.user)
     registration = (
         Registration.objects.filter(
             student=student,
@@ -80,7 +80,7 @@ def student_section_detail(
         )
 
     context = {
-        "student_profile": _build_student_profile(student),
+        "student_profile": _build_std_profile(student),
         "sidebar_links": _build_sidebar_links("Course Registration", student=student),
         "section": {
             "code": section.course.short_code or section.course.code,

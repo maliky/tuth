@@ -52,7 +52,7 @@ def build_requirement_context(student: Student) -> ReqContextT:
     }
 
 
-def _group_member_pairs(
+def _gp_member_pairs(
     group: CurriCourseReqGp,
 ) -> list[CourseLabelPairT]:
     """Return `(course_id, display_label)` pairs for one requirement group."""
@@ -95,7 +95,7 @@ def evaluate_curriculum_course_requirements(
         "members__required_course"
     )
     for group in groups:
-        member_pairs = _group_member_pairs(group)
+        member_pairs = _gp_member_pairs(group)
         if not member_pairs:
             continue
         group_common: ReqFailureT = {

@@ -32,7 +32,7 @@ def _clamp_non_negative(value: Decimal) -> Decimal:
     return value
 
 
-def _ensure_payer_defaults() -> None:
+def _ensure_payer_dfts() -> None:
     """Ensure payer lookup values exist before invoice writes."""
     Payer._populate_attributes_and_db()
 
@@ -141,7 +141,7 @@ class StdSemesterInvoice(StatusableMixin, models.Model):
             fallback_payer=self.fee_payer_id,
         )
 
-    def _refresh_course_invoice_balances(self, course_total: Decimal) -> None:
+    def _refresh_crs_invoice_balances(self, course_total: Decimal) -> None:
         """Propagate parent balance/status to child course invoices."""
         child_invoices = list(self.course_invoices.all().select_related("status"))
         if not child_invoices:
@@ -196,7 +196,7 @@ class StdSemesterInvoice(StatusableMixin, models.Model):
         elif not self.fee_payer_id:
             self.fee_payer_id = PAYER_STUDENT_CODE
         self._update_status()
-        self._refresh_course_invoice_balances(course_total)
+        self._refresh_crs_invoice_balances(course_total)
 
         if save_model:
             self.save(
@@ -211,7 +211,7 @@ class StdSemesterInvoice(StatusableMixin, models.Model):
 
     def save(self, *args, **kwargs):
         """Keep monetary fields initialized before persisting."""
-        _ensure_payer_defaults()
+        _ensure_payer_dfts()
         if self.balance is None:
             self.balance = self.initial_amount_due
         self.required_deposit_amount = self.initial_required_deposit()
@@ -317,7 +317,7 @@ class CourseInvoice(StatusableMixin, models.Model):
             return
         if not self.student_id or not self.semester_id:
             return
-        _ensure_payer_defaults()
+        _ensure_payer_dfts()
         parent_invoice, _ = StdSemesterInvoice.objects.get_or_create(
             student_id=self.student_id,
             semester_id=self.semester_id,

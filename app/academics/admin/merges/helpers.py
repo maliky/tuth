@@ -27,7 +27,7 @@ MERGE_CHOICE_MERGE: ConflictChoiceT = "merge"
 MERGE_CHOICE_SKIP: ConflictChoiceT = "skip"
 
 
-def _build_course_identity(
+def _build_crs_id(
     department_id: int | None, course_number: str | None
 ) -> CourseIdentityT | None:
     """Return the canonical identity key used for cross-curriculum reconciliation."""
@@ -41,21 +41,21 @@ def _build_course_identity(
     return (int(department_id), normalized_number)
 
 
-def _curriculum_course_identity(curriculum_course: CurriCourse) -> CourseIdentityT | None:
+def _curri_crs_id(curriculum_course: CurriCourse) -> CourseIdentityT | None:
     """Return a curriculum-course identity as (department_id, course_number)."""
     course = getattr(curriculum_course, "course", None)
     if course is None:
         return None
-    return _build_course_identity(course.department_id, course.number)
+    return _build_crs_id(course.department_id, course.number)
 
 
-def _index_curriculum_courses_by_identity(
+def _index_curri_crss_by_id(
     curriculum_courses: list[CurriCourse],
 ) -> dict[CourseIdentityT, CurriCourse]:
     """Index rows by identity while keeping the lowest-id row as canonical."""
     identity_index: dict[CourseIdentityT, CurriCourse] = {}
     for curriculum_course in sorted(curriculum_courses, key=lambda row: int(row.id)):
-        identity = _curriculum_course_identity(curriculum_course)
+        identity = _curri_crs_id(curriculum_course)
         if identity is None:
             continue
         if identity in identity_index:
@@ -64,13 +64,13 @@ def _index_curriculum_courses_by_identity(
     return identity_index
 
 
-def _identity_by_curriculum_course_id(
+def _id_by_curri_crs_id(
     curriculum_courses: list[CurriCourse],
 ) -> dict[int, CourseIdentityT]:
     """Build an id->identity lookup for already-fetched curriculum course rows."""
     identity_by_curriculum_course_id: dict[int, CourseIdentityT] = {}
     for curriculum_course in curriculum_courses:
-        identity = _curriculum_course_identity(curriculum_course)
+        identity = _curri_crs_id(curriculum_course)
         if identity is None:
             continue
         identity_by_curriculum_course_id[curriculum_course.id] = identity
@@ -90,7 +90,7 @@ def empty_student_curriculum_record_summary() -> StdCurriRecordMergeSummaryT:
     }
 
 
-def _merge_curriculum_course_links(target: CurriCourse, source: CurriCourse) -> None:
+def _merge_curri_crs_links(target: CurriCourse, source: CurriCourse) -> None:
     """Move concentration links from a source curriculum course to the target."""
     for major_link in MajorCurriCourse.objects.filter(curriculum_course=source):
         if MajorCurriCourse.objects.filter(
@@ -142,7 +142,7 @@ def merge_departments(target: Department, sources):
 
 # Avoid mypy internal error on the annotate chain for collision summaries.
 @no_type_check
-def _department_merge_collision_summary(target: Department, sources) -> dict[str, int]:
+def _dpt_merge_collision_summary(target: Department, sources) -> dict[str, int]:
     """Summarize potential department merge collisions."""
     source_ids = [dept.pk for dept in sources if dept.pk]
     if not target.pk or not source_ids:

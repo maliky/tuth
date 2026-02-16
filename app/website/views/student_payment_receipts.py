@@ -19,8 +19,8 @@ from app.timetable.utils import format_datetime
 
 from .student_helpers import (
     _build_sidebar_links,
-    _build_student_profile,
-    _require_student,
+    _build_std_profile,
+    _require_std,
 )
 
 
@@ -41,7 +41,7 @@ def student_payment_receipt(
     semester_id: int,
 ) -> HttpResponse:
     """Render a payment receipt for the requested semester."""
-    student = _require_student(request.user)
+    student = _require_std(request.user)
     semester = (
         Semester.objects.filter(pk=semester_id).select_related("academic_year").first()
     )
@@ -111,7 +111,7 @@ def student_payment_receipt(
         "total_paid": total_paid,
         "semester_label": semester_label,
         "generated_at": generated_at,
-        "student_profile": _build_student_profile(student),
+        "student_profile": _build_std_profile(student),
         "sidebar_links": _build_sidebar_links(
             "Download payment statement",
             student=student,

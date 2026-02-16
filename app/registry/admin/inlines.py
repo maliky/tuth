@@ -10,7 +10,7 @@ from app.registry.models.grade import Grade
 from app.registry.models.registration import Registration
 
 
-def _format_section_link(section) -> str:
+def _format_sec_link(section) -> str:
     """Return a link to the section change view."""
     if not section:
         return "-"
@@ -18,7 +18,7 @@ def _format_section_link(section) -> str:
     return format_html('<a href="{}">{}</a>', url, section)
 
 
-def _format_section_semester(section):
+def _format_sec_sem(section):
     """Return the semester label for a section."""
     if not section:
         return "-"
@@ -60,12 +60,12 @@ class StdRegistrationIL(admin.TabularInline):
     @admin.display(description="Section")
     def section_link(self, obj):
         """Link to the related section change page."""
-        return _format_section_link(obj.section)
+        return _format_sec_link(obj.section)
 
     @admin.display(description="Semester")
     def section_semester(self, obj):
         """Show the semester for the linked section."""
-        return _format_section_semester(obj.section)
+        return _format_sec_sem(obj.section)
 
     @admin.display(description="Grade")
     def grade_code(self, obj):
@@ -117,7 +117,7 @@ class StdGradeIL(admin.TabularInline):
     @admin.display(description="Section")
     def section_link(self, obj):
         """Link to the related section change page."""
-        return _format_section_link(obj.section)
+        return _format_sec_link(obj.section)
 
 
 class DocStaffIL(admin.TabularInline):  # StackedIL

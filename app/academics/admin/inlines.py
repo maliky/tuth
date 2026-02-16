@@ -80,7 +80,7 @@ class CourseFeeStackIL(admin.TabularInline):
 
     _semester_cache: Semester | None = None
 
-    def _resolved_semester(self) -> Semester | None:
+    def _resolved_sem(self) -> Semester | None:
         """Return the latest started semester (or latest available)."""
         if self._semester_cache is not None:
             return self._semester_cache
@@ -96,7 +96,7 @@ class CourseFeeStackIL(admin.TabularInline):
     @admin.display(description="Current stack total")
     def current_stack_total(self, obj: CourseFeeStack) -> str:
         """Show resolved stack total for the current semester context."""
-        semester = self._resolved_semester()
+        semester = self._resolved_sem()
         if obj is None or not obj.fee_stack_id:
             return "-"
         total = obj.fee_stack.total_amount_for_semester(semester)
@@ -176,21 +176,21 @@ class CurriCourseIL(admin.TabularInline):
             form_field.label = "Required group"
         return form_field
 
-    def _group_key(self, curriculum_course: CurriCourse) -> tuple[int, int]:
+    def _gp_key(self, curriculum_course: CurriCourse) -> tuple[int, int]:
         """Return the (year, semester) key for summary grouping."""
         return (
             int(getattr(curriculum_course, "year_number", 0) or 0),
             int(getattr(curriculum_course, "semester_number", 0) or 0),
         )
 
-    def _build_group_summary(
+    def _build_gp_summary(
         self, rows: list[CurriCourse]
     ) -> dict[tuple[int, int], dict[str, int]]:
         """Return summary stats keyed by year/semester."""
         summary_map: dict[tuple[int, int], dict[str, int]] = {}
         grouped: dict[tuple[int, int], list[CurriCourse]] = defaultdict(list)
         for row in rows:
-            grouped[self._group_key(row)].append(row)
+            grouped[self._gp_key(row)].append(row)
 
         for group_key, group_rows in grouped.items():
             # Count each required group once; standalone courses are their own group.
@@ -225,8 +225,8 @@ class CurriCourseIL(admin.TabularInline):
         """Attach group summaries to inline rows for template rendering."""
         formset = super().get_formset(request, obj, **kwargs)
         formset_class = cast(Any, formset)
-        formset_class.summary_builder = self._build_group_summary
-        formset_class.group_key_builder = self._group_key
+        formset_class.summary_builder = self._build_gp_summary
+        formset_class.group_key_builder = self._gp_key
         return formset
 
     # Student counts removed from inline to avoid slow/incorrect values.

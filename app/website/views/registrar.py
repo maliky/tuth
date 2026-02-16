@@ -72,7 +72,7 @@ def _clean_int(value: str | None) -> int | None:
         return None
 
 
-def _latest_graded_semester_id() -> int | None:
+def _latest_graded_sem_id() -> int | None:
     """Return the most recent semester id that has at least one grade."""
     return (
         Grade.objects.order_by(
@@ -125,7 +125,7 @@ def registrar_grades_dashboard(request: HttpRequest) -> HttpResponse:
         semester_id = None
     if not semester_param_present:
         # Default to the latest semester that has graded students.
-        semester_id = _latest_graded_semester_id()
+        semester_id = _latest_graded_sem_id()
 
     students_qs = Student.objects.filter(grade__isnull=False).select_related("user")
     if semester_id:

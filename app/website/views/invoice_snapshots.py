@@ -11,13 +11,13 @@ from app.finance.models.invoice import Invoice
 from app.finance.utils import build_invoice_snapshot, render_invoice_snapshot_pdf
 from app.timetable.models.semester import Semester
 
-from .student_helpers import _require_student
+from .student_helpers import _require_std
 
 
 @login_required
 def student_invoice_snapshot_pdf(request: HttpRequest) -> HttpResponse:
     """Generate and download a PDF invoice snapshot for the student."""
-    student = _require_student(request.user)
+    student = _require_std(request.user)
     semester_id = request.GET.get("semester")
     semester = None
     invoice_qs = (

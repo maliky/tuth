@@ -148,7 +148,7 @@ class Command(BaseCommand):
             "Session import skipped {count} invalid rows; details logged to {path}",
         )
 
-        section_cache = _prime_section_cache()
+        section_cache = _prime_sec_cache()
         pending_sessions: set[SessionKeyT] = set()
 
         rows_to_create: list[SecSession] = []
@@ -246,8 +246,8 @@ def _resolve_row(
         semester_code: "25-26s2"
     """
 
-    semester_id = _resolve_semester_id(row, semester_code)
-    curriculum_course_id = _resolve_curriculum_course_id(row)
+    semester_id = _resolve_sem_id(row, semester_code)
+    curriculum_course_id = _resolve_curri_crs_id(row)
     schedule_id = _resolve_schedule_id(row)
     room_id = _resolve_room_id(row)
     faculty_id = _resolve_faculty_id(row)
@@ -257,7 +257,7 @@ def _resolve_row(
         # this is to prevent a DB failure, number >0
         raise ValueError(f"Invalid section_no value: {get_in_row('section_no', row)}")
 
-    section_id = _resolve_section_id(
+    section_id = _resolve_sec_id(
         semester_id, curriculum_course_id, section_no, faculty_id, section_cache
     )
 
@@ -322,7 +322,7 @@ def _resolve_room_id(row: RowStrOptT) -> int:
     return ensure_room_id(space_code or "TBA", room_code or "TBA")
 
 
-def _resolve_semester_id(row: RowStrOptT, semester_code: str) -> int:
+def _resolve_sem_id(row: RowStrOptT, semester_code: str) -> int:
     """Resolve a semester id from row values or a fallback code.
 
     Args:
@@ -338,7 +338,7 @@ def _resolve_semester_id(row: RowStrOptT, semester_code: str) -> int:
     return ensure_semester_id(academic_year, semester_no, default=default)
 
 
-def _resolve_curriculum_course_id(row: RowStrOptT) -> int:
+def _resolve_curri_crs_id(row: RowStrOptT) -> int:
     """Resolve curriculum_course id for a session row.
 
     Args:
@@ -392,7 +392,7 @@ def _resolve_faculty_id(row: RowStrOptT) -> int | None:
     return faculty.id
 
 
-def _resolve_section_id(
+def _resolve_sec_id(
     semester_id: int,
     curriculum_course_id: int,
     section_no: int,
@@ -486,7 +486,7 @@ def _split_location(raw: str) -> tuple[str, str]:
     return split_location(raw)
 
 
-def _prime_section_cache() -> SectionCacheT:
+def _prime_sec_cache() -> SectionCacheT:
     """Prime a cache for Section lookups.
 
     Returns:

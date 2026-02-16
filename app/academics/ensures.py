@@ -33,7 +33,7 @@ CURRICULUM_BY_ID_CACHE: Dict[int, Curriculum] = {}
 CURRICULUM_COURSE_ID_CACHE: TwoIntIntMapT = {}
 
 
-def _normalize_course_no(value: str) -> str:
+def _normalize_crs_no(value: str) -> str:
     """Normalize course numbers like '101.0' -> '101'."""
     # This should not happen but taking care of 102.0 -> 102.
     value = parse_str(value)
@@ -50,7 +50,7 @@ def _prime_college_id_cache() -> None:
         COLLEGE_ID_CACHE[code.lower()] = pk
 
 
-def _prime_department_id_cache() -> None:
+def _prime_dpt_id_cache() -> None:
     """Load department ids into the local cache if empty."""
     if DEPARTMENT_ID_CACHE:
         return
@@ -60,7 +60,7 @@ def _prime_department_id_cache() -> None:
         DEPARTMENT_ID_CACHE[(code.upper(), college_id)] = pk
 
 
-def _prime_course_id_cache() -> None:
+def _prime_crs_id_cache() -> None:
     """Load course ids into the local cache if empty."""
     if COURSE_ID_CACHE:
         return
@@ -70,7 +70,7 @@ def _prime_course_id_cache() -> None:
         COURSE_ID_CACHE[(department_id, str(number))] = pk
 
 
-def _prime_curriculum_id_cache() -> None:
+def _prime_curri_id_cache() -> None:
     """Load curriculum ids into the local cache if empty."""
     if CURRICULUM_ID_CACHE:
         return
@@ -78,7 +78,7 @@ def _prime_curriculum_id_cache() -> None:
         CURRICULUM_ID_CACHE[parse_str(name, "lower")] = pk
 
 
-def _prime_curriculum_course_id_cache() -> None:
+def _prime_curri_crs_id_cache() -> None:
     """Load curriculum course ids into the local cache if empty."""
     if CURRICULUM_COURSE_ID_CACHE:
         return
@@ -100,7 +100,7 @@ def _get_college_by_id(college_id: int) -> College:
     return college
 
 
-def _get_department_by_id(department_id: int) -> Department:
+def _get_dpt_by_id(department_id: int) -> Department:
     """Fetch a department by id and keep caches aligned."""
     cached = DEPARTMENT_BY_ID_CACHE.get(department_id)
     if cached:
@@ -112,7 +112,7 @@ def _get_department_by_id(department_id: int) -> Department:
     return dept
 
 
-def _get_course_by_id(course_id: int) -> Course:
+def _get_crs_by_id(course_id: int) -> Course:
     """Fetch a course by id and keep caches aligned."""
     cached = COURSE_BY_ID_CACHE.get(course_id)
     if cached:
@@ -124,7 +124,7 @@ def _get_course_by_id(course_id: int) -> Course:
     return course
 
 
-def _get_curriculum_by_id(curriculum_id: int) -> Curriculum:
+def _get_curri_by_id(curriculum_id: int) -> Curriculum:
     """Fetch a curriculum by id and keep caches aligned."""
     cached = CURRICULUM_BY_ID_CACHE.get(curriculum_id)
     if cached:
@@ -211,7 +211,7 @@ def ensure_course(
     fuzzy_threshold: float = 1.0,
 ) -> Course:
     """Look-up or create a course updating the title is set."""
-    course_no = _normalize_course_no(course_no)
+    course_no = _normalize_crs_no(course_no)
 
     key = (department.id, course_no)
     cached = COURSE_CACHE.get(key)
@@ -288,7 +288,7 @@ def ensure_department_id(dept_code_raw: str, college_id: int) -> int:
     """Return a department id for the given code and college id."""
     dept_code = normalize_department_code(dept_code_raw)
     key = (dept_code, college_id)
-    _prime_department_id_cache()
+    _prime_dpt_id_cache()
     cached = DEPARTMENT_ID_CACHE.get(key)
     if cached:
         return cached
@@ -304,13 +304,13 @@ def ensure_course_id(
     fuzzy_threshold: float = 1.0,
 ) -> int:
     """Return a course id for the given department id and course number."""
-    course_no = _normalize_course_no(course_no_raw)
+    course_no = _normalize_crs_no(course_no_raw)
     key = (department_id, course_no)
-    _prime_course_id_cache()
+    _prime_crs_id_cache()
     cached = COURSE_ID_CACHE.get(key)
     if cached:
         return cached
-    department = _get_department_by_id(department_id)
+    department = _get_dpt_by_id(department_id)
     course = ensure_course(
         department, course_no, title=title, fuzzy_threshold=fuzzy_threshold
     )
@@ -327,7 +327,7 @@ def ensure_curriculum_id(
         curriculum = ensure_curriculum("", college, fuzzy_threshold=fuzzy_threshold)
         return curriculum.id
     key = name.lower()
-    _prime_curriculum_id_cache()
+    _prime_curri_id_cache()
     cached = CURRICULUM_ID_CACHE.get(key)
     if cached:
         return cached
@@ -344,12 +344,12 @@ def ensure_curriculum_course_id(
 ) -> int:
     """Return a curriculum course id for the given curriculum/course ids."""
     key = (curriculum_id, course_id)
-    _prime_curriculum_course_id_cache()
+    _prime_curri_crs_id_cache()
     cached = CURRICULUM_COURSE_ID_CACHE.get(key)
     if cached:
         return cached
-    curriculum = _get_curriculum_by_id(curriculum_id)
-    course = _get_course_by_id(course_id)
+    curriculum = _get_curri_by_id(curriculum_id)
+    course = _get_crs_by_id(course_id)
     curriculum_course = ensure_curriculum_course(
         curriculum=curriculum,
         course=course,

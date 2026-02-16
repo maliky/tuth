@@ -186,9 +186,9 @@ class Student(AbstractPerson):
             self.curriculum = Curriculum.get_default()
 
         super().save(*args, **kwargs)
-        self._ensure_primary_curriculum_enrollment()
+        self._ensure_primary_curri_enrollment()
 
-    def _ensure_primary_curriculum_enrollment(self) -> None:
+    def _ensure_primary_curri_enrollment(self) -> None:
         """Keep the through enrollment table aligned with current curriculum."""
         from app.people.models.student_curriculum_enrollment import (
             StdCurriEnroll,

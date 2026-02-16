@@ -12,8 +12,8 @@ from app.academics.models.curriculum_course import CurriCourse
 
 from .student_helpers import (
     _build_sidebar_links,
-    _build_student_profile,
-    _require_student,
+    _build_std_profile,
+    _require_std,
 )
 
 
@@ -39,7 +39,7 @@ class CurriCourseDetailT(TypedDict):
 @login_required
 def student_curriculum_courses(request: HttpRequest) -> HttpResponse:
     """Render an ordered list of curriculum courses for the current student."""
-    student = _require_student(request.user)
+    student = _require_std(request.user)
     curriculum_courses = (
         CurriCourse.objects.filter(curriculum=student.curriculum)
         .select_related("course", "credit_hours")
@@ -55,7 +55,7 @@ def student_curriculum_courses(request: HttpRequest) -> HttpResponse:
         for cc in curriculum_courses
     ]
     context = {
-        "student_profile": _build_student_profile(student),
+        "student_profile": _build_std_profile(student),
         "sidebar_links": _build_sidebar_links("Course Registration", student=student),
         "course_rows": course_rows,
         "curriculum_label": student.curriculum.long_name or student.curriculum.short_name,
@@ -69,7 +69,7 @@ def student_curriculum_course_detail(
     curriculum_course_id: int,
 ) -> HttpResponse:
     """Render course details for a curriculum course linked to the student."""
-    student = _require_student(request.user)
+    student = _require_std(request.user)
     curriculum_course = (
         CurriCourse.objects.filter(
             curriculum=student.curriculum,
@@ -90,7 +90,7 @@ def student_curriculum_course_detail(
         "curriculum_label": str(curriculum_course.curriculum),
     }
     context = {
-        "student_profile": _build_student_profile(student),
+        "student_profile": _build_std_profile(student),
         "sidebar_links": _build_sidebar_links("Course Registration", student=student),
         "course": course_detail,
     }

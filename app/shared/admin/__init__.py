@@ -40,7 +40,7 @@ ADMIN_GROUP_MODEL_LABELS = {
 }
 
 
-def _group_admin_models(app_list: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _gp_admin_models(app_list: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Return app list with lookup and utility models under the Admin heading."""
     admin_models: list[dict[str, Any]] = []
     grouped_apps: list[dict[str, Any]] = []
@@ -70,7 +70,7 @@ def _group_admin_models(app_list: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return grouped_apps
 
 
-def _grouped_get_app_list(
+def _gped_get_app_list(
     site: AdminSite,
     request,
     app_label: str | None = None,
@@ -79,9 +79,9 @@ def _grouped_get_app_list(
     app_list = AdminSite.get_app_list(site, request, app_label=app_label)
     if app_label:
         return app_list
-    return _group_admin_models(app_list)
+    return _gp_admin_models(app_list)
 
 
-admin.site.get_app_list = _grouped_get_app_list.__get__(  # type: ignore[method-assign]
+admin.site.get_app_list = _gped_get_app_list.__get__(  # type: ignore[method-assign]
     admin.site, AdminSite
 )

@@ -22,7 +22,7 @@ TUITION_RATE_PER_CREDIT = Decimal("5.00")
 ChoiceListT: TypeAlias = list[tuple[int, str]]
 
 
-def _semester_number_choices() -> ChoiceListT:
+def _sem_number_choices() -> ChoiceListT:
     """Return semester choices including an undefined value."""
     choices = [(0, "Undefined (0)")]
     choices.extend(list(SEMESTER_NUMBER.choices))
@@ -48,7 +48,7 @@ def _year_number_choices() -> ChoiceListT:
     return choices
 
 
-SEMESTER_NUMBER_CHOICES = tuple(_semester_number_choices())
+SEMESTER_NUMBER_CHOICES = tuple(_sem_number_choices())
 YEAR_NUMBER_CHOICES = tuple(_year_number_choices())
 LEVEL_NUMBER_CHOICES = tuple(
     [(int(LEVEL_NUMBER.UNDEF.value), "Undefined (99)"), (0, "Remedial (0)")]
@@ -153,7 +153,7 @@ class CurriCourse(models.Model):
             code=self.credit_hours_id, defaults={"label": str(self.credit_hours_id)}
         )
 
-    def _ensure_year_semester_from_level(self) -> None:
+    def _ensure_year_sem_from_level(self) -> None:
         """Autofill year/semester when a level number is provided."""
         level_value_raw = getattr(self, "level_number", None)
         # Keep "other/undefined" rows in a dedicated bucket to avoid stale
@@ -214,7 +214,7 @@ class CurriCourse(models.Model):
     def save(self, *args, **kwargs):
         """Make sure we set default before saving."""
         self._ensure_credit_hours()
-        self._ensure_year_semester_from_level()
+        self._ensure_year_sem_from_level()
         super().save(*args, **kwargs)
 
     class Meta:

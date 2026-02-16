@@ -12,15 +12,15 @@ from app.academics.models.prerequisite import Prerequisite
 from app.finance.models.invoice import Invoice
 from app.timetable.models.section import Section
 
-from .helpers import CourseMergeSummaryT, _merge_curriculum_course_links
+from .helpers import CourseMergeSummaryT, _merge_curri_crs_links
 from .section_merge import (
-    _merge_curriculum_course_to_target,
-    _merge_sections,
-    _pick_section_merge_candidate,
+    _merge_curri_crs_to_target,
+    _merge_secs,
+    _pick_sec_merge_candidate,
 )
 
 
-def _select_course_merge_target(courses: list[Course]) -> Course:
+def _select_crs_merge_target(courses: list[Course]) -> Course:
     """Pick a target course based on description or smallest id."""
     # Prefer the course with a description, otherwise default to the smallest id.
     with_description = [
@@ -58,7 +58,7 @@ def merge_courses(target: Course, sources):
         source_curriculum_courses = list(
             CurriCourse.objects.filter(course=src).select_related("curriculum")
         )
-        if _course_merge_has_invoice_conflict(source_curriculum_courses, target_cc_map):
+        if _crs_merge_has_invoice_conflict(source_curriculum_courses, target_cc_map):
             summary["skipped_invoices"] += 1
             continue
         # Merge or move curriculum courses before deleting the source course.
@@ -66,7 +66,7 @@ def merge_courses(target: Course, sources):
             curriculum_id = cc.curriculum_id
             existing = target_cc_map.get(curriculum_id)
             if existing:
-                moved = _merge_curriculum_course_to_target(existing, cc)
+                moved = _merge_curri_crs_to_target(existing, cc)
                 summary["sections_moved"] += moved["sections_moved"]
                 summary["sections_merged"] += moved["sections_merged"]
                 summary["sections_retained_protected"] += moved[
@@ -82,7 +82,7 @@ def merge_courses(target: Course, sources):
             cc.save(update_fields=["course"])
             target_cc_map[curriculum_id] = cc
             summary["curriculum_courses_moved"] += 1
-        prereq_summary = _merge_course_prerequisites(target, src)
+        prereq_summary = _merge_crs_prerequisites(target, src)
         summary["prerequisites_moved"] += prereq_summary["prerequisites_moved"]
         summary["prerequisites_skipped"] += prereq_summary["prerequisites_skipped"]
         try:
@@ -94,7 +94,7 @@ def merge_courses(target: Course, sources):
     return summary
 
 
-def _course_merge_has_invoice_conflict(
+def _crs_merge_has_invoice_conflict(
     source_curriculum_courses: list[CurriCourse],
     target_cc_map: dict[int, CurriCourse],
 ) -> bool:
@@ -133,7 +133,7 @@ def merge_curriculum_course_into_target(
     if Invoice.objects.filter(curriculum_course=source).exists():
         summary["skipped_invoices"] += 1
         return summary
-    merge_result = _merge_curriculum_course_to_target(target, source)
+    merge_result = _merge_curri_crs_to_target(target, source)
     summary["sections_moved"] += merge_result["sections_moved"]
     summary["sections_merged"] += merge_result["sections_merged"]
     summary["sections_retained_protected"] += merge_result["sections_retained_protected"]
@@ -146,7 +146,7 @@ def merge_curriculum_course_into_target(
     return summary
 
 
-def _merge_course_prerequisites(target: Course, source: Course) -> dict[str, int]:
+def _merge_crs_prerequisites(target: Course, source: Course) -> dict[str, int]:
     """Reassign prerequisite rows from the source course to the target course."""
     summary = {"prerequisites_moved": 0, "prerequisites_skipped": 0}
     prerequisites = list(
@@ -233,12 +233,12 @@ def merge_curriculum_courses(target: CurriCourse, sources):
             summary["is_required_conflicts"] += 1
         if src.is_elective != target.is_elective:
             summary["is_elective_conflicts"] += 1
-        _merge_curriculum_course_links(target, src)
+        _merge_curri_crs_links(target, src)
         source_sections = Section.objects.filter(curriculum_course=src)
         for section in source_sections:
-            conflict = _pick_section_merge_candidate(target, section)
+            conflict = _pick_sec_merge_candidate(target, section)
             if conflict is not None:
-                merge_result = _merge_sections(conflict, section)
+                merge_result = _merge_secs(conflict, section)
                 if merge_result["sections_merged"]:
                     summary["sections_merged"] += merge_result["sections_merged"]
                 elif merge_result["sections_skipped_grade_conflict"]:

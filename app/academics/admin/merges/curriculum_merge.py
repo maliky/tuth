@@ -29,17 +29,17 @@ from .helpers import (
     MERGE_CHOICE_MERGE,
     MERGE_CHOICE_SKIP,
     StdCurriRecordMergeSummaryT,
-    _build_course_identity,
-    _curriculum_course_identity,
-    _identity_by_curriculum_course_id,
-    _index_curriculum_courses_by_identity,
-    _merge_curriculum_course_links,
+    _build_crs_id,
+    _curri_crs_id,
+    _id_by_curri_crs_id,
+    _index_curri_crss_by_id,
+    _merge_curri_crs_links,
     empty_student_curriculum_record_summary,
 )
 from .section_merge import (
-    _index_section_merge_candidates,
-    _merge_curriculum_course_to_target,
-    _pick_section_merge_candidate_from_index,
+    _index_sec_merge_candidates,
+    _merge_curri_crs_to_target,
+    _pick_sec_merge_candidate_from_index,
 )
 
 
@@ -58,11 +58,11 @@ def list_curriculum_course_conflicts(
         .order_by("id")
     )
     # > Reconciliation uses canonical identity (department, number), not raw course id.
-    target_by_course_identity = _index_curriculum_courses_by_identity(target_rows)
+    target_by_course_identity = _index_curri_crss_by_id(target_rows)
     conflicts: list[ConflictCurriCoursePairT] = []
     non_conflicting: list[CurriCourse] = []
     for source_row in source_rows:
-        source_identity = _curriculum_course_identity(source_row)
+        source_identity = _curri_crs_id(source_row)
         target_row = (
             target_by_course_identity.get(source_identity)
             if source_identity is not None
@@ -75,7 +75,7 @@ def list_curriculum_course_conflicts(
     return conflicts, non_conflicting
 
 
-def _overlay_curriculum_course_fields(target: CurriCourse, source: CurriCourse) -> None:
+def _overlay_curri_crs_fields(target: CurriCourse, source: CurriCourse) -> None:
     """Copy selected field values from source onto target before merge."""
     updated_fields: list[str] = []
     field_names = (
@@ -98,9 +98,7 @@ def _overlay_curriculum_course_fields(target: CurriCourse, source: CurriCourse) 
         target.save(update_fields=updated_fields)
 
 
-def _keep_target_curriculum_course(
-    target: CurriCourse, source: CurriCourse
-) -> dict[str, int]:
+def _keep_target_curri_crs(target: CurriCourse, source: CurriCourse) -> dict[str, int]:
     """Keep target programmed course and delete source when possible."""
     summary = {
         "sections_moved": 0,
@@ -109,7 +107,7 @@ def _keep_target_curriculum_course(
         "sections_skipped_grade_conflict": 0,
         "source_retained_protected": 0,
     }
-    _merge_curriculum_course_links(target, source)
+    _merge_curri_crs_links(target, source)
     try:
         source.delete()
     except ProtectedError:
@@ -117,7 +115,7 @@ def _keep_target_curriculum_course(
     return summary
 
 
-def _merge_curriculum_course_conflict(
+def _merge_curri_crs_conflict(
     target: CurriCourse,
     source: CurriCourse,
     choice: ConflictChoiceT,
@@ -133,11 +131,11 @@ def _merge_curriculum_course_conflict(
         }
     if choice == MERGE_CHOICE_KEEP_SOURCE:
         # Keep the target row id for FK stability, while applying source metadata.
-        _overlay_curriculum_course_fields(target, source)
-        return _merge_curriculum_course_to_target(target, source)
+        _overlay_curri_crs_fields(target, source)
+        return _merge_curri_crs_to_target(target, source)
     if choice == MERGE_CHOICE_KEEP_TARGET:
-        return _keep_target_curriculum_course(target, source)
-    return _merge_curriculum_course_to_target(target, source)
+        return _keep_target_curri_crs(target, source)
+    return _merge_curri_crs_to_target(target, source)
 
 
 @transaction.atomic
@@ -181,7 +179,7 @@ def merge_curricula(
             .select_related("course")
             .order_by("id")
         )
-        target_by_course_identity = _index_curriculum_courses_by_identity(target_rows)
+        target_by_course_identity = _index_curri_crss_by_id(target_rows)
         moved_students = Student.objects.filter(curriculum=src).update(curriculum=target)
         summary["students_moved"] += moved_students
         summary["majors_moved"] += Major.objects.filter(curriculum=src).update(
@@ -204,7 +202,7 @@ def merge_curricula(
             summary["prerequisites_moved"] += 1
         for cc in CurriCourse.objects.filter(curriculum=src).select_related("course"):
             # > Avoid duplicate entries using canonical identity.
-            source_identity = _curriculum_course_identity(cc)
+            source_identity = _curri_crs_id(cc)
             existing = (
                 target_by_course_identity.get(source_identity)
                 if source_identity is not None
@@ -222,7 +220,7 @@ def merge_curricula(
                     summary["is_required_conflicts"] += 1
                 if cc.is_elective != existing.is_elective:
                     summary["is_elective_conflicts"] += 1
-                moved = _merge_curriculum_course_conflict(
+                moved = _merge_curri_crs_conflict(
                     existing,
                     cc,
                     selected_choice,
@@ -267,7 +265,7 @@ def merge_curricula(
     return summary
 
 
-def _entry_semester_merge_blocked(
+def _entry_sem_merge_blocked(
     target_row: StdCurriEnroll,
     source_row: StdCurriEnroll,
 ) -> bool:
@@ -287,7 +285,7 @@ def merge_student_enrollment_pair(
     summary = empty_student_curriculum_record_summary()
     if target_row.student_id != source_row.student_id:
         return False, summary
-    if _entry_semester_merge_blocked(target_row, source_row):
+    if _entry_sem_merge_blocked(target_row, source_row):
         return False, summary
 
     # Reconcile student-scoped grade/registration duplicates before row collapse.
@@ -339,9 +337,7 @@ def reconcile_student_curriculum_records(
         .only("id", "course_id", "course__department_id", "course__number")
     )
     # > Match target/source rows by canonical course identity.
-    target_cc_by_course_identity = _index_curriculum_courses_by_identity(
-        target_curriculum_courses
-    )
+    target_cc_by_course_identity = _index_curri_crss_by_id(target_curriculum_courses)
     if not target_cc_by_course_identity:
         return summary
 
@@ -350,7 +346,7 @@ def reconcile_student_curriculum_records(
         .select_related("course")
         .only("id", "course_id", "course__department_id", "course__number")
     )
-    source_course_identity_by_curriculum_course_id = _identity_by_curriculum_course_id(
+    source_course_identity_by_curriculum_course_id = _id_by_curri_crs_id(
         source_curriculum_courses
     )
     source_curriculum_course_ids = [
@@ -421,7 +417,7 @@ def reconcile_student_curriculum_records(
         "section__curriculum_course__course__number",
         "value_id",
     ):
-        identity = _build_course_identity(department_id, course_number)
+        identity = _build_crs_id(department_id, course_number)
         if identity is None:
             continue
         target_grade_values_by_course_identity[identity].add(value_id)
@@ -435,7 +431,7 @@ def reconcile_student_curriculum_records(
         "section__curriculum_course__course__department_id",
         "section__curriculum_course__course__number",
     ):
-        identity = _build_course_identity(department_id, course_number)
+        identity = _build_crs_id(department_id, course_number)
         if identity is None:
             continue
         target_registration_course_identities.add(identity)
@@ -465,7 +461,7 @@ def reconcile_student_curriculum_records(
         sections,
     ) in target_sections_by_curriculum_course_id.items():
         indexed_target_sections[target_curriculum_course_id] = (
-            _index_section_merge_candidates(sections)
+            _index_sec_merge_candidates(sections)
         )
 
     for source_section in source_sections:
@@ -482,7 +478,7 @@ def reconcile_student_curriculum_records(
         indexed_sections = indexed_target_sections.get(target_cc.id)
         if indexed_sections is not None:
             by_semester_number, by_semester = indexed_sections
-            target_section = _pick_section_merge_candidate_from_index(
+            target_section = _pick_sec_merge_candidate_from_index(
                 source_section,
                 by_semester_number,
                 by_semester,

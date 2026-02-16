@@ -14,7 +14,7 @@ StdIdT: TypeAlias = str
 STUDENT_ID_CACHE: StrIntMapT = {}
 
 
-def _prime_student_id_cache() -> None:
+def _prime_std_id_cache() -> None:
     """Load student ids into the local cache if empty."""
     if STUDENT_ID_CACHE:
         return
@@ -30,7 +30,7 @@ def _prime_student_id_cache() -> None:
 #     if not sid:
 #         return int(Student.get_default().pk)
 
-#     _prime_student_id_cache()
+#     _prime_std_id_cache()
 #     existing = STUDENT_ID_CACHE.get(sid)
 #     if existing:
 #         return existing
@@ -69,7 +69,7 @@ def ensure_student_sid(student_id_raw: StdIdT) -> int:
     if not sid:
         return int(Student.get_default().pk)
 
-    _prime_student_id_cache()
+    _prime_std_id_cache()
     existing = STUDENT_ID_CACHE.get(sid)
     if existing:
         return existing

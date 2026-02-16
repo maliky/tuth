@@ -13,7 +13,7 @@ from app.people.models.student import Student
 from app.timetable.models.semester import Semester
 
 
-def _require_student(user: User | AnonymousUser) -> Student:
+def _require_std(user: User | AnonymousUser) -> Student:
     """Return the related Student or abort early."""
     student = getattr(user, "student", None)
     if student is None:
@@ -21,7 +21,7 @@ def _require_student(user: User | AnonymousUser) -> Student:
     return cast(Student, student)  # <— only cast once, in one place
 
 
-def _resolve_semester(
+def _resolve_sem(
     student: Student, requested_semester_id: Optional[str]
 ) -> tuple[Optional[Semester], list[Semester]]:
     """Return the semester that should drive course availability."""
@@ -49,7 +49,7 @@ def _resolve_semester(
     return semester, list(open_semesters)
 
 
-def _build_student_profile(student: Student) -> dict[str, str]:
+def _build_std_profile(student: Student) -> dict[str, str]:
     """Return the student profile block for portal templates."""
     academic_year = "Not assigned"
     if student.entry_semester:

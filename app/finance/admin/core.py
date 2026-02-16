@@ -203,17 +203,17 @@ class CourseInvoiceAdmin(
                 f"Skipped {skipped_closed} invoice(s) with no balance due.",
             )
 
-    def _get_open_registration_semester(self, request) -> Optional[Semester]:
+    def _get_open_registration_sem(self, request) -> Optional[Semester]:
         """Return the open registration semester, if available."""
         # It's not clear what we have in request and where _open_registration..
         # is coming from.
         if getattr(request, "_open_registration_semester_loaded", False):
-            return getattr(request, "_open_registration_semester", None)
+            return getattr(request, "_open_registration_sem", None)
 
         semester, error_message = Semester.registration_open_semester()
         if error_message:
             messages.error(request, error_message)
-        request._open_registration_semester = semester
+        request._open_registration_sem = semester
         request._open_registration_semester_loaded = True
 
         return semester
@@ -237,7 +237,7 @@ class CourseInvoiceAdmin(
     def get_changeform_initial_data(self, request):
         """Set default semester/recorded_by values for invoice creation."""
         initial = super().get_changeform_initial_data(request)
-        open_semester = self._get_open_registration_semester(request)
+        open_semester = self._get_open_registration_sem(request)
         if open_semester and "semester" not in initial:
             initial["semester"] = str(open_semester.pk)
         staff = self._resolve_recorded_by_staff(request)
@@ -248,7 +248,7 @@ class CourseInvoiceAdmin(
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Customize foreign key fields for defaulting and scoping."""
         if db_field.name == "curriculum_course":
-            open_semester = self._get_open_registration_semester(request)
+            open_semester = self._get_open_registration_sem(request)
             # Only allow curriculum courses with sections in the open semester.
             if open_semester:
                 kwargs["queryset"] = CurriCourse.objects.filter(
@@ -266,7 +266,7 @@ class CourseInvoiceAdmin(
             return field
 
         if db_field.name == "semester":
-            open_semester = self._get_open_registration_semester(request)
+            open_semester = self._get_open_registration_sem(request)
             if open_semester and isinstance(field, forms.ModelChoiceField):
                 field.initial = open_semester.pk
 
@@ -286,7 +286,7 @@ class CourseInvoiceAdmin(
             if staff:
                 obj.recorded_by = staff
         if not obj.semester_id:
-            open_semester = self._get_open_registration_semester(request)
+            open_semester = self._get_open_registration_sem(request)
             if open_semester:
                 obj.semester = open_semester
         super().save_model(request, obj, form, change)
@@ -442,7 +442,7 @@ class FeeStackAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     _current_semester_cache: Optional[Semester] = None
     _current_semester_loaded = False
 
-    def _resolved_current_semester(self) -> Optional[Semester]:
+    def _resolved_current_sem(self) -> Optional[Semester]:
         """Return the current semester, or the latest one when none is active."""
         if self._current_semester_loaded:
             return self._current_semester_cache
@@ -459,7 +459,7 @@ class FeeStackAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     def get_queryset(self, request):
         """Annotate sortable totals and counts for fee stack changelist."""
         queryset = super().get_queryset(request)
-        semester = self._resolved_current_semester()
+        semester = self._resolved_current_sem()
         cutoff_date = getattr(semester, "start_date", None)
         current_total_sql = """
             SELECT COALESCE(SUM(chosen.amount), 0.00)
@@ -505,7 +505,7 @@ class FeeStackAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
         """Return stack total resolved for the current semester context."""
         total = getattr(obj, "current_total_amount", None)
         if total is None:
-            semester = self._resolved_current_semester()
+            semester = self._resolved_current_sem()
             total = obj.total_amount_for_semester(semester)
         return f"{Decimal(total):.2f}"
 

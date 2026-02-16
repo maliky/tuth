@@ -28,7 +28,7 @@ pytestmark = pytest.mark.django_db(transaction=True)
 
 
 @contextmanager
-def _curriculum_course_constraint_disabled() -> Iterator[None]:
+def _curri_crs_constraint_disabled() -> Iterator[None]:
     """Temporarily drop the uniq_course_per_curriculum constraint."""
     constraint = next(
         c for c in CurriCourse._meta.constraints if c.name == "uniq_course_per_curriculum"
@@ -74,7 +74,7 @@ def test_merge_curriculum_courses_same_course_moves_section(
     curriculum = curriculum_factory("CURR-A")
     course = course_factory("101")
     summary = {}
-    with _curriculum_course_constraint_disabled():
+    with _curri_crs_constraint_disabled():
         target = CurriCourse.objects.create(curriculum=curriculum, course=course)
         source = CurriCourse.objects.create(curriculum=curriculum, course=course)
         section = Section.objects.create(
@@ -118,7 +118,7 @@ def test_merge_curriculum_courses_skips_invoices(
     curriculum = curriculum_factory("CURR-A")
     course = course_factory("101")
     summary = {}
-    with _curriculum_course_constraint_disabled():
+    with _curri_crs_constraint_disabled():
         target = CurriCourse.objects.create(curriculum=curriculum, course=course)
         source = CurriCourse.objects.create(curriculum=curriculum, course=course)
         invoice_factory(source)
@@ -235,7 +235,7 @@ def test_merge_curriculum_courses_merges_conflicting_sections(
     curriculum = curriculum_factory("CURR-A")
     course = course_factory("101")
     summary = {}
-    with _curriculum_course_constraint_disabled():
+    with _curri_crs_constraint_disabled():
         target = CurriCourse.objects.create(curriculum=curriculum, course=course)
         source = CurriCourse.objects.create(curriculum=curriculum, course=course)
         target_section = Section.objects.create(
@@ -269,7 +269,7 @@ def test_merge_curriculum_courses_conflict_reassigns_grade_and_registration(
 ):
     """Conflict merge should reassign source grades/registrations to target section."""
     summary = {}
-    with _curriculum_course_constraint_disabled():
+    with _curri_crs_constraint_disabled():
         target = CurriCourse.objects.create(
             curriculum=curriculum_factory("CURR-A"),
             course=course_factory("301"),
@@ -313,7 +313,7 @@ def test_merge_curriculum_courses_conflict_retains_source_when_grade_duplicate(
 ):
     """Duplicate grades for same student keep source section protected and retained."""
     summary = {}
-    with _curriculum_course_constraint_disabled():
+    with _curri_crs_constraint_disabled():
         target = CurriCourse.objects.create(
             curriculum=curriculum_factory("CURR-A"),
             course=course_factory("302"),
@@ -389,7 +389,7 @@ def test_merge_curriculum_courses_skips_section_merge_on_grade_value_mismatch(
 ):
     """Section merge should skip when overlapping student grade values differ."""
     summary = {}
-    with _curriculum_course_constraint_disabled():
+    with _curri_crs_constraint_disabled():
         target = CurriCourse.objects.create(
             curriculum=curriculum_factory("CURR-A"),
             course=course_factory("501"),
@@ -426,7 +426,7 @@ def test_merge_curriculum_courses_keeps_lowest_number_and_logs_conflicts(
 ):
     """Merging grade-compatible sections keeps the lowest number and logs metadata."""
     summary = {}
-    with _curriculum_course_constraint_disabled():
+    with _curri_crs_constraint_disabled():
         target = CurriCourse.objects.create(
             curriculum=curriculum_factory("CURR-A"),
             course=course_factory("502"),

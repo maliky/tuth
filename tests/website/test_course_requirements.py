@@ -27,7 +27,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture(autouse=True)
-def _ensure_status_defaults() -> None:
+def _ensure_status_dfts() -> None:
     """Create required lookup rows before each test."""
     SemesterStatus._populate_attributes_and_db()
     RegistrationStatus._populate_attributes_and_db()
@@ -35,7 +35,7 @@ def _ensure_status_defaults() -> None:
     Payer._populate_attributes_and_db()
 
 
-def _open_registration_semester(semester_factory) -> Semester:
+def _open_registration_sem(semester_factory) -> Semester:
     """Return one semester marked as registration-open."""
     semester = semester_factory(1, datetime(2026, 1, 1))
     semester.status_id = "registration"
@@ -43,7 +43,7 @@ def _open_registration_semester(semester_factory) -> Semester:
     return cast(Semester, semester)
 
 
-def _student_for_curriculum(
+def _std_for_curri(
     *,
     user_factory,
     curriculum,
@@ -62,7 +62,7 @@ def _student_for_curriculum(
     return student
 
 
-def _add_requirement_member_group(
+def _add_req_member_gp(
     *,
     target: CurriCourse,
     kind: str,
@@ -87,7 +87,7 @@ def test_requirement_resolver_returns_machine_readable_failure_codes(
     user_factory,
 ) -> None:
     """Resolver should expose all expected failure categories."""
-    semester = _open_registration_semester(semester_factory)
+    semester = _open_registration_sem(semester_factory)
     target = curriculum_course_factory("910", "CURRI_REQ")
     target.min_validated_credits = 18
     target.save(update_fields=["min_validated_credits"])
@@ -96,24 +96,24 @@ def test_requirement_resolver_returns_machine_readable_failure_codes(
     prereq_any_a = curriculum_course_factory("913", "CURRI_REQ")
     prereq_any_b = curriculum_course_factory("914", "CURRI_REQ")
     coreq_member = curriculum_course_factory("915", "CURRI_REQ")
-    student = _student_for_curriculum(
+    student = _std_for_curri(
         user_factory=user_factory,
         curriculum=target.curriculum,
         semester=semester,
         username="req_resolver_student",
     )
 
-    _add_requirement_member_group(
+    _add_req_member_gp(
         target=target,
         kind=ReqKind.PREREQ_ALL,
         required_courses=[prereq_all_a, prereq_all_b],
     )
-    _add_requirement_member_group(
+    _add_req_member_gp(
         target=target,
         kind=ReqKind.PREREQ_ANY,
         required_courses=[prereq_any_a, prereq_any_b],
     )
-    _add_requirement_member_group(
+    _add_req_member_gp(
         target=target,
         kind=ReqKind.COREQ_ALL,
         required_courses=[coreq_member],
@@ -139,15 +139,15 @@ def test_register_post_requires_coreq_group_in_same_action(
     user_factory,
 ) -> None:
     """Registration POST must reject coreq_all partial selections."""
-    semester = _open_registration_semester(semester_factory)
+    semester = _open_registration_sem(semester_factory)
     target = curriculum_course_factory("920", "CURRI_COREQ")
     coreq_member = curriculum_course_factory("921", "CURRI_COREQ")
-    _add_requirement_member_group(
+    _add_req_member_gp(
         target=target,
         kind=ReqKind.COREQ_ALL,
         required_courses=[coreq_member],
     )
-    student = _student_for_curriculum(
+    student = _std_for_curri(
         user_factory=user_factory,
         curriculum=target.curriculum,
         semester=semester,
@@ -209,15 +209,15 @@ def test_dashboard_surfaces_coreq_reason_without_locking_initial_selection(
     user_factory,
 ) -> None:
     """Dashboard should show coreq guidance while keeping initial course selectable."""
-    semester = _open_registration_semester(semester_factory)
+    semester = _open_registration_sem(semester_factory)
     target = curriculum_course_factory("930", "CURRI_COREQ_UI")
     coreq_member = curriculum_course_factory("931", "CURRI_COREQ_UI")
-    _add_requirement_member_group(
+    _add_req_member_gp(
         target=target,
         kind=ReqKind.COREQ_ALL,
         required_courses=[coreq_member],
     )
-    student = _student_for_curriculum(
+    student = _std_for_curri(
         user_factory=user_factory,
         curriculum=target.curriculum,
         semester=semester,
@@ -256,7 +256,7 @@ def test_dashboard_surfaces_multiple_requirement_reason_lines(
     user_factory,
 ) -> None:
     """Locked courses should expose all grouped-requirement reason lines."""
-    semester = _open_registration_semester(semester_factory)
+    semester = _open_registration_sem(semester_factory)
     target = curriculum_course_factory("940", "CURRI_REASON_LINES")
     target.min_validated_credits = 24
     target.save(update_fields=["min_validated_credits"])
@@ -266,17 +266,17 @@ def test_dashboard_surfaces_multiple_requirement_reason_lines(
     req_all_label = req_all.course.short_code or req_all.course.code
     req_any_a_label = req_any_a.course.short_code or req_any_a.course.code
     req_any_b_label = req_any_b.course.short_code or req_any_b.course.code
-    _add_requirement_member_group(
+    _add_req_member_gp(
         target=target,
         kind=ReqKind.PREREQ_ALL,
         required_courses=[req_all],
     )
-    _add_requirement_member_group(
+    _add_req_member_gp(
         target=target,
         kind=ReqKind.PREREQ_ANY,
         required_courses=[req_any_a, req_any_b],
     )
-    student = _student_for_curriculum(
+    student = _std_for_curri(
         user_factory=user_factory,
         curriculum=target.curriculum,
         semester=semester,
@@ -316,11 +316,11 @@ def test_dashboard_keeps_no_section_courses_in_locked_information_list(
     user_factory,
 ) -> None:
     """Courses without offered sections stay visible in locked informational cards."""
-    semester = _open_registration_semester(semester_factory)
+    semester = _open_registration_sem(semester_factory)
     target = curriculum_course_factory("950", "CURRI_NO_SECTION")
     target.level_number = 3
     target.save(update_fields=["level_number"])
-    student = _student_for_curriculum(
+    student = _std_for_curri(
         user_factory=user_factory,
         curriculum=target.curriculum,
         semester=semester,

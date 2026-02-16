@@ -50,7 +50,7 @@ from app.registry.admin import (
     DocStdIL,
     StdGradeIL,
 )
-from app.registry.admin.core import _available_sections_for_student
+from app.registry.admin.core import _available_secs_for_std
 
 # GPA should ignore non-final grade codes (kept in registry.constants).
 from app.registry.constants import GPA_EXCLUDED_CODES
@@ -505,7 +505,7 @@ class StdRegistrationForm(StdForm):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         student = self.instance if getattr(self.instance, "pk", None) else None
-        sections_qs = _available_sections_for_student(student)
+        sections_qs = _available_secs_for_std(student)
         sections_field = self.fields.get("registration_sections")
         if sections_field is not None and isinstance(
             sections_field, forms.ModelMultipleChoiceField

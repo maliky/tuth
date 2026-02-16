@@ -35,7 +35,7 @@ ROOM_ID_CACHE: RoomCacheT = {}
 SESSION_ID_CACHE: SessionCacheT = {}
 
 
-def _section_cache_key(
+def _sec_cache_key(
     semester_id: int, curriculum_course_id: int, number: int
 ) -> Tuple[int, int, int, Optional[int]]:
     """Build a cache key for section lookups."""
@@ -43,7 +43,7 @@ def _section_cache_key(
     return (semester_id, curriculum_course_id, number, None)
 
 
-def _normalize_semester_key(
+def _normalize_sem_key(
     academic_year: str, semester_no: str | int, default: str | None = None
 ) -> Tuple[str, int]:
     """Normalize semester inputs to a cache key."""
@@ -57,7 +57,7 @@ def _normalize_semester_key(
     return ay_code, sem_no
 
 
-def _prime_semester_id_cache() -> None:
+def _prime_sem_id_cache() -> None:
     """Load semester ids into the local cache if empty."""
     if SEMESTER_ID_CACHE:
         return
@@ -127,7 +127,7 @@ def ensure_semester(
     Falls back to a defined default semester when code such as '25-26_Sem2' exists,
     else get the semester 0 for the current academic year.
     """
-    ay_code, sem_no = _normalize_semester_key(academic_year, semester_no, default)
+    ay_code, sem_no = _normalize_sem_key(academic_year, semester_no, default)
 
     key = (ay_code, sem_no)
     cached = SEMESTER_CACHE.get(key)
@@ -155,9 +155,9 @@ def ensure_semester_id(
     academic_year: str, semester_no: str | int, default: str | None = None
 ) -> int:
     """Return a Semester id for the given academic year and semester."""
-    ay_code, sem_no = _normalize_semester_key(academic_year, semester_no, default)
+    ay_code, sem_no = _normalize_sem_key(academic_year, semester_no, default)
     key = (ay_code, sem_no)
-    _prime_semester_id_cache()
+    _prime_sem_id_cache()
     cached = SEMESTER_ID_CACHE.get(key)
     if cached:
         return cached
@@ -172,7 +172,7 @@ def ensure_section(
     faculty_id: int | None = None,
 ) -> Section:
     """Look-up or autocreate a Section."""
-    key = _section_cache_key(semester.id, curriculum_course.id, number)
+    key = _sec_cache_key(semester.id, curriculum_course.id, number)
     cached = SECTION_CACHE.get(key)
     if cached:
         if faculty_id and cached.faculty_id is None:
@@ -201,7 +201,7 @@ def ensure_section_id(
     faculty_id: int | None = None,
 ) -> int:
     """Return a Section id for the given identifiers."""
-    key = _section_cache_key(semester_id, curriculum_course_id, number)
+    key = _sec_cache_key(semester_id, curriculum_course_id, number)
     cached = SECTION_CACHE.get(key)
     if cached:
         if faculty_id and cached.faculty_id is None:

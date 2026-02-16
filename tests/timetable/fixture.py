@@ -35,7 +35,7 @@ def schedule() -> Schedule:
     return Schedule.get_default(day=1)
 
 
-def _ensure_semester_statuses() -> None:
+def _ensure_sem_statuses() -> None:
     """Make sure default semester statuses exist before creating semesters."""
     SemesterStatus._populate_attributes_and_db()
 
@@ -43,7 +43,7 @@ def _ensure_semester_statuses() -> None:
 @pytest.fixture
 def semester(academic_year_factory: AcademicYearFactoryT) -> Semester:
     """Get a Semester object for a specific academic year."""
-    _ensure_semester_statuses()
+    _ensure_sem_statuses()
     ay = academic_year_factory(DEF_DATE)
     return Semester.objects.create(academic_year=ay, number=1)
 
@@ -77,7 +77,7 @@ def academic_year_factory() -> AcademicYearFactoryT:
 def semester_factory(academic_year_factory: AcademicYearFactoryT) -> SemesterFactoryT:
     def _make(number: int, ay_start_date: datetime = DEF_DATE) -> Semester:
 
-        _ensure_semester_statuses()
+        _ensure_sem_statuses()
 
         ay = academic_year_factory(ay_start_date)
 

@@ -52,7 +52,7 @@ def normalize_semester(raw: str | None) -> str:
     return SEM_MAP.get(token, "1")
 
 
-def _truncate_curriculum_label(label: str) -> str:
+def _truncate_curri_label(label: str) -> str:
     """Clamp curriculum labels to the DB max_length (40 chars)."""
     text = parse_str(label)
     if len(text) > CURRICULUM_MAX_LEN:
@@ -166,7 +166,7 @@ class LegacyGradeSheetResource(GradeResource):
         if not current_curriculum:
             current_curriculum = major or self.fallback_curriculum
         row["curriculum_long_name"] = current_curriculum
-        row["curriculum"] = _truncate_curriculum_label(current_curriculum)
+        row["curriculum"] = _truncate_curri_label(current_curriculum)
         if college:
             row["college_code"] = college
 
@@ -237,7 +237,7 @@ class LegacyRegistrationResource(RegistrationResource):
         row["course_no"] = get_in_row("course_no", row)
         current_curriculum = get_in_row("curriculum", row) or self.fallback_curriculum
         row["curriculum_long_name"] = current_curriculum
-        row["curriculum"] = _truncate_curriculum_label(current_curriculum)
+        row["curriculum"] = _truncate_curri_label(current_curriculum)
         pipeline(
             row,
             setdefault_field(

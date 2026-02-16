@@ -29,9 +29,7 @@ def _academic_year_end_date(academic_year: AcademicYear) -> date:
     )
 
 
-def _default_semester_dates(
-    academic_year: AcademicYear, number: int
-) -> SemesterDateDefaultsT:
+def _dft_sem_dates(academic_year: AcademicYear, number: int) -> SemesterDateDefaultsT:
     """Return default semester start/end dates per academic year rules."""
     start_year = academic_year.start_date.year
     end_year = start_year + 1
@@ -78,13 +76,11 @@ class Semester(StatusableMixin, models.Model):
     # > this is not clear. Why do we need that ? why a set ? or dict ?
     REGISTRATION_OPEN_CODES = "registration"
 
-    def _ensure_default_dates(self) -> None:
+    def _ensure_dft_dates(self) -> None:
         """Ensure default dates are applied when missing."""
         if not self.academic_year_id:
             return
-        default_start, default_end = _default_semester_dates(
-            self.academic_year, int(self.number)
-        )
+        default_start, default_end = _dft_sem_dates(self.academic_year, int(self.number))
         if not self.start_date:
             self.start_date = default_start
         if not self.end_date:
@@ -93,7 +89,7 @@ class Semester(StatusableMixin, models.Model):
     def clean(self) -> None:
         """Ensure semester dates stay within the academic year boundaries."""
         # Default semester dates based on the academic year rules.
-        self._ensure_default_dates()
+        self._ensure_dft_dates()
 
         # Semester.clean() and Term.clean() call validate_subperiod() but not
         # full_clean() on related objects. In admin workflows the parent may still
@@ -120,7 +116,7 @@ class Semester(StatusableMixin, models.Model):
 
     def save(self, *args, **kwargs):
         # Ensure default date ranges are always set, even outside form validation.
-        self._ensure_default_dates()
+        self._ensure_dft_dates()
         self._ensure_status()
         return super().save(*args, **kwargs)
 
@@ -161,7 +157,7 @@ class Semester(StatusableMixin, models.Model):
 
         # Ensure statuses are present before creating a semester.
         SemesterStatus._populate_attributes_and_db()
-        sem1_start, sem1_end = _default_semester_dates(ay, SEMESTER_NUMBER.FIRST)
+        sem1_start, sem1_end = _dft_sem_dates(ay, SEMESTER_NUMBER.FIRST)
 
         # Avoid duplicate semesters when the academic year already has Sem 1.
         semester, _created = cls.objects.get_or_create(

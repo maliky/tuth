@@ -13,10 +13,10 @@ from app.registry.models.grade import Grade
 from app.registry.models.registration import Registration
 from app.timetable.models.section import Section
 
-from .helpers import SectionMergeResultT, _merge_curriculum_course_links
+from .helpers import SectionMergeResultT, _merge_curri_crs_links
 
 
-def _merge_curriculum_course_to_target(
+def _merge_curri_crs_to_target(
     target: CurriCourse, source: CurriCourse
 ) -> dict[str, int]:
     """Move section and concentration links from source to target."""
@@ -27,12 +27,12 @@ def _merge_curriculum_course_to_target(
         "sections_skipped_grade_conflict": 0,
         "source_retained_protected": 0,
     }
-    _merge_curriculum_course_links(target, source)
+    _merge_curri_crs_links(target, source)
     source_sections = Section.objects.filter(curriculum_course=source)
     for section in source_sections:
-        conflict = _pick_section_merge_candidate(target, section)
+        conflict = _pick_sec_merge_candidate(target, section)
         if conflict is not None:
-            merge_result = _merge_sections(conflict, section)
+            merge_result = _merge_secs(conflict, section)
             if merge_result["sections_merged"]:
                 summary["sections_merged"] += merge_result["sections_merged"]
             elif merge_result["sections_skipped_grade_conflict"]:
@@ -54,7 +54,7 @@ def _merge_curriculum_course_to_target(
     return summary
 
 
-def _pick_section_merge_candidate(
+def _pick_sec_merge_candidate(
     target_curriculum_course: CurriCourse,
     source_section: Section,
 ) -> Section | None:
@@ -78,7 +78,7 @@ def _pick_section_merge_candidate(
     return None
 
 
-def _index_section_merge_candidates(
+def _index_sec_merge_candidates(
     sections: list[Section],
 ) -> tuple[dict[tuple[int, int], Section], dict[int, list[Section]]]:
     """Index target sections for deterministic merge-candidate resolution."""
@@ -90,7 +90,7 @@ def _index_section_merge_candidates(
     return by_semester_number, by_semester
 
 
-def _pick_section_merge_candidate_from_index(
+def _pick_sec_merge_candidate_from_index(
     source_section: Section,
     by_semester_number: dict[tuple[int, int], Section],
     by_semester: dict[int, list[Section]],
@@ -107,7 +107,7 @@ def _pick_section_merge_candidate_from_index(
     return None
 
 
-def _grade_value_map_for_section(section: Section) -> dict[int, int | None]:
+def _grade_value_map_for_sec(section: Section) -> dict[int, int | None]:
     """Return grade values keyed by student id for a section."""
     return {
         student_id: value_id
@@ -120,8 +120,8 @@ def _grade_value_map_for_section(section: Section) -> dict[int, int | None]:
 
 def _has_mergeable_grade_overlap(target: Section, source: Section) -> bool:
     """Return True when overlapping student grades are compatible for merging."""
-    target_grade_map = _grade_value_map_for_section(target)
-    source_grade_map = _grade_value_map_for_section(source)
+    target_grade_map = _grade_value_map_for_sec(target)
+    source_grade_map = _grade_value_map_for_sec(source)
     overlapping_students = set(target_grade_map).intersection(source_grade_map)
     if not overlapping_students:
         return True
@@ -131,7 +131,7 @@ def _has_mergeable_grade_overlap(target: Section, source: Section) -> bool:
     return True
 
 
-def _section_default_value(field_name: str):
+def _sec_dft_value(field_name: str):
     """Return the effective default value for a section model field."""
     field = cast(models.Field, Section._meta.get_field(field_name))
     if field.has_default():
@@ -141,12 +141,12 @@ def _section_default_value(field_name: str):
     return None
 
 
-def _is_non_default_section_value(field_name: str, value) -> bool:
+def _is_non_dft_sec_value(field_name: str, value) -> bool:
     """Return True when a section field value differs from its default."""
-    return bool(value != _section_default_value(field_name))
+    return bool(value != _sec_dft_value(field_name))
 
 
-def _append_section_merge_notes(target: Section, notes: list[str]) -> None:
+def _append_sec_merge_notes(target: Section, notes: list[str]) -> None:
     """Append structured merge notes to the target section info field."""
     if not notes:
         return
@@ -157,7 +157,7 @@ def _append_section_merge_notes(target: Section, notes: list[str]) -> None:
     )
 
 
-def _reconcile_section_fields(target: Section, source: Section) -> list[str]:
+def _reconcile_sec_fields(target: Section, source: Section) -> list[str]:
     """Reconcile section metadata and return update_fields for saving target."""
     update_fields: set[str] = set()
     notes: list[str] = []
@@ -166,9 +166,9 @@ def _reconcile_section_fields(target: Section, source: Section) -> list[str]:
     if int(target.number) != lowest_number:
         target.number = lowest_number
         update_fields.add("number")
-    if _is_non_default_section_value("number", source.number):
+    if _is_non_dft_sec_value("number", source.number):
         notes.append(f"[merge] source non-default number={source.number}")
-    if _is_non_default_section_value("number", target.number):
+    if _is_non_dft_sec_value("number", target.number):
         notes.append(f"[merge] target non-default number={target.number}")
 
     field_names = ("faculty_id", "start_date", "end_date", "max_seats")
@@ -176,12 +176,12 @@ def _reconcile_section_fields(target: Section, source: Section) -> list[str]:
         target_value = getattr(target, field_name)
         source_value = getattr(source, field_name)
         if target_value == source_value:
-            if _is_non_default_section_value(field_name, target_value):
+            if _is_non_dft_sec_value(field_name, target_value):
                 notes.append(f"[merge] both non-default {field_name}={target_value}")
             continue
 
-        target_non_default = _is_non_default_section_value(field_name, target_value)
-        source_non_default = _is_non_default_section_value(field_name, source_value)
+        target_non_default = _is_non_dft_sec_value(field_name, target_value)
+        source_non_default = _is_non_dft_sec_value(field_name, source_value)
         if target_non_default:
             notes.append(f"[merge] target non-default {field_name}={target_value}")
         if source_non_default:
@@ -194,16 +194,16 @@ def _reconcile_section_fields(target: Section, source: Section) -> list[str]:
             update_fields.add(field_name.removesuffix("_id"))
             continue
         if target_non_default and source_non_default:
-            setattr(target, field_name, _section_default_value(field_name))
+            setattr(target, field_name, _sec_dft_value(field_name))
             update_fields.add(field_name.removesuffix("_id"))
 
-    _append_section_merge_notes(target, notes)
+    _append_sec_merge_notes(target, notes)
     if notes:
         update_fields.add("info")
     return sorted(update_fields)
 
 
-def _merge_sections(target: Section, source: Section) -> SectionMergeResultT:
+def _merge_secs(target: Section, source: Section) -> SectionMergeResultT:
     """Merge a conflicting section into target, moving related records."""
     if not _has_mergeable_grade_overlap(target, source):
         return {
@@ -212,7 +212,7 @@ def _merge_sections(target: Section, source: Section) -> SectionMergeResultT:
             "sections_skipped_grade_conflict": 1,
         }
 
-    updated_fields = _reconcile_section_fields(target, source)
+    updated_fields = _reconcile_sec_fields(target, source)
     if updated_fields:
         target.save(update_fields=updated_fields)
 

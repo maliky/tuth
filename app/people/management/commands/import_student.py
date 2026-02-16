@@ -49,10 +49,10 @@ class Command(BaseCommand):
         text = read_text_file(path)
         dataset = _load_dataset(text)
         batch_size = int(options.get("batch_size") or 500)
-        _run_student_import(self, dataset, dry_run=dry_run, batch_size=batch_size)
+        _run_std_import(self, dataset, dry_run=dry_run, batch_size=batch_size)
 
 
-def _run_student_import(
+def _run_std_import(
     cmd, dataset: Dataset, *, dry_run: bool = False, batch_size: int = 500
 ) -> None:
     """Bulk import students in chunks with minimal logging for speed."""

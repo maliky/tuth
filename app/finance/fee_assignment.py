@@ -66,7 +66,7 @@ def _stacks_by_configured_names(setting_name: str) -> list[FeeStack]:
     return [stack_map[name] for name in configured_names if name in stack_map]
 
 
-def _stack_amounts_for_semester(
+def _stack_amounts_for_sem(
     fee_stacks: list[FeeStack],
     semester,
 ) -> MoneyMapT:
@@ -92,7 +92,7 @@ def optional_semester_stack_choices(
     if not optional_stacks:
         return []
 
-    stack_amounts = _stack_amounts_for_semester(optional_stacks, semester)
+    stack_amounts = _stack_amounts_for_sem(optional_stacks, semester)
     parent_invoice = StdSemesterInvoice.objects.filter(
         student=student,
         semester=semester,
@@ -135,7 +135,7 @@ def attach_semester_fee_stacks(
         return {"added": 0, "removed_optional": 0, "ignored_optional": 0}
 
     default_stacks = _stacks_by_configured_names(DEFAULT_SEMESTER_STACKS_SETTING)
-    default_amounts = _stack_amounts_for_semester(default_stacks, semester)
+    default_amounts = _stack_amounts_for_sem(default_stacks, semester)
     default_stack_ids = {
         fee_stack.id
         for fee_stack in default_stacks

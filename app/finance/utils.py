@@ -135,7 +135,7 @@ def create_pending_payments(
                 continue
             Payment.objects.create(
                 student_semester_invoice=parent_invoice,
-                payer_id=_default_payment_payer_id(parent_invoice),
+                payer_id=_dft_payment_payer_id(parent_invoice),
                 amount_paid=balance,
                 recorded_by=recorded_by,
             )
@@ -148,7 +148,7 @@ def _format_currency(amount: Decimal) -> str:
     return f"{amount:.2f}"
 
 
-def _default_payment_payer_id(parent_invoice: StdSemesterInvoice) -> str:
+def _dft_payment_payer_id(parent_invoice: StdSemesterInvoice) -> str:
     """Resolve the default payer for newly created payments."""
     candidate_codes = (
         parent_invoice.fee_payer_id,

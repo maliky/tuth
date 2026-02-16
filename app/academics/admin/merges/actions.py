@@ -12,14 +12,14 @@ from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 
 from .course_merge import (
-    _select_course_merge_target,
+    _select_crs_merge_target,
     merge_courses,
     merge_curriculum_courses,
 )
 from .curriculum_merge import merge_curricula
 from .helpers import (
     CourseMergeSummaryT,
-    _department_merge_collision_summary,
+    _dpt_merge_collision_summary,
     merge_departments,
 )
 
@@ -35,7 +35,7 @@ def merge_departments_action(dept_admin: "DepartmentAdmin", request, queryset):
         return
     target = queryset.order_by("id").first()
     sources = queryset.exclude(pk=target.pk)
-    collision_summary = _department_merge_collision_summary(target, sources)
+    collision_summary = _dpt_merge_collision_summary(target, sources)
     if collision_summary["course_number_collisions"]:
         messages.warning(
             request,
@@ -249,7 +249,7 @@ def merge_courses_by_short_code_action(
         if len(items) < 2:
             continue
         summary["groups"] += 1
-        target = _select_course_merge_target(items)
+        target = _select_crs_merge_target(items)
         sources = [course for course in items if course.id != target.id]
         group_summary = merge_courses(target, sources)
         summary["merged"] += group_summary["merged"]

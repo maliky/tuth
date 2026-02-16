@@ -189,7 +189,7 @@ class StdUserWgt(widgets.ForeignKeyWidget):
 
         # > using get or created in a cached version is a bit useless
         # > as the get will never get called.
-        def _get_or_create_student() -> Student:
+        def _get_or_create_std() -> Student:
             student, created = Student.objects.get_or_create(
                 username=username,
                 student_id=student_id,  # this is why I do not use the factory
@@ -201,7 +201,7 @@ class StdUserWgt(widgets.ForeignKeyWidget):
 
             return cast(Student, student)
 
-        student_obj = cached_entity(self._cache_student, key, _get_or_create_student)
+        student_obj = cached_entity(self._cache_student, key, _get_or_create_std)
 
         return student_obj
 

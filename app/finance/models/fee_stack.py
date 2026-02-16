@@ -30,7 +30,7 @@ def _fee_type_codes_for_stack(stack_id: int) -> FeeTypeCodeSetT:
     )
 
 
-def _semester_start_date(semester: "Semester | date | datetime | None") -> date | None:
+def _sem_start_date(semester: "Semester | date | datetime | None") -> date | None:
     """Return normalized semester start date for comparisons."""
     if semester is None:
         return None
@@ -47,7 +47,7 @@ def _is_newer_start(candidate: date | None, current: date | None) -> bool:
     return (candidate or date.min) > (current or date.min)
 
 
-def _resolve_stack_fee_lines_for_semester(
+def _resolve_stack_fee_lines_for_sem(
     fee_lines,
     semester_start: date | None,
 ) -> list["FeeStackLine"]:
@@ -55,7 +55,7 @@ def _resolve_stack_fee_lines_for_semester(
     selected_lines: dict[str, FeeStackLine] = {}
     selected_starts: dict[str, date | None] = {}
     for fee_line in fee_lines:
-        line_start = _semester_start_date(fee_line.effective_from_semester)
+        line_start = _sem_start_date(fee_line.effective_from_semester)
         if (
             semester_start is not None
             and line_start is not None
@@ -90,10 +90,10 @@ def resolve_fee_stack_line_payers(
     fallback_payer: str | None,
 ) -> PayerCodeSetT:
     """Return resolved payer codes for attached fee stacks and semester context."""
-    semester_start = _semester_start_date(semester)
+    semester_start = _sem_start_date(semester)
     payer_codes: PayerCodeSetT = set()
     for fee_stack in fee_stacks:
-        resolved_lines = _resolve_stack_fee_lines_for_semester(
+        resolved_lines = _resolve_stack_fee_lines_for_sem(
             fee_stack.fees.select_related("fee_type", "effective_from_semester"),
             semester_start,
         )
@@ -117,7 +117,7 @@ def _refresh_parent_invoices_for_stack(stack_id: int | None) -> None:
 
 def resolve_course_fee_stack_map(course, semester) -> tuple[FeeMapT, FeeLabelMapT]:
     """Return fee amounts/labels resolved from course stacks active in a semester."""
-    semester_start = _semester_start_date(semester)
+    semester_start = _sem_start_date(semester)
     if semester_start is None:
         return {}, {}
 
@@ -142,7 +142,7 @@ def resolve_course_fee_stack_map(course, semester) -> tuple[FeeMapT, FeeLabelMap
         )
     )
     for stack_link in stack_links:
-        for fee_line in _resolve_stack_fee_lines_for_semester(
+        for fee_line in _resolve_stack_fee_lines_for_sem(
             stack_link.fee_stack.fees.all(),
             semester_start,
         ):
@@ -155,7 +155,7 @@ def resolve_course_fee_stack_map(course, semester) -> tuple[FeeMapT, FeeLabelMap
     return fee_map, label_map
 
 
-def _fee_type_codes_for_course_stacks(
+def _fee_type_codes_for_crs_stacks(
     course_id: int,
     exclude_link_id: int | None,
 ) -> FeeTypeCodeSetT:
@@ -196,8 +196,8 @@ class FeeStack(models.Model):
 
     def total_amount_for_semester(self, semester: "Semester | None") -> Decimal:
         """Return stack amount for one semester using line effective dates."""
-        semester_start = _semester_start_date(semester)
-        resolved_lines = _resolve_stack_fee_lines_for_semester(
+        semester_start = _sem_start_date(semester)
+        resolved_lines = _resolve_stack_fee_lines_for_sem(
             self.fees.select_related("fee_type", "effective_from_semester"),
             semester_start,
         )
@@ -341,7 +341,7 @@ class CourseFeeStack(models.Model):
         target_codes = _fee_type_codes_for_stack(self.fee_stack_id)
         if not target_codes:
             return
-        linked_codes = _fee_type_codes_for_course_stacks(
+        linked_codes = _fee_type_codes_for_crs_stacks(
             course_id=self.course_id,
             exclude_link_id=self.pk,
         )

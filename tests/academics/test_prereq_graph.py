@@ -44,7 +44,7 @@ def test_export_prereq_graph_includes_global_prereqs(
     payload = json.loads(output.json_path.read_text(encoding="utf-8"))
     links = payload.get("links", [])
 
-    prereq_label = prereq_graph._course_display(prereq_course)
+    prereq_label = prereq_graph._crs_display(prereq_course)
 
     assert any(
         link.get("source") == f"C{prereq_course.id}"

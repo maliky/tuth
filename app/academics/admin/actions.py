@@ -17,7 +17,7 @@ from app.academics.models.department import Department
 from app.finance.models.fee_stack import CourseFeeStack, FeeStack
 
 
-def _empty_department_update_summary() -> dict[str, int]:
+def _empty_dpt_update_summary() -> dict[str, int]:
     """Return default counters for the bulk department update action."""
     return {
         "updated": 0,
@@ -32,7 +32,7 @@ def _empty_department_update_summary() -> dict[str, int]:
     }
 
 
-def _add_course_merge_summary(
+def _add_crs_merge_summary(
     summary: dict[str, int], merge_summary: dict[str, int]
 ) -> None:
     """Accumulate relevant merge counters into department action counters."""
@@ -66,7 +66,7 @@ def update_department(modeladmin, request, queryset):
         form = _DepartmentUpdateForm(request.POST)
         if form.is_valid():
             new_dept = form.cleaned_data["dept"]
-            summary = _empty_department_update_summary()
+            summary = _empty_dpt_update_summary()
             selected_ids = list(queryset.order_by("id").values_list("id", flat=True))
             # Keep a lookup of existing target department courses by number so we
             # can merge collisions instead of violating unique constraints.
@@ -87,7 +87,7 @@ def update_department(modeladmin, request, queryset):
                     # Reuse the shared merge path so section/grade dedupe and
                     # conflict reporting stay consistent with other admin merges.
                     merge_summary = merge_courses(collision_target, [course])
-                    _add_course_merge_summary(summary, merge_summary)
+                    _add_crs_merge_summary(summary, merge_summary)
                     continue
                 course.department = new_dept
                 course.code = ""

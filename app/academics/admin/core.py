@@ -114,7 +114,7 @@ class CurriMergeConflictForm(forms.Form):
         self._merge_fields = merge_fields
         self._conflict_course_ids = conflict_course_ids
         target_choices = [
-            (str(item.pk), self._curriculum_label(item))
+            (str(item.pk), self._curri_label(item))
             for item in curricula
             if item.pk is not None
         ]
@@ -151,7 +151,7 @@ class CurriMergeConflictForm(forms.Form):
             )
 
     @staticmethod
-    def _curriculum_label(item: Curriculum) -> str:
+    def _curri_label(item: Curriculum) -> str:
         """Build a compact curriculum label for merge choices."""
         college_code = getattr(getattr(item, "college", None), "code", "-")
         return f"{item.short_name} ({college_code})"
@@ -648,7 +648,7 @@ class CurriAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
                     [source],
                     conflict_choices=conflict_choices,
                 )
-            self._message_curriculum_merge_summary(request, target, summary)
+            self._msg_curri_merge_summary(request, target, summary)
             return None
 
         merge_field_rows = [
@@ -698,7 +698,7 @@ class CurriAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
 
     merge_records_action.short_description = "Guided merge selected curricula"  # type: ignore[attr-defined]
 
-    def _message_curriculum_merge_summary(
+    def _msg_curri_merge_summary(
         self,
         request,
         target: Curriculum,
@@ -833,7 +833,7 @@ class CurriAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         target_curriculum = cast(Curriculum, target)
         source_curricula = cast(Iterable[Curriculum], sources)
         request = getattr(self, "_merge_request", None)
-        self._warn_curriculum_merge_precheck(
+        self._warn_curri_merge_precheck(
             request,
             target_curriculum,
             source_curricula,
@@ -862,7 +862,7 @@ class CurriAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
 
     # Avoid mypy internal error on the nested curriculum overlap query.
     @no_type_check
-    def _warn_curriculum_merge_precheck(
+    def _warn_curri_merge_precheck(
         self,
         request,
         target: Curriculum,
@@ -1074,7 +1074,7 @@ class CurriStdEnrollAdmin(CollegeRestrictedAdmin):
     actions = ("merge_two_selected_rows", "merge_selected_rows_by_student_id")
 
     @staticmethod
-    def _accumulate_student_record_summary(
+    def _accumulate_std_record_summary(
         aggregate: StdCurriRecordMergeSummaryT,
         current: StdCurriRecordMergeSummaryT,
     ) -> None:
@@ -1083,7 +1083,7 @@ class CurriStdEnrollAdmin(CollegeRestrictedAdmin):
             aggregate[key] += value
 
     @staticmethod
-    def _reconciled_student_record_count(
+    def _reconciled_std_record_count(
         summary: StdCurriRecordMergeSummaryT,
     ) -> int:
         """Return the number of auto-reconciled student records."""
@@ -1095,7 +1095,7 @@ class CurriStdEnrollAdmin(CollegeRestrictedAdmin):
         )
 
     @staticmethod
-    def _unresolved_student_record_count(
+    def _unresolved_std_record_count(
         summary: StdCurriRecordMergeSummaryT,
     ) -> int:
         """Return the number of manual-review student records."""
@@ -1105,13 +1105,13 @@ class CurriStdEnrollAdmin(CollegeRestrictedAdmin):
             + summary["registrations_unresolved"]
         )
 
-    def _notify_student_record_summary(
+    def _notify_std_record_summary(
         self,
         request,
         summary: StdCurriRecordMergeSummaryT,
     ) -> None:
         """Show one consistent reconciliation summary in admin messages."""
-        if self._reconciled_student_record_count(summary):
+        if self._reconciled_std_record_count(summary):
             self.message_user(
                 request,
                 (
@@ -1123,7 +1123,7 @@ class CurriStdEnrollAdmin(CollegeRestrictedAdmin):
                 ),
                 level=messages.INFO,
             )
-        if self._unresolved_student_record_count(summary):
+        if self._unresolved_std_record_count(summary):
             self.message_user(
                 request,
                 (
@@ -1171,7 +1171,7 @@ class CurriStdEnrollAdmin(CollegeRestrictedAdmin):
             "Merged 2 enrollment rows into the lowest-id row.",
             level=messages.SUCCESS,
         )
-        self._notify_student_record_summary(request, student_record_summary)
+        self._notify_std_record_summary(request, student_record_summary)
 
     @admin.action(description="Merge selected rows grouped by student id")
     @transaction.atomic
@@ -1208,7 +1208,7 @@ class CurriStdEnrollAdmin(CollegeRestrictedAdmin):
                     target_row,
                     source_row,
                 )
-                self._accumulate_student_record_summary(
+                self._accumulate_std_record_summary(
                     aggregate_student_summary,
                     student_record_summary,
                 )
@@ -1235,7 +1235,7 @@ class CurriStdEnrollAdmin(CollegeRestrictedAdmin):
                 ),
                 level=messages.WARNING,
             )
-        self._notify_student_record_summary(request, aggregate_student_summary)
+        self._notify_std_record_summary(request, aggregate_student_summary)
         if not merged_count and not blocked_count:
             self.message_user(
                 request,

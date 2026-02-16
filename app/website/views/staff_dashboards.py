@@ -62,7 +62,7 @@ def _as_user(user: User | AnonymousUser) -> User:
     return cast(User, user)
 
 
-def _user_group_names(user: User) -> set[str]:
+def _user_gp_names(user: User) -> set[str]:
     return set(user.groups.values_list("name", flat=True))
 
 
@@ -845,7 +845,7 @@ def _user_has_membership(user: User, role_slug: str) -> bool:
     config = ROLE_CONFIG.get(role_slug)
     if not config or not config["groups"]:
         return False
-    return bool(_user_group_names(user).intersection(config["groups"]))
+    return bool(_user_gp_names(user).intersection(config["groups"]))
 
 
 def _user_inherits_role(user: User, role_slug: str) -> bool:
@@ -854,7 +854,7 @@ def _user_inherits_role(user: User, role_slug: str) -> bool:
 
 
 def _resolve_staff_role(user: User) -> str:
-    group_names = _user_group_names(user)
+    group_names = _user_gp_names(user)
     for slug in ROLE_PRIORITY:
         config = ROLE_CONFIG.get(slug)
         if not config:

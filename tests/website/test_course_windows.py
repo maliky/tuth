@@ -17,7 +17,7 @@ from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester, SemesterStatus
 
 
-def _ensure_semester_statuses():
+def _ensure_sem_statuses():
     """Make sure the canonical semester statuses exist."""
     for code, label in [
         ("planning", "Planning"),
@@ -30,7 +30,7 @@ def _ensure_semester_statuses():
 @pytest.mark.django_db
 def test_student_dashboard_prefers_open_semester(client):
     """Student dashboard should show the semester with an open status."""
-    _ensure_semester_statuses()
+    _ensure_sem_statuses()
 
     academic_year: AcademicYear = baker.make(
         "timetable.AcademicYear",
@@ -93,7 +93,7 @@ def test_student_dashboard_prefers_open_semester(client):
 @pytest.mark.django_db
 def test_registrar_dashboard_toggles_window(client):
     """Registrar dashboard should update semester status."""
-    _ensure_semester_statuses()
+    _ensure_sem_statuses()
 
     academic_year: AcademicYear = baker.make(
         "timetable.AcademicYear",

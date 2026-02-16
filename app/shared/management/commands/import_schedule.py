@@ -157,22 +157,22 @@ class Command(BaseCommand):
         """Parse a single row and build related records."""
         dept_code, course_no, section_no = self._parse_cid(get_in_row("cid", row))
 
-        semester = self._resolve_semester(
+        semester = self._resolve_sem(
             ay_str=get_in_row("ay", row),
             semester_str=get_in_row("semester_no", row),
             stats=stats,
         )
 
         college = self._resolve_college(get_in_row("college", row).lower(), stats)
-        department = self._resolve_department(dept_code, college, stats)
-        course = self._resolve_course(
+        department = self._resolve_dpt(dept_code, college, stats)
+        course = self._resolve_crs(
             course_no, department, get_in_row("course_title", row), stats
         )
         credit_hours = self._resolve_credit_hours(get_in_row("credit", row))
-        curriculum = self._resolve_curriculum(
+        curriculum = self._resolve_curri(
             course, college, semester, get_in_row("course_title", row), stats
         )
-        curriculum_course = self._resolve_curriculum_course(
+        curriculum_course = self._resolve_curri_crs(
             curriculum, course, credit_hours, stats
         )
 
@@ -180,7 +180,7 @@ class Command(BaseCommand):
             get_in_row("instructor", row), department, college, stats
         )
 
-        section = self._resolve_section(
+        section = self._resolve_sec(
             semester=semester,
             curriculum_course=curriculum_course,
             section_no=section_no,
@@ -214,7 +214,7 @@ class Command(BaseCommand):
 
         return dept_code, course_no, section_no
 
-    def _resolve_semester(
+    def _resolve_sem(
         self, ay_str: str, semester_str: str, stats: ImportStats
     ) -> Semester:
         ay_code = normalize_academic_year(ay_str)
@@ -241,7 +241,7 @@ class Command(BaseCommand):
             stats.colleges += 1
         return college
 
-    def _resolve_department(
+    def _resolve_dpt(
         self, dept_code: str, college: College, stats: ImportStats
     ) -> Department:
         created = not Department.objects.filter(code=dept_code, college=college).exists()
@@ -250,7 +250,7 @@ class Command(BaseCommand):
             stats.departments += 1
         return department
 
-    def _resolve_course(
+    def _resolve_crs(
         self,
         course_no: str,
         department: Department,
@@ -271,7 +271,7 @@ class Command(BaseCommand):
             stats.courses += 1
         return course
 
-    def _resolve_curriculum(
+    def _resolve_curri(
         self,
         course: Course,
         college: College,
@@ -308,7 +308,7 @@ class Command(BaseCommand):
         )
         return credit_hour
 
-    def _resolve_curriculum_course(
+    def _resolve_curri_crs(
         self,
         curriculum: Curriculum,
         course: Course,
@@ -355,7 +355,7 @@ class Command(BaseCommand):
             stats.faculties += 1
         return faculty
 
-    def _resolve_section(
+    def _resolve_sec(
         self,
         semester: Semester,
         curriculum_course: CurriCourse,

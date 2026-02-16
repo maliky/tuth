@@ -82,7 +82,7 @@ def _candidate_timestamp(obj: ModelT) -> datetime | None:
     return None
 
 
-def _default_candidate_id(candidates: list[ModelT]) -> str | None:
+def _dft_candidate_id(candidates: list[ModelT]) -> str | None:
     """Return the default candidate id (oldest record first)."""
     if not candidates:
         return None
@@ -176,7 +176,7 @@ class MergeWizardForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.candidates = list(candidates)
         self.candidate_map: CandidateMapT = {str(obj.pk): obj for obj in self.candidates}
-        default_candidate_id = _default_candidate_id(self.candidates)
+        default_candidate_id = _dft_candidate_id(self.candidates)
         choices = [(str(obj.pk), label_fn(obj)) for obj in self.candidates]
         self.fields["target_id"] = forms.ChoiceField(
             label="Merge target",

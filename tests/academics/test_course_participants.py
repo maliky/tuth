@@ -12,7 +12,7 @@ from app.registry.models.registration import Registration
 pytestmark = pytest.mark.django_db
 
 
-def _setup_course_env(faculty, student_factory, curriculum_course_factory):
+def _setup_crs_env(faculty, student_factory, curriculum_course_factory):
     """Create a curriculum course with a section in the current semester."""
     today = date.today()
     start = date(today.year, 8, 1)
@@ -36,7 +36,7 @@ def test_current_faculty_returns_faculty(
     faculty, student_factory, curriculum_course_factory
 ):
     """Course.current_faculty returns faculty for the active semester."""
-    course, fac, _student = _setup_course_env(
+    course, fac, _student = _setup_crs_env(
         faculty, student_factory, curriculum_course_factory
     )
     assert list(course.current_faculty()) == [fac]
@@ -46,7 +46,7 @@ def test_current_students_returns_students(
     faculty, student_factory, curriculum_course_factory
 ):
     """Course.current_students returns students for the active semester."""
-    course, _fac, stud = _setup_course_env(
+    course, _fac, stud = _setup_crs_env(
         faculty, student_factory, curriculum_course_factory
     )
     assert list(course.current_students()) == [stud]
