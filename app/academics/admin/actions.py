@@ -1,6 +1,8 @@
 """Actions module."""
 
 # app/academics/admin/actions.py
+from typing import Callable, TypeAlias
+
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
@@ -15,6 +17,8 @@ from app.academics.models.curriculum import Curriculum
 from app.academics.models.curriculum_course import CurriCourse
 from app.academics.models.department import Department
 from app.finance.models.fee_stack import CourseFeeStack, FeeStack
+
+CurriUpdateSummaryT: TypeAlias = dict[str, int]
 
 
 def _empty_dpt_update_summary() -> dict[str, int]:
@@ -47,6 +51,246 @@ def _add_crs_merge_summary(
         "sections_skipped_grade_conflict", 0
     )
     summary["protected_deletes"] += merge_summary.get("protected_deletes", 0)
+
+
+def _empty_curri_update_summary() -> CurriUpdateSummaryT:
+    """Return default counters for curriculum relink actions."""
+    return {
+        "moved": 0,
+        "already_in_target": 0,
+        "merged_duplicates": 0,
+        "skipped_invoices": 0,
+        "skipped_incompatible": 0,
+        "sections_moved": 0,
+        "sections_merged": 0,
+        "sections_retained_protected": 0,
+        "sections_skipped_grade_conflict": 0,
+        "protected_deletes": 0,
+        "skipped_missing_target": 0,
+    }
+
+
+def _apply_curri_relink(
+    *,
+    selected_rows: list[CurriCourse],
+    resolve_target_curri: Callable[[CurriCourse], Curriculum | None],
+) -> CurriUpdateSummaryT:
+    """Relink rows to resolved target curricula with duplicate-safe merge behavior."""
+    summary = _empty_curri_update_summary()
+    row_target_map: dict[int, Curriculum] = {}
+    target_curri_ids: set[int] = set()
+
+    for curriculum_course in selected_rows:
+        target_curri = resolve_target_curri(curriculum_course)
+        if target_curri is None:
+            summary["skipped_missing_target"] += 1
+            continue
+        row_target_map[curriculum_course.id] = target_curri
+        if target_curri.pk is not None:
+            target_curri_ids.add(target_curri.pk)
+
+    target_by_pair = {
+        (row.curriculum_id, row.course_id): row
+        for row in CurriCourse.objects.filter(curriculum_id__in=target_curri_ids)
+        .select_related("course")
+        .order_by("id")
+    }
+
+    for curriculum_course in selected_rows:
+        target_curri = row_target_map.get(curriculum_course.id)
+        if target_curri is None:
+            continue
+        if curriculum_course.curriculum_id == target_curri.id:
+            summary["already_in_target"] += 1
+            target_by_pair.setdefault(
+                (target_curri.id, curriculum_course.course_id),
+                curriculum_course,
+            )
+            continue
+
+        duplicate_target = target_by_pair.get(
+            (target_curri.id, curriculum_course.course_id)
+        )
+        if duplicate_target is not None and duplicate_target.pk != curriculum_course.pk:
+            merge_summary = merge_curri_crs_into_target(
+                duplicate_target,
+                curriculum_course,
+            )
+            summary["merged_duplicates"] += merge_summary["merged"]
+            summary["skipped_invoices"] += merge_summary["skipped_invoices"]
+            summary["skipped_incompatible"] += merge_summary["skipped_incompatible"]
+            summary["sections_moved"] += merge_summary["sections_moved"]
+            summary["sections_merged"] += merge_summary["sections_merged"]
+            summary["sections_retained_protected"] += merge_summary[
+                "sections_retained_protected"
+            ]
+            summary["sections_skipped_grade_conflict"] += merge_summary[
+                "sections_skipped_grade_conflict"
+            ]
+            summary["protected_deletes"] += merge_summary["protected_deletes"]
+            continue
+
+        curriculum_course.curriculum = target_curri
+        try:
+            curriculum_course.save(update_fields=["curriculum"])
+        except IntegrityError:
+            duplicate_target = (
+                CurriCourse.objects.filter(
+                    curriculum=target_curri,
+                    course_id=curriculum_course.course_id,
+                )
+                .exclude(pk=curriculum_course.pk)
+                .first()
+            )
+            if duplicate_target is None:
+                continue
+            merge_summary = merge_curri_crs_into_target(
+                duplicate_target,
+                curriculum_course,
+            )
+            summary["merged_duplicates"] += merge_summary["merged"]
+            summary["skipped_invoices"] += merge_summary["skipped_invoices"]
+            summary["skipped_incompatible"] += merge_summary["skipped_incompatible"]
+            summary["sections_moved"] += merge_summary["sections_moved"]
+            summary["sections_merged"] += merge_summary["sections_merged"]
+            summary["sections_retained_protected"] += merge_summary[
+                "sections_retained_protected"
+            ]
+            summary["sections_skipped_grade_conflict"] += merge_summary[
+                "sections_skipped_grade_conflict"
+            ]
+            summary["protected_deletes"] += merge_summary["protected_deletes"]
+            continue
+        target_by_pair[(target_curri.id, curriculum_course.course_id)] = curriculum_course
+        summary["moved"] += 1
+
+    return summary
+
+
+def _notify_curri_relink_result(
+    *,
+    modeladmin,
+    request,
+    summary: CurriUpdateSummaryT,
+    target_label: str | None = None,
+) -> None:
+    """Emit consistent feedback messages for curriculum relink actions."""
+    if summary["moved"]:
+        if target_label:
+            modeladmin.message_user(
+                request,
+                f"{summary['moved']} course(s) were linked to {target_label}.",
+                messages.SUCCESS,
+            )
+        else:
+            modeladmin.message_user(
+                request,
+                (
+                    f"{summary['moved']} course(s) were linked to each department "
+                    "college default curriculum."
+                ),
+                messages.SUCCESS,
+            )
+    if summary["merged_duplicates"]:
+        modeladmin.message_user(
+            request,
+            (
+                f"Merged {summary['merged_duplicates']} duplicate curriculum-course row(s) "
+                "into existing target rows."
+            ),
+            messages.SUCCESS,
+        )
+    if summary["already_in_target"]:
+        if target_label:
+            modeladmin.message_user(
+                request,
+                (
+                    f"Skipped {summary['already_in_target']} course(s) already linked to "
+                    f"{target_label}."
+                ),
+                messages.INFO,
+            )
+        else:
+            modeladmin.message_user(
+                request,
+                (
+                    f"Skipped {summary['already_in_target']} course(s) already linked "
+                    "to their target default curriculum."
+                ),
+                messages.INFO,
+            )
+    if summary["skipped_missing_target"]:
+        modeladmin.message_user(
+            request,
+            (
+                f"Skipped {summary['skipped_missing_target']} course(s) because "
+                "a target curriculum could not be resolved."
+            ),
+            messages.WARNING,
+        )
+    if summary["skipped_invoices"]:
+        modeladmin.message_user(
+            request,
+            (
+                f"Skipped {summary['skipped_invoices']} duplicate row(s) because "
+                "invoice rows still reference them."
+            ),
+            messages.WARNING,
+        )
+    if summary["skipped_incompatible"]:
+        modeladmin.message_user(
+            request,
+            (
+                f"Skipped {summary['skipped_incompatible']} duplicate row(s) due to "
+                "incompatible course identity."
+            ),
+            messages.WARNING,
+        )
+    if summary["sections_merged"]:
+        modeladmin.message_user(
+            request,
+            f"Merged {summary['sections_merged']} conflicting section(s).",
+            messages.INFO,
+        )
+    if summary["sections_moved"]:
+        modeladmin.message_user(
+            request,
+            f"Moved {summary['sections_moved']} section(s) to target rows.",
+            messages.INFO,
+        )
+    if summary["sections_retained_protected"]:
+        modeladmin.message_user(
+            request,
+            (
+                f"Retained {summary['sections_retained_protected']} section(s) "
+                "because related rows are protected."
+            ),
+            messages.WARNING,
+        )
+    if summary["sections_skipped_grade_conflict"]:
+        modeladmin.message_user(
+            request,
+            (
+                f"Skipped {summary['sections_skipped_grade_conflict']} section merge(s) "
+                "due to conflicting grade values."
+            ),
+            messages.WARNING,
+        )
+    if summary["protected_deletes"]:
+        modeladmin.message_user(
+            request,
+            (
+                f"Retained {summary['protected_deletes']} source curriculum-course row(s) "
+                "because delete is protected."
+            ),
+            messages.WARNING,
+        )
+    if all(value == 0 for value in summary.values()):
+        modeladmin.message_user(
+            request,
+            "No course changed for this action.",
+            messages.INFO,
+        )
 
 
 @admin.action(description="Bulk update departments")
@@ -235,180 +479,16 @@ def update_curri(modeladmin, request, queryset):
                 .select_related("course")
                 .order_by("id")
             )
-            moved = 0
-            already_in_target = 0
-            merged_duplicates = 0
-            skipped_invoices = 0
-            skipped_incompatible = 0
-            sections_moved = 0
-            sections_merged = 0
-            sections_retained_protected = 0
-            sections_skipped_grade_conflict = 0
-            protected_deletes = 0
-            target_by_course_id = {
-                row.course_id: row
-                for row in CurriCourse.objects.filter(curriculum=curriculum)
-                .select_related("course")
-                .order_by("id")
-            }
-            for curriculum_course in selected_rows:
-                if curriculum_course.curriculum_id == curriculum.id:
-                    already_in_target += 1
-                    continue
-                # Auto-merge duplicate rows instead of failing on unique(course, curriculum).
-                duplicate_target = target_by_course_id.get(curriculum_course.course_id)
-                if (
-                    duplicate_target is not None
-                    and duplicate_target.pk != curriculum_course.pk
-                ):
-                    merge_summary = merge_curri_crs_into_target(
-                        duplicate_target,
-                        curriculum_course,
-                    )
-                    merged_duplicates += merge_summary["merged"]
-                    skipped_invoices += merge_summary["skipped_invoices"]
-                    skipped_incompatible += merge_summary["skipped_incompatible"]
-                    sections_moved += merge_summary["sections_moved"]
-                    sections_merged += merge_summary["sections_merged"]
-                    sections_retained_protected += merge_summary[
-                        "sections_retained_protected"
-                    ]
-                    sections_skipped_grade_conflict += merge_summary[
-                        "sections_skipped_grade_conflict"
-                    ]
-                    protected_deletes += merge_summary["protected_deletes"]
-                    continue
-                curriculum_course.curriculum = curriculum
-                try:
-                    curriculum_course.save(update_fields=["curriculum"])
-                except IntegrityError:
-                    # Safety net for races with concurrent updates.
-                    duplicate_target = (
-                        CurriCourse.objects.filter(
-                            curriculum=curriculum, course_id=curriculum_course.course_id
-                        )
-                        .exclude(pk=curriculum_course.pk)
-                        .first()
-                    )
-                    if duplicate_target is None:
-                        continue
-                    merge_summary = merge_curri_crs_into_target(
-                        duplicate_target,
-                        curriculum_course,
-                    )
-                    merged_duplicates += merge_summary["merged"]
-                    skipped_invoices += merge_summary["skipped_invoices"]
-                    skipped_incompatible += merge_summary["skipped_incompatible"]
-                    sections_moved += merge_summary["sections_moved"]
-                    sections_merged += merge_summary["sections_merged"]
-                    sections_retained_protected += merge_summary[
-                        "sections_retained_protected"
-                    ]
-                    sections_skipped_grade_conflict += merge_summary[
-                        "sections_skipped_grade_conflict"
-                    ]
-                    protected_deletes += merge_summary["protected_deletes"]
-                    continue
-                target_by_course_id[curriculum_course.course_id] = curriculum_course
-                moved += 1
-            if moved:
-                modeladmin.message_user(
-                    request,
-                    f"{moved} course(s) were linked to {curriculum}.",
-                    messages.SUCCESS,
-                )
-            if merged_duplicates:
-                modeladmin.message_user(
-                    request,
-                    (
-                        f"Merged {merged_duplicates} duplicate curriculum-course row(s) "
-                        "into existing target rows."
-                    ),
-                    messages.SUCCESS,
-                )
-            if already_in_target:
-                modeladmin.message_user(
-                    request,
-                    (
-                        f"Skipped {already_in_target} course(s) already linked to "
-                        f"{curriculum}."
-                    ),
-                    messages.INFO,
-                )
-            if skipped_invoices:
-                modeladmin.message_user(
-                    request,
-                    (
-                        f"Skipped {skipped_invoices} duplicate row(s) because "
-                        "invoice rows still reference them."
-                    ),
-                    messages.WARNING,
-                )
-            if skipped_incompatible:
-                modeladmin.message_user(
-                    request,
-                    (
-                        f"Skipped {skipped_incompatible} duplicate row(s) due to "
-                        "incompatible course identity."
-                    ),
-                    messages.WARNING,
-                )
-            if sections_merged:
-                modeladmin.message_user(
-                    request,
-                    f"Merged {sections_merged} conflicting section(s).",
-                    messages.INFO,
-                )
-            if sections_moved:
-                modeladmin.message_user(
-                    request,
-                    f"Moved {sections_moved} section(s) to target rows.",
-                    messages.INFO,
-                )
-            if sections_retained_protected:
-                modeladmin.message_user(
-                    request,
-                    (
-                        f"Retained {sections_retained_protected} section(s) "
-                        "because related rows are protected."
-                    ),
-                    messages.WARNING,
-                )
-            if sections_skipped_grade_conflict:
-                modeladmin.message_user(
-                    request,
-                    (
-                        f"Skipped {sections_skipped_grade_conflict} section merge(s) "
-                        "due to conflicting grade values."
-                    ),
-                    messages.WARNING,
-                )
-            if protected_deletes:
-                modeladmin.message_user(
-                    request,
-                    (
-                        f"Retained {protected_deletes} source curriculum-course row(s) "
-                        "because delete is protected."
-                    ),
-                    messages.WARNING,
-                )
-            if (
-                moved == 0
-                and merged_duplicates == 0
-                and already_in_target == 0
-                and skipped_invoices == 0
-                and skipped_incompatible == 0
-                and sections_merged == 0
-                and sections_moved == 0
-                and sections_retained_protected == 0
-                and sections_skipped_grade_conflict == 0
-                and protected_deletes == 0
-            ):
-                modeladmin.message_user(
-                    request,
-                    "No course changed for this action.",
-                    messages.INFO,
-                )
+            summary = _apply_curri_relink(
+                selected_rows=list(selected_rows),
+                resolve_target_curri=lambda _row: curriculum,
+            )
+            _notify_curri_relink_result(
+                modeladmin=modeladmin,
+                request=request,
+                summary=summary,
+                target_label=str(curriculum),
+            )
             return redirect(request.get_full_path())
         else:
             pass
@@ -427,6 +507,48 @@ def update_curri(modeladmin, request, queryset):
         "admin/update_curri.html",
         context={"courses": queryset, "form": form, "title": "Bulk-set curriculum"},
     )
+
+
+@admin.action(description="Move to each department's college default curriculum")
+def update_curri_to_dpt_college_dft(modeladmin, request, queryset):
+    """Relink selected curriculum-course rows to default curricula per department college."""
+    selected_rows = list(
+        queryset.select_related("course__department__college").order_by("id").all()
+    )
+    dft_curri_by_college_id: dict[int, Curriculum] = {}
+
+    def _resolve_target(curriculum_course: CurriCourse) -> Curriculum | None:
+        dept = getattr(curriculum_course.course, "department", None)
+        if dept is None or dept.college_id is None:
+            return None
+        target_curri = dft_curri_by_college_id.get(dept.college_id)
+        if target_curri is not None:
+            return target_curri
+        # Cache by college to avoid repeated get_or_create calls.
+        target_curri = Curriculum.get_dft(def_college=dept.college)
+        dft_curri_by_college_id[dept.college_id] = target_curri
+        return target_curri
+
+    summary = _apply_curri_relink(
+        selected_rows=selected_rows,
+        resolve_target_curri=_resolve_target,
+    )
+    _notify_curri_relink_result(
+        modeladmin=modeladmin,
+        request=request,
+        summary=summary,
+    )
+    if dft_curri_by_college_id:
+        modeladmin.message_user(
+            request,
+            (
+                "Resolved "
+                f"{len(dft_curri_by_college_id)} default curriculum target(s) "
+                "from selected departments."
+            ),
+            messages.INFO,
+        )
+    return redirect(request.get_full_path())
 
 
 @admin.action(description="Attach / update college on selected courses")

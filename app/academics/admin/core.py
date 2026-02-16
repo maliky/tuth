@@ -38,6 +38,7 @@ from app.people.admin.mixins import MergeWizardMixin, ModelT
 from .actions import (
     attach_fee_stacks,
     update_curri,
+    update_curri_to_dpt_college_dft,
     update_dpt,
     update_level_number,
 )
@@ -943,7 +944,7 @@ class CurriCourseAdmin(
     inlines = ()
 
     ordering = ("course__short_code",)
-    actions = [update_curri, update_level_number]
+    actions = [update_curri, update_curri_to_dpt_college_dft, update_level_number]
 
     def get_queryset(self, request):
         """Annotate section totals and prefetch faculty for list_display."""
