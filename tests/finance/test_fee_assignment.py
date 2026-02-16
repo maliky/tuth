@@ -42,12 +42,12 @@ def _fee_type(code: str, label: str) -> FeeType:
     FINANCE_OPTIONAL_SEMESTER_FEE_STACK_NAMES=["Dormitory Fee"],
 )
 def test_attach_sem_fee_stacks_is_idempotent(
-    curri_crs_factory,
+    curriculum_course_factory,
     sem_factory,
     student,
 ) -> None:
     """Default and optional stack attachments should be repeatable and stable."""
-    curriculum_course = curri_crs_factory("881", "CURR_FEES")
+    curriculum_course = curriculum_course_factory("881", "CURR_FEES")
     semester = sem_factory(1, datetime(2026, 1, 1))
     student.curriculum = curriculum_course.curriculum
     student.last_enrolled_semester = semester

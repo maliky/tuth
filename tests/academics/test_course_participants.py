@@ -12,7 +12,7 @@ from app.registry.models.registration import Registration
 pytestmark = pytest.mark.django_db
 
 
-def _setup_crs_env(faculty, std_factory, curri_crs_factory):
+def _setup_crs_env(faculty, std_factory, curriculum_course_factory):
     """Create a curriculum course with a section in the current semester."""
     today = date.today()
     start = date(today.year, 8, 1)
@@ -23,7 +23,7 @@ def _setup_crs_env(faculty, std_factory, curri_crs_factory):
         start_date=today - timedelta(days=1),
         end_date=today + timedelta(days=1),
     )
-    course = curri_crs_factory()
+    course = curriculum_course_factory()
     section = Section.objects.create(
         semester=semester, curriculum_course=course, faculty=faculty
     )
@@ -32,13 +32,15 @@ def _setup_crs_env(faculty, std_factory, curri_crs_factory):
     return course, faculty, student
 
 
-def test_current_faculty_returns_faculty(faculty, std_factory, curri_crs_factory):
+def test_current_faculty_returns_faculty(faculty, std_factory, curriculum_course_factory):
     """Course.current_faculty returns faculty for the active semester."""
-    course, fac, _student = _setup_crs_env(faculty, std_factory, curri_crs_factory)
+    course, fac, _student = _setup_crs_env(
+        faculty, std_factory, curriculum_course_factory
+    )
     assert list(course.current_faculty()) == [fac]
 
 
-def test_current_stds_returns_stds(faculty, std_factory, curri_crs_factory):
+def test_current_stds_returns_stds(faculty, std_factory, curriculum_course_factory):
     """Course.current_stds returns students for the active semester."""
-    course, _fac, stud = _setup_crs_env(faculty, std_factory, curri_crs_factory)
+    course, _fac, stud = _setup_crs_env(faculty, std_factory, curriculum_course_factory)
     assert list(course.current_stds()) == [stud]

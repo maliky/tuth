@@ -81,7 +81,7 @@ def reg_sem_pair(
 
 @pytest.fixture
 def reg_sec_factory(
-    curri_crs_factory,
+    curriculum_course_factory,
     credit_hour_factory,
 ) -> RegSectionFactoryT:
     """Return a callable to build sections tied to a supplied semester."""
@@ -91,7 +91,7 @@ def reg_sec_factory(
         course_number: str = "101",
         curriculum_short_name: str = "CURRI_TEST",
     ) -> tuple[Section, Curriculum]:
-        curriculum_course: CurriCourse = curri_crs_factory(
+        curriculum_course: CurriCourse = curriculum_course_factory(
             course_number, curriculum_short_name
         )
         if not curriculum_course.credit_hours_id:

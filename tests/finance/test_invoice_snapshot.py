@@ -38,12 +38,12 @@ def _fee_type(code: str, label: str) -> FeeType:
 
 
 def test_build_invoice_snapshot_uses_parent_totals(
-    curri_crs_factory,
+    curriculum_course_factory,
     sem_factory,
     student,
 ) -> None:
     """Snapshot totals should come from parent semester invoice aggregation."""
-    curriculum_course = curri_crs_factory("891", "CURR_SSI_SNAPSHOT")
+    curriculum_course = curriculum_course_factory("891", "CURR_SSI_SNAPSHOT")
     semester = sem_factory(1, datetime(2026, 1, 1))
     student.curriculum = curriculum_course.curriculum
     student.last_enrolled_semester = semester

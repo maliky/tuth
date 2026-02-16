@@ -23,12 +23,12 @@ def _fee_type(code: str, label: str) -> FeeType:
 
 
 def test_invoice_initial_amount_is_not_changed_by_later_fee_stack_update(
-    curri_crs_factory,
+    curriculum_course_factory,
     sem_factory,
     student,
 ) -> None:
     """Invoice stores initial amount and does not retroactively follow fee edits."""
-    curriculum_course = curri_crs_factory("701", "CURR_STACK_INVOICE")
+    curriculum_course = curriculum_course_factory("701", "CURR_STACK_INVOICE")
     semester_old = sem_factory(1, datetime(2024, 9, 1))
     semester_new = sem_factory(1, datetime(2025, 9, 1))
     section_old = Section.objects.create(

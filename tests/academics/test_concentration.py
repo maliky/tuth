@@ -17,7 +17,7 @@ from app.academics.models.curriculum_course import CurriCourse
 pytestmark = pytest.mark.django_db
 
 
-def test_major_get_dft_has_curri_crs():
+def test_major_get_dft_has_curriculum_course():
     """Default major should include one curriculum_course."""
     major = Major.get_dft()
 
@@ -25,7 +25,7 @@ def test_major_get_dft_has_curri_crs():
     assert courses.count() == 1
 
 
-def test_minor_get_dft_has_curri_crs():
+def test_minor_get_dft_has_curriculum_course():
     """Default minor should include one curriculum_course."""
     minor = Minor.get_dft()
 
@@ -33,7 +33,7 @@ def test_minor_get_dft_has_curri_crs():
     assert courses.count() == 1
 
 
-def test_total_credit_hours_sums_curri_crs(major):
+def test_total_credit_hours_sums_curriculum_course(major):
     """total_credit_hours should add all attached curriculum_course credits."""
     pg = CurriCourse.get_unique_dft()
     pg.credit_hours = CreditHour.objects.get(code=4)
@@ -46,7 +46,7 @@ def test_total_credit_hours_sums_curri_crs(major):
     assert major.total_credit_hours() == total
 
 
-def test_major_clean_requires_curri_crs(curri_factory):
+def test_major_clean_requires_curriculum_course(curri_factory):
     """clean() should fail if no curriculum_course is attached."""
     curri = curri_factory("TEST_CURRI")
     new_major = Major.objects.create(name="NO_PROG", curriculum=curri)
@@ -68,10 +68,12 @@ def test_major_clean_credit_limit_exceeded(major):
         major.clean()
 
 
-def test_majorcurri_crs_unique_curri_crs_per_major(curri_factory, curri_crs_factory):
+def test_majorcurriculum_course_unique_curriculum_course_per_major(
+    curri_factory, curriculum_course_factory
+):
     """(major, curriculum_course) pairs must be unique."""
     major = Major.objects.create(name="M_TEST", curriculum=curri_factory("M_TEST_CURRI"))
-    curriculum_course = curri_crs_factory()
+    curriculum_course = curriculum_course_factory()
 
     MajorCurriCourse.objects.create(major=major, curriculum_course=curriculum_course)
 
@@ -82,12 +84,14 @@ def test_majorcurri_crs_unique_curri_crs_per_major(curri_factory, curri_crs_fact
             )
 
 
-def test_minorcurri_crs_unique_curri_crs_per_minor(curri_factory, curri_crs_factory):
+def test_minorcurriculum_course_unique_curriculum_course_per_minor(
+    curri_factory, curriculum_course_factory
+):
     """(minor, curriculum_course) pairs must be unique."""
     minor = Minor.objects.create(
         name="MNR_TEST", curriculum=curri_factory("MNR_TEST_CURRI")
     )
-    curriculum_course = curri_crs_factory()
+    curriculum_course = curriculum_course_factory()
 
     MinorCurriCourse.objects.create(minor=minor, curriculum_course=curriculum_course)
 

@@ -89,7 +89,7 @@ def sem_factory(academic_year_factory: AcademicYearFactoryT) -> SemesterFactoryT
 @pytest.fixture
 def sec_factory(
     sem_factory: SemesterFactoryT,
-    curri_crs_factory: CurriCourseFactoryT,
+    curriculum_course_factory: CurriCourseFactoryT,
 ) -> SectionFactoryT:
     def _make(
         course_number: str = "111",
@@ -98,7 +98,9 @@ def sec_factory(
         semester_number: int = 1,
     ) -> Section:
         semester = sem_factory(semester_number)
-        curriculum_course = curri_crs_factory(course_number, curriculum_short_name)
+        curriculum_course = curriculum_course_factory(
+            course_number, curriculum_short_name
+        )
         return Section.objects.create(
             curriculum_course=curriculum_course, semester=semester, number=number
         )

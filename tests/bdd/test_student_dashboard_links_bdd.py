@@ -27,7 +27,7 @@ pytestmark = [
     "features/student_dashboard_links.feature",
     "Student can open invoice and payment statements",
 )
-def test_student_dashboard_links_bdd():
+def test_std_dashboard_links_bdd():
     """Drive the student dashboard link flow via BDD steps."""
 
 

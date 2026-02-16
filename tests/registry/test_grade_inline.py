@@ -21,11 +21,11 @@ def test_sec_admin_has_grade_inline():
 # @pytest.mark.django_db
 # def test_grade_inline_visible(
 #     admin_client,
-#     curri_crs_factory,
+#     curriculum_course_factory,
 #     sem_factory,
 # ):
 
-#     curriculum_course = curri_crs_factory()
+#     curriculum_course = curriculum_course_factory()
 #     semester = sem_factory()
 #     section = Section.objects.create(
 #         curriculum_course=curriculum_course,

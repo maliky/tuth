@@ -22,7 +22,7 @@ def _request_with_user(superuser):
     return request
 
 
-def test_curri_crs_delete_shows_protected_msg(
+def test_curriculum_course_delete_shows_protected_msg(
     curriculum_course, semester, student, superuser
 ):
     """Deleting a programmed course with grade-linked sections should be blocked."""

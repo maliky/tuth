@@ -42,7 +42,7 @@ def _fee_type(code: str, label: str) -> FeeType:
 
 def _std_regio_with_invoice(
     *,
-    curri_crs_factory,
+    curriculum_course_factory,
     sem_factory,
     user_factory,
     student_username: str,
@@ -53,7 +53,7 @@ def _std_regio_with_invoice(
         code="canceled",
         defaults={"label": "Canceled"},
     )
-    curriculum_course = curri_crs_factory("931", "CURR_CANCEL")
+    curriculum_course = curriculum_course_factory("931", "CURR_CANCEL")
     semester = sem_factory(1, datetime(2026, 1, 1))
     user = user_factory(student_username)
     student = Student(
@@ -87,13 +87,13 @@ def _std_regio_with_invoice(
 
 def test_cancel_keeps_parent_invoice_when_sem_fees_exist(
     client,
-    curri_crs_factory,
+    curriculum_course_factory,
     sem_factory,
     user_factory,
 ) -> None:
     """Cancellation should keep parent invoice when semester fee stacks are attached."""
     user, _student, registration, invoice, parent_invoice = _std_regio_with_invoice(
-        curri_crs_factory=curri_crs_factory,
+        curriculum_course_factory=curriculum_course_factory,
         sem_factory=sem_factory,
         user_factory=user_factory,
         student_username="cancel_with_fees",
@@ -122,13 +122,13 @@ def test_cancel_keeps_parent_invoice_when_sem_fees_exist(
 
 def test_cancel_keeps_parent_invoice_when_cleared_history_exists(
     client,
-    curri_crs_factory,
+    curriculum_course_factory,
     sem_factory,
     user_factory,
 ) -> None:
     """Cancellation should keep parent invoice when payment history has a cleared state."""
     user, _student, registration, invoice, parent_invoice = _std_regio_with_invoice(
-        curri_crs_factory=curri_crs_factory,
+        curriculum_course_factory=curriculum_course_factory,
         sem_factory=sem_factory,
         user_factory=user_factory,
         student_username="cancel_with_history",

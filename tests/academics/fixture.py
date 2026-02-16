@@ -92,7 +92,7 @@ def crs_factory() -> CourseFactoryT:
 
 
 @pytest.fixture
-def curri_crs_factory(crs_factory, curri_factory) -> CurriCourseFactoryT:
+def curriculum_course_factory(crs_factory, curri_factory) -> CurriCourseFactoryT:
     def _make(course_num="111", curriculum_short_name: str = "CURRI_TEST") -> CurriCourse:
         course = crs_factory(course_num)
         curriculum = curri_factory(curriculum_short_name)
