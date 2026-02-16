@@ -107,6 +107,45 @@ def _course_merge_has_invoice_conflict(
     return Invoice.objects.filter(curriculum_course_id__in=conflict_ids).exists()
 
 
+def merge_curriculum_course_into_target(
+    target: CurriCourse, source: CurriCourse
+) -> dict[str, int]:
+    """Merge one source curriculum-course into a target duplicate row.
+
+    This helper is used by bulk curriculum reassignment where source and target
+    can belong to different curricula but reference the same course.
+    """
+    summary = {
+        "merged": 0,
+        "skipped_incompatible": 0,
+        "skipped_invoices": 0,
+        "sections_moved": 0,
+        "sections_merged": 0,
+        "sections_retained_protected": 0,
+        "sections_skipped_grade_conflict": 0,
+        "protected_deletes": 0,
+    }
+    if source.pk == target.pk:
+        return summary
+    if source.course_id != target.course_id:
+        summary["skipped_incompatible"] += 1
+        return summary
+    if Invoice.objects.filter(curriculum_course=source).exists():
+        summary["skipped_invoices"] += 1
+        return summary
+    merge_result = _merge_curriculum_course_to_target(target, source)
+    summary["sections_moved"] += merge_result["sections_moved"]
+    summary["sections_merged"] += merge_result["sections_merged"]
+    summary["sections_retained_protected"] += merge_result["sections_retained_protected"]
+    summary["sections_skipped_grade_conflict"] += merge_result[
+        "sections_skipped_grade_conflict"
+    ]
+    summary["protected_deletes"] += merge_result["source_retained_protected"]
+    if merge_result["source_retained_protected"] == 0:
+        summary["merged"] += 1
+    return summary
+
+
 def _merge_course_prerequisites(target: Course, source: Course) -> dict[str, int]:
     """Reassign prerequisite rows from the source course to the target course."""
     summary = {"prerequisites_moved": 0, "prerequisites_skipped": 0}

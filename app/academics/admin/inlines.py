@@ -6,7 +6,7 @@ from typing import Any, Callable, cast
 
 from django.db.models import Count
 from django.forms.models import BaseInlineFormSet
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 from django.utils.html import format_html
 from django.utils import timezone
 
@@ -274,9 +274,10 @@ class CurriCourseReqGpIL(admin.TabularInline):
         if not getattr(obj, "pk", None):
             return "Save first"
         # Django has no nested inlines; open the group page to edit member rows.
-        url = reverse(
-            "admin:academics_curriculumcourserequirementgroup_change", args=[obj.pk]
-        )
+        try:
+            url = reverse("admin:academics_curricoursereqgp_change", args=[obj.pk])
+        except NoReverseMatch:
+            return "Not available"
         return format_html('<a href="{}">Open</a>', url)
 
 

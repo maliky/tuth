@@ -77,6 +77,40 @@ Example:
 cat scripts/curriculum_merge_conflicts.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v source_id=1 -v target_id=2
 #+END_SRC
 
+*** =curriculum_merge_with_audit.sql=
+Short description:
+- Consolidated curriculum merge script with three phases in one file:
+  - preflight classification,
+  - optional apply mode,
+  - post-run report.
+- Uses canonical course identity =(department_id, course_number)= when pairing
+  source and target curriculum-course rows.
+- Stores persistent audit logs in:
+  - =scripts_curriculum_merge_run=
+  - =scripts_curriculum_merge_log=
+- Reason codes are explicit (e.g. =CURRICOURSE_INVOICE_BLOCK=,
+  =SECTION_GRADE_VALUE_CONFLICT=, =CURRICOURSE_DELETE_PROTECTED=).
+- Dry-run by default; set =-v apply=1= to execute updates.
+- Complements existing precheck scripts without overlapping their purpose.
+
+Example (dry-run):
+
+#+BEGIN_SRC bash
+cat scripts/curriculum_merge_with_audit.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v source_id=206 -v target_id=31 -v apply=0 -v run_label='curri_206_to_31_dry'
+#+END_SRC
+
+Example (apply):
+
+#+BEGIN_SRC bash
+cat scripts/curriculum_merge_with_audit.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v source_id=206 -v target_id=31 -v apply=1 -v run_label='curri_206_to_31_apply'
+#+END_SRC
+
+Example (query latest run logs):
+
+#+BEGIN_SRC bash
+docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT run_id, run_label, status, started_at, finished_at FROM scripts_curriculum_merge_run ORDER BY run_id DESC LIMIT 5;"
+#+END_SRC
+
 *** =curriculumcourse_merge_conflicts.sql=
 Short description:
 - Precheck for merging two curriculum-course rows.

@@ -7,7 +7,11 @@ from .actions import (
     merge_curriculum_courses_action,
     merge_departments_action,
 )
-from .course_merge import merge_courses, merge_curriculum_courses
+from .course_merge import (
+    merge_courses,
+    merge_curriculum_course_into_target,
+    merge_curriculum_courses,
+)
 from .curriculum_merge import (
     list_curriculum_course_conflicts,
     merge_curricula,
@@ -47,6 +51,7 @@ __all__ = [
     "merge_courses",
     "merge_courses_action",
     "merge_courses_by_short_code_action",
+    "merge_curriculum_course_into_target",
     "merge_curricula",
     "merge_curricula_action",
     "merge_curriculum_courses",
