@@ -400,9 +400,16 @@ class CrsAdmin(DptRestrictedAdmin):
         return format_html_join(", ", '<a href="{}">{}</a>', rows)
 
     @admin.display(description="Grades", ordering="grade_total")
-    def grade_count(self, obj: Course) -> int:
-        """Return the number of grades recorded for this course."""
-        return int(getattr(obj, "grade_total", 0) or 0)
+    def grade_count(self, obj: Course) -> str:
+        """Link to grades filtered to this course."""
+        count = int(getattr(obj, "grade_total", 0) or 0)
+        if not obj.pk:
+            return str(count)
+        url = (
+            reverse("admin:registry_grade_changelist")
+            + f"?section__curriculum_course__course__id__exact={obj.pk}"
+        )
+        return format_html('<a href="{}">{}</a>', url, count)
 
     def get_form(self, request, obj=None, **kwargs):
         """Return the admin form with dep ordered by their shortname."""
