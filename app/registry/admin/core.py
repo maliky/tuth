@@ -346,6 +346,12 @@ class GradeAdmin(
         """Display the letter grade in uppercase."""
         return (obj.value.code if obj.value else "").upper()
 
+    def lookup_allowed(self, lookup, value):
+        """Allow course filter used by course admin grade link."""
+        if lookup == "section__curriculum_course__course__id__exact":
+            return True
+        return super().lookup_allowed(lookup, value)
+
 
 @admin.register(Registration)
 class RegioAdmin(
