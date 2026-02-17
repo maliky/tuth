@@ -7,19 +7,19 @@ from typing import Literal, TypeAlias, no_type_check
 from django.db import transaction
 from django.db.models import Count
 
-from app.academics.models.concentration import MajorCurriCourse, MinorCurriCourse
+from app.academics.models.concentration import MajorCurriCrs, MinorCurriCrs
 from app.academics.models.course import Course
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.department import Department
 from app.people.models import RoleAssignment, Staff
 
-CourseMergeSummaryT: TypeAlias = dict[str, int]
+CrsMergeSummaryT: TypeAlias = dict[str, int]
 ConflictChoiceT = Literal["keep_target", "keep_source", "merge", "skip"]
-ConflictChoiceByCourseIdT: TypeAlias = dict[int, ConflictChoiceT]
-ConflictCurriCoursePairT: TypeAlias = tuple[CurriCourse, CurriCourse]
+ConflictChoiceByCrsIdT: TypeAlias = dict[int, ConflictChoiceT]
+ConflictCurriCrsPairT: TypeAlias = tuple[CurriCrs, CurriCrs]
 SectionMergeResultT: TypeAlias = dict[str, int]
 StdCurriRecordMergeSummaryT: TypeAlias = dict[str, int]
-CourseIdityT: TypeAlias = tuple[int, str]
+CrsIdityT: TypeAlias = tuple[int, str]
 
 MERGE_CHOICE_KEEP_TARGET: ConflictChoiceT = "keep_target"
 MERGE_CHOICE_KEEP_SOURCE: ConflictChoiceT = "keep_source"
@@ -29,7 +29,7 @@ MERGE_CHOICE_SKIP: ConflictChoiceT = "skip"
 
 def _build_crs_idity(
     department_id: int | None, course_number: str | None
-) -> CourseIdityT | None:
+) -> CrsIdityT | None:
     """Return the canonical identity key used for cross-curriculum reconciliation."""
     if not department_id:
         return None
@@ -41,7 +41,7 @@ def _build_crs_idity(
     return (int(department_id), normalized_number)
 
 
-def _curri_crs_idity(curriculum_course: CurriCourse) -> CourseIdityT | None:
+def _curri_crs_idity(curriculum_course: CurriCrs) -> CrsIdityT | None:
     """Return a curriculum-course identity as (department_id, course_number)."""
     course = getattr(curriculum_course, "course", None)
     if course is None:
@@ -50,10 +50,10 @@ def _curri_crs_idity(curriculum_course: CurriCourse) -> CourseIdityT | None:
 
 
 def _index_curri_crss_by_idity(
-    curriculum_courses: list[CurriCourse],
-) -> dict[CourseIdityT, CurriCourse]:
+    curriculum_courses: list[CurriCrs],
+) -> dict[CrsIdityT, CurriCrs]:
     """Index rows by identity while keeping the lowest-id row as canonical."""
-    idity_index: dict[CourseIdityT, CurriCourse] = {}
+    idity_index: dict[CrsIdityT, CurriCrs] = {}
     for curriculum_course in sorted(curriculum_courses, key=lambda row: int(row.id)):
         idity = _curri_crs_idity(curriculum_course)
         if idity is None:
@@ -65,10 +65,10 @@ def _index_curri_crss_by_idity(
 
 
 def _idity_by_curri_crs_id(
-    curriculum_courses: list[CurriCourse],
-) -> dict[int, CourseIdityT]:
+    curriculum_courses: list[CurriCrs],
+) -> dict[int, CrsIdityT]:
     """Build an id->identity lookup for already-fetched curriculum course rows."""
-    idity_by_curriculum_course_id: dict[int, CourseIdityT] = {}
+    idity_by_curriculum_course_id: dict[int, CrsIdityT] = {}
     for curriculum_course in curriculum_courses:
         idity = _curri_crs_idity(curriculum_course)
         if idity is None:
@@ -90,17 +90,17 @@ def empty_std_curri_record_summary() -> StdCurriRecordMergeSummaryT:
     }
 
 
-def _merge_curri_crs_links(target: CurriCourse, source: CurriCourse) -> None:
+def _merge_curri_crs_links(target: CurriCrs, source: CurriCrs) -> None:
     """Move concentration links from a source curriculum course to the target."""
-    for major_link in MajorCurriCourse.objects.filter(curriculum_course=source):
-        if MajorCurriCourse.objects.filter(
+    for major_link in MajorCurriCrs.objects.filter(curriculum_course=source):
+        if MajorCurriCrs.objects.filter(
             major_id=major_link.major_id, curriculum_course=target
         ).exists():
             continue
         major_link.curriculum_course = target
         major_link.save(update_fields=["curriculum_course"])
-    for minor_link in MinorCurriCourse.objects.filter(curriculum_course=source):
-        if MinorCurriCourse.objects.filter(
+    for minor_link in MinorCurriCrs.objects.filter(curriculum_course=source):
+        if MinorCurriCrs.objects.filter(
             minor_id=minor_link.minor_id, curriculum_course=target
         ).exists():
             continue

@@ -58,7 +58,7 @@ SELECT
 FROM tgt
 ORDER BY role;
 
--- Courses sharing the same number inside the source/target departments.
+-- Crss sharing the same number inside the source/target departments.
 WITH src AS (
     SELECT department_id FROM academics_course WHERE id = :source_id
 ),

@@ -7,19 +7,19 @@ from typing import Callable, TypeAlias
 
 import pytest
 
-from app.finance.models.invoice import CourseInvoice
+from app.finance.models.invoice import CrsInvoice
 from app.registry.models.registration import Registration
 from tests.constants import D100
 
-InvoiceFactoryT: TypeAlias = Callable[[Registration, Decimal], CourseInvoice]
+InvoiceFactoryT: TypeAlias = Callable[[Registration, Decimal], CrsInvoice]
 
 
 @pytest.fixture
 def invoice_factory() -> InvoiceFactoryT:
     """Return a callable to build invoices for a registration."""
 
-    def _make(registration: Registration, amount: Decimal = D100) -> CourseInvoice:
-        return CourseInvoice.objects.create(
+    def _make(registration: Registration, amount: Decimal = D100) -> CrsInvoice:
+        return CrsInvoice.objects.create(
             curriculum_course=registration.section.curriculum_course,
             student=registration.student,
             semester=registration.section.semester,

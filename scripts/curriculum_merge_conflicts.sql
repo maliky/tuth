@@ -17,7 +17,7 @@ WHERE curriculum_id IN (:source_id, :target_id)
 GROUP BY curriculum_id
 ORDER BY curriculum_id;
 
--- Courses present in both source and target curricula.
+-- Crss present in both source and target curricula.
 SELECT
     c.id AS course_id,
     c.short_code,
@@ -38,7 +38,7 @@ JOIN academics_course AS c ON c.id = sc.course_id
 WHERE sc.curriculum_id = :source_id
 ORDER BY c.short_code;
 
--- Courses in source that are not in target.
+-- Crss in source that are not in target.
 SELECT c.id AS course_id, c.short_code, c.title
 FROM academics_curriculumcourse AS sc
 JOIN academics_course AS c ON c.id = sc.course_id

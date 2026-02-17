@@ -28,8 +28,8 @@ Feature: Portal role dashboards
     Examples:
       | username               | role               | actions                                                       |
       | registrar_officer_user | Registrar Officer  | registrar_course_windows                                      |
-      | enrollment_user        | Enrollment         | student_list,admin:people_student_add,student_admin_edit      |
-      | enrollment_officer_user| Enrollment Officer | student_list,admin:people_student_add,student_admin_edit,admin:people_student_changelist |
+      | enrollment_user        | Enrollment         | std_list,admin:people_student_add,std_admin_edit      |
+      | enrollment_officer_user| Enrollment Officer | std_list,admin:people_student_add,std_admin_edit,admin:people_student_changelist |
 
   Scenario: Registrar without officer permissions cannot manage semester windows
     Given a portal user "registrar_basic" with role "Registrar" and student "no"

@@ -51,7 +51,7 @@ class Command(BaseCommand):
         call_command("load_roles", verbosity=0)
 
         self.stdout.write("-> Importing fundamentals")
-        _import_resources(csv_dir, ["Room", "Course", "CurriCourse", "Semester"])
+        _import_resources(csv_dir, ["Room", "Course", "CurriCrs", "Semester"])
 
         if opts["people"]:
             self.stdout.write("-> Importing people")

@@ -11,7 +11,7 @@ from django.test import RequestFactory
 
 from app.academics.admin.actions import attach_fee_stacks
 from app.academics.models.course import Course
-from app.finance.models.fee_stack import CourseFeeStack, FeeStack, FeeStackLine
+from app.finance.models.fee_stack import CrsFeeStack, FeeStack, FeeStackLine
 from app.finance.models.status_types_methods import FeeType
 
 
@@ -75,19 +75,19 @@ def test_attach_fee_stacks_action_attaches_multiple_stacks_to_crss(
     response = attach_fee_stacks(model_admin, request, queryset)
 
     assert response.status_code == 302
-    assert CourseFeeStack.objects.filter(
+    assert CrsFeeStack.objects.filter(
         course=course_one,
         fee_stack=first_stack,
     ).exists()
-    assert CourseFeeStack.objects.filter(
+    assert CrsFeeStack.objects.filter(
         course=course_one,
         fee_stack=second_stack,
     ).exists()
-    assert CourseFeeStack.objects.filter(
+    assert CrsFeeStack.objects.filter(
         course=course_two,
         fee_stack=first_stack,
     ).exists()
-    assert CourseFeeStack.objects.filter(
+    assert CrsFeeStack.objects.filter(
         course=course_two,
         fee_stack=second_stack,
     ).exists()
@@ -122,7 +122,7 @@ def test_attach_fee_stacks_action_skips_existing_and_invalid_links(
         fee_type=reg_fee_type,
         amount=Decimal("5.00"),
     )
-    CourseFeeStack.objects.create(
+    CrsFeeStack.objects.create(
         course=course,
         fee_stack=existing_stack,
     )
@@ -146,8 +146,8 @@ def test_attach_fee_stacks_action_skips_existing_and_invalid_links(
     response = attach_fee_stacks(model_admin, request, queryset)
 
     assert response.status_code == 302
-    assert CourseFeeStack.objects.filter(course=course).count() == 2
-    assert CourseFeeStack.objects.filter(course=course, fee_stack=valid_stack).exists()
+    assert CrsFeeStack.objects.filter(course=course).count() == 2
+    assert CrsFeeStack.objects.filter(course=course, fee_stack=valid_stack).exists()
     assert any(
         "Skipped 1 existing course/stack link(s)." in msg
         for msg, _ in model_admin.messages

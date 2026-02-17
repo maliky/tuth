@@ -7,7 +7,7 @@ from typing import Iterable, Optional, TypedDict
 
 from django.db.models import Q, QuerySet
 
-from app.finance.models.invoice import CourseInvoice
+from app.finance.models.invoice import CrsInvoice
 from app.finance.models.payment import Payment
 from app.people.models.student import Student
 
@@ -24,7 +24,7 @@ class InvoiceGpT(TypedDict):
     """Invoice group keyed by student."""
 
     student: Student
-    rows: list[CourseInvoice]
+    rows: list[CrsInvoice]
     total_due: Decimal
 
 
@@ -39,7 +39,7 @@ class PaymentGpT(TypedDict):
 
 def finance_std_ids() -> set[int]:
     """Return student IDs with invoices or payments."""
-    invoice_ids = set(CourseInvoice.objects.values_list("student_id", flat=True))
+    invoice_ids = set(CrsInvoice.objects.values_list("student_id", flat=True))
     payment_ids = set(
         Payment.objects.values_list("student_semester_invoice__student_id", flat=True)
     )
@@ -91,7 +91,7 @@ def build_std_options(
     return options
 
 
-def gp_invoices(invoices: Iterable[CourseInvoice]) -> list[InvoiceGpT]:
+def gp_invoices(invoices: Iterable[CrsInvoice]) -> list[InvoiceGpT]:
     """Group invoices by student preserving the incoming order."""
     groups: list[InvoiceGpT] = []
     group_lookup: dict[int, InvoiceGpT] = {}
@@ -152,9 +152,9 @@ def invoice_queryset(
     selected_student_id: Optional[int],
     status_filter: str,
     semester_id: Optional[int],
-) -> QuerySet[CourseInvoice]:
+) -> QuerySet[CrsInvoice]:
     """Return the base invoice queryset for the finance officer view."""
-    qs = CourseInvoice.objects.select_related(
+    qs = CrsInvoice.objects.select_related(
         "student",
         "student__user",
         "semester",

@@ -15,11 +15,11 @@ class ReqKind(models.TextChoices):
     COREQ_ALL = "coreq_all", "Corequisite (all together)"
 
 
-class CurriCourseReqGp(models.Model):
+class CurriCrsReqGp(models.Model):
     """Group prerequisite/corequisite rules for one curriculum course."""
 
     curriculum_course = models.ForeignKey(
-        "academics.CurriCourse",
+        "academics.CurriCrs",
         on_delete=models.CASCADE,
         related_name="requirement_groups",
     )
@@ -44,7 +44,7 @@ class CurriCourseReqGp(models.Model):
             return
         # Keep labels deterministic so admin lists stay readable without manual input.
         next_index = (
-            CurriCourseReqGp.objects.filter(curriculum_course=self.curriculum_course)
+            CurriCrsReqGp.objects.filter(curriculum_course=self.curriculum_course)
             .exclude(pk=self.pk)
             .count()
             + 1
@@ -60,7 +60,7 @@ class CurriCourseReqGp(models.Model):
         ordering = ["curriculum_course", "order", "id"]
 
 
-class CurriCourseReqMember(models.Model):
+class CurriCrsReqMember(models.Model):
     """Single course member inside a requirement group.
 
     This explicit member model is effectively a through table. We could model
@@ -70,7 +70,7 @@ class CurriCourseReqMember(models.Model):
     """
 
     group = models.ForeignKey(
-        "academics.CurriCourseReqGp",
+        "academics.CurriCrsReqGp",
         on_delete=models.CASCADE,
         related_name="members",
     )

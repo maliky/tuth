@@ -8,10 +8,10 @@ from typing import cast
 import pytest
 from django.urls import reverse
 
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.requirement_group import (
-    CurriCourseReqGp,
-    CurriCourseReqMember,
+    CurriCrsReqGp,
+    CurriCrsReqMember,
     ReqKind,
 )
 from app.finance.models.status_types_methods import InvoiceStatus, Payer
@@ -64,17 +64,17 @@ def _std_for_curri(
 
 def _add_req_member_gp(
     *,
-    target: CurriCourse,
+    target: CurriCrs,
     kind: str,
-    required_courses: list[CurriCourse],
+    required_courses: list[CurriCrs],
 ) -> None:
     """Create one requirement group and populate all member courses."""
-    group = CurriCourseReqGp.objects.create(
+    group = CurriCrsReqGp.objects.create(
         curriculum_course=target,
         kind=kind,
     )
     for index, required in enumerate(required_courses):
-        CurriCourseReqMember.objects.create(
+        CurriCrsReqMember.objects.create(
             group=group,
             required_course=required.course,
             order=index,
@@ -315,7 +315,7 @@ def test_dashboard_keeps_no_sec_crss_in_locked_information_list(
     sem_factory,
     user_factory,
 ) -> None:
-    """Courses without offered sections stay visible in locked informational cards."""
+    """Crss without offered sections stay visible in locked informational cards."""
     semester = _open_regio_sem(sem_factory)
     target = curriculum_course_factory("950", "CURRI_NO_SECTION")
     target.level_number = 3

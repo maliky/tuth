@@ -19,7 +19,7 @@ WHERE department_id IN (:source_id, :target_id)
 GROUP BY department_id
 ORDER BY department_id;
 
--- Courses that would collide on course number after a merge.
+-- Crss that would collide on course number after a merge.
 SELECT
     sc.id AS source_course_id,
     tc.id AS target_course_id,

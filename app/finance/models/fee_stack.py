@@ -133,7 +133,7 @@ def resolve_crs_fee_stack_map(course, semester) -> tuple[FeeMapT, FeeLabelMapT]:
         )
         if stack_links_manager is not None
         else list(
-            CourseFeeStack.objects.filter(course=course)
+            CrsFeeStack.objects.filter(course=course)
             .select_related("fee_stack")
             .prefetch_related(
                 "fee_stack__fees__fee_type",
@@ -160,7 +160,7 @@ def _fee_type_codes_for_crs_stacks(
     exclude_link_id: int | None,
 ) -> FeeTypeCodeSetT:
     """Return fee type codes attached to a course via other stacks."""
-    stack_links = CourseFeeStack.objects.filter(course_id=course_id)
+    stack_links = CrsFeeStack.objects.filter(course_id=course_id)
     if exclude_link_id:
         stack_links = stack_links.exclude(pk=exclude_link_id)
     linked_stack_ids = list(stack_links.values_list("fee_stack_id", flat=True))
@@ -186,7 +186,7 @@ class FeeStack(models.Model):
     )
     courses = models.ManyToManyField(
         "academics.Course",
-        through="finance.CourseFeeStack",
+        through="finance.CrsFeeStack",
         related_name="fee_stacks",
         blank=True,
     )
@@ -315,7 +315,7 @@ class FeeStackLine(models.Model):
         ordering = ["fee_stack", "fee_type", "effective_from_semester"]
 
 
-class CourseFeeStack(models.Model):
+class CrsFeeStack(models.Model):
     """Attachment between a course and a fee stack."""
 
     course = models.ForeignKey(

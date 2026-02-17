@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 
 from app.academics.admin.filters import CurriFltAC
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from app.people.models.faculty import Faculty
 from app.people.models.student import Student
 from app.registry.admin.inlines import GradeIL
@@ -117,7 +117,7 @@ class SecAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Sort curriculum course choices alphabetically by display components."""
         if db_field.name == "curriculum_course":
-            kwargs["queryset"] = CurriCourse.objects.select_related(
+            kwargs["queryset"] = CurriCrs.objects.select_related(
                 "course",
                 "curriculum__college",
             ).order_by(

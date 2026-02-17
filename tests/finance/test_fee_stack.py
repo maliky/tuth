@@ -9,7 +9,7 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from app.finance.models.fee_stack import (
-    CourseFeeStack,
+    CrsFeeStack,
     FeeStack,
     FeeStackLine,
     resolve_crs_fee_stack_map,
@@ -80,10 +80,10 @@ def test_crs_fee_stack_rejects_duplicate_fee_types(crs_factory) -> None:
         amount=Decimal("11.00"),
         effective_from_semester=None,
     )
-    CourseFeeStack.objects.create(course=course, fee_stack=first_stack)
+    CrsFeeStack.objects.create(course=course, fee_stack=first_stack)
 
     with pytest.raises(ValidationError):
-        CourseFeeStack.objects.create(course=course, fee_stack=second_stack)
+        CrsFeeStack.objects.create(course=course, fee_stack=second_stack)
 
 
 def test_crs_fee_stack_allows_disjoint_fee_types(crs_factory) -> None:
@@ -107,10 +107,10 @@ def test_crs_fee_stack_allows_disjoint_fee_types(crs_factory) -> None:
         effective_from_semester=None,
     )
 
-    CourseFeeStack.objects.create(course=course, fee_stack=first_stack)
-    CourseFeeStack.objects.create(course=course, fee_stack=second_stack)
+    CrsFeeStack.objects.create(course=course, fee_stack=first_stack)
+    CrsFeeStack.objects.create(course=course, fee_stack=second_stack)
 
-    assert CourseFeeStack.objects.filter(course=course).count() == 2
+    assert CrsFeeStack.objects.filter(course=course).count() == 2
 
 
 def test_resolve_crs_fee_stack_map_depends_on_sem(
@@ -136,7 +136,7 @@ def test_resolve_crs_fee_stack_map_depends_on_sem(
         amount=Decimal("18.00"),
         effective_from_semester=semester_new,
     )
-    CourseFeeStack.objects.create(course=course, fee_stack=stack)
+    CrsFeeStack.objects.create(course=course, fee_stack=stack)
 
     old_map, _old_labels = resolve_crs_fee_stack_map(course, semester_old)
     new_map, _new_labels = resolve_crs_fee_stack_map(course, semester_new)

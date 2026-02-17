@@ -9,7 +9,7 @@ import pytest
 from django.urls import reverse
 
 from app.finance.models.fee_stack import FeeStack, FeeStackLine
-from app.finance.models.invoice import CourseInvoice, StdSemesterInvoice
+from app.finance.models.invoice import CrsInvoice, StdSemesterInvoice
 from app.finance.models.payment import Payment
 from app.finance.models.status_types_methods import (
     FeeType,
@@ -73,7 +73,7 @@ def _std_regio_with_invoice(
         status=RegistrationStatus.pending(),
     )
     tuition = curriculum_course.tuition_for()
-    invoice = CourseInvoice.objects.create(
+    invoice = CrsInvoice.objects.create(
         curriculum_course=curriculum_course,
         student=student,
         semester=semester,
@@ -116,7 +116,7 @@ def test_cancel_keeps_parent_invoice_when_sem_fees_exist(
 
     registration.refresh_from_db()
     assert registration.status_id == "canceled"
-    assert not CourseInvoice.objects.filter(pk=invoice.pk).exists()
+    assert not CrsInvoice.objects.filter(pk=invoice.pk).exists()
     assert StdSemesterInvoice.objects.filter(pk=parent_invoice.pk).exists()
 
 
@@ -153,5 +153,5 @@ def test_cancel_keeps_parent_invoice_when_cleared_history_exists(
 
     registration.refresh_from_db()
     assert registration.status_id == "canceled"
-    assert not CourseInvoice.objects.filter(pk=invoice.pk).exists()
+    assert not CrsInvoice.objects.filter(pk=invoice.pk).exists()
     assert StdSemesterInvoice.objects.filter(pk=parent_invoice.pk).exists()

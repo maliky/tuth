@@ -3,7 +3,7 @@
 from admin_searchable_dropdown.filters import AutocompleteFilterFactory
 
 from app.academics.models.curriculum import Curriculum
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.department import Department
 from app.shared.admin.filters import ScopedAutocompleteFilter
 
@@ -21,7 +21,7 @@ class FacultyTeachingDptFltAC(ScopedAutocompleteFilter):
     target_model = Department
 
 
-class StdCurriCourseFltAC(ScopedAutocompleteFilter):
+class StdCurriCrsFltAC(ScopedAutocompleteFilter):
     """Autocomplete filter for students by registered curriculum course."""
 
     title = "Curriculum course"
@@ -30,7 +30,7 @@ class StdCurriCourseFltAC(ScopedAutocompleteFilter):
     lookup_map = (
         ("student_registrations", "student_registrations__section__curriculum_course"),
     )
-    target_model = CurriCourse
+    target_model = CurriCrs
 
 
 class StdEnrolledCurriFltAC(ScopedAutocompleteFilter):

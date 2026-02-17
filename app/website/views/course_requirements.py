@@ -4,22 +4,22 @@ from __future__ import annotations
 
 from typing import Iterable, TypeAlias, TypedDict
 
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.requirement_group import (
-    CurriCourseReqGp,
+    CurriCrsReqGp,
     ReqKind,
 )
 from app.people.models.student import Student
 
-CourseIdsT: TypeAlias = set[int]
-CourseLabelPairT: TypeAlias = tuple[int, str]
+CrsIdsT: TypeAlias = set[int]
+CrsLabelPairT: TypeAlias = tuple[int, str]
 ReqFailureListT: TypeAlias = list["ReqFailureT"]
 
 
 class ReqContextT(TypedDict):
     """Cached student requirement facts shared across evaluations."""
 
-    passed_course_ids: CourseIdsT
+    passed_course_ids: CrsIdsT
     validated_credits: int
 
 
@@ -53,8 +53,8 @@ def build_req_context(student: Student) -> ReqContextT:
 
 
 def _gp_member_pairs(
-    group: CurriCourseReqGp,
-) -> list[CourseLabelPairT]:
+    group: CurriCrsReqGp,
+) -> list[CrsLabelPairT]:
     """Return `(course_id, display_label)` pairs for one requirement group."""
     return [
         (
@@ -68,7 +68,7 @@ def _gp_member_pairs(
 def eval_curri_crs_reqs(
     *,
     student: Student,
-    curriculum_course: CurriCourse,
+    curriculum_course: CurriCrs,
     selected_course_ids: Iterable[int],
     context: ReqContextT | None = None,
 ) -> ReqCheckResultT:

@@ -24,7 +24,7 @@ from app.people.admin.filters import (
     FacultyGpFAC,
     FacultyTeachingDptFltAC,
     StdEnrolledCurriFltAC,
-    StdCurriCourseFltAC,
+    StdCurriCrsFltAC,
     StdEntrySemFAC,
 )
 from app.people.admin.mixins import (
@@ -613,7 +613,7 @@ class StdAdmin(
         StdEnrolledCurriFltAC,
         StdEntrySemFAC,
         StdLevelFlt,
-        StdCurriCourseFltAC,
+        StdCurriCrsFltAC,
         "curriculum__college",
     )
     readonly_fields = ("student_id",)

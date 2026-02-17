@@ -6,7 +6,7 @@ from typing import cast
 
 import pytest
 
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from tests.constants import D9_99
 
 
@@ -19,14 +19,14 @@ class DummyCreditHours:
 
 
 @dataclass
-class DummyCurriCourse:
+class DummyCurriCrs:
     """Minimal curriculum course object used for tuition_for tests."""
 
     credit_hours: DummyCreditHours
 
     def tuition_for(self) -> Decimal:
-        """Reuse the real CurriCourse logic for testing the rate."""
-        return CurriCourse.tuition_for(cast(CurriCourse, self))
+        """Reuse the real CurriCrs logic for testing the rate."""
+        return CurriCrs.tuition_for(cast(CurriCrs, self))
 
 
 @pytest.mark.parametrize("hours", [0, 1, 3])
@@ -39,6 +39,6 @@ def test_tuition_for_uses_rate(monkeypatch, hours):
         rate,
     )
 
-    dummy = DummyCurriCourse(credit_hours=DummyCreditHours(code=hours))
-    curriculum_course = cast(CurriCourse, dummy)
+    dummy = DummyCurriCrs(credit_hours=DummyCreditHours(code=hours))
+    curriculum_course = cast(CurriCrs, dummy)
     assert curriculum_course.tuition_for() == Decimal(hours) * rate

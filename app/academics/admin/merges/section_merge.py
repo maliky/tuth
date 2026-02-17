@@ -8,7 +8,7 @@ from typing import cast
 from django.db import models
 from django.db.models.deletion import ProtectedError
 
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from app.registry.models.grade import Grade
 from app.registry.models.registration import Registration
 from app.timetable.models.section import Section
@@ -16,9 +16,7 @@ from app.timetable.models.section import Section
 from .helpers import SectionMergeResultT, _merge_curri_crs_links
 
 
-def _merge_curri_crs_to_target(
-    target: CurriCourse, source: CurriCourse
-) -> dict[str, int]:
+def _merge_curri_crs_to_target(target: CurriCrs, source: CurriCrs) -> dict[str, int]:
     """Move section and concentration links from source to target."""
     summary = {
         "sections_moved": 0,
@@ -55,7 +53,7 @@ def _merge_curri_crs_to_target(
 
 
 def _pick_sec_merge_candidate(
-    target_curriculum_course: CurriCourse,
+    target_curriculum_course: CurriCrs,
     source_section: Section,
 ) -> Section | None:
     """Return a deterministic section merge candidate for a source section."""

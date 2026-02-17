@@ -6,7 +6,7 @@ from decimal import Decimal
 
 import pytest
 
-from app.finance.models.invoice import CourseInvoice
+from app.finance.models.invoice import CrsInvoice
 from app.finance.models.status_types_methods import Payer
 
 pytestmark = pytest.mark.django_db
@@ -19,7 +19,7 @@ def test_crs_invoice_creation_bootstraps_all_payers(regio_factory) -> None:
 
     reg = regio_factory("payer_bootstrap_student", "CURRI_TEST", "101", 1)
     amount = Decimal("10.00")
-    invoice = CourseInvoice.objects.create(
+    invoice = CrsInvoice.objects.create(
         curriculum_course=reg.section.curriculum_course,
         student=reg.student,
         semester=reg.section.semester,

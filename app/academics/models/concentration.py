@@ -9,7 +9,7 @@ from django.db import models
 from simple_history.models import HistoricalRecords
 
 from app.academics.models.curriculum import Curriculum
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 
 
 class ConcentrationMixin(models.Model):
@@ -60,7 +60,7 @@ class ConcentrationMixin(models.Model):
         # will return 0 if the object is not saved.
         self._ensure_saved()
         courses = cast(
-            "models.Manager[CurriCourse]",
+            "models.Manager[CurriCrs]",
             getattr(
                 self, "curriculum_courses"
             ),  # Check if curriculum_courses is attribute of ContentrationMixing
@@ -82,7 +82,7 @@ class ConcentrationMixin(models.Model):
             curriculum=Curriculum.get_dft(),
             description=f"This is a default {cls.RELATED_NAME}",
         )
-        pg = CurriCourse.get_dft()
+        pg = CurriCrs.get_dft()
         dft_concentration.curriculum_courses.add(pg)
         dft_concentration.save()  # ? is the save necessary
 
@@ -98,8 +98,8 @@ class Major(ConcentrationMixin):
     RELATED_NAME: str = "major"
 
     curriculum_courses = models.ManyToManyField(
-        "academics.CurriCourse",
-        through="academics.MajorCurriCourse",
+        "academics.CurriCrs",
+        through="academics.MajorCurriCrs",
         related_name="majors",
     )
     max_credit_hours = models.PositiveIntegerField(default=50)
@@ -114,8 +114,8 @@ class Minor(ConcentrationMixin):
 
     RELATED_NAME: str = "minor"
     curriculum_courses = models.ManyToManyField(
-        "academics.CurriCourse",
-        through="academics.MinorCurriCourse",
+        "academics.CurriCrs",
+        through="academics.MinorCurriCrs",
         related_name="minors",
     )
     max_credit_hours = models.PositiveIntegerField(default=20)
@@ -126,13 +126,13 @@ class Minor(ConcentrationMixin):
 
 
 # ##  TODO make sure Minor curriculum_course can be in several curriculms?
-class MajorCurriCourse(models.Model):
+class MajorCurriCrs(models.Model):
     """A table joining the Major table with the curriculum_course table."""
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     major = models.ForeignKey("Major", on_delete=models.CASCADE, related_name="courses")
     curriculum_course = models.ForeignKey(
-        "academics.CurriCourse", on_delete=models.CASCADE, related_name="major_link"
+        "academics.CurriCrs", on_delete=models.CASCADE, related_name="major_link"
     )
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()
@@ -146,13 +146,13 @@ class MajorCurriCourse(models.Model):
         ]
 
 
-class MinorCurriCourse(models.Model):
+class MinorCurriCrs(models.Model):
     """A table joining the Major table with the curriculum_course table."""
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
     minor = models.ForeignKey("Minor", on_delete=models.CASCADE, related_name="courses")
     curriculum_course = models.ForeignKey(
-        "academics.CurriCourse", on_delete=models.CASCADE, related_name="minor_links"
+        "academics.CurriCrs", on_delete=models.CASCADE, related_name="minor_links"
     )
     # ~~~~ Auto-filled ~~~~
     history = HistoricalRecords()

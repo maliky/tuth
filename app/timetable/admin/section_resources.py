@@ -2,7 +2,7 @@
 
 from import_export import fields, resources
 
-from app.academics.admin.widgets import CurriCourseWgt
+from app.academics.admin.widgets import CurriCrsWgt
 from app.people.admin.widgets import FacultyUsernameWgt
 from app.timetable.admin.core_widgets import SemWgt
 from app.timetable.models.section import Section
@@ -29,7 +29,7 @@ class SecResource(resources.ModelResource):
         # could be other course columns
         attribute="curriculum_course",
         column_name="curriculum",
-        widget=CurriCourseWgt(),
+        widget=CurriCrsWgt(),
     )
     number = fields.Field(attribute="number", column_name="section_no")
 

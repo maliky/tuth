@@ -8,25 +8,25 @@ from app.academics.choices import COLLEGE_LONG_NAME
 from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.department import Department
 from app.academics.utils import normalize_college_code, normalize_dpt_code
 from app.shared.models import CreditHour
-from app.shared.types import DeptCollegeMapT, DeptCourseMapT, StrIntMapT, TwoIntIntMapT
+from app.shared.types import DeptCollegeMapT, DeptCrsMapT, StrIntMapT, TwoIntIntMapT
 from app.shared.utils import parse_str
 
 COLLEGE_CACHE: Dict[str, College] = {}
 DEPARTMENT_CACHE: Dict[Tuple[str, int], Department] = {}
 COURSE_CACHE: Dict[Tuple[int, str], Course] = {}
 CURRICULUM_CACHE: Dict[Tuple[str, Optional[int]], Curriculum] = {}
-CURRICULUM_COURSE_CACHE: Dict[Tuple[int, int], CurriCourse] = {}
+CURRICULUM_COURSE_CACHE: Dict[Tuple[int, int], CurriCrs] = {}
 CREDIT_HOUR_CACHE: Dict[int, CreditHour] = {}
 
 COLLEGE_ID_CACHE: StrIntMapT = {}
 COLLEGE_BY_ID_CACHE: Dict[int, College] = {}
 DEPARTMENT_ID_CACHE: DeptCollegeMapT = {}
 DEPARTMENT_BY_ID_CACHE: Dict[int, Department] = {}
-COURSE_ID_CACHE: DeptCourseMapT = {}
+COURSE_ID_CACHE: DeptCrsMapT = {}
 COURSE_BY_ID_CACHE: Dict[int, Course] = {}
 CURRICULUM_ID_CACHE: StrIntMapT = {}
 CURRICULUM_BY_ID_CACHE: Dict[int, Curriculum] = {}
@@ -82,7 +82,7 @@ def _prime_curri_crs_id_cache() -> None:
     """Load curriculum course ids into the local cache if empty."""
     if CURRICULUM_COURSE_ID_CACHE:
         return
-    for curriculum_id, course_id, pk in CurriCourse.objects.values_list(
+    for curriculum_id, course_id, pk in CurriCrs.objects.values_list(
         "curriculum_id", "course_id", "id"
     ):
         CURRICULUM_COURSE_ID_CACHE[(curriculum_id, course_id)] = pk
@@ -243,8 +243,8 @@ def ensure_curri_crs(
     course: Course,
     credit_code: int = 3,
     is_required: bool | None = None,
-) -> CurriCourse:
-    """Provide a CurriCourse cached if available."""
+) -> CurriCrs:
+    """Provide a CurriCrs cached if available."""
     key = (curriculum.id, course.id)
     cached = CURRICULUM_COURSE_CACHE.get(key)
 
@@ -261,7 +261,7 @@ def ensure_curri_crs(
         credit, _ = CreditHour.objects.get_or_create(code=credit_code)
         CREDIT_HOUR_CACHE[credit_code] = credit
 
-    ccur, _ = CurriCourse.objects.get_or_create(
+    ccur, _ = CurriCrs.objects.get_or_create(
         curriculum=curriculum,
         course=course,
         defaults={"credit_hours": credit, "is_required": is_required},

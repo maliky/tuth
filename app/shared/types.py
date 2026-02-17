@@ -45,7 +45,7 @@ Transform = Callable[[Row], Row]
 RowStrOptT: TypeAlias = Mapping[str, Optional[str]]
 
 SectionQuery: TypeAlias = QuerySet["Section"]
-CourseQuery: TypeAlias = QuerySet["Course"]
+CrsQuery: TypeAlias = QuerySet["Course"]
 FacultyQuery: TypeAlias = QuerySet["Faculty"]
 StdQuery: TypeAlias = QuerySet["Student"]
 RegistrationQuery: TypeAlias = QuerySet["Registration"]
@@ -76,8 +76,8 @@ ThreeIntOptIntMapT: TypeAlias = dict[tuple[int, int, int, Optional[int]], int]
 
 # More explicit map aliases for common keys
 DeptCollegeMapT: TypeAlias = dict[tuple[str, int], int]  # (dept_code, college_id) -> id
-DeptCourseMapT: TypeAlias = dict[tuple[int, str], int]  # (dept_id, course_no) -> id
-CurriCourseMapT: TypeAlias = dict[tuple[int, int], int]
+DeptCrsMapT: TypeAlias = dict[tuple[int, str], int]  # (dept_id, course_no) -> id
+CurriCrsMapT: TypeAlias = dict[tuple[int, int], int]
 SectionKeyMapT: TypeAlias = dict[tuple[int, int, int, Optional[int]], int]
 
 ScheduleKeyT: TypeAlias = tuple[int, time, time | None]

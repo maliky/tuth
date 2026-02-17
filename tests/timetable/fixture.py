@@ -12,7 +12,7 @@ from app.timetable.models.schedule import Schedule
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester, SemesterStatus
 from app.timetable.models.session import SecSession
-from tests.academics.fixture import CurriCourseFactoryT
+from tests.academics.fixture import CurriCrsFactoryT
 
 AcademicYearFactoryT: TypeAlias = Callable[[datetime], AcademicYear]
 SemesterFactoryT: TypeAlias = Callable[[int], Semester]
@@ -89,7 +89,7 @@ def sem_factory(academic_year_factory: AcademicYearFactoryT) -> SemesterFactoryT
 @pytest.fixture
 def sec_factory(
     sem_factory: SemesterFactoryT,
-    curriculum_course_factory: CurriCourseFactoryT,
+    curriculum_course_factory: CurriCrsFactoryT,
 ) -> SectionFactoryT:
     def _make(
         course_number: str = "111",

@@ -62,12 +62,12 @@ LEVEL_NUMBER_CHOICES = tuple(
 )
 
 
-class CurriCourse(models.Model):
+class CurriCrs(models.Model):
     """Map Curriculum instances to their constituent courses.
 
     It can be called a 'program'
     Example:
-        >>> CurriCourse.objects.create(curriculum=curriculum, course=course)
+        >>> CurriCrs.objects.create(curriculum=curriculum, course=course)
 
     Side Effects:
         save() defaults credit_hours to the course value when missing.
@@ -127,7 +127,7 @@ class CurriCourse(models.Model):
 
     @classmethod
     def get_dft(cls, _course: Optional[Course] = None) -> Self:
-        """Returns a default CurriCourse."""
+        """Returns a default CurriCrs."""
         def_pg, _ = cls.objects.get_or_create(
             curriculum=Curriculum.get_dft(),
             course=(_course or Course.get_dft()),
@@ -136,7 +136,7 @@ class CurriCourse(models.Model):
 
     @classmethod
     def get_unique_dft(cls) -> Self:
-        """Returns a default unique CurriCourse."""
+        """Returns a default unique CurriCrs."""
         u_course = Course.get_unique_dft()
         return cls.get_dft(_course=u_course)
 
@@ -225,4 +225,4 @@ class CurriCourse(models.Model):
         ]
         ordering = ["curriculum"]
         verbose_name = "Programmed Course"
-        verbose_name_plural = "Programmed Courses"
+        verbose_name_plural = "Programmed Crss"

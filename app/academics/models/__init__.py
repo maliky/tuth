@@ -1,15 +1,15 @@
 """Initialization for the models package."""
 
 from .college import College
-from .concentration import Major, MajorCurriCourse, Minor, MinorCurriCourse
+from .concentration import Major, MajorCurriCrs, Minor, MinorCurriCrs
 from .course import Course
 from .curriculum import Curriculum, CurriStatus
-from .curriculum_course import CurriCourse
+from .curriculum_course import CurriCrs
 from .department import Department
 from .prerequisite import Prerequisite
 from .requirement_group import (
-    CurriCourseReqGp,
-    CurriCourseReqMember,
+    CurriCrsReqGp,
+    CurriCrsReqMember,
     ReqKind,
 )
 from .student_curriculum_enrollment import CurriStdEnroll
@@ -18,16 +18,16 @@ __all__ = [
     "College",
     "Course",
     "Curriculum",
-    "CurriCourse",
+    "CurriCrs",
     "CurriStatus",
     "Department",
     "Major",
-    "MajorCurriCourse",
+    "MajorCurriCrs",
     "Minor",
-    "MinorCurriCourse",
+    "MinorCurriCrs",
     "Prerequisite",
-    "CurriCourseReqGp",
-    "CurriCourseReqMember",
+    "CurriCrsReqGp",
+    "CurriCrsReqMember",
     "ReqKind",
     "CurriStdEnroll",
 ]

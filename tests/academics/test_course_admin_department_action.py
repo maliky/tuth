@@ -12,7 +12,7 @@ from django.test import RequestFactory
 from app.academics.admin.actions import update_dpt
 from app.academics.models.college import College
 from app.academics.models.course import Course
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.department import Department
 
 pytestmark = pytest.mark.django_db
@@ -97,11 +97,11 @@ def test_update_dpt_merges_collision_with_existing_crs(
         number="201",
         title="Source course",
     )
-    CurriCourse.objects.create(
+    CurriCrs.objects.create(
         curriculum=curri_factory("CURRI-TGT"),
         course=target_course,
     )
-    source_curriculum_course = CurriCourse.objects.create(
+    source_curriculum_course = CurriCrs.objects.create(
         curriculum=curri_factory("CURRI-SRC"),
         course=source_course,
     )
@@ -139,8 +139,8 @@ def test_update_dpt_skips_collision_merge_when_invoice_exists(
         title="Source course",
     )
     curriculum = curri_factory("CURRI-INV")
-    CurriCourse.objects.create(curriculum=curriculum, course=target_course)
-    source_curriculum_course = CurriCourse.objects.create(
+    CurriCrs.objects.create(curriculum=curriculum, course=target_course)
+    source_curriculum_course = CurriCrs.objects.create(
         curriculum=curriculum,
         course=source_course,
     )

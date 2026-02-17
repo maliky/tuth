@@ -7,8 +7,8 @@ from typing import Optional
 
 from import_export import widgets
 
-from app.academics.admin.widgets import CurriCourseWgt
-from app.finance.models.invoice import CourseInvoice, StdSemesterInvoice
+from app.academics.admin.widgets import CurriCrsWgt
+from app.finance.models.invoice import CrsInvoice, StdSemesterInvoice
 from app.finance.models.status_types_methods import (
     FeeType,
     InvoiceStatus,
@@ -76,9 +76,9 @@ class InvoiceWgt(widgets.ForeignKeyWidget):
     """Resolve course invoices using student, curriculum course, and semester."""
 
     def __init__(self):
-        super().__init__(CourseInvoice)
+        super().__init__(CrsInvoice)
         self.student_w = StdUserWgt()
-        self.curriculum_course_w = CurriCourseWgt()
+        self.curriculum_course_w = CurriCrsWgt()
         self.semester_w = SemWgt()
 
     def _parse_amount(self, value: str) -> Decimal:
@@ -90,7 +90,7 @@ class InvoiceWgt(widgets.ForeignKeyWidget):
         except (TypeError, ValueError):
             return Decimal("0.00")
 
-    def clean(self, value, row=None, *args, **kwargs) -> Optional[CourseInvoice]:
+    def clean(self, value, row=None, *args, **kwargs) -> Optional[CrsInvoice]:
         """Return or create an invoice using human-readable row columns."""
         student_value = get_in_row("student_id", row)
         curriculum_value = get_in_row("curriculum", row)
@@ -103,7 +103,7 @@ class InvoiceWgt(widgets.ForeignKeyWidget):
         if not (student and curriculum_course and semester):
             return None
 
-        invoice = CourseInvoice.objects.filter(
+        invoice = CrsInvoice.objects.filter(
             student=student,
             curriculum_course=curriculum_course,
             semester=semester,
@@ -114,7 +114,7 @@ class InvoiceWgt(widgets.ForeignKeyWidget):
         initial_due = self._parse_amount(get_in_row("initial_amount_due", row))
         balance = self._parse_amount(get_in_row("balance", row)) or initial_due
 
-        return CourseInvoice.objects.create(
+        return CrsInvoice.objects.create(
             student=student,
             curriculum_course=curriculum_course,
             semester=semester,

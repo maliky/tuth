@@ -11,7 +11,7 @@ from app.academics.models.concentration import Major
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from app.academics.utils import (
     expand_crs_code,
     normalize_college_code,
@@ -28,20 +28,20 @@ from app.academics.ensures import (
 from app.shared.utils import asserts_keys, get_in_row, parse_str, to_int
 
 
-class CurriCourseWgt(widgets.ForeignKeyWidget):
-    """Create or CurriCourse from CSV rows.
+class CurriCrsWgt(widgets.ForeignKeyWidget):
+    """Create or CurriCrs from CSV rows.
 
     Use the curriculum_short name as the 'value'.
     The widget delegates curriculum parsing to CurriWgt and course parsing
-    to CourseWgt then assembles a CurriCourse object from the results.
+    to CrsWgt then assembles a CurriCrs object from the results.
     """
 
     def __init__(self):
-        super().__init__(CurriCourse)
+        super().__init__(CurriCrs)
         self.curriculum_w = CurriWgt()
-        self.course_w = CourseWgt()
+        self.course_w = CrsWgt()
 
-    def clean(self, value, row=None, *args, **kwargs) -> CurriCourse:
+    def clean(self, value, row=None, *args, **kwargs) -> CurriCrs:
         """Assemble course_dept, curriculum and course to return a curriculum course."""
         # we don't use value.  We always get a curriculum course back
 
@@ -107,7 +107,7 @@ class CurriWgt(widgets.ForeignKeyWidget):
         return curriculum
 
 
-class CourseWgt(widgets.ForeignKeyWidget):
+class CrsWgt(widgets.ForeignKeyWidget):
     """Convert course_* CSV columns into a Course.
 
     course_dept and course_no identify the course while college is
@@ -154,16 +154,16 @@ class CourseWgt(widgets.ForeignKeyWidget):
         return crs_obj
 
 
-class CourseManyWgt(widgets.ManyToManyWidget):
+class CrsManyWgt(widgets.ManyToManyWidget):
     """Parse list_courses and return a list of Course objects.
 
     The widget splits the CSV column on ; and delegates parsing of each
-    token to CourseWgt, creating courses on the fly when needed.
+    token to CrsWgt, creating courses on the fly when needed.
     """
 
     def __init__(self):
         super().__init__(Course, separator=";", field="code")
-        self.course_w = CourseWgt()
+        self.course_w = CrsWgt()
 
     def clean(self, value, row=None, *args, **kwargs) -> list[Course]:
         """Returns a list of Course instances parsed from the provided CSV value.
@@ -177,7 +177,7 @@ class CourseManyWgt(widgets.ManyToManyWidget):
         for token in str(value).split(self.separator):
             token = token.strip()
             if token:
-                # Delegate to CourseCodeWgt to parse/create individual course
+                # Delegate to CrsCodeWgt to parse/create individual course
                 course = self.course_w.clean(token, row)
                 if course:
                     courses.append(course)
@@ -198,7 +198,7 @@ class CourseManyWgt(widgets.ManyToManyWidget):
         return self.separator.join(codes)
 
 
-class CourseCodeWgt(widgets.ForeignKeyWidget):
+class CrsCodeWgt(widgets.ForeignKeyWidget):
     """Resolve a course code  into a Course.
 
     A Course code is <college_code>-<dept_code><course_no>.

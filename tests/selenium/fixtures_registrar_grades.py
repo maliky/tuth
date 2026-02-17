@@ -11,7 +11,7 @@ from django.contrib.auth.models import Permission
 from django.utils import timezone
 
 from app.academics.models.curriculum import Curriculum
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from app.people.models.student import Student
 from app.registry.models.grade import Grade, GradeValue
 from app.timetable.models.academic_year import AcademicYear
@@ -91,7 +91,7 @@ def reg_sec_factory(
         course_number: str = "101",
         curriculum_short_name: str = "CURRI_TEST",
     ) -> tuple[Section, Curriculum]:
-        curriculum_course: CurriCourse = curriculum_course_factory(
+        curriculum_course: CurriCrs = curriculum_course_factory(
             course_number, curriculum_short_name
         )
         if not curriculum_course.credit_hours_id:

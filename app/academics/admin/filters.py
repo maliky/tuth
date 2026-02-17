@@ -33,7 +33,7 @@ DEPARTMENT_CURRICULUM_LOOKUPS: LookUpType = (
 )
 
 
-class CourseCollegeFlt(BaseCollegeFlt):
+class CrsCollegeFlt(BaseCollegeFlt):
     field_path = "department__college"
     parameter_name = "department__college"
 
@@ -68,7 +68,7 @@ class DptCurriFltAC(ScopedAutocompleteFilter):
     target_model = Curriculum
 
 
-class CourseCurriFlt(admin.SimpleListFilter):
+class CrsCurriFlt(admin.SimpleListFilter):
     """Curriculum filter for courses (avoids reverse M2M autocomplete errors)."""
 
     title = "By Curriculum"
@@ -86,7 +86,7 @@ class CourseCurriFlt(admin.SimpleListFilter):
         return queryset
 
 
-class CurriCourseFacultyFltAC(ScopedAutocompleteFilter):
+class CurriCrsFacultyFltAC(ScopedAutocompleteFilter):
     """Autocomplete filter constrained to faculty teaching curriculum courses."""
 
     title = "Faculty"
@@ -96,7 +96,7 @@ class CurriCourseFacultyFltAC(ScopedAutocompleteFilter):
     target_model = Faculty
 
 
-class CurriCourseStdFltAC(ScopedAutocompleteFilter):
+class CurriCrsStdFltAC(ScopedAutocompleteFilter):
     """Autocomplete filter constrained to students registered in course sections."""
 
     title = "Student"

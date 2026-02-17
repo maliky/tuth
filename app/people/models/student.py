@@ -14,12 +14,12 @@ from simple_history.models import HistoricalRecords
 from app.academics.choices import LEVEL_NUMBER
 from app.academics.constants import MAX_STUDENT_CREDITS
 from app.academics.models.course import Course
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 
 from app.academics.models.curriculum import Curriculum
 from app.people.models.core import AbstractPerson
 from app.shared.mixins import SimpleTableMixin
-from app.shared.types import CourseQuery
+from app.shared.types import CrsQuery
 from app.timetable.models.semester import Semester
 
 
@@ -105,7 +105,7 @@ class Student(AbstractPerson):
         """Return the student's current college."""
         return self.curriculum.college
 
-    def passed_crss(self) -> CourseQuery:
+    def passed_crss(self) -> CrsQuery:
         """Return courses the student completed with a passing grade."""
         return Course.objects.filter(
             in_curriculum_courses__sections__grade__student=self,
@@ -117,7 +117,7 @@ class Student(AbstractPerson):
     def completed_credits(self) -> int:
         """Return sum of credit hours successfully completed."""
         passed_ids = self.passed_crss().values_list("id", flat=True)
-        agg = CurriCourse.objects.filter(
+        agg = CurriCrs.objects.filter(
             curriculum=self.curriculum, course_id__in=passed_ids
         ).aggregate(total=Sum("credit_hours"))
         return agg.get("total") or 0
@@ -134,7 +134,7 @@ class Student(AbstractPerson):
             return LEVEL_NUMBER.THREE.label
         return LEVEL_NUMBER.FOUR.label
 
-    def allowed_crss(self) -> CourseQuery:
+    def allowed_crss(self) -> CrsQuery:
         """Return courses available for registration based on prerequisites."""
         curriculum = self.curriculum or Curriculum.get_dft()
         all_courses = Course.for_curri(curriculum)

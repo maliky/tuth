@@ -12,7 +12,7 @@ from django.db.models import Max
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
-from app.finance.models.invoice import CourseInvoice, StdSemesterInvoice
+from app.finance.models.invoice import CrsInvoice, StdSemesterInvoice
 from app.finance.models.payment import Payment
 from app.timetable.models.semester import Semester
 from app.timetable.utils import format_datetime
@@ -27,7 +27,7 @@ from .student_helpers import (
 class ReceiptRowT(TypedDict):
     """Row details for a receipt line item."""
 
-    invoice: CourseInvoice
+    invoice: CrsInvoice
     paid_total: Decimal
     paid_on: str
 
@@ -54,7 +54,7 @@ def std_payment_receipt(
         .first()
     )
     payments: list[Payment] = []
-    invoices: list[CourseInvoice] = []
+    invoices: list[CrsInvoice] = []
     if parent_invoice is not None:
         payments = list(
             Payment.objects.filter(

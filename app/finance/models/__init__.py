@@ -1,7 +1,7 @@
 """Convenience exports for finance app models."""
 
-from app.finance.models.fee_stack import CourseFeeStack, FeeStack, FeeStackLine
-from app.finance.models.invoice import CourseInvoice, Invoice, StdSemesterInvoice
+from app.finance.models.fee_stack import CrsFeeStack, FeeStack, FeeStackLine
+from app.finance.models.invoice import CrsInvoice, Invoice, StdSemesterInvoice
 from app.finance.models.invoice_snapshot import InvoiceSnapshot
 from app.finance.models.payment import Payment
 from app.finance.models.scholarship import (
@@ -21,12 +21,12 @@ from app.finance.models.status_types_methods import (
 __all__ = [
     "AccountChartType",
     "AccountType",
-    "CourseFeeStack",
+    "CrsFeeStack",
     "FeeStack",
     "FeeStackLine",
     "FeeType",
     "Payer",
-    "CourseInvoice",
+    "CrsInvoice",
     "Invoice",
     "InvoiceSnapshot",
     "Payment",

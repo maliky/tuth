@@ -8,7 +8,7 @@ from decimal import Decimal
 import pytest
 
 from app.finance.models.fee_stack import FeeStack, FeeStackLine
-from app.finance.models.invoice import CourseInvoice
+from app.finance.models.invoice import CrsInvoice
 from app.finance.models.payment import Payment
 from app.finance.models.status_types_methods import (
     FeeType,
@@ -50,7 +50,7 @@ def test_build_invoice_snapshot_uses_parent_totals(
     student.save(update_fields=["curriculum", "last_enrolled_semester"])
 
     tuition = curriculum_course.tuition_for()
-    course_invoice = CourseInvoice.objects.create(
+    course_invoice = CrsInvoice.objects.create(
         curriculum_course=curriculum_course,
         student=student,
         semester=semester,

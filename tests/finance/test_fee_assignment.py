@@ -10,7 +10,7 @@ from django.test import override_settings
 
 from app.finance.fee_assignment import attach_sem_fee_stacks
 from app.finance.models.fee_stack import FeeStack, FeeStackLine
-from app.finance.models.invoice import CourseInvoice
+from app.finance.models.invoice import CrsInvoice
 from app.finance.models.status_types_methods import (
     FeeType,
     InvoiceStatus,
@@ -54,7 +54,7 @@ def test_attach_sem_fee_stacks_is_idempotent(
     student.save(update_fields=["curriculum", "last_enrolled_semester"])
 
     tuition = curriculum_course.tuition_for()
-    course_invoice = CourseInvoice.objects.create(
+    course_invoice = CrsInvoice.objects.create(
         curriculum_course=curriculum_course,
         student=student,
         semester=semester,

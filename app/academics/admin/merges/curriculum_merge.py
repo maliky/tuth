@@ -10,7 +10,7 @@ from django.db.models.deletion import ProtectedError
 
 from app.academics.models.concentration import Major, Minor
 from app.academics.models.curriculum import Curriculum
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.prerequisite import Prerequisite
 from app.finance.models.invoice import Invoice
 from app.people.models.student import Student
@@ -20,10 +20,10 @@ from app.registry.models.registration import Registration
 from app.timetable.models.section import Section
 
 from .helpers import (
-    ConflictChoiceByCourseIdT,
+    ConflictChoiceByCrsIdT,
     ConflictChoiceT,
-    ConflictCurriCoursePairT,
-    CourseIdityT,
+    ConflictCurriCrsPairT,
+    CrsIdityT,
     MERGE_CHOICE_KEEP_SOURCE,
     MERGE_CHOICE_KEEP_TARGET,
     MERGE_CHOICE_MERGE,
@@ -45,22 +45,22 @@ from .section_merge import (
 
 def list_curri_crs_conflicts(
     target: Curriculum, source: Curriculum
-) -> tuple[list[ConflictCurriCoursePairT], list[CurriCourse]]:
+) -> tuple[list[ConflictCurriCrsPairT], list[CurriCrs]]:
     """Return conflicting and non-conflicting programmed courses for two curricula."""
     target_rows = list(
-        CurriCourse.objects.filter(curriculum=target)
+        CurriCrs.objects.filter(curriculum=target)
         .select_related("course", "credit_hours")
         .order_by("id")
     )
     source_rows = list(
-        CurriCourse.objects.filter(curriculum=source)
+        CurriCrs.objects.filter(curriculum=source)
         .select_related("course", "credit_hours")
         .order_by("id")
     )
     # > Reconciliation uses canonical identity (department, number), not raw course id.
     target_by_course_identity = _index_curri_crss_by_idity(target_rows)
-    conflicts: list[ConflictCurriCoursePairT] = []
-    non_conflicting: list[CurriCourse] = []
+    conflicts: list[ConflictCurriCrsPairT] = []
+    non_conflicting: list[CurriCrs] = []
     for source_row in source_rows:
         source_identity = _curri_crs_idity(source_row)
         target_row = (
@@ -75,7 +75,7 @@ def list_curri_crs_conflicts(
     return conflicts, non_conflicting
 
 
-def _overlay_curri_crs_fields(target: CurriCourse, source: CurriCourse) -> None:
+def _overlay_curri_crs_fields(target: CurriCrs, source: CurriCrs) -> None:
     """Copy selected field values from source onto target before merge."""
     updated_fields: list[str] = []
     field_names = (
@@ -98,7 +98,7 @@ def _overlay_curri_crs_fields(target: CurriCourse, source: CurriCourse) -> None:
         target.save(update_fields=updated_fields)
 
 
-def _keep_target_curri_crs(target: CurriCourse, source: CurriCourse) -> dict[str, int]:
+def _keep_target_curri_crs(target: CurriCrs, source: CurriCrs) -> dict[str, int]:
     """Keep target programmed course and delete source when possible."""
     summary = {
         "sections_moved": 0,
@@ -116,8 +116,8 @@ def _keep_target_curri_crs(target: CurriCourse, source: CurriCourse) -> dict[str
 
 
 def _merge_curri_crs_conflict(
-    target: CurriCourse,
-    source: CurriCourse,
+    target: CurriCrs,
+    source: CurriCrs,
     choice: ConflictChoiceT,
 ) -> dict[str, int]:
     """Resolve one conflicting programmed course pair with a caller-selected mode."""
@@ -142,10 +142,10 @@ def _merge_curri_crs_conflict(
 def merge_curra(
     target: Curriculum,
     sources,
-    conflict_choices: ConflictChoiceByCourseIdT | None = None,
+    conflict_choices: ConflictChoiceByCrsIdT | None = None,
 ):
     """Merge curricula: move attached records to the target curriculum."""
-    selected_choices: ConflictChoiceByCourseIdT = conflict_choices or {}
+    selected_choices: ConflictChoiceByCrsIdT = conflict_choices or {}
     summary = {
         "curricula_merged": 0,
         "curricula_retained": 0,
@@ -175,7 +175,7 @@ def merge_curra(
             continue
         skip_delete = False
         target_rows = list(
-            CurriCourse.objects.filter(curriculum=target)
+            CurriCrs.objects.filter(curriculum=target)
             .select_related("course")
             .order_by("id")
         )
@@ -200,7 +200,7 @@ def merge_curra(
             prereq.curriculum = target
             prereq.save(update_fields=["curriculum"])
             summary["prerequisites_moved"] += 1
-        for cc in CurriCourse.objects.filter(curriculum=src).select_related("course"):
+        for cc in CurriCrs.objects.filter(curriculum=src).select_related("course"):
             # > Avoid duplicate entries using canonical identity.
             source_identity = _curri_crs_idity(cc)
             existing = (
@@ -332,7 +332,7 @@ def reconcile_std_curri_records(
     summary = empty_std_curri_record_summary()
 
     target_curriculum_courses = list(
-        CurriCourse.objects.filter(curriculum=target_curriculum)
+        CurriCrs.objects.filter(curriculum=target_curriculum)
         .select_related("course")
         .only("id", "course_id", "course__department_id", "course__number")
     )
@@ -342,7 +342,7 @@ def reconcile_std_curri_records(
         return summary
 
     source_curriculum_courses = list(
-        CurriCourse.objects.filter(curriculum=source_curriculum)
+        CurriCrs.objects.filter(curriculum=source_curriculum)
         .select_related("course")
         .only("id", "course_id", "course__department_id", "course__number")
     )
@@ -406,7 +406,7 @@ def reconcile_std_curri_records(
     if not target_curriculum_course_ids:
         return summary
 
-    target_grade_values_by_course_identity: dict[CourseIdityT, set[int | None]] = (
+    target_grade_values_by_course_identity: dict[CrsIdityT, set[int | None]] = (
         defaultdict(set)
     )
     for department_id, course_number, value_id in Grade.objects.filter(
@@ -423,7 +423,7 @@ def reconcile_std_curri_records(
         target_grade_values_by_course_identity[identity].add(value_id)
     target_has_grade_course_identities = set(target_grade_values_by_course_identity)
 
-    target_registration_course_identities: set[CourseIdityT] = set()
+    target_registration_course_identities: set[CrsIdityT] = set()
     for department_id, course_number in Registration.objects.filter(
         student=student,
         section__curriculum_course_id__in=target_curriculum_course_ids,

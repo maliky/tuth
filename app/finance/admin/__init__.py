@@ -1,7 +1,7 @@
 """Initialization for the admin package."""
 
 from app.finance.admin.core import (
-    CourseInvoiceAdmin,
+    CrsInvoiceAdmin,
     LookupAdmin,
     PaymentAdmin,
     ScholarshipAdmin,
@@ -10,7 +10,7 @@ from app.finance.admin.core import (
 
 
 __all__ = [
-    "CourseInvoiceAdmin",
+    "CrsInvoiceAdmin",
     "LookupAdmin",
     "PaymentAdmin",
     "ScholarshipAdmin",

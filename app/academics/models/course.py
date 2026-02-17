@@ -15,13 +15,13 @@ from app.academics.models.department import Department
 from app.academics.utils import make_crs_code
 from app.registry.models import CreditHour
 from app.shared.fuzzy_matching import token_similarity
-from app.shared.types import CourseQuery
+from app.shared.types import CrsQuery
 
 DEFAULT_COURSE_NO = count(start=1, step=1)
 logger = logging.getLogger(__name__)
 
 
-class CourseManager(models.Manager["Course"]):
+class CrsManager(models.Manager["Course"]):
     """Manager with fuzzy lookup to avoid near-duplicate courses."""
 
     def _token(self, department: Department, number: str, title: str | None) -> str:
@@ -108,7 +108,7 @@ class Course(models.Model):
         save() populates code from name and number.
     """
 
-    objects: CourseManager = CourseManager()
+    objects: CrsManager = CrsManager()
     history = HistoricalRecords()
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
@@ -138,7 +138,7 @@ class Course(models.Model):
     )
 
     @classmethod
-    def for_curri(cls, curriculum) -> CourseQuery:
+    def for_curri(cls, curriculum) -> CrsQuery:
         """Return courses included in the given curriculum."""
         return cls.objects.filter(curricula=curriculum).distinct()
 

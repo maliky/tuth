@@ -3,7 +3,7 @@
 from decimal import Decimal
 from typing import Optional
 
-from app.finance.models.fee_stack import CourseFeeStack, FeeStack, FeeStackLine
+from app.finance.models.fee_stack import CrsFeeStack, FeeStack, FeeStackLine
 from app.finance.models.status_types_methods import (
     FeeType,
     Payer,
@@ -29,7 +29,7 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from app.finance.admin.resources import InvoiceResource, PaymentResource
 from app.finance.admin.filters import (
     EffectiveSemesterFltAC,
@@ -38,10 +38,10 @@ from app.finance.admin.filters import (
 )
 from app.finance.admin.inlines import (
     InvoicePaymentIL,
-    StdSemCourseInvoiceIL,
+    StdSemCrsInvoiceIL,
 )
 from app.finance.models.payment import Payment
-from app.finance.models.invoice import CourseInvoice, StdSemesterInvoice
+from app.finance.models.invoice import CrsInvoice, StdSemesterInvoice
 from app.finance.models.scholarship import Scholarship
 from app.finance.utils import create_pending_payments
 from app.people.models.staffs import Staff
@@ -94,8 +94,8 @@ class AmountDueFlt(admin.SimpleListFilter):
         return queryset.filter(pk__in=invoice_ids)
 
 
-@admin.register(CourseInvoice)
-class CourseInvoiceAdmin(
+@admin.register(CrsInvoice)
+class CrsInvoiceAdmin(
     ScopedAutocompleteAdminMixin,
     SimpleHistoryAdmin,
     ImportExportModelAdmin,
@@ -148,7 +148,7 @@ class CourseInvoiceAdmin(
         )
 
     @admin.display(description="Payments")
-    def payments_link(self, obj: CourseInvoice) -> str:
+    def payments_link(self, obj: CrsInvoice) -> str:
         """Return a clickable payment count for the invoice."""
         count = getattr(obj, "payments_count", 0)
         parent_invoice_id = obj.student_semester_invoice_id
@@ -159,7 +159,7 @@ class CourseInvoiceAdmin(
         return format_html('<a href="{}?{}">{}</a>', base_url, query, count)
 
     @admin.display(description="Student")
-    def std_label(self, obj: CourseInvoice) -> str:
+    def std_label(self, obj: CrsInvoice) -> str:
         """Return the student name and ID for display."""
         student = obj.student
         name = student.long_name or student.user.get_full_name() or student.student_id
@@ -167,7 +167,7 @@ class CourseInvoiceAdmin(
         return f"{name} ({student_id})"
 
     @admin.display(description="Semester")
-    def sem_label(self, obj: CourseInvoice) -> str:
+    def sem_label(self, obj: CrsInvoice) -> str:
         """Return the invoice semester label."""
         return str(obj.semester)
 
@@ -251,11 +251,11 @@ class CourseInvoiceAdmin(
             open_semester = self._get_open_regio_sem(request)
             # Only allow curriculum courses with sections in the open semester.
             if open_semester:
-                kwargs["queryset"] = CurriCourse.objects.filter(
+                kwargs["queryset"] = CurriCrs.objects.filter(
                     sections__semester=open_semester
                 ).distinct()
             else:
-                kwargs["queryset"] = CurriCourse.objects.none()
+                kwargs["queryset"] = CurriCrs.objects.none()
 
         if db_field.name == "recorded_by":
             kwargs["form_class"] = StaffChoiceField
@@ -322,7 +322,7 @@ class StdSemInvoiceAdmin(
     )
     list_select_related = ("student", "semester", "status")
     autocomplete_fields = ("student", "semester", "fee_stacks")
-    inlines = (StdSemCourseInvoiceIL, InvoicePaymentIL)
+    inlines = (StdSemCrsInvoiceIL, InvoicePaymentIL)
     readonly_fields = ("created_at", "updated_at")
 
     def save_model(self, request, obj, form, change):
@@ -415,10 +415,10 @@ class FeeStackLineIL(admin.TabularInline):
     fields = ("fee_type", "amount", "payer", "effective_from_semester")
 
 
-class CourseFeeStackIL(admin.TabularInline):
+class CrsFeeStackIL(admin.TabularInline):
     """Inline editor for attaching courses to a fee stack."""
 
-    model = CourseFeeStack
+    model = CrsFeeStack
     fk_name = "fee_stack"
     extra = 0
     autocomplete_fields = ("course",)
@@ -438,7 +438,7 @@ class FeeStackAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
         "crs_count",
     )
     search_fields = ("name", "courses__short_code", "courses__code", "courses__title")
-    inlines = [FeeStackLineIL, CourseFeeStackIL]
+    inlines = [FeeStackLineIL, CrsFeeStackIL]
     _current_semester_cache: Optional[Semester] = None
     _current_semester_loaded = False
 
@@ -509,7 +509,7 @@ class FeeStackAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
             total = obj.total_amount_for_sem(semester)
         return f"{Decimal(total):.2f}"
 
-    @admin.display(description="Courses", ordering="annotated_course_count")
+    @admin.display(description="Crss", ordering="annotated_course_count")
     def crs_count(self, obj: FeeStack) -> int:
         """Return how many courses are linked to the stack."""
         return int(getattr(obj, "annotated_course_count", obj.courses.count()))
@@ -535,9 +535,9 @@ class FeeStackLineAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
     )
 
 
-@admin.register(CourseFeeStack)
-class CourseFeeStackAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
-    """Admin settings for CourseFeeStack."""
+@admin.register(CrsFeeStack)
+class CrsFeeStackAdmin(SimpleHistoryAdmin, GuardedModelAdmin):
+    """Admin settings for CrsFeeStack."""
 
     list_display = ("course", "fee_stack")
     autocomplete_fields = ("course", "fee_stack")

@@ -18,13 +18,13 @@ from .course_merge import (
 )
 from .curriculum_merge import merge_curra
 from .helpers import (
-    CourseMergeSummaryT,
+    CrsMergeSummaryT,
     _dpt_merge_collision_summary,
     merge_dpts,
 )
 
 if TYPE_CHECKING:
-    from app.academics.admin.core import CourseAdmin, CurriAdmin, DptAdmin
+    from app.academics.admin.core import CrsAdmin, CurriAdmin, DptAdmin
 
 
 @admin.action(description="Merge selected departments into the first")
@@ -168,7 +168,7 @@ def merge_curra_action(curriculum_admin: "CurriAdmin", request, queryset):
 
 
 @admin.action(description="Merge selected courses into the first")
-def merge_crss_action(course_admin: "CourseAdmin", request, queryset):
+def merge_crss_action(course_admin: "CrsAdmin", request, queryset):
     """Merge courses: move curriculum-course links and sections to the first course."""
     if queryset.count() < 2:
         messages.warning(request, "Select at least two courses to merge.")
@@ -221,7 +221,7 @@ def merge_crss_action(course_admin: "CourseAdmin", request, queryset):
 
 @admin.action(description="Merge courses by short code")
 def merge_crss_by_short_code_action(
-    course_admin: "CourseAdmin",
+    course_admin: "CrsAdmin",
     request,
     queryset,
 ):
@@ -236,7 +236,7 @@ def merge_crss_by_short_code_action(
         if course.short_code:
             grouped[course.short_code].append(course)
 
-    summary: CourseMergeSummaryT = {
+    summary: CrsMergeSummaryT = {
         "groups": 0,
         "merged": 0,
         "skipped_invoices": 0,

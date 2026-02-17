@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from import_export import fields, resources
 
-from app.academics.admin.widgets import CurriCourseWgt
+from app.academics.admin.widgets import CurriCrsWgt
 from app.finance.admin.widgets import (
     InvoiceStatusWgt,
     PayerWgt,
@@ -13,7 +13,7 @@ from app.finance.admin.widgets import (
     StaffWgt,
     StdSemInvoiceWgt,
 )
-from app.finance.models.invoice import CourseInvoice
+from app.finance.models.invoice import CrsInvoice
 from app.finance.models.payment import Payment
 from app.people.admin.widgets import StdUserWgt
 from app.shared.utils import parse_str
@@ -21,7 +21,7 @@ from app.timetable.admin.core_widgets import SemWgt
 
 
 class InvoiceResource(resources.ModelResource):
-    """Import/export resource for CourseInvoice using readable columns."""
+    """Import/export resource for CrsInvoice using readable columns."""
 
     student = fields.Field(
         column_name="student_id",
@@ -31,7 +31,7 @@ class InvoiceResource(resources.ModelResource):
     curriculum_course = fields.Field(
         column_name="curriculum",
         attribute="curriculum_course",
-        widget=CurriCourseWgt(),
+        widget=CurriCrsWgt(),
     )
     semester = fields.Field(
         column_name="semester_no",
@@ -55,7 +55,7 @@ class InvoiceResource(resources.ModelResource):
     student_name = fields.Field(attribute=None, column_name="student_name")
 
     class Meta:
-        model = CourseInvoice
+        model = CrsInvoice
         import_id_fields = ("student", "curriculum_course", "semester")
         fields = (
             "student",

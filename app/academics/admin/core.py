@@ -14,7 +14,7 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models import (
     CurriStdEnroll,
     College,
@@ -43,19 +43,19 @@ from .actions import (
     update_level_number,
 )
 from .filters import (
-    CourseCollegeFlt,
-    CourseCurriFlt,
+    CrsCollegeFlt,
+    CrsCurriFlt,
     CurriFltAC,
-    CurriCourseFacultyFltAC,
-    CurriCourseStdFltAC,
+    CurriCrsFacultyFltAC,
+    CurriCrsStdFltAC,
     DptCurriFltAC,
     DptFltAC,
 )
 from .inlines import (
-    CourseCurriIL,
-    CourseFeeStackIL,
-    CurriCourseIL,
-    DptCourseIL,
+    CrsCurriIL,
+    CrsFeeStackIL,
+    CurriCrsIL,
+    DptCrsIL,
     PrerequisiteIL,
     RequiresIL,
 )
@@ -64,7 +64,7 @@ from .merges import (
     MERGE_CHOICE_KEEP_TARGET,
     MERGE_CHOICE_MERGE,
     MERGE_CHOICE_SKIP,
-    ConflictChoiceByCourseIdT,
+    ConflictChoiceByCrsIdT,
     StdCurriRecordMergeSummaryT,
     empty_std_curri_record_summary,
     merge_crss_action,
@@ -78,8 +78,8 @@ from .merges import (
 from app.academics.prereq_graph import export_prereq_graph
 from .resources import (
     CollegeResource,
-    CourseResource,
-    CurriCourseResource,
+    CrsResource,
+    CurriCrsResource,
     CurriResource,
     DptResource,
     PrerequisiteResource,
@@ -187,9 +187,9 @@ class CurriMergeConflictForm(forms.Form):
             return self.FIELD_FROM_SOURCE
         return self.FIELD_FROM_TARGET
 
-    def get_conflict_choices(self) -> ConflictChoiceByCourseIdT:
+    def get_conflict_choices(self) -> ConflictChoiceByCrsIdT:
         """Return validated conflict choices keyed by course id."""
-        choices: ConflictChoiceByCourseIdT = {}
+        choices: ConflictChoiceByCrsIdT = {}
         for course_id in self._conflict_course_ids:
             field_name = self.conflict_field_key(course_id)
             raw_choice = self.cleaned_data.get(field_name, MERGE_CHOICE_MERGE)
@@ -240,7 +240,7 @@ class CollegeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
         )
         return format_html('<a href="{}">{}</a>', url, count)
 
-    @admin.display(description="Courses")
+    @admin.display(description="Crss")
     def crs_count_link(self, obj: College):
         count = obj.crs_count
         url = reverse("admin:academics_course_changelist") + (
@@ -312,7 +312,7 @@ class CollegeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
 
 
 @admin.register(Course)
-class CourseAdmin(DptRestrictedAdmin):
+class CrsAdmin(DptRestrictedAdmin):
     """Admin interface for Course.
 
     Provides course management with extra tools:
@@ -326,7 +326,7 @@ class CourseAdmin(DptRestrictedAdmin):
         dropdown to assign them all to a different college.
     """
 
-    resource_class = CourseResource
+    resource_class = CrsResource
     list_display = (
         "short_code",
         "title",
@@ -337,18 +337,18 @@ class CourseAdmin(DptRestrictedAdmin):
     # Use list filters for curricula to avoid reverse M2M autocomplete errors.
     # > TODO: Add the list of student enrolled in this course the current semester.
     inlines = [
-        CourseFeeStackIL,
+        CrsFeeStackIL,
         RequiresIL,
         PrerequisiteIL,
-        CourseCurriIL,
+        CrsCurriIL,
     ]
     list_select_related = ("department",)
     list_editable = ("department",)
     list_filter = (
         SemFltAC,
         DptFltAC,
-        CourseCurriFlt,
-        CourseCollegeFlt,
+        CrsCurriFlt,
+        CrsCollegeFlt,
     )
 
     list_per_page = 100
@@ -447,7 +447,7 @@ class CurriAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
     list_filter = (SemFltAC, "college")
     list_editable = ("status", "is_active", "college")
     autocomplete_fields = ("college",)
-    inlines = [CurriCourseIL]
+    inlines = [CurriCrsIL]
 
     # list_selected_relate reduces the number of queries in db
     list_select_related = ("college",)
@@ -464,7 +464,7 @@ class CurriAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         )
         return format_html('<a href="{}">{}</a>', url, count)
 
-    @admin.display(description="Courses")
+    @admin.display(description="Crss")
     def crs_count_link(self, obj):
         """Link course counts to the course changelist for this curriculum."""
         count = obj.crs_count()
@@ -551,9 +551,9 @@ class CurriAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
                         status_id="pending",
                         is_active=False,
                     )
-                    source_rows = CurriCourse.objects.filter(curriculum=source)
+                    source_rows = CurriCrs.objects.filter(curriculum=source)
                     for row in source_rows:
-                        CurriCourse.objects.create(
+                        CurriCrs.objects.create(
                             curriculum=target,
                             course_id=row.course_id,
                             is_required=row.is_required,
@@ -875,9 +875,9 @@ class CurriAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         source_ids = [cur.pk for cur in sources if cur.pk]
         if not source_ids or not target.pk:
             return
-        overlap_count = CurriCourse.objects.filter(
+        overlap_count = CurriCrs.objects.filter(
             curriculum=target,
-            course_id__in=CurriCourse.objects.filter(curriculum_id__in=source_ids).values(
+            course_id__in=CurriCrs.objects.filter(curriculum_id__in=source_ids).values(
                 "course_id"
             ),
         ).count()
@@ -892,18 +892,16 @@ class CurriAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
             )
 
 
-@admin.register(CurriCourse)
-class CurriCourseAdmin(
-    ProtectedDeleteAdminMixin, MergeWizardMixin, CollegeRestrictedAdmin
-):
-    """Admin screen for :class:~app.academics.models.CurriCourse.
+@admin.register(CurriCrs)
+class CurriCrsAdmin(ProtectedDeleteAdminMixin, MergeWizardMixin, CollegeRestrictedAdmin):
+    """Admin screen for :class:~app.academics.models.CurriCrs.
 
     list_display shows the curriculum and related course while
     autocomplete_fields make lookups faster. list_select_related joins
     both relations for efficient queries.
     """
 
-    resource_class = CurriCourseResource
+    resource_class = CurriCrsResource
     college_field = "curriculum__college"
     merge_fields = (
         "curriculum",
@@ -927,8 +925,8 @@ class CurriCourseAdmin(
         CurriFltAC,
         DptFltAC,
         "level_number",
-        CurriCourseFacultyFltAC,
-        CurriCourseStdFltAC,
+        CurriCrsFacultyFltAC,
+        CurriCrsStdFltAC,
     )
 
     list_editable = ("curriculum", "level_number")
@@ -972,7 +970,7 @@ class CurriCourseAdmin(
 
     def merge_object_label(self, obj) -> str:
         """Return a label for merge choices."""
-        curriculum_course = cast(CurriCourse, obj)
+        curriculum_course = cast(CurriCrs, obj)
         course = curriculum_course.course
         curriculum = curriculum_course.curriculum
         course_label = course.short_code or course.code or str(course)
@@ -981,16 +979,16 @@ class CurriCourseAdmin(
 
     def merge_records(self, target, sources):
         """Merge curriculum courses into the target selection."""
-        target_course = cast(CurriCourse, target)
+        target_course = cast(CurriCrs, target)
         return merge_curri_crss(target_course, sources)
 
     @admin.display(description="Course")
-    def crs_display(self, obj: CurriCourse) -> str:
+    def crs_display(self, obj: CurriCrs) -> str:
         """Truncate course display to avoid very long values in list view."""
         return Truncator(str(obj.course)).chars(50)
 
     @admin.display(description="Department")
-    def dpt_link(self, obj: CurriCourse):
+    def dpt_link(self, obj: CurriCrs):
         """Link to departments filtered to this course's department."""
         dept = getattr(obj.course, "department", None)
         if not dept:
@@ -1011,7 +1009,7 @@ class CurriCourseAdmin(
 
     # Advanced requirement-group link is kept dormant until the model is re-enabled.
     @admin.display(description="Requirement groups")
-    def req_gps_link(self, obj: CurriCourse):
+    def req_gps_link(self, obj: CurriCrs):
         """Return requirement-group count when dormant advanced UI is re-enabled."""
         return obj.requirement_groups.count()
 
@@ -1266,7 +1264,7 @@ class DptAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
     ]
     list_editable = ("college",)
     search_fields = ("code", "long_name", "college")
-    inlines = [DptCourseIL]
+    inlines = [DptCrsIL]
 
     def get_queryset(self, request):
         # > explain the djangonic logic here
@@ -1278,7 +1276,7 @@ class DptAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
             ),
         ).prefetch_related("courses__curricula")
 
-    @admin.display(description="Courses", ordering="crs_count")
+    @admin.display(description="Crss", ordering="crs_count")
     def crs_count_link(self, obj):
         """Adding a link to the course number."""
         count = getattr(obj, "crs_count", None)

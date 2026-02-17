@@ -8,14 +8,14 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.http import urlencode
 
-from app.finance.models.invoice import CourseInvoice
+from app.finance.models.invoice import CrsInvoice
 from app.finance.models.payment import Payment
 
 
 class StdInvoiceIL(admin.TabularInline):
     """Inline list of student invoices with payment counts."""
 
-    model = CourseInvoice
+    model = CrsInvoice
     fk_name = "student"
     classes = ["collapse"]
     can_delete = False
@@ -37,7 +37,7 @@ class StdInvoiceIL(admin.TabularInline):
         )
 
     @admin.display(description="Payments")
-    def payments_link(self, obj: CourseInvoice) -> str:
+    def payments_link(self, obj: CrsInvoice) -> str:
         """Return a link to filtered payments for the invoice."""
         count = getattr(obj, "payments_count", 0)
         parent_invoice_id = obj.student_semester_invoice_id
@@ -59,10 +59,10 @@ class StdSemInvoicePaymentIL(admin.TabularInline):
     fields = ("amount_paid", "status", "payment_method", "recorded_by")
 
 
-class StdSemCourseInvoiceIL(admin.TabularInline):
+class StdSemCrsInvoiceIL(admin.TabularInline):
     """Inline list of course invoices attached to a student-semester invoice."""
 
-    model = CourseInvoice
+    model = CrsInvoice
     fk_name = "student_semester_invoice"
     classes = ["collapse"]
     extra = 0

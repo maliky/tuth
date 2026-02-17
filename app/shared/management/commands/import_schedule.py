@@ -30,7 +30,7 @@ from app.academics.ensures import (
 )
 from app.academics.models.college import College
 from app.academics.models.course import Course
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.people.ensure_people import ensure_faculty
@@ -314,8 +314,8 @@ class Command(BaseCommand):
         course: Course,
         credit_hours: CreditHour,
         stats: ImportStats,
-    ) -> CurriCourse:
-        created = not CurriCourse.objects.filter(
+    ) -> CurriCrs:
+        created = not CurriCrs.objects.filter(
             curriculum=curriculum, course=course
         ).exists()
         curriculum_course = ensure_curri_crs(
@@ -358,7 +358,7 @@ class Command(BaseCommand):
     def _resolve_sec(
         self,
         semester: Semester,
-        curriculum_course: CurriCourse,
+        curriculum_course: CurriCrs,
         section_no: int,
         faculty: Optional[Faculty],
         stats: ImportStats,

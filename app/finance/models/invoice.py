@@ -161,7 +161,7 @@ class StdSemesterInvoice(StatusableMixin, models.Model):
             remaining_balance = _clamp_non_negative(remaining_balance - child_balance)
             child_invoice.balance = child_balance
             child_invoice._update_status()
-            CourseInvoice.objects.filter(pk=child_invoice.pk).update(
+            CrsInvoice.objects.filter(pk=child_invoice.pk).update(
                 balance=child_invoice.balance,
                 status_id=child_invoice.status_id,
             )
@@ -230,12 +230,10 @@ class StdSemesterInvoice(StatusableMixin, models.Model):
         verbose_name_plural = "Student semester invoices"
 
 
-class CourseInvoice(StatusableMixin, models.Model):
+class CrsInvoice(StatusableMixin, models.Model):
     """Course-level invoice attached to a student and semester."""
 
-    curriculum_course = models.ForeignKey(
-        "academics.CurriCourse", on_delete=models.CASCADE
-    )
+    curriculum_course = models.ForeignKey("academics.CurriCrs", on_delete=models.CASCADE)
     student = models.ForeignKey("people.Student", on_delete=models.PROTECT)
     semester = models.ForeignKey("timetable.Semester", on_delete=models.PROTECT)
     student_semester_invoice = models.ForeignKey(
@@ -355,7 +353,7 @@ class CourseInvoice(StatusableMixin, models.Model):
 
 
 # Backward-compatible import alias kept temporarily while other modules migrate.
-Invoice = CourseInvoice
+Invoice = CrsInvoice
 
 
 @receiver(m2m_changed, sender=StdSemesterInvoice.fee_stacks.through)
@@ -367,7 +365,7 @@ def refresh_parent_invoice_after_fee_stack_change(
         instance.refresh_totals_from_sources(save_model=True)
 
 
-def _update_regio_status(invoice: "CourseInvoice") -> int:
+def _update_regio_status(invoice: "CrsInvoice") -> int:
     """Update registration status when the course-invoice status changes."""
     if not invoice:
         return 0

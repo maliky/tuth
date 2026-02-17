@@ -9,11 +9,11 @@ from django.test.utils import override_settings
 
 from app.academics import prereq_graph
 from app.academics.models.course import Course
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.requirement_group import (
-    CurriCourseReqGp,
-    CurriCourseReqMember,
+    CurriCrsReqGp,
+    CurriCrsReqMember,
     ReqKind,
 )
 
@@ -29,7 +29,7 @@ def test_export_prereq_graph_includes_global_prereqs(
     course = Course.get_unique_dft()
     prereq_course = Course.get_unique_dft()
     other_course = Course.get_unique_dft()
-    CurriCourse.objects.create(curriculum=curriculum, course=course)
+    CurriCrs.objects.create(curriculum=curriculum, course=course)
     Prerequisite.objects.create(
         course=course, prerequisite_course=prereq_course, curriculum=None
     )
@@ -68,28 +68,28 @@ def test_export_prereq_graph_coreq_clusters_and_alt_clusters(
     course_alt_a = Course.get_unique_dft()
     course_alt_b = Course.get_unique_dft()
 
-    cc_anchor = CurriCourse.objects.create(
+    cc_anchor = CurriCrs.objects.create(
         curriculum=curriculum,
         course=course_anchor,
         level_number=1,
     )
-    cc_coreq_a = CurriCourse.objects.create(
+    cc_coreq_a = CurriCrs.objects.create(
         curriculum=curriculum,
         course=course_coreq_a,
         level_number=2,
     )
-    cc_coreq_b = CurriCourse.objects.create(
+    cc_coreq_b = CurriCrs.objects.create(
         curriculum=curriculum,
         course=course_coreq_b,
         level_number=2,
     )
-    cc_alt_a = CurriCourse.objects.create(
+    cc_alt_a = CurriCrs.objects.create(
         curriculum=curriculum,
         course=course_alt_a,
         level_number=2,
         required_group_number=7,
     )
-    CurriCourse.objects.create(
+    CurriCrs.objects.create(
         curriculum=curriculum,
         course=course_alt_b,
         level_number=2,
@@ -114,12 +114,12 @@ def test_export_prereq_graph_coreq_clusters_and_alt_clusters(
         prerequisite_course=cc_anchor.course,
     )
 
-    coreq_group = CurriCourseReqGp.objects.create(
+    coreq_group = CurriCrsReqGp.objects.create(
         curriculum_course=cc_coreq_a,
         kind=ReqKind.COREQ_ALL,
         label="Coreq Bundle",
     )
-    CurriCourseReqMember.objects.create(
+    CurriCrsReqMember.objects.create(
         group=coreq_group,
         required_course=cc_coreq_b.course,
     )

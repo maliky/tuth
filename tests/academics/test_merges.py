@@ -17,7 +17,7 @@ from app.academics.admin.merges import (
     reconcile_std_curri_records,
 )
 from app.academics.models.course import Course
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.curriculum import Curriculum
 from app.registry.models.grade import Grade, GradeValue
 from app.registry.models.registration import Registration
@@ -31,10 +31,10 @@ pytestmark = pytest.mark.django_db(transaction=True)
 def _curriculum_course_constraint_disabled() -> Iterator[None]:
     """Temporarily drop the uniq_course_per_curriculum constraint."""
     constraint = next(
-        c for c in CurriCourse._meta.constraints if c.name == "uniq_course_per_curriculum"
+        c for c in CurriCrs._meta.constraints if c.name == "uniq_course_per_curriculum"
     )
     with connection.schema_editor(atomic=False) as schema_editor:
-        schema_editor.remove_constraint(CurriCourse, constraint)
+        schema_editor.remove_constraint(CurriCrs, constraint)
     try:
         yield
     finally:
@@ -53,7 +53,7 @@ def _curriculum_course_constraint_disabled() -> Iterator[None]:
             duplicate_pairs = list(cursor.fetchall())
         for curriculum_id, course_id in duplicate_pairs:
             duplicate_ids = list(
-                CurriCourse.objects.filter(
+                CurriCrs.objects.filter(
                     curriculum_id=curriculum_id,
                     course_id=course_id,
                 )
@@ -62,9 +62,9 @@ def _curriculum_course_constraint_disabled() -> Iterator[None]:
             )
             # Keep the first record to preserve the target row, drop the rest.
             for drop_id in duplicate_ids[1:]:
-                CurriCourse.objects.filter(id=drop_id).delete()
+                CurriCrs.objects.filter(id=drop_id).delete()
         with connection.schema_editor(atomic=False) as schema_editor:
-            schema_editor.add_constraint(CurriCourse, constraint)
+            schema_editor.add_constraint(CurriCrs, constraint)
 
 
 def test_merge_curri_crss_same_crs_moves_sec(curri_factory, crs_factory, dft_sem):
@@ -73,8 +73,8 @@ def test_merge_curri_crss_same_crs_moves_sec(curri_factory, crs_factory, dft_sem
     course = crs_factory("101")
     summary = {}
     with _curriculum_course_constraint_disabled():
-        target = CurriCourse.objects.create(curriculum=curriculum, course=course)
-        source = CurriCourse.objects.create(curriculum=curriculum, course=course)
+        target = CurriCrs.objects.create(curriculum=curriculum, course=course)
+        source = CurriCrs.objects.create(curriculum=curriculum, course=course)
         section = Section.objects.create(
             curriculum_course=source,
             semester=dft_sem,
@@ -84,14 +84,14 @@ def test_merge_curri_crss_same_crs_moves_sec(curri_factory, crs_factory, dft_sem
     assert summary["merged"] == 1
     assert summary["sections_moved"] == 1
     assert Section.objects.filter(id=section.id, curriculum_course=target).exists()
-    assert not CurriCourse.objects.filter(id=source.id).exists()
+    assert not CurriCrs.objects.filter(id=source.id).exists()
 
 
 def test_merge_curri_crss_blocks_crs_mismatch(curri_factory, crs_factory, dft_sem):
     """Merging curriculum courses rejects course mismatches."""
     curriculum = curri_factory("CURR-A")
-    target = CurriCourse.objects.create(curriculum=curriculum, course=crs_factory("101"))
-    source = CurriCourse.objects.create(curriculum=curriculum, course=crs_factory("202"))
+    target = CurriCrs.objects.create(curriculum=curriculum, course=crs_factory("101"))
+    source = CurriCrs.objects.create(curriculum=curriculum, course=crs_factory("202"))
     section = Section.objects.create(
         curriculum_course=source,
         semester=dft_sem,
@@ -99,7 +99,7 @@ def test_merge_curri_crss_blocks_crs_mismatch(curri_factory, crs_factory, dft_se
     )
     summary = merge_curri_crss(target, [source])
     assert summary["skipped_incompatible"] == 1
-    assert CurriCourse.objects.filter(id=source.id).exists()
+    assert CurriCrs.objects.filter(id=source.id).exists()
     assert Section.objects.filter(id=section.id, curriculum_course=source).exists()
 
 
@@ -109,11 +109,11 @@ def test_merge_curri_crss_skips_invoices(curri_factory, crs_factory, invoice_fac
     course = crs_factory("101")
     summary = {}
     with _curriculum_course_constraint_disabled():
-        target = CurriCourse.objects.create(curriculum=curriculum, course=course)
-        source = CurriCourse.objects.create(curriculum=curriculum, course=course)
+        target = CurriCrs.objects.create(curriculum=curriculum, course=course)
+        source = CurriCrs.objects.create(curriculum=curriculum, course=course)
         invoice_factory(source)
         summary = merge_curri_crss(target, [source])
-        assert CurriCourse.objects.filter(id=source.id).exists()
+        assert CurriCrs.objects.filter(id=source.id).exists()
         # Cleanup so the unique constraint can be restored.
         source.delete()
         target.delete()
@@ -128,8 +128,8 @@ def test_merge_curra_overlapping_crs_conflicts(
     target = curri_factory("CURR-T")
     source = curri_factory("CURR-S")
     course = crs_factory("101")
-    target_cc = CurriCourse.objects.create(curriculum=target, course=course)
-    source_cc = CurriCourse.objects.create(curriculum=source, course=course)
+    target_cc = CurriCrs.objects.create(curriculum=target, course=course)
+    source_cc = CurriCrs.objects.create(curriculum=source, course=course)
     target_cc.credit_hours = credit_hour_factory(3)
     target_cc.is_required = True
     target_cc.is_elective = False
@@ -159,8 +159,8 @@ def test_list_curri_crs_conflicts_uses_dpt_number_id(curri_factory, crs_factory)
         code=f"ALT{target_course.id}",
         short_code=f"ALT{target_course.number}",
     )
-    target_cc = CurriCourse.objects.create(curriculum=target, course=target_course)
-    source_cc = CurriCourse.objects.create(curriculum=source, course=source_course)
+    target_cc = CurriCrs.objects.create(curriculum=target, course=target_course)
+    source_cc = CurriCrs.objects.create(curriculum=source, course=source_course)
 
     conflicts, non_conflicting = list_curri_crs_conflicts(target, source)
 
@@ -175,8 +175,8 @@ def test_merge_curra_invoice_conflict_retains_source(
     target = curri_factory("CURR-T")
     source = curri_factory("CURR-S")
     course = crs_factory("101")
-    CurriCourse.objects.create(curriculum=target, course=course)
-    source_cc = CurriCourse.objects.create(curriculum=source, course=course)
+    CurriCrs.objects.create(curriculum=target, course=course)
+    source_cc = CurriCrs.objects.create(curriculum=source, course=course)
     invoice_factory(source_cc)
     summary = merge_curra(target, [source])
     assert summary["skipped_invoices"] == 1
@@ -190,8 +190,8 @@ def test_merge_curra_moves_curriculum_courses(curri_factory, crs_factory):
     source = curri_factory("CURR-S")
     course_a = crs_factory("101")
     course_b = crs_factory("202")
-    CurriCourse.objects.create(curriculum=target, course=course_a)
-    source_cc = CurriCourse.objects.create(curriculum=source, course=course_b)
+    CurriCrs.objects.create(curriculum=target, course=course_a)
+    source_cc = CurriCrs.objects.create(curriculum=source, course=course_b)
     summary = merge_curra(target, [source])
     assert summary["curriculum_courses_moved"] == 1
     assert summary["curricula_merged"] == 1
@@ -206,8 +206,8 @@ def test_merge_crss_moves_curriculum_courses(curri_factory, crs_factory):
     curriculum_b = curri_factory("CURR-B")
     target = crs_factory("101")
     source = crs_factory("202")
-    CurriCourse.objects.create(curriculum=curriculum_a, course=target)
-    source_cc = CurriCourse.objects.create(curriculum=curriculum_b, course=source)
+    CurriCrs.objects.create(curriculum=curriculum_a, course=target)
+    source_cc = CurriCrs.objects.create(curriculum=curriculum_b, course=source)
     summary = merge_crss(target, [source])
     assert summary["curriculum_courses_moved"] == 1
     assert summary["merged"] == 1
@@ -222,8 +222,8 @@ def test_merge_curri_crss_merges_conflicting_secs(curri_factory, crs_factory, df
     course = crs_factory("101")
     summary = {}
     with _curriculum_course_constraint_disabled():
-        target = CurriCourse.objects.create(curriculum=curriculum, course=course)
-        source = CurriCourse.objects.create(curriculum=curriculum, course=course)
+        target = CurriCrs.objects.create(curriculum=curriculum, course=course)
+        source = CurriCrs.objects.create(curriculum=curriculum, course=course)
         target_section = Section.objects.create(
             curriculum_course=target,
             semester=dft_sem,
@@ -256,11 +256,11 @@ def test_merge_curri_crss_conflict_reassigns_grade_and_regio(
     """Conflict merge should reassign source grades/registrations to target section."""
     summary = {}
     with _curriculum_course_constraint_disabled():
-        target = CurriCourse.objects.create(
+        target = CurriCrs.objects.create(
             curriculum=curri_factory("CURR-A"),
             course=crs_factory("301"),
         )
-        source = CurriCourse.objects.create(
+        source = CurriCrs.objects.create(
             curriculum=target.curriculum,
             course=target.course,
         )
@@ -300,11 +300,11 @@ def test_merge_curri_crss_conflict_retains_source_when_grade_duplicate(
     """Duplicate grades for same student keep source section protected and retained."""
     summary = {}
     with _curriculum_course_constraint_disabled():
-        target = CurriCourse.objects.create(
+        target = CurriCrs.objects.create(
             curriculum=curri_factory("CURR-A"),
             course=crs_factory("302"),
         )
-        source = CurriCourse.objects.create(
+        source = CurriCrs.objects.create(
             curriculum=target.curriculum,
             course=target.course,
         )
@@ -346,8 +346,8 @@ def test_merge_curra_keep_source_choice_applies_source_values(
     target = curri_factory("CURR-T")
     source = curri_factory("CURR-S")
     course = crs_factory("401")
-    target_cc = CurriCourse.objects.create(curriculum=target, course=course)
-    source_cc = CurriCourse.objects.create(curriculum=source, course=course)
+    target_cc = CurriCrs.objects.create(curriculum=target, course=course)
+    source_cc = CurriCrs.objects.create(curriculum=source, course=course)
     target_cc.credit_hours = credit_hour_factory(3)
     target_cc.is_required = True
     target_cc.is_elective = False
@@ -376,11 +376,11 @@ def test_merge_curri_crss_skips_sec_merge_on_grade_value_mismatch(
     """Section merge should skip when overlapping student grade values differ."""
     summary = {}
     with _curriculum_course_constraint_disabled():
-        target = CurriCourse.objects.create(
+        target = CurriCrs.objects.create(
             curriculum=curri_factory("CURR-A"),
             course=crs_factory("501"),
         )
-        source = CurriCourse.objects.create(
+        source = CurriCrs.objects.create(
             curriculum=target.curriculum,
             course=target.course,
         )
@@ -413,11 +413,11 @@ def test_merge_curri_crss_keeps_lowest_number_and_logs_conflicts(
     """Merging grade-compatible sections keeps the lowest number and logs metadata."""
     summary = {}
     with _curriculum_course_constraint_disabled():
-        target = CurriCourse.objects.create(
+        target = CurriCrs.objects.create(
             curriculum=curri_factory("CURR-A"),
             course=crs_factory("502"),
         )
-        source = CurriCourse.objects.create(
+        source = CurriCrs.objects.create(
             curriculum=target.curriculum,
             course=target.course,
         )
@@ -465,8 +465,8 @@ def test_reconcile_std_curri_records_dedupes_same_grade_value(
     target_curriculum = curri_factory("CURR-T-DEDUPE")
     source_curriculum = curri_factory("CURR-S-DEDUPE")
     course = crs_factory("601")
-    target_cc = CurriCourse.objects.create(curriculum=target_curriculum, course=course)
-    source_cc = CurriCourse.objects.create(curriculum=source_curriculum, course=course)
+    target_cc = CurriCrs.objects.create(curriculum=target_curriculum, course=course)
+    source_cc = CurriCrs.objects.create(curriculum=source_curriculum, course=course)
     target_section = Section.objects.create(
         curriculum_course=target_cc,
         semester=dft_sem,
@@ -512,8 +512,8 @@ def test_reconcile_std_curri_records_flags_conflicting_grade_values(
     target_curriculum = curri_factory("CURR-T-CONFLICT")
     source_curriculum = curri_factory("CURR-S-CONFLICT")
     course = crs_factory("602")
-    target_cc = CurriCourse.objects.create(curriculum=target_curriculum, course=course)
-    source_cc = CurriCourse.objects.create(curriculum=source_curriculum, course=course)
+    target_cc = CurriCrs.objects.create(curriculum=target_curriculum, course=course)
+    source_cc = CurriCrs.objects.create(curriculum=source_curriculum, course=course)
     target_section = Section.objects.create(
         curriculum_course=target_cc,
         semester=dft_sem,
@@ -558,10 +558,10 @@ def test_reconcile_std_records_uses_dpt_number_id(
         code=f"ALT{target_course.id}",
         short_code=f"ALT{target_course.number}",
     )
-    target_cc = CurriCourse.objects.create(
+    target_cc = CurriCrs.objects.create(
         curriculum=target_curriculum, course=target_course
     )
-    source_cc = CurriCourse.objects.create(
+    source_cc = CurriCrs.objects.create(
         curriculum=source_curriculum, course=source_course
     )
     target_section = Section.objects.create(

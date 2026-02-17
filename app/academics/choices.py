@@ -130,7 +130,7 @@ class LEVEL_NUMBER(IntegerChoices):
 
 
 # this translate UM_registrations.Major EnrollType? to standard curriculum
-# this translate UM_Crs.CourseCode/Course to a standard curriculum.
+# this translate UM_Crss.CrsCode/Course to a standard curriculum.
 # this translate UM_Registration.Major/Enrolltype to a standard curriculum.
 LEGACY_CURRICULUM_MAP = {
     "": "WVSTU - GEN",  # empty major → default to university-wide general

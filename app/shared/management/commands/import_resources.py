@@ -22,8 +22,8 @@ from tablib.core import InvalidDimensions
 from tqdm import tqdm
 
 from app.academics.admin import (  # noqa: F401
-    CourseResource,
-    CurriCourseResource,
+    CrsResource,
+    CurriCrsResource,
 )
 from app.academics.models import College  # noqa: F401
 from app.people.admin import DonorResource, FacultyResource, StdResource
@@ -62,7 +62,7 @@ class Command(BaseCommand):
         "  -f/--file_path: path to a CSV/TSV or a directory containing resources.\n"
         "  -r/--resource: optional, one or more resource names to limit the import "
         "(defaults to all available). Choices include Grade, LegacyGrade, LegacyRegistration "
-        "and directory-scoped resources (Faculty, Room, Course, CurriCourse, Semester, "
+        "and directory-scoped resources (Faculty, Room, Course, CurriCrs, Semester, "
         "Donor, Student, Grade, LegacyRegistration, LegacyGrade).\n"
         "Behavior:\n"
         "  • Reads tabular data, normalizes headers, and delegates to import-export resources.\n"

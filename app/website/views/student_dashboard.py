@@ -20,14 +20,14 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from app.academics.constants import MAX_STUDENT_CREDITS
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.prerequisite import Prerequisite
 from app.finance.fee_assignment import (
     FeeAssignmentSummaryT,
     attach_sem_fee_stacks,
     optional_sem_stack_choices,
 )
-from app.finance.models.invoice import CourseInvoice, StdSemesterInvoice
+from app.finance.models.invoice import CrsInvoice, StdSemesterInvoice
 from app.finance.models.payment import Payment
 from app.people.models.student import Student
 from app.registry.gpa import get_cumulative_gpa, get_grade_points_and_credits
@@ -80,7 +80,7 @@ def _append_reason_line(reason_lines: list[str], reason: str) -> None:
     reason_lines.append(text)
 
 
-def _curri_level_hint(curriculum_course: CurriCourse) -> str:
+def _curri_level_hint(curriculum_course: CurriCrs) -> str:
     """Return a short curriculum placement hint for the course card UI."""
     level_number = int(curriculum_course.level_number or 0)
     if 1 <= level_number <= 10:
@@ -105,7 +105,7 @@ def std_invoice_statement(request: HttpRequest) -> HttpResponse:
     """Render the invoice statement for the current student."""
     student = _require_std(request.user)
     invoices = list(
-        CourseInvoice.objects.filter(student=student, balance__gt=0)
+        CrsInvoice.objects.filter(student=student, balance__gt=0)
         .select_related(
             "curriculum_course__course",
             "curriculum_course__credit_hours",
@@ -172,7 +172,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     def _ensure_invoice_for_sec(section: Section) -> None:
         """Create or patch invoices so initial_amount_due is always set."""
         amount_due = section.fee_total_amount()
-        invoice, created = CourseInvoice.objects.get_or_create(
+        invoice, created = CrsInvoice.objects.get_or_create(
             student=student,
             curriculum_course=section.curriculum_course,
             semester=section.semester,
@@ -336,7 +336,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             existing_by_section = {reg.section_id: reg for reg in existing_regs}
             new_credit_total = 0
             selected_course_ids: set[int] = set()
-            selected_curriculum_course_by_course_id: dict[int, CurriCourse] = {}
+            selected_curriculum_course_by_course_id: dict[int, CurriCrs] = {}
             for section in sections:
                 existing = existing_by_section.get(section.id)
                 if existing and existing.status_id not in {"canceled", "removed"}:
@@ -543,7 +543,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
                     )
                 messages.error(request, "Canceled status is not configured.")
                 return _redirect_to_sem()
-            invoice_qs = CourseInvoice.objects.filter(
+            invoice_qs = CrsInvoice.objects.filter(
                 student=student,
                 curriculum_course=registration.section.curriculum_course,
                 semester=registration.section.semester,
@@ -658,7 +658,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     )
     history_dates = {row["id"]: row["last_change"] for row in history_rows}
 
-    invoices = CourseInvoice.objects.filter(student=student)
+    invoices = CrsInvoice.objects.filter(student=student)
     invoice_key_rows = list(
         invoices.values_list(
             "curriculum_course_id",
@@ -733,7 +733,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         )
 
     curriculum_courses_qs = (
-        CurriCourse.objects.filter(curriculum=student.curriculum)
+        CurriCrs.objects.filter(curriculum=student.curriculum)
         .select_related("course", "credit_hours")
         .prefetch_related("requirement_groups__members__required_course")
         .order_by("course__short_code")

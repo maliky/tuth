@@ -8,11 +8,11 @@ from app.shared.models import CreditHour
 
 from app.academics.models.concentration import (
     Major,
-    MajorCurriCourse,
+    MajorCurriCrs,
     Minor,
-    MinorCurriCourse,
+    MinorCurriCrs,
 )
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 
 pytestmark = pytest.mark.django_db
 
@@ -35,7 +35,7 @@ def test_minor_get_dft_has_curriculum_course():
 
 def test_total_credit_hours_sums_curriculum_course(major):
     """total_credit_hours should add all attached curriculum_course credits."""
-    pg = CurriCourse.get_unique_dft()
+    pg = CurriCrs.get_unique_dft()
     pg.credit_hours = CreditHour.objects.get(code=4)
     pg.save()
     courses = cast(Any, major.curriculum_courses)
@@ -57,7 +57,7 @@ def test_major_clean_requires_curriculum_course(curri_factory):
 
 def test_major_clean_credit_limit_exceeded(major):
     """clean() should detect credit hour overflow."""
-    pg = CurriCourse.get_unique_dft()
+    pg = CurriCrs.get_unique_dft()
     pg.credit_hours = CreditHour.objects.get(code=10)
     pg.save()
     courses = cast(Any, major.curriculum_courses)
@@ -75,13 +75,11 @@ def test_majorcurriculum_course_unique_curriculum_course_per_major(
     major = Major.objects.create(name="M_TEST", curriculum=curri_factory("M_TEST_CURRI"))
     curriculum_course = curriculum_course_factory()
 
-    MajorCurriCourse.objects.create(major=major, curriculum_course=curriculum_course)
+    MajorCurriCrs.objects.create(major=major, curriculum_course=curriculum_course)
 
     with pytest.raises(IntegrityError):
         with transaction.atomic():
-            MajorCurriCourse.objects.create(
-                major=major, curriculum_course=curriculum_course
-            )
+            MajorCurriCrs.objects.create(major=major, curriculum_course=curriculum_course)
 
 
 def test_minorcurriculum_course_unique_curriculum_course_per_minor(
@@ -93,10 +91,8 @@ def test_minorcurriculum_course_unique_curriculum_course_per_minor(
     )
     curriculum_course = curriculum_course_factory()
 
-    MinorCurriCourse.objects.create(minor=minor, curriculum_course=curriculum_course)
+    MinorCurriCrs.objects.create(minor=minor, curriculum_course=curriculum_course)
 
     with pytest.raises(IntegrityError):
         with transaction.atomic():
-            MinorCurriCourse.objects.create(
-                minor=minor, curriculum_course=curriculum_course
-            )
+            MinorCurriCrs.objects.create(minor=minor, curriculum_course=curriculum_course)

@@ -7,12 +7,12 @@ from django.db.models import Q
 from django.db.models.deletion import ProtectedError
 
 from app.academics.models.course import Course
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.prerequisite import Prerequisite
 from app.finance.models.invoice import Invoice
 from app.timetable.models.section import Section
 
-from .helpers import CourseMergeSummaryT, _merge_curri_crs_links
+from .helpers import CrsMergeSummaryT, _merge_curri_crs_links
 from .section_merge import (
     _merge_curri_crs_to_target,
     _merge_secs,
@@ -50,13 +50,13 @@ def merge_crss(target: Course, sources):
     }
     target_cc_map = {
         cc.curriculum_id: cc
-        for cc in CurriCourse.objects.filter(course=target).select_related("curriculum")
+        for cc in CurriCrs.objects.filter(course=target).select_related("curriculum")
     }
     for src in sources:
         if src.pk == target.pk:
             continue
         source_curriculum_courses = list(
-            CurriCourse.objects.filter(course=src).select_related("curriculum")
+            CurriCrs.objects.filter(course=src).select_related("curriculum")
         )
         if _crs_merge_has_invoice_conflict(source_curriculum_courses, target_cc_map):
             summary["skipped_invoices"] += 1
@@ -95,8 +95,8 @@ def merge_crss(target: Course, sources):
 
 
 def _crs_merge_has_invoice_conflict(
-    source_curriculum_courses: list[CurriCourse],
-    target_cc_map: dict[int, CurriCourse],
+    source_curriculum_courses: list[CurriCrs],
+    target_cc_map: dict[int, CurriCrs],
 ) -> bool:
     """Return True when invoices block merging source curriculum courses."""
     conflict_ids = [
@@ -107,9 +107,7 @@ def _crs_merge_has_invoice_conflict(
     return Invoice.objects.filter(curriculum_course_id__in=conflict_ids).exists()
 
 
-def merge_curri_crs_into_target(
-    target: CurriCourse, source: CurriCourse
-) -> dict[str, int]:
+def merge_curri_crs_into_target(target: CurriCrs, source: CurriCrs) -> dict[str, int]:
     """Merge one source curriculum-course into a target duplicate row.
 
     This helper is used by bulk curriculum reassignment where source and target
@@ -200,8 +198,8 @@ def _merge_crs_prerequisites(target: Course, source: Course) -> dict[str, int]:
 
 
 @transaction.atomic
-def merge_curri_crss(target: CurriCourse, sources):
-    """Merge CurriCourse rows into target."""
+def merge_curri_crss(target: CurriCrs, sources):
+    """Merge CurriCrs rows into target."""
     summary = {
         "merged": 0,
         "skipped_incompatible": 0,

@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 
 from .student_helpers import (
     _build_sidebar_links,
@@ -17,7 +17,7 @@ from .student_helpers import (
 )
 
 
-class CurriCourseRowT(TypedDict):
+class CurriCrsRowT(TypedDict):
     """Row details for curriculum course listings."""
 
     id: int
@@ -26,7 +26,7 @@ class CurriCourseRowT(TypedDict):
     credits: int
 
 
-class CurriCourseDetailT(TypedDict):
+class CurriCrsDetailT(TypedDict):
     """Detail data for a curriculum course."""
 
     code: str
@@ -41,11 +41,11 @@ def std_curri_crss(request: HttpRequest) -> HttpResponse:
     """Render an ordered list of curriculum courses for the current student."""
     student = _require_std(request.user)
     curriculum_courses = (
-        CurriCourse.objects.filter(curriculum=student.curriculum)
+        CurriCrs.objects.filter(curriculum=student.curriculum)
         .select_related("course", "credit_hours")
         .order_by("course__short_code", "course__code")
     )
-    course_rows: list[CurriCourseRowT] = [
+    course_rows: list[CurriCrsRowT] = [
         {
             "id": cc.id,
             "code": cc.course.short_code or cc.course.code or "",
@@ -71,7 +71,7 @@ def std_curri_crs_detail(
     """Render course details for a curriculum course linked to the student."""
     student = _require_std(request.user)
     curriculum_course = (
-        CurriCourse.objects.filter(
+        CurriCrs.objects.filter(
             curriculum=student.curriculum,
             pk=curriculum_course_id,
         )
@@ -82,7 +82,7 @@ def std_curri_crs_detail(
         raise Http404("Course not found.")
 
     course = curriculum_course.course
-    course_detail: CurriCourseDetailT = {
+    course_detail: CurriCrsDetailT = {
         "code": course.short_code or course.code or "",
         "title": course.title or "",
         "credits": int(curriculum_course.credit_hours.code),

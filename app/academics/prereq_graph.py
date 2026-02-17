@@ -17,11 +17,11 @@ from django.core.management.base import CommandError
 from django.utils.text import slugify
 
 from app.academics.models.curriculum import Curriculum
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.requirement_group import (
-    CurriCourseReqGp,
-    CurriCourseReqMember,
+    CurriCrsReqGp,
+    CurriCrsReqMember,
     ReqKind,
 )
 
@@ -109,13 +109,13 @@ def _safe_curri_slug(curriculum: Curriculum) -> str:
 
 def _build_crs_maps(
     curriculum: Curriculum,
-) -> tuple[dict[int, CurriCourse], NodeAttrMapT]:
+) -> tuple[dict[int, CurriCrs], NodeAttrMapT]:
     """Return curriculum course map and node attributes."""
-    course_map: dict[int, CurriCourse] = {}
+    course_map: dict[int, CurriCrs] = {}
     node_attrs: NodeAttrMapT = {}
 
     qs = (
-        CurriCourse.objects.filter(curriculum=curriculum)
+        CurriCrs.objects.filter(curriculum=curriculum)
         .select_related("course__department__college")
         .order_by("course__short_code")
     )
@@ -135,8 +135,8 @@ def _build_crs_maps(
 def _build_json_payload(
     curriculum: Curriculum,
     prerequisites: Iterable[Prerequisite],
-    coreq_groups: Iterable[CurriCourseReqGp],
-    course_map: dict[int, CurriCourse],
+    coreq_groups: Iterable[CurriCrsReqGp],
+    course_map: dict[int, CurriCrs],
     node_attrs: NodeAttrMapT,
 ) -> JsonPayloadT:
     """Build JSON payload for a curriculum prerequisite graph."""
@@ -552,7 +552,7 @@ def export_prereq_graph(curriculum: Curriculum) -> PrereqGraphPaths:
         .order_by("course__short_code", "prerequisite_course__short_code")
     )
     coreq_groups = (
-        CurriCourseReqGp.objects.filter(
+        CurriCrsReqGp.objects.filter(
             curriculum_course__curriculum=curriculum,
             kind=ReqKind.COREQ_ALL,
         )
@@ -560,7 +560,7 @@ def export_prereq_graph(curriculum: Curriculum) -> PrereqGraphPaths:
         .prefetch_related(
             Prefetch(
                 "members",
-                queryset=CurriCourseReqMember.objects.select_related(
+                queryset=CurriCrsReqMember.objects.select_related(
                     "required_course__department__college"
                 ),
             )

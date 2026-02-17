@@ -16,7 +16,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from app.finance.models.invoice import CourseInvoice
+from app.finance.models.invoice import CrsInvoice
 from app.finance.models.payment import Payment
 from app.finance.models.status_types_methods import Payer, PaymentMethod, PaymentStatus
 from app.finance.utils import create_pending_payments
@@ -93,7 +93,7 @@ def finance_officer_create_payments(request: HttpRequest) -> HttpResponse:
         return redirect(request.POST.get("next") or reverse("finance_officer_invoices"))
 
     if invoice_ids:
-        invoices = CourseInvoice.objects.filter(id__in=invoice_ids)
+        invoices = CrsInvoice.objects.filter(id__in=invoice_ids)
     else:
         if student_id is None:
             # >  cannot reach heare because not invoice_ids and not student_id
@@ -101,7 +101,7 @@ def finance_officer_create_payments(request: HttpRequest) -> HttpResponse:
             return redirect(
                 request.POST.get("next") or reverse("finance_officer_invoices")
             )
-        invoices = CourseInvoice.objects.filter(student_id=student_id, balance__gt=0)
+        invoices = CrsInvoice.objects.filter(student_id=student_id, balance__gt=0)
     staff = getattr(request.user, "staff", None)
     summary = create_pending_payments(invoices, recorded_by=staff)
     created = summary.get("created", 0)

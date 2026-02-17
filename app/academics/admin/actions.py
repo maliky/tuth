@@ -14,9 +14,9 @@ from app.academics.admin.merges import merge_crss, merge_curri_crs_into_target
 from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.department import Department
-from app.finance.models.fee_stack import CourseFeeStack, FeeStack
+from app.finance.models.fee_stack import CrsFeeStack, FeeStack
 
 CurriUpdateSummaryT: TypeAlias = dict[str, int]
 
@@ -72,8 +72,8 @@ def _empty_curri_update_summary() -> CurriUpdateSummaryT:
 
 def _apply_curri_relink(
     *,
-    selected_rows: list[CurriCourse],
-    resolve_target_curri: Callable[[CurriCourse], Curriculum | None],
+    selected_rows: list[CurriCrs],
+    resolve_target_curri: Callable[[CurriCrs], Curriculum | None],
 ) -> CurriUpdateSummaryT:
     """Relink rows to resolved target curricula with duplicate-safe merge behavior."""
     summary = _empty_curri_update_summary()
@@ -91,7 +91,7 @@ def _apply_curri_relink(
 
     target_by_pair = {
         (row.curriculum_id, row.course_id): row
-        for row in CurriCourse.objects.filter(curriculum_id__in=target_curri_ids)
+        for row in CurriCrs.objects.filter(curriculum_id__in=target_curri_ids)
         .select_related("course")
         .order_by("id")
     }
@@ -135,7 +135,7 @@ def _apply_curri_relink(
             curriculum_course.save(update_fields=["curriculum"])
         except IntegrityError:
             duplicate_target = (
-                CurriCourse.objects.filter(
+                CurriCrs.objects.filter(
                     curriculum=target_curri,
                     course_id=curriculum_course.course_id,
                 )
@@ -517,7 +517,7 @@ def update_curri_to_dpt_college_dft(modeladmin, request, queryset):
     )
     dft_curri_by_college_id: dict[int, Curriculum] = {}
 
-    def _resolve_target(curriculum_course: CurriCourse) -> Curriculum | None:
+    def _resolve_target(curriculum_course: CurriCrs) -> Curriculum | None:
         dept = getattr(curriculum_course.course, "department", None)
         if dept is None or dept.college_id is None:
             return None
@@ -619,15 +619,15 @@ def attach_fee_stacks(modeladmin, request, queryset):
             skipped_invalid_count = 0
             for course in queryset:
                 for fee_stack in selected_stacks:
-                    if CourseFeeStack.objects.filter(
+                    if CrsFeeStack.objects.filter(
                         course=course,
                         fee_stack=fee_stack,
                     ).exists():
                         skipped_existing_count += 1
                         continue
                     try:
-                        # Keep rule checks centralized in CourseFeeStack.clean().
-                        CourseFeeStack.objects.create(
+                        # Keep rule checks centralized in CrsFeeStack.clean().
+                        CrsFeeStack.objects.create(
                             course=course,
                             fee_stack=fee_stack,
                         )
@@ -690,7 +690,7 @@ def update_level_number(modeladmin, request, queryset):
         def validate(self, value):
             pass  # allow any IDs
 
-    raw_level_choices = CurriCourse._meta.get_field("level_number").choices
+    raw_level_choices = CurriCrs._meta.get_field("level_number").choices
     level_choices = raw_level_choices if raw_level_choices is not None else ()
 
     class _LevelNumberForm(forms.Form):

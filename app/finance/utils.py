@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from app.people.models.student import Student
     from app.timetable.models.semester import Semester
 
-from app.finance.models.invoice import CourseInvoice, StdSemesterInvoice
+from app.finance.models.invoice import CrsInvoice, StdSemesterInvoice
 from app.finance.models.invoice_snapshot import InvoiceSnapshot
 from app.finance.models.payment import Payment
 
@@ -91,7 +91,7 @@ FEE_TYPE_ORDER = [
 
 
 def create_pending_payments(
-    invoices: Iterable[CourseInvoice],
+    invoices: Iterable[CrsInvoice],
     recorded_by: Optional["Staff"] = None,
 ) -> PaymentCreateSummaryT:
     """Create pending full payments for parent student-semester invoices.
@@ -189,7 +189,7 @@ def _ordered_fee_lines(
 
 
 def build_invoice_snapshot(
-    invoices: Iterable[CourseInvoice],
+    invoices: Iterable[CrsInvoice],
     *,
     student: "Student",
     semester: "Semester | None" = None,

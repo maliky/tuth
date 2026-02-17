@@ -5,8 +5,8 @@ from typing import Optional, cast
 from import_export import widgets
 
 from app.academics.admin.widgets import (
-    CourseWgt,
-    CurriCourseWgt,
+    CrsWgt,
+    CurriCrsWgt,
     CurriWgt,
 )
 from app.people.admin.widgets import FacultyFullnameWgt
@@ -22,7 +22,7 @@ class SecWgt(widgets.ForeignKeyWidget):
 
     def __init__(self, *, fuzzy_threshold: float = 1.0):
         super().__init__(Section)  # using pk until export is done
-        self.curriculum_course_w = CurriCourseWgt()
+        self.curriculum_course_w = CurriCrsWgt()
         self.sem_w = SemWgt()
         self.faculty_w = FacultyFullnameWgt()
         self.fuzzy_threshold = fuzzy_threshold
@@ -84,7 +84,7 @@ class SecCodeWgt(widgets.Widget):
 
     def __init__(self) -> None:
         super().__init__(Section)
-        self.crs_w = CourseWgt()
+        self.crs_w = CrsWgt()
 
     def clean(
         self,

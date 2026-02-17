@@ -184,7 +184,7 @@ class Curriculum(StatusableMixin, models.Model):
 
     curriculum_course = models.ManyToManyField(
         "academics.Course",
-        through="academics.CurriCourse",
+        through="academics.CurriCrs",
         related_name="curricula",  # <-- reverse accessor course.curricula
         blank=True,
     )

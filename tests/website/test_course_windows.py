@@ -10,7 +10,7 @@ from model_bakery import baker
 from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
-from app.academics.models.curriculum_course import CurriCourse
+from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.department import Department
 from app.shared.models import CreditHour
 from app.timetable.models.academic_year import AcademicYear
@@ -59,8 +59,8 @@ def test_std_dashboard_prefers_open_sem(client):
         title="Principles of Accounting",
     )
     credit_hours, _ = CreditHour.objects.get_or_create(code=3, defaults={"label": "3"})
-    curriculum_course: CurriCourse = baker.make(
-        "academics.CurriCourse",
+    curriculum_course: CurriCrs = baker.make(
+        "academics.CurriCrs",
         curriculum=curriculum,
         course=course,
         credit_hours=credit_hours,
