@@ -58,7 +58,7 @@ class SecSessionAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAd
     def sec_curri_crs_link(self, obj):
         """Link to the curriculum course attached to the session section."""
         curriculum_course = obj.section.curriculum_course
-        url = reverse("admin:academics_curricourse_change", args=[curriculum_course.pk])
+        url = reverse("admin:academics_curricrs_change", args=[curriculum_course.pk])
         return format_html('<a href="{}">{}</a>', url, curriculum_course)
 
     @admin.display(description="Faculty")

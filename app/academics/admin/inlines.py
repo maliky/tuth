@@ -6,8 +6,6 @@ from typing import Any, Callable, cast
 
 from django.db.models import Count
 from django.forms.models import BaseInlineFormSet
-from django.urls import NoReverseMatch, reverse
-from django.utils.html import format_html
 from django.utils import timezone
 
 from app.academics.models.prerequisite import Prerequisite
@@ -273,12 +271,9 @@ class CurriCrsReqGpIL(admin.TabularInline):
         """Link to group change page where member inline is available."""
         if not getattr(obj, "pk", None):
             return "Save first"
-        # Django has no nested inlines; open the group page to edit member rows.
-        try:
-            url = reverse("admin:academics_curricoursereqgp_change", args=[obj.pk])
-        except NoReverseMatch:
-            return "Not available"
-        return format_html('<a href="{}">Open</a>', url)
+        # Requirement-group admin is intentionally not registered while the
+        # advanced UI remains dormant.
+        return "Not available"
 
 
 class DptCrsIL(admin.TabularInline):
