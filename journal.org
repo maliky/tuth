@@ -1,6 +1,58 @@
 
 * <2026-02-18 mer.>  students with several enrollements
-At this moment you are my duck, a smart programming assistant /collegue whith whome I can exahcnage idea to relect on the process and clarify them.  analyse the text below and engage a thoughfull conversation. do not edit the code, but do make verification to anchor the examples.
+
+** <2026-02-18 Wed 11:54> About Grade policy
+Credits versus Class Standing
+Grading System
+
+Each course taken at William V. S. Tubman University is assigned a credit value in semester hours. A semester hour/unit is defined as fifty (50) contact minutes and where applicable three hours per week of practical or laboratory work throughout the semester. A semester is fifteen (15) weeks. The William V.S. Tubman University Grading System uses the letter grade with equivalent credit points for the evaluation of academic performance. The numerical value of each letter grade with credit points is as follows:
+
+Numerical Value, Letter Grade and Index Number
+NUMERICAL
+VALUE
+LETTER GRADE
+INDEX NUMBER
+90-100
+A-Excellent
+4.0
+80-89
+B-Good
+3.0
+70-79
+C-Average
+2.0
+60-69
+D-Poor
+1.0
+Below 60
+F-Failure
+0.0
+
+Grades below C and Academic Implications
+
+Grades of D, I, F, AB, DR, or NG are considered deficiencies in a student’s academic status at the university.
+
+    • A grade of D is unsatisfactory. A student must re-enroll in the course within the next two consecutive semesters and earn a grade of C or better to earn the course credits in the areas listed below. A course in which a grade of D was earned can only be repeated ONCE. The grade earned when the course is repeated replaces the first grade earned, even if the second grade is lower.
+
+        ◦ A student cannot graduate with a D in:
+            ▪ English 101 or 102
+            ▪ A major or minor area of concentration
+            ▪ More than two (2) courses
+
+    • A grade of I indicates a student may have completed a substantial part of the course with satisfactory performance but has not been able to complete the course. The student has provided documented evidence for the inability to complete the course. The grade of I may be converted to a letter grade when the course requirements are satisfactorily met, within the next two consecutive semesters.
+
+    • A grade of F represents failure. A student who has failed a course cannot  have that grade changed by retaking the final examination or completing additional assignments. A student who fails a course must re-enroll in the course and earn a grade of C or better to earn the course credits.
+
+    • A grade of AB indicates that a student did not take the final examination. Documented evidence has to be provided for the inability to take the final examination. A grade of AB may be converted to a letter grade when the course requirements are satisfactorily met, within the next two consecutive semesters.
+
+    • A grade of DR indicates that a student has exceeded the three (3) excused absences allowed. To earn course credits, the student must re-enroll in the course and obtain a grade of C or better.
+
+    • A grade of NG indicates a student registered for the course but failed to officially withdraw or attend classes. To earn course credits, the student must re-enroll in the course and obtain a grade of C or better.
+    • A grade of W indicates a student filed the official withdrawal forms in the Office of the Registrar after consultation with the instructor and received approval from the department chair and/or dean of the college. The day the form is filed is the official date for the withdrawal.   
+
+** <2026-02-18 Wed 11:54> Initial
+
+  At this moment you are my duck, a smart programming assistant /collegue whith whome I can exahcnage idea to relect on the process and clarify them.  analyse the text below and engage a thoughfull conversation. do not edit the code, but do make verification to anchor the examples.
 
 › Review the above plan, update it if necessary. the goal is to handle the
   merging of courses such as 321 (PHIL101) and 168 (PHIL101) which is
