@@ -245,7 +245,7 @@ class GradeValueAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAd
     Describe the different grades types
     """
 
-    list_display = ("number", "code", "description")
+    list_display = ("description", "number", "code")
     search_fields = ("code", "description")
 
 
