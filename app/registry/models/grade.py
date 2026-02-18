@@ -35,6 +35,7 @@ class GradeValue(models.Model):
     description = models.CharField(
         max_length=60, null=True, default=GRADES_DESCRIPTION["ip"]
     )
+    info = models.TextField(blank=True, default="")
     history = HistoricalRecords()
 
     @classmethod

@@ -1,6 +1,35 @@
 
 * <2026-02-18 mer.>  students with several enrollements
 
+** <2026-02-18 mer. 11:58> plan
+  Anchors from current codebase:
+
+  - app/registry/choices.py grade codes are A, AB, B, C, D, DR, F, I, IP, NG, W.  - E is not currently a defined grade code.
+ 
+ 
+  - Current merge behavior in app/ac
+ 
+    retain source because overlapping grade rows are skipped then PROTECT
+    prevents section delete.
+
+  So yes, your rule can be the conflict resolver:
+
+  - Rank: A > B > C > D > F > all other non-letter statuses.
+  - For overlap on same student + same course + same semester:
+      - higher rank wins,
+      - if equal rank and equal code, keep earliest section (or target-by-
+        default),
+      - if equal rank but different non-letter statuses, keep earliest section.
+  - Then collapse to one surviving grade row so section merge can complete.
+
+  For your PHIL101 example:
+
+  - Student 4420 with two F values: deterministic merge to one row is
+    straightforward (same rank/code -> earliest section wins).
+  - If one later attempt is A and earlier was F, A wins by precedence.
+
+
+
 ** <2026-02-18 Wed 11:54> About Grade policy
 Credits versus Class Standing
 Grading System
