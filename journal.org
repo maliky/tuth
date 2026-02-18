@@ -1,10 +1,53 @@
 
+* <2026-02-18 mer.>  students with several enrollements
+At this moment you are my duck, a smart programming assistant /collegue whith whome I can exahcnage idea to relect on the process and clarify them.  analyse the text below and engage a thoughfull conversation. do not edit the code, but do make verification to anchor the examples.
+
+› Review the above plan, update it if necessary. the goal is to handle the
+  merging of courses such as 321 (PHIL101) and 168 (PHIL101) which is
+  currently stoped because of overlapping grades. in this example student 4420
+  has 2 F grades for the PHIL101 courses, in 2 distincs curriculums and
+  therefore the grades are linked to 2 curricrs, 6631 and 2094.  After the
+  course merge I expect student 4420 to have only one PHIL101 course, the
+  earliest one by default. the student 4420 is a special student because he
+  enrolled for a second bachelor after having completed a frist one. since PHIL101 is in both of his curriculum there's a conflict that needs disambiguation.
+
+if he obtained a passing grade for his first sectionm then no need to tkae the cours again.  the grade/section of the frist program he took should appear and be incorporated in his 2nd program.
+
+second case.  he could have failed the first program all togehter and enrolle in a different program without having validated the first section. i am toalink of PHIL101.  in that case what ?
+I suggest that we apply a similar general pattern, as if the section was copied to the new program, but this cannot be the case exactly because the schedule , effective counts depend an the true relation and the student in this case has to take the classe again.  Therefore he should be added to the section for th enew program.
+
+The solution could come form the registration.
+If the sutdent succeeded the first phil courses, he is not required to register again for this course and the previsou section grade is reported to his new progra, and show as is on his grade roster for eg.  this mean alos that either the authorised person can remove some of the prerequisites needed to be fullfiled to display the courses to be registered, or taht the prerequisites can extend and take in account to courses outside of the curent cruricluum.
+
+In the csse where the student did not finalize his first course, then he has to register for the second course.  it is the grade of this course that will now take precedence on the previous coures grade.   but proble. just overideing the previous course grade on officail transcript will brake the rational of for eg, not meeting prerequisites to do such or such course in the first program.  Therefore at the inimun we shold log in the infor field of the grades the changes made.  or we could disociate the grade sheets with a timestmp mechnisme, to the current representation of tin the tusis system.
+
+
+
+
+* <2026-02-17 mar.>
+Look at section 66132 and 31954.  the associated curriculum courses should be merged.
+course 2696 and 130 seen to block the merging of curriclum or grades.  I am not clear why those 2 course cannot merge. and if it's not the courses the blockage where is it ?
+A student cannot be doing 2 section for the same course during the same semester. if merging the course provoc a section clash, then merge the section for that student.  What I want here is that the grade for student 5265 in his  2 BIO101 course be merged into one.
+
+This is the message from the action log '''Retained 33 conflicting section(s) because grades still protect them.
+Could not delete 5 source course(s) because grades protect related sections.''' I thnik we have sql scritp giving more details.
+
+Also we have admin action or sql script to merge courses by short code.
+
+
+I want ot make sure that the admin/academic/course is well sorted by course.shortcode
+
+
+* <2026-02-17 mar.>  Working on interface again
+I need to harmonize the staff interface with what they know.
+
 * <2026-02-16 lun.>  Cleaning DB
-- I would like an admin action on curricourse which does the following : look at the department of the curricourse and reset the curricourse to the default curriculum of the college associated witht that department.  This change of curriculum should use the function we defined and whcih handles the merging of duplicates courses.
+I would like an admin action on curricourse which does the following : look at the department of the curricourse curriculum and reset the curricourse to the depatment.college.get_default_curriculum (not exact just for the idea).  This change of curriculum should use the function we defined and handles nicely the merging of duplicates courses.
 
 ** <2026-02-16 lun. 10:45> Renaming
-  - Course -> Crs (identifier-level where requested)
-  - Courses -> Crss (current consistency rule)
+
+  - Course -> Crs
+  - Courses -> Crss
   - Curricula -> Curra
   - Curriculum -> Curri
   - Default -> Dft
