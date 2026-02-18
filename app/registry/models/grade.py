@@ -101,6 +101,10 @@ class Grade(models.Model):
     # Keep grade rows immutable from section/curriculum cleanup operations.
     section = models.ForeignKey("timetable.Section", on_delete=models.PROTECT)
     value = models.ForeignKey("registry.GradeValue", on_delete=models.CASCADE, null=True)
+    # Tracks which attempt should be used by policy consumers (prereq/GPA views).
+    is_effective = models.BooleanField(default=True, db_index=True)
+    # Free-form audit notes for merge/reconciliation operations.
+    info = models.TextField(blank=True, default="")
 
     # ~~~~ Auto-filled ~~~~
     graded_on = models.DateField(auto_now_add=True)
