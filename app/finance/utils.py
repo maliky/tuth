@@ -124,6 +124,7 @@ def create_pending_payments(
     )
     with transaction.atomic():
         for parent_invoice in parent_invoices:
+            parent_invoice.refresh_totals_from_sources(save_model=True)
             balance = parent_invoice.get_balance()
             if balance <= 0:
                 summary["skipped_closed"] += 1
@@ -361,6 +362,25 @@ def build_invoice_snapshot(
     if balance < Decimal("0.00"):
         balance = Decimal("0.00")
 
+    from app.people.models.student_curriculum_enrollment import StdCurriEnroll
+
+    primary_enrollment = (
+        StdCurriEnroll.objects.filter(student=student, is_primary=True, is_active=True)
+        .select_related("curriculum")
+        .first()
+    )
+    if primary_enrollment is None:
+        primary_enrollment = (
+            StdCurriEnroll.objects.filter(student=student, is_primary=True)
+            .select_related("curriculum")
+            .first()
+        )
+    curriculum_label = (
+        str(primary_enrollment.curriculum)
+        if primary_enrollment is not None
+        else str(student.curriculum)
+    )
+
     departments = {
         inv.curriculum_course.course.department.code
         for inv in invoice_list
@@ -379,7 +399,7 @@ def build_invoice_snapshot(
         "student_name": student.long_name or student.user.get_full_name(),
         "student_id": student.student_id,
         "department": department,
-        "curriculum": str(student.curriculum),
+        "curriculum": curriculum_label,
         "present_status": student.class_level.title(),
         "address": student.physical_address,
         "academic_semester": academic_semester,

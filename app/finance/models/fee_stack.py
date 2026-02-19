@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
+import logging
 from typing import TYPE_CHECKING, TypeAlias
 
 from django.core.exceptions import ValidationError
@@ -19,6 +20,7 @@ FeeMapT: TypeAlias = dict[str, Decimal]
 FeeLabelMapT: TypeAlias = dict[str, str]
 PayerCodeSetT: TypeAlias = set[str]
 PAYER_STUDENT_CODE = "student"
+logger = logging.getLogger(__name__)
 
 
 def _fee_type_codes_for_stack(stack_id: int) -> FeeTypeCodeSetT:
@@ -54,6 +56,7 @@ def _resolve_stack_fee_lines_for_sem(
     """Pick one fee line per fee type using latest effective_from <= semester."""
     selected_lines: dict[str, FeeStackLine] = {}
     selected_starts: dict[str, date | None] = {}
+    seen_by_type_start: dict[tuple[int, date | None], int] = {}
     for fee_line in fee_lines:
         line_start = _sem_start_date(fee_line.effective_from_semester)
         if (
@@ -62,6 +65,15 @@ def _resolve_stack_fee_lines_for_sem(
             and line_start > semester_start
         ):
             continue
+        duplicate_key = (fee_line.fee_type_id, line_start)
+        seen_by_type_start[duplicate_key] = seen_by_type_start.get(duplicate_key, 0) + 1
+        if seen_by_type_start[duplicate_key] == 2:
+            logger.warning(
+                "Fee stack %s has duplicate fee lines for fee_type %s at start %s",
+                fee_line.fee_stack_id,
+                fee_line.fee_type_id,
+                line_start,
+            )
         fee_type_code = fee_line.fee_type.code
         if fee_type_code not in selected_lines or _is_newer_start(
             line_start, selected_starts.get(fee_type_code)

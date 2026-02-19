@@ -351,7 +351,7 @@ class CrsAdmin(DptRestrictedAdmin):
         CrsCollegeFlt,
     )
 
-    list_per_page = 100
+    list_per_page = 250
     list_max_show_all = 500
 
     search_fields = ("short_code", "department__code", "title")
