@@ -66,7 +66,7 @@ WITH grade_basis AS (
     FROM registry_grade AS g
     JOIN timetable_section AS s
       ON s.id = g.section_id
-    JOIN academics_curricourse AS cc
+    JOIN academics_curricrs AS cc
       ON cc.id = s.curriculum_course_id
     LEFT JOIN registry_gradevalue AS gv
       ON gv.id = g.value_id
@@ -106,7 +106,7 @@ WITH grade_basis AS (
     FROM registry_grade AS g
     JOIN timetable_section AS s
       ON s.id = g.section_id
-    JOIN academics_curricourse AS cc
+    JOIN academics_curricrs AS cc
       ON cc.id = s.curriculum_course_id
     LEFT JOIN registry_gradevalue AS gv
       ON gv.id = g.value_id
@@ -166,7 +166,7 @@ WITH grade_basis AS (
     FROM registry_grade AS g
     JOIN timetable_section AS s
       ON s.id = g.section_id
-    JOIN academics_curricourse AS cc
+    JOIN academics_curricrs AS cc
       ON cc.id = s.curriculum_course_id
     LEFT JOIN registry_gradevalue AS gv
       ON gv.id = g.value_id
@@ -250,7 +250,7 @@ WITH pair_stats AS (
     FROM registry_grade AS g
     JOIN timetable_section AS s
       ON s.id = g.section_id
-    JOIN academics_curricourse AS cc
+    JOIN academics_curricrs AS cc
       ON cc.id = s.curriculum_course_id
     LEFT JOIN registry_gradevalue AS gv
       ON gv.id = g.value_id

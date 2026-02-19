@@ -85,12 +85,12 @@ ORDER BY d.code, c.number;
 -- Curriculum courses that would collide after the course merge.
 WITH src_cc AS (
     SELECT id, curriculum_id, is_required, is_elective, credit_hours_id
-    FROM academics_curriculumcourse
+    FROM academics_curricrs
     WHERE course_id = :source_id
 ),
 tgt_cc AS (
     SELECT id, curriculum_id, is_required, is_elective, credit_hours_id
-    FROM academics_curriculumcourse
+    FROM academics_curricrs
     WHERE course_id = :target_id
 )
 SELECT
@@ -117,7 +117,7 @@ WITH source_sections AS (
         s.number AS section_number,
         cc.curriculum_id
     FROM timetable_section AS s
-    JOIN academics_curriculumcourse AS cc
+    JOIN academics_curricrs AS cc
       ON cc.id = s.curriculum_course_id
     WHERE cc.course_id = :source_id
 ),
@@ -128,7 +128,7 @@ target_sections AS (
         s.number AS section_number,
         cc.curriculum_id
     FROM timetable_section AS s
-    JOIN academics_curriculumcourse AS cc
+    JOIN academics_curricrs AS cc
       ON cc.id = s.curriculum_course_id
     WHERE cc.course_id = :target_id
 )
@@ -190,7 +190,7 @@ ORDER BY cur.short_name, course_code;
 SELECT
     course_id,
     COUNT(*) AS curriculum_course_count
-FROM academics_curriculumcourse
+FROM academics_curricrs
 WHERE course_id IN (:source_id, :target_id)
 GROUP BY course_id
 ORDER BY course_id;
@@ -200,7 +200,7 @@ SELECT
     cc.course_id,
     COUNT(s.id) AS section_count
 FROM timetable_section AS s
-JOIN academics_curriculumcourse AS cc
+JOIN academics_curricrs AS cc
   ON cc.id = s.curriculum_course_id
 WHERE cc.course_id IN (:source_id, :target_id)
 GROUP BY cc.course_id

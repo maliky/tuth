@@ -65,9 +65,9 @@ CREATE TEMP TABLE tmp_cc_pairs AS
 SELECT
     src.id AS src_id,
     tgt.id AS tgt_id
-FROM academics_curriculumcourse src
+FROM academics_curricrs src
 JOIN tmp_course_merge m ON src.course_id = m.source_id
-JOIN academics_curriculumcourse tgt
+JOIN academics_curricrs tgt
   ON tgt.curriculum_id = src.curriculum_id
  AND tgt.course_id = m.target_id;
 
@@ -76,12 +76,12 @@ SET curriculum_course_id = tmp_cc_pairs.tgt_id
 FROM tmp_cc_pairs
 WHERE s.curriculum_course_id = tmp_cc_pairs.src_id;
 
-DELETE FROM academics_curriculumcourse cc
+DELETE FROM academics_curricrs cc
 USING tmp_cc_pairs
 WHERE cc.id = tmp_cc_pairs.src_id;
 
 -- Update remaining curriculum courses to the target course.
-UPDATE academics_curriculumcourse cc
+UPDATE academics_curricrs cc
 SET course_id = m.target_id
 FROM tmp_course_merge m
 WHERE cc.course_id = m.source_id;
@@ -92,8 +92,8 @@ CREATE TEMP TABLE tmp_cc_dupes AS
 SELECT
     cc.id AS drop_id,
     cc2.id AS keep_id
-FROM academics_curriculumcourse cc
-JOIN academics_curriculumcourse cc2
+FROM academics_curricrs cc
+JOIN academics_curricrs cc2
   ON cc.curriculum_id = cc2.curriculum_id
  AND cc.course_id = cc2.course_id
  AND cc.id > cc2.id;
@@ -108,14 +108,14 @@ WITH cc_dupes AS (
     SELECT
         cc.id AS drop_id,
         cc2.id AS keep_id
-    FROM academics_curriculumcourse cc
-    JOIN academics_curriculumcourse cc2
+    FROM academics_curricrs cc
+    JOIN academics_curricrs cc2
       ON cc.curriculum_id = cc2.curriculum_id
      AND cc.course_id = cc2.course_id
      AND cc.id > cc2.id
 )
 
-DELETE FROM academics_curriculumcourse cc
+DELETE FROM academics_curricrs cc
 USING tmp_cc_dupes
 WHERE cc.id = tmp_cc_dupes.drop_id;
 

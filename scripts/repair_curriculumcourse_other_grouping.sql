@@ -20,7 +20,7 @@ SELECT
     level_number,
     year_number,
     semester_number
-FROM academics_curriculumcourse
+FROM academics_curricrs
 WHERE
     (level_number IS NULL OR level_number = 99 OR level_number <= 0)
     AND (
@@ -30,7 +30,7 @@ WHERE
 ORDER BY curriculum_id, course_id, id;
 
 -- Apply normalization to the "other/undefined" bucket.
-UPDATE academics_curriculumcourse
+UPDATE academics_curricrs
 SET
     year_number = 99,
     semester_number = 0
@@ -44,7 +44,7 @@ WHERE
 -- Summary after update.
 SELECT
     COUNT(*) AS rows_now_in_other_grouping
-FROM academics_curriculumcourse
+FROM academics_curricrs
 WHERE
     (level_number IS NULL OR level_number = 99 OR level_number <= 0)
     AND year_number = 99

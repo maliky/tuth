@@ -1,5 +1,5 @@
 -- Backfill CurriculumStudentEnrollment admin records from existing data sources.
--- Physical DB table: people_curriculumstudentenrollment
+-- Physical DB table: people_stdcurrienroll
 --
 -- What it does:
 -- 1) Inserts one enrollment row per (student, student.curriculum) when missing.
@@ -17,9 +17,9 @@ BEGIN;
 -- Guard: fail fast if enrollment/grade tables do not exist.
 DO $$
 BEGIN
-    IF to_regclass('public.people_curriculumstudentenrollment') IS NULL THEN
+    IF to_regclass('public.people_stdcurrienroll') IS NULL THEN
         RAISE EXCEPTION
-            'Table people_curriculumstudentenrollment does not exist. Run migrations first.';
+            'Table people_stdcurrienroll does not exist. Run migrations first.';
     END IF;
     IF to_regclass('public.registry_grade') IS NULL THEN
         RAISE EXCEPTION
@@ -28,7 +28,7 @@ BEGIN
 END $$;
 
 -- 1) Insert missing enrollment rows from Student.curriculum.
-INSERT INTO people_curriculumstudentenrollment (
+INSERT INTO people_stdcurrienroll (
     student_id,
     curriculum_id,
     entry_semester_id,
@@ -51,7 +51,7 @@ FROM people_student AS s
 WHERE s.curriculum_id IS NOT NULL
   AND NOT EXISTS (
       SELECT 1
-      FROM people_curriculumstudentenrollment AS e
+      FROM people_stdcurrienroll AS e
       WHERE e.student_id = s.id
         AND e.curriculum_id = s.curriculum_id
   );
@@ -67,7 +67,7 @@ WITH grade_curriculum_pairs AS (
     FROM registry_grade AS g
     JOIN timetable_section AS s
       ON s.id = g.section_id
-    JOIN academics_curriculumcourse AS cc
+    JOIN academics_curricrs AS cc
       ON cc.id = s.curriculum_course_id
     JOIN timetable_semester AS sem
       ON sem.id = s.semester_id
@@ -78,7 +78,7 @@ WITH grade_curriculum_pairs AS (
         sem.start_date NULLS LAST,
         sem.id
 )
-INSERT INTO people_curriculumstudentenrollment (
+INSERT INTO people_stdcurrienroll (
     student_id,
     curriculum_id,
     entry_semester_id,
@@ -100,13 +100,13 @@ SELECT
 FROM grade_curriculum_pairs AS gp
 WHERE NOT EXISTS (
     SELECT 1
-    FROM people_curriculumstudentenrollment AS e
+    FROM people_stdcurrienroll AS e
     WHERE e.student_id = gp.student_id
       AND e.curriculum_id = gp.curriculum_id
 );
 
 -- 3) Align flags/semester metadata for rows tied to Student.curriculum.
-UPDATE people_curriculumstudentenrollment AS e
+UPDATE people_stdcurrienroll AS e
 SET
     is_primary = (e.curriculum_id = s.curriculum_id),
     is_active = CASE
@@ -128,7 +128,7 @@ COMMIT;
 -- WHERE s.curriculum_id IS NOT NULL
 --   AND NOT EXISTS (
 --       SELECT 1
---       FROM people_curriculumstudentenrollment AS e
+--       FROM people_stdcurrienroll AS e
 --       WHERE e.student_id = s.id
 --         AND e.curriculum_id = s.curriculum_id
 --   );
@@ -140,8 +140,8 @@ COMMIT;
 --     COUNT(*) AS grade_count
 -- FROM registry_grade AS g
 -- JOIN timetable_section AS s ON s.id = g.section_id
--- JOIN academics_curriculumcourse AS cc ON cc.id = s.curriculum_course_id
--- LEFT JOIN people_curriculumstudentenrollment AS e
+-- JOIN academics_curricrs AS cc ON cc.id = s.curriculum_course_id
+-- LEFT JOIN people_stdcurrienroll AS e
 --   ON e.student_id = g.student_id
 --  AND e.curriculum_id = cc.curriculum_id
 -- WHERE cc.curriculum_id IS NOT NULL
@@ -153,7 +153,7 @@ COMMIT;
 -- SELECT
 --     e.student_id,
 --     COUNT(*) FILTER (WHERE e.is_primary) AS primary_count
--- FROM people_curriculumstudentenrollment AS e
+-- FROM people_stdcurrienroll AS e
 -- JOIN people_student AS s ON s.id = e.student_id
 -- WHERE s.curriculum_id IS NOT NULL
 -- GROUP BY e.student_id

@@ -30,8 +30,8 @@ SELECT
     tc.is_elective AS target_is_elective,
     sc.credit_hours_id AS source_credit_hours,
     tc.credit_hours_id AS target_credit_hours
-FROM academics_curriculumcourse AS sc
-JOIN academics_curriculumcourse AS tc
+FROM academics_curricrs AS sc
+JOIN academics_curricrs AS tc
   ON tc.course_id = sc.course_id
   AND tc.curriculum_id = :target_id
 JOIN academics_course AS c ON c.id = sc.course_id
@@ -40,12 +40,12 @@ ORDER BY c.short_code;
 
 -- Crss in source that are not in target.
 SELECT c.id AS course_id, c.short_code, c.title
-FROM academics_curriculumcourse AS sc
+FROM academics_curricrs AS sc
 JOIN academics_course AS c ON c.id = sc.course_id
 WHERE sc.curriculum_id = :source_id
   AND NOT EXISTS (
       SELECT 1
-      FROM academics_curriculumcourse AS tc
+      FROM academics_curricrs AS tc
       WHERE tc.curriculum_id = :target_id
         AND tc.course_id = sc.course_id
   )
@@ -58,7 +58,7 @@ WITH source_sections AS (
            s.number AS section_number,
            cc.course_id
     FROM timetable_section AS s
-    JOIN academics_curriculumcourse AS cc
+    JOIN academics_curricrs AS cc
       ON cc.id = s.curriculum_course_id
     WHERE cc.curriculum_id = :source_id
 ),
@@ -68,7 +68,7 @@ target_sections AS (
            s.number AS section_number,
            cc.course_id
     FROM timetable_section AS s
-    JOIN academics_curriculumcourse AS cc
+    JOIN academics_curricrs AS cc
       ON cc.id = s.curriculum_course_id
     WHERE cc.curriculum_id = :target_id
 )
@@ -112,8 +112,8 @@ SELECT
     m.name AS major_name,
     COUNT(*) AS course_count
 FROM academics_major AS m
-JOIN academics_majorcurriculumcourse AS mcc ON mcc.major_id = m.id
-JOIN academics_curriculumcourse AS cc ON cc.id = mcc.curriculum_course_id
+JOIN academics_majorcurricrs AS mcc ON mcc.major_id = m.id
+JOIN academics_curricrs AS cc ON cc.id = mcc.curriculum_course_id
 WHERE m.curriculum_id = :source_id
 GROUP BY m.id, m.name
 ORDER BY m.name;
@@ -124,8 +124,8 @@ SELECT
     m.name AS minor_name,
     COUNT(*) AS course_count
 FROM academics_minor AS m
-JOIN academics_minorcurriculumcourse AS mcc ON mcc.minor_id = m.id
-JOIN academics_curriculumcourse AS cc ON cc.id = mcc.curriculum_course_id
+JOIN academics_minorcurricrs AS mcc ON mcc.minor_id = m.id
+JOIN academics_curricrs AS cc ON cc.id = mcc.curriculum_course_id
 WHERE m.curriculum_id = :source_id
 GROUP BY m.id, m.name
 ORDER BY m.name;
@@ -138,7 +138,7 @@ SELECT
     sem.number AS semester_number,
     COUNT(r.id) AS registration_count
 FROM timetable_section AS s
-JOIN academics_curriculumcourse AS cc ON cc.id = s.curriculum_course_id
+JOIN academics_curricrs AS cc ON cc.id = s.curriculum_course_id
 JOIN academics_course AS c ON c.id = cc.course_id
 JOIN timetable_semester AS sem ON sem.id = s.semester_id
 LEFT JOIN registry_registration AS r ON r.section_id = s.id

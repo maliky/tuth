@@ -144,7 +144,7 @@ BEGIN
             sc.department_id AS source_department_id,
             BTRIM(sc.number) AS source_course_number,
             CONCAT(sc.department_id, ':', BTRIM(sc.number)) AS identity_key
-        FROM academics_curricourse AS scc
+        FROM academics_curricrs AS scc
         JOIN academics_course AS sc ON sc.id = scc.course_id
         WHERE scc.curriculum_id = v_source
     ),
@@ -157,7 +157,7 @@ BEGIN
                 PARTITION BY tc.department_id, BTRIM(tc.number)
                 ORDER BY tcc.id
             ) AS rn
-        FROM academics_curricourse AS tcc
+        FROM academics_curricrs AS tcc
         JOIN academics_course AS tc ON tc.id = tcc.course_id
         WHERE tcc.curriculum_id = v_target
     )
@@ -639,7 +639,7 @@ BEGIN
             ORDER BY source_cc_id
         LOOP
             IF v_row.target_cc_id IS NULL THEN
-                UPDATE academics_curricourse
+                UPDATE academics_curricrs
                 SET curriculum_id = v_target
                 WHERE id = v_row.source_cc_id;
                 INSERT INTO scripts_curriculum_merge_log (
@@ -923,7 +923,7 @@ BEGIN
             END LOOP;
 
             BEGIN
-                DELETE FROM academics_curricourse WHERE id = v_row.source_cc_id;
+                DELETE FROM academics_curricrs WHERE id = v_row.source_cc_id;
                 IF FOUND THEN
                     INSERT INTO scripts_curriculum_merge_log (
                         run_id, stage, entity, source_id, target_id, reason_code

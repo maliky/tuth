@@ -17,7 +17,7 @@ WITH src AS (
         cc.credit_hours_id,
         cc.is_required,
         cc.is_elective
-    FROM academics_curriculumcourse AS cc
+    FROM academics_curricrs AS cc
     JOIN academics_curriculum AS cur ON cur.id = cc.curriculum_id
     JOIN academics_course AS c ON c.id = cc.course_id
     JOIN academics_department AS d ON d.id = c.department_id
@@ -35,7 +35,7 @@ tgt AS (
         cc.credit_hours_id,
         cc.is_required,
         cc.is_elective
-    FROM academics_curriculumcourse AS cc
+    FROM academics_curricrs AS cc
     JOIN academics_curriculum AS cur ON cur.id = cc.curriculum_id
     JOIN academics_course AS c ON c.id = cc.course_id
     JOIN academics_department AS d ON d.id = c.department_id
@@ -108,8 +108,8 @@ SELECT
     t.id AS target_invoice_id,
     s.student_id,
     s.semester_id
-FROM finance_invoice AS s
-JOIN finance_invoice AS t
+FROM finance_courseinvoice AS s
+JOIN finance_courseinvoice AS t
   ON t.student_id = s.student_id
  AND t.semester_id = s.semester_id
 WHERE s.curriculum_course_id = :source_id
@@ -120,7 +120,7 @@ ORDER BY s.student_id, s.semester_id;
 SELECT
     curriculum_course_id,
     COUNT(*) AS invoice_count
-FROM finance_invoice
+FROM finance_courseinvoice
 WHERE curriculum_course_id IN (:source_id, :target_id)
 GROUP BY curriculum_course_id
 ORDER BY curriculum_course_id;

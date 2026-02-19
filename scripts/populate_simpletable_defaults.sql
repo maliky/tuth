@@ -1,14 +1,14 @@
 BEGIN;
 
--- academics_curriculumstatus
-INSERT INTO academics_curriculumstatus (code, label) VALUES
+-- academics_curristatus
+INSERT INTO academics_curristatus (code, label) VALUES
     ('pending', 'Pending'),
     ('approved', 'Approved'),
     ('needs_revision', 'Needs Revision')
 ON CONFLICT (code) DO UPDATE SET label = EXCLUDED.label;
 
--- registry_documenttype
-INSERT INTO registry_documenttype (code, label) VALUES
+-- registry_doctype
+INSERT INTO registry_doctype (code, label) VALUES
     ('photo', 'Photo'),
     ('applet', 'Application Letter'),
     ('recls', 'Recommandation Last School'),
@@ -23,8 +23,8 @@ INSERT INTO registry_documenttype (code, label) VALUES
     ('other', 'Other Document')
 ON CONFLICT (code) DO UPDATE SET label = EXCLUDED.label;
 
--- registry_documentstatus
-INSERT INTO registry_documentstatus (code, label) VALUES
+-- registry_docstatus
+INSERT INTO registry_docstatus (code, label) VALUES
     ('pending', 'Pending'),
     ('approved', 'Approved'),
     ('adjustments_required', 'Adjustments Required'),
@@ -117,8 +117,8 @@ INSERT INTO finance_feetype (code, label) VALUES
     ('tuition', 'Tuition')
 ON CONFLICT (code) DO UPDATE SET label = EXCLUDED.label;
 
--- finance_invoicestatus
-INSERT INTO finance_invoicestatus (code, label) VALUES
+-- finance_courseinvoicestatus
+INSERT INTO finance_courseinvoicestatus (code, label) VALUES
     ('initial', 'Initial'),
     ('settled', 'Settled'),
     ('cleared', 'Cleared'),

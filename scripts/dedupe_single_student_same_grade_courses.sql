@@ -66,7 +66,7 @@ JOIN registry_gradevalue AS gv
   ON gv.id = g.value_id
 JOIN timetable_section AS s
   ON s.id = g.section_id
-JOIN academics_curricourse AS cc
+JOIN academics_curricrs AS cc
   ON cc.id = s.curriculum_course_id
 JOIN academics_course AS c
   ON c.id = cc.course_id

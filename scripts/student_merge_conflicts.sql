@@ -31,7 +31,7 @@ GROUP BY student_id
 ORDER BY student_id;
 
 SELECT student_id, COUNT(*) AS invoice_count
-FROM finance_invoice
+FROM finance_courseinvoice
 WHERE student_id IN (:source_id, :target_id)
 GROUP BY student_id
 ORDER BY student_id;
@@ -49,7 +49,7 @@ GROUP BY student_id
 ORDER BY student_id;
 
 SELECT person_id AS student_id, COUNT(*) AS document_count
-FROM registry_documentstudent
+FROM registry_docstd
 WHERE person_id IN (:source_id, :target_id)
 GROUP BY person_id
 ORDER BY person_id;
@@ -84,8 +84,8 @@ SELECT
     s.semester_id,
     s.id AS source_invoice_id,
     t.id AS target_invoice_id
-FROM finance_invoice AS s
-JOIN finance_invoice AS t
+FROM finance_courseinvoice AS s
+JOIN finance_courseinvoice AS t
   ON t.curriculum_course_id = s.curriculum_course_id
  AND t.semester_id = s.semester_id
 WHERE s.student_id = :source_id

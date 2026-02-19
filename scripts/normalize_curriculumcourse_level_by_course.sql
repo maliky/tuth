@@ -10,7 +10,7 @@
 -- Show the current distinct level numbers for the course.
 WITH levels AS (
     SELECT DISTINCT cc.level_number
-    FROM academics_curriculumcourse AS cc
+    FROM academics_curricrs AS cc
     JOIN academics_course AS c ON c.id = cc.course_id
     WHERE c.short_code = :'course_short_code'
       AND cc.level_number IS NOT NULL
@@ -26,14 +26,14 @@ WITH levels AS (
     SELECT COUNT(*) AS level_count, MIN(level_number) AS level_value
     FROM (
         SELECT DISTINCT cc.level_number
-        FROM academics_curriculumcourse AS cc
+        FROM academics_curricrs AS cc
         JOIN academics_course AS c ON c.id = cc.course_id
         WHERE c.short_code = :'course_short_code'
           AND cc.level_number IS NOT NULL
           AND cc.level_number <> 99
     ) AS levels
 )
-UPDATE academics_curriculumcourse AS cc
+UPDATE academics_curricrs AS cc
 SET level_number = levels.level_value,
     year_number = CASE
         WHEN levels.level_value BETWEEN 1 AND 8
