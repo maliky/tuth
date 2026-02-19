@@ -36,6 +36,8 @@ from app.shared.admin.mixins import (
 from app.people.admin.mixins import MergeWizardMixin, ModelT
 
 from .actions import (
+    _apply_curri_relink,
+    _notify_curri_relink_result,
     attach_fee_stacks,
     update_curri,
     update_curri_to_dpt_college_dft,
@@ -470,6 +472,69 @@ class CurriAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
             f"?student_registrations__section__curriculum_course__curriculum={obj.id}"
         )
         return format_html('<a href="{}">{}</a>', url, count)
+
+    def save_formset(self, request, form, formset, change):
+        """Handle inline moves to department default curricula."""
+        super().save_formset(request, form, formset, change)
+        if formset.model is not CurriCrs:
+            return
+
+        selected_ids: list[int] = []
+        for inline_form in formset.forms:
+            cleaned = getattr(inline_form, "cleaned_data", None)
+            if not cleaned:
+                continue
+            if cleaned.get("DELETE"):
+                continue
+            if not cleaned.get("move_to_dpt_dft"):
+                continue
+            instance = inline_form.instance
+            if instance.pk:
+                selected_ids.append(instance.pk)
+
+        if not selected_ids:
+            return
+
+        selected_rows = list(
+            CurriCrs.objects.filter(pk__in=selected_ids)
+            .select_related("course__department__college")
+            .order_by("id")
+        )
+        if not selected_rows:
+            return
+
+        dft_curri_by_college_id: dict[int, Curriculum] = {}
+
+        def _resolve_target(curriculum_course: CurriCrs) -> Curriculum | None:
+            dept = getattr(curriculum_course.course, "department", None)
+            if dept is None or dept.college_id is None:
+                return None
+            target_curri = dft_curri_by_college_id.get(dept.college_id)
+            if target_curri is not None:
+                return target_curri
+            target_curri = Curriculum.get_dft(def_college=dept.college)
+            dft_curri_by_college_id[dept.college_id] = target_curri
+            return target_curri
+
+        summary = _apply_curri_relink(
+            selected_rows=selected_rows,
+            resolve_target_curri=_resolve_target,
+        )
+        _notify_curri_relink_result(
+            modeladmin=self,
+            request=request,
+            summary=summary,
+        )
+        if dft_curri_by_college_id:
+            self.message_user(
+                request,
+                (
+                    "Resolved "
+                    f"{len(dft_curri_by_college_id)} default curriculum target(s) "
+                    "from selected departments."
+                ),
+                messages.INFO,
+            )
 
     @admin.display(description="Crss")
     def crs_count_link(self, obj):

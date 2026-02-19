@@ -1,5 +1,6 @@
 """ILs module."""
 
+from django import forms
 from django.contrib import admin
 from collections import defaultdict
 from typing import Any, Callable, cast
@@ -146,6 +147,21 @@ class CurriCrsIL(admin.TabularInline):
     """Inline for linking courses to a curriculum."""
 
     model = CurriCrs
+
+    class CurriCrsInlineForm(forms.ModelForm):
+        """Inline form with bulk relink toggle."""
+
+        move_to_dpt_dft = forms.BooleanField(
+            required=False,
+            label="Move to dept default",
+            help_text="Move this course to the department's default curriculum",
+        )
+
+        class Meta:
+            model = CurriCrs
+            fields = "__all__"
+
+    form = CurriCrsInlineForm
     fk_name = "curriculum"
     verbose_name_plural = "Crss in this curriculum."
     extra = 0
@@ -164,6 +180,7 @@ class CurriCrsIL(admin.TabularInline):
         "required_group_number",
         "credit_hours",
         "min_validated_credits",
+        "move_to_dpt_dft",
     )
     readonly_fields = ()
 
