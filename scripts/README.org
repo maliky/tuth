@@ -57,6 +57,25 @@ Example:
 cat scripts/backfill_curriculum_student_enrollment.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
 #+END_SRC
 
+*** =backfill_grade_is_effective.sql=
+Short description:
+- Backfills =registry_grade.is_effective= so each =(student, course)= has a
+  single effective grade row.
+- Uses "most recent section attempt wins" ordering.
+- Dry-run by default; apply with =-v apply=1=.
+
+Example (dry-run):
+
+#+BEGIN_SRC bash
+cat scripts/backfill_grade_is_effective.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+#+END_SRC
+
+Example (apply):
+
+#+BEGIN_SRC bash
+cat scripts/backfill_grade_is_effective.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v apply=1
+#+END_SRC
+
 *** =course_merge_conflicts.sql=
 Short description:
 - Precheck for course merge conflicts between source and target course IDs.

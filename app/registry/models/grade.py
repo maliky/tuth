@@ -113,6 +113,33 @@ class Grade(models.Model):
     class Meta:
         unique_together = ("student", "section")
 
+    @classmethod
+    def recompute_effective_for_student_course(
+        cls, *, student_id: int, course_id: int
+    ) -> None:
+        """Set a single effective grade per student/course using recency."""
+        qs = cls.objects.filter(
+            student_id=student_id,
+            section__curriculum_course__course_id=course_id,
+        )
+        effective_id = (
+            qs.order_by(
+                "-section__semester__start_date",
+                "-section__semester_id",
+                "-section_id",
+                "-graded_on",
+                "-id",
+            )
+            .values_list("id", flat=True)
+            .first()
+        )
+        if effective_id is None:
+            return
+        qs.exclude(id=effective_id).filter(is_effective=True).update(is_effective=False)
+        cls.objects.filter(id=effective_id).exclude(is_effective=True).update(
+            is_effective=True
+        )
+
     def __str__(self) -> str:  # pragma: no cover
         """Human readable representation used in admin lists."""
         return f"{self.student} – {self.section}: {self.value}"
@@ -126,3 +153,53 @@ class Grade(models.Model):
         """Return the grade code or letter."""
         if self.value:
             return self.value.code
+
+    def save(self, *args, **kwargs) -> None:
+        """Save a grade and refresh effective status for touched course groups."""
+        old_pair: tuple[int, int] | None = None
+        if self.pk:
+            old_pair = (
+                self.__class__.objects.filter(pk=self.pk)
+                .values_list(
+                    "student_id",
+                    "section__curriculum_course__course_id",
+                )
+                .first()
+            )
+
+        super().save(*args, **kwargs)
+
+        recompute_pairs: set[tuple[int, int]] = set()
+        if self.section_id:
+            recompute_pairs.add(
+                (
+                    int(self.student_id),
+                    int(self.section.curriculum_course.course_id),
+                )
+            )
+        if old_pair is not None:
+            recompute_pairs.add((int(old_pair[0]), int(old_pair[1])))
+
+        for student_id, course_id in recompute_pairs:
+            self.recompute_effective_for_student_course(
+                student_id=student_id,
+                course_id=course_id,
+            )
+
+    def delete(self, *args, **kwargs):
+        """Delete a grade and refresh effective status for the same course."""
+        old_pair = (
+            self.__class__.objects.filter(pk=self.pk)
+            .values_list(
+                "student_id",
+                "section__curriculum_course__course_id",
+            )
+            .first()
+        )
+        deleted = super().delete(*args, **kwargs)
+        if old_pair is not None:
+            self.recompute_effective_for_student_course(
+                student_id=int(old_pair[0]),
+                course_id=int(old_pair[1]),
+            )
+        return deleted
