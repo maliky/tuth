@@ -2,12 +2,14 @@
 -- Physical DB table: people_stdcurrienroll
 --
 -- What it does:
--- 1) Inserts one enrollment row per (student, student.curriculum) when missing.
+-- 1) Inserts one enrollment row per (student, student.curriculum) only when
+--    no matching enrollment exists yet (legacy bootstrap).
 -- 2) Inserts missing enrollment rows for curricula found in student grades.
 --    - Uses earliest graded semester as entry_semester_id when available.
--- 3) Keeps Student.curriculum authoritative as the primary enrollment.
---    - Exactly that FK curriculum is marked is_primary = TRUE.
---    - Other enrollment rows for the same student are is_primary = FALSE.
+-- 3) Canonicalizes primary enrollment from enrollment-table precedence:
+--    - keep existing primary flag when present,
+--    - otherwise prefer active rows,
+--    - then latest updated row.
 -- 4) Keeps primary row active and copies Student.entry_semester when missing.
 --
 -- This script is idempotent and safe to re-run.
@@ -105,34 +107,51 @@ WHERE NOT EXISTS (
       AND e.curriculum_id = gp.curriculum_id
 );
 
--- 3) Align flags/semester metadata for rows tied to Student.curriculum.
+-- 3) Canonicalize one primary row per student from enrollment-table precedence.
+WITH ranked AS (
+    SELECT
+        e.id,
+        ROW_NUMBER() OVER (
+            PARTITION BY e.student_id
+            ORDER BY
+                e.is_primary DESC,
+                e.is_active DESC,
+                e.updated_at DESC,
+                e.id DESC
+        ) AS row_rank
+    FROM people_stdcurrienroll AS e
+)
 UPDATE people_stdcurrienroll AS e
 SET
-    is_primary = (e.curriculum_id = s.curriculum_id),
+    is_primary = (r.row_rank = 1),
     is_active = CASE
-        WHEN e.curriculum_id = s.curriculum_id THEN TRUE
+        WHEN r.row_rank = 1 THEN TRUE
         ELSE e.is_active
     END,
-    entry_semester_id = COALESCE(e.entry_semester_id, s.entry_semester_id),
+    updated_at = NOW()
+FROM ranked AS r
+WHERE r.id = e.id
+  AND (
+      e.is_primary IS DISTINCT FROM (r.row_rank = 1)
+      OR (
+          r.row_rank = 1
+          AND e.is_active IS DISTINCT FROM TRUE
+      )
+  );
+
+-- 4) Fill missing entry_semester from Student metadata when available.
+UPDATE people_stdcurrienroll AS e
+SET
+    entry_semester_id = s.entry_semester_id,
     updated_at = NOW()
 FROM people_student AS s
 WHERE s.id = e.student_id
-  AND s.curriculum_id IS NOT NULL;
+  AND e.entry_semester_id IS NULL
+  AND s.entry_semester_id IS NOT NULL;
 
 COMMIT;
 
 -- -------- Post-run verification --------
--- Expect 0 rows: each student FK curriculum should exist in enrollment table.
--- SELECT s.id, s.curriculum_id
--- FROM people_student AS s
--- WHERE s.curriculum_id IS NOT NULL
---   AND NOT EXISTS (
---       SELECT 1
---       FROM people_stdcurrienroll AS e
---       WHERE e.student_id = s.id
---         AND e.curriculum_id = s.curriculum_id
---   );
---
 -- Expect 0 rows: each grade-derived curriculum should exist in enrollment table.
 -- SELECT
 --     g.student_id,
@@ -149,12 +168,10 @@ COMMIT;
 -- GROUP BY g.student_id, cc.curriculum_id
 -- ORDER BY g.student_id, cc.curriculum_id;
 --
--- Expect 0 rows: each student with non-null FK curriculum has exactly one primary row.
+-- Expect 0 rows: each student with enrollments has exactly one primary row.
 -- SELECT
 --     e.student_id,
 --     COUNT(*) FILTER (WHERE e.is_primary) AS primary_count
 -- FROM people_stdcurrienroll AS e
--- JOIN people_student AS s ON s.id = e.student_id
--- WHERE s.curriculum_id IS NOT NULL
 -- GROUP BY e.student_id
 -- HAVING COUNT(*) FILTER (WHERE e.is_primary) <> 1;

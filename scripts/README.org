@@ -44,10 +44,10 @@ Then run:
 *** =backfill_curriculum_student_enrollment.sql=
 Short description:
 - Backfills CurriculumStudentEnrollment data from both:
-  - =people_student.curriculum_id=
+  - legacy =people_student.curriculum_id= (bootstrap only when enrollment row is missing)
   - curricula inferred from student grades (section -> curriculum course).
 - Writes to =people_stdcurrienroll=.
-- Keeps =Student.curriculum= authoritative for primary enrollment.
+- Canonicalizes one primary enrollment per student from enrollment-table precedence.
 - Uses earliest graded semester as enrollment entry when inferred from grades.
 - Safe to re-run (idempotent).
 
