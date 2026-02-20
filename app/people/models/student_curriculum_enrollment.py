@@ -102,14 +102,16 @@ def get_primary_curriculum(student: "Student") -> Curriculum:
     if student.curriculum_id:
         if getattr(settings, "STRICT_STDCURRIENROLL", False):
             raise RuntimeError(
-                "Legacy Student.curriculum fallback reached. "
+                "Legacy curriculum FK fallback reached. "
                 "Create/repair StdCurriEnroll rows first."
             )
         logger.warning(
             "Using legacy curriculum fallback for student_id=%s due to missing enrollment row",
             student.pk,
         )
-        return student.curriculum
+        curriculum = Curriculum.objects.filter(pk=student.curriculum_id).first()
+        if curriculum is not None:
+            return curriculum
     return Curriculum.get_dft()
 
 
@@ -166,10 +168,14 @@ def sync_primary_std_curri_enroll(student: "Student") -> StdCurriEnroll:
     """Synchronize enrollment and legacy curriculum FK from canonical precedence."""
     enroll = get_primary_std_curri_enroll(student)
     if enroll is None:
-        curriculum = student.curriculum if student.curriculum_id else Curriculum.get_dft()
+        curriculum = (
+            Curriculum.objects.filter(pk=student.curriculum_id).first()
+            if student.curriculum_id
+            else None
+        )
         return set_primary_std_curri_enroll(
             student,
-            curriculum,
+            curriculum or Curriculum.get_dft(),
             entry_semester_id=student.entry_semester_id,
             is_active=True,
         )

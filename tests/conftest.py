@@ -92,5 +92,5 @@ def _clear_ensure_caches() -> Generator[None, None, None]:
 
 @pytest.fixture(autouse=True)
 def _strict_stdcurrienroll(settings) -> None:
-    """Fail fast in tests when legacy Student.curriculum fallback is used."""
+    """Fail fast in tests when legacy curriculum FK fallback is used."""
     settings.STRICT_STDCURRIENROLL = True

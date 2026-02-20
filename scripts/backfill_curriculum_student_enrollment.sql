@@ -2,7 +2,7 @@
 -- Physical DB table: people_stdcurrienroll
 --
 -- What it does:
--- 1) Inserts one enrollment row per (student, student.curriculum) only when
+-- 1) Inserts one enrollment row per (student, curriculum FK) only when
 --    no matching enrollment exists yet (legacy bootstrap).
 -- 2) Inserts missing enrollment rows for curricula found in student grades.
 --    - Uses earliest graded semester as entry_semester_id when available.
@@ -29,7 +29,7 @@ BEGIN
     END IF;
 END $$;
 
--- 1) Insert missing enrollment rows from Student.curriculum.
+-- 1) Insert missing enrollment rows from people_student.curriculum_id.
 INSERT INTO people_stdcurrienroll (
     student_id,
     curriculum_id,
