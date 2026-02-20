@@ -118,24 +118,30 @@ class Grade(models.Model):
         cls, *, student_id: int, course_id: int
     ) -> None:
         """Set a single effective grade per student/course using recency."""
-        qs = cls.objects.filter(
-            student_id=student_id,
-            section__curriculum_course__course_id=course_id,
-        )
         effective_id = (
-            qs.order_by(
+            cls.objects.filter(
+                student_id=student_id,
+                section__curriculum_course__course_id=course_id,
+            )
+            .order_by(
                 "-section__semester__start_date",
                 "-section__semester_id",
                 "-section_id",
                 "-graded_on",
                 "-id",
             )
-            .values_list("id", flat=True)
+            .values_list(
+                "id",
+                flat=True,
+            )
             .first()
         )
         if effective_id is None:
             return
-        qs.exclude(id=effective_id).filter(is_effective=True).update(is_effective=False)
+        cls.objects.filter(
+            student_id=student_id,
+            section__curriculum_course__course_id=course_id,
+        ).exclude(id=effective_id).filter(is_effective=True).update(is_effective=False)
         cls.objects.filter(id=effective_id).exclude(is_effective=True).update(
             is_effective=True
         )
