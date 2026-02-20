@@ -10,6 +10,7 @@ import pytest
 from app.finance.models.fee_stack import CrsFeeStack, FeeStack, FeeStackLine
 from app.finance.models.invoice import CrsInvoice
 from app.finance.models.status_types_methods import FeeType
+from app.people.models.student_curriculum_enrollment import set_primary_std_curri_enroll
 from app.timetable.models.section import Section
 
 
@@ -42,8 +43,7 @@ def test_invoice_initial_amount_is_not_changed_by_later_fee_stack_update(
         number=1,
     )
 
-    student.curriculum = curriculum_course.curriculum
-    student.save(update_fields=["curriculum"])
+    set_primary_std_curri_enroll(student, curriculum_course.curriculum)
 
     old_stack = FeeStack.objects.create(name="Invoice Stack Old")
     old_fee_line = FeeStackLine.objects.create(

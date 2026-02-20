@@ -10,6 +10,7 @@ from selenium.webdriver.support.ui import Select, WebDriverWait
 
 from app.finance.models.invoice import Invoice
 from app.people.models.student import Student
+from app.people.models.student_curriculum_enrollment import set_primary_std_curri_enroll
 from app.registry.models.registration import Registration
 from app.timetable.models.semester import SemesterStatus
 from tests.bdd.fixtures import StdContext
@@ -66,8 +67,7 @@ def curri_sec_available(
     section, curriculum = reg_sec_factory(std_context.semester)
     student = std_context.student
     assert student is not None
-    student.curriculum = curriculum
-    student.save(update_fields=["curriculum"])
+    set_primary_std_curri_enroll(student, curriculum)
     std_context.section = section
     std_context.fee_due = section.fee_total_amount()
 

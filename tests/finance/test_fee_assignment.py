@@ -18,6 +18,7 @@ from app.finance.models.status_types_methods import (
     PaymentMethod,
     PaymentStatus,
 )
+from app.people.models.student_curriculum_enrollment import set_primary_std_curri_enroll
 
 pytestmark = pytest.mark.django_db
 
@@ -49,9 +50,9 @@ def test_attach_sem_fee_stacks_is_idempotent(
     """Default and optional stack attachments should be repeatable and stable."""
     curriculum_course = curriculum_course_factory("881", "CURR_FEES")
     semester = sem_factory(1, datetime(2026, 1, 1))
-    student.curriculum = curriculum_course.curriculum
+    set_primary_std_curri_enroll(student, curriculum_course.curriculum)
     student.last_enrolled_semester = semester
-    student.save(update_fields=["curriculum", "last_enrolled_semester"])
+    student.save(update_fields=["last_enrolled_semester"])
 
     tuition = curriculum_course.tuition_for()
     course_invoice = CrsInvoice.objects.create(

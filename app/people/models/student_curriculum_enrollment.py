@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from datetime import date
+import logging
 from typing import TYPE_CHECKING, TypeAlias, cast
 
+from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from simple_history.models import HistoricalRecords
@@ -16,6 +18,7 @@ if TYPE_CHECKING:
 
 
 StdCurriEnrollT: TypeAlias = "StdCurriEnroll | None"
+logger = logging.getLogger(__name__)
 
 
 class StdCurriEnroll(models.Model):
@@ -97,6 +100,15 @@ def get_primary_curriculum(student: "Student") -> Curriculum:
     if enroll is not None:
         return enroll.curriculum
     if student.curriculum_id:
+        if getattr(settings, "STRICT_STDCURRIENROLL", False):
+            raise RuntimeError(
+                "Legacy Student.curriculum fallback reached. "
+                "Create/repair StdCurriEnroll rows first."
+            )
+        logger.warning(
+            "Using legacy curriculum fallback for student_id=%s due to missing enrollment row",
+            student.pk,
+        )
         return student.curriculum
     return Curriculum.get_dft()
 
