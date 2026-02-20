@@ -467,9 +467,9 @@ class CurriAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
 
     def std_count(self, obj):
         """Adding a link to the student number."""
-        count = obj.registered_std_count()
+        count = obj.current_std_count()
         url = reverse("admin:people_student_changelist") + (
-            f"?student_registrations__section__curriculum_course__curriculum={obj.id}"
+            f"?curriculum__id__exact={obj.id}"
         )
         return format_html('<a href="{}">{}</a>', url, count)
 
