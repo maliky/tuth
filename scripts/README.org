@@ -57,6 +57,21 @@ Example:
 cat scripts/backfill_curriculum_student_enrollment.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
 #+END_SRC
 
+*** =stdcurrienroll_drop_fk_readiness.sql=
+Short description:
+- Read-only readiness checks before dropping =people_student.curriculum_id=.
+- Validates:
+  - students without enrollment rows,
+  - students with invalid primary enrollment cardinality,
+  - FK vs primary enrollment mismatches (while FK still exists),
+  - missing grade-derived enrollment rows.
+
+Example:
+
+#+BEGIN_SRC bash
+cat scripts/stdcurrienroll_drop_fk_readiness.sql | docker-compose -f docker-compose-preprod.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+#+END_SRC
+
 *** =backfill_grade_is_effective.sql=
 Short description:
 - Backfills =registry_grade.is_effective= so each =(student, course)= has a
