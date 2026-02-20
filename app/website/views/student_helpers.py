@@ -51,6 +51,7 @@ def _resolve_sem(
 
 def _build_std_profile(student: Student) -> dict[str, str]:
     """Return the student profile block for portal templates."""
+    curriculum = student.primary_curriculum
     academic_year = "Not assigned"
     if student.entry_semester:
         academic_year = (
@@ -64,7 +65,7 @@ def _build_std_profile(student: Student) -> dict[str, str]:
         "name": student.long_name or student.user.get_full_name() or student.username,
         "student_id": student.student_id or "Pending ID",
         "academic_year": academic_year,
-        "curriculum": student.curriculum.long_name or student.curriculum.short_name,
+        "curriculum": curriculum.long_name or curriculum.short_name,
         "avatar": avatar_url,
     }
 

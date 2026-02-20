@@ -338,9 +338,8 @@ def reg_grade_transcript(
     student_id: int,
 ) -> HttpResponse:
     """Render an official grade transcript preview for a student."""
-    student = get_object_or_404(
-        Student.objects.select_related("user", "curriculum"), pk=student_id
-    )
+    student = get_object_or_404(Student.objects.select_related("user"), pk=student_id)
+    curriculum = student.primary_curriculum
     grades = (
         Grade.objects.select_related(
             "section__semester__academic_year",
@@ -381,9 +380,7 @@ def reg_grade_transcript(
         "std_label": (
             student.long_name or student.user.get_full_name() or student.student_id
         ),
-        "curriculum_label": (
-            student.curriculum.long_name or student.curriculum.short_name
-        ),
+        "curriculum_label": (curriculum.long_name or curriculum.short_name),
         "generated_at": format_datetime(timezone.now()),
         "transcript_rows": transcript_rows,
         "dashboard_url": reverse("reg_grades_dashboard"),

@@ -6,6 +6,7 @@ from typing import TypeAlias
 
 from app.academics.models.curriculum import Curriculum
 from app.people.models.student import Student
+from app.people.models.student_curriculum_enrollment import sync_primary_std_curri_enroll
 from app.shared.types import StrIntMapT
 from app.shared.utils import parse_str
 
@@ -89,6 +90,7 @@ def ensure_std_sid(student_id_raw: StdIdT) -> int:
             "curriculum": Curriculum.get_dft(),
         },
     )
+    sync_primary_std_curri_enroll(student)
 
     # student.save()  # is it necessary after a save ?
 

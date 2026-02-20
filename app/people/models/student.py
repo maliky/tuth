@@ -18,6 +18,12 @@ from app.academics.models.curriculum_course import CurriCrs
 
 from app.academics.models.curriculum import Curriculum
 from app.people.models.core import AbstractPerson
+from app.people.models.student_curriculum_enrollment import (
+    get_primary_curriculum,
+    get_primary_std_curri_enroll,
+    set_primary_std_curri_enroll,
+    sync_primary_std_curri_enroll,
+)
 from app.shared.mixins import SimpleTableMixin
 from app.shared.types import CrsQuery
 from app.timetable.models.semester import Semester
@@ -103,7 +109,12 @@ class Student(AbstractPerson):
     @property
     def college(self):
         """Return the student's current college."""
-        return self.curriculum.college
+        return self.primary_curriculum.college
+
+    @property
+    def primary_curriculum(self) -> Curriculum:
+        """Return the student's canonical curriculum from enrollment rows."""
+        return get_primary_curriculum(self)
 
     def passed_crss(self) -> CrsQuery:
         """Return courses the student completed with a passing grade."""
@@ -116,9 +127,10 @@ class Student(AbstractPerson):
     @property
     def completed_credits(self) -> int:
         """Return sum of credit hours successfully completed."""
+        curriculum = self.primary_curriculum
         passed_ids = self.passed_crss().values_list("id", flat=True)
         agg = CurriCrs.objects.filter(
-            curriculum=self.curriculum, course_id__in=passed_ids
+            curriculum=curriculum, course_id__in=passed_ids
         ).aggregate(total=Sum("credit_hours"))
         return agg.get("total") or 0
 
@@ -136,7 +148,7 @@ class Student(AbstractPerson):
 
     def allowed_crss(self) -> CrsQuery:
         """Return courses available for registration based on prerequisites."""
-        curriculum = self.curriculum or Curriculum.get_dft()
+        curriculum = self.primary_curriculum
         all_courses = Course.for_curri(curriculum)
         passed = self.passed_crss()
         allowed_ids: list[int] = []
@@ -182,47 +194,37 @@ class Student(AbstractPerson):
         (i.e., ``last_enrolled_semester`` is set) and the
         ``entry_semester`` is empty, record today's date.
         """
+        previous_curriculum_id = None
+        if self.pk:
+            previous_curriculum_id = (
+                self.__class__.objects.filter(pk=self.pk)
+                .values_list("curriculum_id", flat=True)
+                .first()
+            )
         if not self.curriculum_id:
-            self.curriculum = Curriculum.get_dft()
+            # Keep the required legacy FK non-null until the model field is dropped.
+            enroll = get_primary_std_curri_enroll(self) if self.pk else None
+            self.curriculum = (
+                enroll.curriculum if enroll is not None else Curriculum.get_dft()
+            )
+        prefer_curriculum = previous_curriculum_id != self.curriculum_id
 
         super().save(*args, **kwargs)
-        self._ensure_primary_curri_enrollment()
+        self._ensure_primary_curri_enrollment(prefer_curriculum=prefer_curriculum)
 
-    def _ensure_primary_curri_enrollment(self) -> None:
-        """Keep the through enrollment table aligned with current curriculum."""
-        from app.people.models.student_curriculum_enrollment import (
-            StdCurriEnroll,
-        )
-
-        entry_semester_id = self.entry_semester_id
-        enrollment, _ = StdCurriEnroll.objects.get_or_create(
-            student=self,
-            curriculum_id=self.curriculum_id,
-            defaults={
-                "entry_semester_id": entry_semester_id,
-                "is_primary": True,
-                "is_active": True,
-            },
-        )
-        update_fields: list[str] = []
-        if not enrollment.is_primary:
-            enrollment.is_primary = True
-            update_fields.append("is_primary")
-        if not enrollment.is_active:
-            enrollment.is_active = True
-            update_fields.append("is_active")
-        if entry_semester_id and enrollment.entry_semester_id != entry_semester_id:
-            enrollment.entry_semester_id = entry_semester_id
-            update_fields.append("entry_semester")
-        if update_fields:
-            enrollment.save(update_fields=update_fields)
-
-        StdCurriEnroll.objects.filter(
-            student=self,
-            is_primary=True,
-        ).exclude(
-            curriculum_id=self.curriculum_id
-        ).update(is_primary=False)
+    def _ensure_primary_curri_enrollment(
+        self, *, prefer_curriculum: bool = False
+    ) -> None:
+        """Keep enrollment rows canonical and sync the legacy FK for compatibility."""
+        if prefer_curriculum and self.curriculum_id:
+            set_primary_std_curri_enroll(
+                self,
+                self.curriculum,
+                entry_semester_id=self.entry_semester_id,
+                is_active=True,
+            )
+            return
+        sync_primary_std_curri_enroll(self)
 
     @classmethod
     def get_dft(cls) -> "Student":
@@ -238,6 +240,7 @@ class Student(AbstractPerson):
                 "curriculum": Curriculum.get_dft(),
             },
         )
+        sync_primary_std_curri_enroll(student)
         return cast("Student", student)
 
     class Meta:

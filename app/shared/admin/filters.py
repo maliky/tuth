@@ -156,7 +156,7 @@ class StdLevelFlt(admin.SimpleListFilter):
             return qs
         # Compute levels in Python; limited to current queryset ids.
         ids: list[int] = []
-        for student in qs.select_related("curriculum"):
+        for student in qs:
             if student.class_level == level:
                 ids.append(student.id)
         return qs.filter(id__in=ids)

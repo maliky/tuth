@@ -23,6 +23,7 @@ from app.people.models.donor import Donor
 from app.people.models.faculty import Faculty
 from app.people.models.staffs import Staff
 from app.people.models.student import Student
+from app.people.models.student_curriculum_enrollment import set_primary_std_curri_enroll
 from app.people.utils import (
     cached_entity,
     create_person_factory,
@@ -258,10 +259,17 @@ class StdGradeWgt(widgets.ForeignKeyWidget):
 
         student = Student(
             user=user,
-            curriculum=curriculum,
+            curriculum=Curriculum.get_dft(),
             student_id=student_id,
         )
         student.save()
+        # Keep enrollment authoritative for curriculum assignment.
+        set_primary_std_curri_enroll(
+            student,
+            curriculum,
+            entry_semester_id=student.entry_semester_id,
+            is_active=True,
+        )
 
         self._cache_student[student_id] = student
         return student

@@ -404,7 +404,7 @@ def _build_vpaa_context(_: HttpRequest) -> dict:
 
 
 def _build_enrollment_context(_: HttpRequest) -> dict:
-    students_qs = Student.objects.select_related("curriculum")
+    students_qs = Student.objects.all()
     total_students = students_qs.count()
     onboarding = students_qs.filter(last_enrolled_semester__isnull=True).count()
     pending_docs = DocStd.objects.filter(status__code="pending").count()
@@ -412,7 +412,7 @@ def _build_enrollment_context(_: HttpRequest) -> dict:
     student_items = [
         {
             "label": student.long_name,
-            "value": student.curriculum.short_name if student.curriculum else "--",
+            "value": student.primary_curriculum.short_name,
             "meta": student.student_id,
         }
         for student in recent_students

@@ -158,7 +158,7 @@ def std_autocomplete(request: HttpRequest) -> HttpResponse:
             "pk": student.pk,
             "label": f"{student.student_id} — {student.long_name}",
             "student_id": student.student_id,
-            "curriculum": student.curriculum.short_name if student.curriculum else "",
+            "curriculum": student.primary_curriculum.short_name,
         }
         for student in suggestions
     ]

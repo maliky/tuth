@@ -40,8 +40,9 @@ class CurriCrsDetailT(TypedDict):
 def std_curri_crss(request: HttpRequest) -> HttpResponse:
     """Render an ordered list of curriculum courses for the current student."""
     student = _require_std(request.user)
+    curriculum = student.primary_curriculum
     curriculum_courses = (
-        CurriCrs.objects.filter(curriculum=student.curriculum)
+        CurriCrs.objects.filter(curriculum=curriculum)
         .select_related("course", "credit_hours")
         .order_by("course__short_code", "course__code")
     )
@@ -58,7 +59,7 @@ def std_curri_crss(request: HttpRequest) -> HttpResponse:
         "student_profile": _build_std_profile(student),
         "sidebar_links": _build_sidebar_links("Course Registration", student=student),
         "course_rows": course_rows,
-        "curriculum_label": student.curriculum.long_name or student.curriculum.short_name,
+        "curriculum_label": curriculum.long_name or curriculum.short_name,
     }
     return render(request, "website/std_curri_crss.html", context)
 
@@ -70,9 +71,10 @@ def std_curri_crs_detail(
 ) -> HttpResponse:
     """Render course details for a curriculum course linked to the student."""
     student = _require_std(request.user)
+    curriculum = student.primary_curriculum
     curriculum_course = (
         CurriCrs.objects.filter(
-            curriculum=student.curriculum,
+            curriculum=curriculum,
             pk=curriculum_course_id,
         )
         .select_related("course", "credit_hours", "curriculum")

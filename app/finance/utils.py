@@ -362,24 +362,9 @@ def build_invoice_snapshot(
     if balance < Decimal("0.00"):
         balance = Decimal("0.00")
 
-    from app.people.models.student_curriculum_enrollment import StdCurriEnroll
+    from app.people.models.student_curriculum_enrollment import get_primary_curriculum
 
-    primary_enrollment = (
-        StdCurriEnroll.objects.filter(student=student, is_primary=True, is_active=True)
-        .select_related("curriculum")
-        .first()
-    )
-    if primary_enrollment is None:
-        primary_enrollment = (
-            StdCurriEnroll.objects.filter(student=student, is_primary=True)
-            .select_related("curriculum")
-            .first()
-        )
-    curriculum_label = (
-        str(primary_enrollment.curriculum)
-        if primary_enrollment is not None
-        else str(student.curriculum)
-    )
+    curriculum_label = str(get_primary_curriculum(student))
 
     departments = {
         inv.curriculum_course.course.department.code

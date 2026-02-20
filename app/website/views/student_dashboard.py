@@ -145,6 +145,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         Rendered student dashboard response.
     """
     student = _require_std(request.user)
+    curriculum = student.primary_curriculum
     semester, open_semesters = _resolve_sem(student, request.GET.get("semester"))
     registration_open = bool(semester and semester.is_regio_open())
     registration: Optional[Registration] = None
@@ -733,7 +734,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
         )
 
     curriculum_courses_qs = (
-        CurriCrs.objects.filter(curriculum=student.curriculum)
+        CurriCrs.objects.filter(curriculum=curriculum)
         .select_related("course", "credit_hours")
         .prefetch_related("requirement_groups__members__required_course")
         .order_by("course__short_code")
@@ -802,7 +803,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     if course_ids:
         prereqs = (
             Prerequisite.objects.filter(
-                Q(curriculum=student.curriculum) | Q(curriculum__isnull=True),
+                Q(curriculum=curriculum) | Q(curriculum__isnull=True),
                 course_id__in=course_ids,
             )
             .select_related("prerequisite_course")
@@ -938,7 +939,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
             # Informational bucket: all non-selectable curriculum courses stay visible.
             locked_courses.append(course_payload)
 
-    gpa_result = get_cumulative_gpa(student=student, curriculum=student.curriculum)
+    gpa_result = get_cumulative_gpa(student=student, curriculum=curriculum)
     gpa = gpa_result["gpa"]
 
     total_due = StdSemesterInvoice.objects.filter(student=student).aggregate(
@@ -1116,7 +1117,7 @@ def student_dashboard(request: HttpRequest) -> HttpResponse:  # noqa: C901
     curriculum_course_count = len(curriculum_courses)
     advisor_actions = [
         {
-            "title": f"{student.curriculum.short_name} curriculum overview",
+            "title": f"{curriculum.short_name} curriculum overview",
             "description": f"{curriculum_course_count} mapped courses in your program.",
             "cta": reverse("std_curri_crss"),
         },
