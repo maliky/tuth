@@ -516,10 +516,11 @@ class CurriAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
             dft_curri_by_college_id[dept.college_id] = target_curri
             return target_curri
 
-        summary = _apply_curri_relink(
-            selected_rows=selected_rows,
-            resolve_target_curri=_resolve_target,
-        )
+        with transaction.atomic():
+            summary = _apply_curri_relink(
+                selected_rows=selected_rows,
+                resolve_target_curri=_resolve_target,
+            )
         _notify_curri_relink_result(
             modeladmin=self,
             request=request,

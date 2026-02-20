@@ -225,16 +225,25 @@ def _merge_secs(target: Section, source: Section) -> SectionMergeResultT:
     target_grade_values: dict[int, int | None] = dict(
         Grade.objects.filter(section=target).values_list("student_id", "value_id")
     )
+    affected_student_ids: set[int] = set()
+    target_course_id = int(target.curriculum_course.course_id)
     for grade in Grade.objects.filter(section=source):
+        affected_student_ids.add(int(grade.student_id))
         target_value_id = target_grade_values.get(grade.student_id)
         if target_value_id is not None:
             # Drop true duplicates so source section can be deleted safely.
             if target_value_id == grade.value_id:
-                grade.delete()
+                grade.delete(recompute_effective=False)
             continue
         grade.section = target
-        grade.save(update_fields=["section"])
+        # Defer effective recompute until all section-grade moves are done.
+        grade.save(update_fields=["section"], recompute_effective=False)
         target_grade_values[grade.student_id] = grade.value_id
+    for student_id in affected_student_ids:
+        Grade.recompute_effective_for_student_course(
+            student_id=student_id,
+            course_id=target_course_id,
+        )
 
     for registration in Registration.objects.filter(section=source):
         if Registration.objects.filter(

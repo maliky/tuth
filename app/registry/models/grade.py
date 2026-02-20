@@ -162,8 +162,9 @@ class Grade(models.Model):
 
     def save(self, *args, **kwargs) -> None:
         """Save a grade and refresh effective status for touched course groups."""
+        recompute_effective = bool(kwargs.pop("recompute_effective", True))
         old_pair: tuple[int, int] | None = None
-        if self.pk:
+        if recompute_effective and self.pk:
             old_pair = (
                 self.__class__.objects.filter(pk=self.pk)
                 .values_list(
@@ -174,6 +175,8 @@ class Grade(models.Model):
             )
 
         super().save(*args, **kwargs)
+        if not recompute_effective:
+            return
 
         recompute_pairs: set[tuple[int, int]] = set()
         if self.section_id:
@@ -194,16 +197,19 @@ class Grade(models.Model):
 
     def delete(self, *args, **kwargs):
         """Delete a grade and refresh effective status for the same course."""
-        old_pair = (
-            self.__class__.objects.filter(pk=self.pk)
-            .values_list(
-                "student_id",
-                "section__curriculum_course__course_id",
+        recompute_effective = bool(kwargs.pop("recompute_effective", True))
+        old_pair = None
+        if recompute_effective:
+            old_pair = (
+                self.__class__.objects.filter(pk=self.pk)
+                .values_list(
+                    "student_id",
+                    "section__curriculum_course__course_id",
+                )
+                .first()
             )
-            .first()
-        )
         deleted = super().delete(*args, **kwargs)
-        if old_pair is not None:
+        if recompute_effective and old_pair is not None:
             self.recompute_effective_for_student_course(
                 student_id=int(old_pair[0]),
                 course_id=int(old_pair[1]),
