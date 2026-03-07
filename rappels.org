@@ -1,5 +1,3 @@
-
-
 * Docker
 ** General
 if using docker-compose attach the config yml file then run the cmd such as exec stop build...

@@ -3,8 +3,6 @@
 Welcome — and thanks for helping grow **Tusis**, Tubman University’s Student Information System.
 This guide explains how to spin up the development stack, run checks, write tests, and craft pull requests.
 
----
-
 ## 2 · Conventions
 
 - Growing codebase habit: re-read AGENTS.md and related task files regularly to align with evolving patterns and instructions.
@@ -21,27 +19,26 @@ The files:
 - `journal.org`
 - all `.gitignore` files
 - Any file explicitly flagged by the user in a conversation
----
 
 ### naming
 Do not change existing variable names
 
 ### Documentation & comments
-- Pay close attention to comment using '# >' markers they are specificaly for agents.  You should read them but not write or delete them yourself.
+- Pay close attention to comment using '# >' markers.  They are specificaly for agents.  You should read them but not write or delete them yourself.
 - When editing code, do not remove commented lines.  Add a comment to explain why you suggest removing them, instead.
 - Comment your additions with concise inline comments on key logic blocks, especially when removing or replacing code.
 - Document succintly new class, methods, or functions even internal ones
 - In the reports, do not add line precision, file precision is enough
 
 ### Coding style
-- Typing: prefer explicit TypeAliases ending with `T` (e.g., `StrIntMapT`), avoid `Any`, and keep mypy happy (no implicit Optional where a concrete type is expected).
-- Prefer functional-style helpers (small pure functions) and reuse existing utilities before adding new logic.
+- Typing: prefer explicit TypeAliases ending with `T` (e.g., `StrIntMapT`), avoid `Any`, and keep mypy happy.
+- Prefer functional-style helpers and reuse existing utilities before adding new logic.
 - Factor common routines rather than duplicating blocks; keep new code composable.
 - Favor abstraction and simplification together: remove redundant parameters/paths and centralize repeated behavior into shared units when it reduces duplication.
 - If two options express the same behavior (e.g., alias parameters), keep one canonical option and update call sites instead of carrying both.
 - For app imports, prefer up to three levels when practical.
 - It is acceptable to use deeper imports (e.g., `from app.finance.models.course_fee import ...`) when needed for clarity or to avoid circular imports.
-- Use `__init__` and `__all__` to simplify import paths when it improves maintainability.
+- Use `__init__` and `__all__` to simplify  import paths when it improves maintainability.
 - Trying keep python files size under 300 lines for readability.  They can be bundled together latter at deployment or production stage.
 
 ### Linting and checks
@@ -59,15 +56,6 @@ Do not change existing variable names
 ### Selenium driver pin
 
 - Use the system `chromedriver` (currently 142.x) when running Selenium. The fixtures look for `/usr/bin/chromedriver` first; do not downgrade to the webdriver-manager default (114) because it breaks local browsers.
-
-## Improvement plan (do not implement without request)
-- Consolidate ensure helpers (e.g., semester/user creation) and centralize `get_user_model` typing to avoid command-specific casts.
-- Extract shared merge/dedup services for imports to replace per-command caches; add tests for same-ID/complementary-row merges.
-- Tighten typing (TypeAlias for user model, prefer `Mapping`/`TypedDict`/`dataclass` for row structures) to keep mypy strict without casts.
-- Centralize username collision policy in one helper used by widgets/commands to avoid divergent suffixing.
-- Standardize import logging: consistent CSV paths/messages, counts for skipped/merged rows, and consider structured logs for commands.
-- Debugging: check function/class signatures and expected types/formats early; prefer settings-driven defaults over hardcoded formats.
-- Growing codebase habit: re-read AGENTS.md and related task files regularly to align with evolving patterns and instructions.
 
 ### Environment notes
 - You may see harmless `pyenv: cannot rehash` warnings in some environments.
