@@ -61,7 +61,10 @@ class College(models.Model):
         Student = apps.get_model("people", "Student")
 
         counts = {lv.label: 0 for lv in LEVEL_NUMBER}
-        for stud in Student.objects.filter(curriculum__college=self):
+        for stud in Student.objects.filter(
+            curriculum_enrollments__curriculum__college=self,
+            curriculum_enrollments__is_primary=True,
+        ).distinct():
             _credits = stud.completed_credits
             if _credits <= 36:
                 level = LEVEL_NUMBER.ONE.label

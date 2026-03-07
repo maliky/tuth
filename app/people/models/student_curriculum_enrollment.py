@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 from datetime import date
-import logging
 from typing import TYPE_CHECKING, TypeAlias, cast
 
-from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from simple_history.models import HistoricalRecords
@@ -18,7 +16,6 @@ if TYPE_CHECKING:
 
 
 StdCurriEnrollT: TypeAlias = "StdCurriEnroll | None"
-logger = logging.getLogger(__name__)
 
 
 class StdCurriEnroll(models.Model):
@@ -99,19 +96,6 @@ def get_primary_curriculum(student: "Student") -> Curriculum:
     enroll = get_primary_std_curri_enroll(student)
     if enroll is not None:
         return enroll.curriculum
-    if student.curriculum_id:
-        if getattr(settings, "STRICT_STDCURRIENROLL", False):
-            raise RuntimeError(
-                "Legacy curriculum FK fallback reached. "
-                "Create/repair StdCurriEnroll rows first."
-            )
-        logger.warning(
-            "Using legacy curriculum fallback for student_id=%s due to missing enrollment row",
-            student.pk,
-        )
-        curriculum = Curriculum.objects.filter(pk=student.curriculum_id).first()
-        if curriculum is not None:
-            return curriculum
     return Curriculum.get_dft()
 
 
@@ -154,28 +138,17 @@ def set_primary_std_curri_enroll(
         pk=enroll.pk
     ).update(is_primary=False)
 
-    # Keep the legacy FK aligned until we drop the Student.curriculum field.
-    if student.curriculum_id != curriculum.id:
-        student.__class__.objects.filter(pk=student.pk).update(
-            curriculum_id=curriculum.id
-        )
-        student.curriculum_id = curriculum.id
     student._primary_std_curri_enroll_cache = enroll  # type: ignore[attr-defined]
     return enroll
 
 
 def sync_primary_std_curri_enroll(student: "Student") -> StdCurriEnroll:
-    """Synchronize enrollment and legacy curriculum FK from canonical precedence."""
+    """Ensure one canonical primary enrollment row exists for the student."""
     enroll = get_primary_std_curri_enroll(student)
     if enroll is None:
-        curriculum = (
-            Curriculum.objects.filter(pk=student.curriculum_id).first()
-            if student.curriculum_id
-            else None
-        )
         return set_primary_std_curri_enroll(
             student,
-            curriculum or Curriculum.get_dft(),
+            Curriculum.get_dft(),
             entry_semester_id=student.entry_semester_id,
             is_active=True,
         )

@@ -1,9 +1,11 @@
 """Defines model forms for the people module."""
 
+from app.academics.models.curriculum import Curriculum
 from app.people.forms.base import PersonFormMixin
 from app.people.models.donor import Donor
 from app.people.models.staffs import Staff
 from app.people.models.student import Student
+from app.people.models.student_curriculum_enrollment import set_primary_std_curri_enroll
 from app.shared.types import FieldT
 from django import forms
 
@@ -30,9 +32,14 @@ class StaffForm(PersonFormMixin, forms.ModelForm):
 
 
 class StdForm(PersonFormMixin, forms.ModelForm):
+    primary_curriculum = forms.ModelChoiceField(
+        queryset=Curriculum.objects.order_by("short_name"),
+        required=False,
+        label="curriculum",
+    )
     SPECIFIC_FIELDS = (
         "student_id",
-        "curriculum",
+        "primary_curriculum",
         "last_enrolled_semester",
         "entry_semester",
         "max_credit_hours",
@@ -52,3 +59,22 @@ class StdForm(PersonFormMixin, forms.ModelForm):
     class Meta:
         model = Student
         fields: FieldT = []
+
+    def __init__(self, *args, **kwargs) -> None:
+        """Set initial curriculum value from primary enrollment."""
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields["primary_curriculum"].initial = self.instance.primary_curriculum
+
+    def save(self, commit=True):
+        """Persist student and map selected curriculum to primary enrollment."""
+        student = super().save(commit=commit)
+        curriculum = self.cleaned_data.get("primary_curriculum")
+        if curriculum is not None:
+            set_primary_std_curri_enroll(
+                student,
+                curriculum,
+                entry_semester_id=student.entry_semester_id,
+                is_active=True,
+            )
+        return student

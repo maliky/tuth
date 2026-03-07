@@ -19,6 +19,9 @@ from app.finance.models.status_types_methods import (
     PaymentStatus,
 )
 from app.people.models.student import Student
+from app.people.models.student_curriculum_enrollment import (
+    set_primary_std_curri_enroll,
+)
 from app.registry.models.registration import Registration, RegistrationStatus
 from app.timetable.models.section import Section
 
@@ -58,10 +61,10 @@ def _std_regio_with_invoice(
     user = user_factory(student_username)
     student = Student(
         user=user,
-        curriculum=curriculum_course.curriculum,
         last_enrolled_semester=semester,
     )
     student.save()
+    set_primary_std_curri_enroll(student, curriculum_course.curriculum)
     section = Section.objects.create(
         semester=semester,
         curriculum_course=curriculum_course,

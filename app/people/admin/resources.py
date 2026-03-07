@@ -109,7 +109,7 @@ class StdResource(resources.ModelResource):
     # to be taken from gp table StudentInfo
     curriculum = fields.Field(
         column_name="curriculum_shortname",
-        attribute="curriculum",
+        attribute="primary_curriculum",
         widget=CurriWgt(),
     )
     birth_date = fields.Field(

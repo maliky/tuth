@@ -257,11 +257,7 @@ class StdGradeWgt(widgets.ForeignKeyWidget):
             password=password,
         )
 
-        student = Student(
-            user=user,
-            curriculum=Curriculum.get_dft(),
-            student_id=student_id,
-        )
+        student = Student(user=user, student_id=student_id)
         student.save()
         # Keep enrollment authoritative for curriculum assignment.
         set_primary_std_curri_enroll(

@@ -10,6 +10,7 @@ from selenium.webdriver.common.by import By
 
 from app.academics.models.curriculum import Curriculum
 from app.people.models.student import Student
+from app.people.models.student_curriculum_enrollment import set_primary_std_curri_enroll
 from app.timetable.models.semester import Semester
 
 TEST_PASSWORD = "PassW0rd!"
@@ -51,14 +52,18 @@ def portal_user_factory(semester: Semester):
             user.groups.add(group)
         if student:
             active_semester = semester_override or semester
-            Student.objects.update_or_create(
+            student_obj, _ = Student.objects.update_or_create(
                 user=user,
                 defaults={
-                    "curriculum": Curriculum.get_dft(),
                     "entry_semester": active_semester,
                     "last_enrolled_semester": active_semester,
                 },
                 username=user.username,
+            )
+            set_primary_std_curri_enroll(
+                student_obj,
+                Curriculum.get_dft(),
+                entry_semester_id=active_semester.id,
             )
         return user
 

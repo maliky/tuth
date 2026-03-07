@@ -16,6 +16,9 @@ from app.academics.models.requirement_group import (
 )
 from app.finance.models.status_types_methods import InvoiceStatus, Payer
 from app.people.models.student import Student
+from app.people.models.student_curriculum_enrollment import (
+    set_primary_std_curri_enroll,
+)
 from app.registry.models.registration import Registration, RegistrationStatus
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester, SemesterStatus
@@ -54,11 +57,11 @@ def _std_for_curri(
     user = user_factory(username)
     student = Student(
         user=user,
-        curriculum=curriculum,
         last_enrolled_semester=semester,
         entry_semester=semester,
     )
     student.save()
+    set_primary_std_curri_enroll(student, curriculum, entry_semester_id=semester.id)
     return student
 
 

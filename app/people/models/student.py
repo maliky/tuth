@@ -20,7 +20,6 @@ from app.academics.models.curriculum import Curriculum
 from app.people.models.core import AbstractPerson
 from app.people.models.student_curriculum_enrollment import (
     get_primary_curriculum,
-    get_primary_std_curri_enroll,
     set_primary_std_curri_enroll,
     sync_primary_std_curri_enroll,
 )
@@ -52,9 +51,6 @@ class Student(AbstractPerson):
     STAFF_STATUS = False
 
     # ~~~~~~~~ Mandatory ~~~~~~~~
-    curriculum = models.ForeignKey(
-        "academics.Curriculum", on_delete=models.CASCADE, related_name="students"
-    )
     curricula = models.ManyToManyField(
         "academics.Curriculum",
         through="people.StdCurriEnroll",
@@ -115,6 +111,12 @@ class Student(AbstractPerson):
     def primary_curriculum(self) -> Curriculum:
         """Return the student's canonical curriculum from enrollment rows."""
         return get_primary_curriculum(self)
+
+    @primary_curriculum.setter
+    def primary_curriculum(self, curriculum: Curriculum) -> None:
+        """Set the canonical curriculum through StdCurriEnroll."""
+        # Keep assignment until save() reconciles enrollment rows.
+        self._pending_primary_curriculum = curriculum  # type: ignore[attr-defined]
 
     def passed_crss(self) -> CrsQuery:
         """Return courses the student completed with a passing grade."""
@@ -188,41 +190,30 @@ class Student(AbstractPerson):
         )
 
     def save(self, *args, **kwargs):
-        """Make sure we have a curriculum for all students.
+        """Make sure we have a canonical enrollment row for all students.
 
         When a student's enrollment is confirmed for the first time
         (i.e., ``last_enrolled_semester`` is set) and the
         ``entry_semester`` is empty, record today's date.
         """
-        previous_curriculum_id = None
-        if self.pk:
-            previous_curriculum_id = (
-                self.__class__.objects.filter(pk=self.pk)
-                .values_list("curriculum_id", flat=True)
-                .first()
-            )
-        if not self.curriculum_id:
-            # Keep the required legacy FK non-null until the model field is dropped.
-            enroll = get_primary_std_curri_enroll(self) if self.pk else None
-            self.curriculum = (
-                enroll.curriculum if enroll is not None else Curriculum.get_dft()
-            )
-        prefer_curriculum = previous_curriculum_id != self.curriculum_id
-
         super().save(*args, **kwargs)
-        self._ensure_primary_curri_enrollment(prefer_curriculum=prefer_curriculum)
+        self._ensure_primary_curri_enrollment()
 
-    def _ensure_primary_curri_enrollment(
-        self, *, prefer_curriculum: bool = False
-    ) -> None:
-        """Keep enrollment rows canonical and sync the legacy FK for compatibility."""
-        if prefer_curriculum and self.curriculum_id:
+    def _ensure_primary_curri_enrollment(self) -> None:
+        """Keep enrollment rows canonical after student save."""
+        pending_curriculum = cast(
+            Curriculum | None,
+            getattr(self, "_pending_primary_curriculum", None),
+        )
+        if pending_curriculum is not None:
             set_primary_std_curri_enroll(
                 self,
-                self.curriculum,
+                pending_curriculum,
                 entry_semester_id=self.entry_semester_id,
                 is_active=True,
             )
+            if hasattr(self, "_pending_primary_curriculum"):
+                delattr(self, "_pending_primary_curriculum")
             return
         sync_primary_std_curri_enroll(self)
 
@@ -237,10 +228,14 @@ class Student(AbstractPerson):
             user=user,
             defaults={
                 "student_id": "TU-DFT",
-                "curriculum": Curriculum.get_dft(),
             },
         )
-        sync_primary_std_curri_enroll(student)
+        set_primary_std_curri_enroll(
+            student,
+            Curriculum.get_dft(),
+            entry_semester_id=student.entry_semester_id,
+            is_active=True,
+        )
         return cast("Student", student)
 
     class Meta:

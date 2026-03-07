@@ -13,6 +13,7 @@ from django.utils import timezone
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.curriculum_course import CurriCrs
 from app.people.models.student import Student
+from app.people.models.student_curriculum_enrollment import set_primary_std_curri_enroll
 from app.registry.models.grade import Grade, GradeValue
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.section import Section
@@ -117,11 +118,11 @@ def reg_std_factory() -> RegStdFactoryT:
         student, _created = Student.objects.get_or_create(
             user=user,
             defaults={
-                "curriculum": curriculum,
                 "entry_semester": semester,
                 "last_enrolled_semester": semester,
             },
         )
+        set_primary_std_curri_enroll(student, curriculum, entry_semester_id=semester.id)
         return cast(Student, student)
 
     return _make

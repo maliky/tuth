@@ -11,6 +11,7 @@ from app.people.models.donor import Donor
 from app.people.models.staffs import Staff
 from app.people.models.faculty import Faculty
 from app.people.models.student import Student
+from app.people.models.student_curriculum_enrollment import set_primary_std_curri_enroll
 from tests.academics.fixture import CurriFactoryT
 
 UserFactoryT: TypeAlias = Callable[[str], User]
@@ -61,14 +62,15 @@ def donor(user_factory: UserFactoryT) -> Donor:
 
 @pytest.fixture
 def student(semester, curriculum) -> Student:
-    return cast(
+    student_obj = cast(
         Student,
         Student.objects.create(
             user=User(username="letudiant"),
-            curriculum=curriculum,
             last_enrolled_semester=semester,
         ),
     )
+    set_primary_std_curri_enroll(student_obj, curriculum)
+    return student_obj
 
 
 # ~~~~~~~~~~~~~~~~ Factories ~~~~~~~~~~~~~~~~
@@ -131,13 +133,14 @@ def std_factory(
     """
 
     def _make(uname: str, curri_short_name: str) -> Student:
-        return cast(
+        student_obj = cast(
             Student,
             Student.objects.create(
                 user=User(username=uname),
-                curriculum=curri_factory(curri_short_name),
             ),
         )
+        set_primary_std_curri_enroll(student_obj, curri_factory(curri_short_name))
+        return student_obj
 
     return _make
 

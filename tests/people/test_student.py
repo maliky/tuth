@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.prerequisite import Prerequisite
 from app.people.models.student import Student
+from app.people.models.student_curriculum_enrollment import set_primary_std_curri_enroll
 from app.registry.models.grade import Grade, GradeValue
 from app.timetable.models.section import Section
 
@@ -55,8 +56,10 @@ def test_std_save_assigns_gp(curriculum, std_factory):
 def test_std_email_uses_username_prefix():
     """Student email prefix matches username; no extra suffixes inserted."""
     student = Student.objects.create(
-        first_name="Jane", last_name="Doe", curriculum=Curriculum.get_dft()
+        first_name="Jane",
+        last_name="Doe",
     )
+    set_primary_std_curri_enroll(student, Curriculum.get_dft())
 
     email = student.mk_email()
     assert email.startswith("janedoe"), f"email should start with username, got {email}"

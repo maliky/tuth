@@ -553,7 +553,7 @@ class StdAdmin(
         "origin_county",
         "marital_status",
         "gender",
-        "curriculum",
+        "curricula",
         "last_enrolled_semester",
         "entry_semester",
         "last_school_attended",
@@ -566,7 +566,7 @@ class StdAdmin(
     )
     STUDENT_FIELDS = (
         "student_id",
-        "curriculum",
+        "primary_curriculum",
         "last_enrolled_semester",
         "entry_semester",
         "max_credit_hours",
@@ -590,7 +590,7 @@ class StdAdmin(
         "username",
         "cumulative_gpa",
         "validated_credits",
-        "curriculum",
+        "primary_curriculum_display",
         # "entry_semester",
         # "last_enrolled_semester",
         "entry_semester",
@@ -614,11 +614,11 @@ class StdAdmin(
         StdEntrySemFAC,
         StdLevelFlt,
         StdCurriCrsFltAC,
-        "curriculum__college",
+        "curricula__college",
     )
     readonly_fields = ("student_id",)
     inlines = [StdGradeIL, DocStdIL]
-    list_select_related = ("curriculum", "entry_semester", "last_enrolled_semester")
+    list_select_related = ("entry_semester", "last_enrolled_semester")
     fieldsets = [
         (
             "Student Informations",
@@ -657,7 +657,11 @@ class StdAdmin(
     # -------------- helpers for readonly panel --------------
     def get_queryset(self, request):
         """Annotate GPA aggregates for the list display."""
-        qs = super().get_queryset(request)
+        qs = (
+            super()
+            .get_queryset(request)
+            .prefetch_related("curriculum_enrollments__curriculum")
+        )
         grade_filter = Q(grade__value__number__isnull=False) & ~Q(
             grade__value__code__in=GPA_EXCLUDED_CODES
         )
@@ -728,6 +732,11 @@ class StdAdmin(
     def username(self, obj):
         """Link the student user for password edits."""
         return _user_admin_link(getattr(obj, "user", None))
+
+    @admin.display(description="Curriculum")
+    def primary_curriculum_display(self, obj):
+        """Render the canonical primary curriculum label."""
+        return str(obj.primary_curriculum)
 
     def save_model(self, request, obj, form, change):
         """Save the model and create selected registrations."""
