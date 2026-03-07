@@ -303,11 +303,16 @@ class CollegeAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin
     def std_counts_by_level_link(self, obj: College):
         """Link to students filtered by college and computed level."""
         rows = []
-        students = list(Student.objects.filter(curriculum__college=obj))
+        students = list(
+            Student.objects.filter(
+                curriculum_enrollments__curriculum__college=obj,
+                curriculum_enrollments__is_primary=True,
+            ).distinct()
+        )
         for level in ("Freshman", "Sophomore", "Junior", "Senior"):
             count = sum(1 for s in students if getattr(s, "class_level", "") == level)
             url = reverse("admin:people_student_changelist") + (
-                f"?curriculum__college__id__exact={obj.id}&class_level={level}"
+                f"?curricula__college__id__exact={obj.id}&class_level={level}"
             )
             rows.append((url, level, count))
         return format_html_join(" | ", '<a href="{}">{}</a>: {}', rows)
@@ -394,7 +399,10 @@ class CrsAdmin(DptRestrictedAdmin):
     def curra_links(self, obj: Course):
         """Link each curriculum name to its admin change page."""
         rows = [
-            (reverse("admin:academics_curriculum_change", args=[cur.pk]), cur.short_name)
+            (
+                reverse("admin:academics_curriculum_change", args=[cur.pk]),
+                cur.short_name,
+            )
             for cur in obj.curricula.all().order_by("short_name")
         ]
         if not rows:
@@ -842,6 +850,26 @@ class CurriAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
                 ),
                 level=messages.WARNING,
             )
+        if summary.get("sections_rebucketed_sem0", 0):
+            self.message_user(
+                request,
+                (
+                    "Rebucketed "
+                    f"{summary['sections_rebucketed_sem0']} sem0 section conflict(s) "
+                    "into semesters 1..3."
+                ),
+                level=messages.INFO,
+            )
+        if summary.get("sections_blocked_sem0_overflow", 0):
+            self.message_user(
+                request,
+                (
+                    "Blocked "
+                    f"{summary['sections_blocked_sem0_overflow']} sem0 conflict(s) "
+                    "because no free semester slot (1..3) was available."
+                ),
+                level=messages.WARNING,
+            )
         if summary["prerequisites_skipped"]:
             self.message_user(
                 request,
@@ -927,6 +955,10 @@ class CurriAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
             "sections_merged": summary.get("sections_merged", 0),
             "sections_skipped_grade_conflict": summary.get(
                 "sections_skipped_grade_conflict", 0
+            ),
+            "sections_rebucketed_sem0": summary.get("sections_rebucketed_sem0", 0),
+            "sections_blocked_sem0_overflow": summary.get(
+                "sections_blocked_sem0_overflow", 0
             ),
             "skipped_invoices": summary.get("skipped_invoices", 0),
             "credit_hours_conflicts": summary.get("credit_hours_conflicts", 0),
@@ -1141,7 +1173,11 @@ class CurriStdEnrollAdmin(CollegeRestrictedAdmin):
     )
     autocomplete_fields = ("student", "curriculum", "entry_semester", "exit_semester")
     list_select_related = ("student__user", "curriculum__college")
-    actions = ("merge_two_selected_rows", "merge_selected_rows_by_std_id")
+    actions = (
+        "merge_two_selected_rows",
+        "bulk_change_curri_on_selected_rows",
+        "merge_selected_rows_by_std_id",
+    )
 
     @staticmethod
     def _accumulate_std_record_summary(
@@ -1205,6 +1241,18 @@ class CurriStdEnrollAdmin(CollegeRestrictedAdmin):
                 level=messages.WARNING,
             )
 
+    def _curri_action_queryset(self, request):
+        """Return curriculum choices allowed for the current admin user."""
+        queryset = Curriculum.objects.select_related("college").order_by(
+            "short_name", "id"
+        )
+        if request.user.is_superuser:
+            return queryset
+        college = self.get_user_college(request)
+        if college is None:
+            return queryset
+        return queryset.filter(college=college)
+
     @admin.action(description="Merge 2 selected enrollment rows")
     @transaction.atomic
     def merge_two_selected_rows(self, request, queryset):
@@ -1242,6 +1290,193 @@ class CurriStdEnrollAdmin(CollegeRestrictedAdmin):
             level=messages.SUCCESS,
         )
         self._notify_std_record_summary(request, student_record_summary)
+
+    @admin.action(description="Bulk change curriculum on selected rows")
+    @transaction.atomic
+    def bulk_change_curri_on_selected_rows(self, request, queryset):
+        """Move selected enrollment rows to one target curriculum with safe merges."""
+
+        class HiddenIdListField(forms.MultipleChoiceField):
+            def validate(self, value):
+                return
+
+        class _CurriBulkChangeForm(forms.Form):
+            _selected_action = HiddenIdListField(widget=forms.MultipleHiddenInput)
+            curriculum = forms.ModelChoiceField(
+                queryset=Curriculum.objects.none(),
+                label="Target curriculum",
+            )
+
+            def __init__(self, *args, curriculum_queryset=None, **kwargs):
+                super().__init__(*args, **kwargs)
+                if curriculum_queryset is None:
+                    curriculum_queryset = Curriculum.objects.none()
+                curriculum_field = cast(forms.ModelChoiceField, self.fields["curriculum"])
+                curriculum_field.queryset = curriculum_queryset
+
+        selected_ids = request.POST.getlist(ACTION_CHECKBOX_NAME)
+        selected_rows = list(
+            queryset.filter(pk__in=selected_ids)
+            .select_related("student", "curriculum", "entry_semester")
+            .order_by("student_id", "id")
+        )
+        if not selected_rows and "apply_change_curri" not in request.POST:
+            self.message_user(
+                request,
+                "Select at least one row for this action.",
+                level=messages.WARNING,
+            )
+            return None
+
+        if "apply_change_curri" in request.POST:
+            form = _CurriBulkChangeForm(
+                request.POST,
+                curriculum_queryset=self._curri_action_queryset(request),
+            )
+            if form.is_valid():
+                target_curri = form.cleaned_data["curriculum"]
+                ordered_ids = [
+                    int(raw_id)
+                    for raw_id in form.cleaned_data["_selected_action"]
+                    if str(raw_id).isdigit()
+                ]
+                moved_count = 0
+                merged_count = 0
+                already_in_target_count = 0
+                blocked_count = 0
+                missing_count = 0
+                aggregate_student_summary = empty_std_curri_record_summary()
+
+                for enroll_id in ordered_ids:
+                    source_row = (
+                        CurriStdEnroll.objects.select_related(
+                            "student",
+                            "curriculum",
+                            "entry_semester",
+                        )
+                        .filter(pk=enroll_id)
+                        .first()
+                    )
+                    if source_row is None:
+                        missing_count += 1
+                        continue
+                    if source_row.curriculum_id == target_curri.id:
+                        already_in_target_count += 1
+                        continue
+
+                    target_row = (
+                        CurriStdEnroll.objects.select_related(
+                            "student",
+                            "curriculum",
+                            "entry_semester",
+                        )
+                        .filter(
+                            student_id=source_row.student_id,
+                            curriculum=target_curri,
+                        )
+                        .exclude(pk=source_row.pk)
+                        .order_by("id")
+                        .first()
+                    )
+                    if target_row is None:
+                        source_row.curriculum = target_curri
+                        source_row.save(update_fields=["curriculum"])
+                        moved_count += 1
+                        continue
+
+                    # Reuse the same guard + reconciliation path as pair merge.
+                    merged, student_record_summary = merge_std_enrollment_pair(
+                        target_row,
+                        source_row,
+                    )
+                    self._accumulate_std_record_summary(
+                        aggregate_student_summary,
+                        student_record_summary,
+                    )
+                    if merged:
+                        merged_count += 1
+                        continue
+                    blocked_count += 1
+
+                if moved_count:
+                    self.message_user(
+                        request,
+                        f"Moved {moved_count} enrollment row(s) to {target_curri}.",
+                        level=messages.SUCCESS,
+                    )
+                if merged_count:
+                    self.message_user(
+                        request,
+                        (
+                            "Merged "
+                            f"{merged_count} row(s) into existing {target_curri} "
+                            "enrollment rows."
+                        ),
+                        level=messages.SUCCESS,
+                    )
+                if already_in_target_count:
+                    self.message_user(
+                        request,
+                        (
+                            "Skipped "
+                            f"{already_in_target_count} row(s) already linked to "
+                            f"{target_curri}."
+                        ),
+                        level=messages.INFO,
+                    )
+                if blocked_count:
+                    self.message_user(
+                        request,
+                        (
+                            "Skipped "
+                            f"{blocked_count} row(s) because entry semesters were "
+                            "both set and different."
+                        ),
+                        level=messages.WARNING,
+                    )
+                if missing_count:
+                    self.message_user(
+                        request,
+                        f"Skipped {missing_count} missing row(s).",
+                        level=messages.INFO,
+                    )
+
+                self._notify_std_record_summary(request, aggregate_student_summary)
+                if (
+                    moved_count == 0
+                    and merged_count == 0
+                    and already_in_target_count == 0
+                    and blocked_count == 0
+                    and missing_count == 0
+                ):
+                    self.message_user(
+                        request,
+                        "No row changed for this action.",
+                        level=messages.INFO,
+                    )
+                return None
+        else:
+            form = _CurriBulkChangeForm(
+                initial={
+                    "_selected_action": [str(row.pk) for row in selected_rows],
+                },
+                curriculum_queryset=self._curri_action_queryset(request),
+            )
+
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Bulk change curriculum on selected enrollment rows",
+            "form": form,
+            "rows": selected_rows,
+            "opts": self.model._meta,
+            "action_name": "bulk_change_curri_on_selected_rows",
+            "action_checkbox_name": ACTION_CHECKBOX_NAME,
+        }
+        return TemplateResponse(
+            request,
+            "admin/academics/curristdenroll/bulk_change_curriculum.html",
+            context,
+        )
 
     @admin.action(description="Merge selected rows grouped by student id")
     @transaction.atomic

@@ -32,6 +32,8 @@ def _empty_dpt_update_summary() -> dict[str, int]:
         "sections_merged": 0,
         "sections_retained_protected": 0,
         "sections_skipped_grade_conflict": 0,
+        "sections_rebucketed_sem0": 0,
+        "sections_blocked_sem0_overflow": 0,
         "protected_deletes": 0,
     }
 
@@ -50,6 +52,12 @@ def _add_crs_merge_summary(
     summary["sections_skipped_grade_conflict"] += merge_summary.get(
         "sections_skipped_grade_conflict", 0
     )
+    summary["sections_rebucketed_sem0"] += merge_summary.get(
+        "sections_rebucketed_sem0", 0
+    )
+    summary["sections_blocked_sem0_overflow"] += merge_summary.get(
+        "sections_blocked_sem0_overflow", 0
+    )
     summary["protected_deletes"] += merge_summary.get("protected_deletes", 0)
 
 
@@ -65,6 +73,8 @@ def _empty_curri_update_summary() -> CurriUpdateSummaryT:
         "sections_merged": 0,
         "sections_retained_protected": 0,
         "sections_skipped_grade_conflict": 0,
+        "sections_rebucketed_sem0": 0,
+        "sections_blocked_sem0_overflow": 0,
         "protected_deletes": 0,
         "skipped_missing_target": 0,
     }
@@ -127,6 +137,12 @@ def _apply_curri_relink(
             summary["sections_skipped_grade_conflict"] += merge_summary[
                 "sections_skipped_grade_conflict"
             ]
+            summary["sections_rebucketed_sem0"] += merge_summary[
+                "sections_rebucketed_sem0"
+            ]
+            summary["sections_blocked_sem0_overflow"] += merge_summary[
+                "sections_blocked_sem0_overflow"
+            ]
             summary["protected_deletes"] += merge_summary["protected_deletes"]
             continue
 
@@ -158,6 +174,12 @@ def _apply_curri_relink(
             ]
             summary["sections_skipped_grade_conflict"] += merge_summary[
                 "sections_skipped_grade_conflict"
+            ]
+            summary["sections_rebucketed_sem0"] += merge_summary[
+                "sections_rebucketed_sem0"
+            ]
+            summary["sections_blocked_sem0_overflow"] += merge_summary[
+                "sections_blocked_sem0_overflow"
             ]
             summary["protected_deletes"] += merge_summary["protected_deletes"]
             continue
@@ -273,6 +295,26 @@ def _notify_curri_relink_result(
             (
                 f"Skipped {summary['sections_skipped_grade_conflict']} section merge(s) "
                 "due to conflicting grade values."
+            ),
+            messages.WARNING,
+        )
+    if summary["sections_rebucketed_sem0"]:
+        modeladmin.message_user(
+            request,
+            (
+                "Rebucketed "
+                f"{summary['sections_rebucketed_sem0']} sem0 section conflict(s) "
+                "into semesters 1..3 before relinking."
+            ),
+            messages.INFO,
+        )
+    if summary["sections_blocked_sem0_overflow"]:
+        modeladmin.message_user(
+            request,
+            (
+                "Blocked "
+                f"{summary['sections_blocked_sem0_overflow']} sem0 conflict(s) "
+                "because no free semester slot (1..3) was available."
             ),
             messages.WARNING,
         )
@@ -397,6 +439,27 @@ def update_dpt(modeladmin, request, queryset):
                         f"{summary['sections_skipped_grade_conflict']} section "
                         "merge(s) because overlapping students had different "
                         "grade values."
+                    ),
+                    messages.WARNING,
+                )
+            if summary["sections_rebucketed_sem0"]:
+                modeladmin.message_user(
+                    request,
+                    (
+                        "Rebucketed "
+                        f"{summary['sections_rebucketed_sem0']} sem0 section "
+                        "conflict(s) into semesters 1..3 before relinking."
+                    ),
+                    messages.INFO,
+                )
+            if summary["sections_blocked_sem0_overflow"]:
+                modeladmin.message_user(
+                    request,
+                    (
+                        "Blocked "
+                        f"{summary['sections_blocked_sem0_overflow']} sem0 "
+                        "conflict(s) because no free semester slot (1..3) was "
+                        "available."
                     ),
                     messages.WARNING,
                 )

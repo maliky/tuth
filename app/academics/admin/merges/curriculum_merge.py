@@ -105,6 +105,8 @@ def _keep_target_curri_crs(target: CurriCrs, source: CurriCrs) -> dict[str, int]
         "sections_merged": 0,
         "sections_retained_protected": 0,
         "sections_skipped_grade_conflict": 0,
+        "sections_rebucketed_sem0": 0,
+        "sections_blocked_sem0_overflow": 0,
         "source_retained_protected": 0,
     }
     _merge_curri_crs_links(target, source)
@@ -127,6 +129,8 @@ def _merge_curri_crs_conflict(
             "sections_merged": 0,
             "sections_retained_protected": 0,
             "sections_skipped_grade_conflict": 0,
+            "sections_rebucketed_sem0": 0,
+            "sections_blocked_sem0_overflow": 0,
             "source_retained_protected": 0,
         }
     if choice == MERGE_CHOICE_KEEP_SOURCE:
@@ -136,6 +140,34 @@ def _merge_curri_crs_conflict(
     if choice == MERGE_CHOICE_KEEP_TARGET:
         return _keep_target_curri_crs(target, source)
     return _merge_curri_crs_to_target(target, source)
+
+
+def _move_std_enrollments_for_curri_merge(
+    *,
+    target: Curriculum,
+    source: Curriculum,
+) -> int:
+    """Move source curriculum enrollments to target without duplicate rows."""
+    moved_rows = 0
+    source_rows = list(
+        StdCurriEnroll.objects.filter(curriculum=source)
+        .select_related("student", "curriculum")
+        .order_by("id")
+    )
+    for source_row in source_rows:
+        target_row = StdCurriEnroll.objects.filter(
+            student_id=source_row.student_id,
+            curriculum=target,
+        ).first()
+        if target_row is not None:
+            merged, _ = merge_std_enrollment_pair(target_row, source_row)
+            if merged:
+                moved_rows += 1
+            continue
+        source_row.curriculum = target
+        source_row.save(update_fields=["curriculum"])
+        moved_rows += 1
+    return moved_rows
 
 
 @transaction.atomic
@@ -164,6 +196,8 @@ def merge_curra(
         "minors_moved": 0,
         "sections_retained_protected": 0,
         "sections_skipped_grade_conflict": 0,
+        "sections_rebucketed_sem0": 0,
+        "sections_blocked_sem0_overflow": 0,
         "protected_deletes": 0,
         "conflicts_kept_target": 0,
         "conflicts_kept_source": 0,
@@ -180,7 +214,10 @@ def merge_curra(
             .order_by("id")
         )
         target_by_course_identity = _index_curri_crss_by_idity(target_rows)
-        moved_students = Student.objects.filter(curriculum=src).update(curriculum=target)
+        moved_students = _move_std_enrollments_for_curri_merge(
+            target=target,
+            source=src,
+        )
         summary["students_moved"] += moved_students
         summary["majors_moved"] += Major.objects.filter(curriculum=src).update(
             curriculum=target
@@ -232,6 +269,10 @@ def merge_curra(
                 ]
                 summary["sections_skipped_grade_conflict"] += moved[
                     "sections_skipped_grade_conflict"
+                ]
+                summary["sections_rebucketed_sem0"] += moved["sections_rebucketed_sem0"]
+                summary["sections_blocked_sem0_overflow"] += moved[
+                    "sections_blocked_sem0_overflow"
                 ]
                 if moved["source_retained_protected"]:
                     summary["protected_deletes"] += moved["source_retained_protected"]

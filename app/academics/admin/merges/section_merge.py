@@ -11,6 +11,7 @@ from django.db.models.deletion import ProtectedError
 from app.academics.models.curriculum_course import CurriCrs
 from app.registry.models.grade import Grade
 from app.registry.models.registration import Registration
+from app.timetable.models.semester import Semester
 from app.timetable.models.section import Section
 
 from .helpers import SectionMergeResultT, _merge_curri_crs_links
@@ -23,10 +24,17 @@ def _merge_curri_crs_to_target(target: CurriCrs, source: CurriCrs) -> dict[str, 
         "sections_merged": 0,
         "sections_retained_protected": 0,
         "sections_skipped_grade_conflict": 0,
+        "sections_rebucketed_sem0": 0,
+        "sections_blocked_sem0_overflow": 0,
         "source_retained_protected": 0,
     }
     _merge_curri_crs_links(target, source)
-    source_sections = Section.objects.filter(curriculum_course=source)
+    # Freeze source sections before editing rows to avoid queryset drift.
+    source_sections = list(
+        Section.objects.filter(curriculum_course=source)
+        .select_related("semester__academic_year", "curriculum_course__course")
+        .order_by("id")
+    )
     for section in source_sections:
         conflict = _pick_sec_merge_candidate(target, section)
         if conflict is not None:
@@ -34,9 +42,20 @@ def _merge_curri_crs_to_target(target: CurriCrs, source: CurriCrs) -> dict[str, 
             if merge_result["sections_merged"]:
                 summary["sections_merged"] += merge_result["sections_merged"]
             elif merge_result["sections_skipped_grade_conflict"]:
-                summary["sections_skipped_grade_conflict"] += merge_result[
-                    "sections_skipped_grade_conflict"
-                ]
+                rebucketed, blocked_overflow = _rebucket_sem0_conflicting_section(
+                    target,
+                    section,
+                    conflict,
+                )
+                if rebucketed:
+                    summary["sections_rebucketed_sem0"] += 1
+                    summary["sections_moved"] += 1
+                else:
+                    summary["sections_skipped_grade_conflict"] += merge_result[
+                        "sections_skipped_grade_conflict"
+                    ]
+                    if blocked_overflow:
+                        summary["sections_blocked_sem0_overflow"] += 1
             else:
                 summary["sections_retained_protected"] += merge_result[
                     "sections_retained_protected"
@@ -50,6 +69,84 @@ def _merge_curri_crs_to_target(target: CurriCrs, source: CurriCrs) -> dict[str, 
     except ProtectedError:
         summary["source_retained_protected"] += 1
     return summary
+
+
+def _is_sem0_section(section: Section) -> bool:
+    """Return True when a section belongs to a semester number 0 placeholder."""
+    return int(getattr(section.semester, "number", 0) or 0) == 0
+
+
+def _sem_rebucket_slots(source_semester_id: int) -> dict[int, Semester]:
+    """Return semester slots 1..3 for the source section academic year."""
+    source_semester = Semester.objects.select_related("academic_year").get(
+        id=source_semester_id
+    )
+    academic_year = source_semester.academic_year
+    slots: dict[int, Semester] = {}
+    for sem_number in (1, 2, 3):
+        semester, _ = Semester.objects.get_or_create(
+            academic_year=academic_year,
+            number=sem_number,
+        )
+        slots[sem_number] = semester
+    return slots
+
+
+def _rebucket_sem0_conflicting_section(
+    target_curriculum_course: CurriCrs,
+    source_section: Section,
+    conflict_section: Section,
+) -> tuple[bool, bool]:
+    """Reassign one sem0 conflicting section into semester 1..3 and target course.
+
+    Returns:
+        (rebucketed, blocked_overflow)
+    """
+    if not (_is_sem0_section(source_section) and _is_sem0_section(conflict_section)):
+        return False, False
+
+    slot_by_number = _sem_rebucket_slots(source_section.semester_id)
+    slot_ids = [semester.id for semester in slot_by_number.values()]
+    used_slot_ids = set(
+        Section.objects.filter(
+            curriculum_course=target_curriculum_course,
+            semester_id__in=slot_ids,
+        ).values_list("semester_id", flat=True)
+    )
+    source_course_id = int(source_section.curriculum_course.course_id)
+    target_course_id = int(target_curriculum_course.course_id)
+    affected_student_ids = set(
+        Grade.objects.filter(section=source_section).values_list("student_id", flat=True)
+    )
+
+    for sem_number in (1, 2, 3):
+        semester = slot_by_number[sem_number]
+        if semester.id in used_slot_ids:
+            continue
+
+        source_section.curriculum_course = target_curriculum_course
+        source_section.semester = semester
+        note = (
+            "[merge] sem0 conflict fallback: moved from "
+            f"semester={conflict_section.semester_id} to semester={semester.id}"
+        )
+        source_section.info = f"{source_section.info}\n{note}".strip()
+        source_section.save(update_fields=["curriculum_course", "semester", "info"])
+
+        for student_id in affected_student_ids:
+            Grade.recompute_effective_for_student_course(
+                student_id=int(student_id),
+                course_id=target_course_id,
+            )
+            if source_course_id != target_course_id:
+                Grade.recompute_effective_for_student_course(
+                    student_id=int(student_id),
+                    course_id=source_course_id,
+                )
+        return True, False
+
+    # No slot available in 1..3 for sem0 fallback.
+    return False, True
 
 
 def _pick_sec_merge_candidate(

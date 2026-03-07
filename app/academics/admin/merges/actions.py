@@ -147,6 +147,24 @@ def merge_curra_action(curriculum_admin: "CurriAdmin", request, queryset):
                 "because overlapping students had different grade values."
             ),
         )
+    if summary["sections_rebucketed_sem0"]:
+        messages.info(
+            request,
+            (
+                "Rebucketed "
+                f"{summary['sections_rebucketed_sem0']} sem0 section conflict(s) "
+                "into semesters 1..3."
+            ),
+        )
+    if summary["sections_blocked_sem0_overflow"]:
+        messages.warning(
+            request,
+            (
+                "Blocked "
+                f"{summary['sections_blocked_sem0_overflow']} sem0 conflict(s) "
+                "because no free semester slot (1..3) was available."
+            ),
+        )
     if summary["sections_retained_protected"]:
         messages.warning(
             request,
@@ -199,6 +217,24 @@ def merge_crss_action(course_admin: "CrsAdmin", request, queryset):
                 "because overlapping students had different grade values."
             ),
         )
+    if summary["sections_rebucketed_sem0"]:
+        messages.info(
+            request,
+            (
+                "Rebucketed "
+                f"{summary['sections_rebucketed_sem0']} sem0 section conflict(s) "
+                "into semesters 1..3."
+            ),
+        )
+    if summary["sections_blocked_sem0_overflow"]:
+        messages.warning(
+            request,
+            (
+                "Blocked "
+                f"{summary['sections_blocked_sem0_overflow']} sem0 conflict(s) "
+                "because no free semester slot (1..3) was available."
+            ),
+        )
     if summary["sections_retained_protected"]:
         messages.warning(
             request,
@@ -243,6 +279,8 @@ def merge_crss_by_short_code_action(
         "prerequisites_skipped": 0,
         "sections_retained_protected": 0,
         "sections_skipped_grade_conflict": 0,
+        "sections_rebucketed_sem0": 0,
+        "sections_blocked_sem0_overflow": 0,
         "protected_deletes": 0,
     }
     for _short_code, items in grouped.items():
@@ -260,6 +298,10 @@ def merge_crss_by_short_code_action(
         ]
         summary["sections_skipped_grade_conflict"] += group_summary[
             "sections_skipped_grade_conflict"
+        ]
+        summary["sections_rebucketed_sem0"] += group_summary["sections_rebucketed_sem0"]
+        summary["sections_blocked_sem0_overflow"] += group_summary[
+            "sections_blocked_sem0_overflow"
         ]
         summary["protected_deletes"] += group_summary["protected_deletes"]
 
@@ -290,6 +332,24 @@ def merge_crss_by_short_code_action(
                 "Skipped "
                 f"{summary['sections_skipped_grade_conflict']} section merge(s) "
                 "because overlapping students had different grade values."
+            ),
+        )
+    if summary["sections_rebucketed_sem0"]:
+        messages.info(
+            request,
+            (
+                "Rebucketed "
+                f"{summary['sections_rebucketed_sem0']} sem0 section conflict(s) "
+                "into semesters 1..3."
+            ),
+        )
+    if summary["sections_blocked_sem0_overflow"]:
+        messages.warning(
+            request,
+            (
+                "Blocked "
+                f"{summary['sections_blocked_sem0_overflow']} sem0 conflict(s) "
+                "because no free semester slot (1..3) was available."
             ),
         )
     if summary["sections_retained_protected"]:
@@ -371,6 +431,24 @@ def merge_curri_crss_action(course_admin, request, queryset):
                 "Skipped "
                 f"{summary['sections_skipped_grade_conflict']} section merge(s) "
                 "because overlapping students had different grade values."
+            ),
+        )
+    if summary["sections_rebucketed_sem0"]:
+        messages.info(
+            request,
+            (
+                "Rebucketed "
+                f"{summary['sections_rebucketed_sem0']} sem0 section conflict(s) "
+                "into semesters 1..3."
+            ),
+        )
+    if summary["sections_blocked_sem0_overflow"]:
+        messages.warning(
+            request,
+            (
+                "Blocked "
+                f"{summary['sections_blocked_sem0_overflow']} sem0 conflict(s) "
+                "because no free semester slot (1..3) was available."
             ),
         )
     if summary["sections_retained_protected"]:

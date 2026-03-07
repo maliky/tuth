@@ -1,0 +1,46 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+  <h2>{{ title }}</h2>
+  <p>Select a target curriculum, then apply the change.</p>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <fieldset class="module aligned">
+      <div class="form-row">
+        {{ form.curriculum.errors }}
+        <div>
+          {{ form.curriculum.label_tag }}
+          {{ form.curriculum }}
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="module aligned">
+      <h3>Selected enrollment rows</h3>
+      <ul>
+        {% for row in rows %}
+          <li>
+            {{ row.student }} - {{ row.curriculum }}
+            {% if row.entry_semester %}(entry {{ row.entry_semester }}){% endif %}
+          </li>
+        {% empty %}
+          <li>No selected rows.</li>
+        {% endfor %}
+      </ul>
+    </fieldset>
+
+    {% for row in rows %}
+      <input type="hidden" name="{{ action_checkbox_name }}" value="{{ row.pk }}">
+    {% endfor %}
+    {% for value in form._selected_action.value %}
+      <input type="hidden" name="_selected_action" value="{{ value }}">
+    {% endfor %}
+    <input type="hidden" name="action" value="{{ action_name }}">
+    <input type="hidden" name="apply_change_curri" value="1">
+    <button type="submit" class="default">{% trans "Apply" %}</button>
+  </form>
+{% endblock %}

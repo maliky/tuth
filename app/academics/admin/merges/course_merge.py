@@ -46,6 +46,8 @@ def merge_crss(target: Course, sources):
         "prerequisites_skipped": 0,
         "sections_retained_protected": 0,
         "sections_skipped_grade_conflict": 0,
+        "sections_rebucketed_sem0": 0,
+        "sections_blocked_sem0_overflow": 0,
         "protected_deletes": 0,
     }
     target_cc_map = {
@@ -74,6 +76,10 @@ def merge_crss(target: Course, sources):
                 ]
                 summary["sections_skipped_grade_conflict"] += moved[
                     "sections_skipped_grade_conflict"
+                ]
+                summary["sections_rebucketed_sem0"] += moved["sections_rebucketed_sem0"]
+                summary["sections_blocked_sem0_overflow"] += moved[
+                    "sections_blocked_sem0_overflow"
                 ]
                 summary["protected_deletes"] += moved["source_retained_protected"]
                 summary["curriculum_courses_merged"] += 1
@@ -121,6 +127,8 @@ def merge_curri_crs_into_target(target: CurriCrs, source: CurriCrs) -> dict[str,
         "sections_merged": 0,
         "sections_retained_protected": 0,
         "sections_skipped_grade_conflict": 0,
+        "sections_rebucketed_sem0": 0,
+        "sections_blocked_sem0_overflow": 0,
         "protected_deletes": 0,
     }
     if source.pk == target.pk:
@@ -137,6 +145,10 @@ def merge_curri_crs_into_target(target: CurriCrs, source: CurriCrs) -> dict[str,
     summary["sections_retained_protected"] += merge_result["sections_retained_protected"]
     summary["sections_skipped_grade_conflict"] += merge_result[
         "sections_skipped_grade_conflict"
+    ]
+    summary["sections_rebucketed_sem0"] += merge_result["sections_rebucketed_sem0"]
+    summary["sections_blocked_sem0_overflow"] += merge_result[
+        "sections_blocked_sem0_overflow"
     ]
     summary["protected_deletes"] += merge_result["source_retained_protected"]
     if merge_result["source_retained_protected"] == 0:
@@ -211,6 +223,8 @@ def merge_curri_crss(target: CurriCrs, sources):
         "is_elective_conflicts": 0,
         "sections_retained_protected": 0,
         "sections_skipped_grade_conflict": 0,
+        "sections_rebucketed_sem0": 0,
+        "sections_blocked_sem0_overflow": 0,
         "protected_deletes": 0,
     }
     for src in sources:
@@ -247,6 +261,12 @@ def merge_curri_crss(target: CurriCrs, sources):
                     summary["sections_retained_protected"] += merge_result[
                         "sections_retained_protected"
                     ]
+                summary["sections_rebucketed_sem0"] += merge_result[
+                    "sections_rebucketed_sem0"
+                ]
+                summary["sections_blocked_sem0_overflow"] += merge_result[
+                    "sections_blocked_sem0_overflow"
+                ]
                 continue
             section.curriculum_course = target
             section.save(update_fields=["curriculum_course"])

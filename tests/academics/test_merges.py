@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from datetime import datetime
 from typing import Iterator
 
 import pytest
@@ -405,6 +406,141 @@ def test_merge_curri_crss_skips_sec_merge_on_grade_value_mismatch(
     assert summary["sections_merged"] == 0
     assert Section.objects.filter(id=target_section.id).exists()
     assert Section.objects.filter(id=source_section.id).exists()
+
+
+def test_merge_curri_crss_rebuckets_sem0_conflict_into_sem1_to_sem3(
+    curri_factory,
+    crs_factory,
+    sem_factory,
+    student,
+):
+    """Sem0 grade conflicts should rebucket source sections instead of skipping."""
+    summary = {}
+    with _curriculum_course_constraint_disabled():
+        target = CurriCrs.objects.create(
+            curriculum=curri_factory("CURR-SEM0-A"),
+            course=crs_factory("711"),
+        )
+        source = CurriCrs.objects.create(
+            curriculum=target.curriculum,
+            course=target.course,
+        )
+        semester0 = sem_factory(0, datetime(2023, 8, 1))
+        target_section = Section.objects.create(
+            curriculum_course=target,
+            semester=semester0,
+            number=4,
+        )
+        source_section = Section.objects.create(
+            curriculum_course=source,
+            semester=semester0,
+            number=1,
+        )
+        grade_a, _ = GradeValue.objects.get_or_create(code="a")
+        grade_b, _ = GradeValue.objects.get_or_create(code="b")
+        Grade.objects.create(student=student, section=target_section, value=grade_a)
+        Grade.objects.create(student=student, section=source_section, value=grade_b)
+
+        summary = merge_curri_crss(target, [source])
+
+    source_section.refresh_from_db()
+    assert summary["sections_rebucketed_sem0"] == 1
+    assert summary["sections_skipped_grade_conflict"] == 0
+    assert summary["sections_blocked_sem0_overflow"] == 0
+    assert source_section.curriculum_course_id == target.id
+    assert int(source_section.semester.number) == 1
+    assert "sem0 conflict fallback" in (source_section.info or "")
+    assert not CurriCrs.objects.filter(id=source.id).exists()
+
+
+def test_merge_curri_crss_blocks_sem0_conflict_when_sem_slots_are_full(
+    curri_factory,
+    crs_factory,
+    sem_factory,
+    student,
+):
+    """Sem0 fallback should block when semesters 1..3 are already occupied."""
+    summary = {}
+    with _curriculum_course_constraint_disabled():
+        target = CurriCrs.objects.create(
+            curriculum=curri_factory("CURR-SEM0-B"),
+            course=crs_factory("712"),
+        )
+        source = CurriCrs.objects.create(
+            curriculum=target.curriculum,
+            course=target.course,
+        )
+        ay_start = datetime(2024, 8, 1)
+        semester0 = sem_factory(0, ay_start)
+        semester1 = sem_factory(1, ay_start)
+        semester2 = sem_factory(2, ay_start)
+        semester3 = sem_factory(3, ay_start)
+        Section.objects.create(curriculum_course=target, semester=semester1, number=1)
+        Section.objects.create(curriculum_course=target, semester=semester2, number=1)
+        Section.objects.create(curriculum_course=target, semester=semester3, number=1)
+        target_section = Section.objects.create(
+            curriculum_course=target,
+            semester=semester0,
+            number=5,
+        )
+        source_section = Section.objects.create(
+            curriculum_course=source,
+            semester=semester0,
+            number=1,
+        )
+        grade_a, _ = GradeValue.objects.get_or_create(code="a")
+        grade_b, _ = GradeValue.objects.get_or_create(code="b")
+        Grade.objects.create(student=student, section=target_section, value=grade_a)
+        Grade.objects.create(student=student, section=source_section, value=grade_b)
+
+        summary = merge_curri_crss(target, [source])
+
+        # Cleanup protected row so the unique constraint helper can restore.
+        if Grade.objects.filter(section=source_section).exists():
+            Grade.objects.filter(section=source_section).delete()
+
+    assert summary["sections_rebucketed_sem0"] == 0
+    assert summary["sections_blocked_sem0_overflow"] == 1
+    assert summary["sections_skipped_grade_conflict"] == 1
+    assert CurriCrs.objects.filter(id=source.id).exists()
+
+
+def test_merge_crss_rebuckets_sem0_conflicts_for_course_merge(
+    curri_factory,
+    crs_factory,
+    sem_factory,
+    student,
+):
+    """Course merge should use sem0 fallback when grade conflicts block section merge."""
+    curriculum = curri_factory("CURR-SEM0-COURSE")
+    target_course = crs_factory("713")
+    source_course = crs_factory("714")
+    target_cc = CurriCrs.objects.create(curriculum=curriculum, course=target_course)
+    source_cc = CurriCrs.objects.create(curriculum=curriculum, course=source_course)
+    semester0 = sem_factory(0, datetime(2025, 8, 1))
+    target_section = Section.objects.create(
+        curriculum_course=target_cc,
+        semester=semester0,
+        number=4,
+    )
+    source_section = Section.objects.create(
+        curriculum_course=source_cc,
+        semester=semester0,
+        number=1,
+    )
+    grade_a, _ = GradeValue.objects.get_or_create(code="a")
+    grade_b, _ = GradeValue.objects.get_or_create(code="b")
+    Grade.objects.create(student=student, section=target_section, value=grade_a)
+    Grade.objects.create(student=student, section=source_section, value=grade_b)
+
+    summary = merge_crss(target_course, [source_course])
+
+    source_section.refresh_from_db()
+    assert summary["sections_rebucketed_sem0"] == 1
+    assert summary["sections_skipped_grade_conflict"] == 0
+    assert source_section.curriculum_course_id == target_cc.id
+    assert int(source_section.semester.number) == 1
+    assert not Course.objects.filter(id=source_course.id).exists()
 
 
 def test_merge_curri_crss_keeps_lowest_number_and_logs_conflicts(
