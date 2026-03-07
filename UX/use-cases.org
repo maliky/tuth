@@ -1,0 +1,1929 @@
+* Roles and use cases
+:PROPERTIES:
+:export_options: toc:nil author:nil date:t num:nil ^:nil
+:export_file_name: tuth_use_cases
+:header-args: :exports results :cache yes
+:END:
+
+Priority is on 1 to 3 scale. mandatory(1) desirable(2), optional(3)
+
+** Student candidate
+** DONE Student
+*** Overview
+| Student Use Case                               | Priority |
+|------------------------------------------------+----------|
+| Pre-register Courses                           |        1 |
+| Consult course prerequisites                   |        1 |
+| View class schedule                            |        1 |
+| View grades (only if financially clear)        |        1 |
+|------------------------------------------------+----------|
+| View past grade sheets                         |        2 |
+| Edit personal info (until locked)              |        2 |
+| Upload registration documents                  |        2 |
+|------------------------------------------------+----------|
+| Evaluate professors (during evaluation window) |        3 |
+| Request overload                               |        3 |
+| Request prerequisite exception                 |        3 |
+
+#+BEGIN_SRC plantuml :results file link :file Plantuml/Roles/students.png
+@startuml
+left to right direction
+skinparam actorStyle awesome
+
+actor Student
+
+'─────────────── Priority 1  (Red) ────────────────
+usecase "Pre-register\nCourses"                  as UC_PreReg      #ffcccc
+usecase "Consult Course\nPrerequisites"         as UC_Consult     #ffcccc
+usecase "View Class\nSchedule"                  as UC_ViewSched   #ffcccc
+usecase "View Grades\n(financially clear)"      as UC_ViewGrades  #ffcccc
+
+'─────────────── Priority 2  (Yellow) ────────────
+usecase "View Past\nGrade Sheets"               as UC_PastGrades  #ffffcc
+usecase "Edit Personal Info\n(until locked)"    as UC_EditInfo    #ffffcc
+usecase "Upload Registration\nDocuments"        as UC_UploadDocs  #ffffcc
+
+'─────────────── Priority 3  (Green) ────────────
+usecase "Evaluate\nProfessors"                  as UC_EvalProf    #ccffcc
+usecase "Request\nOverload"                     as UC_RequestOL   #ccffcc
+usecase "Request\nPrerequisite Exception"       as UC_RequestPX   #ccffcc
+
+'──────────── Actor → Use-case links ────────────
+Student --> UC_PreReg
+Student --> UC_Consult
+Student --> UC_ViewSched
+Student --> UC_ViewGrades
+Student --> UC_PastGrades
+Student --> UC_EditInfo
+Student --> UC_UploadDocs
+Student --> UC_EvalProf
+Student --> UC_RequestOL
+Student --> UC_RequestPX
+@enduml
+#+END_SRC
+
+#+RESULTS[46cfc7c678221654e1066e039f60664d599a63db]:
+[[file:Plantuml/Roles/students.png]]
+
+**** Student Uploads Registration Documents
+:PROPERTIES:
+:PRIMARY_ACTOR: Student
+:SCOPE: Registration Module
+:LEVEL: User-goal level
+:END:
+***** Preconditions
+- Student logged into Tuth system.
+- Registration period open.
+
+***** Success Guarantee
+- Documents uploaded and pending verification by the Enrollment Department.
+
+***** Main Success Scenario
+1. Student logs into the registration interface.
+2. System verifies student's identity.
+3. Student selects "Upload Documents" action.
+4. Student selects required document files (e.g., ID, transcripts).
+5. Student confirms the upload.
+6. System validates the file types and sizes.
+7. System stores documents securely and updates student's status to "pending verification".
+8. System confirms successful upload.
+
+***** Extensions (Alternative scenarios)
+- 6a. Invalid document type or size:
+  1. System alerts the student to the specific error.
+  2. Student corrects and re-uploads documents.
+
+- 7a. System fails during document storage:
+  1. System notifies the student of an internal error.
+  2. Student retries upload or contacts IT support.
+
+***** Postconditions
+- Documents available for Enrollment Department's verification.
+- Student status updated to indicate document submission status.
+
+**** Student Checks Financial and Enrollment Status
+:PROPERTIES:
+:PRIMARY_ACTOR: Student
+:
+SCOPE: Student Dashboard
+:LEVEL: User-goal level
+:END:
+***** Preconditions
+- Student logged into Tuth system.
+
+***** Success Guarantee
+- Student clearly views accurate and current financial and enrollment status.
+
+***** Main Success Scenario
+1. Student logs into their student dashboard.
+2. System verifies student's identity and displays dashboard.
+3. Student navigates to "Financial & Enrollment Status" section.
+4. System retrieves student's financial clearance and enrollment data.
+5. System displays current balance, payment deadlines, and enrollment conditions (e.g., fully enrolled, partially enrolled due to incomplete payments/documents).
+
+***** Extensions (Alternative scenarios)
+- 4a. System unable to retrieve data due to internal issues:
+  1. System informs student of temporary data retrieval issue.
+  2. Student contacts support or retries later.
+
+- 5a. Student sees "partially enrolled" status due to financial issues:
+  1. Student reviews details of pending financial requirements.
+  2. Student initiates contact with Financial Officer for clarification or resolution.
+
+***** Postconditions
+- Student aware of their current academic and financial standing.
+- Information displayed guides the student's next steps clearly.
+
+** Remedial Student
+*** Overview
+| Use case                                                               | Priority |
+|------------------------------------------------------------------------+----------|
+| Remedial Student Consults Academic Progress and Re-attempt Eligibility |        2 |
+
+*** Remedial Student Registers for Remedial Courses
+:PROPERTIES:
+:PRIMARY_ACTOR: Remedial Student
+:SCOPE: Remedial Course Registration Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Remedial Student logged into Tuth system.
+- Student identified as eligible for remedial courses.
+
+**** Success Guarantee
+- Remedial student successfully registered for required remedial courses.
+
+**** Main Success Scenario
+1. Student logs into course registration interface.
+2. System identifies student’s remedial status and displays remedial course options.
+3. Student selects appropriate remedial courses based on eligibility and recommendations.
+4. Student confirms course selections.
+5. System verifies selections against remedial guidelines.
+6. System saves registration and updates student's remedial enrollment status.
+7. System notifies student of successful registration.
+
+**** Extensions (Alternative scenarios)
+- 5a. Course selection not meeting remedial guidelines:
+  1. System alerts student to incorrect course choices.
+  2. Student revises selection according to remedial guidelines.
+
+- 6a. System error encountered during registration save:
+  1. System notifies student of internal error.
+  2. Student retries or contacts IT support.
+
+**** Postconditions
+- Remedial student registered correctly, clearly informed of course schedules and responsibilities.
+
+---
+
+*** Remedial Student Consults Academic Progress and Re-attempt Eligibility
+:PROPERTIES:
+:PRIMARY_ACTOR: Remedial Student
+:SCOPE: Remedial Student Academic Tracking Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Remedial Student logged into Tuth system.
+- Remedial student enrolled in remedial semester.
+
+**** Success Guarantee
+- Student clearly informed of academic progress and eligibility status to retake entrance exams or transition to full enrollment.
+
+**** Main Success Scenario
+1. Student logs into academic tracking interface.
+2. Student selects "View Remedial Progress".
+3. System displays student's current academic performance, grades, and attendance in remedial courses.
+4. System indicates eligibility to retake entrance exam or eligibility criteria required to achieve full enrollment.
+5. Student reviews detailed feedback and eligibility criteria.
+6. Student makes informed decisions based on provided academic status information.
+
+**** Extensions (Alternative scenarios)
+- 3a. Academic records incomplete or incorrect:
+  1. System notifies student of incomplete data.
+  2. Student contacts academic advisor or remedial coordinator for clarification.
+
+- 4a. Eligibility status unclear or disputed:
+  1. Student requests a manual review or clarification from remedial course coordinator.
+
+**** Postconditions
+- Remedial student fully informed about academic progress, next steps clearly communicated.
+
+** Instructor
+*** Overview
+| Use case                                                      | Priority |
+|---------------------------------------------------------------+----------|
+| Instructor Enters and Edits Grades                   |        2 |
+
+
+#+BEGIN_SRC plantuml :results file link :file Plantuml/Roles/professor.png
+' ---------- Instructor ----------
+left to right direction
+skinparam actorStyle awesome
+actor Instructor
+package "Tuth System" {
+  usecase "Enter grades\n(midterm / final)" as UC_ProfEnter
+  usecase "Edit grades\n(within time window)"   as UC_ProfEdit
+  usecase "View teaching\nschedule & roster" as UC_ProfSchedule
+  usecase "Report student\nmisbehavior"    as UC_ProfMis
+  usecase "View workload\n(credit hours)"  as UC_ProfLoad
+}
+Instructor --> UC_ProfEnter
+Instructor --> UC_ProfEdit
+Instructor --> UC_ProfSchedule
+Instructor --> UC_ProfMis
+Instructor --> UC_ProfLoad
+@enduml
+#+END_SRC
+
+#+RESULTS:
+[[file:Plantuml/Roles/professor.png]]
+
+*** Enters and Edits Grades
+:PROPERTIES:
+:PRIMARY_ACTOR: Instructor
+:SCOPE: Grading Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+-  logged in.
+- Grade entry window opened by Registrar.
+
+**** Success Guarantee
+- Grades entered successfully into the system and saved securely.
+
+**** Main Success Scenario
+1.  logs into the grading interface.
+2. System verifies professor identity and permissions.
+3. Instructor selects a course from their teaching schedule.
+4. Instructor inputs grades for each student.
+5. Instructor submits the grades.
+6. System validates the inputs and stores grades.
+7. System confirms successful entry.
+
+**** Extensions (Alternative scenarios)
+- 4a.  enters an invalid grade (out of allowed range):
+  1. System alerts professor about invalid input.
+  2. Instructor corrects the input and resubmits.
+- 5a. Instructor submits after grade entry window closed:
+  1. System rejects submission.
+  2. Instructor requests grade-entry window reopening via Registrar.
+
+**** Postconditions
+- Grades available for reporting and viewing by authorized roles (e.g., Registrar, Students if financially cleared).
+
+** Chair
+*** Overview
+| Use case                                                      | Priority |
+|---------------------------------------------------------------+----------|
+| Department Chair Assigns Faculty to Courses                   |        3 |
+
+#+BEGIN_SRC plantuml :results file link :file Plantuml/Roles/chair.png
+' ---------- Chair ----------
+left to right direction
+skinparam actorStyle awesome
+actor Chair
+package "Tuth System" {
+  usecase "View course\nofferings"        as UC_ChairCourses
+  usecase "Recommend faculty\noverloads"  as UC_ChairOverload
+  usecase "View student\nenrollment"      as UC_ChairEnroll
+  usecase "Assign professors\nto courses" as UC_ChairAssign
+  usecase "View misbehavior\nreports (dept)" as UC_ChairMis
+  usecase "View department\nschedules"    as UC_ChairSchedule
+  usecase "Propose faculties\nfor courses" as UC_ChairProp
+}
+Chair --> UC_ChairCourses
+Chair --> UC_ChairOverload
+Chair --> UC_ChairEnroll
+Chair --> UC_ChairAssign
+Chair --> UC_ChairMis
+Chair --> UC_ChairSchedule
+Chair --> UC_ChairProp
+@enduml
+#+END_SRC
+
+*** Department Chair Assigns Faculty to Courses
+:PROPERTIES:
+:PRIMARY_ACTOR: Department Chair
+:SCOPE: Course Assignment Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Department Chair logged into Tuth system.
+- List of faculty members and available courses for the semester accessible.
+
+**** Success Guarantee
+- Faculty assignments to courses clearly proposed and submitted to the Dean and VPAA for validation.
+
+**** Main Success Scenario
+1. Chair logs into course assignment interface.
+2. Chair selects "Assign Faculty to Courses".
+3. System presents available courses and qualified faculty members.
+4. Chair matches faculty members to courses based on expertise, workload limits, and availability.
+5. Chair records assignments and submits proposals with justification notes.
+6. System saves proposals and forwards them to the Dean and VPAA for validation.
+
+**** Extensions (Alternative scenarios)
+- 4a. Faculty availability conflict identified:
+  1. System alerts Chair of scheduling or workload conflict.
+  2. Chair revises assignment accordingly.
+
+- 6a. Technical issue saving faculty assignment proposals:
+  1. System notifies Chair of internal error.
+  2. Chair retries operation or escalates to IT support.
+
+**** Postconditions
+- Faculty-course assignment proposals submitted, awaiting Dean and VPAA validation.
+
+*** Department Chair Reviews Departmental Enrollment
+:PROPERTIES:
+:PRIMARY_ACTOR: Department Chair
+:SCOPE: Enrollment Management Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Department Chair logged into Tuth system.
+- Current enrollment data available for department courses.
+
+**** Success Guarantee
+- Departmental enrollment reviewed, and potential issues or anomalies clearly identified.
+
+**** Main Success Scenario
+1. Chair logs into enrollment management interface.
+2. Chair selects "Review Department Enrollment".
+3. System retrieves current enrollment numbers and capacity data for department courses.
+4. Chair reviews enrollment data, identifying under-enrolled or over-enrolled courses.
+5. Chair records observations or recommendations for adjustments (e.g., merging sections, reallocating resources).
+6. System saves Chair's recommendations and notifies Registrar and Dean for further action.
+
+**** Extensions (Alternative scenarios)
+- 4a. Chair notices data inconsistency or missing data:
+  1. Chair requests clarification or correction from Registrar.
+  2. Issue marked pending until resolved.
+
+- 6a. Technical issue saving enrollment recommendations:
+  1. System notifies Chair of an internal error.
+  2. Chair retries or contacts IT support.
+
+**** Postconditions
+- Department enrollment status clearly reviewed with actionable recommendations provided for Registrar and Dean.
+
+** Dean
+*** Overview
+| Use case                                                      | Priority |
+|---------------------------------------------------------------+----------|
+| Dean Proposes and Validates Faculty Overloads                 |        3 |
+
+#+BEGIN_SRC plantuml  :results file link :file Plantuml/Roles/dean.png
+  ' ---------- Dean ----------
+  left to right direction
+  skinparam actorStyle awesome
+  actor Dean
+  package "Tuth System" {
+    usecase "View faculty & student\nschedules (FET)" as UC_DeanSchedules
+    usecase "View grade\ndistributions"               as UC_DeanGrades
+    usecase "Propose overloads\n(students & faculty)" as UC_DeanOverload
+    usecase "Edit course\nprerequisites"             as UC_DeanPrereq
+    usecase "Propose course\ncredit hours"             as UC_DeanCredHour
+    usecase "Propose prerequisite\nexceptions"        as UC_DeanPrereqEx
+    usecase "View misbehavior\nreports (college)"     as UC_DeanMis
+    usecase "View professor\nevaluations"             as UC_DeanEval
+    usecase "Assign faculties\nto courses"            as UC_DeanAssign
+  }
+  Dean --> UC_DeanSchedules
+  Dean --> UC_DeanCredHour
+  Dean --> UC_DeanGrades
+  Dean --> UC_DeanOverload
+  Dean --> UC_DeanPrereq
+  Dean --> UC_DeanPrereqEx
+  Dean --> UC_DeanMis
+  Dean --> UC_DeanEval
+  Dean --> UC_DeanAssign
+  @enduml
+#+END_SRC
+
+#+RESULTS:
+[[file:Plantuml/Roles/dean.png]]
+
+*** Dean Reviews and Proposes Faculty Overloads
+:PROPERTIES:
+:PRIMARY_ACTOR: Dean
+:SCOPE: Academic Workload Management Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Dean logged into Tuth system.
+- Current faculty workload data accessible in the system.
+
+**** Success Guarantee
+- Faculty overload requests reviewed and proposed to VPAA for approval.
+
+**** Main Success Scenario
+1. Dean logs into workload management interface.
+2. Dean selects "Review Faculty Workloads".
+3. System retrieves detailed workload reports for faculty members.
+4. Dean assesses workloads against departmental and university policies.
+5. Dean identifies faculty requiring or requesting overload assignments.
+6. Dean proposes overload assignments with explicit justification.
+7. System records proposals and forwards them to VPAA for final validation.
+
+**** Extensions (Alternative scenarios)
+- 4a. Insufficient information available for workload assessment:
+  1. Dean requests additional data from relevant department or Registrar.
+  2. Proposal marked pending until the required information is received.
+
+- 7a. Technical issue during proposal submission:
+  1. System notifies Dean of an internal error.
+  2. Dean retries or contacts IT support.
+
+**** Postconditions
+- Faculty overload proposals submitted and awaiting VPAA's validation.
+
+---
+
+*** Dean Manages Course Credit Hour Proposals
+:PROPERTIES:
+:PRIMARY_ACTOR: Dean
+:SCOPE: Curriculum Management Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Dean logged into Tuth system.
+- Course catalog and existing credit-hour configurations accessible.
+
+**** Success Guarantee
+- Course credit-hour proposals reviewed, validated, and officially submitted for approval.
+
+**** Main Success Scenario
+1. Dean logs into the curriculum management interface.
+2. Dean selects "Review Course Credit Hour Proposals".
+3. System displays existing course credit hours alongside proposed changes.
+4. Dean evaluates proposed credit-hour modifications based on curriculum requirements and academic standards.
+5. Dean approves or suggests modifications to the proposals.
+6. Dean records their decision with accompanying notes.
+7. System updates the proposals and submits them to VPAA or curriculum committee for final approval.
+
+**** Extensions (Alternative scenarios)
+- 4a. Proposed credit hours conflict with university policy or accreditation standards:
+  1. Dean flags the proposal and provides detailed feedback.
+  2. Proposal returned to the originating department for revision.
+
+- 7a. Technical issue saving proposals:
+  1. System alerts Dean of an internal error.
+  2. Dean retries the operation or escalates to IT support.
+
+**** Postconditions
+- Course credit-hour proposals updated and pending final validation by VPAA or curriculum committee.
+
+** VPAA
+*** Overview
+| Use case                                                      | Priority |
+|---------------------------------------------------------------+----------|
+| VPAA Validates Faculty Course Assignments                     |        3 |
+
+  #+BEGIN_SRC plantuml :results file link :file Plantuml/Roles/vpaa.png
+' ---------- VPAA ----------
+left to right direction
+skinparam actorStyle awesome
+actor VPAA
+package "Tuth System" {
+  usecase "Validate overload\nproposals"          as UC_VPAA_Overload
+  usecase "Validate prerequisite\nchanges"        as UC_VPAA_Prereq
+  usecase "Final decision on\nacademic exceptions" as UC_VPAA_Exceptions
+  usecase "Access dashboards &\nacademic reports"  as UC_VPAA_Dash
+  usecase "Validate faculty\ncourse assignments"   as UC_VPAA_FacAssign
+}
+VPAA --> UC_VPAA_Overload
+VPAA --> UC_VPAA_Prereq
+VPAA --> UC_VPAA_Exceptions
+VPAA --> UC_VPAA_Dash
+VPAA --> UC_VPAA_FacAssign
+@enduml
+#+END_SRC
+
+#+RESULTS:
+[[file:Plantuml/Roles/vpaa.png]]
+
+*** VPAA Validates Faculty Course Assignments
+:PROPERTIES:
+:PRIMARY_ACTOR: VPAA (Vice President for Academic Affairs)
+:SCOPE: Academic Management Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- VPAA logged into Tuth system.
+- Course assignments proposed by Deans and Chairs available for review.
+
+**** Success Guarantee
+- Faculty course assignments validated and officially confirmed.
+
+**** Main Success Scenario
+1. VPAA logs into the academic management interface.
+2. VPAA selects "Review Faculty Course Assignments".
+3. System presents the list of proposed course assignments.
+4. VPAA reviews assignment proposals for each faculty/course.
+5. VPAA validates and approves assignments or requests adjustments.
+6. System updates official records accordingly.
+7. System notifies relevant Deans, Chairs, and Faculty of finalized assignments.
+
+**** Extensions (Alternative scenarios)
+- 4a. VPAA finds conflicts or inappropriate assignments:
+  1. VPAA flags the assignment, adds explanatory notes.
+  2. System returns flagged assignments to the Dean or Chair for revision.
+
+- 6a. System encounters a technical error updating records:
+  1. System notifies VPAA of the error.
+  2. VPAA retries or escalates the issue to IT support.
+
+**** Postconditions
+- Faculty course assignments confirmed, transparent, and accessible to relevant roles.
+
+---
+
+*** VPAA Validates Academic Exception Requests
+:PROPERTIES:
+:PRIMARY_ACTOR: VPAA
+:SCOPE: Academic Exception Management Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- VPAA logged into Tuth system.
+- Academic exception requests submitted and reviewed by relevant academic staff (e.g., Dean, Registrar).
+
+**** Success Guarantee
+- Academic exception requests validated, with decisions clearly documented.
+
+**** Main Success Scenario
+1. VPAA logs into the exception management interface.
+2. VPAA selects "Review Academic Exception Requests".
+3. System retrieves pending academic exception requests.
+4. VPAA examines detailed justification and previous recommendations.
+5. VPAA makes a final decision (approve/reject) on each request.
+6. VPAA records the decision and optional explanatory notes.
+7. System updates the student records to reflect the decision.
+8. System notifies the concerned student and related administrative offices of the final decision.
+
+**** Extensions (Alternative scenarios)
+- 4a. Insufficient documentation or unclear justification provided:
+  1. VPAA requests additional information or clarification.
+  2. Exception request marked as pending until resolved.
+
+- 7a. Technical issue updating student records:
+  1. System notifies VPAA of internal error.
+  2. VPAA retries or escalates the issue to IT support.
+
+**** Postconditions
+- Academic exception clearly resolved and status accurately reflected in student records.
+
+---
+
+*** VPAA Reviews and Validates Proposed Course Prerequisite Changes
+:PROPERTIES:
+:PRIMARY_ACTOR: VPAA
+:SCOPE: Curriculum Management Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- VPAA logged into Tuth system.
+- Course prerequisite proposals submitted by Deans available.
+
+**** Success Guarantee
+- Course prerequisites reviewed and officially validated.
+
+**** Main Success Scenario
+1. VPAA logs into curriculum management interface.
+2. VPAA selects "Review Prerequisite Changes".
+3. System displays submitted proposals for course prerequisite modifications.
+4. VPAA reviews each proposal's justification, potential impacts, and related documentation.
+5. VPAA approves changes or requests additional review/revision.
+6. System updates the course catalog prerequisites officially.
+7. System notifies the Registrar, relevant Deans, and Chairs of changes.
+
+**** Extensions (Alternative scenarios)
+- 4a. VPAA identifies missing impact assessments or unclear justification:
+  1. VPAA requests clarification or further information.
+  2. Proposal marked pending until additional information provided.
+
+- 6a. Technical error during catalog update:
+  1. System notifies VPAA of the issue.
+  2. VPAA retries or contacts IT support.
+
+**** Postconditions
+- Course prerequisite updates officially recorded, reflected in course catalog, and communicated to stakeholders.
+
+** Quality Insurance Officer
+*** Overview
+| Use case                                                      | Priority |
+|---------------------------------------------------------------+----------|
+| Quality Officer Defines Course and Faculty Evaluation Periods |        3 |
+| Quality Officer Reviews Aggregated Evaluation Results         |        2 |
+
+#+BEGIN_SRC plantuml :results file link :file Plantuml/Roles/quality_insurance.png
+' ---------- Quality & Insurance Dept ----------
+left to right direction
+skinparam actorStyle awesome
+actor "Quality &\nInsurance Dept" as QI
+package "Tuth System" {
+  usecase "Define evaluation\nperiods"           as UC_QI_Define
+  usecase "Provide evaluation\ninterface access" as UC_QI_Interface
+  usecase "View aggregated\nevaluation results"  as UC_QI_Results
+}
+QI --> UC_QI_Define
+QI --> UC_QI_Interface
+QI --> UC_QI_Results
+@enduml
+#+END_SRC
+
+#+RESULTS:
+[[file:Plantuml/Roles/quality_insurance.png]]
+
+*** Quality Officer Defines Evaluation Periods for Course and Faculty Evaluations
+:PROPERTIES:
+:PRIMARY_ACTOR: Quality and Insurance Officer
+:SCOPE: Quality Assurance Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Quality Officer logged into Tuth system.
+- Academic calendar clearly available for reference.
+
+**** Success Guarantee
+- Evaluation periods defined and communicated clearly to faculty, students, and administration.
+
+**** Main Success Scenario
+1. Officer logs into the quality assurance management interface.
+2. Officer selects "Define Evaluation Periods".
+3. System displays academic calendar and past evaluation periods.
+4. Officer selects appropriate dates for course and faculty evaluation windows.
+5. Officer confirms and submits selected dates.
+6. System validates and saves the evaluation periods.
+7. System sends automated notifications to students, faculty, and administrative personnel regarding evaluation periods.
+
+**** Extensions (Alternative scenarios)
+- 4a. Evaluation period conflicts identified with other academic activities:
+  1. System alerts Officer about scheduling conflicts.
+  2. Officer revises evaluation period dates accordingly.
+
+- 6a. Technical issue encountered during evaluation period saving:
+  1. System notifies Officer of internal error.
+  2. Officer retries or escalates issue to IT support.
+
+**** Postconditions
+- Evaluation periods successfully defined, clearly communicated, and recorded for quality assurance activities.
+
+---
+
+*** Quality Officer Reviews Aggregated Evaluation Results
+:PROPERTIES:
+:PRIMARY_ACTOR: Quality and Insurance Officer
+:SCOPE: Evaluation Reporting Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Quality Officer logged into Tuth system.
+- Completed evaluation results available in the system.
+
+**** Success Guarantee
+- Aggregated evaluation results reviewed and actionable insights clearly identified.
+
+**** Main Success Scenario
+1. Officer logs into evaluation reporting interface.
+2. Officer selects "View Aggregated Evaluation Results".
+3. Officer specifies criteria for viewing results (e.g., semester, department, courses, faculty).
+4. System compiles and displays aggregated evaluation data.
+5. Officer reviews and analyzes results, identifying trends, strengths, and areas needing improvement.
+6. Officer records observations and recommendations.
+7. System saves officer's observations and makes reports accessible to relevant stakeholders (Deans, VPAA, Faculty).
+
+**** Extensions (Alternative scenarios)
+- 4a. Incomplete or inconsistent evaluation data identified:
+  1. System alerts Officer to incomplete data sets.
+  2. Officer requests follow-up or additional information from relevant departments.
+
+- 6a. Technical issue encountered saving officer's observations:
+  1. System notifies Officer of internal error.
+  2. Officer retries the operation or escalates to IT support.
+
+**** Postconditions
+- Aggregated evaluation results clearly reviewed, documented, and accessible for institutional quality improvements.
+
+** Librarian
+*** Overview
+| Librarian Manages Library Resources Inventory               |        3 |
+| Librarian Handles Resource Lending and Returns              |        3 |
+
+*** Librarian Manages Library Resources Inventory
+:PROPERTIES:
+:PRIMARY_ACTOR: Librarian
+:SCOPE: Library Resource Management Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Librarian logged into Tuth system.
+- Current library inventory records available.
+
+**** Success Guarantee
+- Library resource inventory accurately managed and updated.
+
+**** Main Success Scenario
+1. Librarian logs into library management interface.
+2. Librarian selects "Manage Resource Inventory".
+3. System presents current inventory list.
+4. Librarian updates inventory records (new acquisitions, discards, losses, or condition updates).
+5. Librarian confirms and submits inventory updates.
+6. System updates inventory data accordingly.
+7. System confirms successful inventory update.
+
+**** Extensions (Alternative scenarios)
+- 4a. Librarian finds discrepancies in the inventory list:
+  1. Librarian notes discrepancies and investigates further.
+  2. Librarian resolves discrepancies or reports them for administrative review.
+
+- 6a. Technical issue encountered during inventory update:
+  1. System notifies Librarian of internal error.
+  2. Librarian retries the operation or escalates to IT support.
+
+**** Postconditions
+- Library inventory accurately reflected in the system.
+
+---
+
+*** Librarian Handles Resource Lending and Returns
+:PROPERTIES:
+:PRIMARY_ACTOR: Librarian
+:SCOPE: Library Lending Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Librarian logged into Tuth system.
+- Students or faculty present for borrowing or returning resources.
+
+**** Success Guarantee
+- Resources correctly lent or returned, and records maintained accurately.
+
+**** Main Success Scenario
+1. Librarian logs into lending management interface.
+2. Librarian selects "Process Lending or Returns".
+3. System displays the interface for resource lending or return.
+4. Librarian inputs borrower's identification and resource details.
+5. Librarian records lending or returning of resources.
+6. System updates borrower records and resource availability status.
+7. System confirms the transaction and updates inventory.
+
+**** Extensions (Alternative scenarios)
+- 4a. Resource or borrower identification issues:
+  1. System alerts Librarian of incorrect or missing details.
+  2. Librarian corrects or requests additional identification from borrower.
+
+- 6a. System error updating borrower/resource records:
+  1. System notifies Librarian of internal error.
+  2. Librarian retries the transaction or contacts IT support.
+
+**** Postconditions
+- Resource lending and returns accurately tracked, updated, and communicated.
+
+** Clinic manager
+*** Overview
+| Use case                                                               | Priority |
+|------------------------------------------------------------------------+----------|
+| Clinic Manager Reports Student Health Issues                           |        3 |
+| Clinic Manager Generates Health Incident Reports                       |        3 |
+
+*** Clinic Manager Reports Student Health Issues
+:PROPERTIES:
+:PRIMARY_ACTOR: Clinic Manager
+:SCOPE: Student Health Management Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Clinic Manager logged into Tuth system.
+- Student health records interface accessible.
+
+**** Success Guarantee
+- Student health issues reported accurately and confidentially.
+
+**** Main Success Scenario
+1. Clinic Manager logs into health management interface.
+2. Clinic Manager selects "Report Student Health Issue".
+3. Clinic Manager inputs student identification and health incident details.
+4. Clinic Manager categorizes and records the severity of the incident.
+5. System securely saves health incident data.
+6. System confirms successful recording of the health incident.
+
+**** Extensions (Alternative scenarios)
+- 3a. Student identification or health incident information incomplete:
+  1. System alerts Clinic Manager about incomplete details.
+  2. Clinic Manager completes or clarifies necessary information.
+
+- 5a. System encounters technical issues saving the health report:
+  1. System notifies Clinic Manager of an internal error.
+  2. Clinic Manager retries or contacts IT support.
+
+**** Postconditions
+- Health incident accurately recorded, securely stored, and accessible for authorized administrative review.
+
+---
+
+*** Clinic Manager Generates Health Incident Reports
+:PROPERTIES:
+:PRIMARY_ACTOR: Clinic Manager
+:SCOPE: Health Reporting Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Clinic Manager logged into Tuth system.
+- Student health incident data available.
+
+**** Success Guarantee
+- Health incident reports accurately generated for administrative review.
+
+**** Main Success Scenario
+1. Clinic Manager logs into health reporting interface.
+2. Clinic Manager selects "Generate Health Incident Reports".
+3. Clinic Manager specifies criteria for the report (time period, incident severity, demographics).
+4. System compiles and generates the report based on the criteria.
+5. Clinic Manager reviews the generated report for accuracy.
+6. Clinic Manager saves and exports the report in the desired format.
+7. System securely distributes the report to authorized personnel.
+
+**** Extensions (Alternative scenarios)
+- 4a. System identifies incomplete or inconsistent data:
+  1. System alerts Clinic Manager of the data issues.
+  2. Clinic Manager resolves issues before regenerating the report.
+
+- 6a. Technical issue encountered during report generation:
+  1. System notifies Clinic Manager of internal error.
+  2. Clinic Manager retries the operation or escalates to IT support.
+
+**** Postconditions
+- Health incident reports accurately generated and clearly available for institutional review.
+
+---
+
+** Counselor
+*** Overview
+| Use case                                                               | Priority |
+|------------------------------------------------------------------------+----------|
+| Counselor Records Anonymized Counseling Session Notes                  |        3 |
+| Counselor Generates Anonymized Counseling Activity Reports             |        3 |
+
+*** Counselor Records Anonymized Counseling Session Notes
+:PROPERTIES:
+:PRIMARY_ACTOR: Counselor
+:SCOPE: Counseling Management Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Counselor logged into Tuth system.
+- Secure counseling records interface accessible.
+
+**** Success Guarantee
+- Counseling session notes recorded anonymously and securely.
+
+**** Main Success Scenario
+1. Counselor logs into the counseling management interface.
+2. Counselor selects "Record Counseling Session".
+3. Counselor inputs anonymized session notes without personally identifiable information.
+4. Counselor categorizes session topics and severity of concerns.
+5. Counselor submits session notes.
+6. System securely saves the anonymized notes.
+7. System confirms successful session recording.
+
+**** Extensions (Alternative scenarios)
+- 3a. Session notes mistakenly include identifiable information:
+  1. System or Counselor identifies personal data.
+  2. Counselor anonymizes and resubmits notes.
+
+- 6a. Technical issue saving session notes:
+  1. System notifies Counselor of internal error.
+  2. Counselor retries operation or contacts IT support.
+
+**** Postconditions
+- Counseling session notes securely stored, anonymized, and accessible for future review and reporting.
+
+---
+
+*** Counselor Generates Anonymized Counseling Activity Reports
+:PROPERTIES:
+:PRIMARY_ACTOR: Counselor
+:SCOPE: Counseling Reporting Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Counselor logged into Tuth system.
+- Anonymized counseling session data available in the system.
+
+**** Success Guarantee
+- Counseling activity reports accurately generated without compromising confidentiality.
+
+**** Main Success Scenario
+1. Counselor logs into counseling reporting interface.
+2. Counselor selects "Generate Counseling Activity Reports".
+3. Counselor specifies report parameters (time frame, topic categories, frequency).
+4. System compiles and generates anonymized counseling activity reports.
+5. Counselor reviews the generated reports for accuracy and completeness.
+6. Counselor saves or exports the report in the desired format.
+7. System securely provides access to authorized personnel.
+
+**** Extensions (Alternative scenarios)
+- 4a. System encounters issues due to inconsistent data:
+  1. System alerts Counselor of data inconsistency.
+  2. Counselor resolves data issues and regenerates the report.
+
+- 6a. Technical error during report generation:
+  1. System notifies Counselor of the error.
+  2. Counselor retries the report generation or contacts IT support.
+
+**** Postconditions
+- Counseling activity reports accurately generated, anonymized, and securely accessible for institutional use.
+
+** VPA
+*** Overview
+| Use case                                        | Priority |
+|-------------------------------------------------+----------|
+
+** Scholarship donor
+** Scholarship Manger
+*** Overview
+| Scholarship Administrator Reviews Scholarship Applications    |        1 |
+| Scholarship Administrator Generates Scholarship Reports       |        1 |
+
+** Financial Officer
+*** Overview
+| Use case                                                      | Priority |
+|---------------------------------------------------------------+----------|
+| Financial Officer Tracks and Updates Student Payment Status   |        1 |
+| Financial Officer Manages Scholarship and Waiver Applications |        1 |
+
+*
+#+BEGIN_SRC plantuml :results file link :file Plantuml/Roles/financial_officer.png
+' ---------- Financial Officer ----------
+left to right direction
+skinparam actorStyle awesome
+actor "Financial\nOfficer" as Fin
+package "Tuth System" {
+  usecase "Track partial &\nfull payments"     as UC_FinTrack
+  usecase "Block / Unblock\naccess to grades"  as UC_FinGrades
+  usecase "Add financial\nalerts / warnings"   as UC_FinAlerts
+  usecase "Handle scholarship\n& waiver apps"  as UC_FinScholar
+}
+Fin --> UC_FinTrack
+Fin --> UC_FinGrades
+Fin --> UC_FinAlerts
+Fin --> UC_FinScholar
+@enduml
+#+END_SRC
+
+#+RESULTS:
+[[file:Plantuml/Roles/financial_officer.png]]
+
+*** Financial Officer Tracks and Updates Student Payment Status
+:PROPERTIES:
+:PRIMARY_ACTOR: Financial Officer
+:SCOPE: Financial Management Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Financial Officer logged into Tuth system.
+- Student payment records accessible in the system.
+
+**** Success Guarantee
+- Student financial status updated accurately, reflecting current payment status.
+
+**** Main Success Scenario
+1. Financial Officer logs into financial interface.
+2. Financial Officer searches for student by ID or name.
+3. System retrieves student’s financial records.
+4. Financial Officer reviews current balance and payment history.
+5. Financial Officer records new payments or adjustments (partial/full payments).
+6. System validates and updates the financial record.
+7. System confirms successful update of student's financial status.
+
+**** Extensions (Alternative scenarios)
+- 5a. Payment record incomplete or incorrect details provided:
+  1. System alerts Financial Officer of data inconsistency.
+  2. Financial Officer reviews, corrects data, and resubmits.
+
+- 6a. System error during update:
+  1. System notifies Financial Officer of internal error.
+  2. Financial Officer retries or contacts IT support.
+
+**** Postconditions
+- Student's financial status updated and clearly available for registration and grade-viewing decisions.
+
+*** Financial Officer Manages Scholarship and Waiver Applications
+:PROPERTIES:
+:PRIMARY_ACTOR: Financial Officer (or optionally, Scholarship Administrator if specialized)
+:SCOPE: Scholarship and Financial Aid Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Financial Officer logged into
+
+** Cashier
+*** Overview
+| Use case                                        | Priority |
+|-------------------------------------------------+----------|
+
+** Enrollement/ Admission Officer
+*** Overview
+| Use Case                             | Priority |
+|--------------------------------------+----------|
+| Makes Decisions on Applications      |        1 |
+| Validates Entrance Exam Results      |        1 |
+| Selects Admitted Students            |        1 |
+| Generates Admission Decision Reports |        2 |
+| Manages Application Status Queries   |        3 |
+
+*** Admission Officer Reviews and Makes Decisions on Applications
+:PROPERTIES:
+:PRIMARY_ACTOR: Admission Officer
+:SCOPE: Admissions Decision Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Admission Officer logged into Tuth system.
+- Applications verified by Admission Clerk and ready for final review.
+
+**** Success Guarantee
+- Application decisions made clearly, documented transparently, and communicated to applicants.
+
+**** Main Success Scenario
+1. Officer logs into admission decision interface.
+2. Officer selects "Review Pending Applications".
+3. System retrieves verified applicant records awaiting final decisions.
+4. Officer reviews each applicant's complete profile (documents, exam scores, eligibility criteria).
+5. Officer makes decisions (accept/reject/waitlist) on each application.
+6. Officer records decisions along with explanatory notes.
+7. System updates applicant status and decisions.
+8. System sends decision notifications to applicants and informs Enrollment Department.
+
+**** Extensions (Alternative scenarios)
+- 4a. Officer identifies discrepancies or missing evaluations:
+  1. Officer marks the application as requiring further review.
+  2. Officer requests additional information or reevaluation from Admission Clerk or relevant departments.
+
+- 7a. Technical issue during decision status update:
+  1. System alerts Officer of an internal error.
+  2. Officer retries or escalates to IT support.
+
+**** Postconditions
+- Final application decisions recorded, status updated, and clearly communicated to applicants.
+
+---
+
+*** Admission Officer Generates Admission Decision Reports
+:PROPERTIES:
+:PRIMARY_ACTOR: Admission Officer
+:SCOPE: Reporting Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Admission Officer logged into Tuth system.
+- Recent admissions decision data available.
+
+**** Success Guarantee
+- Admission decision reports accurately generated and available for administrative use.
+
+**** Main Success Scenario
+1. Officer logs into reporting interface.
+2. Officer selects "Generate Admission Decision Reports".
+3. Officer specifies report parameters (admission period, decision outcomes, demographics).
+4. System compiles and generates reports based on specified parameters.
+5. Officer reviews generated report for accuracy.
+6. Officer approves and saves the final report.
+7. Officer exports the report in the desired format (PDF/CSV).
+8. System provides secure access to the generated report for authorized personnel.
+
+**** Extensions (Alternative scenarios)
+- 4a. Incomplete or inaccurate data identified in report generation:
+  1. System alerts Officer about the data issues.
+  2. Officer resolves data issues with Admission Clerk or Registrar before regenerating the report.
+
+- 6a. Technical issue encountered while saving report:
+  1. System notifies Officer of internal error.
+  2. Officer retries or contacts IT support.
+
+**** Postconditions
+- Admission decision reports clearly generated, accurately reflecting decisions, and accessible to stakeholders.
+
+** Admission Clerk
+*** Overview
+| Use Case                                                   | Priority |
+|------------------------------------------------------------+----------|
+| Reviews and Verifies Application Documents  |        1 |
+| Schedules Entrance Exams                    |        2 |
+| Sends Admission Notifications                    |        2 |
+
+*** Admission Clerk Reviews and Verifies Application Documents
+:PROPERTIES:
+:PRIMARY_ACTOR: Admission Clerk
+:SCOPE: Admission Management Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Admission Clerk logged into Tuth system.
+- Student-submitted application documents available for verification.
+
+**** Success Guarantee
+- Application documents thoroughly reviewed, verified, and marked appropriately.
+
+**** Main Success Scenario
+1. Clerk logs into admission management interface.
+2. Clerk selects "Review Application Documents".
+3. System retrieves pending student applications with submitted documents.
+4. Clerk examines each document for completeness, authenticity, and compliance with admission requirements.
+5. Clerk marks each document as verified or identifies issues.
+6. Clerk records verification status with optional notes for further action.
+7. System updates application status based on document verification outcomes.
+8. System notifies students of document verification results and next steps.
+
+**** Extensions (Alternative scenarios)
+- 4a. Clerk finds incomplete or suspicious documentation:
+  1. Clerk flags application as pending with specific notes on missing or suspicious documents.
+  2. Clerk requests additional documents or clarification from the applicant.
+
+- 7a. System encounters an error updating verification statuses:
+  1. System notifies Clerk of internal error.
+  2. Clerk retries or contacts IT support.
+
+**** Postconditions
+- Application documents verified, status accurately reflected and communicated to applicants.
+
+---
+
+*** Admission Clerk Schedules and Coordinates Entrance Exams
+:PROPERTIES:
+:PRIMARY_ACTOR: Admission Clerk
+:SCOPE: Examination Scheduling Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Admission Clerk logged into Tuth system.
+- List of verified applicants ready for examination scheduling.
+
+**** Success Guarantee
+- Entrance exams scheduled effectively and communicated clearly to applicants.
+
+**** Main Success Scenario
+1. Clerk logs into examination scheduling interface.
+2. Clerk selects "Schedule Entrance Exams".
+3. System presents verified applicant list and available exam slots.
+4. Clerk assigns applicants to specific exam dates, times, and venues.
+5. Clerk reviews and confirms the examination schedule.
+6. System saves and updates the schedule.
+7. System sends automated notifications (email/SMS) to applicants with exam details.
+8. Clerk generates attendance lists for examination proctors.
+
+**** Extensions (Alternative scenarios)
+- 4a. Exam scheduling conflict identified:
+  1. System alerts Clerk of conflicting exam assignments or venue capacities.
+  2. Clerk adjusts scheduling to resolve conflicts.
+
+- 6a. Technical issue during schedule saving:
+  1. System alerts Clerk of internal error.
+  2. Clerk retries or escalates issue to IT support.
+
+**** Postconditions
+- Entrance exams successfully scheduled, clearly communicated to applicants and proctors.
+
+** Registrar
+*** Overview
+| Regisrar Use Case                                  | Priority |
+|----------------------------------------------------+----------|
+| Validates and Finalizes Grades                     |        1 |
+| Generates Official Transcripts                     |        1 |
+| Exports Academic Reports                           |        1 |
+| Manages Grade Entry Windows                        |        1 |
+| Manages Class Rosters                              |        1 |
+| Generates Statistical Reports                      |        1 |
+| Export schedules                                   |        1 |
+|----------------------------------------------------+----------|
+| Locks/Unlocks Registration Periods                 |        2 |
+| Reopens Grade Entry Windows                        |        2 |
+| Reviews Enrollment Status and Anomalies            |        2 |
+| Coordinates Departmental Scheduling                |        2 |
+| Updates Student Academic Status                    |        2 |
+| Reviews and Verifies Student Information           |        2 |
+| Manages Student Withdrawals                        |        2 |
+| Handles Student Re-admissions                      |        2 |
+| Manages Graduation Processes                       |        2 |
+| Archives and Retrieves Historical Academic Records |        2 |
+|----------------------------------------------------+----------|
+| Manages Course Prerequisites                       |        3 |
+| Assigns and Changes Advisors                       |        3 |
+| Updates Class Sizes and Capacity                   |        3 |
+| Manages Remedial Student Progress                  |        3 |
+| Locks/Unlocks Registration Periods                 |        3 |
+| Verifies Submitted Documents                       |        3 |
+
+
+#+BEGIN_SRC plantuml :results file link :file Plantuml/Roles/registrar.png
+    @startuml
+    left to right direction
+    skinparam actorStyle awesome
+
+    actor Registrar
+
+    package "Tuth System - Registrar" {
+      ' Priority 1 Use Cases (Red)
+      usecase "Validate & Finalize\nGrades" as UC_ValidateGrades #ffcccc
+      usecase "Generate Official\nTranscripts" as UC_Transcripts #ffcccc
+      usecase "Export Academic\nReports" as UC_ExportReports #ffcccc
+      usecase "Manage Grade\nEntry Windows" as UC_GradeWindows #ffcccc
+      usecase "Manage Class Rosters" as UC_ClassRoster #ffcccc
+      usecase "Generate Statistical\nReports" as UC_StatsReports #ffcccc
+      usecase "Export Schedules\n(FET)" as UC_ExportSchedules #ffcccc
+      usecase "Generate transcripts\n& summaries" as UC_RegTranscripts  #ffcccc
+
+      ' Priority 2 Use Cases (Yellow)
+      usecase "Lock/Unlock\nRegistration Periods" as UC_LockReg #ffffcc
+      usecase "Review Enrollment\nStatus & Anomalies" as UC_ReviewEnroll #ffffcc
+      usecase "Coordinate Department\nScheduling" as UC_CoordSchedule #ffffcc
+      usecase "Update Student\nAcademic Status" as UC_UpdateStatus #ffffcc
+      usecase "Verify Student\nInformation" as UC_VerifyInfo #ffffcc
+      usecase "Manage Student\nWithdrawals" as UC_Withdrawals #ffffcc
+      usecase "Handle Student\nRe-admissions" as UC_Readmissions #ffffcc
+      usecase "Manage Graduation\nProcesses" as UC_Graduation #ffffcc
+      usecase "Archive & Retrieve\nHistorical Records" as UC_Archives #ffffcc
+      usecase "Export schedule\nto FET"          as UC_RegExportFET #ffffcc
+
+      ' Priority 3 Use Cases (Green)
+      usecase "Manage Course\nPrerequisites" as UC_Prerequisites #ccffcc
+      usecase "Update Class Sizes\n& Capacities" as UC_ClassSize #ccffcc
+      usecase "Manage Remedial\nStudent Progress" as UC_Remedial #ccffcc
+      usecase "Verify Submitted\nDocuments" as UC_VerifyDocs #ccffcc
+    }
+
+    ' Connect Registrar actor to use cases
+    Registrar --> UC_ValidateGrades
+    Registrar --> UC_Transcripts
+    Registrar --> UC_ExportReports
+    Registrar --> UC_GradeWindows
+    Registrar --> UC_ClassRoster
+    Registrar --> UC_StatsReports
+    Registrar --> UC_ExportSchedules
+
+    Registrar --> UC_LockReg
+    Registrar --> UC_ReopenGrades
+    Registrar --> UC_ReviewEnroll
+    Registrar --> UC_CoordSchedule
+    Registrar --> UC_UpdateStatus
+    Registrar --> UC_VerifyInfo
+    Registrar --> UC_Withdrawals
+    Registrar --> UC_Readmissions
+    Registrar --> UC_Graduation
+    Registrar --> UC_Archives
+
+    Registrar --> UC_Prerequisites
+    Registrar --> UC_Advisors
+    Registrar --> UC_ClassSize
+    Registrar --> UC_Remedial
+    Registrar --> UC_VerifyDocs
+
+  /'
+   ' Registrar --> UC_RegSetWindow
+   ' Registrar --> UC_RegReopen
+   ' Registrar --> UC_RegViewGrades
+   ' Registrar --> UC_RegTranscripts
+   ' Registrar --> UC_RegExportFET
+   ' Registrar --> UC_RegLock
+   '/
+
+    @enduml
+
+#+END_SRC
+
+*** Sets and Manages Grade Entry Windows
+:PROPERTIES:
+:Primary_Actor: Registrar
+:SCOPE: Administrative Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Registrar logged in with proper permissions.
+- Academic calendar and course schedule defined.
+
+**** Success Guarantee
+- Grade entry windows defined and managed securely.
+
+**** Main Success Scenario
+1. Registrar logs into the administrative interface.
+2. Registrar selects a semester/course to set a grading window.
+3. Registrar sets a valid start and end date/time for grade entry.
+4. Registrar confirms the entry window.
+5. System validates and stores grading window data.
+6. System notifies relevant professors of the open grading period.
+
+**** Extensions (Alternative scenarios)
+- 3a. Registrar sets an invalid date range (end before start):
+  1. System alerts Registrar to the invalid date range.
+  2. Registrar adjusts the dates or cancels action.
+- 5a. Registrar must reopen a closed grading window (upon professor's request):
+  1. Registrar selects the previously closed window.
+  2. Registrar modifies and extends window dates.
+  3. System updates and notifies the concerned professors.
+
+**** Postconditions
+- Grading windows controlled, auditable, and transparent for academic operations.
+
+*** Generates Official Transcripts
+:PROPERTIES:
+:PRIMARY_ACTOR: Registrar
+:SCOPE: Reporting Module
+:LEVEL: User-goal level
+:export_options: toc:nil author:nil date:t num:nil
+:END:
+**** Preconditions
+- Registrar logged into Tuth system.
+- Grades entered, validated, and finalized for requested semester.
+
+**** Success Guarantee
+- Official transcript generated, accurate, and available for secure download or print.
+
+**** Main Success Scenario
+1. Registrar logs into reporting interface.
+2. Registrar selects "Generate Transcript".
+3. Registrar inputs student identification and selects semester range.
+4. System retrieves grades and academic records for selected criteria.
+5. System generates an official transcript document in PDF format.
+6. Registrar reviews the generated transcript for accuracy.
+7. Registrar approves and saves the official transcript.
+8. System makes the transcript available for secure access or printing.
+
+**** Extensions (Alternative scenarios)
+- 4a. System finds incomplete or missing grade data:
+  1. System alerts Registrar of incomplete data.
+  2. Registrar initiates investigation and correction through relevant faculty.
+- 5a. System experiences error during PDF generation:
+  1. System notifies Registrar of generation error.
+  2. Registrar retries operation or contacts IT support.
+
+**** Postconditions
+- Official transcript available for students, authorized faculty, or external requests securely and accurately.
+
+*** COMMENT Manages Course Prerequisites
+:PROPERTIES:
+:PRIMARY_ACTOR: Registrar
+:SCOPE: Course Management Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- Registrar logged into Tuth system.
+- Course catalog defined and available.
+
+**** Success Guarantee
+- Course prerequisites managed, accurately reflecting academic policies.
+
+**** Main Success Scenario
+1. Registrar logs into course management interface.
+2. Registrar selects a course from the course catalog.
+3. Registrar chooses action "Edit Prerequisites".
+4. Registrar selects prerequisite courses from a validated list.
+5. Registrar confirms the prerequisite configuration.
+6. System validates and saves prerequisite changes.
+7. System confirms successful update.
+
+**** Extensions (Alternative scenarios)
+- 4a. Registrar selects invalid prerequisite (e.g., course creates circular dependency):
+  1. System alerts Registrar of invalid selection.
+  2. Registrar corrects the prerequisite selection.
+- 6a. System encounters a failure during save operation:
+  1. System notifies Registrar of error.
+  2. Registrar retries or contacts IT support.
+
+**** Postconditions
+- Course prerequisites updated and visible in student and faculty interfaces.
+
+---
+
+** Registrar Clerk
+** IT support
+*** Overview
+| IT Support Manages Technical Incident Reports               |        3 |
+| IT Department Performs System Maintenance and Backup        |        2 |
+
+*** IT Support Manages Technical Incident Reports
+:PROPERTIES:
+:PRIMARY_ACTOR: IT Support Staff
+:SCOPE: Technical Incident Management Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- IT support staff logged into Tuth system.
+- Technical incidents reported by users accessible.
+
+**** Success Guarantee
+- Technical incidents effectively managed, tracked, and resolved or escalated clearly.
+
+**** Main Success Scenario
+1. IT Support logs into technical incident management interface.
+2. IT Support selects "View Technical Incidents".
+3. System displays reported incidents by status (new, pending, resolved).
+4. IT Support selects an incident to review details and perform diagnostic actions.
+5. IT Support documents diagnostic findings and applies corrective actions or escalation.
+6. System updates incident status based on IT Support’s actions.
+7. System notifies the reporting user of incident resolution or escalation.
+
+**** Extensions (Alternative scenarios)
+- 4a. IT Support identifies incomplete or unclear incident information:
+  1. IT Support requests additional details from the user who reported the incident.
+  2. Incident marked as pending until additional information is received.
+
+- 5a. Technical issue encountered applying corrective action:
+  1. System logs the issue internally.
+  2. IT Support escalates the issue to a senior technician or external support.
+
+**** Postconditions
+- Technical incident clearly resolved or appropriately escalated, with transparent status updates to users.
+
+---
+
+*** IT Department Performs System Maintenance and Backup
+:PROPERTIES:
+:PRIMARY_ACTOR: IT Support Staff
+:SCOPE: System Maintenance Module
+:LEVEL: User-goal level
+:END:
+**** Preconditions
+- IT support staff logged into Tuth system.
+- Scheduled system maintenance window established and communicated.
+
+**** Success Guarantee
+- System maintenance and backup completed securely and efficiently, minimizing downtime.
+
+**** Main Success Scenario
+1. IT Support logs into system maintenance interface.
+2. IT Support selects "Perform System Maintenance and Backup".
+3. System provides maintenance tasks and backup options.
+4. IT Support initiates system backup to a secure location.
+5. System performs backup and validates successful completion.
+6. IT Support performs scheduled maintenance tasks (updates, patches, security checks).
+7. IT Support confirms maintenance completion and system readiness.
+8. System notifies administrative personnel and users about successful maintenance.
+
+**** Extensions (Alternative scenarios)
+- 5a. Backup validation fails due to data integrity issues:
+  1. System alerts IT Support of the failure.
+  2. IT Support addresses data issues and retries the backup process.
+
+- 6a. Maintenance tasks encounter technical problems:
+  1. IT Support logs encountered issues.
+  2. IT Support resolves issues or escalates to external support.
+
+**** Postconditions
+- System maintenance clearly completed, backups securely stored, and system stability and security ensured.
+
+** System Administrator
+*** Overview
+| System Administrator Use case          | Priority |
+|----------------------------------------+----------|
+| Manages User Accounts & Permissions    |        1 |
+| Configures Academic Rules and Policies |        2 |
+| Perform Maintenance, Backup & Audit    |        2 |
+
+Academic Rules (way GPA is computed, year start and end ?)
+#+BEGIN_SRC plantuml :results file link :file Plantuml/Roles/sys_admin.png
+' ---------- System Administrator ----------
+left to right direction
+skinparam actorStyle awesome
+actor "System\nAdministrator" as SA
+package "Tuth System" {
+  usecase "Manage user accounts\n& permissions"     as UC_SA_Users
+  usecase "Configure academic\nrules & policies"    as UC_SA_Rules
+  usecase "Manage course catalog\n& structure"      as UC_SA_Catalog
+  usecase "Set semester timelines" as UC_SA_Timeline
+  usecase "Perform maintenance,\nbackup & audit"     as UC_SA_Maint
+}
+SA --> UC_SA_Users
+SA --> UC_SA_Rules
+SA --> UC_SA_Catalog
+SA --> UC_SA_Timeline
+SA --> UC_SA_Maint
+@enduml
+#+END_SRC
+
+#+RESULTS:
+[[file:Plantuml/Roles/sys_admin.png]]
+
+
+
+**** System Administrator Manages User Accounts and Permissions
+:PROPERTIES:
+:PRIMARY_ACTOR: System Administrator
+:SCOPE: User and Access Management Module
+:LEVEL: User-goal level
+:END:
+***** Preconditions
+- System Administrator logged into Tuth system.
+- User account details and access management interface accessible.
+
+***** Success Guarantee
+- User accounts and permissions effectively managed and updated accurately.
+
+***** Main Success Scenario
+1. Administrator logs into the user management interface.
+2. Administrator selects "Manage User Accounts and Permissions".
+3. System displays user accounts and current permissions.
+4. Administrator selects a user account to update permissions or details.
+5. Administrator updates user permissions and account details as required.
+6. Administrator confirms and saves the updates.
+7. System validates, applies changes, and confirms success.
+8. System sends notifications to affected users regarding permission changes.
+
+***** Extensions (Alternative scenarios)
+- 5a. Administrator enters incorrect permission settings:
+  1. System alerts Administrator about permission conflicts or errors.
+  2. Administrator corrects settings and resubmits.
+
+- 7a. System encounters an error saving account updates:
+  1. System notifies Administrator of internal error.
+  2. Administrator retries or escalates to technical support.
+
+***** Postconditions
+- User accounts accurately updated, permissions correctly assigned, and users clearly notified.
+
+---
+
+**** System Administrator Configures Academic Rules and Policies
+:PROPERTIES:
+:PRIMARY_ACTOR: System Administrator
+:SCOPE: Academic Policy Configuration Module
+:LEVEL: User-goal level
+:END:
+***** Preconditions
+- System Administrator logged into Tuth system.
+- Existing academic policies and configurations accessible.
+
+***** Success Guarantee
+- Academic rules and policies accurately configured and communicated clearly within the system.
+
+***** Main Success Scenario
+1. Administrator logs into academic policy configuration interface.
+2. Administrator selects "Configure Academic Rules and Policies".
+3. System presents current academic policy settings.
+4. Administrator updates or creates new rules/policies (grading scales, enrollment rules, etc.).
+5. Administrator reviews and confirms new or modified policy settings.
+6. System validates and applies configuration changes.
+7. System confirms successful updates.
+8. System notifies relevant administrative personnel of policy updates.
+
+***** Extensions (Alternative scenarios)
+- 4a. Administrator proposes rules conflicting with existing system configurations:
+  1. System alerts Administrator to conflicts or errors.
+  2. Administrator revises policy configurations accordingly.
+
+- 6a. Technical issue encountered during policy application:
+  1. System notifies Administrator of internal error.
+  2. Administrator retries the operation or escalates to technical support.
+
+***** Postconditions
+- Academic rules and policies clearly configured, system updated accordingly, and clearly communicated to institutional stakeholders.
+
+** Invitee
+
+* From Website
+** Admission
+
+
+Applications can be opened November to end of February and placement exams administered the second week Friday of March each year. Transfer students are also welcomed to apply during this same period.
+Requirements:
+
+Successful candidates are to submit the following documents to the Admissions Office.
+
+    A completed TU application form
+
+    Liberia Senior High Certificate Examination (LSHCE) / West Africa Senior School Certificate Examination (WASSCE) certificate
+
+    High school diploma and transcript
+
+    Two letters of recommendation (one from the last school attended and other)
+
+    Personal essay
+
+    Two passport sized photos (white background)
+
+    A recent health assessment certificate from the TU Clinic
+
+    Birth certificate or notification for Liberian citizens
+
+    Naturalization document or resident permit for international citizens
+
+NOTE: High school graduates with LSHCE / WASSCE Division I and II certificates are exempted from the TU placement exams.
+
+** Access to college
+
+1. The Access to College Program
+
+The Access to College Program is a two-tracked program: (1) Access to College Remedial, and (2) Access to College Regular. It is a preparation program promoting academic, personal and social preparedness for success in college through intensive development of foundational skills.
+1.1 Access Remedial Program
+
+Access Remedial is only offered during the vacation period from June to July. Students under this program may take Mathematics, English or both depending on the category where their scores in the placement exam fall in.
+1.2 Access to College Regular
+
+Access to College Regular is a one-semester preparation program which includes taking four foundational courses in Mathematics, English, Computer and Integrated Science
+
+** Financial aid
+he Financial Aid Office is responsible for the administration and management of financial aid services that include the advisement and counsel of students and parents about available financial assistance, and provides students with relevant information, as required by sponsors’ guidelines and TU financial aid regulations.
+Types of Scholarship(s)
+
+    Merit-based- aid is a form of college financial aid that does not consider a student's financial need, but rather is awarded based on an outstanding academic performance, leadership and or have been admitted to a particular academic discipline
+
+    Financial Aid- Financial aid is any college funding that doesn't come from family or personal savings or earnings. It can take the form of grants, scholarships, work-study.
+
+    Need-based- scholarships and grants are exactly what their title indicates: money for students with a financial need and no academic performance is attached before been awarded
+
+    Land Grants- scholarship awarded to recommended and selected individuals from their local authorities base on an agreement through an Memorandum of Understanding (MOU) between two institutions for the sole purpose of providing higher education for her citizens from the selected communities
+
+Financial Aid Applications and the Screening Processes
+
+    First Time Applicants
+
+    Step 1
+
+    All newly admitted students must present admission letter to Financial Aid Office either by email or hand delivery to obtain Financial Aid or scholarship form;
+
+    All returning (old) students submit grade sheets to the Financial Aid Office two weeks before registration to apply for financial aid or scholarship;
+
+    Selection for retuning students is done based on grade points (from the highest GPA downward, 4.00, 3.9, 3.8, 3.7. . .);
+
+    The Financial Aid Office liaises with the Offices of the registrar, and Admissions & Records to verify information (GPAs, counties of origin …) contained in financial aid applications;
+
+    Step 2
+
+    Priority consideration for aid is given to students whose files are completed by deadline of each award year;
+
+    Financial Aid Office personnel reviews each application to ensure that all relevant data are provided (e.g. Name, DOB, Residence (City and County), etc.;
+
+    The number of qualified candidates to be selected is based on available funds.
+
+    Step 3
+
+    Award letters are issued to students to enable them register;
+
+    Step 4
+
+    After completion of registration, copies of recent grade sheet and present control are submitted to the Financial Aid Office for onward submission to donors;
+
+    Step 5
+
+    Donors who select their own beneficiaries’ lists are required to be in compliance with the University’s scholarship minimum standards (2.5 minimum GPA, at least 12 credits hours, recipient must not be on disciplinary probation of any kind, etc.)
+
+NOTE: NO STUDENT IS ALLOWED TO BENEFIT MORE THAN ONE SCHOLARSHIP/FINANCIAL AID OFFER DURING A SEMESTER.
+Falsification of Scholarship Documents
+
+    In an effort to promote scholarly spirit and set the stage for research on the campuses of Tubman University, any student allegedly falsifying official transcript and or any other official documents as a way of seeking financial support, shall be forwarded to the Student Judicial Affairs Committee for investigation, if found liable shall NOT benefit any scholarships throughout his/her sojourn at the University.
+
+PROCESSING OF BILLS
+
+    The DIRECTOR, FINANCIAL AID generates the INITIAL BILLING LIST based on grade sheets submitted by students (potential beneficiaries) in line with the respective eligibility criteria of each scholarship/financial aid;
+
+    The DIRECTOR, FINANCIAL AID VERIFIES the billing list by requesting from the OFFICE OF THE REGISTRAR, the NAMES and GPAs of all students (potential beneficiaries) who have met the eligibility criteria for each financial aid/scholarship;
+
+    Once VERIFIED by the OFFICE OF THE REGISTRAR, the DIRECTOR, FINANCIAL AID develops the FINAL BILLING LIST for submission to the respective SCHOLARSHIP DONORS. When the list is being submitted, the OFFICES OF INTERNAL AUDIT, FINANCE AND BUDGET, CHAIR OF TU SCHOLARSHIP COMMITTEE and VPSA shall always be copied;
+
+    Semester report which includes a cover letter with an excel spread sheet along with copies of student billing sheet and grade sheet are prepared two weeks after ADD and DROP period for submission to donors;
+
+    The final billing list, a cover letter, and all supporting documents (copies of student billing invoices with students’ identification cards copied at the back, and grade sheets are submitted to the respective sponsors both electronically and in hard copies. Follow-up is made to ensure donors acknowledge receipt of report;
+
+    Constant follow up is made until all bills and/or arrears are paid.
+
+Payments
+
+    ALL CHECKS and/or CASH payable to the University by a Scholarship Donor SHALL be deposited in the below UNIVERSITY’S SCHOLARSHIP ACCOUNT. When this is done, the DEPARTMENTS OF FINANCIAL AID AND FINANCE AND BUDGET shall be notified;
+
+    USD Scholarship Account #: 0141014700080504/6100530832
+
+    LRD Tuition Account #: 0140014700080502
+
+    Swift Code for oversea wire funds: ECOCLRLM
+
+Once VERIFIED by the DEPARTMENT OF FINANCE AND BUDGET that check(s) and/or cash are in receipt in the University’s Scholarship Account.
+*** Audio
+Some use cases for the finance clerk responsible for scholarships. This is how the scholarship process goes. A student usually goes to donors and asks them for vetting. The donors select some students, send the list of the students they've selected to the office of the scholarship, and they give the number of the TU ID of the student, the name of the student, and the amount, either in absolute value or in percentage, that they are ready to cover for the student fees. So once the office of the scholarship receives that list from the donors.And he categorizes the help into lots. You have what he calls scholarship, which pays for everything, every fees of the student. The student doesn't have to pay anything. And then there's what he callsfinancial aid from the donors and financial aid will not cover everything so you can have different types of scholarships even though they are called scholarship some of them have exceptions on the fees and maybe to better understand you need to have an idea of the different fees that the student can have at the University of Williamstown Man University so the fees are related to the number of credits in the course there's five dollars per course credit usually students can take up to 12 credits of courses which is 60 USD and then they can have extra fees depending on the course if it's a laboratory course like for biology physics and chemistry there's an extra $20 per course you can have a research course with an extra $20 fee also but this research fee is actually for all senior studentYou also have once a semester, the first semester of the academic year, a fee for ID card, to create the ID card. I think it's 15 US dollars. So you can have scholarships which pay for everything except, for example, the ID card or the PE t-shirt. The PE t-shirt is also an annual fee at the beginning of the academic year. So the officer of the scholarship will then issue letters for every student who is on the list of the vetting donors and give the letter to the student so he can go to the finance office and do his registration.
+
+
+For the scholarship officer is to be able to review the list of the donors and to generate the letters, named letters, with the specific information for the support, the financial support by the donor to the student. Print them and that's it. So the other thing he needs to do is at the end of each semester, he should be able to print out a report of all this.All the students supported by a specific donor for a specific scholarship type or financial aid type. And this report will include the name of the student, some classical information about the student, but more importantly it will include the GPA of that student for the passing semester, because the financial aid is subject to GPA conditions.  ...to GPA conditions. That's another thing for the different types of scholarships. Some scholarships require GPA above 3, others above 2, plus different criteria. For example, if you're from the region, then you can have a scholarly land scholarship where you only need to have 2.5 GPA. But if you want a merit-based scholarship, you should have more than 3 points, and you can also have a need-based scholarship.
+
+Another thing the officer needs to be able to do is to craft some letter templates, or use, maybe, existing templates that he is able to make himself, in Google Doc, or Word, or whatever, with some placeholders, and select those templates, plus name of some students, and then generate letters. But this can be done outside of TOOTS, I think. This would be more easily integrated somewhere else. But we could think, at long term, of some text that he wants to generate, some template format that he could do also in the system.
+** Registration
+
+
+The Office of the Registrar at Tubman University is dedicated to providing exceptional service to students, faculty, staff, and alumni. Our office manages academic records, course registration, graduation services, and policies that ensure the integrity of the university's academic mission.
+Our Services
+
+    Course Registration & Enrollment
+
+    Our team supports students throughout the registration process, helping them manage course schedules, add or drop classes, and navigate the university’s registration system.
+    Academic Records
+
+    The Registrar’s Office maintains all academic records, ensuring accuracy and privacy. Students can request official transcripts, view grades, and update personal information through our secure online portal.
+    Graduation Services
+
+    We guide students through the graduation process, from applying for graduation to ensuring that all degree requirements are met.
+    Verification & Certification
+
+    We provide enrollment verifications, degree certifications, and respond to third-party verification requests for student status and academic standing.
+    Transfer Credit Evaluation
+
+    The Registrar evaluates transfer credits to ensure they align with university standards, helping students receive appropriate credit for their previous academic work.
+
+Registration Process
+
+    Pre-Registration Preparation
+
+        Academic Advising: Before registering, students are required to meet with their academic advisors to discuss their course selections for the upcoming semester. This ensures that they are on track to meet their degree requirements and maintain a balanced academic workload.
+
+        Clearing Holds: Students should ensure there are no holds on their accounts (such as financial, academic, readmission, or disciplinary holds) that could prevent them from registering. Holds can be cleared by contacting the relevant offices.
+    Course Selection
+
+        Course Offerings: Review the course catalog or the online registration system to explore the available courses for the semester. The catalog includes information on course codes, schedules, credit hours, and prerequisites.
+
+        Creating a Schedule: After consulting with your advisor, create a schedule that balances core and elective courses. Be mindful of time conflicts and make sure to account for all required courses.
+    Online Registration
+
+        Login: Access the university’s online student portal using your student credentials.
+
+        Select Courses: Use the course search function to find the courses discussed during advising. Add them to your registration cart.
+
+        Register for Classes: Once your course selection is complete, proceed to officially register. The system will prompt you to confirm your choices.
+
+        Drop/Add Period: Usually occurs in the second week instruction. This is to allow students to adjust their course schedules according to their wish.
+    Confirmation of Enrollment
+
+        Enrollment Verification: After successful registration and payment, confirm your enrollment through the student portal. You will receive an official confirmation of your registered courses and payment status.
+    Late Registration and Withdrawal
+
+        Late Registration: If you miss the regular registration period, you may still register during the late registration period, though late fees may apply.
+
+        Withdrawal from Courses: a students may withdraw from a course after the add/drop period, but they should be aware of the withdrawal deadlines (before midterm)
+
+Important Dates to Remember
+
+    Registration Open Dates:The registration window opens during registration and classes when registration is closed. Check the academic calendar for these dates.
+
+** Access to college
+
+1. The Access to College Program
+
+The Access to College Program is a two-tracked program: (1) Access to College Remedial, and (2) Access to College Regular. It is a preparation program promoting academic, personal and social preparedness for success in college through intensive development of foundational skills.
+1.1 Access Remedial Program
+
+Access Remedial is only offered during the vacation period from June to July. Students under this program may take Mathematics, English or both depending on the category where their scores in the placement exam fall in.
+1.2 Access to College Regular
+
+Access to College Regular is a one-semester preparation program which includes taking four foundational courses in Mathematics, English, Computer and Integrated Science
+** Online enrollement
+William V.S. Tubman University Online Enrollment Application
+Enrollment Type
+Freshman
+Associate Degree Holder
+Readmission
+2nd Baccalaureate Degree
+Basic Information
+First Name
+Middle Name
+Last Name
+Phone number
+Email
+Address
+Country
+Citizenship
+County
+Date of birth
+Gender
+Education Details
+High school from which you graduated
+Graduation Date
+List any additional high schools attended and dates you attended
+WASSCE/WAEC Details
+Date of Exam
+Location of Exam
+
+What are your scores?
+English
+Literature
+Biology
+Geography
+Economics
+Chemistry
+Mathematics
+Physics
+History
+Additional Information
+Colleges
+Major
+Who shall be responsible to pay for your education at Tubman University?
+Relationship and Contact information
+
+Do you have a disability?
+Yes
+No
+If you answered yes above, please state disability
+Additional information
+Attach your credentials
+If I am accepted as a student of WVSTU, I promise to abide by all rules and regulations of the University, and I recognize that failure to abide by such rules will subject me to the appropriate penalties including expulsion from the University. 
+
+* Use case Restrictions
+- A chair, dean, vpa should be able to add prerequisites to a course of his college from the django administration.
+- A dean should be able to import a list of courses (prerequisits included) attached to a curriculum using the import csv of the admin interface.
+- A dean should not be able to add a curriculum outside of his college
+- A chair should be able edit a curricululm of his college only if it is not active.
+- A chair should not be able to activate a curriculum, only the dean or vpaa should be able to do that.
+- credit hours of a course should be limited to choices 1, 3, 4, 10. 3 been the default.
+- I want users to see all courses attached to a curriculum when selecting a curriculm in the admin interface.  Should this be done there or should I creat a specific view for that matter ?
+  
+  
+**Summary of key choices:**
+- Object-level permissions (django-guardian) address most permission checks.
+- Admin customization (`save_model`, `get_readonly_fields`, and `get_form`) controls specific editing constraints.
+- Field validation (model-level choices and validation) is ideal for fixed-choice constraints.
+- Admin inlines are ideal for related object visibility.
+
+  
+** Use Case Constraints and Recommended Approaches
+
+*** (1) Adding prerequisites to a course
+- =Roles=: chair, dean, vpaa
+- =Restriction=: Only for courses within user's college.
+- =Approach=:
+  1. Use object-level permissions with django-guardian.
+  2. Assign "change_course" or a custom permission (e.g., "add_prerequisite") at the Course level per college.
+  3. Limit admin interface access to prerequisites via inlines with object-permission checks.
+
+*** (2) Dean imports courses from CSV (prerequisites included)
+- =Role=: dean
+- =Restriction=: Only courses linked to a curriculum within dean's own college.
+- =Approach=:
+  1. Use Django's import-export.
+  2. Customize `CurriculumAdmin` import method to:
+     - Check the user's role (Dean).
+     - Validate imported curriculum's college against dean's college.
+     - Reject imports violating this constraint with clear error messages.
+
+*** (3) Dean restricted to add curriculum only within own college
+- =Role=: dean
+- =Restriction=: Can't create curriculum outside their college.
+- =Approach=:
+  1. Override `CurriculumAdmin.get_form()` to:
+     - Auto-set and lock "college" field based on dean’s college.
+     - Or use form validation to reject invalid college selection.
+  2. Limit the `college` queryset in the admin form dynamically.
+
+*** (4) Chair can edit curriculum only if inactive
+- =Role=: chair
+- =Restriction=: Edit curriculum only if `is_active=False`.
+- =Approach=:
+  1. Use `CurriculumAdmin.get_readonly_fields()` to dynamically set all fields as read-only if curriculum is active for chairs.
+  2. Override `has_change_permission` method to enforce condition:
+     ```python
+     def has_change_permission(self, request, obj=None):
+         if request.user.groups.filter(name="Chair").exists() and obj and obj.is_active:
+             return False
+         return super().has_change_permission(request, obj)
+     ```
+
+*** (5) Chair cannot activate curriculum, only dean and vpaa can
+- =Roles=: chair (restricted), dean & vpaa (allowed)
+- =Restriction=: Chair cannot set `is_active=True`.
+- =Approach=:
+  1. Override `CurriculumAdmin.save_model()` or `Curriculum.clean()`:
+     - Reject activation attempt by a chair.
+     ```python
+     def save_model(self, request, obj, form, change):
+         if "is_active" in form.changed_data and obj.is_active:
+             if request.user.groups.filter(name="Chair").exists():
+                 raise ValidationError("Only Dean or VPAA can activate curriculum.")
+         super().save_model(request, obj, form, change)
+     ```
+
+*** (6) Credit hours of a course limited to 1, 3 (default), 4, 10
+- =Restriction=: Limit choices to `[1, 3 (default), 4, 10]`.
+- =Approach=:
+  1. Use Django's field choices in `Course` model:
+     ```python
+     credit_hours = models.PositiveSmallIntegerField(
+         choices=[(1, '1'), (3, '3'), (4, '4'), (10, '10')],
+         default=3
+     )
+     ```
+  2. Field validation automatically enforced by Django admin and forms.
+
+*** (7) Displaying courses attached to curriculum clearly
+- =Approach=:
+  - Use `CourseInline` in `CurriculumAdmin` to display associated courses directly on curriculum's admin page.
+  - If further detail or customization is needed (such as prerequisites view), consider a custom admin view or a read-only admin inline to present clear data.
+
+  ```python
+  class CourseInline(admin.TabularInline):
+      model = Course
+      extra = 0
+      readonly_fields = ('code', 'title', 'credit_hours')
+  
+  class CurriculumAdmin(admin.ModelAdmin):
+      inlines = [CourseInline]
+
+
+
+
+
+

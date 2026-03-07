@@ -1,0 +1,627 @@
+* UI_ENHANCEMENT_GUIDE
+** Student dashboard financial status and payment link
+  #+begin_src gherkin
+Feature: Student dashboard financial status and payment link
+
+Scenario: Student sees outstanding balance with a payment link
+Given a student with an active semester
+And the student has an outstanding balance
+When the student logs in to the portal
+Then the dashboard shows an outstanding balance card
+And the card includes a payment link
+
+Scenario: Student can navigate from the balance card to payment
+Given a student with an outstanding balance
+When the student clicks the payment link
+Then the payment workflow page is shown
+#+end_src
+
+
+** Smart course registration guidance
+  #+begin_src gherkin
+Feature: Smart course registration guidance
+
+Scenario: Recommended courses are prioritized with schedule clarity
+Given a student eligible to register this semester
+When the student opens course registration
+Then recommended courses are shown first
+And class times are shown inline
+
+Scenario: Registration blocks obvious conflicts and missing prerequisites
+Given a student selecting courses
+When the student adds a section that conflicts with an existing selection
+Then the system detects the scheduling conflict
+And the student is prompted to resolve it
+When the student adds a course without meeting prerequisites
+Then the system shows a prerequisite validation error
+#+end_src
+
+
+** Unified staff dashboard with permission-based navigation
+  #+begin_src gherkin
+Feature: Unified staff dashboard with permission-based navigation
+
+Scenario: Staff user sees only menu items permitted by role
+Given a staff user who belongs to one or more permission groups
+When the user opens /staff/dashboard/
+Then the dashboard shows only the menu items allowed by their groups
+
+Scenario: Multi-role staff user gets a primary panel and secondary tabs
+Given a staff user with multiple roles
+When the user opens /staff/dashboard/
+Then the primary role panel is shown first
+And secondary role panels are available as tabs
+#+end_src
+
+
+** Enhanced tables with sorting, filtering, and export
+#+begin_src gherkin
+Feature: Enhanced tables with sorting, filtering, and export
+
+Scenario: User sorts a table by clicking column headers
+Given a user viewing a data table
+When the user clicks a column header
+Then the table sorts by that column
+And the UI shows a sort indicator
+
+Scenario: User applies per-column filters and exports results
+Given a user viewing a data table
+When the user applies a filter on a column
+Then the table results are filtered
+When the user exports the table
+Then the system provides a CSV or PDF export
+#+end_src
+
+
+** Confirmation and status feedback for user actions
+#+begin_src gherkin
+Feature: Confirmation and status feedback for user actions
+
+Scenario: Payment processing gives immediate success feedback
+Given a user submits a payment
+When the payment is processed successfully
+Then a success toast notification is shown
+And the message includes the amount received
+
+Scenario: User gets clear feedback when an operation fails
+Given a user attempts an operation
+When the operation fails
+Then an error alert is shown
+And the message explains what went wrong
+#+end_src
+
+
+
+** Student achievements include payment milestone recognition
+#+begin_src gherkin
+Feature: Student achievements include payment milestone recognition
+
+Scenario: Student is notified when the outstanding balance is cleared
+Given a student had an outstanding balance
+When the balance becomes zero after payment posting
+Then the system shows a “balance cleared” achievement notification
+#+end_src
+
+
+* USE_CASES
+
+** Student pre-registers courses  
+#+begin_src gherkin
+Feature: Student pre-registers courses
+
+Scenario: Student builds a registration cart and submits it
+Given a student eligible to register this semester
+When the student opens the course registration section
+And the student selects available sections
+And the student submits the registration cart
+Then the registration request is saved
+And the selected courses appear in the registrations list
+#+end_src
+
+
+** Student views class schedule for a section
+#+begin_src gherkin
+Feature: Student views class schedule for a section
+
+Scenario: Student views a section schedule from the course list
+Given a student viewing available sections
+When the student opens a section details page
+Then the schedule rows are displayed
+And the section shows meeting times and rooms
+#+end_src
+
+** Student views grades and past grade sheets
+#+begin_src gherkin
+Feature: Student views grades and past grade sheets
+
+Scenario: Student sees completed courses grouped by semester
+Given a student with recorded grades
+When the student opens the records section
+Then the grades are grouped by semester
+And each semester shows GPA and total credits
+#+end_src
+
+
+** Student checks financial and enrollment status
+#+begin_src gherkin
+Feature: Student checks financial and enrollment status
+
+Scenario: Student sees balance and last payment on the dashboard
+Given a student with invoices or payments
+When the student opens the dashboard
+Then the financial summary shows the outstanding balance
+And the summary shows the last payment date
+#+end_src
+
+
+** Student views invoice and payment statements
+#+begin_src gherkin
+Feature: Student views invoice and payment statements
+
+Scenario: Student opens invoice statement
+Given a student with invoices
+When the student opens the invoice statement page
+Then the invoice statement table is shown
+
+Scenario: Student opens payment receipt
+Given a student with payments
+When the student opens the payment receipt page
+Then the payment receipt table is shown
+#+end_src
+
+
+** Student browses curriculum courses
+#+begin_src gherkin
+Feature: Student browses curriculum courses
+
+Scenario: Student opens curriculum course list
+Given a student enrolled in a curriculum
+When the student opens the curriculum courses page
+Then the curriculum course list is shown
+
+Scenario: Student opens course detail
+Given a student on the curriculum course list
+When the student opens a course detail page
+Then the course details are displayed
+#+end_src
+
+
+** Registrar reviews grades dashboard
+#+begin_src gherkin
+Feature: Registrar reviews grades dashboard
+
+Scenario: Registrar sees default semester selection
+Given a registrar with grade access
+When the registrar opens the grades dashboard
+Then the semester filter defaults to the current semester
+
+Scenario: Registrar expands a student summary row
+Given a registrar viewing the grades dashboard
+When the registrar expands a student row
+Then the student grade details are visible
+
+Scenario: Registrar opens the official transcript preview
+Given a registrar viewing the grades dashboard
+When the registrar opens the transcript action
+Then the official transcript page is shown
+#+end_src
+
+
+** Registrar manages grade entry windows
+#+begin_src gherkin
+Feature: Registrar manages grade entry windows
+
+Scenario: Registrar opens the registrar windows page
+Given a registrar user
+When the registrar opens the grade entry windows page
+Then the grade entry window table is displayed
+#+end_src
+
+
+** Finance officer updates payment status
+#+begin_src gherkin
+Feature: Finance officer updates payment status
+
+Scenario: Finance officer updates a payment record
+Given a finance officer viewing payment records
+When the officer updates a payment amount or status
+Then the payment record is saved
+And a confirmation message is shown
+#+end_src
+
+
+** Enrollment officer manages student records
+#+begin_src gherkin
+Feature: Enrollment officer manages student records
+
+Scenario: Enrollment officer opens the student list
+Given an enrollment officer
+When the officer opens the student list page
+Then the student list is displayed
+
+Scenario: Enrollment officer opens a student detail
+Given an enrollment officer viewing the student list
+When the officer opens a student detail page
+Then the student profile details are displayed
+#+end_src
+
+
+* USE_CASES_MISSING_OR_PARTIAL
+
+** Student uploads registration documents
+  #+begin_src gherkin
+Feature: Student uploads registration documents
+
+Scenario: Student uploads required documents
+Given a student with an open registration window
+When the student opens the document upload area
+And the student selects the required document files
+And the student confirms the upload
+Then the documents are stored
+And the student status shows pending verification
+
+Scenario: Student uploads an invalid document
+Given a student uploading registration documents
+When the student selects a file with an invalid type or size
+Then the system rejects the upload
+And the student sees an error message explaining the requirement
+#+end_src
+
+
+** Student consults course prerequisites
+  #+begin_src gherkin
+Feature: Student consults course prerequisites
+
+Scenario: Student views prerequisites for a course
+Given a student browsing curriculum courses
+When the student opens a course detail page
+Then the prerequisite list is displayed
+#+end_src
+
+
+** Student views grades only when financially cleared
+  #+begin_src gherkin
+Feature: Student views grades only when financially cleared
+
+Scenario: Student is blocked from grades when not cleared
+Given a student with an outstanding balance
+When the student opens the grades section
+Then the system indicates grades are locked
+And the student sees a clearance instruction
+
+Scenario: Student can view grades when cleared
+Given a student who is financially cleared
+When the student opens the grades section
+Then the grades are displayed
+#+end_src
+
+
+** Student edits personal information before lock
+  #+begin_src gherkin
+Feature: Student edits personal information before lock
+
+Scenario: Student updates profile details during an editable window
+Given a student whose profile is editable
+When the student updates personal information
+Then the profile changes are saved
+
+Scenario: Student cannot edit after profile lock
+Given a student whose profile is locked
+When the student attempts to update personal information
+Then the system blocks the change
+And the student sees a lock message
+#+end_src
+
+
+** Student requests academic exceptions
+  #+begin_src gherkin
+Feature: Student requests academic exceptions
+
+Scenario: Student requests an overload
+Given a student eligible to request an overload
+When the student submits an overload request
+Then the request is recorded
+And the student sees a confirmation
+
+Scenario: Student requests a prerequisite exception
+Given a student needing a prerequisite exception
+When the student submits the exception request
+Then the request is recorded
+And the student sees the request status
+#+end_src
+
+
+** Remedial student registration
+  #+begin_src gherkin
+Feature: Remedial student registration
+
+Scenario: Remedial student registers for remedial courses
+Given a remedial student eligible for remedial courses
+When the student selects remedial course options
+And the student confirms the selection
+Then the remedial registration is saved
+And the student sees the remedial schedule
+#+end_src
+
+
+** Remedial student progress tracking
+  #+begin_src gherkin
+Feature: Remedial student progress tracking
+
+Scenario: Remedial student views progress and eligibility
+Given a remedial student enrolled in a remedial term
+When the student opens remedial progress
+Then the system shows current grades and attendance
+And the system shows eligibility to transition to full enrollment
+#+end_src
+
+
+** Instructor enters and edits grades
+  #+begin_src gherkin
+Feature: Instructor enters and edits grades
+
+Scenario: Instructor enters grades during the entry window
+Given an instructor with an open grading window
+When the instructor submits grades for a course
+Then the grades are saved
+And the instructor sees a confirmation
+
+Scenario: Instructor cannot edit grades after the window closes
+Given an instructor with a closed grading window
+When the instructor attempts to edit grades
+Then the system rejects the update
+And the instructor sees a window-closed message
+#+end_src
+
+
+** Chair assigns faculty to courses
+  #+begin_src gherkin
+Feature: Chair assigns faculty to courses
+
+Scenario: Chair submits faculty-course assignment proposals
+Given a chair with available faculty and courses
+When the chair assigns faculty to courses
+And the chair submits the proposals
+Then the assignments are recorded
+And the proposals are routed for approval
+#+end_src
+
+
+** Chair reviews departmental enrollment
+  #+begin_src gherkin
+Feature: Chair reviews departmental enrollment
+
+Scenario: Chair reviews enrollment and flags anomalies
+Given a chair with access to enrollment data
+When the chair reviews department enrollment
+Then under-enrolled and over-enrolled courses are highlighted
+And the chair can record recommendations
+#+end_src
+
+
+** Dean reviews faculty workload proposals
+  #+begin_src gherkin
+Feature: Dean reviews faculty workload proposals
+
+Scenario: Dean proposes faculty overloads
+Given a dean reviewing faculty workloads
+When the dean submits overload proposals
+Then the proposals are recorded
+And the VPAA is notified
+#+end_src
+
+
+** Dean manages course credit hour proposals
+  #+begin_src gherkin
+Feature: Dean manages course credit hour proposals
+
+Scenario: Dean reviews credit hour changes
+Given a dean reviewing course credit hour proposals
+When the dean approves or requests changes
+Then the proposal status is updated
+And the next approver is notified
+#+end_src
+
+
+** VPAA validates academic proposals
+  #+begin_src gherkin
+Feature: VPAA validates academic proposals
+
+Scenario: VPAA validates faculty course assignments
+Given a VPAA reviewing faculty course assignments
+When the VPAA approves or requests changes
+Then the assignment status is updated
+And stakeholders are notified
+
+Scenario: VPAA validates academic exception requests
+Given a VPAA reviewing academic exceptions
+When the VPAA approves or rejects an exception
+Then the student record is updated
+And stakeholders are notified
+
+Scenario: VPAA validates prerequisite changes
+Given a VPAA reviewing prerequisite change proposals
+When the VPAA approves the change
+Then the course catalog is updated
+And stakeholders are notified
+#+end_src
+
+
+** Quality assurance evaluation periods
+  #+begin_src gherkin
+Feature: Quality assurance evaluation periods
+
+Scenario: Quality officer defines evaluation windows
+Given a quality officer with access to the evaluation calendar
+When the officer sets an evaluation period
+Then the evaluation window is saved
+And notifications are issued
+#+end_src
+
+
+** Quality assurance evaluation reporting
+  #+begin_src gherkin
+Feature: Quality assurance evaluation reporting
+
+Scenario: Quality officer reviews aggregated evaluation results
+Given a quality officer viewing evaluation results
+When the officer filters results by semester and department
+Then aggregated results are displayed
+And observations can be recorded
+#+end_src
+
+
+** Librarian manages inventory
+  #+begin_src gherkin
+Feature: Librarian manages inventory
+
+Scenario: Librarian updates library inventory
+Given a librarian managing inventory
+When the librarian updates resource records
+Then inventory changes are saved
+And a confirmation is shown
+#+end_src
+
+
+** Librarian handles lending and returns
+  #+begin_src gherkin
+Feature: Librarian handles lending and returns
+
+Scenario: Librarian records lending and return
+Given a librarian processing a resource transaction
+When the librarian records a lending or return
+Then the borrower record is updated
+And the resource availability is updated
+#+end_src
+
+
+** Clinic manager reports health incidents
+  #+begin_src gherkin
+Feature: Clinic manager reports health incidents
+
+Scenario: Clinic manager records a health incident
+Given a clinic manager with access to student health records
+When the manager submits a health incident report
+Then the report is stored securely
+And a confirmation is shown
+#+end_src
+
+
+** Clinic manager generates incident reports
+  #+begin_src gherkin
+Feature: Clinic manager generates incident reports
+
+Scenario: Clinic manager generates a health incident report
+Given a clinic manager viewing health incidents
+When the manager generates a report for a time period
+Then the report is compiled
+And an export is available
+#+end_src
+
+
+** Counselor records anonymized session notes
+  #+begin_src gherkin
+Feature: Counselor records anonymized session notes
+
+Scenario: Counselor records a counseling session
+Given a counselor using the counseling interface
+When the counselor submits anonymized session notes
+Then the notes are stored securely
+And a confirmation is shown
+#+end_src
+
+
+** Counselor generates anonymized reports
+  #+begin_src gherkin
+Feature: Counselor generates anonymized reports
+
+Scenario: Counselor generates an activity report
+Given a counselor reviewing anonymized session data
+When the counselor generates a report for a period
+Then the report is compiled
+And an export is available
+#+end_src
+
+
+** Financial officer manages scholarships and waivers
+  #+begin_src gherkin
+Feature: Financial officer manages scholarships and waivers
+
+Scenario: Financial officer reviews scholarship applications
+Given a financial officer with scholarship applications pending
+When the officer reviews an application
+Then the application status is updated
+And the applicant is notified
+#+end_src
+
+
+** Admission officer decisions
+  #+begin_src gherkin
+Feature: Admission officer decisions
+
+Scenario: Admission officer decides on applications
+Given an admission officer reviewing verified applications
+When the officer records an admission decision
+Then the applicant status is updated
+And the applicant is notified
+#+end_src
+
+
+** Admission officer reports
+  #+begin_src gherkin
+Feature: Admission officer reports
+
+Scenario: Admission officer generates decision reports
+Given an admission officer viewing admissions data
+When the officer generates a decision report
+Then the report is created
+And an export is available
+#+end_src
+
+
+** Admission clerk verifies documents
+  #+begin_src gherkin
+Feature: Admission clerk verifies documents
+
+Scenario: Admission clerk verifies application documents
+Given an admission clerk reviewing documents
+When the clerk marks documents as verified
+Then the application status is updated
+And the applicant is notified
+#+end_src
+
+
+** Admission clerk schedules entrance exams
+  #+begin_src gherkin
+Feature: Admission clerk schedules entrance exams
+
+Scenario: Admission clerk schedules entrance exams
+Given an admission clerk with verified applicants
+When the clerk assigns exam slots
+Then the schedule is saved
+And applicants receive exam notifications
+#+end_src
+
+
+** Registrar manages enrollment status
+  #+begin_src gherkin
+Feature: Registrar manages enrollment status
+
+Scenario: Registrar reviews enrollment anomalies
+Given a registrar reviewing enrollment status
+When the registrar filters for anomalies
+Then the anomaly list is displayed
+And the registrar can record follow-up actions
+#+end_src
+
+
+** System admin manages user permissions
+  #+begin_src gherkin
+Feature: System admin manages user permissions
+
+Scenario: System admin updates user permissions
+Given a system admin managing user accounts
+When the admin updates user permissions
+Then the changes are saved
+And affected users are notified
+#+end_src
