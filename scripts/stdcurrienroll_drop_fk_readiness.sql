@@ -1,11 +1,10 @@
--- Readiness checks before dropping people_student.curriculum_id.
+-- Read-only consistency checks for student curriculum enrollments.
 -- This script is read-only and safe to run repeatedly.
 --
 -- What it validates:
 -- 1) Every student has at least one enrollment row.
 -- 2) Each student has exactly one primary enrollment row.
--- 3) Existing FK matches primary enrollment when FK is still present.
--- 4) Grade-derived curricula are represented in enrollment rows.
+-- 3) Grade-derived curricula are represented in enrollment rows.
 
 -- 1) Students without any enrollment rows.
 SELECT
@@ -53,32 +52,7 @@ HAVING COUNT(*) FILTER (WHERE e.is_primary) <> 1
 ORDER BY e.student_id
 LIMIT 50;
 
--- 3) Students where FK and primary enrollment disagree (transitional check).
-SELECT
-    'fk_primary_mismatch' AS check_name,
-    COUNT(*)::bigint AS issue_count
-FROM people_student AS s
-JOIN people_stdcurrienroll AS e
-  ON e.student_id = s.id
- AND e.is_primary
-WHERE s.curriculum_id IS NOT NULL
-  AND s.curriculum_id <> e.curriculum_id;
-
-SELECT
-    s.id AS student_pk,
-    s.student_id,
-    s.curriculum_id AS fk_curriculum_id,
-    e.curriculum_id AS primary_curriculum_id
-FROM people_student AS s
-JOIN people_stdcurrienroll AS e
-  ON e.student_id = s.id
- AND e.is_primary
-WHERE s.curriculum_id IS NOT NULL
-  AND s.curriculum_id <> e.curriculum_id
-ORDER BY s.id
-LIMIT 50;
-
--- 4) Grade-derived curricula missing from enrollment rows.
+-- 3) Grade-derived curricula missing from enrollment rows.
 WITH grade_curriculum_pairs AS (
     SELECT DISTINCT
         g.student_id,

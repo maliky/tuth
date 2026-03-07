@@ -2,15 +2,13 @@
 -- Physical DB table: people_stdcurrienroll
 --
 -- What it does:
--- 1) Inserts one enrollment row per (student, curriculum FK) only when
---    no matching enrollment exists yet (legacy bootstrap).
--- 2) Inserts missing enrollment rows for curricula found in student grades.
+-- 1) Inserts missing enrollment rows for curricula found in student grades.
 --    - Uses earliest graded semester as entry_semester_id when available.
--- 3) Canonicalizes primary enrollment from enrollment-table precedence:
+-- 2) Canonicalizes primary enrollment from enrollment-table precedence:
 --    - keep existing primary flag when present,
 --    - otherwise prefer active rows,
 --    - then latest updated row.
--- 4) Keeps primary row active and copies Student.entry_semester when missing.
+-- 3) Keeps primary row active and copies Student.entry_semester when missing.
 --
 -- This script is idempotent and safe to re-run.
 
@@ -29,38 +27,8 @@ BEGIN
     END IF;
 END $$;
 
--- 1) Insert missing enrollment rows from people_student.curriculum_id.
-INSERT INTO people_stdcurrienroll (
-    student_id,
-    curriculum_id,
-    entry_semester_id,
-    exit_semester_id,
-    is_primary,
-    is_active,
-    creation_date,
-    updated_at
-)
-SELECT
-    s.id,
-    s.curriculum_id,
-    s.entry_semester_id,
-    NULL,
-    TRUE,
-    TRUE,
-    CURRENT_DATE,
-    NOW()
-FROM people_student AS s
-WHERE s.curriculum_id IS NOT NULL
-  AND NOT EXISTS (
-      SELECT 1
-      FROM people_stdcurrienroll AS e
-      WHERE e.student_id = s.id
-        AND e.curriculum_id = s.curriculum_id
-  );
-
--- 2) Insert missing enrollment rows derived from grades.
---    This captures curricula where a student has grades even if the FK was not set
---    to that curriculum at import time.
+-- 1) Insert missing enrollment rows derived from grades.
+--    This captures curricula where a student has grades but no enrollment row yet.
 WITH grade_curriculum_pairs AS (
     SELECT DISTINCT ON (g.student_id, cc.curriculum_id)
         g.student_id,
@@ -107,7 +75,7 @@ WHERE NOT EXISTS (
       AND e.curriculum_id = gp.curriculum_id
 );
 
--- 3) Canonicalize one primary row per student from enrollment-table precedence.
+-- 2) Canonicalize one primary row per student from enrollment-table precedence.
 WITH ranked AS (
     SELECT
         e.id,
@@ -139,7 +107,7 @@ WHERE r.id = e.id
       )
   );
 
--- 4) Fill missing entry_semester from Student metadata when available.
+-- 3) Fill missing entry_semester from Student metadata when available.
 UPDATE people_stdcurrienroll AS e
 SET
     entry_semester_id = s.entry_semester_id,

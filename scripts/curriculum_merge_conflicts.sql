@@ -11,9 +11,10 @@ WHERE id IN (:source_id, :target_id)
 ORDER BY id;
 
 -- Student counts per curriculum.
-SELECT curriculum_id, COUNT(*) AS student_count
-FROM people_student
+SELECT curriculum_id, COUNT(DISTINCT student_id) AS student_count
+FROM people_stdcurrienroll
 WHERE curriculum_id IN (:source_id, :target_id)
+  AND is_primary = TRUE
 GROUP BY curriculum_id
 ORDER BY curriculum_id;
 

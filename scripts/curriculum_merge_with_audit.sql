@@ -412,20 +412,6 @@ BEGIN
     FROM tmp_section_candidates c;
 
     IF v_apply THEN
-        UPDATE people_student
-        SET curriculum_id = v_target
-        WHERE curriculum_id = v_source;
-        GET DIAGNOSTICS v_rows = ROW_COUNT;
-        INSERT INTO scripts_curriculum_merge_log (
-            run_id, stage, entity, reason_code, detail
-        ) VALUES (
-            v_run_id,
-            'apply',
-            'summary',
-            'STUDENT_MAIN_CURRICULUM_MOVED',
-            JSONB_BUILD_OBJECT('rows', v_rows)
-        );
-
         -- Move enrollment rows without an existing target enrollment row.
         WITH moved AS (
             UPDATE people_stdcurrienroll s

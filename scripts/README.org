@@ -43,9 +43,7 @@ Then run:
 
 *** =backfill_curriculum_student_enrollment.sql=
 Short description:
-- Backfills CurriculumStudentEnrollment data from both:
-  - legacy =people_student.curriculum_id= (bootstrap only when enrollment row is missing)
-  - curricula inferred from student grades (section -> curriculum course).
+- Backfills CurriculumStudentEnrollment data from curricula inferred from student grades (section -> curriculum course).
 - Writes to =people_stdcurrienroll=.
 - Canonicalizes one primary enrollment per student from enrollment-table precedence.
 - Uses earliest graded semester as enrollment entry when inferred from grades.
@@ -59,11 +57,10 @@ cat scripts/backfill_curriculum_student_enrollment.sql | docker-compose -f docke
 
 *** =stdcurrienroll_drop_fk_readiness.sql=
 Short description:
-- Read-only readiness checks before dropping =people_student.curriculum_id=.
+- Read-only consistency checks for =people_stdcurrienroll=.
 - Validates:
   - students without enrollment rows,
   - students with invalid primary enrollment cardinality,
-  - FK vs primary enrollment mismatches (while FK still exists),
   - missing grade-derived enrollment rows.
 
 Example:
@@ -103,7 +100,7 @@ cat scripts/course_merge_conflicts.sql | docker-compose -f docker-compose-prepro
 
 *** =curriculum_merge_conflicts.sql=
 Short description:
-- Precheck for curriculum merge conflicts (students, overlapping courses, section collisions).
+- Precheck for curriculum merge conflicts (primary enrollment counts, overlapping courses, section collisions).
 
 Example:
 

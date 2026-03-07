@@ -6,16 +6,24 @@
 
 -- Confirm the selected students.
 SELECT
-    id,
-    student_id,
-    long_name,
-    curriculum_id,
-    entry_semester_id,
-    last_enrolled_semester_id,
-    user_id
-FROM people_student
-WHERE id IN (:source_id, :target_id)
-ORDER BY id;
+    s.id,
+    s.student_id,
+    s.long_name,
+    pe.curriculum_id AS primary_curriculum_id,
+    s.entry_semester_id,
+    s.last_enrolled_semester_id,
+    s.user_id
+FROM people_student AS s
+LEFT JOIN LATERAL (
+    SELECT e.curriculum_id
+    FROM people_stdcurrienroll AS e
+    WHERE e.student_id = s.id
+      AND e.is_primary = TRUE
+    ORDER BY e.updated_at DESC, e.id DESC
+    LIMIT 1
+) AS pe ON TRUE
+WHERE s.id IN (:source_id, :target_id)
+ORDER BY s.id;
 
 -- Related record counts per student.
 SELECT student_id, COUNT(*) AS registration_count
