@@ -143,5 +143,5 @@ def test_export_prereq_graph_coreq_clusters_and_alt_clusters(
         f'C{course_coreq_a.id} -> C{course_anchor.id} [ltail="{coreq_cluster_name}"];'
         in dot_text
     )
-    assert "subgraph cluster_ALT7" in dot_text
+    assert "subgraph clusterALT7" in dot_text
     assert f"C{course_anchor.id} -> C{course_alt_a.id};" in dot_text

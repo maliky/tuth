@@ -8,6 +8,7 @@ from django.test import RequestFactory
 
 from app.registry.models.grade import Grade, GradeValue
 from app.timetable.models.section import Section
+from app.timetable.models.semester import Semester, SemesterStatus
 from app.timetable.models.session import SecSession
 from app.timetable.models.schedule import Schedule
 from app.timetable.admin.section_registers import SecAdmin
@@ -72,3 +73,46 @@ def test_sec_admin_bulk_delete_shows_protected_msg(section, student, superuser):
     assert "Bulk delete stopped: some sections have grades attached" in str(
         msg_user.call_args.args[1]
     )
+
+
+@pytest.mark.django_db
+def test_sec_admin_initial_semester_prefers_registration_open_semester(
+    academic_year_factory,
+):
+    """Section add form should prefill semester with registration-open semester."""
+    SemesterStatus._populate_attributes_and_db()
+    academic_year = academic_year_factory()
+    open_semester = Semester.objects.create(
+        academic_year=academic_year,
+        number=1,
+        status_id="registration",
+    )
+    Semester.objects.create(
+        academic_year=academic_year,
+        number=2,
+        status_id="planning",
+    )
+    admin_obj = SecAdmin(Section, admin.site)
+    request = RequestFactory().get("/admin/timetable/section/add/")
+
+    initial = admin_obj.get_changeform_initial_data(request)
+
+    assert initial["semester"] == str(open_semester.pk)
+
+
+@pytest.mark.django_db
+def test_sec_admin_initial_semester_falls_back_to_current_semester(semester):
+    """Section add form should fallback to current semester when none is open."""
+    SemesterStatus._populate_attributes_and_db()
+    semester.status_id = "planning"
+    semester.save(update_fields=["status"])
+    admin_obj = SecAdmin(Section, admin.site)
+    request = RequestFactory().get("/admin/timetable/section/add/")
+
+    with (
+        patch.object(Semester, "regio_open_sem", return_value=(None, None)),
+        patch.object(Semester, "get_current_sem", return_value=semester),
+    ):
+        initial = admin_obj.get_changeform_initial_data(request)
+
+    assert initial["semester"] == str(semester.pk)

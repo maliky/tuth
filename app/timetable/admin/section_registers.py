@@ -78,6 +78,22 @@ class SecAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
     # fast starts-with on indexed code
     search_fields = ("^curriculum_course__course__short_code",)
 
+    def _get_dft_sem(self, request: HttpRequest) -> Semester | None:
+        """Return the default semester used when creating sections."""
+        # Prefer the semester open for registration when available.
+        open_semester, _error_message = Semester.regio_open_sem()
+        return open_semester or Semester.get_current_sem()
+
+    def get_changeform_initial_data(
+        self, request: HttpRequest
+    ) -> dict[str, str | list[str]]:
+        """Prefill semester on section add form with the best available default."""
+        initial = super().get_changeform_initial_data(request)
+        default_semester = self._get_dft_sem(request)
+        if default_semester and "semester" not in initial:
+            initial["semester"] = str(default_semester.pk)
+        return initial
+
     def get_queryset(self, request):
         """Prefetch sessions and limit sections to the current faculty."""
         qs = (

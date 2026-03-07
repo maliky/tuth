@@ -400,7 +400,7 @@ def _build_dot(payload: JsonPayloadT) -> str:
             logger.warning(warning_msg)
             lines.append(f"  // WARNING: {warning_msg}")
             continue
-        cluster_name = f"cluster_ALT{group_number}"
+        cluster_name = f"clusterALT{group_number}"
         cluster_nodes[cluster_name] = free_member_ids
         cluster_labels[cluster_name] = f"ALT {group_number}"
         cluster_types[cluster_name] = "alt"
