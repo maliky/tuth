@@ -4270,56 +4270,6 @@ None
     students.to_csv(OUTDIR / "fundamentals_students.csv", index=False)
   #+END_SRC
 
-- TranscriptRequestStatus_TranscriptRequest : transcript_request.status_id, transcript_request.student_id
-
-**** TranscriptRequestStatus_TranscriptRequest
-- TranscriptRequestStatus_TranscriptRequest: transcript_status.code, transcript_request.student_id, transcript_request.destination_name.
-*** Derived bundles
-- Curriculum + Course + CurriculumCourse <- Department + CurriculumStatus: curriculum.short_name, course.course_dept, curriculum_course.curriculum_id, curriculum_course.course_id, curriculum_course.credit_hours_id.
-- Invoice <- Semester + CurriculumCourse: invoice.student_id, invoice.semester_id, invoice.curriculum_course_id.
-- Section <- Semester + CurriculumCourse: section.section_no, section.semester_id, section.curriculum_course_id.
-- Grade <- Student + Section: grade.student_id, grade.section_id, grade.grade_value_id.
-- Registration <- RegistrationStatus + Student + Section: registration.student_id, registration.section_id, registration.status_id.
-- Payment <- ClearanceStatus + Invoice: payment.invoice_id, payment.amount_paid, payment.status_id.
-
-
-** Text
-*** # depedency depth 0
-AcademicYear_Semester : ac.start_date, sm.number
-ClearanceStatus
-College_Department
-CreditHour
-CurriculumStatus
-FeeType
-PaymentMethod
-RegistrationStatus
-SemesterStatus
-Space_Room
-Staff_Faculty
-Student
-TranscriptRequestStatus_TranscriptRequest
-
-*** # depedency depth 1
-Curriculum_Course_CurriculumCourse <- Department_CurriculumStatus
-+Faculty+
-+Room+
-+Semester+
-+TranscriptRequest+
-
-*** # depedency depth 2
-+Course+
-+CurriculumCourse+
-Term ? # > no mandatory ignore it for now
-
-*** # dependency depth 3
-Invoice <- Semester_CurriculumCourse
-Section <- Semester_CurriculumCourse
-
-*** # dependency depth 4
-SectionFee ?  # ignore for now
-Grade <- Student_Section
-Registration <- RegistrationStatus_Student_Section
-Payement <- ClearanceStatus_Invoice
 
 ** Graphviz
  #+BEGIN_SRC dot  dot :results file link :file ../../Tusis_app/Docs/dep.png
