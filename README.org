@@ -197,3 +197,51 @@ the =django-import-export= package. Use these buttons to upload CSV
 or XLSX files and to download existing records. Models such as
 Courses, Curricula and Sections already provide corresponding
 resources.
+
+* Curriculum Recovery Plan
+
+The stalled curriculum migration should use additive curriculum versioning.
+Existing courses, curriculum-course rows, sections, registrations, and grades
+must remain intact so historical transcripts and class rosters keep their
+original academic context. New curriculum documents should become new active
+curriculum records rather than overwriting old records that grades already
+reference.
+
+The canonical source for the new curriculum import work is
+=Seed_data/Curriculum/Export/Parts/*.org=. These Org part files should first be
+audited into reviewable TSV artifacts before any database changes are applied.
+The first milestone is an audit report that extracts curriculum programs,
+course-plan rows, course descriptions from =\TUCCrsDescDef=, placeholder
+descriptions, duplicates, aliases, credit mismatches, and missing descriptions.
+
+Implementation should proceed in phases:
+
+1. Schema reality check.
+   Run =makemigrations --check --dry-run --noinput= and reconcile intentional
+   model renames before data migration work. Some existing SQL helpers may
+   target older physical table names, so every script must be checked against
+   current model metadata and the live database.
+2. Audit only.
+   Parse the six Org part files, compare extracted facts with the current seed
+   CSV files in =Seed_data/Fundamentals=, and produce a no-write report of
+   placeholders, ambiguous program tags, title conflicts, credit conflicts, and
+   unresolved aliases.
+3. Additive import.
+   Create versioned curricula such as =NURS-2026= or =BFIN-2026=. Reuse an
+   existing =Course= only on exact canonical identity
+   =(college, department, normalized course number)=. Create new =CurriCrs= rows
+   for the new curricula without reparenting historical sections.
+4. Student transition.
+   Preserve old grade and registration links. Add or update =StdCurriEnroll=
+   rows so students can have historical and current curriculum memberships.
+   Change =Student.curriculum= only after a reviewed student-to-program mapping
+   audit.
+5. Optional cleanup.
+   Use merge tools only for reviewed duplicates with no grade, registration,
+   invoice, or roster conflicts. Do not hard-delete curriculum-course or section
+   rows referenced by historical records.
+
+Testing for this work should cover Org extraction snippets, exact and ambiguous
+course identity resolution, additive imports that leave existing grade/section
+foreign keys unchanged, and targeted admin/import flows around =CurriCrs=,
+=StdCurriEnroll=, =import_grades=, and =import_sessions=.
