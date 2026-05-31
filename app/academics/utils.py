@@ -1,11 +1,11 @@
 """Utility function related to academics objects."""
 
-from typing import TYPE_CHECKING, Mapping, Optional, Tuple
+from typing import TYPE_CHECKING
 
 from app.academics.choices import COLLEGE_CODE
 from app.academics.constants import COURSE_PATTERN  # safe
 from app.academics.models.college import College
-from app.shared.types import Row
+from app.shared.types import ReadImportRowT
 from app.shared.utils import get_in_row, parse_str
 
 if TYPE_CHECKING:
@@ -13,8 +13,8 @@ if TYPE_CHECKING:
 
 
 def expand_crs_code(
-    code: str, *, row: Optional[Mapping[str, str]] = None
-) -> Tuple[str, str, str]:
+    code: str, *, row: ReadImportRowT | None = None
+) -> tuple[str, str, str]:
     """Parse a course code into its components.
 
     Args:
@@ -42,10 +42,7 @@ def expand_crs_code(
     )
 
     if not college_code:
-        if row and "college_code" in row:
-            college_code = row["college_code"]
-        else:
-            college_code = College.get_dft().code
+        college_code = get_in_row("college_code", row) or College.get_dft().code
 
     return college_code, dept_shortname, course_no
 

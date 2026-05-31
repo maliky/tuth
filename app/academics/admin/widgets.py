@@ -1,23 +1,10 @@
 """Wgts module."""
 
-from typing import Any, Optional
+from __future__ import annotations
 
-from django.db import IntegrityError
 from import_export import widgets
 
 from app.academics.choices import COLLEGE_LONG_NAME
-from app.academics.models.college import College
-from app.academics.models.concentration import Major
-from app.academics.models.course import Course
-from app.academics.models.curriculum import Curriculum
-from app.academics.models.department import Department
-from app.academics.models.curriculum_course import CurriCrs
-from app.academics.utils import (
-    expand_crs_code,
-    normalize_college_code,
-    normalize_dpt_code,
-)
-from app.registry.models import CreditHour
 from app.academics.ensures import (
     ensure_college,
     ensure_crs,
@@ -25,7 +12,24 @@ from app.academics.ensures import (
     ensure_curri_crs,
     ensure_dpt,
 )
+from app.academics.models.college import College
+from app.academics.models.course import Course
+from app.academics.models.curriculum_course import CurriCrs
+from app.academics.models.curriculum import Curriculum
+from app.academics.models.department import Department
+from app.academics.utils import (
+    expand_crs_code,
+    normalize_college_code,
+    normalize_dpt_code,
+)
+from app.registry.models import CreditHour
+from app.shared.types import ReadImportRowT
 from app.shared.utils import asserts_keys, get_in_row, parse_str, to_int
+
+
+def _course_dept_code(row: ReadImportRowT | None) -> str:
+    """Return a course department from canonical or legacy row keys."""
+    return get_in_row("dept_code", row) or get_in_row("course_dept", row)
 
 
 class CurriCrsWgt(widgets.ForeignKeyWidget):
@@ -41,11 +45,19 @@ class CurriCrsWgt(widgets.ForeignKeyWidget):
         self.curriculum_w = CurriWgt()
         self.course_w = CrsWgt()
 
-    def clean(self, value, row=None, *args, **kwargs) -> CurriCrs:
+    def clean(
+        self,
+        value: object,
+        row: ReadImportRowT | None = None,
+        *args: object,
+        **kwargs: object,
+    ) -> CurriCrs:
         """Assemble course_dept, curriculum and course to return a curriculum course."""
         # we don't use value.  We always get a curriculum course back
 
-        asserts_keys(["course_no", "dept_code"], row)
+        asserts_keys(["course_no"], row)
+        if not _course_dept_code(row):
+            raise ValueError(f"dept_code or course_dept is required in row {row}")
 
         curriculum = self.curriculum_w.clean(value=value, row=row)
         if curriculum is None:
@@ -85,7 +97,12 @@ class CurriWgt(widgets.ForeignKeyWidget):
         self.college_w = CollegeWgt()
 
     def clean(
-        self, value, row=None, fuzzy_threshold: float = 1.0, *args, **kwargs
+        self,
+        value: object,
+        row: ReadImportRowT | None = None,
+        fuzzy_threshold: float | None = None,
+        *args: object,
+        **kwargs: object,
     ) -> Curriculum | None:
         """Returns a Curriculum object matching the provided short_name in value.
 
@@ -100,9 +117,8 @@ class CurriWgt(widgets.ForeignKeyWidget):
         if not curr_value:
             return Curriculum.get_dft(def_college=college)
 
-        curriculum = ensure_curri(
-            curr_value, college=college, fuzzy_threshold=fuzzy_threshold
-        )
+        threshold = self.fuzzy_threshold if fuzzy_threshold is None else fuzzy_threshold
+        curriculum = ensure_curri(curr_value, college=college, fuzzy_threshold=threshold)
 
         return curriculum
 
@@ -122,11 +138,11 @@ class CrsWgt(widgets.ForeignKeyWidget):
 
     def clean(
         self,
-        value: Any,
-        row: Optional[dict[str, Any]] = None,
+        value: object,
+        row: ReadImportRowT | None = None,
         fuzzy_threshold: float = 1,
-        *args: Any,
-        **kwargs: Any,
+        *args: object,
+        **kwargs: object,
     ) -> Course:
         """Return a Course gotten from dept, no and college_code.
 
@@ -134,7 +150,7 @@ class CrsWgt(widgets.ForeignKeyWidget):
         the resource, but the info we need is spread across *row*).
         """
         course_no = get_in_row("course_no", row)
-        dept_code = get_in_row("dept_code", row)
+        dept_code = _course_dept_code(row) or parse_str(value)
 
         if not course_no or not dept_code:
             return Course.get_unique_dft()
@@ -158,14 +174,20 @@ class CrsManyWgt(widgets.ManyToManyWidget):
     """Parse list_courses and return a list of Course objects.
 
     The widget splits the CSV column on ; and delegates parsing of each
-    token to CrsWgt, creating courses on the fly when needed.
+    token to CrsCodeWgt, creating courses on the fly when needed.
     """
 
     def __init__(self):
         super().__init__(Course, separator=";", field="code")
-        self.course_w = CrsWgt()
+        self.course_w = CrsCodeWgt()
 
-    def clean(self, value, row=None, *args, **kwargs) -> list[Course]:
+    def clean(
+        self,
+        value: object,
+        row: ReadImportRowT | None = None,
+        *args: object,
+        **kwargs: object,
+    ) -> list[Course]:
         """Returns a list of Course instances parsed from the provided CSV value.
 
         If value is empty or missing, returns an empty list (no courses associated).
@@ -173,7 +195,7 @@ class CrsManyWgt(widgets.ManyToManyWidget):
         if not value:
             return []
 
-        courses = []
+        courses: list[Course] = []
         for token in str(value).split(self.separator):
             token = token.strip()
             if token:
@@ -185,7 +207,7 @@ class CrsManyWgt(widgets.ManyToManyWidget):
         return courses
 
     def render(self, value, obj=None, **kwargs):
-        """Return course codes joined with ':' for exports."""
+        """Return course codes joined with the widget separator for exports."""
         if not value:
             return ""
 
@@ -209,7 +231,12 @@ class CrsCodeWgt(widgets.ForeignKeyWidget):
         self.department_w = DptWgt()
 
     def clean(
-        self, value, row=None, credit_field: str | None = None, *args, **kwargs
+        self,
+        value: object,
+        row: ReadImportRowT | None = None,
+        credit_field: str | None = None,
+        *args: object,
+        **kwargs: object,
     ) -> Course | None:
         """Return a Course object matching the provided value.
 
@@ -220,25 +247,23 @@ class CrsCodeWgt(widgets.ForeignKeyWidget):
         If course, college or department do not exist they will be created,
         otherwise the existing course is returned (and updated when fields differ).
         """
-        if not value:
+        course_code = parse_str(value)
+        if not course_code:
             return None
 
-        dept_code, course_no, college_code = expand_crs_code(value, row=row)
-        dept = self.department_w.clean(dept_code, row)
+        college_code, dept_code, course_no = expand_crs_code(course_code, row=row)
+        dept_row = dict(row or {})
+        dept_row["college_code"] = college_code
+        dept = self.department_w.clean(dept_code, dept_row)
 
         # course_code = make_crs_code(dept, course_no)
 
-        title_raw = row.get("course_title") if row else None
-
-        course, _ = Course.objects.get_or_create(
+        title_raw = get_in_row("course_title", row)
+        course = ensure_crs(
             department=dept,
-            number=course_no,
+            course_no=course_no,
+            title=title_raw,
         )
-        # defaults are ignore in case of existance
-        # since we want to update in all case we do it manualy.
-        if title_raw and course.title != title_raw:
-            course.title = title_raw
-            course.save(update_fields=["title"])
 
         return course
 
@@ -251,7 +276,13 @@ class CollegeWgt(widgets.ForeignKeyWidget):
         # if not set then default to pk
         super().__init__(College, field="code")
 
-    def clean(self, value, row=None, *args, **kwargs) -> College:
+    def clean(
+        self,
+        value: object,
+        row: ReadImportRowT | None = None,
+        *args: object,
+        **kwargs: object,
+    ) -> College:
         """Return or create the College referenced by college_code.
 
         Defaults to COAS.
@@ -273,7 +304,13 @@ class DptWgt(widgets.ForeignKeyWidget):
         super().__init__(Department, field="code")
         self.college_w = CollegeWgt()
 
-    def clean(self, value, row=None, *args, **kwargs) -> Department:
+    def clean(
+        self,
+        value: object,
+        row: ReadImportRowT | None = None,
+        *args: object,
+        **kwargs: object,
+    ) -> Department:
         """Return or create the Department using course_dept and college_code.
 
         If nothing passed, return a default value.
