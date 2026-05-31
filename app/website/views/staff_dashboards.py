@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, TypedDict, cast
+from collections.abc import Callable, Sequence
+from typing import Any, NotRequired, TypeAlias, TypedDict, cast
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import AnonymousUser, User
@@ -30,6 +31,8 @@ from app.timetable.models.section import Section
 
 ADMIN_PORTAL_GROUPS = {"System Administrator", "IT Support"}
 
+DisplayValueT: TypeAlias = str | int | float | bool | None
+
 ROLE_PRIORITY: list[str] = [
     "vpaa",
     "dean",
@@ -49,11 +52,68 @@ ROLE_PRIORITY: list[str] = [
 ]
 
 
+class MetricT(TypedDict):
+    label: str
+    value: DisplayValueT
+
+
+class PanelItemT(TypedDict):
+    label: str
+    value: DisplayValueT
+    meta: NotRequired[str]
+
+
+class PanelT(TypedDict):
+    title: str
+    items: list[PanelItemT]
+    subtitle: NotRequired[str]
+
+
+class ActionT(TypedDict):
+    label: str
+    href: str
+    description: str
+    variant: str
+    is_admin: NotRequired[bool]
+
+
+class RoleContextT(TypedDict):
+    metrics: list[MetricT]
+    panels: list[PanelT]
+    actions: list[ActionT]
+
+
+class DashboardLinkT(TypedDict):
+    label: str
+    summary: str
+    href: str
+    active: bool
+    slug: str
+
+
+class RoleSwitcherLinkT(TypedDict):
+    label: str
+    href: str
+    active: bool
+
+
+class SidebarLinkT(TypedDict):
+    label: str
+    href: str
+    active: bool
+    icon: str
+
+
+class BreadcrumbT(TypedDict):
+    label: str
+    href: str
+
+
 class RoleConfig(TypedDict, total=False):
     groups: set[str]
     title: str
     summary: str
-    builder: Callable[[HttpRequest], dict[str, Any]]
+    builder: Callable[[HttpRequest], RoleContextT]
     template: str
 
 
@@ -76,7 +136,7 @@ def _get_faculty_profile(user: User) -> Faculty | None:
         return None
 
 
-def _empty_role_context(message: str) -> dict[str, list]:
+def _empty_role_context(message: str) -> RoleContextT:
     return {
         "panels": [
             {
@@ -95,7 +155,9 @@ def _empty_role_context(message: str) -> dict[str, list]:
 
 
 def _maybe_reverse(
-    name: str, args: list | tuple | None = None, kwargs: dict | None = None
+    name: str,
+    args: Sequence[object] | None = None,
+    kwargs: dict[str, object] | None = None,
 ) -> str:
     try:
         return reverse(name, args=args, kwargs=kwargs)
@@ -103,30 +165,37 @@ def _maybe_reverse(
         return ""
 
 
-def _with_actions(context: dict[str, Any], extra: list[dict[str, Any]]) -> dict[str, Any]:
-    merged = dict(context)
-    merged_actions = list(context.get("actions", []))  # type: ignore[arg-type]
-    merged_actions.extend(extra)
-    merged["actions"] = merged_actions
-    return merged
+def _with_actions(context: RoleContextT, extra: list[ActionT]) -> RoleContextT:
+    """Return a role context with additional actions."""
+    return {
+        "metrics": list(context["metrics"]),
+        "panels": list(context["panels"]),
+        "actions": [*context["actions"], *extra],
+    }
 
 
-def _annotate_admin_actions(actions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _annotate_admin_actions(actions: list[ActionT]) -> list[ActionT]:
     """Flag action links that point to Django admin views."""
     admin_prefix = reverse("admin:index")
+    annotated: list[ActionT] = []
     for action in actions:
         href = str(action.get("href") or "")
         is_admin = href.startswith(admin_prefix)
-        action["is_admin"] = is_admin
-        # Align action button colors with admin vs app destinations.
-        action["variant"] = "primary" if is_admin else "warning"
-    return actions
+        annotated.append(
+            {
+                **action,
+                "is_admin": is_admin,
+                # Align action button colors with admin vs app destinations.
+                "variant": "primary" if is_admin else "warning",
+            }
+        )
+    return annotated
 
 
-def _build_staff_context(request: HttpRequest) -> dict:
+def _build_staff_context(request: HttpRequest) -> RoleContextT:
     user = _as_user(request.user)
     staff_profile = getattr(user, "staff", None)
-    metrics = [{"label": "Username", "value": user.username}]
+    metrics: list[MetricT] = [{"label": "Username", "value": user.username}]
     if staff_profile and staff_profile.employment_date:
         metrics.append(
             {
@@ -135,7 +204,7 @@ def _build_staff_context(request: HttpRequest) -> dict:
             }
         )
 
-    profile_items = (
+    profile_items: list[PanelItemT] = (
         [
             {
                 "label": "Staff ID",
@@ -158,7 +227,7 @@ def _build_staff_context(request: HttpRequest) -> dict:
         ]
     )
 
-    actions = []
+    actions: list[ActionT] = []
     if staff_profile:
         edit_url = _maybe_reverse("admin:people_staff_change", args=[staff_profile.pk])
         if edit_url:
@@ -178,7 +247,7 @@ def _build_staff_context(request: HttpRequest) -> dict:
     }
 
 
-def _build_faculty_context(request: HttpRequest) -> dict:
+def _build_faculty_context(request: HttpRequest) -> RoleContextT:
     faculty = _get_faculty_profile(_as_user(request.user))
     if not faculty:
         return _empty_role_context("No faculty profile linked to this account yet.")
@@ -195,9 +264,11 @@ def _build_faculty_context(request: HttpRequest) -> dict:
         section__faculty=faculty, value__isnull=True
     ).count()
 
-    panel_items = [
+    panel_items: list[PanelItemT] = [
         {
-            "label": sec.curriculum_course.course.short_code,
+            "label": sec.curriculum_course.course.short_code
+            or sec.curriculum_course.course.title
+            or "Course",
             "value": f"{sec.semester} · Section {sec.number}",
             "meta": f"Seats: {sec.current_registrations}/{sec.max_seats}",
         }
@@ -214,7 +285,7 @@ def _build_faculty_context(request: HttpRequest) -> dict:
     }
 
 
-def _build_chair_context(request: HttpRequest) -> dict:
+def _build_chair_context(request: HttpRequest) -> RoleContextT:
     faculty = _get_faculty_profile(_as_user(request.user))
     if not faculty or not faculty.college:
         return _empty_role_context("No college associated to this chair account.")
@@ -225,7 +296,7 @@ def _build_chair_context(request: HttpRequest) -> dict:
         .select_related("faculty", "semester")
         .order_by("-semester__academic_year__start_date", "-semester__number")[:5]
     )
-    workload_items = [
+    workload_items: list[PanelItemT] = [
         {
             "label": f"{snap.faculty.staff_profile.long_name}",
             "value": f"{snap.semester}: {snap.credit_hours_delivered} ch",
@@ -234,7 +305,7 @@ def _build_chair_context(request: HttpRequest) -> dict:
         for snap in workloads
     ] or [{"label": "No workloads captured", "value": "Snapshots pending."}]
 
-    curricula_items = []
+    curricula_items: list[PanelItemT] = []
     for cur in curricula[:6]:
         curricula_items.append(
             {
@@ -248,7 +319,7 @@ def _build_chair_context(request: HttpRequest) -> dict:
         ]
 
     department = faculty.staff_profile.department
-    department_faculty_items: list[dict[str, str]] = []
+    department_faculty_items: list[PanelItemT] = []
     if department:
         department_faculty = (
             Faculty.objects.filter(staff_profile__department=department)
@@ -279,7 +350,7 @@ def _build_chair_context(request: HttpRequest) -> dict:
             }
         ]
 
-    panels = [
+    panels: list[PanelT] = [
         {
             "title": "Curricula",
             "items": curricula_items,
@@ -301,14 +372,14 @@ def _build_chair_context(request: HttpRequest) -> dict:
     }
 
 
-def _build_dean_context(request: HttpRequest) -> dict:
+def _build_dean_context(request: HttpRequest) -> RoleContextT:
     faculty_profile = _get_faculty_profile(_as_user(request.user))
     college = faculty_profile.college if faculty_profile else None
     approvals_qs = ApprovalQueue.objects.filter(target_role="dean").order_by(
         "-created_at"
     )
     approvals = list(approvals_qs[:6])
-    approval_items = [
+    approval_items: list[PanelItemT] = [
         {
             "label": approval.get_request_type_display(),
             "value": approval.status.title(),
@@ -321,7 +392,7 @@ def _build_dean_context(request: HttpRequest) -> dict:
             {"label": "No requests", "value": "You're all caught up."},
         ]
 
-    chairs_items: list[dict[str, str]] = []
+    chairs_items: list[PanelItemT] = []
     if college:
         chairs = (
             Faculty.objects.filter(
@@ -368,16 +439,16 @@ def _build_dean_context(request: HttpRequest) -> dict:
     }
 
 
-def _build_vpaa_context(_: HttpRequest) -> dict:
+def _build_vpaa_context(_: HttpRequest) -> RoleContextT:
     approvals_qs = ApprovalQueue.objects.filter(target_role="vpaa").order_by(
         "-created_at"
     )
     approvals = list(approvals_qs[:8])
-    approval_items = [
+    approval_items: list[PanelItemT] = [
         {
             "label": approval.get_request_type_display(),
             "value": approval.status.title(),
-            "meta": approval.payload.get("summary", ""),
+            "meta": str(approval.payload.get("summary", "")),
         }
         for approval in approvals
     ]
@@ -403,13 +474,13 @@ def _build_vpaa_context(_: HttpRequest) -> dict:
     }
 
 
-def _build_enrollment_context(_: HttpRequest) -> dict:
+def _build_enrollment_context(_: HttpRequest) -> RoleContextT:
     students_qs = Student.objects.all()
     total_students = students_qs.count()
     onboarding = students_qs.filter(last_enrolled_semester__isnull=True).count()
     pending_docs = DocStd.objects.filter(status__code="pending").count()
     recent_students = list(students_qs.order_by("-id")[:6])
-    student_items = [
+    student_items: list[PanelItemT] = [
         {
             "label": student.long_name,
             "value": student.primary_curriculum.short_name,
@@ -423,7 +494,7 @@ def _build_enrollment_context(_: HttpRequest) -> dict:
         }
     ]
 
-    actions = [
+    actions: list[ActionT] = [
         {
             "label": "Student snapshot",
             "href": reverse("std_list"),
@@ -460,10 +531,10 @@ def _build_enrollment_context(_: HttpRequest) -> dict:
     }
 
 
-def _build_enrollment_officer_context(request: HttpRequest) -> dict:
+def _build_enrollment_officer_context(request: HttpRequest) -> RoleContextT:
     context = _build_enrollment_context(request)
     bulk_url = _maybe_reverse("admin:people_student_changelist")
-    extras = []
+    extras: list[ActionT] = []
     if bulk_url:
         extras.append(
             {
@@ -476,13 +547,13 @@ def _build_enrollment_officer_context(request: HttpRequest) -> dict:
     return _with_actions(context, extras)
 
 
-def _build_reg_context(_: HttpRequest) -> dict:
+def _build_reg_context(_: HttpRequest) -> RoleContextT:
     pending_qs = TranscriptRequest.objects.filter(status__code="pending")
     pending_transcripts = list(
         pending_qs.select_related("student").order_by("-requested_at")[:8]
     )
     registration_anomalies = Registration.objects.filter(status__code="pending").count()
-    transcript_items = [
+    transcript_items: list[PanelItemT] = [
         {
             "label": req.student.long_name,
             "value": req.destination_name,
@@ -495,7 +566,7 @@ def _build_reg_context(_: HttpRequest) -> dict:
             {"label": "No transcript requests", "value": "All clear."},
         ]
 
-    actions = []
+    actions: list[ActionT] = []
     grades_url = _maybe_reverse("reg_grades_dashboard")
     if grades_url:
         actions.append(
@@ -524,9 +595,9 @@ def _build_reg_context(_: HttpRequest) -> dict:
     }
 
 
-def _build_reg_officer_context(request: HttpRequest) -> dict:
+def _build_reg_officer_context(request: HttpRequest) -> RoleContextT:
     base = _build_reg_context(request)
-    extras = [
+    extras: list[ActionT] = [
         {
             "label": "Manage semester windows",
             "href": reverse("reg_crs_wins"),
@@ -547,12 +618,12 @@ def _build_reg_officer_context(request: HttpRequest) -> dict:
     return _with_actions(base, extras)
 
 
-def _build_scholarship_context(_: HttpRequest) -> dict:
+def _build_scholarship_context(_: HttpRequest) -> RoleContextT:
     low_gpa = ScholarshipTermSnapshot.objects.filter(gpa__lt=2.5).select_related(
         "student", "semester"
     )
     templates = ScholarshipLetterTemplate.objects.filter(is_active=True)
-    beneficiary_items = [
+    beneficiary_items: list[PanelItemT] = [
         {
             "label": snap.student.long_name,
             "value": f"GPA {snap.gpa}",
@@ -583,10 +654,10 @@ def _build_scholarship_context(_: HttpRequest) -> dict:
     }
 
 
-def _build_finance_context(_: HttpRequest) -> dict:
+def _build_finance_context(_: HttpRequest) -> RoleContextT:
     pending_payments = Payment.objects.filter(status__code="pending").count()
     invoice_count = CrsInvoice.objects.count()
-    actions = []
+    actions: list[ActionT] = []
     invoice_admin = _maybe_reverse("admin:finance_courseinvoice_changelist")
     if invoice_admin:
         actions.append(
@@ -628,10 +699,10 @@ def _build_finance_context(_: HttpRequest) -> dict:
     }
 
 
-def _build_cashier_context(request: HttpRequest) -> dict:
+def _build_cashier_context(request: HttpRequest) -> RoleContextT:
     base = _build_finance_context(request)
     quick_entry = _maybe_reverse("admin:finance_payment_add")
-    extras: list[dict] = []
+    extras: list[ActionT] = []
     if quick_entry:
         extras.append(
             {
@@ -644,10 +715,10 @@ def _build_cashier_context(request: HttpRequest) -> dict:
     return _with_actions(base, extras)
 
 
-def _build_finance_officer_context(request: HttpRequest) -> dict:
+def _build_finance_officer_context(request: HttpRequest) -> RoleContextT:
     base = _build_finance_context(request)
     scholarship_admin = _maybe_reverse("admin:finance_scholarship_changelist")
-    extras = []
+    extras: list[ActionT] = []
     finance_console = _maybe_reverse("finance_officer_invoices")
     if finance_console:
         extras.append(
@@ -670,13 +741,13 @@ def _build_finance_officer_context(request: HttpRequest) -> dict:
     return _with_actions(base, extras)
 
 
-def _build_it_context(_: HttpRequest) -> dict:
+def _build_it_context(_: HttpRequest) -> RoleContextT:
     return _empty_role_context(
         "IT support tasks live in the Django admin and infrastructure tools."
     )
 
 
-def _build_general_context(_: HttpRequest) -> dict:
+def _build_general_context(_: HttpRequest) -> RoleContextT:
     return _empty_role_context("No specific dashboard is associated with this account.")
 
 
@@ -817,10 +888,10 @@ def _accessible_role_slugs(user: User) -> set[str]:
 
 def _build_accessible_dashboard_links(
     user: User, active_slug: str
-) -> list[dict[str, Any]]:
+) -> list[DashboardLinkT]:
     slugs = _accessible_role_slugs(user)
     ordered = sorted(slugs, key=lambda slug: ROLE_ORDER.get(slug, len(ROLE_PRIORITY)))
-    links: list[dict[str, Any]] = []
+    links: list[DashboardLinkT] = []
     for slug in ordered:
         config = ROLE_CONFIG.get(slug)
         if not config:
@@ -875,7 +946,7 @@ def _render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse
     accessible_links = _build_accessible_dashboard_links(
         _as_user(request.user), role_slug
     )
-    role_switcher: list[dict[str, Any]] = []
+    role_switcher: list[RoleSwitcherLinkT] = []
     if len(accessible_links) > 1:
         role_switcher = [
             {
@@ -894,14 +965,13 @@ def _render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse
         "eyebrow": role_slug.replace("_", " ").title(),
     }
     base.update(context)
-    if isinstance(base.get("actions"), list):
-        # Add admin cues for action cards.
-        base["actions"] = _annotate_admin_actions(base["actions"])
+    # Add admin cues for action cards before rendering.
+    base["actions"] = _annotate_admin_actions(context["actions"])
     base["accessible_dashboards"] = accessible_links
     base["role_switcher"] = role_switcher
     template_name = config.get("template", "website/staff/role_dashboard.html")
 
-    sidebar_links = [
+    sidebar_links: list[SidebarLinkT] = [
         {
             "label": "Dashboard",
             "href": reverse("staff_dashboard"),
@@ -918,7 +988,7 @@ def _render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse
                 "icon": "bi-people",
             }
         )
-    breadcrumbs = [
+    breadcrumbs: list[BreadcrumbT] = [
         {"label": "Staff Workspace", "href": reverse("staff_dashboard")},
         {"label": config["title"], "href": ""},
     ]
