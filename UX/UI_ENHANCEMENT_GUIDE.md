@@ -47,14 +47,16 @@ This enhancement initiative will:
 
 ## Improvement Phases Overview
 
+**Visual source of truth**: If this roadmap conflicts with `UX/tu-web-design-guide.org`, follow the design guide. The student portal is the reference UI, and staff roles inherit from the shared portal base rather than adopting a separate admin visual language.
+
 ### Timeline Summary
 
 | Phase | Duration | Focus | Key Deliverables | Dependencies |
 |-------|----------|-------|------------------|---|
 | **Phase 0** | Week 1 | Architecture Setup | Unified dashboard backend, permission system, URL redirects | None |
-| **Phase 1** | Weeks 2-3 | Design Foundation | Component library, typography, colors, navigation patterns | Phase 0 |
-| **Phase 2** | Weeks 4-5 | Student Experience | Dashboard redesign, KPI cards, course registration, achievements | Phase 1 |
-| **Phase 3** | Weeks 6-8 | Staff Consolidation | Unified dashboard, role-specific panels, bulk operations | Phase 1 |
+| **Phase 1** | Weeks 2-3 | Shared Portal Foundation | Abstract portal shell, reusable component system, sidebar/navigation model | Phase 0 |
+| **Phase 2** | Weeks 4-5 | Student Reference Implementation | Student portal extraction, canonical component usage, reference patterns | Phase 1 |
+| **Phase 3** | Weeks 6-8 | Staff Harmonization | Staff shell inheritance, role reskins, finance/admin widget skinning | Phase 1-2 |
 | **Phase 4** | Weeks 9-10 | Universal Features | Search, filtering, forms, tables, responsive design | Phase 1-3 |
 | **Phase 5** | Week 11 | Testing & Accessibility | WCAG audit, keyboard navigation, screen reader testing | Phase 2-4 |
 | **Phase 6** | Week 12 | Launch & Training | Final polish, user testing, documentation, rollout | Phase 5 |
@@ -604,129 +606,130 @@ All improvements are organized into logical categories with related fixes groupe
 
 ---
 
-### Phase 1: Design Foundation (Weeks 2-3)
+### Phase 1: Shared Portal Foundation (Weeks 2-3)
 
-**Objective**: Establish design system and component library before building UIs.
+**Objective**: Establish the shared portal foundation before further role-specific UI work.
 
 **Tasks**:
-- [ ] Define color palette (primary, secondary, semantic colors)
-- [ ] Create typography system (font families, sizes, weights)
-- [ ] Build reusable component library
-  - [ ] Buttons (primary, secondary, tertiary, danger)
-  - [ ] Cards (minimal, bordered, elevated, alert, metric)
-  - [ ] Form inputs (text, select, checkbox, radio, date, time)
-  - [ ] Modals and drawers
-  - [ ] Toasts and notifications
-  - [ ] Badges and tags
-  - [ ] Tabs and accordions
-- [ ] Create base template with header/footer/navigation
-- [ ] Implement responsive grid system
-- [ ] Set up CSS variables for theming (light/dark mode ready)
-- [ ] Create component documentation site
-- [ ] Implement notification system UI
-- [ ] Create permission-aware nav component
+- [ ] Define `portal-base` abstraction for all authenticated users
+  - [ ] Shared shell blocks for sidebar, sidebar header, content header, and feedback region
+  - [ ] Template inheritance rules for `student-portal` and `staff-portal`
+- [ ] Extract reusable visual tokens from the student UI
+  - [ ] Colors, spacing, radii, shadows, and typography
+  - [ ] Button, badge, card, table, and form primitives
+- [ ] Build reusable component library derived from student patterns
+  - [ ] Buttons and action hierarchy
+  - [ ] KPI cards and content cards
+  - [ ] Tables and empty states
+  - [ ] Form inputs and validation states
+  - [ ] Toasts and inline feedback
+- [ ] Formalize portal navigation patterns
+  - [ ] Task-oriented left sidebar
+  - [ ] Role switcher in the sidebar header
+  - [ ] Breadcrumbs as optional secondary context
+- [ ] Implement responsive grid rules for the shared portal shell
+- [ ] Create component documentation and inheritance notes
+- [ ] Define skinning rules for admin-origin widgets used inside the portal
 
 **Deliverables**:
-- ✅ Component library documentation with live examples
-- ✅ Updated base templates
-- ✅ Navigation patterns tested
-- ✅ Accessibility checklist for each component
-- ✅ CSS/SCSS files with variables
+- ✅ Shared `portal-base` specification
+- ✅ Reusable component library derived from student UI
+- ✅ Updated base templates for student and staff inheritance
+- ✅ Sidebar and role-switcher navigation rules
+- ✅ Token reference aligned with `tu-web-design-guide.org`
 
-**Duration**: 2 weeks  
-**Dependencies**: Phase 0 complete  
+**Duration**: 2 weeks
+**Dependencies**: Phase 0 complete
 **Team**: UI/UX designer + Frontend developer + QA
 
 ---
 
-### Phase 2: Student Experience (Weeks 4-5)
+### Phase 2: Student Reference Implementation (Weeks 4-5)
 
-**Objective**: Redesign student dashboard with engagement focus.
+**Objective**: Formalize the student portal as the canonical reference implementation of the shared portal UI.
 
 **Tasks**:
-- [ ] Design and build semester status card
-  - [ ] Status indicator (on-track, at-risk, action-needed)
-  - [ ] GPA trend visualization
-  - [ ] Next steps section
-- [ ] Enhance KPI cards
-  - [ ] Add progress bars
-  - [ ] Add trend sparklines
-  - [ ] Add micro-interactions (hover states)
-  - [ ] Add contextual help
-- [ ] Improve course registration interface
-  - [ ] Recommended courses section
-  - [ ] Conflict detection system
-  - [ ] Prerequisite validation
-  - [ ] Credit allowance display
+- [ ] Refactor student pages to consume the shared portal components
+  - [ ] Dashboard shell
+  - [ ] KPI row
+  - [ ] White content sections
+  - [ ] Tables, badges, and buttons
+- [ ] Normalize student page patterns so they become reusable examples
+  - [ ] Registration surfaces
+  - [ ] Finance pages
+  - [ ] Curriculum and records pages
+- [ ] Close abstraction gaps in the student UI
+  - [ ] Formalize custom classes currently acting as portal primitives
+  - [ ] Align feedback states and empty states
+  - [ ] Align form controls and action hierarchy
+- [ ] Improve high-value student UX details that will become shared patterns
+  - [ ] Payment call-to-action placement
   - [ ] Smart cart with inline actions
-- [ ] Implement achievement recognition system
-  - [ ] Achievement detection logic
-  - [ ] Toast notification design
-  - [ ] Milestone badges
-  - [ ] Progress visualization
-- [ ] Build quick resources section
-  - [ ] Organize help by category
-  - [ ] Add contextual help links
-  - [ ] Add FAQ section
-  - [ ] Add contact information
+  - [ ] Help and support entry points
+- [ ] Document student reference patterns for staff adoption
 - [ ] Test with student user group
 - [ ] Gather feedback and iterate
 
 **Deliverables**:
-- ✅ New student dashboard
-- ✅ Enhanced course registration flow
-- ✅ Achievement system
-- ✅ Help resources section
-- ✅ Student feedback report
+- ✅ Student portal as canonical reference implementation
+- ✅ Harmonized student pages using shared portal components
+- ✅ Reusable examples for cards, tables, forms, and feedback
+- ✅ Student feedback report feeding staff harmonization
+- ✅ Reference notes for staff-role migration
 
-**Duration**: 2 weeks  
-**Dependencies**: Phase 1 complete  
+**Duration**: 2 weeks
+**Dependencies**: Phase 1 complete
 **Team**: Frontend developer + UX designer + QA + Student testers
 
 ---
 
-### Phase 3: Staff Consolidation (Weeks 6-8)
+### Phase 3: Staff Harmonization (Weeks 6-8)
 
-**Objective**: Consolidate all 14 role dashboards into one intelligent dashboard.
+**Objective**: Harmonize all staff roles by inheriting from the shared portal base and the staff portal layer.
+
+**Implementation order**:
+- [ ] Tighten typing and simplify staff dashboard context builders before template changes
+- [ ] Introduce `portal-base` and move shared shell blocks there
+- [ ] Make `student-portal` inherit `portal-base` without changing the student experience
+- [ ] Make `staff-portal` inherit `portal-base`
+- [ ] Move staff role switching into the sidebar header
+- [ ] Replace generic staff sidebar links with task-oriented entries
+- [ ] Reskin finance and admin-origin widgets under the inherited staff templates
 
 **Tasks**:
-- [ ] Build unified dashboard template
-  - [ ] Permission-based navigation
-  - [ ] Primary panel system
-  - [ ] Secondary panels (tabbed)
-  - [ ] Quick actions sidebar
-- [ ] Migrate faculty dashboard
-  - [ ] Section overview cards
-  - [ ] Grade entry section
-  - [ ] At-risk student flags
-  - [ ] Task checklist
-- [ ] Migrate finance officer dashboard
-  - [ ] Payment queue system
-  - [ ] Metrics cards
-  - [ ] Bulk operation buttons
-- [ ] Migrate registrar dashboard
-  - [ ] Course window status
-  - [ ] Pending grades tracking
-  - [ ] Data quality flagging
-- [ ] Migrate dean/chair dashboard
-  - [ ] Health metrics
-  - [ ] At-risk student list
-  - [ ] Curriculum approvals
-- [ ] Migrate remaining 9 role dashboards
+- [ ] Build `staff-portal` as a derived shell from `portal-base`
+  - [ ] Make the shell visually behave like the student portal
+  - [ ] Place the role switcher in the sidebar header
+  - [ ] Make sidebar navigation task-oriented
+- [ ] Build staff-specific component extensions without changing the core portal language
+  - [ ] Denser table and filter patterns
+  - [ ] Bulk action patterns
+  - [ ] Approval and payment queue patterns
+- [ ] Migrate the generic role dashboard onto shared portal components
+  - [ ] KPI cards
+  - [ ] Action panels
+  - [ ] Shared section layouts
+- [ ] Reskin finance to inherit staff templates
+  - [ ] Align invoice and payment console with portal cards, forms, tables, and buttons
+  - [ ] Remove or skin admin-looking widgets
+- [ ] Migrate dean, registrar, faculty, enrollment, chair, and remaining staff roles
+  - [ ] Replace role-specific visual divergence with shared staff patterns
+  - [ ] Keep role differences limited to task modules and permissions
 - [ ] Implement URL redirects for old URLs
 - [ ] Test multi-role user scenarios
+- [ ] Validate cross-role comfort for users moving from the current platform
 - [ ] Performance optimization
 - [ ] Staff user testing
 
 **Deliverables**:
-- ✅ Unified staff dashboard
-- ✅ All 14 role panels accessible
-- ✅ URL redirects tested
-- ✅ Multi-role support validated
-- ✅ Staff feedback report
+- ✅ Harmonized `staff-portal` inherited from `portal-base`
+- ✅ Finance, dean, registrar, faculty, and other staff roles aligned to the student reference UI
+- ✅ Task-oriented sidebar with sidebar-header role switcher
+- ✅ Finance and admin-origin widgets skinned to match the portal
+- ✅ Staff feedback report on transition comfort
 
-**Duration**: 3 weeks  
-**Dependencies**: Phase 1-2 complete  
+**Duration**: 3 weeks
+**Dependencies**: Phase 1-2 complete
 **Team**: Frontend developers (2) + Backend developer + QA (2)
 
 ---

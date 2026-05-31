@@ -217,35 +217,45 @@ The student experience stays fully mobile-first. Design every widget so it can c
 - Minimum touch target 48px. Keep focus outlines visible (2px gold offset shadow).
 - Provide readable empty states (“No outstanding invoices—nice!”) with action buttons when appropriate.
 
-* Staff / Admin Dashboard Style Blueprint
-Staff dashboards drop the mobile-only constraint. They default to a widescreen layout while remaining usable on tablets.
+* Shared Portal UI Inheritance Model
+The portal uses one visual language. The student UI is the reference implementation. Staff, dean, finance, registrar, faculty, chair, and other internal roles inherit the same base shell and component language rather than switching to a distinct admin product.
 
-** Palette & Theme Shift
-- Base background: #101826 (midnight navy) to differentiate the admin experience.
-- Primary text/icons: white; secondary text: gray-300.
-- Accent stripe: Phoenix Gold at the top edge of cards to retain institutional branding.
-- Danger/success states reuse Alert Crimson/Evergreen but applied sparingly to avoid alert fatigue.
+** Inheritance Rules
+- =portal-base=: abstract shell shared by every authenticated user. It owns the left rail, sidebar header, content header, feedback region, content spacing, and base component slots.
+- =student-portal=: first concrete implementation and visual reference. It defines the tone, card rhythm, spacing scale, badge treatment, table behavior, and primary call-to-action hierarchy.
+- =staff-portal=: extends =portal-base= and reuses student visual tokens. It may increase information density and expose role-specific tools, but it must not change the overall mood, palette, or interaction model.
+- Role workspaces such as =finance=, =dean=, =registrar=, and =faculty= extend =staff-portal= and contribute task modules only. They should not introduce their own shells.
+- When documentation conflicts on visual behavior, this guide defines the intended UI.
+
+* Staff Workspace Variant
+Staff workspaces remain desktop-capable, but they should still feel like the student portal. The difference is density and task scope, not theme identity.
+
+** Palette & Tone
+- Reuse the student portal palette: light content canvas, dark sidebar, green header band, white cards, and gold accents.
+- Staff may add semantic emphasis for operational states, but they should not switch to a separate dark admin theme.
+- Preserve the same card radius, shadow depth, badge language, and spacing scale used in the student portal.
 
 ** Grid & Navigation
-- Two-column desktop grid (8/4 split). Metrics occupy the wide column; action panels/queues live in the narrow column.
-- Permanent sidebar with vertical tabs (Dashboard, Roles, Tools). Sidebar width 280px, collapsible only on ≤992 px.
-- Breadcrumbs always visible beneath the header to reinforce location inside the admin IA.
+- Keep the same left-rail shell as student. The sidebar remains the primary navigation anchor.
+- The sidebar header contains the workspace identity and the role switcher.
+- Sidebar links are task-oriented. Prefer labels such as =Payments=, =Approvals=, =Records=, and =My Sections= over generic =Dashboard= or =Roles= entries.
+- Breadcrumbs are optional secondary context, not a replacement for the sidebar.
+- Use the same page rhythm as the student portal: prominent page header, KPI row when useful, then stacked white content sections.
 
 ** Components
-- Metric cards: dark background (#1b2233) with subtle inner glow. Numeric value 32px, label in uppercase microcopy.
-- Action cards: button anchored to bottom edge, descriptive text above. Buttons use outline styles so they contrast on the dark canvas.
-- Tables: sticky headers, zebra striping using rgba(255,255,255,0.03). Include quick filters inline (chips).
-- Notifications: right-side drawer listing approval queues, each entry with badge showing required role (Dean, VPAA, etc.).
+- KPI cards, section cards, filters, badges, tables, empty states, and action buttons inherit the student portal component language.
+- Forms use the same input borders, labels, help text, validation tone, and submit hierarchy as student pages.
+- Dense operational screens may add bulk actions, inline filters, and collapsible tables, but they stay inside the same card and table system.
+- Finance screens must inherit staff templates and skin any admin-origin widgets so they match portal forms.
+- Notifications use the same toast and inline feedback language across student and staff surfaces.
 
 ** Responsiveness
-- ≥1200 px: allow three cards per row. 992–1199 px: drop to two columns. ≤768 px: cards become full-width stacked but retain dark mode theme; sidebar collapses into top nav.
-- Staff dashboards are optimized for desktop interactions (hover tooltips, keyboard shortcuts), but ensure critical actions (approve, reject, edit) remain reachable on touch by spacing controls.
-
-** Accessibility & Performance
-- Maintain 4.5:1 contrast even in dark theme; test with Chrome DevTools contrast checker.
-- Iconography should include tooltips (`aria-label`) because some icons are monochrome.
-- Lazy-load heavy tables and charts only when their tab is active to keep initial payload reasonable.
+- Staff views can use wider data layouts, but they still collapse through the shared responsive rules from =portal-base=.
+- On mobile and tablet, preserve the same sidebar and header behavior as the student portal. Do not introduce a separate top-nav-only admin pattern.
+- Critical actions must remain touch-accessible and keyboard reachable.
 
 ** Operational Notes
-- Use CSS custom properties for theme tokens so switching between public/student/admin skins only swaps a small set of variables.
-- Keep admin charts lightweight (e.g., Chart.js with treeshaking). Avoid large visualizations that could slow down the control center.
+- Formalize shared CSS custom properties and shared template blocks at the =portal-base= layer before expanding staff screens.
+- Extract reusable student components first, then migrate staff roles to consume them.
+- Finance, dean, registrar, faculty, chair, and other staff roles should vary by content modules and permissions, not by visual skin.
+- Keep charts and heavy widgets lightweight and aligned with the portal rhythm.
