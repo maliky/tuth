@@ -41,7 +41,7 @@ def to_int(value: str | int | None, default: int = 0) -> int:
         return default
 
 
-def asserts_keys(required: list[str], row: dict) -> None:
+def asserts_keys(required: list[str], row: Mapping[str, object] | None) -> None:
     """Ensure required keys are present in a row.
 
     Args:
@@ -51,7 +51,8 @@ def asserts_keys(required: list[str], row: dict) -> None:
     Raises:
         ValueError: If any required key is missing.
     """
-    if not all([r in row for r in required]):
+    safe_row = row or {}
+    if not all(r in safe_row for r in required):
         raise ValueError(f"{required} are required in row {row} context.")
 
 
@@ -86,7 +87,7 @@ def parse_str(value: object, casing: str = "unchanged", dft: str = "") -> str:
     return new_value if new_value else dft_value
 
 
-def get_in_row(key: str, row: Optional[Mapping[str, str | None]]) -> str:
+def get_in_row(key: str, row: Optional[Mapping[str, object | None]]) -> str:
     """Return a stripped string value from a row.
 
     Args:

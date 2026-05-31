@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import csv
 import logging
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
 
 from django.core.management.base import BaseCommand
 
 from app.shared.importing.rows import first_value
+from app.shared.types import ReadImportRowT
 
 
 def get_import_logger() -> logging.Logger:
@@ -24,11 +25,11 @@ class CsvRowLogger:
         self.path = Path(filename)
         self.headers = list(headers)
         self.message_template = message_template
-        self.rows: list[Mapping[str, str]] = []
+        self.rows: list[dict[str, str]] = []
 
     def log(self, row: Mapping[str, str]) -> None:
         """Accumulate a row for later writing."""
-        self.rows.append(row)
+        self.rows.append(dict(row))
 
     def report(self, cmd: BaseCommand) -> None:
         """Write accumulated rows and emit a summary message."""
@@ -48,7 +49,7 @@ class CsvRowLogger:
 def log_invalid_row(
     logger: CsvRowLogger,
     row_number: int,
-    row: Mapping[str, Any],
+    row: ReadImportRowT,
     reason: str,
     *,
     fields: Mapping[str, Sequence[str]],

@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 from datetime import time
-from pathlib import Path
 from typing import (
     TYPE_CHECKING,
-    Any,
     Callable,
     Mapping,
     Optional,
@@ -40,9 +38,15 @@ AbstractPersonT = TypeVar(
 )  # Faculty included here
 Score = float
 
-Row = dict[str, Any]
-Transform = Callable[[Row], Row]
-RowStrOptT: TypeAlias = Mapping[str, Optional[str]]
+ImportValueT: TypeAlias = str | int | float | bool | None
+ImportRowT: TypeAlias = dict[str, ImportValueT]
+ReadImportRowT: TypeAlias = Mapping[str, ImportValueT]
+RowTransformT: TypeAlias = Callable[[ImportRowT], ImportRowT]
+
+# Compatibility aliases for existing import helpers.
+Row: TypeAlias = ImportRowT
+Transform: TypeAlias = RowTransformT
+RowStrOptT: TypeAlias = ReadImportRowT
 
 SectionQuery: TypeAlias = QuerySet["Section"]
 CrsQuery: TypeAlias = QuerySet["Course"]

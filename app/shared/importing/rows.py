@@ -3,25 +3,24 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any
 
-from app.shared.types import Row, Transform
+from app.shared.types import ImportRowT, ReadImportRowT, RowTransformT
 from app.shared.utils import get_in_row, parse_str
 
 # stuff here should go to academics.utils
 
 
-def pipeline(row: Row, *transforms: Transform) -> Row:
+def pipeline(row: ImportRowT, *transforms: RowTransformT) -> ImportRowT:
     """Apply a sequence of transforms to the row, returning the mutated dict."""
     for transform in transforms:
         row = transform(row)
     return row
 
 
-def rename_headers(mapping: Mapping[str, str]) -> Transform:
+def rename_headers(mapping: Mapping[str, str]) -> RowTransformT:
     """Return a transform that maps legacy headers into the canonical schema."""
 
-    def _apply(row: Row) -> Row:
+    def _apply(row: ImportRowT) -> ImportRowT:
         for legacy, modern in mapping.items():
             if modern in row:
                 continue
@@ -33,11 +32,11 @@ def rename_headers(mapping: Mapping[str, str]) -> Transform:
     return _apply
 
 
-def normalize_field(key: str, normalizer: Callable[[str | None], str]) -> Transform:
+def normalize_field(key: str, normalizer: Callable[[str | None], str]) -> RowTransformT:
     """Return a transform that normalizes a field using the provided callable."""
 
-    def _apply(row: Row) -> Row:
-        row[key] = normalizer(row.get(key))
+    def _apply(row: ImportRowT) -> ImportRowT:
+        row[key] = normalizer(parse_str(row.get(key)))
         return row
 
     return _apply
@@ -48,10 +47,10 @@ def coerce_field(
     *,
     default: str = "",
     converter: Callable[[str], str] | None = None,
-) -> Transform:
+) -> RowTransformT:
     """Coerce a textual field into a canonical representation with a default."""
 
-    def _apply(row: Row) -> Row:
+    def _apply(row: ImportRowT) -> ImportRowT:
         value = parse_str(row.get(key))
         if not value:
             row[key] = default
@@ -64,10 +63,10 @@ def coerce_field(
     return _apply
 
 
-def setdft_field(key: str, provider: Callable[[Row], str]) -> Transform:
+def setdft_field(key: str, provider: Callable[[ReadImportRowT], str]) -> RowTransformT:
     """Set a field using the provider when the current value is blank."""
 
-    def _apply(row: Row) -> Row:
+    def _apply(row: ImportRowT) -> ImportRowT:
         if not get_in_row(key, row):
             row[key] = provider(row)
         return row
@@ -75,7 +74,7 @@ def setdft_field(key: str, provider: Callable[[Row], str]) -> Transform:
     return _apply
 
 
-def first_value(row: Mapping[str, Any], keys: Sequence[str]) -> str:
+def first_value(row: ReadImportRowT, keys: Sequence[str]) -> str:
     """Return the first non-empty value found in *keys*."""
     for key in keys:
         value = row.get(key)
@@ -87,7 +86,7 @@ def first_value(row: Mapping[str, Any], keys: Sequence[str]) -> str:
     return ""
 
 
-def set_crs_codes(row: Row) -> Row:
+def set_crs_codes(row: ImportRowT) -> ImportRowT:
     """Populate college_code/course_dept when absent by inspecting course columns."""
     college_code, dept_code = extract_crs_codes(row)
     row.setdefault("college_code", college_code)
@@ -95,7 +94,7 @@ def set_crs_codes(row: Row) -> Row:
     return row
 
 
-def extract_crs_codes(row: Row) -> tuple[str, str]:
+def extract_crs_codes(row: ReadImportRowT) -> tuple[str, str]:
     """Return college/department codes derived from the row content.
 
     Assumptions are that course_code is the small MATH101,
