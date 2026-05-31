@@ -5,12 +5,10 @@ from import_export import fields, resources
 from app.people.admin.widgets import StdGradeWgt, StdUserWgt
 from app.registry.admin.resources_mapping import GRADE_HEADER_MAP
 from app.registry.admin.widgets import GradeValueWgt
-from app.registry.models.grade import Grade, GradeValue
+from app.registry.models.grade import Grade
 from app.registry.models.registration import Registration
-from app.shared.utils import get_in_row
 from app.timetable.admin.resource_mapping import SECTION_HEADER_MAP
 from app.timetable.admin.section_widgets import SecWgt
-from app.timetable.utils import normalize_academic_year
 
 
 class GradeResource(resources.ModelResource):
@@ -49,8 +47,8 @@ class GradeResource(resources.ModelResource):
     def before_import(self, dataset):
         """Normalize grade file headers."""
         headers = dataset.headers or []
-        dataset.headers = [GRADE_HEADER_MAP.get(h, h) for h in headers]
-        dataset.headers = [SECTION_HEADER_MAP.get(h, h) for h in headers]
+        mapped_headers = [GRADE_HEADER_MAP.get(h, h) for h in headers]
+        dataset.headers = [SECTION_HEADER_MAP.get(h, h) for h in mapped_headers]
 
     def dehydrate_std(self, obj):
         student = getattr(obj, "student", None)

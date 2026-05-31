@@ -5,8 +5,8 @@ from __future__ import annotations
 import csv
 from dataclasses import dataclass, field
 from datetime import time
-from time import monotonic
 from pathlib import Path
+
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import transaction
 
@@ -21,7 +21,7 @@ from app.people.ensure_people import ensure_faculty
 from app.people.utils import name_parts_from_row
 
 from app.shared.importing import CsvRowLogger, log_invalid_row
-from app.shared.types import RowStrOptT, SectionCacheT, SessionKeyT
+from app.shared.types import ReadImportRowT, SectionCacheT, SessionKeyT
 
 from app.shared.utils import get_in_row, to_int
 from app.timetable.ensures import (
@@ -211,7 +211,7 @@ class Command(BaseCommand):
 def _log_invalid_row(
     logger: CsvRowLogger,
     row_number: int,
-    row: RowStrOptT,
+    row: ReadImportRowT,
     reason: str,
 ) -> None:
     """Record invalid rows into the shared CSV logger."""
@@ -219,7 +219,7 @@ def _log_invalid_row(
 
 
 def _resolve_row(
-    row: RowStrOptT,
+    row: ReadImportRowT,
     *,
     semester_code: str,
     section_cache: SectionCacheT,
@@ -281,7 +281,7 @@ def _resolve_row(
     return SecSession(section_id=section_id, schedule_id=schedule_id, room_id=room_id)
 
 
-def _resolve_schedule_id(row: RowStrOptT) -> int:
+def _resolve_schedule_id(row: ReadImportRowT) -> int:
     """Resolve schedule id from weekday/start/end values.
 
     Args:
@@ -302,7 +302,7 @@ def _resolve_schedule_id(row: RowStrOptT) -> int:
     return ensure_schedule_id(weekday, start_time, end_time)
 
 
-def _resolve_room_id(row: RowStrOptT) -> int:
+def _resolve_room_id(row: ReadImportRowT) -> int:
     """Resolve room id from space/room or a combined location string.
 
     Args:
@@ -322,7 +322,7 @@ def _resolve_room_id(row: RowStrOptT) -> int:
     return ensure_room_id(space_code or "TBA", room_code or "TBA")
 
 
-def _resolve_sem_id(row: RowStrOptT, semester_code: str) -> int:
+def _resolve_sem_id(row: ReadImportRowT, semester_code: str) -> int:
     """Resolve a semester id from row values or a fallback code.
 
     Args:
@@ -338,7 +338,7 @@ def _resolve_sem_id(row: RowStrOptT, semester_code: str) -> int:
     return ensure_sem_id(academic_year, semester_no, default=default)
 
 
-def _resolve_curri_crs_id(row: RowStrOptT) -> int:
+def _resolve_curri_crs_id(row: ReadImportRowT) -> int:
     """Resolve curriculum_course id for a session row.
 
     Args:
@@ -371,7 +371,7 @@ def _resolve_curri_crs_id(row: RowStrOptT) -> int:
     return ensure_curri_crs_id(curriculum_id, course_id, credit_code)
 
 
-def _resolve_faculty_id(row: RowStrOptT) -> int | None:
+def _resolve_faculty_id(row: ReadImportRowT) -> int | None:
     """Resolve the faculty id for a session row.
 
     Args:
