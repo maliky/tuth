@@ -342,7 +342,7 @@ def reg_grades_dashboard(request: HttpRequest) -> HttpResponse:
         "pagination_action": request.path,
         "student_autocomplete_url": reverse("reg_std_autocomplete"),
     }
-    return render(request, "website/staff/reg_grades_dashboard.html", context)
+    return render(request, "website/staff/registrar_grades_dashboard.html", context)
 
 
 @login_required
@@ -401,7 +401,7 @@ def reg_grade_transcript(
         "role_switcher": build_staff_role_switcher(cast(User, request.user), "registrar"),
         "dashboard_url": reverse("reg_grades_dashboard"),
     }
-    return render(request, "website/staff/reg_grade_transcript.html", context)
+    return render(request, "website/staff/registrar_grade_transcript.html", context)
 
 
 @permission_required("timetable.change_semester", raise_exception=True)

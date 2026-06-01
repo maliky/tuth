@@ -117,4 +117,4 @@ def std_payment_receipt(
             student=student,
         ),
     }
-    return render(request, "website/std_payment_receipt.html", context)
+    return render(request, "website/student_payment_receipt.html", context)

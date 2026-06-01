@@ -61,7 +61,7 @@ def std_curri_crss(request: HttpRequest) -> HttpResponse:
         "course_rows": course_rows,
         "curriculum_label": curriculum.long_name or curriculum.short_name,
     }
-    return render(request, "website/std_curri_crss.html", context)
+    return render(request, "website/student_curriculum_courses.html", context)
 
 
 @login_required
@@ -98,6 +98,6 @@ def std_curri_crs_detail(
     }
     return render(
         request,
-        "website/std_curri_crs_detail.html",
+        "website/student_curriculum_course_detail.html",
         context,
     )

@@ -97,4 +97,4 @@ def std_sec_detail(
             "schedule_rows": schedule_rows,
         },
     }
-    return render(request, "website/std_sec_detail.html", context)
+    return render(request, "website/student_section_detail.html", context)

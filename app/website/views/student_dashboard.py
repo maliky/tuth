@@ -131,7 +131,7 @@ def std_invoice_statement(request: HttpRequest) -> HttpResponse:
         "student_profile": student_profile,
         "sidebar_links": sidebar_links,
     }
-    return render(request, "website/std_invoice_statement.html", context)
+    return render(request, "website/student_invoice_statement.html", context)
 
 
 @login_required

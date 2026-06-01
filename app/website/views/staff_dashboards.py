@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from typing import Any, NotRequired, TypeAlias, TypedDict, cast
 
 from django.contrib.auth.decorators import login_required
@@ -32,8 +32,10 @@ from app.timetable.models.section import Section
 ADMIN_PORTAL_GROUPS = {"System Administrator", "IT Support"}
 
 DisplayValueT: TypeAlias = str | int | float | bool | None
+RoleSlugT: TypeAlias = str
+RoleEdgeT: TypeAlias = tuple[RoleSlugT, RoleSlugT]
 
-ROLE_PRIORITY: list[str] = [
+ROLE_PRIORITY: list[RoleSlugT] = [
     "vpaa",
     "dean",
     "chair",
@@ -124,6 +126,11 @@ class RoleConfig(TypedDict, total=False):
     summary: str
     builder: Callable[[HttpRequest], RoleContextT]
     template: str
+
+
+RoleConfigMapT: TypeAlias = Mapping[RoleSlugT, RoleConfig]
+RoleParentMapT: TypeAlias = dict[RoleSlugT, frozenset[RoleSlugT]]
+RoleChildMapT: TypeAlias = dict[RoleSlugT, frozenset[RoleSlugT]]
 
 
 def _as_user(user: User | AnonymousUser) -> User:
@@ -1042,16 +1049,47 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
     ],
 }
 
-ROLE_INHERITANCE: dict[str, set[str]] = {}
-for slug in ROLE_CONFIG:
-    if slug.endswith("_officer"):
-        base = slug[: -len("_officer")]
-        ROLE_INHERITANCE.setdefault(base, set()).add(slug)
+EXPLICIT_ROLE_PARENT_EDGES: tuple[RoleEdgeT, ...] = (
+    ("chair", "dean"),
+    ("faculty", "chair"),
+    ("dean", "vpaa"),
+    ("registrar", "reg_officer"),
+)
 
-ROLE_INHERITANCE.setdefault("chair", set()).add("dean")
-ROLE_INHERITANCE.setdefault("faculty", set()).add("chair")
-ROLE_INHERITANCE.setdefault("dean", set()).add("vpaa")
-ROLE_INHERITANCE.setdefault("registrar", set()).add("reg_officer")
+
+def _officer_parent_edges(role_slugs: Iterable[RoleSlugT]) -> tuple[RoleEdgeT, ...]:
+    """Return role-parent edges where officer roles inherit base workspaces."""
+    slugs = frozenset(role_slugs)
+    return tuple(
+        (base, slug)
+        for slug in slugs
+        if slug.endswith("_officer")
+        for base in (slug[: -len("_officer")],)
+        if base in slugs
+    )
+
+
+def _build_role_parent_map(config: RoleConfigMapT) -> RoleParentMapT:
+    """Build the typed map of role -> parent roles allowed to access it."""
+    parents: dict[RoleSlugT, set[RoleSlugT]] = {slug: set() for slug in config}
+    edges = (*_officer_parent_edges(config), *EXPLICIT_ROLE_PARENT_EDGES)
+    for child_slug, parent_slug in edges:
+        if child_slug in parents and parent_slug in parents:
+            parents[child_slug].add(parent_slug)
+    return {slug: frozenset(values) for slug, values in parents.items()}
+
+
+def _build_role_child_map(parent_map: RoleParentMapT) -> RoleChildMapT:
+    """Invert the role-parent map into parent -> directly accessible roles."""
+    children: dict[RoleSlugT, set[RoleSlugT]] = {slug: set() for slug in parent_map}
+    for child_slug, parent_slugs in parent_map.items():
+        for parent_slug in parent_slugs:
+            children.setdefault(parent_slug, set()).add(child_slug)
+    return {slug: frozenset(values) for slug, values in children.items()}
+
+
+ROLE_INHERITANCE: RoleParentMapT = _build_role_parent_map(ROLE_CONFIG)
+ROLE_CHILDREN: RoleChildMapT = _build_role_child_map(ROLE_INHERITANCE)
 
 ROLE_ORDER: dict[str, int] = {slug: idx for idx, slug in enumerate(ROLE_PRIORITY)}
 
@@ -1064,8 +1102,19 @@ def _user_membership_slugs(user: User) -> set[str]:
     }
 
 
-def _direct_subordinates(role_slug: str) -> set[str]:
-    return {slug for slug, parents in ROLE_INHERITANCE.items() if role_slug in parents}
+def _role_access_closure(role_slugs: Iterable[RoleSlugT]) -> set[RoleSlugT]:
+    """Return every workspace reachable from the direct role memberships."""
+    accessible = set(role_slugs)
+    frontier = list(accessible)
+    # Expand until a fixed point so displayed workspaces match permission checks.
+    while frontier:
+        role_slug = frontier.pop()
+        for child_slug in ROLE_CHILDREN.get(role_slug, frozenset()):
+            if child_slug in accessible:
+                continue
+            accessible.add(child_slug)
+            frontier.append(child_slug)
+    return accessible
 
 
 def _accessible_role_slugs(user: User) -> set[str]:
@@ -1075,11 +1124,7 @@ def _accessible_role_slugs(user: User) -> set[str]:
             slugs.discard("general")
         return slugs
     membership = _user_membership_slugs(user)
-    inherited = {slug for slug in ROLE_CONFIG if _user_inherits_role(user, slug)}
-    direct_lower: set[str] = set()
-    for slug in membership | inherited:
-        direct_lower.update(_direct_subordinates(slug))
-    slugs = membership | inherited | direct_lower
+    slugs = _role_access_closure(membership)
     if not slugs:
         return {"general"}
     return slugs
@@ -1158,9 +1203,16 @@ def _user_has_membership(user: User, role_slug: str) -> bool:
     return bool(_user_gp_names(user).intersection(config["groups"]))
 
 
-def _user_inherits_role(user: User, role_slug: str) -> bool:
-    inherited = ROLE_INHERITANCE.get(role_slug, set())
-    return any(_user_has_membership(user, slug) for slug in inherited)
+def _user_can_access_role(user: User, role_slug: str) -> bool:
+    """Return True when a user may open a staff workspace."""
+    config = ROLE_CONFIG.get(role_slug)
+    if not config:
+        return False
+    if user.is_superuser:
+        return True
+    if not config["groups"]:
+        return True
+    return role_slug in _accessible_role_slugs(user)
 
 
 def _resolve_staff_role(user: User) -> str:
@@ -1224,15 +1276,7 @@ def staff_role_dashboard(request: HttpRequest, role: str) -> HttpResponse:
         raise Http404("Unknown staff role.")
 
     user = _as_user(request.user)
-    config = ROLE_CONFIG[role]
-    requires_membership = bool(config["groups"])
-    has_access = (
-        user.is_superuser
-        or not requires_membership
-        or _user_has_membership(user, role)
-        or _user_inherits_role(user, role)
-    )
-    if not has_access:
+    if not _user_can_access_role(user, role):
         raise PermissionDenied("You do not belong to this staff group.")
 
     return _render_role_dashboard(request, role)
