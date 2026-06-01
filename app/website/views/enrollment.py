@@ -16,6 +16,10 @@ from django.urls import reverse
 
 from app.people.models.student import Student
 from app.shared.utils import parse_str
+from app.website.views.staff_dashboards import (
+    build_staff_role_switcher,
+    build_staff_sidebar_links,
+)
 
 
 class StdAdminLookupForm(forms.Form):
@@ -69,9 +73,14 @@ def create_std(request: HttpRequest) -> HttpResponse:
     context = {
         "page_title": "Create student",
         "page_summary": "Use the Django admin admissions form to capture the official record.",
+        "eyebrow": "Enrollment",
+        "sidebar_links": build_staff_sidebar_links("enrollment", "create_student"),
+        "role_switcher": build_staff_role_switcher(
+            cast(User, request.user), "enrollment"
+        ),
         "breadcrumbs": _staff_breadcrumb("Create student"),
     }
-    return render(request, "website/create_std.html", context)
+    return render(request, "website/create_student.html", context)
 
 
 @permission_required("people.view_student", raise_exception=True)
@@ -82,9 +91,14 @@ def std_list(request: HttpRequest) -> HttpResponse:
         "students": students,
         "page_title": "Student snapshot",
         "page_summary": "This list shows the latest entries. Use Django admin for full search and filters.",
+        "eyebrow": "Enrollment",
+        "sidebar_links": build_staff_sidebar_links("enrollment", "student_snapshot"),
+        "role_switcher": build_staff_role_switcher(
+            cast(User, request.user), "enrollment"
+        ),
         "breadcrumbs": _staff_breadcrumb("Directory snapshot"),
     }
-    return render(request, "enrollment/std_list.html", context)
+    return render(request, "enrollment/student_list.html", context)
 
 
 @permission_required("people.view_student", raise_exception=True)
@@ -95,9 +109,14 @@ def std_detail(request: HttpRequest, pk: int) -> HttpResponse:
         "student": student,
         "page_title": student.long_name,
         "page_summary": f"Student ID {student.student_id}",
+        "eyebrow": "Enrollment",
+        "sidebar_links": build_staff_sidebar_links("enrollment", "student_snapshot"),
+        "role_switcher": build_staff_role_switcher(
+            cast(User, request.user), "enrollment"
+        ),
         "breadcrumbs": _staff_breadcrumb(student.long_name),
     }
-    return render(request, "enrollment/std_detail.html", context)
+    return render(request, "enrollment/student_detail.html", context)
 
 
 @permission_required("people.delete_student", raise_exception=True)
@@ -117,6 +136,11 @@ def std_delete(request: HttpRequest, pk: int) -> HttpResponse:
         "student": student,
         "page_title": f"Delete {student.long_name}",
         "page_summary": "Once deleted, this record cannot be recovered.",
+        "eyebrow": "Enrollment",
+        "sidebar_links": build_staff_sidebar_links("enrollment", "student_snapshot"),
+        "role_switcher": build_staff_role_switcher(
+            cast(User, request.user), "enrollment"
+        ),
         "breadcrumbs": _staff_breadcrumb("Delete student"),
     }
     return render(request, "enrollment/student_confirm_delete.html", context)
@@ -135,10 +159,15 @@ def std_admin_edit(request: HttpRequest) -> HttpResponse:
         "form": form,
         "page_title": "Edit student in admin",
         "page_summary": "Pick an ID and Tusis will open the Django admin edit form in a new tab.",
+        "eyebrow": "Enrollment",
+        "sidebar_links": build_staff_sidebar_links("enrollment", "student_lookup"),
+        "role_switcher": build_staff_role_switcher(
+            cast(User, request.user), "enrollment"
+        ),
         "breadcrumbs": _staff_breadcrumb("Edit student"),
         "autocomplete_url": reverse("std_autocomplete"),
     }
-    return render(request, "enrollment/std_admin_edit.html", context)
+    return render(request, "enrollment/student_admin_edit.html", context)
 
 
 @permission_required("people.view_student", raise_exception=True)

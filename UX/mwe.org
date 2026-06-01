@@ -1,10 +1,32 @@
 * Test user credentials (dev/test)
-This section lists every explicit login/password pair defined in the repo for local dev and automated tests.
+This section separates runtime MWE accounts from automated-test fixture accounts. Use the runtime accounts for local/preprod browser checks.
 
 ** Default dev superuser
 - Login: dev
 - Password: dev
 - Source: app/shared/auth/helpers.ensure_superuser
+
+** Runtime MWE role users
+All of the accounts below exist in the current running MWE database and share the same password: PassW0rd!.
+
+| Login                    | Primary role                         |
+|--------------------------+--------------------------------------|
+| test_student             | Student                              |
+| test_prospecting_student | Prospecting Student                  |
+| test_staff               | Staff                                |
+| test_faculty             | Faculty                              |
+| test_chair               | Chair                                |
+| test_dean                | Dean                                 |
+| test_vpaa                | Vice President Academic Affairs      |
+| test_registrar           | Registrar                            |
+| test_registrar_officer   | Registrar Officer                    |
+| test_finance             | Finance                              |
+| test_finance_officer     | Finance Officer                      |
+| test_cashier             | Cashier                              |
+| test_enrollment          | Enrollment                           |
+| test_enrollment_officer  | Enrollment Officer                   |
+| test_it                  | IT / Staff                           |
+| test_donor               | Donor                                |
 
 ** Pytest fixtures and feature tests
 - Login: super
@@ -16,21 +38,8 @@ This section lists every explicit login/password pair defined in the repo for lo
 - Login: outsider
   Password: PassW0rd!
 
-** Selenium portal role users (tests/selenium/test_portal_roles.py)
-All of the accounts below share the same password: PassW0rd!
-- instructor_user
-- student_user
-- chair_user
-- dean_user
-- vpaa_user
-- registrar_user
-- scholarship_user
-- finance_user
-- finance_officer_user
-- registrar_officer_user
-- enrollment_user
-- enrollment_officer_user
-- registrar_basic
+** Selenium/BDD fixture-only names
+Older usernames such as =student_user=, =dean_user=, =finance_officer_user=, and =registrar_officer_user= are fixture data created inside Selenium/BDD tests. They are not current runtime/preprod login accounts.
 
 ** Password reset helper
 If you run python manage.py reset_test_passwords (default prefix test_), all test_* accounts are reset to PassW0rd!.

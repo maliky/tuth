@@ -1,14 +1,15 @@
 {% extends "website/staff/base.html" %}
 
-{% block header_actions %}
-  <a class="btn btn-outline-secondary btn-sm" href="{% url 'std_list' %}">
+{% block staff_header_actions %}
+  <a class="btn portal-btn-outline btn-sm" href="{% url 'std_list' %}">
     Back to snapshot
   </a>
 {% endblock %}
 
 {% block staff_content %}
-  <div class="card shadow-sm">
-    <div class="card-body">
+  <div class="portal-panel-card">
+    <div class="portal-panel-card__stripe"></div>
+    <div class="portal-panel-card__body">
       <h2 class="h5 mb-3">{{ student.long_name }}</h2>
       <dl class="row mb-0">
         <dt class="col-sm-4">Student ID</dt>

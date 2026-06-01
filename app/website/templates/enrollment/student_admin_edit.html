@@ -1,14 +1,15 @@
 {% extends "website/staff/base.html" %}
 
-{% block header_actions %}
-  <a class="btn btn-outline-secondary btn-sm" href="{% url 'std_list' %}">
+{% block staff_header_actions %}
+  <a class="btn portal-btn-outline btn-sm" href="{% url 'std_list' %}">
     Back to snapshot
   </a>
 {% endblock %}
 
 {% block staff_content %}
-  <div class="card shadow-sm">
-    <div class="card-body">
+  <div class="portal-panel-card">
+    <div class="portal-panel-card__stripe"></div>
+    <div class="portal-panel-card__body">
       <h2 class="h5 mb-3">Jump to Django admin</h2>
       <p class="text-muted">
         Pick a student and Tusis will open the Django admin edit form in a new tab.
@@ -18,12 +19,16 @@
         <div class="col-md-8">
           {{ form.student_query.label_tag }}
           <div class="autocomplete-wrapper">
-            {{ form.student_query.as_widget(attrs={
-              "class": "form-control autocomplete-input",
-              "data-autocomplete-url": autocomplete_url,
-              "aria-describedby": "student-autocomplete-help",
-              "autocomplete": "off",
-            }) }}
+            <input
+              type="text"
+              name="{{ form.student_query.html_name }}"
+              value="{{ form.student_query.value|default_if_none:'' }}"
+              class="form-control autocomplete-input"
+              data-autocomplete-url="{{ autocomplete_url }}"
+              aria-describedby="student-autocomplete-help"
+              autocomplete="off"
+              id="{{ form.student_query.id_for_label }}"
+            />
             {{ form.student }}
             <div class="autocomplete-dropdown visually-hidden" id="student-autocomplete">
               <span class="autocomplete-empty">
@@ -46,7 +51,7 @@
           {% endif %}
         </div>
         <div class="col-md-4 d-flex align-items-end">
-          <button type="submit" class="btn portal-btn-primary w-100">Open in admin</button>
+          <button type="submit" class="btn portal-btn-accent w-100">Open in admin</button>
         </div>
       </form>
     </div>

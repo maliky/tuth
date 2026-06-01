@@ -1,10 +1,10 @@
 :root {
-  --staff-bg: #f6f7fb;
+  --staff-bg: var(--tu-gray);
   --staff-card-bg: #ffffff;
-  --staff-border: rgba(16, 24, 38, 0.08);
-  --staff-primary: #134529;
-  --staff-muted: #6c7a8a;
-  --staff-accent: #ffc107;
+  --staff-border: rgba(15, 31, 28, 0.08);
+  --staff-primary: var(--tu-green);
+  --staff-muted: rgba(15, 31, 28, 0.62);
+  --staff-accent: var(--tu-gold);
 }
 
 .staff-light-body {
@@ -309,4 +309,161 @@
   display: block;
   padding: 0.75rem 1rem;
   color: var(--staff-muted);
+}
+
+.staff-portal-body .card {
+  border: 1px solid var(--staff-border);
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 20px rgba(15, 31, 28, 0.06) !important;
+}
+
+.portal-filter-card,
+.portal-accordion-card,
+.portal-selection-bar {
+  background: #fff;
+  border: 1px solid var(--staff-border);
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 20px rgba(15, 31, 28, 0.06);
+}
+
+.portal-filter-card__body {
+  padding: 1.25rem;
+}
+
+.portal-filter-card__intro {
+  border-bottom: 1px solid var(--staff-border);
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+}
+
+.portal-filter-card__intro h2 {
+  color: var(--staff-primary);
+  font-size: 1.15rem;
+  margin: 0;
+}
+
+.portal-accordion-card {
+  overflow: hidden;
+}
+
+.portal-accordion-card__header {
+  background: #fff;
+  border-bottom: 1px solid var(--staff-border);
+  padding: 0.95rem 1rem;
+}
+
+.portal-accordion-card__body {
+  padding: 1rem;
+}
+
+.portal-nested-card {
+  border: 1px solid var(--staff-border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.portal-collapse-toggle {
+  color: var(--staff-primary);
+  font-weight: 700;
+}
+
+.portal-collapse-toggle:hover {
+  color: var(--staff-primary);
+}
+
+.portal-collapse-toggle .chevron {
+  transition: transform 0.2s ease;
+}
+
+.portal-collapse-toggle[aria-expanded="true"] .chevron {
+  transform: rotate(90deg);
+}
+
+.portal-tabs {
+  border-bottom: 0;
+  gap: 0.5rem;
+}
+
+.portal-tabs .nav-link {
+  background: #fff;
+  border: 1px solid var(--staff-border);
+  border-radius: 999px;
+  color: var(--staff-primary);
+  font-weight: 700;
+  padding: 0.55rem 1rem;
+}
+
+.portal-tabs .nav-link.active {
+  background: var(--staff-primary);
+  border-color: var(--staff-primary);
+  color: #fff;
+}
+
+.portal-selection-bar {
+  padding: 0.85rem 1rem;
+}
+
+.portal-empty-state {
+  background: #fff;
+  border: 1px dashed var(--staff-border);
+  border-radius: 0.75rem;
+  color: var(--staff-muted);
+  padding: 1rem;
+}
+
+.staff-portal-body .form-control,
+.staff-portal-body .form-select,
+.select2-container--default .select2-selection--single {
+  border-color: rgba(15, 31, 28, 0.16);
+  border-radius: 0.55rem;
+}
+
+.staff-portal-body .form-control:focus,
+.staff-portal-body .form-select:focus,
+.select2-container--default.select2-container--focus
+  .select2-selection--single,
+.select2-container--default .select2-selection--single:focus {
+  border-color: var(--staff-primary);
+  box-shadow: 0 0 0 0.2rem rgba(19, 69, 41, 0.12);
+}
+
+.select2-container--default .select2-selection--single {
+  min-height: 38px;
+  padding: 0.3rem 0.5rem;
+}
+
+.select2-dropdown {
+  border-color: rgba(15, 31, 28, 0.16);
+  border-radius: 0.75rem;
+  box-shadow: 0 12px 28px rgba(15, 31, 28, 0.14);
+  overflow: hidden;
+}
+
+.select2-container--default
+  .select2-results__option--highlighted[aria-selected] {
+  background: var(--staff-primary);
+}
+
+.action-card__cue {
+  border-radius: 999px;
+  display: inline-block;
+  height: 0.55rem;
+  margin-right: 0.35rem;
+  width: 0.55rem;
+}
+
+.action-card__cue.is-admin {
+  background: var(--staff-muted);
+}
+
+.action-card__cue.is-app {
+  background: var(--staff-accent);
+}
+
+@media (max-width: 768px) {
+  .portal-accordion-card__header,
+  .portal-selection-bar {
+    align-items: flex-start !important;
+    flex-direction: column;
+  }
 }

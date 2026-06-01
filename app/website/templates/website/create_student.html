@@ -1,19 +1,16 @@
 {% extends "website/staff/base.html" %}
 
-{% block header_actions %}
-  <a class="btn btn-outline-secondary btn-sm" href="{% url 'portal_logout' %}">
-    Logout
-  </a>
-{% endblock %}
+{% block staff_header_actions %}{% endblock %}
 
 {% block staff_content %}
-  <div class="card shadow-sm">
-    <div class="card-body">
+  <div class="portal-panel-card">
+    <div class="portal-panel-card__stripe"></div>
+    <div class="portal-panel-card__body">
       <h2 class="h5">Create student in Django admin</h2>
       <p class="text-muted">
         The admissions workflow now lives entirely in the Django admin. Click the button below to open the official creation form with validation, attachments, and history tracking.
       </p>
-      <a class="btn btn-primary" href="{% url 'admin:people_student_add' %}">
+      <a class="btn portal-btn-accent" href="{% url 'admin:people_student_add' %}">
         Open admin form
       </a>
     </div>

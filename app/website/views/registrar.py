@@ -6,6 +6,7 @@ from typing import TypedDict, cast
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
@@ -19,6 +20,10 @@ from app.registry.models.grade import Grade
 from app.shared.utils import parse_str
 from app.timetable.models.semester import Semester, SemesterStatus
 from app.timetable.utils import format_datetime
+from app.website.views.staff_dashboards import (
+    build_staff_role_switcher,
+    build_staff_sidebar_links,
+)
 
 
 class RegGradeRowT(TypedDict):
@@ -318,6 +323,15 @@ def reg_grades_dashboard(request: HttpRequest) -> HttpResponse:
         "page_title": "Registrar grades",
         "page_summary": "Review grades grouped by student and semester.",
         "eyebrow": "Registrar",
+        "sidebar_links": build_staff_sidebar_links("reg_officer", "grades"),
+        "role_switcher": build_staff_role_switcher(cast(User, request.user), "registrar"),
+        "breadcrumbs": [
+            {
+                "label": "Registrar dashboard",
+                "href": reverse("staff_role_dashboard", args=["registrar"]),
+            },
+            {"label": "Grade review", "href": ""},
+        ],
         "student_groups": student_groups,
         "page_obj": page_obj,
         "semester_options": semester_options,
@@ -383,6 +397,8 @@ def reg_grade_transcript(
         "curriculum_label": (curriculum.long_name or curriculum.short_name),
         "generated_at": format_datetime(timezone.now()),
         "transcript_rows": transcript_rows,
+        "sidebar_links": build_staff_sidebar_links("reg_officer", "grades"),
+        "role_switcher": build_staff_role_switcher(cast(User, request.user), "registrar"),
         "dashboard_url": reverse("reg_grades_dashboard"),
     }
     return render(request, "website/staff/reg_grade_transcript.html", context)
@@ -418,8 +434,15 @@ def reg_crs_wins(request: HttpRequest) -> HttpResponse:
         "statuses": statuses,
         "page_title": "Course selection windows",
         "page_summary": "Open or close registration periods directly from Tusis.",
+        "eyebrow": "Registrar officer",
+        "sidebar_links": build_staff_sidebar_links("reg_officer", "semester_windows"),
+        "role_switcher": build_staff_role_switcher(cast(User, request.user), "registrar"),
         "breadcrumbs": [
-            {"label": "Registrar desk", "href": ""},
+            {
+                "label": "Registrar dashboard",
+                "href": reverse("staff_role_dashboard", args=["registrar"]),
+            },
+            {"label": "Semester windows", "href": ""},
         ],
     }
     return render(request, "website/registrar_windows.html", context)

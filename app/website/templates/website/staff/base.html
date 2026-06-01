@@ -1,72 +1,42 @@
-{% extends "website/base.html" %}
+{% extends "website/portal_base.html" %}
 {% load static %}
 
-{% block title %}{{ page_title|default:"Staff workspace" }} · Tusis{% endblock %}
-{% block head_extra %}
-  <link
-    rel="stylesheet"
-    href="{% static 'website/bootstrap-icons/bootstrap-icons.min.css' %}"
-  />
-  <link rel="stylesheet" href="{% static 'css/sidebar.css' %}" />
+{% block page_title %}{{ page_title|default:"Staff workspace" }} · Tusis{% endblock %}
+
+{% block portal_body_class %}staff-portal-body{% endblock %}
+
+{% block extra_css %}
   <link rel="stylesheet" href="{% static 'css/staff-dashboard.css' %}" />
   {% block staff_head_extra %}{% endblock %}
 {% endblock %}
-{% block body_class %}staff-light-body{% endblock %}
+
+{% block portal_sidebar %}
+  {% include "website/partials/sidebar.html" with sidebar_title=page_title sidebar_subtitle=eyebrow sidebar_links=sidebar_links sidebar_role_switcher=role_switcher sidebar_nav_label="Tasks" sidebar_avatar_initial=request.user.get_full_name|default:request.user.username sidebar_footer_title="Support" sidebar_footer_text="admin@tubmanu.edu.lr" %}
+{% endblock %}
+
+{% block header_eyebrow %}{{ eyebrow|default:"Staff workspace" }}{% endblock %}
+
+{% block header_title %}
+  {{ page_title|default:"Staff workspace" }}
+{% endblock %}
+
+{% block header_actions %}
+  {% block staff_header_actions %}{% endblock %}
+  {# Logout remains visible on all staff dashboards. #}
+  <a class="btn portal-btn-accent btn-sm" href="{% url 'portal_logout' %}">
+    Log out
+  </a>
+  {% if request.user.is_staff %}
+    <a class="btn portal-btn-outline btn-sm" href="{% url 'admin:index' %}">
+      Advanced admin
+    </a>
+  {% endif %}
+{% endblock %}
 
 {% block content %}
-  <div class="portal-shell">
-    {% include "website/partials/sidebar.html" with sidebar_title=page_title sidebar_subtitle=eyebrow sidebar_links=sidebar_links sidebar_avatar_initial=request.user.get_full_name|default:request.user.username sidebar_footer_text="it.support@tusis.edu" %}
-    <div class="portal-content">
-      <div class="staff-shell container-xl py-5">
-        <header class="staff-shell__header">
-          <div>
-            <h1 class="staff-shell__title">{{ page_title|default:"Staff workspace" }}</h1>
-            {% if role_switcher %}
-              <div class="role-switcher">
-                <label class="text-muted small" for="role-switcher">Role</label>
-                <select
-                  id="role-switcher"
-                  class="form-select form-select-sm"
-                  onchange="if (this.value) { window.location = this.value; }"
-                >
-                  {% for role in role_switcher %}
-                    <option value="{{ role.href }}" {% if role.active %}selected{% endif %}>
-                      {{ role.label }}
-                    </option>
-                  {% endfor %}
-                </select>
-              </div>
-            {% endif %}
-          </div>
-          <div class="staff-shell__actions">
-            {% block header_actions %}{% endblock %}
-            {# Logout remains visible on all staff dashboards. #}
-            <a class="btn btn-outline-secondary btn-sm" href="{% url 'portal_logout' %}">
-              Log out
-            </a>
-            <a class="btn btn-outline-secondary btn-sm" href="{% url 'admin:index' %}">
-              Django admin
-            </a>
-          </div>
-        </header>
+  {% block staff_content %}{% endblock %}
+{% endblock %}
 
-        {% if breadcrumbs %}
-          <nav class="staff-shell__breadcrumbs">
-            {% for crumb in breadcrumbs %}
-              {% if crumb.href %}
-                <a href="{{ crumb.href }}">{{ crumb.label }}</a>
-              {% else %}
-                <span>{{ crumb.label }}</span>
-              {% endif %}
-              {% if not forloop.last %}
-                <span class="divider">/</span>
-              {% endif %}
-            {% endfor %}
-          </nav>
-        {% endif %}
-
-        {% block staff_content %}{% endblock %}
-      </div>
-    </div>
-  </div>
+{% block extra_js %}
+  {% block staff_body_extra %}{% endblock %}
 {% endblock %}

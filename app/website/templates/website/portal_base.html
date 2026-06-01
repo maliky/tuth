@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{% block page_title %}Tusis Portal{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{% static 'css/fonts.css' %}" />
+    <link rel="icon" href="{% static 'favicon.ico' %}" />
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}" />
+    <link
+      rel="stylesheet"
+      href="{% static 'website/bootstrap-icons/bootstrap-icons.min.css' %}"
+    />
+    <link rel="stylesheet" href="{% static 'css/student_portal.css' %}" />
+    {% block extra_css %}{% endblock %}
+  </head>
+  <body class="portal-body {% block portal_body_class %}{% endblock %}">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <div class="portal-shell">
+      {% block portal_sidebar %}{% endblock %}
+
+      <main class="portal-content" id="main-content">
+        <header class="portal-header">
+          <div>
+            <p class="eyebrow mb-1 text-uppercase">
+              {% block header_eyebrow %}{{ eyebrow|default:"Tusis Portal" }}{% endblock %}
+            </p>
+            <h1 class="mb-0">{% block header_title %}{{ page_title|default:"Tusis Portal" }}{% endblock %}</h1>
+            {% block header_summary %}
+              {% if page_summary %}
+                <p class="portal-header__summary mb-0">{{ page_summary }}</p>
+              {% endif %}
+            {% endblock %}
+          </div>
+          <div class="header-actions">
+            {% block header_actions %}{% endblock %}
+          </div>
+        </header>
+
+        {% if breadcrumbs %}
+          <nav class="portal-breadcrumbs" aria-label="Breadcrumb">
+            {% for crumb in breadcrumbs %}
+              {% if crumb.href %}
+                <a href="{{ crumb.href }}">{{ crumb.label }}</a>
+              {% else %}
+                <span>{{ crumb.label }}</span>
+              {% endif %}
+              {% if not forloop.last %}
+                <span aria-hidden="true">/</span>
+              {% endif %}
+            {% endfor %}
+          </nav>
+        {% endif %}
+
+        <section class="portal-inner">
+          {% block content %}{% endblock %}
+        </section>
+      </main>
+    </div>
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>

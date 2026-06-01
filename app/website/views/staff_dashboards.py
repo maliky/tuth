@@ -104,6 +104,15 @@ class SidebarLinkT(TypedDict):
     icon: str
 
 
+class RoleTaskT(TypedDict):
+    label: str
+    route_name: str
+    icon: str
+    args: NotRequired[list[str]]
+    key: NotRequired[str]
+    query: NotRequired[str]
+
+
 class BreadcrumbT(TypedDict):
     label: str
     href: str
@@ -844,6 +853,195 @@ ROLE_CONFIG: dict[str, RoleConfig] = {
     },
 }
 
+ROLE_TASKS: dict[str, list[RoleTaskT]] = {
+    "staff": [
+        {
+            "label": "My staff profile",
+            "route_name": "staff_role_dashboard",
+            "args": ["staff"],
+            "icon": "bi-person-badge",
+        }
+    ],
+    "faculty": [
+        {
+            "label": "Teaching overview",
+            "route_name": "staff_role_dashboard",
+            "args": ["faculty"],
+            "icon": "bi-journal-text",
+        },
+        {
+            "label": "Grade tasks",
+            "route_name": "staff_role_dashboard",
+            "args": ["faculty"],
+            "icon": "bi-pencil-square",
+        },
+    ],
+    "chair": [
+        {
+            "label": "Curricula",
+            "route_name": "staff_role_dashboard",
+            "args": ["chair"],
+            "icon": "bi-diagram-3",
+        },
+        {
+            "label": "Faculty workload",
+            "route_name": "staff_role_dashboard",
+            "args": ["chair"],
+            "icon": "bi-people",
+        },
+    ],
+    "dean": [
+        {
+            "label": "Approval queue",
+            "route_name": "staff_role_dashboard",
+            "args": ["dean"],
+            "icon": "bi-inbox",
+        },
+        {
+            "label": "College chairs",
+            "route_name": "staff_role_dashboard",
+            "args": ["dean"],
+            "icon": "bi-person-lines-fill",
+        },
+    ],
+    "vpaa": [
+        {
+            "label": "Institution approvals",
+            "route_name": "staff_role_dashboard",
+            "args": ["vpaa"],
+            "icon": "bi-check2-square",
+        }
+    ],
+    "registrar": [
+        {
+            "label": "Transcript queue",
+            "route_name": "staff_role_dashboard",
+            "args": ["registrar"],
+            "icon": "bi-file-earmark-text",
+        },
+        {
+            "label": "Grade review",
+            "route_name": "reg_grades_dashboard",
+            "icon": "bi-card-checklist",
+            "key": "grades",
+        },
+    ],
+    "reg_officer": [
+        {
+            "label": "Semester windows",
+            "route_name": "reg_crs_wins",
+            "icon": "bi-calendar-event",
+            "key": "semester_windows",
+        },
+        {
+            "label": "Grade review",
+            "route_name": "reg_grades_dashboard",
+            "icon": "bi-card-checklist",
+            "key": "grades",
+        },
+    ],
+    "enrollment": [
+        {
+            "label": "Student snapshot",
+            "route_name": "std_list",
+            "icon": "bi-list-check",
+            "key": "student_snapshot",
+        },
+        {
+            "label": "Admin edit lookup",
+            "route_name": "std_admin_edit",
+            "icon": "bi-search",
+            "key": "student_lookup",
+        },
+        {
+            "label": "Create student",
+            "route_name": "create_std",
+            "icon": "bi-person-plus",
+            "key": "create_student",
+        },
+    ],
+    "enrollment_officer": [
+        {
+            "label": "Student snapshot",
+            "route_name": "std_list",
+            "icon": "bi-list-check",
+            "key": "student_snapshot",
+        },
+        {
+            "label": "Admin edit lookup",
+            "route_name": "std_admin_edit",
+            "icon": "bi-search",
+            "key": "student_lookup",
+        },
+        {
+            "label": "Create student",
+            "route_name": "create_std",
+            "icon": "bi-person-plus",
+            "key": "create_student",
+        },
+    ],
+    "finance": [
+        {
+            "label": "Finance overview",
+            "route_name": "staff_role_dashboard",
+            "args": ["finance"],
+            "icon": "bi-cash-coin",
+        }
+    ],
+    "cashier": [
+        {
+            "label": "Payment station",
+            "route_name": "staff_role_dashboard",
+            "args": ["cashier"],
+            "icon": "bi-receipt",
+        }
+    ],
+    "finance_officer": [
+        {
+            "label": "Finance overview",
+            "route_name": "staff_role_dashboard",
+            "args": ["finance_officer"],
+            "icon": "bi-cash-coin",
+        },
+        {
+            "label": "Invoice console",
+            "route_name": "finance_officer_invoices",
+            "icon": "bi-receipt-cutoff",
+            "key": "invoice_console",
+        },
+        {
+            "label": "Payment validation",
+            "route_name": "finance_officer_invoices",
+            "icon": "bi-shield-check",
+            "key": "payment_validation",
+            "query": "?tab=payments",
+        },
+    ],
+    "scholarship": [
+        {
+            "label": "Beneficiary alerts",
+            "route_name": "staff_role_dashboard",
+            "args": ["scholarship"],
+            "icon": "bi-award",
+        }
+    ],
+    "it": [
+        {
+            "label": "Support overview",
+            "route_name": "staff_role_dashboard",
+            "args": ["it"],
+            "icon": "bi-tools",
+        }
+    ],
+    "general": [
+        {
+            "label": "Workspace home",
+            "route_name": "staff_dashboard",
+            "icon": "bi-speedometer2",
+        }
+    ],
+}
+
 ROLE_INHERITANCE: dict[str, set[str]] = {}
 for slug in ROLE_CONFIG:
     if slug.endswith("_officer"):
@@ -913,6 +1111,46 @@ def _build_accessible_dashboard_links(
     return links
 
 
+def build_staff_role_switcher(user: User, active_slug: str) -> list[RoleSwitcherLinkT]:
+    """Return role-switching links for the shared staff sidebar."""
+    accessible_links = _build_accessible_dashboard_links(user, active_slug)
+    if len(accessible_links) <= 1:
+        return []
+    return [
+        {
+            "label": link["label"],
+            "href": link["href"],
+            "active": link["active"],
+        }
+        for link in accessible_links
+    ]
+
+
+def build_staff_sidebar_links(
+    role_slug: str, active_key: str = "overview"
+) -> list[SidebarLinkT]:
+    """Build task-oriented staff navigation for the portal sidebar."""
+    tasks = ROLE_TASKS.get(role_slug, ROLE_TASKS["general"])
+    links: list[SidebarLinkT] = []
+    for index, task in enumerate(tasks):
+        task_key = task.get("key") or ("overview" if index == 0 else task["label"])
+        href = _maybe_reverse(task["route_name"], args=task.get("args"))
+        if not href:
+            continue
+        query = task.get("query", "")
+        if query:
+            href = f"{href}{query}"
+        links.append(
+            {
+                "label": task["label"],
+                "href": href,
+                "active": task_key == active_key,
+                "icon": task["icon"],
+            }
+        )
+    return links
+
+
 def _user_has_membership(user: User, role_slug: str) -> bool:
     config = ROLE_CONFIG.get(role_slug)
     if not config or not config["groups"]:
@@ -947,16 +1185,7 @@ def _render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse
     accessible_links = _build_accessible_dashboard_links(
         _as_user(request.user), role_slug
     )
-    role_switcher: list[RoleSwitcherLinkT] = []
-    if len(accessible_links) > 1:
-        role_switcher = [
-            {
-                "label": link["label"],
-                "href": link["href"],
-                "active": link["active"],
-            }
-            for link in accessible_links
-        ]
+    role_switcher = build_staff_role_switcher(_as_user(request.user), role_slug)
     base: dict[str, Any] = {
         "title": config["title"],
         "summary": config["summary"],
@@ -971,24 +1200,7 @@ def _render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse
     base["accessible_dashboards"] = accessible_links
     base["role_switcher"] = role_switcher
     template_name = config.get("template", "website/staff/role_dashboard.html")
-
-    sidebar_links: list[SidebarLinkT] = [
-        {
-            "label": "Dashboard",
-            "href": reverse("staff_dashboard"),
-            "active": role_slug == "general",
-            "icon": "bi-speedometer2",
-        },
-    ]
-    if len(accessible_links) > 1:
-        sidebar_links.append(
-            {
-                "label": "Roles",
-                "href": reverse("staff_role_dashboard", args=[role_slug]),
-                "active": role_slug != "general",
-                "icon": "bi-people",
-            }
-        )
+    sidebar_links = build_staff_sidebar_links(role_slug)
     breadcrumbs: list[BreadcrumbT] = [
         {"label": "Staff Workspace", "href": reverse("staff_dashboard")},
         {"label": config["title"], "href": ""},

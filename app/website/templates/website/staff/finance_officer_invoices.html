@@ -3,26 +3,21 @@
 
 {% block staff_head_extra %}
   <link rel="stylesheet" href="{% static 'admin/css/vendor/select2/select2.min.css' %}" />
-  <link rel="stylesheet" href="{% static 'admin/css/autocomplete.css' %}" />
-  <style>
-    .collapse-toggle .chevron {
-      transition: transform 0.2s ease;
-    }
-    .collapse-toggle[aria-expanded="true"] .chevron {
-      transform: rotate(90deg);
-    }
-  </style>
 {% endblock %}
 
-{% block header_actions %}
-  <a class="btn btn-outline-secondary btn-sm" href="{{ dashboard_url }}">
+{% block staff_header_actions %}
+  <a class="btn portal-btn-outline btn-sm" href="{{ dashboard_url }}">
     Back to dashboard
   </a>
 {% endblock %}
 
 {% block staff_content %}
-  <section class="card shadow-sm mb-4">
-    <div class="card-body">
+  <section class="portal-filter-card mb-4">
+    <div class="portal-filter-card__body">
+      <div class="portal-filter-card__intro">
+        <p class="eyebrow text-uppercase mb-1">Find a student account</p>
+        <h2>Filter invoices and payments</h2>
+      </div>
       <form method="get" class="row g-3 align-items-end">
         <input type="hidden" name="tab" value="{{ active_tab }}" />
         <div class="col-md-5">
@@ -71,13 +66,13 @@
           {% endif %}
         </div>
         <div class="col-md-2">
-          <button class="btn btn-primary w-100" type="submit">Filter</button>
+          <button class="btn portal-btn-accent w-100" type="submit">Filter</button>
         </div>
       </form>
     </div>
   </section>
 
-  <ul class="nav nav-tabs mb-3">
+  <ul class="nav portal-tabs mb-3">
     <li class="nav-item">
       <a
         class="nav-link {% if active_tab != 'payments' %}active{% endif %}"
@@ -107,11 +102,11 @@
           {% csrf_token %}
           <input type="hidden" name="next" value="{{ current_path }}" />
           <input type="hidden" name="student_id" value="{{ group.student.id }}" />
-          <div class="card shadow-sm mb-3">
-            <div class="card-header d-flex flex-wrap align-items-center gap-3 justify-content-between">
+          <div class="portal-accordion-card mb-3">
+            <div class="portal-accordion-card__header d-flex flex-wrap align-items-center gap-3 justify-content-between">
               <div>
                 <button
-                  class="btn btn-link text-decoration-none p-0 d-inline-flex align-items-center gap-2 collapse-toggle"
+                  class="btn portal-collapse-toggle text-decoration-none p-0 d-inline-flex align-items-center gap-2"
                   type="button"
                   data-bs-toggle="collapse"
                   data-bs-target="#payments-{{ group.student.id }}"
@@ -122,7 +117,7 @@
                   <strong>{{ group.student.long_name }}</strong>
                 </button>
                 <span class="text-muted">({{ group.student.student_id }})</span>
-                <span class="badge bg-warning text-dark ms-2">
+                <span class="status-badge status-pending ms-2">
                   Pending: {{ group.pending_count }}
                 </span>
               </div>
@@ -131,13 +126,13 @@
                   <span class="text-muted small">Total paid</span><br/>
                   <strong>{{ group.total_paid }}</strong>
                 </div>
-                <button class="btn btn-outline-primary btn-sm" type="submit">
+                <button class="btn portal-btn-accent btn-sm" type="submit">
                   Validate changes
                 </button>
               </div>
             </div>
             <div class="collapse" id="payments-{{ group.student.id }}">
-              <div class="table-responsive">
+              <div class="course-table table-responsive">
                 <table class="table align-middle mb-0">
                   <thead>
                     <tr>
@@ -206,7 +201,7 @@
         </form>
       {% endfor %}
     {% else %}
-      <div class="alert alert-light">No payments found.</div>
+      <div class="portal-empty-state">No payments found.</div>
     {% endif %}
   {% else %}
     {% for group in invoice_groups %}
@@ -228,10 +223,10 @@
     >
       {% csrf_token %}
       <input type="hidden" name="next" value="{{ current_path }}" />
-      <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="portal-selection-bar d-flex justify-content-between align-items-center mb-3">
         <p class="mb-0 text-muted">Select invoices for individual payments.</p>
         <button
-          class="btn btn-outline-primary btn-sm d-none"
+          class="btn portal-btn-accent btn-sm d-none"
           type="submit"
           id="invoice-selection-submit"
         >
@@ -240,11 +235,11 @@
       </div>
       {% if invoice_groups %}
         {% for group in invoice_groups %}
-          <div class="card shadow-sm mb-3">
-            <div class="card-header d-flex flex-wrap align-items-center gap-3 justify-content-between">
+          <div class="portal-accordion-card mb-3">
+            <div class="portal-accordion-card__header d-flex flex-wrap align-items-center gap-3 justify-content-between">
               <div>
                 <button
-                  class="btn btn-link text-decoration-none p-0 d-inline-flex align-items-center gap-2 collapse-toggle"
+                  class="btn portal-collapse-toggle text-decoration-none p-0 d-inline-flex align-items-center gap-2"
                   type="button"
                   data-bs-toggle="collapse"
                   data-bs-target="#invoices-{{ group.student.id }}"
@@ -262,7 +257,7 @@
                   <strong>{{ group.total_due }}</strong>
                 </div>
                 <button
-                  class="btn btn-outline-primary btn-sm"
+                  class="btn portal-btn-accent btn-sm"
                   type="submit"
                   form="student-payment-form-{{ group.student.id }}"
                 >
@@ -271,7 +266,7 @@
               </div>
             </div>
             <div class="collapse" id="invoices-{{ group.student.id }}">
-              <div class="table-responsive">
+              <div class="course-table table-responsive">
                 <table class="table align-middle mb-0">
                   <thead>
                     <tr>
@@ -311,7 +306,7 @@
           </div>
         {% endfor %}
       {% else %}
-        <div class="alert alert-light">No invoices found.</div>
+        <div class="portal-empty-state">No invoices found.</div>
       {% endif %}
     </form>
   {% endif %}
@@ -327,7 +322,7 @@
   {% endif %}
 {% endblock %}
 
-{% block body_extra %}
+{% block staff_body_extra %}
   <script src="{% static 'admin/js/vendor/jquery/jquery.min.js' %}"></script>
   <script src="{% static 'admin/js/vendor/select2/select2.full.min.js' %}"></script>
   <script>

@@ -1,8 +1,8 @@
 <aside class="portal-sidebar">
-  <div class="student-chip">
-    <div class="student-avatar">
+  <div class="student-chip portal-sidebar__identity">
+    <div class="student-avatar" aria-hidden="true">
       {% if sidebar_avatar_url %}
-        <img src="{{ sidebar_avatar_url }}" alt="{{ sidebar_title }}" />
+        <img src="{{ sidebar_avatar_url }}" alt="" />
       {% else %}
         <span>{{ sidebar_avatar_initial|default:"TU"|slice:":1" }}</span>
       {% endif %}
@@ -12,6 +12,22 @@
       <p class="student-id mb-0">{{ sidebar_subtitle|default:"" }}</p>
     </div>
   </div>
+
+  {% if sidebar_role_switcher %}
+    <div class="portal-role-switcher">
+      <label for="portal-role-switcher">Workspace</label>
+      <select
+        id="portal-role-switcher"
+        onchange="if (this.value) { window.location = this.value; }"
+      >
+        {% for role in sidebar_role_switcher %}
+          <option value="{{ role.href }}" {% if role.active %}selected{% endif %}>
+            {{ role.label }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  {% endif %}
 
   <nav class="portal-nav">
     <span class="nav-label">{{ sidebar_nav_label|default:"Navigation" }}</span>

@@ -227,6 +227,13 @@ The portal uses one visual language. The student UI is the reference implementat
 - Role workspaces such as =finance=, =dean=, =registrar=, and =faculty= extend =staff-portal= and contribute task modules only. They should not introduce their own shells.
 - When documentation conflicts on visual behavior, this guide defines the intended UI.
 
+** MWE Implementation Direction
+- The public Tusis landing page is an official portal gateway, not a broad marketing website. It should reassure users that they are entering a Tubman University service and route them quickly to login, role selection, and support.
+- Use the live university website for public terminology, contact details, and institutional cues. Do not copy external photos or social-media assets into Tusis unless usage rights are explicit.
+- Until approved university photos are available, use local static assets and brand-led composition rather than placeholder social images.
+- Student, staff, dean, registrar, and finance screens should now inherit the shared =portal-base= shell. Any new backstage workflow should start from =staff-portal= and add task modules only.
+- Django admin remains available for privileged users, but it is an advanced path. It should not be presented as the main user journey on public or staff landing surfaces.
+
 * Staff Workspace Variant
 Staff workspaces remain desktop-capable, but they should still feel like the student portal. The difference is density and task scope, not theme identity.
 

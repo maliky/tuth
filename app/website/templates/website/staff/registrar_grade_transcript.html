@@ -1,18 +1,19 @@
 {% extends "website/staff/base.html" %}
 
-{% block header_actions %}
-  <a class="btn btn-outline-secondary btn-sm" href="{{ dashboard_url }}">
+{% block staff_header_actions %}
+  <a class="btn portal-btn-outline btn-sm" href="{{ dashboard_url }}">
     Back to grades
   </a>
 {% endblock %}
 
 {% block staff_content %}
-  <section class="card shadow-sm mb-4">
-    <div class="card-body">
+  <section class="portal-panel-card mb-4">
+    <div class="portal-panel-card__stripe"></div>
+    <div class="portal-panel-card__body">
       <div class="d-flex justify-content-between flex-wrap gap-3">
         <div>
           <p class="text-uppercase small text-muted mb-1">Student</p>
-          <h2 class="h5 mb-1">{{ student_label }}</h2>
+          <h2 class="h5 mb-1">{{ std_label }}</h2>
           <p class="text-muted mb-0">{{ student.student_id }}</p>
           <p class="text-uppercase small text-muted mt-3 mb-1">Curriculum</p>
           <p class="mb-0">{{ curriculum_label }}</p>
@@ -27,12 +28,12 @@
     </div>
   </section>
 
-  <section class="card shadow-sm">
-    <div class="card-header">
+  <section class="portal-panel-card">
+    <div class="portal-accordion-card__header">
       <strong>Official grade transcript</strong>
     </div>
     {% if transcript_rows %}
-      <div class="table-responsive">
+      <div class="course-table table-responsive">
         <table class="table mb-0 align-middle">
           <thead>
             <tr>
@@ -45,7 +46,7 @@
           <tbody>
             {% for row in transcript_rows %}
               <tr>
-                <td>{{ row.semester_label }}</td>
+                <td>{{ row.sem_label }}</td>
                 <td>
                   <strong>{{ row.course_code }}</strong><br/>
                   <span class="text-muted">{{ row.course_title }}</span>
@@ -58,9 +59,7 @@
         </table>
       </div>
     {% else %}
-      <div class="card-body">
-        <div class="alert alert-light mb-0">No grades recorded for this student.</div>
-      </div>
+      <div class="portal-empty-state">No grades recorded for this student.</div>
     {% endif %}
   </section>
 {% endblock %}

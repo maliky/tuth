@@ -1,10 +1,6 @@
 {% extends "website/staff/base.html" %}
 
-{% block header_actions %}
-  <a class="btn btn-outline-secondary btn-sm" href="{% url 'portal_logout' %}">
-    Logout
-  </a>
-{% endblock %}
+{% block staff_header_actions %}{% endblock %}
 
 {% block staff_content %}
   {% if messages %}
@@ -15,11 +11,12 @@
     </div>
   {% endif %}
 
-  <div class="card shadow-sm">
-    <div class="card-body p-0">
-      <div class="table-responsive">
+  <div class="portal-panel-card">
+    <div class="portal-panel-card__stripe"></div>
+    <div class="portal-panel-card__body p-0">
+      <div class="course-table table-responsive">
         <table class="table align-middle mb-0">
-          <thead class="table-light">
+          <thead>
             <tr>
               <th>Semester</th>
               <th>Current status</th>
@@ -36,7 +33,7 @@
                   </small>
                 </td>
                 <td>
-                  <span class="badge {% if semester.is_registration_open %}bg-success{% else %}bg-secondary{% endif %}">
+                  <span class="status-badge {% if semester.is_registration_open %}status-completed{% else %}status-pending{% endif %}">
                     {{ semester.status.label }}
                   </span>
                 </td>
@@ -51,7 +48,7 @@
                         </option>
                       {% endfor %}
                     </select>
-                    <button type="submit" class="btn btn-primary btn-sm">
+                    <button type="submit" class="btn portal-btn-accent btn-sm">
                       Update
                     </button>
                   </form>

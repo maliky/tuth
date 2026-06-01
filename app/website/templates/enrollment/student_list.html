@@ -1,18 +1,15 @@
 {% extends "website/staff/base.html" %}
 
-{% block header_actions %}
-  <a class="btn btn-outline-secondary btn-sm" href="{% url 'portal_logout' %}">
-    Logout
-  </a>
-{% endblock %}
+{% block staff_header_actions %}{% endblock %}
 
 {% block staff_content %}
   <div class="alert alert-warning">
     Detailed search and cohort filters now live in the Django admin. This page shows a quick snapshot of recent students.
   </div>
 
-  <div class="card shadow-sm">
-    <div class="card-body">
+  <div class="portal-panel-card">
+    <div class="portal-panel-card__stripe"></div>
+    <div class="portal-panel-card__body">
       <h2 class="h5 mb-3">Latest records</h2>
       <ul class="list-group list-group-flush">
         {% for student in students %}

@@ -33,6 +33,10 @@ from app.website.views.finance_officer_helpers import (
     invoice_queryset,
     payment_queryset,
 )
+from app.website.views.staff_dashboards import (
+    build_staff_role_switcher,
+    build_staff_sidebar_links,
+)
 
 FINANCE_GROUPS = {
     UserRole.FINANCE.value.label,
@@ -299,10 +303,23 @@ def finance_officer_invoices(request: HttpRequest) -> HttpResponse:
             }
         )
 
+    active_task = "payment_validation" if tab == "payments" else "invoice_console"
+    dashboard_url = reverse(
+        "staff_role_dashboard",
+        kwargs={"role": "finance_officer"},
+    )
     context = {
         "page_title": "Finance Officer Console",
         "page_summary": "Review invoices, record payments, and clear balances.",
         "eyebrow": "Finance officer",
+        "sidebar_links": build_staff_sidebar_links("finance_officer", active_task),
+        "role_switcher": build_staff_role_switcher(
+            cast(User, request.user), "finance_officer"
+        ),
+        "breadcrumbs": [
+            {"label": "Finance overview", "href": dashboard_url},
+            {"label": "Invoice console", "href": ""},
+        ],
         "active_tab": tab,
         "search_query": search_query,
         "student_options": student_options,
@@ -327,9 +344,6 @@ def finance_officer_invoices(request: HttpRequest) -> HttpResponse:
         "pagination_hidden_fields": pagination_hidden_fields,
         "pagination_action": request.path,
         "student_autocomplete_url": reverse("finance_officer_std_autocomplete"),
-        "dashboard_url": reverse(
-            "staff_role_dashboard",
-            kwargs={"role": "finance_officer"},
-        ),
+        "dashboard_url": dashboard_url,
     }
     return render(request, "website/staff/finance_officer_invoices.html", context)
