@@ -120,8 +120,7 @@ Resolution:
 Adjusted the portal shell, sidebar navigation, KPI grid, and course-table containment for mobile widths.
 Targeted Selenium verification passed with no global horizontal overflow on the student dashboard.
 
-** DONE UX harmonization issues
-CLOSED: [2026-06-01 lun. 21:28]
+** TODO UX harmonization issues
 *** P2 - Django admin remains too visible in staff workflows
 Most staff pages expose =Advanced admin= in the top-right header, and several role action cards link directly to admin models.
 This is technically useful, but it still makes the staff portal feel like a skin over Django admin rather than a complete Tusis workspace.
