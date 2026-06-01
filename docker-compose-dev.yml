@@ -1,15 +1,13 @@
-x-default-env: &default-env
-  env_file:
-    - .env-pg
 services:
-  db:
+  dev-db:
     image: postgres:16
-    container_name: tusis-dev-db
-    <<: *default-env
     environment:
-      - PGDATA=/var/lib/postgresql/data/pgdata
+      POSTGRES_DB: ${TUSIS_DEV_POSTGRES_DB:-tuth_db}
+      POSTGRES_USER: ${TUSIS_DEV_POSTGRES_USER:-tuth_user}
+      POSTGRES_PASSWORD: ${TUSIS_DEV_POSTGRES_PASSWORD:-password}
+      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${TUSIS_DEV_DB_PORT:-15432}:5432"
     volumes:
       - tusis_pgdata:/var/lib/postgresql/data
     shm_size: "64mb"
@@ -21,9 +19,33 @@ services:
       -c maintenance_work_mem=32MB
       -c effective_cache_size=256MB
 
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile-dev
+    environment:
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-app.settings}
+      DJANGO_SECRET_KEY: ${TUSIS_DEV_SECRET_KEY:-dev-secret-key}
+      DJANGO_DEBUG: ${TUSIS_DEV_DEBUG:-True}
+      DJANGO_ALLOWED_HOSTS: ${TUSIS_DEV_ALLOWED_HOSTS:-localhost,127.0.0.1,[::1]}
+      DJANGO_CSRF_TRUSTED_ORIGINS: ${TUSIS_DEV_CSRF_TRUSTED_ORIGINS:-https://localhost,https://127.0.0.1}
+      DJANGO_DB_ENGINE: ${TUSIS_DEV_DB_ENGINE:-django.db.backends.postgresql}
+      DJANGO_DB_NAME: ${TUSIS_DEV_POSTGRES_DB:-tuth_db}
+      DJANGO_DB_USER: ${TUSIS_DEV_POSTGRES_USER:-tuth_user}
+      DJANGO_DB_PASSWORD: ${TUSIS_DEV_POSTGRES_PASSWORD:-password}
+      DJANGO_DB_HOST: ${TUSIS_DEV_DB_HOST:-dev-db}
+      DJANGO_DB_PORT: ${TUSIS_DEV_DB_PORT:-5432}
+    depends_on:
+      - dev-db
+    working_dir: /code
+    volumes:
+      - .:/code
+    ports:
+      - "127.0.0.1:${TUSIS_DEV_WEB_PORT:-8000}:8000"
+    command: ["bash", "-lc", "sleep infinity"]
+
   js-tools:
     image: node:20-bookworm-slim
-    container_name: tusis-dev-js-tools
     working_dir: /code
     volumes:
       - .:/code

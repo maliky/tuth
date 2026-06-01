@@ -5,8 +5,12 @@ DJANGO_DEBUG="True"
 DJANGO_ALLOWED_HOSTS="localhost,127.0.0.1,[::1]"
 DJANGO_CSRF_TRUSTED_ORIGINS="https://localhost,https://127.0.0.1"
 
-DJANGO_DB_ENGINE="django.db.backends.sqlite3"
-DJANGO_DB_NAME="db_test"
+DJANGO_DB_ENGINE="django.db.backends.postgresql"
+DJANGO_DB_NAME="tuth_db"
+DJANGO_DB_USER="tuth_user"
+DJANGO_DB_PASSWORD="password"
+DJANGO_DB_HOST="127.0.0.1"
+DJANGO_DB_PORT="15432"
 
 # Selenium / WebDriver defaults for local runs
 CHROMEDRIVER_VERSION="142.0.7444.61"

@@ -4,6 +4,15 @@ This document describes how to run the test suites and how fixtures are organize
 
 ### Quick Start
 
+Start the local PostgreSQL service, then load `env-test` before running pytest
+from the host:
+
+```bash
+docker-compose -p tusis_dev -f docker-compose-dev.yml up -d dev-db
+set -a; . ./env-test; set +a
+pytest
+```
+
 Run the full suite:
 
 ```bash

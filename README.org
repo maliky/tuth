@@ -124,10 +124,11 @@ cp .env-dev.example .env-dev
 #+END_SRC
 
 ** Running Tests
-Load the environment variables from your local `.env-test` file, then run pytest:
+Start the local PostgreSQL service, load the tracked =env-test= file, then run pytest:
 
 #+BEGIN_SRC bash
-export $(grep -v '^#' .env | xargs)  # load variables
+docker-compose -p tusis_dev -f docker-compose-dev.yml up -d dev-db
+set -a; . ./env-test; set +a
 pytest tests/
 # For parallel regression runs with reusable test DB and a saved log file:
 pytest ./tests -n 8  --dist=loadscope --reuse-db  -r fE 2>&1 | tee logs/tests.log

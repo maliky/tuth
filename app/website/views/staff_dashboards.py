@@ -853,6 +853,7 @@ for slug in ROLE_CONFIG:
 ROLE_INHERITANCE.setdefault("chair", set()).add("dean")
 ROLE_INHERITANCE.setdefault("faculty", set()).add("chair")
 ROLE_INHERITANCE.setdefault("dean", set()).add("vpaa")
+ROLE_INHERITANCE.setdefault("registrar", set()).add("reg_officer")
 
 ROLE_ORDER: dict[str, int] = {slug: idx for idx, slug in enumerate(ROLE_PRIORITY)}
 
