@@ -48,7 +48,7 @@ Highest-impact state:
 - Public landing, login, finance, enrollment, and dean mobile smoke pages avoid global horizontal overflow.
 
 ** Blocking findings
-*** P0 - Student/registrar primary links return 500
+*** DONE P0 - Student/registrar primary links return 500
 The click audit found repeated 500s on primary MWE links:
 - =/student/curriculum/=
 - =/student/invoice/statement/=
@@ -82,8 +82,12 @@ Fix direction:
 Update the view render targets to the current template names, or add compatibility wrapper templates if the old names are still used elsewhere.
 Then rerun the click audit for student curriculum/detail/section, invoice statement, payment receipt, registrar grades, and transcript preview.
 
+Resolution:
+Updated stale view render targets to the current portal template names.
+Targeted Selenium verification passed for student curriculum, invoice statement, payment receipt, registrar grades, and registrar-officer grades.
+
 ** Primary workflow issues
-*** P1 - Role switcher exposes inaccessible inherited staff pages
+*** DONE P1 - Role switcher exposes inaccessible inherited staff pages
 The dean and VPAA role-switcher/sidebar experience can expose workspace options that lead to 403 responses.
 Observed examples:
 - dean path to =/staff/faculty/= returned 403
@@ -98,7 +102,11 @@ Make role visibility and role permission use the same source of truth.
 If dean/VPAA should inherit lower workspaces, make the inheritance transitive and grant access consistently.
 If they should not inherit those workspaces, hide those options from the role switcher.
 
-*** P1 - Student dashboard overflows horizontally on mobile
+Resolution:
+Role switcher visibility and staff dashboard permission now share the same transitive role-access closure.
+Targeted Selenium verification passed for dean access to the faculty workspace and VPAA access to the chair workspace.
+
+*** DONE P1 - Student dashboard overflows horizontally on mobile
 The mobile smoke test found global horizontal overflow on the student dashboard only.
 The broad elements were the portal sidebar/content/header layout and student dashboard sections, with the page measuring wider than the mobile viewport.
 
@@ -108,7 +116,12 @@ This is the first page a student sees, so mobile comfort is not yet acceptable f
 Fix direction:
 Contain the student portal shell at mobile widths, wrap or stack sidebar navigation links, and keep wide course/registration tables inside local scroll containers instead of expanding the whole page.
 
-** UX harmonization issues
+Resolution:
+Adjusted the portal shell, sidebar navigation, KPI grid, and course-table containment for mobile widths.
+Targeted Selenium verification passed with no global horizontal overflow on the student dashboard.
+
+** DONE UX harmonization issues
+CLOSED: [2026-06-01 lun. 21:28]
 *** P2 - Django admin remains too visible in staff workflows
 Most staff pages expose =Advanced admin= in the top-right header, and several role action cards link directly to admin models.
 This is technically useful, but it still makes the staff portal feel like a skin over Django admin rather than a complete Tusis workspace.
