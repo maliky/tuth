@@ -1,18 +1,89 @@
 {% extends "website/staff/base.html" %}
 
-{% block staff_header_actions %}{% endblock %}
+{% block staff_header_actions %}
+  {% if student %}
+    <a class="btn portal-btn-outline btn-sm" href="{% url 'std_detail' student.pk %}">
+      Back to profile
+    </a>
+  {% endif %}
+{% endblock %}
 
 {% block staff_content %}
   <div class="portal-panel-card">
     <div class="portal-panel-card__stripe"></div>
     <div class="portal-panel-card__body">
-      <h2 class="h5">Create student in Django admin</h2>
-      <p class="text-muted">
-        The admissions workflow now lives entirely in the Django admin. Click the button below to open the official creation form with validation, attachments, and history tracking.
-      </p>
-      <a class="btn portal-btn-accent" href="{% url 'admin:people_student_add' %}">
-        Open admin form
-      </a>
+      <div class="portal-panel-card__head mb-3">
+        <h2 class="h5">{% if student %}Update enrollment record{% else %}Create student profile{% endif %}</h2>
+        <p class="portal-panel-card__subtitle">
+          Capture the minimum official record needed for a student to appear in Tusis workflows.
+        </p>
+      </div>
+
+      <form method="post" class="row g-3" novalidate>
+        {% csrf_token %}
+        <div class="col-md-4">
+          {{ form.student_id.label_tag }}
+          {{ form.student_id }}
+          {% if form.student_id.errors %}
+            <div class="text-danger small mt-1">{{ form.student_id.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-4">
+          {{ form.first_name.label_tag }}
+          {{ form.first_name }}
+          {% if form.first_name.errors %}
+            <div class="text-danger small mt-1">{{ form.first_name.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-4">
+          {{ form.last_name.label_tag }}
+          {{ form.last_name }}
+          {% if form.last_name.errors %}
+            <div class="text-danger small mt-1">{{ form.last_name.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-6">
+          {{ form.email.label_tag }}
+          {{ form.email }}
+          {% if form.email.errors %}
+            <div class="text-danger small mt-1">{{ form.email.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-6">
+          {{ form.primary_curriculum.label_tag }}
+          {{ form.primary_curriculum }}
+          {% if form.primary_curriculum.errors %}
+            <div class="text-danger small mt-1">{{ form.primary_curriculum.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-6">
+          {{ form.entry_semester.label_tag }}
+          {{ form.entry_semester }}
+          {% if form.entry_semester.errors %}
+            <div class="text-danger small mt-1">{{ form.entry_semester.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-6">
+          {{ form.last_enrolled_semester.label_tag }}
+          {{ form.last_enrolled_semester }}
+          {% if form.last_enrolled_semester.errors %}
+            <div class="text-danger small mt-1">{{ form.last_enrolled_semester.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+        {% if form.non_field_errors %}
+          <div class="col-12 text-danger small">
+            {{ form.non_field_errors|join:", " }}
+          </div>
+        {% endif %}
+        <div class="col-12 d-flex flex-wrap gap-2">
+          <button class="btn portal-btn-accent" type="submit">
+            {% if student %}Save student profile{% else %}Create student profile{% endif %}
+          </button>
+          <a class="btn portal-btn-outline" href="{% url 'std_list' %}">
+            View student snapshot
+          </a>
+        </div>
+      </form>
     </div>
   </div>
 {% endblock %}

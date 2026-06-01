@@ -1,25 +1,30 @@
 {% extends "website/staff/base.html" %}
 
-{% block staff_header_actions %}{% endblock %}
+{% block staff_header_actions %}
+  <a class="btn portal-btn-outline btn-sm" href="{% url 'create_std' %}">
+    Create student
+  </a>
+{% endblock %}
 
 {% block staff_content %}
-  <div class="alert alert-warning">
-    Detailed search and cohort filters now live in the Django admin. This page shows a quick snapshot of recent students.
-  </div>
-
   <div class="portal-panel-card">
     <div class="portal-panel-card__stripe"></div>
     <div class="portal-panel-card__body">
-      <h2 class="h5 mb-3">Latest records</h2>
+      <div class="portal-panel-card__head mb-3">
+        <h2 class="h5 mb-1">Latest records</h2>
+        <p class="portal-panel-card__subtitle mb-0">
+          Open a profile to review details or continue the enrollment record.
+        </p>
+      </div>
       <ul class="list-group list-group-flush">
         {% for student in students %}
-          <li class="list-group-item d-flex justify-content-between align-items-center">
+          <li class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div>
               <strong>{{ student.long_name }}</strong><br />
               <small class="text-muted">{{ student.student_id }}</small>
             </div>
             <a class="btn btn-sm portal-btn-outline" href="{% url 'std_detail' student.pk %}">
-              View
+              View profile
             </a>
           </li>
         {% empty %}

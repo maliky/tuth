@@ -4,6 +4,9 @@
   <a class="btn portal-btn-outline btn-sm" href="{% url 'std_list' %}">
     Back to snapshot
   </a>
+  <a class="btn portal-btn-accent btn-sm" href="{% url 'create_std' %}?student_id={{ student.student_id|urlencode }}">
+    Update profile
+  </a>
 {% endblock %}
 
 {% block staff_content %}

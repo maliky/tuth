@@ -13,57 +13,77 @@
 
   <div class="portal-panel-card">
     <div class="portal-panel-card__stripe"></div>
-    <div class="portal-panel-card__body p-0">
-      <div class="course-table table-responsive">
-        <table class="table align-middle mb-0">
-          <thead>
-            <tr>
-              <th>Semester</th>
-              <th>Current status</th>
-              <th class="text-end">Change status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for semester in semesters %}
-              <tr>
-                <td>
-                  <strong>{{ semester }}</strong><br />
-                  <small class="text-muted">
-                    {{ semester.academic_year.code }} · Semester {{ semester.number }}
-                  </small>
-                </td>
-                <td>
-                  <span class="status-badge {% if semester.is_registration_open %}status-completed{% else %}status-pending{% endif %}">
-                    {{ semester.status.label }}
-                  </span>
-                </td>
-                <td class="text-end">
-                  <form method="post" class="d-inline-flex align-items-center gap-2">
-                    {% csrf_token %}
-                    <input type="hidden" name="semester_id" value="{{ semester.id }}" />
-                    <select name="status_code" class="form-select form-select-sm">
-                      {% for status in statuses %}
-                        <option value="{{ status.code }}" {% if semester.status_id == status.code %}selected{% endif %}>
-                          {{ status.label }}
-                        </option>
-                      {% endfor %}
-                    </select>
-                    <button type="submit" class="btn portal-btn-accent btn-sm">
-                      Update
-                    </button>
-                  </form>
-                </td>
-              </tr>
-            {% empty %}
-              <tr>
-                <td colspan="3" class="text-center text-muted py-4">
-                  No semesters defined yet.
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+    <div class="portal-panel-card__body">
+      <div class="portal-panel-card__head mb-3">
+        <h2 class="h5">Registration windows by academic year</h2>
+        <p class="portal-panel-card__subtitle">
+          Open or close one semester at a time. Tusis asks for confirmation before changing a window.
+        </p>
       </div>
+
+      {% for group in semester_groups %}
+        <section class="portal-accordion-card registrar-window-group mb-3">
+          <div class="portal-accordion-card__header d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+              <p class="eyebrow text-uppercase mb-1">Academic year</p>
+              <h3 class="h5 mb-0">{{ group.academic_year }}</h3>
+            </div>
+            <span class="badge rounded-pill text-bg-light">
+              {{ group.semesters|length }} semester{{ group.semesters|length|pluralize }}
+            </span>
+          </div>
+          <div class="portal-accordion-card__body p-0">
+            <div class="course-table table-responsive mb-0">
+              <table class="table align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Semester</th>
+                    <th>Current status</th>
+                    <th class="text-end">Change status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for semester in group.semesters %}
+                    <tr>
+                      <td>
+                        <strong>Semester {{ semester.number }}</strong><br />
+                        <small class="text-muted">{{ semester }}</small>
+                      </td>
+                      <td>
+                        <span class="status-badge {% if semester.is_registration_open %}status-completed{% else %}status-pending{% endif %}">
+                          {{ semester.status.label }}
+                        </span>
+                      </td>
+                      <td class="text-end">
+                        <form
+                          method="post"
+                          class="registrar-window-form d-inline-flex align-items-center gap-2"
+                          onsubmit="return confirm('Update this semester window?');"
+                        >
+                          {% csrf_token %}
+                          <input type="hidden" name="semester_id" value="{{ semester.id }}" />
+                          <select name="status_code" class="form-select form-select-sm" aria-label="Status for {{ semester }}">
+                            {% for status in statuses %}
+                              <option value="{{ status.code }}" {% if semester.status_id == status.code %}selected{% endif %}>
+                                {{ status.label }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                          <button type="submit" class="btn portal-btn-accent btn-sm">
+                            Update
+                          </button>
+                        </form>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      {% empty %}
+        <div class="portal-empty-state">No semesters defined yet.</div>
+      {% endfor %}
     </div>
   </div>
 {% endblock %}

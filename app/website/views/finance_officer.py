@@ -223,6 +223,8 @@ def finance_officer_invoices(request: HttpRequest) -> HttpResponse:
     else:
         invoice_tab_url = "?tab=invoices"
         payment_tab_url = "?tab=payments"
+    invoice_all_url = "?tab=invoices&invoice_status=all&semester=all"
+    payment_all_url = "?tab=payments&payment_status=all&semester=all"
     pagination_params = request.GET.copy()
     pagination_params.pop("page", None)
     if "semester" not in pagination_params and semester_id:
@@ -340,6 +342,8 @@ def finance_officer_invoices(request: HttpRequest) -> HttpResponse:
         "current_path": request.get_full_path(),
         "invoice_tab_url": invoice_tab_url,
         "payment_tab_url": payment_tab_url,
+        "invoice_all_url": invoice_all_url,
+        "payment_all_url": payment_all_url,
         "pagination_query": pagination_params.urlencode(),
         "pagination_hidden_fields": pagination_hidden_fields,
         "pagination_action": request.path,

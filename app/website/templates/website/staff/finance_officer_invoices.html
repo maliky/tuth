@@ -201,7 +201,20 @@
         </form>
       {% endfor %}
     {% else %}
-      <div class="portal-empty-state">No payments found.</div>
+      <div class="portal-empty-state portal-empty-state--guided">
+        <h3>No payments match these filters.</h3>
+        <p>
+          Try all semesters, all payment statuses, or switch back to invoices to create pending payment rows first.
+        </p>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn portal-btn-outline btn-sm" href="{{ payment_all_url }}">
+            Show all payments
+          </a>
+          <a class="btn portal-btn-accent btn-sm" href="{{ invoice_tab_url }}">
+            Review invoices
+          </a>
+        </div>
+      </div>
     {% endif %}
   {% else %}
     {% for group in invoice_groups %}
@@ -216,24 +229,24 @@
       </form>
     {% endfor %}
 
-    <form
-      id="invoice-selection-form"
-      method="post"
-      action="{% url 'finance_officer_create_payments' %}"
-    >
-      {% csrf_token %}
-      <input type="hidden" name="next" value="{{ current_path }}" />
-      <div class="portal-selection-bar d-flex justify-content-between align-items-center mb-3">
-        <p class="mb-0 text-muted">Select invoices for individual payments.</p>
-        <button
-          class="btn portal-btn-accent btn-sm d-none"
-          type="submit"
-          id="invoice-selection-submit"
-        >
-          Create individual payment
-        </button>
-      </div>
-      {% if invoice_groups %}
+    {% if invoice_groups %}
+      <form
+        id="invoice-selection-form"
+        method="post"
+        action="{% url 'finance_officer_create_payments' %}"
+      >
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ current_path }}" />
+        <div class="portal-selection-bar d-flex justify-content-between align-items-center mb-3">
+          <p class="mb-0 text-muted">Select invoices for individual payments.</p>
+          <button
+            class="btn portal-btn-accent btn-sm d-none"
+            type="submit"
+            id="invoice-selection-submit"
+          >
+            Create individual payment
+          </button>
+        </div>
         {% for group in invoice_groups %}
           <div class="portal-accordion-card mb-3">
             <div class="portal-accordion-card__header d-flex flex-wrap align-items-center gap-3 justify-content-between">
@@ -305,10 +318,23 @@
             </div>
           </div>
         {% endfor %}
-      {% else %}
-        <div class="portal-empty-state">No invoices found.</div>
-      {% endif %}
-    </form>
+      </form>
+    {% else %}
+      <div class="portal-empty-state portal-empty-state--guided">
+        <h3>No invoices match these filters.</h3>
+        <p>
+          Try all semesters, show all invoice statuses, or search for a specific student account.
+        </p>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn portal-btn-outline btn-sm" href="{{ invoice_all_url }}">
+            Show all invoices
+          </a>
+          <a class="btn portal-btn-accent btn-sm" href="{{ payment_tab_url }}">
+            Review payments
+          </a>
+        </div>
+      </div>
+    {% endif %}
   {% endif %}
 
   {% if active_tab == "payments" %}

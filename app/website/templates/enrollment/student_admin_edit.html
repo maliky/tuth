@@ -10,9 +10,9 @@
   <div class="portal-panel-card">
     <div class="portal-panel-card__stripe"></div>
     <div class="portal-panel-card__body">
-      <h2 class="h5 mb-3">Jump to Django admin</h2>
+      <h2 class="h5 mb-3">Find a student profile</h2>
       <p class="text-muted">
-        Pick a student and Tusis will open the Django admin edit form in a new tab.
+        Pick a student and Tusis will open the portal profile for review or update.
       </p>
       <form method="post" class="row g-3" novalidate>
         {% csrf_token %}
@@ -51,7 +51,7 @@
           {% endif %}
         </div>
         <div class="col-md-4 d-flex align-items-end">
-          <button type="submit" class="btn portal-btn-accent w-100">Open in admin</button>
+          <button type="submit" class="btn portal-btn-accent w-100">Open portal profile</button>
         </div>
       </form>
     </div>

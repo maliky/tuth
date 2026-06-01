@@ -26,11 +26,6 @@
   <a class="btn portal-btn-accent btn-sm" href="{% url 'portal_logout' %}">
     Log out
   </a>
-  {% if request.user.is_staff %}
-    <a class="btn portal-btn-outline btn-sm" href="{% url 'admin:index' %}">
-      Advanced admin
-    </a>
-  {% endif %}
 {% endblock %}
 
 {% block content %}

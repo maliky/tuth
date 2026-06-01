@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TypedDict, cast
 
 from django.contrib import messages
@@ -67,6 +68,13 @@ class RegTranscriptRowT(TypedDict):
     grade: str
 
 
+class RegSemesterWindowGroupT(TypedDict):
+    """Grouped semester-window rows for the registrar portal."""
+
+    academic_year: str
+    semesters: list[Semester]
+
+
 def _clean_int(value: str | None) -> int | None:
     """Return a cleaned integer or None."""
     if not value:
@@ -88,6 +96,23 @@ def _latest_graded_sem_id() -> int | None:
         .values_list("section__semester_id", flat=True)
         .first()
     )
+
+
+def _group_semester_windows(
+    semesters: Sequence[Semester],
+) -> list[RegSemesterWindowGroupT]:
+    """Group semester windows by academic year for compact display."""
+    groups: list[RegSemesterWindowGroupT] = []
+    group_lookup: dict[str, RegSemesterWindowGroupT] = {}
+    for semester in semesters:
+        label = semester.academic_year.code
+        group = group_lookup.get(label)
+        if group is None:
+            group = {"academic_year": label, "semesters": []}
+            group_lookup[label] = group
+            groups.append(group)
+        group["semesters"].append(semester)
+    return groups
 
 
 @login_required
@@ -430,7 +455,7 @@ def reg_crs_wins(request: HttpRequest) -> HttpResponse:
         return redirect("reg_crs_wins")
 
     context = {
-        "semesters": semesters,
+        "semester_groups": _group_semester_windows(list(semesters)),
         "statuses": statuses,
         "page_title": "Course selection windows",
         "page_summary": "Open or close registration periods directly from Tusis.",

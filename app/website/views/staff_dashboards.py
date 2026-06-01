@@ -16,9 +16,11 @@ from app.academics.models.curriculum import Curriculum
 from app.finance.models.invoice import CrsInvoice
 from app.finance.models.payment import Payment
 from app.finance.models.scholarship import (
+    Scholarship,
     ScholarshipLetterTemplate,
     ScholarshipTermSnapshot,
 )
+from app.people.models.donor import Donor
 from app.people.models.faculty import Faculty, FacultyWorkloadSnapshot
 from app.people.models.student import Student
 from app.registry.models.document import DocStd
@@ -48,6 +50,7 @@ ROLE_PRIORITY: list[RoleSlugT] = [
     "finance",
     "cashier",
     "scholarship",
+    "donor",
     "it",
     "staff",
     "general",
@@ -152,6 +155,14 @@ def _get_faculty_profile(user: User) -> Faculty | None:
         return None
 
 
+def _get_donor_profile(user: User) -> Donor | None:
+    """Return the donor profile attached to a user, if any."""
+    try:
+        return user.donor
+    except Donor.DoesNotExist:
+        return None
+
+
 def _empty_role_context(message: str) -> RoleContextT:
     return {
         "panels": [
@@ -191,18 +202,19 @@ def _with_actions(context: RoleContextT, extra: list[ActionT]) -> RoleContextT:
 
 
 def _annotate_admin_actions(actions: list[ActionT]) -> list[ActionT]:
-    """Flag action links that point to Django admin views."""
+    """Return portal-visible actions, hiding Django admin escape hatches."""
     admin_prefix = reverse("admin:index")
     annotated: list[ActionT] = []
     for action in actions:
         href = str(action.get("href") or "")
         is_admin = href.startswith(admin_prefix)
+        if is_admin:
+            continue
         annotated.append(
             {
                 **action,
                 "is_admin": is_admin,
-                # Align action button colors with admin vs app destinations.
-                "variant": "primary" if is_admin else "warning",
+                "variant": "warning",
             }
         )
     return annotated
@@ -243,23 +255,10 @@ def _build_staff_context(request: HttpRequest) -> RoleContextT:
         ]
     )
 
-    actions: list[ActionT] = []
-    if staff_profile:
-        edit_url = _maybe_reverse("admin:people_staff_change", args=[staff_profile.pk])
-        if edit_url:
-            actions.append(
-                {
-                    "label": "Edit my staff profile",
-                    "href": edit_url,
-                    "description": "Update contact information or department details.",
-                    "variant": "outline-primary",
-                }
-            )
-
     return {
         "metrics": metrics,
         "panels": [{"title": "Profile", "items": profile_items}],
-        "actions": actions,
+        "actions": [],
     }
 
 
@@ -518,15 +517,15 @@ def _build_enrollment_context(_: HttpRequest) -> RoleContextT:
             "variant": "outline-primary",
         },
         {
-            "label": "Create student in admin",
-            "href": reverse("admin:people_student_add"),
-            "description": "Open the official admissions form with attachments and history.",
+            "label": "Create student",
+            "href": reverse("create_std"),
+            "description": "Capture a new student profile directly in Tusis.",
             "variant": "primary",
         },
         {
-            "label": "Edit student in admin",
+            "label": "Find student",
             "href": reverse("std_admin_edit"),
-            "description": "Pick an ID and Tusis will send you straight to the admin edit screen.",
+            "description": "Search by ID or name and open the portal profile.",
             "variant": "outline-secondary",
         },
     ]
@@ -548,19 +547,7 @@ def _build_enrollment_context(_: HttpRequest) -> RoleContextT:
 
 
 def _build_enrollment_officer_context(request: HttpRequest) -> RoleContextT:
-    context = _build_enrollment_context(request)
-    bulk_url = _maybe_reverse("admin:people_student_changelist")
-    extras: list[ActionT] = []
-    if bulk_url:
-        extras.append(
-            {
-                "label": "Open admin directory",
-                "href": bulk_url,
-                "description": "Search, filter, and export from Django admin.",
-                "variant": "outline-secondary",
-            }
-        )
-    return _with_actions(context, extras)
+    return _build_enrollment_context(request)
 
 
 def _build_reg_context(_: HttpRequest) -> RoleContextT:
@@ -621,16 +608,6 @@ def _build_reg_officer_context(request: HttpRequest) -> RoleContextT:
             "variant": "warning",
         }
     ]
-    admin_url = _maybe_reverse("admin:timetable_semester_changelist")
-    if admin_url:
-        extras.append(
-            {
-                "label": "Review semester setup",
-                "href": admin_url,
-                "description": "Audit statuses directly in Django admin.",
-                "variant": "outline-secondary",
-            }
-        )
     return _with_actions(base, extras)
 
 
@@ -670,27 +647,60 @@ def _build_scholarship_context(_: HttpRequest) -> RoleContextT:
     }
 
 
+def _build_donor_context(request: HttpRequest) -> RoleContextT:
+    """Render a donor-facing sponsorship summary."""
+    donor = _get_donor_profile(_as_user(request.user))
+    if donor is None:
+        return _empty_role_context("No donor profile is linked to this account yet.")
+
+    scholarships = (
+        Scholarship.objects.filter(donor=donor)
+        .select_related("student")
+        .order_by("-start_date", "-id")
+    )
+    templates_count = donor.letter_templates.filter(is_active=True).count()
+    scholarship_items: list[PanelItemT] = [
+        {
+            "label": scholarship.student.long_name,
+            "value": f"{scholarship.amount} from {scholarship.start_date:%d %b %Y}",
+            "meta": scholarship.conditions or "No conditions recorded.",
+        }
+        for scholarship in scholarships[:6]
+    ]
+    if not scholarship_items:
+        scholarship_items = [
+            {
+                "label": "No active sponsorships yet",
+                "value": "Scholarship awards will appear here once recorded.",
+            }
+        ]
+
+    return {
+        "metrics": [
+            {"label": "Sponsored students", "value": scholarships.count()},
+            {"label": "Letter templates", "value": templates_count},
+        ],
+        "panels": [
+            {
+                "title": "Scholarship commitments",
+                "items": scholarship_items,
+            }
+        ],
+        "actions": [],
+    }
+
+
 def _build_finance_context(_: HttpRequest) -> RoleContextT:
     pending_payments = Payment.objects.filter(status__code="pending").count()
     invoice_count = CrsInvoice.objects.count()
     actions: list[ActionT] = []
-    invoice_admin = _maybe_reverse("admin:finance_courseinvoice_changelist")
-    if invoice_admin:
+    finance_console = _maybe_reverse("finance_officer_invoices")
+    if finance_console:
         actions.append(
             {
-                "label": "Review invoices",
-                "href": invoice_admin,
-                "description": "Open the finance register filtered by status.",
-                "variant": "outline-primary",
-            }
-        )
-    payment_admin = _maybe_reverse("admin:finance_payment_changelist")
-    if payment_admin:
-        actions.append(
-            {
-                "label": "Validate payments",
-                "href": payment_admin,
-                "description": "Confirm proof of payment submissions.",
+                "label": "Open finance console",
+                "href": finance_console,
+                "description": "Review invoices and payment validation from Tusis.",
                 "variant": "primary",
             }
         )
@@ -716,51 +726,16 @@ def _build_finance_context(_: HttpRequest) -> RoleContextT:
 
 
 def _build_cashier_context(request: HttpRequest) -> RoleContextT:
-    base = _build_finance_context(request)
-    quick_entry = _maybe_reverse("admin:finance_payment_add")
-    extras: list[ActionT] = []
-    if quick_entry:
-        extras.append(
-            {
-                "label": "Record payment",
-                "href": quick_entry,
-                "description": "Jump straight to the cashier form in admin.",
-                "variant": "success",
-            }
-        )
-    return _with_actions(base, extras)
+    return _build_finance_context(request)
 
 
 def _build_finance_officer_context(request: HttpRequest) -> RoleContextT:
-    base = _build_finance_context(request)
-    scholarship_admin = _maybe_reverse("admin:finance_scholarship_changelist")
-    extras: list[ActionT] = []
-    finance_console = _maybe_reverse("finance_officer_invoices")
-    if finance_console:
-        extras.append(
-            {
-                "label": "Invoice & payment console",
-                "href": finance_console,
-                "description": "Review invoices and record pending payments.",
-                "variant": "primary",
-            }
-        )
-    if scholarship_admin:
-        extras.append(
-            {
-                "label": "Manage scholarships",
-                "href": scholarship_admin,
-                "description": "Adjust donor awards and compliance snapshots.",
-                "variant": "outline-secondary",
-            }
-        )
-    return _with_actions(base, extras)
+    """Return the finance officer workspace without duplicate console links."""
+    return _build_finance_context(request)
 
 
 def _build_it_context(_: HttpRequest) -> RoleContextT:
-    return _empty_role_context(
-        "IT support tasks live in the Django admin and infrastructure tools."
-    )
+    return _empty_role_context("IT support workflows are not yet exposed in the portal.")
 
 
 def _build_general_context(_: HttpRequest) -> RoleContextT:
@@ -846,10 +821,16 @@ ROLE_CONFIG: dict[str, RoleConfig] = {
         "summary": "Donor letters and GPA compliance snapshots.",
         "builder": _build_scholarship_context,
     },
+    "donor": {
+        "groups": {UserRole.DONOR.value.label},
+        "title": "Donor Sponsorship Portal",
+        "summary": "Scholarship commitments and beneficiary status.",
+        "builder": _build_donor_context,
+    },
     "it": {
-        "groups": {"IT", "IT Support"},
+        "groups": {"IT", "It", "IT Support"},
         "title": "IT Support",
-        "summary": "Infrastructure, monitoring, and admin tooling.",
+        "summary": "Infrastructure, monitoring, and support queues.",
         "builder": _build_it_context,
     },
     "general": {
@@ -955,7 +936,7 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
             "key": "student_snapshot",
         },
         {
-            "label": "Admin edit lookup",
+            "label": "Student lookup",
             "route_name": "std_admin_edit",
             "icon": "bi-search",
             "key": "student_lookup",
@@ -975,7 +956,7 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
             "key": "student_snapshot",
         },
         {
-            "label": "Admin edit lookup",
+            "label": "Student lookup",
             "route_name": "std_admin_edit",
             "icon": "bi-search",
             "key": "student_lookup",
@@ -1029,6 +1010,14 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
             "label": "Beneficiary alerts",
             "route_name": "staff_role_dashboard",
             "args": ["scholarship"],
+            "icon": "bi-award",
+        }
+    ],
+    "donor": [
+        {
+            "label": "Sponsorship summary",
+            "route_name": "staff_role_dashboard",
+            "args": ["donor"],
             "icon": "bi-award",
         }
     ],

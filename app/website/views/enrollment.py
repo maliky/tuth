@@ -16,6 +16,7 @@ from django.urls import reverse
 
 from app.people.models.student import Student
 from app.shared.utils import parse_str
+from app.website.forms.enrollment import StudentIntakeForm, save_student_intake
 from app.website.views.staff_dashboards import (
     build_staff_role_switcher,
     build_staff_sidebar_links,
@@ -23,7 +24,7 @@ from app.website.views.staff_dashboards import (
 
 
 class StdAdminLookupForm(forms.Form):
-    """Small helper form that jumps to the Django admin edit screen."""
+    """Small helper form that opens a student profile inside the portal."""
 
     student = forms.IntegerField(widget=forms.HiddenInput(), required=False)
     student_query = forms.CharField(
@@ -67,18 +68,44 @@ def _staff_breadcrumb(label: str) -> list[dict[str, str]]:
     ]
 
 
+def _selected_student(request: HttpRequest) -> Student | None:
+    """Return the student selected for portal editing, when present."""
+    raw_student_id = request.POST.get("student_id") or request.GET.get("student_id")
+    student_id = parse_str(raw_student_id)
+    if not student_id:
+        return None
+    return (
+        Student.objects.select_related("user")
+        .filter(student_id__iexact=student_id)
+        .first()
+    )
+
+
 @permission_required("people.add_student", raise_exception=True)
 def create_std(request: HttpRequest) -> HttpResponse:
-    """Point staff to the Django admin form."""
+    """Create or update a student profile from the portal."""
+    student = _selected_student(request)
+    form = StudentIntakeForm(
+        request.POST or None,
+        student=student,
+    )
+    if request.method == "POST" and form.is_valid():
+        student = save_student_intake(form, student)
+        messages.success(request, f"{student.long_name} is ready in Tusis.")
+        return redirect("std_detail", pk=student.pk)
+
+    mode_label = "Update student" if student else "Create student"
     context = {
-        "page_title": "Create student",
-        "page_summary": "Use the Django admin admissions form to capture the official record.",
+        "form": form,
+        "student": student,
+        "page_title": mode_label,
+        "page_summary": "Capture the core admissions record without leaving the Tusis portal.",
         "eyebrow": "Enrollment",
         "sidebar_links": build_staff_sidebar_links("enrollment", "create_student"),
         "role_switcher": build_staff_role_switcher(
             cast(User, request.user), "enrollment"
         ),
-        "breadcrumbs": _staff_breadcrumb("Create student"),
+        "breadcrumbs": _staff_breadcrumb(mode_label),
     }
     return render(request, "website/create_student.html", context)
 
@@ -90,7 +117,7 @@ def std_list(request: HttpRequest) -> HttpResponse:
     context = {
         "students": students,
         "page_title": "Student snapshot",
-        "page_summary": "This list shows the latest entries. Use Django admin for full search and filters.",
+        "page_summary": "Review recent student profiles and continue enrollment work inside Tusis.",
         "eyebrow": "Enrollment",
         "sidebar_links": build_staff_sidebar_links("enrollment", "student_snapshot"),
         "role_switcher": build_staff_role_switcher(
@@ -148,17 +175,17 @@ def std_delete(request: HttpRequest, pk: int) -> HttpResponse:
 
 @permission_required("people.view_student", raise_exception=True)
 def std_admin_edit(request: HttpRequest) -> HttpResponse:
-    """Provide a simple selector that jumps to the Django admin edit form."""
+    """Provide a simple selector that opens a portal student profile."""
     form = StdAdminLookupForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         student_pk = form.cleaned_data["student"]
         student = get_object_or_404(Student, pk=student_pk)
-        return redirect(reverse("admin:people_student_change", args=[student.pk]))
+        return redirect("std_detail", pk=student.pk)
 
     context = {
         "form": form,
-        "page_title": "Edit student in admin",
-        "page_summary": "Pick an ID and Tusis will open the Django admin edit form in a new tab.",
+        "page_title": "Find student",
+        "page_summary": "Pick an ID and Tusis will open the portal profile.",
         "eyebrow": "Enrollment",
         "sidebar_links": build_staff_sidebar_links("enrollment", "student_lookup"),
         "role_switcher": build_staff_role_switcher(

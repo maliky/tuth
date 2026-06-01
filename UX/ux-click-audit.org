@@ -3,10 +3,11 @@
 :DATE: 2026-06-01
 :TARGET: https://tusis.koba.sarl
 :ARTIFACTS: /tmp/tusis_ux_click_audit_20260601T193458Z
+:P2_P3_ARTIFACTS: /tmp/tusis_ux_p2_p3_verify_20260601T221640Z
 :END:
 
 ** Scope and method
-This audit used headless Chromium/Selenium against preprod with basic auth =tusis:tusis=.
+The original audit used headless Chromium/Selenium against preprod with basic auth =tusis:tusis=.
 It used the runtime MWE accounts documented in =UX/mwe.org=.
 
 The crawl covered:
@@ -15,37 +16,43 @@ The crawl covered:
 - staff, faculty, chair, dean, VPAA, registrar, registrar officer, finance, finance officer, cashier, enrollment, enrollment officer, IT, and donor logins
 - representative mobile pages for public, login, student, finance, registrar, enrollment, and dean
 
+The P2/P3 follow-up verification used the same public preprod route with the runtime MWE accounts and stricter checks for 500, 403/access-denied pages, visible admin-first wording, and primary =/admin/= anchors.
+
 The audit intentionally did not click Django admin or submit destructive/mutating forms.
-Skipped mutating actions include student registration/drop, finance payment creation/update, semester status update, student delete, and admin edit/create jumps.
+Skipped mutating actions include student registration/drop, finance payment creation/update, semester status update, and student delete.
 
 Raw evidence:
-- 145 rendered pages captured
-- screenshots and raw JSON: =/tmp/tusis_ux_click_audit_20260601T193458Z=
-- raw JSON: =/tmp/tusis_ux_click_audit_20260601T193458Z/audit.json=
+- original click audit screenshots and JSON: =/tmp/tusis_ux_click_audit_20260601T193458Z=
+- P2/P3 verification screenshots and JSON: =/tmp/tusis_ux_p2_p3_verify_20260601T221640Z=
+- P2/P3 report: =/tmp/tusis_ux_p2_p3_verify_20260601T221640Z/report.json=
 
 ** Executive state
-The new shared portal shell is visible and coherent across the main staff/student surfaces.
-The landing page, login page, staff dashboards, finance console, dean dashboard, enrollment snapshots, and registrar course windows generally render with the harmonized green/gold portal language.
+The shared portal shell is visible and coherent across the main student and staff surfaces.
+The landing page, login page, staff dashboards, finance console, dean dashboard, enrollment snapshots, donor portal, and registrar course windows render with the harmonized green/gold portal language.
 
-The MWE is not yet deployable as a comfortable end-to-end UX because several primary internal links still return 500s, and staff workflows still expose Django admin as a prominent part of the visible journey.
+The original P0, P1, P2, and P3 audit findings are now resolved for the non-mutating MWE browser path.
+The remaining UX risk is not basic navigation comfort; it is the depth of still-minimal backstage workflows and untested destructive/mutating submissions.
 
 Highest-impact state:
-- Student dashboard loads, but student curriculum, invoice statement, and payment receipt links return 500.
-- Registrar dashboard loads, but grade review returns 500.
-- Staff/dean/finance shell is visually harmonized, but =Advanced admin= and admin-oriented action cards remain visible across most staff pages.
-- Enrollment still depends on admin-first create/edit workflows.
-- Student mobile dashboard has horizontal overflow; finance/enrollment/dean mobile smoke pages did not show horizontal overflow.
+- Student curriculum, invoice statement, payment receipt, registrar grades, and registrar-officer grades no longer return 500 in the targeted audit path.
+- Role switcher visibility and permissions are aligned for the audited dean/VPAA/staff paths.
+- Staff, dean, finance, enrollment, registrar, donor, and IT pages keep Django admin out of the primary visible workflow.
+- Enrollment create/search/update now stays inside Tusis instead of sending users to Django admin as the first action.
+- Finance empty/default states explain the next action and avoid empty submit controls when no invoice rows exist.
+- Registrar course windows are grouped by academic year and status changes require confirmation.
+- Finance and registrar edited pages passed the mobile smoke check without global horizontal overflow.
 
 ** What is done
 - Public landing and portal login render correctly and route users into their workspaces.
-- All runtime =test_*= accounts authenticated successfully.
-- Student dashboard renders in the new portal shell with student identity, sidebar navigation, KPI cards, registration area, and payment/invoice affordances.
-- Staff, dean, finance, registrar, enrollment, cashier, faculty, chair, VPAA, and IT dashboards inherit the shared portal shell.
-- Finance officer console renders in the portal language, with invoice/payment tabs, filters, sidebar task navigation, and empty-state messaging.
+- Runtime =test_*= accounts authenticated successfully for the audited paths.
+- Student dashboard renders in the portal shell with student identity, sidebar navigation, KPI cards, registration area, and payment/invoice affordances.
+- Staff, dean, finance, registrar, enrollment, cashier, faculty, chair, VPAA, donor, and IT dashboards inherit the shared portal shell.
+- Finance officer console renders in the portal language, with invoice/payment tabs, filters, sidebar task navigation, and guided empty-state messaging.
 - Dean dashboard renders as a portal page with approval queue and college chair panels.
-- Enrollment student snapshot and student detail pages render under the portal shell.
-- Registrar course-window management page renders under the portal shell.
-- Public landing, login, finance, enrollment, and dean mobile smoke pages avoid global horizontal overflow.
+- Enrollment student snapshot, student detail, student lookup, create, and update pages render under the portal shell.
+- Registrar course-window management renders under the portal shell with academic-year grouping.
+- Donor runtime account lands on a donor sponsorship workspace instead of the generic staff dashboard.
+- Public landing, login, finance, enrollment, registrar, dean, and student mobile smoke pages avoid global horizontal overflow on the audited paths.
 
 ** Blocking findings
 *** DONE P0 - Student/registrar primary links return 500
@@ -55,7 +62,7 @@ The click audit found repeated 500s on primary MWE links:
 - =/student/payment/receipt/<semester>/=
 - =/registrar/grades/=
 
-Server logs show =TemplateDoesNotExist= for old template names after the portal template rename/harmonization.
+Server logs showed =TemplateDoesNotExist= for old template names after the portal template rename/harmonization.
 A static render-name check also found additional old template references that were not all reached by the crawl.
 
 Affected source areas:
@@ -65,150 +72,123 @@ Affected source areas:
 - =app/website/views/student_sections.py=
 - =app/website/views/registrar.py=
 
-Current missing render targets and likely intended portal templates:
-- =website/std_curri_crss.html= -> =website/student_curriculum_courses.html=
-- =website/std_curri_crs_detail.html= -> =website/student_curriculum_course_detail.html=
-- =website/std_invoice_statement.html= -> =website/student_invoice_statement.html=
-- =website/std_payment_receipt.html= -> =website/student_payment_receipt.html=
-- =website/std_sec_detail.html= -> =website/student_section_detail.html=
-- =website/staff/reg_grades_dashboard.html= -> =website/staff/registrar_grades_dashboard.html=
-- =website/staff/reg_grade_transcript.html= -> =website/staff/registrar_grade_transcript.html=
-
-Impact:
-A student cannot complete the basic MWE journey from dashboard to curriculum, invoice statement, or payment receipt.
-A registrar cannot open the grade-review workflow.
-
-Fix direction:
-Update the view render targets to the current template names, or add compatibility wrapper templates if the old names are still used elsewhere.
-Then rerun the click audit for student curriculum/detail/section, invoice statement, payment receipt, registrar grades, and transcript preview.
-
 Resolution:
 Updated stale view render targets to the current portal template names.
 Targeted Selenium verification passed for student curriculum, invoice statement, payment receipt, registrar grades, and registrar-officer grades.
 
 ** Primary workflow issues
 *** DONE P1 - Role switcher exposes inaccessible inherited staff pages
-The dean and VPAA role-switcher/sidebar experience can expose workspace options that lead to 403 responses.
-Observed examples:
-- dean path to =/staff/faculty/= returned 403
-- VPAA path to =/staff/chair/= returned 403
-
-Impact:
-The interface tells a senior user that a workspace is available, then denies entry after navigation.
-That breaks trust in the staff hierarchy model and makes the inheritance rule feel inconsistent.
-
-Fix direction:
-Make role visibility and role permission use the same source of truth.
-If dean/VPAA should inherit lower workspaces, make the inheritance transitive and grant access consistently.
-If they should not inherit those workspaces, hide those options from the role switcher.
+The dean and VPAA role-switcher/sidebar experience exposed workspace options that could lead to 403 responses.
+Observed examples included dean navigation to faculty and VPAA navigation to chair.
 
 Resolution:
 Role switcher visibility and staff dashboard permission now share the same transitive role-access closure.
 Targeted Selenium verification passed for dean access to the faculty workspace and VPAA access to the chair workspace.
+The P2/P3 strict browser run also confirmed representative backstage dashboards do not show access-denied pages, including the runtime IT group spelling =It=.
 
 *** DONE P1 - Student dashboard overflows horizontally on mobile
-The mobile smoke test found global horizontal overflow on the student dashboard only.
-The broad elements were the portal sidebar/content/header layout and student dashboard sections, with the page measuring wider than the mobile viewport.
-
-Impact:
-This is the first page a student sees, so mobile comfort is not yet acceptable for MWE demonstration.
-
-Fix direction:
-Contain the student portal shell at mobile widths, wrap or stack sidebar navigation links, and keep wide course/registration tables inside local scroll containers instead of expanding the whole page.
+The mobile smoke test found global horizontal overflow on the student dashboard.
+The broad elements were the portal sidebar/content/header layout and student dashboard sections.
 
 Resolution:
 Adjusted the portal shell, sidebar navigation, KPI grid, and course-table containment for mobile widths.
 Targeted Selenium verification passed with no global horizontal overflow on the student dashboard.
 
-** TODO UX harmonization issues
-*** P2 - Django admin remains too visible in staff workflows
-Most staff pages expose =Advanced admin= in the top-right header, and several role action cards link directly to admin models.
-This is technically useful, but it still makes the staff portal feel like a skin over Django admin rather than a complete Tusis workspace.
+** UX harmonization issues
+*** DONE P2 - Django admin remains too visible in staff workflows
+Most staff pages previously exposed =Advanced admin= in the top-right header, and several role action cards linked directly to admin models.
+This made the staff portal feel like a skin over Django admin rather than a complete Tusis workspace.
 
-Common affected areas:
-- staff profile actions
-- finance payment/scholarship actions
-- enrollment create/edit actions
-- registrar semester/admin actions
-- generic staff dashboard actions
+Resolution:
+- Removed the staff-shell =Advanced admin= header action.
+- Filtered Django admin destinations out of role action cards.
+- Replaced finance, registrar, enrollment, and staff dashboard actions with portal-native task destinations.
+- Updated the public landing copy to describe advanced tools as outside the primary role workflow.
+- Added the runtime =It= group spelling to the IT workspace so IT resolves to the portal instead of an inaccessible page.
 
-Impact:
-The student-like portal shell is now present, but staff users still see admin as a normal workflow destination.
-This conflicts with the desired MWE direction: admin should be an advanced escape hatch, not the main journey.
+Verification:
+The strict P2/P3 Selenium run passed for representative staff, dean, finance, cashier, enrollment officer, registrar, donor, and IT pages with no visible admin-first wording, no primary =/admin/= anchors, and no access-denied pages.
 
-Fix direction:
-Keep admin access available for privileged users, but move it behind a less prominent advanced tools area.
-Replace role action cards with portal-native workflow pages or read-only portal summaries where feasible.
-
-*** P2 - Enrollment create/edit remains admin-first
-Enrollment pages render in the portal shell, but the create/edit copy and actions explicitly send users to Django admin.
+*** DONE P2 - Enrollment create/edit remains admin-first
+Enrollment pages rendered in the portal shell, but create/edit copy and actions explicitly sent users to Django admin.
 Observed surfaces:
 - =/students/new/=
 - =/students/admin-edit/=
 - =/students/=
 
-Impact:
-Enrollment is one of the key MWE backstage workflows.
-The visual shell is harmonized, but the actual task still feels like leaving Tusis.
+Resolution:
+- Added a portal-native student intake form for create/update.
+- Student snapshot links now open portal profiles.
+- Student detail exposes an =Update profile= action that returns to the portal form.
+- Student lookup opens the portal profile instead of redirecting to Django admin.
 
-Fix direction:
-Build a minimal portal-native enrollment form and edit lookup flow for the MWE.
-If full admin editing must stay, present it as =Advanced record tools= after a portal-native summary and primary action.
+Verification:
+The strict P2/P3 Selenium run passed through enrollment snapshot, profile, update profile, create student, and lookup pages without leaving Tusis.
 
-*** P2 - Finance console is visually aligned but data/default states need UX tightening
+*** DONE P2 - Finance console is visually aligned but data/default states need UX tightening
 The finance console loaded and looked consistent with the portal shell.
 However, the default audited state showed no invoices, an empty submit control in the invoice-payment form, and admin escape links still visible.
 
-Impact:
-Finance staff can reach the console, but the default state does not yet clearly explain what to do next when no records match the default filters.
+Resolution:
+- Added guided empty states for invoice and payment tabs.
+- Added =Show all invoices= and =Show all payments= filter-reset actions.
+- Rendered invoice selection controls only when invoice rows exist.
+- Kept finance dashboard actions pointed to the portal console.
 
-Fix direction:
-Improve finance empty states with explicit next steps: change semester, search student, show all invoices, or open payment validation.
-Hide or disable empty submit controls when no invoice rows are available.
+Verification:
+The strict P2/P3 Selenium run passed the finance default invoices page, payments tab click, all-invoices GET filter, all-payments GET filter, and mobile finance smoke pages.
 
-*** P2 - Registrar course-window page is functional but operationally dense
-The course-window page loaded, but it renders a long list of per-semester POST forms with repeated =Update= buttons.
-The audit skipped these mutating submits.
+*** DONE P2 - Registrar course-window page is functional but operationally dense
+The course-window page loaded, but it rendered a long list of per-semester POST forms with repeated =Update= buttons.
+The audit skipped those mutating submits.
 
-Impact:
-The page works as an operational tool, but it may feel heavy and repetitive for a registrar officer.
+Resolution:
+- Grouped semester windows by academic year.
+- Kept each row operational but visually compact.
+- Added a confirmation affordance before changing a semester window.
 
-Fix direction:
-Consider grouping semesters by academic year, making status changes inline but visually compact, and adding a confirmation affordance for status changes.
+Verification:
+The strict P2/P3 Selenium run passed desktop and mobile registrar course-window pages and confirmed grouped academic-year cards and confirmation-backed forms are present.
 
-*** P2 - Donor account falls through to generic staff dashboard
+*** DONE P2 - Donor account falls through to generic staff dashboard
 =test_donor= authenticated successfully but landed on the generic staff dashboard.
 
-Impact:
-If donor is part of the MWE story, that role has no meaningful UX yet.
-If donor is out of MWE scope, this is acceptable but should be documented.
+Resolution:
+Added a donor role workspace with scholarship commitment metrics and beneficiary summary panels.
 
-Fix direction:
-Either remove donor from the runtime MWE demonstration set, or add a simple donor workspace with scholarship/beneficiary status appropriate to the role.
+Verification:
+The strict P2/P3 Selenium run confirmed =test_donor= lands on =Donor Sponsorship Portal= with =Scholarship commitments= visible.
 
 ** Lower-priority findings
-*** P3 - Some audit clicks were intentionally skipped or inconclusive
-The audit skipped POST forms by design.
+*** DONE P3 - Some audit clicks were intentionally skipped or inconclusive
+The original audit skipped POST forms by design.
 Two finance GET-filter attempts produced stale-element Selenium errors during audit interaction, but the finance pages themselves loaded and rendered.
-This should be treated as audit-run fragility unless reproduced manually.
 
-*** P3 - External/social/media imagery is not the current bottleneck
+Resolution:
+The P2/P3 follow-up reran the finance GET paths and tab click directly against preprod.
+The audited finance default invoices, payments tab, all-invoices filter, and all-payments filter passed without stale-element failure.
+Mutating POST actions remain intentionally out of this non-destructive UX audit.
+
+*** DONE P3 - External/social/media imagery is not the current bottleneck
 The site can be made functional without photography first.
-The current blockers are broken internal views, portal/admin boundary clarity, and mobile layout containment.
-Images can improve polish later, but they will not solve the MWE readiness issues found here.
+The current goal is a comfortable MWE with a harmonized portal shell and working backstage workflows.
+
+Resolution:
+No photo dependency was introduced.
+The landing page now leans on the Tubman/Tusis portal direction, consistent layout, typography, and task language rather than requiring university photography to carry the experience.
+Images remain a polish task, not an MWE blocker.
 
 ** Recommended next implementation order
-1. Fix the missing template render targets and rerun the broken student/registrar paths.
-2. Fix role-switcher permission consistency for dean/VPAA inherited workspaces.
-3. Fix student mobile overflow.
-4. De-emphasize =Advanced admin= and replace admin-first enrollment create/edit with portal-native MWE pages.
-5. Tighten finance empty states and empty submit controls.
-6. Decide whether donor is in or out of the MWE demonstration.
+1. Keep this P0-P3 browser audit as the pre-deploy smoke target for the MWE.
+2. Add a separate safe test-data workflow for mutating POST checks: enrollment create, finance payment creation/update, semester window update, and student registration/drop.
+3. Continue replacing deeper staff summaries with portal-native operational pages where the MWE narrative needs them.
+4. Add real Tubman University photography later as polish, only after the functional portal path remains stable.
 
-** Acceptance criteria for next audit
-- No 500 responses on any visible internal portal link.
-- No visible role-switcher option leads to 403.
-- Student dashboard has no global horizontal overflow at mobile width.
-- Staff/dean/finance/enrollment/registrar pages keep admin links out of the primary task path.
-- Enrollment can demonstrate create/search/edit as a Tusis workflow without requiring Django admin as the first action.
-- Finance default empty state tells staff what to do next.
+** Acceptance criteria status
+- No 500 responses on audited visible internal portal links: met.
+- No visible role-switcher option leads to 403 in the audited backstage path: met.
+- Student dashboard has no global horizontal overflow at mobile width: met.
+- Staff/dean/finance/enrollment/registrar pages keep admin links out of the primary task path: met.
+- Enrollment can demonstrate create/search/update as a Tusis workflow without requiring Django admin as the first action: met.
+- Finance default empty state tells staff what to do next: met.
+- Finance and registrar edited pages pass mobile smoke checks: met.

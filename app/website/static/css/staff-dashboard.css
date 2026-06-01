@@ -411,6 +411,26 @@
   padding: 1rem;
 }
 
+.portal-empty-state h3 {
+  color: var(--staff-primary);
+  font-size: 1rem;
+  margin-bottom: 0.35rem;
+}
+
+.portal-empty-state--guided {
+  padding: 1.25rem;
+}
+
+.registrar-window-form {
+  min-width: min(100%, 430px);
+}
+
+.registrar-window-group .course-table {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .staff-portal-body .form-control,
 .staff-portal-body .form-select,
 .select2-container--default .select2-selection--single {
@@ -465,5 +485,11 @@
   .portal-selection-bar {
     align-items: flex-start !important;
     flex-direction: column;
+  }
+
+  .registrar-window-form {
+    align-items: stretch !important;
+    flex-direction: column;
+    width: 100%;
   }
 }
