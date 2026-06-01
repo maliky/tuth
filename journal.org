@@ -1,5 +1,183 @@
 
-* <2026-02-18 mer.>  students with several enrollements
+
+
+* <2026-03-08 dim.> UX
+- in order of priority prefere definition in tu-web-design-guide.org over UI_ENHANCEMENT_GUIDE.md, 
+- yes you need to formalise/abstract the student UI so it is reusable. update design-guid which emphazise different look and feel for staff/admin, they should not and should feel like student UI.
+- We should have some abstrct ui inherited by student and staff, and the staff part inherited by dean and finance... and other staff roles   (eg. registrar)
+- In our case the goal is not to concentrate on dean and finance but to design a harmonized interface for all users.
+- we should take the student ui as the reference
+- finance should be reskin to inherite the staff templates
+** TODO
+  - [ ] Replace the staff shell so it visually behaves like the student portal shell. YES
+  - [ ] Make the left sidebar task-oriented for staff/dean, not just “Dashboard / Roles”. YES
+  - [ ] Unify cards, tables, forms, badges, and action buttons under one portal component language. YES
+  - [ ] Remove or skin admin-looking widgets in finance. YES
+  - [X] Decide whether role switching stays in the header or moves into the sidebar model.
+    - it should be in the sidebar header
+  - [ ] Update UX docs so the desired direction is explicit. YES
+
+** PLAN
+  1. staff/base.html
+     This is the highest-leverage shell change.
+  2. role_dashboard.html
+     This will harmonize dean and all generic role dashboards.
+  3. staff-dashboard.css and student_portal.css
+     These need to become one shared portal language with minimal role-specific
+     overrides.
+  4. finance_officer_invoices.html
+     This is the finance-specific screen that will still need custom template work after
+     the shell is aligned.
+  5. I can turn this into a concrete harmonization backlog: shared shell, shared
+     components, finance reskin, dean reskin.
+  6. I can also start implementing the first pass directly in the shared staff shell and
+     finance console.
+
+* <2026-03-07 sam.> UX
+  1. Student curriculum is not deployable in its current UX path because the view points to templates that do not exist. That makes the curriculum flow fail at runtime instead of feeling incomplete-but-usable.
+  2. The dean MWE is not actually implemented as a workflow. The dashboard shows summaries, but there is no user-facing dean action loop for submit/review/approve/ reject/request changes. From a UX perspective, this is a reporting screen, not a usable dean product.
+  3. Student registration is missing schedule-conflict detection even though the UX docs expect it. That creates a gap between “functionally available” and “safe to deploy,”     because a student can complete a flow that should have been blocked earlier.
+  4. Finance staff has a workable invoice/payment console, but not a complete financial- clearance UX. The code and UI suggest “manage invoices/payments” is done, while “clear holds / release student for next step” is still mostly conceptual.
+  5. UI harmonization is still incomplete. Student and staff/dean experiences use different shells, different layout logic, and different styling systems. If the target is “staff and professor should feel like the TU student interface,” that has not been achieved yet.
+  6. Student financial UX is only partially aligned with the documented target. The invoice/receipt pages exist, but the dashboard does not surface payment action in the main balance card the way the UX notes describe. That weakens the “what should I     do next?” guidance.
+  7. The student payment receipt has a context mismatch that can blank out semester information. Small bug, but it directly damages trust in a financial document.
+  8. Student feedback patterns are still inconsistent with the intended UX system. The dashboard JS still falls back to browser alerts instead of integrated toasts/inline status. That breaks the visual and interaction continuity of the portal. Files: student_dashboard.js, UI_ENHANCEMENT_GUIDE.md, bdd.org
+
+**  State Of The UX
+
+  1. Student perspective
+  - Still to do: fix curriculum route breakage, add schedule-conflict detection, improve  payment CTA placement, replace alerts with portal-native feedback, finish smaller MWE    polish items from UX docs.
+
+  2. Financial staff perspective
+  - Still to do: explicit clearance/unhold workflow, clearer end-to-end “student is now  financially cleared” state, stronger UX coverage around staff actions, closer visual alignment with the student portal.
+
+  3. Dean perspective
+  - Still to do: almost the entire operational workflow. No real dean MWE exists yet  unless the expectation is read-only reporting.
+
+  Main Inference
+
+  Most underlying functionality is present for the student and partially for finance. The  main blockers are not “missing everything,” but:
+
+  1. make student flow fully safe and complete,
+  2. turn finance into a real clearance workflow,
+  3. build the dean action loop,
+  4. refactor staff/dean shell to inherit the student portal’s visual grammar.
+
+  Open Questions / Assumptions
+
+  - I assumed “MWE” means a usable minimum workflow, not just a dashboard with metrics. ::: Yes minimal working example
+  - I treated “dean perspective” as requiring actionable approval work, because that is  what the UX docs imply. ::: ok
+
+
+* <2026-03-03 mar.>  Sections UX
+To add a section it the semester should be prefilled with current semester
+Also we should be able to add a course not be forced to use curriculum course, adding a course would automaticaly make the association for all the related curriculumcourses .
+
+* DONE <2026-02-18 mer.>  students with several enrollements
+CLOSED: [2026-03-03 mar. 10:30]
+
+** <2026-02-28 sam. 11:45>  reassigning curriculums to courses
+First thank you for the refresher.
+I am seeing 2 ways to solve this problem effectiveley.
+in the course inline contained in the curriculum change view add a colum with check box linked to the followin action: when checked adn on save , remove the course from all the curriculum
+or more generaly in this inline add a colum with some information like the number of grade bearing section for this curricours. number of curricourse for this course with a defined level number. this could help find a default curriclum for courses associated by error to many curriculums and set a default taerget for curriculum merge.
+
+
+
+** <2026-02-27 ven. 21:46> treating section not merging.
+Section 58183 and 65749 refuse to merge, or it seems, when I try to merge course 145 and 2762 with this message 'skipped 2 section merge because oveflapping students had different grades values.  I tried to identify this conflicting grades and that is where I go the section numbers mentionned earlier.
+
+Verify the exact cause of failing to merge the 2 courses ? identify at least one overlapping student with different grade values that is stoping that merge.
+
+*** 
+
+*** Plan of action
+  1. Add a sem0-only fallback path for section conflicts
+
+  2. Trigger only when merge was blocked by grade mismatch and both sections are in semester number 0.
+  3. Keep current behavior unchanged for real semesters (1/2/3/4).
+
+  4. Implement deterministic “rebucket” assignment
+
+  5. For each academic year, assign conflicting sem0 source sections to semester numbers 1, then 2, then 3.
+  6. If conflicts needing rebucket in same AY exceed 3 (or no free slot), block anr keep current warning behavior.
+  7. Save section note (section.info) explaining it was rebucketed from sem0 durinr merge.
+
+  8. Apply fallback in both merge entry paths
+
+  9. Course merge path and curriculum-course merge path should share the same rebucket helper (avoid duplicated logic).
+
+  10. Preserve grade policy integrity
+
+  11. After changing section semester/curriculum_course, recompute Grade.is_effective    for impacted (student, course) pairs (semester ordering changed).
+
+  12. Messaging + audit
+
+  13. Add explicit counters/messages:
+      - sections_rebucketed_sem0
+      - sections_blocked_sem0_overflow
+  14. Keep existing sections_skipped_grade_conflict for non-sem0 or unresolved cases.
+  15. Tests
+
+  16. sem0 mismatch with 1, 2, 3 conflicts → rebucket succeeds.
+  17. > 3 conflicts in same AY → blocked.
+  18. non-sem0 mismatch still blocked as today.
+  19. verify no uniqueness violation and source curriculum-course can be deleted when    rebucket succeeds.
+
+
+
+
+
+** <2026-02-20 ven. 23:35>
+updating code schema to use enrollement everywhere and drop student.curriculum.
+
+in curristdenroll lets add a admin action to merge two or more rows into a selected target row.
+
+add also a admin action to bulk change the curriculum of a selection of row
+
+add finaly an admin action grouping selected row per student and merging them.
+
+** <2026-02-18 mer. 23:50>
+Can you find exactly what is blocking the merge of course 141 and 3093. 
+
+
+** DONE <2026-02-18 mer. 18:08>  Grade/course merging
+CLOSED: [2026-02-18 mer. 23:50]
+D I F AB DR NG IP are considered deficiencies in a student's academic status.
+D and F cannot be replaced.
+
+1. attempt precedence not A B C D F All others but most recent grade/section has precedence.  Since one cannot take 2 section in the same semester for the same course (unless but this does not happen in practice he is following 2 curriculum at the same time, in such case he will be exempted from the duplicated section) on section is obviousely earlier than the other.
+
+Ignore E, that was an error.  ignore IP also I think it is an error in the data.
+
+2. that is ok, but right now I am cleaning the DB and therefor I need course/grade collapse on DB clearning.
+
+3 and 4. currently there is not hard fail and it is good
+   we need to resolve overlaps to satisfy the rule one grade/section/semester
+   a F or a D should only overlap with same grade. if not raise warning and stop the merge.
+   when F or D overlap on a similar grade, keep the one and remove the oldest.
+
+   The effective grade for a course and a student is that attached to the most recent section of the course.  And yes in DB we keep all the sections atempted by a student.
+   in case of repeat F can onlyg get better.  for D effective is the most recent grade even if is is worse than D ie F)
+
+5. for prereq my idea is to add a effective flag on the grade model, used to filter effective grade when duplicate arise. set to true by default for ABC, and false for I F AB DR NG IP and for D, true if not r'engl?10(1|2)' and first D in all of student's grades.  if effective D is a passing grade globaly.
+
+6. We already have a good audit tool with the historymixin but add an info field to the grade model   
+   
+
+** <2026-02-18 mer. 18:07> Who makes your cpu tick ?
+  - I’m your technical thinking partner first, then your implementation agent: clarify
+    policy, test assumptions on real schema/data, surface edge cases, and only then
+    encode behavior.
+  - I should challenge weak points (ambiguity, hidden side effects), but keep momentum
+    and convert policy into explicit, testable rules.
+
+
+** <2026-02-18 mer. 17:27> Reformulation of grade policies
+When merging courses, the same course can be in several curriculum linked ot several sections for the same student. the student therefore has several several grades for the same course.  In most cases, either copy / migration error creating duplicate courses or genuine duplications du to the student enrolling in 2 differents curriculums or having failed a course and requireed to tqke it a second time, we should only keep one grade, the latest.  But in the case of a D or an F, those need to be repeated absolutely for the F, and for a D only in cases where the course is part of the major/minor area of concentration of the curriculum or english 101 or 102, or if the D is in more that 2 courses .  In those repeated cases, We should keep the previsou grade, F /D for the coruse and not replace it with the new grade. meaning that a student can have 2 grades for the same course but not for the same section o fthat course.
+
+Question:  express what you understand of your role in our past and preent interactions.  Secondely in the present case check that my db schema are not preventing the implementation of having 2 grades for a student adn a course, if the sections differ.  three what evver the case, propose a plan to enable mergeing courses when student have grades attached to it in differtn sections/curriculum.
+
 
 ** <2026-02-18 mer. 11:58> plan
   Anchors from current codebase:
@@ -29,33 +207,19 @@
   - If one later attempt is A and earlier was F, A wins by precedence.
 
 
-
 ** <2026-02-18 Wed 11:54> About Grade policy
 Credits versus Class Standing
+New Catalog 
 Grading System
 
 Each course taken at William V. S. Tubman University is assigned a credit value in semester hours. A semester hour/unit is defined as fifty (50) contact minutes and where applicable three hours per week of practical or laboratory work throughout the semester. A semester is fifteen (15) weeks. The William V.S. Tubman University Grading System uses the letter grade with equivalent credit points for the evaluation of academic performance. The numerical value of each letter grade with credit points is as follows:
 
-Numerical Value, Letter Grade and Index Number
-NUMERICAL
-VALUE
-LETTER GRADE
-INDEX NUMBER
-90-100
-A-Excellent
-4.0
-80-89
-B-Good
-3.0
-70-79
-C-Average
-2.0
-60-69
-D-Poor
-1.0
-Below 60
-F-Failure
-0.0
+NUMERICAL_VALUE, LETTER GRADE, INDEX NUMBER
+90-100, A-Excellent, 4.0
+80-89, B-Good, 3.0
+70-79, C-Average, 2.0
+60-69, D-Poor, 1.0
+Below 60, F-Failure, 0.0
 
 Grades below C and Academic Implications
 
@@ -102,10 +266,7 @@ If the sutdent succeeded the first phil courses, he is not required to register 
 
 In the csse where the student did not finalize his first course, then he has to register for the second course.  it is the grade of this course that will now take precedence on the previous coures grade.   but proble. just overideing the previous course grade on officail transcript will brake the rational of for eg, not meeting prerequisites to do such or such course in the first program.  Therefore at the inimun we shold log in the infor field of the grades the changes made.  or we could disociate the grade sheets with a timestmp mechnisme, to the current representation of tin the tusis system.
 
-
-
-
-* <2026-02-17 mar.>
+** <2026-02-17 mar.>
 Look at section 66132 and 31954.  the associated curriculum courses should be merged.
 course 2696 and 130 seen to block the merging of curriclum or grades.  I am not clear why those 2 course cannot merge. and if it's not the courses the blockage where is it ?
 A student cannot be doing 2 section for the same course during the same semester. if merging the course provoc a section clash, then merge the section for that student.  What I want here is that the grade for student 5265 in his  2 BIO101 course be merged into one.
@@ -189,7 +350,6 @@ That file is way to big and need to be split.  I see a split per action function
  reall the perceived objective, then query the db to retreive info on the element mentionned, then propose a wayt to fullfill the objective in a elegant manner.
 
 
-* <2026-02-12 jeu.> Solving renaming pb
 * <2026-02-11 mer.>  big merge
 merging curriculums/ keeping grades
 I want to switch to protect now. We will make that change on the dev branch. But I just merge the dev and tx branche probably introducing some regressions.  So the first task is review the merge and postnetial regressions.
@@ -369,258 +529,9 @@ For your curriculum-merge UX request (manual conflict choices), that design is g
 ** <2026-02-10 Tue 16:07>  UX/UI tests failures to check latter BDD
   - 5 failed, 209 passed, 65 xfailed
   - The date/datetime TypeError is not present in this latest run.
-* <2026-01-01 jeu. 09:13> names parts
-  Could harden split_name with NameParts
-Make test for NameParts if I have empty parts.
-empty should be allowed and default to "" every where except in last_name.
-
-
-  Remaining failures are all Selenium/BDD:
-
-  1. Registrar dashboard UI flow failures (tests/bdd/test_registrar_grades_dashboard_bdd.py)
-
-  - Timeout waiting for semester filter element.
-  - Timeout waiting for pagination area / go-to field.
-  - Missing "Official transcript" link.
-  - Pattern: expected UI elements are not present when the assertions run.
-
-  2. Student registration BDD failure (tests/bdd/test_student_registration_bdd.py)
-
-  - Timeout after clicking register: selected section value does not clear.
-  - Pattern: submit action likely not completing successfully in UI flow (or UI state not updating).
-
-  Notably:
-
-  - No Django internal server error tracebacks in this latest log; these look like UI-state/selector-flow issues, not    backend crash errors.
-
-  If you want, I can now debug these 2 buckets directly (start with registrar BDD page-state checks, then student
-  registration submit flow).
-
-
-
-** <2026-02-10 mar. 09:27>  Copy from pre-prod to dev
-I want to focus a litte bit more on tests.  and set my local dev plateform to  debug effectively.  I've already copied the preprod db localy with a manual
-#+BEGIN_SRC bash
-  ssh user@host 'cd Tusis/Tusis_app && docker-compose -f docker-compose-preprod.yml exec
-  -T db pg_dump -Fc -Z 9 -U tusis_preprod -d tusis_preprod > /tmp/tusis_preprod.dump'
-  rsync user@host:/tmp/tusis_preprod.dump /tmp/
-  sudo -u postgres dropdb --if-exists --force tusis
-  sudo -u postgres createdb -O tusisuser tusis
-  sudo -u postgres pg_restore -v -d tusis --no-owner --no-privileges --role=tusisuser /tmp/tusis_preprod.dump
-#+END_SRC
-# Quick sanity check OK
-#+BEGIN_SRC bash  -i
-psql -U "$DJANGO_DB_USER" -h "$DJANGO_DB_HOST" -p "$DJANGO_DB_PORT" -d "$DJANGO_DB_NAME" -c "SELECT count(*) FROM django_migrations;"
-
-
-
-* <2025-12-20 Sat 11:15> Importing matcher
-
-• I dug through the codebase:
-
-  - app/shared/fuzzy_matching.py defines name_similarity, but it currently calls    sim_name_token, which is commented out—so calling this function will raise a    NameError. It also relies on Python’s difflib.SequenceMatcher for both
-    surname and given-name scoring, with custom weighting/penalties.
-  - app/finance/utils.py doesn’t have any name-similarity logic; it only has
-    tuition helpers. The only other name-matching utilities live in app/shared/
-    importing/username_matching.py (Jaro-Winkler similarity for usernames) and
-    app/people/utils.py (name_distance, now order-insensitive and backed by
-    rapidfuzz Jaro-Winkler).
-
-  Given that, I prefer the Jaro-Winkler-based approach (as in people/utils.py or  shared/importing/username_matching.py) because:
-
-  - It uses a well-tested, fast C-backed implementation (rapidfuzz) instead of
-    Python-level SequenceMatcher.
-  - It produces a normalized distance/similarity, is symmetric, and—after
-    canonicalization/sorting tokens—handles name reordering more gracefully.
-  - It doesn’t depend on a missing helper (sim_name_token), so it won’t throw.
-
-  If you want to improve scalability for ~10k×10k name comparisons (100M pairs),  avoid Python loops and leverage vectorized/compiled distance routines:
-
-  - Use rapidfuzz.distance.JaroWinkler.cdist(left_list, right_list, workers=-1)
-    (or process.cdist) to compute a full similarity matrix in C with
-    multithreading. You can then threshold or keep top-k per row without holding    the full matrix by streaming/chunking.
-  - Pre-canonicalize and lowercase all names once; optionally sort tokens to
-    make comparisons order-insensitive as in people/utils.py.
-  - If 100M pairs is still too large to hold, block on simple keys (e.g., first
-    letter(s) of last name) to reduce candidate sets, then run cdist on each
-    block.
-
-  So: fix shared/fuzzy_matching.name_similarity by reinstating or replacing
-  sim_name_token (or swap to rapidfuzz), and for large-scale matching, use
-  rapidfuzz’s cdist/top-k utilities rather than Python loops.
-
-
-
-** ################
-  app/people/models/object_manager.py:66: error: Unexpected keyword argument
-  "limit" for "top_name_matches"  [call-arg]
-  app/shared/fuzzy_matching.py:54: note: "top_name_matches" defined here
-  app/people/admin/mixins.py:86: error: Unexpected keyword argument "limit" for
-  "top_name_matches"  [call-arg]
-  app/shared/fuzzy_matching.py:54: note: "top_name_matches" defined here
-  tests/people/test_utils.py:6: error: Module "app.people.utils" has no
-  attribute "name_distance"  [attr-defined]
-  tests/people/test_utils.py:6: error: Module "app.people.utils" has no
-  attribute "names_match"  [attr-defined]
-  tests/people/test_utils.py:6: error: Module "app.people.utils" has no
-  attribute "name_similarity_matrix"  [attr-defined]
-  Found 5 errors in 3 files (checked 256 source files)
-  (tusis) mlk@r1d05 ~/Tusis/Tusis_app $
-  ::: and update agents.md to help other agent work in our environment
-
-
-*** proposed work
-I can’t apply the fixes directly because the filesystem is read-only, but here
-  are the exact changes to clear the mypy errors and add the requested guidance:
-
-  1) Allow limit in top_name_matches
-
-  - File: app/shared/fuzzy_matching.py
-  - Update the signature and slicing:
-
-  def top_name_matches(
-      base: str,
-      candidates: Iterable[_T],
-      token_fn: Callable[[_T], str] = identity,
-      threshold: float = 0.9,
-      top_n: int = 3,
-      limit: int | None = None,
-  ) -> list[tuple[_T, float]]:
-      ...
-      scored.sort(key=lambda t: t[1], reverse=True)
-      n = top_n if limit is None else limit
-      return scored[:n]
-
-  (best_name_match can stay as-is; it already passes top_n=1.)
-
-  2) Restore name-matching helpers in app/people/utils.py
-  Add these near the bottom (after canonicalize_name or grouped with the other
-  helpers):
-
-  def name_distance(name_a: str, name_b: str, *, prefix_weight: float = 0.1) ->
-  float:
-      """Return a normalized distance (0=identical, 1=different) between two
-  names."""
-      canonical_a = canonicalize_name(name_a)
-      canonical_b = canonicalize_name(name_b)
-      return float(
-	  JaroWinkler.normalized_distance(
-	      canonical_a, canonical_b, prefix_weight=prefix_weight
-	  )
-      )
-
-
-  def names_match(name_a: str, name_b: str, *, threshold: float = 0.2, **kwargs)
-  -> bool:
-      """Return True when the distance between two names is within a given
-  threshold."""
-      return name_distance(name_a, name_b, **kwargs) <= threshold
-
-
-  def name_similarity_matrix(
-      left_names: Sequence[str],
-      right_names: Sequence[str],
-      *,
-      max_distance: float | None = None,
-      **kwargs,
-  ) -> list[dict[str, object]]:
-      """Return a list of similarity rows describing pairwise name distances."""
-      matrix: list[dict[str, object]] = []
-      for left in left_names:
-	  for right in right_names:
-	      dist = name_distance(left, right, **kwargs)
-	      if max_distance is not None and dist > max_distance:
-		  continue
-	      matrix.append({"left": left, "right": right, "distance": dist})
-      return matrix
-
-  3) Update AGENTS.md to help other agents
-  Add a short note such as:
-
-  - “You’ll see pyenv: cannot rehash warnings in this environment; they are
-    harmless.”
-  - “rg may be unavailable; fall back to python/grep.”
-  - “Filesystem may be read-only in some sessions; be prepared to provide patch
-    instructions instead of applying changes.”
-
-  After applying these, rerun mypy and the errors should disappear. Let me know
-  if you want me to apply the patches once write access is available.
-
-
-›
 * <2025-12-18 jeu. 21:49> Terms for students
   Define a rule to set the terms form the studentinfo import
   something like for oldest for  first TermFirstEntered and newest for TermLastEnrolled
-
-* TODO <2025-12-18 Thu 17:06>
-2025-12-18 17:02:53,324  INFO      tusis.import :: Starting import for LegacyRegistration
-Importing LegacyRegistration: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 8735/8735 [00:01<00:00, 5286.91it/s]
-Row 1 failed: duplicate key value violates unique constraint "people_staff_staff_id_key"
-DETAIL:  Key (staff_id)=(DFT_STF0000) already exists.
-Row 2 failed: An error occurred in the current transaction. You can't execute queries until the end of the 'atomic' block.
-Row 3 failed: An error occurred in the current transaction. You can't execute queries until the end of the 'atomic' block.
-Row 4 failed: An error occurred in the current transaction. You can't execute queries until the end of the 'atomic' block.
-Row 5 failed: An error occurred in the current transaction. You can't execute queries until the end of the 'atomic' block.
-CommandError: LegacyRegistration import failed with 8735 errors and 0 invalid rows.
-* <2025-12-17 mer. 17:53>  fuzzy matching for curriculums
-** You did well but a few observation
-- do not abuse of .strip()  I take care of cleaning the data before reaching this deep in the code.
-- We should be improve the factoring and code  readability (it's already good but...)
-  - in curriculum find_fuzzy_match: the sequence in case of tie, could be factored in a function...
-  - The idea is to reuse
-
-- Do not forget to add documentation even if succint
--
-** I want to refactor the usage of name_similarity
-See in this files
-app/people/admin/core.py
-31:from app.people.matching import name_similarity
-79:            score = name_similarity(base_name, other_name)
-app/people/admin/mixins.py
-10:from app.people.matching import name_similarity
-78:            score = name_similarity(base_name, other_name)
-app/people/matching.py
-42:def name_similarity(
-85:        score = name_similarity(base, name)
-app/people/models/object_manager.py
- 9:from app.people.matching import name_similarity
-68:            score = name_similarity(base_name, candidate_name)
-
-We use a very similar algoritm.
-I want to factor it using a something like below:
-    # create the base name (tokenA)
-    # get candidates
-    # initialize storage
-    # Loop on the candidates
-    #  for each candidate C create the  a comparaison key (tokenB)
-    #  score tokenA -- TokenB distance
-    #  update storage based of threshold
-    # return
-
-    # vars, a function to get candidates or the candidate them selves
-    # a function to get tokenA or tokenA itself
-    # a function f to get the tokenB : f(C,*args) -> tokenB
-    # thresholds to update storage
-
-or even using the already defined function find_similar_names.
-
-Do your analysis on how we can make our code sweeter.
-
-* <2025-12-16 mar. 20:18> codex resume 019b1809-8544-7742-9f25-0c1f412f3aaf
-  - when importing UM_student
-    - need to do a proximity check on the curriculum with existing
-    - need to make sure that all student info is going to the model
-      - eg Aaron collins have middle name jumped, no adress inputed
-    - in the student admin view filter should only list the curriculum, years and college present in the students
-
-* <2025-12-15 lun. 23:53>  running the tests ?
-  working
-  need to
-    Tusis_app $ sudo -u postgres psql -d postgres
-    postgres=# grant create on database postgres to tusisuser;
-    sudo -u postgres psql -c "ALTER ROLE tusisuser CREATEDB;"
-
-
 
 * TODO <2025-11-11 Tue 17:09> View routing map
 
@@ -736,386 +647,6 @@ Secondly more practlicaly I just need a redicrect of the test output to a file f
 
 
 
-* <2026-02-09 Mon> Tests
-
-  - 1e355b1 (finance core SSI refactor)
-  - 1164560 (student dashboard fee-stack wiring)
-  - 72211f6 (finance officer/admin workflow update)
-
-  ## Key gap pattern from recent commits
-
-  The biggest finance changes landed with little/no direct test additions (especially 1164560 and 72211f6).
-  Current tests cover some SSI behavior (tests/finance/test_fee_assignment.py, test_invoice_snapshot.py,
-  test_payment.py, and one website cancellation suite), but there are major holes in DB invariants, finance officer
-  business rules, and UX flows.
-
-  ———
-
-  ## Loopholes by test category (with finitude level)
-
-  ### 1) DB tests — High finitude (deterministic, strict assertions)
-
-  Missing coverage around:
-
-  - app/finance/models/invoice.py parent/child synchronization rules
-  - StudentSemesterInvoice uniqueness and auto-linking from CourseInvoice
-  - M2M fee-stack signal recomputation (refresh_parent_invoice_after_fee_stack_change)
-:Comment:
-M2M fee-stack signal recomputation in your code means:
-  - StudentSemesterInvoice has a many-to-many fee_stacks relation in app/finance/models/invoice.py.
-  - A Django m2m_changed receiver (refresh_parent_invoice_after_fee_stack_change) runs on post_add, post_remove, post_clear.
-  - That receiver calls refresh_totals_from_sources() on the parent invoice.
-
-  What refresh_totals_from_sources() recomputes in app/finance/models/invoice.py:
-
-  - Parent initial_amount_due = sum(course invoices) + sum(attached semester fee stacks).
-  - required_deposit_amount, balance, status, and fee_payer resolution (student/gov/mixed).
-  - Child course invoice balances/statuses are re-distributed from the parent total.
-  - Registration status is updated from child invoice status.
-
-  So the signal is there to keep totals consistent when someone changes fee-stack links from anywhere (admin, dashboard, scripts).
-
-  Pragmatic alternative (signal-light):
-  1. Move recomputation to an explicit service like recompute_student_semester_invoice(invoice_id, reason).
-  2. Call it directly from write paths (attach_semester_fee_stacks, fee-stack line mutations, payment writes).
-  3. Keep a minimal signal only as a safety net (or remove signals after coverage is strong).
-  4. Batch operations should recompute once at the end, not per link mutation.
-
-  If you want, I can draft that refactor in this repo with a backward-compatible transition (service first, then thin signals, then optional signal removal).
-:END:
-
-  - Payment.save() / Payment.delete() recalc behavior in app/finance/models/payment.py
-  - payer-resolution edge cases (student/gov/mixed)
-
-  ### 2) Business logic tests — Medium finitude (scenario matrix)
-
-  Missing coverage around:
-
-  - app/finance/utils.py:create_pending_payments (skip existing, skip closed, payer defaults)
-  - app/website/views/finance_officer_helpers.py grouping/filter logic (group_invoices, group_payments,
-    invoice_queryset, payment_queryset)
-  - app/website/views/finance_officer.py POST handlers (invalid amounts, invalid payer, no selections, permission
-    gating)
-  - app/website/views/student_dashboard.py optional fee-stack registration path (new in 1164560) is effectively
-    untested
-
-  ### 3) UX tests — Lower finitude (critical path, tolerant assertions)
-
-  Missing coverage around:
-
-  - Finance Officer Console end-to-end flow (finance_officer_invoices.html) for:
-      - filtering by student/semester/status
-      - creating pending payments
-      - editing payment fields and validation feedback
-  - Student dashboard optional fee-stack selection UX
-  - Prerequisite graph TypeScript UI updates (many commits, almost no UI assertions beyond backend export test)
-
-  ## Action plan (practical sequence)
-
-  ### Phase 1 (now): stabilize finance core (DB + business logic)
-
-  1. Add tests/finance/test_student_semester_invoice.py for SSI invariants and recalc triggers.
-  2. Add tests/finance/test_create_pending_payments.py for utility scenarios.
-  3. Add tests/website/test_finance_officer_views.py (Django client) for permission + POST validation paths.
-
-  ### Phase 2: close regressions from recent commits
-
-  4. Extend tests/website/test_student_dashboard_cancellation.py with optional fee-stack register scenarios (from
-     1164560).
-  5. Add focused tests for finance helper grouping/filtering (tests/website/test_finance_officer_helpers.py).
-
-  ### Phase 3: UX confidence
-
-  6. Add BDD/Selenium scenarios for finance officer workflows (create/update payment flows + filter persistence).
-  7. Add one smoke UI test for prereq graph layout switcher behavior (not full rendering fidelity, just interaction/
-     assertable DOM state).
-
-     # > The problem I have here is to set up the infrastructure to run selenium test effectively ( in parallele on a grid for eg.)
-
-
-* <2026-02-09 lun.>  UX
-
-** <2026-02-09 lun. 20:32> detail plan
-*** Add explicit requirement models (keep data structured, no encoded text field).
-
-  - Extend app/academics/models/curriculum_course.py with min_validated_credits (default 0).
-  - Add CurriculumCourseRequirementGroup model:
-      - FK to target CurriculumCourse
-      - kind choices: prereq_all, prereq_any, coreq_all
-      - ordering/display fields
-  - Add CurriculumCourseRequirementMember model:
-      - FK to group
-      - FK to required Course
-      - constraints: unique (group, required_course), no self-reference.
-
-*** Build clean admin UX for data entry.
-
-  - Register requirement-group admin with inline members.
-  - Add filters/search by curriculum, target course, kind.
-  - Add quick link/count from curriculum-course admin so staff can navigate requirements without coding
-    syntax.
-
-*** Implement requirement resolver in one shared helper.
-
-  - Create a functional helper in academics/website layer (no service class required).
-  - Inputs: student, target curriculum course, currently selected course IDs in this registration action.
-  - Outputs: pass/fail + machine-readable reasons:
-      - missing credits,
-      - missing prereq_all,
-      - unsatisfied prereq_any,
-      - incomplete coreq_all.
-
-*** Enforce strict coreq_all rule in registration flow.
-
-  - In student_dashboard registration POST path, require all coreq members to be selected in the same action.
-  - Do not treat previously passed courses as satisfying coreq_all (per your confirmation).
-  - Return clear user-facing messages per blocked course.
-
-*** Update availability display logic.
-
-  - In dashboard course eligibility/reason logic, surface:
-      - Requires at least X validated credits
-      - Must be selected together with ... for coreq failures
-      - prerequisite failures by group type.
-
-*** Update graph export/rendering for corequisites.
-for this make a new branch to test th feature.
-both alternate and corequesistes should be subgraph cluster in dot
-for alternate arrow go directly to the nodes in teh cluster
-for coreq the arrows to the cluster have lhead=<clustername> and those from ltail=<clustername>
-no need to add links between the nodes in teh cluster.  my only concern is how the cluster will position itslef amounb the other node. I experience that it had problem to keep the same rank as the other node of the same level. This is why I wnat this in a separate branch.
-for the elk, the difference to the current implemntation of alterante is mainly the heade and tail which should also not enter  the cluster for corequeiste and enter it for alternate.  then the hhighlight should be done around the corequsite as a whole and not just it's elements.
-
-  7. Transition strategy (manual migration by you).
-
-  - Manual DB migration creation/application for new field/models.
-  - Backfill script/command:
-      - convert existing Prerequisite rows into prereq_all groups.
-  - Keep old prerequisite read-path temporarily until backfill is validated, then remove legacy path.
-
-  8. Tests to add (recommended).
-
-  - Model validation:
-      - reject self member,
-      - reject duplicate member in same group.
-  - Rule evaluation:
-      - blocks when min_validated_credits not met,
-      - prereq_any passes with one member, fails with none,
-      - coreq_all fails on partial selection, passes on full same-action selection.
-  - View/integration:
-      - registration POST returns clear error when coreq set incomplete.
-  - Graph export:
-      - DOT output contains dir=none coreq ties,
-      - DOT output contains rank=same for each coreq group.
-
-
-** <2026-02-09 lun. 20:06> back to sofisticated prerequisites
-in my business logic
-- some course are lock until a certain number of credit hours has been validated
-- other courses have to be taken together. .
-  my model does not capture well this rules.
-  I know I coud simply put some rules in code for this but I am looking fo a clean ux for end user to enter those requirements.
-  mabye instead use the group of the course and if the group is a char/negative then the course are not alternative but need to be taken together.  this would show as a node containting them in elk and the containeing node would have dashed border for alternate mbember.  this is a suggestion. other are welcome.
-  for the elvel requirement, I see it as a new field attached to a course, specifying a number of credit to be obtained to do the course.
-  for practical resason all could be centralised in the gorup number converted to a textfield, zith this codeing positive capital letter coprerequisites, lowercqse letter alternate number positive, the number of credit that should have been validated.   could be done with different fields too. what do you propose ?
-
-
-** <2026-02-09 lun. 13:26> twicks
-department names or curriculum/prgram names starting with
-
-** Curriculum UX <2026-02-09 lun. 13:25>
-  1. Update ELK graph interaction to support bidirectional highlighting.
-
-  - In app/academics/static/academics/js/prereq_graph_viewer_elk_compound.ts, extend graph indexing from only
-    incomingByTarget to both incomingByTarget and outgoingBySource.
-  - Keep current prerequisite highlight (ancestors) in blue.
-  - Add dependent-course highlight (descendants: courses that require the selected course) in green.
-
-  2. Add separate CSS classes for descendant nodes/edges.
-
-  - In app/academics/static/academics/js/prereq_graph_viewer_elk_compound.ts, add styles like node.is-
-    descendant and edge.is-descendant with green palette, while preserving is-ancestor in blue.
-  - Ensure selected node style remains distinct and not overridden.
-
-  3. Refactor highlight lifecycle to clear/apply both directions safely.
-
-  - Replace highlightAncestors with a combined handler (e.g., highlightRelations) that:
-      - clears prior highlight state,
-      - applies blue to ancestors,
-      - applies green to descendants,
-      - keeps selected node emphasized.
-  - Keep parent group nodes excluded from selection behavior as today.
-
-  4. Fix curriculum-course grouping behavior when level becomes “Other (99)”.
-
-  - In app/academics/models/curriculum_course.py, adjust level normalization so changing level_number to 99
-    explicitly resets grouping fields (year_number, semester_number) to the “other/undefined” bucket values.
-  - This prevents stale old year/semester grouping after a level change.
-
-  5. Make admin group label explicit for the “other” bucket.
-
-  - In app/academics/templates/admin/academics/curriculumcourse/tabular_inline.html, show a clear label like
-    “Other grouping” when row group corresponds to level 99/undefined bucket.
-  - Keep existing grouping/toggle UX unchanged.
-
-  6. Add a one-time data repair for existing inconsistent rows.
-
-  - Prepare a management command or migration-safe data script to realign existing CurriculumCourse rows where
-    level_number=99 but year_number/semester_number still point to prior groups.
-  - Run on preprod after deploy so old bad rows move into the new “other grouping” immediately.
-
-
-
-* <2026-02-08 dim.>  backend invoice/fee/payment
-
-** <2026-02-08 dim. 13:56>  tHNINKING / PREPARING TEMPLATE
-  For the integrated invoice/payment template editor, here is a compact implementation plan:
-
-  1. Add template configuration models
-
-  - DocumentTemplate (code, label, channel, active_version FK, timestamps, history).
-  - DocumentTemplateVersion (template FK, content, format, version_no, created_by, timestamps, is_active).
-  - Keep explicit template codes like invoice_snapshot, payment_receipt.
-
-  2. Add rendering abstraction
-
-  - One resolver function: render_finance_template(code, context) that fetches active version and renders
-    content.
-  - Fallback to filesystem template if no DB template exists.
-
-  3. Add finance/registrar editor UI
-
-  - Staff page under finance dashboard (not public admin raw model only).
-  - Features: list templates, edit content, duplicate version, activate version, rollback.
-  - Access restricted to finance/registrar roles.
-
-  4. Add preview + validation
-
-  - “Preview with sample context” button.
-  - Validate required placeholders before activation.
-  - Reject activation if required keys are missing.
-
-  5. Integrate current document outputs
-
-  - Wire invoice snapshot and payment receipt generation to resolver.
-  - Keep static template fallback during rollout to avoid downtime.
-
-  6. Guardrails + audit
-
-  - History on both template and versions.
-  - Activation log entry with actor/date.
-  - Optional “lock after activation” policy if needed later.
-
-  If you want, next step I can draft the exact model fields and admin/staff forms (no code edits yet) so you
-  can approve the schema before implementation.
-
-
-** <2026-02-08 dim. 11:47>  Plan to create full blown invoices
-  - P1 Pending payments are treated as settled money in balance math. app/finance/models/invoice.py sums all payments in refresh_totals_from_sources, while app/finance/utils.py creates full-
-    amount pending payments. Result: creating a pending payment can zero balances and flip invoice/registration statuses too early.
-
-  - P1 Student-facing invoice outputs are inconsistent with the new parent invoice model. app/finance/utils.py build_invoice_snapshot uses only course stacks and hardcodes 40%; it does not
-    include StudentSemesterInvoice.fee_stacks totals or required_deposit_percent.
-
-  - P1 Registration cancel flow can drop valid semester-level charges. In app/website/views/student_dashboard.py, parent invoice deletion is based on “no course invoices” and can remove
-    invoice context even when semester fee stacks should remain.
-
-  - P2 The “default general fee stack once per semester” use case is still manual. Invoice creation path in app/website/views/student_dashboard.py creates course invoices, but no policy/
-    service auto-attaches semester/global stacks.
-
-  - P2 Payer data is modeled but not enforced in workflow. Payment defaults to student in app/finance/models/payment.py, and create_pending_payments in app/finance/utils.py does not derive
-    payer from SSI context; finance officer bulk update view does not edit payer either.
-
-  - P2 Permissions are still alias-heavy and fragile. app/shared/auth/perms.py relies on legacy aliases (invoice, coursefee, curriculumcoursefee) that now fan out to multiple models; this is
-    easy to misconfigure and hard to audit.
-
-  - P2 Test suite still contains obsolete old-API usage. tests/finance/test_payment.py and tests/selenium/fixtures_finance.py still create Payment(invoice=...) although payments now attach to
-    StudentSemesterInvoice.
-
-  - P3 Current worktree has referenced-but-untracked admin filter code (app/finance/admin/filters.py). If not committed, deploy/import can break.
-
-  Updated Fix Plan
-
-  1. Define payment accounting semantics explicitly: only cleared payments affect StudentSemesterInvoice.balance; pending remains informational. OK
-  2. Refactor invoice rendering/snapshot to parent-first computation: include semester fee stacks, SSI deposit percent, and keep child course lines as breakdown only. OK
-  3. Harden cancellation lifecycle: never delete SSI when semester-level fees or non-reversible payment history exist; recalculate instead. OK
-  4. Add a fee-assignment service for invoice generation: auto-attach default semester stacks idempotently, plus optional stacks (dormitory-like) from explicit student choice. OK
-  5. Complete payer workflow: keep payer FK model, but propagate payer defaults from SSI into payment creation and expose payer in finance officer update flow.
-  6. Clean permissions matrix to explicit current models (no legacy aliases), then validate with load_roles. OK
-  7. Refresh tests: remove old Payment.invoice tests, add targeted tests for pending-vs-cleared balance behavior, SSI snapshot totals, cancellation retention rules, and auto-attach     idempotency. OK
-  8. Finish rollout hygiene on dev/preprod: ensure migrations applied, ensure seed commands create payer/fee-stack defaults, and commit currently untracked required files. OK
-
-
-
-** <2026-02-08 dim. 11:14> How to create the nivoice with the genera stack feee
-When generating the invoice, we need to include the course tuitions, depends on course ch and ch cost. this will be taken care by gove for liberian students
-we need to add speaclia stack fee dependent on the course type, eg lab fees for some bio or medical courses
-we need to add genereal fee like registration fee
-on some semesster we need to ad d some other fee for some courses eg pe has a uniforme fee every first semester of the yesar if you take that course.
-
-I did attache the sepcific courses fee package to the special courses (la/enterpreneruship ect...) but for the genera fee this need to be adde when the use creates his invoice has some genera fees depend on the semester and on option of the user.   in fact I am remembering that we neeed to incle dormitory fee for stends who pay dormiroty. wher do they make ta selection ? and where is this store.  I line toward the invoice table for the storage space. for the selection f, should be done at teh student ux level in a different panel from the course registration. or jsut a checkbox for the dormitory. I understna the dormitory are the only addition fee that cannot be deducted from course and semester.
-
-
-** <2026-02-08 dim. 09:12>
-
-• 1. Finalize the payer contract and naming.
-
-  - Rename Invoice to CourseInvoice.
-  - Keep payer fields only on StudentSemesterInvoice: course_tuition_payer (default gov) and
-    fee_payer (default student).
-  - Add nullable payer on FeeStack and FeeStackLine, with choices including mixed.
-
-  2. Implement one payer-resolution rule for fees.
-
-  - Resolve each fee line payer as: FeeStackLine.payer -> FeeStack.payer ->
-    StudentSemesterInvoice.fee_payer.
-  - Tuition payer always comes from StudentSemesterInvoice.course_tuition_payer.
-
-  3. Make StudentSemesterInvoice.fee_payer auto-derived when needed.
-
-  - Compute the set of effective fee-line payers for the semester.
-  - If set size > 1, force fee_payer = mixed.
-  - If set size = 1, set fee_payer to that payer.
-  - If no line payer resolves, keep the non-null default behavior.
-
-  4. Keep parent-invoice architecture as source of truth.
-
-  - One StudentSemesterInvoice per (student, semester).
-  - CourseInvoice linked under it.
-  - Payments linked to parent invoice only.
-  - Parent totals/status computed from child course totals + attached semester fees + payments.
-  5. Preserve manual governance (no hard guard after payment).
-
-  - Admin can still edit payer/deposit fields after payments.
-  - History remains the audit trail.
-  - No additional lock mechanism.
-
-  6. Validate with focused scenario checks before rollout.
-
-  - Single-payer stack set -> parent fee_payer single value.
-  - Multi-payer stack lines -> parent fee_payer = mixed.
-  - Null payer fallback chain works at all three levels.
-  - Tuition payer independent from fee payer.
-
-
-›
-
-** <2026-02-08 dim. 09:07> refinement on payer
-default_fee_payer (call it fee_payer ) in StudentSemesterInvoice should be set to mixed if the se of feestackline.payer has more than one payer.
-** <2026-02-08 dim. 08:24> defining the payer types
-Remove the payer_type from courseInvoice and move it to StuddentSemesterInvoice level. call it course_tuition_payer (non nullable default to gov). add also a default_fee_payer (non nullable) (default to student).
-We need to add a payer field to the feeStacks line (nulllable)  and feestack (nullable).
-The rational is that sometime we may have the governement taking care of tution, and 3rd partie taking care of one or 2 items of a feestack. option for payer (not payer type) should include mixed.
-The fee rule should be as follow, if null check the level above for a payer and use that as default.  the default for top level is always set
-** <2026-02-08 dim. 07:56> update on model for better invoice/fee management
-We are still  reflecting, no edit.
-1. we can drop the guards even after first payment. Control will be manualy by admin
-2. do not mention  details for code areas or migration changes.
-3. Rename the invoice model to CourseInvoice in DB and UI.
-4. your steps 2  to 6 are correct
-
-
-
 * <2026-02-02 lun. 07:23> DB sync
 1. You run the dump on preprod (redirection happens on preprod)
 
@@ -1136,20 +667,6 @@ We are still  reflecting, no edit.
   psql -d test_tusis -c "SELECT count(*) FROM django_migrations;"
 
 
-
-* <2026-02-01 dim. 18:43> Test the prereq graph engine
-
-
-* <2026-01-30 ven. 23:00> curriculum
-add a link from the dean dashboard to the curriculum admin, for him to edit curriculums
-he should be able to see all the course, but only edit those courses unders his college.
-He should be able to create new courses for his college and change the assignement of the courses to the curriculum of his college.
-
-the  students number  displayed in   admin/academic/curriculum for each row (curriculum) should match the sum of  the student numbers computed in the course inline for that specific curriculum.  Now, in the course inline the student numbers are zero. Check and correct.
-
-
-* <2026-01-30 ven. 20:59> prerequisites
-  If no curriculum set, then it as the default for the course.
 
 * <2026-01-30 ven. 15:01> Invoice template
 # The snapshot should occure the first time the user access student_invoice_statement
