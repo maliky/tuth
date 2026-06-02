@@ -207,6 +207,8 @@ def save_student_intake(
         user.last_name = data["last_name"]
         user.email = data["email"]
         user.save(update_fields=["first_name", "last_name", "email"])
+        # Student.save() only fills an empty name; portal edits must refresh it.
+        student.long_name = ""
 
     if data["student_id"]:
         student.student_id = data["student_id"]

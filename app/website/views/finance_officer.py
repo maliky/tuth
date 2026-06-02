@@ -9,7 +9,6 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
-from django.core.paginator import Paginator
 from django.db import transaction
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
@@ -18,24 +17,14 @@ from django.views.decorators.http import require_POST
 
 from app.finance.models.invoice import CrsInvoice
 from app.finance.models.payment import Payment
-from app.finance.models.status_types_methods import Payer, PaymentMethod, PaymentStatus
+from app.finance.models.status_types_methods import Payer
 from app.finance.utils import create_pending_payments
 from app.shared.auth.perms import UserRole
 from app.shared.utils import parse_str
-from app.timetable.models.semester import Semester
-from app.website.views.finance_officer_helpers import (
-    build_std_options,
+from app.website.services.finance_portal import (
+    build_finance_console_context,
     clean_int,
-    finance_std_by_id,
     finance_stds,
-    gp_invoices,
-    gp_payments,
-    invoice_queryset,
-    payment_queryset,
-)
-from app.website.views.staff_dashboards import (
-    build_staff_role_switcher,
-    build_staff_sidebar_links,
 )
 
 FINANCE_GROUPS = {
@@ -189,165 +178,5 @@ def finance_officer_update_payments(request: HttpRequest) -> HttpResponse:
 def finance_officer_invoices(request: HttpRequest) -> HttpResponse:
     """Render the finance officer invoice and payment console."""
     _require_finance_access(request)
-    tab = request.GET.get("tab", "invoices")
-    search_query = request.GET.get("q", "").strip()
-    selected_student_id = clean_int(request.GET.get("student_id"))
-    invoice_status = request.GET.get("invoice_status") or None
-    payment_status = request.GET.get("payment_status") or None
-    semester_param = request.GET.get("semester")
-    semester_id = clean_int(semester_param)
-    semester_param_present = "semester" in request.GET
-    if semester_param == "all":
-        semester_id = None
-    if selected_student_id and invoice_status is None:
-        invoice_status = "all"
-    if not selected_student_id and invoice_status is None:
-        invoice_status = "open"
-    if selected_student_id and payment_status is None:
-        payment_status = "all"
-    if not selected_student_id and payment_status is None:
-        payment_status = "pending"
-    if not semester_param_present:
-        current_semester = Semester.get_current_sem()
-        if current_semester:
-            semester_id = current_semester.id
-
-    base_params = request.GET.copy()
-    base_params.pop("tab", None)
-    base_params.pop("page", None)
-    base_query = base_params.urlencode()
-    invoice_tab_url = "?"
-    if base_query:
-        invoice_tab_url = f"?tab=invoices&{base_query}"
-        payment_tab_url = f"?tab=payments&{base_query}"
-    else:
-        invoice_tab_url = "?tab=invoices"
-        payment_tab_url = "?tab=payments"
-    invoice_all_url = "?tab=invoices&invoice_status=all&semester=all"
-    payment_all_url = "?tab=payments&payment_status=all&semester=all"
-    pagination_params = request.GET.copy()
-    pagination_params.pop("page", None)
-    if "semester" not in pagination_params and semester_id:
-        pagination_params["semester"] = str(semester_id)
-    # Preserve filter inputs when the "Go to page" form submits.
-    pagination_hidden_fields: list[dict[str, str]] = []
-    for key, values in pagination_params.lists():
-        for value in values:
-            pagination_hidden_fields.append({"name": key, "value": value})
-
-    student_options = []
-    selected_student_label = ""
-    if selected_student_id:
-        selected_student = finance_std_by_id(selected_student_id)
-        if selected_student:
-            student_options = build_std_options(
-                [selected_student],
-                selected_student_id,
-            )
-            selected_student_label = student_options[0]["label"]
-    invoice_qs = invoice_queryset(
-        selected_student_id,
-        invoice_status or "open",
-        semester_id,
-    )
-    payment_qs = payment_queryset(
-        selected_student_id,
-        payment_status or "pending",
-        semester_id,
-    )
-
-    page_number = request.GET.get("page")
-    per_page = 100
-    invoice_page = Paginator(invoice_qs, per_page).get_page(page_number)
-    payment_page = Paginator(payment_qs, per_page).get_page(page_number)
-
-    invoice_groups = gp_invoices(invoice_page)
-    payment_groups = gp_payments(payment_page)
-
-    invoice_status_options = [
-        {"value": "open", "label": "Open balance"},
-        {"value": "all", "label": "All invoices"},
-    ]
-    payment_status_options = [
-        {"value": "all", "label": "All payments"},
-    ] + [
-        {"value": status.code, "label": status.label}
-        for status in PaymentStatus.objects.order_by("label")
-    ]
-    payment_status_choices = [
-        {"code": status.code, "label": status.label}
-        for status in PaymentStatus.objects.order_by("label")
-    ]
-    payment_method_options = [
-        {"code": method.code, "label": method.label}
-        for method in PaymentMethod.objects.order_by("label")
-    ]
-    payer_options = [
-        {"code": payer.code, "label": payer.label}
-        for payer in Payer.objects.order_by("label")
-    ]
-    semester_options = [
-        {
-            "value": "all",
-            "label": "All semesters",
-            "selected": semester_param == "all",
-        }
-    ]
-    for sem in Semester.objects.select_related("academic_year").order_by(
-        "-academic_year__start_date",
-        "-number",
-    ):
-        semester_options.append(
-            {
-                "value": str(sem.id),
-                "label": f"{sem.academic_year.code} · Semester {sem.number}",
-                "selected": semester_id == sem.id,
-            }
-        )
-
-    active_task = "payment_validation" if tab == "payments" else "invoice_console"
-    dashboard_url = reverse(
-        "staff_role_dashboard",
-        kwargs={"role": "finance_officer"},
-    )
-    context = {
-        "page_title": "Finance Officer Console",
-        "page_summary": "Review invoices, record payments, and clear balances.",
-        "eyebrow": "Finance officer",
-        "sidebar_links": build_staff_sidebar_links("finance_officer", active_task),
-        "role_switcher": build_staff_role_switcher(
-            cast(User, request.user), "finance_officer"
-        ),
-        "breadcrumbs": [
-            {"label": "Finance overview", "href": dashboard_url},
-            {"label": "Invoice console", "href": ""},
-        ],
-        "active_tab": tab,
-        "search_query": search_query,
-        "student_options": student_options,
-        "selected_student_id": selected_student_id,
-        "selected_student_label": selected_student_label,
-        "invoice_status": invoice_status,
-        "payment_status": payment_status,
-        "invoice_status_options": invoice_status_options,
-        "payment_status_options": payment_status_options,
-        "payment_status_choices": payment_status_choices,
-        "payment_method_options": payment_method_options,
-        "payer_options": payer_options,
-        "semester_options": semester_options,
-        "invoice_groups": invoice_groups,
-        "payment_groups": payment_groups,
-        "invoice_page": invoice_page,
-        "payment_page": payment_page,
-        "current_path": request.get_full_path(),
-        "invoice_tab_url": invoice_tab_url,
-        "payment_tab_url": payment_tab_url,
-        "invoice_all_url": invoice_all_url,
-        "payment_all_url": payment_all_url,
-        "pagination_query": pagination_params.urlencode(),
-        "pagination_hidden_fields": pagination_hidden_fields,
-        "pagination_action": request.path,
-        "student_autocomplete_url": reverse("finance_officer_std_autocomplete"),
-        "dashboard_url": dashboard_url,
-    }
+    context = build_finance_console_context(request)
     return render(request, "website/staff/finance_officer_invoices.html", context)

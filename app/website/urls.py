@@ -51,6 +51,21 @@ urlpatterns = [
         name="std_curri_crs_detail",
     ),
     path(
+        "staff/dean/curricula/",
+        views.dean_curricula,
+        name="dean_curricula",
+    ),
+    path(
+        "staff/dean/curricula/<int:curriculum_id>/",
+        views.dean_curriculum_detail,
+        name="dean_curriculum_detail",
+    ),
+    path(
+        "staff/dean/curricula/<int:curriculum_id>/request-activation/",
+        views.dean_curriculum_request_activation,
+        name="dean_curriculum_request_activation",
+    ),
+    path(
         "staff/finance/invoices/",
         views.finance_officer_invoices,
         name="finance_officer_invoices",

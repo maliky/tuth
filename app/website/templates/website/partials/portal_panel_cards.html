@@ -1,0 +1,40 @@
+{% for panel in panels %}
+  <article class="portal-panel-card">
+    <div class="portal-panel-card__stripe"></div>
+    <div class="portal-panel-card__body">
+      <div class="portal-panel-card__head">
+        <h2>{{ panel.title }}</h2>
+        {% if panel.subtitle %}
+          <p class="portal-panel-card__subtitle">{{ panel.subtitle }}</p>
+        {% endif %}
+      </div>
+      <ul class="portal-panel-card__list">
+        {% for item in panel.items %}
+          <li>
+            <div>
+              <strong>{{ item.label }}</strong>
+              {% if item.value %}
+                <span class="portal-panel-card__value">{{ item.value }}</span>
+              {% endif %}
+            </div>
+            {% if item.meta %}
+              <small>{{ item.meta }}</small>
+            {% endif %}
+          </li>
+        {% empty %}
+          <li><span class="text-muted">No data available.</span></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </article>
+{% empty %}
+  <article class="portal-panel-card">
+    <div class="portal-panel-card__stripe"></div>
+    <div class="portal-panel-card__body">
+      <h2>Nothing to show yet</h2>
+      <p class="portal-panel-card__subtitle">
+        As soon as data streams in, this dashboard will populate.
+      </p>
+    </div>
+  </article>
+{% endfor %}

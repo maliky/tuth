@@ -7,7 +7,7 @@ from typing import Any
 from django import template
 from django.urls import reverse
 
-from app.website.views.staff_dashboards import ROLE_CONFIG, _resolve_staff_role
+from app.website.services.staff_portal import ROLE_CONFIG, resolve_staff_role
 
 register = template.Library()
 
@@ -20,7 +20,7 @@ def staff_dashboard_info(context: dict[str, Any]) -> dict[str, str]:
     if not user or not user.is_authenticated:
         return {}
     try:
-        role_slug = _resolve_staff_role(user)
+        role_slug = resolve_staff_role(user)
     except Exception:  # pragma: no cover - safety net
         return {}
     if not role_slug:

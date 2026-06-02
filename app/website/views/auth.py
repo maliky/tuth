@@ -13,7 +13,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.views import View
 
-from .staff_dashboards import ADMIN_PORTAL_GROUPS
+from app.website.services.staff_portal import ADMIN_PORTAL_GROUPS
 
 
 @login_required

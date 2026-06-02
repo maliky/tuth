@@ -1,6 +1,11 @@
 """Modularized views exposed under the legacy import path."""
 
 from .auth import PortalLoginView, PortalLogoutView, portal_redirect
+from .dean import (
+    dean_curricula,
+    dean_curriculum_detail,
+    dean_curriculum_request_activation,
+)
 from .enrollment import (
     create_std,
     std_admin_edit,
@@ -39,6 +44,9 @@ __all__ = [
     "PortalLoginView",
     "PortalLogoutView",
     "create_std",
+    "dean_curricula",
+    "dean_curriculum_detail",
+    "dean_curriculum_request_activation",
     "portal_redirect",
     "reg_crs_wins",
     "reg_grades_dashboard",

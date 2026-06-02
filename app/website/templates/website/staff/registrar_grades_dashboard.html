@@ -6,12 +6,14 @@
 {% endblock %}
 
 {% block staff_header_actions %}
-  <a class="btn portal-btn-outline btn-sm" href="{% url 'staff_dashboard' %}">
-    Back to dashboard
-  </a>
+  <a class="btn portal-btn-outline btn-sm" href="{% url 'staff_dashboard' %}">Back to dashboard</a>
 {% endblock %}
 
 {% block staff_content %}
+  <div class="mb-3">
+    <a class="btn portal-btn-outline btn-sm" href="{% url 'staff_dashboard' %}">Back to dashboard</a>
+  </div>
+
   <section class="portal-filter-card mb-4">
     <div class="portal-filter-card__body">
       <div class="portal-filter-card__intro">
@@ -72,12 +74,7 @@
               GPA {{ group.gpa }} · Credits {{ group.credits_total }}
             </span>
           </button>
-          <a
-            class="btn btn-sm portal-btn-accent me-3"
-            href="{% url 'reg_grade_transcript' group.student.id %}"
-          >
-            Official transcript
-          </a>
+          <a class="btn btn-sm portal-btn-accent me-3" href="{% url 'reg_grade_transcript' group.student.id %}">Official transcript</a>
         </div>
         <div class="collapse" id="student-{{ group.student.id }}">
           <div class="portal-accordion-card__body">

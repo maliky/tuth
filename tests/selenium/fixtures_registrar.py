@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from django.core.paginator import Paginator
 
-from app.website.views import registrar as registrar_views
+from app.website.services import registrar_portal as registrar_portal_services
 
 
 @pytest.fixture
@@ -19,5 +19,5 @@ def tiny_paginator(monkeypatch: pytest.MonkeyPatch):
             super().__init__(object_list, 1, **kwargs)
 
     # I need clarifications here
-    # Monkeypatch replaces the view's paginator for this test session only.
-    monkeypatch.setattr(registrar_views, "Paginator", TinyPaginator)
+    # Monkeypatch replaces the service paginator for this test session only.
+    monkeypatch.setattr(registrar_portal_services, "Paginator", TinyPaginator)

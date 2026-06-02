@@ -112,15 +112,14 @@ class AbstractPerson(models.Model):
 
     def _update_long_name(self) -> None:
         """Update the long name."""
-        self.long_name = " ".join(
-            [
-                self.prefix_name,
-                self.user.first_name,
-                self.middle_name,
-                self.user.last_name,
-                self.suffix_name,
-            ]
-        ).strip()
+        name_parts = [
+            self.prefix_name,
+            self.user.first_name,
+            self.middle_name,
+            self.user.last_name,
+            self.suffix_name,
+        ]
+        self.long_name = " ".join(part for part in name_parts if part).strip()
 
     def _ensure_long_name(self) -> None:
         """Set the long name from the different name parts."""

@@ -7,86 +7,10 @@
 {% block staff_content %}
   <div class="portal-workspace-grid">
     <div class="staff-dashboard__primary">
-      {% if metrics %}
-        <div class="kpi-grid mb-4">
-          {% for metric in metrics %}
-            <article class="kpi-card">
-              <p class="metric-card__label">{{ metric.label }}</p>
-              <p class="kpi-value mb-0">{{ metric.value }}</p>
-            </article>
-          {% endfor %}
-        </div>
-      {% endif %}
-
-      {% for panel in panels %}
-        <article class="portal-panel-card">
-          <div class="portal-panel-card__stripe"></div>
-          <div class="portal-panel-card__body">
-            <div class="portal-panel-card__head">
-              <h2>{{ panel.title }}</h2>
-              {% if panel.subtitle %}
-                <p class="portal-panel-card__subtitle">{{ panel.subtitle }}</p>
-              {% endif %}
-            </div>
-            <ul class="portal-panel-card__list">
-              {% for item in panel.items %}
-                <li>
-                  <div>
-                    <strong>{{ item.label }}</strong>
-                    {% if item.value %}
-                      <span class="portal-panel-card__value">{{ item.value }}</span>
-                    {% endif %}
-                  </div>
-                  {% if item.meta %}
-                    <small>{{ item.meta }}</small>
-                  {% endif %}
-                </li>
-              {% empty %}
-                <li><span class="text-muted">No data available.</span></li>
-              {% endfor %}
-            </ul>
-          </div>
-        </article>
-      {% empty %}
-        <article class="portal-panel-card">
-          <div class="portal-panel-card__stripe"></div>
-          <div class="portal-panel-card__body">
-            <h2>Nothing to show yet</h2>
-            <p class="portal-panel-card__subtitle">
-              As soon as data streams in, this dashboard will populate.
-            </p>
-          </div>
-        </article>
-      {% endfor %}
+      {% include "website/partials/portal_kpi_grid.html" %}
+      {% include "website/partials/portal_panel_cards.html" %}
     </div>
 
-    <aside class="portal-actions-panel">
-      <div class="portal-actions-panel__header">
-        <p class="eyebrow text-uppercase mb-1">Next actions</p>
-        <h2>What can I do here?</h2>
-      </div>
-      <div class="staff-dashboard__secondary">
-        {% if actions %}
-          {% for action in actions %}
-            <article class="action-card">
-              <p class="action-card__label">
-                <span class="action-card__cue {% if action.is_admin %}is-admin{% else %}is-app{% endif %}"></span>
-                {{ action.description }}
-              </p>
-              <a
-                class="btn {% if action.is_admin %}portal-btn-outline{% else %}portal-btn-accent{% endif %} w-100"
-                href="{{ action.href }}"
-              >
-                {{ action.label }}
-              </a>
-            </article>
-          {% endfor %}
-        {% else %}
-          <article class="action-card action-card--empty">
-            <p>No quick actions right now.</p>
-          </article>
-        {% endif %}
-      </div>
-    </aside>
+    {% include "website/partials/portal_action_panel.html" %}
   </div>
 {% endblock %}

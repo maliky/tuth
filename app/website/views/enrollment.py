@@ -17,7 +17,7 @@ from django.urls import reverse
 from app.people.models.student import Student
 from app.shared.utils import parse_str
 from app.website.forms.enrollment import StudentIntakeForm, save_student_intake
-from app.website.views.staff_dashboards import (
+from app.website.services.staff_portal import (
     build_staff_role_switcher,
     build_staff_sidebar_links,
 )
