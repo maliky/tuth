@@ -9,7 +9,6 @@ from app.timetable.models.section import Section
 
 
 class SecResource(resources.ModelResource):
-
     # just to keep it in headers and accessible for other.
 
     academic_year = fields.Field(attribute=None, column_name="academic_year")

@@ -11,7 +11,6 @@ from django import forms
 
 
 class DonorForm(PersonFormMixin, forms.ModelForm):
-
     class Meta:
         model = Donor
         fields: FieldT = []

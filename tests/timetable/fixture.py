@@ -65,7 +65,6 @@ def session(section, room) -> SecSession:
 
 @pytest.fixture
 def academic_year_factory() -> AcademicYearFactoryT:
-
     def _make(start_date: datetime = DEF_DATE) -> AcademicYear:
         academic_year, _ = AcademicYear.objects.get_or_create(start_date=start_date)
         return academic_year
@@ -76,7 +75,6 @@ def academic_year_factory() -> AcademicYearFactoryT:
 @pytest.fixture
 def sem_factory(academic_year_factory: AcademicYearFactoryT) -> SemesterFactoryT:
     def _make(number: int, ay_start_date: datetime = DEF_DATE) -> Semester:
-
         _ensure_sem_statuses()
 
         ay = academic_year_factory(ay_start_date)

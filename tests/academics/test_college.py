@@ -61,10 +61,10 @@ def test_college_computed_fields(
 
     assert college.faculty_count == 1
     assert college.crs_count == 4
-    assert "CUR1" in [
-        c.short_name for c in college.curricula.all()
-    ], f"{college.curricula.all()}"
-    assert "SCI" in [
-        c.code for c in college.departments.all()
-    ], f"{college.departments.all()}"
+    assert "CUR1" in [c.short_name for c in college.curricula.all()], (
+        f"{college.curricula.all()}"
+    )
+    assert "SCI" in [c.code for c in college.departments.all()], (
+        f"{college.departments.all()}"
+    )
     assert "sophomore: 1" in college.std_counts_by_level, f"{college.std_counts_by_level}"

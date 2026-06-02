@@ -7,7 +7,6 @@ from app.spaces.models.core import Room, Space
 
 
 class SpaceWgt(widgets.ForeignKeyWidget):
-
     def __init__(self):
         super().__init__(Space, field="code")
 

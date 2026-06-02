@@ -32,7 +32,6 @@ class StatusHistoryForm(forms.ModelForm):
             self.instance, "content_type", None
         )
         if content_type:
-
             field = self.fields["status"]
             assert isinstance(field, ChoiceField)
             model_cls = content_type.model_class()

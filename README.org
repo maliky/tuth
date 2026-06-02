@@ -55,8 +55,8 @@ If you add Python libraries using `pip install ...`,
 echo "xyz" > requirements-dev.txt
 #+END_SRC
 - Run code checks: 
-#+BEGIN_SRC python
-black app/ && flake8 app/ && mypy app/
+#+BEGIN_SRC bash
+ruff format --check app/ && ruff check app/ && mypy app/
 #+END_SRC
 
 * Style Notes

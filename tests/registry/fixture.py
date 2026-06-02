@@ -134,7 +134,6 @@ def grade_factory(std_factory, sec_factory) -> GradeFactoryT:
         letter: str = "A",
         numeric: Decimal = D90,
     ) -> Grade:
-
         grade_value, _ = GradeValue.objects.get_or_create(code=letter)
         return Grade.objects.create(
             student=std_factory(student_uname, curri_short_name),

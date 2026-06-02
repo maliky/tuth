@@ -34,7 +34,7 @@ def test_std_import(student_id, long_name, username, curriculum, gp_factory):
 
     raw_row = [student_id, long_name, "", curriculum.short_name]
     ds.append(raw_row)
-    row = dict(zip(ds.headers, raw_row))
+    row = dict(zip(ds.headers, raw_row, strict=False))
 
     # Create the username before the Resource call otherways it will differ if
     # because by default uniqueness is set to True

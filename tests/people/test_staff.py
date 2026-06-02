@@ -16,9 +16,9 @@ def test_staff_creation_generates_username_when_missing() -> None:
     )
 
     expected_username = mk_username("Tina", "Doe")
-    assert (
-        staff.user.username == expected_username
-    ), f"{staff.user.username} != {expected_username}"
+    assert staff.user.username == expected_username, (
+        f"{staff.user.username} != {expected_username}"
+    )
     assert staff.staff_id.startswith(Staff.ID_PREFIX)
     assert staff.user.groups.filter(name=Staff.GROUP).exists()
 
@@ -38,7 +38,6 @@ def test_staff_creation_can_set_custom_username() -> None:
 
 @pytest.mark.django_db
 def test_staff_creation_ensures_unique_username() -> None:
-
     Staff.objects.create(first_name="Amaury", last_name="Smith")
 
     with pytest.raises(IntegrityError):

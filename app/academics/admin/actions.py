@@ -708,10 +708,7 @@ def attach_fee_stacks(modeladmin, request, queryset):
             if skipped_existing_count:
                 modeladmin.message_user(
                     request,
-                    (
-                        f"Skipped {skipped_existing_count} existing course/stack "
-                        "link(s)."
-                    ),
+                    (f"Skipped {skipped_existing_count} existing course/stack link(s)."),
                     level=messages.INFO,
                 )
             if skipped_invalid_count:

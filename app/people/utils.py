@@ -652,7 +652,6 @@ def create_person_factory(
     """
 
     def f() -> ModelT:
-
         manager = cast(BaseManager[ModelT], model._default_manager)
 
         pers, _created = manager.get_or_create(username=username, defaults=dfts)

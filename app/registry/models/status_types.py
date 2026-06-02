@@ -5,7 +5,6 @@ from app.shared.mixins import SimpleTableMixin
 
 
 class DocType(SimpleTableMixin):
-
     DEFAULT_VALUES = [
         ("photo", "Photo"),
         ("applet", "Application Letter"),

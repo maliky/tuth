@@ -39,9 +39,7 @@ class Term(models.Model):
         container_end = self.semester.end_date
 
         assert container_start is not None and container_end is not None
-        overlap_qs = Term.objects.filter(semester=self.semester).exclude(
-            pk=self.pk
-        )  # type: ignore[attr-defined]
+        overlap_qs = Term.objects.filter(semester=self.semester).exclude(pk=self.pk)  # type: ignore[attr-defined]
         validate_subperiod(
             sub_start=self.start_date,
             sub_end=self.end_date,

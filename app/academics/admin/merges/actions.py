@@ -403,10 +403,7 @@ def merge_curri_crss_action(course_admin, request, queryset):
     if summary["credit_hours_conflicts"]:
         messages.warning(
             request,
-            (
-                "Credit hours differ on "
-                f"{summary['credit_hours_conflicts']} selection(s)."
-            ),
+            (f"Credit hours differ on {summary['credit_hours_conflicts']} selection(s)."),
         )
     if summary["is_required_conflicts"]:
         messages.warning(

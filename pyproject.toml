@@ -10,17 +10,14 @@ markers = [
 # requires = ["setuptools>=42", "wheel"]
 # build-backend = "setuptools.build_meta"
 
-[tool.black]
+[tool.ruff]
 line-length = 90
-target-version = ["py313"]
-exclude = "__pycache__|.git|migrations|Seed_data"
+target-version = "py313"
+exclude = ["__pycache__", ".git", "migrations", "Seed_data"]
 
-[tool.flake8]
-per-file-ignores = ["__init__.py:F401"]
-extend-exclude = "__pycache__,.git,migrations,Seed_data"
-max-complexity = 15
-max-line-length = 90
-# The old ignore list: C901,W605,E203,D401,W503,D101,D107,D103,E501
+[tool.ruff.lint]
+select = ["B", "C90", "D", "E", "F", "W"]
+# Keep the historical Flake8 policy while Ruff replaces Black and Flake8.
 ignore = [
   "B009",
   "C901",  # 'func' is too complex
@@ -36,11 +33,20 @@ ignore = [
   "E501",  # line too long
   "E741",  # ambiguous variable name
   "F401",
-  "W503",  # line break before binary operator
-  "W504",  # line break after binary operator
   "W605",  # invalid escape sequence
 ]
-docstring-convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+line-ending = "auto"
 
 [tool.mypy]
 python_version = "3.13"

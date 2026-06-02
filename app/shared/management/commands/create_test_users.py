@@ -61,9 +61,7 @@ class Command(BaseCommand):
             RoleAssignment.objects.get_or_create(
                 user=_user, group=group, start_date=date.today(), college=college
             )
-            created.append(
-                (person.username, group.name, was_created)
-            )  # type: ignore[attr-defined]
+            created.append((person.username, group.name, was_created))  # type: ignore[attr-defined]
             # log
             status = "Created" if was_created else "Updated"
             self.stdout.write(f" - {_user} ({group}): {status} with pwd {TEST_PASSWORD}")

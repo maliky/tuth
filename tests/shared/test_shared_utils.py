@@ -45,7 +45,6 @@ def test_expand_code_invalid_format():
 
 @pytest.mark.django_db
 def test_expand_code_accepts_underscore(college, dpt_factory):
-
     dept = dpt_factory("ACCT")
     college_code, dept_shortname, num = expand_crs_code("ACCT_404")
 

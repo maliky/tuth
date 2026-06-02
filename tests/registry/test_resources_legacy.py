@@ -29,8 +29,7 @@ def test_legacy_regio_rows_reads_override(tmp_path: Path):
     cache_clear()
     csv_path = tmp_path / "legacy.csv"
     csv_path.write_text(
-        "student_id,AcademicYear,Semester,Major,College\n"
-        "123,2020/2021,First,CS,COET\n",
+        "student_id,AcademicYear,Semester,Major,College\n123,2020/2021,First,CS,COET\n",
         encoding="utf-8",
     )
     rows = legacy_regio_rows(csv_path)

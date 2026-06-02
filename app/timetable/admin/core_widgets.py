@@ -34,7 +34,7 @@ class AcademicYearCodeWgt(widgets.ForeignKeyWidget):
         m = self.ay_pat.match(value)
         if not m:
             raise ValueError(
-                f"Invalid academic year short name, got '{value!r}';" f"for {self.ay_pat}"
+                f"Invalid academic year short name, got '{value!r}';for {self.ay_pat}"
             )
 
         start = date(int("20" + m.group(1)), 8, 11)

@@ -24,7 +24,7 @@ class SemResource(resources.ModelResource):
         fields = (
             "academic_year",
             "number",
-            "status" "start_date",
+            "statusstart_date",
             "end_date",
             "",
         )  # do not remove academic_year

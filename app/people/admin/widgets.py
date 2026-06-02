@@ -35,7 +35,6 @@ from app.shared.utils import get_in_row, parse_str
 
 
 class StaffProfileWgt(widgets.ForeignKeyWidget):
-
     def __init__(self):
         self._cache_staff: dict[Hashable, Staff] = {}
         super().__init__(Staff)

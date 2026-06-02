@@ -32,7 +32,6 @@ def test_faculty_college_assignation(college_factory):
 
 @pytest.mark.django_db
 def test_faculty_creation_ensures_unique_username() -> None:
-
     Faculty.objects.create(first_name="Amaury", last_name="Smith")
 
     with pytest.raises(IntegrityError):

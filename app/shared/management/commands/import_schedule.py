@@ -337,7 +337,6 @@ class Command(BaseCommand):
         college: College,
         stats: ImportStats,
     ) -> Optional[Faculty]:
-
         _name = parse_str(raw_name)
         if not _name:
             return None

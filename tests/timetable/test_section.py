@@ -11,7 +11,6 @@ pytestmark = pytest.mark.django_db
 
 
 def test_sec_unique_per_curriculum_course(curriculum_course, semester):
-
     Section.objects.create(
         semester=semester, curriculum_course=curriculum_course, number=1
     )

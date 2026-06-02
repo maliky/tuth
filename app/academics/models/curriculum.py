@@ -113,7 +113,6 @@ class CurriManager(models.Manager["Curriculum"]):
         long_name = defaults.get("long_name") if defaults else ""
 
         if fuzzy_threshold < 1 and short_name and college:
-
             cur_match, _score = self.find_fuzzy_match(
                 short_name=short_name,
                 college=college,

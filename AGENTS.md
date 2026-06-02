@@ -42,7 +42,7 @@ Do not change existing variable names
 - Trying keep python files size under 300 lines for readability.  They can be bundled together latter at deployment or production stage.
 
 ### Linting and checks
-- Check that the code pass with `py_compile`,  `black`, `flake8`, and `mypy` at the end of your edits. 
+- Check that the code passes with `py_compile`, `ruff format --check`, `ruff check`, and `mypy` at the end of your edits.
 - If a model change requires migrations, stop at code changes and report the required migration; do not create or edit migration files unless explicitly asked.
 
 ## Codebase style snapshot
