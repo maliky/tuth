@@ -22,6 +22,8 @@ from app.people.services.merge_people import merge_people
 ModelT: TypeAlias = models.Model
 MergeSummaryT: TypeAlias = dict[str, int]
 CandidateMapT: TypeAlias = dict[str, ModelT]
+DuplicateMatchesT: TypeAlias = list[tuple[ModelT, float]]
+DuplicateMatchesCacheT: TypeAlias = dict[int, DuplicateMatchesT]
 
 
 class _UserSyncedModel(Protocol):
@@ -423,6 +425,7 @@ class DuplicatePreviewMixin:
         # > Cache per-request duplicate metrics for list display and ordering.
         self._duplicate_score_cache: dict[int, float] = {}
         self._duplicate_count_cache: dict[int, int] = {}
+        self._duplicate_matches_cache: DuplicateMatchesCacheT = {}
 
         dup_target = request.GET.get("dups_for")
         if dup_target:
@@ -494,18 +497,33 @@ class DuplicatePreviewMixin:
         qs = self._get_candidates(obj, person_user)
         return base_name, qs
 
-    def _duplicate_matches(self, obj) -> list[tuple[ModelT, float]]:
+    def _duplicate_matches_cache_map(self) -> DuplicateMatchesCacheT:
+        """Return the duplicate-match cache for the current admin request."""
+        cache = getattr(self, "_duplicate_matches_cache", None)
+        if not isinstance(cache, dict):
+            cache = {}
+            self._duplicate_matches_cache = cache
+        return cast(DuplicateMatchesCacheT, cache)
+
+    def _duplicate_matches(self, obj) -> DuplicateMatchesT:
         """Return all matches meeting the similarity threshold."""
+        cache = self._duplicate_matches_cache_map()
+        if obj.pk and obj.pk in cache:
+            return cache[obj.pk]
         base_name, qs = self._duplicate_candidates(obj)
         if not base_name:
+            if obj.pk:
+                cache[obj.pk] = []
             return []
-        matches: list[tuple[ModelT, float]] = []
+        matches: DuplicateMatchesT = []
         for other in qs[:50]:
             other_name = self._get_long_name(other)
             score = name_similarity(base_name, other_name)
             if score >= self.duplicate_threshold:
                 matches.append((other, score))
         matches.sort(key=lambda item: item[1], reverse=True)
+        if obj.pk:
+            cache[obj.pk] = matches
         return matches
 
     def _duplicate_score_value(self, obj) -> float:

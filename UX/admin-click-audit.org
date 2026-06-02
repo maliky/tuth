@@ -168,7 +168,7 @@ Verification:
 Focused Django admin GET regression tests passed for course-invoice and student-semester-invoice facet/search combinations.
 
 ** Slowness findings
-*** TODO P2 - Several admin pages are too slow for comfortable operational use
+*** DONE P2 - Several admin pages are too slow for comfortable operational use
 Slow threshold used by the audit: 3 seconds.
 Urgent threshold used by the audit: 5 seconds.
 
@@ -206,8 +206,19 @@ Recommended fix:
 Prioritize query count and payload inspection for these pages.
 Reduce inline volume, add pagination/collapse where possible, and ensure list displays use annotations/select_related/prefetch_related without conflicting with facets.
 
+Resolution:
+- Scoped admin changelists now default to 50 rows per page instead of 200, with a 200-row show-all cap.
+- Course admin now uses a per-course grade-count subquery instead of a wide grade join/group-by over the full course table.
+- Curriculum-course inlines now select related course/curriculum/credit-hour labels and no longer compute the unused registration count aggregate.
+- Student duplicate preview/count columns now share a per-request fuzzy-match cache.
+- Student-semester invoice add screens skip course/payment detail inlines until the parent invoice exists.
+
+Verification:
+Focused remaining-audit regression tests passed for the optimized slow-page mechanics and for the audited slow admin pages rendering successfully.
+Exact browser timing should still be repeated after deployment because this verification used Django admin render tests, not a fresh preprod browser timing pass.
+
 ** Lower-priority findings
-*** TODO P3 - Registration admin JavaScript fails in the browser
+*** DONE P3 - Registration admin JavaScript fails in the browser
 Affected admin paths:
 - =/admin/registry/registration/=
 - =/admin/registry/registration/add/=
@@ -228,7 +239,16 @@ The page still renders, but dynamic registration behavior may be broken.
 Recommended fix:
 Wrap the script with Django admin's jQuery convention or vanilla JavaScript and add a browser smoke test for the registration add/change page.
 
-*** REVIEW P1 - Impersonation log add URL returns 403
+Resolution:
+The registration admin TypeScript now resolves =django.jQuery= lazily, retries briefly when admin media ordering is late, and falls back to =window.jQuery= only when available.
+It no longer calls the =$= argument immediately from =django.jQuery= before the admin runtime has initialized it.
+
+Verification:
+Focused remaining-audit regression tests confirm the registration add page renders and the source uses the resilient loader.
+TypeScript format/lint/typecheck and static build passed through the compose =js-tools= service.
+Browser-console retesting should still be repeated after deployment/restart.
+
+*** DONE P1 - Impersonation log add URL returns 403
 Affected admin path:
 - =/admin/impersonate/impersonationlog/add/=
 
@@ -243,6 +263,13 @@ Recommended fix:
 Verify the object tools on the impersonation log changelist do not expose =Add=.
 No code change is required if the link is not visible.
 
+Resolution:
+This is expected read-only behavior.
+The impersonation log admin reports no add permission, the changelist does not expose the impersonation-log add URL, and direct GET to the add URL still returns 403.
+
+Verification:
+Focused remaining-audit regression tests passed for the read-only impersonation log behavior.
+
 ** P0 fix verification
 All original P0 findings from this audit now have focused Django admin GET regression coverage.
 
@@ -254,11 +281,27 @@ Verification result:
 - focused P0 regression tests: passed
 - full test suite: =244 passed, 67 xfailed=
 
+** P1-P3 fix verification
+Verification commands:
+- =pytest tests/test_admin_p0_audit_regressions.py tests/test_admin_remaining_audit_regressions.py --reuse-db=
+- =pytest tests/ --reuse-db -x -m "not selenium"=
+- =docker-compose -f docker-compose-preprod.yml run --rm js-tools npm run check:ts=
+- =docker-compose -f docker-compose-preprod.yml run --rm js-tools npm run build:ts=
+
+Verification result:
+- Combined admin audit regression tests: =10 passed=.
+- Non-Selenium regression suite: =227 passed, 23 deselected, 67 xfailed=.
+- TypeScript format/lint/typecheck: passed.
+- TypeScript static build: passed.
+
+Selenium note:
+Full-suite Selenium runs were attempted and stopped in =tests/bdd/test_registrar_grades_dashboard_bdd.py= on registrar grades dashboard waits.
+The failed scenarios passed when rerun in isolation, so this is tracked as a separate browser-suite stability issue rather than an admin audit regression.
+
 ** Recommended next implementation order
-1. Fix registration admin JavaScript so Django admin dynamic behavior works reliably.
-2. Profile and optimize the slowest admin pages, starting with student-semester invoice add, curriculum change, and course changelist.
-3. Repeat the full browser audit after deploying these P0 fixes to preprod.
-4. Add the admin browser audit runner as a reusable checked-in smoke target if this becomes part of the release process.
+1. Deploy the admin audit fixes and rebuilt static assets to preprod.
+2. Repeat the full browser audit after deployment/restart, with emphasis on page timing and console errors.
+3. Add the admin browser audit runner as a reusable checked-in smoke target if this becomes part of the release process.
 
 ** Acceptance criteria status
 - Admin login with =dev= succeeds: met.
@@ -266,5 +309,5 @@ Verification result:
 - All discovered model changelists load: met.
 - No 500s on original P0 deeper admin GET paths: met in focused regression tests.
 - No original P0 admin-generated search/filter/autocomplete crashes: met in focused regression tests.
-- No core admin page above 3 seconds: not met.
-- No browser console errors on audited admin pages: not met.
+- No core admin page above 3 seconds: mitigated in code; needs fresh preprod browser timing after deployment.
+- No browser console errors on audited admin pages: registration source and static build validated; needs fresh browser-console pass after deployment/restart.

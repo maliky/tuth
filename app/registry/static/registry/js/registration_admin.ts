@@ -34,117 +34,156 @@ type JQueryInstanceT = {
 type JQueryStaticT = ((selector: string) => JQueryInstanceT) &
   ((handler: () => void) => void);
 
-// django.jQuery is the admin-safe jQuery instance (no global $).
-declare const django: {
-  jQuery: JQueryStaticT;
+type DjangoAdminT = {
+  jQuery?: JQueryStaticT;
 };
 
-// Wrap in an IIFE to keep admin globals clean.
-(function ($: JQueryStaticT) {
-  /** Keep the section field synced with the currently selected student. */
-  function initRegistrationSectionField() {
-    var $section = $("#id_section");
-    if (!$section.length) {
-      return;
-    }
-    var studentFieldId = $section.attr("data-student-field");
-    if (!studentFieldId) {
-      return;
-    }
-    var $student = $("#" + studentFieldId);
-    if (!$student.length) {
-      return;
+type AdminWindowT = Window &
+  typeof globalThis & {
+    django?: DjangoAdminT;
+    jQuery?: JQueryStaticT;
+  };
+
+function adminWindow(): AdminWindowT {
+  /** Return a typed window with optional admin jQuery handles. */
+  return window as AdminWindowT;
+}
+
+function resolveAdminJQuery(): JQueryStaticT | null {
+  /** Resolve Django admin jQuery without assuming load order or global $. */
+  var currentWindow = adminWindow();
+  return currentWindow.django?.jQuery || currentWindow.jQuery || null;
+}
+
+function runWhenAdminJQueryIsReady(
+  callback: (jquery: JQueryStaticT) => void,
+  attemptsLeft: number
+) {
+  /** Retry briefly because Django admin media ordering can vary by form widget. */
+  var jquery = resolveAdminJQuery();
+  if (jquery) {
+    callback(jquery);
+    return;
+  }
+  if (attemptsLeft <= 0) {
+    return;
+  }
+  window.setTimeout(function () {
+    runWhenAdminJQueryIsReady(callback, attemptsLeft - 1);
+  }, 100);
+}
+
+function initRegistrationAdmin($: JQueryStaticT) {
+  /** Initialize registration widgets using the resolved admin jQuery instance. */
+  // Wrap in an IIFE to keep admin globals clean.
+  (function ($: JQueryStaticT) {
+    /** Keep the section field synced with the currently selected student. */
+    function initRegistrationSectionField() {
+      var $section = $("#id_section");
+      if (!$section.length) {
+        return;
+      }
+      var studentFieldId = $section.attr("data-student-field");
+      if (!studentFieldId) {
+        return;
+      }
+      var $student = $("#" + studentFieldId);
+      if (!$student.length) {
+        return;
+      }
+
+      var previousStudent = $student.val() || "";
+      function toggleSection() {
+        var currentStudent = $student.val() || "";
+        if (currentStudent !== previousStudent) {
+          $section.val(null).trigger("change");
+          previousStudent = currentStudent;
+        }
+      }
+
+      /** Patch Select2's AJAX data payload to include the student id. */
+      function configureSectionAutocomplete(): boolean {
+        var select2 = $section.data("select2") as Select2InstanceT | null;
+        if (!select2 || !select2.options || !select2.options.options) {
+          return false;
+        }
+        var options = select2.options.options;
+        var ajaxOptions: Select2AjaxOptionsT = options.ajax || {};
+        var baseData = ajaxOptions.data;
+        ajaxOptions.data = function (params: Select2AjaxParamsT) {
+          var data: Select2AjaxDataT = baseData
+            ? baseData(params)
+            : {
+                term: params.term,
+                page: params.page,
+                app_label: $section.attr("data-app-label"),
+                model_name: $section.attr("data-model-name"),
+                field_name: $section.attr("data-field-name"),
+              };
+          data.student = $student.val() || "";
+          data.requires_student = "1";
+          return data;
+        };
+        options.ajax = ajaxOptions;
+        $section.select2("destroy").select2(options);
+        return true;
+      }
+
+      // Select2 can initialize after this script runs; retry a few times.
+      (function retryConfigure(attemptsLeft: number) {
+        if (configureSectionAutocomplete()) {
+          return;
+        }
+        if (attemptsLeft <= 0) {
+          return;
+        }
+        window.setTimeout(function () {
+          retryConfigure(attemptsLeft - 1);
+        }, 200);
+      })(10);
+
+      toggleSection();
+      // Wait for select2 to sync the value before resetting section choices.
+      function handleStudentChange() {
+        window.requestAnimationFrame(toggleSection);
+      }
+      $student.on("change select2:select select2:clear", handleStudentChange);
     }
 
-    var previousStudent = $student.val() || "";
-    function toggleSection() {
+    /** Redirect the multi-section admin page when the student filter changes. */
+    function initRegistrationSectionsField() {
+      var $sections = $("#id_sections");
+      if (!$sections.length) {
+        return;
+      }
+      var $student = $("#id_student");
+      if (!$student.length) {
+        return;
+      }
       var currentStudent = $student.val() || "";
-      if (currentStudent !== previousStudent) {
-        $section.val(null).trigger("change");
-        previousStudent = currentStudent;
+      function redirectForStudent() {
+        var nextStudent = $student.val() || "";
+        if (nextStudent === currentStudent) {
+          return;
+        }
+        currentStudent = nextStudent;
+        var url = new URL(window.location.href);
+        if (nextStudent) {
+          url.searchParams.set("student", String(nextStudent));
+        } else {
+          url.searchParams.delete("student");
+        }
+        window.location.assign(url.toString());
       }
+      $student.on("change select2:select select2:clear", redirectForStudent);
     }
 
-    /** Patch Select2's AJAX data payload to include the student id. */
-    function configureSectionAutocomplete(): boolean {
-      var select2 = $section.data("select2") as Select2InstanceT | null;
-      if (!select2 || !select2.options || !select2.options.options) {
-        return false;
-      }
-      var options = select2.options.options;
-      var ajaxOptions: Select2AjaxOptionsT = options.ajax || {};
-      var baseData = ajaxOptions.data;
-      ajaxOptions.data = function (params: Select2AjaxParamsT) {
-        var data: Select2AjaxDataT = baseData
-          ? baseData(params)
-          : {
-              term: params.term,
-              page: params.page,
-              app_label: $section.attr("data-app-label"),
-              model_name: $section.attr("data-model-name"),
-              field_name: $section.attr("data-field-name"),
-            };
-        data.student = $student.val() || "";
-        data.requires_student = "1";
-        return data;
-      };
-      options.ajax = ajaxOptions;
-      $section.select2("destroy").select2(options);
-      return true;
-    }
+    // DOM-ready hook for Django admin pages.
+    $(function () {
+      initRegistrationSectionField();
+      initRegistrationSectionsField();
+    });
+  })($);
+}
 
-    // Select2 can initialize after this script runs; retry a few times.
-    (function retryConfigure(attemptsLeft: number) {
-      if (configureSectionAutocomplete()) {
-        return;
-      }
-      if (attemptsLeft <= 0) {
-        return;
-      }
-      window.setTimeout(function () {
-        retryConfigure(attemptsLeft - 1);
-      }, 200);
-    })(10);
-
-    toggleSection();
-    // Wait for select2 to sync the value before resetting section choices.
-    function handleStudentChange() {
-      window.requestAnimationFrame(toggleSection);
-    }
-    $student.on("change select2:select select2:clear", handleStudentChange);
-  }
-
-  /** Redirect the multi-section admin page when the student filter changes. */
-  function initRegistrationSectionsField() {
-    var $sections = $("#id_sections");
-    if (!$sections.length) {
-      return;
-    }
-    var $student = $("#id_student");
-    if (!$student.length) {
-      return;
-    }
-    var currentStudent = $student.val() || "";
-    function redirectForStudent() {
-      var nextStudent = $student.val() || "";
-      if (nextStudent === currentStudent) {
-        return;
-      }
-      currentStudent = nextStudent;
-      var url = new URL(window.location.href);
-      if (nextStudent) {
-        url.searchParams.set("student", String(nextStudent));
-      } else {
-        url.searchParams.delete("student");
-      }
-      window.location.assign(url.toString());
-    }
-    $student.on("change select2:select select2:clear", redirectForStudent);
-  }
-
-  // DOM-ready hook for Django admin pages.
-  $(function () {
-    initRegistrationSectionField();
-    initRegistrationSectionsField();
-  });
-})(django.jQuery);
+runWhenAdminJQueryIsReady(initRegistrationAdmin, 20);

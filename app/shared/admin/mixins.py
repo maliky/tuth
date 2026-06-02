@@ -82,9 +82,9 @@ class ScopedAutocompleteAdminMixin(ModelAdmin):
             ...
     """
 
-    # Raise the default page size globally for all inheriting admins.
-    list_per_page = 200
-    list_max_show_all = 500
+    # Keep operational changelists responsive on large preprod datasets.
+    list_per_page = 50
+    list_max_show_all = 200
 
     def lookup_allowed(
         self, lookup: str, value: str | None, request: HttpRequest | None = None

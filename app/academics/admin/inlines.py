@@ -5,7 +5,6 @@ from django.contrib import admin
 from collections import defaultdict
 from typing import Any, Callable, cast
 
-from django.db.models import Count
 from django.forms.models import BaseInlineFormSet
 from django.utils import timezone
 
@@ -64,6 +63,11 @@ class CrsCurriIL(admin.TabularInline):
         "min_validated_credits",
     )
 
+    def get_queryset(self, request):
+        """Select related labels used by the grouped inline template."""
+        qs = super().get_queryset(request)
+        return qs.select_related("course", "curriculum__college", "credit_hours")
+
 
 class CrsFeeStackIL(admin.TabularInline):
     """Inline editor for linking fee stacks to courses."""
@@ -113,12 +117,7 @@ class CurriCrsSummaryFormSet(BaseInlineFormSet):
         qs = (
             super()
             .get_queryset()
-            .annotate(
-                student_total=Count(
-                    "sections__section_registrations__student",
-                    distinct=True,
-                )
-            )
+            .select_related("course", "curriculum__college", "credit_hours")
             .order_by(
                 "year_number",
                 "semester_number",
@@ -229,7 +228,9 @@ class CurriCrsIL(admin.TabularInline):
     def get_queryset(self, request):
         """Order curriculum-course rows for inline display."""
         qs = super().get_queryset(request)
-        return qs.order_by(
+        return qs.select_related(
+            "course", "curriculum__college", "credit_hours"
+        ).order_by(
             "year_number",
             "semester_number",
             "required_group_number",

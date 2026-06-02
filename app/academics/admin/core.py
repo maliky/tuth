@@ -5,8 +5,9 @@ from typing import Iterable, Literal, TypeAlias, cast, no_type_check
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
-from django.db import transaction
-from django.db.models import Count
+from django.db import connection, transaction
+from django.db.models import Count, IntegerField
+from django.db.models.expressions import RawSQL
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
@@ -93,6 +94,36 @@ from app.timetable.admin.filters import SemFltAC
 
 ModelChoiceFieldT: TypeAlias = forms.ModelChoiceField | forms.ModelMultipleChoiceField
 MergeFieldSourceChoiceT = Literal["target", "source"]
+
+
+def _quote_table(name: str) -> str:
+    """Return a backend-quoted table identifier for generated admin SQL."""
+    return connection.ops.quote_name(name)
+
+
+def _crs_grade_total_expr() -> RawSQL:
+    """Return a per-course grade count expression without a wide group-by."""
+    from app.registry.models.grade import Grade
+    from app.timetable.models.section import Section
+
+    grade_table = _quote_table(Grade._meta.db_table)
+    section_table = _quote_table(Section._meta.db_table)
+    curri_crs_table = _quote_table(CurriCrs._meta.db_table)
+    course_table = _quote_table(Course._meta.db_table)
+    sql = (
+        f"(SELECT COUNT({grade_table}.id) "
+        f"FROM {grade_table} "
+        f"INNER JOIN {section_table} "
+        f"ON {grade_table}.section_id = {section_table}.id "
+        f"INNER JOIN {curri_crs_table} "
+        f"ON {section_table}.curriculum_course_id = {curri_crs_table}.id "
+        f"WHERE {curri_crs_table}.course_id = {course_table}.id)"
+    )
+    return RawSQL(
+        sql,
+        params=(),
+        output_field=IntegerField(),
+    )
 
 
 class CurriMergeConflictForm(forms.Form):
@@ -359,8 +390,8 @@ class CrsAdmin(DptRestrictedAdmin):
         CrsCollegeFlt,
     )
 
-    list_per_page = 250
-    list_max_show_all = 500
+    list_per_page = 50
+    list_max_show_all = 200
 
     search_fields = ("short_code", "department__code", "title")
     fields = ("code", "short_code", "department", "number", "title", "description")
@@ -377,7 +408,7 @@ class CrsAdmin(DptRestrictedAdmin):
         """Prefetch curricula for link rendering in list_display."""
         qs = super().get_queryset(request)
         qs = qs.prefetch_related("curricula").annotate(
-            grade_total=Count("in_curriculum_courses__sections__grade", distinct=True)
+            grade_total=_crs_grade_total_expr()
         )
         curriculum_id = request.GET.get("curricula__id__exact") or request.GET.get(
             "in_curriculum_courses__curriculum"

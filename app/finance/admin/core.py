@@ -13,6 +13,7 @@ from app.finance.models.status_types_methods import (
 )
 from django import forms
 from django.contrib import admin, messages
+from django.contrib.admin.options import InlineModelAdmin
 from django.db.models import (
     Count,
     DecimalField,
@@ -354,6 +355,12 @@ class StdSemInvoiceAdmin(
     autocomplete_fields = ("student", "semester", "fee_stacks")
     inlines = (StdSemCrsInvoiceIL, InvoicePaymentIL)
     readonly_fields = ("created_at", "updated_at")
+
+    def get_inline_instances(self, request, obj=None) -> list[InlineModelAdmin]:
+        """Skip empty invoice-detail inlines while the parent invoice is unsaved."""
+        if obj is None:
+            return []
+        return super().get_inline_instances(request, obj)
 
     def save_model(self, request, obj, form, change):
         """Keep parent totals aligned after manual admin edits."""
