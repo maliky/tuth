@@ -115,13 +115,8 @@ class ScopedAutocompleteAdminMixin(ModelAdmin):
         return super().lookup_allowed(lookup, safe_value)
 
 
-class CollegeRestrictedAdmin(
-    ScopedAutocompleteAdminMixin,
-    SimpleHistoryAdmin,
-    ImportExportModelAdmin,
-    GuardedModelAdmin,
-):
-    """Limit queryset to objects within the user's college."""
+class CollegeRestrictedQueryMixin:
+    """Apply college-level queryset scoping for admin classes."""
 
     college_field: str = "college"
 
@@ -134,12 +129,31 @@ class CollegeRestrictedAdmin(
 
     def get_queryset(self, request):
         """Filter queryset to the user's college when one is linked."""
-        qs = super().get_queryset(request)
+        qs = super().get_queryset(request)  # type: ignore[misc]
         college = self.get_user_college(request)
         if request.user.is_superuser or college is None:
             return qs
 
         return qs.filter(**{self.college_field: college})
+
+
+class CollegeRestrictedAdmin(
+    CollegeRestrictedQueryMixin,
+    ScopedAutocompleteAdminMixin,
+    SimpleHistoryAdmin,
+    ImportExportModelAdmin,
+    GuardedModelAdmin,
+):
+    """Limit queryset to the user's college and expose simple-history views."""
+
+
+class CollegeRestrictedNoHistoryAdmin(
+    CollegeRestrictedQueryMixin,
+    ScopedAutocompleteAdminMixin,
+    ImportExportModelAdmin,
+    GuardedModelAdmin,
+):
+    """Limit queryset to the user's college without exposing history views."""
 
 
 class DptRestrictedAdmin(

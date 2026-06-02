@@ -30,6 +30,7 @@ from app.finance.models.invoice import Invoice
 from app.shared.admin.filters import BaseCollegeFlt
 from app.shared.admin.mixins import (
     CollegeRestrictedAdmin,
+    CollegeRestrictedNoHistoryAdmin,
     DptRestrictedAdmin,
     ProtectedDeleteAdminMixin,
 )
@@ -1148,7 +1149,7 @@ class CurriStatusAdmin(admin.ModelAdmin):
 
 
 @admin.register(CurriStdEnroll)
-class CurriStdEnrollAdmin(CollegeRestrictedAdmin):
+class CurriStdEnrollAdmin(CollegeRestrictedNoHistoryAdmin):
     """Admin interface for student program enrollments."""
 
     college_field = "curriculum__college"
@@ -1571,7 +1572,7 @@ class DptAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         DptCurriFltAC,
     ]
     list_editable = ("college",)
-    search_fields = ("code", "long_name", "college")
+    search_fields = ("code", "long_name", "college__code", "college__long_name")
     inlines = [DptCrsIL]
 
     def get_queryset(self, request):

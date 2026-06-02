@@ -58,6 +58,7 @@ from app.registry.models.registration import Registration, RegistrationStatus
 from app.shared.admin.filters import StdLevelFlt
 from app.shared.admin.mixins import (
     CollegeRestrictedAdmin,
+    CollegeRestrictedNoHistoryAdmin,
     DptRestrictedAdmin,
     ScopedAutocompleteAdminMixin,
 )
@@ -191,7 +192,9 @@ class MergeableUserAdmin(MergeWizardMixin, DuplicatePreviewMixin, dj_admin.Model
 
 
 @admin.register(Faculty)
-class FacultyAdmin(MergeWizardMixin, DuplicatePreviewMixin, CollegeRestrictedAdmin):
+class FacultyAdmin(
+    MergeWizardMixin, DuplicatePreviewMixin, CollegeRestrictedNoHistoryAdmin
+):
     """Admin options for :class:~app.people.models.Faculty.
 
     Displays the staff profile with optional filtering by college. The faculty

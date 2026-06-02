@@ -1,0 +1,270 @@
+* Tusis Django admin click audit
+:PROPERTIES:
+:DATE: 2026-06-02
+:TARGET: https://tusis.koba.sarl/admin/
+:BASIC_AUTH: tusis:tusis
+:ADMIN_USER: dev
+:ARTIFACTS: /tmp/tusis_admin_click_audit_20260602T101726Z
+:END:
+
+** Scope and method
+This first Django admin audit used headless Chromium/Selenium against preprod, behind basic auth =tusis:tusis=, with the Django admin test user =dev=.
+
+The pass was intentionally non-destructive.
+It loaded admin pages and GET-only admin endpoints but did not submit saves, deletes, admin actions, imports, exports, or mutating forms.
+
+Coverage:
+- admin login and dashboard
+- 44 registered model admin changelists discovered from the admin index
+- add-form GETs
+- one existing change form per model where an object link was available
+- history GETs where a change form was available
+- search GETs where a search box was present
+- one representative filter/facet GET where filters were present
+- import/export object-tool GETs where visible
+- autocomplete GETs discovered from add/change forms
+
+Raw evidence:
+- JSON report: =/tmp/tusis_admin_click_audit_20260602T101726Z/report.json=
+- screenshots: =/tmp/tusis_admin_click_audit_20260602T101726Z/screenshots=
+- preprod web log tail captured after the run: =/tmp/tusis_admin_click_audit_20260602T101726Z/web.full.clean.log=
+
+Audit totals:
+- 367 admin GET/browser checks
+- 44 model admin changelists discovered
+- 18 raw findings from the runner
+- Severity split from raw runner: P0=8, P1=1, P2=4, P3=5
+
+** Executive state
+The Django admin shell itself is reachable and most admin pages load.
+The =dev= admin user authenticated successfully, the dashboard rendered, and all 44 discovered model changelists were reachable.
+
+The main risk is not basic access.
+The main risk is deeper admin behavior: search/facet combinations, history views on admins without a compatible history manager, and a few high-cost admin pages.
+
+The priority is to fix the 500s before using admin as a dependable MWE fallback for staff operations.
+The second priority is to reduce the slow pages that make admin feel unreliable under operational use.
+
+** What loaded correctly
+- =/admin/= loaded after basic auth and Django login.
+- All 44 model changelists discovered from the admin index returned a usable admin page.
+- Most add-form GETs loaded without submitting data.
+- Most autocomplete endpoints returned JSON successfully.
+- Most change and history views loaded when an existing row was available.
+- Import/export object-tool GETs did not surface as a primary failure in this pass.
+
+Skipped deeper checks:
+- Some models had no existing object link on the first changelist page, so change/history GETs were skipped for those models.
+- Examples include finance invoice/payment/scholarship models, transcript requests, impersonation logs, and timetable terms.
+- These skips are data-state skips, not necessarily application defects.
+
+** Blocking findings
+*** DONE P0 - History views return 500 for admins without a compatible history manager
+Affected admin paths:
+- =/admin/academics/curristdenroll/<id>/history/=
+- =/admin/people/faculty/<id>/history/=
+
+Observed behavior:
+- Both history pages returned HTTP 500.
+- Server logs show =AttributeError: 'Options' object has no attribute 'simple_history_manager_attribute'= from =simple_history.admin=.
+
+Likely source areas:
+- =app/academics/admin/core.py=
+- =app/people/admin/core.py=
+- =app/shared/admin/mixins.py=
+
+Interpretation:
+Some admin classes inherit a history-capable admin base, but their model does not appear to expose the corresponding simple-history manager.
+The admin history link therefore exists but crashes when used.
+
+Recommended fix:
+Use a non-history admin base for models without simple-history tracking, or add/verify historical tracking for those models before exposing history views.
+
+Resolution:
+Faculty and curriculum-enrollment admin now use a college-restricted admin base that does not expose SimpleHistory views.
+This keeps the admin usable without adding model history migrations.
+
+Verification:
+Focused Django admin GET regression tests passed for faculty history and curriculum-enrollment history.
+
+*** DONE P0 - Department-backed search/autocomplete can return 500
+Affected admin paths:
+- =/admin/academics/department/?q=zzzz-admin-audit-no-match=
+- =/admin/autocomplete/?app_label=people&model_name=roleassignment&field_name=department&term=a=
+
+Observed behavior:
+- Department admin search returned HTTP 500.
+- Role assignment department autocomplete returned HTTP 500.
+- Server logs show =FieldError: Unsupported lookup 'icontains' for ForeignKey or join on the field not permitted=.
+
+Likely source areas:
+- =app/academics/admin/core.py=
+- =app/people/admin/core.py=
+
+Interpretation:
+=DepartmentAdmin.search_fields= includes a ForeignKey field directly, which Django cannot search with the default =icontains= lookup.
+Any autocomplete that relies on DepartmentAdmin search can inherit the same failure.
+
+Recommended fix:
+Replace direct ForeignKey search entries with concrete related text fields, such as college code/name fields.
+Add a focused admin search/autocomplete test for department and role assignment department autocomplete.
+
+Resolution:
+Department admin search now targets concrete department and college text fields instead of the direct college ForeignKey.
+Role-assignment department autocomplete now inherits a safe department search configuration.
+
+Verification:
+Focused Django admin GET regression tests passed for department search and role-assignment department autocomplete.
+
+*** DONE P0 - Transcript request admin search returns 500
+Affected admin path:
+- =/admin/registry/transcriptrequest/?q=zzzz-admin-audit-no-match=
+
+Observed behavior:
+- Transcript request search returned HTTP 500.
+- Server logs show =FieldError: Unsupported lookup 'icontains' for ForeignKey or join on the field not permitted=.
+
+Likely source area:
+- =app/registry/admin/core.py=
+
+Interpretation:
+=TranscriptRequestAdmin.search_fields= includes ForeignKey fields directly instead of related text fields.
+
+Recommended fix:
+Replace direct ForeignKey search entries with concrete searchable fields on student/status, then add an admin search test.
+
+Resolution:
+Transcript request admin search now targets concrete student and status text fields instead of direct ForeignKey fields.
+
+Verification:
+Focused Django admin GET regression tests passed for transcript request search.
+
+*** DONE P0 - Finance facet/filter links can return 500
+Affected admin paths:
+- =/admin/finance/crsinvoice/?_facets=True&q=zzzz-admin-audit-no-match=
+- =/admin/finance/stdsemesterinvoice/?_facets=True&q=zzzz-admin-audit-no-match=
+
+Observed behavior:
+- Both finance facet/filter GETs returned HTTP 500.
+- Server logs show =FieldError= stating a field cannot be both deferred and traversed with =select_related=.
+
+Likely source area:
+- =app/finance/admin/core.py=
+
+Interpretation:
+Finance admin query optimization conflicts with Django admin facet/filter rendering for these query combinations.
+This is especially risky because the broken links are generated by the admin filter UI itself.
+
+Recommended fix:
+Review =list_select_related= and any queryset deferral/only/defer behavior used by the finance admin and scoped filters.
+Keep the selected related fields consistent with the fields rendered by list display and filters.
+Add a regression test for finance invoice changelist with =_facets=True= and a search query.
+
+Resolution:
+The amount-due filter now computes thresholds from value rows instead of iterating over =.only()= model instances.
+This avoids the deferred-field and =select_related= conflict when Django admin renders facet/filter pages.
+
+Verification:
+Focused Django admin GET regression tests passed for course-invoice and student-semester-invoice facet/search combinations.
+
+** Slowness findings
+*** TODO P2 - Several admin pages are too slow for comfortable operational use
+Slow threshold used by the audit: 3 seconds.
+Urgent threshold used by the audit: 5 seconds.
+
+Slow pages above threshold:
+| Severity | Admin path | Browser load |
+|----------+------------+--------------|
+| P2 | =/admin/finance/stdsemesterinvoice/add/= | 13985 ms |
+| P2 | =/admin/academics/curriculum/<id>/change/= | 13461 ms |
+| P2 | =/admin/academics/course/= | 11736 ms |
+| P2 | =/admin/people/student/= | 3206 ms |
+
+Near-threshold pages to watch:
+| Admin path | Browser load |
+|------------+--------------|
+| =/admin/timetable/section/add/= | 2721 ms |
+| =/admin/timetable/section/<id>/change/= | 2648 ms |
+| =/admin/registry/grade/?_facets=True&q=...= | 2515 ms |
+| =/admin/registry/grade/?q=...= | 2486 ms |
+| =/admin/people/faculty/= | 2248 ms |
+| =/admin/academics/department/= | 2187 ms |
+
+Likely source areas:
+- =app/finance/admin/core.py=
+- =app/academics/admin/core.py=
+- =app/academics/admin/inlines.py=
+- =app/people/admin/core.py=
+- =app/registry/admin/core.py=
+- =app/timetable/admin/section_registers.py=
+
+Interpretation:
+The slowest pages are admin screens with wide list displays, large related datasets, or heavy inlines.
+The curriculum change page and student-semester invoice add page are especially expensive and should not be treated as comfortable MWE workflows until optimized.
+
+Recommended fix:
+Prioritize query count and payload inspection for these pages.
+Reduce inline volume, add pagination/collapse where possible, and ensure list displays use annotations/select_related/prefetch_related without conflicting with facets.
+
+** Lower-priority findings
+*** TODO P3 - Registration admin JavaScript fails in the browser
+Affected admin paths:
+- =/admin/registry/registration/=
+- =/admin/registry/registration/add/=
+- =/admin/registry/registration/<id>/change/=
+- related search/filter variants
+
+Observed behavior:
+- Pages returned HTTP 200, but browser console logged =Uncaught TypeError: $ is not a function=.
+
+Likely source areas:
+- =app/registry/admin/core.py=
+- =app/registry/static/registry/js/registration_admin.js=
+
+Interpretation:
+The registration admin custom JavaScript likely assumes a global =$= instead of using Django admin's jQuery namespace or a safe wrapper.
+The page still renders, but dynamic registration behavior may be broken.
+
+Recommended fix:
+Wrap the script with Django admin's jQuery convention or vanilla JavaScript and add a browser smoke test for the registration add/change page.
+
+*** REVIEW P1 - Impersonation log add URL returns 403
+Affected admin path:
+- =/admin/impersonate/impersonationlog/add/=
+
+Observed behavior:
+- Direct GET returned HTTP 403.
+
+Interpretation:
+This is probably expected because impersonation logs should be read-only.
+It should only be treated as a bug if the admin UI exposes an =Add= button for this model.
+
+Recommended fix:
+Verify the object tools on the impersonation log changelist do not expose =Add=.
+No code change is required if the link is not visible.
+
+** P0 fix verification
+All original P0 findings from this audit now have focused Django admin GET regression coverage.
+
+Verification commands:
+- =pytest tests/test_admin_p0_audit_regressions.py --reuse-db=
+- =pytest tests/ --reuse-db -x=
+
+Verification result:
+- focused P0 regression tests: passed
+- full test suite: =244 passed, 67 xfailed=
+
+** Recommended next implementation order
+1. Fix registration admin JavaScript so Django admin dynamic behavior works reliably.
+2. Profile and optimize the slowest admin pages, starting with student-semester invoice add, curriculum change, and course changelist.
+3. Repeat the full browser audit after deploying these P0 fixes to preprod.
+4. Add the admin browser audit runner as a reusable checked-in smoke target if this becomes part of the release process.
+
+** Acceptance criteria status
+- Admin login with =dev= succeeds: met.
+- Dashboard loads: met.
+- All discovered model changelists load: met.
+- No 500s on original P0 deeper admin GET paths: met in focused regression tests.
+- No original P0 admin-generated search/filter/autocomplete crashes: met in focused regression tests.
+- No core admin page above 3 seconds: not met.
+- No browser console errors on audited admin pages: not met.

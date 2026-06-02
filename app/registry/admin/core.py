@@ -443,7 +443,14 @@ class TranscriptRequestAdmin(
 
     list_display = ("student", "status", "requested_at", "purpose")
     autocomplete_fields = ("student", "status")
-    search_fields = ("student", "status")
+    search_fields = (
+        "student__student_id",
+        "student__long_name",
+        "student__user__first_name",
+        "student__user__last_name",
+        "status__code",
+        "status__label",
+    )
     # > See how I can make this a AC field and limit the number of semester to the used semesters
     list_filter = (SemFltAC,)
 

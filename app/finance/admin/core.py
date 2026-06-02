@@ -1,7 +1,7 @@
 """Core module."""
 
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, TypeAlias
 
 from app.finance.models.fee_stack import CrsFeeStack, FeeStack, FeeStackLine
 from app.finance.models.status_types_methods import (
@@ -49,6 +49,11 @@ from app.shared.admin.mixins import ScopedAutocompleteAdminMixin
 from app.timetable.admin.filters import SemFltAC
 from app.timetable.models.semester import Semester
 
+AmountDueRowT: TypeAlias = (
+    tuple[int, Decimal | None, Decimal | None]
+    | tuple[int, Decimal | None, Decimal | None, Decimal | None]
+)
+
 
 class StaffChoiceField(forms.ModelChoiceField):
     """ModelChoiceField that displays staff long names."""
@@ -71,6 +76,29 @@ class AmountDueFlt(admin.SimpleListFilter):
             ("full", "Full balance"),
         )
 
+    @staticmethod
+    def _threshold(row: AmountDueRowT) -> Decimal:
+        """Return the deposit threshold without instantiating deferred models."""
+        initial_amount_due = row[2] or Decimal("0.00")
+        if len(row) == 4:
+            percent = (row[3] or Decimal("0.00")) / Decimal("100.00")
+            return initial_amount_due * percent
+        return initial_amount_due * Decimal("0.40")
+
+    @staticmethod
+    def _balance(row: AmountDueRowT) -> Decimal:
+        """Return a non-null balance fallback for value rows."""
+        return row[1] or row[2] or Decimal("0.00")
+
+    @staticmethod
+    def _value_fields(queryset) -> list[str]:
+        """Return minimal fields needed for amount-due filtering."""
+        fields = ["id", "balance", "initial_amount_due"]
+        model_fields = {field.name for field in queryset.model._meta.fields}
+        if "required_deposit_percent" in model_fields:
+            fields.append("required_deposit_percent")
+        return fields
+
     def queryset(self, request, queryset):
         value = self.value()
         if value == "zero":
@@ -82,14 +110,16 @@ class AmountDueFlt(admin.SimpleListFilter):
             return queryset
 
         invoice_ids: list[int] = []
-        # Limit columns since we only need balances and initial totals.
-        for invoice in queryset.only("id", "balance", "initial_amount_due"):
-            threshold = invoice.initial_forty_percent_due()
+        # Use values instead of model instances; .only() conflicts with admin facets.
+        for row in queryset.values_list(*self._value_fields(queryset)):
+            amount_row = row
+            threshold = self._threshold(amount_row)
+            balance = self._balance(amount_row)
 
-            if value == "low" and invoice.balance <= threshold:
-                invoice_ids.append(invoice.pk)
-            if value == "mid" and threshold < invoice.balance:
-                invoice_ids.append(invoice.pk)
+            if value == "low" and balance <= threshold:
+                invoice_ids.append(amount_row[0])
+            if value == "mid" and threshold < balance:
+                invoice_ids.append(amount_row[0])
 
         return queryset.filter(pk__in=invoice_ids)
 
