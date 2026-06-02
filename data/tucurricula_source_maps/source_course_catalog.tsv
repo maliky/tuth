@@ -1,0 +1,842 @@
+source_college	source_file	source_course_code	visible_course_code	normalized_course_key	source_dept_code	course_no	title	credit	prerequisites	corequisites	course_slug	is_todo	lab_marker
+cafs	cafs_curriculum_2024.org	AANS 202	AANS 202	AANS202	AANS	202	Animal Nutrition and Growth	3	agri106		aans202	false	false
+cafs	cafs_curriculum_2024.org	AANS 204	AANS 204	AANS204	AANS	204	Animal Anatomy and Physiology	3	agri203, agri106		aans204	false	false
+cafs	cafs_curriculum_2024.org	AANS 206	AANS 206	AANS206	AANS	206	Animal Behavior and Welfare	3	agri203, agri106		aans206	false	false
+cafs	cafs_curriculum_2024.org	AANS 302	AANS 302	AANS302	AANS	302	Animal Genetics and Breeding	3	aans204, aans206		aans302	false	false
+cafs	cafs_curriculum_2024.org	AANS 303	AANS 303	AANS303	AANS	303	Swine and Poultry Production	3	agri203, aans204, aans202		aans303	false	false
+cafs	cafs_curriculum_2024.org	AANS 304	AANS 304	AANS304	AANS	304	Ruminant Production	3	aans204, aans206		aans304	false	false
+cafs	cafs_curriculum_2024.org	AANS 306	AANS 306	AANS306	AANS	306	Aquaculture and Fisheries	3	aans204, aans206		aans306	false	false
+cafs	cafs_curriculum_2024.org	AANS 407	AANS 407	AANS407	AANS	407	Animal Reproduction and Lactation	3	aans202, aans204, aans206		aans407	false	false
+cafs	cafs_curriculum_2024.org	AANS 409	AANS 409	AANS409	AANS	409	Animal Products and Technology	3	aans302, aans304, aans306		aans409	false	false
+cafs	cafs_curriculum_2024.org	AANS 410	AANS 410	AANS410	AANS	410	Animal Health and Disease Control	3	aans302, aans304, aans306		aans410	false	false
+cafs	cafs_curriculum_2024.org	ACRS 104	ACRS 104	ACRS104	ACRS	104	Botany (for Agronomistes)	3	biol101		acrs104	false	false
+cafs	cafs_curriculum_2024.org	ACRS 202-TODO	ACRS 202	ACRS202	ACRS	202	Placeholder Entry for ACRS 202	0			acrs202	true	false
+cafs	cafs_curriculum_2024.org	ACRS 204	ACRS 204	ACRS204	ACRS	204	Plant Physiology	3	biol101, agri106, acrs104		acrs204	false	false
+cafs	cafs_curriculum_2024.org	ACRS 208	ACRS 208	ACRS208	ACRS	208	Tropical Food Crop	3	biol101, agri106, acrs104		acrs208	false	false
+cafs	cafs_curriculum_2024.org	ACRS 301	ACRS 301	ACRS301	ACRS	301	Plant Entomology	3	agri106, asos201, envs201, acrs104		acrs301	false	false
+cafs	cafs_curriculum_2024.org	ACRS 302	ACRS 302	ACRS302	ACRS	302	Basic Horticulture	3	asos201, acrs104, acrs204		acrs302	false	false
+cafs	cafs_curriculum_2024.org	ACRS 304	ACRS 304	ACRS304	ACRS	304	Tropical Tree Crops	3	asos201, acrs104, acrs204		acrs304	false	false
+cafs	cafs_curriculum_2024.org	ACRS 306	ACRS 306	ACRS306	ACRS	306	Plant Breeding and Genetics	3	asos201, acrs104, acrs204		acrs306	false	false
+cafs	cafs_curriculum_2024.org	ACRS 401	ACRS 401	ACRS401	ACRS	401	Weed Science and Management	3	asos201, acrs104, acrs204		acrs401	false	false
+cafs	cafs_curriculum_2024.org	ACRS 402	ACRS 402	ACRS402	ACRS	402	Plant Pathology	3	acrs204, acrs301		acrs402	false	false
+cafs	cafs_curriculum_2024.org	ACRS 409	ACRS 409	ACRS409	ACRS	409	Farm Mechanization and Technology	3	asos204, asos305, agri307		acrs409	false	false
+cafs	cafs_curriculum_2024.org	AGBU 300	AGBU 300	AGBU300	AGBU	300	Agricultural Production and Management	3			agbu300	false	false
+cafs	cafs_curriculum_2024.org	AGBU 301	AGBU 301	AGBU301	AGBU	301	Value Chain Analysis in Agriculture	3			agbu301	false	false
+cafs	cafs_curriculum_2024.org	AGBU 302	AGBU 302	AGBU302	AGBU	302	Agricultural Marketing and Finance	3			agbu302	false	false
+cafs	cafs_curriculum_2024.org	AGBU 401	AGBU 401	AGBU401	AGBU	401	Agricultural Financial Management and Implication	3			agbu401	false	false
+cafs	cafs_curriculum_2024.org	AGBU 402	AGBU 402	AGBU402	AGBU	402	Agricultural and Resource Enterprise Analysis	3			agbu402	false	false
+cafs	cafs_curriculum_2024.org	AGBU 404	AGBU 404	AGBU404	AGBU	404	Personnel Management in Agriculture	3			agbu404	false	false
+cafs	cafs_curriculum_2024.org	AGCA 323	AGCA 323	AGCA323	AGCA	323	Gender in Agriculture	3			agca323	false	false
+cafs	cafs_curriculum_2024.org	AGCA 331	AGCA 331	AGCA331	AGCA	331	Agroforestry and Gender Politics	3			agca331	false	false
+cafs	cafs_curriculum_2024.org	AGCA 431	AGCA 431	AGCA431	AGCA	431	Gender and Society	3			agca431	false	false
+cafs	cafs_curriculum_2024.org	AGCA 432	AGCA 432	AGCA432	AGCA	432	Environmental Justice	3			agca432	false	false
+cafs	cafs_curriculum_2024.org	AGCA 433	AGCA 433	AGCA433	AGCA	433	Woman and Social Change	3			agca433	false	false
+cafs	cafs_curriculum_2024.org	AGCA 434	AGCA 434	AGCA434	AGCA	434	Introduction to Social Work	3			agca434	false	false
+cafs	cafs_curriculum_2024.org	AGEC 306	AGEC 306	AGEC306	AGEC	306	Macroeconomics (for Agronomists)	3			agec306	false	false
+cafs	cafs_curriculum_2024.org	AGEC 314	AGEC 314	AGEC314	AGEC	314	Production economics	3			agec314	false	false
+cafs	cafs_curriculum_2024.org	AGEC 315	AGEC 315	AGEC315	AGEC	315	Microeconomics (for Agronomists)	3			agec315	false	false
+cafs	cafs_curriculum_2024.org	AGEC 323	AGEC 323	AGEC323	AGEC	323	Economic development and planning	3			agec323	false	false
+cafs	cafs_curriculum_2024.org	AGEC 437	AGEC 437	AGEC437	AGEC	437	Labor Economics	3			agec437	false	false
+cafs	cafs_curriculum_2024.org	AGEC 468	AGEC 468	AGEC468	AGEC	468	Econometrics	3			agec468	false	false
+cafs	cafs_curriculum_2024.org	AGEE 321	AGEE 321	AGEE321	AGEE	321	Agricultural Extension Methods	3			agee321	false	false
+cafs	cafs_curriculum_2024.org	AGEE 323	AGEE 323	AGEE323	AGEE	323	Educational Psychology and Extension	3			agee323	false	false
+cafs	cafs_curriculum_2024.org	AGEE 324	AGEE 324	AGEE324	AGEE	324	Gender and Agricultural Extension	3			agee324	false	false
+cafs	cafs_curriculum_2024.org	AGEE 411	AGEE 411	AGEE411	AGEE	411	Public Policy and Agricultural Extension	3			agee411	false	false
+cafs	cafs_curriculum_2024.org	AGEE 413	AGEE 413	AGEE413	AGEE	413	Leadership Impact in Agricultural Extension	3			agee413	false	false
+cafs	cafs_curriculum_2024.org	AGEE 422	AGEE 422	AGEE422	AGEE	422	Field Experimentation and Supervision	3			agee422	false	false
+cafs	cafs_curriculum_2024.org	AGRI 106	AGRI 106	AGRI106	AGRI	106	Introduction to Agriculture	3	biol101		agri106	false	false
+cafs	cafs_curriculum_2024.org	AGRI 203	AGRI 203	AGRI203	AGRI	203	Introduction to Animal Science	3	biol101		agri203	false	false
+cafs	cafs_curriculum_2024.org	AGRI 204	AGRI 204	AGRI204	AGRI	204	Agricultural Economics I	3	biol101, agri106		agri204	false	false
+cafs	cafs_curriculum_2024.org	AGRI 206	AGRI 206	AGRI206	AGRI	206	Agricultural Chemistry	4	biol101, chem101		agri206	false	false
+cafs	cafs_curriculum_2024.org	AGRI 207	AGRI 207	AGRI207	AGRI	207	Introductory Food Production Management	3	biol101, agri106, acrs104		agri207	false	false
+cafs	cafs_curriculum_2024.org	AGRI 210	AGRI 210	AGRI210	AGRI	210	Population Food Security and Sustainable Development	3	biol101, agri106, acrs104		agri210	false	false
+cafs	cafs_curriculum_2024.org	AGRI 211	AGRI 211	AGRI211	AGRI	211	Practicum I	1	biol101		agri211	false	true
+cafs	cafs_curriculum_2024.org	AGRI 301	AGRI 301	AGRI301	AGRI	301	Agricultural Marketing	3	agri106, agri204		agri301	false	false
+cafs	cafs_curriculum_2024.org	AGRI 303	AGRI 303	AGRI303	AGRI	303	Agricultural Economics II	3	agri106, agri204		agri303	false	false
+cafs	cafs_curriculum_2024.org	AGRI 305	AGRI 305	AGRI305	AGRI	305	Introduction to Forestry	3	biol101, agri106		agri305	false	false
+cafs	cafs_curriculum_2024.org	AGRI 306	AGRI 306	AGRI306	AGRI	306	Agricultural Statistics and Experimental Design	3	math101, math102		agri306	false	false
+cafs	cafs_curriculum_2024.org	AGRI 307	AGRI 307	AGRI307	AGRI	307	Agricultural Extension	3	agri106, agri204		agri307	false	false
+cafs	cafs_curriculum_2024.org	AGRI 308	AGRI 308	AGRI308	AGRI	308	Agriculture and Climate Change	3	agri106, agri206		agri308	false	false
+cafs	cafs_curriculum_2024.org	AGRI 310	AGRI 310	AGRI310	AGRI	310	AGRI 310	3	agri306, engl201		agri310	false	false
+cafs	cafs_curriculum_2024.org	AGRI 311	AGRI 311	AGRI311	AGRI	311	Practicum II	1	agri106, agri211		agri311	false	true
+cafs	cafs_curriculum_2024.org	AGRI 401	AGRI 401	AGRI401	AGRI	401	Agricultural Research Methods	3	agri306, engl201		agri401	false	false
+cafs	cafs_curriculum_2024.org	AGRI 403	AGRI 403	AGRI403	AGRI	403	Seminar	1	engl204, agri106		agri403	false	true
+cafs	cafs_curriculum_2024.org	AGRI 405	AGRI 405	AGRI405	AGRI	405	Agricultural Farm Management	3	agri301, agri305, agri307		agri405	false	false
+cafs	cafs_curriculum_2024.org	AGRI 406	AGRI 406	AGRI406	AGRI	406	Food Microbiology	3	acrs202, agri206, agri308		agri406	false	false
+cafs	cafs_curriculum_2024.org	AGRI 407	AGRI 407	AGRI407	AGRI	407	Human Nutrition	3	agri206, agri301, agri308		agri407	false	false
+cafs	cafs_curriculum_2024.org	AGRI 410	AGRI 410	AGRI410	AGRI	410	Post-Harvest Management and Technology	3	agri301, acrs302, agri308		agri410	false	false
+cafs	cafs_curriculum_2024.org	AGRI 412	AGRI 412	AGRI412	AGRI	412	Senior Research Project	3	agri306, agri401, agri414		agri412	false	false
+cafs	cafs_curriculum_2024.org	AGRI 414	AGRI 414	AGRI414	AGRI	414	Agricultural Internship	3	agri306, agri308, agri311		agri414	false	true
+cafs	cafs_curriculum_2024.org	AGRI 426-TODO	AGRI 426	AGRI426	AGRI	426	Placeholder Entry for AGRI 426	0			agri426	true	false
+cafs	cafs_curriculum_2024.org	ANRM 341	ANRM 341	ANRM341	ANRM	341	Non-Timber Forest Products	3			anrm341	false	false
+cafs	cafs_curriculum_2024.org	ANRM 343	ANRM 343	ANRM343	ANRM	343	ANRM 343-ORPH	3			anrm343	false	false
+cafs	cafs_curriculum_2024.org	ANRM 354	ANRM 354	ANRM354	ANRM	354	Climate Change Impact on Natural Resources	3			anrm354	false	false
+cafs	cafs_curriculum_2024.org	ANRM 362	ANRM 362	ANRM362	ANRM	362	Forest Ecology and Management	3			anrm362	false	false
+cafs	cafs_curriculum_2024.org	ANRM 431	ANRM 431	ANRM431	ANRM	431	Forest Timber and Harvest Management	3			anrm431	false	false
+cafs	cafs_curriculum_2024.org	ANRM 446	ANRM 446	ANRM446	ANRM	446	Urbanization and Sustainable Development	3			anrm446	false	false
+cafs	cafs_curriculum_2024.org	ANRM 448	ANRM 448	ANRM448	ANRM	448	Land Rights, Natural Resources, and Benefit Distribution	3			anrm448	false	false
+cafs	cafs_curriculum_2024.org	ASOS 201	ASOS 201	ASOS201	ASOS	201	Introduction to Soil Science	3	biol101, chem101, acrs104		asos201	false	false
+cafs	cafs_curriculum_2024.org	ASOS 202	ASOS 202	ASOS202	ASOS	202	Soil Genesis and Classification	3	biol101, asos201, agri106		asos202	false	false
+cafs	cafs_curriculum_2024.org	ASOS 204	ASOS 204	ASOS204	ASOS	204	Soil Fertility and Crop Nutrition	3	asos201, agri106		asos204	false	false
+cafs	cafs_curriculum_2024.org	ASOS 301	ASOS 301	ASOS301	ASOS	301	Soil Chemistry	3	chem101, asos201, agri206		asos301	false	false
+cafs	cafs_curriculum_2024.org	ASOS 302	ASOS 302	ASOS302	ASOS	302	Soil Organic Matter	3	chem101, agri206, asos202		asos302	false	false
+cafs	cafs_curriculum_2024.org	ASOS 304	ASOS 304	ASOS304	ASOS	304	Soil Survey	3	asos201, asos202, asos204, agri106		asos304	false	false
+cafs	cafs_curriculum_2024.org	ASOS 305	ASOS 305	ASOS305	ASOS	305	Agricultural Physics	3	asos201, asos202, agri106		asos305	false	false
+cafs	cafs_curriculum_2024.org	ASOS 401	ASOS 401	ASOS401	ASOS	401	Soil Laboratory Procedures and Instrumentation	3	asos202, asos204, asos302, asos301		asos401	false	true
+cafs	cafs_curriculum_2024.org	ASOS 403	ASOS 403	ASOS403	ASOS	403	Soil Conservation and Water Management	3	asos204, asos301, asos302		asos403	false	false
+cafs	cafs_curriculum_2024.org	ASOS 404	ASOS 404	ASOS404	ASOS	404	Soil Microbiology and Biochemistry	3	asos204, asos301, asos302		asos404	false	false
+cas	cas_curriculum_2025.org	BIOL 101	BIOL 101	BIOL101	BIOL	101	General Biology I	4			biol101	false	false
+cas	cas_curriculum_2025.org	BIOL 102	BIOL 102	BIOL102	BIOL	102	General Biology II (with Lab)	4	biol101		biol102	false	true
+cas	cas_curriculum_2025.org	BIOL 104	BIOL 104	BIOL104	BIOL	104	Botany I (for Biologists)	4	biol101		biol104	false	false
+cas	cas_curriculum_2025.org	BIOL 203	BIOL 203	BIOL203	BIOL	203	Foundations in Anatomy and Physiology	4	biol102, biol203		biol203	false	false
+cas	cas_curriculum_2025.org	BIOL 206	BIOL 206	BIOL206	BIOL	206	Botany II (for Biologists)	4	biol104		biol206	false	false
+cas	cas_curriculum_2025.org	BIOL 208	BIOL 208	BIOL208	BIOL	208	Entomology	4	biol201		biol208	false	false
+cas	cas_curriculum_2025.org	BIOL 301	BIOL 301	BIOL301	BIOL	301	Comparative Chordate Anatomy	4	biol201		biol301	false	false
+cas	cas_curriculum_2025.org	BIOL 302	BIOL 302	BIOL302	BIOL	302	Animal Parasitology	4	zool204		biol302	false	false
+cas	cas_curriculum_2025.org	BIOL 304	BIOL 304	BIOL304	BIOL	304	Hematology	4	biol309		biol304	false	false
+cas	cas_curriculum_2025.org	BIOL 305	BIOL 305	BIOL305	BIOL	305	General Microbiology	4			biol305	false	false
+cas	cas_curriculum_2025.org	BIOL 306	BIOL 306	BIOL306	BIOL	306	Immunology	4	biol102, chem201		biol306	false	false
+cas	cas_curriculum_2025.org	BIOL 309	BIOL 309	BIOL309	BIOL	309	Histology and Micro-Technique	4	biol201		biol309	false	false
+cas	cas_curriculum_2025.org	BIOL 310	BIOL 310	BIOL310	BIOL	310	Molecular Biology	4			biol310	false	false
+cas	cas_curriculum_2025.org	BIOL 312	BIOL 312	BIOL312	BIOL	312	Junior Seminar	2	Junior Standing		biol312	false	true
+cas	cas_curriculum_2025.org	BIOL 401	BIOL 401	BIOL401	BIOL	401	Ecology and Organisms	4			biol401	false	false
+cas	cas_curriculum_2025.org	BIOL 402	BIOL 402	BIOL402	BIOL	402	Vertebrate Embryology	4	biol301		biol402	false	false
+cas	cas_curriculum_2025.org	BIOL 404	BIOL 404	BIOL404	BIOL	404	General Biochemistry	4	chem201,chem202, chem401		biol404	false	false
+cas	cas_curriculum_2025.org	BIOL 406	BIOL 406	BIOL406	BIOL	406	Genetics and Genomics	4	biol310		biol406	false	false
+cas	cas_curriculum_2025.org	BIOL 408	BIOL 408	BIOL408	BIOL	408	Internship	3	Senior Standing		biol408	false	true
+cas	cas_curriculum_2025.org	CHEM 101	CHEM 101	CHEM101	CHEM	101	Principles of Chemistry I	4			chem101	false	false
+cas	cas_curriculum_2025.org	CHEM 102	CHEM 102	CHEM102	CHEM	102	Principles of Chemistry II (with Lab)	4	chem101		chem102	false	true
+cas	cas_curriculum_2025.org	CHEM 201	CHEM 201	CHEM201	CHEM	201	Organic Chemistry I	4	chem102		chem201	false	false
+cas	cas_curriculum_2025.org	CHEM 202	CHEM 202	CHEM202	CHEM	202	Organic Chemistry II	4	chem201		chem202	false	false
+cas	cas_curriculum_2025.org	CHEM 301	CHEM 301	CHEM301	CHEM	301	Inorganic Chemistry I (Group Chemistry)	4	chem102		chem301	false	false
+cas	cas_curriculum_2025.org	CHEM 302	CHEM 302	CHEM302	CHEM	302	Inorganic Chemistry II (Transition Metal and Coordination Chemistry)	4	chem301		chem302	false	false
+cas	cas_curriculum_2025.org	CHEM 303	CHEM 303	CHEM303	CHEM	303	Spectroscopy and Structure	3	chem202		chem303	false	false
+cas	cas_curriculum_2025.org	CHEM 304	CHEM 304	CHEM304	CHEM	304	Electrochemistry	4	math202, chem302		chem304	false	false
+cas	cas_curriculum_2025.org	CHEM 305	CHEM 305	CHEM305	CHEM	305	Natural Product Chemistry-Phytochemistry	4	chem202		chem305	false	false
+cas	cas_curriculum_2025.org	CHEM 306	CHEM 306	CHEM306	CHEM	306	Industrial Chemistry	4	chem201, chem301		chem306	false	false
+cas	cas_curriculum_2025.org	CHEM 307	CHEM 307	CHEM307	CHEM	307	Stereochemistry	4	chem202		chem307	false	false
+cas	cas_curriculum_2025.org	CHEM 308	CHEM 308	CHEM308	CHEM	308	Environmental Chemistry	4	chem307		chem308	false	false
+cas	cas_curriculum_2025.org	CHEM 401	CHEM 401	CHEM401	CHEM	401	Physical Chemistry I	4	chem304		chem401	false	false
+cas	cas_curriculum_2025.org	CHEM 402	CHEM 402	CHEM402	CHEM	402	Physical Chemistry II	4	chem401		chem402	false	false
+cas	cas_curriculum_2025.org	CHEM 403	CHEM 403	CHEM403	CHEM	403	Analytical Chemistry I	4	chem202, chem302		chem403	false	false
+cas	cas_curriculum_2025.org	CHEM 404	CHEM 404	CHEM404	CHEM	404	Analytical Chemistry II	4	chem401, chem407		chem404	false	false
+cas	cas_curriculum_2025.org	CHEM 407-TODO	CHEM 407	CHEM407	CHEM	407	Placeholder Entry for CHEM 407	0			chem407	true	false
+cas	cas_curriculum_2025.org	CHIN 101-TODO	CHIN 101	CHIN101	CHIN	101	Placeholder Entry for CHIN 101	0			chin101	true	false
+cas	cas_curriculum_2025.org	CHIN 102-TODO	CHIN 102	CHIN102	CHIN	102	Placeholder Entry for CHIN 102	0			chin102	true	false
+cas	cas_curriculum_2025.org	CHIN 201-TODO	CHIN 201	CHIN201	CHIN	201	Placeholder Entry for CHIN 201	0			chin201	true	false
+cas	cas_curriculum_2025.org	CHIN 202-TODO	CHIN 202	CHIN202	CHIN	202	Placeholder Entry for CHIN 202	0			chin202	true	false
+cas	cas_curriculum_2025.org	COMP 101	COMP 101	COMP101	COMP	101	Computer Literacy I	3			comp101	false	false
+cas	cas_curriculum_2025.org	COMP 102-TODO	COMP 102	COMP102	COMP	102	Computer Literacy II	3			comp102	true	false
+cas	cas_curriculum_2025.org	COMP 204	COMP 204	COMP204	COMP	204	Computer Programming (MATLAB)	3			comp204	false	false
+cas	cas_curriculum_2025.org	COMP 301	COMP 301	COMP301	COMP	301	Principles of Computing I	3	Junior Standing/		comp301	false	false
+cas	cas_curriculum_2025.org	COMP 302	COMP 302	COMP302	COMP	302	Principles of Computing II	3	comp301		comp302	false	false
+cas	cas_curriculum_2025.org	COMP 304	COMP 304	COMP304	COMP	304	Object oriented programming	3			comp304	false	false
+cas	cas_curriculum_2025.org	COMP 305	COMP 305	COMP305	COMP	305	Operating System	3			comp305	false	false
+cas	cas_curriculum_2025.org	COMP 307	COMP 307	COMP307	COMP	307	Data Communication and Networking I	3			comp307	false	false
+cas	cas_curriculum_2025.org	COMP 308	COMP 308	COMP308	COMP	308	Data Management System	3			comp308	false	false
+cas	cas_curriculum_2025.org	COMP 406	COMP 406	COMP406	COMP	406	Digital Computer Circuit	3			comp406	false	false
+cas	cas_curriculum_2025.org	CSEN 101	CSEN 101	CSEN101	CSEN	101	Computer Literacy I	3			csen101	false	false
+cas	cas_curriculum_2025.org	CSEN 204	CSEN 204	CSEN204	CSEN	204	Computer Engineering (MATLAB)	3			csen204	false	false
+cas	cas_curriculum_2025.org	CSEN 306	CSEN 306	CSEN306	CSEN	306	Systems analysis and design	3			csen306	false	false
+cas	cas_curriculum_2025.org	CSEN 401	CSEN 401	CSEN401	CSEN	401	Introduction to Artificial Intelligence	3			csen401	false	false
+cas	cas_curriculum_2025.org	CSEN 404	CSEN 404	CSEN404	CSEN	404	Introduction to Python Programming	3			csen404	false	false
+cas	cas_curriculum_2025.org	ELAN 101	ELAN 101	ELAN101	ELAN	101	Elective Language (French / Glebo / Chinese / Spanish)	3			elan101	false	false
+cas	cas_curriculum_2025.org	ELAN 102	ELAN 102	ELAN102	ELAN	102	Elective Language (French / Glebo / Chinese / Spanish)	3			elan102	false	false
+cas	cas_curriculum_2025.org	ELAN 201	ELAN 201	ELAN201	ELAN	201	Elective Language (French / Glebo / Chinese / Spanish)	3			elan201	false	false
+cas	cas_curriculum_2025.org	ELAN 202	ELAN 202	ELAN202	ELAN	202	Elective Language (French / Glebo / Chinese / Spanish)	3			elan202	false	false
+cas	cas_curriculum_2025.org	ENGL 101	ENGL 101	ENGL101	ENGL	101	Freshman English I (Fundamental Grammar)	3			engl101	false	false
+cas	cas_curriculum_2025.org	ENGL 102	ENGL 102	ENGL102	ENGL	102	Freshman English II (Basic Composition)	3	engl101		engl102	false	false
+cas	cas_curriculum_2025.org	ENGL 104	ENGL 104	ENGL104	ENGL	104	Introduction to Drama	3	engl101		engl104	false	false
+cas	cas_curriculum_2025.org	ENGL 201	ENGL 201	ENGL201	ENGL	201	Grammar and Composition	3	engl102		engl201	false	false
+cas	cas_curriculum_2025.org	ENGL 202	ENGL 202	ENGL202	ENGL	202	Introduction to Literature	3	engl201		engl202	false	false
+cas	cas_curriculum_2025.org	ENGL 203	ENGL 203	ENGL203	ENGL	203	Technical/Business Communication and Public Speaking	3	engl102		engl203	false	false
+cas	cas_curriculum_2025.org	ENGL 204	ENGL 204	ENGL204	ENGL	204	Introduction to Creative Writing and the Short Story	3			engl204	false	false
+cas	cas_curriculum_2025.org	ENGL 205	ENGL 205	ENGL205	ENGL	205	English Phonology and Suprasegmentals	3	engl102		engl205	false	false
+cas	cas_curriculum_2025.org	ENGL 206	ENGL 206	ENGL206	ENGL	206	Discourse Analysis	3	engl102		engl206	false	false
+cas	cas_curriculum_2025.org	ENGL 208	ENGL 208	ENGL208	ENGL	208	Introduction to Poetry	3	engl205		engl208	false	false
+cas	cas_curriculum_2025.org	ENGL 209	ENGL 209	ENGL209	ENGL	209	Theater Workshop (Elective)	3	engl104		engl209	false	false
+cas	cas_curriculum_2025.org	ENGL 211	ENGL 211	ENGL211	ENGL	211	Introduction to Prose	3	engl202		engl211	false	false
+cas	cas_curriculum_2025.org	ENGL 301	ENGL 301	ENGL301	ENGL	301	Introduction to English Morphology	3	engl202		engl301	false	false
+cas	cas_curriculum_2025.org	ENGL 302	ENGL 302	ENGL302	ENGL	302	Psycholinguistics	3	engl204		engl302	false	false
+cas	cas_curriculum_2025.org	ENGL 303	ENGL 303	ENGL303	ENGL	303	Survey of African Literature	3	engl204, engl208		engl303	false	false
+cas	cas_curriculum_2025.org	ENGL 304	ENGL 304	ENGL304	ENGL	304	Survey of English and American Literature	3	engl202, engl206		engl304	false	false
+cas	cas_curriculum_2025.org	ENGL 305	ENGL 305	ENGL305	ENGL	305	Caribbean Literature	3	engl204, engl208		engl305	false	false
+cas	cas_curriculum_2025.org	ENGL 306	ENGL 306	ENGL306	ENGL	306	Approaches to Literary Theory and Criticism	3	engl204, engl208		engl306	false	false
+cas	cas_curriculum_2025.org	ENGL 307	ENGL 307	ENGL307	ENGL	307	Sociolinguistics	3	engl204, engl208		engl307	false	false
+cas	cas_curriculum_2025.org	ENGL 308	ENGL 308	ENGL308	ENGL	308	African-American Literature	3	engl204, engl305		engl308	false	false
+cas	cas_curriculum_2025.org	ENGL 309	ENGL 309	ENGL309	ENGL	309	Oral African Literature	3	engl202, engl204		engl309	false	false
+cas	cas_curriculum_2025.org	ENGL 310	ENGL 310	ENGL310	ENGL	310	Gender, Feminism and Contemporary Literature	3	engl204, engl303, engl305		engl310	false	false
+cas	cas_curriculum_2025.org	ENGL 311	ENGL 311	ENGL311	ENGL	311	Literary Genre, Classification, Forms, Convention and Techniques	3	engl206, engl208		engl311	false	false
+cas	cas_curriculum_2025.org	ENGL 312	ENGL 312	ENGL312	ENGL	312	Pragmatics	3	engl307		engl312	false	false
+cas	cas_curriculum_2025.org	ENGL 401	ENGL 401	ENGL401	ENGL	401	Survey of Liberian Literature	3	engl202, engl303		engl401	false	false
+cas	cas_curriculum_2025.org	ENGL 402	ENGL 402	ENGL402	ENGL	402	New Trend in Syntax	3	engl301		engl402	false	false
+cas	cas_curriculum_2025.org	ENGL 403	ENGL 403	ENGL403	ENGL	403	Shakespearean Literature	3	engl102; engl104		engl403	false	false
+cas	cas_curriculum_2025.org	ENGL 404	ENGL 404	ENGL404	ENGL	404	English Stylistics	3	engl302, engl307		engl404	false	false
+cas	cas_curriculum_2025.org	ENGL 405	ENGL 405	ENGL405	ENGL	405	World Literature	3	engl303, engl305, engl308		engl405	false	false
+cas	cas_curriculum_2025.org	ENGL 406	ENGL 406	ENGL406	ENGL	406	18th Century Literature and Early English Novel	3	engl206		engl406	false	false
+cas	cas_curriculum_2025.org	ENGL 407	ENGL 407	ENGL407	ENGL	407	Modern English Language Today	3	engl302, engl304		engl407	false	false
+cas	cas_curriculum_2025.org	ENGL 412	ENGL 412	ENGL412	ENGL	412	Advanced Composition and Academic Writing	3	Senior Standing		engl412	false	false
+cas	cas_curriculum_2025.org	ENGL 427	ENGL 427	ENGL427	ENGL	427	Research Methods in English	3	engl306		engl427	false	false
+cas	cas_curriculum_2025.org	ENGL 490	ENGL 490	ENGL490	ENGL	490	Thesis/Project	4	engl306, engl427		engl490	false	false
+cas	cas_curriculum_2025.org	ENVS 201	ENVS 201	ENVS201	ENVS	201	Introduction to Environmental Science	3	chem101 or biol101		envs201	false	false
+cas	cas_curriculum_2025.org	ESOC 101	ESOC 101	ESOC101	ESOC	101	Elective Social Science (History / Philosophy / Psychology / Sociology)	3			esoc101	false	false
+cas	cas_curriculum_2025.org	ESOC 102	ESOC 102	ESOC102	ESOC	102	Elective Social Science (History / Philosophy / Psychology / Sociology)	3			esoc102	false	false
+cas	cas_curriculum_2025.org	FOCO 101	FOCO 101	FOCO101	FOCO	101	Team Building and Mental Conditioning of Players; Planning Pre- Season Program	3			foco101	false	false
+cas	cas_curriculum_2025.org	FOCO 102	FOCO 102	FOCO102	FOCO	102	Management and Coaching	3			foco102	false	false
+cas	cas_curriculum_2025.org	FOCO 112	FOCO 112	FOCO112	FOCO	112	Teaching Soccer Skills and Games	3			foco112	false	false
+cas	cas_curriculum_2025.org	FOCO 121	FOCO 121	FOCO121	FOCO	121	Team Preparation for a Match and Development of Playing Styles	3			foco121	false	false
+cas	cas_curriculum_2025.org	FOCO 122	FOCO 122	FOCO122	FOCO	122	Principles of Play and Coaching	3			foco122	false	false
+cas	cas_curriculum_2025.org	FOCO 132	FOCO 132	FOCO132	FOCO	132	Sport Nutrition and First Aid	3			foco132	false	false
+cas	cas_curriculum_2025.org	FOCO 141	FOCO 141	FOCO141	FOCO	141	Match Observational Structure	3			foco141	false	false
+cas	cas_curriculum_2025.org	FOCO 142	FOCO 142	FOCO142	FOCO	142	Programming in Sport	3			foco142	false	false
+cas	cas_curriculum_2025.org	FOCO 152	FOCO 152	FOCO152	FOCO	152	Introduction to Game Systems and Tactics	3			foco152	false	false
+cas	cas_curriculum_2025.org	FOCO 201	FOCO 201	FOCO201	FOCO	201	Effective Communication and Organizing Individual Training and Coaching Sessions	3			foco201	false	false
+cas	cas_curriculum_2025.org	FOCO 202	FOCO 202	FOCO202	FOCO	202	Coaching Practicum --Micro	3			foco202	false	true
+cas	cas_curriculum_2025.org	FOCO 211	FOCO 211	FOCO211	FOCO	211	Coaching Football (Primary Level)	3			foco211	false	false
+cas	cas_curriculum_2025.org	FOCO 212	FOCO 212	FOCO212	FOCO	212	Coaching Football (Semi -- Pro)	3			foco212	false	false
+cas	cas_curriculum_2025.org	FOCO 221	FOCO 221	FOCO221	FOCO	221	Coaching Football (Intermediate Level)	3			foco221	false	false
+cas	cas_curriculum_2025.org	FOCO 222	FOCO 222	FOCO222	FOCO	222	Current Issues in Sport	3			foco222	false	false
+cas	cas_curriculum_2025.org	FOCO 232	FOCO 232	FOCO232	FOCO	232	The Goalkeepers Psychological Approach to Training and Improve Technique to Game Awareness	3			foco232	false	false
+cas	cas_curriculum_2025.org	FRCR 001	FRCR 001	FRCR001	FRCR	001	Everyday French	3			frcr001	false	false
+cas	cas_curriculum_2025.org	FRCR 002	FRCR 002	FRCR002	FRCR	002	Discovering Worlds of French	3			frcr002	false	false
+cas	cas_curriculum_2025.org	FRCR 003	FRCR 003	FRCR003	FRCR	003	French at work	3			frcr003	false	false
+cas	cas_curriculum_2025.org	FRCR 004	FRCR 004	FRCR004	FRCR	004	La Francophonie (people, places, travels and events)	3			frcr004	false	false
+cas	cas_curriculum_2025.org	FRCR 005	FRCR 005	FRCR005	FRCR	005	Traditions and celebrations	3			frcr005	false	false
+cas	cas_curriculum_2025.org	FRCR 006	FRCR 006	FRCR006	FRCR	006	Francophone media	3			frcr006	false	false
+cas	cas_curriculum_2025.org	FREN 101-TODO	FREN 101	FREN101	FREN	101	Placeholder Entry for FREN 101	0			fren101	true	false
+cas	cas_curriculum_2025.org	FREN 102-TODO	FREN 102	FREN102	FREN	102	Placeholder Entry for FREN 102	0			fren102	true	false
+cas	cas_curriculum_2025.org	FREN 201	FREN 201	FREN201	FREN	201	Fundamentals of French I	3	engl102		fren201	false	false
+cas	cas_curriculum_2025.org	FREN 202	FREN 202	FREN202	FREN	202	Intermediate French	3	fren201		fren202	false	false
+cas	cas_curriculum_2025.org	FREN 203	FREN 203	FREN203	FREN	203	French for Specialization I	3	fren201		fren203	false	false
+cas	cas_curriculum_2025.org	FREN 204	FREN 204	FREN204	FREN	204	French for Specialization II	3	fren202		fren204	false	false
+cas	cas_curriculum_2025.org	FREN 301	FREN 301	FREN301	FREN	301	Literary theory and criticism in French Literature	3	fren202, fren203		fren301	false	false
+cas	cas_curriculum_2025.org	FREN 302	FREN 302	FREN302	FREN	302	Introduction to French Poetry	3	fren203, fren204		fren302	false	false
+cas	cas_curriculum_2025.org	FREN 303	FREN 303	FREN303	FREN	303	French Grammar and Vocabulary	3	fren204		fren303	false	false
+cas	cas_curriculum_2025.org	FREN 304	FREN 304	FREN304	FREN	304	Advanced French Grammar	3	fren303		fren304	false	false
+cas	cas_curriculum_2025.org	FREN 305	FREN 305	FREN305	FREN	305	French Stylistics and Composition	3	fren204, fren301		fren305	false	false
+cas	cas_curriculum_2025.org	FREN 306	FREN 306	FREN306	FREN	306	Business French and Professional Communication	3	fren203, fren303, fren305		fren306	false	false
+cas	cas_curriculum_2025.org	FREN 307	FREN 307	FREN307	FREN	307	French Phonetics and Pronunciation	3	fren203, fren204		fren307	false	false
+cas	cas_curriculum_2025.org	FREN 308	FREN 308	FREN308	FREN	308	French Semantics and Pragmatics	3	fren303, fren304		fren308	false	false
+cas	cas_curriculum_2025.org	FREN 309	FREN 309	FREN309	FREN	309	French Culture and Society	3	fren202		fren309	false	false
+cas	cas_curriculum_2025.org	FREN 310	FREN 310	FREN310	FREN	310	French Phonology and Syntax	3	fren307, fren308		fren310	false	false
+cas	cas_curriculum_2025.org	FREN 311	FREN 311	FREN311	FREN	311	Intermediate French Writing	3	fren302, fren303, fren305		fren311	false	false
+cas	cas_curriculum_2025.org	FREN 312	FREN 312	FREN312	FREN	312	French-English Translation	3	Students must have completed the previous courses.*		fren312	false	false
+cas	cas_curriculum_2025.org	FREN 401	FREN 401	FREN401	FREN	401	Introduction to Francophone African Drama and Prose	3	fren301, fren302, fren305, fren307		fren401	false	false
+cas	cas_curriculum_2025.org	FREN 402	FREN 402	FREN402	FREN	402	French African-Caribbean Literature	3	fren301, fren302, fren305, fren307		fren402	false	false
+cas	cas_curriculum_2025.org	FREN 403	FREN 403	FREN403	FREN	403	French Political and Social Thought	3	fren301, fren309		fren403	false	false
+cas	cas_curriculum_2025.org	FREN 404	FREN 404	FREN404	FREN	404	French Dialectology	3	fren202, fren309		fren404	false	false
+cas	cas_curriculum_2025.org	FREN 405	FREN 405	FREN405	FREN	405	French Language Teaching Methodology	3	Students must have completed the previous courses.*		fren405	false	false
+cas	cas_curriculum_2025.org	FREN 406	FREN 406	FREN406	FREN	406	Francophone Literature	3	fren301		fren406	false	false
+cas	cas_curriculum_2025.org	FREN 407	FREN 407	FREN407	FREN	407	French Phonetics for Non-Native Speakers	3	fren307		fren407	false	false
+cas	cas_curriculum_2025.org	FREN 408	FREN 408	FREN408	FREN	408	French Cultural Studies	3	fren309		fren408	false	false
+cas	cas_curriculum_2025.org	FREN 409	FREN 409	FREN409	FREN	409	French Research Methods	3	Students must have completed the previous courses.*		fren409	false	false
+cas	cas_curriculum_2025.org	FREN 410	FREN 410	FREN410	FREN	410	Internship	2	Completion of foundational language and culture courses.*		fren410	false	true
+cas	cas_curriculum_2025.org	FREN 411	FREN 411	FREN411	FREN	411	French Language Proficiency	3	fren304, fren307, fren308		fren411	false	false
+cas	cas_curriculum_2025.org	FREN 412	FREN 412	FREN412	FREN	412	French Capstone Project	4	fren202		fren412	false	false
+cas	cas_curriculum_2025.org	GLEB 101-TODO	GLEB 101	GLEB101	GLEB	101	Placeholder Entry for GLEB 101	0			gleb101	true	false
+cas	cas_curriculum_2025.org	GLEB 102-TODO	GLEB 102	GLEB102	GLEB	102	Placeholder Entry for GLEB 102	0			gleb102	true	false
+cas	cas_curriculum_2025.org	GLEB 201	GLEB 201	GLEB201	GLEB	201	Introduction to Glebo	3	engl102		gleb201	false	false
+cas	cas_curriculum_2025.org	GLEB 202-TODO	GLEB 202	GLEB202	GLEB	202	Placeholder Entry for GLEB 202	0			gleb202	true	false
+cas	cas_curriculum_2025.org	HIST 101	HIST 101	HIST101	HIST	101	Liberian History and Society	3			hist101	false	false
+cas	cas_curriculum_2025.org	HIST 102-TODO	HIST 102	HIST102	HIST	102	Placeholder Entry for HIST 102	0			hist102	true	false
+cas	cas_curriculum_2025.org	HIST 202	HIST 202	HIST202	HIST	202	World History	3			hist202	false	false
+cas	cas_curriculum_2025.org	MATH 101	MATH 101	MATH101	MATH	101	College Algebra	3			math101	false	false
+cas	cas_curriculum_2025.org	MATH 102	MATH 102	MATH102	MATH	102	Plane Trigonometry	3	math101		math102	false	false
+cas	cas_curriculum_2025.org	MATH 104	MATH 104	MATH104	MATH	104	Precalculus	3	math102		math104	false	false
+cas	cas_curriculum_2025.org	MATH 108-TODO	MATH 108	MATH108	MATH	108	Calculus for non-science major	3			math108	true	false
+cas	cas_curriculum_2025.org	MATH 201	MATH 201	MATH201	MATH	201	Calculus I (Differential Calculus)	3	math102, math104		math201	false	false
+cas	cas_curriculum_2025.org	MATH 202	MATH 202	MATH202	MATH	202	Calculus II (Integral Calculus)	3	math104, math201		math202	false	false
+cas	cas_curriculum_2025.org	MATH 204	MATH 204	MATH204	MATH	204	Introduction to Linear Algebra	3	math104, math201		math204	false	false
+cas	cas_curriculum_2025.org	MATH 206	MATH 206	MATH206	MATH	206	Analytic Geometry	3	math102, math104		math206	false	false
+cas	cas_curriculum_2025.org	MATH 208	MATH 208	MATH208	MATH	208	Applied Statistics	3	math102		math208	false	false
+cas	cas_curriculum_2025.org	MATH 301	MATH 301	MATH301	MATH	301	Multivariable Calculus	3	math202		math301	false	false
+cas	cas_curriculum_2025.org	MATH 302	MATH 302	MATH302	MATH	302	Ordinary Differential Equations	3	math301		math302	false	false
+cas	cas_curriculum_2025.org	MATH 305	MATH 305	MATH305	MATH	305	History of Mathematics	3			math305	false	false
+cas	cas_curriculum_2025.org	MATH 306	MATH 306	MATH306	MATH	306	Probability	3	math206math208		math306	false	false
+cas	cas_curriculum_2025.org	MATH 308	MATH 308	MATH308	MATH	308	Spherical Geometry	3	math307		math308	false	false
+cas	cas_curriculum_2025.org	MATH 309	MATH 309	MATH309	MATH	309	Numerical Analysis I	3	math202, math206		math309	false	false
+cas	cas_curriculum_2025.org	MATH 310	MATH 310	MATH310	MATH	310	Numerical Analysis II	3	math309		math310	false	false
+cas	cas_curriculum_2025.org	MATH 311	MATH 311	MATH311	MATH	311	Junior Seminar I	2	Junior Standing		math311	false	true
+cas	cas_curriculum_2025.org	MATH 312	MATH 312	MATH312	MATH	312	Junior Seminar II	2	math311		math312	false	true
+cas	cas_curriculum_2025.org	MATH 314	MATH 314	MATH314	MATH	314	Calculus for Biology Students	3	math104		math314	false	false
+cas	cas_curriculum_2025.org	MATH 401	MATH 401	MATH401	MATH	401	Abstract Algebra	3	math302, Senior Standing		math401	false	false
+cas	cas_curriculum_2025.org	MATH 402	MATH 402	MATH402	MATH	402	Number Theory	3	Senior Standing		math402	false	false
+cas	cas_curriculum_2025.org	MATH 403	MATH 403	MATH403	MATH	403	Inferential Statistics	3	math302	resm411	math403	false	false
+cas	cas_curriculum_2025.org	MATH 404	MATH 404	MATH404	MATH	404	Vector Analysis	3	Senior Standing		math404	false	false
+cas	cas_curriculum_2025.org	MATH 405	MATH 405	MATH405	MATH	405	Introduction to Topology	3	math314		math405	false	false
+cas	cas_curriculum_2025.org	MATH 406	MATH 406	MATH406	MATH	406	Discrete Mathematics	3	math306, math405		math406	false	false
+cas	cas_curriculum_2025.org	MATH 407	MATH 407	MATH407	MATH	407	Graph Theory	3	math306, math307, math310		math407	false	false
+cas	cas_curriculum_2025.org	MATH 408	MATH 408	MATH408	MATH	408	Complex Variables	3	math403, math405		math408	false	false
+cas	cas_curriculum_2025.org	MATH 413-TODO	MATH 413	MATH413	MATH	413	Partial Differential Equation	3			math413	true	false
+cas	cas_curriculum_2025.org	PHED 101	PHED 101	PHED101	PHED	101	Human Kinetics I	1			phed101	false	false
+cas	cas_curriculum_2025.org	PHED 102	PHED 102	PHED102	PHED	102	Human Kinetics II	1	phed101		phed102	false	false
+cas	cas_curriculum_2025.org	PHED 111	PHED 111	PHED111	PHED	111	History, Principles and Foundations of Physical Education	2			phed111	false	false
+cas	cas_curriculum_2025.org	PHED 112	PHED 112	PHED112	PHED	112	Health Education and Environmental Studies	3			phed112	false	false
+cas	cas_curriculum_2025.org	PHED 122	PHED 122	PHED122	PHED	122	Sports Psychology and Sociology	3			phed122	false	false
+cas	cas_curriculum_2025.org	PHED 132	PHED 132	PHED132	PHED	132	Anatomy and Physiology	3	biol101 is a pre requisite (same as biol205 Human Anatomy and Physiology under BS Biology Program)		phed132	false	false
+cas	cas_curriculum_2025.org	PHED 142	PHED 142	PHED142	PHED	142	Kinesiology and Biomechanics	3	biol101, chem101 are pre requisite		phed142	false	false
+cas	cas_curriculum_2025.org	PHED 152	PHED 152	PHED152	PHED	152	Educational Technology and Methods of Teaching in Physical Education	2			phed152	false	false
+cas	cas_curriculum_2025.org	PHED 201	PHED 201	PHED201	PHED	201	Sports Management	3			phed201	false	false
+cas	cas_curriculum_2025.org	PHED 202	PHED 202	PHED202	PHED	202	Dance and Swimming	3			phed202	false	false
+cas	cas_curriculum_2025.org	PHED 222	PHED 222	PHED222	PHED	222	Health and Nutrition	3			phed222	false	false
+cas	cas_curriculum_2025.org	PHED 232	PHED 232	PHED232	PHED	232	Fitness Assessment and Exercise Prescription	3	(it required 10 hr. field practice)		phed232	false	false
+cas	cas_curriculum_2025.org	PHED 251	PHED 251	PHED251	PHED	251	Sports Medicine, Physiotherapy and Rehabilitation	4	(It required field trip)		phed251	false	false
+cas	cas_curriculum_2025.org	PHED 252	PHED 252	PHED252	PHED	252	Analysis of Artistic and Rhythmic Gymnastics	3			phed252	false	false
+cas	cas_curriculum_2025.org	PHED 271	PHED 271	PHED271	PHED	271	Track and Field/Athletics	3			phed271	false	false
+cas	cas_curriculum_2025.org	PHED 291	PHED 291	PHED291	PHED	291	Team Sport	3	(field work Required)		phed291	false	false
+cas	cas_curriculum_2025.org	PHIL 101	PHIL 101	PHIL101	PHIL	101	Introduction to Philosophy	3			phil101	false	false
+cas	cas_curriculum_2025.org	PHIL 102-TODO	PHIL 102	PHIL102	PHIL	102	Placeholder Entry for PHIL 102	0			phil102	true	false
+cas	cas_curriculum_2025.org	PHYS 101	PHYS 101	PHYS101	PHYS	101	Mechanics (with Lab)	4	math102		phys101	false	true
+cas	cas_curriculum_2025.org	PHYS 102	PHYS 102	PHYS102	PHYS	102	Matter and Heat (with Lab)	4	math101, math201	math202	phys102	false	true
+cas	cas_curriculum_2025.org	PHYS 201	PHYS 201	PHYS201	PHYS	201	Basic Electronics and Circuit Theory (with Lab)	4			phys201	false	true
+cas	cas_curriculum_2025.org	PHYS 202	PHYS 202	PHYS202	PHYS	202	Electricity and Magnetism (with Lab)	4	phys201, math104		phys202	false	true
+cas	cas_curriculum_2025.org	PHYS 206	PHYS 206	PHYS206	PHYS	206	Physics of the Solid Earth	4			phys206	false	false
+cas	cas_curriculum_2025.org	PHYS 303	PHYS 303	PHYS303	PHYS	303	Modern Physics	4	phys101, phys102, phys201, phys202, math101, math104		phys303	false	false
+cas	cas_curriculum_2025.org	PHYS 311	PHYS 311	PHYS311	PHYS	311	Classical Physics I	4			phys311	false	false
+cas	cas_curriculum_2025.org	PHYS 312	PHYS 312	PHYS312	PHYS	312	Classical Physics II	4			phys312	false	false
+cas	cas_curriculum_2025.org	PHYS 314	PHYS 314	PHYS314	PHYS	314	Physical and Geometric Optics	4			phys314	false	false
+cas	cas_curriculum_2025.org	PHYS 315	PHYS 315	PHYS315	PHYS	315	Mathematical Method in the Physical Sciences	4			phys315	false	false
+cas	cas_curriculum_2025.org	PHYS 316	PHYS 316	PHYS316	PHYS	316	Thermodynamics and Statistical Physics	4			phys316	false	false
+cas	cas_curriculum_2025.org	PHYS 317	PHYS 317	PHYS317	PHYS	317	Waves I	4			phys317	false	false
+cas	cas_curriculum_2025.org	PHYS 318	PHYS 318	PHYS318	PHYS	318	Waves II	4			phys318	false	false
+cas	cas_curriculum_2025.org	PHYS 322	PHYS 322	PHYS322	PHYS	322	Gravity and Magnetic Prospecting Methods	4			phys322	false	false
+cas	cas_curriculum_2025.org	PHYS 323	PHYS 323	PHYS323	PHYS	323	Electrical and Electromagnetic Methods of Geophysics	4			phys323	false	false
+cas	cas_curriculum_2025.org	PHYS 331	PHYS 331	PHYS331	PHYS	331	Introduction to Space Physics	3			phys331	false	false
+cas	cas_curriculum_2025.org	PHYS 332-TODO	PHYS 332	PHYS332	PHYS	332	Placeholder Entry for PHYS 332	0			phys332	true	false
+cas	cas_curriculum_2025.org	PHYS 411	PHYS 411	PHYS411	PHYS	411	Electromagnetism I	4			phys411	false	false
+cas	cas_curriculum_2025.org	PHYS 412	PHYS 412	PHYS412	PHYS	412	Electromagnetism II	4			phys412	false	false
+cas	cas_curriculum_2025.org	PHYS 413	PHYS 413	PHYS413	PHYS	413	Quantum Mechanics I	4			phys413	false	false
+cas	cas_curriculum_2025.org	PHYS 414	PHYS 414	PHYS414	PHYS	414	Quantum Mechanics II	4			phys414	false	false
+cas	cas_curriculum_2025.org	PHYS 416	PHYS 416	PHYS416	PHYS	416	Nuclear and Particle Physics	4			phys416	false	false
+cas	cas_curriculum_2025.org	PHYS 421	PHYS 421	PHYS421	PHYS	421	Introduction to Atmospheric Physics	3			phys421	false	false
+cas	cas_curriculum_2025.org	PHYS 424	PHYS 424	PHYS424	PHYS	424	Geophysical Data Analysis and Interpretations.	3			phys424	false	false
+cas	cas_curriculum_2025.org	PHYS 431	PHYS 431	PHYS431	PHYS	431	Satellite Communication	3			phys431	false	false
+cas	cas_curriculum_2025.org	PSYC 101	PSYC 101	PSYC101	PSYC	101	Introduction to Psychology	3			psyc101	false	false
+cas	cas_curriculum_2025.org	PSYC 102-TODO	PSYC 102	PSYC102	PSYC	102	Placeholder Entry for PSYC 102	0			psyc102	true	false
+cas	cas_curriculum_2025.org	RESM 411	RESM 411	RESM411	RESM	411	Research Methodology	3	Senior Standing	math403	resm411	false	false
+cas	cas_curriculum_2025.org	RESM 412	RESM 412	RESM412	RESM	412	Senior thesis	3	resm411		resm412	false	false
+cas	cas_curriculum_2025.org	SOCI 101	SOCI 101	SOCI101	SOCI	101	Introduction to Sociology	3			soci101	false	false
+cas	cas_curriculum_2025.org	SOCI 102-TODO	SOCI 102	SOCI102	SOCI	102	Placeholder Entry for SOCI 102	0			soci102	true	false
+cas	cas_curriculum_2025.org	SOCI 201	SOCI 201	SOCI201	SOCI	201	Core Concepts in Sociology	3	sosc102		soci201	false	false
+cas	cas_curriculum_2025.org	SOCI 202	SOCI 202	SOCI202	SOCI	202	Comparative Social Institutions	3	soci201		soci202	false	false
+cas	cas_curriculum_2025.org	SOCI 203	SOCI 203	SOCI203	SOCI	203	Introduction to Social Work	3			soci203	false	false
+cas	cas_curriculum_2025.org	SOCI 204	SOCI 204	SOCI204	SOCI	204	Societies and Cultures of Africa	3			soci204	false	false
+cas	cas_curriculum_2025.org	SOCI 301	SOCI 301	SOCI301	SOCI	301	Poverty and Social Inequality	3	soci202		soci301	false	false
+cas	cas_curriculum_2025.org	SOCI 302	SOCI 302	SOCI302	SOCI	302	Sociology of Gender and Development	3	soci202		soci302	false	false
+cas	cas_curriculum_2025.org	SOCI 303	SOCI 303	SOCI303	SOCI	303	Marriage and Family	3	soci202		soci303	false	false
+cas	cas_curriculum_2025.org	SOCI 304	SOCI 304	SOCI304	SOCI	304	Social Stratification	3	soci202		soci304	false	false
+cas	cas_curriculum_2025.org	SOCI 305	SOCI 305	SOCI305	SOCI	305	Rural Sociology	3	soci202		soci305	false	false
+cas	cas_curriculum_2025.org	SOCI 306	SOCI 306	SOCI306	SOCI	306	Urban and Industrial Sociology	3	soci305		soci306	false	false
+cas	cas_curriculum_2025.org	SOCI 307	SOCI 307	SOCI307	SOCI	307	Social Problems (Deviance and Criminal Behavior)	3	soci202		soci307	false	false
+cas	cas_curriculum_2025.org	SOCI 308	SOCI 308	SOCI308	SOCI	308	Globalization and Social Change	3	soci202		soci308	false	false
+cas	cas_curriculum_2025.org	SOCI 309-TODO	SOCI 309	SOCI309	SOCI	309	Placeholder Social Psychology	3			soci309	true	false
+cas	cas_curriculum_2025.org	SOCI 401	SOCI 401	SOCI401	SOCI	401	Contemporary Social Theories	3			soci401	false	false
+cas	cas_curriculum_2025.org	SOCI 402	SOCI 402	SOCI402	SOCI	402	Sociology of Law	3	soci307		soci402	false	false
+cas	cas_curriculum_2025.org	SOCI 403	SOCI 403	SOCI403	SOCI	403	Introduction to Social Research	3			soci403	false	false
+cas	cas_curriculum_2025.org	SOCI 405	SOCI 405	SOCI405	SOCI	405	Community Development	3			soci405	false	false
+cas	cas_curriculum_2025.org	SOCI 406	SOCI 406	SOCI406	SOCI	406	Practical Research (Thesis Writing)	3	soci403		soci406	false	false
+cas	cas_curriculum_2025.org	SOCI 407	SOCI 407	SOCI407	SOCI	407	Social Welfare and Social Policy	3			soci407	false	false
+cas	cas_curriculum_2025.org	SOSC 102-TODO	SOSC 102	SOSC102	SOSC	102	Placeholder Entry for SOSC 102	0			sosc102	true	false
+cas	cas_curriculum_2025.org	SPAN 101-TODO	SPAN 101	SPAN101	SPAN	101	Placeholder Entry for SPAN 101	0			span101	true	false
+cas	cas_curriculum_2025.org	SPAN 102-TODO	SPAN 102	SPAN102	SPAN	102	Placeholder Entry for SPAN 102	0			span102	true	false
+cas	cas_curriculum_2025.org	SPAN 201-TODO	SPAN 201	SPAN201	SPAN	201	Placeholder Entry for SPAN 201	0			span201	true	false
+cas	cas_curriculum_2025.org	SPAN 202-TODO	SPAN 202	SPAN202	SPAN	202	Placeholder Entry for SPAN 202	0			span202	true	false
+cas	cas_curriculum_2025.org	SPDA 211	SPDA 211	SPDA211	SPDA	211	Organization and Administration of Sport and Tournament	3			spda211	false	false
+cas	cas_curriculum_2025.org	SPDM 101	SPDM 101	SPDM101	SPDM	101	Introduction to Sport Management	3			spdm101	false	false
+cas	cas_curriculum_2025.org	SPDM 102	SPDM 102	SPDM102	SPDM	102	Strategic Marketing for Sport Organizations	3			spdm102	false	false
+cas	cas_curriculum_2025.org	SPDM 111	SPDM 111	SPDM111	SPDM	111	Construction and Management of Sports Facilities	3			spdm111	false	false
+cas	cas_curriculum_2025.org	SPDM 112	SPDM 112	SPDM112	SPDM	112	Sports Law, Ethics and Contemporary Issues in Sport	3			spdm112	false	false
+cas	cas_curriculum_2025.org	SPDM 121	SPDM 121	SPDM121	SPDM	121	Leadership and Personnel Management in the Sports	3			spdm121	false	false
+cas	cas_curriculum_2025.org	SPDM 131	SPDM 131	SPDM131	SPDM	131	Governing Bodies in Sports	3			spdm131	false	false
+cas	cas_curriculum_2025.org	SPDM 132	SPDM 132	SPDM132	SPDM	132	Sports Administration and Event Planning and Management	3			spdm132	false	false
+cas	cas_curriculum_2025.org	SPDM 141	SPDM 141	SPDM141	SPDM	141	Sports Psychology and Sociology	3			spdm141	false	false
+cas	cas_curriculum_2025.org	SPDM 142	SPDM 142	SPDM142	SPDM	142	Sports Media, Social Networking and Brand Communication	3			spdm142	false	false
+cas	cas_curriculum_2025.org	SPDM 151	SPDM 151	SPDM151	SPDM	151	Team Sport	3			spdm151	false	false
+cas	cas_curriculum_2025.org	SPDM 152	SPDM 152	SPDM152	SPDM	152	Organizational Behavior for Managers	3			spdm152	false	false
+cas	cas_curriculum_2025.org	SPDM 162	SPDM 162	SPDM162	SPDM	162	Budgeting and Financing of Sport	3			spdm162	false	false
+cas	cas_curriculum_2025.org	SPES 203	SPES 203	SPES203	SPES	203	Legal and Ethical Issues in Sport	3			spes203	false	false
+cas	cas_curriculum_2025.org	SPMT 201	SPMT 201	SPMT201	SPMT	201	Planning a Competition and Training Program	3			spmt201	false	false
+cas	cas_curriculum_2025.org	SPMT 300	SPMT 300	SPMT300	SPMT	300	Practicum (Internship)	4			spmt300	false	true
+cas	cas_curriculum_2025.org	SPOB 202	SPOB 202	SPOB202	SPOB	202	Organizational Behavior for Managers	3			spob202	false	false
+cas	cas_curriculum_2025.org	SSCL 102	SSCL 102	SSCL102	SSCL	102	Liberian Society, Issues and Problems	3			sscl102	false	false
+cas	cas_curriculum_2025.org	TPRA 282	TPRA 282	TPRA282	TPRA	282	Teaching Practice	6			tpra282	false	false
+cas	cas_curriculum_2025.org	ZOOL 201	ZOOL 201	ZOOL201	ZOOL	201	General Zoology	3	biol101, biol102		zool201	false	false
+cas	cas_curriculum_2025.org	ZOOL 204	ZOOL 204	ZOOL204	ZOOL	204	Invertebrate Zoology	4	zool201		zool204	false	false
+cba	cba_curriculum_2025.org	ACCT 102	ACCT 102	ACCT102	ACCT	102	Introduction to Accounting	3			acct102	false	false
+cba	cba_curriculum_2025.org	ACCT 201	ACCT 201	ACCT201	ACCT	201	Principles of Accounting I	3	acct102, math101, engl101, engl102		acct201	false	false
+cba	cba_curriculum_2025.org	ACCT 202	ACCT 202	ACCT202	ACCT	202	Principles of Accounting II	3	acct201, math104, engl201		acct202	false	false
+cba	cba_curriculum_2025.org	ACCT 301	ACCT 301	ACCT301	ACCT	301	Intermediate Accounting I	3	acct202		acct301	false	false
+cba	cba_curriculum_2025.org	ACCT 302	ACCT 302	ACCT302	ACCT	302	Intermediate Accounting II	3	acct301		acct302	false	false
+cba	cba_curriculum_2025.org	ACCT 303	ACCT 303	ACCT303	ACCT	303	Cost and Management Accounting I	3	acct102, acct201, acct202		acct303	false	false
+cba	cba_curriculum_2025.org	ACCT 304	ACCT 304	ACCT304	ACCT	304	Cost and Management Accounting II	3	acct303		acct304	false	false
+cba	cba_curriculum_2025.org	ACCT 312	ACCT 312	ACCT312	ACCT	312	Computerized Accounting	3	acct303		acct312	false	false
+cba	cba_curriculum_2025.org	ACCT 401	ACCT 401	ACCT401	ACCT	401	Advanced Accounting I	3	acct302, acct303		acct401	false	false
+cba	cba_curriculum_2025.org	ACCT 402	ACCT 402	ACCT402	ACCT	402	Advanced Accounting II	3	acct401		acct402	false	false
+cba	cba_curriculum_2025.org	ACCT 403	ACCT 403	ACCT403	ACCT	403	Principles of Auditing I	3	acct302, acct303		acct403	false	false
+cba	cba_curriculum_2025.org	ACCT 404	ACCT 404	ACCT404	ACCT	404	Principles of Auditing II	3	acct304, acct403		acct404	false	false
+cba	cba_curriculum_2025.org	ACCT 405	ACCT 405	ACCT405	ACCT	405	Accounting Systems and Controls	3	acct302, acct303		acct405	false	false
+cba	cba_curriculum_2025.org	ACCT 407	ACCT 407	ACCT407	ACCT	407	Accounting Theory and Practice	3	acct302, acct303		acct407	false	false
+cba	cba_curriculum_2025.org	ACCT 410	ACCT 410	ACCT410	ACCT	410	Public Budgeting and Taxation	3	acct302, acct303		acct410	false	false
+cba	cba_curriculum_2025.org	ACCT 411	ACCT 411	ACCT411	ACCT	411	Not-for-Profit Accounting	3	acct201		acct411	false	false
+cba	cba_curriculum_2025.org	BFIN 201	BFIN 201	BFIN201	BFIN	201	Principles of Banking and Finance	3	acct201, econ202		bfin201	false	false
+cba	cba_curriculum_2025.org	BFIN 301	BFIN 301	BFIN301	BFIN	301	Financial Management	3	acct201, econ202		bfin301	false	false
+cba	cba_curriculum_2025.org	BFIN 303	BFIN 303	BFIN303	BFIN	303	Investment Theory and Analysis	3	acct201		bfin303	false	false
+cba	cba_curriculum_2025.org	BFIN 304	BFIN 304	BFIN304	BFIN	304	Portfolio Theory and Management	3	bfin303		bfin304	false	false
+cba	cba_curriculum_2025.org	BFIN 311	BFIN 311	BFIN311	BFIN	311	Money, Banking and Monetary Theory	3	econ202		bfin311	false	false
+cba	cba_curriculum_2025.org	BFIN 312	BFIN 312	BFIN312	BFIN	312	Financial Institutions and Markets	3	econ202		bfin312	false	false
+cba	cba_curriculum_2025.org	BFIN 314	BFIN 314	BFIN314	BFIN	314	Survey of the Liberia Financial System	3			bfin314	false	false
+cba	cba_curriculum_2025.org	BFIN 401-TODO	BFIN 401	BFIN401	BFIN	401	Placeholder Entry for BFIN 401	0			bfin401	true	false
+cba	cba_curriculum_2025.org	BFIN 402	BFIN 402	BFIN402	BFIN	402	Advanced Corporate Finance	3	bfin301		bfin402	false	false
+cba	cba_curriculum_2025.org	BFIN 403	BFIN 403	BFIN403	BFIN	403	Management of Financial Institutions	3	bfin311, bfin312		bfin403	false	false
+cba	cba_curriculum_2025.org	BFIN 404	BFIN 404	BFIN404	BFIN	404	Treasury Management	3	All 300-level BFIN Courses		bfin404	false	false
+cba	cba_curriculum_2025.org	BFIN 405	BFIN 405	BFIN405	BFIN	405	Financial Engineering and Risk Management	3	bfin311, bfin312		bfin405	false	false
+cba	cba_curriculum_2025.org	BFIN 406	BFIN 406	BFIN406	BFIN	406	Financial Planning and Control	3	bfin401		bfin406	false	false
+cba	cba_curriculum_2025.org	BFIN 407	BFIN 407	BFIN407	BFIN	407	Internship in Banking and Finance	3	bfin303 and Senior Standing		bfin407	false	true
+cba	cba_curriculum_2025.org	BFIN 412	BFIN 412	BFIN412	BFIN	412	International Banking and Finance	3	All 300-level BFIN courses		bfin412	false	false
+cba	cba_curriculum_2025.org	BFIN 413	BFIN 413	BFIN413	BFIN	413	Financial Technology (FinTech)	3			bfin413	false	false
+cba	cba_curriculum_2025.org	BUSA 202	BUSA 202	BUSA202	BUSA	202	Introduction to Business Administration	3			busa202	false	false
+cba	cba_curriculum_2025.org	BUSA 204	BUSA 204	BUSA204	BUSA	204	Principles of Management	3			busa204	false	false
+cba	cba_curriculum_2025.org	BUSA 301	BUSA 301	BUSA301	BUSA	301	Organizational Behavior	3	busa202		busa301	false	false
+cba	cba_curriculum_2025.org	BUSA 302	BUSA 302	BUSA302	BUSA	302	Human Resource Management	3			busa302	false	false
+cba	cba_curriculum_2025.org	BUSA 304	BUSA 304	BUSA304	BUSA	304	Marketing Management	3			busa304	false	false
+cba	cba_curriculum_2025.org	BUSA 305	BUSA 305	BUSA305	BUSA	305	Project Planning and Management	3			busa305	false	false
+cba	cba_curriculum_2025.org	BUSA 306	BUSA 306	BUSA306	BUSA	306	Supply Chain Management	3			busa306	false	false
+cba	cba_curriculum_2025.org	BUSA 307	BUSA 307	BUSA307	BUSA	307	Principles of Business Law	3			busa307	false	false
+cba	cba_curriculum_2025.org	BUSA 308	BUSA 308	BUSA308	BUSA	308	Computer for Business	3			busa308	false	false
+cba	cba_curriculum_2025.org	BUSA 314-TODO	BUSA 314	BUSA314	BUSA	314	Placeholder Entry for BUSA 314	0			busa314	true	false
+cba	cba_curriculum_2025.org	BUSA 401	BUSA 401	BUSA401	BUSA	401	Business Policy and Strategy	3			busa401	false	false
+cba	cba_curriculum_2025.org	BUSA 402	BUSA 402	BUSA402	BUSA	402	Business Ethics	3			busa402	false	false
+cba	cba_curriculum_2025.org	BUSA 404	BUSA 404	BUSA404	BUSA	404	International Marketing	3			busa404	false	false
+cba	cba_curriculum_2025.org	BUSA 406	BUSA 406	BUSA406	BUSA	406	Purchasing Administration and Material Management	3	busa407		busa406	false	false
+cba	cba_curriculum_2025.org	BUSA 407	BUSA 407	BUSA407	BUSA	407	Production and Operations Management	3	busa314		busa407	false	false
+cba	cba_curriculum_2025.org	BUSA 408	BUSA 408	BUSA408	BUSA	408	Quality Management	3	busa407		busa408	false	false
+cba	cba_curriculum_2025.org	BUSA 411	BUSA 411	BUSA411	BUSA	411	Small Business and Entrepreneurial Management	3			busa411	false	false
+cba	cba_curriculum_2025.org	BUSA 413	BUSA 413	BUSA413	BUSA	413	Retail Management	3	busa304		busa413	false	false
+cba	cba_curriculum_2025.org	COBA 427	COBA 427	COBA427	COBA	427	Corporate Finance	3	bfin301		coba427	false	false
+cba	cba_curriculum_2025.org	COBA 430	COBA 430	COBA430	COBA	430	Senior Accounting Project Writing	3	acct302, acct304, acct401, acct403, acct405, econ308, econ314		coba430	false	false
+cba	cba_curriculum_2025.org	COBA 431	COBA 431	COBA431	COBA	431	Senior Project Writing I	1			coba431	false	false
+cba	cba_curriculum_2025.org	COBA 432	COBA 432	COBA432	COBA	432	Senior Project Writing II	2	coba431		coba432	false	false
+cba	cba_curriculum_2025.org	COBA 434	COBA 434	COBA434	COBA	434	Internship	3			coba434	false	true
+cba	cba_curriculum_2025.org	ECON 102	ECON 102	ECON102	ECON	102	Principles of Economics I	3			econ102	false	false
+cba	cba_curriculum_2025.org	ECON 202	ECON 202	ECON202	ECON	202	Principles of Economics II	3			econ202	false	false
+cba	cba_curriculum_2025.org	ECON 203	ECON 203	ECON203	ECON	203	Quantitative Techniques for Business and Economics	3	Math 101 and 102		econ203	false	false
+cba	cba_curriculum_2025.org	ECON 204	ECON 204	ECON204	ECON	204	Quantitative Techniques for Business and Economics	3	math101, math104		econ204	false	false
+cba	cba_curriculum_2025.org	ECON 301	ECON 301	ECON301	ECON	301	Intermediate Microeconomic Analysis I	3	econ202		econ301	false	false
+cba	cba_curriculum_2025.org	ECON 301	ECON 301	ECON301	ECON	301	Intermediate Microeconomic Analysis I	3	econ102		econ301	false	false
+cba	cba_curriculum_2025.org	ECON 302	ECON 302	ECON302	ECON	302	Intermediate Microeconomic Analysis II	3	econ301		econ302	false	false
+cba	cba_curriculum_2025.org	ECON 303	ECON 303	ECON303	ECON	303	Intermediate Macroeconomic Analysis I	3	econ202		econ303	false	false
+cba	cba_curriculum_2025.org	ECON 304	ECON 304	ECON304	ECON	304	Intermediate Macroeconomic Analysis II	3	econ303		econ304	false	false
+cba	cba_curriculum_2025.org	ECON 307	ECON 307	ECON307	ECON	307	Mathematics for Economists	3	econ202		econ307	false	false
+cba	cba_curriculum_2025.org	ECON 308	ECON 308	ECON308	ECON	308	Research Methodology	3	econ202, econ313		econ308	false	false
+cba	cba_curriculum_2025.org	ECON 312	ECON 312	ECON312	ECON	312	Survey of the Liberian Economy	3			econ312	false	false
+cba	cba_curriculum_2025.org	ECON 313	ECON 313	ECON313	ECON	313	Statistics for Business and Economics I	3	econ202		econ313	false	false
+cba	cba_curriculum_2025.org	ECON 314	ECON 314	ECON314	ECON	314	Statistics for Business and Economics II	3	econ313		econ314	false	false
+cba	cba_curriculum_2025.org	ECON 401	ECON 401	ECON401	ECON	401	Public Finance	3			econ401	false	false
+cba	cba_curriculum_2025.org	ECON 404	ECON 404	ECON404	ECON	404	Managerial Economics	3	econ202, econ307		econ404	false	false
+cba	cba_curriculum_2025.org	ECON 405	ECON 405	ECON405	ECON	405	Development Economics	3	econ404		econ405	false	false
+cba	cba_curriculum_2025.org	ECON 407	ECON 407	ECON407	ECON	407	Econometrics I and Time Series	3	econ307		econ407	false	false
+cba	cba_curriculum_2025.org	ECON 407	ECON 407	ECON407	ECON	407	Mathematical Economics	3	econ202, econ307, econ313		econ407	false	false
+cba	cba_curriculum_2025.org	ECON 408	ECON 408	ECON408	ECON	408	Econometrics and Time Series	3	econ304		econ408	false	false
+cba	cba_curriculum_2025.org	ECON 411	ECON 411	ECON411	ECON	411	Monetary Economics	3			econ411	false	false
+cba	cba_curriculum_2025.org	ECON 412	ECON 412	ECON412	ECON	412	Industrial Economics	3			econ412	false	false
+cba	cba_curriculum_2025.org	EEDU 301	EEDU 301	EEDU301	EEDU	301	Entrepreneurship Education I	0	econ102, econ202		eedu301	false	false
+cba	cba_curriculum_2025.org	EEDU 302	EEDU 302	EEDU302	EEDU	302	Entrepreneurship Education II	3	eedu301		eedu302	false	false
+cba	cba_curriculum_2025.org	MATH 110-TODO	MATH 110	MATH110	MATH	110	Placeholder Entry for Math for Decision Making	3			math110	true	false
+cba	cba_curriculum_2025.org	PADM 201-TODO	PADM 201	PADM201	PADM	201	Placeholder Entry for PADM 201	0			padm201	true	false
+cba	cba_curriculum_2025.org	PADM 202	PADM 202	PADM202	PADM	202	Introductions to Public Administration and Political Science	3			padm202	false	false
+cba	cba_curriculum_2025.org	PADM 304	PADM 304	PADM304	PADM	304	Development Planning and Administration.	3	padm201, padm202 and Econ 201		padm304	false	false
+cba	cba_curriculum_2025.org	PADM 306	PADM 306	PADM306	PADM	306	Administrative Law and Practice	3	padm307		padm306	false	false
+cba	cba_curriculum_2025.org	PADM 307	PADM 307	PADM307	PADM	307	Administrative Theory and Practice	3	padm202		padm307	false	false
+cba	cba_curriculum_2025.org	PADM 308	PADM 308	PADM308	PADM	308	Public Organizational Structure \&Behavior	3	padm202		padm308	false	false
+cba	cba_curriculum_2025.org	PADM 311	PADM 311	PADM311	PADM	311	Government and NGO	3	padm202		padm311	false	false
+cba	cba_curriculum_2025.org	PADM 317	PADM 317	PADM317	PADM	317	Organizational Communications	3	padm202		padm317	false	false
+cba	cba_curriculum_2025.org	PADM 401	PADM 401	PADM401	PADM	401	Comparative Public Administration	3	padm304		padm401	false	false
+cba	cba_curriculum_2025.org	PADM 403	PADM 403	PADM403	PADM	403	Public Personnel Administration	3	padm311		padm403	false	false
+cba	cba_curriculum_2025.org	PADM 404	PADM 404	PADM404	PADM	404	Government and Multinational Organization	3			padm404	false	false
+cba	cba_curriculum_2025.org	PADM 405	PADM 405	PADM405	PADM	405	Public Finance Administrations	3	bfin301		padm405	false	false
+cba	cba_curriculum_2025.org	PADM 406	PADM 406	PADM406	PADM	406	Rural Development Administrations	3	padm311		padm406	false	false
+cba	cba_curriculum_2025.org	PADM 407	PADM 407	PADM407	PADM	407	Local Government Administration	3	padm311		padm407	false	false
+cba	cba_curriculum_2025.org	PADM 417	PADM 417	PADM417	PADM	417	Public Policy Process	3	padm306		padm417	false	false
+cba	cba_curriculum_2025.org	PADM 420	PADM 420	PADM420	PADM	420	Issues in Liberian and African Development	3	Senior Standing		padm420	false	false
+cba	cba_curriculum_2025.org	PADM 434	PADM 434	PADM434	PADM	434	Internship	3	Completion of Upper Junior year courses		padm434	false	true
+ced	ced_curriculum_2025.org	BIOL 204	BIOL 204	BIOL204	BIOL	204	Anatomy and Physiology (for Biologists)	4	biol101, biol102, biol203		biol204	false	false
+ced	ced_curriculum_2025.org	BIOL 205	BIOL 205	BIOL205	BIOL	205	General Botany	3	biol101, biol102		biol205	false	false
+ced	ced_curriculum_2025.org	BIOL 301	BIOL 301	BIOL301	BIOL	301	Nutrition	3	biol101, biol102, biol201, biol202		biol301	false	false
+ced	ced_curriculum_2025.org	BIOL 302	BIOL 302	BIOL302	BIOL	302	Molecular Biology	4	biol101, biol102, biol201, biol202, biol301		biol302	false	false
+ced	ced_curriculum_2025.org	BIOL 303	BIOL 303	BIOL303	BIOL	303	General Microbiology	4	biol101, biol102, biol201, biol202		biol303	false	false
+ced	ced_curriculum_2025.org	BIOL 304	BIOL 304	BIOL304	BIOL	304	Biochemistry I (for Specialistes)	3	biol101, biol102, biol201, biol203		biol304	false	false
+ced	ced_curriculum_2025.org	BIOL 305	BIOL 305	BIOL305	BIOL	305	Histology	4	biol101, biol102, biol201, biol202		biol305	false	false
+ced	ced_curriculum_2025.org	BIOL 402	BIOL 402	BIOL402	BIOL	402	Seminar in Biology	1	biol401 with no more courses in the program		biol402	false	true
+ced	ced_curriculum_2025.org	BIOL 403	BIOL 403	BIOL403	BIOL	403	Genetics and Genomics	3			biol403	false	false
+ced	ced_curriculum_2025.org	BIOL 405	BIOL 405	BIOL405	BIOL	405	Cytology	4	biol101, biol102, biol201, biol202, biol301, biol302		biol405	false	false
+ced	ced_curriculum_2025.org	BIOL 407	BIOL 407	BIOL407	BIOL	407	Biochemistry II (for Specialistes)	3			biol407	false	false
+ced	ced_curriculum_2025.org	BIOL 410	BIOL 410	BIOL410	BIOL	410	Internship (Teaching in Biology)	6	biol401 with no more courses in the program		biol410	false	true
+ced	ced_curriculum_2025.org	BIOL 441	BIOL 441	BIOL441	BIOL	441	Methods of Teaching Biology in Secondary Schools	3	biol101, biol102, biol201, biol202, biol301, biol302		biol441	false	false
+ced	ced_curriculum_2025.org	CHEM 201	CHEM 201	CHEM201	CHEM	201	Organic Chemistry I	4	chem101, chem102		chem201	false	false
+ced	ced_curriculum_2025.org	CHEM 202	CHEM 202	CHEM202	CHEM	202	Organic Chemistry II	4	chem101, chem102, chem201		chem202	false	false
+ced	ced_curriculum_2025.org	CHEM 203	CHEM 203	CHEM203	CHEM	203	Fundamental Environmental Chemistry	4	chem101, chem102		chem203	false	false
+ced	ced_curriculum_2025.org	CHEM 204	CHEM 204	CHEM204	CHEM	204	Environmental Mitigation Technology	3	chem101, chem102, chem201		chem204	false	false
+ced	ced_curriculum_2025.org	CHEM 301	CHEM 301	CHEM301	CHEM	301	Inorganic Chemistry I	4	chem101, chem102, chem201, chem202		chem301	false	false
+ced	ced_curriculum_2025.org	CHEM 302	CHEM 302	CHEM302	CHEM	302	Inorganic Chemistry II	4	chem101, chem102, chem201, chem202, chem301		chem302	false	false
+ced	ced_curriculum_2025.org	CHEM 303	CHEM 303	CHEM303	CHEM	303	Analytical Chemistry	4	chem101, chem102, chem201, chem202		chem303	false	false
+ced	ced_curriculum_2025.org	CHEM 304	CHEM 304	CHEM304	CHEM	304	Introduction to Industrial Chemistry	4	chem101, chem102, chem201, chem202, chem301		chem304	false	false
+ced	ced_curriculum_2025.org	CHEM 309	CHEM 309	CHEM309	CHEM	309	Instrumental Analysis	4	chem101, chem102, chem201, chem202		chem309	false	false
+ced	ced_curriculum_2025.org	CHEM 401	CHEM 401	CHEM401	CHEM	401	Methods of Teaching Chemistry in Secondary Schools	3	chem301, chem302, chem303, chem404		chem401	false	false
+ced	ced_curriculum_2025.org	CHEM 402	CHEM 402	CHEM402	CHEM	402	Seminar in Chemistry	1	chem401 with no more courses left in the program		chem402	false	true
+ced	ced_curriculum_2025.org	CHEM 404	CHEM 404	CHEM404	CHEM	404	Internship in Chemistry	6	chem401 with no more courses left in the program		chem404	false	true
+ced	ced_curriculum_2025.org	ECED 201	ECED 201	ECED201	ECED	201	Introduction to Early Childhood Education and Development	3	engl102, math102, math102, eyed102		eced201	false	false
+ced	ced_curriculum_2025.org	ECED 202	ECED 202	ECED202	ECED	202	Content-Specific Methods for Early Childhood Math	3	math104		eced202	false	false
+ced	ced_curriculum_2025.org	ECED 203	ECED 203	ECED203	ECED	203	Children's Literature	3	engl102		eced203	false	false
+ced	ced_curriculum_2025.org	ECED 204	ECED 204	ECED204	ECED	204	Speech, Language, and Learning	3	engl201, eyed201		eced204	false	false
+ced	ced_curriculum_2025.org	ECED 205	ECED 205	ECED205	ECED	205	Practicum in Early Childhood Education I	1	engl102		eced205	false	true
+ced	ced_curriculum_2025.org	ECED 206	ECED 206	ECED206	ECED	206	Natural and Life Sciences in Early Childhood Education	3	biol102, chem101, phys101		eced206	false	false
+ced	ced_curriculum_2025.org	ECED 208	ECED 208	ECED208	ECED	208	Practicum in Early Childhood Education II	1	engl102		eced208	false	true
+ced	ced_curriculum_2025.org	ECED 301	ECED 301	ECED301	ECED	301	Social Sciences in Early Childhood Education	3	phil101, educ201		eced301	false	false
+ced	ced_curriculum_2025.org	ECED 302	ECED 302	ECED302	ECED	302	Advanced Practices and Processes for Teaching Early Childhood Math	3	math101, math102, eced202		eced302	false	false
+ced	ced_curriculum_2025.org	ECED 401	ECED 401	ECED401	ECED	401	Literacy-Focused Practicum	3	engl201, eyed201, eced204, eyed302		eced401	false	true
+ced	ced_curriculum_2025.org	ECED 402	ECED 402	ECED402	ECED	402	Seminar in Early Childhood Education	1	Senior standing with no course left in the program		eced402	false	true
+ced	ced_curriculum_2025.org	ECED 403	ECED 403	ECED403	ECED	403	Early Childhood Teaching Methods	3			eced403	false	false
+ced	ced_curriculum_2025.org	ECED 404	ECED 404	ECED404	ECED	404	Internship - Teaching in early childhood school	6	complete all courses in semester I of the senior year		eced404	false	true
+ced	ced_curriculum_2025.org	EDEN 201	EDEN 201	EDEN201	EDEN	201	Linguistics for Teachers	3	engl102		eden201	false	false
+ced	ced_curriculum_2025.org	EDEN 202	EDEN 202	EDEN202	EDEN	202	Introduction to Literature	3	engl102, eden201		eden202	false	false
+ced	ced_curriculum_2025.org	EDEN 203	EDEN 203	EDEN203	EDEN	203	Phonetics and Stress	3	engl102		eden203	false	false
+ced	ced_curriculum_2025.org	EDEN 204	EDEN 204	EDEN204	EDEN	204	Introduction to Creative Writing and Short Story (Prose)	3	engl102		eden204	false	false
+ced	ced_curriculum_2025.org	EDEN 205	EDEN 205	EDEN205	EDEN	205	Survey of African Literature	3	engl102		eden205	false	false
+ced	ced_curriculum_2025.org	EDEN 206	EDEN 206	EDEN206	EDEN	206	Discourse Analysis	3	engl201, eden204, eden205		eden206	false	false
+ced	ced_curriculum_2025.org	EDEN 301	EDEN 301	EDEN301	EDEN	301	Literary Genres, Classification, Forms, Conventions and Techniques	3	engl201, eden204, eden205, eden206		eden301	false	false
+ced	ced_curriculum_2025.org	EDEN 302	EDEN 302	EDEN302	EDEN	302	Sociolinguistics	3	engl201, eden204, eden205, engl206		eden302	false	false
+ced	ced_curriculum_2025.org	EDEN 303	EDEN 303	EDEN303	EDEN	303	World Literature	3			eden303	false	false
+ced	ced_curriculum_2025.org	EDEN 304	EDEN 304	EDEN304	EDEN	304	Elements of English Language (Lexis, Semantics, Syntax, and Pragmatics)	3	engl201, eden204, eden205, eden206, eden301, eden302, and 303		eden304	false	false
+ced	ced_curriculum_2025.org	EDEN 305	EDEN 305	EDEN305	EDEN	305	Introduction to English Morphology	3	engl201, eden204, eden205, eden206, eden301, eden302, and303		eden305	false	false
+ced	ced_curriculum_2025.org	EDEN 306	EDEN 306	EDEN306	EDEN	306	Introduction to Poetry Writing	3	engl201, eden201, eden202		eden306	false	false
+ced	ced_curriculum_2025.org	EDEN 307	EDEN 307	EDEN307	EDEN	307	Survey of English and American Literature	3	engl101,engl102, engl201, eden201, eden202		eden307	false	false
+ced	ced_curriculum_2025.org	EDEN 309	EDEN 309	EDEN309	EDEN	309	Survey of Liberian Literature	3	engl201, eden201, eden202		eden309	false	false
+ced	ced_curriculum_2025.org	EDEN 401	EDEN 401	EDEN401	EDEN	401	Methods of Teaching English and Literature in Secondary Schools	3	engl201, eden201, eden202, eden301, eden302		eden401	false	false
+ced	ced_curriculum_2025.org	EDEN 402	EDEN 402	EDEN402	EDEN	402	Seminar in English and Literature	1	eden401 with no more courses left in the program		eden402	false	true
+ced	ced_curriculum_2025.org	EDEN 403	EDEN 403	EDEN403	EDEN	403	Eco LITERATURE	3	engl102, engl202, eden301, eden302- Senior Standing)		eden403	false	false
+ced	ced_curriculum_2025.org	EDEN 404	EDEN 404	EDEN404	EDEN	404	Internship in English and Literature	6	eden401 with no more courses left in the program		eden404	false	true
+ced	ced_curriculum_2025.org	EDEN 405	EDEN 405	EDEN405	EDEN	405	18th Century Literature and Early English Novels	3	engl201, eden204, eden205, eden206, eden301, eden302, eden303, eden304, eden305, and 306		eden405	false	false
+ced	ced_curriculum_2025.org	EDEN 407	EDEN 407	EDEN407	EDEN	407	Advanced Composition and Academic Writing	3	engl201, eden201, eden202, eden301, eden302		eden407	false	false
+ced	ced_curriculum_2025.org	EDEN 409	EDEN 409	EDEN409	EDEN	409	Gender, Feminism, and Contemporary Literature	3	engl201, eden204, eden205, eden206, eden301, eden302, eden303, eden304, eden305, and 306		eden409	false	false
+ced	ced_curriculum_2025.org	EDHI 102	EDHI 102	EDHI102	EDHI	102	Colonial History of Liberia to 1944	3	engl101, phil101, hist101		edhi102	false	false
+ced	ced_curriculum_2025.org	EDHI 201	EDHI 201	EDHI201	EDHI	201	Liberian History from 1944 to Present	3	edhi102, sccl102		edhi201	false	false
+ced	ced_curriculum_2025.org	EDHI 202	EDHI 202	EDHI202	EDHI	202	Africa under Colonial Rule	3	hist101, edhi102		edhi202	false	false
+ced	ced_curriculum_2025.org	EDHI 203	EDHI 203	EDHI203	EDHI	203	History of West Africa	3	hist101, edhi102		edhi203	false	false
+ced	ced_curriculum_2025.org	EDHI 204	EDHI 204	EDHI204	EDHI	204	European History	3	hist101, edhi102		edhi204	false	false
+ced	ced_curriculum_2025.org	EDHI 205	EDHI 205	EDHI205	EDHI	205	Regional History of Africa	3	hist101, edhi102		edhi205	false	false
+ced	ced_curriculum_2025.org	EDHI 206	EDHI 206	EDHI206	EDHI	206	African Film, Art and Politics	3	hist101, edhi102		edhi206	false	false
+ced	ced_curriculum_2025.org	EDHI 207	EDHI 207	EDHI207	EDHI	207	African Civilizations I	3	hist101, edhi102		edhi207	false	false
+ced	ced_curriculum_2025.org	EDHI 301	EDHI 301	EDHI301	EDHI	301	Slavery: An African and Inter-continental Perspective	3	edhi205, edhi207		edhi301	false	false
+ced	ced_curriculum_2025.org	EDHI 302	EDHI 302	EDHI302	EDHI	302	Historical Archaeology of Africa	3	edhi205, edhi207		edhi302	false	false
+ced	ced_curriculum_2025.org	EDHI 303	EDHI 303	EDHI303	EDHI	303	Post-Colonial Africa	3	edhi205, edhi202		edhi303	false	false
+ced	ced_curriculum_2025.org	EDHI 304	EDHI 304	EDHI304	EDHI	304	History of World Civilizations	3	edhi205, edhi301		edhi304	false	false
+ced	ced_curriculum_2025.org	EDHI 305	EDHI 305	EDHI305	EDHI	305	History of the Americas	3	edhi205, edhi207		edhi305	false	false
+ced	ced_curriculum_2025.org	EDHI 307	EDHI 307	EDHI307	EDHI	307	Historiography: The Philosophy of History	3	edhi205, edhi207		edhi307	false	false
+ced	ced_curriculum_2025.org	EDHI 401	EDHI 401	EDHI401	EDHI	401	Methods of Teaching History in Secondary Schools	3	edhi303, edhi307		edhi401	false	false
+ced	ced_curriculum_2025.org	EDHI 403	EDHI 403	EDHI403	EDHI	403	Urbanization of Contemporary Africa; Space, Identity and Politics	3	edhi303, edhi307		edhi403	false	false
+ced	ced_curriculum_2025.org	EDHI 405	EDHI 405	EDHI405	EDHI	405	Running While Others Walk; African Perspectives on Development	3	edhi303, edhi307		edhi405	false	false
+ced	ced_curriculum_2025.org	EDUC 202-TODO	EDUC 202	EDUC202	EDUC	202	Principles and Philosophical Foundations of Education	3			educ202	true	false
+ced	ced_curriculum_2025.org	EDUC 203-TODO	EDUC 203	EDUC203	EDUC	203	Educational Psychology	3			educ203	true	false
+ced	ced_curriculum_2025.org	EDUC 301-TODO	EDUC 301	EDUC301	EDUC	301	Inclusive Education for All Students	3			educ301	true	false
+ced	ced_curriculum_2025.org	EDUC 303-TODO	EDUC 303	EDUC303	EDUC	303	Classroom Management	0			educ303	true	false
+ced	ced_curriculum_2025.org	EDUC 401	EDUC 401	EDUC401	EDUC	401	Educational Research (Thesis in Major)	3			educ401	false	false
+ced	ced_curriculum_2025.org	ENGL 303	ENGL 303	ENGL303	ENGL	303	WORLD LITERATURE	3	engl201, eden201, eden202		engl303	false	false
+ced	ced_curriculum_2025.org	EYED 201	EYED 201	EYED201	EYED	201	Early Literacy Foundational Skills	3	engl102		eyed201	false	false
+ced	ced_curriculum_2025.org	EYED 202	EYED 202	EYED202	EYED	202	Principles and Foundations of Education in Early Years' Education	3	eced201, pedu201, eyed201		eyed202	false	false
+ced	ced_curriculum_2025.org	EYED 301	EYED 301	EYED301	EYED	301	General Science I	3	biol101, chem101, phys101, eced206, pedu206		eyed301	false	false
+ced	ced_curriculum_2025.org	EYED 302	EYED 302	EYED302	EYED	302	General Science II	3	biol101, chem101, phys101, eced206, eyed301, eced206, pedu206		eyed302	false	false
+ced	ced_curriculum_2025.org	EYED 303	EYED 303	EYED303	EYED	303	Child and Adolescent Development	3	phil101, educ201, eyed202		eyed303	false	false
+ced	ced_curriculum_2025.org	EYED 305	EYED 305	EYED305	EYED	305	Sociology of Education and Working with Families and Communities	3	phil101, educ201, eyed202		eyed305	false	false
+ced	ced_curriculum_2025.org	EYED 307	EYED 307	EYED307	EYED	307	Child Health	3	eced201, eced204, pedu201, pedu204, eyed202		eyed307	false	false
+ced	ced_curriculum_2025.org	EYED 401	EYED 401	EYED401	EYED	401	Creative Arts (Music, Visual, Performance)	3	engl201, eyed305, eced302, pedu302		eyed401	false	false
+ced	ced_curriculum_2025.org	EYED 403	EYED 403	EYED403	EYED	403	Early Years Program Organization and Management	3	Senior standing. All 3rd year courses must be cleared.		eyed403	false	false
+ced	ced_curriculum_2025.org	GCED 102	GCED 102	GCED102	GCED	102	Biology of Human Behavior	3	biol101, psyc101		gced102	false	false
+ced	ced_curriculum_2025.org	GCED 202	GCED 202	GCED202	GCED	202	Introduction to Guidance and Counseling	3	gced102, educ203		gced202	false	false
+ced	ced_curriculum_2025.org	GCED 203	GCED 203	GCED203	GCED	203	Method of Psychotherapy	3			gced203	false	false
+ced	ced_curriculum_2025.org	GCED 204	GCED 204	GCED204	GCED	204	Grief Counseling	3	gced102, educ203		gced204	false	false
+ced	ced_curriculum_2025.org	GCED 205	GCED 205	GCED205	GCED	205	Career Development Counseling	3	psyc101, gced102		gced205	false	false
+ced	ced_curriculum_2025.org	GCED 206	GCED 206	GCED206	GCED	206	Crisis Intervention and Conflict Resolution	3	gced102, educ203		gced206	false	false
+ced	ced_curriculum_2025.org	GCED 207	GCED 207	GCED207	GCED	207	Expressive Art Therapies in Counseling	3	gced102, educ203		gced207	false	false
+ced	ced_curriculum_2025.org	GCED 301	GCED 301	GCED301	GCED	301	Abnormal Psychology (Psychopathology)	3	gced202, gced206, educ202		gced301	false	false
+ced	ced_curriculum_2025.org	GCED 302	GCED 302	GCED302	GCED	302	Gender and Domestic Violence	3	gced301, gced303, educ305		gced302	false	false
+ced	ced_curriculum_2025.org	GCED 303	GCED 303	GCED303	GCED	303	Theories and Techniques in Counseling and Psychotherapy	3	gced202		gced303	false	false
+ced	ced_curriculum_2025.org	GCED 304	GCED 304	GCED304	GCED	304	Theories of Personality and Adjustment	3	gced301, gced303		gced304	false	false
+ced	ced_curriculum_2025.org	GCED 305	GCED 305	GCED305	GCED	305	ICT and E-LEARNING	3	gced201, gced202		gced305	false	false
+ced	ced_curriculum_2025.org	GCED 306	GCED 306	GCED306	GCED	306	Addiction and Mental Health Counseling	3	gced301, gced303, educ301		gced306	false	false
+ced	ced_curriculum_2025.org	GCED 307	GCED 307	GCED307	GCED	307	School Counseling Programs	3	educ204, gced201, gced202		gced307	false	false
+ced	ced_curriculum_2025.org	GCED 309	GCED 309	GCED309	GCED	309	Family and Group Counseling and Psychotherapy	3	gced202, gced203, educ203		gced309	false	false
+ced	ced_curriculum_2025.org	GCED 401	GCED 401	GCED401	GCED	401	Pre-Secondary School Counseling	3	gced302, gced306, educ302		gced401	false	false
+ced	ced_curriculum_2025.org	GCED 402	GCED 402	GCED402	GCED	402	Seminar in Guidance and Counseling	1	gced401, gced403		gced402	false	true
+ced	ced_curriculum_2025.org	GCED 403	GCED 403	GCED403	GCED	403	Multicultural and Social Justice Counseling	3	gced303, gced304		gced403	false	false
+ced	ced_curriculum_2025.org	GCED 404	GCED 404	GCED404	GCED	404	Counseling Practicum	6	Student must have satisfied conditions stated for practicum offering		gced404	false	true
+ced	ced_curriculum_2025.org	GCED 405	GCED 405	GCED405	GCED	405	Psychological Assessment in Counseling	3	gced303, educ306, educ401		gced405	false	false
+ced	ced_curriculum_2025.org	GCED 407	GCED 407	GCED407	GCED	407	Organization and Administration in Counseling	3	educ303, gced303		gced407	false	false
+ced	ced_curriculum_2025.org	GEOG 101	GEOG 101	GEOG101	GEOG	101	Fundamentals of Geography I	3			geog101	false	false
+ced	ced_curriculum_2025.org	GEOG 102	GEOG 102	GEOG102	GEOG	102	Fundamentals of Human Geography II	3	geog101		geog102	false	false
+ced	ced_curriculum_2025.org	GEOG 201	GEOG 201	GEOG201	GEOG	201	Principles and Methods of Map Analysis I	3	geog101, geog102		geog201	false	false
+ced	ced_curriculum_2025.org	GEOG 202	GEOG 202	GEOG202	GEOG	202	Agriculture Geography for SS Teachers	3	geog101, geog102, geog201		geog202	false	false
+ced	ced_curriculum_2025.org	GEOG 203	GEOG 203	GEOG203	GEOG	203	Principles and Methods of Statistical Geography for Teachers	3	geog101, geog102		geog203	false	false
+ced	ced_curriculum_2025.org	GEOG 204	GEOG 204	GEOG204	GEOG	204	Principles and Methods of Map Analysis II	3	geog101, geog102, geog201		geog204	false	false
+ced	ced_curriculum_2025.org	GEOG 205	GEOG 205	GEOG205	GEOG	205	Geomorphology	3	geog101, geog102		geog205	false	false
+ced	ced_curriculum_2025.org	GEOG 207	GEOG 207	GEOG207	GEOG	207	Regional Geography of Africa	3	geog101, geog102		geog207	false	false
+ced	ced_curriculum_2025.org	GEOG 301	GEOG 301	GEOG301	GEOG	301	Population Geography for SS Teachers	3	geog101, geog102, geog201, geog202		geog301	false	false
+ced	ced_curriculum_2025.org	GEOG 302	GEOG 302	GEOG302	GEOG	302	Environmental Geography and Ecology for Teachers	3	geog101, geog102, geog201, geog202		geog302	false	false
+ced	ced_curriculum_2025.org	GEOG 303	GEOG 303	GEOG303	GEOG	303	Climatology I	3	geog101, geog102, geog201, geog202		geog303	false	false
+ced	ced_curriculum_2025.org	GEOG 304	GEOG 304	GEOG304	GEOG	304	Population Geography for Teachers	3	geog101, geog102, geog201, geog202		geog304	false	false
+ced	ced_curriculum_2025.org	GEOG 305	GEOG 305	GEOG305	GEOG	305	Spatial Organization	3	geog101, geog102, geog201, geog202		geog305	false	false
+ced	ced_curriculum_2025.org	GEOG 306	GEOG 306	GEOG306	GEOG	306	Geographic Information System (GIS)	3	geog101, geog102, geog201, geog202		geog306	false	false
+ced	ced_curriculum_2025.org	GEOG 307	GEOG 307	GEOG307	GEOG	307	Urban Geography for Teachers	3	geog101, geog102, geog201, geog202		geog307	false	false
+ced	ced_curriculum_2025.org	GEOG 401	GEOG 401	GEOG401	GEOG	401	Methods of Teaching Geography in Secondary Schools	3	geog101, geog102, geog201, geog202, geog204		geog401	false	false
+ced	ced_curriculum_2025.org	GEOG 402	GEOG 402	GEOG402	GEOG	402	Seminar in Geography	1	geog401 with no more courses left in the program		geog402	false	true
+ced	ced_curriculum_2025.org	GEOG 403	GEOG 403	GEOG403	GEOG	403	Regional Geography of Liberia	3	geog101, geog102, geog201, geog202, geog204		geog403	false	false
+ced	ced_curriculum_2025.org	GEOG 404	GEOG 404	GEOG404	GEOG	404	Internship in Geography	6	geog401 with no more courses left in the program		geog404	false	true
+ced	ced_curriculum_2025.org	GEOG 405	GEOG 405	GEOG405	GEOG	405	Economic Geography of Liberia for Teachers	3	geog101, geog102, geog201, geog202, geog204, geog301, geog302		geog405	false	false
+ced	ced_curriculum_2025.org	MATH 205	MATH 205	MATH205	MATH	205	Mathematics for Teachers I	3	math104,		math205	false	false
+ced	ced_curriculum_2025.org	MATH 207	MATH 207	MATH207	MATH	207	Elementary functions	3	math104		math207	false	false
+ced	ced_curriculum_2025.org	MATH 210	MATH 210	MATH210	MATH	210	Mathematics for Teachers II	3	math201		math210	false	false
+ced	ced_curriculum_2025.org	MATH 303	MATH 303	MATH303	MATH	303	Multivariable Calculus	3	math201		math303	false	false
+ced	ced_curriculum_2025.org	MATH 304	MATH 304	MATH304	MATH	304	Inferential Statistics (for Education Students)	3	math301		math304	false	false
+ced	ced_curriculum_2025.org	MATH 307	MATH 307	MATH307	MATH	307	Plane Geometry	3	math201		math307	false	false
+ced	ced_curriculum_2025.org	MATH 404	MATH 404	MATH404	MATH	404	Internship in Mathematics	6	Math 401 with no more courses left in the program		math404	false	true
+ced	ced_curriculum_2025.org	MATH 409	MATH 409	MATH409	MATH	409	Methods of Teaching Mathematics in Secondary Schools	3	math302		math409	false	false
+ced	ced_curriculum_2025.org	MATH 410	MATH 410	MATH410	MATH	410	Seminar in Mathematics	1	no more courses left in the program		math410	false	true
+ced	ced_curriculum_2025.org	PEDU 201	PEDU 201	PEDU201	PEDU	201	Introduction to Primary Education	3	engl102		pedu201	false	false
+ced	ced_curriculum_2025.org	PEDU 202	PEDU 202	PEDU202	PEDU	202	Content-Specific Methods for Primary Grades Math + General Methods for Primary Math	3	math101, math104, pedu201		pedu202	false	false
+ced	ced_curriculum_2025.org	PEDU 203	PEDU 203	PEDU203	PEDU	203	Social Studies in Primary Classroom I	3	phil101, sscl102		pedu203	false	false
+ced	ced_curriculum_2025.org	PEDU 204	PEDU 204	PEDU204	PEDU	204	Social Studies in Primary Classroom II	3	phil101, sscl102, pedu203		pedu204	false	false
+ced	ced_curriculum_2025.org	PEDU 205	PEDU 205	PEDU205	PEDU	205	Practicum in Literacy and Social Studies in Primary Classroom	2	engl102, phil101, sscl102		pedu205	false	true
+ced	ced_curriculum_2025.org	PEDU 206	PEDU 206	PEDU206	PEDU	206	Natural and Life Sciences in the Primary Grades	3	biol101, chem101, phys101		pedu206	false	false
+ced	ced_curriculum_2025.org	PEDU 208	PEDU 208	PEDU208	PEDU	208	Practicum in Math and Science for Primary Grades	2	math101, math102, biol101, chem101, phys101		pedu208	false	true
+ced	ced_curriculum_2025.org	PEDU 301	PEDU 301	PEDU301	PEDU	301	Teaching Reading Comprehension and Writing	3	engl201, pedu201, eyed202		pedu301	false	false
+ced	ced_curriculum_2025.org	PEDU 302	PEDU 302	PEDU302	PEDU	302	Diagnostic and Prescriptive Advanced Methods for Primary Grades Math	3	math101, math104, pedu202, pedu208, eyed301		pedu302	false	false
+ced	ced_curriculum_2025.org	PEDU 401	PEDU 401	PEDU401	PEDU	401	Language Arts, K-6	3	engl201, pedu201, pedu301, eyed202		pedu401	false	false
+ced	ced_curriculum_2025.org	PEDU 402	PEDU 402	PEDU402	PEDU	402	Primary Classroom Teaching Seminar	1	Senior standing with no more courses left for the student		pedu402	false	true
+ced	ced_curriculum_2025.org	PEDU 403	PEDU 403	PEDU403	PEDU	403	Literacy and Creative Arts Practicum	3	engl201, pedu201, pedu301, eyed202		pedu403	false	true
+ced	ced_curriculum_2025.org	PEDU 404	PEDU 404	PEDU404	PEDU	404	Internship - Teaching in Primary School Setting	6	Senior standing with no more courses left for the student		pedu404	false	true
+ced	ced_curriculum_2025.org	PHYS 301	PHYS 301	PHYS301	PHYS	301	Classical Physics I	3	phys101, phys102, phys201, phys202, math101, math104		phys301	false	false
+ced	ced_curriculum_2025.org	PHYS 302	PHYS 302	PHYS302	PHYS	302	Classical Physics II	3	phys101, phys102, phys201, phys202, math101, math104		phys302	false	false
+ced	ced_curriculum_2025.org	PHYS 304	PHYS 304	PHYS304	PHYS	304	Thermodynamics and Statistical Physics	3	phys101, phys102, phys201, phys202, phys301, math101, math104		phys304	false	false
+ced	ced_curriculum_2025.org	PHYS 305	PHYS 305	PHYS305	PHYS	305	Mathematical Method in the Physical Sciences	3	phys101, phys102, phys201, phys202, math101, math104		phys305	false	false
+ced	ced_curriculum_2025.org	PHYS 306	PHYS 306	PHYS306	PHYS	306	Electromagnetism II	3	phys101, phys102, phys201, phys202, phys303, math101, math104		phys306	false	false
+ced	ced_curriculum_2025.org	PHYS 307	PHYS 307	PHYS307	PHYS	307	Electromagnetism 1	3	phys101, phys102, phys201, phys202, math101, math104		phys307	false	false
+ced	ced_curriculum_2025.org	PHYS 309	PHYS 309	PHYS309	PHYS	309	Physical and Geometric Optics	3	phys101, phys102, phys201, phys202, math101, math104		phys309	false	false
+ced	ced_curriculum_2025.org	PHYS 401	PHYS 401	PHYS401	PHYS	401	Methods of Teaching Physics in Secondary Schools	3	phys101, phys102, phys201, phys202, phys301, phys302, phys303, phys304, phys305, phys306, math101, math104		phys401	false	false
+ced	ced_curriculum_2025.org	PHYS 402	PHYS 402	PHYS402	PHYS	402	Seminar in Physics	1	phys401 with no more courses left in the program		phys402	false	true
+ced	ced_curriculum_2025.org	PHYS 403	PHYS 403	PHYS403	PHYS	403	Nuclear and Particle Physics	3	phys101, phys102, phys201, phys202, phys301, phys302, phys303, phys304, math101, math104		phys403	false	false
+ced	ced_curriculum_2025.org	PHYS 404	PHYS 404	PHYS404	PHYS	404	Internship (Field Teaching) in Physics	6	phys401 with no more courses left in the program		phys404	false	true
+ced	ced_curriculum_2025.org	SCCL 102-TODO	SCCL 102	SCCL102	SCCL	102	Placeholder Entry for SCCL 102	0			sccl102	true	false
+ced	ced_curriculum_2025.org	ZOOL 201	ZOOL 201	ZOOL201	ZOOL	201	General Zoology	3	biol101, biol102		zool201	false	false
+cet	cet_curriculum_2024.org	CENG 301	CENG 301	CENG301	CENG	301	Surveying I	3	geng203, geng202		ceng301	false	false
+cet	cet_curriculum_2024.org	CENG 302	CENG 302	CENG302	CENG	302	Surveying II	3	ceng301		ceng302	false	false
+cet	cet_curriculum_2024.org	CENG 303	CENG 303	CENG303	CENG	303	Technical Report Writing	3	Third year standing		ceng303	false	false
+cet	cet_curriculum_2024.org	CENG 304	CENG 304	CENG304	CENG	304	Quantity Surveying	3	Third year standing		ceng304	false	false
+cet	cet_curriculum_2024.org	CENG 400	CENG 400	CENG400	CENG	400	Internship	4	Students should have passed 145 credits including All GE and EEDU courses taken and passed		ceng400	false	true
+cet	cet_curriculum_2024.org	CENG 401	CENG 401	CENG401	CENG	401	Structural Analysis I	3	geng304, math202		ceng401	false	false
+cet	cet_curriculum_2024.org	CENG 402	CENG 402	CENG402	CENG	402	Structural Analysis II	3	ceng401		ceng402	false	false
+cet	cet_curriculum_2024.org	CENG 403	CENG 403	CENG403	CENG	403	Soil Mechanics	3	ceng302		ceng403	false	false
+cet	cet_curriculum_2024.org	CENG 404	CENG 404	CENG404	CENG	404	Geotechnical Engineering	3	ceng403		ceng404	false	false
+cet	cet_curriculum_2024.org	CENG 405	CENG 405	CENG405	CENG	405	CE Fluid Mechanics	3	Senior level		ceng405	false	false
+cet	cet_curriculum_2024.org	CENG 406	CENG 406	CENG406	CENG	406	Construction Materials	3	geng304		ceng406	false	false
+cet	cet_curriculum_2024.org	CENG 407	CENG 407	CENG407	CENG	407	Civil Engineering Lab I	3	geng304, ceng302		ceng407	false	true
+cet	cet_curriculum_2024.org	CENG 408	CENG 408	CENG408	CENG	408	Civil Engineering Lab II	3	ceng403, ceng407	ceng404	ceng408	false	true
+cet	cet_curriculum_2024.org	CENG 501	CENG 501	CENG501	CENG	501	Structural Analysis and Design III (Reinforced Concrete)	3	ceng402, ceng406		ceng501	false	false
+cet	cet_curriculum_2024.org	CENG 502	CENG 502	CENG502	CENG	502	Structural Analysis and Design IV (Steel Design)	3	ceng501		ceng502	false	false
+cet	cet_curriculum_2024.org	CENG 503	CENG 503	CENG503	CENG	503	Highway Engineering I	3	ceng302		ceng503	false	false
+cet	cet_curriculum_2024.org	CENG 504	CENG 504	CENG504	CENG	504	Highway Engineering II	3	ceng503		ceng504	false	false
+cet	cet_curriculum_2024.org	CENG 505	CENG 505	CENG505	CENG	505	Civil Engineering Design Project I	3	Fifth-year standing and approval of instructor		ceng505	false	false
+cet	cet_curriculum_2024.org	CENG 506	CENG 506	CENG506	CENG	506	Civil Engineering Design Project II	3	ceng505		ceng506	false	false
+cet	cet_curriculum_2024.org	CENG 507	CENG 507	CENG507	CENG	507	Environmental / Sanitary Engineering I (Water Management)	3	ceng405		ceng507	false	false
+cet	cet_curriculum_2024.org	CENG 508	CENG 508	CENG508	CENG	508	Environmental / Sanitary Engineering II (Wastewater Management)	3	ceng507		ceng508	false	false
+cet	cet_curriculum_2024.org	CENG 509	CENG 509	CENG509	CENG	509	Seminar I	1		ceng505	ceng509	false	true
+cet	cet_curriculum_2024.org	CENG 510	CENG 510	CENG510	CENG	510	Seminar II	1		ceng506	ceng510	false	true
+cet	cet_curriculum_2024.org	CENG 512	CENG 512	CENG512	CENG	512	Construction Methods and Equipment	3			ceng512	false	false
+cet	cet_curriculum_2024.org	CSEN 301	CSEN 301	CSEN301	CSEN	301	Introduction to Software Engineering	3			csen301	false	false
+cet	cet_curriculum_2024.org	CSEN 302	CSEN 302	CSEN302	CSEN	302	JAVA Programming	3			csen302	false	false
+cet	cet_curriculum_2024.org	CSEN 303	CSEN 303	CSEN303	CSEN	303	Operating System	3			csen303	false	false
+cet	cet_curriculum_2024.org	CSEN 304	CSEN 304	CSEN304	CSEN	304	Object-Oriented Programming with Java	3	Java Programming (csen305)		csen304	false	false
+cet	cet_curriculum_2024.org	CSEN 305	CSEN 305	CSEN305	CSEN	305	Introductions to Programming	3			csen305	false	false
+cet	cet_curriculum_2024.org	CSEN 306	CSEN 306	CSEN306	CSEN	306	System Analysis and Design	3			csen306	false	false
+cet	cet_curriculum_2024.org	CSEN 307	CSEN 307	CSEN307	CSEN	307	Computer Organizations	3			csen307	false	false
+cet	cet_curriculum_2024.org	CSEN 308	CSEN 308	CSEN308	CSEN	308	Data Management System	3			csen308	false	false
+cet	cet_curriculum_2024.org	CSEN 309	CSEN 309	CSEN309	CSEN	309	Computer Science Professional Ethics	3			csen309	false	false
+cet	cet_curriculum_2024.org	CSEN 310	CSEN 310	CSEN310	CSEN	310	Web Programming and Development	3			csen310	false	false
+cet	cet_curriculum_2024.org	CSEN 312	CSEN 312	CSEN312	CSEN	312	Algorithm Analysis and Design	3			csen312	false	false
+cet	cet_curriculum_2024.org	CSEN 400	CSEN 400	CSEN400	CSEN	400	Internship		Student /must have completed 160 credits/ including All GE and EEDU courses taken and passed/.		csen400	false	true
+cet	cet_curriculum_2024.org	CSEN 401	CSEN 401	CSEN401	CSEN	401	Artificial Intelligence	3			csen401	false	false
+cet	cet_curriculum_2024.org	CSEN 402	CSEN 402	CSEN402	CSEN	402	Multimedia and its Application	3			csen402	false	false
+cet	cet_curriculum_2024.org	CSEN 403	CSEN 403	CSEN403	CSEN	403	Introduction to Blockchain Technology	3	csen301		csen403	false	false
+cet	cet_curriculum_2024.org	CSEN 404	CSEN 404	CSEN404	CSEN	404	Introduction to Python Programming	3	One Programming Language		csen404	false	false
+cet	cet_curriculum_2024.org	CSEN 405	CSEN 405	CSEN405	CSEN	405	Cloud Computing	3			csen405	false	false
+cet	cet_curriculum_2024.org	CSEN 406	CSEN 406	CSEN406	CSEN	406	Digital Computer Circuits	3			csen406	false	false
+cet	cet_curriculum_2024.org	CSEN 407	CSEN 407	CSEN407	CSEN	407	Relational Database Management System	3	csen310		csen407	false	false
+cet	cet_curriculum_2024.org	CSEN 408	CSEN 408	CSEN408	CSEN	408	Computer Security	3			csen408	false	false
+cet	cet_curriculum_2024.org	CSEN 409	CSEN 409	CSEN409	CSEN	409	Embedded System Design	3			csen409	false	false
+cet	cet_curriculum_2024.org	CSEN 411	CSEN 411	CSEN411	CSEN	411	Data Communications and Networking 1	3			csen411	false	false
+cet	cet_curriculum_2024.org	CSEN 412	CSEN 412	CSEN412	CSEN	412	Data Communications and Networking II	3	csen307		csen412	false	false
+cet	cet_curriculum_2024.org	CSEN 501	CSEN 501	CSEN501	CSEN	501	Digital Hardware Design	3			csen501	false	false
+cet	cet_curriculum_2024.org	CSEN 502	CSEN 502	CSEN502	CSEN	502	CSEN Seminars	1			csen502	false	false
+cet	cet_curriculum_2024.org	CSEN 503	CSEN 503	CSEN503	CSEN	503	Mobile Computing	3			csen503	false	false
+cet	cet_curriculum_2024.org	CSEN 504	CSEN 504	CSEN504	CSEN	504	Compiler Design	3			csen504	false	false
+cet	cet_curriculum_2024.org	CSEN 505	CSEN 505	CSEN505	CSEN	505	Senior System Design project I	4			csen505	false	false
+cet	cet_curriculum_2024.org	EENG 201-TODO	EENG 201	EENG201	EENG	201	Placeholder Entry for EENG 201	0			eeng201	true	false
+cet	cet_curriculum_2024.org	EENG 301	EENG 301	EENG301	EENG	301	Electrical Networks I	3	math201, phys202		eeng301	false	false
+cet	cet_curriculum_2024.org	EENG 302	EENG 302	EENG302	EENG	302	Electrical Networks II	3	eeng301, math302		eeng302	false	false
+cet	cet_curriculum_2024.org	EENG 303	EENG 303	EENG303	EENG	303	Electrical Workshop	3	eeng102		eeng303	false	false
+cet	cet_curriculum_2024.org	EENG 306	EENG 306	EENG306	EENG	306	Electric Machinery I	3	eeng201, geng203		eeng306	false	false
+cet	cet_curriculum_2024.org	EENG 308	EENG 308	EENG308	EENG	308	Electrical Safety, maintenance and Troubleshooting Procedures	2	eeng102, geng203		eeng308	false	false
+cet	cet_curriculum_2024.org	EENG 310	EENG 310	EENG310	EENG	310	Electrical and Electronics Testing Method and reliability	2	eeng301, eeng303, eeng304, eeng305		eeng310	false	false
+cet	cet_curriculum_2024.org	EENG 312	EENG 312	EENG312	EENG	312	Instrumentation and Measurement	2	eeng301, eeng303, eeng304, eeng305		eeng312	false	false
+cet	cet_curriculum_2024.org	EENG 314	EENG 314	EENG314	EENG	314	Power Systems I	3	eeng405		eeng314	false	false
+cet	cet_curriculum_2024.org	EENG 400	EENG 400	EENG400	EENG	400	Internship	4	Students must have completed 153 Credits/ including All GE and EEDU courses taken and passed/.		eeng400	false	true
+cet	cet_curriculum_2024.org	EENG 401	EENG 401	EENG401	EENG	401	Communications Systems I	3	eeng304, eeng302, eeng305		eeng401	false	false
+cet	cet_curriculum_2024.org	EENG 403	EENG 403	EENG403	EENG	403	Electrodynamics		eeng301		eeng403	false	false
+cet	cet_curriculum_2024.org	EENG 404	EENG 404	EENG404	EENG	404	Electromagnetic Field Theory	3	eeng403		eeng404	false	false
+cet	cet_curriculum_2024.org	EENG 405	EENG 405	EENG405	EENG	405	Electric Machinery II	3	phys202, eeng308, eeng306		eeng405	false	false
+cet	cet_curriculum_2024.org	EENG 406	EENG 406	EENG406	EENG	406	Electrical Workshop II	3	eeng303		eeng406	false	false
+cet	cet_curriculum_2024.org	EENG 407	EENG 407	EENG407	EENG	407	Control Systems I	3	math301, math302, geng203, eeng302, eeng304, eeng305, eeng306		eeng407	false	false
+cet	cet_curriculum_2024.org	EENG 408	EENG 408	EENG408	EENG	408	Optical Fiber Communication System	3	Senior level standing		eeng408	false	false
+cet	cet_curriculum_2024.org	EENG 409	EENG 409	EENG409	EENG	409	Analog Electronics	3	eeng102, geng203, eeng303, math201		eeng409	false	false
+cet	cet_curriculum_2024.org	EENG 501	EENG 501	EENG501	EENG	501	Signals and Systems (DSP)	3	eeng403, eeng404		eeng501	false	false
+cet	cet_curriculum_2024.org	EENG 502	EENG 502	EENG502	EENG	502	Power System Protection	3	eeng308, eeng306, eeng310, eeng405		eeng502	false	false
+cet	cet_curriculum_2024.org	EENG 503	EENG 503	EENG503	EENG	503	Power System II	3	eeng402		eeng503	false	false
+cet	cet_curriculum_2024.org	EENG 504	EENG 504	EENG504	EENG	504	Micro-Computer Technology	3	geng204		eeng504	false	false
+cet	cet_curriculum_2024.org	EENG 505	EENG 505	EENG505	EENG	505	Electrical Senior Design Project I (Conceptual design)	3	Graduating Senior standing.		eeng505	false	false
+cet	cet_curriculum_2024.org	EENG 506	EENG 506	EENG506	EENG	506	Electrical Senior Design Project II (Prototype)	3	eeng505		eeng506	false	false
+cet	cet_curriculum_2024.org	EENG 507	EENG 507	EENG507	EENG	507	Control System II	3	eeng407		eeng507	false	false
+cet	cet_curriculum_2024.org	EENG 508	EENG 508	EENG508	EENG	508	High Voltage Engineering	3	eeng402, eeng503		eeng508	false	false
+cet	cet_curriculum_2024.org	EENG 509	EENG 509	EENG509	EENG	509	Power Electronics	3	eeng302, eeng304, eeng305		eeng509	false	false
+cet	cet_curriculum_2024.org	EENG 510	EENG 510	EENG510	EENG	510	Communication Systems II	3	eeng401		eeng510	false	false
+cet	cet_curriculum_2024.org	EENG 511	EENG 511	EENG511	EENG	511	EE Seminar I	1	Graduating Senior Standing		eeng511	false	true
+cet	cet_curriculum_2024.org	EENG 512	EENG 512	EENG512	EENG	512	EE Seminar II	1	Graduating Senior Standing		eeng512	false	true
+cet	cet_curriculum_2024.org	EENG 513	EENG 513	EENG513	EENG	513	Digital Electronics	2	eeng303, eeng305		eeng513	false	false
+cet	cet_curriculum_2024.org	ELEC 501	ELEC 501	ELEC501	ELEC	501	Technical Elective	3	Fifth year standing		elec501	false	false
+cet	cet_curriculum_2024.org	GENG 201	GENG 201	GENG201	GENG	201	Introduction to Engineering Graphics	3	Entrance to Engineering		geng201	false	false
+cet	cet_curriculum_2024.org	GENG 202	GENG 202	GENG202	GENG	202	Computer Aided Design I	3	geng201		geng202	false	false
+cet	cet_curriculum_2024.org	GENG 203	GENG 203	GENG203	GENG	203	Introduction to Engineering	3	Entrance level		geng203	false	false
+cet	cet_curriculum_2024.org	GENG 204	GENG 204	GENG204	GENG	204	Computer Programming	3	Sophomore standing		geng204	false	false
+cet	cet_curriculum_2024.org	GENG 211	GENG 211	GENG211	GENG	211	Physics for Engineers I	4	phys101	math201 or with advisement	geng211	false	false
+cet	cet_curriculum_2024.org	GENG 212	GENG 212	GENG212	GENG	212	Physics for Engineers II	4	geng211, math201	math202 or with advisement	geng212	false	false
+cet	cet_curriculum_2024.org	GENG 301	GENG 301	GENG301	GENG	301	Engineering Mechanics I (Statics)	3	geng211, math202		geng301	false	false
+cet	cet_curriculum_2024.org	GENG 302	GENG 302	GENG302	GENG	302	Engineering Mechanics II (Dynamics)	3	geng301, math201, math202	math302	geng302	false	false
+cet	cet_curriculum_2024.org	GENG 303	GENG 303	GENG303	GENG	303	Engineering Management	3	Third Year Standing		geng303	false	false
+cet	cet_curriculum_2024.org	GENG 304	GENG 304	GENG304	GENG	304	Strength of Materials	3	geng301, geng305, math202		geng304	false	false
+cet	cet_curriculum_2024.org	GENG 305	GENG 305	GENG305	GENG	305	Material Science	3	chem101, geng212		geng305	false	false
+cet	cet_curriculum_2024.org	GENG 306	GENG 306	GENG306	GENG	306	Engineering Thermodynamics	3	geng212, math202		geng306	false	false
+cet	cet_curriculum_2024.org	GENG 307	GENG 307	GENG307	GENG	307	Electrical and Electronics Fundamentals	3	geng203, geng212		geng307	false	false
+cet	cet_curriculum_2024.org	GENG 309	GENG 309	GENG309	GENG	309	AutoCAD II (3D Modelling)	3	geng202		geng309	false	false
+cet	cet_curriculum_2024.org	GENG 401	GENG 401	GENG401	GENG	401	Research Methodology	3	Fourth year standing		geng401	false	false
+cet	cet_curriculum_2024.org	GENG 402	GENG 402	GENG402	GENG	402	Engineering Economics		math206, math302		geng402	false	false
+cet	cet_curriculum_2024.org	MATH 411-TODO	MATH 411	MATH411	MATH	411	Numerical Methdos	3			math411	true	false
+cet	cet_curriculum_2024.org	MENG 302	MENG 302	MENG302	MENG	302	Kinematics of Machine	3	math301, geng301, meng301, meng303		meng302	false	false
+cet	cet_curriculum_2024.org	MENG 303	MENG 303	MENG303	MENG	303	Basic Practical Workshop I	1	Junior level standing		meng303	false	false
+cet	cet_curriculum_2024.org	MENG 304	MENG 304	MENG304	MENG	304	Heat Transfer	3	meng401, meng403		meng304	false	false
+cet	cet_curriculum_2024.org	MENG 305	MENG 305	MENG305	MENG	305	Manufacturing Processes	3	geng306, meng301, meng302		meng305	false	false
+cet	cet_curriculum_2024.org	MENG 306	MENG 306	MENG306	MENG	306	Basic Practical Workshop II	1	meng303		meng306	false	false
+cet	cet_curriculum_2024.org	MENG 400	MENG 400	MENG400	MENG	400	Internship	4	Student must have completed 150 credits		meng400	false	true
+cet	cet_curriculum_2024.org	MENG 402	MENG 402	MENG402	MENG	402	Applied Thermodynamics	3	meng401, meng407, meng403		meng402	false	false
+cet	cet_curriculum_2024.org	MENG 403	MENG 403	MENG403	MENG	403	Fluid Mechanics I	3	math302, geng302, meng301, meng305		meng403	false	false
+cet	cet_curriculum_2024.org	MENG 404	MENG 404	MENG404	MENG	404	Fluid Mechanics II	3	meng403		meng404	false	false
+cet	cet_curriculum_2024.org	MENG 405	MENG 405	MENG405	MENG	405	Dynamic Systems	3	geng302, meng302, math302		meng405	false	false
+cet	cet_curriculum_2024.org	MENG 406	MENG 406	MENG406	MENG	406	System Dynamics and Control	3	meng405		meng406	false	false
+cet	cet_curriculum_2024.org	MENG 407	MENG 407	MENG407	MENG	407	Mechanical Lab /Workshop I	1	meng302, meng304		meng407	false	true
+cet	cet_curriculum_2024.org	MENG 408	MENG 408	MENG408	MENG	408	Mechanical Lab /Workshop II	1	meng407		meng408	false	true
+cet	cet_curriculum_2024.org	MENG 409	MENG 409	MENG409	MENG	409	Machine Design I	3	math302, geng306, meng301, meng302, meng304		meng409	false	false
+cet	cet_curriculum_2024.org	MENG 410	MENG 410	MENG410	MENG	410	Machine Design II	3	meng409		meng410	false	false
+cet	cet_curriculum_2024.org	MENG 501	MENG 501	MENG501	MENG	501	Computer Aided Manufacturing (CAM)	3	meng411		meng501	false	false
+cet	cet_curriculum_2024.org	MENG 502	MENG 502	MENG502	MENG	502	Production Management I	3	meng404		meng502	false	false
+cet	cet_curriculum_2024.org	MENG 503	MENG 503	MENG503	MENG	503	Internal Combustion Engine and Automotive Power Systems	3	meng402, meng404, meng413		meng503	false	false
+cet	cet_curriculum_2024.org	MENG 504	MENG 504	MENG504	MENG	504	Fluid Powered System	3	meng404		meng504	false	false
+cet	cet_curriculum_2024.org	MENG 505	MENG 505	MENG505	MENG	505	Senior Project Design I	3	meng402, meng404, meng406, meng408, meng410, meng412		meng505	false	false
+cet	cet_curriculum_2024.org	MENG 506	MENG 506	MENG506	MENG	506	Senior Project II	3	meng505		meng506	false	false
+cet	cet_curriculum_2024.org	MENG 507	MENG 507	MENG507	MENG	507	Seminar I	1	Must be concurrently taken with meng505		meng507	false	true
+cet	cet_curriculum_2024.org	MENG 508	MENG 508	MENG508	MENG	508	Seminar II	1	Must be concurrently taken with meng506		meng508	false	true
+cet	cet_curriculum_2024.org	MENG 509	MENG 509	MENG509	MENG	509	Alternative Energy Systems	3	meng402, meng410, meng414, meng503		meng509	false	false
+cet	cet_curriculum_2024.org	MENG 510	MENG 510	MENG510	MENG	510	Heating, Ventilation and Air Conditioning System	3	meng402, meng410, meng414, meng503		meng510	false	false
+cet	cet_curriculum_2024.org	MENG 511	MENG 511	MENG511	MENG	511	Finite Element Method	3	math302, geng212, geng202, geng302, geng306, meng305, meng401.		meng511	false	false
+cet	cet_curriculum_2024.org	MENG 512	MENG 512	MENG512	MENG	512	Production Management II	3	meng502		meng512	false	false
+chs	chs_curriculum_2024.org	CHSC 102	CHSC 102	CHSC102	CHSC	102	Human Anatomy and Physiology I	4	biol101, chem101, ENGL		chsc102	false	false
+chs	chs_curriculum_2024.org	CHSC 201	CHSC 201	CHSC201	CHSC	201	Principles of Human Nutrition	3	biol101, chem101, comp101, comp102, engl101, engl102, Math 108		chsc201	false	false
+chs	chs_curriculum_2024.org	CHSC 202	CHSC 202	CHSC202	CHSC	202	Tropical and Communicable Diseases	3	biol101, chem101, comp101, comp102, engl101, engl102, Math 108		chsc202	false	false
+chs	chs_curriculum_2024.org	CHSC 203-TODO	CHSC 203	CHSC203	CHSC	203	Microbiology for Health Sciences (with Lab)	4			chsc203	true	true
+chs	chs_curriculum_2024.org	CHSC 204	CHSC 204	CHSC204	CHSC	204	Primary Health Care	3	biol101, chem101, comp101, comp102, engl101, engl102, Math 108		chsc204	false	false
+chs	chs_curriculum_2024.org	CHSC 205	CHSC 205	CHSC205	CHSC	205	National and Global Health Perspectives	3	biol101, chem101, comp101, comp102, engl101, engl102, Math 108		chsc205	false	false
+chs	chs_curriculum_2024.org	CHSC 206	CHSC 206	CHSC206	CHSC	206	Human Anatomy and Physiology II (with Lab)	4	biol101, chem101, comp101, comp102, engl101, engl102, math108, chsc205		chsc206	false	true
+chs	chs_curriculum_2024.org	CHSC 207-TODO	CHSC 207	CHSC207	CHSC	207	Introduction to Biostatistics	3			chsc207	true	false
+chs	chs_curriculum_2024.org	CHSC 301	CHSC 301	CHSC301	CHSC	301	Introduction to Epidemiology	3	pubh200, pubh202		chsc301	false	false
+chs	chs_curriculum_2024.org	CHSC 305	CHSC 305	CHSC305	CHSC	305	Emergency and Crisis Management in Healthcare	2	chsc301		chsc305	false	false
+chs	chs_curriculum_2024.org	MATH 106-TODO	MATH 106	MATH106	MATH	106	Applied Statistics for Health Sciences	3			math106	true	false
+chs	chs_curriculum_2024.org	MIDC 303	MIDC 303	MIDC303	MIDC	303	Midwifery Management and Leadership (with Lab)	6	midw200, midw202, midw204, midw206, midw208		midc303	false	true
+chs	chs_curriculum_2024.org	MIDW 200	MIDW 200	MIDW200	MIDW	200	Professional Issues in Midwifery	3	biol101, chem101, engl101, engl102, chsc102, psyc201, envs201, chsc206, chsc205		midw200	false	false
+chs	chs_curriculum_2024.org	MIDW 202	MIDW 202	MIDW202	MIDW	202	Embryology and Genetics	3	biol101, chem101, engl101, engl102, psyc201, chsc102, chsc206	midw204, midw202, midw206	midw202	false	false
+chs	chs_curriculum_2024.org	MIDW 204	MIDW 204	MIDW204	MIDW	204	Evidence-Based Midwifery Practice (Midwifery Research I)	3	biol101, chem101, engl101, engl102, psyc201, chsc102, envs201, chsc203, chsc205, chsc206		midw204	false	false
+chs	chs_curriculum_2024.org	MIDW 206	MIDW 206	MIDW206	MIDW	206	Pathophysiology of the Reproductive System	3	biol101, chem101, chsc102, chsc206		midw206	false	false
+chs	chs_curriculum_2024.org	MIDW 208	MIDW 208	MIDW208	MIDW	208	Advanced Pharmacology	3	Transfer Pharmacology Course	midw201	midw208	false	false
+chs	chs_curriculum_2024.org	MIDW 301	MIDW 301	MIDW301	MIDW	301	Evidence-Based Practice (Midwifery Research II)	3	midw200, midw202, midw204, midw206, midw208		midw301	false	false
+chs	chs_curriculum_2024.org	MIDW 302	MIDW 302	MIDW302	MIDW	302	Ready for Professional Midwifery Practice	2			midw302	false	false
+chs	chs_curriculum_2024.org	MIDW 304-TODO	MIDW 304	MIDW304	MIDW	304	Senior Midwifery Practice Seminar (from Theory to Application)	2			midw304	true	true
+chs	chs_curriculum_2024.org	MIDW 305	MIDW 305	MIDW305	MIDW	305	Teaching Methodology	3	midw200, midw202, midw204, midw206, midw208		midw305	false	false
+chs	chs_curriculum_2024.org	MIDW 306	MIDW 306	MIDW306	MIDW	306	Senior Seminar / Practicum	8	midw301, midc303, midw305	midw302, midw304	midw306	false	true
+chs	chs_curriculum_2024.org	NURC 206	NURC 206	NURC206	NURC	206	Fundamentals of Nursing II (with Lab)	6	nurs201, nurs205, chsc201, nurs208	nurs200, nurs204, chsc204, chsc206	nurc206	false	true
+chs	chs_curriculum_2024.org	NURC 301	NURC 301	NURC301	NURC	301	Medical-Surgical Nursing I (with Lab)	6	nurs200, nurs201, nurs205, nurc206, nurs208, chsc204, chsc206	nurc303, nurc305, nurc307, chsc309	nurc301	false	true
+chs	chs_curriculum_2024.org	NURC 302	NURC 302	NURC302	NURC	302	Medical-Surgical Nursing II (with Lab)	6	nurc301, nurc303, nurc305, nurc307, chsc309	nurc302, nurs304, nurc306, nurc308, nurs310	nurc302	false	true
+chs	chs_curriculum_2024.org	NURC 303	NURC 303	NURC303	NURC	303	Psychiatric Mental Health Nursing	5	nurs200, nurs201, nurs205, nurc206, nurs208, chsc204, chsc206	nurc301, nurc305, nurc307, chsc309	nurc303	false	false
+chs	chs_curriculum_2024.org	NURC 305	NURC 305	NURC305	NURC	305	Obstetric-Maternity Nursing I (with Lab)	6	nurs200, nurs201, nurs205, nurc206, nurs208, chsc204, chsc206	nurc301, nurc303, nurc307, chsc309	nurc305	false	true
+chs	chs_curriculum_2024.org	NURC 306	NURC 306	NURC306	NURC	306	Obstetric-Maternity Nursing II	5	nurc301, nurc303, nurc305, nurc307, chsc309	nurc302, nurc306, nurc308, nurs310, nurs312	nurc306	false	false
+chs	chs_curriculum_2024.org	NURC 307	NURC 307	NURC307	NURC	307	Pediatric Nursing I (with Lab)	6	nurs200, nurs201, nurs205, nurc206, nurs208, chsc204, chsc206	nurc301, nurc303, nurc305, chsc309	nurc307	false	true
+chs	chs_curriculum_2024.org	NURC 308	NURC 308	NURC308	NURC	308	Pediatric Nursing II	5	nurc301, nurc303, nurc305, nurc307, chsc309	nurc302, nurc306, nurs310, nurs312	nurc308	false	false
+chs	chs_curriculum_2024.org	NURC 401	NURC 401	NURC401	NURC	401	Community Health Nursing	5	nurc301, nurc303, nurc305, nurc307, chsc309, nurc302, nurc306, nurs310, nurs312	nurc403, nurs405, nurs407, nurc409	nurc401	false	false
+chs	chs_curriculum_2024.org	NURC 403	NURC 403	NURC403	NURC	403	Nursing Leadership and Management	6	nurc301, nurc303, nurc305, nurc307, chsc309, nurc302, nurc306, nurs310, nurs312	nurc401, nurs405, nurs407, nurc409	nurc403	false	false
+chs	chs_curriculum_2024.org	NURC 409	NURC 409	NURC409	NURC	409	Simplified Diagnosis and Treatment	5			nurc409	false	false
+chs	chs_curriculum_2024.org	NURS 200	NURS 200	NURS200	NURS	200	Health Assessment (with Lab)	4	chsc102, nurs205	chsc206, nurs202	nurs200	false	true
+chs	chs_curriculum_2024.org	NURS 201	NURS 201	NURS201	NURS	201	Nursing Ethics and Professional Adjustment	3	engl101, engl102, math101, math108, biol101, chem101, chsc102, psyc101, comp101, comp102, phed101, phed102	engl201, nurs205	nurs201	false	false
+chs	chs_curriculum_2024.org	NURS 205	NURS 205	NURS205	NURS	205	Fundamentals of Nursing I (with Lab)	4	chem101 or biol101, engl101, engl102, psyc101 CHSC 10	nurs201, nurs208	nurs205	false	true
+chs	chs_curriculum_2024.org	NURS 208	NURS 208	NURS208	NURS	208	Clinical Pharmacology and Drug Calculation	3	Math 101, Math 108	nurs201, nurs205, chsc201	nurs208	false	true
+chs	chs_curriculum_2024.org	NURS 310	NURS 310	NURS310	NURS	310	Nursing Care of the Aging Adult	3	nurc301, nurc303, nurc305, nurc307, chsc309	nurc302, nurc306, nurc308, nurs312	nurs310	false	false
+chs	chs_curriculum_2024.org	NURS 312	NURS 312	NURS312	NURS	312	Evidence-Based Practice (Nursing Research I)	3	nurc301, nurc303, nurc305, nurc307, chsc309	nurc302, nurc306, nurs310, nurs312	nurs312	false	false
+chs	chs_curriculum_2024.org	NURS 402	NURS 402	NURS402	NURS	402	Ready for Practice Workshop	1	nurc301, nurc303, nurc305, nurc307, chsc309, nurc302, nurc306, nurs310, nurs312	nurs404, nurs406	nurs402	false	false
+chs	chs_curriculum_2024.org	NURS 404	NURS 404	NURS404	NURS	404	Nursing Capstone Seminar	1	nurc401, nurs405, nurs407, nurc409	nurs402, nurs406	nurs404	false	true
+chs	chs_curriculum_2024.org	NURS 405	NURS 405	NURS405	NURS	405	Evidence-Based Practice (Nursing Research II)	3	nurc301, nurc303, nurc305, nurc307, chsc309, nurc302, nurc306, nurs310		nurs405	false	false
+chs	chs_curriculum_2024.org	NURS 406	NURS 406	NURS406	NURS	406	Nursing Clinical Affiliation	5	nurc401, nurs405, nurs407, nurc409, nurs402, nurs404	nurs402, nurs404	nurs406	false	true
+chs	chs_curriculum_2024.org	NURS 407	NURS 407	NURS407	NURS	407	Nursing Education	3	nurc301, nurc303, nurc305, nurc307, chsc309, nurc302, nurc306, nurs310		nurs407	false	false
+chs	chs_curriculum_2024.org	PSYC 201-TODO	PSYC 201	PSYC201	PSYC	201	Developmental Psychology	3			psyc201	true	false
+chs	chs_curriculum_2024.org	PUBH 201	PUBH 201	PUBH201	PUBH	201	Introduction to Public and Community Health (Theory and Practice)	4	biol101, chem101, comp101, comp102, engl101, engl102		pubh201	false	false
+chs	chs_curriculum_2024.org	PUBH 202	PUBH 202	PUBH202	PUBH	202	Introduction to Biostatistics	3	math101, math106, chsc201, chsc202, chsc203, chsc204, chsc205, chsc206, chsc207		pubh202	false	false
+chs	chs_curriculum_2024.org	PUBH 302	PUBH 302	PUBH302	PUBH	302	Data Collection, Analysis and Interpretation	3	math106, pubh200, pubh202		pubh302	false	false
+chs	chs_curriculum_2024.org	PUBH 303	PUBH 303	PUBH303	PUBH	303	Health Behavior and Risk Reduction	3	pubh200, pubh202		pubh303	false	false
+chs	chs_curriculum_2024.org	PUBH 304	PUBH 304	PUBH304	PUBH	304	Analytical Epidemiology (Study Designs)	3	chsc201, chsc202, chsc203, chsc204, chsc205, chsc206, chsc207, chsc301, chsc305, pubh301		pubh304	false	false
+chs	chs_curriculum_2024.org	PUBH 305-ORPH	PUBH 305-ORPH	PUBH305	PUBH	305	Public Health Program Planning	3	pubh200, pubh202		pubh305	false	false
+chs	chs_curriculum_2024.org	PUBH 306	PUBH 306	PUBH306	PUBH	306	Introduction to Environmental and Occupational Health	3	pubh200, pubh202, pubh204, envs201		pubh306	false	false
+chs	chs_curriculum_2024.org	PUBH 307	PUBH 307	PUBH307	PUBH	307	Monitoring and Evaluation of Public Health Programs	3	pubh200, pubh202, pubh303, pubh302		pubh307	false	false
+chs	chs_curriculum_2024.org	PUBH 308	PUBH 308	PUBH308	PUBH	308	Foundation of Family, Maternal and Child Health	3	chsc202, chsc203, chsc204, pubh200, pubh202		pubh308	false	false
+chs	chs_curriculum_2024.org	PUBH 309	PUBH 309	PUBH309	PUBH	309	Research Methodology	3	pubh303, pubh302		pubh309	false	false
+chs	chs_curriculum_2024.org	PUBH 310-TODO	PUBH 310	PUBH310	PUBH	310	Introduction to Health Policy and Management	3			pubh310	true	false
+chs	chs_curriculum_2024.org	PUBH 312	PUBH 312	PUBH312	PUBH	312	Health Promotion Programs	3	pubh200, pubh202		pubh312	false	false
+chs	chs_curriculum_2024.org	PUBH 314	PUBH 314	PUBH314	PUBH	314	Analysis of Environmental Data	3	pubh200, pubh202		pubh314	false	false
+chs	chs_curriculum_2024.org	PUBH 316	PUBH 316	PUBH316	PUBH	316	Gender, Race, Ethnicity, and the Social Determinants of Health	3	pubh200, pubh202		pubh316	false	false
+chs	chs_curriculum_2024.org	PUBH 318	PUBH 318	PUBH318	PUBH	318	Infectious Disease Epidemiology	3	chsc201, chsc301, pubh200, pubh202		pubh318	false	false
+chs	chs_curriculum_2024.org	PUBH 320	PUBH 320	PUBH320	PUBH	320	Environmental Microbiology	3	chsc201, pubh200, pubh202		pubh320	false	false
+chs	chs_curriculum_2024.org	PUBH 320-ORPH	PUBH 320-ORPH	PUBH320	PUBH	320	Biostatistics II	3	pubh200, pubh202, pubh303, pubh302		pubh320	false	false
+chs	chs_curriculum_2024.org	PUBH 322	PUBH 322	PUBH322	PUBH	322	Emergency and Disaster Preparedness	3	pubh200, pubh202		pubh322	false	false
+chs	chs_curriculum_2024.org	PUBH 324-ORPH	PUBH 324-ORPH	PUBH324	PUBH	324	National and Global Health	3	pubh200, pubh202, chsc301		pubh324	false	false
+chs	chs_curriculum_2024.org	PUBH 325	PUBH 325	PUBH325	PUBH	325	Public Health Internship	3	pubh403, pubh408, pubh421, pubh405, pubh423, PUBH		pubh325	false	true
+chs	chs_curriculum_2024.org	PUBH 330-TODO	PUBH 330	PUBH330	PUBH	330	Food Quality Control and Hygiene	3			pubh330	true	false
+chs	chs_curriculum_2024.org	PUBH 401-ORPH	PUBH 401-ORPH	PUBH401	PUBH	401	Special Topics in Public Health	3	pubh200, pubh202, chsc301, pubh330		pubh401	false	false
+chs	chs_curriculum_2024.org	PUBH 402	PUBH 402	PUBH402	PUBH	402	Health and Social Welfare Policy, and Management	3	pubh200, pubh202, chsc301		pubh402	false	false
+chs	chs_curriculum_2024.org	PUBH 403-ORPH	PUBH 403-ORPH	PUBH403	PUBH	403	Health Information Systems	3	Senior Standing		pubh403	false	false
+chs	chs_curriculum_2024.org	PUBH 404	PUBH 404	PUBH404	PUBH	404	Health Economics	3	pubh302, Senior Standing		pubh404	false	false
+chs	chs_curriculum_2024.org	PUBH 405	PUBH 405	PUBH405	PUBH	405	Management of Healthcare Agencies	3	pubh403, pubh408, pubh421, PU pubh423, pubh430		pubh405	false	false
+chs	chs_curriculum_2024.org	PUBH 406	PUBH 406	PUBH406	PUBH	406	Senior Seminar and Thesis/Project Presentation	3	pubh403, pubh408, pubh421, pubh405, pubh423, pubh430		pubh406	false	true
+chs	chs_curriculum_2024.org	PUBH 408	PUBH 408	PUBH408	PUBH	408	Applied Epidemiology and Statistics	3	chsc301, pubh408		pubh408	false	false
+chs	chs_curriculum_2024.org	PUBH 410	PUBH 410	PUBH410	PUBH	410	Chronic Disease Epidemiology	3	pubh324, pubh408		pubh410	false	false
+chs	chs_curriculum_2024.org	PUBH 411	PUBH 411	PUBH411	PUBH	411	Research Survey Methods in Public Health	3	pubh403, pubh408, pubh421, pubh405, pubh423, pubh430		pubh411	false	false
+chs	chs_curriculum_2024.org	PUBH 412	PUBH 412	PUBH412	PUBH	412	Statistical Computing in Public Health	3	pubh305, pubh403, pubh408, pubh421, pubh405, pubh423, pubh430		pubh412	false	false
+chs	chs_curriculum_2024.org	PUBH 413	PUBH 413	PUBH413	PUBH	413	Water Pollution Control and Treatment	3	pubh403, pubh408		pubh413	false	false
+chs	chs_curriculum_2024.org	PUBH 414	PUBH 414	PUBH414	PUBH	414	Environmental Policy	3	pubh306, pubh413		pubh414	false	false
+chs	chs_curriculum_2024.org	PUBH 415	PUBH 415	PUBH415	PUBH	415	Analysis of Environmental Data	3	pubh403, pubh408		pubh415	false	false
+chs	chs_curriculum_2024.org	PUBH 416	PUBH 416	PUBH416	PUBH	416	Data Collection, Analysis, and Oral Defense	3	pubh308, pubh421, pubh405, pubh423, pubh430		pubh416	false	false
+chs	chs_curriculum_2024.org	PUBH 417	PUBH 417	PUBH417	PUBH	417	Reproductive Health	3	pubh308		pubh417	false	false
+chs	chs_curriculum_2024.org	PUBH 419	PUBH 419	PUBH419	PUBH	419	Research Proposal Development	3	pubh403, pubh408, pubh421, pubh405, pubh423, pubh430		pubh419	false	false
+chs	chs_curriculum_2024.org	PUBH 421	PUBH 421	PUBH421	PUBH	421	Integrated Disease Surveillance and Response (IDSR)	3	pubh403, pubh408, pubh405		pubh421	false	false
+chs	chs_curriculum_2024.org	PUBH 423-ORPH	PUBH 423-ORPH	PUBH423	PUBH	423	International Health Regulations (IHR)	2	pubh421, pubh303, pubh302		pubh423	false	false
+chs	chs_curriculum_2024.org	PUBH 425-TODO	PUBH 425	PUBH425	PUBH	425	Port Health and Vectors Control	3			pubh425	true	false
+chs	chs_curriculum_2024.org	PUBH 430-TODO	PUBH 430	PUBH430	PUBH	430	Public Health Law	3			pubh430	true	false

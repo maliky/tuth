@@ -1,0 +1,76 @@
+"""Regression tests for course import row aliases."""
+
+from __future__ import annotations
+
+import pytest
+from tablib import Dataset
+
+from app.academics.admin.resources import CurriCrsResource
+from app.academics.admin.widgets import CrsWgt
+from app.academics.models.curriculum_course import CurriCrs
+
+
+@pytest.mark.django_db
+def test_crs_widget_accepts_course_dept_alias() -> None:
+    """CrsWgt should use course_dept when dept_code is absent."""
+    course = CrsWgt().clean(
+        None,
+        row={
+            "course_dept": "ACCT",
+            "course_no": "101",
+            "college_code": "CBA",
+            "course_title": "Accounting I",
+        },
+    )
+
+    assert course.department.code == "ACCT"
+    assert course.number == "101"
+    assert course.title == "Accounting I"
+
+
+@pytest.mark.django_db
+def test_curricrs_resource_accepts_course_dept_rows() -> None:
+    """CurriCrsResource should bind course_dept rows through CrsWgt."""
+    dataset = Dataset(
+        headers=[
+            "curriculum",
+            "course_dept",
+            "course_no",
+            "college_code",
+            "course_title",
+            "credit_hours",
+        ]
+    )
+    dataset.append(["BACC", "ACCT", "101", "CBA", "Accounting I", "4"])
+
+    result = CurriCrsResource().import_data(dataset, dry_run=False, raise_errors=True)
+
+    assert not result.has_errors()
+    curriculum_course = CurriCrs.objects.select_related(
+        "course__department", "curriculum", "credit_hours"
+    ).get()
+    assert curriculum_course.curriculum.short_name == "BACC"
+    assert curriculum_course.course.department.code == "ACCT"
+    assert curriculum_course.course.number == "101"
+    assert curriculum_course.credit_hours_id == 4
+
+
+@pytest.mark.django_db
+def test_curricrs_resource_defaults_credit_hours_when_missing() -> None:
+    """Existing curriculum-course CSVs can omit credit_hours."""
+    dataset = Dataset(
+        headers=[
+            "curriculum",
+            "course_dept",
+            "course_no",
+            "college_code",
+            "course_title",
+        ]
+    )
+    dataset.append(["BACC", "ACCT", "102", "CBA", "Accounting II"])
+
+    result = CurriCrsResource().import_data(dataset, dry_run=False, raise_errors=True)
+
+    assert not result.has_errors()
+    curriculum_course = CurriCrs.objects.select_related("credit_hours").get()
+    assert curriculum_course.credit_hours_id == 3

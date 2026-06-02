@@ -10,6 +10,11 @@ from app.shared.utils import get_in_row, parse_str
 
 # stuff here should go to academics.utils
 
+CourseDeptKeysT = tuple[str, ...]
+
+COURSE_DEPT_KEYS: CourseDeptKeysT = ("dept_code", "course_dept", "course_name")
+COURSE_NO_KEYS: CourseDeptKeysT = ("course_no",)
+
 
 def pipeline(row: Row, *transforms: Transform) -> Row:
     """Apply a sequence of transforms to the row, returning the mutated dict."""
@@ -75,8 +80,10 @@ def setdft_field(key: str, provider: Callable[[Row], str]) -> Transform:
     return _apply
 
 
-def first_value(row: Mapping[str, Any], keys: Sequence[str]) -> str:
+def first_value(row: Mapping[str, Any] | None, keys: Sequence[str]) -> str:
     """Return the first non-empty value found in *keys*."""
+    if row is None:
+        return ""
     for key in keys:
         value = row.get(key)
         if value is None:
@@ -87,11 +94,32 @@ def first_value(row: Mapping[str, Any], keys: Sequence[str]) -> str:
     return ""
 
 
+def get_course_dept(row: Mapping[str, Any] | None) -> str:
+    """Return the canonical course department value from accepted row aliases."""
+    return first_value(row, COURSE_DEPT_KEYS)
+
+
+def require_course_identity(row: Mapping[str, Any] | None) -> tuple[str, str]:
+    """Return ``(dept_code, course_no)`` or fail with a normalized error."""
+    dept_code = get_course_dept(row)
+    course_no = first_value(row, COURSE_NO_KEYS)
+    if not dept_code or not course_no:
+        raise ValueError(
+            "course_no and one of dept_code/course_dept/course_name are required "
+            f"in row {row} context."
+        )
+    return dept_code, course_no
+
+
 def set_crs_codes(row: Row) -> Row:
     """Populate college_code/course_dept when absent by inspecting course columns."""
     college_code, dept_code = extract_crs_codes(row)
-    row.setdefault("college_code", college_code)
-    row.setdefault("course_dept", dept_code)
+    if not get_in_row("college_code", row):
+        row["college_code"] = college_code
+    if not get_in_row("course_dept", row):
+        row["course_dept"] = dept_code
+    if not get_in_row("dept_code", row):
+        row["dept_code"] = dept_code
     return row
 
 
@@ -110,7 +138,7 @@ def extract_crs_codes(row: Row) -> tuple[str, str]:
     course_code = get_in_row("course_code", row)
 
     if not course_code:
-        _dept_code = get_in_row("dept_code", row) or get_in_row("course_dept", row)
+        _dept_code = get_course_dept(row)
         course_no = get_in_row("course_no", row)
         course_code = _dept_code + course_no
 

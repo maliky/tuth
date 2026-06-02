@@ -5,6 +5,7 @@ from import_export import fields, resources
 
 from app.academics.admin.widgets import (
     CollegeWgt,
+    CreditHourWgt,
     CrsManyWgt,
     CrsWgt,
     CurriWgt,
@@ -206,7 +207,10 @@ class CurriCrsResource(resources.ModelResource):
         widget=CrsWgt(),
     )
     credit_hours_f = fields.Field(
-        attribute="credit_hours", column_name="credit_hours", default=3
+        attribute="credit_hours",
+        column_name="credit_hours",
+        default=3,
+        widget=CreditHourWgt(),
     )
     year_number_f = fields.Field(
         attribute="year_number", column_name="year_number", default=99

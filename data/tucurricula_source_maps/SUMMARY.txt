@@ -1,0 +1,7 @@
+source_root: /home/jil/tucurricula
+source_course_rows: 841
+source_program_rows: 59
+legacy_course_rows: 285
+legacy_curriculum_rows: 289
+department_map_rows: 73
+curriculum_map_rows: 80

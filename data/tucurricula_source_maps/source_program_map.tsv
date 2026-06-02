@@ -1,0 +1,60 @@
+source_college	source_slug	source_curriculum_key	program_title	program_type
+cafs	animal	cafs:animal	Bachelor of Science in Agriculture -- Animal Science	bachelor
+cafs	crop	cafs:crop	Bachelor of Science in Agriculture -- Crop Science	bachelor
+cafs	soil	cafs:soil	Bachelor of Science in Agriculture -- Soil Science	bachelor
+cafs	minor-anrm	cafs:minor-anrm	Minor in Natural Resources Management	minor
+cafs	minor-agca	cafs:minor-agca	Minor in Gender, Culture, and Agriculture	minor
+cafs	minor-agee	cafs:minor-agee	Minor in Agricultural Education and Extension	minor
+cafs	minor-agec	cafs:minor-agec	Minor in Agricultural Economics	minor
+cafs	minor-agbu	cafs:minor-agbu	Minor in Agribusiness	minor
+cas	engl	cas:engl	Bachelor of Arts in English	bachelor
+cas	fren	cas:fren	Bachelor of Arts in French	bachelor
+cas	soci	cas:soci	Bachelor of Arts in Sociology	bachelor
+cas	biol	cas:biol	Bachelor of Science in Biology -- Minor in Chemistry	minor
+cas	chem	cas:chem	Bachelor of Science in Chemistry	bachelor
+cas	chem-biol	cas:chem-biol	Bachelor of Science in Chemistry -- Minor in Biology	minor
+cas	chem-math	cas:chem-math	Bachelor of Science in Chemistry -- Minor in Mathematics	minor
+cas	math	cas:math	Bachelor of Science in Mathematics	bachelor
+cas	math-engl	cas:math-engl	Bachelor of Science in Mathematics -- Minor in Economics	minor
+cas	math-chim	cas:math-chim	Bachelor of Science in Mathematics -- Minor in Computer Science	minor
+cas	phys-pure	cas:phys-pure	Bachelor of Science in Physics -- Minor in Pure Physics	minor
+cas	phys-comp	cas:phys-comp	Bachelor of Science in Physics -- Minor in Computer Science	minor
+cas	phys-geop	cas:phys-geop	Bachelor of Science in Physics -- Minor in Exploration Geophysics	minor
+cas	phys-spac	cas:phys-spac	Bachelor of Science in Physics -- Minor in Space Physics	minor
+cas	fren-cert	cas:fren-cert	French Certificate Program	certificate
+cas	humk	cas:humk	Associate Degree in Human Kinetics	associate
+cas	sadm	cas:sadm	Higher National Diploma in Sport Administration and Management	diploma
+cas	socc	cas:socc	Diploma in Soccer Coach	diploma
+cba	acct	cba:acct	Bachelor of Business Administration (BBA) -- Accounting	bachelor
+cba	bfin	cba:bfin	Bachelor of Business Administration -- Banking and Finance	bachelor
+cba	busa	cba:busa	Bachelor of Business Administration (BBA)	bachelor
+cba	econ	cba:econ	Bachelor of Science in Economics	bachelor
+cba	padm	cba:padm	Bachelor of Public Administration	bachelor
+cba	acct-minor	cba:acct-minor	Minor in Accounting	minor
+cba	bfin-minor	cba:bfin-minor	Minor in Banking and Finance	minor
+cba	busa-minor	cba:busa-minor	Minor in Business Administration	minor
+cba	econ-minor	cba:econ-minor	Minor in Economics	minor
+cba	padm-minor	cba:padm-minor	Minor in Public Administration	minor
+ced	eced	ced:eced	Bachelor of Science in Early Childhood Education and Development	bachelor
+ced	pedu	ced:pedu	Bachelor of Science in Primary Education	bachelor
+ced	sedu-biol	ced:sedu-biol	Bachelor of Science in Secondary Education Emphasis in Biology	bachelor
+ced	sedu-chem	ced:sedu-chem	Bachelor of Science in Secondary Education Emphasis in Chemistry	bachelor
+ced	sedu-phys	ced:sedu-phys	Bachelor of Science in Secondary Education Emphasis in Physics	bachelor
+ced	sedu-eden	ced:sedu-eden	Bachelor of Science in Secondary Education Emphasis in English and Literature	bachelor
+ced	sedu-hist	ced:sedu-hist	Bachelor of Science in Secondary Education Emphasis in History	bachelor
+ced	sedu-geog	ced:sedu-geog	Bachelor of Science in Secondary Education Emphasis in Geography	bachelor
+ced	sedu-math	ced:sedu-math	Bachelor of Science in Secondary Education Emphasis in Mathematics	bachelor
+ced	gced	ced:gced	Bachelor of Science in Guidance and Counseling	bachelor
+cet	civi	cet:civi	Bachelor of Science in Civil Engineering	bachelor
+cet	elec	cet:elec	Bachelor of Science in Electrical Engineering	bachelor
+cet	mech	cet:mech	Bachelor of Science in Mechanical Engineering	bachelor
+cet	csen	cet:csen	Bachelor of Science in Computer Science and Engineering	bachelor
+chs	nurs	chs:nurs	Bachelor of Science in Nursing	bachelor
+chs	midw	chs:midw	Bachelor of Science in Midwifery	bachelor
+chs	pubh	chs:pubh	Bachelor of Science in Public Health	bachelor
+chs	pubh-hadm-minor	chs:pubh-hadm-minor	Public Health Minor -- Health Administration and Community Health	minor
+chs	pubh-epid-minor	chs:pubh-epid-minor	Public Health Minor -- Biostatistics and Epidemiology	minor
+chs	pubh-envh-minor	chs:pubh-envh-minor	Public Health Minor -- Environmental Health	minor
+Program Centers	access-remedial	program-centers:access-remedial	Access-to-College Remedial Program	pre-college
+Program Centers	access-regular	program-centers:access-regular	Access-to-College Regular Program	pre-college
+Program Centers	access-wassce	program-centers:access-wassce	Access-to-College WASSCE Prep Program	pre-college

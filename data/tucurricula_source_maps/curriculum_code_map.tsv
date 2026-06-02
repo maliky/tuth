@@ -1,0 +1,81 @@
+legacy_tusis_curriculum	source_college	source_slug	source_curriculum_key	source_program	program_type	legacy_course_count	source_table_course_count	match_score	confidence
+ACCT						7	0	0.000	unresolved
+BAM						18	0	0.000	unresolved
+BBFI						8	0	0.000	unresolved
+BE in Counseling	cba	acct-minor	cba:acct-minor	Minor in Accounting	minor	5	0	0.629	medium
+BE in Counseling	ced	gced	ced:gced	Bachelor of Science in Guidance and Counseling	bachelor	5	50	0.516	candidate
+BE in Counseling	chs	nurs	chs:nurs	Bachelor of Science in Nursing	bachelor	5	43	0.478	candidate
+BE in Counseling	cba	econ-minor	cba:econ-minor	Minor in Economics	minor	5	0	0.471	candidate
+BE in Primary Education	ced	pedu	ced:pedu	Bachelor of Science in Primary Education	bachelor	14	50	0.730	medium
+BE in Primary Education	cafs	minor-agee	cafs:minor-agee	Minor in Agricultural Education and Extension	minor	14	0	0.500	candidate
+BE in Primary Education	ced	sedu-biol	ced:sedu-biol	Bachelor of Science in Secondary Education Emphasis in Biology	bachelor	14	46	0.447	candidate
+BE in Primary Education	ced	sedu-phys	ced:sedu-phys	Bachelor of Science in Secondary Education Emphasis in Physics	bachelor	14	47	0.447	candidate
+BE in Secondary Education	ced	pedu	ced:pedu	Bachelor of Science in Primary Education	bachelor	22	50	0.585	candidate
+BE in Secondary Education	ced	sedu-biol	ced:sedu-biol	Bachelor of Science in Secondary Education Emphasis in Biology	bachelor	22	46	0.575	candidate
+BE in Secondary Education	ced	sedu-phys	ced:sedu-phys	Bachelor of Science in Secondary Education Emphasis in Physics	bachelor	22	47	0.575	candidate
+BE in Secondary Education	ced	sedu-hist	ced:sedu-hist	Bachelor of Science in Secondary Education Emphasis in History	bachelor	22	47	0.575	candidate
+BPA						9	0	0.000	unresolved
+BPH						26	0	0.000	unresolved
+BS Nursing	chs	nurs	chs:nurs	Bachelor of Science in Nursing	bachelor	19	43	0.500	candidate
+BSc Agriculture	cafs	minor-agec	cafs:minor-agec	Minor in Agricultural Economics	minor	21	0	0.522	candidate
+BSc Agriculture	cafs	minor-agca	cafs:minor-agca	Minor in Gender, Culture, and Agriculture	minor	21	0	0.464	candidate
+BSc Agriculture	cafs	crop	cafs:crop	Bachelor of Science in Agriculture -- Crop Science	bachelor	21	0	0.462	candidate
+BSc Agriculture	cafs	soil	cafs:soil	Bachelor of Science in Agriculture -- Soil Science	bachelor	21	0	0.462	candidate
+BSc Biology	cas	soci	cas:soci	Bachelor of Arts in Sociology	bachelor	13	42	0.450	candidate
+BSc Computer Systtem						16	0	0.000	unresolved
+BSc Eletrical Engineering	cet	elec	cet:elec	Bachelor of Science in Electrical Engineering	bachelor	18	66	0.714	medium
+BSc Eletrical Engineering	cet	mech	cet:mech	Bachelor of Science in Mechanical Engineering	bachelor	18	64	0.600	candidate
+BSc Eletrical Engineering	cet	civi	cet:civi	Bachelor of Science in Civil Engineering	bachelor	18	63	0.585	candidate
+BSc Eletrical Engineering	cet	csen	cet:csen	Bachelor of Science in Computer Science and Engineering	bachelor	18	58	0.500	candidate
+BSc Environment	chs	pubh-envh-minor	chs:pubh-envh-minor	Public Health Minor -- Environmental Health	minor	15	0	0.483	candidate
+BSc Mecahnical Engineering	cet	mech	cet:mech	Bachelor of Science in Mechanical Engineering	bachelor	15	64	0.704	medium
+BSc Mecahnical Engineering	cet	elec	cet:elec	Bachelor of Science in Electrical Engineering	bachelor	15	66	0.620	candidate
+BSc Mecahnical Engineering	cet	civi	cet:civi	Bachelor of Science in Civil Engineering	bachelor	15	63	0.576	candidate
+BSc Mecahnical Engineering	cet	csen	cet:csen	Bachelor of Science in Computer Science and Engineering	bachelor	15	58	0.519	candidate
+BSc Mechanics	cba	econ-minor	cba:econ-minor	Minor in Economics	minor	14	0	0.452	candidate
+BSc Mechanics	cba	econ	cba:econ	Bachelor of Science in Economics	bachelor	14	53	0.444	candidate
+BSc Mechanics	cas	math	cas:math	Bachelor of Science in Mathematics	bachelor	14	46	0.426	candidate
+BSc Midwiifery	chs	midw	chs:midw	Bachelor of Science in Midwifery	bachelor	10	33	0.565	candidate
+BUS						8	0	0.000	unresolved
+ECON						10	0	0.000	unresolved
+GEC-COAB						1	0	0.000	unresolved
+GEC-COAS						18	0	0.000	unresolved
+GEC-COET						1	0	0.000	unresolved
+Public Health	chs	pubh	chs:pubh	Bachelor of Science in Public Health	bachelor	1	44	0.531	candidate
+Public Health	chs	pubh-envh-minor	chs:pubh-envh-minor	Public Health Minor -- Environmental Health	minor	1	0	0.500	candidate
+	cafs	animal	cafs:animal	Bachelor of Science in Agriculture -- Animal Science	bachelor	0	0	0.000	source_only
+	cafs	minor-anrm	cafs:minor-anrm	Minor in Natural Resources Management	minor	0	0	0.000	source_only
+	cafs	minor-agbu	cafs:minor-agbu	Minor in Agribusiness	minor	0	0	0.000	source_only
+	cas	engl	cas:engl	Bachelor of Arts in English	bachelor	0	49	0.000	source_only
+	cas	fren	cas:fren	Bachelor of Arts in French	bachelor	0	49	0.000	source_only
+	cas	biol	cas:biol	Bachelor of Science in Biology -- Minor in Chemistry	minor	0	44	0.000	source_only
+	cas	chem	cas:chem	Bachelor of Science in Chemistry	bachelor	0	41	0.000	source_only
+	cas	chem-biol	cas:chem-biol	Bachelor of Science in Chemistry -- Minor in Biology	minor	0	42	0.000	source_only
+	cas	chem-math	cas:chem-math	Bachelor of Science in Chemistry -- Minor in Mathematics	minor	0	44	0.000	source_only
+	cas	math-engl	cas:math-engl	Bachelor of Science in Mathematics -- Minor in Economics	minor	0	47	0.000	source_only
+	cas	math-chim	cas:math-chim	Bachelor of Science in Mathematics -- Minor in Computer Science	minor	0	0	0.000	source_only
+	cas	phys-pure	cas:phys-pure	Bachelor of Science in Physics -- Minor in Pure Physics	minor	0	43	0.000	source_only
+	cas	phys-comp	cas:phys-comp	Bachelor of Science in Physics -- Minor in Computer Science	minor	0	43	0.000	source_only
+	cas	phys-geop	cas:phys-geop	Bachelor of Science in Physics -- Minor in Exploration Geophysics	minor	0	43	0.000	source_only
+	cas	phys-spac	cas:phys-spac	Bachelor of Science in Physics -- Minor in Space Physics	minor	0	43	0.000	source_only
+	cas	fren-cert	cas:fren-cert	French Certificate Program	certificate	0	0	0.000	source_only
+	cas	humk	cas:humk	Associate Degree in Human Kinetics	associate	0	22	0.000	source_only
+	cas	sadm	cas:sadm	Higher National Diploma in Sport Administration and Management	diploma	0	12	0.000	source_only
+	cas	socc	cas:socc	Diploma in Soccer Coach	diploma	0	0	0.000	source_only
+	cba	acct	cba:acct	Bachelor of Business Administration (BBA) -- Accounting	bachelor	0	53	0.000	source_only
+	cba	bfin	cba:bfin	Bachelor of Business Administration -- Banking and Finance	bachelor	0	54	0.000	source_only
+	cba	busa	cba:busa	Bachelor of Business Administration (BBA)	bachelor	0	54	0.000	source_only
+	cba	padm	cba:padm	Bachelor of Public Administration	bachelor	0	52	0.000	source_only
+	cba	bfin-minor	cba:bfin-minor	Minor in Banking and Finance	minor	0	0	0.000	source_only
+	cba	busa-minor	cba:busa-minor	Minor in Business Administration	minor	0	0	0.000	source_only
+	cba	padm-minor	cba:padm-minor	Minor in Public Administration	minor	0	0	0.000	source_only
+	ced	eced	ced:eced	Bachelor of Science in Early Childhood Education and Development	bachelor	0	50	0.000	source_only
+	ced	sedu-chem	ced:sedu-chem	Bachelor of Science in Secondary Education Emphasis in Chemistry	bachelor	0	44	0.000	source_only
+	ced	sedu-eden	ced:sedu-eden	Bachelor of Science in Secondary Education Emphasis in English and Literature	bachelor	0	49	0.000	source_only
+	ced	sedu-geog	ced:sedu-geog	Bachelor of Science in Secondary Education Emphasis in Geography	bachelor	0	49	0.000	source_only
+	ced	sedu-math	ced:sedu-math	Bachelor of Science in Secondary Education Emphasis in Mathematics	bachelor	0	48	0.000	source_only
+	chs	pubh-hadm-minor	chs:pubh-hadm-minor	Public Health Minor -- Health Administration and Community Health	minor	0	0	0.000	source_only
+	chs	pubh-epid-minor	chs:pubh-epid-minor	Public Health Minor -- Biostatistics and Epidemiology	minor	0	0	0.000	source_only
+	Program Centers	access-remedial	program-centers:access-remedial	Access-to-College Remedial Program	pre-college	0	0	0.000	source_only
+	Program Centers	access-regular	program-centers:access-regular	Access-to-College Regular Program	pre-college	0	0	0.000	source_only
+	Program Centers	access-wassce	program-centers:access-wassce	Access-to-College WASSCE Prep Program	pre-college	0	0	0.000	source_only

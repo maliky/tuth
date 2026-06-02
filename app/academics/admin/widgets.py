@@ -25,7 +25,8 @@ from app.academics.ensures import (
     ensure_curri_crs,
     ensure_dpt,
 )
-from app.shared.utils import asserts_keys, get_in_row, parse_str, to_int
+from app.shared.importing.rows import get_course_dept, require_course_identity
+from app.shared.utils import get_in_row, parse_str, to_int
 
 
 class CurriCrsWgt(widgets.ForeignKeyWidget):
@@ -45,15 +46,17 @@ class CurriCrsWgt(widgets.ForeignKeyWidget):
         """Assemble course_dept, curriculum and course to return a curriculum course."""
         # we don't use value.  We always get a curriculum course back
 
-        asserts_keys(["course_no", "dept_code"], row)
+        require_course_identity(row)
 
         curriculum = self.curriculum_w.clean(value=value, row=row)
         if curriculum is None:
             curriculum = Curriculum.get_dft()
         course = self.course_w.clean(value=None, row=row)
 
-        credit_hours_val = to_int(get_in_row("credit_hours", row))
-        credit_hours, _ = CreditHour.objects.get_or_create(code=credit_hours_val)
+        credit_hours_val = to_int(get_in_row("credit_hours", row), default=3)
+        credit_hours, _ = CreditHour.objects.get_or_create(
+            code=credit_hours_val, defaults={"label": str(credit_hours_val)}
+        )
 
         is_required = (
             True
@@ -67,6 +70,21 @@ class CurriCrsWgt(widgets.ForeignKeyWidget):
             credit_code=credit_hours.code,
             is_required=is_required,
         )
+
+
+class CreditHourWgt(widgets.ForeignKeyWidget):
+    """Return or create a CreditHour from a numeric import value."""
+
+    def __init__(self):
+        super().__init__(CreditHour, field="code")
+
+    def clean(self, value, row=None, *args, **kwargs) -> CreditHour:
+        """Convert raw credit values into CreditHour instances."""
+        credit_code = to_int(value, default=3)
+        credit_hour, _ = CreditHour.objects.get_or_create(
+            code=credit_code, defaults={"label": str(credit_code)}
+        )
+        return credit_hour
 
 
 class CurriWgt(widgets.ForeignKeyWidget):
@@ -134,7 +152,7 @@ class CrsWgt(widgets.ForeignKeyWidget):
         the resource, but the info we need is spread across *row*).
         """
         course_no = get_in_row("course_no", row)
-        dept_code = get_in_row("dept_code", row)
+        dept_code = get_course_dept(row)
 
         if not course_no or not dept_code:
             return Course.get_unique_dft()

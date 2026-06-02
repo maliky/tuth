@@ -1,0 +1,74 @@
+legacy_tusis_dept	source_dept_code	legacy_course_count	source_course_count	shared_course_numbers	title_matches	confidence	reason
+ACCT	ACCT	7	16	6	5	exact	exact_code
+AGR	AGRI	20	24	3	0	medium	configured_alias
+BFIN	BFIN	8	16	7	6	exact	exact_code
+BIO	BIOL	21	32	10	2	high	configured_alias
+BUS	BUSA	8	18	6	6	high	configured_alias
+CENG	CENG	10	24	9	4	exact	exact_code
+CHE	CHEM	4	29	0	0	candidate	configured_alias
+CHEM	CHEM	4	29	4	2	exact	exact_code
+CSE	CSEN	1	33	1	0	medium	configured_alias
+CSENG	CSEN	13	33	13	5	high	configured_alias
+ECD	ECED	8	13	0	0	candidate	configured_alias
+ECON	ECON	12	22	9	8	exact	exact_code
+EDU	EDUC	11	5	0	0	candidate	configured_alias
+EDUP	PEDU	8	13	0	0	candidate	configured_alias
+EED	EEDU	1	2	1	1	high	configured_alias
+EEDU	EEDU	1	2	1	1	exact	exact_code
+EENG	EENG	12	31	11	4	exact	exact_code
+ENGL	ENGL	9	35	3	0	exact	exact_code
+ENVS	ENVS	14	1	1	1	exact	exact_code
+FREN	FREN	2	30	1	0	exact	exact_code
+GCED	GCED	8	21	0	0	exact	exact_code
+GENG	GENG	9	16	6	2	exact	exact_code
+GLE	GLEB	1	4	1	1	high	configured_alias
+HIST	HIST	6	3	2	0	exact	exact_code
+HSM		7	0	0	0	unresolved	no source candidate
+MATH	MATH	10	40	4	2	exact	exact_code
+MENG	MENG	14	27	9	3	exact	exact_code
+MIDW	MIDW	3	10	2	0	exact	exact_code
+NUR	NURS	14	11	3	2	high	configured_alias
+PADM	PADM	9	17	8	7	exact	exact_code
+PE		3	0	0	0	unresolved	no source candidate
+PH	PUBH	22	41	17	2	high	configured_alias
+PHIL	PHIL	1	2	1	1	exact	exact_code
+PHYS	PHYS	2	36	2	0	exact	exact_code
+PSY		2	0	0	0	unresolved	no source candidate
+	AANS	0	10	0	0	source_only	not present in current Tusis seeds
+	ACRS	0	11	0	0	source_only	not present in current Tusis seeds
+	AGBU	0	6	0	0	source_only	not present in current Tusis seeds
+	AGCA	0	6	0	0	source_only	not present in current Tusis seeds
+	AGEC	0	6	0	0	source_only	not present in current Tusis seeds
+	AGEE	0	6	0	0	source_only	not present in current Tusis seeds
+	ANRM	0	7	0	0	source_only	not present in current Tusis seeds
+	ASOS	0	10	0	0	source_only	not present in current Tusis seeds
+	CHIN	0	4	0	0	source_only	not present in current Tusis seeds
+	CHSC	0	10	0	0	source_only	not present in current Tusis seeds
+	COBA	0	5	0	0	source_only	not present in current Tusis seeds
+	COMP	0	10	0	0	source_only	not present in current Tusis seeds
+	EDEN	0	21	0	0	source_only	not present in current Tusis seeds
+	EDHI	0	17	0	0	source_only	not present in current Tusis seeds
+	ELAN	0	4	0	0	source_only	not present in current Tusis seeds
+	ELEC	0	1	0	0	source_only	not present in current Tusis seeds
+	ESOC	0	2	0	0	source_only	not present in current Tusis seeds
+	EYED	0	9	0	0	source_only	not present in current Tusis seeds
+	FOCO	0	16	0	0	source_only	not present in current Tusis seeds
+	FRCR	0	6	0	0	source_only	not present in current Tusis seeds
+	GEOG	0	20	0	0	source_only	not present in current Tusis seeds
+	MIDC	0	1	0	0	source_only	not present in current Tusis seeds
+	NURC	0	11	0	0	source_only	not present in current Tusis seeds
+	PHED	0	16	0	0	source_only	not present in current Tusis seeds
+	PSYC	0	3	0	0	source_only	not present in current Tusis seeds
+	RESM	0	2	0	0	source_only	not present in current Tusis seeds
+	SCCL	0	1	0	0	source_only	not present in current Tusis seeds
+	SOCI	0	21	0	0	source_only	not present in current Tusis seeds
+	SOSC	0	1	0	0	source_only	not present in current Tusis seeds
+	SPAN	0	4	0	0	source_only	not present in current Tusis seeds
+	SPDA	0	1	0	0	source_only	not present in current Tusis seeds
+	SPDM	0	12	0	0	source_only	not present in current Tusis seeds
+	SPES	0	1	0	0	source_only	not present in current Tusis seeds
+	SPMT	0	2	0	0	source_only	not present in current Tusis seeds
+	SPOB	0	1	0	0	source_only	not present in current Tusis seeds
+	SSCL	0	1	0	0	source_only	not present in current Tusis seeds
+	TPRA	0	1	0	0	source_only	not present in current Tusis seeds
+	ZOOL	0	3	0	0	source_only	not present in current Tusis seeds
