@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import re
 from difflib import SequenceMatcher
-from typing import Any, Callable, Iterable, List, Sequence, Tuple, TypeVar
+from typing import Any, Callable, Iterable, List, Sequence, Tuple, TypeAlias, TypeVar
 
 from rapidfuzz.distance import JaroWinkler
 
 from app.shared.types import AbstractPersonT, Score
 
 CandidateT = TypeVar("CandidateT")
+NameTokensT: TypeAlias = tuple[str, list[str]]
 
 
 def identity(value: Any) -> Any:
@@ -41,9 +42,27 @@ def token_similarity(
     return score, score >= threshold
 
 
-def normalize_name_tokens(name: str) -> Tuple[str, list[str]]:
+def _clean_name_token(token: str) -> str:
+    """Normalize one name token to lowercase letters only."""
+    return re.sub(r"[^A-Za-z]", "", token).lower()
+
+
+def _clean_name_tokens(name: str) -> list[str]:
+    """Normalize and remove empty name tokens."""
+    return [token for part in name.split() if (token := _clean_name_token(part))]
+
+
+def normalize_name_tokens(name: str) -> NameTokensT:
     """Return (surname, given_tokens) lowercased and stripped of punctuation."""
-    tokens = [re.sub(r"[^A-Za-z]", "", part).lower() for part in name.split() if part]
+    if "," in name:
+        surname_part, given_part = name.split(",", 1)
+        surname_tokens = _clean_name_tokens(surname_part)
+        given_tokens = _clean_name_tokens(given_part)
+        if surname_tokens:
+            # Comma-separated names are commonly written "surname, given".
+            return surname_tokens[-1], given_tokens
+
+    tokens = _clean_name_tokens(name)
     if not tokens:
         return "", []
 

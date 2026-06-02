@@ -48,13 +48,13 @@ def test_sec_admin_delete_model_shows_protected_msg(section, student, superuser)
     admin_obj = SecAdmin(Section, admin.site)
     request = _request_with_user(superuser)
 
-    with patch.object(admin_obj, "msg_user") as msg_user:
+    with patch.object(admin_obj, "message_user") as message_user:
         admin_obj.delete_model(request, section)
 
     assert Section.objects.filter(id=section.id).exists()
-    assert msg_user.call_count == 1
+    assert message_user.call_count == 1
     assert "Cannot delete section because grades depend on it" in str(
-        msg_user.call_args.args[1]
+        message_user.call_args.args[1]
     )
 
 
@@ -65,13 +65,13 @@ def test_sec_admin_bulk_delete_shows_protected_msg(section, student, superuser):
     admin_obj = SecAdmin(Section, admin.site)
     request = _request_with_user(superuser)
 
-    with patch.object(admin_obj, "msg_user") as msg_user:
+    with patch.object(admin_obj, "message_user") as message_user:
         admin_obj.delete_queryset(request, Section.objects.filter(id=section.id))
 
     assert Section.objects.filter(id=section.id).exists()
-    assert msg_user.call_count == 1
+    assert message_user.call_count == 1
     assert "Bulk delete stopped: some sections have grades attached" in str(
-        msg_user.call_args.args[1]
+        message_user.call_args.args[1]
     )
 
 

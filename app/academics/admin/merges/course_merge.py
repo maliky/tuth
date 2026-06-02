@@ -10,14 +10,12 @@ from app.academics.models.course import Course
 from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.prerequisite import Prerequisite
 from app.finance.models.invoice import Invoice
+from app.registry.models.grade import Grade
+from app.registry.models.registration import Registration
 from app.timetable.models.section import Section
 
-from .helpers import CrsMergeSummaryT, _merge_curri_crs_links
-from .section_merge import (
-    _merge_curri_crs_to_target,
-    _merge_secs,
-    _pick_sec_merge_candidate,
-)
+from .helpers import CrsMergeSummaryT
+from .section_merge import _merge_curri_crs_to_target
 
 
 def _select_crs_merge_target(courses: list[Course]) -> Course:
@@ -30,6 +28,54 @@ def _select_crs_merge_target(courses: list[Course]) -> Course:
     sorted_candidates = sorted(candidates, key=lambda course: course.id or 0)[0]
     # problem if no course has a descriptionthis will be empty.
     return sorted_candidates
+
+
+def _sec_student_ids(section: Section) -> set[int]:
+    """Return students with grade or registration records on a section."""
+    grade_student_ids = Grade.objects.filter(section=section).values_list(
+        "student_id", flat=True
+    )
+    registration_student_ids = Registration.objects.filter(section=section).values_list(
+        "student_id", flat=True
+    )
+    return {int(student_id) for student_id in grade_student_ids}.union(
+        int(student_id) for student_id in registration_student_ids
+    )
+
+
+def _has_sec_student_overlap(target: Section, source: Section) -> bool:
+    """Return True when two sections share grade or registration students."""
+    return bool(_sec_student_ids(target).intersection(_sec_student_ids(source)))
+
+
+def _pick_duplicate_curri_crs_sec_candidate(
+    target_curriculum_course: CurriCrs,
+    source_section: Section,
+) -> Section | None:
+    """Pick a section merge candidate for duplicate CurriCrs rows.
+
+    Same-number sections are duplicate offerings and should merge. Different
+    section numbers should remain distinct unless student records overlap.
+    """
+    same_number = Section.objects.filter(
+        curriculum_course=target_curriculum_course,
+        semester_id=source_section.semester_id,
+        number=source_section.number,
+    ).first()
+    if same_number is not None:
+        return same_number
+
+    same_semester = list(
+        Section.objects.filter(
+            curriculum_course=target_curriculum_course,
+            semester_id=source_section.semester_id,
+        ).order_by("number", "id")[:2]
+    )
+    if len(same_semester) == 1 and _has_sec_student_overlap(
+        same_semester[0], source_section
+    ):
+        return same_semester[0]
+    return None
 
 
 @transaction.atomic
@@ -245,36 +291,26 @@ def merge_curri_crss(target: CurriCrs, sources):
             summary["is_required_conflicts"] += 1
         if src.is_elective != target.is_elective:
             summary["is_elective_conflicts"] += 1
-        _merge_curri_crs_links(target, src)
-        source_sections = Section.objects.filter(curriculum_course=src)
-        for section in source_sections:
-            conflict = _pick_sec_merge_candidate(target, section)
-            if conflict is not None:
-                merge_result = _merge_secs(conflict, section)
-                if merge_result["sections_merged"]:
-                    summary["sections_merged"] += merge_result["sections_merged"]
-                elif merge_result["sections_skipped_grade_conflict"]:
-                    summary["sections_skipped_grade_conflict"] += merge_result[
-                        "sections_skipped_grade_conflict"
-                    ]
-                else:
-                    summary["sections_retained_protected"] += merge_result[
-                        "sections_retained_protected"
-                    ]
-                summary["sections_rebucketed_sem0"] += merge_result[
-                    "sections_rebucketed_sem0"
-                ]
-                summary["sections_blocked_sem0_overflow"] += merge_result[
-                    "sections_blocked_sem0_overflow"
-                ]
-                continue
-            section.curriculum_course = target
-            section.save(update_fields=["curriculum_course"])
-            summary["sections_moved"] += 1
-        try:
-            src.delete()
-        except ProtectedError:
-            summary["protected_deletes"] += 1
-            continue
-        summary["merged"] += 1
+        # Use the shared curriculum-course merge path so section conflict
+        # rebucketing and protected-delete counters stay consistent.
+        merge_result = _merge_curri_crs_to_target(
+            target,
+            src,
+            candidate_selector=_pick_duplicate_curri_crs_sec_candidate,
+        )
+        summary["sections_moved"] += merge_result["sections_moved"]
+        summary["sections_merged"] += merge_result["sections_merged"]
+        summary["sections_retained_protected"] += merge_result[
+            "sections_retained_protected"
+        ]
+        summary["sections_skipped_grade_conflict"] += merge_result[
+            "sections_skipped_grade_conflict"
+        ]
+        summary["sections_rebucketed_sem0"] += merge_result["sections_rebucketed_sem0"]
+        summary["sections_blocked_sem0_overflow"] += merge_result[
+            "sections_blocked_sem0_overflow"
+        ]
+        summary["protected_deletes"] += merge_result["source_retained_protected"]
+        if merge_result["source_retained_protected"] == 0:
+            summary["merged"] += 1
     return summary

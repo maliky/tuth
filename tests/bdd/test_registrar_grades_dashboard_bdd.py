@@ -19,7 +19,7 @@ pytestmark = [
 
 
 @scenario(
-    "features/reg_grades_dashboard.feature",
+    "features/registrar_grades_dashboard.feature",
     "Defaults to most recent semester with graded students",
 )
 def test_reg_grades_dft_sem_bdd():
@@ -27,7 +27,7 @@ def test_reg_grades_dft_sem_bdd():
 
 
 @scenario(
-    "features/reg_grades_dashboard.feature",
+    "features/registrar_grades_dashboard.feature",
     "Dashboard link and row expand",
 )
 def test_reg_grades_row_expand_bdd():
@@ -35,19 +35,19 @@ def test_reg_grades_row_expand_bdd():
 
 
 @scenario(
-    "features/reg_grades_dashboard.feature",
+    "features/registrar_grades_dashboard.feature",
     "Pagination shows counts and last link",
 )
 def test_reg_grades_pagination_bdd():
     """Drive the pagination scenario."""
 
 
-@scenario("features/reg_grades_dashboard.feature", "Transcript button")
+@scenario("features/registrar_grades_dashboard.feature", "Transcript button")
 def test_reg_grades_transcript_bdd():
     """Drive the transcript scenario."""
 
 
-@scenario("features/reg_grades_dashboard.feature", "Go-to preserves semester")
+@scenario("features/registrar_grades_dashboard.feature", "Go-to preserves semester")
 def test_reg_grades_go_to_preserves_bdd():
     """Drive the go-to pagination scenario."""
 

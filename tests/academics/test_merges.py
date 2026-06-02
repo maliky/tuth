@@ -42,11 +42,12 @@ def _curriculum_course_constraint_disabled() -> Iterator[None]:
         # Remove duplicates created during the test so the unique constraint can
         # be restored deterministically without leaking state across tests.
         duplicate_pairs: list[tuple[int, int]] = []
+        table_name = connection.ops.quote_name(CurriCrs._meta.db_table)
         with connection.cursor() as cursor:
             cursor.execute(
-                """
+                f"""
                 SELECT curriculum_id, course_id
-                FROM academics_curriculumcourse
+                FROM {table_name}
                 GROUP BY curriculum_id, course_id
                 HAVING COUNT(*) > 1
                 """
@@ -295,10 +296,10 @@ def test_merge_curri_crss_conflict_reassigns_grade_and_regio(
     assert not Section.objects.filter(id=source_section.id).exists()
 
 
-def test_merge_curri_crss_conflict_retains_source_when_grade_duplicate(
+def test_merge_curri_crss_conflict_dedupes_same_grade_duplicate(
     curri_factory, crs_factory, dft_sem, student
 ):
-    """Duplicate grades for same student keep source section protected and retained."""
+    """Duplicate same-value grades are deduped so duplicate sections can merge."""
     summary = {}
     with _curriculum_course_constraint_disabled():
         target = CurriCrs.objects.create(
@@ -332,12 +333,12 @@ def test_merge_curri_crss_conflict_retains_source_when_grade_duplicate(
 
         summary = merge_curri_crss(target, [source])
 
-        assert Section.objects.filter(id=source_section.id).exists()
-        # Cleanup protected row so the unique constraint helper can restore.
-        source_grade.delete()
+        assert not Section.objects.filter(id=source_section.id).exists()
+        assert not Grade.objects.filter(id=source_grade.id).exists()
 
-    assert summary["sections_retained_protected"] == 1
-    assert summary["protected_deletes"] == 1
+    assert summary["sections_merged"] == 1
+    assert summary["sections_retained_protected"] == 0
+    assert summary["protected_deletes"] == 0
 
 
 def test_merge_curra_keep_source_choice_applies_source_values(
@@ -398,14 +399,20 @@ def test_merge_curri_crss_skips_sec_merge_on_grade_value_mismatch(
         grade_a, _ = GradeValue.objects.get_or_create(code="a")
         grade_b, _ = GradeValue.objects.get_or_create(code="b")
         Grade.objects.create(student=student, section=target_section, value=grade_a)
-        Grade.objects.create(student=student, section=source_section, value=grade_b)
+        source_grade = Grade.objects.create(
+            student=student, section=source_section, value=grade_b
+        )
 
         summary = merge_curri_crss(target, [source])
 
+        assert Section.objects.filter(id=target_section.id).exists()
+        assert Section.objects.filter(id=source_section.id).exists()
+        # Cleanup the intentionally retained duplicate before restoring the constraint.
+        source_grade.delete()
+        source_section.delete()
+
     assert summary["sections_skipped_grade_conflict"] == 1
     assert summary["sections_merged"] == 0
-    assert Section.objects.filter(id=target_section.id).exists()
-    assert Section.objects.filter(id=source_section.id).exists()
 
 
 def test_merge_curri_crss_rebuckets_sem0_conflict_into_sem1_to_sem3(
@@ -498,11 +505,12 @@ def test_merge_curri_crss_blocks_sem0_conflict_when_sem_slots_are_full(
         # Cleanup protected row so the unique constraint helper can restore.
         if Grade.objects.filter(section=source_section).exists():
             Grade.objects.filter(section=source_section).delete()
+        if Section.objects.filter(id=source_section.id).exists():
+            source_section.delete()
 
     assert summary["sections_rebucketed_sem0"] == 0
     assert summary["sections_blocked_sem0_overflow"] == 1
     assert summary["sections_skipped_grade_conflict"] == 1
-    assert CurriCrs.objects.filter(id=source.id).exists()
 
 
 def test_merge_crss_rebuckets_sem0_conflicts_for_course_merge(

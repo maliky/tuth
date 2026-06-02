@@ -67,8 +67,8 @@ def session(section, room) -> SecSession:
 def academic_year_factory() -> AcademicYearFactoryT:
 
     def _make(start_date: datetime = DEF_DATE) -> AcademicYear:
-
-        return AcademicYear.objects.create(start_date=start_date)
+        academic_year, _ = AcademicYear.objects.get_or_create(start_date=start_date)
+        return academic_year
 
     return _make
 
@@ -81,7 +81,8 @@ def sem_factory(academic_year_factory: AcademicYearFactoryT) -> SemesterFactoryT
 
         ay = academic_year_factory(ay_start_date)
 
-        return Semester.objects.create(academic_year=ay, number=number)
+        semester, _ = Semester.objects.get_or_create(academic_year=ay, number=number)
+        return semester
 
     return _make
 

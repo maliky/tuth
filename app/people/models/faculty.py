@@ -64,8 +64,9 @@ class FacultyManager(models.Manager):
         staff_kwargs, faculty_kwargs = self._split_kwargs({**kwargs, **defaults})
 
         if staff_profile:
+            # A supplied Staff already owns staff fields; keep defaults for Faculty only.
             return super().get_or_create(
-                staff_profile=staff_profile, defaults=staff_kwargs
+                staff_profile=staff_profile, defaults=faculty_kwargs
             )
 
         staff_profile, _ = Staff.objects.get_or_create(

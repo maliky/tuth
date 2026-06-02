@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import IntegrityError, models
 from django.db.models.functions import ExtractYear
 from simple_history.models import HistoricalRecords
 
@@ -71,8 +71,15 @@ class AcademicYear(models.Model):
         ref = today or date.today()
         start_year = ref.year if ref.month >= 8 else ref.year - 1
         start = date(start_year, 8, 1)
-        ay, _ = cls.objects.get_or_create(start_date=start)
-        return ay
+        end_year = start_year + 1
+        code = f"{str(start_year)[-2:]}-{str(end_year)[-2:]}"
+        existing = cls.objects.filter(code=code).first()
+        if existing:
+            return existing
+        try:
+            return cls.objects.create(start_date=start)
+        except IntegrityError:
+            return cls.objects.get(code=code)
 
     class Meta:
         constraints = [

@@ -1,4 +1,5 @@
 [tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "app.test_settings"
 addopts = "-p no:cacheprovider --assert=plain --strict-markers -q --create-db"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
 markers = [

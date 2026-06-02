@@ -98,12 +98,7 @@ def dashboard_heading_includes(
     portal_context: PortalContext, selenium_driver, heading: str
 ) -> None:
     """Confirm the expected dashboard heading is visible."""
-    staff_heading = (By.CSS_SELECTOR, ".staff-shell__title")
-    student_heading = (By.CSS_SELECTOR, ".portal-header h1")
-    if portal_context.is_student:
-        heading_locator = student_heading
-    else:
-        heading_locator = staff_heading
+    heading_locator = (By.CSS_SELECTOR, ".portal-header h1")
     WebDriverWait(selenium_driver, 20).until(
         EC.text_to_be_present_in_element(heading_locator, heading)
     )

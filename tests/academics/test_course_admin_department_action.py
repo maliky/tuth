@@ -27,7 +27,7 @@ class DummyAdmin:
     def __init__(self) -> None:
         self.messages: list[MessageT] = []
 
-    def msg_user(self, request, message, level=messages.INFO) -> None:
+    def message_user(self, request, message, level=messages.INFO) -> None:
         """Store user-facing action messages for assertions."""
         self.messages.append((str(message), int(level)))
 

@@ -35,15 +35,19 @@ def visitor_on_landing_page(live_server, selenium_driver) -> None:
 @then("the landing page hero is visible")
 def landing_page_hero_visible(selenium_driver) -> None:
     """Ensure the marketing hero is present."""
-    hero_heading = selenium_driver.find_element(By.CSS_SELECTOR, ".carousel-caption h2")
-    assert "Build Your Career" in hero_heading.text
+    hero_heading = WebDriverWait(selenium_driver, 10).until(
+        EC.visibility_of_element_located((By.ID, "landing-hero-title"))
+    )
+    assert "One secure entry point" in hero_heading.text
 
 
-@then("the mockup banner is visible")
-def landing_page_mockup_banner_visible(selenium_driver) -> None:
-    """Ensure the mockup banner is visible."""
-    mockup_banner = selenium_driver.find_element(By.CSS_SELECTOR, "main h3")
-    assert "mock-up landing page" in mockup_banner.text
+@then("the service status card is visible")
+def landing_page_service_status_visible(selenium_driver) -> None:
+    """Ensure the landing service status card is visible."""
+    status_card = WebDriverWait(selenium_driver, 10).until(
+        EC.visibility_of_element_located((By.CSS_SELECTOR, ".landing-service-card h2"))
+    )
+    assert "Ready for campus workflow testing" in status_card.text
 
 
 @when("the visitor clicks the Tusis button")

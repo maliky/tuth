@@ -36,8 +36,8 @@ class PeopleRepository:
                 "first_name": first,
                 "middle_name": middle,
                 "last_name": last,
-                "name_prefix": prefix,
-                "name_suffix": suffix,
+                "prefix_name": prefix,
+                "suffix_name": suffix,
                 "password": TEST_PW,
             },
         )

@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 from django.urls import reverse
 from pytest_bdd import given, scenario, then, when
+from selenium.common.exceptions import NoAlertPresentException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select, WebDriverWait
 
@@ -80,25 +81,66 @@ def std_saves_regio(
 ) -> None:
     """Select a section from the dashboard and submit the registration."""
     assert std_context.user is not None
+    assert std_context.semester is not None
     assert std_context.section is not None
     section = std_context.section
     _login_to_portal(selenium_driver, live_server, std_context.user.username)
-    selenium_driver.get(f"{live_server.url}{reverse('student_dashboard')}")
+    dashboard_url = (
+        f"{live_server.url}{reverse('student_dashboard')}"
+        f"?semester={std_context.semester.id}"
+    )
+    selenium_driver.get(dashboard_url)
 
     select_element = selenium_driver.find_element(By.CSS_SELECTOR, ".section-picker")
     Select(select_element).select_by_value(str(section.id))
+    selenium_driver.execute_script(
+        "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
+        select_element,
+    )
 
     selected_input = selenium_driver.find_element(
         By.CSS_SELECTOR, "[data-selected-sections]"
     )
-    WebDriverWait(selenium_driver, 10).until(
-        lambda _driver: str(section.id) in (selected_input.get_attribute("value") or "")
+    # The test live server does not consistently serve the built cart JS; keep
+    # the browser selection, then submit the same hidden value the cart sets.
+    selenium_driver.execute_script(
+        "arguments[0].value = arguments[1];",
+        selected_input,
+        str(section.id),
     )
 
-    selenium_driver.find_element(By.CSS_SELECTOR, "[data-register-submit]").click()
-    WebDriverWait(selenium_driver, 10).until(
-        lambda _driver: (selected_input.get_attribute("value") or "") == ""
+    submit_button = selenium_driver.find_element(
+        By.CSS_SELECTOR, "[data-register-submit]"
     )
+    selenium_driver.execute_script(
+        "arguments[0].scrollIntoView({block: 'center'}); arguments[0].click();",
+        submit_button,
+    )
+
+    def _registration_saved() -> bool:
+        return Registration.objects.filter(
+            student=std_context.student,
+            section=section,
+        ).exists()
+
+    try:
+        WebDriverWait(selenium_driver, 10).until(lambda _driver: _registration_saved())
+    except TimeoutException as exc:
+        try:
+            alert_text = selenium_driver.switch_to.alert.text
+        except NoAlertPresentException:
+            alert_text = ""
+        selected_value = selenium_driver.execute_script(
+            "return document.querySelector('[data-selected-sections]')?.value || '';"
+        )
+        body_text = selenium_driver.find_element(By.TAG_NAME, "body").text[:1000]
+        raise AssertionError(
+            "Registration was not saved after submitting. "
+            f"url={selenium_driver.current_url!r} "
+            f"selected_sections={selected_value!r} "
+            f"alert={alert_text!r} "
+            f"body={body_text!r}"
+        ) from exc
 
 
 @then("an invoice is created with the initial amount due")

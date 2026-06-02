@@ -6,7 +6,7 @@ Feature: Landing page
   Scenario: Visitor sees the landing page hero
     Given the visitor is on the landing page
     Then the landing page hero is visible
-    And the mockup banner is visible
+    And the service status card is visible
 
   Scenario: Visitor uses the Tusis button
     Given the visitor is on the landing page

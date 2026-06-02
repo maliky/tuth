@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date
 from typing import TYPE_CHECKING, TypeAlias, cast
 
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
 from simple_history.models import HistoricalRecords
 
@@ -107,36 +107,48 @@ def set_primary_std_curri_enroll(
     is_active: bool = True,
 ) -> StdCurriEnroll:
     """Ensure one primary enrollment row for the provided curriculum."""
-    enroll, _ = StdCurriEnroll.objects.get_or_create(
-        student=student,
-        curriculum=curriculum,
-        defaults={
-            "entry_semester_id": entry_semester_id,
-            "is_primary": True,
-            "is_active": is_active,
-        },
-    )
-    if not enroll.is_primary:
-        # Demote existing primary rows first to preserve the unique primary constraint.
+    with transaction.atomic():
+        enroll = StdCurriEnroll.objects.filter(
+            student=student,
+            curriculum=curriculum,
+        ).first()
+        if enroll is None:
+            # The partial unique constraint allows only one primary row per student.
+            StdCurriEnroll.objects.filter(student=student, is_primary=True).update(
+                is_primary=False
+            )
+            enroll = StdCurriEnroll.objects.create(
+                student=student,
+                curriculum=curriculum,
+                entry_semester_id=entry_semester_id,
+                is_primary=True,
+                is_active=is_active,
+            )
+            student._primary_std_curri_enroll_cache = enroll  # type: ignore[attr-defined]
+            return enroll
+
+        if not enroll.is_primary:
+            # Demote existing primary rows first to preserve the unique primary constraint.
+            StdCurriEnroll.objects.filter(student=student, is_primary=True).exclude(
+                pk=enroll.pk
+            ).update(is_primary=False)
+
+        update_fields: list[str] = []
+        if not enroll.is_primary:
+            enroll.is_primary = True
+            update_fields.append("is_primary")
+        if enroll.is_active != is_active:
+            enroll.is_active = is_active
+            update_fields.append("is_active")
+        if entry_semester_id and enroll.entry_semester_id != entry_semester_id:
+            enroll.entry_semester_id = entry_semester_id
+            update_fields.append("entry_semester")
+        if update_fields:
+            enroll.save(update_fields=update_fields)
+
         StdCurriEnroll.objects.filter(student=student, is_primary=True).exclude(
             pk=enroll.pk
         ).update(is_primary=False)
-    update_fields: list[str] = []
-    if not enroll.is_primary:
-        enroll.is_primary = True
-        update_fields.append("is_primary")
-    if enroll.is_active != is_active:
-        enroll.is_active = is_active
-        update_fields.append("is_active")
-    if entry_semester_id and enroll.entry_semester_id != entry_semester_id:
-        enroll.entry_semester_id = entry_semester_id
-        update_fields.append("entry_semester")
-    if update_fields:
-        enroll.save(update_fields=update_fields)
-
-    StdCurriEnroll.objects.filter(student=student, is_primary=True).exclude(
-        pk=enroll.pk
-    ).update(is_primary=False)
 
     student._primary_std_curri_enroll_cache = enroll  # type: ignore[attr-defined]
     return enroll

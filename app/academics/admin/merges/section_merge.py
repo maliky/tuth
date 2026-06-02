@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import cast
+from typing import Callable, TypeAlias, cast
 
 from django.db import models
 from django.db.models.deletion import ProtectedError
@@ -17,8 +17,17 @@ from app.timetable.models.section import Section
 from .helpers import SectionMergeResultT, _merge_curri_crs_links
 
 
-def _merge_curri_crs_to_target(target: CurriCrs, source: CurriCrs) -> dict[str, int]:
+SecMergeCandidateSelectorT: TypeAlias = Callable[[CurriCrs, Section], Section | None]
+
+
+def _merge_curri_crs_to_target(
+    target: CurriCrs,
+    source: CurriCrs,
+    *,
+    candidate_selector: SecMergeCandidateSelectorT | None = None,
+) -> dict[str, int]:
     """Move section and concentration links from source to target."""
+    pick_candidate = candidate_selector or _pick_sec_merge_candidate
     summary = {
         "sections_moved": 0,
         "sections_merged": 0,
@@ -36,7 +45,7 @@ def _merge_curri_crs_to_target(target: CurriCrs, source: CurriCrs) -> dict[str, 
         .order_by("id")
     )
     for section in source_sections:
-        conflict = _pick_sec_merge_candidate(target, section)
+        conflict = pick_candidate(target, section)
         if conflict is not None:
             merge_result = _merge_secs(conflict, section)
             if merge_result["sections_merged"]:

@@ -73,7 +73,7 @@ def test_std_dashboard_prefers_open_sem(client):
     baker.make(
         "people.Student",
         user=std_user,
-        curriculum=curriculum,
+        primary_curriculum=curriculum,
         last_enrolled_semester=current_sem,
     )
 
