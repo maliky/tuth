@@ -1,0 +1,400 @@
+#+TITLE: Tusis architecture and UX readiness audit
+:PROPERTIES:
+:DATE: 2026-06-02
+:TARGET: Local worktree and https://tusis.koba.sarl
+:BASIC_AUTH: tusis:tusis
+:SOURCE_OF_TRUTH: UX/tu-web-design-guide.org
+:BROWSER_ARTIFACTS: /tmp/tusis_arch_browser_smoke.json /tmp/tusis_arch_browser_role_focus.json
+:END:
+* Scope and method
+This pass audits the implementation architecture behind the MWE user experience and records the follow-up remediation implemented from that audit.
+The first pass was diagnostic; the current worktree now includes architecture, UX-shell, workflow, and validation changes.
+
+The goal is to state where the MWE stands from these perspectives:
+- student
+- finance staff
+- dean and registrar-family staff
+- Django admin fallback for privileged operations
+
+The audit combines:
+- local source inspection
+- Django route, model, and admin inventory
+- portal template inheritance inspection
+- import and file-size inspection
+- static checks and tests
+- public preprod browser smoke checks with the runtime MWE accounts from =UX/mwe.org=
+
+The design direction is inherited from =UX/tu-web-design-guide.org=:
+- student UI is the visual reference
+- staff UI inherits the shared portal shell
+- finance, dean, registrar, and other roles vary by task modules, not by a separate visual skin
+- Django admin remains an advanced path, not the primary user journey
+
+* Executive state
+The MWE is in a usable portal-first state.
+The public landing page, portal login, student dashboard, finance-officer console, dean dashboard, registrar dashboard, registrar-officer course windows, and Django admin all load on preprod.
+
+No current P0 architecture blocker was found in this pass.
+The immediate risk is not "pages do not load".
+The main architectural risk has been reduced: the largest website views have been replaced by thin request/permission/render wrappers, and their orchestration now lives in typed portal service modules.
+
+The architecture is good enough for an MWE demonstration across student, finance officer, dean, registrar, registrar officer, and enrollment flows.
+It is still not finished architecture: =student_portal.py= and =staff_portal.py= remain large service modules and should be split again when the next workflow area is touched.
+
+* Current implementation map
+** Domain apps
+The Django inventory found 109 models across the core apps:
+- =academics=
+- =people=
+- =registry=
+- =finance=
+- =timetable=
+- =spaces=
+- =shared=
+
+The Django admin registers 44 model admin classes.
+This confirms that the admin fallback is broad and still operationally important.
+
+** Portal routes
+The portal URL surface includes:
+- public landing: =/=
+- portal login/logout: =/auth/login/= and =/auth/logout/=
+- student dashboard and student task pages
+- staff dashboard and role dashboards: =/staff/dashboard/= and =/staff/<role>/=
+- finance officer invoices: =/staff/finance/invoices/=
+- dean curriculum review: =/staff/dean/curricula/=
+- registrar grades: =/registrar/grades/=
+- registrar officer course windows: =/registrar/course-windows/=
+- enrollment/student pages under =/students/=
+- Django admin under =/admin/=
+
+** Template inheritance
+The portal shell is now structurally shared:
+- =app/website/templates/website/portal_base.html= owns the shared portal frame and base stylesheet.
+- =app/website/templates/website/student_portal_base.html= extends the portal base.
+- =app/website/templates/website/staff/base.html= extends the portal base and adds staff styling.
+- student task templates extend the student portal base.
+- staff, finance, registrar, and enrollment task templates extend the staff base.
+
+This matches the current design guide direction.
+The remaining work is to split the large service modules and continue moving repeated task-specific markup into shared portal components.
+
+** Portal service layer
+The website layer now has explicit service modules:
+- =app/website/services/student_portal.py=
+- =app/website/services/staff_portal.py=
+- =app/website/services/finance_portal.py=
+- =app/website/services/registrar_portal.py=
+- =app/website/services/dean_portal.py=
+
+The URL-facing views now mostly do:
+- permission/decorator enforcement
+- typed service call
+- render or redirect
+
+This is the intended direction for future registrar, finance, dean, enrollment, and VPAA workflows.
+
+* MWE readiness by user perspective
+** Student perspective
+Current state:
+- Student login works on preprod with =test_student=.
+- Student dashboard loads in the portal shell.
+- Invoice statement, payment receipt, curriculum list, and curriculum course details load.
+- The student dashboard is the clearest reference implementation for the shared portal feeling.
+
+Still to do:
+- Keep extracting reusable cards, tables, badges, and empty states from the student UI so staff pages can consume the same component language.
+- Continue splitting =app/website/services/student_portal.py= into smaller query/context/action services.
+- Add deeper controlled browser checks for destructive drop/cancel paths when disposable data policy is explicit.
+
+** Finance staff perspective
+Current state:
+- =test_finance= lands on the finance workspace.
+- =test_finance_officer= reaches the finance-officer dashboard and invoice console.
+- Finance pages inherit the staff portal shell and no longer feel like raw Django admin pages.
+- The focused preprod browser pass reached =/staff/finance_officer/= and =/staff/finance/invoices/= without 403, 404, 500, or severe console errors.
+- Finance invoice filtering and console context now live in =app/website/services/finance_portal.py=.
+- Disposable-data tests cover finance payment create/update behavior.
+
+Still to do:
+- Add a browser-driven finance payment workflow once the demo data policy says which invoices may be mutated.
+- Continue tightening Finance versus Finance Officer labels in page copy as new finance tasks are added.
+
+** Dean perspective
+Current state:
+- =test_dean= reaches the dean dashboard in the shared staff shell.
+- The dean dashboard has the right UX direction: portal-native, task-oriented, and visually aligned with the student reference.
+- The admin path is not the visible primary route for the audited dean surface.
+- Deans now have a portal-native curriculum review route at =/staff/dean/curricula/=.
+- Deans can request VPAA activation for a curriculum through the portal, with duplicate pending requests reused.
+
+Still to do:
+- Extend the dean workflow from activation request into full curriculum editing/revision when the curriculum authoring policy is settled.
+- Add the matching VPAA approval portal workflow so the request does not require admin fallback.
+
+** Registrar and registrar officer perspective
+Current state:
+- =test_registrar= reaches transcript/grade review surfaces.
+- =test_registrar_officer= reaches semester/course-window management and grade review.
+- The apparent course-window 403 in a broader smoke run was correct role-boundary behavior: plain Registrar does not have the officer permission for changing semester windows.
+- Registrar grade context and semester-window context now live in =app/website/services/registrar_portal.py=.
+- Course-window mutation is covered with disposable semester data.
+- Browser-facing BDD scenarios cover registrar grade filters, transcript links, row expansion, and pagination.
+
+Still to do:
+- Continue reducing repeated registrar table/form patterns into shared staff portal partials.
+- Add a browser-driven semester-window mutation only if it remains valuable beyond the existing server-side workflow test.
+
+** Django admin fallback
+Current state:
+- The admin dashboard loads on public preprod.
+- The recent admin-audit P0/P1/P2/P3 fixes are committed separately.
+- Targeted admin regression tests pass.
+
+Still to do:
+- Retake the full admin browser timing pass after deployment of the latest code.
+- Keep admin as a fallback, not the staff workflow default.
+- Continue splitting the largest admin modules and shared admin mixins where it reduces coupling.
+
+* Validation evidence
+** Static and typed checks
+All local checks below passed:
+- =python -m py_compile= over =app=, =tests=, and =scripts=, excluding migrations and seed data
+- =ruff format --check app tests scripts=
+- =ruff check app tests scripts=
+- =mypy app tests scripts=
+- =python manage.py check=
+- =python scripts/build_tucurricula_source_maps.py --output-dir /tmp/tucurricula_source_maps_check=
+- =docker-compose -f docker-compose-preprod.yml run --rm js-tools npm ci=
+- Docker TypeScript check: =docker-compose -f docker-compose-preprod.yml run --rm js-tools npm run check:ts=
+
+Local shell note:
+- =npm= is not installed directly in this shell.
+- The repository Docker =js-tools= path is the working TypeScript validation path.
+- =npm ci= reported existing dependency audit vulnerabilities; the TypeScript check still passed.
+- Docker reported an existing orphan =tusis-dev-db= container; this did not affect the JS validation.
+
+** Test checks
+Architecture remediation tests:
+- command: =python -m pytest tests/website/test_architecture_remediation.py tests/academics/test_course_import_aliases.py -q=
+- result: 7 passed
+
+Touched website workflow tests:
+- command: =python -m pytest tests/website/test_course_windows.py tests/website/test_staff_permissions.py tests/website/test_registrar_grades_dashboard.py tests/website/test_student_dashboard_cancellation.py -q=
+- result: 8 passed
+
+Browser-facing BDD portal tests:
+- command: =python -m pytest tests/bdd/test_landing_page_bdd.py tests/bdd/test_portal_roles_bdd.py tests/bdd/test_student_dashboard_links_bdd.py tests/bdd/test_registrar_grades_dashboard_bdd.py tests/bdd/test_student_registration_bdd.py -q=
+- result: 23 passed
+
+Targeted admin regression tests:
+- command: =python -m pytest tests/test_admin_p0_audit_regressions.py tests/test_admin_remaining_audit_regressions.py -q=
+- result: 10 passed
+- warning: one existing Django unordered pagination warning on Department admin search
+
+Broad non-Selenium suite:
+- command: =python -m pytest tests -m 'not selenium' --ignore=tests/selenium -q=
+- result: passed
+- warning: the same existing Django unordered pagination warning
+
+** Public preprod checks
+The public preprod browser checks below are the evidence from the audit pass before this local remediation.
+They were not rerun after these local worktree changes because the new code has not been deployed to preprod in this pass.
+The reusable smoke runner for the next deploy is now tracked as =scripts/mwe_portal_smoke.py=.
+
+HTTP smoke:
+- =/=: HTTP 200, about 0.086 seconds
+- =/auth/login/=: HTTP 200, about 0.012 seconds
+
+Headless Chromium public route smoke:
+- broad role smoke: 42 pages
+- focused officer-role smoke: 7 pages
+- no 500 pages found
+- no 404 pages found
+- no slow pages at the 3 second threshold
+- student, finance, dean, registrar, finance-officer, registrar-officer, and admin surfaces loaded
+
+Artifacts:
+- =/tmp/tusis_arch_browser_smoke.json=
+- =/tmp/tusis_arch_browser_role_focus.json=
+
+Interpretation:
+The current preprod MWE route surface is browser-usable for non-mutating demonstrations.
+The officer-role focused pass is the reliable evidence for finance-officer and registrar-officer task pages.
+
+* Ranked findings
+** P0 - No current architecture blocker found
+No P0 was found in this architecture pass.
+The audited public and portal surfaces load, and the local checks pass.
+
+** P1 - Working UX is too concentrated in large orchestration modules
+Affected source areas:
+- =app/website/views/staff_dashboards.py=
+- =app/website/views/student_dashboard.py=
+- =app/academics/admin/core.py=
+- =app/people/admin/core.py=
+- =app/finance/admin/core.py=
+- =app/registry/admin/core.py=
+
+Evidence:
+- The URL-facing staff and student dashboard views are now thin wrappers.
+- Their previous orchestration moved into =app/website/services/staff_portal.py= and =app/website/services/student_portal.py=.
+- Those two service modules are still over 1000 lines and should be split by role/context/action in the next pass.
+- The largest admin modules remain very large and cross-domain.
+
+Impact:
+The UX works today, but adding one more staff workflow risks copying patterns into the same large files.
+This makes role behavior harder to reason about and makes typed refactoring harder.
+
+Status after remediation:
+- DONE: thin URL-facing views for student, staff, finance, registrar, and dean portal routes.
+- DONE: typed portal service modules added.
+- TODO: split =student_portal.py= and =staff_portal.py= into smaller composable services.
+- TODO: continue admin module splitting where it reduces coupling.
+
+** P1 - Mutating workflow confidence is still below the non-mutating route confidence
+Affected source areas:
+- =app/website/views/student_dashboard.py=
+- =app/website/views/finance_officer.py=
+- =app/website/views/registrar.py=
+- =app/website/views/enrollment.py=
+
+Evidence:
+- Browser audits still avoid destructive production submissions.
+- Local disposable-data tests now cover student registration, finance payment create/update, registrar window update, enrollment create/update, and student cancellation safeguards.
+
+Impact:
+The MWE can be demonstrated safely as a read/navigation experience.
+For a full operational MWE, users need confidence that key POST workflows preserve data and return clear feedback.
+
+Status after remediation:
+- DONE: server-side disposable-data mutation coverage for the main operational areas.
+- DONE: browser-facing BDD coverage for student registration and registrar grade workflows.
+- TODO: add browser-driven finance/enrollment mutation checks only after the demo-data mutation policy is explicit.
+
+** P2 - Service/query boundaries are inconsistent
+Affected source areas:
+- =app/website/views=
+- =app/finance/utils.py=
+- =app/people/utils.py=
+- =app/shared/auth/perms.py=
+
+Evidence:
+- Website views now delegate the large context/query work to the portal service layer.
+- Finance and registrar workflows have dedicated typed service modules.
+- Dean curriculum review has a dedicated typed service module.
+
+Impact:
+The portal is visually harmonized, but the code architecture does not yet express a clean "portal layer" over domain services.
+This increases the risk of duplicated query logic and role-specific behavior drifting apart.
+
+Status after remediation:
+- DONE: typed portal service/query layer created.
+- DONE: thin views now call the service layer.
+- TODO: move common service type aliases and repeated context shapes into shared portal component types when the next workflow is added.
+
+** P2 - Staff role naming needs clearer UX and test documentation
+Affected source areas:
+- =UX/mwe.org=
+- =app/shared/auth/perms.py=
+- =app/website/views/staff_dashboards.py=
+- =app/website/views/registrar.py=
+
+Evidence:
+- Runtime users include both =test_finance= and =test_finance_officer=.
+- Runtime users include both =test_registrar= and =test_registrar_officer=.
+- Course-window management correctly belongs to registrar officer permission, not plain registrar.
+
+Impact:
+The permissions are behaving, but the distinction can confuse demos and audits if the expected route is tested with the broader role.
+
+Status after remediation:
+- DONE: =UX/mwe.org= now has a runtime workflow map that distinguishes Finance from Finance Officer and Registrar from Registrar Officer.
+- DONE: registrar officer uses =/staff/reg_officer/= in the documented workflow map.
+- TODO: keep role copy aligned as VPAA and registrar-family workflows expand.
+
+** P2 - Admin fallback remains broad and operationally important
+Affected source areas:
+- =app/academics/admin=
+- =app/finance/admin=
+- =app/people/admin=
+- =app/registry/admin=
+- =app/timetable/admin=
+- =app/shared/admin=
+- =UX/admin-click-audit.org=
+
+Evidence:
+- Django admin registers 44 model admin classes.
+- Recent admin fixes resolved major 500s and slow-page mechanics, but the full browser timing pass still needs to be repeated after deployment.
+
+Impact:
+The admin is safer now, but it remains a large fallback surface.
+If a staff portal task is incomplete, users will still fall back to admin and experience a different product.
+
+Status after remediation:
+- DONE: admin regression suite still passes after the portal extraction.
+- TODO: retake the full admin timing/browser audit after deployment.
+- TODO: keep future primary staff tasks portal-native unless the admin path is explicitly accepted as fallback.
+
+** P2 - Static asset build contract is implicit
+Affected source areas:
+- =package.json=
+- =tsconfig.json=
+- =docker-compose-preprod.yml=
+- =app/website/static=
+- =app/registry/static=
+
+Evidence:
+- TypeScript sources are tracked and strict.
+- Generated assets live under the static build pipeline.
+- Local shell does not expose =npm=, but Docker =js-tools= validates the asset pipeline.
+
+Impact:
+This is workable, but deployment correctness depends on remembering the Docker JS build path.
+
+Status after remediation:
+- DONE: =README.org= documents =npm ci=, =npm run check:ts=, and =npm run build:ts= through the Docker =js-tools= service.
+- DONE: Docker =npm ci= and =npm run check:ts= passed in this pass.
+- TODO: address the npm audit vulnerabilities as a dependency-maintenance task, not as a blocker for this UX architecture pass.
+
+** P3 - Public imagery is not an MWE dependency
+Affected source areas:
+- =UX/tu-web-design-guide.org=
+- =app/website/templates/website/landing.html=
+- =app/website/static/img=
+
+Evidence:
+- The design guide explicitly prefers local static assets and brand-led composition until approved university photos are available.
+- The public landing page loads and communicates the portal entry point without depending on social-media imagery.
+
+Impact:
+The site can remain functional and credible without high-quality photos.
+
+Status after remediation:
+- DONE: no social-media imagery was introduced.
+- TODO: add approved university photography later when rights and quality are settled.
+
+* Implementation checklist from this audit
+- [X] Freeze the non-mutating MWE smoke path as a reusable acceptance check.
+  - Implemented as =scripts/mwe_portal_smoke.py=.
+- [X] Add safe disposable-data checks for mutating workflows.
+  - Covered by architecture remediation tests, course-window tests, student registration BDD, and student cancellation tests.
+- [X] Extract student portal context/query helpers from =app/website/views/student_dashboard.py=.
+  - The view is now a thin wrapper; remaining split work belongs in =app/website/services/student_portal.py=.
+- [X] Extract staff role registry and role context builders from =app/website/views/staff_dashboards.py=.
+  - The view is now a thin wrapper; remaining split work belongs in =app/website/services/staff_portal.py=.
+- [X] Move finance and registrar operational queries behind typed portal services.
+  - Implemented in =app/website/services/finance_portal.py= and =app/website/services/registrar_portal.py=.
+- [X] Convert repeated cards, tables, badges, empty states, and actions into shared portal partials where the dashboard needed them now.
+  - Implemented for KPI grids, panel cards, and action panels.
+- [ ] Retake the full admin browser timing audit after the latest deployed code is confirmed.
+- [X] Keep photography as a later content task, not a blocker for MWE readiness.
+
+* Acceptance status after remediation
+- [X] Student, finance officer, dean, registrar, and registrar officer route families have reusable smoke coverage available.
+  - Local browser-facing BDD passed; preprod smoke should be rerun after deployment with =scripts/mwe_portal_smoke.py=.
+- [X] At least one controlled mutating workflow passes per operational area: registration, finance payment, registrar window, enrollment student update.
+- [X] Staff and student URL-facing dashboard views no longer carry most context-building logic.
+- [ ] Staff and student service modules are not yet small enough; split =student_portal.py= and =staff_portal.py= in the next architecture pass.
+- [X] The shared portal component language is reusable through template partials and typed context builders.
+- [X] Admin remains covered by regression tests, but no new primary staff task was routed through admin.

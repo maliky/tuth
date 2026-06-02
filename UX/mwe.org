@@ -28,6 +28,20 @@ All of the accounts below exist in the current running MWE database and share th
 | test_it                  | IT / Staff                           |
 | test_donor               | Donor                                |
 
+** Runtime MWE workflow map
+Use this table when demonstrating or smoke-testing the portal. The staff UI should keep the student portal shell as the visual reference; the role differences are task differences, not separate skins.
+
+| Login                  | Demonstrates                                | Main portal route                  | Notes                                                      |
+|------------------------+---------------------------------------------+------------------------------------+------------------------------------------------------------|
+| test_student           | Student dashboard, invoices, curriculum     | /student/dashboard/                | Student UI is the reference look for all portal roles.     |
+| test_dean              | Dean oversight and curriculum review        | /staff/dean/                       | Curriculum review continues at /staff/dean/curricula/.     |
+| test_finance           | Finance overview and holds                  | /staff/finance/                    | Overview role; not the payment-console officer account.    |
+| test_finance_officer   | Invoice console and payment workflow        | /staff/finance_officer/            | Payment console continues at /staff/finance/invoices/.     |
+| test_registrar         | Registrar lifecycle and grade review        | /staff/registrar/                  | Plain Registrar should not manage semester windows.        |
+| test_registrar_officer | Registrar officer course-window operations  | /staff/reg_officer/                | Use this account for /registrar/course-windows/.           |
+| test_enrollment        | Student snapshot and portal intake          | /staff/enrollment/                 | Create/update student records through /students/new/.      |
+| test_enrollment_officer| Enrollment officer escalation and deletion  | /staff/enrollment_officer/         | Use only when officer-level actions are part of the demo.  |
+
 ** Pytest fixtures and feature tests
 - Login: super
   Password: secret123

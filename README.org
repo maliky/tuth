@@ -139,10 +139,11 @@ The Selenium suite exercises the public landing page and any future UI flows tha
 #+BEGIN_SRC bash
 pytest -m selenium tests/selenium
 #+END_SRC
-By default the tests spin up a headless Chrome instance via =webdriver-manager=. You can tweak the driver with environment variables:
+By default the tests spin up a headless Chrome/Chromium instance and prefer the system chromedriver at =/usr/bin/chromedriver=. You can tweak the driver with environment variables:
 - ~SELENIUM_BROWSER~: `chrome` (default) or `firefox`
 - ~SELENIUM_HEADLESS~: set to `0` to watch the browser
 - ~SELENIUM_IMPLICIT_WAIT~: seconds to wait for DOM queries
+- ~CHROMEDRIVER_PATH~: explicit chromedriver binary path when the system path is not correct
 example:
 #+BEGIN_SRC bash
 docker run -d --rm -p 4444:4444 -p 7900:7900 selenium/standalone-chrome:126.0
@@ -175,6 +176,12 @@ This tier runs PostgreSQL and Django/Gunicorn in Docker, while the host’s nati
 1. **Prepare secrets**
    - Copy the sample env file: ~cp .env-preprod.example .env-preprod~ and provide a secure secret key, hostnames, DB credentials, and Gunicorn sizing (port/workers/timeouts). Keep this file out of git.
 2. **Build the stack**
+   - Validate and build TypeScript assets through the Docker JS toolchain:
+     #+BEGIN_SRC bash
+     docker-compose -f docker-compose-preprod.yml run --rm js-tools npm ci
+     docker-compose -f docker-compose-preprod.yml run --rm js-tools npm run check:ts
+     docker-compose -f docker-compose-preprod.yml run --rm js-tools npm run build:ts
+     #+END_SRC
    - Launch Postgres + the app: ~docker-compose -f docker-compose-preprod.yml up -d --build~.
    - The =deploy/preprod/entrypoint.sh= script blocks until Postgres is reachable, runs migrations, calls =collectstatic= (writing to the repo’s ~static/~ path), and starts Gunicorn bound to ~0.0.0.0:${GUNICORN_PORT:-8000}~. The compose file publishes that container port as ~127.0.0.1:18000~ on the host, so only the local Nginx can reach it.
    - Inspect status/logs with ~docker-compose -f docker-compose-preprod.yml ps~ and ~docker-compose -f docker-compose-preprod.yml logs -f web db~.
@@ -184,6 +191,10 @@ This tier runs PostgreSQL and Django/Gunicorn in Docker, while the host’s nati
    - The config aliases static/media to =~/Tusis/Tusis_app/static= and =media=, so each deploy should include ~python manage.py collectstatic --noinput~ which the entrypoint already runs.
 4. **Smoke-test**
    - Hit the local health check through Nginx: ~curl -u <user>:<pass> https://tusis.babao.rhum/healthz~ (expect =ok=). Without creds you should receive a 401 challenge from Basic Auth.
+   - Run the non-mutating MWE portal smoke against the public preprod URL:
+     #+BEGIN_SRC bash
+     TUSIS_BASIC_AUTH_USER=tusis TUSIS_BASIC_AUTH_PASSWORD=tusis scripts/mwe_portal_smoke.py
+     #+END_SRC
 5. **Operate & back up**
    - Run management commands via ~docker-compose -f docker-compose-preprod.yml exec web python manage.py <command>~ (e.g., ~createsuperuser~, ~populate_initial_data~).
    - Capture database dumps from the db service: ~docker-compose -f docker-compose-preprod.yml exec db pg_dump -U $POSTGRES_USER $POSTGRES_DB > tusis-preprod-$(date +%F).sql~.
