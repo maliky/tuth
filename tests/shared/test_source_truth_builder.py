@@ -248,7 +248,7 @@ def test_build_tusis_truth_uses_latest_smartschool_operational_exports(
         "dbo,UM_Oldgrades,0\n"
         "dbo,UM_Programs,1\n"
         "dbo,UM_Registrations,1\n"
-        "dbo,UM_Students,1\n"
+        "dbo,UM_Students,2\n"
         "dbo,UM_StudentsCourses,1\n",
     )
     _write(smartschool / "dbo_UM_Courses.csv", "CourseCode,Course\nNURS,Nursing\n")
@@ -289,6 +289,8 @@ def test_build_tusis_truth_uses_latest_smartschool_operational_exports(
         smartschool / "dbo_UM_Students.csv",
         "StudentID,FirstName,MiddleName,LastName,Major,College,SemesterOfEntry,"
         "YearOfEntry,DateOfBirth,Sex,EnrollmentType,Scholarship,Enrolled\n"
+        "03062,Wrong,,Nurse,BBA - Accounting,CBA,1,2025/2026,1900-01-01T00:00:00,"
+        "Female,Business 1,No,Yes\n"
         "03062,Ada,M,Nurse,BSN - Nursing,CHS,1,2025/2026,2000-01-01T00:00:00,"
         "Female,Nursing 1,No,Yes\n",
     )
@@ -305,8 +307,28 @@ def test_build_tusis_truth_uses_latest_smartschool_operational_exports(
     _write(fundamentals / "full_grades.tsv", "student_id\n")
     _write(fundamentals / "registry_registration.csv", "student_id\n")
     _write(fundamentals / "finance_payments.csv", "student_id\n")
-    _write(grapro / "Courses.csv", "CourseID\n")
-    _write(grapro / "Accounts.csv", "AccountID\n")
+    _write(
+        grapro / "Courses.csv",
+        "CourseID,CourseName,CourseDescription,CreditHours,AreaID\n"
+        "CHEM 101,General Chemistry,General Chemistry,4,CHEM\n",
+    )
+    _write(
+        grapro / "Accounts.csv",
+        "AccountID,FirstName,MiddleName,LastName,Sex,BirthDate,AccountType,ProgramID\n"
+        "00353,Augustine,B.,Hinneh,M,03/04/21 00:00:00,Student,BSc - General Agr\n",
+    )
+    _write(
+        grapro / "StudentInfo.csv",
+        "AccountID,HomeCountry,ClassLevel,TermFirstEntered,TermLastEnrolled,"
+        "EnrollmentStatusID\n"
+        '00353,LIBERIA,Senior,"2009/2010, 1st Semes","2009/2010, 2nd Semes",G\n',
+    )
+    _write(
+        grapro / "StudentRecords.csv",
+        "AccountID,ProgramID,TermID,ItemID,SectionID,Description,FinalGrade,Quantity\n"
+        '00353,BSc - General Agr,"2009/2010, 1st Semes",CHEM 101,1.0,'
+        "General Chemistry,C,4\n",
+    )
     _write(tucurricula / "academic_course.tsv", "course_dept\tcourse_no\nNURS\t101\n")
     _write(
         tucurricula / "academic_curriculum.tsv",
@@ -336,13 +358,24 @@ def test_build_tusis_truth_uses_latest_smartschool_operational_exports(
 
     students = _read_tsv(output / "import_ready" / "people_full_student.tsv")
     assert students[0]["student_id"] == "03062"
+    assert students[0]["first_name"] == "Ada"
     assert students[0]["curriculum"] == "CHS-NURS"
     assert students[0]["legacy_curriculum"] == "BSN - Nursing"
     assert students[0]["last_enrolled_semester"] == "25-26_Sem2"
+    grapro_student = [row for row in students if row["student_id"] == "00353"][0]
+    assert grapro_student["birth_date"] == "2021-03-04"
+    assert grapro_student["entry_semester"] == "09-10_Sem1"
 
     grades = _read_tsv(output / "import_ready" / "full_grades.tsv")
     assert grades[0]["semester_no"] == "2"
     assert "semester" not in grades[0]
+    assert any(
+        row["source_row_number"] == "1" and row["course_dept"] == "CHEM" for row in grades
+    )
+    grapro_grade_actions = _read_tsv(output / "grapro_grade_supplements.tsv")
+    assert any(row["action"] == "added_missing" for row in grapro_grade_actions)
+    grapro_student_actions = _read_tsv(output / "grapro_student_supplements.tsv")
+    assert grapro_student_actions[0]["action"] == "added_missing"
 
     registrations = _read_tsv(output / "import_ready" / "registry_registration.tsv")
     assert registrations[0]["course_dept"] == "NURS"

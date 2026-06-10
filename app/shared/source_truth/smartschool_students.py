@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from pathlib import Path
 from typing import TypeAlias
 
@@ -23,6 +24,22 @@ from app.shared.source_truth.smartschool_normalize import (
 from app.timetable.utils import normalize_academic_year
 
 RowsT: TypeAlias = list[RowT]
+StudentCurriculumCountsT: TypeAlias = dict[str, Counter[str]]
+
+STUDENT_COMPLETENESS_FIELDS = (
+    "long_name",
+    "first_name",
+    "last_name",
+    "legacy_curriculum",
+    "college_code",
+    "birth_date",
+    "birth_place",
+    "nationality",
+    "origin_county",
+    "personal_email",
+    "phone_no",
+    "physical_address",
+)
 
 
 def load_smartschool_students(smartschool_dir: Path, ok_tables: set[str]) -> RowsT:
@@ -31,8 +48,8 @@ def load_smartschool_students(smartschool_dir: Path, ok_tables: set[str]) -> Row
         return []
     path = smartschool_dir / "dbo_UM_Students.csv"
     last_terms = _student_last_terms(smartschool_dir, ok_tables)
+    registration_curricula = _student_registration_curricula(smartschool_dir, ok_tables)
     rows: RowsT = []
-    seen_usernames: set[str] = set()
     for row in read_rows(path):
         student_id = clean_student_id(first_value(row, "StudentID"))
         if not student_id:
@@ -79,10 +96,9 @@ def load_smartschool_students(smartschool_dir: Path, ok_tables: set[str]) -> Row
                 or first_value(row, "AddressLine3"),
                 "phone_no": first_value(row, "Phone") or first_value(row, "AddressLine2"),
                 "physical_address": first_value(row, "AddressLine1"),
-                "username": _student_username(first, middle, last, seen_usernames),
             }
         )
-    return rows
+    return _with_unique_usernames(_dedupe_students_by_id(rows, registration_curricula))
 
 
 def _student_last_terms(smartschool_dir: Path, ok_tables: set[str]) -> dict[str, str]:
@@ -105,6 +121,67 @@ def _student_last_terms(smartschool_dir: Path, ok_tables: set[str]) -> dict[str,
         if current is None or candidate[:2] > current[:2]:
             terms[student_id] = candidate
     return {student_id: term[2] for student_id, term in terms.items()}
+
+
+def _student_registration_curricula(
+    smartschool_dir: Path, ok_tables: set[str]
+) -> StudentCurriculumCountsT:
+    """Return legacy curriculum frequencies from operational registration rows."""
+    counts: StudentCurriculumCountsT = {}
+    if "UM_Registrations" not in ok_tables:
+        return counts
+    for row in read_rows(smartschool_dir / "dbo_UM_Registrations.csv"):
+        student_id = clean_student_id(first_value(row, "StudentID"))
+        legacy_curriculum = legacy_curriculum_from_row(row)
+        if not student_id or not legacy_curriculum:
+            continue
+        counts.setdefault(student_id, Counter())[legacy_curriculum] += 1
+    return counts
+
+
+def _dedupe_students_by_id(
+    rows: RowsT, registration_curricula: StudentCurriculumCountsT
+) -> RowsT:
+    """Keep one strongest SmartSchool student row for each student id."""
+    selected: dict[str, RowT] = {}
+    for row in rows:
+        student_id = row.get("student_id", "")
+        existing = selected.get(student_id)
+        if existing is None or _student_row_score(
+            row, registration_curricula
+        ) > _student_row_score(existing, registration_curricula):
+            selected[student_id] = row
+    return list(selected.values())
+
+
+def _student_row_score(
+    row: RowT, registration_curricula: StudentCurriculumCountsT
+) -> tuple[int, int, int]:
+    """Score duplicate student rows by operational evidence and completeness."""
+    student_id = row.get("student_id", "")
+    legacy_curriculum = row.get("legacy_curriculum", "")
+    registration_score = registration_curricula.get(student_id, Counter()).get(
+        legacy_curriculum, 0
+    )
+    real_birth_date = int(row.get("birth_date", "") not in {"", "1900-01-01"})
+    completeness = sum(1 for field in STUDENT_COMPLETENESS_FIELDS if row.get(field, ""))
+    return (registration_score, real_birth_date, completeness)
+
+
+def _with_unique_usernames(rows: RowsT) -> RowsT:
+    """Populate deterministic unique usernames after duplicate student rows are removed."""
+    seen_usernames: set[str] = set()
+    output: RowsT = []
+    for row in rows:
+        updated = dict(row)
+        updated["username"] = _student_username(
+            row.get("first_name", ""),
+            row.get("middle_name", ""),
+            row.get("last_name", row.get("student_id", "")),
+            seen_usernames,
+        )
+        output.append(updated)
+    return output
 
 
 def _student_username(

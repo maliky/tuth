@@ -88,3 +88,13 @@ def test_import_grades_command_rows(
         created_grade = Grade.objects.first()
         assert created_grade is not None
         assert created_grade.student_id == default_student.id
+
+
+def test_import_grades_dry_run_rolls_back(tmp_path, grade_values) -> None:
+    """Dry-run should validate rows without writing Grade records."""
+    tsv_path = tmp_path / "grades.tsv"
+    _write_grades_tsv(tsv_path, [_grade_row()])
+
+    call_command("import_grades", file=tsv_path, batch_size=1, dry_run=True)
+
+    assert Grade.objects.count() == 0

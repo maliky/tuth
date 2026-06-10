@@ -36,6 +36,8 @@ FUNDAMENTAL_IMPORT_FILES: FileNamesT = (
 GRAPRO_IMPORT_FILES: FileNamesT = (
     "Accounts.csv",
     "Courses.csv",
+    "StudentInfo.csv",
+    "StudentRecords.csv",
 )
 
 TUCURRICULA_IMPORT_FILES: FileNamesT = (

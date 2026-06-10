@@ -37,9 +37,7 @@ class SecWgt(widgets.ForeignKeyWidget):
             return None
         sec_no = to_int(sec_value)
 
-        asserts_keys(
-            ["curriculum", "course_no", "dept_code", "college_code", "faculty"], row
-        )
+        asserts_keys(["curriculum", "course_no", "dept_code", "college_code"], row)
 
         curriculum_value = get_in_row("curriculum", row)
         curriculum_course = self.curriculum_course_w.clean(curriculum_value, row=row)
@@ -50,7 +48,7 @@ class SecWgt(widgets.ForeignKeyWidget):
         semester = ensure_sem(academic_value, semester_value, default="25-26s2")
 
         faculty_value = get_in_row("faculty", row)
-        faculty = self.faculty_w.clean(faculty_value, row=row)
+        faculty = self.faculty_w.clean(faculty_value, row=row) if faculty_value else None
 
         key = (
             semester.id,

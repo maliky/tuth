@@ -243,6 +243,10 @@ class LegacyRegioResource(RegioResource):
                 lambda _: RegistrationStatus.get_dft().code,
             ),
         )
+        status_code = parse_str(get_in_row("status", row), "lower")
+        if status_code not in self.registration_status_codes:
+            status_code = RegistrationStatus.get_dft().code
+        row["status"] = status_code
 
         return super().before_import_row(row, **kwargs)
 
@@ -250,6 +254,12 @@ class LegacyRegioResource(RegioResource):
     def fallback_curri(self) -> str:
         """Return a default curriculum label for registrations."""
         return LegacyGradeSheetResource.fallback_curri
+
+    @cached_property
+    def registration_status_codes(self) -> set[str]:
+        """Return valid registration status codes for fast legacy normalization."""
+        RegistrationStatus._populate_attributes_and_db()
+        return set(RegistrationStatus.objects.values_list("code", flat=True))
 
     # ---------------- duplicate handling / logging ----------------
 

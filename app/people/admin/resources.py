@@ -6,7 +6,7 @@ import json
 import re
 
 from import_export import fields, resources
-from import_export.widgets import DateTimeWidget, Widget
+from import_export.widgets import DateWidget, Widget
 
 from app.academics.admin.widgets import CurriWgt
 from app.people.admin.resources_mapping import (
@@ -113,7 +113,7 @@ class StdResource(resources.ModelResource):
         widget=CurriWgt(),
     )
     birth_date = fields.Field(
-        column_name="birth_date", attribute="birth_date", widget=DateTimeWidget()
+        column_name="birth_date", attribute="birth_date", widget=DateWidget()
     )
     entry_semester = fields.Field(
         column_name="entry_semester_no",

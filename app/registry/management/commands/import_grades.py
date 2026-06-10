@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import time
 from pathlib import Path
+from typing import Mapping, TypeAlias
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import transaction
@@ -22,6 +23,8 @@ from app.registry.models.grade import Grade, GradeValue
 from app.shared.types import StrIntMapT
 from app.shared.utils import get_in_row, to_int
 from app.timetable.ensures import ensure_sec_id, ensure_sem_id
+
+RowT: TypeAlias = Mapping[str, str]
 
 
 class Command(BaseCommand):
@@ -42,6 +45,17 @@ class Command(BaseCommand):
             default=5000,
             help="Number of rows per bulk insert chunk.",
         )
+        parser.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Parse/import without committing grade rows.",
+        )
+        parser.add_argument(
+            "--max-errors",
+            type=int,
+            default=25,
+            help="Stop after this many row errors.",
+        )
 
     def handle(self, *args, **options):
         path = Path(options["file"])
@@ -49,10 +63,12 @@ class Command(BaseCommand):
             raise CommandError(f"Missing file: {path}")
 
         batch_size: int = options["batch_size"]
+        dry_run = bool(options.get("dry_run"))
+        max_errors = int(options.get("max_errors") or 25)
 
         # Caches are preloaded on-demand inside ensure_* helpers.
         grade_values: StrIntMapT = {
-            code.upper(): pk for code, pk in GradeValue.objects.values_list("code", "id")
+            code.lower(): pk for code, pk in GradeValue.objects.values_list("code", "id")
         }
 
         default_faculty = Faculty.get_dft()
@@ -72,83 +88,146 @@ class Command(BaseCommand):
         rows_to_create: list[Grade] = []
         # Existing grade pairs to avoid duplicates
         existing_pairs = set(Grade.objects.values_list("student_id", "section_id"))
+        error_rows: list[tuple[int, str, RowT]] = []
 
         start_time = time.time()
 
         # > at this level we expect all all students in the grade table are already created.
-        with path.open(newline="", encoding="utf-8-sig") as f:
-            reader = csv.DictReader(f, delimiter="\t")
-            for _, row in enumerate(reader, start=1):
-                # > this ensure_student should student manager to find existing student with sid
-                student_pk = ensure_std_sid(get_in_row("student_id", row))
+        with transaction.atomic():
+            with path.open(newline="", encoding="utf-8-sig") as f:
+                reader = csv.DictReader(f, delimiter="\t")
+                for row_number, row in enumerate(reader, start=1):
+                    try:
+                        grade = _grade_from_row(
+                            row,
+                            grade_values=grade_values,
+                            default_faculty_id=default_faculty_id,
+                        )
+                    except UnknownGradeCodeError:
+                        skipped += 1
+                        rows_processed += 1
+                        continue
+                    except Exception as exc:
+                        error_rows.append((row_number, str(exc), row))
+                        if len(error_rows) >= max_errors:
+                            _write_grade_error_log(error_rows)
+                            raise CommandError(
+                                f"Grade import stopped after {len(error_rows)} errors."
+                            ) from exc
+                        rows_processed += 1
+                        continue
 
-                # Looking for the section
-                sem_pk = ensure_sem_id(
-                    get_in_row("academic_year", row), get_in_row("semester_no", row)
-                )
-                college_pk = ensure_college_id(get_in_row("college_code", row))
-                dept_pk = ensure_dpt_id(get_in_row("course_dept", row), college_pk)
-                course_pk = ensure_crs_id(
-                    dept_pk, get_in_row("course_no", row), get_in_row("course_title", row)
-                )
-                curriculum_pk = ensure_curri_id(
-                    get_in_row("curriculum", row), college_pk, fuzzy_threshold=1.0
-                )
-                credit_code = to_int(get_in_row("credit_hours", row), default=3)
-                curr_course_pk = ensure_curri_crs_id(
-                    curriculum_pk, course_pk, credit_code
-                )
-                sec_no = to_int(get_in_row("section_no", row))
-                section_pk = ensure_sec_id(
-                    sem_pk, curr_course_pk, sec_no, default_faculty_id
-                )
+                    pair = (grade.student_id, grade.section_id)
+                    if pair in existing_pairs:
+                        rows_processed += 1
+                        continue
+                    existing_pairs.add(pair)
+                    rows_to_create.append(grade)
 
-                # Looking for the grade
-                grade_code = get_in_row("grade_code", row).upper()
-                grade_value_id = grade_values.get(grade_code)
-                if grade_value_id is None:
-                    skipped += 1
-                    continue
-
-                pair = (student_pk, section_pk)
-                if pair in existing_pairs:
-                    continue
-                existing_pairs.add(pair)
-
-                rows_to_create.append(
-                    Grade(
-                        student_id=student_pk,
-                        section_id=section_pk,
-                        value_id=grade_value_id,
-                    )
-                )
-
-                if len(rows_to_create) >= batch_size:
-                    with transaction.atomic():
+                    if len(rows_to_create) >= batch_size:
                         Grade.objects.bulk_create(
                             rows_to_create, ignore_conflicts=True, batch_size=batch_size
                         )
-                    created_grades_total += len(rows_to_create)
-                    rows_to_create.clear()
-                    batch_commits += 1
-                    if batch_commits % 5 == 0:
-                        elapsed = time.time() - start_time
-                        rate = rows_processed / elapsed if elapsed else 0
-                        self.stdout.write(
-                            f"Progress: {rows_processed} rows in {elapsed:.1f}s ({rate:.0f} rows/s)"
-                        )
+                        created_grades_total += len(rows_to_create)
+                        rows_to_create.clear()
+                        batch_commits += 1
+                        if batch_commits % 5 == 0:
+                            elapsed = time.time() - start_time
+                            rate = rows_processed / elapsed if elapsed else 0
+                            self.stdout.write(
+                                f"Progress: {rows_processed} rows in {elapsed:.1f}s ({rate:.0f} rows/s)"
+                            )
 
-                rows_processed += 1
+                    rows_processed += 1
 
-        if rows_to_create:
-            with transaction.atomic():
+            if rows_to_create:
                 Grade.objects.bulk_create(
                     rows_to_create, ignore_conflicts=True, batch_size=batch_size
                 )
-            created_grades_total += len(rows_to_create)
+                created_grades_total += len(rows_to_create)
+
+            if error_rows:
+                _write_grade_error_log(error_rows)
+                raise CommandError(
+                    f"Grade import failed with {len(error_rows)} row errors."
+                )
+
+            if dry_run:
+                transaction.set_rollback(True)
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Grade import complete: {created_grades_total} grades created, {skipped} skipped (missing grade_value or invalid)."
+                f"Grade import complete{' (dry-run)' if dry_run else ''}: "
+                f"{created_grades_total} grades created, {skipped} skipped "
+                "(missing grade_value or invalid)."
             )
         )
+
+
+class UnknownGradeCodeError(ValueError):
+    """Raised when a source row carries a grade code missing from GradeValue."""
+
+
+def _grade_from_row(
+    row: RowT, *, grade_values: StrIntMapT, default_faculty_id: int
+) -> Grade:
+    """Build a Grade object from one normalized import row."""
+    # > this ensure_student should student manager to find existing student with sid
+    student_pk = ensure_std_sid(get_in_row("student_id", row))
+    semester_no = get_in_row("semester_no", row) or get_in_row("semester", row)
+    sem_pk = ensure_sem_id(get_in_row("academic_year", row), semester_no)
+    college_pk = ensure_college_id(get_in_row("college_code", row))
+    dept_pk = ensure_dpt_id(get_in_row("course_dept", row), college_pk)
+    course_pk = ensure_crs_id(
+        dept_pk,
+        get_in_row("course_no", row),
+        get_in_row("course_title", row),
+    )
+    curriculum_pk = ensure_curri_id(
+        get_in_row("curriculum", row), college_pk, fuzzy_threshold=1.0
+    )
+    credit_code = to_int(get_in_row("credit_hours", row), default=3)
+    curr_course_pk = ensure_curri_crs_id(curriculum_pk, course_pk, credit_code)
+    sec_no = to_int(get_in_row("section_no", row))
+    section_pk = ensure_sec_id(sem_pk, curr_course_pk, sec_no, default_faculty_id)
+
+    grade_code = get_in_row("grade_code", row).lower()
+    grade_value_id = grade_values.get(grade_code)
+    if grade_value_id is None:
+        raise UnknownGradeCodeError(grade_code)
+    return Grade(student_id=student_pk, section_id=section_pk, value_id=grade_value_id)
+
+
+def _write_grade_error_log(rows: list[tuple[int, str, RowT]]) -> Path:
+    """Write compact grade import errors for importer repair."""
+    log_path = Path("logs/import_errors/import_grades_errors.csv")
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    headers = [
+        "row_number",
+        "error",
+        "student_id",
+        "academic_year",
+        "semester_no",
+        "course_dept",
+        "course_no",
+        "section_no",
+        "grade_code",
+    ]
+    with log_path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=headers)
+        writer.writeheader()
+        for row_number, error, row in rows:
+            writer.writerow(
+                {
+                    "row_number": row_number,
+                    "error": error,
+                    "student_id": get_in_row("student_id", row),
+                    "academic_year": get_in_row("academic_year", row),
+                    "semester_no": get_in_row("semester_no", row),
+                    "course_dept": get_in_row("course_dept", row),
+                    "course_no": get_in_row("course_no", row),
+                    "section_no": get_in_row("section_no", row),
+                    "grade_code": get_in_row("grade_code", row),
+                }
+            )
+    return log_path

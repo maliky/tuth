@@ -32,6 +32,8 @@ from app.shared.source_truth.fuzzy import (
     build_course_alias_candidates,
 )
 from app.shared.source_truth.fuzzy_students import build_student_identity_candidates
+from app.shared.source_truth.grade_merge import merge_missing_grades
+from app.shared.source_truth.grapro_operational import load_grapro_grades
 from app.shared.source_truth.inventory import (
     build_configured_inventory,
     build_smartschool_integrity,
@@ -40,10 +42,12 @@ from app.shared.source_truth.inventory import (
 )
 from app.shared.source_truth.io import RowT, write_tsv
 from app.shared.source_truth.records import (
+    load_grapro_import_students,
     load_fundamental_students,
     load_grapro_students,
     load_passthrough_rows,
     load_smartschool_payments,
+    merge_missing_grapro_students,
 )
 from app.shared.source_truth.smartschool_invalid import (
     load_invalid_smartschool_course_identities,
@@ -159,13 +163,21 @@ def build_tusis_truth(config: TruthBuildConfigT) -> TruthBuildResultT:
     fund_curri_courses = load_fundamental_curriculum_courses(config.fundamentals_dir)
     historical_curri_courses = [*ss_curri_courses, *fund_curri_courses]
 
+    gp_students = load_grapro_students(config.grapro_csv_dir)
+    gp_import_students = load_grapro_import_students(config.grapro_csv_dir)
+    gp_grades, gp_grade_skipped = load_grapro_grades(config.grapro_csv_dir)
+
     students = load_smartschool_students(config.smartschool_dir, ok_tables)
     if not students:
         students = load_fundamental_students(config.fundamentals_dir)
+    students, grapro_student_supplements = merge_missing_grapro_students(
+        students,
+        gp_import_students,
+        {row.get("student_id", "") for row in gp_grades},
+    )
     students, student_curriculum_matches = apply_curriculum_matches_to_students(
         students, curriculum_matches
     )
-    gp_students = load_grapro_students(config.grapro_csv_dir)
     student_matches = build_student_identity_candidates(students, gp_students)
 
     grades = load_smartschool_grades(config.smartschool_dir, ok_tables)
@@ -173,6 +185,7 @@ def build_tusis_truth(config: TruthBuildConfigT) -> TruthBuildResultT:
         grades = load_passthrough_rows(
             config.fundamentals_dir / "full_grades.tsv", "fundamentals_smartschool"
         )
+    grades, grapro_grade_supplements = merge_missing_grades(grades, gp_grades)
     registrations = load_smartschool_course_registrations(
         config.smartschool_dir, ok_tables
     )
@@ -214,6 +227,9 @@ def build_tusis_truth(config: TruthBuildConfigT) -> TruthBuildResultT:
         curriculum_aliases=curriculum_aliases,
         student_matches=student_matches,
         student_curriculum_matches=student_curriculum_matches,
+        grapro_student_supplements=grapro_student_supplements,
+        grapro_grade_supplements=grapro_grade_supplements,
+        grapro_grade_skipped=gp_grade_skipped,
         canonical_courses=canonical_courses,
         canonical_curricula=canonical_curricula,
         canonical_curri_courses=canonical_curri_courses,

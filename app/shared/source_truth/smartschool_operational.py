@@ -97,7 +97,7 @@ def load_smartschool_course_registrations(
                 "course_title": course.get("course_title", ""),
                 "curriculum": context.get("curriculum", ""),
                 "college_code": context.get("college_code", ""),
-                "status": "registered",
+                "status": "pending",
             }
         )
     return rows

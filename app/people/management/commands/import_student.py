@@ -5,7 +5,7 @@ from __future__ import annotations
 import csv
 import time
 from pathlib import Path
-from typing import Iterable
+from typing import Mapping, TypeAlias
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from tablib import Dataset
@@ -14,6 +14,8 @@ from app.people.admin.resources import StdResource
 from app.people.admin.resources_mapping import STUDENT_HEADER_MAP
 from app.shared.file_utils import read_text_file
 from app.shared.management.commands.import_resources import _load_dataset
+
+ErrorRowT: TypeAlias = Mapping[str, str]
 
 
 class Command(BaseCommand):
@@ -39,6 +41,12 @@ class Command(BaseCommand):
             default=100,
             help="Batch size for chunked student import (default: 1000).",
         )
+        parser.add_argument(
+            "--start-row",
+            type=int,
+            default=1,
+            help="1-based data row to start importing from for resume runs.",
+        )
 
     def handle(self, *args, **options) -> None:
         dry_run: bool = bool(options.get("dry_run"))
@@ -49,11 +57,23 @@ class Command(BaseCommand):
         text = read_text_file(path)
         dataset = _load_dataset(text)
         batch_size = int(options.get("batch_size") or 500)
-        _run_std_import(self, dataset, dry_run=dry_run, batch_size=batch_size)
+        start_row = max(1, int(options.get("start_row") or 1))
+        _run_std_import(
+            self,
+            dataset,
+            dry_run=dry_run,
+            batch_size=batch_size,
+            start_row=start_row,
+        )
 
 
 def _run_std_import(
-    cmd, dataset: Dataset, *, dry_run: bool = False, batch_size: int = 500
+    cmd,
+    dataset: Dataset,
+    *,
+    dry_run: bool = False,
+    batch_size: int = 500,
+    start_row: int = 1,
 ) -> None:
     """Bulk import students in chunks with minimal logging for speed."""
     headers = dataset.headers or []
@@ -70,8 +90,9 @@ def _run_std_import(
     chunk_size = batch_size
     created = updated = skipped = invalid = 0
     total_rows = len(dataset)
+    start_index = max(0, start_row - 1)
 
-    for start in range(0, total_rows, chunk_size):
+    for start in range(start_index, total_rows, chunk_size):
         end = min(start + chunk_size, total_rows)
         chunk = Dataset()
 
@@ -115,8 +136,20 @@ def _run_std_import(
 def _log_chunk_error(
     cmd, chunk: Dataset, start_index: int, error: str, *, limit: int = 100
 ) -> None:
-    """Log a sample of offending rows when a chunk fails."""
-    log_path = Path("import_student_errors.csv")
+    """Log actual offending rows when a chunk fails."""
+    failing_rows = _find_failing_student_rows(chunk, start_index, limit=limit)
+    if not failing_rows:
+        failing_rows = [
+            (
+                start_index + idx + 1,
+                error,
+                {key: row.get(key, "") for key in list(chunk.headers or [])},
+            )
+            for idx, row in enumerate(chunk.dict[:limit])
+        ]
+
+    log_path = Path("logs/import_errors/import_student_errors.csv")
+    log_path.parent.mkdir(parents=True, exist_ok=True)
     headers = list(chunk.headers or [])
     fieldnames = ["row_number", "error", *headers]
 
@@ -125,17 +158,33 @@ def _log_chunk_error(
         writer = csv.DictWriter(fh, fieldnames=fieldnames)
         if mode == "w":
             writer.writeheader()
-        for idx, row in enumerate(chunk.dict, start=0):
-            if idx >= limit:
-                break
-            payload = {k: row.get(k, "") for k in headers}
-            payload["row_number"] = start_index + idx + 1
-            payload["error"] = error
+        for row_number, row_error, row in failing_rows:
+            payload: dict[str, object] = {k: row.get(k, "") for k in headers}
+            payload["row_number"] = row_number
+            payload["error"] = row_error
             writer.writerow(payload)
 
     cmd.stdout.write(
         cmd.style.ERROR(
             f"Chunk starting at row {start_index + 1} failed: {error}; "
-            f"logged up to {limit} rows to {log_path}"
+            f"logged {len(failing_rows)} failing/sample rows to {log_path}"
         )
     )
+
+
+def _find_failing_student_rows(
+    chunk: Dataset, start_index: int, *, limit: int
+) -> list[tuple[int, str, ErrorRowT]]:
+    """Dry-run each row in a failed chunk to isolate real row-level errors."""
+    failures: list[tuple[int, str, ErrorRowT]] = []
+    headers = list(chunk.headers or [])
+    for offset, row in enumerate(chunk.dict):
+        if len(failures) >= limit:
+            break
+        one = Dataset(headers=headers)
+        one.append([row.get(header, "") for header in headers])
+        try:
+            StdResource().import_data(one, dry_run=True, raise_errors=True)
+        except Exception as exc:  # noqa: BLE001 - diagnostics should preserve importer errors.
+            failures.append((start_index + offset + 1, str(exc), row))
+    return failures

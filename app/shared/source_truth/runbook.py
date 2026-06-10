@@ -24,6 +24,15 @@ def write_import_runbook(output_dir: Path, *, smartschool_dir: Path) -> int:
         "would create fake course registrations or duplicate semester state, so it is kept ",
         "as =registry_semester_enrollment.tsv= for audit/reconciliation only.",
         "",
+        "** Resume without reloading completed tables",
+        "",
+        "Use =scripts/rebuild_preprod_from_truth.sh= for operational reloads. If a later ",
+        "stage fails after earlier tables loaded correctly, keep the database volume and ",
+        "resume with =RUN_PREFLIGHT=0 START_AT=<stage>= instead of rerunning reset/imports.",
+        "Useful stages are =catalog=, =students=, =registrations=, =grades=, =finance=, ",
+        "=web=, =check=, and =validate=. For a student import failure after fixing the ",
+        "source file, add =STUDENT_START_ROW=<row>= with =START_AT=students=.",
+        "",
         "** Commands",
         "",
     ]
@@ -46,6 +55,10 @@ def _command_blocks(
         "python manage.py build_tusis_truth "
         f"--smartschool-dir {smartschool_dir} --output-dir {output_dir}"
     )
+    preflight = (
+        f"TRUTH_DIR={import_dir} COMPOSE_PROJECT_NAME=tusis_preprod "
+        "./scripts/preflight_preprod_truth.sh"
+    )
     reset_standard = (
         f"{compose} down -v && {compose} up -d db && "
         f"until {compose} exec -T db bash -lc "
@@ -54,27 +67,28 @@ def _command_blocks(
         "'python manage.py migrate --noinput && python manage.py create_states && "
         "python manage.py load_roles && python manage.py create_test_users'"
     )
-    import_catalog = (
+    import_catalog_students = (
         f"{compose} run --rm web python manage.py import_resources -f {import_dir} "
-        "-r Curriculum -r Course -r CurriCrs -r CurriCrsRequirement"
-    )
-    import_students = (
+        "-r Curriculum -r Course -r CurriCrs -r CurriCrsRequirement && "
         f"{compose} run --rm web python manage.py import_student "
         f"-f {import_dir / 'people_full_student.tsv'} --batch-size 500"
     )
-    import_registry_grades = (
+    import_registry_grades_finance = (
         f"{compose} run --rm web bash -lc "
         f"'python manage.py import_resources -f {import_dir} -r LegacyRegistration && "
         f"python manage.py import_grades -f {import_dir / 'full_grades.tsv'} "
-        f"--batch-size 5000' && {compose} up -d --build web && "
-        f"{compose} exec -T web python manage.py check"
+        f"--batch-size 5000 && python manage.py import_finance_payments "
+        f"-f {import_dir / 'finance_payments.tsv'}' && {compose} up -d web && "
+        f"{compose} exec -T web python manage.py check && "
+        f"{compose} exec -T web python manage.py validate_preprod_truth "
+        f"--truth-dir {import_dir}"
     )
     return (
         build_truth,
+        preflight,
         reset_standard,
-        import_catalog,
-        import_students,
-        import_registry_grades,
+        import_catalog_students,
+        import_registry_grades_finance,
     )
 
 

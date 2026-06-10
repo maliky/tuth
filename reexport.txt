@@ -1,0 +1,68 @@
+SmartSchool tables to re-export from Seed_data/SmartSchoolDB_20260603
+Generated from logs/tusis_truth/latest-check/table_integrity.tsv.
+Reason: manifest row count is non-zero, but exported CSV is empty/corrupt or row count mismatches.
+
+Highest priority for Anthony/current-semester course correctness
+- UM_GradeSheet: expected 54572, got 0
+- UM_Oldgrades: expected 168462, got 0
+- UM_StudentsCourses: expected 60303, got 0
+- UM_Registrations: expected 15375, got 0
+- UM_CoursesSections: expected 2047, got 0
+- UM_CoursesSchedule: expected 36, got 0
+- UM_Courses: expected 101, got 0
+- UM_CoursesLevels: expected 997, got 0
+
+Academic / Courses
+- UM_Courses: expected 101, got 0
+- UM_CoursesLevels: expected 997, got 0
+- UM_CoursesSchedule: expected 36, got 0
+- UM_CoursesSections: expected 2047, got 0
+- UM_CurriculumCourses: expected 1930, got 0
+- UM_Curriculums: expected 39, got 0
+- UM_Programs: expected 39, got 0
+- UM_Sections: expected 14, got 0
+
+Grades / Registration / Students
+- UM_GradeSheet: expected 54572, got 0
+- UM_Oldgrades: expected 168462, got 0
+- UM_Registrations: expected 15375, got 0
+- UM_StudentsCourses: expected 60303, got 0
+- UM_Students: expected 7362, got 0
+- UM_StudentsDocuments: expected 20, got 0
+- UM_Suspension: expected 49, got 0
+
+Finance
+- Transactions: expected 2254246, got 25976
+- TransactionsVoid: expected 8880, got 0
+- UM_Fees: expected 30, got 0
+- UM_CollegeFees: expected 7, got 0
+- UM_NonStaticFees: expected 9, got 0
+- UM_RosterPercentToPay: expected 1, got 0
+- UM_Scholarships: expected 24, got 0
+- UM_FinancialAid: expected 35, got 0
+- UM_FinAidStudents: expected 4734, got 0
+- UM_FinAidLetterColleges: expected 6, got 0
+- UM_FinAidLetterDDates: expected 15, got 0
+- UM_ReAdmissionBilling: expected 102, got 0
+- UM_ReAdmissionPmt: expected 101, got 0
+- UM_GradTransBilling: expected 262, got 0
+- UM_GradTranTransactions: expected 258, got 0
+- UM_GradTranTransactionsVoid: expected 1, got 0
+
+Reports / Temp Tables Worth Re-exporting
+- UM_tmpBillingSummary: expected 2259, got 0
+- UM_tmpDelinquentStudents: expected 883, got 0
+- UM_tmpEnrollmentRpt: expected 44, got 0
+- UM_tmpEnrollmentRpt1: expected 164, got 0
+- UM_tmpFinClear: expected 569, got 0
+
+Other Corrupted/Mismatched
+- FileDetail: expected 343619, got 343618
+- Files: expected 46738, got 46737
+- UM_AcademicPeriods: expected 9, got 0
+- UM_Colleges: expected 7, got 0
+- UM_EnrollmentTypes: expected 36, got 0
+- UM_Entrance: expected 1280, got 0
+- UM_EntranceType: expected 1, got 0
+- UM_EntranceVoid: expected 82, got 0
+- UM_Staff: expected 106, got 0
