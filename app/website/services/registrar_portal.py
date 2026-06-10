@@ -19,12 +19,13 @@ from app.registry.models.grade import Grade
 from app.shared.utils import parse_str
 from app.timetable.models.semester import Semester, SemesterStatus
 from app.timetable.utils import format_datetime
+from app.website.services.portal_types import PortalContextT
 from app.website.services.staff_portal import (
     build_staff_role_switcher,
     build_staff_sidebar_links,
 )
 
-ContextT: TypeAlias = dict[str, object]
+ContextT: TypeAlias = PortalContextT
 
 
 class RegGradeRowT(TypedDict):
@@ -80,6 +81,14 @@ class StudentAutocompleteResultT(TypedDict):
 
     id: int
     text: str
+
+
+class SemesterOptionT(TypedDict):
+    """Portal semester filter option for registrar views."""
+
+    value: str
+    label: str
+    selected: bool
 
 
 def clean_int(value: str | None) -> int | None:
@@ -149,9 +158,9 @@ def registrar_student_results(query: str | None) -> list[StudentAutocompleteResu
 
 def _semester_options(
     semester_id: int | None, all_selected: bool
-) -> list[dict[str, object]]:
+) -> list[SemesterOptionT]:
     """Build semester filter options for registrar pages."""
-    options: list[dict[str, object]] = [
+    options: list[SemesterOptionT] = [
         {"value": "all", "label": "All semesters", "selected": all_selected}
     ]
     for sem in Semester.objects.select_related("academic_year").order_by(

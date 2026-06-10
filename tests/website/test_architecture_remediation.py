@@ -7,6 +7,7 @@ from decimal import Decimal
 
 import pytest
 from django.contrib.auth.models import Group, Permission, User
+from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 
 from app.academics.models.college import College
@@ -199,3 +200,102 @@ def test_staff_sidebar_exposes_dean_curriculum_task(client) -> None:
     assert response.status_code == 200
     assert b"Curriculum review" in response.content
     assert reverse("dean_curricula").encode() in response.content
+
+
+def test_vpaa_can_approve_curriculum_activation(client) -> None:
+    """VPAA approval should approve and activate the related curriculum."""
+    college = College.objects.create(code="TVPAA", long_name="VPAA Test College")
+    curriculum = Curriculum.objects.create(
+        short_name="BSC-VPAA",
+        long_name="VPAA Approval Curriculum",
+        college=college,
+        status_id="pending",
+    )
+    dean_user = User.objects.create_user("dean_vpaa_arch", password="PassW0rd!")
+    approval = ApprovalQueue.objects.create(
+        request_type="curriculum_activation",
+        target_role="vpaa",
+        submitted_by=dean_user,
+        related_content_type=ContentType.objects.get_for_model(Curriculum),
+        related_object_id=curriculum.id,
+        payload={"summary": curriculum.long_name},
+    )
+    vpaa_user = User.objects.create_user("vpaa_arch", password="PassW0rd!")
+    _group_user(vpaa_user, "VPAA")
+    client.force_login(vpaa_user)
+
+    list_response = client.get(reverse("vpaa_approvals"))
+    assert list_response.status_code == 200
+    assert b"VPAA Approval Curriculum" in list_response.content
+
+    detail_response = client.get(reverse("vpaa_approval_detail", args=[approval.id]))
+    assert detail_response.status_code == 200
+    assert reverse("vpaa_approval_approve", args=[approval.id]).encode() in (
+        detail_response.content
+    )
+
+    review_response = client.post(
+        reverse("vpaa_approval_mark_review", args=[approval.id]),
+        follow=True,
+    )
+    assert review_response.status_code == 200
+    approval.refresh_from_db()
+    assert approval.status == "in_review"
+
+    approve_response = client.post(
+        reverse("vpaa_approval_approve", args=[approval.id]),
+        {"notes": "Approved for activation."},
+        follow=True,
+    )
+    assert approve_response.status_code == 200
+    approval.refresh_from_db()
+    curriculum.refresh_from_db()
+    assert approval.status == "approved"
+    assert approval.decided_by == vpaa_user
+    assert curriculum.status_id == "approved"
+    assert curriculum.is_active is True
+
+
+def test_vpaa_can_reject_curriculum_activation_without_domain_change(client) -> None:
+    """VPAA rejection should decide the request without approving the curriculum."""
+    college = College.objects.create(code="TREJ", long_name="VPAA Reject College")
+    curriculum = Curriculum.objects.create(
+        short_name="BSC-REJ",
+        long_name="VPAA Rejection Curriculum",
+        college=college,
+        status_id="pending",
+    )
+    approval = ApprovalQueue.objects.create(
+        request_type="curriculum_activation",
+        target_role="vpaa",
+        submitted_by=User.objects.create_user("dean_reject_arch"),
+        related_content_type=ContentType.objects.get_for_model(Curriculum),
+        related_object_id=curriculum.id,
+        payload={"summary": curriculum.long_name},
+    )
+    vpaa_user = User.objects.create_user("vpaa_reject_arch", password="PassW0rd!")
+    _group_user(vpaa_user, "VPAA")
+    client.force_login(vpaa_user)
+
+    response = client.post(
+        reverse("vpaa_approval_reject", args=[approval.id]),
+        {"notes": "Return to college."},
+        follow=True,
+    )
+    assert response.status_code == 200
+    approval.refresh_from_db()
+    curriculum.refresh_from_db()
+    assert approval.status == "rejected"
+    assert approval.notes == "Return to college."
+    assert curriculum.status_id == "pending"
+    assert curriculum.is_active is False
+
+
+def test_non_vpaa_cannot_open_vpaa_approval_queue(client) -> None:
+    """VPAA approval pages should be role-bound."""
+    user = User.objects.create_user("not_vpaa_arch", password="PassW0rd!")
+    _group_user(user, "Dean")
+    client.force_login(user)
+
+    response = client.get(reverse("vpaa_approvals"))
+    assert response.status_code == 403

@@ -77,15 +77,17 @@ The portal shell is now structurally shared:
 - staff, finance, registrar, and enrollment task templates extend the staff base.
 
 This matches the current design guide direction.
-The remaining work is to split the large service modules and continue moving repeated task-specific markup into shared portal components.
+The large portal entry modules are now compatibility façades over smaller service modules; remaining work is deeper student-dashboard decomposition and continued shared component extraction as new task screens are added.
 
 ** Portal service layer
 The website layer now has explicit service modules:
-- =app/website/services/student_portal.py=
-- =app/website/services/staff_portal.py=
+- =app/website/services/student_portal.py= façade over student dashboard and finance statement services
+- =app/website/services/staff_portal.py= façade over staff role, context, navigation, and rendering services
 - =app/website/services/finance_portal.py=
 - =app/website/services/registrar_portal.py=
 - =app/website/services/dean_portal.py=
+- =app/website/services/vpaa_portal.py=
+- =app/website/services/portal_types.py= for shared portal context/component shapes
 
 The URL-facing views now mostly do:
 - permission/decorator enforcement
@@ -104,7 +106,7 @@ Current state:
 
 Still to do:
 - Keep extracting reusable cards, tables, badges, and empty states from the student UI so staff pages can consume the same component language.
-- Continue splitting =app/website/services/student_portal.py= into smaller query/context/action services.
+- Continue decomposing the student dashboard service into smaller query/context/action helpers when the next student workflow is touched.
 - Add deeper controlled browser checks for destructive drop/cancel paths when disposable data policy is explicit.
 
 ** Finance staff perspective
@@ -115,9 +117,9 @@ Current state:
 - The focused preprod browser pass reached =/staff/finance_officer/= and =/staff/finance/invoices/= without 403, 404, 500, or severe console errors.
 - Finance invoice filtering and console context now live in =app/website/services/finance_portal.py=.
 - Disposable-data tests cover finance payment create/update behavior.
+- Browser-driven finance payment create/update smoke now runs against disposable local test data.
 
 Still to do:
-- Add a browser-driven finance payment workflow once the demo data policy says which invoices may be mutated.
 - Continue tightening Finance versus Finance Officer labels in page copy as new finance tasks are added.
 
 ** Dean perspective
@@ -127,10 +129,10 @@ Current state:
 - The admin path is not the visible primary route for the audited dean surface.
 - Deans now have a portal-native curriculum review route at =/staff/dean/curricula/=.
 - Deans can request VPAA activation for a curriculum through the portal, with duplicate pending requests reused.
+- VPAA approval queue, detail, in-review, approve, and reject routes are portal-native.
 
 Still to do:
 - Extend the dean workflow from activation request into full curriculum editing/revision when the curriculum authoring policy is settled.
-- Add the matching VPAA approval portal workflow so the request does not require admin fallback.
 
 ** Registrar and registrar officer perspective
 Current state:
@@ -239,8 +241,8 @@ Affected source areas:
 Evidence:
 - The URL-facing staff and student dashboard views are now thin wrappers.
 - Their previous orchestration moved into =app/website/services/staff_portal.py= and =app/website/services/student_portal.py=.
-- Those two service modules are still over 1000 lines and should be split by role/context/action in the next pass.
-- The largest admin modules remain very large and cross-domain.
+- =staff_portal.py= and =student_portal.py= are now compatibility façades over smaller service modules.
+- The largest admin =core.py= files are now compatibility façades over domain admin modules.
 
 Impact:
 The UX works today, but adding one more staff workflow risks copying patterns into the same large files.
@@ -249,8 +251,8 @@ This makes role behavior harder to reason about and makes typed refactoring hard
 Status after remediation:
 - DONE: thin URL-facing views for student, staff, finance, registrar, and dean portal routes.
 - DONE: typed portal service modules added.
-- TODO: split =student_portal.py= and =staff_portal.py= into smaller composable services.
-- TODO: continue admin module splitting where it reduces coupling.
+- DONE: split =student_portal.py= and =staff_portal.py= into smaller composable service modules with compatibility façades.
+- DONE: split the largest admin =core.py= modules into domain modules with compatibility façades.
 
 ** P1 - Mutating workflow confidence is still below the non-mutating route confidence
 Affected source areas:
@@ -270,7 +272,7 @@ For a full operational MWE, users need confidence that key POST workflows preser
 Status after remediation:
 - DONE: server-side disposable-data mutation coverage for the main operational areas.
 - DONE: browser-facing BDD coverage for student registration and registrar grade workflows.
-- TODO: add browser-driven finance/enrollment mutation checks only after the demo-data mutation policy is explicit.
+- DONE: browser-driven finance and enrollment mutation checks run against disposable local test data.
 
 ** P2 - Service/query boundaries are inconsistent
 Affected source areas:
@@ -291,7 +293,7 @@ This increases the risk of duplicated query logic and role-specific behavior dri
 Status after remediation:
 - DONE: typed portal service/query layer created.
 - DONE: thin views now call the service layer.
-- TODO: move common service type aliases and repeated context shapes into shared portal component types when the next workflow is added.
+- DONE: common portal type aliases and component context shapes now live in =app/website/services/portal_types.py=.
 
 ** P2 - Staff role naming needs clearer UX and test documentation
 Affected source areas:
@@ -311,7 +313,8 @@ The permissions are behaving, but the distinction can confuse demos and audits i
 Status after remediation:
 - DONE: =UX/mwe.org= now has a runtime workflow map that distinguishes Finance from Finance Officer and Registrar from Registrar Officer.
 - DONE: registrar officer uses =/staff/reg_officer/= in the documented workflow map.
-- TODO: keep role copy aligned as VPAA and registrar-family workflows expand.
+- DONE: VPAA copy now points to an explicit institution approvals task in the staff sidebar.
+- TODO: keep role copy aligned as registrar-family workflows expand.
 
 ** P2 - Admin fallback remains broad and operationally important
 Affected source areas:
@@ -378,7 +381,7 @@ Status after remediation:
 - [X] Freeze the non-mutating MWE smoke path as a reusable acceptance check.
   - Implemented as =scripts/mwe_portal_smoke.py=.
 - [X] Add safe disposable-data checks for mutating workflows.
-  - Covered by architecture remediation tests, course-window tests, student registration BDD, and student cancellation tests.
+  - Covered by architecture remediation tests, course-window tests, student registration BDD, student cancellation tests, and Selenium finance/enrollment mutation smokes.
 - [X] Extract student portal context/query helpers from =app/website/views/student_dashboard.py=.
   - The view is now a thin wrapper; remaining split work belongs in =app/website/services/student_portal.py=.
 - [X] Extract staff role registry and role context builders from =app/website/views/staff_dashboards.py=.
@@ -395,6 +398,7 @@ Status after remediation:
   - Local browser-facing BDD passed; preprod smoke should be rerun after deployment with =scripts/mwe_portal_smoke.py=.
 - [X] At least one controlled mutating workflow passes per operational area: registration, finance payment, registrar window, enrollment student update.
 - [X] Staff and student URL-facing dashboard views no longer carry most context-building logic.
-- [ ] Staff and student service modules are not yet small enough; split =student_portal.py= and =staff_portal.py= in the next architecture pass.
+- [X] Staff and student portal entry modules are compatibility façades over smaller service modules.
+- [ ] Continue deeper student dashboard service decomposition when student registration UX changes next.
 - [X] The shared portal component language is reusable through template partials and typed context builders.
 - [X] Admin remains covered by regression tests, but no new primary staff task was routed through admin.

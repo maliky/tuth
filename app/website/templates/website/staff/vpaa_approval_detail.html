@@ -1,0 +1,86 @@
+{% extends "website/staff/base.html" %}
+
+{% block staff_header_actions %}
+  <a class="btn portal-btn-outline btn-sm" href="{% url 'vpaa_approvals' %}">
+    Back to approvals
+  </a>
+{% endblock %}
+
+{% block staff_content %}
+  <section class="portal-panel-card mb-4">
+    <div class="portal-panel-card__stripe"></div>
+    <div class="portal-panel-card__body">
+      <div class="portal-panel-card__head mb-3">
+        <h2>{{ approval.get_request_type_display }}</h2>
+        <p class="portal-panel-card__subtitle">{{ approval.payload.summary|default:"Approval request" }}</p>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-3"><strong>Status</strong><br>{{ approval.status|title }}</div>
+        <div class="col-md-3"><strong>Target role</strong><br>{{ approval.get_target_role_display }}</div>
+        <div class="col-md-3"><strong>Submitted</strong><br>{{ approval.created_at|date:"M d, Y" }}</div>
+        <div class="col-md-3"><strong>Submitted by</strong><br>{{ approval.submitted_by.get_full_name|default:approval.submitted_by.username|default:"Unknown" }}</div>
+      </div>
+      {% if approval.notes %}
+        <div class="alert alert-light mt-4 mb-0">
+          <strong>Decision notes:</strong> {{ approval.notes }}
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  {% if curriculum %}
+    <section class="portal-panel-card mb-4">
+      <div class="portal-panel-card__stripe"></div>
+      <div class="portal-panel-card__body">
+        <div class="portal-panel-card__head mb-3">
+          <h2>{{ curriculum.short_name }}</h2>
+          <p class="portal-panel-card__subtitle">{{ curriculum.long_name|default:"No long name recorded" }}</p>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-3"><strong>College</strong><br>{{ curriculum.college }}</div>
+          <div class="col-md-3"><strong>Status</strong><br>{{ curriculum.status.label }}</div>
+          <div class="col-md-3"><strong>Active</strong><br>{% if curriculum.is_active %}Yes{% else %}No{% endif %}</div>
+          <div class="col-md-3"><strong>Courses</strong><br>{{ curriculum.crs_count }}</div>
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="portal-panel-card">
+    <div class="portal-panel-card__stripe"></div>
+    <div class="portal-panel-card__body">
+      <div class="portal-panel-card__head mb-3">
+        <h2>Decision</h2>
+        <p class="portal-panel-card__subtitle">Approve the request or return it to the submitting office.</p>
+      </div>
+      {% if can_decide %}
+        <form method="post" action="{% url 'vpaa_approval_mark_review' approval.id %}" class="mb-3">
+          {% csrf_token %}
+          <button class="btn portal-btn-outline btn-sm" type="submit">Mark in review</button>
+        </form>
+        <form method="post" action="{% url 'vpaa_approval_approve' approval.id %}" class="row g-3 mb-3">
+          {% csrf_token %}
+          <div class="col-12">
+            <label class="form-label" for="approve-notes">Approval notes</label>
+            <textarea class="form-control" id="approve-notes" name="notes" rows="3"></textarea>
+          </div>
+          <div class="col-12">
+            <button class="btn portal-btn-accent" type="submit">Approve request</button>
+          </div>
+        </form>
+        <form method="post" action="{% url 'vpaa_approval_reject' approval.id %}" class="row g-3">
+          {% csrf_token %}
+          <div class="col-12">
+            <label class="form-label" for="reject-notes">Rejection notes</label>
+            <textarea class="form-control" id="reject-notes" name="notes" rows="3"></textarea>
+          </div>
+          <div class="col-12">
+            <button class="btn btn-outline-danger" type="submit">Reject request</button>
+          </div>
+        </form>
+      {% else %}
+        <div class="portal-empty-state">This request has already been decided.</div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

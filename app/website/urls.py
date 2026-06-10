@@ -66,6 +66,31 @@ urlpatterns = [
         name="dean_curriculum_request_activation",
     ),
     path(
+        "staff/vpaa/approvals/",
+        views.vpaa_approvals,
+        name="vpaa_approvals",
+    ),
+    path(
+        "staff/vpaa/approvals/<int:approval_id>/",
+        views.vpaa_approval_detail,
+        name="vpaa_approval_detail",
+    ),
+    path(
+        "staff/vpaa/approvals/<int:approval_id>/review/",
+        views.vpaa_approval_mark_review,
+        name="vpaa_approval_mark_review",
+    ),
+    path(
+        "staff/vpaa/approvals/<int:approval_id>/approve/",
+        views.vpaa_approval_approve,
+        name="vpaa_approval_approve",
+    ),
+    path(
+        "staff/vpaa/approvals/<int:approval_id>/reject/",
+        views.vpaa_approval_reject,
+        name="vpaa_approval_reject",
+    ),
+    path(
         "staff/finance/invoices/",
         views.finance_officer_invoices,
         name="finance_officer_invoices",

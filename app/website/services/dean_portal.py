@@ -16,12 +16,13 @@ from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.college import College
 from app.people.models.faculty import Faculty
 from app.shared.models import ApprovalQueue
+from app.website.services.portal_types import PortalContextT
 from app.website.services.staff_portal import (
     build_staff_role_switcher,
     build_staff_sidebar_links,
 )
 
-ContextT: TypeAlias = dict[str, object]
+ContextT: TypeAlias = PortalContextT
 
 
 def dean_college(user: User) -> College | None:

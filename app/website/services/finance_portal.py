@@ -16,6 +16,7 @@ from app.finance.models.payment import Payment
 from app.finance.models.status_types_methods import Payer, PaymentMethod, PaymentStatus
 from app.people.models.student import Student
 from app.timetable.models.semester import Semester
+from app.website.services.portal_types import PortalContextT
 from app.website.services.staff_portal import (
     build_staff_role_switcher,
     build_staff_sidebar_links,
@@ -213,7 +214,7 @@ def clean_int(value: str | None) -> Optional[int]:
         return None
 
 
-def build_finance_console_context(request: HttpRequest) -> dict[str, object]:
+def build_finance_console_context(request: HttpRequest) -> PortalContextT:
     """Build context for the finance officer invoice and payment console."""
     user = cast(User, request.user)
     tab = request.GET.get("tab", "invoices")

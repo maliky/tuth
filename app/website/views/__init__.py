@@ -27,6 +27,13 @@ from .registrar import (
     reg_std_autocomplete,
 )
 from .staff_dashboards import staff_dashboard, staff_role_dashboard
+from .vpaa import (
+    vpaa_approval_approve,
+    vpaa_approval_detail,
+    vpaa_approval_mark_review,
+    vpaa_approval_reject,
+    vpaa_approvals,
+)
 from .student_dashboard import (
     download_invoice_statement,
     student_dashboard,
@@ -71,4 +78,9 @@ __all__ = [
     "finance_officer_create_payments",
     "finance_officer_std_autocomplete",
     "finance_officer_update_payments",
+    "vpaa_approval_approve",
+    "vpaa_approval_detail",
+    "vpaa_approval_mark_review",
+    "vpaa_approval_reject",
+    "vpaa_approvals",
 ]
