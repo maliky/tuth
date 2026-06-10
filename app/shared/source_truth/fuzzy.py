@@ -67,10 +67,10 @@ def build_course_alias_candidates(
         exact_rows = target_by_key.get(source_key, [])
         for target in exact_rows[:limit]:
             rows.append(_course_match_row(source, target, 1.0, "exact_course_key"))
-            emitted.add(target.get("row_key", ""))
+            emitted.add(_row_course_key(target))
         alias_key = _alias_course_key(source)
         for target in target_by_key.get(alias_key, []):
-            target_key = target.get("row_key", "")
+            target_key = _row_course_key(target)
             if target_key in emitted:
                 continue
             score = title_similarity(
@@ -85,9 +85,14 @@ def build_course_alias_candidates(
         )
         for target, score in scored[: max(0, limit - len(emitted))]:
             rows.append(
-                _course_match_row(source, target, score, _course_recommendation(score))
+                _course_match_row(
+                    source,
+                    target,
+                    score,
+                    _course_recommendation(source, target, score),
+                )
             )
-            emitted.add(target.get("row_key", ""))
+            emitted.add(_row_course_key(target))
     return rows
 
 
@@ -134,7 +139,7 @@ def _title_candidate_pool(source: RowT, index: CourseTokenIndexT) -> RowsT:
     scored: dict[str, tuple[RowT, int]] = {}
     for token in _title_tokens(source.get("course_title", "")):
         for row in index.get(token, []):
-            key = row.get("row_key", "")
+            key = _row_course_key(row)
             if not key:
                 continue
             _, count = scored.get(key, (row, 0))
@@ -164,7 +169,7 @@ def _score_title_candidates(
     if not source_title:
         return scored
     for target in targets:
-        if target.get("row_key", "") in emitted:
+        if _row_course_key(target) in emitted:
             continue
         score = title_similarity(source_title, target.get("course_title", ""))
         if score >= threshold:
@@ -173,13 +178,28 @@ def _score_title_candidates(
     return scored
 
 
-def _course_recommendation(score: float) -> str:
+def _course_recommendation(source: RowT, target: RowT, score: float) -> str:
     """Classify fuzzy course-title candidates."""
+    if _close_course_code(source, target) and score >= 0.94:
+        return "strong_title_and_close_code_match"
+    if _close_course_code(source, target) and score >= 0.86:
+        return "possible_title_and_close_code_match"
     if score >= 0.94:
         return "strong_title_match"
     if score >= 0.86:
         return "possible_title_match"
     return "weak_title_match"
+
+
+def _close_course_code(source: RowT, target: RowT) -> bool:
+    """Return True when course identities are close enough to prioritize review."""
+    source_dept, source_no = split_course_code(_row_course_key(source))
+    target_dept, target_no = split_course_code(_row_course_key(target))
+    if source_dept != target_dept or not source_no or not target_no:
+        return False
+    if source_no == target_no:
+        return True
+    return source_no[-2:] == target_no[-2:]
 
 
 def _course_match_row(

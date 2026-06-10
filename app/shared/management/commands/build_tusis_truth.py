@@ -51,6 +51,11 @@ class Command(BaseCommand):
             default=None,
             help="Output directory. Defaults to logs/tusis_truth/<UTC timestamp>.",
         )
+        parser.add_argument(
+            "--course-aliases",
+            default="data/course_aliases/approved_course_aliases.tsv",
+            help="Approved course alias TSV applied to import-ready outputs.",
+        )
 
     def handle(self, *args: object, **options: object) -> None:
         """Run the read-only source-truth build."""
@@ -62,6 +67,7 @@ class Command(BaseCommand):
             grapro_mdb=Path(cast(str, options["grapro_mdb"])),
             tucurricula_import_dir=Path(cast(str, options["tucurricula_import_dir"])),
             output_dir=Path(output_option) if output_option else default_output_dir(),
+            approved_course_aliases_path=Path(cast(str, options["course_aliases"])),
         )
         result = build_tusis_truth(config)
         self.stdout.write(

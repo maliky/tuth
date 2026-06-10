@@ -12,6 +12,16 @@ from app.shared.source_truth.curriculum_match import (
     build_curriculum_match_map,
 )
 from app.shared.source_truth.conflicts import build_conflicts
+from app.shared.source_truth.course_aliases import (
+    DEFAULT_APPROVED_ALIAS_PATH,
+    apply_course_aliases,
+    collapse_aliased_duplicates,
+    grade_collision_key,
+    grade_collision_signature,
+    load_approved_course_aliases,
+    registration_collision_key,
+    registration_collision_signature,
+)
 from app.shared.source_truth.exports import (
     build_canonical_courses,
     build_canonical_curricula,
@@ -93,6 +103,7 @@ class TruthBuildConfigT:
     grapro_mdb: Path
     tucurricula_import_dir: Path
     output_dir: Path
+    approved_course_aliases_path: Path = DEFAULT_APPROVED_ALIAS_PATH
 
 
 @dataclass(frozen=True)
@@ -144,8 +155,12 @@ def build_tusis_truth(config: TruthBuildConfigT) -> TruthBuildResultT:
     ss_courses = load_smartschool_courses(config.smartschool_dir, ok_tables)
     fund_courses = load_fundamental_courses(config.fundamentals_dir)
     gp_courses = load_grapro_courses(config.grapro_csv_dir)
-    historical_courses = [*ss_courses, *fund_courses, *gp_courses]
-    course_aliases = build_course_alias_candidates(historical_courses, tuc_courses)
+    historical_courses_raw = [*ss_courses, *fund_courses, *gp_courses]
+    course_aliases = build_course_alias_candidates(historical_courses_raw, tuc_courses)
+    approved_alias_map, approved_course_aliases = load_approved_course_aliases(
+        config.approved_course_aliases_path
+    )
+    historical_courses = apply_course_aliases(historical_courses_raw, approved_alias_map)
 
     tuc_curricula = load_tucurricula_curricula(config.tucurricula_import_dir)
     ss_curricula = load_smartschool_curricula(config.smartschool_dir, ok_tables)
@@ -161,11 +176,15 @@ def build_tusis_truth(config: TruthBuildConfigT) -> TruthBuildResultT:
         config.smartschool_dir, ok_tables
     )
     fund_curri_courses = load_fundamental_curriculum_courses(config.fundamentals_dir)
-    historical_curri_courses = [*ss_curri_courses, *fund_curri_courses]
+    historical_curri_courses_raw = [*ss_curri_courses, *fund_curri_courses]
+    historical_curri_courses = apply_course_aliases(
+        historical_curri_courses_raw, approved_alias_map
+    )
 
     gp_students = load_grapro_students(config.grapro_csv_dir)
     gp_import_students = load_grapro_import_students(config.grapro_csv_dir)
-    gp_grades, gp_grade_skipped = load_grapro_grades(config.grapro_csv_dir)
+    gp_grades_raw, gp_grade_skipped = load_grapro_grades(config.grapro_csv_dir)
+    gp_grades = apply_course_aliases(gp_grades_raw, approved_alias_map)
 
     students = load_smartschool_students(config.smartschool_dir, ok_tables)
     if not students:
@@ -180,14 +199,29 @@ def build_tusis_truth(config: TruthBuildConfigT) -> TruthBuildResultT:
     )
     student_matches = build_student_identity_candidates(students, gp_students)
 
-    grades = load_smartschool_grades(config.smartschool_dir, ok_tables)
+    grades_raw = load_smartschool_grades(config.smartschool_dir, ok_tables)
+    grades = apply_course_aliases(grades_raw, approved_alias_map)
     if not grades:
         grades = load_passthrough_rows(
             config.fundamentals_dir / "full_grades.tsv", "fundamentals_smartschool"
         )
+        grades = apply_course_aliases(grades, approved_alias_map)
     grades, grapro_grade_supplements = merge_missing_grades(grades, gp_grades)
-    registrations = load_smartschool_course_registrations(
+    grades, grade_alias_collisions = collapse_aliased_duplicates(
+        grades,
+        domain="grade",
+        key_fn=grade_collision_key,
+        signature_fn=grade_collision_signature,
+    )
+    registrations_raw = load_smartschool_course_registrations(
         config.smartschool_dir, ok_tables
+    )
+    registrations = apply_course_aliases(registrations_raw, approved_alias_map)
+    registrations, registration_alias_collisions = collapse_aliased_duplicates(
+        registrations,
+        domain="registration",
+        key_fn=registration_collision_key,
+        signature_fn=registration_collision_signature,
     )
     semester_enrollments = load_smartschool_semester_enrollments(
         config.smartschool_dir, ok_tables
@@ -211,7 +245,7 @@ def build_tusis_truth(config: TruthBuildConfigT) -> TruthBuildResultT:
     )
     conflicts = build_conflicts(
         smartschool_integrity,
-        historical_courses,
+        historical_courses_raw,
         course_aliases,
         invalid_course_identities,
     )
@@ -220,8 +254,13 @@ def build_tusis_truth(config: TruthBuildConfigT) -> TruthBuildResultT:
         inventory=inventory,
         smartschool_integrity=smartschool_integrity,
         mdb_tables=mdb_tables,
-        course_witnesses=[*tuc_courses, *historical_courses],
+        course_witnesses=[*tuc_courses, *historical_courses_raw],
         course_aliases=course_aliases,
+        approved_course_aliases=approved_course_aliases,
+        course_alias_collisions=[
+            *grade_alias_collisions,
+            *registration_alias_collisions,
+        ],
         invalid_course_identities=invalid_course_identities,
         repaired_course_identities=repaired_course_identities,
         curriculum_aliases=curriculum_aliases,
@@ -242,9 +281,9 @@ def build_tusis_truth(config: TruthBuildConfigT) -> TruthBuildResultT:
 
     stage_truth_witnesses(
         conn,
-        courses=[*tuc_courses, *historical_courses],
+        courses=[*tuc_courses, *historical_courses_raw],
         curricula=[*tuc_curricula, *historical_curricula],
-        curriculum_courses=[*tuc_curri_courses, *historical_curri_courses],
+        curriculum_courses=[*tuc_curri_courses, *historical_curri_courses_raw],
         requirements=tuc_requirements,
         students=[*students, *gp_students],
         grades=grades,

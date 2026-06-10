@@ -1,0 +1,3 @@
+source_course_dept	source_course_no	target_course_dept	target_course_no	reason
+HIST	101	HIST	201	Legacy duplicate: Liberian History is the same course family as revised Liberian History and Society.
+HIST	102	HIST	202	Legacy SmartSchool/GradPro duplicate: World History 102 is the same course as revised World History 202.

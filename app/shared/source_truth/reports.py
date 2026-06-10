@@ -71,6 +71,36 @@ def report_specs(**rows_by_name: RowsT) -> tuple[ReportSpecT, ...]:
             rows_by_name["course_aliases"],
         ),
         (
+            "approved_course_aliases.tsv",
+            (
+                "source_course_key",
+                "target_course_key",
+                "source_course_dept",
+                "source_course_no",
+                "target_course_dept",
+                "target_course_no",
+                "reason",
+                "action",
+            ),
+            rows_by_name["approved_course_aliases"],
+        ),
+        (
+            "course_alias_collisions.tsv",
+            (
+                "domain",
+                "record_key",
+                "action",
+                "kept_course_key",
+                "duplicate_course_key",
+                "student_id",
+                "academic_year",
+                "semester_no",
+                "kept_source_name",
+                "duplicate_source_name",
+            ),
+            rows_by_name["course_alias_collisions"],
+        ),
+        (
             "invalid_course_identity_rows.tsv",
             (
                 "source_name",
@@ -266,8 +296,9 @@ def summary_text(
             "  2. Review course_identity_repairs.tsv for normalized legacy course rows.",
             "  3. Review invalid_course_identity_rows.tsv for skipped course rows.",
             "  4. Review course_alias_candidates.tsv before accepting aliases.",
-            "  5. Review student_identity_matches.tsv before merging identities.",
-            "  6. Dry-run import_ready TSV files before applying to Django.",
+            "  5. Review approved_course_aliases.tsv and course_alias_collisions.tsv.",
+            "  6. Review student_identity_matches.tsv before merging identities.",
+            "  7. Dry-run import_ready TSV files before applying to Django.",
         ]
     )
     return "\n".join(lines) + "\n"
