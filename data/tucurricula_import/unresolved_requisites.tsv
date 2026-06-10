@@ -1,0 +1,356 @@
+source_file	target_course	field	raw_text	required_course_key	reason
+cafs_curriculum_2024.org	AGRI 211	prereq_all	biol101	BIOL101	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 106	prereq_all	biol101	BIOL101	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 203	prereq_all	biol101	BIOL101	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 204	prereq_all	biol101, agri106	BIOL101	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 204	prereq_all	biol101, agri106	AGRI106	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 206	prereq_all	biol101, chem101	BIOL101	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 206	prereq_all	biol101, chem101	CHEM101	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 207	prereq_all	biol101, agri106, acrs104	BIOL101	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 207	prereq_all	biol101, agri106, acrs104	AGRI106	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 207	prereq_all	biol101, agri106, acrs104	ACRS104	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 210	prereq_all	biol101, agri106, acrs104	BIOL101	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 210	prereq_all	biol101, agri106, acrs104	AGRI106	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 210	prereq_all	biol101, agri106, acrs104	ACRS104	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 301	prereq_all	agri106, agri204	AGRI106	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 301	prereq_all	agri106, agri204	AGRI204	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 303	prereq_all	agri106, agri204	AGRI106	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 303	prereq_all	agri106, agri204	AGRI204	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 305	prereq_all	biol101, agri106	BIOL101	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 305	prereq_all	biol101, agri106	AGRI106	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 306	prereq_all	math101, math102	MATH101	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 306	prereq_all	math101, math102	MATH102	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 307	prereq_all	agri106, agri204	AGRI106	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 307	prereq_all	agri106, agri204	AGRI204	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 308	prereq_all	agri106, agri206	AGRI106	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 308	prereq_all	agri106, agri206	AGRI206	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 310	prereq_all	agri306, engl201	AGRI306	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 310	prereq_all	agri306, engl201	ENGL201	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 311	prereq_all	agri106, agri211	AGRI106	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 311	prereq_all	agri106, agri211	AGRI211	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 401	prereq_all	agri306, engl201	AGRI306	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 401	prereq_all	agri306, engl201	ENGL201	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 403	prereq_all	engl204, agri106	ENGL204	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 403	prereq_all	engl204, agri106	AGRI106	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 405	prereq_all	agri301, agri305, agri307	AGRI301	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 405	prereq_all	agri301, agri305, agri307	AGRI305	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 405	prereq_all	agri301, agri305, agri307	AGRI307	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 406	prereq_all	acrs202, agri206, agri308	ACRS202	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 406	prereq_all	acrs202, agri206, agri308	AGRI206	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 406	prereq_all	acrs202, agri206, agri308	AGRI308	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 407	prereq_all	agri206, agri301, agri308	AGRI206	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 407	prereq_all	agri206, agri301, agri308	AGRI301	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 407	prereq_all	agri206, agri301, agri308	AGRI308	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 414	prereq_all	agri306, agri308, agri311	AGRI306	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 414	prereq_all	agri306, agri308, agri311	AGRI308	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 414	prereq_all	agri306, agri308, agri311	AGRI311	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 410	prereq_all	agri301, acrs302, agri308	AGRI301	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 410	prereq_all	agri301, acrs302, agri308	ACRS302	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 410	prereq_all	agri301, acrs302, agri308	AGRI308	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 412	prereq_all	agri306, agri401, agri414	AGRI306	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 412	prereq_all	agri306, agri401, agri414	AGRI401	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AGRI 412	prereq_all	agri306, agri401, agri414	AGRI414	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 204	prereq_all	agri203, agri106	AGRI203	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 204	prereq_all	agri203, agri106	AGRI106	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 206	prereq_all	agri203, agri106	AGRI203	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 206	prereq_all	agri203, agri106	AGRI106	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 202	prereq_all	agri106	AGRI106	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 303	prereq_all	agri203, aans204, aans202	AGRI203	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 303	prereq_all	agri203, aans204, aans202	AANS204	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 303	prereq_all	agri203, aans204, aans202	AANS202	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 302	prereq_all	aans204, aans206	AANS204	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 302	prereq_all	aans204, aans206	AANS206	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 304	prereq_all	aans204, aans206	AANS204	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 304	prereq_all	aans204, aans206	AANS206	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 306	prereq_all	aans204, aans206	AANS204	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 306	prereq_all	aans204, aans206	AANS206	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 407	prereq_all	aans202, aans204, aans206	AANS202	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 407	prereq_all	aans202, aans204, aans206	AANS204	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 407	prereq_all	aans202, aans204, aans206	AANS206	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 409	prereq_all	aans302, aans304, aans306	AANS302	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 409	prereq_all	aans302, aans304, aans306	AANS304	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 409	prereq_all	aans302, aans304, aans306	AANS306	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 410	prereq_all	aans302, aans304, aans306	AANS302	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 410	prereq_all	aans302, aans304, aans306	AANS304	target course not mapped to any curriculum
+cafs_curriculum_2024.org	AANS 410	prereq_all	aans302, aans304, aans306	AANS306	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 104	prereq_all	biol101	BIOL101	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 204	prereq_all	biol101, agri106, acrs104	BIOL101	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 204	prereq_all	biol101, agri106, acrs104	AGRI106	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 204	prereq_all	biol101, agri106, acrs104	ACRS104	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 208	prereq_all	biol101, agri106, acrs104	BIOL101	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 208	prereq_all	biol101, agri106, acrs104	AGRI106	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 208	prereq_all	biol101, agri106, acrs104	ACRS104	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 301	prereq_all	agri106, asos201, envs201, acrs104	AGRI106	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 301	prereq_all	agri106, asos201, envs201, acrs104	ASOS201	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 301	prereq_all	agri106, asos201, envs201, acrs104	ENVS201	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 301	prereq_all	agri106, asos201, envs201, acrs104	ACRS104	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 302	prereq_all	asos201, acrs104, acrs204	ASOS201	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 302	prereq_all	asos201, acrs104, acrs204	ACRS104	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 302	prereq_all	asos201, acrs104, acrs204	ACRS204	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 304	prereq_all	asos201, acrs104, acrs204	ASOS201	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 304	prereq_all	asos201, acrs104, acrs204	ACRS104	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 304	prereq_all	asos201, acrs104, acrs204	ACRS204	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 306	prereq_all	asos201, acrs104, acrs204	ASOS201	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 306	prereq_all	asos201, acrs104, acrs204	ACRS104	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 306	prereq_all	asos201, acrs104, acrs204	ACRS204	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 401	prereq_all	asos201, acrs104, acrs204	ASOS201	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 401	prereq_all	asos201, acrs104, acrs204	ACRS104	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 401	prereq_all	asos201, acrs104, acrs204	ACRS204	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 409	prereq_all	asos204, asos305, agri307	ASOS204	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 409	prereq_all	asos204, asos305, agri307	ASOS305	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 409	prereq_all	asos204, asos305, agri307	AGRI307	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 402	prereq_all	acrs204, acrs301	ACRS204	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ACRS 402	prereq_all	acrs204, acrs301	ACRS301	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 201	prereq_all	biol101, chem101, acrs104	BIOL101	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 201	prereq_all	biol101, chem101, acrs104	CHEM101	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 201	prereq_all	biol101, chem101, acrs104	ACRS104	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 202	prereq_all	biol101, asos201, agri106	BIOL101	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 202	prereq_all	biol101, asos201, agri106	ASOS201	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 202	prereq_all	biol101, asos201, agri106	AGRI106	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 301	prereq_all	chem101, asos201, agri206	CHEM101	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 301	prereq_all	chem101, asos201, agri206	ASOS201	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 301	prereq_all	chem101, asos201, agri206	AGRI206	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 302	prereq_all	chem101, agri206, asos202	CHEM101	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 302	prereq_all	chem101, agri206, asos202	AGRI206	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 302	prereq_all	chem101, agri206, asos202	ASOS202	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 204	prereq_all	asos201, agri106	ASOS201	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 204	prereq_all	asos201, agri106	AGRI106	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 304	prereq_all	asos201, asos202, asos204, agri106	ASOS201	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 304	prereq_all	asos201, asos202, asos204, agri106	ASOS202	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 304	prereq_all	asos201, asos202, asos204, agri106	ASOS204	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 304	prereq_all	asos201, asos202, asos204, agri106	AGRI106	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 305	prereq_all	asos201, asos202, agri106	ASOS201	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 305	prereq_all	asos201, asos202, agri106	ASOS202	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 305	prereq_all	asos201, asos202, agri106	AGRI106	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 401	prereq_all	asos202, asos204, asos302, asos301	ASOS202	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 401	prereq_all	asos202, asos204, asos302, asos301	ASOS204	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 401	prereq_all	asos202, asos204, asos302, asos301	ASOS302	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 401	prereq_all	asos202, asos204, asos302, asos301	ASOS301	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 403	prereq_all	asos204, asos301, asos302	ASOS204	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 403	prereq_all	asos204, asos301, asos302	ASOS301	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 403	prereq_all	asos204, asos301, asos302	ASOS302	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 404	prereq_all	asos204, asos301, asos302	ASOS204	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 404	prereq_all	asos204, asos301, asos302	ASOS301	target course not mapped to any curriculum
+cafs_curriculum_2024.org	ASOS 404	prereq_all	asos204, asos301, asos302	ASOS302	target course not mapped to any curriculum
+cas_curriculum_2025.org	FREN 201	prereq_all	engl102	ENGL102	target course not mapped to any curriculum
+cas_curriculum_2025.org	GLEB 201	prereq_all	engl102	ENGL102	target course not mapped to any curriculum
+cas_curriculum_2025.org	ENGL 209	prereq_all	engl104	ENGL104	target course not mapped to any curriculum
+cas_curriculum_2025.org	ENGL 412	prerequisites	Senior Standing		no course reference parsed
+cas_curriculum_2025.org	FREN 312	prerequisites	Students must have completed the previous courses.*		no course reference parsed
+cas_curriculum_2025.org	FREN 405	prerequisites	Students must have completed the previous courses.*		no course reference parsed
+cas_curriculum_2025.org	FREN 409	prerequisites	Students must have completed the previous courses.*		no course reference parsed
+cas_curriculum_2025.org	FREN 410	prerequisites	Completion of foundational language and culture courses.*		no course reference parsed
+cas_curriculum_2025.org	BIOL 208	prereq_all	biol201	BIOL201	required course not mapped to import rows
+cas_curriculum_2025.org	BIOL 301	prereq_all	biol201	BIOL201	required course not mapped to import rows
+cas_curriculum_2025.org	BIOL 309	prereq_all	biol201	BIOL201	required course not mapped to import rows
+cas_curriculum_2025.org	BIOL 312	prerequisites	Junior Standing		no course reference parsed
+cas_curriculum_2025.org	BIOL 408	prerequisites	Senior Standing		no course reference parsed
+cas_curriculum_2025.org	MATH 306	prerequisites	math206math208		no course reference parsed
+cas_curriculum_2025.org	COMP 301	prerequisites	Junior Standing/		no course reference parsed
+cas_curriculum_2025.org	MATH 311	prerequisites	Junior Standing		no course reference parsed
+cas_curriculum_2025.org	MATH 402	prerequisites	Senior Standing		no course reference parsed
+cas_curriculum_2025.org	MATH 404	prerequisites	Senior Standing		no course reference parsed
+cas_curriculum_2025.org	RESM 411	prerequisites	Senior Standing		no course reference parsed
+cas_curriculum_2025.org	PHED 251	prerequisites	(It required field trip)		no course reference parsed
+cas_curriculum_2025.org	PHED 291	prerequisites	(field work Required)		no course reference parsed
+cas_curriculum_2025.org	PHED 232	prereq_all	(it required 10 hr. field practice)	REQUIRED10	required course not mapped to import rows
+cba_curriculum_2025.org	ACCT 411	prereq_all	acct201	ACCT201	target course not mapped to any curriculum
+cba_curriculum_2025.org	COBA 430	prereq_all	acct302, acct304, acct401, acct403, acct405, econ308, econ314	ACCT302	target course not mapped to any curriculum
+cba_curriculum_2025.org	COBA 430	prereq_all	acct302, acct304, acct401, acct403, acct405, econ308, econ314	ACCT304	target course not mapped to any curriculum
+cba_curriculum_2025.org	COBA 430	prereq_all	acct302, acct304, acct401, acct403, acct405, econ308, econ314	ACCT401	target course not mapped to any curriculum
+cba_curriculum_2025.org	COBA 430	prereq_all	acct302, acct304, acct401, acct403, acct405, econ308, econ314	ACCT403	target course not mapped to any curriculum
+cba_curriculum_2025.org	COBA 430	prereq_all	acct302, acct304, acct401, acct403, acct405, econ308, econ314	ACCT405	target course not mapped to any curriculum
+cba_curriculum_2025.org	COBA 430	prereq_all	acct302, acct304, acct401, acct403, acct405, econ308, econ314	ECON308	target course not mapped to any curriculum
+cba_curriculum_2025.org	COBA 430	prereq_all	acct302, acct304, acct401, acct403, acct405, econ308, econ314	ECON314	target course not mapped to any curriculum
+cba_curriculum_2025.org	BFIN 404	prereq_all	All 300-level BFIN Courses	ALL300	required course not mapped to import rows
+cba_curriculum_2025.org	BFIN 412	prereq_all	All 300-level BFIN courses	ALL300	required course not mapped to import rows
+cba_curriculum_2025.org	ECON 203	prereq_all	Math 101 and 102	AND102	required course not mapped to import rows
+cba_curriculum_2025.org	ECON 404	prereq_all	econ202, econ307	ECON202	target course not mapped to any curriculum
+cba_curriculum_2025.org	ECON 404	prereq_all	econ202, econ307	ECON307	target course not mapped to any curriculum
+cba_curriculum_2025.org	PADM 304	prereq_all	padm201, padm202 and Econ 201	ECON201	required course not mapped to import rows
+cba_curriculum_2025.org	PADM 406	prereq_all	padm311	PADM311	target course not mapped to any curriculum
+cba_curriculum_2025.org	PADM 420	prerequisites	Senior Standing		no course reference parsed
+cba_curriculum_2025.org	PADM 434	prerequisites	Completion of Upper Junior year courses		no course reference parsed
+ced_curriculum_2025.org	EYED 403	prerequisites	Senior standing. All 3rd year courses must be cleared.		no course reference parsed
+ced_curriculum_2025.org	ECED 201	prereq_all	engl102, math102, math102, eyed102	EYED102	required course not mapped to import rows
+ced_curriculum_2025.org	ECED 402	prerequisites	Senior standing with no course left in the program		no course reference parsed
+ced_curriculum_2025.org	ECED 404	prerequisites	complete all courses in semester I of the senior year		no course reference parsed
+ced_curriculum_2025.org	PEDU 402	prerequisites	Senior standing with no more courses left for the student		no course reference parsed
+ced_curriculum_2025.org	PEDU 404	prerequisites	Senior standing with no more courses left for the student		no course reference parsed
+ced_curriculum_2025.org	BIOL 301	prereq_all	biol101, biol102, biol201, biol202	BIOL201	required course not mapped to import rows
+ced_curriculum_2025.org	BIOL 302	prereq_all	biol101, biol102, biol201, biol202, biol301	BIOL201	required course not mapped to import rows
+ced_curriculum_2025.org	BIOL 303	prereq_all	biol101, biol102, biol201, biol202	BIOL201	required course not mapped to import rows
+ced_curriculum_2025.org	BIOL 304	prereq_all	biol101, biol102, biol201, biol203	BIOL201	required course not mapped to import rows
+ced_curriculum_2025.org	BIOL 305	prereq_all	biol101, biol102, biol201, biol202	BIOL201	required course not mapped to import rows
+ced_curriculum_2025.org	BIOL 441	prereq_all	biol101, biol102, biol201, biol202, biol301, biol302	BIOL201	required course not mapped to import rows
+ced_curriculum_2025.org	BIOL 405	prereq_all	biol101, biol102, biol201, biol202, biol301, biol302	BIOL201	required course not mapped to import rows
+ced_curriculum_2025.org	EDEN 304	prereq_all	engl201, eden204, eden205, eden206, eden301, eden302, and 303	AND303	required course not mapped to import rows
+ced_curriculum_2025.org	EDEN 305	prereq_all	engl201, eden204, eden205, eden206, eden301, eden302, and303	AND303	required course not mapped to import rows
+ced_curriculum_2025.org	EDEN 405	prereq_all	engl201, eden204, eden205, eden206, eden301, eden302, eden303, eden304, eden305, and 306	AND306	required course not mapped to import rows
+ced_curriculum_2025.org	EDEN 409	prereq_all	engl201, eden204, eden205, eden206, eden301, eden302, eden303, eden304, eden305, and 306	AND306	required course not mapped to import rows
+ced_curriculum_2025.org	MATH 410	prerequisites	no more courses left in the program		no course reference parsed
+ced_curriculum_2025.org	GCED 302	prereq_all	gced301, gced303, educ305	EDUC305	required course not mapped to import rows
+ced_curriculum_2025.org	GCED 305	prereq_all	gced201, gced202	GCED201	required course not mapped to import rows
+ced_curriculum_2025.org	GCED 307	prereq_all	educ204, gced201, gced202	GCED201	required course not mapped to import rows
+ced_curriculum_2025.org	GCED 404	prerequisites	Student must have satisfied conditions stated for practicum offering		no course reference parsed
+cet_curriculum_2024.org	GENG 201	prerequisites	Entrance to Engineering		no course reference parsed
+cet_curriculum_2024.org	GENG 203	prerequisites	Entrance level		no course reference parsed
+cet_curriculum_2024.org	GENG 204	prerequisites	Sophomore standing		no course reference parsed
+cet_curriculum_2024.org	GENG 303	prerequisites	Third Year Standing		no course reference parsed
+cet_curriculum_2024.org	GENG 401	prerequisites	Fourth year standing		no course reference parsed
+cet_curriculum_2024.org	CENG 303	prerequisites	Third year standing		no course reference parsed
+cet_curriculum_2024.org	CENG 304	prerequisites	Third year standing		no course reference parsed
+cet_curriculum_2024.org	CENG 400	prereq_all	Students should have passed 145 credits including All GE and EEDU courses taken and passed	PASSED145	required course not mapped to import rows; target course not mapped to any curriculum
+cet_curriculum_2024.org	CENG 405	prerequisites	Senior level		no course reference parsed
+cet_curriculum_2024.org	ELEC 501	prerequisites	Fifth year standing		no course reference parsed
+cet_curriculum_2024.org	CENG 505	prerequisites	Fifth-year standing and approval of instructor		no course reference parsed
+cet_curriculum_2024.org	EENG 303	prereq_all	eeng102	EENG102	required course not mapped to import rows
+cet_curriculum_2024.org	EENG 308	prereq_all	eeng102, geng203	EENG102	required course not mapped to import rows
+cet_curriculum_2024.org	EENG 310	prereq_all	eeng301, eeng303, eeng304, eeng305	EENG304	required course not mapped to import rows
+cet_curriculum_2024.org	EENG 310	prereq_all	eeng301, eeng303, eeng304, eeng305	EENG305	required course not mapped to import rows
+cet_curriculum_2024.org	EENG 312	prereq_all	eeng301, eeng303, eeng304, eeng305	EENG304	required course not mapped to import rows
+cet_curriculum_2024.org	EENG 312	prereq_all	eeng301, eeng303, eeng304, eeng305	EENG305	required course not mapped to import rows
+cet_curriculum_2024.org	EENG 400	prereq_all	Students must have completed 153 Credits/ including All GE and EEDU courses taken and passed/.	COMPLETED153	required course not mapped to import rows; target course not mapped to any curriculum
+cet_curriculum_2024.org	EENG 401	prereq_all	eeng304, eeng302, eeng305	EENG304	required course not mapped to import rows
+cet_curriculum_2024.org	EENG 401	prereq_all	eeng304, eeng302, eeng305	EENG305	required course not mapped to import rows
+cet_curriculum_2024.org	EENG 407	prereq_all	math301, math302, geng203, eeng302, eeng304, eeng305, eeng306	EENG304	required course not mapped to import rows
+cet_curriculum_2024.org	EENG 407	prereq_all	math301, math302, geng203, eeng302, eeng304, eeng305, eeng306	EENG305	required course not mapped to import rows
+cet_curriculum_2024.org	EENG 408	prerequisites	Senior level standing		no course reference parsed
+cet_curriculum_2024.org	EENG 409	prereq_all	eeng102, geng203, eeng303, math201	EENG102	required course not mapped to import rows
+cet_curriculum_2024.org	EENG 513	prereq_all	eeng303, eeng305	EENG303	target course not mapped to any curriculum
+cet_curriculum_2024.org	EENG 513	prereq_all	eeng303, eeng305	EENG305	required course not mapped to import rows; target course not mapped to any curriculum
+cet_curriculum_2024.org	EENG 503	prereq_all	eeng402	EENG402	required course not mapped to import rows
+cet_curriculum_2024.org	EENG 505	prerequisites	Graduating Senior standing.		no course reference parsed
+cet_curriculum_2024.org	EENG 508	prereq_all	eeng402, eeng503	EENG402	required course not mapped to import rows
+cet_curriculum_2024.org	EENG 509	prereq_all	eeng302, eeng304, eeng305	EENG304	required course not mapped to import rows
+cet_curriculum_2024.org	EENG 509	prereq_all	eeng302, eeng304, eeng305	EENG305	required course not mapped to import rows
+cet_curriculum_2024.org	EENG 511	prerequisites	Graduating Senior Standing		no course reference parsed
+cet_curriculum_2024.org	EENG 512	prerequisites	Graduating Senior Standing		no course reference parsed
+cet_curriculum_2024.org	MENG 302	prereq_all	math301, geng301, meng301, meng303	MENG301	required course not mapped to import rows
+cet_curriculum_2024.org	MENG 303	prerequisites	Junior level standing		no course reference parsed
+cet_curriculum_2024.org	MENG 304	prereq_all	meng401, meng403	MENG401	required course not mapped to import rows
+cet_curriculum_2024.org	MENG 305	prereq_all	geng306, meng301, meng302	MENG301	required course not mapped to import rows
+cet_curriculum_2024.org	MENG 400	prereq_all	Student must have completed 150 credits	COMPLETED150	required course not mapped to import rows; target course not mapped to any curriculum
+cet_curriculum_2024.org	MENG 402	prereq_all	meng401, meng407, meng403	MENG401	required course not mapped to import rows
+cet_curriculum_2024.org	MENG 403	prereq_all	math302, geng302, meng301, meng305	MENG301	required course not mapped to import rows
+cet_curriculum_2024.org	MENG 409	prereq_all	math302, geng306, meng301, meng302, meng304	MENG301	required course not mapped to import rows
+cet_curriculum_2024.org	MENG 501	prereq_all	meng411	MENG411	required course not mapped to import rows
+cet_curriculum_2024.org	MENG 503	prereq_all	meng402, meng404, meng413	MENG413	required course not mapped to import rows
+cet_curriculum_2024.org	MENG 505	prereq_all	meng402, meng404, meng406, meng408, meng410, meng412	MENG412	required course not mapped to import rows
+cet_curriculum_2024.org	MENG 509	prereq_all	meng402, meng410, meng414, meng503	MENG402	target course not mapped to any curriculum
+cet_curriculum_2024.org	MENG 509	prereq_all	meng402, meng410, meng414, meng503	MENG410	target course not mapped to any curriculum
+cet_curriculum_2024.org	MENG 509	prereq_all	meng402, meng410, meng414, meng503	MENG414	required course not mapped to import rows; target course not mapped to any curriculum
+cet_curriculum_2024.org	MENG 509	prereq_all	meng402, meng410, meng414, meng503	MENG503	target course not mapped to any curriculum
+cet_curriculum_2024.org	MENG 510	prereq_all	meng402, meng410, meng414, meng503	MENG402	target course not mapped to any curriculum
+cet_curriculum_2024.org	MENG 510	prereq_all	meng402, meng410, meng414, meng503	MENG410	target course not mapped to any curriculum
+cet_curriculum_2024.org	MENG 510	prereq_all	meng402, meng410, meng414, meng503	MENG414	required course not mapped to import rows; target course not mapped to any curriculum
+cet_curriculum_2024.org	MENG 510	prereq_all	meng402, meng410, meng414, meng503	MENG503	target course not mapped to any curriculum
+cet_curriculum_2024.org	MENG 511	prereq_all	math302, geng212, geng202, geng302, geng306, meng305, meng401.	MATH302	target course not mapped to any curriculum
+cet_curriculum_2024.org	MENG 511	prereq_all	math302, geng212, geng202, geng302, geng306, meng305, meng401.	GENG212	target course not mapped to any curriculum
+cet_curriculum_2024.org	MENG 511	prereq_all	math302, geng212, geng202, geng302, geng306, meng305, meng401.	GENG202	target course not mapped to any curriculum
+cet_curriculum_2024.org	MENG 511	prereq_all	math302, geng212, geng202, geng302, geng306, meng305, meng401.	GENG302	target course not mapped to any curriculum
+cet_curriculum_2024.org	MENG 511	prereq_all	math302, geng212, geng202, geng302, geng306, meng305, meng401.	GENG306	target course not mapped to any curriculum
+cet_curriculum_2024.org	MENG 511	prereq_all	math302, geng212, geng202, geng302, geng306, meng305, meng401.	MENG305	target course not mapped to any curriculum
+cet_curriculum_2024.org	MENG 511	prereq_all	math302, geng212, geng202, geng302, geng306, meng305, meng401.	MENG401	required course not mapped to import rows; target course not mapped to any curriculum
+cet_curriculum_2024.org	MENG 512	prereq_all	meng502	MENG502	target course not mapped to any curriculum
+cet_curriculum_2024.org	CSEN 400	prereq_all	Student /must have completed 160 credits/ including All GE and EEDU courses taken and passed/.	COMPLETED160	required course not mapped to import rows; target course not mapped to any curriculum
+cet_curriculum_2024.org	CSEN 404	prerequisites	One Programming Language		no course reference parsed
+chs_curriculum_2024.org	CHSC 301	prereq_all	pubh200, pubh202	PUBH200	required course not mapped to import rows
+chs_curriculum_2024.org	NURS 200	coreq_all	chsc206, nurs202	NURS202	required course not mapped to import rows
+chs_curriculum_2024.org	NURS 205	prereq_any	chem101 or biol101, engl101, engl102, psyc101 CHSC 10	CHSC10	required course not mapped to import rows
+chs_curriculum_2024.org	NURC 206	coreq_all	nurs200, nurs204, chsc204, chsc206	NURS204	required course not mapped to import rows
+chs_curriculum_2024.org	NURC 301	coreq_all	nurc303, nurc305, nurc307, chsc309	CHSC309	required course not mapped to import rows
+chs_curriculum_2024.org	NURC 302	prereq_all	nurc301, nurc303, nurc305, nurc307, chsc309	CHSC309	required course not mapped to import rows
+chs_curriculum_2024.org	NURC 302	coreq_all	nurc302, nurs304, nurc306, nurc308, nurs310	NURS304	required course not mapped to import rows
+chs_curriculum_2024.org	NURC 303	coreq_all	nurc301, nurc305, nurc307, chsc309	CHSC309	required course not mapped to import rows
+chs_curriculum_2024.org	NURC 305	coreq_all	nurc301, nurc303, nurc307, chsc309	CHSC309	required course not mapped to import rows
+chs_curriculum_2024.org	NURC 306	prereq_all	nurc301, nurc303, nurc305, nurc307, chsc309	CHSC309	required course not mapped to import rows
+chs_curriculum_2024.org	NURC 307	coreq_all	nurc301, nurc303, nurc305, chsc309	CHSC309	required course not mapped to import rows
+chs_curriculum_2024.org	NURC 308	prereq_all	nurc301, nurc303, nurc305, nurc307, chsc309	CHSC309	required course not mapped to import rows
+chs_curriculum_2024.org	NURS 310	prereq_all	nurc301, nurc303, nurc305, nurc307, chsc309	CHSC309	required course not mapped to import rows
+chs_curriculum_2024.org	NURS 312	prereq_all	nurc301, nurc303, nurc305, nurc307, chsc309	CHSC309	required course not mapped to import rows
+chs_curriculum_2024.org	NURC 401	prereq_all	nurc301, nurc303, nurc305, nurc307, chsc309, nurc302, nurc306, nurs310, nurs312	CHSC309	required course not mapped to import rows
+chs_curriculum_2024.org	NURS 402	prereq_all	nurc301, nurc303, nurc305, nurc307, chsc309, nurc302, nurc306, nurs310, nurs312	CHSC309	required course not mapped to import rows
+chs_curriculum_2024.org	NURC 403	prereq_all	nurc301, nurc303, nurc305, nurc307, chsc309, nurc302, nurc306, nurs310, nurs312	CHSC309	required course not mapped to import rows
+chs_curriculum_2024.org	NURS 405	prereq_all	nurc301, nurc303, nurc305, nurc307, chsc309, nurc302, nurc306, nurs310	CHSC309	required course not mapped to import rows
+chs_curriculum_2024.org	NURS 407	prereq_all	nurc301, nurc303, nurc305, nurc307, chsc309, nurc302, nurc306, nurs310	CHSC309	required course not mapped to import rows
+chs_curriculum_2024.org	MIDW 208	prerequisites	Transfer Pharmacology Course		no course reference parsed
+chs_curriculum_2024.org	MIDW 208	coreq_all	midw201	MIDW201	required course not mapped to import rows
+chs_curriculum_2024.org	PUBH 302	prereq_all	math106, pubh200, pubh202	PUBH200	required course not mapped to import rows
+chs_curriculum_2024.org	PUBH 303	prereq_all	pubh200, pubh202	PUBH200	required course not mapped to import rows
+chs_curriculum_2024.org	PUBH 304	prereq_all	chsc201, chsc202, chsc203, chsc204, chsc205, chsc206, chsc207, chsc301, chsc305, pubh301	PUBH301	required course not mapped to import rows
+chs_curriculum_2024.org	PUBH 305-ORPH	prereq_all	pubh200, pubh202	PUBH200	required course not mapped to import rows; target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 305-ORPH	prereq_all	pubh200, pubh202	PUBH202	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 306	prereq_all	pubh200, pubh202, pubh204, envs201	PUBH200	required course not mapped to import rows
+chs_curriculum_2024.org	PUBH 306	prereq_all	pubh200, pubh202, pubh204, envs201	PUBH204	required course not mapped to import rows
+chs_curriculum_2024.org	PUBH 307	prereq_all	pubh200, pubh202, pubh303, pubh302	PUBH200	required course not mapped to import rows
+chs_curriculum_2024.org	PUBH 308	prereq_all	chsc202, chsc203, chsc204, pubh200, pubh202	PUBH200	required course not mapped to import rows
+chs_curriculum_2024.org	PUBH 320-ORPH	prereq_all	pubh200, pubh202, pubh303, pubh302	PUBH200	required course not mapped to import rows; target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 320-ORPH	prereq_all	pubh200, pubh202, pubh303, pubh302	PUBH202	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 320-ORPH	prereq_all	pubh200, pubh202, pubh303, pubh302	PUBH303	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 320-ORPH	prereq_all	pubh200, pubh202, pubh303, pubh302	PUBH302	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 312	prereq_all	pubh200, pubh202	PUBH200	required course not mapped to import rows; target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 312	prereq_all	pubh200, pubh202	PUBH202	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 314	prereq_all	pubh200, pubh202	PUBH200	required course not mapped to import rows; target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 314	prereq_all	pubh200, pubh202	PUBH202	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 316	prereq_all	pubh200, pubh202	PUBH200	required course not mapped to import rows; target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 316	prereq_all	pubh200, pubh202	PUBH202	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 318	prereq_all	chsc201, chsc301, pubh200, pubh202	CHSC201	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 318	prereq_all	chsc201, chsc301, pubh200, pubh202	CHSC301	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 318	prereq_all	chsc201, chsc301, pubh200, pubh202	PUBH200	required course not mapped to import rows; target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 318	prereq_all	chsc201, chsc301, pubh200, pubh202	PUBH202	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 320	prereq_all	chsc201, pubh200, pubh202	CHSC201	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 320	prereq_all	chsc201, pubh200, pubh202	PUBH200	required course not mapped to import rows; target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 320	prereq_all	chsc201, pubh200, pubh202	PUBH202	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 322	prereq_all	pubh200, pubh202	PUBH200	required course not mapped to import rows; target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 322	prereq_all	pubh200, pubh202	PUBH202	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 324-ORPH	prereq_all	pubh200, pubh202, chsc301	PUBH200	required course not mapped to import rows; target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 324-ORPH	prereq_all	pubh200, pubh202, chsc301	PUBH202	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 324-ORPH	prereq_all	pubh200, pubh202, chsc301	CHSC301	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 325	prereq_all	pubh403, pubh408, pubh421, pubh405, pubh423, PUBH	PUBH403	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 325	prereq_all	pubh403, pubh408, pubh421, pubh405, pubh423, PUBH	PUBH408	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 325	prereq_all	pubh403, pubh408, pubh421, pubh405, pubh423, PUBH	PUBH421	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 325	prereq_all	pubh403, pubh408, pubh421, pubh405, pubh423, PUBH	PUBH405	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 325	prereq_all	pubh403, pubh408, pubh421, pubh405, pubh423, PUBH	PUBH423	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 401-ORPH	prereq_all	pubh200, pubh202, chsc301, pubh330	PUBH200	required course not mapped to import rows; target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 401-ORPH	prereq_all	pubh200, pubh202, chsc301, pubh330	PUBH202	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 401-ORPH	prereq_all	pubh200, pubh202, chsc301, pubh330	CHSC301	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 401-ORPH	prereq_all	pubh200, pubh202, chsc301, pubh330	PUBH330	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 402	prereq_all	pubh200, pubh202, chsc301	PUBH200	required course not mapped to import rows; target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 402	prereq_all	pubh200, pubh202, chsc301	PUBH202	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 402	prereq_all	pubh200, pubh202, chsc301	CHSC301	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 403-ORPH	prerequisites	Senior Standing		no course reference parsed
+chs_curriculum_2024.org	PUBH 405	prereq_all	pubh403, pubh408, pubh421, PU pubh423, pubh430	PUBH403	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 405	prereq_all	pubh403, pubh408, pubh421, PU pubh423, pubh430	PUBH408	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 405	prereq_all	pubh403, pubh408, pubh421, PU pubh423, pubh430	PUBH421	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 405	prereq_all	pubh403, pubh408, pubh421, PU pubh423, pubh430	PUBH423	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 405	prereq_all	pubh403, pubh408, pubh421, PU pubh423, pubh430	PUBH430	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 408	prereq_all	chsc301, pubh408	CHSC301	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 411	prereq_all	pubh403, pubh408, pubh421, pubh405, pubh423, pubh430	PUBH403	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 411	prereq_all	pubh403, pubh408, pubh421, pubh405, pubh423, pubh430	PUBH408	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 411	prereq_all	pubh403, pubh408, pubh421, pubh405, pubh423, pubh430	PUBH421	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 411	prereq_all	pubh403, pubh408, pubh421, pubh405, pubh423, pubh430	PUBH405	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 411	prereq_all	pubh403, pubh408, pubh421, pubh405, pubh423, pubh430	PUBH423	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 411	prereq_all	pubh403, pubh408, pubh421, pubh405, pubh423, pubh430	PUBH430	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 412	prereq_all	pubh305, pubh403, pubh408, pubh421, pubh405, pubh423, pubh430	PUBH305	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 412	prereq_all	pubh305, pubh403, pubh408, pubh421, pubh405, pubh423, pubh430	PUBH403	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 412	prereq_all	pubh305, pubh403, pubh408, pubh421, pubh405, pubh423, pubh430	PUBH408	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 412	prereq_all	pubh305, pubh403, pubh408, pubh421, pubh405, pubh423, pubh430	PUBH421	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 412	prereq_all	pubh305, pubh403, pubh408, pubh421, pubh405, pubh423, pubh430	PUBH405	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 412	prereq_all	pubh305, pubh403, pubh408, pubh421, pubh405, pubh423, pubh430	PUBH423	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 412	prereq_all	pubh305, pubh403, pubh408, pubh421, pubh405, pubh423, pubh430	PUBH430	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 413	prereq_all	pubh403, pubh408	PUBH403	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 413	prereq_all	pubh403, pubh408	PUBH408	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 414	prereq_all	pubh306, pubh413	PUBH306	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 414	prereq_all	pubh306, pubh413	PUBH413	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 415	prereq_all	pubh403, pubh408	PUBH403	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 415	prereq_all	pubh403, pubh408	PUBH408	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 416	prereq_all	pubh308, pubh421, pubh405, pubh423, pubh430	PUBH308	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 416	prereq_all	pubh308, pubh421, pubh405, pubh423, pubh430	PUBH421	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 416	prereq_all	pubh308, pubh421, pubh405, pubh423, pubh430	PUBH405	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 416	prereq_all	pubh308, pubh421, pubh405, pubh423, pubh430	PUBH423	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 416	prereq_all	pubh308, pubh421, pubh405, pubh423, pubh430	PUBH430	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 417	prereq_all	pubh308	PUBH308	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 423-ORPH	prereq_all	pubh421, pubh303, pubh302	PUBH421	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 423-ORPH	prereq_all	pubh421, pubh303, pubh302	PUBH303	target course not mapped to any curriculum
+chs_curriculum_2024.org	PUBH 423-ORPH	prereq_all	pubh421, pubh303, pubh302	PUBH302	target course not mapped to any curriculum
