@@ -212,7 +212,9 @@ def pagination_shows_counts(selenium_driver) -> None:
 def transcript_page_shown(reg_context: RegContext, selenium_driver) -> None:
     """Open and verify the transcript preview."""
     assert reg_context.student is not None
-    transcript_link = selenium_driver.find_element(By.LINK_TEXT, "Official transcript")
+    transcript_link = WebDriverWait(selenium_driver, 10).until(
+        EC.element_to_be_clickable((By.LINK_TEXT, "Official transcript"))
+    )
     transcript_link.click()
 
     WebDriverWait(selenium_driver, 10).until(
