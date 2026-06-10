@@ -109,7 +109,7 @@ def _build_sidebar_links(
             "active": False,
         },
         {
-            "label": "Old Course and grades",
+            "label": "Grades",
             "href": f"{dashboard_url}#records",
             "active": False,
         },

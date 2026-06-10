@@ -28,8 +28,9 @@ from app.finance.fee_assignment import (
 )
 from app.finance.models.invoice import CrsInvoice, StdSemesterInvoice
 from app.finance.models.payment import Payment
+from app.finance.registration_invoices import ensure_course_invoice_for_registration
 from app.people.models.student import Student
-from app.registry.gpa import get_cumulative_gpa, get_grade_points_and_credits
+from app.registry.gpa import effective_transcript_grades, get_grade_points_and_credits
 from app.registry.models.grade import Grade
 from app.registry.models.registration import Registration, RegistrationStatus
 from app.timetable.choices import WEEKDAYS_NUMBER
@@ -169,24 +170,9 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
             return
         getattr(messages, level)(request, text)
 
-    def _ensure_invoice_for_sec(section: Section) -> None:
-        """Create or patch invoices so initial_amount_due is always set."""
-        amount_due = section.fee_total_amount()
-        invoice, created = CrsInvoice.objects.get_or_create(
-            student=student,
-            curriculum_course=section.curriculum_course,
-            semester=section.semester,
-            defaults={
-                "initial_amount_due": amount_due,
-                "balance": amount_due,
-            },
-        )
-        initial_amount_due: Decimal | None = getattr(invoice, "initial_amount_due", None)
-        if not created and initial_amount_due is None:
-            invoice.initial_amount_due = amount_due
-            if invoice.balance is None:
-                invoice.balance = amount_due
-            invoice.save(update_fields=["initial_amount_due", "balance", "status"])
+    def _ensure_invoice_for_reg(registration: Registration) -> None:
+        """Materialize the finance invoice attached to a registration."""
+        ensure_course_invoice_for_registration(registration)
 
     def _parse_sec_ids(raw_ids: str) -> list[int]:
         """Parse a comma-delimited list of section IDs into integers."""
@@ -433,14 +419,14 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
                     if was_created:
                         created += 1
                         current_course_ids.add(course_id)
-                        _ensure_invoice_for_sec(section)
+                        _ensure_invoice_for_reg(registration)
                         continue
                     if registration.status_id in {"canceled", "removed"}:
                         registration.status = pending_status
                         registration.save(update_fields=["status"])
                         updated += 1
                         current_course_ids.add(course_id)
-                        _ensure_invoice_for_sec(section)
+                        _ensure_invoice_for_reg(registration)
                     else:
                         skipped += 1
                 if semester is not None:
@@ -957,9 +943,6 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
             # Informational bucket: all non-selectable curriculum courses stay visible.
             locked_courses.append(course_payload)
 
-    gpa_result = get_cumulative_gpa(student=student, curriculum=curriculum)
-    gpa = gpa_result["gpa"]
-
     total_due = StdSemesterInvoice.objects.filter(student=student).aggregate(
         total=Sum("balance")
     ).get("total") or Decimal("0.00")
@@ -1023,10 +1006,13 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
     semester_credit_totals: DefaultDict[int, int] = defaultdict(int)
     semester_sort_info: dict[int, tuple[date, int]] = {}
     validated_credits_total = 0
-    grades = (
-        Grade.objects.filter(student=student)
+    cumulative_gpa_points = 0.0
+    cumulative_gpa_credits = 0
+    grades_qs = (
+        Grade.objects.filter(student=student, is_effective=True)
         .select_related(
             "section__curriculum_course__course",
+            "section__curriculum_course__course__department",
             "section__curriculum_course__credit_hours",
             "section__semester",
             "section__semester__academic_year",
@@ -1038,6 +1024,7 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
             "-graded_on",
         )
     )
+    grades = effective_transcript_grades(grades_qs)
     # > Group completed grades by semester with GPA summaries.
     for grade in grades:
         section = grade.section
@@ -1089,6 +1076,8 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
             quality_points, gpa_credits = gpa_values
             semester_gpa_points[semester_id] += quality_points
             semester_gpa_credits[semester_id] += gpa_credits
+            cumulative_gpa_points += quality_points
+            cumulative_gpa_credits += gpa_credits
 
     for grade_group in semester_grade_groups:
         semester_id = grade_group["semester_id"]
@@ -1112,8 +1101,11 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
             )
         grade_group["courses"].sort(key=lambda row: row["code"] or "")
 
+    gpa = (
+        cumulative_gpa_points / cumulative_gpa_credits if cumulative_gpa_credits else None
+    )
     credit_summary = {
-        "gpa": f"{gpa:.2f}" if gpa else "N/A",
+        "gpa": f"{gpa:.2f}" if gpa is not None else "N/A",
         "validated": validated_credits_total,
     }
 
