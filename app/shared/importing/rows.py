@@ -5,15 +5,33 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
+from app.shared.course_wrangling import (
+    CourseIdentityResultT,
+    CourseIdentityT,
+    compact_course_code,
+    invalid_course_identity_reason,
+    normalize_course_number,
+    parse_course_identity,
+    parse_course_identity_result,
+)
 from app.shared.types import Row, Transform
 from app.shared.utils import get_in_row, parse_str
 
 # stuff here should go to academics.utils
 
 CourseDeptKeysT = tuple[str, ...]
-
 COURSE_DEPT_KEYS: CourseDeptKeysT = ("dept_code", "course_dept", "course_name")
 COURSE_NO_KEYS: CourseDeptKeysT = ("course_no",)
+
+__all__ = [
+    "CourseIdentityResultT",
+    "CourseIdentityT",
+    "compact_course_code",
+    "invalid_course_identity_reason",
+    "normalize_course_number",
+    "parse_course_identity",
+    "parse_course_identity_result",
+]
 
 
 def pipeline(row: Row, *transforms: Transform) -> Row:
@@ -103,12 +121,13 @@ def require_course_identity(row: Mapping[str, Any] | None) -> tuple[str, str]:
     """Return ``(dept_code, course_no)`` or fail with a normalized error."""
     dept_code = get_course_dept(row)
     course_no = first_value(row, COURSE_NO_KEYS)
-    if not dept_code or not course_no:
+    identity = parse_course_identity(dept_code, course_no)
+    if identity is None:
         raise ValueError(
-            "course_no and one of dept_code/course_dept/course_name are required "
-            f"in row {row} context."
+            "A parseable course_no and one of dept_code/course_dept/course_name "
+            f"are required in row {row} context."
         )
-    return dept_code, course_no
+    return identity
 
 
 def set_crs_codes(row: Row) -> Row:
@@ -137,14 +156,16 @@ def extract_crs_codes(row: Row) -> tuple[str, str]:
     # could also be dept_code no ?
     course_code = get_in_row("course_code", row)
 
-    if not course_code:
-        _dept_code = get_course_dept(row)
-        course_no = get_in_row("course_no", row)
-        course_code = _dept_code + course_no
+    if course_code:
+        try:
+            college_code, dept_code, _ = expand_crs_code(course_code, row=row)
+            return college_code, dept_code
+        except AssertionError:
+            pass
 
-    try:
-        college_code, dept_code, _ = expand_crs_code(course_code, row=row)
-    except AssertionError:
-        return (get_in_row("college_code", row), course_code)
+    identity = parse_course_identity(get_course_dept(row), get_in_row("course_no", row))
+    if identity is not None:
+        return get_in_row("college_code", row), identity[0]
 
-    return college_code, dept_code
+    course_code = course_code or f"{get_course_dept(row)}{get_in_row('course_no', row)}"
+    return (get_in_row("college_code", row), course_code)

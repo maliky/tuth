@@ -11,6 +11,7 @@ from app.academics.models.curriculum import Curriculum
 from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.department import Department
 from app.academics.utils import normalize_college_code, normalize_dpt_code
+from app.shared.course_wrangling import normalize_course_number
 from app.shared.models import CreditHour
 from app.shared.types import DeptCollegeMapT, DeptCrsMapT, StrIntMapT, TwoIntIntMapT
 from app.shared.utils import parse_str
@@ -36,10 +37,7 @@ CURRICULUM_COURSE_ID_CACHE: TwoIntIntMapT = {}
 def _normalize_crs_no(value: str) -> str:
     """Normalize course numbers like '101.0' -> '101'."""
     # This should not happen but taking care of 102.0 -> 102.
-    value = parse_str(value)
-    if value.endswith(".0"):
-        value = value[:-2]
-    return value
+    return normalize_course_number(value)
 
 
 def _prime_college_id_cache() -> None:

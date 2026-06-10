@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Mapping, Optional, Tuple
 from app.academics.choices import COLLEGE_CODE
 from app.academics.constants import COURSE_PATTERN  # safe
 from app.academics.models.college import College
+from app.shared.course_wrangling import compact_course_code
 from app.shared.types import Row
 from app.shared.utils import get_in_row, parse_str
 
@@ -32,7 +33,7 @@ def expand_crs_code(
     """
     assert "/" not in code
 
-    _match = COURSE_PATTERN.search(code.strip().upper())
+    _match = COURSE_PATTERN.search(compact_course_code(code))
     assert _match is not None, f"Code '{code}' doesn't match expected pattern"
 
     college_code, dept_shortname, course_no = (

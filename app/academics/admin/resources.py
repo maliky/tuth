@@ -1,7 +1,7 @@
 """Resources module."""
 
 from django.contrib import messages
-from import_export import fields, resources
+from import_export import fields, resources, widgets
 
 from app.academics.admin.widgets import (
     CollegeWgt,
@@ -11,13 +11,29 @@ from app.academics.admin.widgets import (
     CurriWgt,
     DptWgt,
 )
+from app.academics.admin.course_resource import CrsResource
 
 from app.academics.models.college import College
-from app.academics.models.course import Course
-from app.academics.models.curriculum import Curriculum
+from app.academics.models.curriculum import Curriculum, CurriStatus
 from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.department import Department
+
+
+class CurriStatusWgt(widgets.ForeignKeyWidget):
+    """Resolve or create curriculum status rows during curriculum imports."""
+
+    def __init__(self):
+        super().__init__(CurriStatus, field="code")
+
+    def clean(self, value, row=None, *args, **kwargs) -> CurriStatus:
+        """Return a curriculum status, defaulting to pending."""
+        code = str(value or "pending").strip() or "pending"
+        status, _ = CurriStatus.objects.get_or_create(
+            code=code,
+            defaults={"label": code.replace("_", " ").title()},
+        )
+        return status
 
 
 class CurriResource(resources.ModelResource):
@@ -25,6 +41,7 @@ class CurriResource(resources.ModelResource):
 
     def __init__(self, *args, **kwargs):
         """For keeping track of what is been added or replaced."""
+        self._import_action = str(kwargs.pop("action", "merge")).lower()
         super().__init__(*args, **kwargs)
         self._created: set[str] = set()
         self._merged: set[str] = set()
@@ -35,8 +52,7 @@ class CurriResource(resources.ModelResource):
 
     def _action(self) -> str:
         """Merge (default) or 'replace'  — read once from the import form."""
-        value = (self._kwargs or {}).get("action", "merge")
-        return str(value).lower()  # str to garantee return type for mypy
+        return self._import_action
 
     college_f = fields.Field(
         column_name="college_code",
@@ -49,6 +65,16 @@ class CurriResource(resources.ModelResource):
         widget=CrsManyWgt(),
     )
     short_name_f = fields.Field(attribute="short_name", column_name="curriculum")
+    status_f = fields.Field(
+        column_name="status",
+        attribute="status",
+        widget=CurriStatusWgt(),
+    )
+    is_active_f = fields.Field(
+        column_name="is_active",
+        attribute="is_active",
+        widget=widgets.BooleanWidget(),
+    )
 
     def save_instance(self, instance, is_create, row, **kwargs):
         """Handle merge/replace logic for curriculum imports.
@@ -104,51 +130,12 @@ class CurriResource(resources.ModelResource):
             "short_name_f",
             "long_name",
             "college_f",
-            "status",
+            "status_f",
+            "is_active_f",
             "list_courses_f",
         )
         skip_unchanged = True
         report_skipped = True
-
-
-class CrsResource(resources.ModelResource):
-    """Import / export definition for Course rows.
-
-    Row should come from a CSV file with: course_dept, course_no and college_code columns.
-
-    Additional: course_title, prerequisites
-    """
-
-    number_f = fields.Field(attribute="number", column_name="course_no")  # 121
-    title_f = fields.Field(attribute="title", column_name="course_title")
-
-    department_f = fields.Field(
-        attribute="department", column_name="course_dept", widget=DptWgt()
-    )
-    prerequisite_f = fields.Field(
-        attribute="prerequisites",
-        column_name="prerequisites",
-        widget=CrsManyWgt(),
-    )
-
-    def __init__(self, *args, **kwargs):
-        """Constructor – track rows skipped by validation logic."""
-        super().__init__(*args, **kwargs)
-        self._mismatched_rows: list[dict] = []  # for admin feedback
-
-    class Meta:
-        model = Course
-        # Uniqueness criterion for updates
-        import_id_fields = ("number_f", "department_f")
-        # Exposed / accepted columns
-        fields = (
-            "number_f",
-            "department_f",
-            "title_f",
-            "prerequisite_f",
-        )
-        skip_unchanged = True  # do not rewrite identical rows
-        report_skipped = False  # include skipped-row info in the Result
 
 
 class PrerequisiteResource(resources.ModelResource):

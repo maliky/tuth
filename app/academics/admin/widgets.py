@@ -29,6 +29,11 @@ from app.shared.importing.rows import get_course_dept, require_course_identity
 from app.shared.utils import get_in_row, parse_str, to_int
 
 
+def _scoped_college_code(row: Optional[dict[str, Any]], scoped_key: str) -> str:
+    """Return a scoped college code with legacy college_code fallback."""
+    return get_in_row(scoped_key, row) or get_in_row("college_code", row)
+
+
 class CurriCrsWgt(widgets.ForeignKeyWidget):
     """Create or CurriCrs from CSV rows.
 
@@ -113,7 +118,7 @@ class CurriWgt(widgets.ForeignKeyWidget):
         """
 
         curr_value = parse_str(value)
-        college = ensure_college(get_in_row("college_code", row))
+        college = ensure_college(_scoped_college_code(row, "curriculum_college_code"))
 
         if not curr_value:
             return Curriculum.get_dft(def_college=college)
@@ -151,13 +156,14 @@ class CrsWgt(widgets.ForeignKeyWidget):
         Value is ignored (import-export still passes the column declared in
         the resource, but the info we need is spread across *row*).
         """
-        course_no = get_in_row("course_no", row)
-        dept_code = get_course_dept(row)
+        course_no_raw = get_in_row("course_no", row)
+        dept_code_raw = get_course_dept(row)
 
-        if not course_no or not dept_code:
+        if not course_no_raw and not dept_code_raw:
             return Course.get_unique_dft()
+        dept_code, course_no = require_course_identity(row)
 
-        college_code = get_in_row("college_code", row)
+        college_code = _scoped_college_code(row, "course_college_code")
         college = ensure_college(college_code)  # verifier que 9a ne fait pas de doublons
         department = ensure_dpt(dept_code, college)  # idem
 
@@ -301,7 +307,7 @@ class DptWgt(widgets.ForeignKeyWidget):
 
         dept_code = normalize_dpt_code(parse_str(value))
 
-        college = self.college_w.clean(get_in_row("college_code", row))
+        college = self.college_w.clean(_scoped_college_code(row, "course_college_code"))
 
         department, _ = Department.objects.get_or_create(code=dept_code, college=college)
         return department

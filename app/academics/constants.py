@@ -5,11 +5,6 @@ credit load for a student and enumerations for colleges and curriculum
 statuses.
 """
 
-import re
+from app.shared.course_wrangling import COURSE_PATTERN
 
 MAX_STUDENT_CREDITS = 18
-
-# This patterns cannot import CENG410A it will ignore it.
-COURSE_PATTERN = re.compile(
-    r"(?:(?P<college>[A-Z]{3,4})-)?(?P<dept>[A-Z]{2,4})[_-]?(?P<num>[0-9]{3})"
-)

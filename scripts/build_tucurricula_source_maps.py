@@ -12,8 +12,15 @@ from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Iterable
 
-
 APP_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(APP_ROOT))
+
+from app.shared.course_wrangling import (  # noqa: E402
+    LEGACY_DEPT_ALIASES,
+    course_key as shared_course_key,
+    split_course_code,
+)
+
 DEFAULT_SOURCE_ROOT = Path.home() / "tucurricula"
 DEFAULT_OUTPUT_DIR = APP_ROOT / "data" / "tucurricula_source_maps"
 LEGACY_COURSE_FILES = (
@@ -27,28 +34,10 @@ LEGACY_CURRICULUM_FILES = (
     Path.home() / "Tusis" / "Data" / "Trimed" / "academic_curriculum_course.csv",
 )
 
-COURSE_RX = re.compile(r"^\s*([A-Z]+)\s*-?\s*(\d+[A-Z]?)", re.I)
 LAB_RX = re.compile(
     r"\b(lab|laboratory|clinical|clinic|seminar|practicum|internship)\b", re.I
 )
 TOKEN_RX = re.compile(r"[a-z0-9]+")
-
-LEGACY_DEPT_ALIASES = {
-    "AGR": "AGRI",
-    "BIO": "BIOL",
-    "BUS": "BUSA",
-    "CHE": "CHEM",
-    "CSE": "CSEN",
-    "CSENG": "CSEN",
-    "ECD": "ECED",
-    "EDU": "EDUC",
-    "EDUP": "PEDU",
-    "EED": "EEDU",
-    "GLE": "GLEB",
-    "NUR": "NURS",
-    "PEDU": "PHED",
-    "PH": "PUBH",
-}
 
 
 def clean(text: object) -> str:
@@ -63,16 +52,12 @@ def norm_token(text: object) -> str:
 
 def code_parts(code: object) -> tuple[str, str]:
     """Split a visible course code into department and number parts."""
-    visible = clean(code).replace("-TODO", "").upper()
-    match = COURSE_RX.match(visible)
-    if not match:
-        return "", ""
-    return match.group(1).upper(), match.group(2).upper()
+    return split_course_code(clean(code))
 
 
 def course_key(dept: object, number: object) -> str:
     """Return a compact dept+number comparison key."""
-    return re.sub(r"[^A-Z0-9]", "", f"{clean(dept)}{clean(number)}".upper())
+    return shared_course_key(clean(dept), clean(number))
 
 
 def title_score(a: object, b: object) -> float:

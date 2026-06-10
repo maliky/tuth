@@ -1,6 +1,7 @@
 """Initialization for the admin package."""
 
-from .resources import CrsResource, CurriCrsResource
+from .requirement_resources import CurriCrsRequirementResource
+from .resources import CrsResource, CurriCrsResource, CurriResource
 from .core import (
     CollegeAdmin,
     CrsAdmin,
@@ -13,6 +14,8 @@ from .core import (
 __all__ = [
     "CrsResource",
     "CurriCrsResource",
+    "CurriCrsRequirementResource",
+    "CurriResource",
     "CollegeAdmin",
     "CrsAdmin",
     "CurriAdmin",

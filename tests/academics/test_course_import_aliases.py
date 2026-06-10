@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 from tablib import Dataset
 
+from app.academics.admin.course_resource import CrsResource
 from app.academics.admin.resources import CurriCrsResource
 from app.academics.admin.widgets import CrsWgt
 from app.academics.models.curriculum_course import CurriCrs
@@ -26,6 +27,52 @@ def test_crs_widget_accepts_course_dept_alias() -> None:
     assert course.department.code == "ACCT"
     assert course.number == "101"
     assert course.title == "Accounting I"
+
+
+@pytest.mark.django_db
+def test_crs_widget_normalizes_dirty_smartschool_course_identity() -> None:
+    """Dirty SmartSchool course identity cells should resolve to one course."""
+    course = CrsWgt().clean(
+        None,
+        row={
+            "course_dept": "Math 003",
+            "course_no": "Math 003",
+            "college_code": "COAS",
+            "course_title": "Remedial Math",
+        },
+    )
+
+    assert course.department.code == "MATH"
+    assert course.number == "003"
+    assert course.title == "Remedial Math"
+
+
+def test_course_resource_skips_unparseable_course_identity() -> None:
+    """Command-line Course imports can skip unparseable legacy identities."""
+    resource = CrsResource()
+    row = {"course_dept": "ME", "course_no": "ME", "course_title": "Bad row"}
+
+    assert resource.should_skip_row(row, 1) is True
+
+
+def test_course_resource_normalizes_dirty_course_identity() -> None:
+    """Course resource mutates recoverable rows before import-export lookup."""
+    resource = CrsResource()
+    row = {"course_dept": "Math 003", "course_no": "Math 003"}
+
+    assert resource.should_skip_row(row, 1) is False
+    assert row["course_dept"] == "MATH"
+    assert row["course_no"] == "003"
+
+
+def test_course_resource_pads_legacy_short_course_number() -> None:
+    """Legacy one- or two-digit SmartSchool numbers are padded for import."""
+    resource = CrsResource()
+    row = {"course_dept": "MATH", "course_no": "3"}
+
+    assert resource.should_skip_row(row, 1) is False
+    assert row["course_dept"] == "MATH"
+    assert row["course_no"] == "003"
 
 
 @pytest.mark.django_db

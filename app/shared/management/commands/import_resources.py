@@ -62,7 +62,8 @@ class Command(BaseCommand):
         "  -f/--file_path: path to a CSV/TSV or a directory containing resources.\n"
         "  -r/--resource: optional, one or more resource names to limit the import "
         "(defaults to all available). Choices include Grade, LegacyGrade, LegacyRegistration "
-        "and directory-scoped resources (Faculty, Room, Course, CurriCrs, Semester, "
+        "and directory-scoped resources (Faculty, Room, Curriculum, Course, CurriCrs, "
+        "CurriCrsRequirement, Semester, "
         "Donor, Student, Grade, LegacyRegistration, LegacyGrade).\n"
         "Behavior:\n"
         "  • Reads tabular data, normalizes headers, and delegates to import-export resources.\n"
@@ -197,12 +198,16 @@ def _run_import(
                 error_rows.append((row_number, row_result.errors))
                 first = row_result.errors[0] if row_result.errors else None
                 if first is not None:
+                    error = getattr(first, "error", str(first))
                     _log_row_detail(
                         cmd,
                         row_number,
                         row,
-                        getattr(first, "error", str(first)),
+                        error,
                         error_details,
+                    )
+                    raise CommandError(
+                        f"{label} import failed at row {row_number}: {error}"
                     )
 
         if dry_run:

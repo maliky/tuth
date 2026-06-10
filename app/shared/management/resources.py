@@ -6,7 +6,8 @@ from collections import OrderedDict
 from typing import Sequence
 
 
-from app.academics.admin.resources import CrsResource, CurriCrsResource
+from app.academics.admin.requirement_resources import CurriCrsRequirementResource
+from app.academics.admin.resources import CrsResource, CurriCrsResource, CurriResource
 from app.people.admin.resources import (
     DonorResource,
     FacultyResource,
@@ -30,15 +31,33 @@ DIRECTORY_RESOURCE_ENTRIES: Sequence[DirectoryResourceEntry] = (
     ("Donor", DonorResource, ("people_donors.csv",)),
     ("Faculty", FacultyResource, ("people_full_faculty.tsv",)),
     ("Student", StdResource, ("people_full_student.tsv",)),
-    ("Course", CrsResource, ("academic_course.csv",)),
+    (
+        "Curriculum",
+        CurriResource,
+        ("academic_curriculum.tsv", "academic_curriculum.csv"),
+    ),
+    ("Course", CrsResource, ("academic_course.tsv", "academic_course.csv")),
     ("SecSession", SecSessionResource, ("timetable_sessions_25-26s2.tsv",)),
-    ("CurriCrs", CurriCrsResource, ("academic_curriculum_course.csv",)),
+    (
+        "CurriCrs",
+        CurriCrsResource,
+        ("academic_curriculum_course.tsv", "academic_curriculum_course.csv"),
+    ),
+    (
+        "CurriCrsRequirement",
+        CurriCrsRequirementResource,
+        (
+            "academic_curriculum_requirement.tsv",
+            "academic_curriculum_requirement.csv",
+        ),
+    ),
     (
         "LegacyRegistration",
         LegacyRegioResource,
         (
             "UM_StudentsCrss.csv",  # Could have been UM
             "registry_registration.csv",
+            "registry_registration.tsv",
             "studentcourses.csv",
         ),
     ),

@@ -135,6 +135,7 @@ def _build_crs_maps(
 def _build_json_payload(
     curriculum: Curriculum,
     prerequisites: Iterable[Prerequisite],
+    prereq_groups: Iterable[CurriCrsReqGp],
     coreq_groups: Iterable[CurriCrsReqGp],
     course_map: dict[int, CurriCrs],
     node_attrs: NodeAttrMapT,
@@ -182,18 +183,41 @@ def _build_json_payload(
         _append_node(curriculum_course.course, True)
 
     links: list[dict[str, str]] = []
+    seen_links: set[tuple[int, int, str]] = set()
+
+    def _append_prereq_link(source_id: int, target_id: int, link_type: str) -> None:
+        """Append one prerequisite edge without duplicating imported mirrors."""
+        key = (source_id, target_id, link_type)
+        if key in seen_links:
+            return
+        seen_links.add(key)
+        links.append(
+            {
+                "source": f"C{source_id}",
+                "target": f"C{target_id}",
+                "type": link_type,
+            }
+        )
+
     for prereq in prerequisites:
         _append_node(
             prereq.prerequisite_course,
             prereq.prerequisite_course_id in course_map,
         )
-        links.append(
-            {
-                "source": f"C{prereq.prerequisite_course_id}",
-                "target": f"C{prereq.course_id}",
-                "type": "prereq",
-            }
+        _append_prereq_link(
+            prereq.prerequisite_course_id,
+            prereq.course_id,
+            "prereq",
         )
+
+    for group in prereq_groups:
+        target_course = group.curriculum_course.course
+        _append_node(target_course, target_course.id in course_map)
+        link_type = "prereq_any" if group.kind == ReqKind.PREREQ_ANY else "prereq"
+        for member in group.members.all():
+            required_course = member.required_course
+            _append_node(required_course, required_course.id in course_map)
+            _append_prereq_link(required_course.id, target_course.id, link_type)
 
     coreq_payload: list[CoreqGpPayloadT] = []
     for group in coreq_groups:
@@ -567,6 +591,22 @@ def export_prereq_graph(curriculum: Curriculum) -> PrereqGraphPaths:
         )
         .order_by("id")
     )
+    prereq_groups = (
+        CurriCrsReqGp.objects.filter(
+            curriculum_course__curriculum=curriculum,
+            kind__in=(ReqKind.PREREQ_ALL, ReqKind.PREREQ_ANY),
+        )
+        .select_related("curriculum_course__course__department__college")
+        .prefetch_related(
+            Prefetch(
+                "members",
+                queryset=CurriCrsReqMember.objects.select_related(
+                    "required_course__department__college"
+                ),
+            )
+        )
+        .order_by("id")
+    )
 
     output_dir = _output_dir()
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -582,6 +622,7 @@ def export_prereq_graph(curriculum: Curriculum) -> PrereqGraphPaths:
     payload = _build_json_payload(
         curriculum,
         prerequisites,
+        prereq_groups,
         coreq_groups,
         course_map,
         node_attrs,
