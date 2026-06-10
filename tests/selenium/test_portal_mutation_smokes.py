@@ -133,6 +133,17 @@ def test_finance_officer_can_mutate_payments_in_browser(
         f"?tab=payments&student_id={student.id}&semester=all&payment_status=all"
     )
     selenium_driver.get(payment_url)
+    payment_checkbox = selenium_driver.find_element(
+        By.CSS_SELECTOR,
+        f"input[name='payment_ids'][value='{payment.id}']",
+    )
+    selenium_driver.execute_script(
+        """
+        arguments[0].checked = true;
+        arguments[0].dispatchEvent(new Event("change", { bubbles: true }));
+        """,
+        payment_checkbox,
+    )
     _set_form_value(
         selenium_driver,
         selenium_driver.find_element(By.NAME, f"amount_paid_{payment.id}"),

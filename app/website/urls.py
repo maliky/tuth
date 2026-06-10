@@ -106,6 +106,16 @@ urlpatterns = [
         name="finance_officer_update_payments",
     ),
     path(
+        "staff/finance/invoices/generate-registration-invoices/",
+        views.finance_officer_generate_registration_invoices,
+        name="finance_officer_generate_registration_invoices",
+    ),
+    path(
+        "staff/finance/invoices/setup-registration-fee/",
+        views.finance_officer_setup_registration_fee,
+        name="finance_officer_setup_registration_fee",
+    ),
+    path(
         "staff/finance/students/autocomplete/",
         views.finance_officer_std_autocomplete,
         name="finance_officer_std_autocomplete",

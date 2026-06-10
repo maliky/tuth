@@ -8,6 +8,9 @@ from django.urls import reverse
 from app.academics.models.curriculum import Curriculum
 from app.finance.models.invoice import CrsInvoice
 from app.finance.models.payment import Payment
+from app.finance.registration_invoices import (
+    missing_registration_invoice_counts,
+)
 from app.finance.models.scholarship import (
     Scholarship,
     ScholarshipLetterTemplate,
@@ -535,7 +538,10 @@ def _build_donor_context(request: HttpRequest) -> RoleContextT:
 
 def _build_finance_context(_: HttpRequest) -> RoleContextT:
     pending_payments = Payment.objects.filter(status__code="pending").count()
-    invoice_count = CrsInvoice.objects.count()
+    invoice_count = CrsInvoice.objects.filter(balance__gt=0).count()
+    missing_invoice_counts = missing_registration_invoice_counts()
+    uninvoiced_count = missing_invoice_counts["billable"]
+    fee_setup_count = missing_invoice_counts["fee_setup"]
     actions: list[ActionT] = []
     finance_console = _maybe_reverse("finance_officer_invoices")
     if finance_console:
@@ -550,6 +556,8 @@ def _build_finance_context(_: HttpRequest) -> RoleContextT:
     return {
         "metrics": [
             {"label": "Outstanding invoices", "value": invoice_count},
+            {"label": "Uninvoiced registrations", "value": uninvoiced_count},
+            {"label": "Needs fee setup", "value": fee_setup_count},
             {"label": "Payments awaiting validation", "value": pending_payments},
         ],
         "panels": [

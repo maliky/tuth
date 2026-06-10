@@ -169,6 +169,35 @@ When the student opens the payment receipt page
 Then the payment receipt table is shown
 #+end_src
 
+** Finance officer clears imported registration charges
+#+begin_src gherkin
+Feature: Finance officer clears imported registration charges
+
+Scenario: Zero-amount pending registration requires fee setup
+Given a student has a pending registration with zero computed tuition
+When a finance officer opens the invoice console for that student
+Then the registration is shown under "Needs fee setup"
+And the finance officer can enter a course-specific fee amount
+
+Scenario: Finance officer sets a special course fee and generates the invoice
+Given a zero-amount pending registration needs a special fee
+When a finance officer enters a positive fee and submits "Set fee + invoice"
+Then a course-specific fee stack is attached to the course
+And the missing course invoice is created or updated with that amount
+
+Scenario: Finance officer clears the fee without student intervention
+Given a zero-amount pending registration needs a special fee
+When a finance officer enters a positive fee and submits "Set fee + clear"
+Then the missing invoice is created or updated
+And a cleared payment is recorded for the current balance
+And the registration becomes cleared
+
+Scenario: Finance officer batch-selects invoice and payment rows
+Given a finance officer is reviewing invoice or payment rows
+When the officer uses select all or shift-click range selection
+Then only the selected rows are submitted for the batch action
+#+end_src
+
 
 ** Student browses curriculum courses
 #+begin_src gherkin

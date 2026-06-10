@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal, InvalidOperation
-from typing import Optional, cast
+from typing import TYPE_CHECKING, Optional, TypedDict, cast
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -17,8 +17,20 @@ from django.views.decorators.http import require_POST
 
 from app.finance.models.invoice import CrsInvoice
 from app.finance.models.payment import Payment
-from app.finance.models.status_types_methods import Payer
+from app.finance.course_fee_setup import ensure_course_default_fee
+from app.finance.registration_invoices import (
+    ensure_course_invoice_for_registration,
+    invoiceable_registration_qs,
+    materialize_registration_invoices,
+)
+from app.finance.models.status_types_methods import (
+    InvoiceStatus,
+    Payer,
+    PaymentMethod,
+    PaymentStatus,
+)
 from app.finance.utils import create_pending_payments
+from app.registry.models.registration import Registration
 from app.shared.auth.perms import UserRole
 from app.shared.utils import parse_str
 from app.website.services.finance_portal import (
@@ -27,11 +39,22 @@ from app.website.services.finance_portal import (
     finance_stds,
 )
 
+if TYPE_CHECKING:
+    from app.people.models.staffs import Staff
+
 FINANCE_GROUPS = {
     UserRole.FINANCE.value.label,
     UserRole.FINANCE_OFFICER.value.label,
     UserRole.CASHIER.value.label,
 }
+
+
+class CourseInvoiceStateT(TypedDict):
+    """Snapshot of a child invoice before targeted payment propagation."""
+
+    invoice_id: int
+    balance: Decimal | None
+    status_id: str
 
 
 def _require_finance_access(request: HttpRequest) -> None:
@@ -172,6 +195,183 @@ def finance_officer_update_payments(request: HttpRequest) -> HttpResponse:
     if invalid:
         messages.warning(request, f"Skipped {invalid} payment(s) with invalid amounts.")
     return redirect(request.POST.get("next") or reverse("finance_officer_invoices"))
+
+
+@login_required
+@require_POST
+def finance_officer_generate_registration_invoices(request: HttpRequest) -> HttpResponse:
+    """Create course invoices for imported registrations missing finance rows."""
+    _require_finance_access(request)
+    raw_ids = request.POST.getlist("registration_ids")
+    registration_ids = [clean_int(value) for value in raw_ids]
+    registration_ids = [value for value in registration_ids if value]
+    student_id = clean_int(request.POST.get("student_id"))
+    if registration_ids:
+        registrations = invoiceable_registration_qs().filter(id__in=registration_ids)
+    elif student_id:
+        registrations = invoiceable_registration_qs(student_id=student_id)
+    else:
+        messages.warning(request, "Select registrations or a student to invoice.")
+        return redirect(request.POST.get("next") or reverse("finance_officer_invoices"))
+
+    if not registrations.exists():
+        messages.info(request, "No uninvoiced registrations were found.")
+        return redirect(request.POST.get("next") or reverse("finance_officer_invoices"))
+
+    summary = materialize_registration_invoices(registrations)
+    created = summary["created"]
+    updated = summary["updated"]
+    skipped_zero = summary["skipped_zero"]
+    if created or updated:
+        messages.success(
+            request,
+            f"Generated {created} invoice(s); updated {updated} existing invoice(s).",
+        )
+    if skipped_zero:
+        messages.info(
+            request,
+            f"Skipped {skipped_zero} zero-amount registration(s).",
+        )
+    if not created and not updated and not skipped_zero:
+        messages.info(request, "No invoices needed to be generated.")
+    return redirect(request.POST.get("next") or reverse("finance_officer_invoices"))
+
+
+@login_required
+@require_POST
+def finance_officer_setup_registration_fee(request: HttpRequest) -> HttpResponse:
+    """Set a course fee, generate its invoice, and optionally clear it."""
+    _require_finance_access(request)
+    registration_id = clean_int(request.POST.get("registration_id"))
+    amount = _parse_decimal(request.POST.get("amount"))
+    fee_type_code = parse_str(request.POST.get("fee_type_code"))
+    clear_now = request.POST.get("clear_now") == "1"
+    if registration_id is None or amount is None or amount <= Decimal("0.00"):
+        messages.warning(request, "Provide a registration and a positive fee amount.")
+        return redirect(request.POST.get("next") or reverse("finance_officer_invoices"))
+
+    registration = (
+        invoiceable_registration_qs(missing_only=False).filter(id=registration_id).first()
+    )
+    if registration is None:
+        messages.warning(request, "No invoiceable registration was found.")
+        return redirect(request.POST.get("next") or reverse("finance_officer_invoices"))
+
+    staff = getattr(request.user, "staff", None)
+    with transaction.atomic():
+        ensure_course_default_fee(
+            course=registration.section.curriculum_course.course,
+            amount=amount,
+            fee_type_code=fee_type_code,
+        )
+        invoice, created, updated = ensure_course_invoice_for_registration(registration)
+        if invoice is None or invoice.student_semester_invoice is None:
+            messages.warning(request, "The fee was saved but no invoice was generated.")
+            return redirect(
+                request.POST.get("next") or reverse("finance_officer_invoices")
+            )
+        parent_invoice = invoice.student_semester_invoice
+        parent_invoice.refresh_totals_from_sources(save_model=True)
+        cleared = _clear_course_invoice(invoice, staff) if clear_now else False
+
+    if clear_now and cleared:
+        messages.success(request, "Fee, invoice, and cleared payment were recorded.")
+    elif created:
+        messages.success(request, "Fee was set and one invoice was generated.")
+    elif updated:
+        messages.success(request, "Fee was set and the existing invoice was updated.")
+    else:
+        messages.info(request, "Fee setup is already reflected in the invoice.")
+    return redirect(request.POST.get("next") or reverse("finance_officer_invoices"))
+
+
+def _clear_course_invoice(
+    invoice: CrsInvoice,
+    staff: "Staff | None",
+) -> bool:
+    """Create a cleared payment for one course invoice without clearing siblings."""
+    parent_invoice = invoice.student_semester_invoice
+    if parent_invoice is None:
+        return False
+    PaymentStatus._populate_attributes_and_db()
+    PaymentMethod._populate_attributes_and_db()
+    InvoiceStatus._populate_attributes_and_db()
+    invoice.refresh_from_db()
+    balance = invoice.get_balance()
+    if balance <= Decimal("0.00"):
+        return False
+    sibling_states = _course_invoice_states(parent_invoice.id, invoice.id)
+    Payment.objects.create(
+        student_semester_invoice=parent_invoice,
+        payer_id="student",
+        amount_paid=balance,
+        payment_method_id="cash",
+        status_id="cleared",
+        recorded_by=staff,
+    )
+    _restore_course_invoice_states(sibling_states)
+    _mark_course_invoice_cleared(invoice.id)
+    return True
+
+
+def _course_invoice_states(
+    parent_invoice_id: int,
+    target_invoice_id: int,
+) -> list[CourseInvoiceStateT]:
+    """Snapshot sibling invoices before parent payment redistribution runs."""
+    states: list[CourseInvoiceStateT] = []
+    siblings = CrsInvoice.objects.filter(
+        student_semester_invoice_id=parent_invoice_id,
+    ).exclude(pk=target_invoice_id)
+    for sibling in siblings.only("id", "balance", "status"):
+        states.append(
+            {
+                "invoice_id": sibling.id,
+                "balance": sibling.balance,
+                "status_id": sibling.status_id or "initial",
+            }
+        )
+    return states
+
+
+def _restore_course_invoice_states(states: list[CourseInvoiceStateT]) -> None:
+    """Restore sibling invoice rows after parent-level payment propagation."""
+    for state in states:
+        CrsInvoice.objects.filter(pk=state["invoice_id"]).update(
+            balance=state["balance"],
+            status_id=state["status_id"],
+        )
+        invoice = CrsInvoice.objects.get(pk=state["invoice_id"])
+        _force_registration_status_for_invoice(invoice)
+
+
+def _mark_course_invoice_cleared(invoice_id: int) -> None:
+    """Persist a cleared child invoice and sync its registration status."""
+    CrsInvoice.objects.filter(pk=invoice_id).update(
+        balance=Decimal("0.00"),
+        status_id=InvoiceStatus.cleared().code,
+    )
+    invoice = CrsInvoice.objects.get(pk=invoice_id)
+    _force_registration_status_for_invoice(invoice)
+
+
+def _force_registration_status_for_invoice(invoice: CrsInvoice) -> int:
+    """Set registration status from an invoice, including rollback from cleared."""
+    reg_status_id = _registration_status_id_for_invoice(invoice.status_id or "initial")
+    return Registration.objects.filter(
+        student=invoice.student,
+        section__curriculum_course=invoice.curriculum_course,
+        section__semester=invoice.semester,
+    ).update(status_id=reg_status_id)
+
+
+def _registration_status_id_for_invoice(status_id: str) -> str:
+    """Map course invoice status IDs to registration status IDs."""
+    if status_id in {"initial", "updated"}:
+        return "pending"
+    if status_id == "settled":
+        return "partialy_cleared"
+    return "cleared"
 
 
 @login_required

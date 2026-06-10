@@ -3,6 +3,24 @@
 
 {% block staff_head_extra %}
   <link rel="stylesheet" href="{% static 'admin/css/vendor/select2/select2.min.css' %}" />
+  <style>
+    .finance-filter-grid .select2-container {
+      min-width: 0;
+      width: 100% !important;
+    }
+
+    .finance-admin-shortcuts {
+      border-top: 1px solid rgba(15, 23, 42, 0.08);
+      margin-top: 1rem;
+      padding-top: 1rem;
+    }
+
+    @media (max-width: 767.98px) {
+      .finance-filter-grid {
+        row-gap: 1rem;
+      }
+    }
+  </style>
 {% endblock %}
 
 {% block staff_header_actions %}
@@ -18,15 +36,16 @@
         <p class="eyebrow text-uppercase mb-1">Find a student account</p>
         <h2>Filter invoices and payments</h2>
       </div>
-      <form method="get" class="row g-3 align-items-end">
+      <form method="get" class="row g-3 align-items-end finance-filter-grid">
         <input type="hidden" name="tab" value="{{ active_tab }}" />
-        <div class="col-md-5">
+        <div class="col-12 col-lg-5">
           <label class="form-label">Student</label>
           <select
             class="form-select"
             name="student_id"
             data-student-autocomplete
             data-autocomplete-url="{{ student_autocomplete_url }}"
+            style="width: 100%;"
           >
             {% if selected_student_id %}
               <option value="{{ selected_student_id }}" selected>
@@ -35,7 +54,7 @@
             {% endif %}
           </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-12 col-sm-6 col-lg-3">
           <label class="form-label">Semester</label>
           <select class="form-select" name="semester">
             {% for option in semester_options %}
@@ -45,7 +64,7 @@
             {% endfor %}
           </select>
         </div>
-        <div class="col-md-2">
+        <div class="col-12 col-sm-6 col-lg-2">
           <label class="form-label">Status</label>
           {% if active_tab == "payments" %}
             <select class="form-select" name="payment_status">
@@ -65,10 +84,22 @@
             </select>
           {% endif %}
         </div>
-        <div class="col-md-2">
+        <div class="col-12 col-lg-2">
           <button class="btn portal-btn-accent w-100" type="submit">Filter</button>
         </div>
       </form>
+      {% if finance_admin_links %}
+        <div class="finance-admin-shortcuts">
+          <p class="eyebrow text-uppercase mb-2">Django admin shortcuts</p>
+          <div class="d-flex flex-wrap gap-2">
+            {% for link in finance_admin_links %}
+              <a class="btn portal-btn-outline btn-sm" href="{{ link.href }}">
+                {{ link.label }}
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
     </div>
   </section>
 
@@ -126,7 +157,11 @@
                   <span class="text-muted small">Total paid</span><br/>
                   <strong>{{ group.total_paid }}</strong>
                 </div>
-                <button class="btn portal-btn-accent btn-sm" type="submit">
+                <button
+                  class="btn portal-btn-accent btn-sm d-none"
+                  type="submit"
+                  data-selection-submit="payment-checkbox-{{ group.student.id }}"
+                >
                   Validate changes
                 </button>
               </div>
@@ -136,6 +171,13 @@
                 <table class="table align-middle mb-0">
                   <thead>
                     <tr>
+                      <th>
+                        <input
+                          type="checkbox"
+                          aria-label="Select all payments for {{ group.student.long_name }}"
+                          data-select-all-for="payment-checkbox-{{ group.student.id }}"
+                        />
+                      </th>
                       <th>Student semester invoice</th>
                       <th>Amount due</th>
                       <th>Amount paid</th>
@@ -148,10 +190,18 @@
                     {% for payment in group.rows %}
                       <tr>
                         <td>
+                          <input
+                            type="checkbox"
+                            class="payment-checkbox-{{ group.student.id }}"
+                            name="payment_ids"
+                            value="{{ payment.id }}"
+                            data-selection-group="payment-checkbox-{{ group.student.id }}"
+                          />
+                        </td>
+                        <td>
                           {{ payment.student_semester_invoice.semester.academic_year.code }} -
                           Semester {{ payment.student_semester_invoice.semester.number }}
                           ({{ payment.student_semester_invoice.course_invoices.count }} course invoice{{ payment.student_semester_invoice.course_invoices.count|pluralize }})
-                          <input type="hidden" name="payment_ids" value="{{ payment.id }}" />
                         </td>
                         <td>{{ payment.student_semester_invoice.balance }}</td>
                         <td>
@@ -229,6 +279,210 @@
       </form>
     {% endfor %}
 
+    {% if fee_setup_registration_groups %}
+      <section class="portal-panel-card mb-4">
+        <div class="portal-panel-card__header d-flex flex-wrap align-items-center justify-content-between gap-3">
+          <div>
+            <p class="eyebrow text-uppercase mb-1">Needs fee setup</p>
+            <h2 class="h5 mb-1">Zero-amount registrations</h2>
+            <p class="text-muted mb-0">
+              These registrations are pending payment but have no billable amount yet. Set the course fee before generating or clearing the invoice.
+            </p>
+          </div>
+        </div>
+        <div class="portal-panel-card__body">
+          {% for group in fee_setup_registration_groups %}
+            <div class="portal-accordion-card mb-3">
+              <div class="portal-accordion-card__header d-flex flex-wrap align-items-center gap-3 justify-content-between">
+                <div>
+                  <button
+                    class="btn portal-collapse-toggle text-decoration-none p-0 d-inline-flex align-items-center gap-2"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#fee-setup-{{ group.student.id }}"
+                    aria-expanded="false"
+                    aria-controls="fee-setup-{{ group.student.id }}"
+                  >
+                    <i class="bi bi-chevron-right chevron" aria-hidden="true"></i>
+                    <strong>{{ group.student.long_name }}</strong>
+                  </button>
+                  <span class="text-muted">({{ group.student.student_id }})</span>
+                  <span class="status-badge status-pending ms-2">
+                    {{ group.rows|length }} fee setup{{ group.rows|length|pluralize }}
+                  </span>
+                </div>
+              </div>
+              <div class="collapse" id="fee-setup-{{ group.student.id }}">
+                <div class="course-table table-responsive">
+                  <table class="table align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th>Course</th>
+                        <th>Semester</th>
+                        <th>Status</th>
+                        <th>Current amount</th>
+                        <th>Fee setup</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for row in group.rows %}
+                        <tr>
+                          <td>
+                            {{ row.registration.section.curriculum_course.course.short_code }} -
+                            {{ row.registration.section.curriculum_course.course.title }}
+                          </td>
+                          <td>
+                            {{ row.registration.section.semester.academic_year.code }} -
+                            Semester {{ row.registration.section.semester.number }}
+                          </td>
+                          <td>{{ row.registration.status.label }}</td>
+                          <td>{{ row.current_amount }}</td>
+                          <td>
+                            <form
+                              method="post"
+                              action="{{ setup_registration_fee_url }}"
+                              class="d-flex flex-wrap align-items-end gap-2"
+                            >
+                              {% csrf_token %}
+                              <input type="hidden" name="next" value="{{ current_path }}" />
+                              <input type="hidden" name="registration_id" value="{{ row.registration.id }}" />
+                              <input type="hidden" name="fee_type_code" value="{{ row.fee_type_code }}" />
+                              <label class="form-label mb-0">
+                                Amount
+                                <input
+                                  class="form-control form-control-sm"
+                                  type="number"
+                                  step="0.01"
+                                  min="0.01"
+                                  name="amount"
+                                  value="{{ row.suggested_amount }}"
+                                />
+                              </label>
+                              <button
+                                class="btn portal-btn-outline btn-sm"
+                                type="submit"
+                                name="clear_now"
+                                value="0"
+                              >
+                                Set fee + invoice
+                              </button>
+                              <button
+                                class="btn portal-btn-accent btn-sm"
+                                type="submit"
+                                name="clear_now"
+                                value="1"
+                              >
+                                Set fee + clear
+                              </button>
+                            </form>
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+          {% with page=fee_setup_registration_page pagination_query=fee_setup_pagination_query pagination_hidden_fields=fee_setup_pagination_hidden_fields pagination_page_param="fee_setup_page" pagination_input_id="fee-setup-pagination-page" %}
+            {% include "website/staff/partials/pagination.html" %}
+          {% endwith %}
+        </div>
+      </section>
+    {% endif %}
+
+    {% if uninvoiced_registration_groups %}
+      <section class="portal-panel-card mb-4">
+        <div class="portal-panel-card__header d-flex flex-wrap align-items-center justify-content-between gap-3">
+          <div>
+            <p class="eyebrow text-uppercase mb-1">Needs invoice generation</p>
+            <h2 class="h5 mb-1">Uninvoiced registrations</h2>
+            <p class="text-muted mb-0">
+              These registrations are visible to students as outstanding charges but do not yet have finance invoice rows.
+            </p>
+          </div>
+        </div>
+        <div class="portal-panel-card__body">
+          {% for group in uninvoiced_registration_groups %}
+            <form
+              id="registration-invoice-form-{{ group.student.id }}"
+              method="post"
+              action="{% url 'finance_officer_generate_registration_invoices' %}"
+              class="portal-accordion-card mb-3"
+            >
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ current_path }}" />
+              <input type="hidden" name="student_id" value="{{ group.student.id }}" />
+              {% for registration in group.rows %}
+                <input type="hidden" name="registration_ids" value="{{ registration.id }}" />
+              {% endfor %}
+              <div class="portal-accordion-card__header d-flex flex-wrap align-items-center gap-3 justify-content-between">
+                <div>
+                  <button
+                    class="btn portal-collapse-toggle text-decoration-none p-0 d-inline-flex align-items-center gap-2"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#uninvoiced-{{ group.student.id }}"
+                    aria-expanded="false"
+                    aria-controls="uninvoiced-{{ group.student.id }}"
+                  >
+                    <i class="bi bi-chevron-right chevron" aria-hidden="true"></i>
+                    <strong>{{ group.student.long_name }}</strong>
+                  </button>
+                  <span class="text-muted">({{ group.student.student_id }})</span>
+                  <span class="status-badge status-pending ms-2">
+                    {{ group.rows|length }} registration{{ group.rows|length|pluralize }}
+                  </span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                  <div>
+                    <span class="text-muted small">Uninvoiced due</span><br/>
+                    <strong>{{ group.total_due }}</strong>
+                  </div>
+                  <button class="btn portal-btn-accent btn-sm" type="submit">
+                    Generate missing invoices
+                  </button>
+                </div>
+              </div>
+              <div class="collapse" id="uninvoiced-{{ group.student.id }}">
+                <div class="course-table table-responsive">
+                  <table class="table align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th>Course</th>
+                        <th>Semester</th>
+                        <th>Status</th>
+                        <th>Amount due</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for registration in group.rows %}
+                        <tr>
+                          <td>
+                            {{ registration.section.curriculum_course.course.short_code }} -
+                            {{ registration.section.curriculum_course.course.title }}
+                          </td>
+                          <td>
+                            {{ registration.section.semester.academic_year.code }} -
+                            Semester {{ registration.section.semester.number }}
+                          </td>
+                          <td>{{ registration.status.label }}</td>
+                          <td>{{ registration.section.fee_total_amount }}</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </form>
+          {% endfor %}
+          {% with page=uninvoiced_registration_page pagination_query=registration_pagination_query pagination_hidden_fields=registration_pagination_hidden_fields pagination_page_param="registration_page" pagination_input_id="registration-pagination-page" %}
+            {% include "website/staff/partials/pagination.html" %}
+          {% endwith %}
+        </div>
+      </section>
+    {% endif %}
+
     {% if invoice_groups %}
       <form
         id="invoice-selection-form"
@@ -243,6 +497,7 @@
             class="btn portal-btn-accent btn-sm d-none"
             type="submit"
             id="invoice-selection-submit"
+            data-selection-submit="invoice-checkbox"
           >
             Create individual payment
           </button>
@@ -283,7 +538,13 @@
                 <table class="table align-middle mb-0">
                   <thead>
                     <tr>
-                      <th></th>
+                      <th>
+                        <input
+                          type="checkbox"
+                          aria-label="Select all invoices"
+                          data-select-all-for="invoice-checkbox"
+                        />
+                      </th>
                       <th>Course</th>
                       <th>Semester</th>
                       <th>Amount due</th>
@@ -299,6 +560,7 @@
                             class="invoice-checkbox"
                             name="invoice_ids"
                             value="{{ invoice.id }}"
+                            data-selection-group="invoice-checkbox"
                           />
                         </td>
                         <td>
@@ -319,7 +581,7 @@
           </div>
         {% endfor %}
       </form>
-    {% else %}
+    {% elif not uninvoiced_registration_groups and not fee_setup_registration_groups %}
       <div class="portal-empty-state portal-empty-state--guided">
         <h3>No invoices match these filters.</h3>
         <p>
@@ -375,17 +637,62 @@
         });
       }
 
-      const selectionButton = document.getElementById("invoice-selection-submit");
-      const checkboxes = document.querySelectorAll(".invoice-checkbox");
-      const toggleButton = () => {
-        if (!selectionButton) return;
-        const anyChecked = Array.from(checkboxes).some((box) => box.checked);
-        selectionButton.classList.toggle("d-none", !anyChecked);
+      const lastCheckedByGroup = new Map();
+      const boxesForGroup = (groupName) =>
+        Array.from(document.querySelectorAll("[data-selection-group]")).filter(
+          (box) => box.dataset.selectionGroup === groupName
+        );
+      const buttonsForGroup = (groupName) =>
+        Array.from(document.querySelectorAll("[data-selection-submit]")).filter(
+          (button) => button.dataset.selectionSubmit === groupName
+        );
+      const selectAllForGroup = (groupName) =>
+        Array.from(document.querySelectorAll("[data-select-all-for]")).filter(
+          (box) => box.dataset.selectAllFor === groupName
+        );
+      const refreshGroup = (groupName) => {
+        const groupBoxes = boxesForGroup(groupName);
+        const checkedCount = groupBoxes.filter((box) => box.checked).length;
+        buttonsForGroup(groupName).forEach((button) => {
+          button.classList.toggle("d-none", checkedCount === 0);
+        });
+        selectAllForGroup(groupName).forEach((box) => {
+          box.checked = groupBoxes.length > 0 && checkedCount === groupBoxes.length;
+          box.indeterminate = checkedCount > 0 && checkedCount < groupBoxes.length;
+        });
       };
-      checkboxes.forEach((box) => {
-        box.addEventListener("change", toggleButton);
+      document.querySelectorAll("[data-selection-group]").forEach((box) => {
+        box.addEventListener("click", (event) => {
+          const groupName = box.dataset.selectionGroup;
+          const groupBoxes = boxesForGroup(groupName);
+          const lastChecked = lastCheckedByGroup.get(groupName);
+          if (event.shiftKey && lastChecked && groupBoxes.includes(lastChecked)) {
+            const start = groupBoxes.indexOf(lastChecked);
+            const end = groupBoxes.indexOf(box);
+            const [from, to] = start < end ? [start, end] : [end, start];
+            groupBoxes.slice(from, to + 1).forEach((rangeBox) => {
+              rangeBox.checked = box.checked;
+            });
+          }
+          lastCheckedByGroup.set(groupName, box);
+          refreshGroup(groupName);
+        });
+        box.addEventListener("change", () => refreshGroup(box.dataset.selectionGroup));
       });
-      toggleButton();
+      document.querySelectorAll("[data-select-all-for]").forEach((box) => {
+        box.addEventListener("change", () => {
+          const groupName = box.dataset.selectAllFor;
+          boxesForGroup(groupName).forEach((groupBox) => {
+            groupBox.checked = box.checked;
+          });
+          refreshGroup(groupName);
+        });
+      });
+      new Set(
+        Array.from(document.querySelectorAll("[data-selection-group]")).map(
+          (box) => box.dataset.selectionGroup
+        )
+      ).forEach(refreshGroup);
     })();
   </script>
 {% endblock %}

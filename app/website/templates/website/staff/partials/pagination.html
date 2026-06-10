@@ -1,4 +1,5 @@
 {% if page and page.paginator.num_pages > 1 %}
+  {% with page_param=pagination_page_param|default:"page" input_id=pagination_input_id|default:"pagination-page" %}
   <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-4">
     <div class="text-muted small">
       {{ page.paginator.count }} records · {{ page.paginator.num_pages }} pages
@@ -13,12 +14,12 @@
           <input type="hidden" name="{{ field.name }}" value="{{ field.value }}" />
         {% endfor %}
       {% endif %}
-      <label class="text-muted small mb-0" for="pagination-page">Go to</label>
+      <label class="text-muted small mb-0" for="{{ input_id }}">Go to</label>
       <input
-        id="pagination-page"
+        id="{{ input_id }}"
         class="form-control form-control-sm"
         type="number"
-        name="page"
+        name="{{ page_param }}"
         min="1"
         max="{{ page.paginator.num_pages }}"
         value="{{ page.number }}"
@@ -32,7 +33,7 @@
       <li class="page-item {% if not page.has_previous %}disabled{% endif %}">
         <a
           class="page-link"
-          href="{% if page.has_previous %}{% if pagination_query %}?{{ pagination_query }}&page={{ page.previous_page_number }}{% else %}?page={{ page.previous_page_number }}{% endif %}{% else %}#{% endif %}"
+          href="{% if page.has_previous %}{% if pagination_query %}?{{ pagination_query }}&{{ page_param }}={{ page.previous_page_number }}{% else %}?{{ page_param }}={{ page.previous_page_number }}{% endif %}{% else %}#{% endif %}"
         >
           Previous
         </a>
@@ -44,7 +45,7 @@
           <li class="page-item">
             <a
               class="page-link"
-              href="{% if pagination_query %}?{{ pagination_query }}&page={{ num }}{% else %}?page={{ num }}{% endif %}"
+              href="{% if pagination_query %}?{{ pagination_query }}&{{ page_param }}={{ num }}{% else %}?{{ page_param }}={{ num }}{% endif %}"
             >
               {{ num }}
             </a>
@@ -54,7 +55,7 @@
       <li class="page-item {% if not page.has_next %}disabled{% endif %}">
         <a
           class="page-link"
-          href="{% if page.has_next %}{% if pagination_query %}?{{ pagination_query }}&page={{ page.next_page_number }}{% else %}?page={{ page.next_page_number }}{% endif %}{% else %}#{% endif %}"
+          href="{% if page.has_next %}{% if pagination_query %}?{{ pagination_query }}&{{ page_param }}={{ page.next_page_number }}{% else %}?{{ page_param }}={{ page.next_page_number }}{% endif %}{% else %}#{% endif %}"
         >
           Next
         </a>
@@ -62,11 +63,12 @@
       <li class="page-item {% if not page.has_next %}disabled{% endif %}">
         <a
           class="page-link"
-          href="{% if page.has_next %}{% if pagination_query %}?{{ pagination_query }}&page={{ page.paginator.num_pages }}{% else %}?page={{ page.paginator.num_pages }}{% endif %}{% else %}#{% endif %}"
+          href="{% if page.has_next %}{% if pagination_query %}?{{ pagination_query }}&{{ page_param }}={{ page.paginator.num_pages }}{% else %}?{{ page_param }}={{ page.paginator.num_pages }}{% endif %}{% else %}#{% endif %}"
         >
           Last
         </a>
       </li>
     </ul>
   </nav>
+  {% endwith %}
 {% endif %}

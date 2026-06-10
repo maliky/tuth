@@ -136,15 +136,20 @@ def resolve_crs_fee_stack_map(course, semester) -> tuple[FeeMapT, FeeLabelMapT]:
     fee_map: FeeMapT = {}
     label_map: FeeLabelMapT = {}
     stack_links_manager = getattr(course, "course_fee_stacks", None)
-    stack_links = (
-        list(
+    prefetched_links = getattr(course, "_prefetched_objects_cache", {}).get(
+        "course_fee_stacks"
+    )
+    if prefetched_links is not None:
+        stack_links = list(prefetched_links)
+    elif stack_links_manager is not None:
+        stack_links = list(
             stack_links_manager.select_related("fee_stack").prefetch_related(
                 "fee_stack__fees__fee_type",
                 "fee_stack__fees__effective_from_semester",
             )
         )
-        if stack_links_manager is not None
-        else list(
+    else:
+        stack_links = list(
             CrsFeeStack.objects.filter(course=course)
             .select_related("fee_stack")
             .prefetch_related(
@@ -152,7 +157,6 @@ def resolve_crs_fee_stack_map(course, semester) -> tuple[FeeMapT, FeeLabelMapT]:
                 "fee_stack__fees__effective_from_semester",
             )
         )
-    )
     for stack_link in stack_links:
         for fee_line in _resolve_stack_fee_lines_for_sem(
             stack_link.fee_stack.fees.all(),

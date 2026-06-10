@@ -16,7 +16,9 @@ from .enrollment import (
 )
 from .finance_officer import (
     finance_officer_create_payments,
+    finance_officer_generate_registration_invoices,
     finance_officer_invoices,
+    finance_officer_setup_registration_fee,
     finance_officer_std_autocomplete,
     finance_officer_update_payments,
 )
@@ -76,7 +78,9 @@ __all__ = [
     "std_invoice_snapshot_pdf",
     "finance_officer_invoices",
     "finance_officer_create_payments",
+    "finance_officer_generate_registration_invoices",
     "finance_officer_std_autocomplete",
+    "finance_officer_setup_registration_fee",
     "finance_officer_update_payments",
     "vpaa_approval_approve",
     "vpaa_approval_detail",
