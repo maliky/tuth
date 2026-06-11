@@ -58,6 +58,112 @@ Older usernames such as =student_user=, =dean_user=, =finance_officer_user=, and
 ** Password reset helper
 If you run python manage.py reset_test_passwords (default prefix test_), all test_* accounts are reset to PassW0rd!.
 
+* MWE Operator Manual
+This section is a practical manual for demonstrating the app with the runtime MWE accounts above. It describes the current user experience and names admin-backed gaps explicitly, so the demo does not promise a portal screen that is not yet implemented.
+
+** Working terminology
+- Enrollment desk :: staff who create or update the student record, assign the curriculum/program, and verify core profile information.
+- Finance clerk :: human office role receiving payment evidence. In the app today, use the =Finance Officer= account for invoice/payment operations; use =Cashier= only when demonstrating a distinct payment-intake role.
+- Registrar :: staff who review grades, transcripts, registration status, and official academic records.
+- Registrar Officer :: registrar role with operational authority to open or close semester/course windows.
+- Academic / Faculty :: instructor who teaches sections and submits grades. The current portal exposes an instruction dashboard, while grade entry itself remains admin-backed.
+- Registration :: the student's course/section enrollment row. In MWE workflows this can be created by student course selection, imported legacy data, or registrar/admin action.
+- Financial clearance :: invoice/payment state that lets the registration move from pending payment toward cleared/official status.
+- Grade sheet / transcript / roster :: use "grade sheet" for a student's semester/course-grade report, "transcript" for the registrar official preview, and "roster" for a section list used by faculty/registrar.
+
+** Full student lifecycle from first enrollment to re-registration
+1. The student or candidate presents required information to the Enrollment desk.
+2. Enrollment logs in as =test_enrollment= and opens =/staff/enrollment/=.
+3. Enrollment uses =/students/new/= to create the student or to update a selected student record.
+4. Enrollment records the student's identity, contact data, and curriculum/program assignment. If a richer edit is needed, Enrollment uses =/students/admin-edit/= to search the student and continue the profile work.
+5. The student receives login credentials and opens =/auth/login/=, then is routed to =/student/dashboard/=.
+6. The student reviews profile, current registration status, balance, and curriculum from the dashboard.
+7. The student opens =/student/curriculum/= to understand the program courses and opens individual course details when prerequisites or descriptions are needed.
+8. During an open registration period, the student selects available sections from the dashboard registration area. The system should show eligible courses, seats, credits, and invoice impact where data exists.
+9. The created registrations start as pending payment until finance clears them.
+10. The student opens =/student/invoice/statement/= to review charges and communicates with Finance for payment.
+11. Finance records or clears payment. Once cleared, the student sees the balance and registration status update on the dashboard or statement.
+12. Registrar validates the official academic record and uses the registrar grade/transcript tools when the semester is complete.
+13. For the following semester, the same student logs in again, checks the new open/current semester, selects the next eligible sections, and repeats the payment and clearance cycle.
+
+** Enrollment desk manual
+1. Log in as =test_enrollment= or =test_enrollment_officer=.
+2. Open =/staff/enrollment/= for the role dashboard.
+3. Use =Student snapshot= or =/students/= to review recent student records.
+4. Use =Create student= or =/students/new/= for a new applicant or for a direct update when a student ID is supplied.
+5. Use =Find student= or =/students/admin-edit/= when the student exists and staff need to open the portal profile quickly.
+6. Confirm that the student has a program/curriculum, current enrollment semester, and enough identity information for Finance and Registrar to find the record.
+7. Tell the student to log into the portal and verify their own dashboard information before course registration.
+8. Escalate deletion or destructive cleanup to =test_enrollment_officer= only; normal Enrollment should update, not delete.
+
+** Student manual
+1. Log in as the student through =/auth/login/=.
+2. Start at =/student/dashboard/=.
+3. Check the profile summary, current semester, curriculum, completed credits, GPA summary, registration list, and finance summary.
+4. Open =/student/curriculum/= to inspect the program structure and course details.
+5. During registration, select eligible sections from the dashboard. If a course is missing, check prerequisites, completed credits, semester availability, and seat status.
+6. After submitting registration choices, verify that selected courses appear in the registrations list.
+7. Open =/student/invoice/statement/= to inspect course charges and outstanding balance.
+8. After paying through the university process, return to the dashboard or statement to confirm that Finance has recorded or cleared the balance.
+9. For grades, use the dashboard grade area once financially clear. If grades are missing, the student asks Registrar for the grade sheet/transcript workflow.
+10. For the next semester, repeat the cycle after Registrar opens the registration period and the new semester sections are available.
+
+** Finance office / clerk manual
+1. Log in as =test_finance_officer= for operational payment work, or =test_finance= for overview-only demonstration.
+2. Open =/staff/finance_officer/= for the finance role dashboard, then =/staff/finance/invoices/= for the console.
+3. Search the student by ID or name. Use the autocomplete field; for example, =31625= should resolve to Anthony Klakur Tchouin in the current preprod data.
+4. Filter by semester and invoice status when looking for a specific registration cycle.
+5. If registrations exist but course invoices do not, use =Generate missing invoices=. The current Sem3 rebuild creates invoice rows automatically, but this remains the manual recovery action.
+6. Review invoice rows. A normal current-semester course invoice should not be less than =15.00 USD=.
+7. For a student who pays, select the relevant invoice rows and create pending payments, or update existing payment rows with amount, payer, method, and status.
+8. Mark payment as cleared only when the office accepts the evidence. Cleared payment updates parent invoice balance and course registration clearance.
+9. Use row checkboxes and batch actions for multiple invoice/payment rows. Use the per-student filter before batch clearing to avoid acting on the wrong student.
+10. Use the finance admin shortcut links when direct table inspection is required: course invoices, semester invoices, payments, fee stacks, and fee lines.
+11. If a course appears to need special lab/field/clinical fees, do not guess in the console. Add or request an explicit fee rule in the maintained course-fee table, then regenerate/backfill invoices.
+
+** Registrar manual
+1. Log in as =test_registrar= for grade and transcript review.
+2. Open =/staff/registrar/= for the registrar dashboard.
+3. Open =/registrar/grades/= to review grade records grouped by student and semester.
+4. Use student autocomplete to find a student, then expand the student summary to inspect grade details.
+5. Use the transcript action to open the official transcript preview at =/registrar/grades/<student_id>/transcript/=.
+6. Use Django admin for direct grade correction when authorized. The relevant records are =Registry -> Grades= and =Registry -> Grade values=.
+7. When a student asks for a grade sheet/transcript, Registrar searches the student, reviews the grade dashboard, opens the transcript preview, and prints or exports according to office practice.
+8. If a grade is disputed, Registrar coordinates with the academic/faculty member, checks the section roster and grade record, then updates the grade only under the university correction rule.
+9. If the correction depends on a closed grade window, Registrar Officer reopens the operational window or performs the authorized admin correction, depending on policy.
+
+** Registrar Officer manual
+1. Log in as =test_registrar_officer=.
+2. Open =/staff/reg_officer/= for the officer dashboard.
+3. Open =/registrar/course-windows/= to manage semester status windows.
+4. Set the relevant semester status to registration/running/locked according to the operational calendar.
+5. Use the current semester status to control whether course registration and grade workflows should be considered open.
+6. After the window closes, confirm with Registrar and Faculty that no pending grade-entry or registration-cleanup work remains.
+
+** Academic / faculty grade-entry manual
+1. Log in as =test_faculty= to view the instruction dashboard at =/staff/faculty/=.
+2. Review assigned sections and pending grade counts.
+3. Current state: detailed grade entry is admin-backed rather than a complete faculty portal page.
+4. When the grade-entry window is open, authorized academic staff enter grades through Django admin using section or grade records.
+5. Grade rows connect a student, section, and grade value. The instructor should work from the official section roster to avoid entering a grade for the wrong section.
+6. Registrar reviews submitted grades from =/registrar/grades/=.
+7. If the instructor needs to correct a grade after submission, the instructor contacts Registrar; Registrar verifies policy and either reopens the window through Registrar Officer or applies the authorized correction in admin.
+8. After grades are complete and effective, students can review them from the student dashboard when their financial status permits.
+
+** Grade sheet / roster request manual
+1. Student requests a grade sheet or transcript from Registrar.
+2. Registrar searches the student in =/registrar/grades/=.
+3. Registrar reviews semester grades, GPA, and missing/incomplete records.
+4. Registrar opens the transcript preview.
+5. If grades are incomplete, Registrar contacts the relevant academic/faculty member and checks whether the grade-entry window is open.
+6. If a correction is needed, Registrar coordinates the correction and then refreshes the transcript preview.
+7. Registrar prints or exports the approved grade sheet/transcript for the student.
+
+** Known terminology to confirm
+- Whether the production title should be =Finance Clerk=, =Cashier=, =Finance Officer=, or a hierarchy of these roles.
+- Whether the office document should consistently say =grade sheet=, =transcript=, or =grade roster= for student-facing requests.
+- Whether faculty grade entry must become a portal workflow before MWE, or whether admin-backed entry is acceptable for this round.
+
 * Detailed Minimal Working Example (MWE) for Tuth System
 ** Dean Uploads or Creates Curriculum (with Prerequisites)
 :PROPERTIES:
