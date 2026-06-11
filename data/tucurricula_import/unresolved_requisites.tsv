@@ -153,7 +153,7 @@ cas_curriculum_2025.org	MATH 404	prerequisites	Senior Standing		no course refere
 cas_curriculum_2025.org	RESM 411	prerequisites	Senior Standing		no course reference parsed
 cas_curriculum_2025.org	PHED 251	prerequisites	(It required field trip)		no course reference parsed
 cas_curriculum_2025.org	PHED 291	prerequisites	(field work Required)		no course reference parsed
-cas_curriculum_2025.org	PHED 232	prereq_all	(it required 10 hr. field practice)	REQUIRED10	required course not mapped to import rows
+cas_curriculum_2025.org	PHED 232	prerequisites	(it required 10 hr. field practice)		no course reference parsed
 cba_curriculum_2025.org	ACCT 411	prereq_all	acct201	ACCT201	target course not mapped to any curriculum
 cba_curriculum_2025.org	COBA 430	prereq_all	acct302, acct304, acct401, acct403, acct405, econ308, econ314	ACCT302	target course not mapped to any curriculum
 cba_curriculum_2025.org	COBA 430	prereq_all	acct302, acct304, acct401, acct403, acct405, econ308, econ314	ACCT304	target course not mapped to any curriculum
@@ -200,7 +200,7 @@ cet_curriculum_2024.org	GENG 303	prerequisites	Third Year Standing		no course re
 cet_curriculum_2024.org	GENG 401	prerequisites	Fourth year standing		no course reference parsed
 cet_curriculum_2024.org	CENG 303	prerequisites	Third year standing		no course reference parsed
 cet_curriculum_2024.org	CENG 304	prerequisites	Third year standing		no course reference parsed
-cet_curriculum_2024.org	CENG 400	prereq_all	Students should have passed 145 credits including All GE and EEDU courses taken and passed	PASSED145	required course not mapped to import rows; target course not mapped to any curriculum
+cet_curriculum_2024.org	CENG 400	prerequisites	Students should have passed 145 credits including All GE and EEDU courses taken and passed		no course reference parsed
 cet_curriculum_2024.org	CENG 405	prerequisites	Senior level		no course reference parsed
 cet_curriculum_2024.org	ELEC 501	prerequisites	Fifth year standing		no course reference parsed
 cet_curriculum_2024.org	CENG 505	prerequisites	Fifth-year standing and approval of instructor		no course reference parsed
@@ -210,7 +210,7 @@ cet_curriculum_2024.org	EENG 310	prereq_all	eeng301, eeng303, eeng304, eeng305	E
 cet_curriculum_2024.org	EENG 310	prereq_all	eeng301, eeng303, eeng304, eeng305	EENG305	required course not mapped to import rows
 cet_curriculum_2024.org	EENG 312	prereq_all	eeng301, eeng303, eeng304, eeng305	EENG304	required course not mapped to import rows
 cet_curriculum_2024.org	EENG 312	prereq_all	eeng301, eeng303, eeng304, eeng305	EENG305	required course not mapped to import rows
-cet_curriculum_2024.org	EENG 400	prereq_all	Students must have completed 153 Credits/ including All GE and EEDU courses taken and passed/.	COMPLETED153	required course not mapped to import rows; target course not mapped to any curriculum
+cet_curriculum_2024.org	EENG 400	prerequisites	Students must have completed 153 Credits/ including All GE and EEDU courses taken and passed/.		no course reference parsed
 cet_curriculum_2024.org	EENG 401	prereq_all	eeng304, eeng302, eeng305	EENG304	required course not mapped to import rows
 cet_curriculum_2024.org	EENG 401	prereq_all	eeng304, eeng302, eeng305	EENG305	required course not mapped to import rows
 cet_curriculum_2024.org	EENG 407	prereq_all	math301, math302, geng203, eeng302, eeng304, eeng305, eeng306	EENG304	required course not mapped to import rows
@@ -230,7 +230,7 @@ cet_curriculum_2024.org	MENG 302	prereq_all	math301, geng301, meng301, meng303	M
 cet_curriculum_2024.org	MENG 303	prerequisites	Junior level standing		no course reference parsed
 cet_curriculum_2024.org	MENG 304	prereq_all	meng401, meng403	MENG401	required course not mapped to import rows
 cet_curriculum_2024.org	MENG 305	prereq_all	geng306, meng301, meng302	MENG301	required course not mapped to import rows
-cet_curriculum_2024.org	MENG 400	prereq_all	Student must have completed 150 credits	COMPLETED150	required course not mapped to import rows; target course not mapped to any curriculum
+cet_curriculum_2024.org	MENG 400	prerequisites	Student must have completed 150 credits		no course reference parsed
 cet_curriculum_2024.org	MENG 402	prereq_all	meng401, meng407, meng403	MENG401	required course not mapped to import rows
 cet_curriculum_2024.org	MENG 403	prereq_all	math302, geng302, meng301, meng305	MENG301	required course not mapped to import rows
 cet_curriculum_2024.org	MENG 409	prereq_all	math302, geng306, meng301, meng302, meng304	MENG301	required course not mapped to import rows
@@ -253,11 +253,10 @@ cet_curriculum_2024.org	MENG 511	prereq_all	math302, geng212, geng202, geng302, 
 cet_curriculum_2024.org	MENG 511	prereq_all	math302, geng212, geng202, geng302, geng306, meng305, meng401.	MENG305	target course not mapped to any curriculum
 cet_curriculum_2024.org	MENG 511	prereq_all	math302, geng212, geng202, geng302, geng306, meng305, meng401.	MENG401	required course not mapped to import rows; target course not mapped to any curriculum
 cet_curriculum_2024.org	MENG 512	prereq_all	meng502	MENG502	target course not mapped to any curriculum
-cet_curriculum_2024.org	CSEN 400	prereq_all	Student /must have completed 160 credits/ including All GE and EEDU courses taken and passed/.	COMPLETED160	required course not mapped to import rows; target course not mapped to any curriculum
+cet_curriculum_2024.org	CSEN 400	prerequisites	Student /must have completed 160 credits/ including All GE and EEDU courses taken and passed/.		no course reference parsed
 cet_curriculum_2024.org	CSEN 404	prerequisites	One Programming Language		no course reference parsed
 chs_curriculum_2024.org	CHSC 301	prereq_all	pubh200, pubh202	PUBH200	required course not mapped to import rows
 chs_curriculum_2024.org	NURS 200	coreq_all	chsc206, nurs202	NURS202	required course not mapped to import rows
-chs_curriculum_2024.org	NURS 205	prereq_any	chem101 or biol101, engl101, engl102, psyc101 CHSC 10	CHSC10	required course not mapped to import rows
 chs_curriculum_2024.org	NURC 206	coreq_all	nurs200, nurs204, chsc204, chsc206	NURS204	required course not mapped to import rows
 chs_curriculum_2024.org	NURC 301	coreq_all	nurc303, nurc305, nurc307, chsc309	CHSC309	required course not mapped to import rows
 chs_curriculum_2024.org	NURC 302	prereq_all	nurc301, nurc303, nurc305, nurc307, chsc309	CHSC309	required course not mapped to import rows

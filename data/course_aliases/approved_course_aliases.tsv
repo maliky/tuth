@@ -1,3 +1,17 @@
 source_course_dept	source_course_no	target_course_dept	target_course_no	reason
 HIST	101	HIST	201	Legacy duplicate: Liberian History is the same course family as revised Liberian History and Society.
 HIST	102	HIST	202	Legacy SmartSchool/GradPro duplicate: World History 102 is the same course as revised World History 202.
+EED	301	EEDU	301	Legacy EED code variant for Entrepreneurship Education I.
+EED	302	EEDU	302	Legacy EED code variant for Entrepreneurship Education II.
+BIO	101	BIOL	101	Legacy BIO department variant for General Biology I.
+BIO	102	BIOL	102	Legacy BIO department variant for General Biology II.
+BIO	201	BIOL	201	Legacy BIO department variant for revised BIOL 201.
+BIO	202	BIOL	202	Legacy BIO department variant for revised BIOL 202.
+CHM	101	CHEM	101	Legacy CHM department variant for Principles of Chemistry I.
+CHM	102	CHEM	102	Legacy CHM department variant for Principles of Chemistry II.
+CHM	201	CHEM	201	Legacy CHM department variant for Organic Chemistry I.
+CHM	202	CHEM	202	Legacy CHM department variant for Organic Chemistry II.
+PHY	101	PHYS	101	Legacy PHY department variant for Physics I.
+PHY	102	PHYS	102	Legacy PHY department variant for Physics II.
+PHY	201	PHYS	201	Legacy PHY department variant for revised PHYS 201.
+PHY	202	PHYS	202	Legacy PHY department variant for revised PHYS 202.

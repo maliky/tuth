@@ -421,3 +421,5 @@ def test_build_tusis_truth_uses_latest_smartschool_operational_exports(
     runbook = (output / "IMPORT_RUNBOOK.org").read_text(encoding="utf-8")
     assert runbook.count("#+begin_src bash") == 5
     assert "registry_semester_enrollment.tsv is audit-only" in runbook
+    assert "extract_tucurricula_imports.py" in runbook
+    assert "backfill_registration_invoices --academic-year 25-26" in runbook

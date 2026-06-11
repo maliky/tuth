@@ -8,6 +8,10 @@ BATCH_SIZE_STUDENTS="${BATCH_SIZE_STUDENTS:-500}"
 BATCH_SIZE_GRADES="${BATCH_SIZE_GRADES:-5000}"
 IMPORT_REGISTRATIONS="${IMPORT_REGISTRATIONS:-1}"
 IMPORT_FINANCE_PAYMENTS="${IMPORT_FINANCE_PAYMENTS:-1}"
+BACKFILL_REGISTRATION_INVOICES="${BACKFILL_REGISTRATION_INVOICES:-1}"
+FEE_BACKFILL_ACADEMIC_YEAR="${FEE_BACKFILL_ACADEMIC_YEAR:-25-26}"
+FEE_BACKFILL_SEMESTER_NUMBER="${FEE_BACKFILL_SEMESTER_NUMBER:-3}"
+FEE_LAB_REPORT="${FEE_LAB_REPORT:-logs/course_fee_policy/25-26_sem3_lab_candidates.tsv}"
 RUN_PREFLIGHT="${RUN_PREFLIGHT:-1}"
 START_AT="${START_AT:-preflight}"
 STUDENT_START_ROW="${STUDENT_START_ROW:-1}"
@@ -154,6 +158,17 @@ if should_run finance; then
       -f "$TRUTH_DIR/finance_payments.tsv"
   else
     log "Skipping truth finance payments; set IMPORT_FINANCE_PAYMENTS=1 after preflight"
+  fi
+
+  if [[ "$BACKFILL_REGISTRATION_INVOICES" == "1" ]]; then
+    log "Backfilling registration invoices for $FEE_BACKFILL_ACADEMIC_YEAR Sem$FEE_BACKFILL_SEMESTER_NUMBER"
+    run_web python manage.py backfill_registration_invoices \
+      --academic-year "$FEE_BACKFILL_ACADEMIC_YEAR" \
+      --semester-number "$FEE_BACKFILL_SEMESTER_NUMBER" \
+      --include-existing \
+      --write-lab-report "$FEE_LAB_REPORT"
+  else
+    log "Skipping registration invoice backfill"
   fi
 fi
 

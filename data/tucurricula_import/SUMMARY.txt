@@ -3,5 +3,5 @@ course_rows: 855
 curriculum_rows: 59
 curriculum_course_rows: 1723
 requirement_rows: 2075
-unresolved_requisite_rows: 355
+unresolved_requisite_rows: 354
 course_conflict_rows: 33

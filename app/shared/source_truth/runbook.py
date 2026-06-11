@@ -51,6 +51,8 @@ def _command_blocks(
         "COMPOSE_PROJECT_NAME=tusis_preprod docker-compose -f docker-compose-preprod.yml"
     )
     build_truth = (
+        "python scripts/extract_tucurricula_imports.py "
+        "--source-root ~/tucurricula --output-dir data/tucurricula_import && "
         "docker-compose -f docker-compose-preprod.yml run --rm web "
         "python manage.py build_tusis_truth "
         f"--smartschool-dir {smartschool_dir} --output-dir {output_dir}"
@@ -78,7 +80,11 @@ def _command_blocks(
         f"'python manage.py import_resources -f {import_dir} -r LegacyRegistration && "
         f"python manage.py import_grades -f {import_dir / 'full_grades.tsv'} "
         f"--batch-size 5000 && python manage.py import_finance_payments "
-        f"-f {import_dir / 'finance_payments.tsv'}' && {compose} up -d web && "
+        f"-f {import_dir / 'finance_payments.tsv'} && "
+        "python manage.py backfill_registration_invoices --academic-year 25-26 "
+        "--semester-number 3 --include-existing --write-lab-report "
+        "logs/course_fee_policy/25-26_sem3_lab_candidates.tsv' && "
+        f"{compose} up -d web && "
         f"{compose} exec -T web python manage.py check && "
         f"{compose} exec -T web python manage.py validate_preprod_truth "
         f"--truth-dir {import_dir}"
