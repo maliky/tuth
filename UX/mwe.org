@@ -111,7 +111,7 @@ This section is a practical manual for demonstrating the app with the runtime MW
 ** Finance office / clerk manual
 1. Log in as =test_finance_officer= for operational payment work, or =test_finance= for overview-only demonstration.
 2. Open =/staff/finance_officer/= for the finance role dashboard, then =/staff/finance/invoices/= for the console.
-3. Search the student by ID or name. Use the autocomplete field; for example, =31625= should resolve to Anthony Klakur Tchouin in the current preprod data.
+3. Search the student by ID or name. Use the autocomplete field; for example, =31625= should resolve to Anthony Klakur Tchouin in the current preprod data. # > it does
 4. Filter by semester and invoice status when looking for a specific registration cycle.
 5. If registrations exist but course invoices do not, use =Generate missing invoices=. The current Sem3 rebuild creates invoice rows automatically, but this remains the manual recovery action.
 6. Review invoice rows. A normal current-semester course invoice should not be less than =15.00 USD=.
@@ -120,6 +120,24 @@ This section is a practical manual for demonstrating the app with the runtime MW
 9. Use row checkboxes and batch actions for multiple invoice/payment rows. Use the per-student filter before batch clearing to avoid acting on the wrong student.
 10. Use the finance admin shortcut links when direct table inspection is required: course invoices, semester invoices, payments, fee stacks, and fee lines.
 11. If a course appears to need special lab/field/clinical fees, do not guess in the console. Add or request an explicit fee rule in the maintained course-fee table, then regenerate/backfill invoices.
+
+*** Anthony payment clearing walkthrough (TU-31625)
+1. Open =/staff/finance/invoices/?tab=invoices&student_id=31625=.
+2. If rows are missing from invoice list, verify =/staff/finance/invoices/?tab=invoices&student_id=31625&semester=all&invoice_status=all= first.
+3. In =Needs fee setup= rows, use =Set fee + clear= when you want one-step payment clearance for that registration.
+4. In =Needs invoice generation=, expand the student section and click =Generate missing invoices=, then return to invoices tab.
+5. For normal invoice rows, tick checkboxes, then click =Create individual payment=.
+6. Switch to =?tab=payments&student_id=31625&payment_status=all=.
+7. For each created payment row:
+   - set =amount_paid= to the exact due amount,
+   - set =status= to =cleared=,
+   - set =payment_method= (for example, =cash=),
+   - set =payer= (for example, =student=),
+   - then click =Validate changes= (button appears when a row is selected).
+8. Confirm finance summary in the finance console and the student-facing balance view.
+
+
++# > grade entry should be instructor lead in the time window open and closed by registar, who should be able to open grade update specificaly for one faculty or a group fo faculty for a given period.  Regsitrar should not be able to change grade himself, this should be the duty of faculty chair dean or vpaa but if feature requires to much changes keep functionalities as is.
 
 ** Registrar manual
 1. Log in as =test_registrar= for grade and transcript review.
@@ -144,6 +162,11 @@ This section is a practical manual for demonstrating the app with the runtime MW
 1. Log in as =test_faculty= to view the instruction dashboard at =/staff/faculty/=.
 2. Review assigned sections and pending grade counts.
 3. Current state: detailed grade entry is admin-backed rather than a complete faculty portal page.
+   # > feature make this faculty portal page, with possibility of downloading a csv file /template with name and student id.
+   # > the faculty fills it and upload it back to the system.
+   # > the system imports the grades in a batch from that file
+   # > possibility to change individual grade is also availabel to the faculty.
+   # > upload is session based.
 4. When the grade-entry window is open, authorized academic staff enter grades through Django admin using section or grade records.
 5. Grade rows connect a student, section, and grade value. The instructor should work from the official section roster to avoid entering a grade for the wrong section.
 6. Registrar reviews submitted grades from =/registrar/grades/=.
@@ -161,8 +184,15 @@ This section is a practical manual for demonstrating the app with the runtime MW
 
 ** Known terminology to confirm
 - Whether the production title should be =Finance Clerk=, =Cashier=, =Finance Officer=, or a hierarchy of these roles.
+# >Let have a hierachy of those  
 - Whether the office document should consistently say =grade sheet=, =transcript=, or =grade roster= for student-facing requests.
+# >  class roster: list of studnets of a sections with some basic information, name age gender, 
+# >  grade roster : list of student in a section with space for the grade to be inputed but not yet there.
+# >  transcript : full list of all the grade of a student for a program, usualy given at the end of the program or if the student leave the program
+# >  grade sheet : grade listing for a semester for a student
+  
 - Whether faculty grade entry must become a portal workflow before MWE, or whether admin-backed entry is acceptable for this round.
+# > we need portal workflow  
 
 * Detailed Minimal Working Example (MWE) for Tuth System
 ** Dean Uploads or Creates Curriculum (with Prerequisites)
