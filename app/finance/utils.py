@@ -268,7 +268,7 @@ def build_invoice_snapshot(
         curriculum_course = invoice.curriculum_course
         course = curriculum_course.course
         credits = int(curriculum_course.credit_hours.code)
-        tuition_amount = curriculum_course.tuition_for()
+        tuition_amount = curriculum_course.tuition_for(invoice.semester)
         course_cost = Decimal(invoice.initial_amount_due or Decimal("0.00"))
         cost_per_credit = (course_cost / Decimal(credits)) if credits else Decimal("0.00")
         tuition_total += tuition_amount

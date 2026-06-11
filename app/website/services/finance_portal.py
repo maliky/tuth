@@ -7,7 +7,7 @@ from typing import Iterable, Optional, TypedDict, cast
 
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
-from django.db.models import Q, QuerySet
+from django.db.models import Exists, OuterRef, Q, QuerySet
 from django.http import HttpRequest, QueryDict
 from django.urls import NoReverseMatch, reverse
 
@@ -19,6 +19,8 @@ from app.finance.course_fee_setup import (
     suggested_registration_fee_amount,
 )
 from app.finance.registration_invoices import (
+    INVOICEABLE_REGISTRATION_STATUSES,
+    invoice_generation_registration_qs,
     invoiceable_registration_qs,
     missing_registration_invoice_student_ids,
     registration_invoice_amount,
@@ -106,24 +108,57 @@ class PaginationStateT(TypedDict):
 PAGINATION_PAGE_PARAMS = ("page", "registration_page", "fee_setup_page")
 
 
-def finance_std_ids() -> set[int]:
+def finance_std_ids(*, missing_semester_id: int | None = None) -> set[int]:
     """Return student IDs with invoices or payments."""
     invoice_ids = set(CrsInvoice.objects.values_list("student_id", flat=True))
     payment_ids = set(
         Payment.objects.values_list("student_semester_invoice__student_id", flat=True)
     )
-    return invoice_ids | payment_ids | missing_registration_invoice_student_ids()
+    return (
+        invoice_ids
+        | payment_ids
+        | missing_registration_invoice_student_ids(semester_id=missing_semester_id)
+    )
+
+
+def finance_relevant_std_qs() -> QuerySet[Student]:
+    """Return students with direct finance activity or invoiceable registrations."""
+    existing_registration_invoice = CrsInvoice.objects.filter(
+        student_id=OuterRef("student_id"),
+        curriculum_course_id=OuterRef("section__curriculum_course_id"),
+        semester_id=OuterRef("section__semester_id"),
+    )
+    missing_registration = Registration.objects.filter(
+        student_id=OuterRef("pk"),
+        status_id__in=INVOICEABLE_REGISTRATION_STATUSES,
+    ).filter(~Exists(existing_registration_invoice))
+    stale_zero_invoice = CrsInvoice.objects.filter(
+        initial_amount_due__lte=Decimal("0.00"),
+        balance__lte=Decimal("0.00"),
+    ).values_list("student_id", flat=True)
+    invoice_student_ids = CrsInvoice.objects.values_list("student_id", flat=True)
+    payment_student_ids = Payment.objects.values_list(
+        "student_semester_invoice__student_id",
+        flat=True,
+    )
+    missing_registration_student_ids = missing_registration.values_list(
+        "student_id",
+        flat=True,
+    )
+    # SQL subqueries keep autocomplete responsive without materializing history.
+    return Student.objects.select_related("user").filter(
+        Q(id__in=invoice_student_ids)
+        | Q(id__in=payment_student_ids)
+        | Q(id__in=missing_registration_student_ids)
+        | Q(id__in=stale_zero_invoice)
+    )
 
 
 def finance_stds(query: str | None = None) -> QuerySet[Student]:
     """Return a queryset of finance-relevant students matching a query."""
-    student_ids = finance_std_ids()
-    if not student_ids:
-        return Student.objects.none()
-    qs = Student.objects.filter(id__in=student_ids).select_related("user")
     if not query:
-        return qs.none()
-    qs = qs.filter(
+        return Student.objects.none()
+    qs = finance_relevant_std_qs().filter(
         Q(student_id__icontains=query)
         | Q(long_name__icontains=query)
         | Q(user__first_name__icontains=query)
@@ -135,10 +170,7 @@ def finance_stds(query: str | None = None) -> QuerySet[Student]:
 
 def finance_std_by_id(student_id: int) -> Optional[Student]:
     """Return a finance-relevant student by ID."""
-    student_ids = finance_std_ids()
-    if not student_ids or student_id not in student_ids:
-        return None
-    return Student.objects.filter(id=student_id).select_related("user").first()
+    return finance_relevant_std_qs().filter(id=student_id).first()
 
 
 def build_std_options(
@@ -297,10 +329,9 @@ def uninvoiced_registration_queryset(
     semester_id: Optional[int],
 ) -> QuerySet[Registration]:
     """Return invoiceable registrations that finance still needs to materialize."""
-    return invoiceable_registration_qs(
+    return invoice_generation_registration_qs(
         student_id=selected_student_id,
         semester_id=semester_id,
-        missing_only=True,
     )
 
 

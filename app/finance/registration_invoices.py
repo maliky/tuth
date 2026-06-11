@@ -12,6 +12,7 @@ from app.finance.models.invoice import CrsInvoice
 from app.registry.models.registration import Registration
 
 RegistrationStatusCodesT: TypeAlias = tuple[str, ...]
+RegistrationInvoiceKeyT: TypeAlias = tuple[int, int, int]
 
 INVOICEABLE_REGISTRATION_STATUSES: RegistrationStatusCodesT = (
     "pending",
@@ -83,37 +84,46 @@ def invoiceable_registration_qs(
     return qs
 
 
-def missing_registration_invoice_student_ids() -> set[int]:
+def missing_registration_invoice_student_ids(
+    *,
+    semester_id: int | None = None,
+) -> set[int]:
     """Return students with invoiceable registrations missing course invoices."""
     return set(
-        invoiceable_registration_qs()
+        invoice_generation_registration_qs(semester_id=semester_id)
         .order_by()
         .values_list("student_id", flat=True)
         .distinct()
     )
 
 
-def billable_missing_registration_count() -> int:
+def billable_missing_registration_count(
+    *,
+    semester_id: int | None = None,
+) -> int:
     """Return positive-amount registrations missing course invoices."""
-    return missing_registration_invoice_counts()["billable"]
+    return missing_registration_invoice_counts(semester_id=semester_id)["billable"]
 
 
-def fee_setup_missing_registration_count() -> int:
+def fee_setup_missing_registration_count(
+    *,
+    semester_id: int | None = None,
+) -> int:
     """Return zero-amount registrations missing course invoices."""
-    return missing_registration_invoice_counts()["fee_setup"]
+    return missing_registration_invoice_counts(semester_id=semester_id)["fee_setup"]
 
 
-def missing_registration_invoice_counts() -> MissingRegistrationInvoiceCountsT:
+def missing_registration_invoice_counts(
+    *,
+    student_id: int | None = None,
+    semester_id: int | None = None,
+) -> MissingRegistrationInvoiceCountsT:
     """Return missing-invoice counters with one fee-resolution pass."""
-    base_qs = invoiceable_registration_qs().order_by()
-    counts: MissingRegistrationInvoiceCountsT = {
-        "billable": base_qs.filter(
-            section__curriculum_course__credit_hours_id__gt=0
-        ).count(),
-        "fee_setup": 0,
-    }
-    zero_credit_qs = base_qs.filter(section__curriculum_course__credit_hours_id__lte=0)
-    for registration in zero_credit_qs:
+    counts: MissingRegistrationInvoiceCountsT = {"billable": 0, "fee_setup": 0}
+    for registration in invoice_generation_registration_qs(
+        student_id=student_id,
+        semester_id=semester_id,
+    ).order_by():
         if registration_invoice_amount(registration) > Decimal("0.00"):
             counts["billable"] += 1
         else:
@@ -124,6 +134,32 @@ def missing_registration_invoice_counts() -> MissingRegistrationInvoiceCountsT:
 def registration_invoice_amount(registration: Registration) -> Decimal:
     """Return the billable amount for a registration section."""
     return registration.section.fee_total_amount()
+
+
+def invoice_generation_registration_qs(
+    *,
+    student_id: int | None = None,
+    semester_id: int | None = None,
+) -> QuerySet[Registration]:
+    """Return registrations missing invoices or holding stale zero invoices."""
+    candidate_qs = invoiceable_registration_qs(
+        student_id=student_id,
+        semester_id=semester_id,
+        missing_only=False,
+    )
+    candidate_registrations = list(candidate_qs)
+    if not candidate_registrations:
+        return candidate_qs.none()
+    existing_keys, stale_zero_keys = _invoice_key_sets(candidate_registrations)
+    actionable_ids = [
+        registration.id
+        for registration in candidate_registrations
+        if _registration_invoice_key(registration) not in existing_keys
+        or _registration_invoice_key(registration) in stale_zero_keys
+    ]
+    if not actionable_ids:
+        return candidate_qs.none()
+    return candidate_qs.filter(id__in=actionable_ids)
 
 
 def ensure_course_invoice_for_registration(
@@ -153,6 +189,48 @@ def ensure_course_invoice_for_registration(
         return invoice, True, False
     updated = _patch_invoice_amount(invoice, amount_due)
     return invoice, False, updated
+
+
+def _invoice_key_sets(
+    registrations: Iterable[Registration],
+) -> tuple[set[RegistrationInvoiceKeyT], set[RegistrationInvoiceKeyT]]:
+    """Return existing and stale-zero invoice keys for registration candidates."""
+    registration_list = list(registrations)
+    student_ids = {registration.student_id for registration in registration_list}
+    curriculum_course_ids = {
+        registration.section.curriculum_course_id for registration in registration_list
+    }
+    semester_ids = {
+        registration.section.semester_id for registration in registration_list
+    }
+    invoice_qs = CrsInvoice.objects.filter(
+        student_id__in=student_ids,
+        curriculum_course_id__in=curriculum_course_ids,
+        semester_id__in=semester_ids,
+    )
+    existing_keys: set[RegistrationInvoiceKeyT] = set()
+    stale_zero_keys: set[RegistrationInvoiceKeyT] = set()
+    for invoice in invoice_qs:
+        key = (
+            invoice.student_id,
+            invoice.curriculum_course_id,
+            invoice.semester_id,
+        )
+        existing_keys.add(key)
+        if invoice.initial_amount_due <= Decimal(
+            "0.00"
+        ) and invoice.get_balance() <= Decimal("0.00"):
+            stale_zero_keys.add(key)
+    return existing_keys, stale_zero_keys
+
+
+def _registration_invoice_key(registration: Registration) -> RegistrationInvoiceKeyT:
+    """Return the matching CrsInvoice identity for a registration."""
+    return (
+        registration.student_id,
+        registration.section.curriculum_course_id,
+        registration.section.semester_id,
+    )
 
 
 def materialize_registration_invoices(
@@ -240,6 +318,7 @@ __all__ = [
     "ensure_course_invoice_for_registration",
     "billable_missing_registration_count",
     "fee_setup_missing_registration_count",
+    "invoice_generation_registration_qs",
     "invoiceable_registration_qs",
     "materialize_registration_invoices",
     "missing_registration_invoice_counts",

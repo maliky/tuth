@@ -1,0 +1,15 @@
+course_dept	course_no	base_amount	extra_amount	fee_type_code	reason
+EEDU	301	15.00		entrepreneurship_education_i	Minimum billable amount for Entrepreneurship Education I.
+EEDU	302	15.00		entrepreneurship_education_ii	Minimum billable amount for Entrepreneurship Education II.
+CHEM	101	15.00		tuition	General science course flat vacation-school amount.
+CHEM	102	15.00		tuition	General science course flat vacation-school amount.
+CHEM	201	15.00		tuition	General science course flat vacation-school amount.
+CHEM	202	15.00		tuition	General science course flat vacation-school amount.
+BIOL	101	15.00		tuition	General science course flat vacation-school amount.
+BIOL	102	15.00		tuition	General science course flat vacation-school amount.
+BIOL	201	15.00		tuition	General science course flat vacation-school amount.
+BIOL	202	15.00		tuition	General science course flat vacation-school amount.
+PHYS	101	15.00		tuition	General science course flat vacation-school amount.
+PHYS	102	15.00		tuition	General science course flat vacation-school amount.
+PHYS	201	15.00		tuition	General science course flat vacation-school amount.
+PHYS	202	15.00		tuition	General science course flat vacation-school amount.

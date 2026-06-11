@@ -8,7 +8,6 @@ from django.core.management import call_command
 
 import pytest
 
-from app.finance.course_fee_setup import ensure_course_default_fee
 from app.finance.models.invoice import CrsInvoice
 from app.finance.registration_invoices import ensure_course_invoice_for_registration
 from app.registry.models.credit_hours import CreditHour
@@ -59,7 +58,7 @@ def test_backfill_registration_invoices_command_supports_dry_run(regio_factory) 
 
 
 def test_registration_invoice_helper_updates_stale_zero_invoice(regio_factory) -> None:
-    """A fee setup should let an existing zero invoice become billable."""
+    """The billing minimum should let an existing zero invoice become billable."""
     registration = regio_factory("invoice_zero_student", "CURRI_INV_ZERO", "806", 1)
     curriculum_course = registration.section.curriculum_course
     curriculum_course.credit_hours = CreditHour.objects.get(code=0)
@@ -72,16 +71,38 @@ def test_registration_invoice_helper_updates_stale_zero_invoice(regio_factory) -
         balance=Decimal("0.00"),
     )
 
-    ensure_course_default_fee(
-        course=curriculum_course.course,
-        amount=Decimal("15.00"),
-        fee_type_code="other",
-    )
     invoice, created, updated = ensure_course_invoice_for_registration(registration)
 
     assert invoice == stale_invoice
     assert created is False
     assert updated is True
     invoice.refresh_from_db()
+    assert invoice.initial_amount_due == Decimal("15.00")
+    assert invoice.balance == Decimal("15.00")
+
+
+def test_backfill_registration_invoices_command_patches_existing_zero_invoice(
+    regio_factory,
+) -> None:
+    """Backfill should patch stale zero invoices when include-existing is set."""
+    registration = regio_factory("invoice_patch_student", "CURRI_INV_PATCH", "807", 1)
+    curriculum_course = registration.section.curriculum_course
+    curriculum_course.credit_hours = CreditHour.objects.get(code=0)
+    curriculum_course.save(update_fields=["credit_hours"])
+    CrsInvoice.objects.create(
+        student=registration.student,
+        curriculum_course=curriculum_course,
+        semester=registration.section.semester,
+        initial_amount_due=Decimal("0.00"),
+        balance=Decimal("0.00"),
+    )
+
+    call_command(
+        "backfill_registration_invoices",
+        student=registration.student.username,
+        include_existing=True,
+    )
+
+    invoice = CrsInvoice.objects.get(student=registration.student)
     assert invoice.initial_amount_due == Decimal("15.00")
     assert invoice.balance == Decimal("15.00")

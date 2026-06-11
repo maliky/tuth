@@ -24,6 +24,7 @@ from app.registry.models.registration import Registration
 from app.registry.models.transcript import TranscriptRequest
 from app.shared.auth.perms import UserRole
 from app.shared.models import ApprovalQueue
+from app.timetable.models.semester import Semester
 from app.timetable.models.section import Section
 from app.website.services.portal_types import (
     ActionT,
@@ -537,9 +538,15 @@ def _build_donor_context(request: HttpRequest) -> RoleContextT:
 
 
 def _build_finance_context(_: HttpRequest) -> RoleContextT:
+    current_semester = Semester.get_current_sem()
+    current_semester_id = current_semester.id if current_semester else None
     pending_payments = Payment.objects.filter(status__code="pending").count()
     invoice_count = CrsInvoice.objects.filter(balance__gt=0).count()
-    missing_invoice_counts = missing_registration_invoice_counts()
+    # Scope dashboard work to the active billing semester; all-history scans are
+    # kept for explicit reports, not every role-overview page load.
+    missing_invoice_counts = missing_registration_invoice_counts(
+        semester_id=current_semester_id
+    )
     uninvoiced_count = missing_invoice_counts["billable"]
     fee_setup_count = missing_invoice_counts["fee_setup"]
     actions: list[ActionT] = []

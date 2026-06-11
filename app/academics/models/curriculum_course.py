@@ -12,13 +12,18 @@ from app.academics.choices import LEVEL_NUMBER
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.finance.models.fee_stack import resolve_crs_fee_stack_map
+from app.finance.course_fee_policy import (
+    DEFAULT_TUITION_RATE_PER_CREDIT,
+    course_policy_extra_amount,
+    course_tuition_amount,
+)
 from app.registry.models import CreditHour
 from app.shared.types import FacultyQuery, StdQuery
 from app.timetable.choices import SEMESTER_NUMBER
 from app.timetable.models.semester import Semester
 
 
-TUITION_RATE_PER_CREDIT = Decimal("5.00")
+TUITION_RATE_PER_CREDIT = DEFAULT_TUITION_RATE_PER_CREDIT
 ChoiceListT: TypeAlias = list[tuple[int, str]]
 
 
@@ -199,17 +204,16 @@ class CurriCrs(models.Model):
         ).distinct()
         return students_qs
 
-    def tuition_for(self) -> Decimal:
-        """Return the tuition amount for this curriculum course."""
-        credit_hours = getattr(self, "credit_hours", None)
-        credit_code = getattr(credit_hours, "code", None)
-        return Decimal(int(credit_code or 0)) * TUITION_RATE_PER_CREDIT
+    def tuition_for(self, semester: Semester | None = None) -> Decimal:
+        """Return the billing-policy tuition amount for this curriculum course."""
+        return course_tuition_amount(self, semester)
 
     def total_fee(self, semester) -> Decimal:
         """Return tuition plus resolved additional fees for a semester."""
         fee_map, _ = resolve_crs_fee_stack_map(self.course, semester)
         fee_total = sum(fee_map.values(), Decimal("0.00"))
-        return self.tuition_for() + fee_total
+        policy_extra = course_policy_extra_amount(self.course)
+        return self.tuition_for(semester) + fee_total + policy_extra
 
     def save(self, *args, **kwargs):
         """Make sure we set default before saving."""

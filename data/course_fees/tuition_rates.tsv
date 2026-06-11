@@ -1,0 +1,9 @@
+academic_year	semester_no	currency	tuition_per_credit	foreigner_tuition_per_credit	source
+2023/2024	2	US$	15.00	25.00	SmartSchool dbo_UM_Tuition
+2023/2024	3	US$	5.00	5.00	SmartSchool dbo_UM_Tuition
+2024/2025	1	US$	5.00	5.00	SmartSchool dbo_UM_Tuition
+2024/2025	2	US$	5.00	5.00	SmartSchool dbo_UM_Tuition
+2024/2025	3	US$	5.00	5.00	SmartSchool dbo_UM_Tuition
+2025/2026	1	US$	5.00	25.00	SmartSchool dbo_UM_Tuition
+2025/2026	2	US$	5.00	25.00	SmartSchool dbo_UM_Tuition
+2025/2026	3	US$	5.00	25.00	SmartSchool dbo_UM_Tuition

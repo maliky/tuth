@@ -10,7 +10,7 @@ from django.core.paginator import Paginator as DjangoPaginator
 from django.urls import reverse
 
 from app.academics.models.department import Department
-from app.finance.models.fee_stack import CrsFeeStack, FeeStackLine
+from app.finance.models.fee_stack import CrsFeeStack
 from app.finance.models.invoice import CrsInvoice
 from app.finance.models.payment import Payment
 from app.finance.registration_invoices import ensure_course_invoice_for_registration
@@ -34,7 +34,7 @@ def _finance_user() -> User:
 
 
 def _zero_fee_registration(registration: Registration) -> Registration:
-    """Turn a registration into the EED301 zero-credit fee-setup case."""
+    """Turn a registration into the EED301 zero-credit minimum-billing case."""
     curriculum_course = registration.section.curriculum_course
     course = curriculum_course.course
     course.department = Department.get_dft("EED")
@@ -120,11 +120,11 @@ def test_finance_autocomplete_includes_students_with_missing_invoices(
     assert payload["results"][0]["id"] == registration.student.id
 
 
-def test_finance_officer_sees_zero_amount_registrations_as_fee_setup(
+def test_finance_officer_sees_zero_credit_registrations_as_billable(
     client,
     regio_factory,
 ) -> None:
-    """Zero-credit pending courses should show as actionable fee setup rows."""
+    """Zero-credit pending courses should be billable without manual fee setup."""
     registration = _zero_fee_registration(
         regio_factory("finance_fee_setup_student", "CURRI_FIN_FEE", "301", 1)
     )
@@ -136,16 +136,17 @@ def test_finance_officer_sees_zero_amount_registrations_as_fee_setup(
     )
 
     assert response.status_code == 200
-    assert b"Needs fee setup" in response.content
+    assert b"Uninvoiced registrations" in response.content
     assert b"EED301" in response.content
-    assert b"Set fee + clear" in response.content
+    assert b"Generate missing invoices" in response.content
+    assert b"Needs fee setup" not in response.content
 
 
-def test_finance_officer_sees_stale_zero_invoice_as_fee_setup(
+def test_finance_officer_sees_stale_zero_invoice_as_billable_generation(
     client,
     regio_factory,
 ) -> None:
-    """Existing zero invoices should still expose the fee setup action."""
+    """Existing zero invoices should expose normal generation/update action."""
     registration = _zero_fee_registration(
         regio_factory("finance_stale_zero_student", "CURRI_FIN_STALE", "301", 1)
     )
@@ -164,9 +165,9 @@ def test_finance_officer_sees_stale_zero_invoice_as_fee_setup(
     )
 
     assert response.status_code == 200
-    assert b"Needs fee setup" in response.content
+    assert b"Uninvoiced registrations" in response.content
     assert b"EED301" in response.content
-    assert b"Set fee + clear" in response.content
+    assert b"Generate missing invoices" in response.content
 
 
 def test_finance_officer_uninvoiced_registration_pagination_is_visible(
@@ -207,11 +208,11 @@ def test_finance_officer_uninvoiced_registration_pagination_is_visible(
     assert b"registration_page=2" in response.content
 
 
-def test_finance_officer_can_set_fee_and_generate_invoice(
+def test_finance_officer_can_set_total_fee_and_generate_invoice(
     client,
     regio_factory,
 ) -> None:
-    """Finance staff should attach a course fee and create the missing invoice."""
+    """Finance staff should create the invoice when the policy already gives amount."""
     registration = _zero_fee_registration(
         regio_factory("finance_set_fee_student", "CURRI_FIN_SET", "301", 1)
     )
@@ -233,10 +234,9 @@ def test_finance_officer_can_set_fee_and_generate_invoice(
     invoice = CrsInvoice.objects.get(student=registration.student)
     assert invoice.initial_amount_due == Decimal("15.00")
     assert invoice.balance == Decimal("15.00")
-    assert CrsFeeStack.objects.filter(
+    assert not CrsFeeStack.objects.filter(
         course=registration.section.curriculum_course.course
     ).exists()
-    assert FeeStackLine.objects.filter(amount=Decimal("15.00")).exists()
 
 
 def test_finance_officer_can_set_fee_and_clear_registration(

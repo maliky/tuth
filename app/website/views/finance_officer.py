@@ -20,6 +20,7 @@ from app.finance.models.payment import Payment
 from app.finance.course_fee_setup import ensure_course_default_fee
 from app.finance.registration_invoices import (
     ensure_course_invoice_for_registration,
+    invoice_generation_registration_qs,
     invoiceable_registration_qs,
     materialize_registration_invoices,
 )
@@ -207,9 +208,11 @@ def finance_officer_generate_registration_invoices(request: HttpRequest) -> Http
     registration_ids = [value for value in registration_ids if value]
     student_id = clean_int(request.POST.get("student_id"))
     if registration_ids:
-        registrations = invoiceable_registration_qs().filter(id__in=registration_ids)
+        registrations = invoiceable_registration_qs(missing_only=False).filter(
+            id__in=registration_ids
+        )
     elif student_id:
-        registrations = invoiceable_registration_qs(student_id=student_id)
+        registrations = invoice_generation_registration_qs(student_id=student_id)
     else:
         messages.warning(request, "Select registrations or a student to invoice.")
         return redirect(request.POST.get("next") or reverse("finance_officer_invoices"))
@@ -259,11 +262,14 @@ def finance_officer_setup_registration_fee(request: HttpRequest) -> HttpResponse
 
     staff = getattr(request.user, "staff", None)
     with transaction.atomic():
-        ensure_course_default_fee(
-            course=registration.section.curriculum_course.course,
-            amount=amount,
-            fee_type_code=fee_type_code,
-        )
+        current_amount = registration.section.fee_total_amount()
+        additional_amount = amount - current_amount
+        if additional_amount > Decimal("0.00"):
+            ensure_course_default_fee(
+                course=registration.section.curriculum_course.course,
+                amount=additional_amount,
+                fee_type_code=fee_type_code,
+            )
         invoice, created, updated = ensure_course_invoice_for_registration(registration)
         if invoice is None or invoice.student_semester_invoice is None:
             messages.warning(request, "The fee was saved but no invoice was generated.")
