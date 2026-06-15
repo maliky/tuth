@@ -1,4 +1,22 @@
 
+* <2026-06-12 ven. 12:10>
+would be good to have the fee totoal on the student dashboard even if it is the outstanding balance
+We need a plan to reconcil the 3385 outstanding invoices. They should all be clearded.
+from finance officer on student 31625 after creating payment I go to payments the lines are there but empty , no course title no amount due, althoug I see a total paid of 827, 0 pending or created or updated. 827 is the total fee of all the student course but theare not all cleared so should not show as totla paid...  I expect ratther the total amoutn du. I also see 5 pending for the user, this is confusing.  the payments shown are only the one cleared. no pending payment line is showing.
+We need to make sure we do not make mistake on payments... good tight tests.
+
+tuition _per credit should not be 15 but 5. 
+
+also from ui point of view the chips invoices payments are redundant with the side bar links.  lets remove them.
+
+* <2026-06-12 ven. 06:41> payment UX
+in student dashboard payement, hide update, and payement update columns. give this info on mouse over the row. in finance invoice payments for a student distinguish visual pending and cleared rows from other status.
+
+Total paid for 31625 say 512 USD but 120 is pending... in finance invoice we can show more date info about the user, created and updated info about each row of sutdent invoice
+
+In the student invoice pdf, just give cost of the course, no need to display cost/cr, also use elisp for the course title. do not wrap the title, trunc it with elips ... to the colum lenght.  the head of the invoice should be more compact, academic semester id no name... and their value should be on the same line. add the course semester as a colum.
+
+do the above and explaine the different monetary value. what evidence for some of his course to be totaly cleared like hist202 or fren202. what evidence for those courses to be 45 USD, that is unusual.
 
 
 * <2026-03-08 dim.> UX
