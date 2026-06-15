@@ -103,25 +103,6 @@
     </div>
   </section>
 
-  <ul class="nav portal-tabs mb-3">
-    <li class="nav-item">
-      <a
-        class="nav-link {% if active_tab != 'payments' %}active{% endif %}"
-        href="{{ invoice_tab_url }}"
-      >
-        Invoices
-      </a>
-    </li>
-    <li class="nav-item">
-      <a
-        class="nav-link {% if active_tab == 'payments' %}active{% endif %}"
-        href="{{ payment_tab_url }}"
-      >
-        Payments
-      </a>
-    </li>
-  </ul>
-
   {% if active_tab == "payments" %}
     {% if payment_groups %}
       {% for group in payment_groups %}
@@ -149,20 +130,41 @@
                 </button>
                 <span class="text-muted">({{ group.student.student_id }})</span>
                 <span class="status-badge status-pending ms-2">
-                  Pending: {{ group.pending_count }}
+                  Pending rows: {{ group.pending_count }}
                 </span>
               </div>
               <div class="d-flex align-items-center gap-3">
                 <div>
-                  <span class="text-muted small">Total paid</span><br/>
-                  <strong>{{ group.total_paid }}</strong>
+                  <span class="text-muted small">Fees charged</span><br/>
+                  <strong>{{ group.charged_total }}</strong>
+                </div>
+                <div>
+                  <span class="text-muted small">Open balance</span><br/>
+                  <strong>{{ group.open_balance }}</strong>
+                </div>
+                <div>
+                  <span class="text-muted small">Pending records</span><br/>
+                  <strong>{{ group.pending_total }}</strong>
+                </div>
+                <div>
+                  <span class="text-muted small">Applied clearance</span><br/>
+                  <strong>{{ group.applied_clearance_total }}</strong>
+                  {% if group.surplus_total %}
+                    <div class="text-warning small">
+                      Surplus records: {{ group.surplus_total }}
+                    </div>
+                  {% endif %}
+                </div>
+                <div>
+                  <span class="text-muted small">Cleared records</span><br/>
+                  <strong>{{ group.cleared_records_total }}</strong>
                 </div>
                 <button
                   class="btn portal-btn-accent btn-sm d-none"
                   type="submit"
                   data-selection-submit="payment-checkbox-{{ group.student.id }}"
                 >
-                  Validate changes
+                  Save payment changes
                 </button>
               </div>
             </div>
@@ -178,17 +180,20 @@
                           data-select-all-for="payment-checkbox-{{ group.student.id }}"
                         />
                       </th>
-                      <th>Student semester invoice</th>
-                      <th>Amount due</th>
-                      <th>Amount paid</th>
+                      <th>Semester invoice</th>
+                      <th>Fees charged</th>
+                      <th>Open balance</th>
+                      <th>Record amount</th>
                       <th>Payer</th>
                       <th>Status</th>
                       <th>Method</th>
+                      <th>Updated</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {% for payment in group.rows %}
-                      <tr>
+                    {% for row in group.rows %}
+                      {% with payment=row.payment %}
+                      <tr class="{{ row.row_class }}">
                         <td>
                           <input
                             type="checkbox"
@@ -198,12 +203,20 @@
                             data-selection-group="payment-checkbox-{{ group.student.id }}"
                           />
                         </td>
-                        <td>
+                        <td title="{{ row.course_summary }}">
                           {{ payment.student_semester_invoice.semester.academic_year.code }} -
                           Semester {{ payment.student_semester_invoice.semester.number }}
-                          ({{ payment.student_semester_invoice.course_invoices.count }} course invoice{{ payment.student_semester_invoice.course_invoices.count|pluralize }})
+                          <div class="text-muted small">
+                            {{ payment.student_semester_invoice.course_invoices.count }} course invoice{{ payment.student_semester_invoice.course_invoices.count|pluralize }}
+                          </div>
+                          {% if row.surplus %}
+                            <div class="text-warning small">
+                              Surplus on this semester: {{ row.surplus }}
+                            </div>
+                          {% endif %}
                         </td>
-                        <td>{{ payment.student_semester_invoice.balance }}</td>
+                        <td>{{ row.charged_total }}</td>
+                        <td>{{ row.open_balance }}</td>
                         <td>
                           <input
                             class="form-control form-control-sm"
@@ -212,10 +225,11 @@
                             min="0"
                             name="amount_paid_{{ payment.id }}"
                             value="{{ payment.amount_paid }}"
+                            data-payment-edit-field
                           />
                         </td>
                         <td>
-                          <select class="form-select form-select-sm" name="payer_{{ payment.id }}">
+                          <select class="form-select form-select-sm" name="payer_{{ payment.id }}" data-payment-edit-field>
                             {% for option in payer_options %}
                               <option value="{{ option.code }}" {% if option.code == payment.payer.code %}selected{% endif %}>
                                 {{ option.label }}
@@ -224,7 +238,7 @@
                           </select>
                         </td>
                         <td>
-                          <select class="form-select form-select-sm" name="status_{{ payment.id }}">
+                          <select class="form-select form-select-sm" name="status_{{ payment.id }}" data-payment-edit-field>
                             {% for option in payment_status_choices %}
                               <option value="{{ option.code }}" {% if option.code == payment.status.code %}selected{% endif %}>
                                 {{ option.label }}
@@ -233,7 +247,7 @@
                           </select>
                         </td>
                         <td>
-                          <select class="form-select form-select-sm" name="method_{{ payment.id }}">
+                          <select class="form-select form-select-sm" name="method_{{ payment.id }}" data-payment-edit-field>
                             {% for option in payment_method_options %}
                               <option value="{{ option.code }}" {% if option.code == payment.payment_method.code %}selected{% endif %}>
                                 {{ option.label }}
@@ -241,7 +255,9 @@
                             {% endfor %}
                           </select>
                         </td>
+                        <td title="Created: {{ row.created_at }}">{{ row.updated_at }}</td>
                       </tr>
+                      {% endwith %}
                     {% endfor %}
                   </tbody>
                 </table>
@@ -492,14 +508,14 @@
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ current_path }}" />
         <div class="portal-selection-bar d-flex justify-content-between align-items-center mb-3">
-          <p class="mb-0 text-muted">Select invoices for individual payments.</p>
+          <p class="mb-0 text-muted">Select course invoices to create semester payment rows.</p>
           <button
             class="btn portal-btn-accent btn-sm d-none"
             type="submit"
             id="invoice-selection-submit"
             data-selection-submit="invoice-checkbox"
           >
-            Create individual payment
+            Create semester payment
           </button>
         </div>
         {% for group in invoice_groups %}
@@ -529,7 +545,7 @@
                   type="submit"
                   form="student-payment-form-{{ group.student.id }}"
                 >
-                  Create payments for student
+                  Create semester payments
                 </button>
               </div>
             </div>
@@ -548,12 +564,14 @@
                       <th>Course</th>
                       <th>Semester</th>
                       <th>Amount due</th>
-                      <th>Created</th>
+                      <th>Status</th>
+                      <th>Updated</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {% for invoice in group.rows %}
-                      <tr>
+                    {% for row in group.rows %}
+                      {% with invoice=row.invoice %}
+                      <tr class="{{ row.row_class }}">
                         <td>
                           <input
                             type="checkbox"
@@ -571,8 +589,10 @@
                           {{ invoice.semester.academic_year.code }} - Semester {{ invoice.semester.number }}
                         </td>
                         <td>{{ invoice.balance }}</td>
-                        <td>{{ invoice.created_at|date:"M d, Y H:i" }}</td>
+                        <td>{{ invoice.status.label }}</td>
+                        <td title="Created: {{ row.created_at }}">{{ row.updated_at }}</td>
                       </tr>
+                      {% endwith %}
                     {% endfor %}
                   </tbody>
                 </table>
@@ -686,6 +706,17 @@
             groupBox.checked = box.checked;
           });
           refreshGroup(groupName);
+        });
+      });
+      document.querySelectorAll("[data-payment-edit-field]").forEach((field) => {
+        field.addEventListener("change", () => {
+          const row = field.closest("tr");
+          const rowBox = row ? row.querySelector("[data-selection-group]") : null;
+          if (!rowBox) {
+            return;
+          }
+          rowBox.checked = true;
+          refreshGroup(rowBox.dataset.selectionGroup);
         });
       });
       new Set(

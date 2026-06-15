@@ -237,7 +237,7 @@ def build_invoice_snapshot(
     )
     dean_signature = getattr(settings, "INVOICE_DEAN_SIGNATURE", "Dean of Admissions")
     if semester:
-        academic_semester = f"{semester.academic_year.code} Sem. {semester.number}"
+        academic_semester = f"{semester.academic_year.code}-S{semester.number}"
     else:
         academic_semester = "All semesters"
 
@@ -282,7 +282,9 @@ def build_invoice_snapshot(
                 "credits": credits,
                 "cost_per_credit": _format_currency(cost_per_credit),
                 "course_cost": _format_currency(course_cost),
-                "sem_label": str(invoice.semester),
+                "sem_label": (
+                    f"{invoice.semester.academic_year.code}-S{invoice.semester.number}"
+                ),
             }
         )
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from urllib.parse import parse_qs, urlparse
 
 import pytest
 from django.contrib.auth.models import Group, User
@@ -13,6 +14,12 @@ from app.academics.models.department import Department
 from app.finance.models.fee_stack import CrsFeeStack
 from app.finance.models.invoice import CrsInvoice
 from app.finance.models.payment import Payment
+from app.finance.models.status_types_methods import (
+    InvoiceStatus,
+    Payer,
+    PaymentMethod,
+    PaymentStatus,
+)
 from app.finance.registration_invoices import ensure_course_invoice_for_registration
 from app.registry.models.credit_hours import CreditHour
 from app.registry.models.registration import Registration
@@ -321,3 +328,151 @@ def test_finance_officer_clears_only_selected_fee_setup_registration(
     assert Payment.objects.get(
         student_semester_invoice=target_invoice.student_semester_invoice
     ).amount_paid == Decimal("15.00")
+
+
+def test_payment_group_total_paid_excludes_pending_amounts(
+    curriculum_course_factory,
+    sem_factory,
+    student,
+) -> None:
+    """Finance payment totals should separate cleared and pending money."""
+    PaymentStatus._populate_attributes_and_db()
+    curriculum_course = curriculum_course_factory("814", "CURRI_FIN_PAY_TOTALS")
+    semester = sem_factory(1)
+    invoice = CrsInvoice.objects.create(
+        student=student,
+        curriculum_course=curriculum_course,
+        semester=semester,
+        initial_amount_due=Decimal("150.00"),
+        balance=Decimal("150.00"),
+    )
+    parent_invoice = invoice.student_semester_invoice
+    assert parent_invoice is not None
+    Payment.objects.create(
+        student_semester_invoice=parent_invoice,
+        amount_paid=Decimal("100.00"),
+        status_id="cleared",
+    )
+    Payment.objects.create(
+        student_semester_invoice=parent_invoice,
+        amount_paid=Decimal("50.00"),
+        status_id="pending",
+    )
+
+    groups = finance_portal.gp_payments(
+        Payment.objects.filter(student_semester_invoice=parent_invoice).select_related(
+            "student_semester_invoice__student",
+            "status",
+            "payer",
+            "payment_method",
+        )
+    )
+
+    assert groups[0]["total_paid"] == Decimal("100.00")
+    assert groups[0]["cleared_records_total"] == Decimal("100.00")
+    assert groups[0]["applied_clearance_total"] == Decimal("100.00")
+    assert groups[0]["surplus_total"] == Decimal("0.00")
+    assert groups[0]["open_balance"] == Decimal("50.00")
+    assert groups[0]["pending_total"] == Decimal("50.00")
+    assert groups[0]["pending_count"] == 1
+    assert all("814" in row["course_summary"] for row in groups[0]["rows"])
+
+
+def test_payment_group_surplus_separates_records_from_applied_clearance(
+    curriculum_course_factory,
+    sem_factory,
+    student,
+) -> None:
+    """Finance totals should explain payment records above semester charges."""
+    InvoiceStatus._populate_attributes_and_db()
+    PaymentStatus._populate_attributes_and_db()
+    PaymentMethod._populate_attributes_and_db()
+    Payer._populate_attributes_and_db()
+    curriculum_course = curriculum_course_factory("815", "CURRI_FIN_PAY_SURPLUS")
+    semester = sem_factory(1)
+    invoice = CrsInvoice.objects.create(
+        student=student,
+        curriculum_course=curriculum_course,
+        semester=semester,
+        initial_amount_due=Decimal("45.00"),
+        balance=Decimal("45.00"),
+    )
+    parent_invoice = invoice.student_semester_invoice
+    assert parent_invoice is not None
+    Payment.objects.create(
+        student_semester_invoice=parent_invoice,
+        amount_paid=Decimal("100.00"),
+        status_id="cleared",
+    )
+
+    groups = finance_portal.gp_payments(
+        Payment.objects.filter(student_semester_invoice=parent_invoice).select_related(
+            "student_semester_invoice__student",
+            "status",
+            "payer",
+            "payment_method",
+        )
+    )
+
+    group = groups[0]
+    assert group["charged_total"] == Decimal("45.00")
+    assert group["cleared_records_total"] == Decimal("100.00")
+    assert group["total_paid"] == Decimal("100.00")
+    assert group["applied_clearance_total"] == Decimal("45.00")
+    assert group["surplus_total"] == Decimal("55.00")
+    assert group["open_balance"] == Decimal("0.00")
+    assert group["rows"][0]["charged_total"] == Decimal("45.00")
+    assert group["rows"][0]["applied_clearance"] == Decimal("45.00")
+    assert group["rows"][0]["surplus"] == Decimal("55.00")
+
+
+def test_finance_officer_create_payments_redirects_to_payment_review(
+    client,
+    curriculum_course_factory,
+    sem_factory,
+    student,
+) -> None:
+    """Creating payments for one student should land on visible payment rows."""
+    PaymentStatus._populate_attributes_and_db()
+    curriculum_course = curriculum_course_factory("815", "CURRI_FIN_PAY_REVIEW")
+    semester = sem_factory(1)
+    invoice = CrsInvoice.objects.create(
+        student=student,
+        curriculum_course=curriculum_course,
+        semester=semester,
+        initial_amount_due=Decimal("90.00"),
+        balance=Decimal("90.00"),
+    )
+    client.force_login(_finance_user())
+
+    response = client.post(
+        reverse("finance_officer_create_payments"),
+        {
+            "invoice_ids": [str(invoice.id)],
+            "next": "/should-not-hide-the-payment-row/",
+        },
+    )
+
+    assert response.status_code == 302
+    location = response.headers["Location"]
+    parsed = urlparse(location)
+    params = parse_qs(parsed.query)
+    assert parsed.path == reverse("finance_officer_invoices")
+    assert params["tab"] == ["payments"]
+    assert params["payment_status"] == ["all"]
+    assert params["semester"] == ["all"]
+    assert params["student_id"] == [str(student.id)]
+    payment = Payment.objects.get(
+        student_semester_invoice=invoice.student_semester_invoice
+    )
+    assert payment.status_id == "pending"
+    assert payment.amount_paid == Decimal("90.00")
+
+    page_response = client.get(location)
+    assert page_response.status_code == 200
+    assert b"Save payment changes" in page_response.content
+    assert b"data-payment-edit-field" in page_response.content
+    assert b'<tr class="table-warning" title=' not in page_response.content
+    assert b'title="Created:' in page_response.content
+    assert b"course invoice" in page_response.content
+    assert b"815" in page_response.content

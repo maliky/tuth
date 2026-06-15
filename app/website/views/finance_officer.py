@@ -13,6 +13,7 @@ from django.db import transaction
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils.http import urlencode
 from django.views.decorators.http import require_POST
 
 from app.finance.models.invoice import CrsInvoice
@@ -79,6 +80,46 @@ def _parse_decimal(value: str | None) -> Optional[Decimal]:
         return None
 
 
+def _resolve_payment_review_student_id(
+    student_id: int | None,
+    invoice_ids: list[int],
+) -> int | None:
+    """Return a single student id when payment creation targets one student."""
+    if student_id is not None:
+        return student_id
+    if not invoice_ids:
+        return None
+    student_ids = list(
+        CrsInvoice.objects.filter(id__in=invoice_ids)
+        .values_list("student_id", flat=True)
+        .distinct()[:2]
+    )
+    if len(student_ids) == 1:
+        return int(student_ids[0])
+    return None
+
+
+def _payment_review_redirect(
+    request: HttpRequest,
+    *,
+    student_id: int | None,
+    invoice_ids: list[int],
+) -> HttpResponse:
+    """Redirect single-student payment creation to visible payment rows."""
+    review_student_id = _resolve_payment_review_student_id(student_id, invoice_ids)
+    if review_student_id is None:
+        return redirect(request.POST.get("next") or reverse("finance_officer_invoices"))
+    query = urlencode(
+        {
+            "tab": "payments",
+            "student_id": str(review_student_id),
+            "semester": "all",
+            "payment_status": "all",
+        }
+    )
+    return redirect(f"{reverse('finance_officer_invoices')}?{query}")
+
+
 @login_required
 def finance_officer_std_autocomplete(request: HttpRequest) -> HttpResponse:
     """Return finance students for the select2 dropdown."""
@@ -101,7 +142,7 @@ def finance_officer_create_payments(request: HttpRequest) -> HttpResponse:
     """Create pending payments for selected invoices."""
     _require_finance_access(request)
     raw_ids = request.POST.getlist("invoice_ids")
-    invoice_ids = [clean_int(value) for value in raw_ids if clean_int(value)]
+    invoice_ids = _clean_int_list(raw_ids)
     student_id = clean_int(request.POST.get("student_id"))
 
     if not invoice_ids and not student_id:
@@ -139,7 +180,11 @@ def finance_officer_create_payments(request: HttpRequest) -> HttpResponse:
             request,
             f"Skipped {skipped_closed} invoice(s) with no balance due.",
         )
-    return redirect(request.POST.get("next") or reverse("finance_officer_invoices"))
+    return _payment_review_redirect(
+        request,
+        student_id=student_id,
+        invoice_ids=invoice_ids,
+    )
 
 
 @login_required
@@ -378,6 +423,16 @@ def _registration_status_id_for_invoice(status_id: str) -> str:
     if status_id == "settled":
         return "partialy_cleared"
     return "cleared"
+
+
+def _clean_int_list(raw_values: list[str]) -> list[int]:
+    """Return valid integer ids from a POST list."""
+    clean_values: list[int] = []
+    for raw_value in raw_values:
+        clean_value = clean_int(raw_value)
+        if clean_value is not None:
+            clean_values.append(clean_value)
+    return clean_values
 
 
 @login_required

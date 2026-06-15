@@ -84,6 +84,15 @@ def test_tuition_rate_for_current_vacation_semester_uses_smartschool_rate(
     assert tuition_rate_for_semester(semester) == Decimal("5.00")
 
 
+def test_tuition_rate_for_2023_semester_two_uses_corrected_smartschool_rate(
+    sem_factory,
+) -> None:
+    """2023/2024 Sem2 imports the corrected 5 USD per-credit rate."""
+    semester = sem_factory(2, datetime(2023, 8, 1))
+
+    assert tuition_rate_for_semester(semester) == Decimal("5.00")
+
+
 def test_unresolved_lab_fee_candidate_report_flags_non_general_four_credit_courses(
     regio_factory,
 ) -> None:

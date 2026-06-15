@@ -7,12 +7,16 @@ from typing import Iterable, Optional, TypedDict, cast
 
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
-from django.db.models import Exists, OuterRef, Q, QuerySet
+from django.db.models import Exists, Max, Min, OuterRef, Q, QuerySet
 from django.http import HttpRequest, QueryDict
 from django.urls import NoReverseMatch, reverse
 
 from app.finance.models.invoice import CrsInvoice
 from app.finance.models.payment import Payment
+from app.finance.payment_application import (
+    InvoicePaymentApplicationT,
+    payment_application_for_parent_invoice,
+)
 from app.finance.models.status_types_methods import Payer, PaymentMethod, PaymentStatus
 from app.finance.course_fee_setup import (
     infer_course_fee_type_code,
@@ -28,6 +32,7 @@ from app.finance.registration_invoices import (
 from app.people.models.student import Student
 from app.registry.models.registration import Registration
 from app.timetable.models.semester import Semester
+from app.timetable.utils import format_datetime
 from app.website.services.portal_types import PortalContextT
 from app.website.services.staff_portal import (
     build_staff_role_switcher,
@@ -43,21 +48,50 @@ class StdOptionT(TypedDict):
     selected: bool
 
 
+class InvoiceRowT(TypedDict):
+    """Display metadata for one course invoice row."""
+
+    invoice: CrsInvoice
+    row_class: str
+    created_at: str
+    updated_at: str
+
+
 class InvoiceGpT(TypedDict):
     """Invoice group keyed by student."""
 
     student: Student
-    rows: list[CrsInvoice]
+    rows: list[InvoiceRowT]
     total_due: Decimal
+
+
+class PaymentRowT(TypedDict):
+    """Display metadata for one payment row."""
+
+    payment: Payment
+    row_class: str
+    created_at: str
+    updated_at: str
+    open_balance: Decimal
+    charged_total: Decimal
+    applied_clearance: Decimal
+    surplus: Decimal
+    course_summary: str
 
 
 class PaymentGpT(TypedDict):
     """Payment group keyed by student."""
 
     student: Student
-    rows: list[Payment]
+    rows: list[PaymentRowT]
     total_paid: Decimal
+    charged_total: Decimal
+    cleared_records_total: Decimal
+    applied_clearance_total: Decimal
+    open_balance: Decimal
+    pending_total: Decimal
     pending_count: int
+    surplus_total: Decimal
 
 
 class UninvoicedRegistrationGpT(TypedDict):
@@ -192,12 +226,83 @@ def build_std_options(
     return options
 
 
+def _status_row_class(status_id: str | None) -> str:
+    """Return a Bootstrap table class for finance status emphasis."""
+    if status_id == "cleared":
+        return "table-success"
+    if status_id in {"pending", "initial", "updated"}:
+        return "table-warning"
+    if status_id == "settled":
+        return "table-info"
+    return ""
+
+
+def _invoice_updated_labels(invoices: list[CrsInvoice]) -> dict[int, str]:
+    """Return invoice id -> latest history timestamp label."""
+    invoice_ids = [invoice.id for invoice in invoices if invoice.id]
+    if not invoice_ids:
+        return {}
+    history_rows = (
+        CrsInvoice.history.filter(id__in=invoice_ids)
+        .values("id")
+        .annotate(last_change=Max("history_date"))
+    )
+    return {
+        int(row["id"]): format_datetime(row["last_change"])
+        for row in history_rows
+        if row["last_change"]
+    }
+
+
+def _payment_history_labels(payments: list[Payment]) -> dict[int, tuple[str, str]]:
+    """Return payment id -> (created, updated) labels from history rows."""
+    payment_ids = [payment.id for payment in payments if payment.id]
+    if not payment_ids:
+        return {}
+    history_rows = (
+        Payment.history.filter(id__in=payment_ids)
+        .values("id")
+        .annotate(first_change=Min("history_date"), last_change=Max("history_date"))
+    )
+    return {
+        int(row["id"]): (
+            format_datetime(row["first_change"]),
+            format_datetime(row["last_change"]),
+        )
+        for row in history_rows
+    }
+
+
+def _course_label(invoice: CrsInvoice) -> str:
+    """Return a compact course label for finance payment summaries."""
+    course = invoice.curriculum_course.course
+    code = course.short_code or course.code or ""
+    title = course.title or ""
+    if code and title:
+        return f"{code} - {title}"
+    return code or title or "Untitled course"
+
+
+def _parent_course_summary(payment: Payment, limit: int | None = None) -> str:
+    """Return child courses covered by a semester payment."""
+    parent_invoice = payment.student_semester_invoice
+    course_invoices = list(parent_invoice.course_invoices.all())
+    visible_invoices = course_invoices if limit is None else course_invoices[:limit]
+    labels = [_course_label(invoice) for invoice in visible_invoices]
+    remaining_count = len(course_invoices) - len(labels)
+    if remaining_count > 0:
+        labels.append(f"+{remaining_count} more")
+    return "; ".join(labels) if labels else "No course invoices"
+
+
 def gp_invoices(invoices: Iterable[CrsInvoice]) -> list[InvoiceGpT]:
     """Group invoices by student preserving the incoming order."""
+    invoice_list = list(invoices)
+    updated_labels = _invoice_updated_labels(invoice_list)
     groups: list[InvoiceGpT] = []
     group_lookup: dict[int, InvoiceGpT] = {}
     parent_seen_by_student: dict[int, set[int]] = {}
-    for invoice in invoices:
+    for invoice in invoice_list:
         student_id = invoice.student_id
         group = group_lookup.get(student_id)
         if group is None:
@@ -209,7 +314,17 @@ def gp_invoices(invoices: Iterable[CrsInvoice]) -> list[InvoiceGpT]:
             group_lookup[student_id] = group
             groups.append(group)
             parent_seen_by_student[student_id] = set()
-        group["rows"].append(invoice)
+        group["rows"].append(
+            {
+                "invoice": invoice,
+                "row_class": _status_row_class(invoice.status_id),
+                "created_at": format_datetime(invoice.created_at),
+                "updated_at": updated_labels.get(
+                    invoice.id,
+                    format_datetime(invoice.created_at),
+                ),
+            }
+        )
         parent_invoice_id = invoice.student_semester_invoice_id
         if parent_invoice_id is None:
             group["total_due"] += invoice.get_balance()
@@ -227,9 +342,24 @@ def gp_invoices(invoices: Iterable[CrsInvoice]) -> list[InvoiceGpT]:
 
 def gp_payments(payments: Iterable[Payment]) -> list[PaymentGpT]:
     """Group payments by student preserving the incoming order."""
+    payment_list = list(payments)
+    history_labels = _payment_history_labels(payment_list)
     groups: list[PaymentGpT] = []
     group_lookup: dict[int, PaymentGpT] = {}
-    for payment in payments:
+    parent_seen_by_student: dict[int, set[int]] = {}
+    application_by_parent_id: dict[int, InvoicePaymentApplicationT] = {}
+
+    def _application(payment: Payment) -> InvoicePaymentApplicationT:
+        """Return cached parent-invoice payment application totals."""
+        parent_invoice = payment.student_semester_invoice
+        cached = application_by_parent_id.get(parent_invoice.id)
+        if cached is not None:
+            return cached
+        application = payment_application_for_parent_invoice(parent_invoice)
+        application_by_parent_id[parent_invoice.id] = application
+        return application
+
+    for payment in payment_list:
         student = payment.student_semester_invoice.student
         student_id = student.id
         group = group_lookup.get(student_id)
@@ -238,14 +368,51 @@ def gp_payments(payments: Iterable[Payment]) -> list[PaymentGpT]:
                 "student": student,
                 "rows": [],
                 "total_paid": Decimal("0.00"),
+                "charged_total": Decimal("0.00"),
+                "cleared_records_total": Decimal("0.00"),
+                "applied_clearance_total": Decimal("0.00"),
+                "open_balance": Decimal("0.00"),
+                "pending_total": Decimal("0.00"),
                 "pending_count": 0,
+                "surplus_total": Decimal("0.00"),
             }
             group_lookup[student_id] = group
             groups.append(group)
-        group["rows"].append(payment)
-        group["total_paid"] += payment.amount_paid or Decimal("0.00")
-        if payment.status_id == "pending":
-            group["pending_count"] += 1
+            parent_seen_by_student[student_id] = set()
+        parent_invoice = payment.student_semester_invoice
+        application = _application(payment)
+        created_at, updated_at = history_labels.get(
+            payment.id,
+            (
+                format_datetime(parent_invoice.created_at),
+                format_datetime(parent_invoice.updated_at),
+            ),
+        )
+        group["rows"].append(
+            {
+                "payment": payment,
+                "row_class": _status_row_class(payment.status_id),
+                "created_at": created_at,
+                "updated_at": updated_at,
+                "open_balance": application["open_balance"],
+                "charged_total": application["charged_total"],
+                "applied_clearance": application["applied_clearance"],
+                "surplus": application["surplus"],
+                "course_summary": _parent_course_summary(payment),
+            }
+        )
+        parent_invoice_id = payment.student_semester_invoice_id
+        if parent_invoice_id not in parent_seen_by_student[student_id]:
+            parent_seen_by_student[student_id].add(parent_invoice_id)
+            group["charged_total"] += application["charged_total"]
+            group["open_balance"] += application["open_balance"]
+            group["pending_total"] += application["pending_records_total"]
+            group["pending_count"] += application["pending_count"]
+            group["cleared_records_total"] += application["cleared_records_total"]
+            group["applied_clearance_total"] += application["applied_clearance"]
+            group["surplus_total"] += application["surplus"]
+            # Backward-compatible alias for existing tests and callers.
+            group["total_paid"] = group["cleared_records_total"]
     return groups
 
 
@@ -354,14 +521,20 @@ def payment_queryset(
     semester_id: Optional[int],
 ) -> QuerySet[Payment]:
     """Return the base payment queryset for the finance officer view."""
-    qs = Payment.objects.select_related(
-        "student_semester_invoice__student",
-        "student_semester_invoice__student__user",
-        "student_semester_invoice__semester",
-        "payer",
-        "status",
-        "payment_method",
-    ).order_by("-id")
+    qs = (
+        Payment.objects.select_related(
+            "student_semester_invoice__student",
+            "student_semester_invoice__student__user",
+            "student_semester_invoice__semester",
+            "payer",
+            "status",
+            "payment_method",
+        )
+        .prefetch_related(
+            "student_semester_invoice__course_invoices__curriculum_course__course",
+        )
+        .order_by("-id")
+    )
     if selected_student_id:
         qs = qs.filter(student_semester_invoice__student_id=selected_student_id)
     if semester_id:

@@ -18,7 +18,7 @@ from app.finance.models.status_types_methods import (
     PaymentStatus,
 )
 from app.people.models.student_curriculum_enrollment import set_primary_std_curri_enroll
-from app.finance.utils import build_invoice_snapshot
+from app.finance.utils import build_invoice_snapshot, render_invoice_snapshot_html
 
 pytestmark = pytest.mark.django_db
 
@@ -91,6 +91,18 @@ def test_build_invoice_snapshot_uses_parent_totals(
     assert payload["payments"] == "20.00"
     assert payload["balance"] == f"{parent_invoice.balance:.2f}"
     assert payload["required_deposit"] == f"{parent_invoice.required_deposit_amount:.2f}"
+    assert (
+        payload["academic_semester"]
+        == f"{semester.academic_year.code}-S{semester.number}"
+    )
+    assert (
+        payload["lines"][0]["sem_label"]
+        == f"{semester.academic_year.code}-S{semester.number}"
+    )
     assert any(
         fee_line["label"] == semester_stack.name for fee_line in payload["fee_lines"]
     )
+
+    rendered_html = render_invoice_snapshot_html(snapshot)
+    assert "Cost / Cr." not in rendered_html
+    assert "Cost of Course" in rendered_html
