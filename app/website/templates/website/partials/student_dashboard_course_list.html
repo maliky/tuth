@@ -61,6 +61,11 @@
         {% else %}
           <span class="badge bg-secondary">Locked</span>
         {% endif %}
+        <div class="mt-2">
+          <a class="btn btn-sm btn-outline-primary" href="{{ course.detail_url }}">
+            Details
+          </a>
+        </div>
       </div>
     </div>
 
@@ -130,6 +135,11 @@
           </div>
           <div class="text-end">
             <span class="badge {{ course.status_class }}">{{ course.status_label|default:"Registered" }}</span>
+            <div class="mt-2">
+              <a class="btn btn-sm btn-outline-primary" href="{{ course.detail_url }}">
+                Details
+              </a>
+            </div>
           </div>
         </div>
         <div class="mt-3">
@@ -191,6 +201,11 @@
             </div>
             <div class="text-end">
               <span class="badge bg-secondary">Locked</span>
+              <div class="mt-2">
+                <a class="btn btn-sm btn-outline-primary" href="{{ course.detail_url }}">
+                  Details
+                </a>
+              </div>
             </div>
           </div>
           <div class="mt-3">

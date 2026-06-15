@@ -12,8 +12,10 @@ from django.db.models import Max
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
+
 from app.finance.models.invoice import CrsInvoice, StdSemesterInvoice
 from app.finance.models.payment import Payment
+from app.finance.payment_application import payment_application_for_parent_invoice
 from app.timetable.models.semester import Semester
 from app.timetable.utils import format_datetime
 
@@ -60,6 +62,7 @@ def std_payment_receipt(
             Payment.objects.filter(
                 student_semester_invoice=parent_invoice,
                 amount_paid__gt=0,
+                status_id="cleared",
             ).order_by("id")
         )
         invoices = list(
@@ -71,9 +74,15 @@ def std_payment_receipt(
         )
 
     receipt_rows: list[ReceiptRowT] = []
-    total_paid = sum((payment.amount_paid for payment in payments), Decimal("0.00"))
+    total_recorded = Decimal("0.00")
+    total_applied = Decimal("0.00")
+    surplus = Decimal("0.00")
     payment_last_updates: PaymentUpdateMapT = {}
     if parent_invoice is not None and payments:
+        application = payment_application_for_parent_invoice(parent_invoice, payments)
+        total_recorded = application["cleared_records_total"]
+        total_applied = application["applied_clearance"]
+        surplus = application["surplus"]
         payment_history = Payment.history.filter(
             student_semester_invoice_id=parent_invoice.id
         ).aggregate(last_change=Max("history_date"))
@@ -82,10 +91,10 @@ def std_payment_receipt(
         paid_on_label = (
             format_datetime(payment_last_updates[parent_invoice.id])
             if parent_invoice.id in payment_last_updates
-            else "-"
+            else format_datetime(parent_invoice.updated_at or parent_invoice.created_at)
         )
 
-        remaining_paid = total_paid
+        remaining_paid = total_applied
         for invoice in invoices:
             applied_paid = min(invoice.initial_amount_due, remaining_paid)
             remaining_paid -= applied_paid
@@ -108,8 +117,11 @@ def std_payment_receipt(
         "student": student,
         "receipt_rows": receipt_rows,
         "currency": currency,
-        "total_paid": total_paid,
-        "sem_label": sem_label,
+        "total_paid": total_applied,
+        "total_applied": total_applied,
+        "total_recorded": total_recorded,
+        "surplus": surplus,
+        "semester_label": sem_label,
         "generated_at": generated_at,
         "student_profile": _build_std_profile(student),
         "sidebar_links": _build_sidebar_links(

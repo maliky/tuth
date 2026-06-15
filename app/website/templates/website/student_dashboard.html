@@ -50,6 +50,17 @@
       <div class="kpi-value">
         {{ financial_summary.currency }} {{ financial_summary.balance|floatformat:2 }}
       </div>
+      <p class="mb-0 text-muted">
+        Fees charged: {{ financial_summary.currency }} {{ financial_summary.fee_total|floatformat:2 }}
+      </p>
+      <p class="mb-0 text-muted">
+        Applied clearance: {{ financial_summary.currency }} {{ financial_summary.applied_clearance_total|floatformat:2 }}
+      </p>
+      {% if financial_summary.surplus_total %}
+        <p class="mb-0 text-warning">
+          Surplus to review: {{ financial_summary.currency }} {{ financial_summary.surplus_total|floatformat:2 }}
+        </p>
+      {% endif %}
       <p class="mb-0 text-muted">Last payment: {{ financial_summary.last_payment }}</p>
     </article>
   </section>

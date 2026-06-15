@@ -28,6 +28,7 @@ from app.finance.fee_assignment import (
 )
 from app.finance.models.invoice import CrsInvoice, StdSemesterInvoice
 from app.finance.models.payment import Payment
+from app.finance.payment_application import payment_application_for_parent_invoice
 from app.finance.registration_invoices import ensure_course_invoice_for_registration
 from app.people.models.student import Student
 from app.registry.gpa import effective_transcript_grades, get_grade_points_and_credits
@@ -100,6 +101,7 @@ class SectionOptionT(TypedDict):
 class CourseCardT(TypedDict):
     """Template payload for a student registration course card."""
 
+    detail_url: str
     code: str
     title: str
     credits: int
@@ -661,6 +663,7 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
         if row[2] is not None and row[3] is not None
     }
     payment_last_updates: dict[int, datetime] = {}
+    parent_invoice_update_fallbacks: dict[int, datetime] = {}
     parent_invoice_ids = [row[3] for row in invoice_key_rows if row[3] is not None]
     if parent_invoice_ids:
         payment_history_rows = (
@@ -669,10 +672,26 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
             .annotate(last_change=Max("history_date"))
         )
         payment_last_updates = {
-            row["student_semester_invoice_id"]: row["last_change"]
-            for row in payment_history_rows
-            if row["last_change"]
+            payment_history_row["student_semester_invoice_id"]: payment_history_row[
+                "last_change"
+            ]
+            for payment_history_row in payment_history_rows
+            if payment_history_row["last_change"]
         }
+        for parent_invoice_fallback in StdSemesterInvoice.objects.filter(
+            id__in=parent_invoice_ids
+        ).only(
+            "id",
+            "created_at",
+            "updated_at",
+        ):
+            fallback_date = (
+                parent_invoice_fallback.updated_at or parent_invoice_fallback.created_at
+            )
+            if fallback_date:
+                parent_invoice_update_fallbacks[parent_invoice_fallback.id] = (
+                    fallback_date
+                )
 
     course_status_rows = []
     course_status_total_credits = 0
@@ -684,9 +703,7 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
         last_change = history_dates.get(reg.id) or reg.date_registered
         credits = int(section.curriculum_course.credit_hours.code)
         course_status_total_credits += credits
-        is_cleared = reg.status_id == "cleared"
-        is_approved = reg.status_id == "approved"
-        can_view = is_cleared or is_approved
+        can_view = reg.status_id in {"pending", "cleared", "approved"}
         invoice_id = invoice_id_by_key.get(
             (section.curriculum_course_id, section.semester_id)
         )
@@ -696,6 +713,8 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
         payment_last_update = (
             format_datetime(payment_last_updates[parent_invoice_id])
             if parent_invoice_id and parent_invoice_id in payment_last_updates
+            else format_datetime(parent_invoice_update_fallbacks[parent_invoice_id])
+            if parent_invoice_id and parent_invoice_id in parent_invoice_update_fallbacks
             else "-"
         )
         course_status_rows.append(
@@ -896,6 +915,7 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
         ]
 
         course_payload: CourseCardT = {
+            "detail_url": reverse("std_curri_crs_detail", args=[cc.id]),
             "code": course.short_code or course.code,
             "title": course.title or "",
             "credits": int(cc.credit_hours.code),
@@ -943,13 +963,37 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
             # Informational bucket: all non-selectable curriculum courses stay visible.
             locked_courses.append(course_payload)
 
-    total_due = StdSemesterInvoice.objects.filter(student=student).aggregate(
-        total=Sum("balance")
-    ).get("total") or Decimal("0.00")
+    parent_invoices = list(
+        StdSemesterInvoice.objects.filter(student=student).prefetch_related("payments")
+    )
+    total_due = sum(
+        (parent_invoice.get_balance() for parent_invoice in parent_invoices),
+        Decimal("0.00"),
+    )
+    fee_total = sum(
+        (parent_invoice.initial_amount_due for parent_invoice in parent_invoices),
+        Decimal("0.00"),
+    )
+    payment_applications = [
+        payment_application_for_parent_invoice(parent_invoice)
+        for parent_invoice in parent_invoices
+    ]
+    cleared_records_total = sum(
+        (application["cleared_records_total"] for application in payment_applications),
+        Decimal("0.00"),
+    )
+    applied_clearance_total = sum(
+        (application["applied_clearance"] for application in payment_applications),
+        Decimal("0.00"),
+    )
+    surplus_total = sum(
+        (application["surplus"] for application in payment_applications),
+        Decimal("0.00"),
+    )
     payments = Payment.objects.filter(student_semester_invoice__student=student)
-    # Receipt availability is driven by any recorded payment amount.
+    # Receipts represent cleared payments only; pending payments are not proof of payment.
     cleared_invoice_semester_ids = set(
-        payments.filter(amount_paid__gt=0).values_list(
+        payments.filter(amount_paid__gt=0, status_id="cleared").values_list(
             "student_semester_invoice__semester_id",
             flat=True,
         )
@@ -976,6 +1020,7 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
     )
     has_pending_registrations = bool(pending_registrations_list)
     outstanding = total_due + pending_total
+    fee_total += pending_total
     last_payment = (
         payments.order_by("-id").select_related("student_semester_invoice").first()
     )
@@ -990,6 +1035,10 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
 
     financial_summary = {
         "balance": outstanding,
+        "fee_total": fee_total,
+        "cleared_records_total": cleared_records_total,
+        "applied_clearance_total": applied_clearance_total,
+        "surplus_total": surplus_total,
         "currency": currency,
         "last_payment": last_payment_label,
     }

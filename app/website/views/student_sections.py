@@ -11,6 +11,7 @@ from django.shortcuts import render
 
 from app.registry.models.registration import Registration
 from app.timetable.choices import WEEKDAYS_NUMBER
+from app.website.services.student_course_info import build_student_course_info
 
 from .student_helpers import (
     _build_sidebar_links,
@@ -32,16 +33,17 @@ def std_sec_detail(
     request: HttpRequest,
     section_id: int,
 ) -> HttpResponse:
-    """Render a cleared section detail view for the current student."""
+    """Render a registered section detail view for the current student."""
     student = _require_std(request.user)
     registration = (
         Registration.objects.filter(
             student=student,
             section_id=section_id,
-            status_id__in={"cleared", "approved"},
+            status_id__in={"pending", "cleared", "approved"},
         )
         .select_related(
             "section__semester__academic_year",
+            "section__curriculum_course__curriculum",
             "section__curriculum_course__course",
             "section__curriculum_course__credit_hours",
             "section__faculty__staff_profile__user",
@@ -96,5 +98,9 @@ def std_sec_detail(
             "info": section.info,
             "schedule_rows": schedule_rows,
         },
+        "course_info": build_student_course_info(
+            student=student,
+            curriculum_course=section.curriculum_course,
+        ),
     }
     return render(request, "website/student_section_detail.html", context)

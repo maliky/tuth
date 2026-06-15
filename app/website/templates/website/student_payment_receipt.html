@@ -18,9 +18,16 @@
           <p class="mb-0">{{ generated_at }}</p>
         </div>
         <div class="text-end">
-          <p class="text-uppercase small text-muted mb-1">Total Paid</p>
-          <div class="h4 mb-0">{{ currency }} {{ total_paid|floatformat:2 }}</div>
-          <p class="text-muted mb-0">Payments recorded for this semester</p>
+          <p class="text-uppercase small text-muted mb-1">Applied clearance</p>
+          <div class="h4 mb-0">{{ currency }} {{ total_applied|floatformat:2 }}</div>
+          <p class="text-muted mb-0">
+            Payment/waiver records: {{ currency }} {{ total_recorded|floatformat:2 }}
+          </p>
+          {% if surplus %}
+            <p class="text-warning mb-0">
+              Surplus to review: {{ currency }} {{ surplus|floatformat:2 }}
+            </p>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -57,10 +64,21 @@
             <tr class="table-light">
               <td colspan="3" class="text-end"><strong>Total</strong></td>
               <td class="text-end">
-                <strong>{{ currency }} {{ total_paid|floatformat:2 }}</strong>
+                <strong>{{ currency }} {{ total_applied|floatformat:2 }}</strong>
               </td>
               <td class="text-end"><strong>{{ currency }} 0.00</strong></td>
             </tr>
+            {% if surplus %}
+              <tr>
+                <td colspan="3" class="text-end text-muted">
+                  Cleared payment/waiver records above semester charges
+                </td>
+                <td class="text-end text-warning">
+                  {{ currency }} {{ surplus|floatformat:2 }}
+                </td>
+                <td></td>
+              </tr>
+            {% endif %}
           </tbody>
         </table>
       </div>

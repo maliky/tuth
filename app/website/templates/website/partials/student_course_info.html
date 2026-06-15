@@ -1,0 +1,99 @@
+<section class="mb-4">
+  <div class="bg-white rounded-3 shadow-sm p-4">
+    <p class="text-uppercase small text-muted mb-1">Course information</p>
+    <div class="d-flex justify-content-between flex-wrap gap-3">
+      <div>
+        <h2 class="h4 mb-1">{{ course_info.code }}</h2>
+        <p class="text-muted mb-0">{{ course_info.title }}</p>
+        <p class="text-muted small mb-0">{{ course_info.curriculum_label }}</p>
+      </div>
+      <div class="text-end">
+        <p class="text-uppercase small text-muted mb-1">Credits</p>
+        <div class="h5 mb-0">{{ course_info.credits }}</div>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <p class="text-uppercase small text-muted mb-2">Description</p>
+      <p class="mb-0">{{ course_info.description }}</p>
+    </div>
+  </div>
+</section>
+
+<section class="mb-4">
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="bg-white rounded-3 shadow-sm p-4 h-100">
+        <p class="text-uppercase small text-muted mb-3">Prerequisites</p>
+        {% if course_info.prerequisites %}
+          <div class="d-flex flex-column gap-2">
+            {% for item in course_info.prerequisites %}
+              <div class="d-flex justify-content-between gap-3 border-bottom pb-2">
+                <div>
+                  <strong>{{ item.code }}</strong>
+                  <div class="text-muted small">{{ item.title }}</div>
+                  {% if item.note %}
+                    <div class="text-muted small">{{ item.note }}</div>
+                  {% endif %}
+                </div>
+                <span class="badge {% if item.met %}bg-success-subtle text-success{% else %}bg-warning-subtle text-dark{% endif %}">
+                  {{ item.status_label }}
+                </span>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted mb-0">No prerequisites recorded.</p>
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="bg-white rounded-3 shadow-sm p-4 h-100">
+        <p class="text-uppercase small text-muted mb-3">Corequisites</p>
+        {% if course_info.corequisites %}
+          <div class="d-flex flex-column gap-2">
+            {% for item in course_info.corequisites %}
+              <div class="d-flex justify-content-between gap-3 border-bottom pb-2">
+                <div>
+                  <strong>{{ item.code }}</strong>
+                  <div class="text-muted small">{{ item.title }}</div>
+                  {% if item.note %}
+                    <div class="text-muted small">{{ item.note }}</div>
+                  {% endif %}
+                </div>
+                <span class="badge {% if item.met %}bg-success-subtle text-success{% else %}bg-info-subtle text-info{% endif %}">
+                  {{ item.status_label }}
+                </span>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted mb-0">No corequisites recorded.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="mb-4">
+  <div class="bg-white rounded-3 shadow-sm p-4">
+    <p class="text-uppercase small text-muted mb-3">Courses unlocked by this course</p>
+    {% if course_info.unlocks %}
+      <div class="row g-2">
+        {% for item in course_info.unlocks %}
+          <div class="col-md-6 col-xl-4">
+            <div class="border rounded-3 p-3 h-100">
+              <strong>{{ item.code }}</strong>
+              <div class="text-muted small">{{ item.title }}</div>
+              {% if item.note %}
+                <div class="text-muted small mt-1">{{ item.note }}</div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-muted mb-0">No dependent courses recorded.</p>
+    {% endif %}
+  </div>
+</section>

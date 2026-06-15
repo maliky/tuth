@@ -158,3 +158,34 @@ def test_cancel_keeps_parent_invoice_when_cleared_history_exists(
     assert registration.status_id == "canceled"
     assert not CrsInvoice.objects.filter(pk=invoice.pk).exists()
     assert StdSemesterInvoice.objects.filter(pk=parent_invoice.pk).exists()
+
+
+def test_student_dashboard_shows_fee_total_before_cleared_payments(
+    client,
+    curriculum_course_factory,
+    sem_factory,
+    user_factory,
+) -> None:
+    """Student dashboard should distinguish total fees from open balance."""
+    user, _student, _registration, invoice, parent_invoice = _std_regio_with_invoice(
+        curriculum_course_factory=curriculum_course_factory,
+        sem_factory=sem_factory,
+        user_factory=user_factory,
+        student_username="dashboard_fee_total",
+    )
+    Payment.objects.create(
+        student_semester_invoice=parent_invoice,
+        amount_paid=Decimal("5.00"),
+        status_id="cleared",
+    )
+
+    client.force_login(user)
+    response = client.get(reverse("student_dashboard"))
+
+    parent_invoice.refresh_from_db()
+    assert response.status_code == 200
+    assert (
+        f"Fees charged: USD {invoice.initial_amount_due:.2f}".encode() in response.content
+    )
+    assert b"Applied clearance: USD 5.00" in response.content
+    assert f"USD {parent_invoice.balance:.2f}".encode() in response.content

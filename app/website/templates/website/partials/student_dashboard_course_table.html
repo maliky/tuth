@@ -6,15 +6,13 @@
         <th>Status</th>
         <th>Credits</th>
         <th>Semester</th>
-        <th>Updated</th>
-        <th>Payment update</th>
         <th class="text-end">Fee</th>
         <th class="text-end">Action</th>
       </tr>
     </thead>
     <tbody>
       {% for row in course_status_rows %}
-        <tr>
+        <tr title="Registration update: {{ row.last_update }}; Payment update: {{ row.payment_last_update }}">
           <td>
             <strong>{{ row.code }}</strong><br/>
             <span class="text-muted">{{ row.title }}</span>
@@ -26,8 +24,6 @@
           </td>
           <td>{{ row.credits }}</td>
           <td>{{ row.semester }}</td>
-          <td>{{ row.last_update }}</td>
-          <td>{{ row.payment_last_update }}</td>
           <td class="text-end">
             {% if row.fee %}
               {{ financial_summary.currency }} {{ row.fee|floatformat:2 }}
@@ -36,22 +32,27 @@
             {% endif %}
           </td>
           <td class="text-end">
-            {% if row.can_cancel %}
-              <form method="post" class="m-0" data-ajax="true">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="cancel_registration" />
-                <input type="hidden" name="registration_id" value="{{ row.registration_id }}" />
-                {% if current_semester %}
-                  <input type="hidden" name="semester_id" value="{{ current_semester.id }}" />
+            {% if row.can_cancel or row.can_view %}
+              <div class="d-flex justify-content-end gap-2 flex-wrap">
+                {% if row.can_cancel %}
+                  <form method="post" class="m-0" data-ajax="true">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="cancel_registration" />
+                    <input type="hidden" name="registration_id" value="{{ row.registration_id }}" />
+                    {% if current_semester %}
+                      <input type="hidden" name="semester_id" value="{{ current_semester.id }}" />
+                    {% endif %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                      Cancel
+                    </button>
+                  </form>
                 {% endif %}
-                <button type="submit" class="btn btn-sm btn-outline-danger">
-                  Cancel
-                </button>
-              </form>
-            {% elif row.can_view %}
-              <a class="btn btn-sm btn-outline-primary" href="{{ row.section_url }}">
-                Details
-              </a>
+                {% if row.can_view %}
+                  <a class="btn btn-sm btn-outline-primary" href="{{ row.section_url }}">
+                    Details
+                  </a>
+                {% endif %}
+              </div>
             {% else %}
               —
             {% endif %}
@@ -59,7 +60,7 @@
         </tr>
       {% empty %}
         <tr>
-          <td colspan="8" class="text-center text-muted py-4">
+          <td colspan="6" class="text-center text-muted py-4">
             No course records found.
           </td>
         </tr>
@@ -69,10 +70,10 @@
       <tr class="table-light">
         <td colspan="2" class="text-end"><strong>Total credits</strong></td>
         <td><strong>{{ course_status_total_credits }}</strong></td>
-        <td colspan="5"></td>
+        <td colspan="3"></td>
       </tr>
       <tr>
-        <td colspan="7" class="text-end text-muted">Payment receipt</td>
+        <td colspan="5" class="text-end text-muted">Payment receipt</td>
         <td class="text-end">
           {% if current_semester_receipt_url %}
             <a class="btn btn-sm btn-outline-primary" href="{{ current_semester_receipt_url }}">

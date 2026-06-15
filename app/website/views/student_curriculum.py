@@ -9,6 +9,7 @@ from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 
 from app.academics.models.curriculum_course import CurriCrs
+from app.website.services.student_course_info import build_student_course_info
 
 from .student_helpers import (
     _build_sidebar_links,
@@ -24,16 +25,6 @@ class CurriCrsRowT(TypedDict):
     code: str
     title: str
     credits: int
-
-
-class CurriCrsDetailT(TypedDict):
-    """Detail data for a curriculum course."""
-
-    code: str
-    title: str
-    credits: int
-    description: str
-    curriculum_label: str
 
 
 @login_required
@@ -78,23 +69,21 @@ def std_curri_crs_detail(
             pk=curriculum_course_id,
         )
         .select_related("course", "credit_hours", "curriculum")
+        .prefetch_related("requirement_groups__members__required_course")
         .first()
     )
     if curriculum_course is None:
         raise Http404("Course not found.")
 
-    course = curriculum_course.course
-    course_detail: CurriCrsDetailT = {
-        "code": course.short_code or course.code or "",
-        "title": course.title or "",
-        "credits": int(curriculum_course.credit_hours.code),
-        "description": course.description or "No description available.",
-        "curriculum_label": str(curriculum_course.curriculum),
-    }
+    course_info = build_student_course_info(
+        student=student,
+        curriculum_course=curriculum_course,
+    )
     context = {
         "student_profile": _build_std_profile(student),
         "sidebar_links": _build_sidebar_links("Course Registration", student=student),
-        "course": course_detail,
+        "course": course_info,
+        "course_info": course_info,
     }
     return render(
         request,
