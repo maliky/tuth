@@ -15,6 +15,7 @@ from app.finance.models.payment import Payment
 from app.people.models.student import Student
 from app.registry.models.grade import Grade
 from app.registry.models.registration import Registration
+from app.registry.grade_registration_reconciliation import student_credit_gaps
 from app.shared.source_truth.io import RowT, read_rows
 
 CountsT: TypeAlias = dict[str, int]
@@ -61,6 +62,7 @@ class Command(BaseCommand):
         _ratio("grades", actual, expected, min_ratio, failures)
         _at_least("payments", actual, expected, failures)
         _check_revised_curricula(truth_dir, failures)
+        _check_registered_vs_passing_credits(failures)
 
         for name in sorted(expected):
             self.stdout.write(
@@ -181,3 +183,12 @@ def _check_revised_curricula(truth_dir: Path, failures: list[str]) -> None:
 def _is_revised(row: RowT) -> bool:
     """Return whether a curriculum row represents the revised catalog."""
     return row.get("status") == "approved" and row.get("is_active") == "true"
+
+
+def _check_registered_vs_passing_credits(failures: list[str]) -> None:
+    """Require registered credits to cover effective passing-grade credits."""
+    gaps = student_credit_gaps()
+    if gaps:
+        failures.append(
+            f"registered credits below passing-grade credits for {len(gaps)} student(s)"
+        )

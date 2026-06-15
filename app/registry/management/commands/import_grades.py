@@ -19,6 +19,12 @@ from app.academics.ensures import (
 )
 from app.people.ensures import ensure_std_sid
 from app.people.models.faculty import Faculty
+from app.registry.grade_import_errors import write_grade_error_log
+from app.registry.grade_registration_reconciliation import (
+    GradeRegistrationPairT,
+    GradeRegistrationSummary,
+    ensure_grade_registration_pairs,
+)
 from app.registry.models.grade import Grade, GradeValue
 from app.shared.types import StrIntMapT
 from app.shared.utils import get_in_row, to_int
@@ -56,6 +62,11 @@ class Command(BaseCommand):
             default=25,
             help="Stop after this many row errors.",
         )
+        parser.add_argument(
+            "--no-reconstruct-registrations",
+            action="store_true",
+            help="Do not create missing cleared registrations from grade rows.",
+        )
 
     def handle(self, *args, **options):
         path = Path(options["file"])
@@ -65,6 +76,7 @@ class Command(BaseCommand):
         batch_size: int = options["batch_size"]
         dry_run = bool(options.get("dry_run"))
         max_errors = int(options.get("max_errors") or 25)
+        reconstruct_registrations = not bool(options.get("no_reconstruct_registrations"))
 
         # Caches are preloaded on-demand inside ensure_* helpers.
         grade_values: StrIntMapT = {
@@ -86,6 +98,9 @@ class Command(BaseCommand):
             pass
 
         rows_to_create: list[Grade] = []
+        registration_pairs_to_ensure: list[GradeRegistrationPairT] = []
+        registration_pairs_seen: set[GradeRegistrationPairT] = set()
+        registration_summary = GradeRegistrationSummary()
         # Existing grade pairs to avoid duplicates
         existing_pairs = set(Grade.objects.values_list("student_id", "section_id"))
         error_rows: list[tuple[int, str, RowT]] = []
@@ -110,13 +125,19 @@ class Command(BaseCommand):
                     except Exception as exc:
                         error_rows.append((row_number, str(exc), row))
                         if len(error_rows) >= max_errors:
-                            _write_grade_error_log(error_rows)
+                            write_grade_error_log(error_rows)
                             raise CommandError(
                                 f"Grade import stopped after {len(error_rows)} errors."
                             ) from exc
                         rows_processed += 1
                         continue
 
+                    if reconstruct_registrations:
+                        _queue_registration_pair(
+                            grade,
+                            pairs_to_ensure=registration_pairs_to_ensure,
+                            seen_pairs=registration_pairs_seen,
+                        )
                     pair = (grade.student_id, grade.section_id)
                     if pair in existing_pairs:
                         rows_processed += 1
@@ -127,6 +148,13 @@ class Command(BaseCommand):
                     if len(rows_to_create) >= batch_size:
                         Grade.objects.bulk_create(
                             rows_to_create, ignore_conflicts=True, batch_size=batch_size
+                        )
+                        registration_summary.add(
+                            _flush_registration_pairs(
+                                registration_pairs_to_ensure,
+                                batch_size=batch_size,
+                                dry_run=dry_run,
+                            )
                         )
                         created_grades_total += len(rows_to_create)
                         rows_to_create.clear()
@@ -146,8 +174,16 @@ class Command(BaseCommand):
                 )
                 created_grades_total += len(rows_to_create)
 
+            registration_summary.add(
+                _flush_registration_pairs(
+                    registration_pairs_to_ensure,
+                    batch_size=batch_size,
+                    dry_run=dry_run,
+                )
+            )
+
             if error_rows:
-                _write_grade_error_log(error_rows)
+                write_grade_error_log(error_rows)
                 raise CommandError(
                     f"Grade import failed with {len(error_rows)} row errors."
                 )
@@ -159,7 +195,10 @@ class Command(BaseCommand):
             self.style.SUCCESS(
                 f"Grade import complete{' (dry-run)' if dry_run else ''}: "
                 f"{created_grades_total} grades created, {skipped} skipped "
-                "(missing grade_value or invalid)."
+                "(missing grade_value or invalid). "
+                f"Grade-backed registrations: {registration_summary.created} created, "
+                f"{registration_summary.would_create} would-create, "
+                f"{registration_summary.existing} existing."
             )
         )
 
@@ -198,36 +237,33 @@ def _grade_from_row(
     return Grade(student_id=student_pk, section_id=section_pk, value_id=grade_value_id)
 
 
-def _write_grade_error_log(rows: list[tuple[int, str, RowT]]) -> Path:
-    """Write compact grade import errors for importer repair."""
-    log_path = Path("logs/import_errors/import_grades_errors.csv")
-    log_path.parent.mkdir(parents=True, exist_ok=True)
-    headers = [
-        "row_number",
-        "error",
-        "student_id",
-        "academic_year",
-        "semester_no",
-        "course_dept",
-        "course_no",
-        "section_no",
-        "grade_code",
-    ]
-    with log_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=headers)
-        writer.writeheader()
-        for row_number, error, row in rows:
-            writer.writerow(
-                {
-                    "row_number": row_number,
-                    "error": error,
-                    "student_id": get_in_row("student_id", row),
-                    "academic_year": get_in_row("academic_year", row),
-                    "semester_no": get_in_row("semester_no", row),
-                    "course_dept": get_in_row("course_dept", row),
-                    "course_no": get_in_row("course_no", row),
-                    "section_no": get_in_row("section_no", row),
-                    "grade_code": get_in_row("grade_code", row),
-                }
-            )
-    return log_path
+def _queue_registration_pair(
+    grade: Grade,
+    *,
+    pairs_to_ensure: list[GradeRegistrationPairT],
+    seen_pairs: set[GradeRegistrationPairT],
+) -> None:
+    """Queue one student/section pair for historical registration repair."""
+    pair = (int(grade.student_id), int(grade.section_id))
+    if pair in seen_pairs:
+        return
+    seen_pairs.add(pair)
+    pairs_to_ensure.append(pair)
+
+
+def _flush_registration_pairs(
+    pairs_to_ensure: list[GradeRegistrationPairT],
+    *,
+    batch_size: int,
+    dry_run: bool,
+) -> GradeRegistrationSummary:
+    """Create queued grade-backed registrations and clear the queue."""
+    if not pairs_to_ensure:
+        return GradeRegistrationSummary()
+    summary = ensure_grade_registration_pairs(
+        pairs_to_ensure,
+        batch_size=batch_size,
+        dry_run=dry_run,
+    )
+    pairs_to_ensure.clear()
+    return summary

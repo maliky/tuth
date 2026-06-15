@@ -10,6 +10,7 @@ from django.core.management import call_command
 
 from app.people.models.student import Student
 from app.registry.models.grade import Grade, GradeValue
+from app.registry.models.registration import Registration
 
 pytestmark = pytest.mark.django_db  # replace the @pytest.mark.django_db decorator
 
@@ -83,6 +84,11 @@ def test_import_grades_command_rows(
     call_command("import_grades", file=tsv_path, batch_size=1)
 
     assert Grade.objects.count() == expected_grades
+    assert Registration.objects.count() == expected_grades
+    if expected_grades:
+        assert set(Registration.objects.values_list("status_id", flat=True)) == {
+            "cleared"
+        }
     if expects_default_student and expected_grades:
         default_student = Student.get_dft()
         created_grade = Grade.objects.first()
@@ -98,3 +104,43 @@ def test_import_grades_dry_run_rolls_back(tmp_path, grade_values) -> None:
     call_command("import_grades", file=tsv_path, batch_size=1, dry_run=True)
 
     assert Grade.objects.count() == 0
+    assert Registration.objects.count() == 0
+
+
+def test_import_grades_reconstructs_missing_registration_for_existing_grade(
+    tmp_path,
+    grade_values,
+) -> None:
+    """Existing grade rows should still repair missing historical registrations."""
+    tsv_path = tmp_path / "grades.tsv"
+    _write_grades_tsv(tsv_path, [_grade_row()])
+    call_command("import_grades", file=tsv_path, batch_size=1)
+    assert Grade.objects.count() == 1
+    assert Registration.objects.count() == 1
+
+    Registration.objects.all().delete()
+    call_command("import_grades", file=tsv_path, batch_size=1)
+
+    assert Grade.objects.count() == 1
+    registration = Registration.objects.get()
+    assert registration.status_id == "cleared"
+    assert registration.section_id == Grade.objects.get().section_id
+
+
+def test_import_grades_can_skip_registration_reconstruction(
+    tmp_path,
+    grade_values,
+) -> None:
+    """The import command keeps an escape hatch for grade-only imports."""
+    tsv_path = tmp_path / "grades.tsv"
+    _write_grades_tsv(tsv_path, [_grade_row()])
+
+    call_command(
+        "import_grades",
+        file=tsv_path,
+        batch_size=1,
+        no_reconstruct_registrations=True,
+    )
+
+    assert Grade.objects.count() == 1
+    assert Registration.objects.count() == 0

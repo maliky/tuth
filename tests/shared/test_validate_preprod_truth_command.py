@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.shared.management.commands.validate_preprod_truth import _expected_counts
+import pytest
+
+from app.registry.models.grade import Grade, GradeValue
+from app.shared.management.commands.validate_preprod_truth import (
+    _check_registered_vs_passing_credits,
+    _expected_counts,
+)
 
 
 def test_expected_counts_deduplicate_requirement_members(tmp_path: Path) -> None:
@@ -80,3 +86,22 @@ def test_expected_counts_deduplicate_requirement_members(tmp_path: Path) -> None
     )
 
     assert _expected_counts(truth_dir)["requirement_members"] == 2
+
+
+@pytest.mark.django_db
+def test_validate_truth_flags_registered_credit_gap(std_factory, sec_factory) -> None:
+    """Validation should fail when passing grades exceed registration credits."""
+    GradeValue._populate_attributes_and_db()
+    student = std_factory("validate_credit_gap", "CURRI_VALIDATE_GAP")
+    section = sec_factory("901", "CURRI_VALIDATE_GAP", 1, 1)
+    Grade.objects.create(
+        student=student,
+        section=section,
+        value=GradeValue.objects.get(code="b"),
+    )
+    failures: list[str] = []
+
+    _check_registered_vs_passing_credits(failures)
+
+    assert failures
+    assert "registered credits below passing-grade credits" in failures[0]
