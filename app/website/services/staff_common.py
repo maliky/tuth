@@ -3,16 +3,18 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import cast
+from typing import TypeAlias, cast
 
 from django.contrib.auth.models import AnonymousUser, User
+from django.db.models import Model
 from django.urls import NoReverseMatch, reverse
 
 from app.people.models.donor import Donor
 from app.people.models.faculty import Faculty
-from app.website.services.portal_types import ActionT, RoleContextT
+from app.website.services.portal_types import ActionT, AdminShortcutT, RoleContextT
 
 ADMIN_PORTAL_GROUPS = {"System Administrator", "IT Support"}
+AdminModelShortcutSpecT: TypeAlias = tuple[str, type[Model]]
 
 
 def as_user(user: User | AnonymousUser) -> User:
@@ -77,11 +79,31 @@ def maybe_reverse(
 
 def with_actions(context: RoleContextT, extra: list[ActionT]) -> RoleContextT:
     """Return a role context with additional actions."""
-    return {
-        "metrics": list(context["metrics"]),
-        "panels": list(context["panels"]),
-        "actions": [*context["actions"], *extra],
-    }
+    updated = context.copy()
+    updated["actions"] = [*context["actions"], *extra]
+    return updated
+
+
+def admin_shortcuts_for_models(
+    user: User,
+    specs: Sequence[AdminModelShortcutSpecT],
+) -> list[AdminShortcutT]:
+    """Return admin changelist shortcuts allowed by the user's view perms."""
+    if not user.is_staff:
+        return []
+    links: list[AdminShortcutT] = []
+    for label, model in specs:
+        opts = model._meta
+        if not user.has_perm(f"{opts.app_label}.view_{opts.model_name}"):
+            continue
+        try:
+            href = reverse(f"admin:{opts.app_label}_{opts.model_name}_changelist")
+        except NoReverseMatch:
+            continue
+        links.append({"label": label, "href": href})
+    if not links:
+        return []
+    return [{"label": "Admin home", "href": reverse("admin:index")}, *links]
 
 
 def annotate_admin_actions(actions: list[ActionT]) -> list[ActionT]:
@@ -111,10 +133,13 @@ _get_donor_profile = get_donor_profile
 _empty_role_context = empty_role_context
 _maybe_reverse = maybe_reverse
 _with_actions = with_actions
+_admin_shortcuts_for_models = admin_shortcuts_for_models
 _annotate_admin_actions = annotate_admin_actions
 
 __all__ = [
     "ADMIN_PORTAL_GROUPS",
+    "AdminModelShortcutSpecT",
+    "admin_shortcuts_for_models",
     "annotate_admin_actions",
     "as_user",
     "empty_role_context",

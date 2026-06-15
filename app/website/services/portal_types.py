@@ -46,12 +46,20 @@ class ActionT(TypedDict):
     is_admin: NotRequired[bool]
 
 
+class AdminShortcutT(TypedDict):
+    """A permission-gated Django admin shortcut rendered as a portal chip."""
+
+    label: str
+    href: str
+
+
 class RoleContextT(TypedDict):
     """Dashboard payload returned by a staff role context builder."""
 
     metrics: list[MetricT]
     panels: list[PanelT]
     actions: list[ActionT]
+    admin_shortcuts: NotRequired[list[AdminShortcutT]]
 
 
 class DashboardLinkT(TypedDict):
@@ -115,6 +123,7 @@ RoleChildMapT: TypeAlias = dict[RoleSlugT, frozenset[RoleSlugT]]
 
 __all__ = [
     "ActionT",
+    "AdminShortcutT",
     "BreadcrumbT",
     "DashboardLinkT",
     "DisplayValueT",

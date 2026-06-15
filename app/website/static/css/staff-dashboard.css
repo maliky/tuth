@@ -342,6 +342,10 @@
   margin: 0;
 }
 
+.staff-admin-shortcuts .portal-btn-outline {
+  background: rgba(19, 69, 41, 0.03);
+}
+
 .portal-accordion-card {
   overflow: hidden;
 }
@@ -429,6 +433,26 @@
   border: 0;
   border-radius: 0;
   box-shadow: none;
+}
+
+.registrar-window-group > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.registrar-window-group > summary::-webkit-details-marker {
+  display: none;
+}
+
+.registrar-window-group > summary::after {
+  color: var(--staff-primary);
+  content: "+";
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.registrar-window-group[open] > summary::after {
+  content: "-";
 }
 
 .staff-portal-body .form-control,

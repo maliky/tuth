@@ -22,16 +22,22 @@
       </div>
 
       {% for group in semester_groups %}
-        <section class="portal-accordion-card registrar-window-group mb-3">
-          <div class="portal-accordion-card__header d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <details class="portal-accordion-card registrar-window-group mb-3" {% if forloop.first %}open{% endif %}>
+          <summary class="portal-accordion-card__header d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div>
               <p class="eyebrow text-uppercase mb-1">Academic year</p>
               <h3 class="h5 mb-0">{{ group.academic_year }}</h3>
             </div>
-            <span class="badge rounded-pill text-bg-light">
-              {{ group.semesters|length }} semester{{ group.semesters|length|pluralize }}
+            <span class="d-inline-flex align-items-center gap-2">
+              {% if group.is_current_academic_year %}
+                <span class="badge rounded-pill text-bg-success">Current year</span>
+              {% endif %}
+              <span class="badge rounded-pill text-bg-light">
+                {{ group.semesters|length }} semester{{ group.semesters|length|pluralize }}
+              </span>
+              <span class="small text-muted">Open / fold</span>
             </span>
-          </div>
+          </summary>
           <div class="portal-accordion-card__body p-0">
             <div class="course-table table-responsive mb-0">
               <table class="table align-middle mb-0">
@@ -50,7 +56,7 @@
                         <small class="text-muted">{{ semester }}</small>
                       </td>
                       <td>
-                        <span class="status-badge {% if semester.is_registration_open %}status-completed{% else %}status-pending{% endif %}">
+                        <span class="status-badge {% if semester.is_regio_open %}status-completed{% else %}status-pending{% endif %}">
                           {{ semester.status.label }}
                         </span>
                       </td>
@@ -80,7 +86,7 @@
               </table>
             </div>
           </div>
-        </section>
+        </details>
       {% empty %}
         <div class="portal-empty-state">No semesters defined yet.</div>
       {% endfor %}

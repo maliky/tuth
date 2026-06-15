@@ -5,7 +5,9 @@ from __future__ import annotations
 from django.http import HttpRequest
 from django.urls import reverse
 
+from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
+from app.academics.models.curriculum_course import CurriCrs
 from app.finance.models.invoice import CrsInvoice
 from app.finance.models.payment import Payment
 from app.finance.registration_invoices import (
@@ -24,6 +26,7 @@ from app.registry.models.registration import Registration
 from app.registry.models.transcript import TranscriptRequest
 from app.shared.auth.perms import UserRole
 from app.shared.models import ApprovalQueue
+from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester
 from app.timetable.models.section import Section
 from app.website.services.portal_types import (
@@ -34,12 +37,27 @@ from app.website.services.portal_types import (
     RoleContextT,
 )
 from app.website.services.staff_common import (
+    AdminModelShortcutSpecT,
     _as_user,
     _empty_role_context,
     _get_donor_profile,
     _get_faculty_profile,
+    _admin_shortcuts_for_models,
     _maybe_reverse,
     _with_actions,
+)
+
+REGISTRAR_ADMIN_SHORTCUTS: tuple[AdminModelShortcutSpecT, ...] = (
+    ("Students", Student),
+    ("Registrations", Registration),
+    ("Grades", Grade),
+    ("Transcript requests", TranscriptRequest),
+    ("Sections", Section),
+    ("Semesters", Semester),
+    ("Academic years", AcademicYear),
+    ("Courses", Course),
+    ("Curricula", Curriculum),
+    ("Curriculum courses", CurriCrs),
 )
 
 
@@ -397,7 +415,8 @@ def _build_enrollment_officer_context(request: HttpRequest) -> RoleContextT:
     return _build_enrollment_context(request)
 
 
-def _build_reg_context(_: HttpRequest) -> RoleContextT:
+def _build_reg_context(request: HttpRequest) -> RoleContextT:
+    user = _as_user(request.user)
     pending_qs = TranscriptRequest.objects.filter(status__code="pending")
     pending_transcripts = list(
         pending_qs.select_related("student").order_by("-requested_at")[:8]
@@ -442,6 +461,10 @@ def _build_reg_context(_: HttpRequest) -> RoleContextT:
             }
         ],
         "actions": actions,
+        "admin_shortcuts": _admin_shortcuts_for_models(
+            user,
+            REGISTRAR_ADMIN_SHORTCUTS,
+        ),
     }
 
 

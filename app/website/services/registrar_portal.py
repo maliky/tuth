@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from datetime import date
 from typing import TypeAlias, TypedDict, cast
 
 from django.contrib.auth.models import User
@@ -26,6 +27,7 @@ from app.website.services.staff_portal import (
 )
 
 ContextT: TypeAlias = PortalContextT
+SemesterWindowSortKeyT: TypeAlias = tuple[int, int, date, date, int, int]
 
 
 class RegGradeRowT(TypedDict):
@@ -73,6 +75,7 @@ class RegSemesterWindowGroupT(TypedDict):
     """Grouped semester-window rows for the registrar portal."""
 
     academic_year: str
+    is_current_academic_year: bool
     semesters: list[Semester]
 
 
@@ -116,19 +119,97 @@ def latest_graded_sem_id() -> int | None:
 
 def group_semester_windows(
     semesters: Sequence[Semester],
+    *,
+    current_academic_year_id: int | None = None,
 ) -> list[RegSemesterWindowGroupT]:
-    """Group semester windows by academic year for compact display."""
+    """Group semester windows by academic year, current year first."""
+    semester_list = list(semesters)
+    active_year_id = current_academic_year_id
+    if active_year_id is None:
+        active_year_id = current_academic_year_id_for_windows(semester_list)
     groups: list[RegSemesterWindowGroupT] = []
     group_lookup: dict[str, RegSemesterWindowGroupT] = {}
-    for semester in semesters:
+    sorted_semesters = sorted(
+        semester_list,
+        key=lambda semester: semester_window_sort_key(semester, active_year_id),
+        reverse=True,
+    )
+    for semester in sorted_semesters:
         label = semester.academic_year.code
         group = group_lookup.get(label)
         if group is None:
-            group = {"academic_year": label, "semesters": []}
+            group = {
+                "academic_year": label,
+                "is_current_academic_year": semester.academic_year_id == active_year_id,
+                "semesters": [],
+            }
             group_lookup[label] = group
             groups.append(group)
         group["semesters"].append(semester)
     return groups
+
+
+def current_academic_year_id_for_windows(
+    semesters: Sequence[Semester],
+    today: date | None = None,
+) -> int | None:
+    """Return the academic year that should anchor registrar windows."""
+    ref_date = today or timezone.localdate()
+    current_semesters = [
+        semester for semester in semesters if semester_contains_date(semester, ref_date)
+    ]
+    if current_semesters:
+        current_semester = max(
+            current_semesters,
+            key=lambda semester: (
+                semester_start_date(semester),
+                semester.number,
+                semester.id,
+            ),
+        )
+        return current_semester.academic_year_id
+
+    current_year_semesters = [
+        semester
+        for semester in semesters
+        if semester.academic_year.start_date
+        <= ref_date
+        <= semester.academic_year.end_date
+    ]
+    if current_year_semesters:
+        return current_year_semesters[0].academic_year_id
+    return None
+
+
+def semester_contains_date(semester: Semester, ref_date: date) -> bool:
+    """Return whether a semester's recorded date range contains ref_date."""
+    semester_end = semester.end_date or semester.academic_year.end_date
+    return semester_start_date(semester) <= ref_date <= semester_end
+
+
+def semester_start_date(semester: Semester) -> date:
+    """Return the most reliable start date available for a semester."""
+    return semester.start_date or semester.academic_year.start_date
+
+
+def semester_window_sort_key(
+    semester: Semester,
+    current_academic_year_id: int | None = None,
+) -> SemesterWindowSortKeyT:
+    """Return the registrar display key for course-window semesters."""
+    # The current year is the navigation anchor; this keeps noisy future imports below it.
+    current_year = (
+        current_academic_year_id is not None
+        and semester.academic_year_id == current_academic_year_id
+    )
+    return (
+        1 if current_year else 0,
+        1 if semester.is_regio_open() else 0,
+        semester_start_date(semester),
+        semester.academic_year.start_date,
+        semester.number,
+        semester.id,
+    )
 
 
 def registrar_student_results(query: str | None) -> list[StudentAutocompleteResultT]:
