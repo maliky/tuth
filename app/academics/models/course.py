@@ -100,8 +100,8 @@ class Course(models.Model):
     """University catalogue entry describing a single course offering.
 
     Example:
-        >>> COAS = College.get_dft()
-        >>> MATH = Departement.objects.create(code=MATH,college=COAS)
+        >>> dft_college = College.get_dft()
+        >>> MATH = Departement.objects.create(code=MATH,college=dft_college)
         >>> Course.objects.create(department=MATH,number="101",title="Algebra")
 
     Side Effects:

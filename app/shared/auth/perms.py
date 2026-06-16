@@ -111,9 +111,9 @@ class UserRole(Enum):
     )
 
     STAFF = RoleInfo("staff", "Staff", "people.Staff")
-    FACULTY = RoleInfo("faculty", "Faculty", "people.Faculty", "COAS")
-    CHAIR = RoleInfo("chair", "Chair", "people.Faculty", "COAS")
-    DEAN = RoleInfo("dean", "Dean", "people.Faculty", "COAS")
+    FACULTY = RoleInfo("faculty", "Faculty", "people.Faculty", "CAS")
+    CHAIR = RoleInfo("chair", "Chair", "people.Faculty", "CAS")
+    DEAN = RoleInfo("dean", "Dean", "people.Faculty", "CAS")
     VPAA = RoleInfo("vpaa", "Vice President Academic Affairs", "people.Staff")
 
     ENROLLMENT = RoleInfo("enrollment", "Enrollment", "people.Staff")

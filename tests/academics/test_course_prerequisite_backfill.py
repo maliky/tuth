@@ -86,8 +86,8 @@ def _course(dept_code: str, number: str, title: str = "") -> Course:
 def _source_course(dept_code: str, number: str, title: str) -> dict[str, str]:
     """Return one source course row."""
     return {
-        "college_code": "COAS",
-        "course_college_code": "COAS",
+        "college_code": "CAS",
+        "course_college_code": "CAS",
         "course_dept": dept_code,
         "course_no": number,
         "course_title": title,
@@ -108,13 +108,13 @@ def _requirement(
 ) -> dict[str, str]:
     """Return one source requirement row."""
     return {
-        "college_code": "COAS",
-        "curriculum_college_code": "COAS",
-        "course_college_code": "COAS",
+        "college_code": "CAS",
+        "curriculum_college_code": "CAS",
+        "course_college_code": "CAS",
         "curriculum": "CAS-TEST",
         "course_dept": target_dept,
         "course_no": target_no,
-        "required_course_college_code": "COAS",
+        "required_course_college_code": "CAS",
         "required_course_dept": required_dept,
         "required_course_no": required_no,
         "requirement_kind": kind,

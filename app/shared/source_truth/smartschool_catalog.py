@@ -8,6 +8,7 @@ from typing import TypeAlias
 from app.shared.source_truth.curriculum_match import (
     standardize_legacy_curriculum_label,
 )
+from app.shared.source_truth.college_codes import canonical_college_code
 from app.shared.source_truth.fuzzy import course_key
 from app.shared.source_truth.io import RowT, read_rows
 from app.shared.source_truth.smartschool_normalize import (
@@ -167,7 +168,7 @@ def _add_curriculum_row(
         "curriculum": label,
         "curriculum_key": key,
         "long_name": long_name or label,
-        "college_code": college.upper(),
+        "college_code": canonical_college_code(college),
         "status": "historical",
         "is_active": "false",
     }

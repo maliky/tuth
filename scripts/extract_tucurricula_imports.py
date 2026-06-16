@@ -35,11 +35,11 @@ SummaryValueT: TypeAlias = str | int | Path
 
 COLLEGE_CODE_MAP = {
     "cafs": "CAFS",
-    "cas": "COAS",
-    "cba": "COBA",
-    "ced": "COED",
-    "cet": "COET",
-    "chs": "COHS",
+    "cas": "CAS",
+    "cba": "CBA",
+    "ced": "EDRCE",
+    "cet": "CET",
+    "chs": "CHS",
     "program centers": "DEFT",
 }
 REQ_KIND_ORDER = {"prereq_all": 1, "prereq_any": 2, "coreq_all": 3}
@@ -105,7 +105,7 @@ def parse_credit(text: object) -> str:
 
 
 def source_college_code(source_college: str) -> str:
-    """Map source college labels to existing TUSIS college codes."""
+    """Map source college labels to canonical TUSIS college codes."""
     return COLLEGE_CODE_MAP.get(source_college.lower(), "DEFT")
 
 
@@ -122,7 +122,11 @@ def course_key_from_code(code: object) -> CourseKeyT:
 
 def short_curriculum(source_college: str, slug: str) -> str:
     """Return the stable TUSIS curriculum short name for a source program."""
-    college = "centers" if source_college.lower() == "program centers" else source_college
+    college = (
+        "centers"
+        if source_college.lower() == "program centers"
+        else source_college_code(source_college)
+    )
     return f"{college}-{slug}".upper().replace(" ", "-")[:40]
 
 

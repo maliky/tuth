@@ -1,5 +1,7 @@
 """Choices module for academic package."""
 
+from typing import Final
+
 from django.db.models import IntegerChoices, TextChoices
 
 
@@ -87,36 +89,56 @@ class DptLongNameChoice(TextChoices):
     DEFT = "deft_long_name", "Default Department"  # default
 
 
+COLLEGE_CODE_RENAMES: Final[dict[str, str]] = {
+    "COAS": "CAS",
+    "COBA": "CBA",
+    "COED": "EDRCE",
+    "COET": "CET",
+    "COHS": "CHS",
+    "COAB": "CBA",
+    "CED": "EDRCE",
+}
+
 COLLEGE_CODE = {
-    # standard
-    "cohs": "COHS",
-    "coas": "COAS",
-    "coed": "COED",
-    "cfas": "CAFS",
+    # Canonical codes match the acronyms used by TU staff and students.
+    "cas": "CAS",
+    "cba": "CBA",
+    "edrce": "EDRCE",
+    "cet": "CET",
+    "chs": "CHS",
     "cafs": "CAFS",
-    "coet": "COET",
-    "coba": "COBA",
-    "coab": "COBA",
     "deft": "DEFT",
     "test": "TEST",
     "": "DEFT",
-    # legacy
-    "cba": "COBA",
-    "chs": "COHS",
-    "edrce": "COED",
-    "cet": "COET",
-    "cas": "COAS",
+    # Legacy SmartSchool/older TUSIS aliases kept as accepted import input.
+    "coas": "CAS",
+    "coba": "CBA",
+    "coab": "CBA",
+    "coed": "EDRCE",
+    "ced": "EDRCE",
+    "coet": "CET",
+    "cohs": "CHS",
+    "cfas": "CAFS",
 }
 
 COLLEGE_LONG_NAME = {
-    "cohs": "College of Health Sciences",
-    "coas": "College of Arts and Sciences",
-    "coed": "College of Education",
+    "cas": "College of Arts and Sciences",
+    "cba": "College of Business Administration",
+    "edrce": "College of Education",
+    "cet": "College of Engineering and Technology",
+    "chs": "College of Health Sciences",
     "cafs": "College of Agriculture and Food Sciences",
-    "coet": "College of Engineering and Technology",
-    "coba": "College of Business Administration",
     "deft": "Default College",
     "test": "College used for Test purposes",  # for test purposes,
+    # Legacy keys preserve display names while old rows are being normalized.
+    "coas": "College of Arts and Sciences",
+    "coba": "College of Business Administration",
+    "coab": "College of Business Administration",
+    "coed": "College of Education",
+    "ced": "College of Education",
+    "coet": "College of Engineering and Technology",
+    "cohs": "College of Health Sciences",
+    "cfas": "College of Agriculture and Food Sciences",
 }
 
 
@@ -209,7 +231,7 @@ LEGACY_CURRICULUM_MAP = {
     "Computer Science 1": "BS - Computer Sci",
     "ECD": "BA - Early Child Dev",
     "ECON": "BS - Economics",
-    "EEDU": "COBA - GEN",
+    "EEDU": "CBA - GEN",
     "EENG": "BS - Elec Eng",
     "ENVS": "BS - Env Sci",
     "EVS": "BS - Env Sci",
@@ -260,15 +282,44 @@ LEGACY_CURRICULUM_MAP = {
 
 
 COLLEGE_CURRICULUM = {
-    "cohs": ["BS - Nursing", "BS - Public Health", "BS - Midwifery", "COHS - GEN"],
-    "coas": ["BA - Psychology", "BS - Biology", "BS - Env Sci", "COAS - GEN"],
+    "chs": ["BS - Nursing", "BS - Public Health", "BS - Midwifery", "CHS - GEN"],
+    "cas": ["BA - Psychology", "BS - Biology", "BS - Env Sci", "CAS - GEN"],
     "cafs": ["BS - Agro", "BS - Agri", "BS - Applied Agr", "CAFS - GEN"],
+    "cet": [
+        "BS - Civil Eng",
+        "BS - Elec Eng",
+        "BS - Mech Eng",
+        "BS - Computer Sci",
+        "CET - GEN",
+    ],
+    "edrce": [
+        "BA - 2ndEd/Biology",
+        "BA - 2ndEd/Chemistry",
+        "BA - 2ndEd/Eng Lit",
+        "BA - 2ndEd/History",
+        "BA - 2ndEd/Math",
+        "BA - Early Child Dev",
+        "BA - Guidance Counseling",
+        "BA - Primary Ed",
+        "EDRCE - GEN",
+    ],
+    "cba": [
+        "BBA - Accounting",
+        "BBA - Banking & Finance",
+        "BBA - Management",
+        "BPA - Management",
+        "BS - Economics",
+        "CBA - GEN",
+    ],
+    # Legacy keys support older normalized rows until all environments are fixed.
+    "cohs": ["BS - Nursing", "BS - Public Health", "BS - Midwifery", "CHS - GEN"],
+    "coas": ["BA - Psychology", "BS - Biology", "BS - Env Sci", "CAS - GEN"],
     "coet": [
         "BS - Civil Eng",
         "BS - Elec Eng",
         "BS - Mech Eng",
         "BS - Computer Sci",
-        "COET - GEN",
+        "CET - GEN",
     ],
     "coed": [
         "BA - 2ndEd/Biology",
@@ -279,7 +330,18 @@ COLLEGE_CURRICULUM = {
         "BA - Early Child Dev",
         "BA - Guidance Counseling",
         "BA - Primary Ed",
-        "COED - GEN",
+        "EDRCE - GEN",
+    ],
+    "ced": [
+        "BA - 2ndEd/Biology",
+        "BA - 2ndEd/Chemistry",
+        "BA - 2ndEd/Eng Lit",
+        "BA - 2ndEd/History",
+        "BA - 2ndEd/Math",
+        "BA - Early Child Dev",
+        "BA - Guidance Counseling",
+        "BA - Primary Ed",
+        "EDRCE - GEN",
     ],
     "coba": [
         "BBA - Accounting",
@@ -287,7 +349,7 @@ COLLEGE_CURRICULUM = {
         "BBA - Management",
         "BPA - Management",
         "BS - Economics",
-        "COBA - GEN",
+        "CBA - GEN",
     ],
     "deft": ["WVSTU - GEN"],
 }

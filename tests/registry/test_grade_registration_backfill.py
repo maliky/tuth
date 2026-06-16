@@ -48,7 +48,7 @@ def _grade_row(**overrides: str) -> dict[str, str]:
         "credit_hours": "3",
         "section_no": "1",
         "grade_code": "B",
-        "college_code": "COAS",
+        "college_code": "CAS",
     }
     row.update(overrides)
     return row

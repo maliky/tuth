@@ -7,54 +7,54 @@ CAFS	CAFS	CAFS-MINOR-AGCA	Minor in Gender, Culture, and Agriculture	pending	cafs
 CAFS	CAFS	CAFS-MINOR-AGEE	Minor in Agricultural Education and Extension	pending	cafs	minor-agee
 CAFS	CAFS	CAFS-MINOR-AGEC	Minor in Agricultural Economics	pending	cafs	minor-agec
 CAFS	CAFS	CAFS-MINOR-AGBU	Minor in Agribusiness	pending	cafs	minor-agbu
-COAS	COAS	CAS-ENGL	Bachelor of Arts in English	pending	cas	engl
-COAS	COAS	CAS-FREN	Bachelor of Arts in French	pending	cas	fren
-COAS	COAS	CAS-SOCI	Bachelor of Arts in Sociology	pending	cas	soci
-COAS	COAS	CAS-BIOL	Bachelor of Science in Biology -- Minor in Chemistry	pending	cas	biol
-COAS	COAS	CAS-CHEM	Bachelor of Science in Chemistry	pending	cas	chem
-COAS	COAS	CAS-CHEM-BIOL	Bachelor of Science in Chemistry -- Minor in Biology	pending	cas	chem-biol
-COAS	COAS	CAS-CHEM-MATH	Bachelor of Science in Chemistry -- Minor in Mathematics	pending	cas	chem-math
-COAS	COAS	CAS-MATH	Bachelor of Science in Mathematics	pending	cas	math
-COAS	COAS	CAS-MATH-ENGL	Bachelor of Science in Mathematics -- Minor in Economics	pending	cas	math-engl
-COAS	COAS	CAS-MATH-CHIM	Bachelor of Science in Mathematics -- Minor in Computer Science	pending	cas	math-chim
-COAS	COAS	CAS-PHYS-PURE	Bachelor of Science in Physics -- Minor in Pure Physics	pending	cas	phys-pure
-COAS	COAS	CAS-PHYS-COMP	Bachelor of Science in Physics -- Minor in Computer Science	pending	cas	phys-comp
-COAS	COAS	CAS-PHYS-GEOP	Bachelor of Science in Physics -- Minor in Exploration Geophysics	pending	cas	phys-geop
-COAS	COAS	CAS-PHYS-SPAC	Bachelor of Science in Physics -- Minor in Space Physics	pending	cas	phys-spac
-COAS	COAS	CAS-FREN-CERT	French Certificate Program	pending	cas	fren-cert
-COAS	COAS	CAS-HUMK	Associate Degree in Human Kinetics	pending	cas	humk
-COAS	COAS	CAS-SADM	Higher National Diploma in Sport Administration and Management	pending	cas	sadm
-COAS	COAS	CAS-SOCC	Diploma in Soccer Coach	pending	cas	socc
-COBA	COBA	CBA-ACCT	Bachelor of Business Administration (BBA) -- Accounting	pending	cba	acct
-COBA	COBA	CBA-BFIN	Bachelor of Business Administration -- Banking and Finance	pending	cba	bfin
-COBA	COBA	CBA-BUSA	Bachelor of Business Administration (BBA)	pending	cba	busa
-COBA	COBA	CBA-ECON	Bachelor of Science in Economics	pending	cba	econ
-COBA	COBA	CBA-PADM	Bachelor of Public Administration	pending	cba	padm
-COBA	COBA	CBA-ACCT-MINOR	Minor in Accounting	pending	cba	acct-minor
-COBA	COBA	CBA-BFIN-MINOR	Minor in Banking and Finance	pending	cba	bfin-minor
-COBA	COBA	CBA-BUSA-MINOR	Minor in Business Administration	pending	cba	busa-minor
-COBA	COBA	CBA-ECON-MINOR	Minor in Economics	pending	cba	econ-minor
-COBA	COBA	CBA-PADM-MINOR	Minor in Public Administration	pending	cba	padm-minor
-COED	COED	CED-ECED	Bachelor of Science in Early Childhood Education and Development	pending	ced	eced
-COED	COED	CED-PEDU	Bachelor of Science in Primary Education	pending	ced	pedu
-COED	COED	CED-SEDU-BIOL	Bachelor of Science in Secondary Education Emphasis in Biology	pending	ced	sedu-biol
-COED	COED	CED-SEDU-CHEM	Bachelor of Science in Secondary Education Emphasis in Chemistry	pending	ced	sedu-chem
-COED	COED	CED-SEDU-PHYS	Bachelor of Science in Secondary Education Emphasis in Physics	pending	ced	sedu-phys
-COED	COED	CED-SEDU-EDEN	Bachelor of Science in Secondary Education Emphasis in English and Literature	pending	ced	sedu-eden
-COED	COED	CED-SEDU-HIST	Bachelor of Science in Secondary Education Emphasis in History	pending	ced	sedu-hist
-COED	COED	CED-SEDU-GEOG	Bachelor of Science in Secondary Education Emphasis in Geography	pending	ced	sedu-geog
-COED	COED	CED-SEDU-MATH	Bachelor of Science in Secondary Education Emphasis in Mathematics	pending	ced	sedu-math
-COED	COED	CED-GCED	Bachelor of Science in Guidance and Counseling	pending	ced	gced
-COET	COET	CET-CIVI	Bachelor of Science in Civil Engineering	pending	cet	civi
-COET	COET	CET-ELEC	Bachelor of Science in Electrical Engineering	pending	cet	elec
-COET	COET	CET-MECH	Bachelor of Science in Mechanical Engineering	pending	cet	mech
-COET	COET	CET-CSEN	Bachelor of Science in Computer Science and Engineering	pending	cet	csen
-COHS	COHS	CHS-NURS	Bachelor of Science in Nursing	pending	chs	nurs
-COHS	COHS	CHS-MIDW	Bachelor of Science in Midwifery	pending	chs	midw
-COHS	COHS	CHS-PUBH	Bachelor of Science in Public Health	pending	chs	pubh
-COHS	COHS	CHS-PUBH-HADM-MINOR	Public Health Minor -- Health Administration and Community Health	pending	chs	pubh-hadm-minor
-COHS	COHS	CHS-PUBH-EPID-MINOR	Public Health Minor -- Biostatistics and Epidemiology	pending	chs	pubh-epid-minor
-COHS	COHS	CHS-PUBH-ENVH-MINOR	Public Health Minor -- Environmental Health	pending	chs	pubh-envh-minor
+CAS	CAS	CAS-ENGL	Bachelor of Arts in English	pending	cas	engl
+CAS	CAS	CAS-FREN	Bachelor of Arts in French	pending	cas	fren
+CAS	CAS	CAS-SOCI	Bachelor of Arts in Sociology	pending	cas	soci
+CAS	CAS	CAS-BIOL	Bachelor of Science in Biology -- Minor in Chemistry	pending	cas	biol
+CAS	CAS	CAS-CHEM	Bachelor of Science in Chemistry	pending	cas	chem
+CAS	CAS	CAS-CHEM-BIOL	Bachelor of Science in Chemistry -- Minor in Biology	pending	cas	chem-biol
+CAS	CAS	CAS-CHEM-MATH	Bachelor of Science in Chemistry -- Minor in Mathematics	pending	cas	chem-math
+CAS	CAS	CAS-MATH	Bachelor of Science in Mathematics	pending	cas	math
+CAS	CAS	CAS-MATH-ENGL	Bachelor of Science in Mathematics -- Minor in Economics	pending	cas	math-engl
+CAS	CAS	CAS-MATH-CHIM	Bachelor of Science in Mathematics -- Minor in Computer Science	pending	cas	math-chim
+CAS	CAS	CAS-PHYS-PURE	Bachelor of Science in Physics -- Minor in Pure Physics	pending	cas	phys-pure
+CAS	CAS	CAS-PHYS-COMP	Bachelor of Science in Physics -- Minor in Computer Science	pending	cas	phys-comp
+CAS	CAS	CAS-PHYS-GEOP	Bachelor of Science in Physics -- Minor in Exploration Geophysics	pending	cas	phys-geop
+CAS	CAS	CAS-PHYS-SPAC	Bachelor of Science in Physics -- Minor in Space Physics	pending	cas	phys-spac
+CAS	CAS	CAS-FREN-CERT	French Certificate Program	pending	cas	fren-cert
+CAS	CAS	CAS-HUMK	Associate Degree in Human Kinetics	pending	cas	humk
+CAS	CAS	CAS-SADM	Higher National Diploma in Sport Administration and Management	pending	cas	sadm
+CAS	CAS	CAS-SOCC	Diploma in Soccer Coach	pending	cas	socc
+CBA	CBA	CBA-ACCT	Bachelor of Business Administration (BBA) -- Accounting	pending	cba	acct
+CBA	CBA	CBA-BFIN	Bachelor of Business Administration -- Banking and Finance	pending	cba	bfin
+CBA	CBA	CBA-BUSA	Bachelor of Business Administration (BBA)	pending	cba	busa
+CBA	CBA	CBA-ECON	Bachelor of Science in Economics	pending	cba	econ
+CBA	CBA	CBA-PADM	Bachelor of Public Administration	pending	cba	padm
+CBA	CBA	CBA-ACCT-MINOR	Minor in Accounting	pending	cba	acct-minor
+CBA	CBA	CBA-BFIN-MINOR	Minor in Banking and Finance	pending	cba	bfin-minor
+CBA	CBA	CBA-BUSA-MINOR	Minor in Business Administration	pending	cba	busa-minor
+CBA	CBA	CBA-ECON-MINOR	Minor in Economics	pending	cba	econ-minor
+CBA	CBA	CBA-PADM-MINOR	Minor in Public Administration	pending	cba	padm-minor
+EDRCE	EDRCE	EDRCE-ECED	Bachelor of Science in Early Childhood Education and Development	pending	ced	eced
+EDRCE	EDRCE	EDRCE-PEDU	Bachelor of Science in Primary Education	pending	ced	pedu
+EDRCE	EDRCE	EDRCE-SEDU-BIOL	Bachelor of Science in Secondary Education Emphasis in Biology	pending	ced	sedu-biol
+EDRCE	EDRCE	EDRCE-SEDU-CHEM	Bachelor of Science in Secondary Education Emphasis in Chemistry	pending	ced	sedu-chem
+EDRCE	EDRCE	EDRCE-SEDU-PHYS	Bachelor of Science in Secondary Education Emphasis in Physics	pending	ced	sedu-phys
+EDRCE	EDRCE	EDRCE-SEDU-EDEN	Bachelor of Science in Secondary Education Emphasis in English and Literature	pending	ced	sedu-eden
+EDRCE	EDRCE	EDRCE-SEDU-HIST	Bachelor of Science in Secondary Education Emphasis in History	pending	ced	sedu-hist
+EDRCE	EDRCE	EDRCE-SEDU-GEOG	Bachelor of Science in Secondary Education Emphasis in Geography	pending	ced	sedu-geog
+EDRCE	EDRCE	EDRCE-SEDU-MATH	Bachelor of Science in Secondary Education Emphasis in Mathematics	pending	ced	sedu-math
+EDRCE	EDRCE	EDRCE-GCED	Bachelor of Science in Guidance and Counseling	pending	ced	gced
+CET	CET	CET-CIVI	Bachelor of Science in Civil Engineering	pending	cet	civi
+CET	CET	CET-ELEC	Bachelor of Science in Electrical Engineering	pending	cet	elec
+CET	CET	CET-MECH	Bachelor of Science in Mechanical Engineering	pending	cet	mech
+CET	CET	CET-CSEN	Bachelor of Science in Computer Science and Engineering	pending	cet	csen
+CHS	CHS	CHS-NURS	Bachelor of Science in Nursing	pending	chs	nurs
+CHS	CHS	CHS-MIDW	Bachelor of Science in Midwifery	pending	chs	midw
+CHS	CHS	CHS-PUBH	Bachelor of Science in Public Health	pending	chs	pubh
+CHS	CHS	CHS-PUBH-HADM-MINOR	Public Health Minor -- Health Administration and Community Health	pending	chs	pubh-hadm-minor
+CHS	CHS	CHS-PUBH-EPID-MINOR	Public Health Minor -- Biostatistics and Epidemiology	pending	chs	pubh-epid-minor
+CHS	CHS	CHS-PUBH-ENVH-MINOR	Public Health Minor -- Environmental Health	pending	chs	pubh-envh-minor
 DEFT	DEFT	CENTERS-ACCESS-REMEDIAL	Access-to-College Remedial Program	pending	Program Centers	access-remedial
 DEFT	DEFT	CENTERS-ACCESS-REGULAR	Access-to-College Regular Program	pending	Program Centers	access-regular
 DEFT	DEFT	CENTERS-ACCESS-WASSCE	Access-to-College WASSCE Prep Program	pending	Program Centers	access-wassce

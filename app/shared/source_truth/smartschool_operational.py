@@ -8,6 +8,7 @@ from typing import TypeAlias
 from app.shared.source_truth.curriculum_match import (
     standardize_legacy_curriculum_label,
 )
+from app.shared.source_truth.college_codes import canonical_college_code
 from app.shared.source_truth.fuzzy import course_key
 from app.shared.source_truth.io import RowT, read_rows
 from app.shared.source_truth.smartschool_catalog import load_smartschool_course_lookup
@@ -124,7 +125,7 @@ def load_smartschool_semester_enrollments(
                 "academic_year": first_value(row, "AcademicYear"),
                 "semester_no": semester_no(first_value(row, "Semester")),
                 "registration_date": date_value(first_value(row, "Date")),
-                "college_code": first_value(row, "College").upper(),
+                "college_code": canonical_college_code(first_value(row, "College")),
                 "major": first_value(row, "Major"),
                 "enrollment_type": first_value(row, "EnrollmentType"),
                 "curriculum": standardize_legacy_curriculum_label(legacy_curriculum),
@@ -202,7 +203,7 @@ def _registration_lookup(
         legacy_curriculum = legacy_curriculum_from_row(row)
         rows[(student_id, normalize_academic_year(academic_year), term_no)] = {
             "curriculum": standardize_legacy_curriculum_label(legacy_curriculum),
-            "college_code": first_value(row, "College").upper(),
+            "college_code": canonical_college_code(first_value(row, "College")),
         }
     return rows
 
@@ -219,7 +220,7 @@ def _student_lookup(smartschool_dir: Path, ok_tables: set[str]) -> StudentLookup
         legacy_curriculum = legacy_curriculum_from_row(row)
         rows[student_id] = {
             "curriculum": standardize_legacy_curriculum_label(legacy_curriculum),
-            "college_code": first_value(row, "College").upper(),
+            "college_code": canonical_college_code(first_value(row, "College")),
         }
     return rows
 

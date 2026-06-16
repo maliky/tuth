@@ -14,6 +14,10 @@ from app.shared.source_truth.grapro_normalize import (
     gradpro_semester_code,
     gradpro_term_parts,
 )
+from app.shared.source_truth.college_codes import (
+    canonical_college_code,
+    canonicalize_college_fields,
+)
 from app.shared.source_truth.io import RowT, read_rows
 from app.shared.source_truth.smartschool_normalize import semester_no
 
@@ -60,7 +64,7 @@ def load_fundamental_students(fundamentals_dir: Path) -> RowsT:
                 "student_id": _first(row, "student_id", "StudentID"),
                 "student_name": _first(row, "long_name", "student_name"),
                 "curriculum": _first(row, "curriculum"),
-                "college_code": _first(row, "college_code"),
+                "college_code": canonical_college_code(_first(row, "college_code")),
                 "username": _first(row, "username"),
             }
         )
@@ -188,7 +192,7 @@ def load_passthrough_rows(path: Path, source_name: str) -> RowsT:
     """Load rows intended to be copied to import-ready outputs."""
     rows: RowsT = []
     for row in read_rows(path):
-        out = dict(row)
+        out = canonicalize_college_fields(row)
         out["source_name"] = source_name
         out["source_path"] = str(path)
         rows.append(out)

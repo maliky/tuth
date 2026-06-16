@@ -103,4 +103,4 @@ def std_user(role_user_factory) -> User:
 @pytest.fixture
 def college_other(college_factory):
     """Secondary college for permission checks."""
-    return college_factory(code="COBA")
+    return college_factory(code="CBA")

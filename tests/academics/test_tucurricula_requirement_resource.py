@@ -37,13 +37,13 @@ def _dataset() -> Dataset:
     )
     dataset.append(
         [
-            "COAS",
-            "COAS",
-            "COAS",
+            "CAS",
+            "CAS",
+            "CAS",
             "CAS-PHYS",
             "PHYS",
             "102",
-            "COAS",
+            "CAS",
             "MATH",
             "101",
             "prereq_all",
@@ -54,13 +54,13 @@ def _dataset() -> Dataset:
     )
     dataset.append(
         [
-            "COAS",
-            "COAS",
-            "COAS",
+            "CAS",
+            "CAS",
+            "CAS",
             "CAS-PHYS",
             "PHYS",
             "102",
-            "COAS",
+            "CAS",
             "PHYS",
             "101",
             "coreq_all",

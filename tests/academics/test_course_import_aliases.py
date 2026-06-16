@@ -43,6 +43,7 @@ def test_crs_widget_normalizes_dirty_smartschool_course_identity() -> None:
     )
 
     assert course.department.code == "MATH"
+    assert course.department.college.code == "CAS"
     assert course.number == "003"
     assert course.title == "Remedial Math"
 

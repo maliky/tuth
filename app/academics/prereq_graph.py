@@ -86,12 +86,12 @@ def _node_shape(is_curriculum_course: bool, college_code: str | None = None) -> 
     """Return the DOT shape for a node type."""
     code = (college_code or "").upper()
     shape_map = {
-        "COAS": "box",
-        "COHS": "egg",
+        "CAS": "box",
+        "CHS": "egg",
         "CAFS": "triangle",
-        "COET": "house",
-        "COED": "ellipse",
-        "COAB": "diamond",
+        "CET": "house",
+        "EDRCE": "ellipse",
+        "CBA": "diamond",
     }
     fallback_shape = "box" if is_curriculum_course else "ellipse"
     return shape_map.get(code, fallback_shape)
@@ -507,17 +507,17 @@ def _build_dot(payload: JsonPayloadT) -> str:
             "    style=rounded;",
             '    color="#ced4da";',
             "    rank=sink;",
-            '    LEG_COAS [label="COAS" shape=box];',
-            '    LEG_COHS [label="COHS" shape=egg];',
+            '    LEG_CAS [label="CAS" shape=box];',
+            '    LEG_CHS [label="CHS" shape=egg];',
             '    LEG_CAFS [label="CAFS" shape=triangle];',
-            '    LEG_COET [label="COET" shape=house];',
-            '    LEG_COED [label="COED" shape=ellipse];',
-            '    LEG_COAB [label="COAB" shape=diamond];',
+            '    LEG_CET [label="CET" shape=house];',
+            '    LEG_EDRCE [label="EDRCE" shape=ellipse];',
+            '    LEG_CBA [label="CBA" shape=diamond];',
             '    LEG_OUT [label="Not in curriculum" shape=ellipse style="dashed"];',
-            "    { rank=same; LEG_COAS; LEG_COHS; LEG_CAFS; LEG_COET; "
-            "LEG_COED; LEG_COAB; LEG_OUT; }",
-            "    LEG_COAS -> LEG_COHS -> LEG_CAFS -> LEG_COET -> LEG_COED "
-            "-> LEG_COAB -> LEG_OUT [style=invis];",
+            "    { rank=same; LEG_CAS; LEG_CHS; LEG_CAFS; LEG_CET; "
+            "LEG_EDRCE; LEG_CBA; LEG_OUT; }",
+            "    LEG_CAS -> LEG_CHS -> LEG_CAFS -> LEG_CET -> LEG_EDRCE "
+            "-> LEG_CBA -> LEG_OUT [style=invis];",
             "  }",
         ]
     )

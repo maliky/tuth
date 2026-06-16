@@ -2,6 +2,7 @@
 
 from django.core.management.base import BaseCommand
 
+from app.academics.college_normalization import normalize_college_records
 from app.academics.models.curriculum import CurriStatus
 from app.finance.fee_stack_defaults import ensure_dft_fee_stacks_from_fee_types
 from app.finance.models.status_types_methods import (
@@ -59,6 +60,16 @@ class Command(BaseCommand):
                 " - Default fee stacks synced "
                 f"({created_stack_count} created stack(s), "
                 f"{created_line_count} created line(s))"
+            )
+        )
+        normalized_colleges = normalize_college_records()
+        self.stdout.write(
+            (
+                " - College acronyms normalized "
+                f"({normalized_colleges.created} created, "
+                f"{normalized_colleges.renamed} renamed, "
+                f"{normalized_colleges.merged} merged, "
+                f"{normalized_colleges.derived_code_updates} derived code updates)"
             )
         )
 

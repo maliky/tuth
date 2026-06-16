@@ -48,7 +48,8 @@ def expand_crs_code(
         else:
             college_code = College.get_dft().code
 
-    return college_code, dept_shortname, course_no
+    # Store only canonical college acronyms; old values remain accepted input.
+    return normalize_college_code(college_code), dept_shortname, course_no
 
 
 def normalize_college_code(code_raw: str) -> str:

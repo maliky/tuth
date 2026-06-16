@@ -44,7 +44,7 @@ def test_secsession_resource_import_data() -> None:
             "BACC",
             "101",
             "ACCT",
-            "COAS",
+            "CAS",
             "Dylan, John A",
             "2",
             "25-26",
@@ -73,7 +73,7 @@ def test_import_resources_secsession(tmp_path) -> None:
         "room\tspace\tweekday\tstart_time\tend_time\tsection_no\tcurriculum\t"
         "course_no\tdept_code\tcollege_code\tfaculty\tsemester_no\tacademic_year\t"
         "course_title\tcredit_hours\n"
-        "201\tNB\tMonday\t08:30\t09:45\t1\tBACC\t101\tACCT\tCOAS\t"
+        "201\tNB\tMonday\t08:30\t09:45\t1\tBACC\t101\tACCT\tCAS\t"
         "Dylan, John A\t2\t25-26\tAccounting 101\t3\n"
     )
     path = tmp_path / "secsession.tsv"

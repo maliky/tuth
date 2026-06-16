@@ -14,14 +14,14 @@ RowsT: TypeAlias = list[RowT]
 CurriculumMatchMapT: TypeAlias = dict[str, "CurriculumMatchT"]
 
 REVISED_CURRICULUM_CODE_BY_LEGACY: dict[str, str] = {
-    "BA - 2ndEd/Biology": "CED-SEDU-BIOL",
-    "BA - 2ndEd/Chemistry": "CED-SEDU-CHEM",
-    "BA - 2ndEd/Eng Lit": "CED-SEDU-EDEN",
-    "BA - 2ndEd/History": "CED-SEDU-HIST",
-    "BA - 2ndEd/Math": "CED-SEDU-MATH",
-    "BA - Early Child Dev": "CED-ECED",
-    "BA - Guidance Counseling": "CED-GCED",
-    "BA - Primary Ed": "CED-PEDU",
+    "BA - 2ndEd/Biology": "EDRCE-SEDU-BIOL",
+    "BA - 2ndEd/Chemistry": "EDRCE-SEDU-CHEM",
+    "BA - 2ndEd/Eng Lit": "EDRCE-SEDU-EDEN",
+    "BA - 2ndEd/History": "EDRCE-SEDU-HIST",
+    "BA - 2ndEd/Math": "EDRCE-SEDU-MATH",
+    "BA - Early Child Dev": "EDRCE-ECED",
+    "BA - Guidance Counseling": "EDRCE-GCED",
+    "BA - Primary Ed": "EDRCE-PEDU",
     "BBA - Accounting": "CBA-ACCT",
     "BBA - Banking & Finance": "CBA-BFIN",
     "BBA - Management": "CBA-BUSA",

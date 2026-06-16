@@ -52,8 +52,8 @@ def _write_import_dir(import_dir: Path) -> None:
         ),
         [
             {
-                "college_code": "COAS",
-                "course_college_code": "COAS",
+                "college_code": "CAS",
+                "course_college_code": "CAS",
                 "course_dept": "MATH",
                 "course_no": "101",
                 "course_title": "College Algebra",
@@ -63,8 +63,8 @@ def _write_import_dir(import_dir: Path) -> None:
                 "source_files": "test.org",
             },
             {
-                "college_code": "COAS",
-                "course_college_code": "COAS",
+                "college_code": "CAS",
+                "course_college_code": "CAS",
                 "course_dept": "PHYS",
                 "course_no": "101",
                 "course_title": "Physics I",
@@ -88,8 +88,8 @@ def _write_import_dir(import_dir: Path) -> None:
         ),
         [
             {
-                "college_code": "COAS",
-                "curriculum_college_code": "COAS",
+                "college_code": "CAS",
+                "curriculum_college_code": "CAS",
                 "curriculum": "CAS-MATH",
                 "long_name": "Bachelor of Science in Mathematics",
                 "status": "pending",
@@ -120,9 +120,9 @@ def _write_import_dir(import_dir: Path) -> None:
         ),
         [
             {
-                "college_code": "COAS",
-                "curriculum_college_code": "COAS",
-                "course_college_code": "COAS",
+                "college_code": "CAS",
+                "curriculum_college_code": "CAS",
+                "course_college_code": "CAS",
                 "curriculum": "CAS-MATH",
                 "course_dept": "MATH",
                 "course_no": "101",
@@ -143,7 +143,7 @@ def _write_import_dir(import_dir: Path) -> None:
 
 def _create_current_referenced_catalog() -> None:
     """Create current data that references one mismatched curriculum course."""
-    college = College.objects.create(code="COAS", long_name="Arts and Sciences")
+    college = College.objects.create(code="CAS", long_name="Arts and Sciences")
     department = Department.objects.create(code="MATH", college=college)
     course = Course.objects.create(
         department=department,

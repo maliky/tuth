@@ -5,6 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TypeAlias
 
+from app.shared.source_truth.college_codes import (
+    canonical_college_code,
+    canonicalize_college_fields,
+)
 from app.shared.source_truth.fuzzy import course_key, split_course_code
 from app.shared.source_truth.io import RowT, read_rows
 
@@ -44,7 +48,9 @@ def load_tucurricula_curricula(import_dir: Path) -> RowsT:
                 "curriculum": curriculum,
                 "curriculum_key": _compact(curriculum),
                 "long_name": _first(row, "long_name"),
-                "college_code": _first(row, "college_code", "curriculum_college_code"),
+                "college_code": canonical_college_code(
+                    _first(row, "college_code", "curriculum_college_code")
+                ),
                 "status": "approved",
                 "is_active": "true",
             }
@@ -66,7 +72,7 @@ def load_tucurricula_curriculum_courses(import_dir: Path) -> RowsT:
                 "course_no": _first(row, "course_no"),
                 "course_title": _first(row, "course_title"),
                 "credit_hours": _first(row, "credit_hours"),
-                "college_code": _first(row, "college_code"),
+                "college_code": canonical_college_code(_first(row, "college_code")),
                 "year_number": _first(row, "year_number"),
                 "semester_number": _first(row, "semester_number"),
                 "level_number": _first(row, "level_number"),
@@ -83,7 +89,7 @@ def load_tucurricula_requirements(import_dir: Path) -> RowsT:
     path = import_dir / "academic_curriculum_requirement.tsv"
     rows: RowsT = []
     for row in read_rows(path):
-        out = dict(row)
+        out = canonicalize_college_fields(row)
         out["source_name"] = "tucurricula"
         out["source_path"] = str(path)
         rows.append(out)
@@ -143,7 +149,7 @@ def load_fundamental_curriculum_courses(fundamentals_dir: Path) -> RowsT:
                 "course_no": _first(row, "course_no"),
                 "course_title": "",
                 "credit_hours": _first(row, "credit_hours"),
-                "college_code": _first(row, "college_code"),
+                "college_code": canonical_college_code(_first(row, "college_code")),
                 "year_number": "99",
                 "semester_number": "0",
                 "level_number": "99",
@@ -198,7 +204,7 @@ def _course_row(
         "course_no": number.upper(),
         "course_title": title,
         "credit_hours": credit,
-        "college_code": college.upper(),
+        "college_code": canonical_college_code(college),
         "description": description,
     }
 

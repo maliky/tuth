@@ -35,7 +35,7 @@ class College(models.Model):
 
     @classmethod
     def get_dft(cls) -> College:
-        """Return the default college ie. COAS."""
+        """Return the fallback non-college placeholder row."""
         # will set the long_name by default on save
         def_clg, _ = cls.objects.get_or_create(code="DEFT")
         return def_clg

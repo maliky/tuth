@@ -8,7 +8,7 @@ PSCHEDULE_HEADER_MAP = {
     "cid": "course_shortcode",  # ACCT_102_s1
     "credit": "credit",  # 3
     "course_title": "course_t# can be defaultitle",  # "Introduction to Accounting"
-    "college": "college",  # "COBA"
+    "college": "college",  # "CBA"
     "start_time": "start_time",  # "08:00"
     "end_time": "end_time",  # "09:30"
 }

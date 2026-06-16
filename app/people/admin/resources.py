@@ -68,7 +68,7 @@ class FacultyResource(resources.ModelResource):
 
     CSV columns:
     faculty        :long display name (“Dr. Jane A. Doe PhD”…)
-    college_code   :optional – defaults to “COAS”
+    college_code   :optional – defaults to “CAS”
     """
 
     staff_profile = fields.Field(

@@ -166,6 +166,8 @@ def test_build_tusis_truth_flags_broken_latest_and_builds_fuzzy_outputs(
     courses = _read_tsv(output / "import_ready" / "academic_course.tsv")
     course_keys = {row["course_dept"] + row["course_no"] for row in courses}
     assert {"CSEN101", "CSE101"}.issubset(course_keys)
+    assert "CET" in {row["college_code"] for row in courses}
+    assert "COET" not in {row["college_code"] for row in courses}
 
     curricula = _read_tsv(output / "import_ready" / "academic_curriculum.tsv")
     historical = [row for row in curricula if row["long_name"] == "BSc Computer Science"]

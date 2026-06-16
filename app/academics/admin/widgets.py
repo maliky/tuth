@@ -134,7 +134,7 @@ class CrsWgt(widgets.ForeignKeyWidget):
     """Convert course_* CSV columns into a Course.
 
     course_dept and course_no identify the course while college is
-    optional and defaults to "COAS". Results are cached to avoid duplicate
+    optional and defaults to "CAS". Results are cached to avoid duplicate
     queries when several rows reference the same course.
     """
 
@@ -238,7 +238,7 @@ class CrsCodeWgt(widgets.ForeignKeyWidget):
         """Return a Course object matching the provided value.
 
         value example formats:
-          - "AGR121" (implies college from row or "COAS")
+          - "AGR121" (implies college from row or "CAS")
           - "CAFS-AGR121" (explicit dept AGR from CAFS college)
 
         If course, college or department do not exist they will be created,
@@ -278,9 +278,9 @@ class CollegeWgt(widgets.ForeignKeyWidget):
     def clean(self, value, row=None, *args, **kwargs) -> College:
         """Return or create the College referenced by college_code.
 
-        Defaults to COAS.
-        Accept 'CBA', 'CAFS', '', 'CHS', 'EDRCE', 'CET', 'CAS' and COAS, COED
-        COET COBA but normalise the code to 4 letters
+        Defaults to CAS.
+        Accept 'CBA', 'CAFS', '', 'CHS', 'EDRCE', 'CET', 'CAS' and legacy CED,
+        COAS, COED, COET, COBA while normalizing to canonical short acronyms.
         """
         code = normalize_college_code(parse_str(value))
         college, _ = College.objects.get_or_create(

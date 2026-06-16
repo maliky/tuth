@@ -137,7 +137,7 @@ class Curriculum(StatusableMixin, models.Model):
     """Set of courses that make up a degree curriculum/program within a college.
 
     Example:
-        >>> col = College.objects.create(code="COAS", long_name="Arts and Sciences")
+        >>> col = College.objects.create(code="CAS", long_name="Arts and Sciences")
         >>> Curriculum.objects.create(short_name="BSCS", college=col)
 
     We use a default curriculum encompassing all curriculum_courses when none is

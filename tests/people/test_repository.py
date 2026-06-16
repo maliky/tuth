@@ -19,8 +19,8 @@ def test_get_or_create_faculty_idempotent(college):
 #     """Test the update of the faculty through a get or create."""
 
 
-#     college_a = college_factory(code="COAS")
-#     college_b = college_factory(code="COBA")
+#     college_a = college_factory(code="CAS")
+#     college_b = college_factory(code="CBA")
 
 #     faculty = PeopleRepository.get_or_create_faculty("Jane Doe", college_a)
 #     assert faculty.college == college_a

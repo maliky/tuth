@@ -36,13 +36,13 @@ def test_expected_counts_deduplicate_requirement_members(tmp_path: Path) -> None
         + "\n"
         + "\t".join(
             [
-                "COAS",
-                "COAS",
-                "COAS",
+                "CAS",
+                "CAS",
+                "CAS",
                 "CAS-BIOL",
                 "PHYS",
                 "101",
-                "COAS",
+                "CAS",
                 "MATH",
                 "102",
                 "prereq_all",
@@ -52,13 +52,13 @@ def test_expected_counts_deduplicate_requirement_members(tmp_path: Path) -> None
         + "\n"
         + "\t".join(
             [
-                "COAS",
-                "COAS",
-                "COAS",
+                "CAS",
+                "CAS",
+                "CAS",
                 "CAS-BIOL",
                 "PHYS",
                 "101",
-                "COAS",
+                "CAS",
                 "MATH",
                 "102",
                 "prereq_all",
@@ -68,13 +68,13 @@ def test_expected_counts_deduplicate_requirement_members(tmp_path: Path) -> None
         + "\n"
         + "\t".join(
             [
-                "COAS",
-                "COAS",
-                "COAS",
+                "CAS",
+                "CAS",
+                "CAS",
                 "CAS-BIOL",
                 "PHYS",
                 "101",
-                "COAS",
+                "CAS",
                 "MATH",
                 "103",
                 "prereq_all",

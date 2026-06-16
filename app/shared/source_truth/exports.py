@@ -7,6 +7,10 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import TypeAlias
 
+from app.shared.source_truth.college_codes import (
+    canonical_college_code,
+    canonicalize_college_fields,
+)
 from app.shared.source_truth.fuzzy import course_key
 from app.shared.source_truth.io import RowT, write_tsv
 
@@ -148,7 +152,7 @@ def _course_output(row: RowT, status: str) -> RowT:
     return {
         "course_dept": row.get("course_dept", ""),
         "course_no": row.get("course_no", ""),
-        "college_code": row.get("college_code", ""),
+        "college_code": canonical_college_code(row.get("college_code", "")),
         "course_title": row.get("course_title", ""),
         "credit_hours": row.get("credit_hours", ""),
         "description": row.get("description", ""),
@@ -165,7 +169,7 @@ def _curriculum_output(row: RowT, status: str) -> RowT:
     return {
         "curriculum": _curriculum_code(row),
         "long_name": row.get("long_name", curriculum) or curriculum,
-        "college_code": row.get("college_code", ""),
+        "college_code": canonical_college_code(row.get("college_code", "")),
         "status": "approved" if status == "revised_catalog" else "historical",
         "is_active": "true" if status == "revised_catalog" else "false",
         "list_courses": row.get("list_courses", ""),
@@ -195,6 +199,7 @@ def _curriculum_course_output(row: RowT, status: str) -> RowT:
 
 def _write_passthrough(path: Path, rows: RowsT) -> int:
     """Write rows using their own columns minus provenance extras."""
+    rows = [canonicalize_college_fields(row) for row in rows]
     headers = _passthrough_headers(rows)
     if not headers:
         headers = ("empty",)

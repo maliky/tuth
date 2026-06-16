@@ -10,6 +10,7 @@ from app.people.utils import mk_username
 from app.shared.source_truth.curriculum_match import (
     standardize_legacy_curriculum_label,
 )
+from app.shared.source_truth.college_codes import canonical_college_code
 from app.shared.source_truth.io import RowT, read_rows
 from app.shared.source_truth.smartschool_normalize import (
     clean_student_id,
@@ -69,7 +70,7 @@ def load_smartschool_students(smartschool_dir: Path, ok_tables: set[str]) -> Row
                 "student_id": student_id,
                 "curriculum": standardize_legacy_curriculum_label(legacy_curriculum),
                 "legacy_curriculum": legacy_curriculum,
-                "college_code": first_value(row, "College").upper(),
+                "college_code": canonical_college_code(first_value(row, "College")),
                 "bio_Enrolled": first_value(row, "Enrolled"),
                 "bio_EnrollmentType": first_value(row, "EnrollmentType"),
                 "bio_admissionstatus": first_value(row, "AdmissionStatus"),

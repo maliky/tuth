@@ -16,7 +16,7 @@ def test_import_sessions_command_creates_session(tmp_path) -> None:
         "academic_year\tsemester_no\tcollege_code\tdept_code\tcourse_no\t"
         "course_title\tcurriculum\tcredit\tsection_no\tweekday\tstart_time\t"
         "end_time\tspace\troom\tfaculty\n"
-        "25-26\t2\tCOAS\tACCT\t101\tAccounting 101\tBACC\t3\t1\t"
+        "25-26\t2\tCAS\tACCT\t101\tAccounting 101\tBACC\t3\t1\t"
         "Monday\t08:30\t09:45\tNB\t201\tDylan, John A\n"
     )
     path = tmp_path / "sessions.tsv"

@@ -76,8 +76,8 @@ def _source_row(
 ) -> dict[str, str]:
     """Return one TUCurricula course TSV row."""
     return {
-        "college_code": "COAS",
-        "course_college_code": "COAS",
+        "college_code": "CAS",
+        "course_college_code": "CAS",
         "course_dept": dept_code,
         "course_no": number,
         "course_title": title,

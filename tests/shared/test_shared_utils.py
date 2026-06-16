@@ -19,7 +19,7 @@ from app.shared.importing.rows import (
 def test_expand_code_explicit_college():
     result = expand_crs_code("COET-MATH101", row={"college_code": "COAS"})
     assert result == (
-        "COET",
+        "CET",
         "MATH",
         "101",
     )
@@ -27,7 +27,7 @@ def test_expand_code_explicit_college():
 
 def test_expand_code_dfts_to_row_college():
     college, dept, num = expand_crs_code("CHEM100", row={"college_code": "COAS"})
-    assert (college, dept, num) == ("COAS", "CHEM", "100")
+    assert (college, dept, num) == ("CAS", "CHEM", "100")
 
 
 @pytest.mark.django_db
@@ -77,23 +77,37 @@ def test_course_identity_parser_handles_dirty_smartschool_codes():
 def test_expand_code_accepts_spaced_legacy_code():
     """Existing expand_crs_code behavior now accepts spaced legacy codes."""
     college, dept, num = expand_crs_code("MATH 003", row={"college_code": "COAS"})
-    assert (college, dept, num) == ("COAS", "MATH", "003")
+    assert (college, dept, num) == ("CAS", "MATH", "003")
+
+
+def test_expand_code_uses_edrce_for_education_aliases():
+    """Education aliases should resolve to the TU-used EDRCE acronym."""
+    assert expand_crs_code("EDU101", row={"college_code": "CED"}) == (
+        "EDRCE",
+        "EDU",
+        "101",
+    )
+    assert expand_crs_code("EDU102", row={"college_code": "COED"}) == (
+        "EDRCE",
+        "EDU",
+        "102",
+    )
 
 
 def test_expand_code_accepts_tucurricula_shape():
     """TUCurricula course codes allow 3-5 letters and an optional suffix."""
     assert expand_crs_code("CENG410A", row={"college_code": "COET"}) == (
-        "COET",
+        "CET",
         "CENG",
         "410A",
     )
     assert expand_crs_code("CSENG 301", row={"college_code": "COET"}) == (
-        "COET",
+        "CET",
         "CSENG",
         "301",
     )
     assert expand_crs_code("EENG  310", row={"college_code": "COET"}) == (
-        "COET",
+        "CET",
         "EENG",
         "310",
     )

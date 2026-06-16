@@ -33,6 +33,13 @@ def write_import_runbook(output_dir: Path, *, smartschool_dir: Path) -> int:
         "=web=, =check=, and =validate=. For a student import failure after fixing the ",
         "source file, add =STUDENT_START_ROW=<row>= with =START_AT=students=.",
         "",
+        "** College acronym convention",
+        "",
+        "Canonical college acronyms are =CAS=, =CBA=, =EDRCE=, =CET=, =CHS=, and =CAFS=.",
+        "Legacy inputs such as =COAS=, =COBA=, =COED=, =CED=, =COET=, and =COHS= are ",
+        "accepted aliases but should not be written as current TUSIS codes. The standard ",
+        "reset command runs =create_states=, which applies =normalize_college_codes=.",
+        "",
         "** Commands",
         "",
     ]
