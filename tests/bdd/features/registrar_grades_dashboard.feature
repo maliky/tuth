@@ -3,11 +3,11 @@ Feature: Registrar grades dashboard
   I want to manage grades efficiently
   So I can review student performance
 
-  Scenario: Defaults to most recent semester with graded students
+  Scenario: Defaults to all semesters for transcript search
     Given a registrar user
     And the registrar data includes graded students in multiple semesters
     When the registrar opens the grades dashboard
-    Then the semester filter defaults to the most recent semester with graded students
+    Then the semester filter defaults to all semesters
 
   Scenario: Dashboard link and row expand
     Given a registrar user

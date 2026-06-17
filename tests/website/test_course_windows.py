@@ -24,6 +24,8 @@ def _ensure_sem_statuses():
     for code, label in [
         ("planning", "Planning"),
         ("registration", "Registration Open"),
+        ("grade_entry", "Grade Entry Open"),
+        ("running", "Registration Closed, Semester running"),
         ("locked", "Locked"),
     ]:
         SemesterStatus.objects.get_or_create(code=code, defaults={"label": label})

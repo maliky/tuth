@@ -39,7 +39,7 @@ Use this table when demonstrating or smoke-testing the portal. The staff UI shou
 | test_finance_officer   | Invoice console and payment workflow        | /staff/finance_officer/            | Payment console continues at /staff/finance/invoices/.     |
 | test_registrar         | Registrar lifecycle and grade review        | /staff/registrar/                  | Plain Registrar should not manage semester windows.        |
 | test_registrar_officer | Registrar officer course-window operations  | /staff/reg_officer/                | Use this account for /registrar/course-windows/.           |
-| test_enrollment        | Student snapshot and portal intake          | /staff/enrollment/                 | Create/update student records through /students/new/.      |
+| test_enrollment        | Student directory and portal intake         | /staff/enrollment/                 | Create/update student records through /students/new/.      |
 | test_enrollment_officer| Enrollment officer escalation and deletion  | /staff/enrollment_officer/         | Use only when officer-level actions are part of the demo.  |
 
 ** Pytest fixtures and feature tests
@@ -89,7 +89,7 @@ This section is a practical manual for demonstrating the app with the runtime MW
 ** Enrollment desk manual
 1. Log in as =test_enrollment= or =test_enrollment_officer=.
 2. Open =/staff/enrollment/= for the role dashboard.
-3. Use =Student snapshot= or =/students/= to review recent student records.
+3. Use =Student directory= or =/students/= to search and review student records.
 4. Use =Create student= or =/students/new/= for a new applicant or for a direct update when a student ID is supplied.
 5. Use =Find student= or =/students/admin-edit/= when the student exists and staff need to open the portal profile quickly.
 6. Confirm that the student has a program/curriculum, current enrollment semester, and enough identity information for Finance and Registrar to find the record.

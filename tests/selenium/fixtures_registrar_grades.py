@@ -15,6 +15,7 @@ from app.academics.models.curriculum_course import CurriCrs
 from app.people.models.student import Student
 from app.people.models.student_curriculum_enrollment import set_primary_std_curri_enroll
 from app.registry.models.grade import Grade, GradeValue
+from app.shared.auth.perms import UserRole
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester, SemesterStatus
@@ -34,12 +35,15 @@ def reg_user_factory() -> RegUserFactoryT:
     """Return a callable to build registrar users with grade permissions."""
     UserModel = get_user_model()
     permission = Permission.objects.get(codename="view_grade")
+    group = UserRole.REGISTRAR.value.group
+    group.permissions.add(permission)
 
     def _make(username: str):
         user, _created = UserModel.objects.get_or_create(username=username)
         user.set_password(TEST_PASSWORD)
         user.save()
         user.user_permissions.add(permission)
+        user.groups.add(group)
         return user
 
     return _make

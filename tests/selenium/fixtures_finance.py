@@ -10,6 +10,7 @@ import pytest
 from app.academics.models.curriculum_course import CurriCrs
 from app.finance.models.invoice import CrsInvoice
 from app.finance.models.payment import Payment
+from app.finance.models.status_types_methods import PaymentStatus
 from app.people.models.student import Student
 from app.timetable.models.semester import Semester
 from tests.constants import D25, D100
@@ -52,6 +53,7 @@ def payment_factory() -> PaymentFactoryT:
         return Payment.objects.create(
             student_semester_invoice=parent_invoice,
             amount_paid=amount,
+            status=PaymentStatus.cleared(),
         )
 
     return _make

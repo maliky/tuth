@@ -49,8 +49,8 @@ def _parse_roles(raw_role: str) -> list[str]:
 
 
 def _action_paths(driver) -> set[str]:
-    """Return the set of action button href paths on the dashboard."""
-    links = driver.find_elements(By.CSS_SELECTOR, ".action-card a.btn")
+    """Return action-like href paths exposed by dashboard cards or sidebar."""
+    links = driver.find_elements(By.CSS_SELECTOR, ".action-card a.btn, .portal-nav a")
     paths: set[str] = set()
     for link in links:
         href = link.get_attribute("href")

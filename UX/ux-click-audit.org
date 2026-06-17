@@ -28,7 +28,7 @@ Raw evidence:
 
 ** Executive state
 The shared portal shell is visible and coherent across the main student and staff surfaces.
-The landing page, login page, staff dashboards, finance console, dean dashboard, enrollment snapshots, donor portal, and registrar course windows render with the harmonized green/gold portal language.
+The landing page, login page, staff dashboards, finance console, dean dashboard, enrollment directory, donor portal, and registrar course windows render with the harmonized green/gold portal language.
 
 The original P0, P1, P2, and P3 audit findings are now resolved for the non-mutating MWE browser path.
 The remaining UX risk is not basic navigation comfort; it is the depth of still-minimal backstage workflows and untested destructive/mutating submissions.
@@ -49,7 +49,7 @@ Highest-impact state:
 - Staff, dean, finance, registrar, enrollment, cashier, faculty, chair, VPAA, donor, and IT dashboards inherit the shared portal shell.
 - Finance officer console renders in the portal language, with invoice/payment tabs, filters, sidebar task navigation, and guided empty-state messaging.
 - Dean dashboard renders as a portal page with approval queue and college chair panels.
-- Enrollment student snapshot, student detail, student lookup, create, and update pages render under the portal shell.
+- Enrollment student directory, student detail, student lookup, create, and update pages render under the portal shell.
 - Registrar course-window management renders under the portal shell with academic-year grouping.
 - Donor runtime account lands on a donor sponsorship workspace instead of the generic staff dashboard.
 - Public landing, login, finance, enrollment, registrar, dean, and student mobile smoke pages avoid global horizontal overflow on the audited paths.
@@ -118,12 +118,12 @@ Observed surfaces:
 
 Resolution:
 - Added a portal-native student intake form for create/update.
-- Student snapshot links now open portal profiles.
+- Student directory links now open portal profiles.
 - Student detail exposes an =Update profile= action that returns to the portal form.
 - Student lookup opens the portal profile instead of redirecting to Django admin.
 
 Verification:
-The strict P2/P3 Selenium run passed through enrollment snapshot, profile, update profile, create student, and lookup pages without leaving Tusis.
+The strict P2/P3 Selenium run passed through enrollment directory, profile, update profile, create student, and lookup pages without leaving Tusis.
 
 *** DONE P2 - Finance console is visually aligned but data/default states need UX tightening
 The finance console loaded and looked consistent with the portal shell.

@@ -20,7 +20,7 @@ pytestmark = [
 
 @scenario(
     "features/registrar_grades_dashboard.feature",
-    "Defaults to most recent semester with graded students",
+    "Defaults to all semesters for transcript search",
 )
 def test_reg_grades_dft_sem_bdd():
     """Drive the default semester scenario."""
@@ -103,7 +103,7 @@ def dashboard_has_current_sem(
     reg_std_factory,
     reg_grade_factory,
 ) -> None:
-    """Set up one graded student in the latest semester."""
+    """Set up one graded student in the current semester."""
     _academic_year, _previous, current = reg_sem_pair_factory()
     section, curriculum = reg_sec_factory(current)
     student = reg_std_factory("student_bdd", curriculum, current)
@@ -153,20 +153,15 @@ def reg_opens_dashboard_filtered(
     selenium_driver.get(url)
 
 
-@then("the semester filter defaults to the most recent semester with graded students")
+@then("the semester filter defaults to all semesters")
 def sem_filter_dfts(reg_context: RegContext, selenium_driver) -> None:
-    """Verify the default semester selection matches the latest graded semester."""
-    assert reg_context.semester is not None
-    expected_semester = reg_context.semester
-    expected_label = (
-        f"{expected_semester.academic_year.code} · Semester {expected_semester.number}"
-    )
+    """Verify the default semester selection stays student-search oriented."""
     WebDriverWait(selenium_driver, 10).until(
         EC.presence_of_element_located((By.NAME, "semester"))
     )
     select = selenium_driver.find_element(By.NAME, "semester")
     selected = select.find_element(By.CSS_SELECTOR, "option:checked")
-    assert selected.text.strip() == expected_label
+    assert selected.text.strip() == "All semesters"
 
 
 @then("the dashboard link is visible")
