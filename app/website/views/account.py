@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TypeAlias, TypedDict, cast
+from typing import TypedDict, cast
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -26,7 +26,14 @@ from app.website.services.staff_portal import (
 from app.website.views.student_helpers import _build_sidebar_links
 
 PROFILE_EDIT_MODE = "edit"
-ProfileDisplayItemT: TypeAlias = dict[str, str]
+
+
+class ProfileDisplayItemT(TypedDict):
+    """A single read-only profile row with explicit empty-state metadata."""
+
+    label: str
+    value: str
+    is_missing: bool
 
 
 class ProfileDisplaySectionT(TypedDict):
@@ -83,6 +90,11 @@ def _field_value(form: AccountProfileForm, field_name: str) -> str:
     return str(value)
 
 
+def _is_missing_field_value(form: AccountProfileForm, field_name: str) -> bool:
+    """Return whether a read-only profile field has no user supplied value."""
+    return form[field_name].value() in {None, ""}
+
+
 def _section_items(
     form: AccountProfileForm,
     field_names: tuple[str, ...],
@@ -92,6 +104,7 @@ def _section_items(
         {
             "label": str(form.fields[field_name].label),
             "value": _field_value(form, field_name),
+            "is_missing": _is_missing_field_value(form, field_name),
         }
         for field_name in field_names
     ]

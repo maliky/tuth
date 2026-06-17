@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
-from typing import TypeAlias, TypedDict, cast
+from typing import Literal, TypeAlias, TypedDict, cast
 
 from django.contrib.auth.models import User
 
 from app.people.models.donor import Donor
+from app.people.models.faculty import Faculty
 from app.people.models.staffs import Staff
 from app.people.models.student import Student
 
 PersonProfileT: TypeAlias = Staff | Student | Donor
+ProfileKindT: TypeAlias = Literal["Faculty", "Staff", "Student", "Donor", "Account"]
 
 
 class PortalIdentityT(TypedDict):
@@ -20,7 +22,7 @@ class PortalIdentityT(TypedDict):
     subtitle: str
     initial: str
     avatar_url: str
-    kind: str
+    kind: ProfileKindT
 
 
 class ProfileFactT(TypedDict):
@@ -45,9 +47,19 @@ def profile_for_user(user: User) -> PersonProfileT | None:
     return None
 
 
-def profile_kind(profile: PersonProfileT | None) -> str:
+def _has_faculty_profile(profile: Staff) -> bool:
+    """Return whether a saved staff profile has a linked faculty record."""
+    profile_id = cast(int | None, getattr(profile, "pk", None))
+    if profile_id is None:
+        return False
+    return Faculty.objects.filter(staff_profile_id=profile_id).exists()
+
+
+def profile_kind(profile: PersonProfileT | None) -> ProfileKindT:
     """Return the user-facing profile type."""
     if isinstance(profile, Staff):
+        if _has_faculty_profile(profile):
+            return "Faculty"
         return "Staff"
     if isinstance(profile, Student):
         return "Student"
@@ -126,6 +138,7 @@ __all__ = [
     "PersonProfileT",
     "PortalIdentityT",
     "ProfileFactT",
+    "ProfileKindT",
     "build_portal_identity",
     "profile_avatar_url",
     "profile_display_name",

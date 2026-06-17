@@ -6,6 +6,7 @@ import pytest
 from django.contrib.auth.models import User
 from django.urls import reverse
 
+from app.people.models.faculty import Faculty
 from app.people.models.staffs import Staff
 
 pytestmark = pytest.mark.django_db
@@ -61,10 +62,27 @@ def test_account_profile_defaults_to_read_only_presentation(client) -> None:
     assert "Edit profile" in content
     assert "account-profile-overview-grid" in content
     assert "account-profile-card__hero" in content
+    assert "account-profile-field-grid" in content
     assert "account-profile-section--contact" in content
+    assert "is-missing" in content
     assert "Save profile" not in content
     assert "Staff Member" in content
     assert "Contact" in content
+    assert "Not set" in content
+
+
+def test_account_profile_labels_faculty_profile(client) -> None:
+    """Staff users with a faculty record should be identified as faculty."""
+    user = _staff_user("faculty_profile_read")
+    Faculty.objects.get_or_create(staff_profile=user.staff)
+    client.force_login(user)
+
+    response = client.get(reverse("account_profile"))
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert "Faculty profile" in content
+    assert "Profile type" in content
 
 
 def test_account_profile_edit_mode_shows_single_page_form(client) -> None:

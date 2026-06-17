@@ -477,43 +477,30 @@
 }
 
 .account-profile-card .portal-filter-card__body {
-  padding: clamp(1rem, 2.5vw, 1.75rem);
+  padding: clamp(1rem, 2.4vw, 1.6rem);
 }
 
 .account-profile-overview-grid {
   align-items: stretch;
   display: grid;
   gap: 1rem;
-  grid-template-columns: minmax(300px, 0.85fr) minmax(360px, 1.15fr);
+  grid-template-columns: minmax(320px, 0.9fr) minmax(360px, 1.1fr);
   margin-bottom: 1.25rem;
 }
 
 .account-profile-card__hero {
   align-items: center;
-  background:
-    radial-gradient(circle at top right, rgba(198, 161, 91, 0.24), transparent 30%),
-    linear-gradient(135deg, rgba(19, 69, 41, 0.96), rgba(19, 69, 41, 0.78));
-  border-radius: 1rem;
+  background: linear-gradient(135deg, rgba(19, 69, 41, 0.98), rgba(15, 31, 28, 0.96));
+  border-radius: 0.75rem;
   color: #fff;
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
   justify-content: space-between;
   margin-bottom: 0;
-  min-height: 150px;
+  min-height: 148px;
   padding: clamp(1rem, 3vw, 1.5rem);
   position: relative;
-}
-
-.account-profile-card__hero::after {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  content: "";
-  height: 8rem;
-  position: absolute;
-  right: -3rem;
-  top: -4rem;
-  width: 8rem;
 }
 
 .account-profile-identity {
@@ -526,12 +513,11 @@
 }
 
 .account-profile-avatar {
-  background: rgba(255, 255, 255, 0.14);
-  border: 3px solid rgba(255, 255, 255, 0.72);
-  box-shadow: 0 16px 34px rgba(15, 31, 28, 0.28);
+  background: rgba(255, 255, 255, 0.16);
+  border: 2px solid rgba(255, 255, 255, 0.7);
   flex: 0 0 auto;
-  height: 82px;
-  width: 82px;
+  height: 78px;
+  width: 78px;
 }
 
 .account-profile-avatar span {
@@ -552,9 +538,8 @@
 }
 
 .account-profile-kind {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(249, 178, 51, 0.18);
   border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 999px;
   color: #fff;
   display: inline-flex;
   font-size: 0.72rem;
@@ -572,23 +557,28 @@
   z-index: 1;
 }
 
+.account-profile-actions .btn {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
 .account-profile-facts {
   display: grid;
-  gap: 0.75rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin: 0;
 }
 
 .account-profile-fact {
-  background: linear-gradient(180deg, #fff, rgba(19, 69, 41, 0.025));
+  background: #fff;
   border: 1px solid var(--staff-border);
-  border-radius: 0.9rem;
-  box-shadow: 0 10px 22px rgba(15, 31, 28, 0.04);
-  padding: 0.85rem 1rem;
+  border-radius: 0.55rem;
+  padding: 0.75rem 0.85rem;
 }
 
 .account-profile-fact span,
-.account-profile-section dt {
+.account-profile-field-grid dt {
   color: var(--staff-muted);
   display: block;
   font-size: 0.72rem;
@@ -605,47 +595,81 @@
 .account-profile-section-grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(12, minmax(0, 1fr));
 }
 
 .account-profile-section {
   background: #fff;
   border: 1px solid var(--staff-border);
-  border-radius: 1rem;
-  box-shadow: 0 10px 22px rgba(15, 31, 28, 0.04);
+  border-radius: 0.75rem;
   overflow: hidden;
 }
 
-.account-profile-section h3 {
+.account-profile-section--name,
+.account-profile-section--contact {
+  grid-column: span 6;
+}
+
+.account-profile-section__header {
+  align-items: center;
   background: rgba(19, 69, 41, 0.05);
   border-bottom: 1px solid var(--staff-border);
+  display: flex;
+  gap: 0.65rem;
+  padding: 0.8rem 0.95rem;
+}
+
+.account-profile-section__header h3 {
   color: var(--staff-primary);
   font-size: 1rem;
+  line-height: 1.2;
   margin: 0;
-  padding: 0.9rem 1rem;
 }
 
-.account-profile-section dl {
+.account-profile-section__icon {
+  align-items: center;
+  background: rgba(19, 69, 41, 0.1);
+  border-radius: 0.45rem;
+  color: var(--staff-primary);
+  display: inline-flex;
+  height: 2rem;
+  justify-content: center;
+  width: 2rem;
+}
+
+.account-profile-field-grid {
   display: grid;
-  gap: 0.75rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin: 0;
-  padding: 1rem;
+  padding: 0;
 }
 
-.account-profile-section dl > div {
-  background: rgba(19, 69, 41, 0.025);
-  border: 1px solid rgba(15, 31, 28, 0.08);
-  border-radius: 0.75rem;
+.account-profile-field-grid > div {
+  border-bottom: 1px solid rgba(15, 31, 28, 0.08);
+  border-right: 1px solid rgba(15, 31, 28, 0.08);
   min-width: 0;
-  padding: 0.8rem 0.85rem;
+  padding: 0.8rem 0.95rem;
 }
 
-.account-profile-section dd {
+.account-profile-field-grid > div:nth-child(2n) {
+  border-right: 0;
+}
+
+.account-profile-field-grid dd {
   color: #17211e;
   font-weight: 650;
   margin: 0.15rem 0 0;
   overflow-wrap: anywhere;
+}
+
+.account-profile-field-grid > div.is-missing {
+  background: rgba(15, 31, 28, 0.018);
+}
+
+.account-profile-field-grid > div.is-missing dd {
+  color: rgba(15, 31, 28, 0.46);
+  font-style: italic;
+  font-weight: 600;
 }
 
 .account-profile-section--personal-details {
@@ -716,6 +740,12 @@
   .account-profile-section-grid {
     grid-template-columns: 1fr;
   }
+
+  .account-profile-section--name,
+  .account-profile-section--contact,
+  .account-profile-section--personal-details {
+    grid-column: auto;
+  }
 }
 
 @media (max-width: 575.98px) {
@@ -731,9 +761,14 @@
 
   .account-profile-facts,
   .account-profile-section-grid,
-  .account-profile-section dl,
+  .account-profile-field-grid,
   .account-profile-section--personal-details dl {
     grid-template-columns: 1fr;
+  }
+
+  .account-profile-field-grid > div,
+  .account-profile-field-grid > div:nth-child(2n) {
+    border-right: 0;
   }
 }
 

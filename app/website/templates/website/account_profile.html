@@ -54,10 +54,12 @@
           <div class="account-profile-actions">
             {% if is_edit_mode %}
               <a class="btn portal-btn-outline btn-sm" href="{{ profile_url }}">
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
                 Cancel
               </a>
             {% else %}
               <a class="btn portal-btn-accent btn-sm" href="{{ edit_profile_url }}">
+                <i class="bi bi-pencil-square" aria-hidden="true"></i>
                 Edit profile
               </a>
             {% endif %}
@@ -175,10 +177,21 @@
         <div class="account-profile-section-grid">
           {% for section in profile_display_sections %}
             <article class="account-profile-section account-profile-section--{{ section.title|slugify }}">
-              <h3>{{ section.title }}</h3>
-              <dl>
+              <header class="account-profile-section__header">
+                <span class="account-profile-section__icon" aria-hidden="true">
+                  {% if section.title == "Name" %}
+                    <i class="bi bi-person-vcard"></i>
+                  {% elif section.title == "Contact" %}
+                    <i class="bi bi-envelope-at"></i>
+                  {% else %}
+                    <i class="bi bi-card-checklist"></i>
+                  {% endif %}
+                </span>
+                <h3>{{ section.title }}</h3>
+              </header>
+              <dl class="account-profile-field-grid">
                 {% for item in section.items %}
-                  <div>
+                  <div class="{% if item.is_missing %}is-missing{% endif %}">
                     <dt>{{ item.label }}</dt>
                     <dd>{{ item.value }}</dd>
                   </div>
