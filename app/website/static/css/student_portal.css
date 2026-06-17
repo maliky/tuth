@@ -64,6 +64,25 @@
   margin-bottom: 1.25rem;
 }
 
+.portal-sidebar__identity-link {
+  border-radius: 0.85rem;
+  color: inherit;
+  margin-left: -0.35rem;
+  margin-right: -0.35rem;
+  padding: 0.35rem;
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.portal-sidebar__identity-link:focus,
+.portal-sidebar__identity-link:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  transform: translateX(2px);
+}
+
 .student-avatar {
   width: 48px;
   height: 48px;
@@ -434,6 +453,10 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
   gap: 1.5rem;
+}
+
+.portal-workspace-grid--single {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .portal-actions-panel {

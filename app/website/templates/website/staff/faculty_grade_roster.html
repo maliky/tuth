@@ -1,0 +1,208 @@
+{% extends "website/staff/base.html" %}
+
+{% block staff_header_actions %}
+  <a class="btn portal-btn-outline btn-sm" href="{{ sections_url }}">
+    Back to sections
+  </a>
+{% endblock %}
+
+{% block staff_content %}
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <section class="portal-filter-card mb-4">
+    <div class="portal-filter-card__body">
+      <div class="portal-filter-card__intro">
+        <p class="eyebrow text-uppercase mb-1">Section roster</p>
+        <h2>{{ course_code }} · Section {{ section.number }}</h2>
+        <p class="mb-0 text-muted">
+          {{ course_title }} · {{ section.semester.academic_year.code }}
+          · Semester {{ section.semester.number }}
+        </p>
+      </div>
+      <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+        {% if grade_entry_open %}
+          <span class="status-badge status-completed">Grade entry open</span>
+        {% else %}
+          <span class="status-badge status-pending">
+            {{ section.semester.status.label }}
+          </span>
+        {% endif %}
+        <a class="btn portal-btn-outline btn-sm" href="{{ download_url }}">
+          Download CSV roster
+        </a>
+        {% for link in faculty_admin_links %}
+          <a class="btn portal-btn-outline btn-sm" href="{{ link.href }}">
+            {{ link.label }}
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  {% if not grade_entry_open %}
+    <div class="alert alert-warning">
+      Grade entry is closed for this semester. The roster is visible in read-only mode.
+    </div>
+  {% endif %}
+
+  {% if upload_errors %}
+    <div class="alert alert-danger border border-danger-subtle shadow-sm">
+      <h2 class="h5">CSV import blocked</h2>
+      <p class="mb-2">
+        {{ upload_error_summary|default:"No grade changes were saved." }}
+      </p>
+      <ul class="mb-0">
+        {% for issue in upload_errors %}
+          <li>
+            {% if issue.row %}Row {{ issue.row }}{% else %}File{% endif %}
+            · <strong>{{ issue.field }}</strong>: {{ issue.message }}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  {% if grade_entry_open %}
+    <section class="portal-filter-card mb-4">
+      <div class="portal-filter-card__body">
+        <div class="portal-filter-card__intro">
+          <p class="eyebrow text-uppercase mb-1">CSV import</p>
+          <h2>Upload completed roster</h2>
+        </div>
+        <form method="post" action="{{ upload_url }}" enctype="multipart/form-data" class="row g-3 align-items-end">
+          {% csrf_token %}
+          <div class="col-12 col-lg-8">
+            <label class="form-label" for="id_roster_file">CSV roster file</label>
+            <input id="id_roster_file" class="form-control" type="file" name="roster_file" accept=".csv,text/csv" />
+            <div class="form-text">
+              Use the downloaded roster so Tusis receives the correct student and section ids.
+            </div>
+          </div>
+          <div class="col-12 col-lg-4">
+            <button class="btn portal-btn-accent w-100" type="submit">
+              Upload grades
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+  {% endif %}
+
+  <form method="post" id="faculty-grade-roster-form" data-autosave-url="{{ autosave_url }}">
+    {% csrf_token %}
+    <div class="portal-panel-card">
+      <div class="portal-panel-card__stripe"></div>
+      <div class="portal-panel-card__body p-0">
+        <div class="course-table table-responsive mb-0">
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Student ID</th>
+                <th>Student</th>
+                <th>Grade</th>
+                <th>Save status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in grade_rows %}
+                <tr>
+                  <td>{{ row.student_id }}</td>
+                  <td>{{ row.student_label }}</td>
+                  <td>
+                    <select
+                      class="form-select form-select-sm"
+                      name="grade_{{ row.grade.id }}"
+                      data-grade-select
+                      data-grade-id="{{ row.grade.id }}"
+                      {% if not grade_entry_open %}disabled{% endif %}
+                    >
+                      <option value="" {% if not row.current_code %}selected{% endif %}>No grade</option>
+                      {% for grade_value in grade_values %}
+                        <option
+                          value="{{ grade_value.code }}"
+                          {% if row.current_code == grade_value.code %}selected{% endif %}
+                        >
+                          {{ grade_value.code|upper }} · {{ grade_value.description }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  </td>
+                  <td class="text-muted small" data-save-status-for="{{ row.grade.id }}">
+                    Not changed
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="4" class="text-center text-muted py-4">
+                    No registered students are attached to this section.
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </form>
+{% endblock %}
+
+{% block staff_body_extra %}
+  {{ block.super }}
+  {% if grade_entry_open %}
+    <script>
+      (() => {
+        const form = document.getElementById("faculty-grade-roster-form");
+        if (!form) return;
+        const autosaveUrl = form.dataset.autosaveUrl;
+        const csrfToken = form.querySelector("[name=csrfmiddlewaretoken]").value;
+        const markStatus = (gradeId, text, className) => {
+          const cell = form.querySelector(`[data-save-status-for="${gradeId}"]`);
+          if (!cell) return;
+          cell.textContent = text;
+          cell.className = `small ${className}`;
+        };
+        form.querySelectorAll("[data-grade-select]").forEach((select) => {
+          select.addEventListener("change", async () => {
+            const gradeId = select.dataset.gradeId;
+            markStatus(gradeId, "Saving...", "text-muted");
+            const body = new URLSearchParams({
+              grade_id: gradeId,
+              grade_code: select.value,
+            });
+            try {
+              const response = await fetch(autosaveUrl, {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                  "Content-Type": "application/x-www-form-urlencoded",
+                  "X-CSRFToken": csrfToken,
+                },
+                body,
+              });
+              let payload = {};
+              try {
+                payload = await response.json();
+              } catch (_error) {
+                payload = { error: `Save failed (${response.status})` };
+              }
+              if (!response.ok || !payload.ok) {
+                markStatus(gradeId, payload.error || "Save failed", "text-danger");
+                return;
+              }
+              markStatus(gradeId, "Saved", "text-success");
+            } catch (_error) {
+              markStatus(gradeId, "Network error", "text-danger");
+            }
+          });
+        });
+      })();
+    </script>
+  {% endif %}
+{% endblock %}

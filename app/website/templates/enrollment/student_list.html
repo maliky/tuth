@@ -1,36 +1,156 @@
 {% extends "website/staff/base.html" %}
 
 {% block staff_header_actions %}
-  <a class="btn portal-btn-outline btn-sm" href="{% url 'create_std' %}">
+  <a class="btn portal-btn-outline btn-sm" href="{% url 'std_admin_edit' %}">
+    Find student
+  </a>
+  <a class="btn portal-btn-accent btn-sm" href="{% url 'create_std' %}">
     Create student
   </a>
 {% endblock %}
 
 {% block staff_content %}
+  <section class="portal-filter-card mb-4">
+    <div class="portal-filter-card__body">
+      <div class="portal-filter-card__intro">
+        <p class="eyebrow text-uppercase mb-1">Enrollment directory</p>
+        <h2>Search student records</h2>
+      </div>
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-lg-4 col-md-6">
+          <label class="form-label" for="student-directory-q">Name or ID</label>
+          <input
+            id="student-directory-q"
+            class="form-control"
+            type="search"
+            name="q"
+            value="{{ filters.q }}"
+            placeholder="Student ID, name, program, or college"
+          />
+        </div>
+        <div class="col-lg-2 col-md-6">
+          <label class="form-label" for="student-directory-college">College</label>
+          <select id="student-directory-college" class="form-select" name="college">
+            <option value="">All colleges</option>
+            {% for college in colleges %}
+              <option value="{{ college.id }}" {% if college.id == filters.college %}selected{% endif %}>
+                {{ college.code }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <label class="form-label" for="student-directory-program">Program</label>
+          <select id="student-directory-program" class="form-select" name="program">
+            <option value="">All programs</option>
+            {% for program in programs %}
+              <option value="{{ program.id }}" {% if program.id == filters.program %}selected{% endif %}>
+                {{ program.college.code }} · {{ program.short_name }}{% if program.long_name %} · {{ program.long_name }}{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-lg-2 col-md-6">
+          <label class="form-label" for="student-directory-semester">Semester</label>
+          <select id="student-directory-semester" class="form-select" name="semester">
+            <option value="">All semesters</option>
+            {% for semester in semesters %}
+              <option value="{{ semester.id }}" {% if semester.id == filters.semester %}selected{% endif %}>
+                {{ semester }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-lg-1 col-md-12 d-grid">
+          <button class="btn portal-btn-accent" type="submit">Filter</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  {% if admin_shortcuts %}
+    <section class="staff-admin-shortcuts portal-filter-card mb-4">
+      <div class="portal-filter-card__body">
+        <div class="portal-filter-card__intro">
+          <p class="eyebrow text-uppercase mb-1">Authorized database</p>
+          <h2>Direct admin access</h2>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          {% for link in admin_shortcuts %}
+            <a class="btn portal-btn-outline btn-sm" href="{{ link.href }}">
+              {{ link.label }}
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
   <div class="portal-panel-card">
     <div class="portal-panel-card__stripe"></div>
     <div class="portal-panel-card__body">
       <div class="portal-panel-card__head mb-3">
-        <h2 class="h5 mb-1">Latest records</h2>
+        <h2 class="h5 mb-1">Student records</h2>
         <p class="portal-panel-card__subtitle mb-0">
-          Open a profile to review details or continue the enrollment record.
+          Review enrollment status and open a profile for CRUD actions.
         </p>
       </div>
-      <ul class="list-group list-group-flush">
-        {% for student in students %}
-          <li class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div>
-              <strong>{{ student.long_name }}</strong><br />
-              <small class="text-muted">{{ student.student_id }}</small>
-            </div>
-            <a class="btn btn-sm portal-btn-outline" href="{% url 'std_detail' student.pk %}">
-              View profile
-            </a>
-          </li>
-        {% empty %}
-          <li class="list-group-item text-muted">No students captured yet.</li>
-        {% endfor %}
-      </ul>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>College</th>
+              <th>Program</th>
+              <th>Entry</th>
+              <th>Current</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for student in students %}
+              <tr>
+                <td>
+                  <strong>{{ student.long_name }}</strong><br />
+                  <small class="text-muted">{{ student.student_id }}</small>
+                </td>
+                <td>{{ student.primary_curriculum.college.code }}</td>
+                <td>
+                  <strong>{{ student.primary_curriculum.short_name }}</strong><br />
+                  <small class="text-muted">{{ student.primary_curriculum.long_name|default:"No program title" }}</small>
+                </td>
+                <td>{{ student.entry_semester|default:"Not set" }}</td>
+                <td>{{ student.last_enrolled_semester|default:"Not set" }}</td>
+                <td class="text-end">
+                  <div class="d-inline-flex flex-wrap justify-content-end gap-2">
+                    <a class="btn btn-sm portal-btn-outline" href="{% url 'std_detail' student.pk %}">
+                      View
+                    </a>
+                    {% if perms.people.add_student %}
+                      <a class="btn btn-sm portal-btn-accent" href="{% url 'create_std' %}?student_id={{ student.student_id|urlencode }}">
+                        Update
+                      </a>
+                    {% endif %}
+                    {% if perms.people.delete_student %}
+                      <a class="btn btn-sm btn-outline-danger" href="{% url 'std_delete' student.pk %}">
+                        Delete
+                      </a>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6" class="text-muted">No students match the current filters.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
+
+  {% with page=page_obj %}
+    {% include "website/staff/partials/pagination.html" %}
+  {% endwith %}
 {% endblock %}

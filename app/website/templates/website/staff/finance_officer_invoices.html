@@ -639,12 +639,17 @@
       if (select && window.jQuery) {
         const $select = window.jQuery(select);
         const url = select.dataset.autocompleteUrl;
+        // Avoid inheriting Basic Auth userinfo from credentialed preprod URLs.
+        const autocompleteUrl = new URL(
+          url,
+          `${window.location.protocol}//${window.location.host}`,
+        ).toString();
         $select.select2({
           allowClear: true,
           placeholder: "Search by name or ID",
           minimumInputLength: 2,
           ajax: {
-            url: url,
+            url: autocompleteUrl,
             dataType: "json",
             delay: 250,
             data: function (params) {

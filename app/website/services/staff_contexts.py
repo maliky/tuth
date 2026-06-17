@@ -36,6 +36,7 @@ from app.website.services.portal_types import (
     PanelT,
     RoleContextT,
 )
+from app.website.services.enrollment_portal import enrollment_admin_shortcuts
 from app.website.services.staff_common import (
     AdminModelShortcutSpecT,
     _as_user,
@@ -59,6 +60,30 @@ REGISTRAR_ADMIN_SHORTCUTS: tuple[AdminModelShortcutSpecT, ...] = (
     ("Curricula", Curriculum),
     ("Curriculum courses", CurriCrs),
 )
+
+FACULTY_ADMIN_SHORTCUTS: tuple[AdminModelShortcutSpecT, ...] = (
+    ("Sections", Section),
+    ("Grades", Grade),
+)
+
+
+def _registrar_pending_payment_metric() -> MetricT:
+    """Return a scoped pending-payment registration metric for registrar dashboards."""
+    pending_qs = Registration.objects.filter(status__code="pending")
+    semester, _error_message = Semester.regio_open_sem()
+    scope = "open registration term"
+    if semester is None:
+        semester = Semester.get_current_sem()
+        scope = "current term"
+    if semester and semester.id:
+        return {
+            "label": f"Registrations pending payment ({scope})",
+            "value": pending_qs.filter(section__semester=semester).count(),
+        }
+    return {
+        "label": "Registrations pending payment (all terms)",
+        "value": pending_qs.count(),
+    }
 
 
 def _build_staff_context(request: HttpRequest) -> RoleContextT:
@@ -104,7 +129,8 @@ def _build_staff_context(request: HttpRequest) -> RoleContextT:
 
 
 def _build_faculty_context(request: HttpRequest) -> RoleContextT:
-    faculty = _get_faculty_profile(_as_user(request.user))
+    user = _as_user(request.user)
+    faculty = _get_faculty_profile(user)
     if not faculty:
         return _empty_role_context("No faculty profile linked to this account yet.")
 
@@ -131,13 +157,31 @@ def _build_faculty_context(request: HttpRequest) -> RoleContextT:
         for sec in upcoming_sections
     ] or [{"label": "No sections yet", "value": "Teaching assignments not published."}]
 
+    actions: list[ActionT] = []
+    grades_url = _maybe_reverse("faculty_grade_sections")
+    if grades_url:
+        actions.append(
+            {
+                "label": "Open grade entry",
+                "href": grades_url,
+                "description": (
+                    "Enter grades, autosave changes, or upload a CSV roster."
+                ),
+                "variant": "primary",
+            }
+        )
+
     return {
         "metrics": [
             {"label": "Sections assigned", "value": sections_qs.count()},
             {"label": "Pending grade updates", "value": pending_grades},
         ],
         "panels": [{"title": "Upcoming sections", "items": panel_items}],
-        "actions": [],
+        "actions": actions,
+        "admin_shortcuts": _admin_shortcuts_for_models(
+            user,
+            FACULTY_ADMIN_SHORTCUTS,
+        ),
     }
 
 
@@ -354,7 +398,8 @@ def _build_vpaa_context(_: HttpRequest) -> RoleContextT:
     }
 
 
-def _build_enrollment_context(_: HttpRequest) -> RoleContextT:
+def _build_enrollment_context(request: HttpRequest) -> RoleContextT:
+    user = _as_user(request.user)
     students_qs = Student.objects.all()
     total_students = students_qs.count()
     onboarding = students_qs.filter(last_enrolled_semester__isnull=True).count()
@@ -374,27 +419,6 @@ def _build_enrollment_context(_: HttpRequest) -> RoleContextT:
         }
     ]
 
-    actions: list[ActionT] = [
-        {
-            "label": "Student snapshot",
-            "href": reverse("std_list"),
-            "description": "Review the latest arrivals without leaving Tusis.",
-            "variant": "outline-primary",
-        },
-        {
-            "label": "Create student",
-            "href": reverse("create_std"),
-            "description": "Capture a new student profile directly in Tusis.",
-            "variant": "primary",
-        },
-        {
-            "label": "Find student",
-            "href": reverse("std_admin_edit"),
-            "description": "Search by ID or name and open the portal profile.",
-            "variant": "outline-secondary",
-        },
-    ]
-
     return {
         "metrics": [
             {"label": "Total students", "value": total_students},
@@ -407,7 +431,9 @@ def _build_enrollment_context(_: HttpRequest) -> RoleContextT:
                 "items": student_items,
             }
         ],
-        "actions": actions,
+        "actions": [],
+        "admin_shortcuts": enrollment_admin_shortcuts(user),
+        "show_action_panel": False,
     }
 
 
@@ -421,7 +447,6 @@ def _build_reg_context(request: HttpRequest) -> RoleContextT:
     pending_transcripts = list(
         pending_qs.select_related("student").order_by("-requested_at")[:8]
     )
-    registration_anomalies = Registration.objects.filter(status__code="pending").count()
     transcript_items: list[PanelItemT] = [
         {
             "label": req.student.long_name,
@@ -449,10 +474,7 @@ def _build_reg_context(request: HttpRequest) -> RoleContextT:
     return {
         "metrics": [
             {"label": "Pending transcripts", "value": pending_qs.count()},
-            {
-                "label": "Registrations pending clearance",
-                "value": registration_anomalies,
-            },
+            _registrar_pending_payment_metric(),
         ],
         "panels": [
             {

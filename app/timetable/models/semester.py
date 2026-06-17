@@ -186,11 +186,12 @@ class Semester(StatusableMixin, models.Model):
 
 
 class SemesterStatus(SimpleTableMixin):
-    """Track the lifecycle of a semester (planning, registration, locked)."""
+    """Track the lifecycle of registration, teaching, and grade-entry periods."""
 
     DEFAULT_VALUES = [
         ("planning", "Planning"),
         ("registration", "Registration Open"),
+        ("grade_entry", "Grade Entry Open"),
         ("running", "Registration Closed, Semester running"),
         ("locked", "Registration Closed, Semester locked"),
     ]

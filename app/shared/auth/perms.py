@@ -231,12 +231,14 @@ ROLE_MATRIX = {
     },
     "faculty": {
         "add": ["grade"],
+        "change": ["grade"],
         "view": [
             "course",
             "curriculum",
             "department",
             "faculty",
             "grade",
+            "gradevalue",
             "major",
             "minor",
             "curricrs",

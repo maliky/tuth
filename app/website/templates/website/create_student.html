@@ -1,89 +1,229 @@
 {% extends "website/staff/base.html" %}
+{% load static %}
+
+{% block staff_head_extra %}
+  <link rel="stylesheet" href="{% static 'admin/css/vendor/select2/select2.min.css' %}" />
+{% endblock %}
 
 {% block staff_header_actions %}
+  <button class="btn portal-btn-accent btn-sm" type="submit" form="student-intake-form">
+    {% if student %}Save profile{% else %}Create profile{% endif %}
+  </button>
   {% if student %}
     <a class="btn portal-btn-outline btn-sm" href="{% url 'std_detail' student.pk %}">
       Back to profile
     </a>
   {% endif %}
+  <a class="btn portal-btn-outline btn-sm" href="{% url 'std_list' %}">
+    Student directory
+  </a>
 {% endblock %}
 
 {% block staff_content %}
-  <div class="portal-panel-card">
-    <div class="portal-panel-card__stripe"></div>
-    <div class="portal-panel-card__body">
-      <div class="portal-panel-card__head mb-3">
-        <h2 class="h5">{% if student %}Update enrollment record{% else %}Create student profile{% endif %}</h2>
-        <p class="portal-panel-card__subtitle">
-          Capture the minimum official record needed for a student to appear in Tusis workflows.
-        </p>
+  {% if admin_shortcuts %}
+    <section class="staff-admin-shortcuts portal-filter-card mb-4">
+      <div class="portal-filter-card__body">
+        <div class="portal-filter-card__intro">
+          <p class="eyebrow text-uppercase mb-1">Authorized database</p>
+          <h2>Direct admin access</h2>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          {% for link in admin_shortcuts %}
+            <a class="btn portal-btn-outline btn-sm" href="{{ link.href }}">
+              {{ link.label }}
+            </a>
+          {% endfor %}
+        </div>
       </div>
+    </section>
+  {% endif %}
 
-      <form method="post" class="row g-3" novalidate>
-        {% csrf_token %}
-        <div class="col-md-4">
-          {{ form.student_id.label_tag }}
-          {{ form.student_id }}
-          {% if form.student_id.errors %}
-            <div class="text-danger small mt-1">{{ form.student_id.errors|join:", " }}</div>
-          {% endif %}
-        </div>
-        <div class="col-md-4">
-          {{ form.first_name.label_tag }}
-          {{ form.first_name }}
-          {% if form.first_name.errors %}
-            <div class="text-danger small mt-1">{{ form.first_name.errors|join:", " }}</div>
-          {% endif %}
-        </div>
-        <div class="col-md-4">
-          {{ form.last_name.label_tag }}
-          {{ form.last_name }}
-          {% if form.last_name.errors %}
-            <div class="text-danger small mt-1">{{ form.last_name.errors|join:", " }}</div>
-          {% endif %}
-        </div>
-        <div class="col-md-6">
-          {{ form.email.label_tag }}
-          {{ form.email }}
-          {% if form.email.errors %}
-            <div class="text-danger small mt-1">{{ form.email.errors|join:", " }}</div>
-          {% endif %}
-        </div>
-        <div class="col-md-6">
-          {{ form.primary_curriculum.label_tag }}
-          {{ form.primary_curriculum }}
-          {% if form.primary_curriculum.errors %}
-            <div class="text-danger small mt-1">{{ form.primary_curriculum.errors|join:", " }}</div>
-          {% endif %}
-        </div>
-        <div class="col-md-6">
-          {{ form.entry_semester.label_tag }}
-          {{ form.entry_semester }}
-          {% if form.entry_semester.errors %}
-            <div class="text-danger small mt-1">{{ form.entry_semester.errors|join:", " }}</div>
-          {% endif %}
-        </div>
-        <div class="col-md-6">
-          {{ form.last_enrolled_semester.label_tag }}
-          {{ form.last_enrolled_semester }}
-          {% if form.last_enrolled_semester.errors %}
-            <div class="text-danger small mt-1">{{ form.last_enrolled_semester.errors|join:", " }}</div>
-          {% endif %}
-        </div>
-        {% if form.non_field_errors %}
-          <div class="col-12 text-danger small">
-            {{ form.non_field_errors|join:", " }}
+  <form id="student-intake-form" method="post" class="row g-4" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="col-12 text-danger small">
+        {{ form.non_field_errors|join:", " }}
+      </div>
+    {% endif %}
+
+    <div class="col-12">
+      <section class="portal-panel-card">
+        <div class="portal-panel-card__stripe"></div>
+        <div class="portal-panel-card__body">
+          <div class="portal-panel-card__head mb-3">
+            <h2 class="h5">{% if student %}Update enrollment record{% else %}Create student profile{% endif %}</h2>
+            <p class="portal-panel-card__subtitle">
+              Use one form for the official identity, account, program, contact, and family information.
+            </p>
           </div>
-        {% endif %}
-        <div class="col-12 d-flex flex-wrap gap-2">
-          <button class="btn portal-btn-accent" type="submit">
-            {% if student %}Save student profile{% else %}Create student profile{% endif %}
-          </button>
-          <a class="btn portal-btn-outline" href="{% url 'std_list' %}">
-            View student snapshot
-          </a>
+          <div class="row g-3">
+            <div class="col-md-3">
+              {{ form.student_id.label_tag }}
+              {{ form.student_id }}
+              {% if form.student_id.errors %}<div class="text-danger small mt-1">{{ form.student_id.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div class="col-md-3">
+              {{ form.prefix_name.label_tag }}
+              {{ form.prefix_name }}
+              {% if form.prefix_name.errors %}<div class="text-danger small mt-1">{{ form.prefix_name.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div class="col-md-3">
+              {{ form.first_name.label_tag }}
+              {{ form.first_name }}
+              {% if form.first_name.errors %}<div class="text-danger small mt-1">{{ form.first_name.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div class="col-md-3">
+              {{ form.middle_name.label_tag }}
+              {{ form.middle_name }}
+              {% if form.middle_name.errors %}<div class="text-danger small mt-1">{{ form.middle_name.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              {{ form.last_name.label_tag }}
+              {{ form.last_name }}
+              {% if form.last_name.errors %}<div class="text-danger small mt-1">{{ form.last_name.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              {{ form.suffix_name.label_tag }}
+              {{ form.suffix_name }}
+              {% if form.suffix_name.errors %}<div class="text-danger small mt-1">{{ form.suffix_name.errors|join:", " }}</div>{% endif %}
+            </div>
+          </div>
         </div>
-      </form>
+      </section>
     </div>
-  </div>
+
+    <div class="col-xl-6">
+      <section class="portal-panel-card h-100">
+        <div class="portal-panel-card__stripe"></div>
+        <div class="portal-panel-card__body">
+          <h2 class="h5 mb-3">Account</h2>
+          <div class="row g-3">
+            <div class="col-12">
+              {{ form.email.label_tag }}
+              {{ form.email }}
+              {% if form.email.help_text %}<div class="form-text">{{ form.email.help_text }}</div>{% endif %}
+              {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors|join:", " }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="col-xl-6">
+      <section class="portal-panel-card h-100">
+        <div class="portal-panel-card__stripe"></div>
+        <div class="portal-panel-card__body">
+          <h2 class="h5 mb-3">Program and enrollment</h2>
+          <div class="row g-3">
+            <div class="col-12" data-curriculum-autocomplete-url="{{ curriculum_autocomplete_url }}">
+              {{ form.primary_curriculum.label_tag }}
+              {{ form.primary_curriculum }}
+              {% if form.primary_curriculum.errors %}<div class="text-danger small mt-1">{{ form.primary_curriculum.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              {{ form.entry_semester.label_tag }}
+              {{ form.entry_semester }}
+              {% if form.entry_semester.errors %}<div class="text-danger small mt-1">{{ form.entry_semester.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              {{ form.last_enrolled_semester.label_tag }}
+              {{ form.last_enrolled_semester }}
+              {% if form.last_enrolled_semester.errors %}<div class="text-danger small mt-1">{{ form.last_enrolled_semester.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              {{ form.max_credit_hours.label_tag }}
+              {{ form.max_credit_hours }}
+              {% if form.max_credit_hours.errors %}<div class="text-danger small mt-1">{{ form.max_credit_hours.errors|join:", " }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="col-xl-6">
+      <section class="portal-panel-card h-100">
+        <div class="portal-panel-card__stripe"></div>
+        <div class="portal-panel-card__body">
+          <h2 class="h5 mb-3">Contact and demographics</h2>
+          <div class="row g-3">
+            <div class="col-md-6">{{ form.phone_number.label_tag }}{{ form.phone_number }}{% if form.phone_number.errors %}<div class="text-danger small mt-1">{{ form.phone_number.errors|join:", " }}</div>{% endif %}</div>
+            <div class="col-md-6">{{ form.gender.label_tag }}{{ form.gender }}{% if form.gender.errors %}<div class="text-danger small mt-1">{{ form.gender.errors|join:", " }}</div>{% endif %}</div>
+            <div class="col-md-6">{{ form.birth_date.label_tag }}{{ form.birth_date }}{% if form.birth_date.errors %}<div class="text-danger small mt-1">{{ form.birth_date.errors|join:", " }}</div>{% endif %}</div>
+            <div class="col-md-6">{{ form.birth_place.label_tag }}{{ form.birth_place }}{% if form.birth_place.errors %}<div class="text-danger small mt-1">{{ form.birth_place.errors|join:", " }}</div>{% endif %}</div>
+            <div class="col-md-6">{{ form.nationality.label_tag }}{{ form.nationality }}{% if form.nationality.errors %}<div class="text-danger small mt-1">{{ form.nationality.errors|join:", " }}</div>{% endif %}</div>
+            <div class="col-md-6">{{ form.origin_county.label_tag }}{{ form.origin_county }}{% if form.origin_county.errors %}<div class="text-danger small mt-1">{{ form.origin_county.errors|join:", " }}</div>{% endif %}</div>
+            <div class="col-md-6">{{ form.marital_status.label_tag }}{{ form.marital_status }}{% if form.marital_status.errors %}<div class="text-danger small mt-1">{{ form.marital_status.errors|join:", " }}</div>{% endif %}</div>
+            <div class="col-12">{{ form.physical_address.label_tag }}{{ form.physical_address }}{% if form.physical_address.errors %}<div class="text-danger small mt-1">{{ form.physical_address.errors|join:", " }}</div>{% endif %}</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="col-xl-6">
+      <section class="portal-panel-card h-100">
+        <div class="portal-panel-card__stripe"></div>
+        <div class="portal-panel-card__body">
+          <h2 class="h5 mb-3">Prior school and family</h2>
+          <div class="row g-3">
+            <div class="col-md-6">{{ form.last_school_attended.label_tag }}{{ form.last_school_attended }}{% if form.last_school_attended.errors %}<div class="text-danger small mt-1">{{ form.last_school_attended.errors|join:", " }}</div>{% endif %}</div>
+            <div class="col-md-6">{{ form.emergency_contact.label_tag }}{{ form.emergency_contact }}{% if form.emergency_contact.errors %}<div class="text-danger small mt-1">{{ form.emergency_contact.errors|join:", " }}</div>{% endif %}</div>
+            <div class="col-12">{{ form.reason_for_leaving.label_tag }}{{ form.reason_for_leaving }}{% if form.reason_for_leaving.errors %}<div class="text-danger small mt-1">{{ form.reason_for_leaving.errors|join:", " }}</div>{% endif %}</div>
+            <div class="col-md-6">{{ form.father_name.label_tag }}{{ form.father_name }}{% if form.father_name.errors %}<div class="text-danger small mt-1">{{ form.father_name.errors|join:", " }}</div>{% endif %}</div>
+            <div class="col-md-6">{{ form.mother_name.label_tag }}{{ form.mother_name }}{% if form.mother_name.errors %}<div class="text-danger small mt-1">{{ form.mother_name.errors|join:", " }}</div>{% endif %}</div>
+            <div class="col-md-6">{{ form.father_address.label_tag }}{{ form.father_address }}{% if form.father_address.errors %}<div class="text-danger small mt-1">{{ form.father_address.errors|join:", " }}</div>{% endif %}</div>
+            <div class="col-md-6">{{ form.mother_address.label_tag }}{{ form.mother_address }}{% if form.mother_address.errors %}<div class="text-danger small mt-1">{{ form.mother_address.errors|join:", " }}</div>{% endif %}</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="col-12 d-flex flex-wrap gap-2">
+      <button class="btn portal-btn-accent" type="submit">
+        {% if student %}Save student profile{% else %}Create student profile{% endif %}
+      </button>
+      <a class="btn portal-btn-outline" href="{% url 'std_list' %}">
+        View student directory
+      </a>
+    </div>
+  </form>
+{% endblock %}
+
+{% block staff_body_extra %}
+  <script src="{% static 'admin/js/vendor/jquery/jquery.min.js' %}"></script>
+  <script src="{% static 'admin/js/vendor/select2/select2.full.min.js' %}"></script>
+  <script>
+    (() => {
+      const select = document.querySelector("[data-curriculum-autocomplete]");
+      const wrapper = document.querySelector("[data-curriculum-autocomplete-url]");
+      if (!select || !wrapper || !window.jQuery) {
+        return;
+      }
+      const $select = window.jQuery(select);
+      const url = wrapper.dataset.curriculumAutocompleteUrl;
+      // Avoid inheriting Basic Auth userinfo from credentialed preprod URLs.
+      const autocompleteUrl = new URL(
+        url,
+        `${window.location.protocol}//${window.location.host}`,
+      ).toString();
+      $select.select2({
+        placeholder: "Search by program, curriculum, or college",
+        width: "100%",
+        ajax: {
+          url: autocompleteUrl,
+          dataType: "json",
+          delay: 250,
+          data: function (params) {
+            return { q: params.term };
+          },
+          processResults: function (data) {
+            return {
+              results: data.results.map(function (item) {
+                return { id: item.id, text: item.text || item.label };
+              }),
+            };
+          },
+        },
+      });
+    })();
+  </script>
 {% endblock %}

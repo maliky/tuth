@@ -19,11 +19,16 @@ from app.registry.gpa import get_grade_points_and_credits
 from app.registry.models.grade import Grade
 from app.shared.utils import parse_str
 from app.timetable.models.semester import Semester, SemesterStatus
-from app.timetable.utils import format_datetime
 from app.website.services.portal_types import PortalContextT
 from app.website.services.staff_portal import (
     build_staff_role_switcher,
     build_staff_sidebar_links,
+)
+from app.website.services.staff_common import _admin_shortcuts_for_models
+from app.website.services.staff_contexts import REGISTRAR_ADMIN_SHORTCUTS
+from app.website.services.transcript_document import (
+    build_transcript_document,
+    flatten_transcript_rows,
 )
 
 ContextT: TypeAlias = PortalContextT
@@ -59,16 +64,6 @@ class RegStdGpT(TypedDict):
     semesters: list[RegSemGpT]
     credits_total: int
     gpa: str
-
-
-class RegTranscriptRowT(TypedDict):
-    """Row details for the official grade transcript."""
-
-    sem_label: str
-    course_code: str
-    course_title: str
-    credits: int
-    grade: str
 
 
 class RegSemesterWindowGroupT(TypedDict):
@@ -271,14 +266,13 @@ def _pagination_hidden_fields(request: HttpRequest) -> tuple[str, list[dict[str,
 
 def build_reg_grades_context(request: HttpRequest) -> ContextT:
     """Build context for the registrar grade dashboard."""
+    user = cast(User, request.user)
     selected_student_id = clean_int(request.GET.get("student_id"))
     semester_param = request.GET.get("semester")
     semester_id = clean_int(semester_param)
     semester_param_present = "semester" in request.GET
-    if semester_param == "all":
+    if semester_param == "all" or not semester_param_present:
         semester_id = None
-    if not semester_param_present:
-        semester_id = latest_graded_sem_id()
 
     students_qs = Student.objects.filter(grade__isnull=False).select_related("user")
     if semester_id:
@@ -313,9 +307,7 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
         grades_qs = grades_qs.filter(section__semester_id=semester_id)
 
     student_groups = build_student_grade_groups(list(page_obj), grades_qs)
-    all_semesters_selected = semester_param == "all" or (
-        not semester_param_present and semester_id is None
-    )
+    all_semesters_selected = semester_id is None
     pagination_query, pagination_hidden_fields = _pagination_hidden_fields(request)
     selected_student_label = ""
     if selected_student_id:
@@ -329,10 +321,10 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
 
     return {
         "page_title": "Registrar grades",
-        "page_summary": "Review grades grouped by student and semester.",
+        "page_summary": "Find students, review grades, and download transcripts.",
         "eyebrow": "Registrar",
         "sidebar_links": build_staff_sidebar_links("reg_officer", "grades"),
-        "role_switcher": build_staff_role_switcher(cast(User, request.user), "registrar"),
+        "role_switcher": build_staff_role_switcher(user, "registrar"),
         "breadcrumbs": [
             {
                 "label": "Registrar dashboard",
@@ -345,6 +337,11 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
         "semester_options": _semester_options(semester_id, all_semesters_selected),
         "selected_student_id": selected_student_id,
         "selected_student_label": selected_student_label,
+        "bulk_download_url": reverse("reg_grade_transcripts_bulk_pdf"),
+        "registrar_admin_links": _admin_shortcuts_for_models(
+            user,
+            REGISTRAR_ADMIN_SHORTCUTS,
+        ),
         "pagination_query": pagination_query,
         "pagination_hidden_fields": pagination_hidden_fields,
         "pagination_action": request.path,
@@ -444,57 +441,27 @@ def build_student_grade_groups(students: list[Student], grades) -> list[RegStdGp
 
 def build_reg_grade_transcript_context(request: HttpRequest, student_id: int) -> ContextT:
     """Build context for an official grade transcript preview."""
-    student = get_object_or_404(Student.objects.select_related("user"), pk=student_id)
-    curriculum = student.primary_curriculum
-    grades = (
-        Grade.objects.select_related(
-            "section__semester__academic_year",
-            "section__curriculum_course__course",
-            "section__curriculum_course__credit_hours",
-            "value",
-        )
-        .filter(student=student)
-        .order_by(
-            "section__semester__start_date",
-            "section__semester__number",
-            "section__curriculum_course__course__short_code",
-        )
-    )
-    transcript_rows: list[RegTranscriptRowT] = []
-    for grade in grades:
-        semester = grade.section.semester
-        course = grade.section.curriculum_course.course
-        grade_label = (
-            grade.value.code.upper() if grade.value and grade.value.code else "-"
-        )
-        transcript_rows.append(
-            {
-                "sem_label": f"{semester.academic_year.code} · Semester {semester.number}",
-                "course_code": course.short_code or course.code or "",
-                "course_title": course.title or "",
-                "credits": int(grade.section.curriculum_course.credit_hours.code),
-                "grade": grade_label,
-            }
-        )
+    transcript = build_transcript_document(student_id)
     return {
         "page_title": "Official grade transcript",
         "page_summary": "Registrar-issued transcript preview.",
         "eyebrow": "Registrar",
-        "student": student,
-        "std_label": student.long_name
-        or student.user.get_full_name()
-        or student.student_id,
-        "curriculum_label": curriculum.long_name or curriculum.short_name,
-        "generated_at": format_datetime(timezone.now()),
-        "transcript_rows": transcript_rows,
+        "std_label": transcript["student_name"],
+        "curriculum_label": transcript["major_program"],
+        "generated_at": transcript["printed_date"],
+        "transcript": transcript,
+        "transcript_rows": flatten_transcript_rows(transcript),
         "sidebar_links": build_staff_sidebar_links("reg_officer", "grades"),
         "role_switcher": build_staff_role_switcher(cast(User, request.user), "registrar"),
         "dashboard_url": reverse("reg_grades_dashboard"),
+        "download_url": reverse("reg_grade_transcript_pdf", args=[student_id]),
+        "source_url": reverse("reg_grade_transcript_org", args=[student_id]),
     }
 
 
 def update_semester_window(semester_id: str | None, status_code: str | None) -> str:
     """Update one semester window and return the user-facing success text."""
+    SemesterStatus._populate_attributes_and_db()
     statuses = set(SemesterStatus.objects.values_list("code", flat=True))
     if status_code not in statuses:
         raise ValueError("Unknown status.")
@@ -505,7 +472,8 @@ def update_semester_window(semester_id: str | None, status_code: str | None) -> 
 
 
 def build_reg_windows_context(request: HttpRequest) -> ContextT:
-    """Build context for course selection window management."""
+    """Build context for registration and grade-entry window management."""
+    SemesterStatus._populate_attributes_and_db()
     semesters = (
         Semester.objects.select_related("academic_year", "status")
         .order_by("-academic_year__start_date", "-number")
@@ -514,8 +482,8 @@ def build_reg_windows_context(request: HttpRequest) -> ContextT:
     return {
         "semester_groups": group_semester_windows(list(semesters)),
         "statuses": SemesterStatus.objects.all().order_by("code"),
-        "page_title": "Course selection windows",
-        "page_summary": "Open or close registration periods directly from Tusis.",
+        "page_title": "Semester windows",
+        "page_summary": "Open registration and grade-entry periods from Tusis.",
         "eyebrow": "Registrar officer",
         "sidebar_links": build_staff_sidebar_links("reg_officer", "semester_windows"),
         "role_switcher": build_staff_role_switcher(cast(User, request.user), "registrar"),

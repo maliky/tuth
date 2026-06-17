@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{{ transcript.document_title }} - {{ transcript.student_id }}</title>
+    <style>
+      @page {
+        size: A4;
+        margin: 10mm 12mm 17mm;
+        @bottom-center {
+          content: "Page " counter(page) " of " counter(pages);
+          font-size: 8px;
+        }
+      }
+
+      body {
+        color: #111;
+        font-family: "Times New Roman", "DejaVu Serif", serif;
+        font-size: 9px;
+        line-height: 1.14;
+      }
+
+      .transcript-header {
+        align-items: center;
+        display: grid;
+        grid-template-columns: 29mm 1fr 58mm;
+        gap: 6mm;
+        margin-bottom: 7mm;
+      }
+
+      .institution-contact {
+        text-align: center;
+      }
+
+      .institution-document-title {
+        margin-top: 1ex;
+      }
+
+      .student-meta {
+        text-align: right;
+      }
+
+      .logo-block {
+        text-align: left;
+      }
+
+      .logo {
+        max-height: 24mm;
+        max-width: 24mm;
+      }
+
+      .title {
+        font-weight: 700;
+      }
+
+      .notice {
+        color: #a00000;
+        font-weight: 700;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h2 {
+        font-size: 13px;
+        margin: 0 0 3mm;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 64mm;
+        gap: 6mm;
+        margin-bottom: 8mm;
+      }
+
+      .summary-line {
+        display: grid;
+        grid-template-columns: max-content minmax(0, 1fr);
+        column-gap: 2mm;
+        margin-bottom: 1mm;
+      }
+
+      .summary-line strong {
+        white-space: nowrap;
+      }
+
+      .summary-line span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .totals-table,
+      .detail-table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      .summary-totals {
+        justify-self: end;
+        margin-right: 4mm;
+        width: 60mm;
+      }
+
+      .totals-table {
+        table-layout: fixed;
+      }
+
+      .totals-table th:first-child,
+      .totals-table td:first-child {
+        width: 25mm;
+      }
+
+      .totals-table th,
+      .totals-table td {
+        padding: 1mm 1.4mm;
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      .totals-table th:first-child,
+      .totals-table td:first-child {
+        text-align: left;
+      }
+
+      .detail-table {
+        table-layout: fixed;
+      }
+
+      .detail-table th {
+        border-bottom: 0.25mm solid #111;
+        font-size: 7.8px;
+        padding: 0.7mm 0.55mm;
+        text-align: center;
+      }
+
+      .detail-table td {
+        padding: 0.45mm 0.55mm;
+        vertical-align: top;
+      }
+
+      .detail-table th:first-child {
+        text-align: left;
+      }
+
+      .detail-table th:nth-child(5),
+      .detail-table th:nth-child(6),
+      .detail-table th:nth-child(7) {
+        text-align: right;
+      }
+
+      .date-cell {
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      .num {
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      .center {
+        text-align: center;
+      }
+
+      .term-row td {
+        font-weight: 700;
+        padding-top: 1.5mm;
+      }
+
+      .term-dates {
+        float: right;
+        font-weight: 400;
+      }
+
+      .course-code {
+        flex: 0 0 auto;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .course-line {
+        display: flex;
+        gap: 1.5mm;
+        min-width: 0;
+      }
+
+      .course-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .totals-row td {
+        font-weight: 700;
+      }
+
+      .program-row td {
+        font-weight: 700;
+        padding-bottom: 1.4mm;
+      }
+
+      .legend,
+      .conclusion {
+        margin-top: 6mm;
+        text-align: center;
+      }
+
+      .signature {
+        display: grid;
+        gap: 8mm;
+        grid-template-columns: 1fr 32mm;
+        margin-left: auto;
+        margin-top: 14mm;
+        width: 70mm;
+      }
+
+      .signature div {
+        border-top: 0.25mm solid #111;
+        padding-top: 1mm;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="transcript-header">
+      <div class="logo-block">
+        {% if transcript.logo_uri %}
+          <img class="logo" src="{{ transcript.logo_uri }}" alt="TU logo" />
+        {% endif %}
+      </div>
+      <div class="institution-contact">
+        <p class="title">{{ transcript.institution_name }}</p>
+        <p>{{ transcript.address_one }}</p>
+        <p>{{ transcript.address_two }}, {{ transcript.country }}</p>
+        <p>{{ transcript.website }} · {{ transcript.registrar_email }}</p>
+        <p class="title institution-document-title">{{ transcript.document_title }}</p>
+      </div>
+      <div class="student-meta">
+        <p>{{ transcript.student_name }}</p>
+        <p>{{ transcript.student_address_one }}</p>
+        {% if transcript.student_address_two %}
+          <p>{{ transcript.student_address_two }}</p>
+        {% endif %}
+        <p class="title" style="margin-top: 3mm;">ID {{ transcript.student_id }}</p>
+        <p>DOB {{ transcript.dob }}</p>
+      </div>
+    </header>
+
+    <section class="summary">
+      <h2>Transcript Summary</h2>
+      <div class="summary-grid">
+        <div>
+          <div class="summary-line">
+            <strong>Program Code:</strong>
+            <span>{{ transcript.program_code }}</span>
+          </div>
+          <div class="summary-line">
+            <strong>College:</strong>
+            <span>{{ transcript.college }}</span>
+          </div>
+          <div class="summary-line">
+            <strong>Enrollment Date:</strong>
+            <span>{{ transcript.enrollment_date }}</span>
+          </div>
+          <div class="summary-line">
+            <strong>Program Completion Date:</strong>
+            <span>{{ transcript.completion_date }}</span>
+          </div>
+          <div class="summary-line">
+            <strong>Graduation Date:</strong>
+            <span>{{ transcript.graduation_date }}</span>
+          </div>
+          <div class="summary-line">
+            <strong>Major Program:</strong>
+            <span>{{ transcript.major_program }}</span>
+          </div>
+        </div>
+        <table class="totals-table summary-totals">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Attempted Credit</th>
+              <th>Earned Credit</th>
+              <th>GPA</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Program Totals:</td>
+              <td>{{ transcript.program_total_attempted }}</td>
+              <td>{{ transcript.program_total_earned }}</td>
+              <td>{{ transcript.program_total_gpa }}</td>
+            </tr>
+            <tr>
+              <td>Cumulative Totals:</td>
+              <td>{{ transcript.cumulative_total_attempted }}</td>
+              <td>{{ transcript.cumulative_total_earned }}</td>
+              <td>{{ transcript.cumulative_total_gpa }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <table class="detail-table">
+      <thead>
+        <tr>
+          <th style="width: 50%;">Transcript Detail</th>
+          <th style="width: 9%;">Start Date</th>
+          <th style="width: 9%;">End Date</th>
+          <th style="width: 7%;">Final Grade</th>
+          <th style="width: 8%;">Attmpt Credit</th>
+          <th style="width: 8%;">Earned Credit</th>
+          <th style="width: 9%;">Quality Points</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="program-row">
+          <td colspan="7">
+            {{ transcript.program_code }} Program: {{ transcript.major_program }}
+          </td>
+        </tr>
+        {% for group in transcript.term_groups %}
+          <tr class="term-row">
+            <td colspan="7">
+              {{ group.term_label }}
+              <span class="term-dates">{{ group.term_start_date }} - {{ group.term_end_date }}</span>
+            </td>
+          </tr>
+          {% for row in group.rows %}
+            <tr>
+              <td>
+                <span class="course-line">
+                  <span class="course-code">{{ row.course_code }}</span>
+                  <span class="course-title">{{ row.course_title }}</span>
+                </span>
+              </td>
+              <td class="date-cell">{{ row.start_date }}</td>
+              <td class="date-cell">{{ row.end_date }}</td>
+              <td class="center">{{ row.final_grade }}</td>
+              <td class="num">{{ row.attempted_credit }}</td>
+              <td class="num">{{ row.earned_credit }}</td>
+              <td class="num">{{ row.quality_points }}</td>
+            </tr>
+          {% endfor %}
+          <tr class="totals-row">
+            <td class="num">Term Totals&nbsp;&nbsp;&nbsp; GPA={{ group.term_gpa }}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="num">{{ group.term_attempted_credit }}</td>
+            <td class="num">{{ group.term_earned_credit }}</td>
+            <td class="num">{{ group.term_quality_points }}</td>
+          </tr>
+          <tr class="program-row">
+            <td class="num">Program Totals&nbsp;&nbsp;&nbsp; GPA={{ group.program_gpa }}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="num">{{ group.program_attempted_credit }}</td>
+            <td class="num">{{ group.program_earned_credit }}</td>
+            <td class="num">{{ group.program_quality_points }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7">No grades recorded for this student.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="legend">
+      <p>Transcript Grade Legend: {{ transcript.grade_legend }}</p>
+    </div>
+
+    <div class="conclusion">
+      <p>***CONCLUSION OF TRANSCRIPT***</p>
+      <p style="margin-top: 5mm;">{{ transcript.notice_final }}</p>
+    </div>
+
+    <div class="signature">
+      <div>{{ transcript.registrar_title }}</div>
+      <div>Date</div>
+    </div>
+  </body>
+</html>

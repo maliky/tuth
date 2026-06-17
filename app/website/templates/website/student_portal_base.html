@@ -3,7 +3,8 @@
 {% block page_title %}{% block student_page_title %}Tusis Student Portal{% endblock %}{% endblock %}
 
 {% block portal_sidebar %}
-  {% include "website/partials/sidebar.html" with sidebar_title=student_profile.name sidebar_subtitle=student_profile.student_id sidebar_links=sidebar_links sidebar_avatar_url=student_profile.avatar sidebar_avatar_initial=student_profile.name sidebar_footer_text="advising@tusis.edu" %}
+  {% url 'account_profile' as account_profile_url %}
+  {% include "website/partials/sidebar.html" with sidebar_title=student_profile.name sidebar_subtitle=student_profile.student_id sidebar_links=sidebar_links sidebar_avatar_url=student_profile.avatar sidebar_avatar_initial=student_profile.name sidebar_identity_url=account_profile_url sidebar_footer_text="advising@tusis.edu" %}
 {% endblock %}
 
 {% block header_eyebrow %}Welcome back{% endblock %}

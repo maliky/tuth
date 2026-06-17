@@ -1,0 +1,19 @@
+#+TITLE: TUSIS transcript Org/LaTeX template pack
+
+This folder contains the reusable transcript source package used by TUSIS registrar exports.
+
+* Files
+- =tutranscript.cls= loads the transcript document class.
+- =tutranscript.sty= owns the transcript layout, TU header, summary, detail table, and signature block.
+- =tutranscript.el= registers the Org class and provides a helper to convert a simple course table into transcript course macros.
+- =example.org= is a standalone export example.
+- =logo120pi.png= is the TU logo copy used by the template.
+
+* Manual export
+From this directory:
+
+#+begin_src shell
+emacs --batch -l ./tutranscript.el example.org --eval '(org-latex-export-to-pdf)'
+#+end_src
+
+The Django PDF download remains WeasyPrint-based. The Org source download is for registrar-controlled source archival and manual LaTeX export.

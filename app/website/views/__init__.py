@@ -1,5 +1,6 @@
 """Modularized views exposed under the legacy import path."""
 
+from .account import account_profile
 from .auth import PortalLoginView, PortalLogoutView, portal_redirect
 from .dean import (
     dean_curricula,
@@ -8,6 +9,7 @@ from .dean import (
 )
 from .enrollment import (
     create_std,
+    curriculum_autocomplete,
     std_admin_edit,
     std_autocomplete,
     std_delete,
@@ -22,10 +24,20 @@ from .finance_officer import (
     finance_officer_std_autocomplete,
     finance_officer_update_payments,
 )
+from .faculty import (
+    faculty_grade_roster,
+    faculty_grade_roster_autosave,
+    faculty_grade_roster_download,
+    faculty_grade_roster_upload,
+    faculty_grade_sections,
+)
 from .registrar import (
     reg_crs_wins,
     reg_grades_dashboard,
     reg_grade_transcript,
+    reg_grade_transcript_org,
+    reg_grade_transcript_pdf,
+    reg_grade_transcripts_bulk_pdf,
     reg_std_autocomplete,
 )
 from .staff_dashboards import staff_dashboard, staff_role_dashboard
@@ -52,7 +64,9 @@ from .student_sections import std_sec_detail
 __all__ = [
     "PortalLoginView",
     "PortalLogoutView",
+    "account_profile",
     "create_std",
+    "curriculum_autocomplete",
     "dean_curricula",
     "dean_curriculum_detail",
     "dean_curriculum_request_activation",
@@ -60,6 +74,9 @@ __all__ = [
     "reg_crs_wins",
     "reg_grades_dashboard",
     "reg_grade_transcript",
+    "reg_grade_transcript_org",
+    "reg_grade_transcript_pdf",
+    "reg_grade_transcripts_bulk_pdf",
     "reg_std_autocomplete",
     "staff_dashboard",
     "staff_role_dashboard",
@@ -82,6 +99,11 @@ __all__ = [
     "finance_officer_std_autocomplete",
     "finance_officer_setup_registration_fee",
     "finance_officer_update_payments",
+    "faculty_grade_roster",
+    "faculty_grade_roster_autosave",
+    "faculty_grade_roster_download",
+    "faculty_grade_roster_upload",
+    "faculty_grade_sections",
     "vpaa_approval_approve",
     "vpaa_approval_detail",
     "vpaa_approval_mark_review",

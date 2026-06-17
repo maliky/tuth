@@ -13,6 +13,7 @@ urlpatterns = [
     path("staff/dashboard/", views.staff_dashboard, name="staff_dashboard"),
     path("staff/<slug:role>/", views.staff_role_dashboard, name="staff_role_dashboard"),
     path("portal/", views.portal_redirect, name="portal_redirect"),
+    path("account/profile/", views.account_profile, name="account_profile"),
     path("auth/login/", views.PortalLoginView.as_view(), name="portal_login"),
     path("auth/logout/", views.PortalLogoutView.as_view(), name="portal_logout"),
     path(
@@ -120,6 +121,31 @@ urlpatterns = [
         views.finance_officer_std_autocomplete,
         name="finance_officer_std_autocomplete",
     ),
+    path(
+        "staff/faculty/grades/",
+        views.faculty_grade_sections,
+        name="faculty_grade_sections",
+    ),
+    path(
+        "staff/faculty/grades/<int:section_id>/",
+        views.faculty_grade_roster,
+        name="faculty_grade_roster",
+    ),
+    path(
+        "staff/faculty/grades/<int:section_id>/autosave/",
+        views.faculty_grade_roster_autosave,
+        name="faculty_grade_roster_autosave",
+    ),
+    path(
+        "staff/faculty/grades/<int:section_id>/download/",
+        views.faculty_grade_roster_download,
+        name="faculty_grade_roster_download",
+    ),
+    path(
+        "staff/faculty/grades/<int:section_id>/upload/",
+        views.faculty_grade_roster_upload,
+        name="faculty_grade_roster_upload",
+    ),
     # Course dashboard removed in favor of the student dashboard flow.
     path("students/", views.std_list, name="std_list"),
     path("students/<int:pk>", views.std_detail, name="std_detail"),
@@ -129,6 +155,11 @@ urlpatterns = [
         "students/autocomplete/",
         views.std_autocomplete,
         name="std_autocomplete",
+    ),
+    path(
+        "students/programs/autocomplete/",
+        views.curriculum_autocomplete,
+        name="curriculum_autocomplete",
     ),
     path(
         "students/admin-edit/",
@@ -146,9 +177,24 @@ urlpatterns = [
         name="reg_grades_dashboard",
     ),
     path(
+        "registrar/grades/transcripts/download/",
+        views.reg_grade_transcripts_bulk_pdf,
+        name="reg_grade_transcripts_bulk_pdf",
+    ),
+    path(
         "registrar/grades/<int:student_id>/transcript/",
         views.reg_grade_transcript,
         name="reg_grade_transcript",
+    ),
+    path(
+        "registrar/grades/<int:student_id>/transcript/download/",
+        views.reg_grade_transcript_pdf,
+        name="reg_grade_transcript_pdf",
+    ),
+    path(
+        "registrar/grades/<int:student_id>/transcript/source/",
+        views.reg_grade_transcript_org,
+        name="reg_grade_transcript_org",
     ),
     path(
         "registrar/grades/students/autocomplete/",

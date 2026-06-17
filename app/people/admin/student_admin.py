@@ -13,6 +13,7 @@ from django.db import models
 from django.db.models import Case, Count, F, FloatField, Q, Sum, When
 from django.db.models.expressions import ExpressionWrapper
 from django.db.models.functions import Round
+from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 from guardian.admin import GuardedModelAdmin
@@ -55,6 +56,7 @@ from app.registry.admin.core import _available_secs_for_std
 # GPA should ignore non-final grade codes (kept in registry.constants).
 from app.registry.constants import GPA_EXCLUDED_CODES
 from app.registry.models.registration import Registration, RegistrationStatus
+from app.shared.auth.perms import UserRole
 from app.shared.admin.filters import StdLevelFlt
 from app.shared.admin.mixins import (
     CollegeRestrictedAdmin,
@@ -70,6 +72,13 @@ from app.people.admin.user_admin import UserFullNameChoiceField, _user_admin_lin
 
 User = get_user_model()
 ModelT: TypeAlias = models.Model
+
+GRADE_STUDENT_UNRESTRICTED_ROLE_LABELS = frozenset(
+    {
+        UserRole.REGISTRAR.value.label,
+        UserRole.REGISTRAR_OFFICER.value.label,
+    }
+)
 
 MERGE_USER_FIELDS = (
     "first_name",
@@ -104,6 +113,64 @@ class StdRegioForm(StdForm):
                 sections_field.help_text = (
                     "No available sections for the current open semester."
                 )
+
+
+def _is_grade_student_autocomplete(request: HttpRequest) -> bool:
+    """Return whether an autocomplete request targets Grade.student."""
+    return (
+        request.GET.get("app_label") == "registry"
+        and request.GET.get("model_name") == "grade"
+        and request.GET.get("field_name") == "student"
+    )
+
+
+def _grade_admin_faculty(request: HttpRequest) -> Faculty | None:
+    """Return the current user's faculty profile, if linked."""
+    user = cast(UserModel, request.user)
+    try:
+        return user.staff.faculty
+    except (AttributeError, Staff.DoesNotExist, Faculty.DoesNotExist):
+        return None
+
+
+def _can_view_all_grade_students(request: HttpRequest) -> bool:
+    """Return whether the user can bypass faculty grade-student scoping."""
+    user = cast(UserModel, request.user)
+    return user.is_superuser or (
+        user.has_perm("registry.view_grade")
+        and user.groups.filter(name__in=GRADE_STUDENT_UNRESTRICTED_ROLE_LABELS).exists()
+    )
+
+
+def _scope_grade_student_autocomplete(
+    request: HttpRequest,
+    qs,
+):
+    """Scope Grade.student autocomplete to faculty/section context."""
+    if not _is_grade_student_autocomplete(request):
+        return qs
+    ordered_qs = qs.order_by("long_name", "student_id", "id")
+    selected_section_id = request.GET.get("section")
+    can_view_all = _can_view_all_grade_students(request)
+    faculty = _grade_admin_faculty(request)
+    if selected_section_id:
+        section_qs = Section.objects.filter(pk=selected_section_id)
+        if not can_view_all:
+            if faculty is None:
+                return qs.none()
+            section_qs = section_qs.filter(faculty=faculty)
+        if not section_qs.exists():
+            return ordered_qs.none()
+        return ordered_qs.filter(
+            student_registrations__section__in=section_qs,
+        ).distinct()
+    if can_view_all:
+        return ordered_qs
+    if faculty is None:
+        return ordered_qs.none()
+    return ordered_qs.filter(
+        student_registrations__section__faculty=faculty,
+    ).distinct()
 
 
 @admin.register(Student)
@@ -248,6 +315,7 @@ class StdAdmin(
             .get_queryset(request)
             .prefetch_related("curriculum_enrollments__curriculum")
         )
+        qs = _scope_grade_student_autocomplete(request, qs)
         grade_filter = Q(grade__value__number__isnull=False) & ~Q(
             grade__value__code__in=GPA_EXCLUDED_CODES
         )

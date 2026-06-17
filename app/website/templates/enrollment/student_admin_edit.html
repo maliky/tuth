@@ -2,7 +2,7 @@
 
 {% block staff_header_actions %}
   <a class="btn portal-btn-outline btn-sm" href="{% url 'std_list' %}">
-    Back to snapshot
+    Back to directory
   </a>
 {% endblock %}
 
@@ -12,11 +12,11 @@
     <div class="portal-panel-card__body">
       <h2 class="h5 mb-3">Find a student profile</h2>
       <p class="text-muted">
-        Pick a student and Tusis will open the portal profile for review or update.
+        Search by student ID, name, college, program, or semester. Pick a result to open the portal profile for review or update.
       </p>
       <form method="post" class="row g-3" novalidate>
         {% csrf_token %}
-        <div class="col-md-8">
+        <div class="col-lg-5 col-md-12">
           {{ form.student_query.label_tag }}
           <div class="autocomplete-wrapper">
             <input
@@ -32,12 +32,12 @@
             {{ form.student }}
             <div class="autocomplete-dropdown visually-hidden" id="student-autocomplete">
               <span class="autocomplete-empty">
-                Start typing a student ID or name to search.
+                Start typing to search student ID, name, program, or college.
               </span>
             </div>
           </div>
           <div id="student-autocomplete-help" class="form-text">
-            Search by student ID or name; only enrolled students appear.
+            Use the filters to narrow large cohorts before selecting a student.
           </div>
           {% if form.student_query.errors %}
             <div class="text-danger small mt-1">
@@ -50,8 +50,38 @@
             </div>
           {% endif %}
         </div>
-        <div class="col-md-4 d-flex align-items-end">
-          <button type="submit" class="btn portal-btn-accent w-100">Open portal profile</button>
+        <div class="col-lg-2 col-md-4">
+          <label class="form-label" for="lookup-college">College</label>
+          <select id="lookup-college" class="form-select" name="college" data-lookup-filter>
+            <option value="">All colleges</option>
+            {% for college in colleges %}
+              <option value="{{ college.id }}" {% if college.id == filters.college %}selected{% endif %}>{{ college.code }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-lg-3 col-md-4">
+          <label class="form-label" for="lookup-program">Program</label>
+          <select id="lookup-program" class="form-select" name="program" data-lookup-filter>
+            <option value="">All programs</option>
+            {% for program in programs %}
+              <option value="{{ program.id }}" {% if program.id == filters.program %}selected{% endif %}>
+                {{ program.college.code }} · {{ program.short_name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-lg-2 col-md-4">
+          <label class="form-label" for="lookup-semester">Semester</label>
+          <select id="lookup-semester" class="form-select" name="semester" data-lookup-filter>
+            <option value="">All semesters</option>
+            {% for semester in semesters %}
+              <option value="{{ semester.id }}" {% if semester.id == filters.semester %}selected{% endif %}>{{ semester }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 d-flex flex-wrap gap-2">
+          <button type="submit" class="btn portal-btn-accent">Open portal profile</button>
+          <a class="btn portal-btn-outline" href="{% url 'std_list' %}">Open full directory</a>
         </div>
       </form>
     </div>
@@ -65,8 +95,16 @@
       const input = wrapper.querySelector("[name='student_query']");
       const hidden = wrapper.querySelector("[name='student']");
       const dropdown = document.getElementById("student-autocomplete");
+      const filters = Array.from(document.querySelectorAll("[data-lookup-filter]"));
       const url = input?.dataset.autocompleteUrl;
       let timer;
+
+      const sameOriginUrl = (path, query) => {
+        // Avoid inheriting Basic Auth userinfo from credentialed preprod URLs.
+        const endpoint = new URL(path, `${window.location.protocol}//${window.location.host}`);
+        endpoint.search = query;
+        return endpoint.toString();
+      };
 
       const hideDropdown = () => {
         dropdown.classList.add("visually-hidden");
@@ -74,6 +112,20 @@
 
       const showDropdown = () => {
         dropdown.classList.remove("visually-hidden");
+      };
+
+      const buildQuery = () => {
+        const params = new URLSearchParams();
+        const query = (input.value || "").trim();
+        if (query) {
+          params.set("q", query);
+        }
+        filters.forEach((filter) => {
+          if (filter.value) {
+            params.set(filter.name, filter.value);
+          }
+        });
+        return params.toString();
       };
 
       const renderResults = (items) => {
@@ -90,11 +142,9 @@
           button.dataset.label = item.label;
           const span = document.createElement("span");
           span.textContent = item.label;
-          if (item.curriculum) {
-            const subtitle = document.createElement("small");
-            subtitle.textContent = item.curriculum;
-            span.appendChild(subtitle);
-          }
+          const subtitle = document.createElement("small");
+          subtitle.textContent = [item.college, item.curriculum, item.semester].filter(Boolean).join(" · ");
+          span.appendChild(subtitle);
           button.appendChild(span);
           dropdown.appendChild(button);
         });
@@ -102,13 +152,13 @@
       };
 
       const fetchSuggestions = async () => {
-        const query = (input.value || "").trim();
-        if (!url || query.length < 2) {
+        const query = buildQuery();
+        if (!url || !query) {
           hideDropdown();
           return;
         }
         try {
-          const response = await fetch(`${url}?q=${encodeURIComponent(query)}`);
+          const response = await fetch(sameOriginUrl(url, query));
           if (!response.ok) {
             throw new Error("Unable to load suggestions.");
           }
@@ -124,13 +174,15 @@
       input.addEventListener("input", () => {
         hidden.value = "";
         clearTimeout(timer);
-        const text = (input.value || "").trim();
-        if (text.length < 2) {
-          dropdown.innerHTML =
-            "<span class='autocomplete-empty'>Keep typing to search students.</span>";
-          return showDropdown();
-        }
         timer = window.setTimeout(fetchSuggestions, 250);
+      });
+
+      filters.forEach((filter) => {
+        filter.addEventListener("change", () => {
+          hidden.value = "";
+          clearTimeout(timer);
+          timer = window.setTimeout(fetchSuggestions, 150);
+        });
       });
 
       dropdown.addEventListener("click", (event) => {

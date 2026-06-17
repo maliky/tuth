@@ -4,6 +4,12 @@
   <a class="btn portal-btn-outline btn-sm" href="{{ dashboard_url }}">
     Back to grades
   </a>
+  <a class="btn portal-btn-accent btn-sm" href="{{ download_url }}">
+    Download PDF
+  </a>
+  <a class="btn portal-btn-outline btn-sm" href="{{ source_url }}">
+    Download Org source
+  </a>
 {% endblock %}
 
 {% block staff_content %}
@@ -14,15 +20,42 @@
         <div>
           <p class="text-uppercase small text-muted mb-1">Student</p>
           <h2 class="h5 mb-1">{{ std_label }}</h2>
-          <p class="text-muted mb-0">{{ student.student_id }}</p>
+          <p class="text-muted mb-0">{{ transcript.student_id }}</p>
           <p class="text-uppercase small text-muted mt-3 mb-1">Curriculum</p>
           <p class="mb-0">{{ curriculum_label }}</p>
         </div>
         <div class="text-end">
           <p class="text-uppercase small text-muted mb-1">Generated</p>
           <p class="mb-0">{{ generated_at }}</p>
-          <p class="text-uppercase small text-muted mt-3 mb-1">Contact</p>
-          <p class="mb-0">{{ student.user.email|default:"-" }}</p>
+          <p class="text-uppercase small text-muted mt-3 mb-1">Cumulative GPA</p>
+          <p class="mb-0">{{ transcript.cumulative_total_gpa }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="portal-panel-card mb-4">
+    <div class="portal-panel-card__body">
+      <div class="d-flex justify-content-between flex-wrap gap-3 align-items-center">
+        <div>
+          <p class="text-uppercase small text-muted mb-1">Transcript exports</p>
+          <h2 class="h5 mb-1">Download official record</h2>
+          <p class="text-muted mb-0">
+            Use PDF for immediate issuance, or Org source for LaTeX archival export.
+          </p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn portal-btn-accent btn-sm" href="{{ download_url }}" download>
+            Download PDF
+          </a>
+          <a
+            class="btn portal-btn-outline btn-sm"
+            href="{{ source_url }}"
+            download
+            data-transcript-org-download
+          >
+            Download Org source
+          </a>
         </div>
       </div>
     </div>
@@ -32,27 +65,57 @@
     <div class="portal-accordion-card__header">
       <strong>Official grade transcript</strong>
     </div>
-    {% if transcript_rows %}
+    {% if transcript.term_groups %}
       <div class="course-table table-responsive">
         <table class="table mb-0 align-middle">
           <thead>
             <tr>
               <th>Semester</th>
               <th>Course</th>
-              <th>Credits</th>
+              <th>Attempted</th>
+              <th>Earned</th>
               <th>Grade</th>
+              <th>Quality points</th>
             </tr>
           </thead>
           <tbody>
-            {% for row in transcript_rows %}
-              <tr>
-                <td>{{ row.sem_label }}</td>
-                <td>
-                  <strong>{{ row.course_code }}</strong><br/>
-                  <span class="text-muted">{{ row.course_title }}</span>
+            {% for group in transcript.term_groups %}
+              <tr class="table-light">
+                <td colspan="6">
+                  <strong>{{ group.term_label }}</strong>
+                  <span class="text-muted ms-2">
+                    {{ group.term_start_date }} - {{ group.term_end_date }}
+                  </span>
                 </td>
-                <td>{{ row.credits }}</td>
-                <td>{{ row.grade }}</td>
+              </tr>
+              {% for row in group.rows %}
+                <tr>
+                  <td></td>
+                  <td>
+                    <strong>{{ row.course_code }}</strong><br/>
+                    <span class="text-muted">{{ row.course_title }}</span>
+                  </td>
+                  <td>{{ row.attempted_credit }}</td>
+                  <td>{{ row.earned_credit }}</td>
+                  <td>{{ row.final_grade }}</td>
+                  <td>{{ row.quality_points }}</td>
+                </tr>
+              {% endfor %}
+              <tr>
+                <td></td>
+                <td><strong>Term Totals</strong> GPA={{ group.term_gpa }}</td>
+                <td><strong>{{ group.term_attempted_credit }}</strong></td>
+                <td><strong>{{ group.term_earned_credit }}</strong></td>
+                <td></td>
+                <td><strong>{{ group.term_quality_points }}</strong></td>
+              </tr>
+              <tr>
+                <td></td>
+                <td><strong>Program Totals</strong> GPA={{ group.program_gpa }}</td>
+                <td><strong>{{ group.program_attempted_credit }}</strong></td>
+                <td><strong>{{ group.program_earned_credit }}</strong></td>
+                <td></td>
+                <td><strong>{{ group.program_quality_points }}</strong></td>
               </tr>
             {% endfor %}
           </tbody>

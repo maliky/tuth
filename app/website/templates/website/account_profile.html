@@ -1,0 +1,193 @@
+{% extends "website/portal_base.html" %}
+{% load static %}
+
+{% block page_title %}My profile · Tusis{% endblock %}
+{% block portal_body_class %}staff-portal-body{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/staff-dashboard.css' %}" />
+{% endblock %}
+
+{% block portal_sidebar %}
+  {% include "website/partials/sidebar.html" with sidebar_title=portal_identity.name sidebar_subtitle=portal_identity.subtitle sidebar_links=sidebar_links sidebar_role_switcher=role_switcher sidebar_nav_label=sidebar_nav_label sidebar_avatar_url=portal_identity.avatar_url sidebar_avatar_initial=portal_identity.initial sidebar_identity_url=sidebar_identity_url sidebar_footer_title=sidebar_footer_title sidebar_footer_text=sidebar_footer_text %}
+{% endblock %}
+
+{% block header_eyebrow %}{{ eyebrow }}{% endblock %}
+{% block header_title %}{{ page_title }}{% endblock %}
+
+{% block header_actions %}
+  <a class="btn portal-btn-outline btn-sm" href="{% url 'portal_redirect' %}">
+    Back to dashboard
+  </a>
+  <a class="btn portal-btn-accent btn-sm" href="{% url 'portal_logout' %}">
+    Log out
+  </a>
+{% endblock %}
+
+{% block content %}
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <section class="portal-filter-card account-profile-card">
+    <div class="portal-filter-card__body">
+      <div class="account-profile-overview-grid">
+        <div class="account-profile-card__hero">
+          <div class="account-profile-identity">
+            <div class="student-avatar account-profile-avatar">
+              {% if portal_identity.avatar_url %}
+                <img src="{{ portal_identity.avatar_url }}" alt="" />
+              {% else %}
+                <span>{{ portal_identity.initial }}</span>
+              {% endif %}
+            </div>
+            <div class="account-profile-identity__copy">
+              <span class="account-profile-kind">{{ portal_identity.kind }} profile</span>
+              <h2>{{ portal_identity.name }}</h2>
+              <p>{{ portal_identity.subtitle }}</p>
+            </div>
+          </div>
+          <div class="account-profile-actions">
+            {% if is_edit_mode %}
+              <a class="btn portal-btn-outline btn-sm" href="{{ profile_url }}">
+                Cancel
+              </a>
+            {% else %}
+              <a class="btn portal-btn-accent btn-sm" href="{{ edit_profile_url }}">
+                Edit profile
+              </a>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="account-profile-facts">
+          {% for fact in profile_facts %}
+            <div class="account-profile-fact">
+              <span>{{ fact.label }}</span>
+              <strong>{{ fact.value }}</strong>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      {% if is_edit_mode %}
+        <div class="account-profile-edit-intro">
+          <p class="eyebrow text-uppercase mb-1">Self-service</p>
+          <h3>Update personal profile</h3>
+          <p>
+            Edit contact details here. Department, role, IDs, and academic records stay controlled by the responsible office.
+          </p>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="row g-3 account-profile-form">
+          {% csrf_token %}
+
+          <div class="col-md-2">
+            <label class="form-label" for="{{ form.prefix_name.id_for_label }}">{{ form.prefix_name.label }}</label>
+            {{ form.prefix_name }}
+            {{ form.prefix_name.errors }}
+          </div>
+          <div class="col-md-5">
+            <label class="form-label" for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+            {{ form.first_name }}
+            {{ form.first_name.errors }}
+          </div>
+          <div class="col-md-5">
+            <label class="form-label" for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+            {{ form.last_name }}
+            {{ form.last_name.errors }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="{{ form.middle_name.id_for_label }}">{{ form.middle_name.label }}</label>
+            {{ form.middle_name }}
+            {{ form.middle_name.errors }}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="{{ form.suffix_name.id_for_label }}">{{ form.suffix_name.label }}</label>
+            {{ form.suffix_name }}
+            {{ form.suffix_name.errors }}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="{{ form.gender.id_for_label }}">{{ form.gender.label }}</label>
+            {{ form.gender }}
+            {{ form.gender.errors }}
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+            {{ form.email }}
+            {{ form.email.errors }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="{{ form.phone_number.id_for_label }}">{{ form.phone_number.label }}</label>
+            {{ form.phone_number }}
+            {{ form.phone_number.errors }}
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="{{ form.physical_address.id_for_label }}">{{ form.physical_address.label }}</label>
+            {{ form.physical_address }}
+            {{ form.physical_address.errors }}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label" for="{{ form.birth_date.id_for_label }}">{{ form.birth_date.label }}</label>
+            {{ form.birth_date }}
+            {{ form.birth_date.errors }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="{{ form.birth_place.id_for_label }}">{{ form.birth_place.label }}</label>
+            {{ form.birth_place }}
+            {{ form.birth_place.errors }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="{{ form.nationality.id_for_label }}">{{ form.nationality.label }}</label>
+            {{ form.nationality }}
+            {{ form.nationality.errors }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="{{ form.origin_county.id_for_label }}">{{ form.origin_county.label }}</label>
+            {{ form.origin_county }}
+            {{ form.origin_county.errors }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="{{ form.marital_status.id_for_label }}">{{ form.marital_status.label }}</label>
+            {{ form.marital_status }}
+            {{ form.marital_status.errors }}
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="{{ form.photo.id_for_label }}">{{ form.photo.label }}</label>
+            {{ form.photo }}
+            {{ form.photo.errors }}
+          </div>
+
+          <div class="col-12 d-flex justify-content-end gap-2">
+            <a class="btn portal-btn-outline" href="{{ profile_url }}">Cancel</a>
+            <button type="submit" class="btn portal-btn-accent">
+              Save profile
+            </button>
+          </div>
+        </form>
+      {% else %}
+        <div class="account-profile-section-grid">
+          {% for section in profile_display_sections %}
+            <article class="account-profile-section account-profile-section--{{ section.title|slugify }}">
+              <h3>{{ section.title }}</h3>
+              <dl>
+                {% for item in section.items %}
+                  <div>
+                    <dt>{{ item.label }}</dt>
+                    <dd>{{ item.value }}</dd>
+                  </div>
+                {% endfor %}
+              </dl>
+            </article>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

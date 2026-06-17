@@ -9,7 +9,6 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -17,6 +16,16 @@ from django.urls import reverse
 from app.people.models.student import Student
 from app.shared.utils import parse_str
 from app.website.forms.enrollment import StudentIntakeForm, save_student_intake
+from app.website.services.enrollment_portal import (
+    apply_student_filters,
+    build_curriculum_autocomplete_results,
+    build_student_autocomplete_results,
+    build_student_detail_context,
+    build_student_directory_context,
+    enrollment_admin_shortcuts,
+    student_search_queryset,
+    StudentFiltersT,
+)
 from app.website.services.staff_portal import (
     build_staff_role_switcher,
     build_staff_sidebar_links,
@@ -28,17 +37,18 @@ class StdAdminLookupForm(forms.Form):
 
     student = forms.IntegerField(widget=forms.HiddenInput(), required=False)
     student_query = forms.CharField(
-        label="Student ID or name",
+        label="Student ID, name, college, program, or semester",
         widget=forms.TextInput(
             attrs={
                 "class": "form-control",
-                "placeholder": "Start typing a student ID or name...",
+                "placeholder": "Start typing a student ID, name, program, or college...",
                 "autocomplete": "off",
             }
         ),
     )
 
     def clean(self) -> dict[str, object]:
+        """Resolve a selected or exact-match student from the lookup field."""
         cleaned = dict(super().clean() or {})
         if cleaned.get("student"):
             return cleaned
@@ -46,31 +56,68 @@ class StdAdminLookupForm(forms.Form):
         if not query:
             raise forms.ValidationError("Select a student from the search results.")
 
-        student = (
-            Student.objects.filter(last_enrolled_semester__isnull=False)
-            .filter(Q(student_id__iexact=query) | Q(long_name__iexact=query))
-            .order_by("student_id")
-            .first()
-        )
+        filters: StudentFiltersT = {
+            "q": query,
+            "college": None,
+            "program": None,
+            "semester": None,
+        }
+        student = apply_student_filters(student_search_queryset(), filters).first()
         if not student:
             raise forms.ValidationError("Select a student from the autocomplete list.")
         cleaned["student"] = student.pk
         return cleaned
 
 
-def _staff_breadcrumb(label: str) -> list[dict[str, str]]:
+def _enrollment_user(request: HttpRequest) -> User:
+    """Return request.user as a concrete auth user for enrollment context."""
+    return cast(User, request.user)
+
+
+def _enrollment_role_slug(user: User) -> str:
+    """Return the active enrollment role slug for sidebar and switcher state."""
+    if user.groups.filter(name="Enrollment Officer").exists():
+        return "enrollment_officer"
+    return "enrollment"
+
+
+def _staff_breadcrumb(label: str, user: User) -> list[dict[str, str]]:
+    """Return enrollment breadcrumbs for staff portal pages."""
+    role_slug = _enrollment_role_slug(user)
+    role_label = (
+        "Enrollment officer desk"
+        if role_slug == "enrollment_officer"
+        else "Enrollment desk"
+    )
     return [
         {
-            "label": "Enrollment desk",
-            "href": reverse("staff_role_dashboard", args=["enrollment"]),
+            "label": role_label,
+            "href": reverse("staff_role_dashboard", args=[role_slug]),
         },
         {"label": label, "href": ""},
     ]
 
 
+def _shell_context(
+    request: HttpRequest,
+    *,
+    active_key: str,
+    label: str,
+) -> dict[str, object]:
+    """Return common enrollment portal shell values."""
+    user = _enrollment_user(request)
+    role_slug = _enrollment_role_slug(user)
+    return {
+        "sidebar_links": build_staff_sidebar_links(role_slug, active_key),
+        "role_switcher": build_staff_role_switcher(user, role_slug),
+        "breadcrumbs": _staff_breadcrumb(label, user),
+        "admin_shortcuts": enrollment_admin_shortcuts(user),
+    }
+
+
 def _selected_student(request: HttpRequest) -> Student | None:
     """Return the student selected for portal editing, when present."""
-    raw_student_id = request.POST.get("student_id") or request.GET.get("student_id")
+    raw_student_id = request.GET.get("student_id") or request.POST.get("student_id")
     student_id = parse_str(raw_student_id)
     if not student_id:
         return None
@@ -95,61 +142,55 @@ def create_std(request: HttpRequest) -> HttpResponse:
         return redirect("std_detail", pk=student.pk)
 
     mode_label = "Update student" if student else "Create student"
-    context = {
+    context: dict[str, object] = {
         "form": form,
         "student": student,
         "page_title": mode_label,
-        "page_summary": "Capture the core admissions record without leaving the Tusis portal.",
+        "page_summary": "Capture the full enrollment record without leaving the Tusis portal.",
         "eyebrow": "Enrollment",
-        "sidebar_links": build_staff_sidebar_links("enrollment", "create_student"),
-        "role_switcher": build_staff_role_switcher(
-            cast(User, request.user), "enrollment"
-        ),
-        "breadcrumbs": _staff_breadcrumb(mode_label),
+        "curriculum_autocomplete_url": reverse("curriculum_autocomplete"),
     }
+    context.update(_shell_context(request, active_key="create_student", label=mode_label))
     return render(request, "website/create_student.html", context)
 
 
 @permission_required("people.view_student", raise_exception=True)
 def std_list(request: HttpRequest) -> HttpResponse:
-    """Render a lightweight snapshot of recent students."""
-    students = Student.objects.order_by("-id")[:25]
-    context = {
-        "students": students,
-        "page_title": "Student snapshot",
-        "page_summary": "Review recent student profiles and continue enrollment work inside Tusis.",
+    """Render a filterable student directory for enrollment staff."""
+    context: dict[str, object] = {
+        **build_student_directory_context(request),
+        "page_title": "Student directory",
+        "page_summary": "Find, review, and update student records by ID, name, college, program, or semester.",
         "eyebrow": "Enrollment",
-        "sidebar_links": build_staff_sidebar_links("enrollment", "student_snapshot"),
-        "role_switcher": build_staff_role_switcher(
-            cast(User, request.user), "enrollment"
-        ),
-        "breadcrumbs": _staff_breadcrumb("Directory snapshot"),
     }
+    context.update(
+        _shell_context(request, active_key="student_directory", label="Student directory")
+    )
     return render(request, "enrollment/student_list.html", context)
 
 
 @permission_required("people.view_student", raise_exception=True)
 def std_detail(request: HttpRequest, pk: int) -> HttpResponse:
-    """Render a student profile card."""
-    student = get_object_or_404(Student, pk=pk)
-    context = {
+    """Render a grouped student profile review page."""
+    user = _enrollment_user(request)
+    student = get_object_or_404(Student.objects.select_related("user"), pk=pk)
+    context: dict[str, object] = {
+        **build_student_detail_context(student, user),
         "student": student,
         "page_title": student.long_name,
         "page_summary": f"Student ID {student.student_id}",
         "eyebrow": "Enrollment",
-        "sidebar_links": build_staff_sidebar_links("enrollment", "student_snapshot"),
-        "role_switcher": build_staff_role_switcher(
-            cast(User, request.user), "enrollment"
-        ),
-        "breadcrumbs": _staff_breadcrumb(student.long_name),
     }
+    context.update(
+        _shell_context(request, active_key="student_directory", label=student.long_name)
+    )
     return render(request, "enrollment/student_detail.html", context)
 
 
 @permission_required("people.delete_student", raise_exception=True)
 def std_delete(request: HttpRequest, pk: int) -> HttpResponse:
     """Delete a student after confirmation."""
-    user = cast(User, request.user)
+    user = _enrollment_user(request)
     if not user.groups.filter(name="Enrollment Officer").exists():
         raise PermissionDenied("Only officers may delete students.")
 
@@ -159,17 +200,15 @@ def std_delete(request: HttpRequest, pk: int) -> HttpResponse:
         messages.success(request, "Student deleted successfully.")
         return redirect("std_list")
 
-    context = {
+    context: dict[str, object] = {
         "student": student,
         "page_title": f"Delete {student.long_name}",
         "page_summary": "Once deleted, this record cannot be recovered.",
         "eyebrow": "Enrollment",
-        "sidebar_links": build_staff_sidebar_links("enrollment", "student_snapshot"),
-        "role_switcher": build_staff_role_switcher(
-            cast(User, request.user), "enrollment"
-        ),
-        "breadcrumbs": _staff_breadcrumb("Delete student"),
     }
+    context.update(
+        _shell_context(request, active_key="student_directory", label="Delete student")
+    )
     return render(request, "enrollment/student_confirm_delete.html", context)
 
 
@@ -182,40 +221,27 @@ def std_admin_edit(request: HttpRequest) -> HttpResponse:
         student = get_object_or_404(Student, pk=student_pk)
         return redirect("std_detail", pk=student.pk)
 
-    context = {
+    context: dict[str, object] = {
+        **build_student_directory_context(request),
         "form": form,
         "page_title": "Find student",
-        "page_summary": "Pick an ID and Tusis will open the portal profile.",
+        "page_summary": "Search by ID, name, college, program, or semester and open the portal profile.",
         "eyebrow": "Enrollment",
-        "sidebar_links": build_staff_sidebar_links("enrollment", "student_lookup"),
-        "role_switcher": build_staff_role_switcher(
-            cast(User, request.user), "enrollment"
-        ),
-        "breadcrumbs": _staff_breadcrumb("Edit student"),
         "autocomplete_url": reverse("std_autocomplete"),
     }
+    context.update(
+        _shell_context(request, active_key="student_lookup", label="Find student")
+    )
     return render(request, "enrollment/student_admin_edit.html", context)
 
 
 @permission_required("people.view_student", raise_exception=True)
 def std_autocomplete(request: HttpRequest) -> HttpResponse:
     """Provide JSON suggestions for the student lookup."""
-    query = parse_str(request.GET.get("q"))
-    students = Student.objects.filter(last_enrolled_semester__isnull=False)
-    if query:
-        students = students.filter(
-            Q(student_id__icontains=query) | Q(long_name__icontains=query)
-        )
-    else:
-        students = students.none()
-    suggestions = students.order_by("student_id")[:15]
-    results = [
-        {
-            "pk": student.pk,
-            "label": f"{student.student_id} — {student.long_name}",
-            "student_id": student.student_id,
-            "curriculum": student.primary_curriculum.short_name,
-        }
-        for student in suggestions
-    ]
-    return JsonResponse({"results": results})
+    return JsonResponse({"results": build_student_autocomplete_results(request)})
+
+
+@permission_required("people.view_student", raise_exception=True)
+def curriculum_autocomplete(request: HttpRequest) -> HttpResponse:
+    """Provide JSON suggestions for the program/curriculum selector."""
+    return JsonResponse({"results": build_curriculum_autocomplete_results(request)})

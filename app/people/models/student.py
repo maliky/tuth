@@ -14,7 +14,6 @@ from simple_history.models import HistoricalRecords
 from app.academics.choices import LEVEL_NUMBER
 from app.academics.constants import MAX_STUDENT_CREDITS
 from app.academics.models.course import Course
-from app.academics.models.curriculum_course import CurriCrs
 
 from app.academics.models.curriculum import Curriculum
 from app.people.models.core import AbstractPerson
@@ -119,22 +118,24 @@ class Student(AbstractPerson):
         self._pending_primary_curriculum = curriculum  # type: ignore[attr-defined]
 
     def passed_crss(self) -> CrsQuery:
-        """Return courses the student completed with a passing grade."""
+        """Return courses the student completed with an effective passing grade."""
         return Course.objects.filter(
             in_curriculum_courses__sections__grade__student=self,
-            # GradeType.number >= 1 == passing grade
             in_curriculum_courses__sections__grade__value__number__gte=1,
+            in_curriculum_courses__sections__grade__is_effective=True,
         ).distinct()
 
     @property
     def completed_credits(self) -> int:
-        """Return sum of credit hours successfully completed."""
-        curriculum = self.primary_curriculum
-        passed_ids = self.passed_crss().values_list("id", flat=True)
-        agg = CurriCrs.objects.filter(
-            curriculum=curriculum, course_id__in=passed_ids
-        ).aggregate(total=Sum("credit_hours"))
-        return agg.get("total") or 0
+        """Return completed credits from effective passing grade rows."""
+        from app.registry.models.grade import Grade
+
+        aggregate = Grade.objects.filter(
+            student=self,
+            value__number__gte=1,
+            is_effective=True,
+        ).aggregate(total=Sum("section__curriculum_course__credit_hours__code"))
+        return int(aggregate.get("total") or 0)
 
     @property
     def class_level(self) -> str:

@@ -5,6 +5,7 @@ from __future__ import annotations
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpRequest, HttpResponse
+from django.shortcuts import redirect
 
 from app.website.services.staff_portal import (
     ROLE_CONFIG,
@@ -29,5 +30,9 @@ def staff_role_dashboard(request: HttpRequest, role: str) -> HttpResponse:
 
     if not user_can_access_role(request.user, role):
         raise PermissionDenied("You do not belong to this staff group.")
+
+    # Keep the self-profile surface canonical; staff/staff should not fork it.
+    if role == "staff":
+        return redirect("account_profile")
 
     return render_role_dashboard(request, role)

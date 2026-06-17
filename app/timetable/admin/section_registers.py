@@ -1,6 +1,9 @@
 """app.timetable.admin.section_registers module."""
 
+from typing import cast
+
 from django.contrib import admin
+from django.contrib.auth.models import User
 from django.db.models import F, Value
 from django.db.models.functions import Coalesce, Concat
 from django.http import HttpRequest
@@ -12,7 +15,12 @@ from app.academics.models.curriculum_course import CurriCrs
 from app.people.models.faculty import Faculty
 from app.people.models.student import Student
 from app.registry.admin.inlines import GradeIL
-from app.shared.admin.mixins import CollegeRestrictedAdmin, ProtectedDeleteAdminMixin
+from app.shared.admin.mixins import (
+    CollegeRestrictedAdmin,
+    CollegeRestrictedQueryMixin,
+    ProtectedDeleteAdminMixin,
+)
+from app.shared.auth.perms import UserRole
 from app.timetable.admin.filters import (
     CollegeFltAC,
     SectionFacultyFltAc,
@@ -23,6 +31,13 @@ from app.timetable.admin.section_resources import SecResource
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
 
+REGISTRAR_SECTION_ROLE_LABELS = frozenset(
+    {
+        UserRole.REGISTRAR.value.label,
+        UserRole.REGISTRAR_OFFICER.value.label,
+    }
+)
+
 
 def _is_regio_lookup(request: HttpRequest) -> bool:
     """Return True when the request targets registration section autocomplete."""
@@ -30,6 +45,15 @@ def _is_regio_lookup(request: HttpRequest) -> bool:
         request.GET.get("app_label") == "registry"
         and request.GET.get("model_name") == "registration"
         and request.GET.get("field_name") == "section"
+    )
+
+
+def _can_view_all_sections(request: HttpRequest) -> bool:
+    """Return whether the user may bypass faculty-only section scoping."""
+    user = cast(User, request.user)
+    return (
+        user.has_perm("timetable.view_section")
+        and user.groups.filter(name__in=REGISTRAR_SECTION_ROLE_LABELS).exists()
     )
 
 
@@ -94,25 +118,32 @@ class SecAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
             initial["semester"] = str(default_semester.pk)
         return initial
 
-    def get_queryset(self, request):
-        """Prefetch sessions and limit sections to the current faculty."""
-        qs = (
-            super()
-            .get_queryset(request)
-            .prefetch_related("sessions__room")
-            .annotate(
-                curriculum_course_str=Concat(
-                    Coalesce(
-                        F("curriculum_course__course__short_code"),
-                        F("curriculum_course__course__code"),
-                    ),
-                    Value(" :: "),
-                    F("curriculum_course__curriculum__college__code"),
-                    Value("_"),
-                    F("curriculum_course__curriculum__short_name"),
-                )
+    def _section_queryset(self, request: HttpRequest, *, unrestricted: bool):
+        """Return annotated sections, optionally bypassing college scoping."""
+        base_qs = (
+            super(CollegeRestrictedQueryMixin, self).get_queryset(request)
+            if unrestricted
+            else super().get_queryset(request)
+        )
+        return base_qs.prefetch_related("sessions__room").annotate(
+            curriculum_course_str=Concat(
+                Coalesce(
+                    F("curriculum_course__course__short_code"),
+                    F("curriculum_course__course__code"),
+                ),
+                Value(" :: "),
+                F("curriculum_course__curriculum__college__code"),
+                Value("_"),
+                F("curriculum_course__curriculum__short_name"),
             )
         )
+
+    def get_queryset(self, request):
+        """Prefetch sessions and limit sections to the current faculty."""
+        can_view_all_sections = request.user.is_superuser or _can_view_all_sections(
+            request
+        )
+        qs = self._section_queryset(request, unrestricted=can_view_all_sections)
         if _is_regio_lookup(request):
             # Scope registration lookups to the semester open for registration.
             open_semester, error_message = Semester.regio_open_sem()
@@ -121,8 +152,8 @@ class SecAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
                 return qs.none()
 
             return qs.filter(semester=open_semester)
-        # > or registrar roles...?
-        if request.user.is_superuser:
+        # Registrar roles intentionally bypass faculty/college scoping.
+        if can_view_all_sections:
             return qs
         try:
             faculty = request.user.staff.faculty

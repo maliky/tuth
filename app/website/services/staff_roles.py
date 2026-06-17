@@ -62,8 +62,8 @@ ROLE_PRIORITY: list[RoleSlugT] = [
 ROLE_CONFIG: dict[str, RoleConfig] = {
     "staff": {
         "groups": {"Staff"},
-        "title": "My Staff Workspace",
-        "summary": "Personal contact info and HR shortcuts.",
+        "title": "Staff Workspace",
+        "summary": "Common staff entry point and shared shortcuts.",
         "builder": _build_staff_context,
     },
     "faculty": {
@@ -161,9 +161,9 @@ ROLE_CONFIG: dict[str, RoleConfig] = {
 ROLE_TASKS: dict[str, list[RoleTaskT]] = {
     "staff": [
         {
-            "label": "My staff profile",
-            "route_name": "staff_role_dashboard",
-            "args": ["staff"],
+            "label": "My profile",
+            "route_name": "account_profile",
+            "key": "profile",
             "icon": "bi-person-badge",
         }
     ],
@@ -176,8 +176,8 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
         },
         {
             "label": "Grade tasks",
-            "route_name": "staff_role_dashboard",
-            "args": ["faculty"],
+            "route_name": "faculty_grade_sections",
+            "key": "faculty_grades",
             "icon": "bi-pencil-square",
         },
     ],
@@ -253,10 +253,10 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
     ],
     "enrollment": [
         {
-            "label": "Student snapshot",
+            "label": "Student directory",
             "route_name": "std_list",
             "icon": "bi-list-check",
-            "key": "student_snapshot",
+            "key": "student_directory",
         },
         {
             "label": "Student lookup",
@@ -273,10 +273,10 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
     ],
     "enrollment_officer": [
         {
-            "label": "Student snapshot",
+            "label": "Student directory",
             "route_name": "std_list",
             "icon": "bi-list-check",
-            "key": "student_snapshot",
+            "key": "student_directory",
         },
         {
             "label": "Student lookup",
@@ -452,7 +452,9 @@ def _build_accessible_dashboard_links(
         config = ROLE_CONFIG.get(slug)
         if not config:
             continue
-        if slug == "general":
+        if slug == "staff":
+            href = reverse("account_profile")
+        elif slug == "general":
             href = reverse("staff_dashboard")
         else:
             href = reverse("staff_role_dashboard", args=[slug])

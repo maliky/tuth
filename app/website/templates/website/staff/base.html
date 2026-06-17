@@ -11,7 +11,8 @@
 {% endblock %}
 
 {% block portal_sidebar %}
-  {% include "website/partials/sidebar.html" with sidebar_title=page_title sidebar_subtitle=eyebrow sidebar_links=sidebar_links sidebar_role_switcher=role_switcher sidebar_nav_label="Tasks" sidebar_avatar_initial=request.user.get_full_name|default:request.user.username sidebar_footer_title="Support" sidebar_footer_text="admin@tubmanu.edu.lr" %}
+  {% url 'account_profile' as account_profile_url %}
+  {% include "website/partials/sidebar.html" with sidebar_title=portal_identity.name|default:request.user.username sidebar_subtitle=portal_identity.subtitle|default:eyebrow sidebar_links=sidebar_links sidebar_role_switcher=role_switcher sidebar_nav_label="Tasks" sidebar_avatar_url=portal_identity.avatar_url sidebar_avatar_initial=portal_identity.initial|default:request.user.username sidebar_identity_url=account_profile_url sidebar_footer_title="Support" sidebar_footer_text="admin@tubmanu.edu.lr" %}
 {% endblock %}
 
 {% block header_eyebrow %}{{ eyebrow|default:"Staff workspace" }}{% endblock %}

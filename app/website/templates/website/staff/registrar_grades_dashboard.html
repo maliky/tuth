@@ -3,6 +3,41 @@
 
 {% block staff_head_extra %}
   <link rel="stylesheet" href="{% static 'admin/css/vendor/select2/select2.min.css' %}" />
+  <style>
+    .registrar-admin-shortcuts,
+    .registrar-bulk-actions {
+      border-top: 1px solid rgba(15, 23, 42, 0.08);
+      margin-top: 1rem;
+      padding-top: 1rem;
+    }
+
+    .registrar-selection-toolbar {
+      background: rgba(248, 250, 252, 0.86);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      border-radius: 1rem;
+      padding: 0.85rem 1rem;
+    }
+
+    .registrar-selection-count {
+      min-width: 6rem;
+    }
+
+    .registrar-row-select {
+      align-items: center;
+      display: flex;
+      gap: 0.45rem;
+      min-width: 5.8rem;
+      padding-left: 1rem;
+    }
+
+    .registrar-row-select__text {
+      color: #334155;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+  </style>
 {% endblock %}
 
 {% block staff_header_actions %}
@@ -18,7 +53,7 @@
     <div class="portal-filter-card__body">
       <div class="portal-filter-card__intro">
         <p class="eyebrow text-uppercase mb-1">Official records</p>
-        <h2>Filter grades by student or semester</h2>
+        <h2>Find transcripts by student or term</h2>
       </div>
       <form method="get" class="row g-3 align-items-end">
         <div class="col-md-6">
@@ -50,88 +85,141 @@
           <button class="btn portal-btn-accent w-100" type="submit">Filter</button>
         </div>
       </form>
+      {% if registrar_admin_links %}
+        <div class="registrar-admin-shortcuts">
+          <p class="eyebrow text-uppercase mb-2">Authorized database</p>
+          <div class="d-flex flex-wrap gap-2">
+            {% for link in registrar_admin_links %}
+              <a class="btn portal-btn-outline btn-sm" href="{{ link.href }}">
+                {{ link.label }}
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
     </div>
   </section>
 
   {% if student_groups %}
-    {% for group in student_groups %}
-      <div class="portal-accordion-card mb-3">
-        <div class="portal-accordion-card__header p-0 d-flex align-items-center gap-2">
-          <button
-            class="btn portal-collapse-toggle text-decoration-none flex-grow-1 text-start d-flex justify-content-between align-items-center px-3 py-2"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#student-{{ group.student.id }}"
-            aria-expanded="false"
-            aria-controls="student-{{ group.student.id }}"
-          >
-            <span class="d-inline-flex align-items-center gap-2">
-              <i class="bi bi-chevron-right chevron" aria-hidden="true"></i>
-              <strong>{{ group.std_label }}</strong>
-              <span class="text-muted">({{ group.student_id }})</span>
-            </span>
-            <span class="text-muted small">
-              GPA {{ group.gpa }} · Credits {{ group.credits_total }}
-            </span>
-          </button>
-          <a class="btn btn-sm portal-btn-accent me-3" href="{% url 'reg_grade_transcript' group.student.id %}">Official transcript</a>
-        </div>
-        <div class="collapse" id="student-{{ group.student.id }}">
-          <div class="portal-accordion-card__body">
-            {% for semester in group.semesters %}
-              <div class="portal-nested-card mb-3">
-                <div class="p-0">
-                  <button
-                    class="btn portal-collapse-toggle text-decoration-none w-100 text-start d-flex justify-content-between align-items-center px-3 py-2"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#semester-{{ group.student.id }}-{{ semester.semester.id }}"
-                    aria-expanded="false"
-                    aria-controls="semester-{{ group.student.id }}-{{ semester.semester.id }}"
-                  >
-                    <span class="d-inline-flex align-items-center gap-2">
-                      <i class="bi bi-chevron-right chevron" aria-hidden="true"></i>
-                      <strong>{{ semester.label }}</strong>
-                    </span>
-                    <span class="text-muted small">
-                      GPA {{ semester.gpa }} · Credits {{ semester.credits_total }}
-                    </span>
-                  </button>
-                </div>
-                <div class="collapse" id="semester-{{ group.student.id }}-{{ semester.semester.id }}">
-                  <div class="course-table table-responsive">
-                    <table class="table mb-0 align-middle">
-                      <thead>
-                        <tr>
-                          <th>Course</th>
-                          <th>Credits</th>
-                          <th>Grade</th>
-                          <th>Faculty</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {% for row in semester.rows %}
+    <form method="post" action="{{ bulk_download_url }}">
+      {% csrf_token %}
+      <div class="registrar-bulk-actions registrar-selection-toolbar d-flex flex-wrap gap-3 align-items-center mb-3">
+        <label class="form-check d-inline-flex align-items-center gap-2 mb-0">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            data-transcript-select-visible
+          />
+          <span class="fw-semibold">Select visible</span>
+        </label>
+        <button
+          class="btn portal-btn-accent btn-sm"
+          type="submit"
+          data-transcript-download-button
+          disabled
+        >
+          Download selected transcripts
+        </button>
+        <span
+          class="registrar-selection-count text-muted small"
+          data-transcript-selected-count
+          aria-live="polite"
+        >
+          0 selected
+        </span>
+        <span class="text-muted small flex-grow-1">
+          Use the semester filter to narrow the list, then check students. Shift-click selects a range.
+        </span>
+      </div>
+      {% for group in student_groups %}
+        <div class="portal-accordion-card mb-3">
+          <div class="portal-accordion-card__header p-0 d-flex align-items-center gap-2">
+            <label class="registrar-row-select mb-0">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                name="student_ids"
+                value="{{ group.student.id }}"
+                data-transcript-checkbox
+                aria-label="Select transcript for {{ group.std_label }}"
+              />
+              <span class="registrar-row-select__text">Select</span>
+            </label>
+            <button
+              class="btn portal-collapse-toggle text-decoration-none flex-grow-1 text-start d-flex justify-content-between align-items-center px-3 py-2"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#student-{{ group.student.id }}"
+              aria-expanded="false"
+              aria-controls="student-{{ group.student.id }}"
+            >
+              <span class="d-inline-flex align-items-center gap-2">
+                <i class="bi bi-chevron-right chevron" aria-hidden="true"></i>
+                <strong>{{ group.std_label }}</strong>
+                <span class="text-muted">({{ group.student_id }})</span>
+              </span>
+              <span class="text-muted small">
+                GPA {{ group.gpa }} · Credits {{ group.credits_total }}
+              </span>
+            </button>
+            <a class="btn btn-sm portal-btn-accent me-3" href="{% url 'reg_grade_transcript' group.student.id %}">Official transcript</a>
+          </div>
+          <div class="collapse" id="student-{{ group.student.id }}">
+            <div class="portal-accordion-card__body">
+              {% for semester in group.semesters %}
+                <div class="portal-nested-card mb-3">
+                  <div class="p-0">
+                    <button
+                      class="btn portal-collapse-toggle text-decoration-none w-100 text-start d-flex justify-content-between align-items-center px-3 py-2"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#semester-{{ group.student.id }}-{{ semester.semester.id }}"
+                      aria-expanded="false"
+                      aria-controls="semester-{{ group.student.id }}-{{ semester.semester.id }}"
+                    >
+                      <span class="d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-chevron-right chevron" aria-hidden="true"></i>
+                        <strong>{{ semester.label }}</strong>
+                      </span>
+                      <span class="text-muted small">
+                        GPA {{ semester.gpa }} · Credits {{ semester.credits_total }}
+                      </span>
+                    </button>
+                  </div>
+                  <div class="collapse" id="semester-{{ group.student.id }}-{{ semester.semester.id }}">
+                    <div class="course-table table-responsive">
+                      <table class="table mb-0 align-middle">
+                        <thead>
                           <tr>
-                            <td>
-                              <strong>{{ row.course_code }}</strong><br/>
-                              <span class="text-muted">{{ row.course_title }}</span>
-                            </td>
-                            <td>{{ row.credits }}</td>
-                            <td>{{ row.grade }}</td>
-                            <td>{{ row.faculty }}</td>
+                            <th>Course</th>
+                            <th>Credits</th>
+                            <th>Grade</th>
+                            <th>Faculty</th>
                           </tr>
-                        {% endfor %}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {% for row in semester.rows %}
+                            <tr>
+                              <td>
+                                <strong>{{ row.course_code }}</strong><br/>
+                                <span class="text-muted">{{ row.course_title }}</span>
+                              </td>
+                              <td>{{ row.credits }}</td>
+                              <td>{{ row.grade }}</td>
+                              <td>{{ row.faculty }}</td>
+                            </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
-              </div>
-            {% endfor %}
+              {% endfor %}
+            </div>
           </div>
         </div>
-      </div>
-    {% endfor %}
-
+      {% endfor %}
+    </form>
     {% with page=page_obj %}
       {% include "website/staff/partials/pagination.html" %}
     {% endwith %}
@@ -149,12 +237,17 @@
       if (select && window.jQuery) {
         const $select = window.jQuery(select);
         const url = select.dataset.autocompleteUrl;
+        // Avoid inheriting Basic Auth userinfo from credentialed preprod URLs.
+        const autocompleteUrl = new URL(
+          url,
+          `${window.location.protocol}//${window.location.host}`,
+        ).toString();
         $select.select2({
           allowClear: true,
           placeholder: "Search by name or ID",
           minimumInputLength: 2,
           ajax: {
-            url: url,
+            url: autocompleteUrl,
             dataType: "json",
             delay: 250,
             data: function (params) {
@@ -166,6 +259,54 @@
           },
         });
       }
+
+      const transcriptCheckboxes = Array.from(
+        document.querySelectorAll("[data-transcript-checkbox]"),
+      );
+      const selectVisible = document.querySelector("[data-transcript-select-visible]");
+      const selectedCount = document.querySelector("[data-transcript-selected-count]");
+      const downloadButton = document.querySelector("[data-transcript-download-button]");
+      let lastTranscriptCheckbox = null;
+
+      const refreshSelectionState = function () {
+        const checkedCount = transcriptCheckboxes.filter((checkbox) => checkbox.checked).length;
+        if (selectedCount) {
+          selectedCount.textContent = `${checkedCount} selected`;
+        }
+        if (downloadButton) {
+          downloadButton.disabled = checkedCount === 0;
+        }
+        if (selectVisible) {
+          selectVisible.checked = checkedCount > 0 && checkedCount === transcriptCheckboxes.length;
+          selectVisible.indeterminate = checkedCount > 0 && checkedCount < transcriptCheckboxes.length;
+        }
+      };
+
+      if (selectVisible) {
+        selectVisible.addEventListener("change", () => {
+          transcriptCheckboxes.forEach((checkbox) => {
+            checkbox.checked = selectVisible.checked;
+          });
+          lastTranscriptCheckbox = null;
+          refreshSelectionState();
+        });
+      }
+
+      transcriptCheckboxes.forEach((checkbox) => {
+        checkbox.addEventListener("click", (event) => {
+          if (event.shiftKey && lastTranscriptCheckbox) {
+            const startIndex = transcriptCheckboxes.indexOf(lastTranscriptCheckbox);
+            const endIndex = transcriptCheckboxes.indexOf(checkbox);
+            const [start, end] = [startIndex, endIndex].sort((left, right) => left - right);
+            transcriptCheckboxes.slice(start, end + 1).forEach((item) => {
+              item.checked = checkbox.checked;
+            });
+          }
+          lastTranscriptCheckbox = checkbox;
+          refreshSelectionState();
+        });
+      });
+      refreshSelectionState();
     })();
   </script>
 {% endblock %}

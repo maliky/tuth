@@ -1,5 +1,13 @@
 <aside class="portal-sidebar">
-  <div class="student-chip portal-sidebar__identity">
+  {% if sidebar_identity_url %}
+    <a
+      class="student-chip portal-sidebar__identity portal-sidebar__identity-link"
+      href="{{ sidebar_identity_url }}"
+      aria-label="Open my profile"
+    >
+  {% else %}
+    <div class="student-chip portal-sidebar__identity">
+  {% endif %}
     <div class="student-avatar" aria-hidden="true">
       {% if sidebar_avatar_url %}
         <img src="{{ sidebar_avatar_url }}" alt="" />
@@ -11,7 +19,11 @@
       <p class="student-name mb-0">{{ sidebar_title|default:"Workspace" }}</p>
       <p class="student-id mb-0">{{ sidebar_subtitle|default:"" }}</p>
     </div>
-  </div>
+  {% if sidebar_identity_url %}
+    </a>
+  {% else %}
+    </div>
+  {% endif %}
 
   {% if sidebar_role_switcher %}
     <div class="portal-role-switcher">
