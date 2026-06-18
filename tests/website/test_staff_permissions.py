@@ -44,8 +44,29 @@ def test_faculty_dashboard_uses_sidebar_without_duplicate_action_panel(client):
     content = response.content.decode()
 
     assert response.status_code == 200
+    assert "portal-role-switcher" not in content
+    assert "Dashboard" in content
     assert reverse("faculty_grade_sections") in content
     assert "What can I do here?" not in content
+
+
+@pytest.mark.django_db
+def test_multi_workspace_user_keeps_workspace_switcher(client):
+    """Academic leaders with inherited workspaces still need quick switching."""
+    User = get_user_model()
+    user = User.objects.create_user("dean_multi_workspace", password="PassW0rd!")
+    dean_group, _ = Group.objects.get_or_create(name="Dean")
+    user.groups.add(dean_group)
+
+    client.force_login(user)
+    response = client.get(reverse("staff_role_dashboard", args=["dean"]))
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert "portal-role-switcher" in content
+    assert "Dean Oversight" in content
+    assert "Chair Curriculum Center" in content
+    assert "Instruction Hub" in content
 
 
 @pytest.mark.django_db
@@ -62,6 +83,7 @@ def test_finance_officer_dashboard_dedupes_sidebar_actions(client):
 
     assert response.status_code == 200
     assert reverse("finance_officer_invoices") in content
+    assert "Dashboard" in content
     assert "Open finance console" not in content
     assert "What can I do here?" not in content
 
@@ -88,6 +110,7 @@ def test_reg_officer_dashboard_shows_authorized_admin_shortcuts(client):
 
     assert response.status_code == 200
     assert "Authorized database" in content
+    assert "portal-role-switcher" in content
     assert reverse("admin:people_student_changelist") in content
     assert reverse("admin:registry_registration_changelist") in content
     assert reverse("admin:registry_grade_changelist") not in content

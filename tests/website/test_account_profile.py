@@ -45,6 +45,9 @@ def test_staff_dashboard_links_to_self_profile(client) -> None:
     content = response.content.decode()
 
     assert response.status_code == 200
+    assert "portal-role-switcher" not in content
+    assert "Dashboard" in content
+    assert "My profile" in content
     assert reverse("account_profile") in content
     assert "Staff Member" in content
     assert "My Staff Workspace" not in content
