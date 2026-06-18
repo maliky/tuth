@@ -1,0 +1,101 @@
+{% extends "website/staff/base.html" %}
+
+{% block staff_header_actions %}
+  <a class="btn portal-btn-outline btn-sm" href="{{ dashboard_url }}">
+    Back to dashboard
+  </a>
+{% endblock %}
+
+{% block staff_content %}
+  <section class="portal-filter-card mb-4">
+    <div class="portal-filter-card__body">
+      <div class="portal-filter-card__intro">
+        <p class="eyebrow text-uppercase mb-1">Academic oversight</p>
+        <h2>Grade rosters</h2>
+        <p class="mb-0 text-muted">
+          Scope: {{ scope_label }}. This view is read-only; faculty enter grades
+          while Registrar controls the open period.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="portal-panel-card">
+    <div class="portal-panel-card__stripe"></div>
+    <div class="portal-panel-card__body p-0">
+      <div class="course-table table-responsive mb-0">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Course</th>
+              <th>Faculty</th>
+              <th>Semester</th>
+              <th class="text-end">Roster</th>
+              <th class="text-end">Graded</th>
+              <th>Status</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in section_rows %}
+              <tr>
+                <td>
+                  <strong>{{ row.course_code }}</strong>
+                  <div class="text-muted small">{{ row.course_title }}</div>
+                  <div class="text-muted small">Section {{ row.section.number }}</div>
+                </td>
+                <td>{{ row.faculty_label }}</td>
+                <td>
+                  {{ row.section.semester.academic_year.code }}
+                  · Semester {{ row.section.semester.number }}
+                </td>
+                <td class="text-end">{{ row.roster_count }}</td>
+                <td class="text-end">{{ row.graded_count }}</td>
+                <td>
+                  {% if row.grade_entry_open %}
+                    <span class="status-badge status-completed">Grade entry open</span>
+                  {% else %}
+                    <span class="status-badge status-pending">
+                      {{ row.pending_count }} pending
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <a class="btn portal-btn-accent btn-sm" href="{{ row.detail_url }}">
+                    View roster
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="7" class="text-center text-muted py-4">
+                  No assigned sections match this oversight scope.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {% if section_page.has_other_pages %}
+    <nav class="d-flex justify-content-between align-items-center mt-3" aria-label="Roster pages">
+      <span class="text-muted small">
+        Page {{ section_page.number }} of {{ section_page.paginator.num_pages }}
+      </span>
+      <div class="d-flex gap-2">
+        {% if section_page.has_previous %}
+          <a class="btn portal-btn-outline btn-sm" href="?page={{ section_page.previous_page_number }}">
+            Previous
+          </a>
+        {% endif %}
+        {% if section_page.has_next %}
+          <a class="btn portal-btn-outline btn-sm" href="?page={{ section_page.next_page_number }}">
+            Next
+          </a>
+        {% endif %}
+      </div>
+    </nav>
+  {% endif %}
+{% endblock %}

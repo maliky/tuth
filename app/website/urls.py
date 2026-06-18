@@ -92,6 +92,16 @@ urlpatterns = [
         name="vpaa_approval_reject",
     ),
     path(
+        "staff/<slug:role>/grade-rosters/",
+        views.staff_grade_rosters,
+        name="staff_grade_rosters",
+    ),
+    path(
+        "staff/<slug:role>/grade-rosters/<int:section_id>/",
+        views.staff_grade_roster_detail,
+        name="staff_grade_roster_detail",
+    ),
+    path(
         "staff/finance/invoices/",
         views.finance_officer_invoices,
         name="finance_officer_invoices",

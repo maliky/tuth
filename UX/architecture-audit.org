@@ -137,7 +137,7 @@ Still to do:
 ** Registrar and registrar officer perspective
 Current state:
 - =test_registrar= reaches transcript/grade review surfaces.
-- =test_registrar_officer= reaches semester/course-window management and grade review.
+- =test_reg_officer= reaches semester/course-window management and grade review.
 - The apparent course-window 403 in a broader smoke run was correct role-boundary behavior: plain Registrar does not have the officer permission for changing semester windows.
 - Registrar grade context and semester-window context now live in =app/website/services/registrar_portal.py=.
 - Course-window mutation is covered with disposable semester data.
@@ -304,7 +304,7 @@ Affected source areas:
 
 Evidence:
 - Runtime users include both =test_finance= and =test_finance_officer=.
-- Runtime users include both =test_registrar= and =test_registrar_officer=.
+- Runtime users include both =test_registrar= and =test_reg_officer=.
 - Course-window management correctly belongs to registrar officer permission, not plain registrar.
 
 Impact:

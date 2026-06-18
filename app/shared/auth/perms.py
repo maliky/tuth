@@ -137,6 +137,7 @@ ROLE_MATRIX = {
     "chair": {
         "add": ["course", "curricrs", "section"],
         "change": ["course", "curricrs", "section"],
+        "delete": ["curricrs"],
         "view": [
             "academicyear",
             "college",
@@ -177,7 +178,7 @@ ROLE_MATRIX = {
             "curricrs",
             "section",
         ],
-        "delete": ["minor"],
+        "delete": ["minor", "curricrs"],
         "view": [
             "academicyear",
             "college",
@@ -579,8 +580,8 @@ ROLE_MATRIX = {
         "delete": [
             "academicyear",
             "college",
-            "course",
             "curriculum",
+            "curricrs",
             "department",
             "faculty",
             "major",

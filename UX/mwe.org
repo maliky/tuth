@@ -19,7 +19,7 @@ All of the accounts below exist in the current running MWE database and share th
 | test_dean                | Dean                                 |
 | test_vpaa                | Vice President Academic Affairs      |
 | test_registrar           | Registrar                            |
-| test_registrar_officer   | Registrar Officer                    |
+| test_reg_officer         | Registrar Officer                    |
 | test_finance             | Finance                              |
 | test_finance_officer     | Finance Officer                      |
 | test_cashier             | Cashier                              |
@@ -38,7 +38,7 @@ Use this table when demonstrating or smoke-testing the portal. The staff UI shou
 | test_finance           | Finance overview and holds                  | /staff/finance/                    | Overview role; not the payment-console officer account.    |
 | test_finance_officer   | Invoice console and payment workflow        | /staff/finance_officer/            | Payment console continues at /staff/finance/invoices/.     |
 | test_registrar         | Registrar lifecycle and grade review        | /staff/registrar/                  | Plain Registrar should not manage semester windows.        |
-| test_registrar_officer | Registrar officer course-window operations  | /staff/reg_officer/                | Use this account for /registrar/course-windows/.           |
+| test_reg_officer       | Registrar officer course-window operations  | /staff/reg_officer/                | Use this account for /registrar/course-windows/.           |
 | test_enrollment        | Student directory and portal intake         | /staff/enrollment/                 | Create/update student records through /students/new/.      |
 | test_enrollment_officer| Enrollment officer escalation and deletion  | /staff/enrollment_officer/         | Use only when officer-level actions are part of the demo.  |
 
@@ -151,7 +151,7 @@ This section is a practical manual for demonstrating the app with the runtime MW
 9. If the correction depends on a closed grade window, Registrar Officer reopens the operational window or performs the authorized admin correction, depending on policy.
 
 ** Registrar Officer manual
-1. Log in as =test_registrar_officer=.
+1. Log in as =test_reg_officer=.
 2. Open =/staff/reg_officer/= for the officer dashboard.
 3. Open =/registrar/course-windows/= to manage semester status windows.
 4. Set the relevant semester status to registration/running/locked according to the operational calendar.

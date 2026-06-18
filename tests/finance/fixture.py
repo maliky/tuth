@@ -11,11 +11,11 @@ from app.finance.models.invoice import CrsInvoice
 from app.registry.models.registration import Registration
 from tests.constants import D100
 
-InvoiceFactoryT: TypeAlias = Callable[[Registration, Decimal], CrsInvoice]
+RegistrationInvoiceFactoryT: TypeAlias = Callable[[Registration, Decimal], CrsInvoice]
 
 
 @pytest.fixture
-def invoice_factory() -> InvoiceFactoryT:
+def registration_invoice_factory() -> RegistrationInvoiceFactoryT:
     """Return a callable to build invoices for a registration."""
 
     def _make(registration: Registration, amount: Decimal = D100) -> CrsInvoice:

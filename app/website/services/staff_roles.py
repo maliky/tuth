@@ -194,6 +194,13 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
             "args": ["chair"],
             "icon": "bi-people",
         },
+        {
+            "label": "Grade rosters",
+            "route_name": "staff_grade_rosters",
+            "args": ["chair"],
+            "key": "grade_rosters",
+            "icon": "bi-card-checklist",
+        },
     ],
     "dean": [
         {
@@ -214,6 +221,13 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
             "args": ["dean"],
             "icon": "bi-person-lines-fill",
         },
+        {
+            "label": "Grade rosters",
+            "route_name": "staff_grade_rosters",
+            "args": ["dean"],
+            "key": "grade_rosters",
+            "icon": "bi-card-checklist",
+        },
     ],
     "vpaa": [
         {
@@ -221,7 +235,14 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
             "route_name": "vpaa_approvals",
             "icon": "bi-check2-square",
             "key": "approvals",
-        }
+        },
+        {
+            "label": "Grade rosters",
+            "route_name": "staff_grade_rosters",
+            "args": ["vpaa"],
+            "key": "grade_rosters",
+            "icon": "bi-card-checklist",
+        },
     ],
     "registrar": [
         {

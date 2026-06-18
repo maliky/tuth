@@ -104,14 +104,14 @@ def test_dean_can_request_curriculum_activation(client) -> None:
 def test_finance_officer_can_create_and_update_payments(
     client,
     regio_factory,
-    invoice_factory,
+    registration_invoice_factory,
 ) -> None:
     """Finance payment POSTs should work with disposable test data."""
     _ensure_finance_defaults()
     user = User.objects.create_user("finance_arch", password="PassW0rd!")
     _group_user(user, "Finance Officer")
     registration = regio_factory("finance_arch_student", "CURR_FIN_ARCH", "701", 1)
-    invoice = invoice_factory(registration, D100)
+    invoice = registration_invoice_factory(registration, D100)
 
     client.force_login(user)
     create_response = client.post(
