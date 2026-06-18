@@ -3,41 +3,6 @@
 
 {% block staff_head_extra %}
   <link rel="stylesheet" href="{% static 'admin/css/vendor/select2/select2.min.css' %}" />
-  <style>
-    .registrar-admin-shortcuts,
-    .registrar-bulk-actions {
-      border-top: 1px solid rgba(15, 23, 42, 0.08);
-      margin-top: 1rem;
-      padding-top: 1rem;
-    }
-
-    .registrar-selection-toolbar {
-      background: rgba(248, 250, 252, 0.86);
-      border: 1px solid rgba(15, 23, 42, 0.08);
-      border-radius: 1rem;
-      padding: 0.85rem 1rem;
-    }
-
-    .registrar-selection-count {
-      min-width: 6rem;
-    }
-
-    .registrar-row-select {
-      align-items: center;
-      display: flex;
-      gap: 0.45rem;
-      min-width: 5.8rem;
-      padding-left: 1rem;
-    }
-
-    .registrar-row-select__text {
-      color: #334155;
-      font-size: 0.8rem;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      text-transform: uppercase;
-    }
-  </style>
 {% endblock %}
 
 {% block staff_header_actions %}
@@ -45,10 +10,6 @@
 {% endblock %}
 
 {% block staff_content %}
-  <div class="mb-3">
-    <a class="btn portal-btn-outline btn-sm" href="{% url 'staff_dashboard' %}">Back to dashboard</a>
-  </div>
-
   <section class="portal-filter-card mb-4">
     <div class="portal-filter-card__body">
       <div class="portal-filter-card__intro">

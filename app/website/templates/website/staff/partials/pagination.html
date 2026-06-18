@@ -17,13 +17,12 @@
       <label class="text-muted small mb-0" for="{{ input_id }}">Go to</label>
       <input
         id="{{ input_id }}"
-        class="form-control form-control-sm"
+        class="form-control form-control-sm portal-pagination__page-input"
         type="number"
         name="{{ page_param }}"
         min="1"
         max="{{ page.paginator.num_pages }}"
         value="{{ page.number }}"
-        style="width: 5rem;"
       />
       <button class="btn btn-sm btn-outline-secondary" type="submit">Go</button>
     </form>
