@@ -8,7 +8,7 @@
   <section id="student-snapshot" class="mb-4">
     <div class="row g-3 align-items-center">
       <div class="col-lg-6">
-        <div class="p-3 rounded-3 bg-white shadow-sm h-100">
+        <div class="portal-surface h-100">
           {# Profile label removed to simplify snapshot header. #}
           <h2 class="h4 mb-1">{{ student_profile.name }}</h2>
           <p class="mb-0 text-muted">
@@ -20,7 +20,7 @@
         </div>
       </div>
       <div class="col-lg-6">
-        <div class="p-3 rounded-3 bg-white shadow-sm h-100">
+        <div class="portal-surface h-100">
           <p class="text-uppercase text-muted small mb-2">Announcements</p>
           <ul class="mb-0 ps-3">
             {% for announcement in announcements %}
@@ -151,14 +151,14 @@
                   </small>
                 </div>
               {% endif %}
-              <button class="btn btn-success" type="submit" data-register-submit>
+              <button class="btn portal-btn-accent" type="submit" data-register-submit>
                 Save registration
               </button>
             </form>
             {% if has_pending_registrations %}
               <form method="post" action="{% url 'student_invoice_statement_download' %}">
                 {% csrf_token %}
-                <button class="btn btn-outline-dark" type="submit">
+                <button class="btn portal-btn-outline" type="submit">
                   Proceed to Payment
                 </button>
               </form>
@@ -173,7 +173,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
       <div>
         <p class="text-uppercase small text-muted mb-1">Completed work</p>
-        <h2 class="h4 mb-0">Crss & grades</h2>
+        <h2 class="h4 mb-0">Courses & grades</h2>
       </div>
       <span class="badge bg-light text-dark">
         Validated credits: {{ credit_summary.validated }}
@@ -181,7 +181,7 @@
     </div>
 
     {% for semester in semester_grade_groups %}
-      <div class="table-responsive bg-white rounded-3 shadow-sm mb-3">
+      <div class="course-table table-responsive mb-3">
         <div class="d-flex justify-content-between align-items-center px-3 pt-3">
           <div>
             <p class="text-uppercase small text-muted mb-1">Semester</p>

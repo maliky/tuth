@@ -31,6 +31,10 @@ from .faculty import (
     faculty_grade_roster_upload,
     faculty_grade_sections,
 )
+from .grade_roster_oversight import (
+    staff_grade_roster_detail,
+    staff_grade_rosters,
+)
 from .registrar import (
     reg_crs_wins,
     reg_grades_dashboard,
@@ -79,6 +83,8 @@ __all__ = [
     "reg_grade_transcripts_bulk_pdf",
     "reg_std_autocomplete",
     "staff_dashboard",
+    "staff_grade_roster_detail",
+    "staff_grade_rosters",
     "staff_role_dashboard",
     "student_dashboard",
     "std_admin_edit",

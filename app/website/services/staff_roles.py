@@ -194,6 +194,13 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
             "args": ["chair"],
             "icon": "bi-people",
         },
+        {
+            "label": "Grade rosters",
+            "route_name": "staff_grade_rosters",
+            "args": ["chair"],
+            "key": "grade_rosters",
+            "icon": "bi-card-checklist",
+        },
     ],
     "dean": [
         {
@@ -214,6 +221,13 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
             "args": ["dean"],
             "icon": "bi-person-lines-fill",
         },
+        {
+            "label": "Grade rosters",
+            "route_name": "staff_grade_rosters",
+            "args": ["dean"],
+            "key": "grade_rosters",
+            "icon": "bi-card-checklist",
+        },
     ],
     "vpaa": [
         {
@@ -221,7 +235,14 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
             "route_name": "vpaa_approvals",
             "icon": "bi-check2-square",
             "key": "approvals",
-        }
+        },
+        {
+            "label": "Grade rosters",
+            "route_name": "staff_grade_rosters",
+            "args": ["vpaa"],
+            "key": "grade_rosters",
+            "icon": "bi-card-checklist",
+        },
     ],
     "registrar": [
         {
@@ -354,9 +375,10 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
     ],
     "general": [
         {
-            "label": "Workspace home",
-            "route_name": "staff_dashboard",
-            "icon": "bi-speedometer2",
+            "label": "My profile",
+            "route_name": "account_profile",
+            "key": "profile",
+            "icon": "bi-person-badge",
         }
     ],
 }
@@ -404,6 +426,7 @@ ROLE_INHERITANCE: RoleParentMapT = _build_role_parent_map(ROLE_CONFIG)
 ROLE_CHILDREN: RoleChildMapT = _build_role_child_map(ROLE_INHERITANCE)
 
 ROLE_ORDER: dict[str, int] = {slug: idx for idx, slug in enumerate(ROLE_PRIORITY)}
+LOW_VALUE_SWITCHER_SLUGS: frozenset[RoleSlugT] = frozenset({"staff", "general"})
 
 
 def _user_membership_slugs(user: User) -> set[str]:
@@ -472,7 +495,11 @@ def _build_accessible_dashboard_links(
 
 def build_staff_role_switcher(user: User, active_slug: str) -> list[RoleSwitcherLinkT]:
     """Return role-switching links for the shared staff sidebar."""
-    accessible_links = _build_accessible_dashboard_links(user, active_slug)
+    accessible_links = [
+        link
+        for link in _build_accessible_dashboard_links(user, active_slug)
+        if link["slug"] not in LOW_VALUE_SWITCHER_SLUGS
+    ]
     if len(accessible_links) <= 1:
         return []
     return [
@@ -485,12 +512,28 @@ def build_staff_role_switcher(user: User, active_slug: str) -> list[RoleSwitcher
     ]
 
 
+def _dashboard_href_for_role(role_slug: str) -> str:
+    """Return the canonical dashboard URL for a staff sidebar."""
+    if role_slug in {"staff", "general"}:
+        return reverse("staff_dashboard")
+    return reverse("staff_role_dashboard", args=[role_slug])
+
+
 def build_staff_sidebar_links(
     role_slug: str, active_key: str = "overview"
 ) -> list[SidebarLinkT]:
     """Build task-oriented staff navigation for the portal sidebar."""
     tasks = ROLE_TASKS.get(role_slug, ROLE_TASKS["general"])
-    links: list[SidebarLinkT] = []
+    dashboard_href = _dashboard_href_for_role(role_slug)
+    links: list[SidebarLinkT] = [
+        {
+            "label": "Dashboard",
+            "href": dashboard_href,
+            "active": active_key == "overview",
+            "icon": "bi-speedometer2",
+        }
+    ]
+    seen_hrefs = {dashboard_href}
     for index, task in enumerate(tasks):
         task_key = task.get("key") or ("overview" if index == 0 else task["label"])
         href = _maybe_reverse(task["route_name"], args=task.get("args"))
@@ -499,6 +542,9 @@ def build_staff_sidebar_links(
         query = task.get("query", "")
         if query:
             href = f"{href}{query}"
+        if href in seen_hrefs:
+            continue
+        seen_hrefs.add(href)
         links.append(
             {
                 "label": task["label"],

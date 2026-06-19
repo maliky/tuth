@@ -26,10 +26,13 @@ def _ensure_finance_payment_dfts() -> None:
     Payer._populate_attributes_and_db()
 
 
-def test_pending_payments_are_informational(regio_factory, invoice_factory):
+def test_pending_payments_are_informational(
+    regio_factory,
+    registration_invoice_factory,
+):
     """Pending payments should not lower the parent or child invoice balances."""
     reg = regio_factory("student_pending", "CURRI_TEST", "101", 1)
-    invoice = invoice_factory(reg, D100)
+    invoice = registration_invoice_factory(reg, D100)
     parent_invoice = invoice.student_semester_invoice
     assert parent_invoice is not None
 
@@ -49,13 +52,13 @@ def test_pending_payments_are_informational(regio_factory, invoice_factory):
 
 def test_cleared_payments_reduce_balances_and_update_regio(
     regio_factory,
-    invoice_factory,
+    registration_invoice_factory,
 ):
     """Cleared payments should drive invoice balances and registration status."""
 
     reg = regio_factory("student_cleared", "CURRI_TEST", "101", 1)
 
-    invoice = invoice_factory(reg, D100)
+    invoice = registration_invoice_factory(reg, D100)
     parent_invoice = invoice.student_semester_invoice
     assert parent_invoice is not None
 

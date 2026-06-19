@@ -1,5 +1,5 @@
 <section class="mb-4">
-  <div class="bg-white rounded-3 shadow-sm p-4">
+  <div class="portal-surface portal-surface--spacious">
     <p class="text-uppercase small text-muted mb-1">Course information</p>
     <div class="d-flex justify-content-between flex-wrap gap-3">
       <div>
@@ -23,7 +23,7 @@
 <section class="mb-4">
   <div class="row g-3">
     <div class="col-lg-6">
-      <div class="bg-white rounded-3 shadow-sm p-4 h-100">
+      <div class="portal-surface portal-surface--spacious h-100">
         <p class="text-uppercase small text-muted mb-3">Prerequisites</p>
         {% if course_info.prerequisites %}
           <div class="d-flex flex-column gap-2">
@@ -48,7 +48,7 @@
       </div>
     </div>
     <div class="col-lg-6">
-      <div class="bg-white rounded-3 shadow-sm p-4 h-100">
+      <div class="portal-surface portal-surface--spacious h-100">
         <p class="text-uppercase small text-muted mb-3">Corequisites</p>
         {% if course_info.corequisites %}
           <div class="d-flex flex-column gap-2">
@@ -76,13 +76,13 @@
 </section>
 
 <section class="mb-4">
-  <div class="bg-white rounded-3 shadow-sm p-4">
+  <div class="portal-surface portal-surface--spacious">
     <p class="text-uppercase small text-muted mb-3">Courses unlocked by this course</p>
     {% if course_info.unlocks %}
       <div class="row g-2">
         {% for item in course_info.unlocks %}
           <div class="col-md-6 col-xl-4">
-            <div class="border rounded-3 p-3 h-100">
+            <div class="border rounded p-3 h-100">
               <strong>{{ item.code }}</strong>
               <div class="text-muted small">{{ item.title }}</div>
               {% if item.note %}
