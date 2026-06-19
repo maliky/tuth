@@ -36,7 +36,10 @@ from .grade_roster_oversight import (
     staff_grade_rosters,
 )
 from .registrar import (
+    reg_class_roster_detail,
+    reg_class_rosters,
     reg_crs_wins,
+    reg_faculty_autocomplete,
     reg_grades_dashboard,
     reg_grade_transcript,
     reg_grade_transcript_org,
@@ -75,7 +78,10 @@ __all__ = [
     "dean_curriculum_detail",
     "dean_curriculum_request_activation",
     "portal_redirect",
+    "reg_class_roster_detail",
+    "reg_class_rosters",
     "reg_crs_wins",
+    "reg_faculty_autocomplete",
     "reg_grades_dashboard",
     "reg_grade_transcript",
     "reg_grade_transcript_org",

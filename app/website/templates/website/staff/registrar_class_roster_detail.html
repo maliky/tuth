@@ -1,0 +1,67 @@
+{% extends "website/staff/base.html" %}
+
+{% block staff_header_actions %}
+  <a class="btn portal-btn-outline btn-sm" href="{{ list_url }}">
+    Back to rosters
+  </a>
+{% endblock %}
+
+{% block staff_content %}
+  <section class="portal-filter-card mb-4">
+    <div class="portal-filter-card__body">
+      <div class="portal-filter-card__intro">
+        <p class="eyebrow text-uppercase mb-1">Read-only class roster</p>
+        <h2>{{ course_code }} · Section {{ section.number }}</h2>
+        <p class="mb-0 text-muted">
+          {{ course_title }} · {{ section.semester }} · Faculty: {{ faculty_label }}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="portal-panel-card">
+    <div class="portal-panel-card__stripe"></div>
+    <div class="portal-panel-card__body p-0">
+      <div class="course-table table-responsive mb-0">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Student ID</th>
+              <th>Gender</th>
+              <th>Age</th>
+              <th>Registration</th>
+              <th>Grade</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in grade_rows %}
+              <tr>
+                <td>{{ row.student_label }}</td>
+                <td>{{ row.student_id }}</td>
+                <td>{{ row.gender }}</td>
+                <td>{{ row.age }}</td>
+                <td>{{ row.registration_status }}</td>
+                <td>
+                  {% if row.grade_code %}
+                    <strong>{{ row.grade_code }}</strong>
+                  {% else %}
+                    <span class="text-muted">Not entered</span>
+                  {% endif %}
+                </td>
+                <td>{{ row.grade_status }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="7" class="text-center text-muted py-4">
+                  No students are registered in this section.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}

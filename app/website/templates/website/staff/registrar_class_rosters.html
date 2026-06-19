@@ -1,0 +1,182 @@
+{% extends "website/staff/base.html" %}
+{% load static %}
+
+{% block staff_head_extra %}
+  <link rel="stylesheet" href="{% static 'admin/css/vendor/select2/select2.min.css' %}" />
+{% endblock %}
+
+{% block staff_header_actions %}
+  <a class="btn portal-btn-outline btn-sm" href="{{ dashboard_url }}">
+    Back to dashboard
+  </a>
+{% endblock %}
+
+{% block staff_content %}
+  <section class="portal-filter-card mb-4">
+    <div class="portal-filter-card__body">
+      <div class="portal-filter-card__intro">
+        <p class="eyebrow text-uppercase mb-1">Registrar records</p>
+        <h2>Class rosters</h2>
+      </div>
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-lg-4">
+          <label class="form-label">Student</label>
+          <select
+            class="form-select"
+            name="student_id"
+            data-student-autocomplete
+            data-autocomplete-url="{{ student_autocomplete_url }}"
+          >
+            {% if selected_student_id %}
+              <option value="{{ selected_student_id }}" selected>
+                {{ selected_student_label }}
+              </option>
+            {% endif %}
+          </select>
+        </div>
+        <div class="col-lg-4">
+          <label class="form-label">Faculty</label>
+          <select
+            class="form-select"
+            name="faculty_id"
+            data-faculty-autocomplete
+            data-autocomplete-url="{{ faculty_autocomplete_url }}"
+          >
+            {% if selected_faculty_id %}
+              <option value="{{ selected_faculty_id }}" selected>
+                {{ selected_faculty_label }}
+              </option>
+            {% endif %}
+          </select>
+        </div>
+        <div class="col-lg-2">
+          <label class="form-label">Semester</label>
+          <select class="form-select" name="semester">
+            {% for option in semester_options %}
+              <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>
+                {{ option.label }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-lg-2">
+          <button class="btn portal-btn-accent w-100" type="submit">Filter</button>
+        </div>
+      </form>
+      {% if registrar_admin_links %}
+        <div class="registrar-admin-shortcuts">
+          <p class="eyebrow text-uppercase mb-2">Authorized database</p>
+          <div class="d-flex flex-wrap gap-2">
+            {% for link in registrar_admin_links %}
+              <a class="btn portal-btn-outline btn-sm" href="{{ link.href }}">
+                {{ link.label }}
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <div class="portal-panel-card">
+    <div class="portal-panel-card__stripe"></div>
+    <div class="portal-panel-card__body p-0">
+      <div class="course-table table-responsive mb-0">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Course</th>
+              <th>Faculty</th>
+              <th>Semester</th>
+              <th class="text-end">Roster</th>
+              <th class="text-end">Graded</th>
+              <th>Status</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in section_rows %}
+              <tr>
+                <td>
+                  <strong>{{ row.course_code }}</strong>
+                  <div class="text-muted small">{{ row.course_title }}</div>
+                  <div class="text-muted small">Section {{ row.section.number }}</div>
+                </td>
+                <td>{{ row.faculty_label }}</td>
+                <td>
+                  {{ row.section.semester.academic_year.code }}
+                  · Semester {{ row.section.semester.number }}
+                </td>
+                <td class="text-end">{{ row.roster_count }}</td>
+                <td class="text-end">{{ row.graded_count }}</td>
+                <td>
+                  {% if row.grade_entry_open %}
+                    <span class="status-badge status-completed">Grade entry open</span>
+                  {% else %}
+                    <span class="status-badge status-pending">
+                      {{ row.pending_count }} pending
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <a class="btn portal-btn-accent btn-sm" href="{{ row.detail_url }}">
+                    View roster
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="7" class="text-center text-muted py-4">
+                  No class rosters match the selected filters.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {% with page=section_page %}
+    {% include "website/staff/partials/pagination.html" %}
+  {% endwith %}
+{% endblock %}
+
+{% block staff_body_extra %}
+  <script src="{% static 'admin/js/vendor/jquery/jquery.min.js' %}"></script>
+  <script src="{% static 'admin/js/vendor/select2/select2.full.min.js' %}"></script>
+  <script>
+    (function () {
+      const initAutocomplete = function (selector, placeholder) {
+        const select = document.querySelector(selector);
+        if (!select || !window.jQuery) {
+          return;
+        }
+        const url = select.dataset.autocompleteUrl;
+        const autocompleteUrl = new URL(
+          url,
+          `${window.location.protocol}//${window.location.host}`,
+        ).toString();
+        window.jQuery(select).select2({
+          allowClear: true,
+          placeholder: placeholder,
+          minimumInputLength: 2,
+          ajax: {
+            url: autocompleteUrl,
+            dataType: "json",
+            delay: 250,
+            data: function (params) {
+              return { q: params.term };
+            },
+            processResults: function (data) {
+              return data;
+            },
+          },
+        });
+      };
+
+      initAutocomplete("[data-student-autocomplete]", "Search by name or ID");
+      initAutocomplete("[data-faculty-autocomplete]", "Search by faculty");
+    })();
+  </script>
+{% endblock %}

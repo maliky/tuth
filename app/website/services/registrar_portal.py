@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from datetime import date
 from typing import TypeAlias, TypedDict, cast
+from urllib.parse import urlencode
 
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
@@ -17,6 +18,8 @@ from django.utils import timezone
 from app.people.models.student import Student
 from app.registry.gpa import get_grade_points_and_credits
 from app.registry.models.grade import Grade
+from app.registry.models.registration import Registration
+from app.shared.auth.perms import UserRole
 from app.shared.utils import parse_str
 from app.timetable.models.semester import Semester, SemesterStatus
 from app.website.services.portal_types import PortalContextT
@@ -43,6 +46,7 @@ class RegGradeRowT(TypedDict):
     credits: int
     grade: str
     faculty: str
+    roster_url: str
 
 
 class RegSemGpT(TypedDict):
@@ -64,6 +68,23 @@ class RegStdGpT(TypedDict):
     semesters: list[RegSemGpT]
     credits_total: int
     gpa: str
+
+
+class RegSnapshotFactT(TypedDict):
+    """One fact displayed in the registrar selected-student snapshot."""
+
+    label: str
+    value: str
+
+
+class RegStudentSnapshotT(TypedDict):
+    """Academic summary shown when Registrar filters by one student."""
+
+    name: str
+    student_id: str
+    rows: list[RegSnapshotFactT]
+    transcript_url: str
+    rosters_url: str
 
 
 class RegSemesterWindowGroupT(TypedDict):
@@ -232,6 +253,74 @@ def registrar_student_results(query: str | None) -> list[StudentAutocompleteResu
     ]
 
 
+def _display_value(value: object) -> str:
+    """Return a stable display value for registrar snapshot rows."""
+    if value is None:
+        return "Not set"
+    text = str(value).strip()
+    return text or "Not set"
+
+
+def _student_display_name(student: Student) -> str:
+    """Return the best available student display name."""
+    return student.long_name or student.user.get_full_name() or student.username
+
+
+def _student_label(student: Student) -> str:
+    """Return the student selector label used across registrar pages."""
+    return f"{student.student_id} — {_student_display_name(student)}"
+
+
+def registrar_sidebar_role(user: User) -> str:
+    """Return the registrar sidebar role matching the user's staff group."""
+    if user.groups.filter(name=UserRole.REGISTRAR_OFFICER.value.label).exists():
+        return "reg_officer"
+    return "registrar"
+
+
+def _roster_list_url(student_id: int, semester_param: str | None) -> str:
+    """Return the registrar roster list URL filtered to a student."""
+    params = {"student_id": str(student_id), "semester": semester_param or "all"}
+    return f"{reverse('reg_class_rosters')}?{urlencode(params)}"
+
+
+def build_reg_student_snapshot(
+    student: Student,
+    semester_param: str | None,
+) -> RegStudentSnapshotT:
+    """Return the selected-student summary for the registrar grades dashboard."""
+    curriculum = student.primary_curriculum
+    grade_count = Grade.objects.filter(student=student).count()
+    registration_count = Registration.objects.filter(student=student).count()
+    return {
+        "name": _student_display_name(student),
+        "student_id": student.student_id or str(student.id),
+        "rows": [
+            {"label": "Username", "value": _display_value(student.username)},
+            {"label": "Program", "value": _display_value(curriculum.short_name)},
+            {"label": "College", "value": _display_value(curriculum.college)},
+            {
+                "label": "Entry semester",
+                "value": _display_value(student.entry_semester),
+            },
+            {
+                "label": "Current semester",
+                "value": _display_value(student.last_enrolled_semester),
+            },
+            {"label": "Class level", "value": _display_value(student.class_level)},
+            {
+                "label": "Completed credits",
+                "value": _display_value(student.completed_credits),
+            },
+            {"label": "Max credits", "value": _display_value(student.max_credit_hours)},
+            {"label": "Grade rows", "value": _display_value(grade_count)},
+            {"label": "Registrations", "value": _display_value(registration_count)},
+        ],
+        "transcript_url": reverse("reg_grade_transcript", args=[student.id]),
+        "rosters_url": _roster_list_url(student.id, semester_param),
+    }
+
+
 def _semester_options(
     semester_id: int | None, all_selected: bool
 ) -> list[SemesterOptionT]:
@@ -267,6 +356,7 @@ def _pagination_hidden_fields(request: HttpRequest) -> tuple[str, list[dict[str,
 def build_reg_grades_context(request: HttpRequest) -> ContextT:
     """Build context for the registrar grade dashboard."""
     user = cast(User, request.user)
+    sidebar_role = registrar_sidebar_role(user)
     selected_student_id = clean_int(request.GET.get("student_id"))
     semester_param = request.GET.get("semester")
     semester_id = clean_int(semester_param)
@@ -310,20 +400,23 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
     all_semesters_selected = semester_id is None
     pagination_query, pagination_hidden_fields = _pagination_hidden_fields(request)
     selected_student_label = ""
+    selected_student_snapshot: RegStudentSnapshotT | None = None
     if selected_student_id:
-        selected_student = Student.objects.filter(id=selected_student_id).first()
+        selected_student = (
+            Student.objects.select_related("user").filter(id=selected_student_id).first()
+        )
         if selected_student:
-            selected_student_label = (
-                selected_student.long_name
-                or selected_student.user.get_full_name()
-                or selected_student.student_id
+            selected_student_label = _student_label(selected_student)
+            selected_student_snapshot = build_reg_student_snapshot(
+                selected_student,
+                semester_param if semester_param_present else "all",
             )
 
     return {
         "page_title": "Registrar grades",
         "page_summary": "Find students, review grades, and download transcripts.",
         "eyebrow": "Registrar",
-        "sidebar_links": build_staff_sidebar_links("reg_officer", "grades"),
+        "sidebar_links": build_staff_sidebar_links(sidebar_role, "grades"),
         "role_switcher": build_staff_role_switcher(user, "registrar"),
         "breadcrumbs": [
             {
@@ -337,6 +430,7 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
         "semester_options": _semester_options(semester_id, all_semesters_selected),
         "selected_student_id": selected_student_id,
         "selected_student_label": selected_student_label,
+        "selected_student_snapshot": selected_student_snapshot,
         "bulk_download_url": reverse("reg_grade_transcripts_bulk_pdf"),
         "registrar_admin_links": _admin_shortcuts_for_models(
             user,
@@ -410,6 +504,10 @@ def build_student_grade_groups(students: list[Student], grades) -> list[RegStdGp
                 "credits": credits,
                 "grade": grade_label,
                 "faculty": faculty_label,
+                "roster_url": reverse(
+                    "reg_class_roster_detail",
+                    args=[grade.section_id],
+                ),
             }
         )
         current_semester_group["credits_total"] += credits
@@ -441,6 +539,8 @@ def build_student_grade_groups(students: list[Student], grades) -> list[RegStdGp
 
 def build_reg_grade_transcript_context(request: HttpRequest, student_id: int) -> ContextT:
     """Build context for an official grade transcript preview."""
+    user = cast(User, request.user)
+    sidebar_role = registrar_sidebar_role(user)
     transcript = build_transcript_document(student_id)
     return {
         "page_title": "Official grade transcript",
@@ -451,8 +551,8 @@ def build_reg_grade_transcript_context(request: HttpRequest, student_id: int) ->
         "generated_at": transcript["printed_date"],
         "transcript": transcript,
         "transcript_rows": flatten_transcript_rows(transcript),
-        "sidebar_links": build_staff_sidebar_links("reg_officer", "grades"),
-        "role_switcher": build_staff_role_switcher(cast(User, request.user), "registrar"),
+        "sidebar_links": build_staff_sidebar_links(sidebar_role, "grades"),
+        "role_switcher": build_staff_role_switcher(user, "registrar"),
         "dashboard_url": reverse("reg_grades_dashboard"),
         "download_url": reverse("reg_grade_transcript_pdf", args=[student_id]),
         "source_url": reverse("reg_grade_transcript_org", args=[student_id]),

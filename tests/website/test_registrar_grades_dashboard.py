@@ -9,6 +9,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.urls import reverse
 
+from app.registry.models.registration import Registration
+
 pytestmark = pytest.mark.django_db
 
 
@@ -117,6 +119,45 @@ def test_dashboard_explicit_semester_filter_limits_students(
     assert "event.shiftKey" in content
 
 
+def test_dashboard_selected_student_shows_academic_snapshot_and_roster_link(
+    client,
+    reg_user_factory,
+    reg_sem_pair_factory,
+    reg_sec_factory,
+    reg_std_factory,
+    reg_grade_factory,
+) -> None:
+    """Filtering to one student should expose registrar-relevant student context."""
+    user = reg_user_factory("registrar_dashboard_student_snapshot")
+    _academic_year, _previous, current = reg_sem_pair_factory()
+    section, curriculum = reg_sec_factory(
+        current,
+        course_number="306",
+        curriculum_short_name="CURRI_REG_SNAPSHOT",
+    )
+    student = reg_std_factory("registrar_snapshot_student", curriculum, current)
+    reg_grade_factory(student, section)
+    Registration.objects.create(student=student, section=section)
+
+    client.force_login(user)
+    response = client.get(
+        reverse("reg_grades_dashboard"),
+        {"student_id": str(student.id), "semester": "all"},
+    )
+    snapshot = response.context["selected_student_snapshot"]
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert snapshot["student_id"] == student.student_id
+    assert snapshot["rosters_url"] == (
+        f"{reverse('reg_class_rosters')}?student_id={student.id}&semester=all"
+    )
+    assert "Academic snapshot" in content
+    assert curriculum.short_name in content
+    assert student.student_id in content
+    assert reverse("reg_class_roster_detail", args=[section.id]) in content
+
+
 def test_dashboard_dfts_to_all_sems_without_grades(
     client,
     reg_user_factory,
@@ -131,6 +172,26 @@ def test_dashboard_dfts_to_all_sems_without_grades(
 
     assert response.status_code == 200
     assert _selected_sem_value(response) == "all"
+
+
+def test_registrar_grade_sidebar_includes_class_rosters_for_registrar(
+    client,
+    reg_user_factory,
+    reg_sem_pair_factory,
+) -> None:
+    """Registrar sidebar should expose class rosters without officer-only links."""
+    user = reg_user_factory("registrar_sidebar_rosters")
+    reg_sem_pair_factory()
+
+    client.force_login(user)
+    response = client.get(reverse("reg_grades_dashboard"))
+    sidebar_links = response.context["sidebar_links"]
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert any(link["href"] == reverse("reg_class_rosters") for link in sidebar_links)
+    assert "Class rosters" in content
+    assert reverse("reg_crs_wins") not in {link["href"] for link in sidebar_links}
 
 
 def test_dashboard_shows_registrar_admin_shortcuts_for_authorized_staff(

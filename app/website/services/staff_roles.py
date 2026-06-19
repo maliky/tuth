@@ -257,6 +257,12 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
             "icon": "bi-card-checklist",
             "key": "grades",
         },
+        {
+            "label": "Class rosters",
+            "route_name": "reg_class_rosters",
+            "icon": "bi-people",
+            "key": "class_rosters",
+        },
     ],
     "reg_officer": [
         {
@@ -270,6 +276,12 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
             "route_name": "reg_grades_dashboard",
             "icon": "bi-card-checklist",
             "key": "grades",
+        },
+        {
+            "label": "Class rosters",
+            "route_name": "reg_class_rosters",
+            "icon": "bi-people",
+            "key": "class_rosters",
         },
     ],
     "enrollment": [

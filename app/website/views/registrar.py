@@ -25,6 +25,11 @@ from app.website.services.registrar_portal import (
     registrar_student_results,
     update_semester_window,
 )
+from app.website.services.registrar_rosters import (
+    build_reg_class_roster_detail_context,
+    build_reg_class_roster_list_context,
+    registrar_faculty_results,
+)
 from app.website.services.transcript_document import build_transcript_document
 from app.website.services.transcript_rendering import (
     render_transcript_document_org,
@@ -73,6 +78,15 @@ def _require_transcript_export_access(request: HttpRequest) -> None:
         raise PermissionDenied
 
 
+def _require_registrar_roster_access(request: HttpRequest) -> None:
+    """Raise unless the user belongs to a registrar roster-review role."""
+    user = cast(User, request.user)
+    if user.is_superuser:
+        return
+    if not user.groups.filter(name__in=REGISTRAR_TRANSCRIPT_ROLE_LABELS).exists():
+        raise PermissionDenied
+
+
 @login_required
 @permission_required("registry.view_grade", raise_exception=True)
 def reg_std_autocomplete(request: HttpRequest) -> HttpResponse:
@@ -86,6 +100,35 @@ def reg_grades_dashboard(request: HttpRequest) -> HttpResponse:
     """Render the registrar grade dashboard grouped by student and semester."""
     context = build_reg_grades_context(request)
     return render(request, "website/staff/registrar_grades_dashboard.html", context)
+
+
+@login_required
+@permission_required("registry.view_grade", raise_exception=True)
+def reg_class_rosters(request: HttpRequest) -> HttpResponse:
+    """Render read-only class roster summaries for registrar staff."""
+    _require_registrar_roster_access(request)
+    context = build_reg_class_roster_list_context(request)
+    return render(request, "website/staff/registrar_class_rosters.html", context)
+
+
+@login_required
+@permission_required("registry.view_grade", raise_exception=True)
+def reg_class_roster_detail(
+    request: HttpRequest,
+    section_id: int,
+) -> HttpResponse:
+    """Render one read-only class roster for registrar staff."""
+    _require_registrar_roster_access(request)
+    context = build_reg_class_roster_detail_context(request, section_id)
+    return render(request, "website/staff/registrar_class_roster_detail.html", context)
+
+
+@login_required
+@permission_required("registry.view_grade", raise_exception=True)
+def reg_faculty_autocomplete(request: HttpRequest) -> HttpResponse:
+    """Return faculty suggestions for registrar class roster filters."""
+    _require_registrar_roster_access(request)
+    return JsonResponse({"results": registrar_faculty_results(request.GET.get("q"))})
 
 
 @login_required

@@ -93,7 +93,7 @@ def test_reg_officer_dashboard_shows_authorized_admin_shortcuts(client):
     """Registrar officer dashboard should expose only permitted admin tables."""
     User = get_user_model()
     user = User.objects.create_user(
-        "reg_officer_admin",
+        "test_reg_officer",
         password="PassW0rd!",
         is_staff=True,
     )
@@ -107,10 +107,18 @@ def test_reg_officer_dashboard_shows_authorized_admin_shortcuts(client):
     client.force_login(user)
     response = client.get(reverse("staff_role_dashboard", args=["reg_officer"]))
     content = response.content.decode()
+    sidebar_links = response.context["sidebar_links"]
 
     assert response.status_code == 200
     assert "Authorized database" in content
     assert "portal-role-switcher" in content
+    assert {
+        "label": "Class rosters",
+        "href": reverse("reg_class_rosters"),
+        "active": False,
+        "icon": "bi-people",
+    } in sidebar_links
+    assert 'href="/registrar/class-rosters/"' in content
     assert reverse("admin:people_student_changelist") in content
     assert reverse("admin:registry_registration_changelist") in content
     assert reverse("admin:registry_grade_changelist") not in content

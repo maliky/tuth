@@ -471,6 +471,16 @@ def _build_reg_context(request: HttpRequest) -> RoleContextT:
                 "variant": "outline-secondary",
             }
         )
+    rosters_url = _maybe_reverse("reg_class_rosters")
+    if rosters_url:
+        actions.append(
+            {
+                "label": "Open class rosters",
+                "href": rosters_url,
+                "description": "Find section rosters by student, faculty, or term.",
+                "variant": "outline-secondary",
+            }
+        )
     return {
         "metrics": [
             {"label": "Pending transcripts", "value": pending_qs.count()},

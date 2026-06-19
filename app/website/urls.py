@@ -187,6 +187,21 @@ urlpatterns = [
         name="reg_grades_dashboard",
     ),
     path(
+        "registrar/class-rosters/",
+        views.reg_class_rosters,
+        name="reg_class_rosters",
+    ),
+    path(
+        "registrar/class-rosters/<int:section_id>/",
+        views.reg_class_roster_detail,
+        name="reg_class_roster_detail",
+    ),
+    path(
+        "registrar/class-rosters/faculty/autocomplete/",
+        views.reg_faculty_autocomplete,
+        name="reg_faculty_autocomplete",
+    ),
+    path(
         "registrar/grades/transcripts/download/",
         views.reg_grade_transcripts_bulk_pdf,
         name="reg_grade_transcripts_bulk_pdf",

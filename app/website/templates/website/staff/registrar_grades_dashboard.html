@@ -61,6 +61,37 @@
     </div>
   </section>
 
+  {% if selected_student_snapshot %}
+    <section class="portal-panel-card mb-4">
+      <div class="portal-panel-card__stripe"></div>
+      <div class="portal-panel-card__body">
+        <div class="portal-panel-card__head d-flex flex-wrap justify-content-between gap-3 mb-3">
+          <div>
+            <p class="eyebrow text-uppercase mb-1">Academic snapshot</p>
+            <h2 class="h5 mb-1">{{ selected_student_snapshot.name }}</h2>
+            <p class="text-muted mb-0">{{ selected_student_snapshot.student_id }}</p>
+          </div>
+          <div class="d-flex flex-wrap gap-2 align-items-start">
+            <a class="btn portal-btn-accent btn-sm" href="{{ selected_student_snapshot.transcript_url }}">
+              Official transcript
+            </a>
+            <a class="btn portal-btn-outline btn-sm" href="{{ selected_student_snapshot.rosters_url }}">
+              Class rosters
+            </a>
+          </div>
+        </div>
+        <div class="account-profile-facts">
+          {% for row in selected_student_snapshot.rows %}
+            <div class="account-profile-fact">
+              <span>{{ row.label }}</span>
+              <strong>{{ row.value }}</strong>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
   {% if student_groups %}
     <form method="post" action="{{ bulk_download_url }}">
       {% csrf_token %}
@@ -156,6 +187,7 @@
                             <th>Credits</th>
                             <th>Grade</th>
                             <th>Faculty</th>
+                            <th class="text-end">Roster</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -168,6 +200,11 @@
                               <td>{{ row.credits }}</td>
                               <td>{{ row.grade }}</td>
                               <td>{{ row.faculty }}</td>
+                              <td class="text-end">
+                                <a class="btn portal-btn-outline btn-sm" href="{{ row.roster_url }}">
+                                  Open
+                                </a>
+                              </td>
                             </tr>
                           {% endfor %}
                         </tbody>
