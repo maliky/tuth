@@ -92,15 +92,15 @@ TRANSCRIPT_LAYOUT_OPTIONS: tuple[TranscriptLayoutOptionT, ...] = (
     {
         "key": "portrait",
         "label": "Portrait",
-        "description": "Official one-column transcript layout.",
+        "description": "A4 portrait with two transcript detail columns.",
         "orientation": "portrait",
-        "column_count": 1,
+        "column_count": 2,
         "css_class": "layout-portrait",
     },
     {
         "key": "landscape",
         "label": "Landscape",
-        "description": "Wide two-column transcript layout.",
+        "description": "A4 landscape with two transcript detail columns.",
         "orientation": "landscape",
         "column_count": 2,
         "css_class": "layout-landscape",

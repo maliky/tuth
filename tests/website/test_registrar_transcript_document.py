@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from datetime import date
 from io import BytesIO
 from pathlib import Path
+from typing import TypeAlias, cast
 from zipfile import ZipFile
 
 import pytest
 from django.contrib.auth.models import Permission
 from django.urls import reverse
+from weasyprint import HTML
 
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
@@ -21,6 +24,10 @@ from app.registry.models.grade import Grade, GradeValue
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
 from app.website.services.transcript_document import build_transcript_document
+from app.website.services.transcript_pdf_layout import (
+    split_term_groups_for_columns,
+    transcript_pdf_layout,
+)
 from app.website.services.transcript_rendering import (
     render_transcript_document_html,
     render_transcript_document_org,
@@ -28,6 +35,9 @@ from app.website.services.transcript_rendering import (
 from app.website.services.transcript_types import normalize_transcript_layout
 
 pytestmark = pytest.mark.django_db
+
+RenderedTextT: TypeAlias = tuple[str, float, float]
+RenderedPageTextT: TypeAlias = tuple[float, list[RenderedTextT]]
 
 
 def _grade_value(code: str) -> GradeValue:
@@ -39,6 +49,42 @@ def _grade_value(code: str) -> GradeValue:
 def _grant_grade_view(user) -> None:
     """Grant broad grade visibility without registrar role membership."""
     user.user_permissions.add(Permission.objects.get(codename="view_grade"))
+
+
+def _box_children(box: object) -> list[object]:
+    """Return child boxes from a WeasyPrint layout box."""
+    raw_children: object = getattr(box, "children", ())
+    return list(cast(Iterable[object], raw_children))
+
+
+def _box_position(box: object, attr: str) -> float:
+    """Return a numeric WeasyPrint box coordinate."""
+    raw_value: object = getattr(box, attr, 0.0)
+    if isinstance(raw_value, int | float):
+        return float(raw_value)
+    return 0.0
+
+
+def _rendered_first_page_texts(html: str) -> RenderedPageTextT:
+    """Render transcript HTML and return first-page text boxes."""
+    project_root = Path(__file__).resolve().parents[2]
+    rendered = HTML(string=html, base_url=str(project_root)).render()
+    page = cast(object, rendered.pages[0])
+    stack: list[object] = [cast(object, getattr(page, "_page_box"))]
+    texts: list[RenderedTextT] = []
+    while stack:
+        box = stack.pop()
+        raw_text: object = getattr(box, "text", "")
+        if isinstance(raw_text, str) and raw_text:
+            texts.append(
+                (
+                    raw_text,
+                    _box_position(box, "position_x"),
+                    _box_position(box, "position_y"),
+                )
+            )
+        stack.extend(_box_children(box))
+    return _box_position(page, "width"), texts
 
 
 def _history_section(
@@ -143,7 +189,18 @@ def test_registrar_transcript_pdf_download_uses_pdf_response(
     assert response.status_code == 200
     assert response["Content-Type"] == "application/pdf"
     assert response["Content-Disposition"].startswith("attachment;")
+    assert "portrait" in response["Content-Disposition"]
     assert response.content.startswith(b"%PDF")
+
+    landscape_response = client.get(
+        reverse("reg_grade_transcript_pdf", args=[student.id]),
+        {"layout": "landscape"},
+    )
+
+    assert landscape_response.status_code == 200
+    assert landscape_response["Content-Type"] == "application/pdf"
+    assert "landscape" in landscape_response["Content-Disposition"]
+    assert landscape_response.content.startswith(b"%PDF")
 
 
 def test_transcript_pdf_html_uses_layout_selection_and_compact_grade_table(
@@ -178,25 +235,125 @@ def test_transcript_pdf_html_uses_layout_selection_and_compact_grade_table(
     assert "Attmpt Credit" not in html
     assert "Start Date" not in html
     assert "End Date" not in html
-    assert "Attempted<br/>Credit" in html
-    assert 'class="logo-block"' in html
-    assert 'class="institution-contact"' in html
+    assert "Attempted<br/>Credit" not in html
+    assert 'class="institution-identity"' in html
+    assert 'class="document-title"' in html
     assert 'class="student-meta"' in html
     assert 'data-transcript-layout="landscape"' in html
+    assert 'class="layout-landscape pdf-layout-landscape-two"' in html
     assert "size: A4 landscape;" in html
-    assert 'class="summary-metrics"' in html
+    assert 'class="summary-strip"' in html
+    assert 'class="detail-columns-table"' in html
+    assert 'class="detail-columns"' not in html
+    assert ".detail-columns {" not in html
+    assert ".course-line {\n        display: grid;" not in html
+    assert ".course-line {\n        white-space: nowrap;" in html
+    assert "<th>Grade</th>" in html
+    assert "<th>Att.</th>" in html
+    assert "<th>Earned</th>" in html
+    assert "<th>Qual.</th>" in html
+    assert "Transcript Summary" not in html
+    assert 'class="summary-metrics"' not in html
     assert 'class="totals-table summary-totals"' not in html
     assert "04/03/26" not in html
     assert "06/05/26" not in html
     assert "Maryland County, Republic of Liberia" in html
-    assert "www.Tubmanu.edu.lr · registrar@tubmanu.edu.lr" in html
-    assert "institution-document-title" in html
+    assert "www.Tubmanu.edu.lr &middot; registrar@tubmanu.edu.lr" in html
     assert html.count("Maryland County, Liberia") == 1
     assert "Transcript Back Matter" in html
     assert "break-before: left" in html
     assert "Grade Letters and Credit Points" in html
-    assert "Mention and honor thresholds" in html
-    assert "Online transcript verification link" in html
+    assert "Mention and honor thresholds" not in html
+    assert "Online transcript verification link" not in html
+
+
+def test_landscape_pdf_render_keeps_transcript_rows_visible(
+    reg_sem_pair_factory,
+    reg_sec_factory,
+    reg_std_factory,
+) -> None:
+    """Landscape PDF rendering should keep course rows visible on page one."""
+    academic_year, first, second = reg_sem_pair_factory(
+        date(2026, 6, 20),
+        previous_offset_days=300,
+        current_offset_days=220,
+    )
+    third = Semester.objects.create(
+        academic_year=academic_year,
+        number=3,
+        start_date=date(2026, 2, 1),
+    )
+    fourth = Semester.objects.create(
+        academic_year=academic_year,
+        number=4,
+        start_date=date(2026, 5, 1),
+    )
+    curriculum_name = "CURRI_TRANSCRIPT_RENDER"
+    sections: list[Section] = []
+    curriculum: Curriculum | None = None
+    for index, semester in enumerate([first, second, third, fourth]):
+        section, curriculum = reg_sec_factory(
+            semester,
+            course_number=str(510 + index),
+            curriculum_short_name=curriculum_name,
+        )
+        course = section.curriculum_course.course
+        course.title = f"Landscape Sentinel {index + 1}"
+        course.save(update_fields=["title"])
+        sections.append(section)
+    assert curriculum is not None
+    student = reg_std_factory("registrar_transcript_render_student", curriculum, first)
+    for section in sections:
+        Grade.objects.create(student=student, section=section, value=_grade_value("a"))
+
+    document = build_transcript_document(student.id)
+    pdf_layout = transcript_pdf_layout("landscape", document["term_groups"])
+    left_code = pdf_layout["term_columns"][0][0]["rows"][0]["course_code"]
+    right_code = pdf_layout["term_columns"][1][0]["rows"][0]["course_code"]
+    html = render_transcript_document_html(document, layout="landscape")
+    page_width, texts = _rendered_first_page_texts(html)
+    positions = {text: (x, y) for text, x, y in texts}
+
+    assert left_code in positions
+    assert right_code in positions
+    assert 0 < positions[left_code][0] < page_width / 2
+    assert page_width / 2 < positions[right_code][0] < page_width
+    assert "Transcript Back Matter" not in {text for text, _x, _y in texts}
+
+
+def test_transcript_pdf_layout_splits_terms_without_breaking_semesters(
+    reg_sem_pair_factory,
+    reg_sec_factory,
+    reg_std_factory,
+) -> None:
+    """The web PDF layout should balance whole semester blocks into two columns."""
+    _academic_year, previous, current = reg_sem_pair_factory()
+    first_section, curriculum = reg_sec_factory(
+        previous,
+        course_number="410",
+        curriculum_short_name="CURRI_TRANSCRIPT_COLUMNS",
+    )
+    second_section, _curriculum = reg_sec_factory(
+        current,
+        course_number="411",
+        curriculum_short_name="CURRI_TRANSCRIPT_COLUMNS",
+    )
+    student = reg_std_factory(
+        "registrar_transcript_columns_student", curriculum, previous
+    )
+    Grade.objects.create(student=student, section=first_section, value=_grade_value("a"))
+    Grade.objects.create(student=student, section=second_section, value=_grade_value("b"))
+
+    document = build_transcript_document(student.id)
+    columns = split_term_groups_for_columns(document["term_groups"])
+    flattened_labels = [group["term_label"] for column in columns for group in column]
+    pdf_layout = transcript_pdf_layout("portrait", document["term_groups"])
+
+    assert len(columns) == 2
+    assert all(columns)
+    assert flattened_labels == [group["term_label"] for group in document["term_groups"]]
+    assert pdf_layout["term_columns"] == columns
+    assert pdf_layout["grade_label"] == "Gr."
 
 
 def test_transcript_layout_normalization_accepts_legacy_values() -> None:
@@ -245,14 +402,14 @@ def test_registrar_transcript_org_download_uses_source_response(
     assert "Clinical" not in org_source
 
 
-def test_registrar_transcript_page_shows_body_download_actions(
+def test_registrar_transcript_page_shows_pdf_download_action_only(
     client,
     reg_user_factory,
     reg_sem_pair_factory,
     reg_sec_factory,
     reg_std_factory,
 ) -> None:
-    """The transcript preview should expose downloads inside the page body."""
+    """The transcript preview should expose PDF download without visible Org source."""
     user = reg_user_factory("registrar_transcript_actions")
     _academic_year, _previous, current = reg_sem_pair_factory()
     section, curriculum = reg_sec_factory(
@@ -272,8 +429,9 @@ def test_registrar_transcript_page_shows_body_download_actions(
     assert "data-transcript-layout-select" in content
     assert "Portrait" in content
     assert "Landscape" in content
-    assert "Download Org source" in content
-    assert "data-transcript-org-download" in content
+    assert "Download PDF" in content
+    assert "Download Org source" not in content
+    assert "data-transcript-org-download" not in content
 
 
 def test_transcript_org_renderer_escapes_latex_values(

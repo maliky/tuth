@@ -6,6 +6,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 
 from app.website.services.transcript_org import render_transcript_document_org
+from app.website.services.transcript_pdf_layout import transcript_pdf_layout
 from app.website.services.transcript_types import (
     DEFAULT_TRANSCRIPT_LAYOUT,
     TranscriptDocumentT,
@@ -23,11 +24,13 @@ def render_transcript_document_html(
 ) -> str:
     """Render the transcript PDF HTML document."""
     layout_key = normalize_transcript_layout(layout)
+    layout_config = transcript_layout_config(layout_key)
     return render_to_string(
         template_name,
         {
             "transcript": document,
-            "layout": transcript_layout_config(layout_key),
+            "layout": layout_config,
+            "pdf_layout": transcript_pdf_layout(layout_key, document["term_groups"]),
         },
     )
 

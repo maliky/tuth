@@ -4,9 +4,6 @@
   <a class="btn portal-btn-outline btn-sm" href="{{ dashboard_url }}">
     Back to grades
   </a>
-  <a class="btn portal-btn-outline btn-sm" href="{{ source_url }}">
-    Download Org source
-  </a>
 {% endblock %}
 
 {% block staff_content %}
@@ -38,7 +35,7 @@
           <p class="text-uppercase small text-muted mb-1">Transcript exports</p>
           <h2 class="h5 mb-1">Download official record</h2>
           <p class="text-muted mb-0">
-            Select a PDF layout before download, or use Org source for LaTeX archival export.
+            Select a PDF layout before downloading the official record.
           </p>
         </div>
         <div class="d-flex flex-wrap gap-3 align-items-end">
@@ -64,14 +61,6 @@
               Download PDF
             </button>
           </form>
-          <a
-            class="btn portal-btn-outline btn-sm"
-            href="{{ source_url }}"
-            download
-            data-transcript-org-download
-          >
-            Download Org source
-          </a>
         </div>
       </div>
     </div>

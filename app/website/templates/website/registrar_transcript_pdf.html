@@ -6,7 +6,7 @@
     <style>
       @page {
         size: A4 {{ layout.orientation }};
-        margin: 10mm 12mm 21mm;
+        margin: {{ pdf_layout.page_margin }};
         @bottom-left {
           content: "Registrar: __________________";
           font-size: 7px;
@@ -23,63 +23,24 @@
 
       @page transcript-back {
         size: A4 {{ layout.orientation }};
-        margin: 12mm;
+        margin: {{ pdf_layout.page_margin }};
         @bottom-left {
-          content: "Registrar: __________________";
-          font-size: 7px;
+          content: "";
         }
         @bottom-center {
           content: "Page " counter(page) " of " counter(pages);
           font-size: 8px;
         }
         @bottom-right {
-          content: "Date: __________________";
-          font-size: 7px;
+          content: "";
         }
       }
 
       body {
         color: #111;
         font-family: "Times New Roman", "DejaVu Serif", serif;
-        font-size: 9px;
-        line-height: 1.14;
-      }
-
-      .transcript-header {
-        align-items: center;
-        display: grid;
-        grid-template-columns: 29mm 1fr 58mm;
-        gap: 6mm;
-        margin-bottom: 6mm;
-      }
-
-      .layout-landscape .transcript-header {
-        grid-template-columns: 31mm 1fr 70mm;
-      }
-
-      .institution-contact {
-        text-align: center;
-      }
-
-      .institution-document-title {
-        margin-top: 1ex;
-      }
-
-      .student-meta {
-        text-align: right;
-      }
-
-      .logo-block {
-        text-align: left;
-      }
-
-      .logo {
-        max-height: 24mm;
-        max-width: 24mm;
-      }
-
-      .title {
-        font-weight: 700;
+        font-size: 8px;
+        line-height: 1.08;
       }
 
       h1,
@@ -89,107 +50,192 @@
         margin: 0;
       }
 
-      h2 {
-        font-size: 13px;
-        margin: 0 0 3mm;
-      }
-
-      .summary {
-        margin-bottom: 6mm;
-      }
-
-      .summary-grid {
+      .transcript-header {
+        align-items: center;
         display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(54mm, 66mm);
-        gap: 6mm;
+        gap: 4.2mm;
+        grid-template-columns: minmax(0, 1.38fr) minmax(40mm, 0.64fr) minmax(0, 0.92fr);
+        margin-bottom: 2.7mm;
       }
 
-      .layout-landscape .summary-grid {
-        grid-template-columns: minmax(0, 1fr) 82mm;
-      }
-
-      .summary-line {
+      .institution-identity {
+        align-items: center;
         display: grid;
-        grid-template-columns: max-content minmax(0, 1fr);
-        column-gap: 2mm;
-        margin-bottom: 1mm;
+        gap: 2mm;
+        grid-template-columns: 15mm minmax(0, 1fr);
       }
 
-      .summary-line strong {
-        white-space: nowrap;
+      .logo {
+        max-height: 14.5mm;
+        max-width: 14.5mm;
       }
 
-      .summary-line span {
+      .institution-contact {
+        font-size: 7.2px;
+        line-height: 1.05;
+      }
+
+      .institution-name,
+      .student-name,
+      .document-title {
+        font-weight: 700;
+      }
+
+      .document-title {
+        font-size: 11px;
+        line-height: 1.05;
+        text-align: center;
+      }
+
+      .student-meta {
+        font-size: 7.2px;
+        line-height: 1.05;
+        text-align: right;
+      }
+
+      .summary-strip {
+        font-size: 7.2px;
+        margin-bottom: 2.2mm;
+      }
+
+      .summary-row {
+        display: grid;
+        gap: 2.2mm;
+        grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr) minmax(0, 0.95fr) minmax(0, 1.05fr) minmax(0, 1fr);
+      }
+
+      .summary-cell {
+        min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
       }
 
-      .summary-metrics {
-        border-left: 0.25mm solid #111;
-        padding-left: 3mm;
+      .summary-cell strong {
+        font-weight: 700;
       }
 
-      .summary-metric {
-        display: block;
-        margin-bottom: 1.3mm;
-        white-space: nowrap;
-      }
-
-      .grade-pages {
-        page: auto;
-      }
-
-      .detail-flow {
-        column-gap: 6mm;
-      }
-
-      .layout-landscape .detail-flow {
-        column-count: 2;
-      }
-
-      .term-block {
-        break-inside: avoid;
-        margin-bottom: 2.2mm;
-      }
-
-      .detail-table,
-      .grade-scale-table {
+      .detail-columns-table {
         border-collapse: collapse;
+        table-layout: fixed;
         width: 100%;
       }
 
-      .detail-table {
-        table-layout: fixed;
-      }
-
-      .detail-table th {
-        border-bottom: 0.25mm solid #111;
-        font-size: 7.6px;
-        line-height: 1.05;
-        padding: 0.65mm 0.45mm;
-        text-align: center;
-      }
-
-      .detail-table td {
-        padding: 0.42mm 0.45mm;
+      .detail-column-cell {
         vertical-align: top;
       }
 
-      .course-col {
-        width: 54%;
+      .detail-spacer-cell {
+        width: 30mm;
       }
 
-      .layout-landscape .course-col {
-        width: 58%;
+      .pdf-layout-portrait-two .detail-spacer-cell {
+        width: 3.5mm;
+      }
+
+      .detail-table {
+        border-collapse: collapse;
+        font-size: 6.85px;
+        line-height: 1.02;
+        table-layout: fixed;
+        width: 100%;
+      }
+
+      .pdf-layout-portrait-two .detail-table {
+        font-size: 6.55px;
+      }
+
+      .course-col {
+        width: 59%;
       }
 
       .grade-col {
-        width: 9%;
+        width: 8%;
       }
 
       .num-col {
-        width: 12.33%;
+        width: 11%;
+      }
+
+      .pdf-layout-landscape-two .course-col {
+        width: 58%;
+      }
+
+      .pdf-layout-landscape-two .grade-col {
+        width: 10%;
+      }
+
+      .pdf-layout-landscape-two .num-col {
+        width: 10.66%;
+      }
+
+      .detail-table th {
+        border-bottom: 0.22mm solid #111;
+        font-weight: 700;
+        padding: 0 0.28mm 0.4mm;
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      .detail-table th:first-child {
+        text-align: left;
+      }
+
+      .detail-table td {
+        padding: 0.24mm 0.28mm;
+        vertical-align: top;
+      }
+
+      .program-block,
+      .term-block {
+        break-inside: avoid;
+        margin-top: 1.15mm;
+      }
+
+      .program-block {
+        font-weight: 700;
+        margin-bottom: 0.3mm;
+      }
+
+      .term-heading td {
+        font-weight: 700;
+        padding-top: 0.65mm;
+      }
+
+      .course-line {
+        white-space: nowrap;
+      }
+
+      .course-code {
+        display: inline-block;
+        font-weight: 700;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        vertical-align: top;
+        white-space: nowrap;
+        width: 15mm;
+      }
+
+      .pdf-layout-portrait-two .course-code {
+        width: 13.5mm;
+      }
+
+      .course-title {
+        display: inline-block;
+        max-width: 69%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        vertical-align: top;
+        white-space: nowrap;
+      }
+
+      .pdf-layout-portrait-two .course-title {
+        max-width: 64%;
+      }
+
+      .center {
+        text-align: center;
+        white-space: nowrap;
       }
 
       .num {
@@ -197,92 +243,61 @@
         white-space: nowrap;
       }
 
-      .center {
-        text-align: center;
-      }
-
-      .term-row td {
+      .totals-row td {
         font-weight: 700;
-        padding-top: 1.1mm;
+        padding-top: 0.45mm;
       }
 
-      .course-line {
-        display: flex;
-        gap: 1.2mm;
-        min-width: 0;
-      }
-
-      .course-code {
-        flex: 0 0 auto;
-        font-weight: 700;
+      .totals-label {
+        padding-left: 15.9mm;
         white-space: nowrap;
       }
 
-      .course-title {
-        display: block;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .totals-row td,
-      .program-row td {
-        font-weight: 700;
-      }
-
-      .program-row td {
-        padding-bottom: 1mm;
+      .pdf-layout-portrait-two .totals-label {
+        padding-left: 14.15mm;
       }
 
       .conclusion {
-        margin-top: 5mm;
-        text-align: center;
-      }
-
-      .grade-page-footer {
-        align-items: end;
         break-inside: avoid;
-        display: grid;
-        grid-template-columns: 38mm 1fr 54mm;
-        margin-top: 9mm;
-      }
-
-      .qr-placeholder {
-        border: 0.25mm solid #111;
-        min-height: 24mm;
-        padding: 2mm;
+        font-size: 7.2px;
+        margin-top: 2.4mm;
         text-align: center;
       }
 
-      .qr-placeholder strong {
-        display: block;
-        font-size: 11px;
-        margin-bottom: 2mm;
-      }
-
-      .signature-block {
-        text-align: center;
-      }
-
-      .signature-line {
-        border-top: 0.25mm solid #111;
-        margin-bottom: 1mm;
-        min-height: 1mm;
+      .notice-final {
+        font-size: 6.9px;
+        margin-top: 1.6mm;
+        text-align: left;
       }
 
       .back-matter {
         break-before: left;
+        font-size: 7.6px;
+        line-height: 1.16;
         page: transcript-back;
       }
 
       .back-matter h2 {
+        font-size: 11px;
+        margin-bottom: 3mm;
         text-align: center;
+      }
+
+      .back-matter h3 {
+        font-size: 8.2px;
+        margin: 3.5mm 0 1mm;
+      }
+
+      .grade-scale-table {
+        border-collapse: collapse;
+        table-layout: fixed;
+        width: 100%;
       }
 
       .grade-scale-table th,
       .grade-scale-table td {
-        border-bottom: 0.15mm solid #777;
-        padding: 1mm;
+        border-bottom: 0.16mm solid #777;
+        padding: 0.8mm 1mm 0.8mm 0;
         text-align: left;
       }
 
@@ -292,110 +307,70 @@
       }
 
       .policy-list {
-        margin: 4mm 0 0;
+        margin: 2mm 0 0;
         padding-left: 5mm;
       }
 
       .policy-list li {
-        margin-bottom: 1.4mm;
-      }
-
-      .mention-note {
-        border: 0.2mm solid #777;
-        margin-top: 4mm;
-        padding: 2mm;
+        margin-bottom: 1.15mm;
       }
     </style>
   </head>
-  <body class="{{ layout.css_class }}" data-transcript-layout="{{ layout.key }}">
+  <body class="{{ layout.css_class }} {{ pdf_layout.css_class }}" data-transcript-layout="{{ layout.key }}">
     <header class="transcript-header">
-      <div class="logo-block">
-        {% if transcript.logo_uri %}
-          <img class="logo" src="{{ transcript.logo_uri }}" alt="TU logo" />
-        {% endif %}
+      <div class="institution-identity">
+        <div class="logo-block">
+          {% if transcript.logo_uri %}
+            <img class="logo" src="{{ transcript.logo_uri }}" alt="TU logo" />
+          {% endif %}
+        </div>
+        <div class="institution-contact">
+          <p class="institution-name">{{ transcript.institution_name }}</p>
+          <p>{{ transcript.address_one }}</p>
+          <p>{{ transcript.address_two }}, {{ transcript.country }}</p>
+          <p>{{ transcript.website }} &middot; {{ transcript.registrar_email }}</p>
+        </div>
       </div>
-      <div class="institution-contact">
-        <p class="title">{{ transcript.institution_name }}</p>
-        <p>{{ transcript.address_one }}</p>
-        <p>{{ transcript.address_two }}, {{ transcript.country }}</p>
-        <p>{{ transcript.website }} · {{ transcript.registrar_email }}</p>
-        <p class="title institution-document-title">{{ transcript.document_title }}</p>
-      </div>
+      <div class="document-title">{{ transcript.document_title }}</div>
       <div class="student-meta">
-        <p>{{ transcript.student_name }}</p>
+        <p class="student-name">{{ transcript.student_name }}</p>
         <p>{{ transcript.student_address_one }}</p>
         {% if transcript.student_address_two %}
           <p>{{ transcript.student_address_two }}</p>
         {% endif %}
-        <p class="title" style="margin-top: 3mm;">ID {{ transcript.student_id }}</p>
+        <p>ID <strong>{{ transcript.student_id }}</strong></p>
         <p>DOB {{ transcript.dob }}</p>
       </div>
     </header>
 
-    <section class="summary">
-      <h2>Transcript Summary</h2>
-      <div class="summary-grid">
-        <div>
-          <div class="summary-line">
-            <strong>Program Code:</strong>
-            <span>{{ transcript.program_code }}</span>
-          </div>
-          <div class="summary-line">
-            <strong>College:</strong>
-            <span>{{ transcript.college }}</span>
-          </div>
-          <div class="summary-line">
-            <strong>Enrollment Date:</strong>
-            <span>{{ transcript.enrollment_date }}</span>
-          </div>
-          <div class="summary-line">
-            <strong>Program Completion Date:</strong>
-            <span>{{ transcript.completion_date }}</span>
-          </div>
-          <div class="summary-line">
-            <strong>Graduation Date:</strong>
-            <span>{{ transcript.graduation_date }}</span>
-          </div>
-          <div class="summary-line">
-            <strong>Major Program:</strong>
-            <span>{{ transcript.major_program }}</span>
-          </div>
+    <section class="summary-strip">
+      <div class="summary-row">
+        <div class="summary-cell">
+          <strong>Curriculum:</strong> {{ transcript.program_code }} -- {{ transcript.major_program }}
         </div>
-        <div class="summary-metrics">
-          <span class="summary-metric">
-            <strong>Program:</strong>
-            Attempted {{ transcript.program_total_attempted }} ·
-            Earned {{ transcript.program_total_earned }} ·
-            GPA {{ transcript.program_total_gpa }}
-          </span>
-          <span class="summary-metric">
-            <strong>Cumulative:</strong>
-            Attempted {{ transcript.cumulative_total_attempted }} ·
-            Earned {{ transcript.cumulative_total_earned }} ·
-            GPA {{ transcript.cumulative_total_gpa }}
-          </span>
+        <div class="summary-cell">
+          <strong>College:</strong> {{ transcript.college }}
+        </div>
+        <div class="summary-cell">
+          <strong>Enrollment:</strong> {{ transcript.enrollment_date }}
+        </div>
+        <div class="summary-cell">
+          <strong>Completion:</strong> {{ transcript.completion_date }}
+        </div>
+        <div class="summary-cell">
+          <strong>Graduation:</strong> {{ transcript.graduation_date }}
         </div>
       </div>
     </section>
 
     <section class="grade-pages">
-      <h2>Transcript Detail</h2>
       {% if transcript.term_groups %}
-        <div class="detail-flow">
-          <section class="term-block program-row">
-            <table class="detail-table">
-              <tbody>
-                <tr>
-                  <td>
-                    {{ transcript.program_code }} Program: {{ transcript.major_program }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </section>
-          {% for group in transcript.term_groups %}
-            <section class="term-block">
-              <table class="detail-table">
+        <table class="detail-columns-table">
+          <tbody>
+            <tr>
+              {% for column in pdf_layout.term_columns %}
+                <td class="detail-column-cell">
+                  <table class="detail-table detail-header-table">
                 <colgroup>
                   <col class="course-col" />
                   <col class="grade-col" />
@@ -406,69 +381,79 @@
                 <thead>
                   <tr>
                     <th>Course</th>
-                    <th>Final<br/>Grade</th>
-                    <th>Attempted<br/>Credit</th>
-                    <th>Earned<br/>Credit</th>
-                    <th>Quality<br/>Points</th>
+                    <th>{{ pdf_layout.grade_label }}</th>
+                    <th>{{ pdf_layout.attempted_label }}</th>
+                    <th>{{ pdf_layout.earned_label }}</th>
+                    <th>{{ pdf_layout.points_label }}</th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr class="term-row">
-                    <td colspan="5">{{ group.term_label }}</td>
-                  </tr>
-                  {% for row in group.rows %}
-                    <tr>
-                      <td>
-                        <span class="course-line">
-                          <span class="course-code">{{ row.course_code }}</span>
-                          <span class="course-title">{{ row.course_title }}</span>
-                        </span>
-                      </td>
-                      <td class="center">{{ row.final_grade }}</td>
-                      <td class="num">{{ row.attempted_credit }}</td>
-                      <td class="num">{{ row.earned_credit }}</td>
-                      <td class="num">{{ row.quality_points }}</td>
-                    </tr>
+                  </table>
+
+                  {% if forloop.first %}
+                    <div class="program-block">
+                      {{ transcript.program_code }} Program: {{ transcript.major_program }}
+                    </div>
+                  {% endif %}
+
+                  {% for group in column %}
+                    <section class="term-block">
+                  <table class="detail-table">
+                    <colgroup>
+                      <col class="course-col" />
+                      <col class="grade-col" />
+                      <col class="num-col" />
+                      <col class="num-col" />
+                      <col class="num-col" />
+                    </colgroup>
+                    <tbody>
+                      <tr class="term-heading">
+                        <td colspan="5">{{ group.term_label }}</td>
+                      </tr>
+                      {% for row in group.rows %}
+                        <tr>
+                          <td>
+                            <span class="course-line">
+                              <span class="course-code">{{ row.course_code }}</span>
+                              <span class="course-title">{{ row.course_title }}</span>
+                            </span>
+                          </td>
+                          <td class="center">{{ row.final_grade }}</td>
+                          <td class="num">{{ row.attempted_credit }}</td>
+                          <td class="num">{{ row.earned_credit }}</td>
+                          <td class="num">{{ row.quality_points }}</td>
+                        </tr>
+                      {% endfor %}
+                      <tr class="totals-row">
+                        <td colspan="2"><span class="totals-label">Term Totals&nbsp;&nbsp;GPA={{ group.term_gpa }}</span></td>
+                        <td class="num">{{ group.term_attempted_credit }}</td>
+                        <td class="num">{{ group.term_earned_credit }}</td>
+                        <td class="num">{{ group.term_quality_points }}</td>
+                      </tr>
+                      <tr class="totals-row">
+                        <td colspan="2"><span class="totals-label">Program Totals&nbsp;&nbsp;GPA={{ group.program_gpa }}</span></td>
+                        <td class="num">{{ group.program_attempted_credit }}</td>
+                        <td class="num">{{ group.program_earned_credit }}</td>
+                        <td class="num">{{ group.program_quality_points }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                    </section>
                   {% endfor %}
-                  <tr class="totals-row">
-                    <td>Term Totals&nbsp;&nbsp;&nbsp; GPA={{ group.term_gpa }}</td>
-                    <td></td>
-                    <td class="num">{{ group.term_attempted_credit }}</td>
-                    <td class="num">{{ group.term_earned_credit }}</td>
-                    <td class="num">{{ group.term_quality_points }}</td>
-                  </tr>
-                  <tr class="program-row">
-                    <td>Program Totals&nbsp;&nbsp;&nbsp; GPA={{ group.program_gpa }}</td>
-                    <td></td>
-                    <td class="num">{{ group.program_attempted_credit }}</td>
-                    <td class="num">{{ group.program_earned_credit }}</td>
-                    <td class="num">{{ group.program_quality_points }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </section>
-          {% endfor %}
-        </div>
+                </td>
+                {% if not forloop.last %}
+                  <td class="detail-spacer-cell"></td>
+                {% endif %}
+              {% endfor %}
+            </tr>
+          </tbody>
+        </table>
       {% else %}
         <p>No grades recorded for this student.</p>
       {% endif %}
 
       <div class="conclusion">
-        <p>***CONCLUSION OF TRANSCRIPT***</p>
-        <p style="margin-top: 5mm;">{{ transcript.notice_final }}</p>
-      </div>
-
-      <div class="grade-page-footer">
-        <div class="qr-placeholder">
-          <strong>QR</strong>
-          <p>Online transcript verification link</p>
-        </div>
-        <div></div>
-        <div class="signature-block">
-          <div class="signature-line"></div>
-          <div>{{ transcript.registrar_title }}</div>
-          <div>Date</div>
-        </div>
+        <p><strong>***CONCLUSION OF TRANSCRIPT***</strong></p>
+        <p class="notice-final">{{ transcript.notice_final }}</p>
       </div>
     </section>
 
@@ -476,7 +461,7 @@
       <h2>Transcript Back Matter</h2>
       <p>{{ transcript.grade_policy_intro }}</p>
 
-      <h3 style="margin-top: 4mm;">Grade Letters and Credit Points</h3>
+      <h3>Grade Letters and Credit Points</h3>
       <table class="grade-scale-table">
         <thead>
           <tr>
@@ -498,14 +483,12 @@
         </tbody>
       </table>
 
-      <h3 style="margin-top: 4mm;">Academic Implications</h3>
+      <h3>Academic Implications</h3>
       <ul class="policy-list">
         {% for note in transcript.deficiency_policy_notes %}
           <li>{{ note }}</li>
         {% endfor %}
       </ul>
-
-      <p class="mention-note">{{ transcript.mention_rules_note }}</p>
     </section>
   </body>
 </html>
