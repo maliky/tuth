@@ -7,6 +7,9 @@
 \DeclareOption{12pt}{\PassOptionsToClass{12pt}{article}}
 \DeclareOption{a4paper}{\PassOptionsToClass{a4paper}{article}}
 \DeclareOption{letterpaper}{\PassOptionsToClass{letterpaper}{article}}
+\DeclareOption{portrait}{\PassOptionsToPackage{portrait}{tutranscript}}
+\DeclareOption{landscape}{\PassOptionsToPackage{landscape}{tutranscript}}
+\DeclareOption{detailtwocolumns}{\PassOptionsToPackage{detailtwocolumns}{tutranscript}}
 \ExecuteOptions{10pt,a4paper}
 \DeclareOption*{\PassOptionsToClass{\CurrentOption}{article}}
 \ProcessOptions\relax

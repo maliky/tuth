@@ -1,0 +1,31 @@
+Note to update the format and process to save and restore the transcript
+
+Objective, have the tanscript for Antony on one page.
+* output
+** Gain space,
+transcript summary on one or 2 lines
+remove the program and cumulative resume
+remvoe titlle transcript detail start directly with the table just keep a small separate blank between semesters and below the semester title line (eg. ~2ex)
+but do ont repeat the table header to each table
+Course column should be truncated cut with elipse.
+
+** Constraints
+Signature and date footer right on page where no registra final signature.
+Increase the space between the columns (1cm)
+- odd pages contains teh grades
+- even pages containes rules and grade details
+  
+
+** adjustement variable
+keep if possible, if not you can remove
+QR code
+
+* process
+a flag should switch from portrait (one colum) to landscape.
+
+* archival
+org mode
+radio table to keep editable org table for the grades
+use the curricula helpers already treating similare grade tables.  This should be primary source of inspiration.
+
+  

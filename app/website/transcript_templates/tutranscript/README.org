@@ -4,9 +4,10 @@ This folder contains the reusable transcript source package used by TUSIS regist
 
 * Files
 - =tutranscript.cls= loads the transcript document class.
-- =tutranscript.sty= owns the transcript layout, TU header, summary, detail table, and signature block.
-- =tutranscript.el= registers the Org class and provides a helper to convert a simple course table into transcript course macros.
-- =example.org= is a standalone export example.
+- =tutranscript.sty= owns the transcript layout, TU header, summary, detail table, conclusion notice, footer signature lines, and public tuning macros.
+- =tutranscript.el= registers the Org class and provides ORGTBL helpers that convert editable transcript tables into semantic transcript macros.
+- =example.org= is a standalone export example with a no-export archival Org table and generated LaTeX receive block.
+- =build-example.sh= refreshes the ORGTBL receive block and generates portrait and landscape examples.
 - =logo120pi.png= is the TU logo copy used by the template.
 
 * Manual export
@@ -15,5 +16,40 @@ From this directory:
 #+begin_src shell
 emacs --batch -l ./tutranscript.el example.org --eval '(org-latex-export-to-pdf)'
 #+end_src
+
+* Portrait and landscape examples
+From this directory:
+
+#+begin_src shell
+bash ./build-example.sh
+# or rebuild only the portrait two-column proposal
+bash ./build-example.sh portrait_two
+#+end_src
+
+This writes =example_portrait.pdf=, =example_landscape.pdf=, and the
+=example_portrait_two.pdf= proposal from the same =example.org= source.
+
+* Portrait two-column proposal
+The =example_portrait_two.pdf= proposal keeps portrait margins unchanged, enables
+=detailtwocolumns=, reduces the detail-column gutter, uses a 9pt detail font,
+widens the code and numeric slots, and shortens long-title truncation so the
+two-column portrait proposal stays readable.
+
+* Editable transcript tables
+The source table in =example.org= follows the curriculum ORGTBL pattern:
+
+- edit the Org table under =Transcript Archive=;
+- run =org-table-send-table= on the =#+ORGTBL: SEND= line, or run the build script;
+- the generated receive block emits semantic macros such as =\TUTranscriptTermBlock=, =\TUTranscriptCourse=, and =\TUTranscriptColumnBreak=.
+
+Fine layout adjustment is kept in LaTeX macros:
+=\TUTRBlockColumnSep=, =\TUTRDetailColSep=, =\TUTRCodeW=,
+=\TUTRGradeW=, =\TUTRAttemptedW=, =\TUTREarnedW=,
+=\TUTRPointsW=, =\TUTRTermGap=, =\TUTRTermHeaderGap=,
+=\TUTRTermTotalGap=, =\TUTRDetailStretch=, and =\TUTRDetailFont=.
+Course-title cells may start
+with =<Twidth>= to override the truncation width for a single row. A
+=column-break= row in the archive table forces the next landscape column and
+reprints the detail-table heading there.
 
 The Django PDF download remains WeasyPrint-based. The Org source download is for registrar-controlled source archival and manual LaTeX export.
