@@ -62,6 +62,8 @@
 \newcommand{\TUTranscriptPrintedDate}{\today}
 \newcommand{\TUTranscriptPrintedDateShort}{\today}
 \newcommand{\TUTranscriptGradeLegend}{A = 90-100; B = 80-89; C = 70-79; D = 60-69; F = 0-59}
+\newcommand{\TUTranscriptGradePolicyIntro}{Each course is assigned credit in semester hours. One semester hour is defined as fifty (50) contact minutes and, where applicable, three hours per week of practical or laboratory work throughout a fifteen-week semester.}
+\newcommand{\TUTranscriptMentionRulesNote}{Mention and honor thresholds are to be confirmed by the Registrar before final transcript publication.}
 \newcommand{\TUTranscriptNoticeFinal}{This is a true copy of the records for the above named student. When inscribed with the seal of William V.S. Tubman University Registrar's Office, this constitutes an Official Transcript.}
 \newcommand{\TUTranscriptRegistrarTitle}{REGISTRAR}
 \newcommand{\TUTranscriptDetailRows}{}
@@ -92,14 +94,16 @@
 }
 
 \fancyhead[C]{\TUTranscriptHeaderBlock}
+\fancyfoot[L]{\scriptsize Registrar: \rule{3.2cm}{0.4pt}}
 \fancyfoot[C]{\scriptsize Page \thepage{} of \pageref{LastPage}}
+\fancyfoot[R]{\scriptsize Date: \rule{3.2cm}{0.4pt}}
 \renewcommand{\headrulewidth}{0pt}
 \renewcommand{\footrulewidth}{0pt}
 
 \newcommand{\TUPrintTranscriptSummary}{%
   {\bfseries Transcript Summary}\par
   \vspace{2pt}
-  \begin{minipage}[t]{0.57\textwidth}
+  \begin{minipage}[t]{0.62\textwidth}
     \begin{tabularx}{\linewidth}{@{}p{4.15cm}X@{}}
       Program Code: & \TUTranscriptProgramCode\\
       College: & \TUTranscriptCollege\\
@@ -109,12 +113,9 @@
       Major Program: & \TUTranscriptMajorProgram\\
     \end{tabularx}
   \end{minipage}\hfill
-  \begin{minipage}[t]{0.36\textwidth}\raggedleft
-    \begin{tabularx}{\linewidth}{@{}X>{\RaggedLeft\arraybackslash}p{1.55cm}>{\RaggedLeft\arraybackslash}p{1.45cm}>{\RaggedLeft\arraybackslash}p{0.8cm}@{\hspace{0.35cm}}}
-         & Attempted Credit & Earned Credit & GPA\\
-      Program Totals: & \TUTranscriptProgramTotalAttempted & \TUTranscriptProgramTotalEarned & \TUTranscriptProgramTotalGPA\\
-      Cumulative Totals: & \TUTranscriptCumulativeTotalAttempted & \TUTranscriptCumulativeTotalEarned & \TUTranscriptCumulativeTotalGPA\\
-    \end{tabularx}
+  \begin{minipage}[t]{0.33\textwidth}\scriptsize
+    \textbf{Program:} Attempted \TUTranscriptProgramTotalAttempted{}; Earned \TUTranscriptProgramTotalEarned{}; GPA \TUTranscriptProgramTotalGPA\par
+    \textbf{Cumulative:} Attempted \TUTranscriptCumulativeTotalAttempted{}; Earned \TUTranscriptCumulativeTotalEarned{}; GPA \TUTranscriptCumulativeTotalGPA
   \end{minipage}\par
   \vspace{0.4\baselineskip}
 }
@@ -125,11 +126,11 @@
 
 \newenvironment{TUTranscriptDetails}{%
   \scriptsize
-  \begin{longtable}{@{}L{7.2cm}C{1.35cm}C{1.35cm}C{0.9cm}R{1.15cm}R{1.15cm}R{1.3cm}@{}}
-  \multicolumn{1}{@{}l}{\textbf{Transcript Detail}} & \textbf{Start Date} & \textbf{End Date} & \textbf{Final Grade} & \multicolumn{1}{r}{\textbf{Attmpt Credit}} & \multicolumn{1}{r}{\textbf{Earned Credit}} & \multicolumn{1}{r@{}}{\textbf{Quality Points}}\\
+  \begin{longtable}{@{}L{10.2cm}C{1.0cm}R{1.45cm}R{1.35cm}R{1.45cm}@{}}
+  \multicolumn{1}{@{}l}{\textbf{Course}} & \textbf{Final Grade} & \multicolumn{1}{r}{\textbf{Attempted Credit}} & \multicolumn{1}{r}{\textbf{Earned Credit}} & \multicolumn{1}{r@{}}{\textbf{Quality Points}}\\
   \midrule
   \endfirsthead
-  \multicolumn{1}{@{}l}{\textbf{Transcript Detail}} & \textbf{Start Date} & \textbf{End Date} & \textbf{Final Grade} & \multicolumn{1}{r}{\textbf{Attmpt Credit}} & \multicolumn{1}{r}{\textbf{Earned Credit}} & \multicolumn{1}{r@{}}{\textbf{Quality Points}}\\
+  \multicolumn{1}{@{}l}{\textbf{Course}} & \textbf{Final Grade} & \multicolumn{1}{r}{\textbf{Attempted Credit}} & \multicolumn{1}{r}{\textbf{Earned Credit}} & \multicolumn{1}{r@{}}{\textbf{Quality Points}}\\
   \midrule
   \endhead
 }{%
@@ -137,24 +138,24 @@
 }
 
 \newcommand{\TUTranscriptProgramRow}[2]{%
-  \multicolumn{7}{@{}l@{}}{\textbf{#1 Program: #2}}\\[-1pt]
+  \multicolumn{5}{@{}l@{}}{\textbf{#1 Program: #2}}\\[-1pt]
 }
 
-\newcommand{\TUTranscriptTermHeader}[3]{%
+\newcommand{\TUTranscriptTermHeader}[1]{%
   \addlinespace[3pt]
-  \multicolumn{7}{@{}l@{}}{\textbf{#1}\hfill #2 -- #3}\\
+  \multicolumn{5}{@{}l@{}}{\textbf{#1}}\\
 }
 
-\newcommand{\TUTranscriptCourse}[8]{%
-  \textbf{#1}\quad #2 & #3 & #4 & #5 & #6 & #7 & #8\\
+\newcommand{\TUTranscriptCourse}[6]{%
+  \textbf{#1}\quad #2 & #3 & #4 & #5 & #6\\
 }
 
 \newcommand{\TUTranscriptTotals}[5]{%
-  \multicolumn{4}{@{}l}{\hspace{1.0cm}\textbf{#1}\quad GPA=#2} & \textbf{#3} & \textbf{#4} & \textbf{#5}\\
+  \multicolumn{2}{@{}l}{\hspace{1.0cm}\textbf{#1}\quad GPA=#2} & \textbf{#3} & \textbf{#4} & \textbf{#5}\\
 }
 
 \newcommand{\TUTranscriptEmptyRow}[1]{%
-  \multicolumn{7}{@{}l@{}}{#1}\\
+  \multicolumn{5}{@{}l@{}}{#1}\\
 }
 
 \newcommand{\TUPrintTranscriptDetails}{%
@@ -163,24 +164,71 @@
   \end{TUTranscriptDetails}
 }
 
+% Back matter is intended for the reverse side when duplex printing.
+\newcommand{\TUTranscriptClearToEvenPage}{%
+  \clearpage
+  \ifodd\value{page}%
+    \thispagestyle{empty}\mbox{}\clearpage
+  \fi
+}
+
 \newcommand{\TUPrintTranscriptConclusion}{%
   \vspace{0.4\baselineskip}
-  {\scriptsize\textbf{Transcript Grade Legend:} \TUTranscriptGradeLegend}\par
-  \vspace{1.1\baselineskip}
   {\centering\bfseries ***CONCLUSION OF TRANSCRIPT***\par}
   \vspace{1.3\baselineskip}
-  \begin{tabularx}{\textwidth}{@{}Xr@{}}
-    \scriptsize \TUTranscriptNoticeFinal & \\
-    & \\
-    & \rule{4.2cm}{0.4pt}\\[-2pt]
-    & {\scriptsize \TUTranscriptRegistrarTitle\hspace{1.5cm}Date}\\
+  \scriptsize \TUTranscriptNoticeFinal\par
+  \vspace{1.3\baselineskip}
+  \begin{tabularx}{\textwidth}{@{}p{3.6cm}Xr@{}}
+    \fbox{\begin{minipage}[c][2.3cm][c]{3.2cm}\centering QR\\Online verification link\end{minipage}} & &
+    \begin{tabular}{c}
+      \rule{4.2cm}{0.4pt}\\[-2pt]
+      {\scriptsize \TUTranscriptRegistrarTitle}\\[-2pt]
+      {\scriptsize Date}
+    \end{tabular}\\
   \end{tabularx}
+}
+
+\newcommand{\TUPrintTranscriptBackMatter}{%
+  \TUTranscriptClearToEvenPage
+  {\centering\bfseries Transcript Back Matter\par}
+  \vspace{0.6\baselineskip}
+  {\scriptsize \TUTranscriptGradePolicyIntro\par}
+  \vspace{0.7\baselineskip}
+  {\scriptsize\bfseries Grade Letters and Credit Points\par}
+  \begin{tabularx}{\textwidth}{@{}p{2.8cm}p{2.4cm}Xr@{}}
+    \toprule
+    Numerical Value & Letter Grade & Meaning & Index Number\\
+    \midrule
+    90--100 & A & Excellent & 4.0\\
+    80--89 & B & Good & 3.0\\
+    70--79 & C & Average & 2.0\\
+    60--69 & D & Poor & 1.0\\
+    Below 60 & F & Failure & 0.0\\
+    \bottomrule
+  \end{tabularx}
+  \vspace{0.7\baselineskip}
+  {\scriptsize\bfseries Academic Implications\par}
+  {\scriptsize
+  \begin{itemize}
+    \item Grades of D, I, F, AB, DR, or NG are considered deficiencies in a student's academic status at the university.
+    \item A grade of D is unsatisfactory. A student must re-enroll in the course within the next two consecutive semesters and earn a grade of C or better to earn course credits where university policy requires it.
+    \item A grade of I indicates that a student completed a substantial part of the course with satisfactory performance but could not complete all requirements.
+    \item A grade of F represents failure. The student must re-enroll in the course and earn a grade of C or better to earn course credits.
+    \item A grade of AB indicates that the student did not take the final examination and provided documented evidence for that inability.
+    \item A grade of DR indicates that the student exceeded the three excused absences allowed and must re-enroll to earn course credits.
+    \item A grade of NG indicates that the student registered for the course but failed to officially withdraw or attend classes.
+    \item A grade of W indicates an official withdrawal approved through the Office of the Registrar after consultation with the instructor and department chair and/or dean.
+  \end{itemize}
+  }
+  \vspace{0.3\baselineskip}
+  \fbox{\begin{minipage}{0.96\textwidth}\scriptsize \TUTranscriptMentionRulesNote\end{minipage}}
 }
 
 \newcommand{\TUPrintTranscript}{%
   \TUPrintTranscriptSummary
   \TUPrintTranscriptDetails
   \TUPrintTranscriptConclusion
+  \TUPrintTranscriptBackMatter
 }
 
 \endinput

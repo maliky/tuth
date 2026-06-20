@@ -4,9 +4,6 @@
   <a class="btn portal-btn-outline btn-sm" href="{{ dashboard_url }}">
     Back to grades
   </a>
-  <a class="btn portal-btn-accent btn-sm" href="{{ download_url }}">
-    Download PDF
-  </a>
   <a class="btn portal-btn-outline btn-sm" href="{{ source_url }}">
     Download Org source
   </a>
@@ -37,17 +34,36 @@
   <section class="portal-panel-card mb-4">
     <div class="portal-panel-card__body">
       <div class="d-flex justify-content-between flex-wrap gap-3 align-items-center">
-        <div>
+        <div class="flex-grow-1">
           <p class="text-uppercase small text-muted mb-1">Transcript exports</p>
           <h2 class="h5 mb-1">Download official record</h2>
           <p class="text-muted mb-0">
-            Use PDF for immediate issuance, or Org source for LaTeX archival export.
+            Select a PDF layout before download, or use Org source for LaTeX archival export.
           </p>
         </div>
-        <div class="d-flex flex-wrap gap-2">
-          <a class="btn portal-btn-accent btn-sm" href="{{ download_url }}" download>
-            Download PDF
-          </a>
+        <div class="d-flex flex-wrap gap-3 align-items-end">
+          <form class="d-flex flex-wrap gap-2 align-items-end" method="get" action="{{ download_url }}">
+            <div>
+              <label class="form-label small text-uppercase text-muted mb-1" for="transcript-layout">
+                Layout
+              </label>
+              <select
+                class="form-select form-select-sm"
+                id="transcript-layout"
+                name="layout"
+                data-transcript-layout-select
+              >
+                {% for option in layout_options %}
+                  <option value="{{ option.key }}" {% if option.selected %}selected{% endif %}>
+                    {{ option.label }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <button class="btn portal-btn-accent btn-sm" type="submit">
+              Download PDF
+            </button>
+          </form>
           <a
             class="btn portal-btn-outline btn-sm"
             href="{{ source_url }}"
@@ -83,9 +99,6 @@
               <tr class="table-light">
                 <td colspan="6">
                   <strong>{{ group.term_label }}</strong>
-                  <span class="text-muted ms-2">
-                    {{ group.term_start_date }} - {{ group.term_end_date }}
-                  </span>
                 </td>
               </tr>
               {% for row in group.rows %}

@@ -19,10 +19,13 @@ from app.website.services.transcript_formatting import (
     fmt_date,
     fmt_gpa,
     fmt_number,
-    fmt_range_date,
 )
 from app.website.services.transcript_types import (
+    DEFICIENCY_POLICY_NOTES,
     GRADE_LEGEND,
+    GRADE_POLICY_INTRO,
+    GRADE_SCALE_ROWS,
+    MENTION_RULES_NOTE,
     NOTICE_CONTINUE,
     NOTICE_FINAL,
     FloatMapT,
@@ -106,17 +109,11 @@ def _course_row(grade: Grade) -> TranscriptCourseRowT:
     """Return a display row for one grade."""
     section = grade.section
     course = section.curriculum_course.course
-    semester = section.semester
     attempted_credit, earned_credit, quality_points = _grade_values(grade)
     final_grade = grade.value.code.upper() if grade.value and grade.value.code else "-"
-    start_date = section.start_date or _semester_start(semester)
-    end_date = section.end_date or _semester_end(semester)
     return {
         "course_code": _course_code(grade),
         "course_title": course.title or "",
-        "clinical": "",
-        "start_date": fmt_date(start_date, short=True),
-        "end_date": fmt_date(end_date, short=True),
         "final_grade": final_grade,
         "attempted_credit": fmt_number(attempted_credit),
         "earned_credit": fmt_number(earned_credit),
@@ -128,8 +125,6 @@ def _empty_term_group(semester: Semester) -> TranscriptTermGroupT:
     """Return a term group initialized with empty display totals."""
     return {
         "term_label": _semester_label(semester),
-        "term_start_date": fmt_range_date(_semester_start(semester)),
-        "term_end_date": fmt_range_date(_semester_end(semester)),
         "rows": [],
         "term_attempted_credit": fmt_number(0),
         "term_earned_credit": fmt_number(0),
@@ -276,6 +271,10 @@ def build_transcript_document(student_id: int) -> TranscriptDocumentT:
         "printed_date": fmt_date(printed_on),
         "printed_date_short": printed_on.strftime("%d-%b-%Y"),
         "grade_legend": GRADE_LEGEND,
+        "grade_policy_intro": GRADE_POLICY_INTRO,
+        "grade_scale_rows": GRADE_SCALE_ROWS,
+        "deficiency_policy_notes": DEFICIENCY_POLICY_NOTES,
+        "mention_rules_note": MENTION_RULES_NOTE,
         "notice_continue": NOTICE_CONTINUE,
         "notice_final": NOTICE_FINAL,
         "registrar_title": getattr(settings, "TRANSCRIPT_REGISTRAR_TITLE", "REGISTRAR"),

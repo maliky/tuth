@@ -71,6 +71,8 @@ def _transcript_header_lines(document: TranscriptDocumentT) -> list[str]:
         ("TUTranscriptPrintedDate", document["printed_date"]),
         ("TUTranscriptPrintedDateShort", document["printed_date_short"]),
         ("TUTranscriptGradeLegend", document["grade_legend"]),
+        ("TUTranscriptGradePolicyIntro", document["grade_policy_intro"]),
+        ("TUTranscriptMentionRulesNote", document["mention_rules_note"]),
         ("TUTranscriptNoticeFinal", document["notice_final"]),
         ("TUTranscriptRegistrarTitle", document["registrar_title"]),
     ]
@@ -102,7 +104,7 @@ def _transcript_detail_lines(document: TranscriptDocumentT) -> list[str]:
         lines.append(
             _latex_command(
                 "TUTranscriptTermHeader",
-                [group["term_label"], group["term_start_date"], group["term_end_date"]],
+                [group["term_label"]],
             )
         )
         for row in group["rows"]:
@@ -113,8 +115,6 @@ def _transcript_detail_lines(document: TranscriptDocumentT) -> list[str]:
                     [
                         row["course_code"],
                         row["course_title"],
-                        row["start_date"],
-                        row["end_date"],
                         row["final_grade"],
                         row["attempted_credit"],
                         row["earned_credit"],

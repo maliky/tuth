@@ -25,6 +25,7 @@ from app.website.services.transcript_rendering import (
     render_transcript_document_html,
     render_transcript_document_org,
 )
+from app.website.services.transcript_types import normalize_transcript_layout
 
 pytestmark = pytest.mark.django_db
 
@@ -90,9 +91,9 @@ def test_transcript_document_counts_failed_courses_as_attempted_not_earned(
 
     document = build_transcript_document(student.id)
 
-    assert document["program_total_attempted"] == "6.00"
-    assert document["program_total_earned"] == "3.00"
-    assert document["cumulative_total_quality"] == "12.00"
+    assert document["program_total_attempted"] == "6"
+    assert document["program_total_earned"] == "3"
+    assert document["cumulative_total_quality"] == "12"
     assert document["cumulative_total_gpa"] == "2.00"
 
 
@@ -114,8 +115,8 @@ def test_transcript_document_collapses_approved_duplicate_aliases(
 
     assert len(rows) == 1
     assert rows[0]["course_code"] == "HIST201"
-    assert document["program_total_attempted"] == "3.00"
-    assert document["cumulative_total_quality"] == "12.00"
+    assert document["program_total_attempted"] == "3"
+    assert document["cumulative_total_quality"] == "12"
 
 
 def test_registrar_transcript_pdf_download_uses_pdf_response(
@@ -145,12 +146,12 @@ def test_registrar_transcript_pdf_download_uses_pdf_response(
     assert response.content.startswith(b"%PDF")
 
 
-def test_transcript_pdf_html_uses_tu_header_without_printed_identity(
+def test_transcript_pdf_html_uses_layout_selection_and_compact_grade_table(
     reg_sem_pair_factory,
     reg_sec_factory,
     reg_std_factory,
 ) -> None:
-    """The PDF source should use TU header blocks and no printed-for footer."""
+    """The PDF source should use selected layout and no date-column grade table."""
     _academic_year, _previous, current = reg_sem_pair_factory()
     section, curriculum = reg_sec_factory(
         current,
@@ -167,22 +168,43 @@ def test_transcript_pdf_html_uses_tu_header_without_printed_identity(
     Grade.objects.create(student=student, section=section, value=_grade_value("a"))
 
     document = build_transcript_document(student.id)
-    html = render_transcript_document_html(document)
+    html = render_transcript_document_html(document, layout="landscape")
 
     assert "@bottom-center" in html
-    assert "@bottom-right" not in html
+    assert "Registrar: __________________" in html
+    assert "Date: __________________" in html
     assert "Printed on" not in html
     assert "Clinical" not in html
+    assert "Attmpt Credit" not in html
+    assert "Start Date" not in html
+    assert "End Date" not in html
+    assert "Attempted<br/>Credit" in html
     assert 'class="logo-block"' in html
     assert 'class="institution-contact"' in html
     assert 'class="student-meta"' in html
-    assert 'class="totals-table summary-totals"' in html
-    assert 'class="date-cell">04/03/26' in html
-    assert 'class="date-cell">06/05/26' in html
+    assert 'data-transcript-layout="landscape"' in html
+    assert "size: A4 landscape;" in html
+    assert 'class="summary-metrics"' in html
+    assert 'class="totals-table summary-totals"' not in html
+    assert "04/03/26" not in html
+    assert "06/05/26" not in html
     assert "Maryland County, Republic of Liberia" in html
     assert "www.Tubmanu.edu.lr · registrar@tubmanu.edu.lr" in html
     assert "institution-document-title" in html
     assert html.count("Maryland County, Liberia") == 1
+    assert "Transcript Back Matter" in html
+    assert "break-before: left" in html
+    assert "Grade Letters and Credit Points" in html
+    assert "Mention and honor thresholds" in html
+    assert "Online transcript verification link" in html
+
+
+def test_transcript_layout_normalization_accepts_legacy_values() -> None:
+    """Legacy transcript layout query values should map to current choices."""
+    assert normalize_transcript_layout("portrait_one") == "portrait"
+    assert normalize_transcript_layout("portrait_two") == "portrait"
+    assert normalize_transcript_layout("landscape_two") == "landscape"
+    assert normalize_transcript_layout("landscape") == "landscape"
 
 
 def test_registrar_transcript_org_download_uses_source_response(
@@ -216,6 +238,9 @@ def test_registrar_transcript_org_download_uses_source_response(
     assert "#+LATEX_CLASS: tutranscript" in org_source
     assert "#+LATEX_COMPILER: lualatex" in org_source
     assert "\\TUTranscriptCourse" in org_source
+    assert "Attmpt Credit" not in org_source
+    assert "Start Date" not in org_source
+    assert "End Date" not in org_source
     assert "\\TUPrintTranscript" in org_source
     assert "Clinical" not in org_source
 
@@ -244,6 +269,9 @@ def test_registrar_transcript_page_shows_body_download_actions(
 
     assert response.status_code == 200
     assert "Transcript exports" in content
+    assert "data-transcript-layout-select" in content
+    assert "Portrait" in content
+    assert "Landscape" in content
     assert "Download Org source" in content
     assert "data-transcript-org-download" in content
 
@@ -285,7 +313,12 @@ def test_transcript_template_pack_contains_org_latex_sources() -> None:
     assert (template_dir / "tutranscript.el").is_file()
     assert (template_dir / "example.org").is_file()
     assert (template_dir / "logo120pi.png").is_file()
-    assert "Clinical" not in (template_dir / "tutranscript.sty").read_text()
+    style_source = (template_dir / "tutranscript.sty").read_text()
+    assert "Clinical" not in style_source
+    assert "Attmpt Credit" not in style_source
+    assert "Start Date" not in style_source
+    assert "Registrar: " in style_source
+    assert r"\TUTranscriptClearToEvenPage" in style_source
 
 
 def test_registrar_transcript_pdf_requires_grade_permission(
@@ -380,15 +413,22 @@ def test_registrar_bulk_transcript_download_exports_selected_students(
         section=second_section,
         value=_grade_value("a"),
     )
+    seen_layouts: list[str] = []
+
+    def fake_pdf(document, *, layout="portrait") -> bytes:
+        """Return a small PDF-like payload and record selected layout."""
+        seen_layouts.append(layout)
+        return f"%PDF {document['student_id']} {layout}".encode()
+
     monkeypatch.setattr(
         "app.website.views.registrar.render_transcript_document_pdf",
-        lambda document: f"%PDF {document['student_id']}".encode(),
+        fake_pdf,
     )
 
     client.force_login(user)
     response = client.post(
         reverse("reg_grade_transcripts_bulk_pdf"),
-        {"student_ids": [str(first_student.id)]},
+        {"student_ids": [str(first_student.id)], "layout": "landscape"},
     )
     with ZipFile(BytesIO(response.content)) as archive:
         names = archive.namelist()
@@ -398,7 +438,9 @@ def test_registrar_bulk_transcript_download_exports_selected_students(
     assert response["Content-Type"] == "application/zip"
     assert len(names) == 1
     assert first_student.student_id in names[0]
+    assert "landscape" in names[0]
     assert second_student.student_id not in names[0]
+    assert seen_layouts == ["landscape"]
     assert payload.startswith(b"%PDF")
 
 

@@ -6,8 +6,8 @@ from datetime import date
 
 
 def fmt_number(value: float | int) -> str:
-    """Return transcript numeric values with two decimal places."""
-    return f"{float(value):.2f}"
+    """Return transcript numeric values rounded to whole units."""
+    return str(round(float(value)))
 
 
 def fmt_gpa(points: float, credits: int) -> str:
@@ -26,11 +26,4 @@ def fmt_date(value: date | None, *, short: bool = False) -> str:
     return f"{value.strftime('%B')} {value.day}, {value.year}"
 
 
-def fmt_range_date(value: date | None) -> str:
-    """Return a date suitable for semester range labels."""
-    if value is None:
-        return ""
-    return value.strftime("%d/%m/%y")
-
-
-__all__ = ["fmt_date", "fmt_gpa", "fmt_number", "fmt_range_date"]
+__all__ = ["fmt_date", "fmt_gpa", "fmt_number"]

@@ -104,6 +104,20 @@
           />
           <span class="fw-semibold">Select visible</span>
         </label>
+        <label class="d-inline-flex align-items-center gap-2 mb-0">
+          <span class="fw-semibold">Layout</span>
+          <select
+            class="form-select form-select-sm"
+            name="layout"
+            data-transcript-layout-select
+          >
+            {% for option in layout_options %}
+              <option value="{{ option.key }}" {% if option.selected %}selected{% endif %}>
+                {{ option.label }}
+              </option>
+            {% endfor %}
+          </select>
+        </label>
         <button
           class="btn portal-btn-accent btn-sm"
           type="submit"
