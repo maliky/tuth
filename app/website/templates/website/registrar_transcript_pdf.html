@@ -5,11 +5,34 @@
     <title>{{ transcript.document_title }} - {{ transcript.student_id }}</title>
     <style>
       @page {
-        size: A4;
-        margin: 10mm 12mm 17mm;
+        size: A4 {{ layout.orientation }};
+        margin: 10mm 12mm 21mm;
+        @bottom-left {
+          content: "QR verification";
+          font-size: 7px;
+        }
         @bottom-center {
           content: "Page " counter(page) " of " counter(pages);
           font-size: 8px;
+        }
+        @bottom-right {
+          content: "Registrar signature / Date";
+          font-size: 7px;
+        }
+      }
+
+      @page transcript-back {
+        size: A4 {{ layout.orientation }};
+        margin: 12mm;
+        @bottom-left {
+          content: "";
+        }
+        @bottom-center {
+          content: "Page " counter(page) " of " counter(pages);
+          font-size: 8px;
+        }
+        @bottom-right {
+          content: "";
         }
       }
 
@@ -25,7 +48,11 @@
         display: grid;
         grid-template-columns: 29mm 1fr 58mm;
         gap: 6mm;
-        margin-bottom: 7mm;
+        margin-bottom: 6mm;
+      }
+
+      .layout-landscape-two .transcript-header {
+        grid-template-columns: 31mm 1fr 70mm;
       }
 
       .institution-contact {
@@ -53,11 +80,6 @@
         font-weight: 700;
       }
 
-      .notice {
-        color: #a00000;
-        font-weight: 700;
-      }
-
       h1,
       h2,
       h3,
@@ -70,11 +92,18 @@
         margin: 0 0 3mm;
       }
 
+      .summary {
+        margin-bottom: 6mm;
+      }
+
       .summary-grid {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 64mm;
+        grid-template-columns: minmax(0, 1fr) minmax(54mm, 66mm);
         gap: 6mm;
-        margin-bottom: 8mm;
+      }
+
+      .layout-landscape-two .summary-grid {
+        grid-template-columns: minmax(0, 1fr) 82mm;
       }
 
       .summary-line {
@@ -94,37 +123,39 @@
         white-space: nowrap;
       }
 
-      .totals-table,
-      .detail-table {
-        border-collapse: collapse;
-        width: 100%;
+      .summary-metrics {
+        border-left: 0.25mm solid #111;
+        padding-left: 3mm;
       }
 
-      .summary-totals {
-        justify-self: end;
-        margin-right: 4mm;
-        width: 60mm;
-      }
-
-      .totals-table {
-        table-layout: fixed;
-      }
-
-      .totals-table th:first-child,
-      .totals-table td:first-child {
-        width: 25mm;
-      }
-
-      .totals-table th,
-      .totals-table td {
-        padding: 1mm 1.4mm;
-        text-align: right;
+      .summary-metric {
+        display: block;
+        margin-bottom: 1.3mm;
         white-space: nowrap;
       }
 
-      .totals-table th:first-child,
-      .totals-table td:first-child {
-        text-align: left;
+      .grade-pages {
+        page: auto;
+      }
+
+      .detail-flow {
+        column-gap: 6mm;
+      }
+
+      .layout-portrait-two .detail-flow,
+      .layout-landscape-two .detail-flow {
+        column-count: 2;
+      }
+
+      .term-block {
+        break-inside: avoid;
+        margin-bottom: 2.2mm;
+      }
+
+      .detail-table,
+      .grade-scale-table {
+        border-collapse: collapse;
+        width: 100%;
       }
 
       .detail-table {
@@ -133,29 +164,31 @@
 
       .detail-table th {
         border-bottom: 0.25mm solid #111;
-        font-size: 7.8px;
-        padding: 0.7mm 0.55mm;
+        font-size: 7.6px;
+        line-height: 1.05;
+        padding: 0.65mm 0.45mm;
         text-align: center;
       }
 
       .detail-table td {
-        padding: 0.45mm 0.55mm;
+        padding: 0.42mm 0.45mm;
         vertical-align: top;
       }
 
-      .detail-table th:first-child {
-        text-align: left;
+      .course-col {
+        width: 54%;
       }
 
-      .detail-table th:nth-child(5),
-      .detail-table th:nth-child(6),
-      .detail-table th:nth-child(7) {
-        text-align: right;
+      .layout-landscape-two .course-col {
+        width: 58%;
       }
 
-      .date-cell {
-        text-align: center;
-        white-space: nowrap;
+      .grade-col {
+        width: 9%;
+      }
+
+      .num-col {
+        width: 12.33%;
       }
 
       .num {
@@ -169,12 +202,13 @@
 
       .term-row td {
         font-weight: 700;
-        padding-top: 1.5mm;
+        padding-top: 1.1mm;
       }
 
-      .term-dates {
-        float: right;
-        font-weight: 400;
+      .course-line {
+        display: flex;
+        gap: 1.2mm;
+        min-width: 0;
       }
 
       .course-code {
@@ -183,50 +217,96 @@
         white-space: nowrap;
       }
 
-      .course-line {
-        display: flex;
-        gap: 1.5mm;
-        min-width: 0;
-      }
-
       .course-title {
+        display: block;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
       }
 
-      .totals-row td {
+      .totals-row td,
+      .program-row td {
         font-weight: 700;
       }
 
       .program-row td {
-        font-weight: 700;
-        padding-bottom: 1.4mm;
+        padding-bottom: 1mm;
       }
 
-      .legend,
       .conclusion {
-        margin-top: 6mm;
+        margin-top: 5mm;
         text-align: center;
       }
 
-      .signature {
+      .grade-page-footer {
+        align-items: end;
+        break-inside: avoid;
         display: grid;
-        gap: 8mm;
-        grid-template-columns: 1fr 32mm;
-        margin-left: auto;
-        margin-top: 14mm;
-        width: 70mm;
+        grid-template-columns: 38mm 1fr 54mm;
+        margin-top: 9mm;
       }
 
-      .signature div {
-        border-top: 0.25mm solid #111;
-        padding-top: 1mm;
+      .qr-placeholder {
+        border: 0.25mm solid #111;
+        min-height: 24mm;
+        padding: 2mm;
         text-align: center;
+      }
+
+      .qr-placeholder strong {
+        display: block;
+        font-size: 11px;
+        margin-bottom: 2mm;
+      }
+
+      .signature-block {
+        text-align: center;
+      }
+
+      .signature-line {
+        border-top: 0.25mm solid #111;
+        margin-bottom: 1mm;
+        min-height: 1mm;
+      }
+
+      .back-matter {
+        break-before: page;
+        page: transcript-back;
+      }
+
+      .back-matter h2 {
+        text-align: center;
+      }
+
+      .grade-scale-table th,
+      .grade-scale-table td {
+        border-bottom: 0.15mm solid #777;
+        padding: 1mm;
+        text-align: left;
+      }
+
+      .grade-scale-table th:last-child,
+      .grade-scale-table td:last-child {
+        text-align: right;
+      }
+
+      .policy-list {
+        margin: 4mm 0 0;
+        padding-left: 5mm;
+      }
+
+      .policy-list li {
+        margin-bottom: 1.4mm;
+      }
+
+      .mention-note {
+        border: 0.2mm solid #777;
+        margin-top: 4mm;
+        padding: 2mm;
       }
     </style>
   </head>
-  <body>
+  <body class="{{ layout.css_class }}" data-transcript-layout="{{ layout.key }}">
     <header class="transcript-header">
       <div class="logo-block">
         {% if transcript.logo_uri %}
@@ -280,112 +360,151 @@
             <span>{{ transcript.major_program }}</span>
           </div>
         </div>
-        <table class="totals-table summary-totals">
-          <thead>
-            <tr>
-              <th></th>
-              <th>Attempted Credit</th>
-              <th>Earned Credit</th>
-              <th>GPA</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Program Totals:</td>
-              <td>{{ transcript.program_total_attempted }}</td>
-              <td>{{ transcript.program_total_earned }}</td>
-              <td>{{ transcript.program_total_gpa }}</td>
-            </tr>
-            <tr>
-              <td>Cumulative Totals:</td>
-              <td>{{ transcript.cumulative_total_attempted }}</td>
-              <td>{{ transcript.cumulative_total_earned }}</td>
-              <td>{{ transcript.cumulative_total_gpa }}</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="summary-metrics">
+          <span class="summary-metric">
+            <strong>Program:</strong>
+            Attempted {{ transcript.program_total_attempted }} ·
+            Earned {{ transcript.program_total_earned }} ·
+            GPA {{ transcript.program_total_gpa }}
+          </span>
+          <span class="summary-metric">
+            <strong>Cumulative:</strong>
+            Attempted {{ transcript.cumulative_total_attempted }} ·
+            Earned {{ transcript.cumulative_total_earned }} ·
+            GPA {{ transcript.cumulative_total_gpa }}
+          </span>
+        </div>
       </div>
     </section>
 
-    <table class="detail-table">
-      <thead>
-        <tr>
-          <th style="width: 50%;">Transcript Detail</th>
-          <th style="width: 9%;">Start Date</th>
-          <th style="width: 9%;">End Date</th>
-          <th style="width: 7%;">Final Grade</th>
-          <th style="width: 8%;">Attmpt Credit</th>
-          <th style="width: 8%;">Earned Credit</th>
-          <th style="width: 9%;">Quality Points</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr class="program-row">
-          <td colspan="7">
-            {{ transcript.program_code }} Program: {{ transcript.major_program }}
-          </td>
-        </tr>
-        {% for group in transcript.term_groups %}
-          <tr class="term-row">
-            <td colspan="7">
-              {{ group.term_label }}
-              <span class="term-dates">{{ group.term_start_date }} - {{ group.term_end_date }}</span>
-            </td>
+    <section class="grade-pages">
+      <h2>Transcript Detail</h2>
+      {% if transcript.term_groups %}
+        <div class="detail-flow">
+          <section class="term-block program-row">
+            <table class="detail-table">
+              <tbody>
+                <tr>
+                  <td>
+                    {{ transcript.program_code }} Program: {{ transcript.major_program }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          {% for group in transcript.term_groups %}
+            <section class="term-block">
+              <table class="detail-table">
+                <colgroup>
+                  <col class="course-col" />
+                  <col class="grade-col" />
+                  <col class="num-col" />
+                  <col class="num-col" />
+                  <col class="num-col" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Course</th>
+                    <th>Final<br/>Grade</th>
+                    <th>Attempted<br/>Credit</th>
+                    <th>Earned<br/>Credit</th>
+                    <th>Quality<br/>Points</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="term-row">
+                    <td colspan="5">{{ group.term_label }}</td>
+                  </tr>
+                  {% for row in group.rows %}
+                    <tr>
+                      <td>
+                        <span class="course-line">
+                          <span class="course-code">{{ row.course_code }}</span>
+                          <span class="course-title">{{ row.course_title }}</span>
+                        </span>
+                      </td>
+                      <td class="center">{{ row.final_grade }}</td>
+                      <td class="num">{{ row.attempted_credit }}</td>
+                      <td class="num">{{ row.earned_credit }}</td>
+                      <td class="num">{{ row.quality_points }}</td>
+                    </tr>
+                  {% endfor %}
+                  <tr class="totals-row">
+                    <td>Term Totals&nbsp;&nbsp;&nbsp; GPA={{ group.term_gpa }}</td>
+                    <td></td>
+                    <td class="num">{{ group.term_attempted_credit }}</td>
+                    <td class="num">{{ group.term_earned_credit }}</td>
+                    <td class="num">{{ group.term_quality_points }}</td>
+                  </tr>
+                  <tr class="program-row">
+                    <td>Program Totals&nbsp;&nbsp;&nbsp; GPA={{ group.program_gpa }}</td>
+                    <td></td>
+                    <td class="num">{{ group.program_attempted_credit }}</td>
+                    <td class="num">{{ group.program_earned_credit }}</td>
+                    <td class="num">{{ group.program_quality_points }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p>No grades recorded for this student.</p>
+      {% endif %}
+
+      <div class="conclusion">
+        <p>***CONCLUSION OF TRANSCRIPT***</p>
+        <p style="margin-top: 5mm;">{{ transcript.notice_final }}</p>
+      </div>
+
+      <div class="grade-page-footer">
+        <div class="qr-placeholder">
+          <strong>QR</strong>
+          <p>Online transcript verification link</p>
+        </div>
+        <div></div>
+        <div class="signature-block">
+          <div class="signature-line"></div>
+          <div>{{ transcript.registrar_title }}</div>
+          <div>Date</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="back-matter">
+      <h2>Transcript Back Matter</h2>
+      <p>{{ transcript.grade_policy_intro }}</p>
+
+      <h3 style="margin-top: 4mm;">Grade Letters and Credit Points</h3>
+      <table class="grade-scale-table">
+        <thead>
+          <tr>
+            <th>Numerical Value</th>
+            <th>Letter Grade</th>
+            <th>Meaning</th>
+            <th>Index Number</th>
           </tr>
-          {% for row in group.rows %}
+        </thead>
+        <tbody>
+          {% for row in transcript.grade_scale_rows %}
             <tr>
-              <td>
-                <span class="course-line">
-                  <span class="course-code">{{ row.course_code }}</span>
-                  <span class="course-title">{{ row.course_title }}</span>
-                </span>
-              </td>
-              <td class="date-cell">{{ row.start_date }}</td>
-              <td class="date-cell">{{ row.end_date }}</td>
-              <td class="center">{{ row.final_grade }}</td>
-              <td class="num">{{ row.attempted_credit }}</td>
-              <td class="num">{{ row.earned_credit }}</td>
-              <td class="num">{{ row.quality_points }}</td>
+              <td>{{ row.numerical_value }}</td>
+              <td>{{ row.letter_grade }}</td>
+              <td>{{ row.meaning }}</td>
+              <td>{{ row.index_number }}</td>
             </tr>
           {% endfor %}
-          <tr class="totals-row">
-            <td class="num">Term Totals&nbsp;&nbsp;&nbsp; GPA={{ group.term_gpa }}</td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td class="num">{{ group.term_attempted_credit }}</td>
-            <td class="num">{{ group.term_earned_credit }}</td>
-            <td class="num">{{ group.term_quality_points }}</td>
-          </tr>
-          <tr class="program-row">
-            <td class="num">Program Totals&nbsp;&nbsp;&nbsp; GPA={{ group.program_gpa }}</td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td class="num">{{ group.program_attempted_credit }}</td>
-            <td class="num">{{ group.program_earned_credit }}</td>
-            <td class="num">{{ group.program_quality_points }}</td>
-          </tr>
-        {% empty %}
-          <tr>
-            <td colspan="7">No grades recorded for this student.</td>
-          </tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin-top: 4mm;">Academic Implications</h3>
+      <ul class="policy-list">
+        {% for note in transcript.deficiency_policy_notes %}
+          <li>{{ note }}</li>
         {% endfor %}
-      </tbody>
-    </table>
+      </ul>
 
-    <div class="legend">
-      <p>Transcript Grade Legend: {{ transcript.grade_legend }}</p>
-    </div>
-
-    <div class="conclusion">
-      <p>***CONCLUSION OF TRANSCRIPT***</p>
-      <p style="margin-top: 5mm;">{{ transcript.notice_final }}</p>
-    </div>
-
-    <div class="signature">
-      <div>{{ transcript.registrar_title }}</div>
-      <div>Date</div>
-    </div>
+      <p class="mention-note">{{ transcript.mention_rules_note }}</p>
+    </section>
   </body>
 </html>

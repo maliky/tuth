@@ -114,6 +114,9 @@ def test_dashboard_explicit_semester_filter_limits_students(
     assert "data-transcript-selected-count" in content
     assert "data-transcript-download-button" in content
     assert "data-transcript-checkbox" in content
+    assert "data-transcript-layout-select" in content
+    assert "Portrait - one grade column" in content
+    assert "Landscape - two grade columns" in content
     assert "event.shiftKey" in content
 
 

@@ -30,6 +30,10 @@ from app.website.services.transcript_rendering import (
     render_transcript_document_org,
     render_transcript_document_pdf,
 )
+from app.website.services.transcript_types import (
+    TranscriptLayoutKeyT,
+    normalize_transcript_layout,
+)
 
 REGISTRAR_TRANSCRIPT_ROLE_LABELS = frozenset(
     {
@@ -52,6 +56,14 @@ def _int_values(values: list[str]) -> list[int]:
 def _filename_part(value: str) -> str:
     """Return a safe filename component for transcript archive members."""
     return "".join(char if char.isalnum() or char in "-_" else "_" for char in value)
+
+
+def _transcript_layout_from_request(request: HttpRequest) -> TranscriptLayoutKeyT:
+    """Return the requested transcript layout, falling back to the default."""
+    raw_layout = request.POST.get("layout") if request.method == "POST" else None
+    if raw_layout is None:
+        raw_layout = request.GET.get("layout")
+    return normalize_transcript_layout(raw_layout)
 
 
 def _bulk_transcript_students(request: HttpRequest) -> list[Student]:
@@ -107,10 +119,11 @@ def reg_grade_transcript_pdf(
 ) -> HttpResponse:
     """Generate and download the registrar transcript PDF."""
     _require_transcript_export_access(request)
+    layout_key = _transcript_layout_from_request(request)
     transcript = build_transcript_document(student_id)
-    pdf_bytes = render_transcript_document_pdf(transcript)
+    pdf_bytes = render_transcript_document_pdf(transcript, layout=layout_key)
     timestamp = timezone.now().strftime("%Y%m%d_%H%M")
-    filename = f"transcript_{transcript['student_id']}_{timestamp}.pdf"
+    filename = f"transcript_{transcript['student_id']}_{layout_key}_{timestamp}.pdf"
     response = HttpResponse(pdf_bytes, content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
@@ -131,15 +144,20 @@ def reg_grade_transcripts_bulk_pdf(request: HttpRequest) -> HttpResponse:
         messages.error(request, "No transcript students matched the export request.")
         return redirect("reg_grades_dashboard")
 
+    layout_key = _transcript_layout_from_request(request)
     timestamp = timezone.now().strftime("%Y%m%d_%H%M")
     archive_buffer = BytesIO()
     with ZipFile(archive_buffer, "w", ZIP_DEFLATED) as archive:
         for student in students:
             transcript = build_transcript_document(student.id)
             member_name = (
-                f"transcript_{_filename_part(transcript['student_id'])}_{timestamp}.pdf"
+                "transcript_"
+                f"{_filename_part(transcript['student_id'])}_{layout_key}_{timestamp}.pdf"
             )
-            archive.writestr(member_name, render_transcript_document_pdf(transcript))
+            archive.writestr(
+                member_name,
+                render_transcript_document_pdf(transcript, layout=layout_key),
+            )
 
     filename = f"transcripts_{timestamp}.zip"
     response = HttpResponse(archive_buffer.getvalue(), content_type="application/zip")

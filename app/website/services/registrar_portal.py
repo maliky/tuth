@@ -30,6 +30,10 @@ from app.website.services.transcript_document import (
     build_transcript_document,
     flatten_transcript_rows,
 )
+from app.website.services.transcript_types import (
+    normalize_transcript_layout,
+    transcript_layout_choices,
+)
 
 ContextT: TypeAlias = PortalContextT
 SemesterWindowSortKeyT: TypeAlias = tuple[int, int, date, date, int, int]
@@ -308,6 +312,7 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
 
     student_groups = build_student_grade_groups(list(page_obj), grades_qs)
     all_semesters_selected = semester_id is None
+    selected_layout = normalize_transcript_layout(None)
     pagination_query, pagination_hidden_fields = _pagination_hidden_fields(request)
     selected_student_label = ""
     if selected_student_id:
@@ -338,6 +343,8 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
         "selected_student_id": selected_student_id,
         "selected_student_label": selected_student_label,
         "bulk_download_url": reverse("reg_grade_transcripts_bulk_pdf"),
+        "layout_options": transcript_layout_choices(selected_layout),
+        "selected_layout": selected_layout,
         "registrar_admin_links": _admin_shortcuts_for_models(
             user,
             REGISTRAR_ADMIN_SHORTCUTS,
@@ -442,6 +449,7 @@ def build_student_grade_groups(students: list[Student], grades) -> list[RegStdGp
 def build_reg_grade_transcript_context(request: HttpRequest, student_id: int) -> ContextT:
     """Build context for an official grade transcript preview."""
     transcript = build_transcript_document(student_id)
+    selected_layout = normalize_transcript_layout(request.GET.get("layout"))
     return {
         "page_title": "Official grade transcript",
         "page_summary": "Registrar-issued transcript preview.",
@@ -456,6 +464,8 @@ def build_reg_grade_transcript_context(request: HttpRequest, student_id: int) ->
         "dashboard_url": reverse("reg_grades_dashboard"),
         "download_url": reverse("reg_grade_transcript_pdf", args=[student_id]),
         "source_url": reverse("reg_grade_transcript_org", args=[student_id]),
+        "layout_options": transcript_layout_choices(selected_layout),
+        "selected_layout": selected_layout,
     }
 
 
