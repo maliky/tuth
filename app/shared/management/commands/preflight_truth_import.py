@@ -12,6 +12,7 @@ from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 from app.registry.constants import GRADES_NUM
 from app.shared.course_wrangling import parse_course_identity
+from app.shared.student_ids import student_id_exact_key
 from app.shared.source_truth.io import read_rows
 
 RowT: TypeAlias = Mapping[str, str]
@@ -110,15 +111,17 @@ def _check_students(path: Path, errors: list[ErrorT], max_errors: int) -> None:
     seen_usernames: set[str] = set()
     for row_number, row in _limited_rows(path, errors, max_errors):
         student_id = row.get("student_id", "")
+        student_id_key = student_id_exact_key(student_id) if student_id else ""
         if not student_id:
             _add_error(errors, path, row_number, "missing_student_id", row, max_errors)
-        if student_id and student_id in seen_ids:
+        if student_id_key and student_id_key in seen_ids:
             _add_error(errors, path, row_number, "duplicate_student_id", row, max_errors)
-        seen_ids.add(student_id)
+        seen_ids.add(student_id_key)
         username = row.get("username", "")
-        if username and username in seen_usernames:
+        username_key = username.casefold()
+        if username_key and username_key in seen_usernames:
             _add_error(errors, path, row_number, "duplicate_username", row, max_errors)
-        seen_usernames.add(username)
+        seen_usernames.add(username_key)
         birth_date = row.get("birth_date", "")
         if birth_date and not _is_iso_date(birth_date):
             _add_error(errors, path, row_number, "invalid_birth_date", row, max_errors)

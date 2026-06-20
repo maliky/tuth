@@ -19,6 +19,7 @@ from app.academics.constants import MAX_STUDENT_CREDITS
 from app.academics.models.curriculum import Curriculum
 from app.people.models.student import Student
 from app.people.models.student_curriculum_enrollment import set_primary_std_curri_enroll
+from app.shared.student_ids import canonical_student_id
 from app.timetable.models.semester import Semester
 
 StudentOptT: TypeAlias = Student | None
@@ -302,7 +303,7 @@ class StudentIntakeForm(forms.Form):
 
     def clean_student_id(self) -> str:
         """Normalize manual student IDs without forcing one."""
-        value = str(self.cleaned_data.get("student_id") or "").strip().upper()
+        value = canonical_student_id(str(self.cleaned_data.get("student_id") or ""))
         if not value:
             return ""
         qs = Student.objects.filter(student_id__iexact=value)

@@ -6,6 +6,7 @@ from app.shared.course_wrangling import (
     CourseIdentityResultT,
     parse_course_identity_result,
 )
+from app.shared.student_ids import canonical_student_id
 from app.shared.source_truth.io import RowT
 from app.timetable.utils import normalize_sem_code
 
@@ -34,8 +35,8 @@ def legacy_curriculum_from_row(row: RowT) -> str:
 
 
 def clean_student_id(value: str) -> str:
-    """Strip transport spaces while preserving meaningful leading zeros."""
-    return value.strip()
+    """Return a canonical import id for TU-prefixed student identifiers."""
+    return canonical_student_id(value)
 
 
 def course_identity_from_row(row: RowT) -> CourseIdentityResultT | None:

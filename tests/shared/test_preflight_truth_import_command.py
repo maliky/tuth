@@ -47,3 +47,41 @@ def test_preflight_rejects_duplicate_student_ids(
 
     with pytest.raises(CommandError, match="Truth preflight failed"):
         call_command("preflight_truth_import", truth_dir=str(truth_dir))
+
+
+def test_preflight_rejects_canonical_tu_student_id_duplicates(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """TU-prefixed case variants should fail as duplicate student ids."""
+    monkeypatch.chdir(tmp_path)
+    truth_dir = tmp_path / "truth"
+    _write(truth_dir / "academic_curriculum.tsv", "curriculum\n")
+    _write(truth_dir / "academic_course.tsv", "course_dept\tcourse_no\n")
+    _write(
+        truth_dir / "academic_curriculum_course.tsv",
+        "curriculum\tcourse_dept\tcourse_no\n",
+    )
+    _write(truth_dir / "academic_curriculum_requirement.tsv", "curriculum\n")
+    _write(
+        truth_dir / "people_full_student.tsv",
+        (
+            "student_id\tusername\tbirth_date\n"
+            "Tu-04047\tstudent.tu04047\t2000-01-01\n"
+            "TU-04047\teastline.clark\t\n"
+        ),
+    )
+    _write(
+        truth_dir / "registry_registration.tsv",
+        "student_id\tacademic_year\tsemester_no\tcourse_dept\tcourse_no\n",
+    )
+    _write(
+        truth_dir / "full_grades.tsv",
+        "student_id\tacademic_year\tsemester_no\tcourse_dept\tcourse_no\tgrade_code\n",
+    )
+    _write(
+        truth_dir / "finance_payments.tsv",
+        "student_id\tacademic_year\tsemester_no\tamount_paid\n",
+    )
+
+    with pytest.raises(CommandError, match="Truth preflight failed"):
+        call_command("preflight_truth_import", truth_dir=str(truth_dir))
