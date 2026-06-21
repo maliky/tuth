@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+from io import BytesIO
 import json
 import secrets
 import subprocess
@@ -219,8 +220,20 @@ def transcript_artifact_filename(artifact: TranscriptArtifactT) -> str:
     return f"transcript_{student_part}_{artifact['layout']}_{artifact['token'][:8]}.pdf"
 
 
-def qr_code_data_uri(value: str) -> str:
-    """Render a QR code PNG data URI using the system qrencode command."""
+def _qr_png_bytes_from_python(value: str) -> bytes | None:
+    """Return QR PNG bytes from the optional Python qrcode package."""
+    try:
+        import qrcode
+    except ImportError:
+        return None
+    buffer = BytesIO()
+    image = qrcode.make(value)
+    image.save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
+def _qr_png_bytes_from_qrencode(value: str) -> bytes:
+    """Return QR PNG bytes using the system qrencode fallback."""
     try:
         completed = subprocess.run(
             ["qrencode", "-o", "-", "-t", "PNG", "-s", "4", "--", value],
@@ -233,7 +246,16 @@ def qr_code_data_uri(value: str) -> str:
     except subprocess.CalledProcessError as exc:
         detail = exc.stderr.decode("utf-8", errors="replace").strip()
         raise RuntimeError(f"Transcript QR generation failed: {detail}") from exc
-    encoded = base64.b64encode(completed.stdout).decode("ascii")
+    return completed.stdout
+
+
+def qr_code_data_uri(value: str) -> str:
+    """Render a QR code PNG data URI for embedding in the transcript PDF."""
+    # Prefer the Python dependency in Docker; keep qrencode for local resilience.
+    png_bytes = _qr_png_bytes_from_python(value)
+    if png_bytes is None:
+        png_bytes = _qr_png_bytes_from_qrencode(value)
+    encoded = base64.b64encode(png_bytes).decode("ascii")
     return f"data:image/png;base64,{encoded}"
 
 
