@@ -1,0 +1,65 @@
+{% extends "website/base.html" %}
+
+{% block title %}Transcript Verification{% endblock %}
+
+{% block content %}
+  <section class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body p-4 p-md-5">
+            <p class="text-uppercase text-muted small fw-semibold mb-2">
+              Tubman University transcript verification
+            </p>
+            <h1 class="h3 mb-3">Official transcript record</h1>
+
+            {% if artifact.revoked %}
+              <div class="alert alert-danger" role="alert">
+                This transcript verification record has been revoked.
+                {% if artifact.revoked_reason %}
+                  {{ artifact.revoked_reason }}
+                {% endif %}
+              </div>
+            {% else %}
+              <div class="alert alert-success" role="alert">
+                This verification token matches a transcript stored by Tusis.
+              </div>
+            {% endif %}
+
+            <dl class="row mb-4">
+              <dt class="col-sm-4">Student</dt>
+              <dd class="col-sm-8">{{ artifact.student_name }}</dd>
+
+              <dt class="col-sm-4">Student ID</dt>
+              <dd class="col-sm-8">{{ artifact.student_id }}</dd>
+
+              <dt class="col-sm-4">Program</dt>
+              <dd class="col-sm-8">{{ artifact.major_program }}</dd>
+
+              <dt class="col-sm-4">College</dt>
+              <dd class="col-sm-8">{{ artifact.college }}</dd>
+
+              <dt class="col-sm-4">Layout</dt>
+              <dd class="col-sm-8">{{ artifact.layout|title }}</dd>
+
+              <dt class="col-sm-4">Issued</dt>
+              <dd class="col-sm-8">{{ artifact.issued_at }}</dd>
+
+              <dt class="col-sm-4">Issued by</dt>
+              <dd class="col-sm-8">{{ artifact.issued_by }}</dd>
+
+              <dt class="col-sm-4">Verification token</dt>
+              <dd class="col-sm-8"><code>{{ artifact.token }}</code></dd>
+            </dl>
+
+            {% if not artifact.revoked %}
+              <a class="btn btn-success" href="{{ pdf_url }}">
+                Download verified PDF
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}

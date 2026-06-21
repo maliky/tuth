@@ -257,6 +257,9 @@ class TranscriptDocumentT(TypedDict):
     notice_final: str
     registrar_title: str
     term_groups: list[TranscriptTermGroupT]
+    verification_token: str
+    verification_url: str
+    qr_code_uri: str
 
 
 __all__ = [

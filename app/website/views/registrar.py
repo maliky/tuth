@@ -31,9 +31,9 @@ from app.website.services.registrar_rosters import (
     registrar_faculty_results,
 )
 from app.website.services.transcript_document import build_transcript_document
+from app.website.services.transcript_artifacts import issue_transcript_artifact
 from app.website.services.transcript_rendering import (
     render_transcript_document_org,
-    render_transcript_document_pdf,
 )
 from app.website.services.transcript_types import (
     TranscriptLayoutKeyT,
@@ -56,11 +56,6 @@ def _int_values(values: list[str]) -> list[int]:
         if clean_value is not None:
             clean_values.append(clean_value)
     return clean_values
-
-
-def _filename_part(value: str) -> str:
-    """Return a safe filename component for transcript archive members."""
-    return "".join(char if char.isalnum() or char in "-_" else "_" for char in value)
 
 
 def _transcript_layout_from_request(request: HttpRequest) -> TranscriptLayoutKeyT:
@@ -165,12 +160,13 @@ def reg_grade_transcript_pdf(
     """Generate and download the registrar transcript PDF."""
     _require_transcript_export_access(request)
     layout_key = _transcript_layout_from_request(request)
-    transcript = build_transcript_document(student_id)
-    pdf_bytes = render_transcript_document_pdf(transcript, layout=layout_key)
-    timestamp = timezone.now().strftime("%Y%m%d_%H%M")
-    filename = f"transcript_{transcript['student_id']}_{layout_key}_{timestamp}.pdf"
-    response = HttpResponse(pdf_bytes, content_type="application/pdf")
-    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    artifact = issue_transcript_artifact(
+        request,
+        layout=layout_key,
+        student_id=student_id,
+    )
+    response = HttpResponse(artifact.pdf_bytes, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="{artifact.filename}"'
     return response
 
 
@@ -194,14 +190,14 @@ def reg_grade_transcripts_bulk_pdf(request: HttpRequest) -> HttpResponse:
     archive_buffer = BytesIO()
     with ZipFile(archive_buffer, "w", ZIP_DEFLATED) as archive:
         for student in students:
-            transcript = build_transcript_document(student.id)
-            member_name = (
-                "transcript_"
-                f"{_filename_part(transcript['student_id'])}_{layout_key}_{timestamp}.pdf"
+            artifact = issue_transcript_artifact(
+                request,
+                layout=layout_key,
+                student_id=student.id,
             )
             archive.writestr(
-                member_name,
-                render_transcript_document_pdf(transcript, layout=layout_key),
+                artifact.filename,
+                artifact.pdf_bytes,
             )
 
     filename = f"transcripts_{layout_key}_{timestamp}.zip"

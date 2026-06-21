@@ -279,6 +279,9 @@ def build_transcript_document(student_id: int) -> TranscriptDocumentT:
         "notice_final": NOTICE_FINAL,
         "registrar_title": getattr(settings, "TRANSCRIPT_REGISTRAR_TITLE", "REGISTRAR"),
         "term_groups": groups,
+        "verification_token": "",
+        "verification_url": "",
+        "qr_code_uri": "",
     }
 
 

@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libxslt1.1 \
       fontconfig \
       fonts-dejavu-core \
+      qrencode \
     && rm -rf /var/lib/apt/lists/*
 
   

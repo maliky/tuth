@@ -48,6 +48,7 @@ from .registrar import (
     reg_std_autocomplete,
 )
 from .staff_dashboards import staff_dashboard, staff_role_dashboard
+from .transcripts import transcript_verify, transcript_verify_pdf
 from .vpaa import (
     vpaa_approval_approve,
     vpaa_approval_detail,
@@ -105,6 +106,8 @@ __all__ = [
     "std_payment_receipt",
     "std_sec_detail",
     "std_invoice_snapshot_pdf",
+    "transcript_verify",
+    "transcript_verify_pdf",
     "finance_officer_invoices",
     "finance_officer_create_payments",
     "finance_officer_generate_registration_invoices",

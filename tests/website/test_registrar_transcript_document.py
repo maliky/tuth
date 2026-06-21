@@ -6,6 +6,7 @@ from collections.abc import Iterable
 from datetime import date
 from io import BytesIO
 from pathlib import Path
+from types import SimpleNamespace
 from typing import TypeAlias, cast
 from zipfile import ZipFile
 
@@ -24,6 +25,10 @@ from app.registry.models.grade import Grade, GradeValue
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
 from app.website.services.transcript_document import build_transcript_document
+from app.website.services.transcript_artifacts import (
+    load_transcript_artifact,
+    transcript_document_with_verification,
+)
 from app.website.services.transcript_pdf_layout import (
     split_term_groups_for_columns,
     transcript_pdf_layout,
@@ -38,6 +43,12 @@ pytestmark = pytest.mark.django_db
 
 RenderedTextT: TypeAlias = tuple[str, float, float]
 RenderedPageTextT: TypeAlias = tuple[float, list[RenderedTextT]]
+
+TINIEST_PNG_URI = (
+    "data:image/png;base64,"
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO"
+    "+/p9sAAAAASUVORK5CYII="
+)
 
 
 def _grade_value(code: str) -> GradeValue:
@@ -167,12 +178,20 @@ def test_transcript_document_collapses_approved_duplicate_aliases(
 
 def test_registrar_transcript_pdf_download_uses_pdf_response(
     client,
+    monkeypatch,
+    settings,
+    tmp_path,
     reg_user_factory,
     reg_sem_pair_factory,
     reg_sec_factory,
     reg_std_factory,
 ) -> None:
     """Registrar users can download a generated transcript PDF."""
+    settings.MEDIA_ROOT = tmp_path
+    monkeypatch.setattr(
+        "app.website.services.transcript_artifacts.qr_code_data_uri",
+        lambda _value: TINIEST_PNG_URI,
+    )
     user = reg_user_factory("registrar_transcript_pdf")
     _academic_year, _previous, current = reg_sem_pair_factory()
     section, curriculum = reg_sec_factory(
@@ -191,6 +210,7 @@ def test_registrar_transcript_pdf_download_uses_pdf_response(
     assert response["Content-Disposition"].startswith("attachment;")
     assert "portrait" in response["Content-Disposition"]
     assert response.content.startswith(b"%PDF")
+    assert list((tmp_path / "transcripts" / "manifests").glob("*.json"))
 
     landscape_response = client.get(
         reverse("reg_grade_transcript_pdf", args=[student.id]),
@@ -201,6 +221,69 @@ def test_registrar_transcript_pdf_download_uses_pdf_response(
     assert landscape_response["Content-Type"] == "application/pdf"
     assert "landscape" in landscape_response["Content-Disposition"]
     assert landscape_response.content.startswith(b"%PDF")
+
+
+def test_registrar_transcript_pdf_download_stores_public_verification_artifact(
+    client,
+    monkeypatch,
+    settings,
+    tmp_path,
+    reg_user_factory,
+    reg_sem_pair_factory,
+    reg_sec_factory,
+    reg_std_factory,
+) -> None:
+    """Official transcript downloads should persist a QR-verifiable artifact."""
+    settings.MEDIA_ROOT = tmp_path
+    monkeypatch.setattr(
+        "app.website.services.transcript_artifacts.qr_code_data_uri",
+        lambda _value: TINIEST_PNG_URI,
+    )
+    user = reg_user_factory("registrar_transcript_artifact")
+    _academic_year, _previous, current = reg_sem_pair_factory()
+    section, curriculum = reg_sec_factory(
+        current,
+        course_number="414",
+        curriculum_short_name="CURRI_TRANSCRIPT_ARTIFACT",
+    )
+    student = reg_std_factory(
+        "registrar_transcript_artifact_student",
+        curriculum,
+        current,
+    )
+    Grade.objects.create(student=student, section=section, value=_grade_value("a"))
+
+    client.force_login(user)
+    response = client.get(
+        reverse("reg_grade_transcript_pdf", args=[student.id]),
+        {"layout": "landscape"},
+    )
+    manifest_paths = list((tmp_path / "transcripts" / "manifests").glob("*.json"))
+    assert response.status_code == 200
+    assert len(manifest_paths) == 1
+
+    artifact = load_transcript_artifact(manifest_paths[0].stem)
+    transcript = build_transcript_document(student.id)
+    pdf_path = tmp_path / artifact["pdf_relative_path"]
+    verify_path = reverse("transcript_verify", args=[artifact["token"]])
+    verify_pdf_path = reverse("transcript_verify_pdf", args=[artifact["token"]])
+
+    assert artifact["layout"] == "landscape"
+    assert artifact["student_id"] == student.student_id
+    assert artifact["student_name"] == transcript["student_name"]
+    assert artifact["verification_url"].endswith(verify_path)
+    assert pdf_path.read_bytes() == response.content
+
+    verify_response = client.get(verify_path)
+    verify_content = verify_response.content.decode()
+    assert verify_response.status_code == 200
+    assert student.student_id in verify_content
+    assert artifact["token"] in verify_content
+
+    pdf_response = client.get(verify_pdf_path)
+    assert pdf_response.status_code == 200
+    assert pdf_response["Content-Type"] == "application/pdf"
+    assert b"".join(pdf_response.streaming_content) == response.content
 
 
 def test_transcript_pdf_html_uses_layout_selection_and_compact_grade_table(
@@ -265,6 +348,36 @@ def test_transcript_pdf_html_uses_layout_selection_and_compact_grade_table(
     assert "Grade Letters and Credit Points" in html
     assert "Mention and honor thresholds" not in html
     assert "Online transcript verification link" not in html
+
+
+def test_transcript_pdf_html_includes_qr_metadata_for_verified_artifact(
+    reg_sem_pair_factory,
+    reg_sec_factory,
+    reg_std_factory,
+) -> None:
+    """Issued transcript documents should render visible QR verification metadata."""
+    _academic_year, _previous, current = reg_sem_pair_factory()
+    section, curriculum = reg_sec_factory(
+        current,
+        course_number="415",
+        curriculum_short_name="CURRI_TRANSCRIPT_QR",
+    )
+    student = reg_std_factory("registrar_transcript_qr_student", curriculum, current)
+    Grade.objects.create(student=student, section=section, value=_grade_value("a"))
+    document = build_transcript_document(student.id)
+    verified_document = transcript_document_with_verification(
+        document,
+        qr_code_uri=TINIEST_PNG_URI,
+        token="qr-token-1",
+        verification_url="https://tusis.koba.sarl/transcripts/verify/qr-token-1/",
+    )
+
+    html = render_transcript_document_html(verified_document, layout="landscape")
+
+    assert "Scan to verify transcript." in html
+    assert "Token: qr-token-1" in html
+    assert "https://tusis.koba.sarl/transcripts/verify/qr-token-1/" in html
+    assert TINIEST_PNG_URI in html
 
 
 def test_landscape_pdf_render_keeps_transcript_rows_visible(
@@ -573,14 +686,18 @@ def test_registrar_bulk_transcript_download_exports_selected_students(
     )
     seen_layouts: list[str] = []
 
-    def fake_pdf(document, *, layout="portrait") -> bytes:
-        """Return a small PDF-like payload and record selected layout."""
+    def fake_issue(request, *, layout="portrait", student_id: int):
+        """Return a small artifact-like payload and record selected layout."""
         seen_layouts.append(layout)
-        return f"%PDF {document['student_id']} {layout}".encode()
+        student = Student.objects.get(id=student_id)
+        return SimpleNamespace(
+            filename=f"transcript_{student.student_id}_{layout}_mock.pdf",
+            pdf_bytes=f"%PDF {student.student_id} {layout}".encode(),
+        )
 
     monkeypatch.setattr(
-        "app.website.views.registrar.render_transcript_document_pdf",
-        fake_pdf,
+        "app.website.views.registrar.issue_transcript_artifact",
+        fake_issue,
     )
 
     client.force_login(user)

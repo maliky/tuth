@@ -226,4 +226,14 @@ urlpatterns = [
         views.reg_std_autocomplete,
         name="reg_std_autocomplete",
     ),
+    path(
+        "transcripts/verify/<slug:token>/",
+        views.transcript_verify,
+        name="transcript_verify",
+    ),
+    path(
+        "transcripts/verify/<slug:token>/pdf/",
+        views.transcript_verify_pdf,
+        name="transcript_verify_pdf",
+    ),
 ]

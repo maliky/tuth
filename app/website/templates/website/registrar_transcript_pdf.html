@@ -270,6 +270,36 @@
         text-align: left;
       }
 
+      .verification-block {
+        align-items: center;
+        border-top: 0.18mm solid #777;
+        display: grid;
+        gap: 2.2mm;
+        grid-template-columns: 18mm minmax(0, 1fr);
+        margin-top: 2mm;
+        padding-top: 1.5mm;
+        text-align: left;
+      }
+
+      .verification-qr {
+        height: 16mm;
+        width: 16mm;
+      }
+
+      .verification-copy {
+        font-size: 6.6px;
+        line-height: 1.15;
+      }
+
+      .verification-copy strong,
+      .verification-token {
+        display: block;
+      }
+
+      .verification-url {
+        overflow-wrap: anywhere;
+      }
+
       .back-matter {
         break-before: left;
         font-size: 7.6px;
@@ -454,6 +484,20 @@
       <div class="conclusion">
         <p><strong>***CONCLUSION OF TRANSCRIPT***</strong></p>
         <p class="notice-final">{{ transcript.notice_final }}</p>
+        {% if transcript.qr_code_uri %}
+          <div class="verification-block">
+            <img
+              class="verification-qr"
+              src="{{ transcript.qr_code_uri }}"
+              alt="Transcript verification QR code"
+            />
+            <div class="verification-copy">
+              <strong>Scan to verify transcript.</strong>
+              <span class="verification-token">Token: {{ transcript.verification_token }}</span>
+              <span class="verification-url">{{ transcript.verification_url }}</span>
+            </div>
+          </div>
+        {% endif %}
       </div>
     </section>
 
