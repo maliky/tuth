@@ -51,18 +51,27 @@
       }
 
       .transcript-header {
-        align-items: center;
-        display: grid;
-        gap: 4.2mm;
-        grid-template-columns: minmax(0, 1.38fr) minmax(40mm, 0.64fr) minmax(0, 0.92fr);
+        display: table;
+        table-layout: fixed;
+        width: 100%;
         margin-bottom: 2.7mm;
       }
 
       .institution-identity {
-        align-items: center;
-        display: grid;
-        gap: 2mm;
-        grid-template-columns: 15mm minmax(0, 1fr);
+        display: table-cell;
+        vertical-align: middle;
+        width: 42%;
+      }
+
+      .institution-identity-table {
+        border-collapse: collapse;
+        table-layout: fixed;
+        width: 100%;
+      }
+
+      .logo-block {
+        vertical-align: middle;
+        width: 17mm;
       }
 
       .logo {
@@ -84,13 +93,19 @@
       .document-title {
         font-size: 11px;
         line-height: 1.05;
+        display: table-cell;
+        vertical-align: middle;
+        width: 24%;
         text-align: center;
       }
 
       .student-meta {
+        display: table-cell;
         font-size: 7.2px;
         line-height: 1.05;
         text-align: right;
+        vertical-align: middle;
+        width: 34%;
       }
 
       .summary-strip {
@@ -99,16 +114,30 @@
       }
 
       .summary-row {
-        display: grid;
-        gap: 2.2mm;
-        grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr) minmax(0, 0.95fr) minmax(0, 1.05fr) minmax(0, 1fr);
+        display: table;
+        table-layout: fixed;
+        width: 100%;
       }
 
       .summary-cell {
+        display: table-cell;
         min-width: 0;
         overflow: hidden;
+        padding-right: 2.2mm;
         text-overflow: ellipsis;
+        vertical-align: top;
         white-space: nowrap;
+      }
+
+      .summary-cell--program {
+        width: 42%;
+      }
+
+      .summary-cell--college,
+      .summary-cell--enrollment,
+      .summary-cell--completion,
+      .summary-cell--graduation {
+        width: 14.5%;
       }
 
       .summary-cell strong {
@@ -270,15 +299,25 @@
         text-align: left;
       }
 
+      /* WeasyPrint can assert on CSS Grid in long paginated transcript PDFs. */
       .verification-block {
-        align-items: center;
         border-top: 0.18mm solid #777;
-        display: grid;
-        gap: 2.2mm;
-        grid-template-columns: 18mm minmax(0, 1fr);
+        display: table;
+        table-layout: fixed;
+        width: 100%;
         margin-top: 2mm;
         padding-top: 1.5mm;
         text-align: left;
+      }
+
+      .verification-qr-cell,
+      .verification-copy {
+        display: table-cell;
+        vertical-align: middle;
+      }
+
+      .verification-qr-cell {
+        width: 18mm;
       }
 
       .verification-qr {
@@ -349,17 +388,23 @@
   <body class="{{ layout.css_class }} {{ pdf_layout.css_class }}" data-transcript-layout="{{ layout.key }}">
     <header class="transcript-header">
       <div class="institution-identity">
-        <div class="logo-block">
-          {% if transcript.logo_uri %}
-            <img class="logo" src="{{ transcript.logo_uri }}" alt="TU logo" />
-          {% endif %}
-        </div>
-        <div class="institution-contact">
-          <p class="institution-name">{{ transcript.institution_name }}</p>
-          <p>{{ transcript.address_one }}</p>
-          <p>{{ transcript.address_two }}, {{ transcript.country }}</p>
-          <p>{{ transcript.website }} &middot; {{ transcript.registrar_email }}</p>
-        </div>
+        <table class="institution-identity-table">
+          <tbody>
+            <tr>
+              <td class="logo-block">
+                {% if transcript.logo_uri %}
+                  <img class="logo" src="{{ transcript.logo_uri }}" alt="TU logo" />
+                {% endif %}
+              </td>
+              <td class="institution-contact">
+                <p class="institution-name">{{ transcript.institution_name }}</p>
+                <p>{{ transcript.address_one }}</p>
+                <p>{{ transcript.address_two }}, {{ transcript.country }}</p>
+                <p>{{ transcript.website }} &middot; {{ transcript.registrar_email }}</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
       <div class="document-title">{{ transcript.document_title }}</div>
       <div class="student-meta">
@@ -375,19 +420,19 @@
 
     <section class="summary-strip">
       <div class="summary-row">
-        <div class="summary-cell">
+        <div class="summary-cell summary-cell--program">
           <strong>Curriculum:</strong> {{ transcript.program_code }} -- {{ transcript.major_program }}
         </div>
-        <div class="summary-cell">
+        <div class="summary-cell summary-cell--college">
           <strong>College:</strong> {{ transcript.college }}
         </div>
-        <div class="summary-cell">
+        <div class="summary-cell summary-cell--enrollment">
           <strong>Enrollment:</strong> {{ transcript.enrollment_date }}
         </div>
-        <div class="summary-cell">
+        <div class="summary-cell summary-cell--completion">
           <strong>Completion:</strong> {{ transcript.completion_date }}
         </div>
-        <div class="summary-cell">
+        <div class="summary-cell summary-cell--graduation">
           <strong>Graduation:</strong> {{ transcript.graduation_date }}
         </div>
       </div>
@@ -484,20 +529,6 @@
       <div class="conclusion">
         <p><strong>***CONCLUSION OF TRANSCRIPT***</strong></p>
         <p class="notice-final">{{ transcript.notice_final }}</p>
-        {% if transcript.qr_code_uri %}
-          <div class="verification-block">
-            <img
-              class="verification-qr"
-              src="{{ transcript.qr_code_uri }}"
-              alt="Transcript verification QR code"
-            />
-            <div class="verification-copy">
-              <strong>Scan to verify transcript.</strong>
-              <span class="verification-token">Token: {{ transcript.verification_token }}</span>
-              <span class="verification-url">{{ transcript.verification_url }}</span>
-            </div>
-          </div>
-        {% endif %}
       </div>
     </section>
 
@@ -533,6 +564,23 @@
           <li>{{ note }}</li>
         {% endfor %}
       </ul>
+
+      {% if transcript.qr_code_uri %}
+        <div class="verification-block">
+          <div class="verification-qr-cell">
+            <img
+              class="verification-qr"
+              src="{{ transcript.qr_code_uri }}"
+              alt="Transcript verification QR code"
+            />
+          </div>
+          <div class="verification-copy">
+            <strong>Scan to verify transcript.</strong>
+            <span class="verification-token">Token: {{ transcript.verification_token }}</span>
+            <span class="verification-url">{{ transcript.verification_url }}</span>
+          </div>
+        </div>
+      {% endif %}
     </section>
   </body>
 </html>

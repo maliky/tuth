@@ -31,7 +31,7 @@ def test_registrar_transcript_page_hides_org_source_download_in_browser(
     reg_sec_factory,
     reg_std_factory,
 ) -> None:
-    """Registrar transcript preview should expose PDF layout controls only."""
+    """Registrar transcript preview should expose direct PDF download only."""
     user = reg_user_factory("registrar_selenium_org_hidden")
     _academic_year, _previous, current = reg_sem_pair_factory()
     section, curriculum = reg_sec_factory(
@@ -51,11 +51,12 @@ def test_registrar_transcript_page_hides_org_source_download_in_browser(
     selenium_driver.get(transcript_url)
     WebDriverWait(selenium_driver, 10).until(
         EC.presence_of_element_located(
-            (By.CSS_SELECTOR, "[data-transcript-layout-select]")
+            (By.CSS_SELECTOR, "[data-transcript-pdf-download]")
         )
     )
 
-    assert "Download PDF" in selenium_driver.page_source
+    assert "Download official transcript" in selenium_driver.page_source
+    assert "data-transcript-layout-select" not in selenium_driver.page_source
     assert "Download Org source" not in selenium_driver.page_source
     assert not selenium_driver.find_elements(
         By.CSS_SELECTOR, "[data-transcript-org-download]"

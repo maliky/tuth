@@ -104,20 +104,6 @@
           />
           <span class="fw-semibold">Select visible</span>
         </label>
-        <label class="d-inline-flex align-items-center gap-2 mb-0">
-          <span class="fw-semibold">Layout</span>
-          <select
-            class="form-select form-select-sm"
-            name="layout"
-            data-transcript-layout-select
-          >
-            {% for option in layout_options %}
-              <option value="{{ option.key }}" {% if option.selected %}selected{% endif %}>
-                {{ option.label }}
-              </option>
-            {% endfor %}
-          </select>
-        </label>
         <button
           class="btn portal-btn-accent btn-sm"
           type="submit"
@@ -174,9 +160,9 @@
             <div class="portal-accordion-card__body">
               {% for semester in group.semesters %}
                 <div class="portal-nested-card mb-3">
-                  <div class="p-0">
+                  <div class="p-0 d-flex flex-wrap align-items-stretch gap-2">
                     <button
-                      class="btn portal-collapse-toggle text-decoration-none w-100 text-start d-flex justify-content-between align-items-center px-3 py-2"
+                      class="btn portal-collapse-toggle text-decoration-none flex-grow-1 text-start d-flex justify-content-between align-items-center px-3 py-2"
                       type="button"
                       data-bs-toggle="collapse"
                       data-bs-target="#semester-{{ group.student.id }}-{{ semester.semester.id }}"
@@ -191,6 +177,14 @@
                         GPA {{ semester.gpa }} · Credits {{ semester.credits_total }}
                       </span>
                     </button>
+                    {% if semester.can_manage_grades %}
+                      <a
+                        class="btn portal-btn-outline btn-sm d-inline-flex align-items-center m-2"
+                        href="{{ semester.grade_editor_url }}"
+                      >
+                        Add/correct grades
+                      </a>
+                    {% endif %}
                   </div>
                   <div class="collapse" id="semester-{{ group.student.id }}-{{ semester.semester.id }}">
                     <div class="course-table table-responsive">
@@ -212,7 +206,14 @@
                                 <span class="text-muted">{{ row.course_title }}</span>
                               </td>
                               <td>{{ row.credits }}</td>
-                              <td>{{ row.grade }}</td>
+                              <td>
+                                {{ row.grade }}
+                                {% if row.is_missing_grade %}
+                                  <span class="status-badge status-pending ms-2">
+                                    Needs grade
+                                  </span>
+                                {% endif %}
+                              </td>
                               <td>{{ row.faculty }}</td>
                               <td class="text-end">
                                 <a class="btn portal-btn-outline btn-sm" href="{{ row.roster_url }}">

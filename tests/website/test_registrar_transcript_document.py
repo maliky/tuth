@@ -22,6 +22,7 @@ from app.academics.models.department import Department
 from app.people.models.student import Student
 from app.registry.models.credit_hours import CreditHour
 from app.registry.models.grade import Grade, GradeValue
+from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
 from app.website.services.transcript_document import build_transcript_document
@@ -208,13 +209,13 @@ def test_registrar_transcript_pdf_download_uses_pdf_response(
     assert response.status_code == 200
     assert response["Content-Type"] == "application/pdf"
     assert response["Content-Disposition"].startswith("attachment;")
-    assert "portrait" in response["Content-Disposition"]
+    assert "landscape" in response["Content-Disposition"]
     assert response.content.startswith(b"%PDF")
     assert list((tmp_path / "transcripts" / "manifests").glob("*.json"))
 
     landscape_response = client.get(
         reverse("reg_grade_transcript_pdf", args=[student.id]),
-        {"layout": "landscape"},
+        {"layout": "portrait"},
     )
 
     assert landscape_response.status_code == 200
@@ -326,9 +327,13 @@ def test_transcript_pdf_html_uses_layout_selection_and_compact_grade_table(
     assert 'class="layout-landscape pdf-layout-landscape-two"' in html
     assert "size: A4 landscape;" in html
     assert 'class="summary-strip"' in html
+    assert 'class="institution-identity-table"' in html
+    assert 'class="summary-cell summary-cell--program"' in html
     assert 'class="detail-columns-table"' in html
     assert 'class="detail-columns"' not in html
     assert ".detail-columns {" not in html
+    assert "display: grid" not in html
+    assert "grid-template" not in html
     assert ".course-line {\n        display: grid;" not in html
     assert ".course-line {\n        white-space: nowrap;" in html
     assert "<th>Grade</th>" in html
@@ -377,7 +382,79 @@ def test_transcript_pdf_html_includes_qr_metadata_for_verified_artifact(
     assert "Scan to verify transcript." in html
     assert "Token: qr-token-1" in html
     assert "https://tusis.koba.sarl/transcripts/verify/qr-token-1/" in html
+    assert 'class="verification-qr-cell"' in html
     assert TINIEST_PNG_URI in html
+    assert html.index('class="back-matter"') < html.index('class="verification-block"')
+    assert html.index("***CONCLUSION OF TRANSCRIPT***") < html.index(
+        'class="back-matter"'
+    )
+
+
+def test_verified_landscape_pdf_renders_long_transcript_without_grid_crash(
+    reg_sec_factory,
+    reg_std_factory,
+) -> None:
+    """Long verified landscape transcripts should avoid WeasyPrint grid asserts."""
+    semesters: list[Semester] = []
+    for year_offset in range(6):
+        start_year = 2017 + year_offset
+        academic_year = AcademicYear.objects.create(start_date=date(start_year, 8, 1))
+        semester_one = Semester.objects.create(
+            academic_year=academic_year,
+            number=1,
+            start_date=date(start_year, 9, 1),
+        )
+        semesters.append(semester_one)
+        if len(semesters) == 11:
+            break
+        semester_two = Semester.objects.create(
+            academic_year=academic_year,
+            number=2,
+            start_date=date(start_year + 1, 1, 15),
+        )
+        semesters.append(semester_two)
+        if len(semesters) == 11:
+            break
+
+    sections: list[Section] = []
+    curriculum: Curriculum | None = None
+    for semester_index, semester in enumerate(semesters):
+        for course_index in range(6):
+            section, curriculum = reg_sec_factory(
+                semester,
+                course_number=str(700 + semester_index * 6 + course_index),
+                curriculum_short_name="CURRI_TRANSCRIPT_LONG_VERIFIED",
+            )
+            course = section.curriculum_course.course
+            course.title = (
+                f"Long Verified Transcript Course {semester_index + 1}-{course_index + 1}"
+            )
+            course.save(update_fields=["title"])
+            sections.append(section)
+    assert curriculum is not None
+
+    student = reg_std_factory(
+        "registrar_transcript_long_verified_student",
+        curriculum,
+        semesters[0],
+    )
+    for section in sections:
+        Grade.objects.create(student=student, section=section, value=_grade_value("a"))
+
+    document = build_transcript_document(student.id)
+    verified_document = transcript_document_with_verification(
+        document,
+        qr_code_uri=TINIEST_PNG_URI,
+        token="long-token-1",
+        verification_url="https://tusis.koba.sarl/transcripts/verify/long-token-1/",
+    )
+    html = render_transcript_document_html(verified_document, layout="landscape")
+    project_root = Path(__file__).resolve().parents[2]
+    pdf_bytes = HTML(string=html, base_url=str(project_root)).write_pdf()
+
+    assert len(document["term_groups"]) == 11
+    assert sum(len(group["rows"]) for group in document["term_groups"]) == 66
+    assert bytes(pdf_bytes).startswith(b"%PDF")
 
 
 def test_landscape_pdf_render_keeps_transcript_rows_visible(
@@ -538,11 +615,12 @@ def test_registrar_transcript_page_shows_pdf_download_action_only(
     content = response.content.decode()
 
     assert response.status_code == 200
-    assert "Transcript exports" in content
-    assert "data-transcript-layout-select" in content
-    assert "Portrait" in content
-    assert "Landscape" in content
-    assert "Download PDF" in content
+    assert "Transcript export" in content
+    assert "data-transcript-layout-select" not in content
+    assert "Portrait" not in content
+    assert "Landscape" not in content
+    assert "Download official transcript" in content
+    assert "data-transcript-pdf-download" in content
     assert "Download Org source" not in content
     assert "data-transcript-org-download" not in content
 
@@ -703,7 +781,7 @@ def test_registrar_bulk_transcript_download_exports_selected_students(
     client.force_login(user)
     response = client.post(
         reverse("reg_grade_transcripts_bulk_pdf"),
-        {"student_ids": [str(first_student.id)], "layout": "landscape"},
+        {"student_ids": [str(first_student.id)], "layout": "portrait"},
     )
     with ZipFile(BytesIO(response.content)) as archive:
         names = archive.namelist()

@@ -145,10 +145,10 @@ This section is a practical manual for demonstrating the app with the runtime MW
 3. Open =/registrar/grades/= to review grade records grouped by student and semester.
 4. Use student autocomplete to find a student, then expand the student summary to inspect grade details.
 5. Use the transcript action to open the official transcript preview at =/registrar/grades/<student_id>/transcript/=.
-6. Use Django admin for direct grade correction when authorized. The relevant records are =Registry -> Grades= and =Registry -> Grade values=.
+6. Use =Add/correct grades= from a semester card to open the portal correction form for that student semester.
 7. When a student asks for a grade sheet/transcript, Registrar searches the student, reviews the grade dashboard, opens the transcript preview, and prints or exports according to office practice.
 8. If a grade is disputed, Registrar coordinates with the academic/faculty member, checks the section roster and grade record, then updates the grade only under the university correction rule.
-9. If the correction depends on a closed grade window, Registrar Officer reopens the operational window or performs the authorized admin correction, depending on policy.
+9. The portal correction form is a registrar override: it can add missing grade rows for the listed student sections or correct existing rows even when the faculty grade-entry window is closed.
 
 ** Registrar Officer manual
 1. Log in as =test_reg_officer=.
@@ -170,7 +170,7 @@ This section is a practical manual for demonstrating the app with the runtime MW
 4. When the grade-entry window is open, authorized academic staff enter grades through Django admin using section or grade records.
 5. Grade rows connect a student, section, and grade value. The instructor should work from the official section roster to avoid entering a grade for the wrong section.
 6. Registrar reviews submitted grades from =/registrar/grades/=.
-7. If the instructor needs to correct a grade after submission, the instructor contacts Registrar; Registrar verifies policy and either reopens the window through Registrar Officer or applies the authorized correction in admin.
+7. If the instructor needs to correct a grade after submission, the instructor contacts Registrar; Registrar verifies policy and applies the authorized correction from the registrar grade portal when appropriate.
 8. After grades are complete and effective, students can review them from the student dashboard when their financial status permits.
 
 ** Grade sheet / roster request manual
@@ -179,7 +179,7 @@ This section is a practical manual for demonstrating the app with the runtime MW
 3. Registrar reviews semester grades, GPA, and missing/incomplete records.
 4. Registrar opens the transcript preview.
 5. If grades are incomplete, Registrar contacts the relevant academic/faculty member and checks whether the grade-entry window is open.
-6. If a correction is needed, Registrar coordinates the correction and then refreshes the transcript preview.
+6. If a correction is needed, Registrar opens =Add/correct grades= for the student semester, saves the authorized change, and then refreshes the transcript preview.
 7. Registrar prints or exports the approved grade sheet/transcript for the student.
 
 ** Known terminology to confirm

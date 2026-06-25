@@ -207,6 +207,11 @@ urlpatterns = [
         name="reg_grade_transcripts_bulk_pdf",
     ),
     path(
+        "registrar/grades/<int:student_id>/semesters/<int:semester_id>/grades/",
+        views.reg_grade_semester_editor,
+        name="reg_grade_semester_editor",
+    ),
+    path(
         "registrar/grades/<int:student_id>/transcript/",
         views.reg_grade_transcript,
         name="reg_grade_transcript",

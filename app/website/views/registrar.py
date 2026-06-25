@@ -25,6 +25,11 @@ from app.website.services.registrar_portal import (
     registrar_student_results,
     update_semester_window,
 )
+from app.website.services.registrar_grade_editor import (
+    RegistrarGradeError,
+    build_registrar_grade_editor_context,
+    save_registrar_grade_editor,
+)
 from app.website.services.registrar_rosters import (
     build_reg_class_roster_detail_context,
     build_reg_class_roster_list_context,
@@ -36,8 +41,8 @@ from app.website.services.transcript_rendering import (
     render_transcript_document_org,
 )
 from app.website.services.transcript_types import (
+    DEFAULT_TRANSCRIPT_LAYOUT,
     TranscriptLayoutKeyT,
-    normalize_transcript_layout,
 )
 
 REGISTRAR_TRANSCRIPT_ROLE_LABELS = frozenset(
@@ -58,14 +63,9 @@ def _int_values(values: list[str]) -> list[int]:
     return clean_values
 
 
-def _transcript_layout_from_request(request: HttpRequest) -> TranscriptLayoutKeyT:
-    """Return the requested transcript layout, falling back to the default."""
-    raw_layout = request.POST.get("layout") if request.method == "POST" else None
-    if raw_layout is None:
-        raw_layout = request.GET.get("layout")
-    if raw_layout is None:
-        raw_layout = request.GET.get("orientation")
-    return normalize_transcript_layout(raw_layout)
+def _canonical_transcript_layout() -> TranscriptLayoutKeyT:
+    """Return the one official transcript layout used by all downloads."""
+    return DEFAULT_TRANSCRIPT_LAYOUT
 
 
 def _bulk_transcript_students(request: HttpRequest) -> list[Student]:
@@ -153,13 +153,56 @@ def reg_grade_transcript(
 
 @login_required
 @permission_required("registry.view_grade", raise_exception=True)
+@permission_required("registry.add_grade", raise_exception=True)
+@permission_required("registry.change_grade", raise_exception=True)
+def reg_grade_semester_editor(
+    request: HttpRequest,
+    student_id: int,
+    semester_id: int,
+) -> HttpResponse:
+    """Render and process registrar grade additions/corrections."""
+    user = cast(User, request.user)
+    if request.method == "POST":
+        try:
+            changed = save_registrar_grade_editor(
+                user,
+                student_id,
+                semester_id,
+                request.POST,
+            )
+        except RegistrarGradeError as exc:
+            messages.error(request, str(exc))
+            context = build_registrar_grade_editor_context(
+                request,
+                student_id,
+                semester_id,
+            )
+            return render(
+                request,
+                "website/staff/registrar_grade_editor.html",
+                context,
+                status=400,
+            )
+        messages.success(request, f"{changed} grade row(s) saved.")
+        return redirect(
+            "reg_grade_semester_editor",
+            student_id=student_id,
+            semester_id=semester_id,
+        )
+
+    context = build_registrar_grade_editor_context(request, student_id, semester_id)
+    return render(request, "website/staff/registrar_grade_editor.html", context)
+
+
+@login_required
+@permission_required("registry.view_grade", raise_exception=True)
 def reg_grade_transcript_pdf(
     request: HttpRequest,
     student_id: int,
 ) -> HttpResponse:
     """Generate and download the registrar transcript PDF."""
     _require_transcript_export_access(request)
-    layout_key = _transcript_layout_from_request(request)
+    layout_key = _canonical_transcript_layout()
     artifact = issue_transcript_artifact(
         request,
         layout=layout_key,
@@ -185,7 +228,7 @@ def reg_grade_transcripts_bulk_pdf(request: HttpRequest) -> HttpResponse:
         messages.error(request, "No transcript students matched the export request.")
         return redirect("reg_grades_dashboard")
 
-    layout_key = _transcript_layout_from_request(request)
+    layout_key = _canonical_transcript_layout()
     timestamp = timezone.now().strftime("%Y%m%d_%H%M")
     archive_buffer = BytesIO()
     with ZipFile(archive_buffer, "w", ZIP_DEFLATED) as archive:

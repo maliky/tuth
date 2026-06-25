@@ -20,6 +20,12 @@ from app.website.services.faculty_grade_types import (
     FacultyGradeRowT,
     FacultySectionRowT,
 )
+from app.website.services.grade_portal_common import (
+    GradePortalError,
+    grade_value_for_code,
+    grade_value_options,
+    set_grade_code,
+)
 from app.website.services.portal_types import AdminShortcutT, PortalContextT
 from app.website.services.staff_common import (
     admin_shortcuts_for_models,
@@ -35,7 +41,7 @@ GRADE_ENTRY_STATUS = "grade_entry"
 SectionQueryT: TypeAlias = QuerySet[Section]
 
 
-class FacultyGradeError(ValueError):
+class FacultyGradeError(GradePortalError):
     """Raised when a faculty grade action cannot be applied safely."""
 
 
@@ -100,12 +106,6 @@ def ensure_grade_roster(section: Section) -> list[Grade]:
         )
         grades.append(grade)
     return grades
-
-
-def grade_value_options() -> list[GradeValue]:
-    """Return the canonical grade values for select widgets."""
-    GradeValue._populate_attributes_and_db()
-    return list(GradeValue.objects.order_by("-number", "code"))
 
 
 def build_faculty_grade_rows(section: Section) -> list[FacultyGradeRowT]:
@@ -241,25 +241,12 @@ def build_faculty_grade_roster_context(
 
 def _grade_value_for_code(grade_code: str) -> GradeValue | None:
     """Return a grade value for a submitted code, or None for a blank grade."""
-    clean_code = grade_code.strip().lower()
-    if not clean_code:
-        return None
-    GradeValue._populate_attributes_and_db()
-    value = GradeValue.objects.filter(code=clean_code).first()
-    if value is None:
-        raise FacultyGradeError(f"Unknown grade code: {grade_code}.")
-    return value
+    return grade_value_for_code(grade_code, error_type=FacultyGradeError)
 
 
 def _set_grade_code(grade: Grade, grade_code: str) -> bool:
     """Set one grade code and return whether it changed."""
-    value = _grade_value_for_code(grade_code)
-    next_value_id = value.id if value else None
-    if grade.value_id == next_value_id:
-        return False
-    grade.value = value
-    grade.save(update_fields=["value"])
-    return True
+    return set_grade_code(grade, grade_code, error_type=FacultyGradeError)
 
 
 def save_grade_roster(section: Section, data: QueryDict) -> int:

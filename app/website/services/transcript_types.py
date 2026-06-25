@@ -11,7 +11,7 @@ TranscriptLayoutKeyT: TypeAlias = Literal[
     "landscape",
 ]
 
-DEFAULT_TRANSCRIPT_LAYOUT: TranscriptLayoutKeyT = "portrait"
+DEFAULT_TRANSCRIPT_LAYOUT: TranscriptLayoutKeyT = "landscape"
 GRADE_LEGEND = "A = 90-100; B = 80-89; C = 70-79; D = 60-69; F = Below 60"
 GRADE_POLICY_INTRO = (
     "Each course is assigned credit in semester hours. One semester hour is "
@@ -169,6 +169,9 @@ def transcript_layout_config(
     """Return the display and rendering config for one layout."""
     for option in TRANSCRIPT_LAYOUT_OPTIONS:
         if option["key"] == layout_key:
+            return option
+    for option in TRANSCRIPT_LAYOUT_OPTIONS:
+        if option["key"] == DEFAULT_TRANSCRIPT_LAYOUT:
             return option
     return TRANSCRIPT_LAYOUT_OPTIONS[0]
 

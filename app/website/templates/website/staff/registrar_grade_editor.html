@@ -1,0 +1,107 @@
+{% extends "website/staff/base.html" %}
+
+{% block staff_header_actions %}
+  <a class="btn portal-btn-outline btn-sm" href="{{ dashboard_url }}">
+    Back to grade review
+  </a>
+{% endblock %}
+
+{% block staff_content %}
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <section class="portal-filter-card mb-4">
+    <div class="portal-filter-card__body">
+      <div class="portal-filter-card__intro">
+        <p class="eyebrow text-uppercase mb-1">Official grade correction</p>
+        <h2>{{ student_label }}</h2>
+        <p class="mb-0 text-muted">
+          {{ semester_label }} · Status: {{ semester_status }}
+        </p>
+      </div>
+      <div class="alert alert-warning mt-3 mb-0">
+        This registrar override updates official grade records and is available
+        outside the faculty grade-entry window. Confirm the university correction
+        rule before saving.
+      </div>
+    </div>
+  </section>
+
+  <form method="post" action="{{ save_url }}">
+    {% csrf_token %}
+    <div class="portal-panel-card">
+      <div class="portal-panel-card__stripe"></div>
+      <div class="portal-panel-card__body p-0">
+        <div class="course-table table-responsive mb-0">
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Course</th>
+                <th>Credits</th>
+                <th>Faculty</th>
+                <th>Record source</th>
+                <th>Grade</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in grade_rows %}
+                <tr>
+                  <td>
+                    <strong>{{ row.course_code }}</strong><br />
+                    <span class="text-muted">{{ row.course_title }}</span>
+                  </td>
+                  <td>{{ row.credits }}</td>
+                  <td>{{ row.faculty }}</td>
+                  <td>
+                    <span class="status-badge {% if row.grade %}status-completed{% else %}status-pending{% endif %}">
+                      {{ row.source_label }}
+                    </span>
+                  </td>
+                  <td>
+                    <select class="form-select form-select-sm" name="{{ row.field_name }}">
+                      <option value="" {% if not row.current_code %}selected{% endif %}>
+                        No grade
+                      </option>
+                      {% for grade_value in grade_values %}
+                        <option
+                          value="{{ grade_value.code }}"
+                          {% if row.current_code == grade_value.code %}selected{% endif %}
+                        >
+                          {{ grade_value.code|upper }} · {{ grade_value.description }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="5" class="text-center text-muted py-4">
+                    No registrations or grade records were found for this student semester.
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-3">
+      <p class="text-muted small mb-0">
+        Saving creates missing grade rows only for the listed student sections.
+      </p>
+      <button
+        class="btn portal-btn-accent"
+        type="submit"
+        {% if not grade_rows %}disabled{% endif %}
+      >
+        Save grade changes
+      </button>
+    </div>
+  </form>
+{% endblock %}

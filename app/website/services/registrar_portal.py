@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from datetime import date
 from typing import TypeAlias, TypedDict, cast
 from urllib.parse import urlencode
@@ -21,6 +21,7 @@ from app.registry.models.grade import Grade
 from app.registry.models.registration import Registration
 from app.shared.auth.perms import UserRole
 from app.shared.utils import parse_str
+from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester, SemesterStatus
 from app.website.services.portal_types import PortalContextT
 from app.website.services.staff_portal import (
@@ -33,13 +34,15 @@ from app.website.services.transcript_document import (
     build_transcript_document,
     flatten_transcript_rows,
 )
-from app.website.services.transcript_types import (
-    normalize_transcript_layout,
-    transcript_layout_choices,
-)
 
 ContextT: TypeAlias = PortalContextT
 SemesterWindowSortKeyT: TypeAlias = tuple[int, int, date, date, int, int]
+REGISTRAR_GRADE_ROLE_LABELS = frozenset(
+    {
+        UserRole.REGISTRAR.value.label,
+        UserRole.REGISTRAR_OFFICER.value.label,
+    }
+)
 
 
 class RegGradeRowT(TypedDict):
@@ -51,6 +54,7 @@ class RegGradeRowT(TypedDict):
     grade: str
     faculty: str
     roster_url: str
+    is_missing_grade: bool
 
 
 class RegSemGpT(TypedDict):
@@ -61,6 +65,8 @@ class RegSemGpT(TypedDict):
     rows: list[RegGradeRowT]
     credits_total: int
     gpa: str
+    grade_editor_url: str
+    can_manage_grades: bool
 
 
 class RegStdGpT(TypedDict):
@@ -122,6 +128,26 @@ def clean_int(value: str | None) -> int | None:
         return int(value)
     except ValueError:
         return None
+
+
+def user_has_registrar_grade_role(user: User) -> bool:
+    """Return whether the user is a registrar actor for grade workflows."""
+    return (
+        user.is_superuser
+        or user.groups.filter(name__in=REGISTRAR_GRADE_ROLE_LABELS).exists()
+    )
+
+
+def can_manage_registrar_grades(user: User) -> bool:
+    """Return whether a user can add or correct grades through the portal."""
+    return user_has_registrar_grade_role(user) and all(
+        user.has_perm(permission)
+        for permission in (
+            "registry.view_grade",
+            "registry.add_grade",
+            "registry.change_grade",
+        )
+    )
 
 
 def latest_graded_sem_id() -> int | None:
@@ -361,6 +387,7 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
     """Build context for the registrar grade dashboard."""
     user = cast(User, request.user)
     sidebar_role = registrar_sidebar_role(user)
+    can_manage_grades = can_manage_registrar_grades(user)
     selected_student_id = clean_int(request.GET.get("student_id"))
     semester_param = request.GET.get("semester")
     semester_id = clean_int(semester_param)
@@ -368,11 +395,23 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
     if semester_param == "all" or not semester_param_present:
         semester_id = None
 
-    students_qs = Student.objects.filter(grade__isnull=False).select_related("user")
-    if semester_id:
-        students_qs = students_qs.filter(grade__section__semester_id=semester_id)
     if selected_student_id:
-        students_qs = students_qs.filter(id=selected_student_id)
+        students_qs = Student.objects.filter(id=selected_student_id).select_related(
+            "user"
+        )
+        if semester_id:
+            students_qs = students_qs.filter(
+                Q(grade__section__semester_id=semester_id)
+                | Q(student_registrations__section__semester_id=semester_id)
+            )
+        else:
+            students_qs = students_qs.filter(
+                Q(grade__isnull=False) | Q(student_registrations__isnull=False)
+            )
+    else:
+        students_qs = Student.objects.filter(grade__isnull=False).select_related("user")
+        if semester_id:
+            students_qs = students_qs.filter(grade__section__semester_id=semester_id)
     students_qs = students_qs.distinct().order_by("long_name", "student_id")
 
     page_obj = Paginator(students_qs, 100).get_page(request.GET.get("page"))
@@ -400,9 +439,35 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
     if semester_id:
         grades_qs = grades_qs.filter(section__semester_id=semester_id)
 
-    student_groups = build_student_grade_groups(list(page_obj), grades_qs)
+    registrations_qs = Registration.objects.none()
+    if selected_student_id and student_ids:
+        registrations_qs = (
+            Registration.objects.select_related(
+                "student",
+                "student__user",
+                "section__semester__academic_year",
+                "section__curriculum_course__course",
+                "section__curriculum_course__credit_hours",
+                "section__faculty__staff_profile__user",
+            )
+            .filter(student_id__in=student_ids)
+            .order_by(
+                "student__long_name",
+                "-section__semester__start_date",
+                "-section__semester__number",
+                "section__curriculum_course__course__short_code",
+            )
+        )
+        if semester_id:
+            registrations_qs = registrations_qs.filter(section__semester_id=semester_id)
+
+    student_groups = build_student_grade_groups(
+        list(page_obj),
+        grades_qs,
+        registrations_qs,
+        can_manage_grades=can_manage_grades,
+    )
     all_semesters_selected = semester_id is None
-    selected_layout = normalize_transcript_layout(None)
     pagination_query, pagination_hidden_fields = _pagination_hidden_fields(request)
     selected_student_label = ""
     selected_student_snapshot: RegStudentSnapshotT | None = None
@@ -437,8 +502,6 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
         "selected_student_label": selected_student_label,
         "selected_student_snapshot": selected_student_snapshot,
         "bulk_download_url": reverse("reg_grade_transcripts_bulk_pdf"),
-        "layout_options": transcript_layout_choices(selected_layout),
-        "selected_layout": selected_layout,
         "registrar_admin_links": _admin_shortcuts_for_models(
             user,
             REGISTRAR_ADMIN_SHORTCUTS,
@@ -450,11 +513,61 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
     }
 
 
-def build_student_grade_groups(students: list[Student], grades) -> list[RegStdGpT]:
+def _grade_editor_url(
+    student_id: int,
+    semester_id: int,
+    can_manage_grades: bool,
+) -> str:
+    """Return the registrar grade editor URL when this actor may use it."""
+    if not can_manage_grades:
+        return ""
+    return reverse("reg_grade_semester_editor", args=[student_id, semester_id])
+
+
+def _semester_group(
+    student_id: int,
+    semester: Semester,
+    can_manage_grades: bool,
+) -> RegSemGpT:
+    """Return an initialized semester grade group."""
+    return RegSemGpT(
+        semester=semester,
+        label=f"{semester.academic_year.code} · Semester {semester.number}",
+        rows=[],
+        credits_total=0,
+        gpa="N/A",
+        grade_editor_url=_grade_editor_url(student_id, semester.id, can_manage_grades),
+        can_manage_grades=can_manage_grades,
+    )
+
+
+def _faculty_label_for_section(section: Section) -> str:
+    """Return the faculty label used in registrar grade tables."""
+    faculty_label = "TBA"
+    if section.faculty and section.faculty.staff_profile:
+        faculty_label = section.faculty.staff_profile.user.get_full_name() or str(
+            section.faculty.staff_profile
+        )
+    return faculty_label
+
+
+def _section_credits(section: Section) -> int:
+    """Return integer credit hours for a section."""
+    return int(section.curriculum_course.credit_hours.code)
+
+
+def build_student_grade_groups(
+    students: list[Student],
+    grades: Iterable[Grade],
+    registrations: Iterable[Registration] | None = None,
+    *,
+    can_manage_grades: bool = False,
+) -> list[RegStdGpT]:
     """Group grade rows by student and semester for registrar pages."""
     student_groups: list[RegStdGpT] = []
     student_lookup: dict[int, RegStdGpT] = {}
     semester_lookup_map: dict[int, dict[int, RegSemGpT]] = {}
+    graded_sections_by_student_semester: dict[tuple[int, int], set[int]] = {}
     student_gpa_points: dict[int, float] = {}
     student_gpa_credits: dict[int, int] = {}
     semester_gpa_points: dict[tuple[int, int], float] = {}
@@ -482,25 +595,22 @@ def build_student_grade_groups(students: list[Student], grades) -> list[RegStdGp
         semester = grade.section.semester
         current_semester_group = semester_group_lookup.get(semester.id)
         if current_semester_group is None:
-            current_semester_group = RegSemGpT(
-                semester=semester,
-                label=f"{semester.academic_year.code} · Semester {semester.number}",
-                rows=[],
-                credits_total=0,
-                gpa="N/A",
+            current_semester_group = _semester_group(
+                grade.student_id,
+                semester,
+                can_manage_grades,
             )
             semester_group_lookup[semester.id] = current_semester_group
             grade_student_group["semesters"].append(current_semester_group)
             semester_gpa_points[(grade.student_id, semester.id)] = 0.0
             semester_gpa_credits[(grade.student_id, semester.id)] = 0
-        faculty_label = "TBA"
-        if grade.section.faculty and grade.section.faculty.staff_profile:
-            faculty_label = (
-                grade.section.faculty.staff_profile.user.get_full_name()
-                or str(grade.section.faculty.staff_profile)
-            )
+        semester_key = (grade.student_id, semester.id)
+        graded_sections_by_student_semester.setdefault(semester_key, set()).add(
+            grade.section_id
+        )
+        faculty_label = _faculty_label_for_section(grade.section)
         course = grade.section.curriculum_course.course
-        credits = int(grade.section.curriculum_course.credit_hours.code)
+        credits = _section_credits(grade.section)
         grade_label = (
             grade.value.code.upper() if grade.value and grade.value.code else "-"
         )
@@ -515,6 +625,7 @@ def build_student_grade_groups(students: list[Student], grades) -> list[RegStdGp
                     "reg_class_roster_detail",
                     args=[grade.section_id],
                 ),
+                "is_missing_grade": False,
             }
         )
         current_semester_group["credits_total"] += credits
@@ -523,11 +634,50 @@ def build_student_grade_groups(students: list[Student], grades) -> list[RegStdGp
         if gpa_values is None:
             continue
         quality_points, gpa_credits = gpa_values
-        semester_key = (grade.student_id, semester.id)
         semester_gpa_points[semester_key] += quality_points
         semester_gpa_credits[semester_key] += gpa_credits
         student_gpa_points[grade.student_id] += quality_points
         student_gpa_credits[grade.student_id] += gpa_credits
+
+    for registration in registrations or []:
+        grade_student_group = student_lookup.get(registration.student_id)
+        if grade_student_group is None:
+            continue
+        semester = registration.section.semester
+        semester_key = (registration.student_id, semester.id)
+        if registration.section_id in graded_sections_by_student_semester.get(
+            semester_key,
+            set(),
+        ):
+            continue
+        semester_group_lookup = semester_lookup_map[registration.student_id]
+        current_semester_group = semester_group_lookup.get(semester.id)
+        if current_semester_group is None:
+            current_semester_group = _semester_group(
+                registration.student_id,
+                semester,
+                can_manage_grades,
+            )
+            semester_group_lookup[semester.id] = current_semester_group
+            grade_student_group["semesters"].append(current_semester_group)
+            semester_gpa_points[semester_key] = 0.0
+            semester_gpa_credits[semester_key] = 0
+        section = registration.section
+        course = section.curriculum_course.course
+        credits = _section_credits(section)
+        current_semester_group["rows"].append(
+            {
+                "course_code": course.short_code or course.code or "",
+                "course_title": course.title or "",
+                "credits": credits,
+                "grade": "-",
+                "faculty": _faculty_label_for_section(section),
+                "roster_url": reverse("reg_class_roster_detail", args=[section.id]),
+                "is_missing_grade": True,
+            }
+        )
+        current_semester_group["credits_total"] += credits
+        grade_student_group["credits_total"] += credits
 
     for student_group in student_groups:
         student_id = student_group["student"].id
@@ -549,7 +699,6 @@ def build_reg_grade_transcript_context(request: HttpRequest, student_id: int) ->
     user = cast(User, request.user)
     sidebar_role = registrar_sidebar_role(user)
     transcript = build_transcript_document(student_id)
-    selected_layout = normalize_transcript_layout(request.GET.get("layout"))
     return {
         "page_title": "Official grade transcript",
         "page_summary": "Registrar-issued transcript preview.",
@@ -564,8 +713,6 @@ def build_reg_grade_transcript_context(request: HttpRequest, student_id: int) ->
         "dashboard_url": reverse("reg_grades_dashboard"),
         "download_url": reverse("reg_grade_transcript_pdf", args=[student_id]),
         "source_url": reverse("reg_grade_transcript_org", args=[student_id]),
-        "layout_options": transcript_layout_choices(selected_layout),
-        "selected_layout": selected_layout,
     }
 
 
