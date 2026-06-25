@@ -134,13 +134,13 @@
       }
 
       .summary-cell--college {
-        width: 21.5%;
+        width: 27.5%;
       }
 
       .summary-cell--enrollment,
       .summary-cell--completion,
       .summary-cell--graduation {
-        width: 14.5%;
+        width: 12.5%;
       }
 
       .summary-cell strong {
@@ -228,15 +228,9 @@
         vertical-align: top;
       }
 
-      .program-block,
       .term-block {
         break-inside: avoid;
         margin-top: 0.35mm;
-      }
-
-      .program-block {
-        font-weight: 700;
-        margin-bottom: 0.1mm;
       }
 
       .term-heading td {
@@ -435,7 +429,7 @@
     <section class="summary-strip">
       <div class="summary-row">
         <div class="summary-cell summary-cell--program">
-          <strong>Curri:</strong> {{ transcript.program_code }} -- {{ transcript.major_program }}
+          <strong>Prog.:</strong> {{ transcript.program_code }} -- {{ transcript.major_program }}
         </div>
         <div class="summary-cell summary-cell--college">
           <strong>College:</strong> {{ transcript.college }}
@@ -477,13 +471,6 @@
                   </tr>
                 </thead>
                   </table>
-
-                  {% if forloop.first %}
-                    <div class="program-block">
-                      {{ transcript.program_code }} Program: {{ transcript.major_program }}
-                    </div>
-                  {% endif %}
-
                   {% for group in column %}
                     <section class="term-block">
                   <table class="detail-table">

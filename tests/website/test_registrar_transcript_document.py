@@ -325,10 +325,11 @@ def test_transcript_pdf_html_uses_layout_selection_and_compact_grade_table(
     assert document["enrollment_date"] == "Mar 4, 2026"
     assert document["completion_date"] == "May 6, 2026"
     assert document["graduation_date"] == "N/A"
-    assert "Curri:" in html
+    assert "Prog.:" in html
     assert "<strong>Enrol:</strong> Mar 4, 2026" in html
     assert "<strong>Comp:</strong> May 6, 2026" in html
     assert "<strong>Grad:</strong> N/A" in html
+    assert "Curri:" not in html
     assert "Curriculum:" not in html
     assert "Enrollment:" not in html
     assert "Completion:" not in html
@@ -354,7 +355,8 @@ def test_transcript_pdf_html_uses_layout_selection_and_compact_grade_table(
     assert 'class="institution-identity-table"' in html
     assert 'class="summary-cell summary-cell--program"' in html
     assert ".summary-cell--program {\n        width: 35%;" in html
-    assert ".summary-cell--college {\n        width: 21.5%;" in html
+    assert ".summary-cell--college {\n        width: 27.5%;" in html
+    assert "width: 12.5%;" in html
     assert 'class="detail-columns-table"' in html
     assert 'class="detail-columns"' not in html
     assert ".detail-columns {" not in html
@@ -375,6 +377,8 @@ def test_transcript_pdf_html_uses_layout_selection_and_compact_grade_table(
     assert "Transcript Summary" not in html
     assert 'class="summary-metrics"' not in html
     assert 'class="totals-table summary-totals"' not in html
+    assert "Program: " not in html
+    assert 'class="program-block"' not in html
     assert "04/03/26" not in html
     assert "06/05/26" not in html
     assert "Maryland County, Republic of Liberia" in html
