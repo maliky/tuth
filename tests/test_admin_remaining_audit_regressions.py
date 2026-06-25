@@ -153,11 +153,13 @@ def test_registration_admin_searches_student_and_course_section(
     _assert_ok(response)
     content = response.content.decode()
     assert "Registration" in content
+    assert "Section code" in content
+    assert "Student" in content
     assert str(target_section.semester) in content
     assert f"{target_section.short_code} - {target_student}" in content
 
     for params in (
-        {"section__curriculum_course__course": str(target_course.id)},
+        {"student": str(target_student.id)},
         {"section": str(target_section.id)},
     ):
         response = client.get(changelist_url, params)
@@ -167,6 +169,18 @@ def test_registration_admin_searches_student_and_course_section(
         }
         assert target_registration.id in result_ids
         assert other_registration.id not in result_ids
+
+    section_admin = admin.site._registry[Section]
+    request = _admin_request(superuser)
+    section_qs = section_admin.get_queryset(request)
+    for section_code in ("ENVS208:s1", "ENVS208 1", "ENVS208-s1"):
+        result_qs, _use_distinct = section_admin.get_search_results(
+            request,
+            section_qs,
+            section_code,
+        )
+        assert target_section.id in set(result_qs.values_list("id", flat=True))
+        assert other_section.id not in set(result_qs.values_list("id", flat=True))
 
 
 def test_student_semester_invoice_add_omits_existing_row_inlines(

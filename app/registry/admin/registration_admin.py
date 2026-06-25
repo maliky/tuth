@@ -11,7 +11,6 @@ from django.utils.html import format_html
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from import_export.admin import ImportExportModelAdmin
 
-from app.academics.models.course import Course
 from app.people.models.student import Student
 from app.registry.models.document import DocStatus, DocType
 
@@ -35,20 +34,20 @@ SectionQueryT: TypeAlias = QuerySet[Section]
 SemesterT: TypeAlias = Semester
 
 
-class RegioCourseFlt(ScopedAutocompleteFilter):
-    """Autocomplete course filter for registration rows."""
+class RegioStudentFlt(ScopedAutocompleteFilter):
+    """Autocomplete student filter for registration rows."""
 
-    title = "Course"
-    parameter_name = "course"
-    field_name = "course"
-    lookup_map = (("section", "section__curriculum_course__course"),)
-    target_model = Course
+    title = "Student"
+    parameter_name = "student"
+    field_name = "student"
+    lookup_map = (("student", "student"),)
+    target_model = Student
 
 
 class RegioSectionFlt(ScopedAutocompleteFilter):
-    """Autocomplete section filter for registration rows."""
+    """Autocomplete section-code filter for registration rows."""
 
-    title = "Section"
+    title = "Section code"
     parameter_name = "section"
     field_name = "section"
     lookup_map = (("section", "section"),)
@@ -296,7 +295,7 @@ class RegioAdmin(
         "section__semester__academic_year__code",
         "section__semester__number",
     )
-    list_filter = (SemFltAC, RegioCourseFlt, RegioSectionFlt)
+    list_filter = (SemFltAC, RegioStudentFlt, RegioSectionFlt)
     ordering = (
         "section__semester__start_date",
         "section__curriculum_course__course__code",

@@ -1,10 +1,11 @@
 """app.timetable.admin.section_registers module."""
 
+import re
 from typing import cast
 
 from django.contrib import admin
 from django.contrib.auth.models import User
-from django.db.models import F, Value
+from django.db.models import F, Q, Value
 from django.db.models.functions import Coalesce, Concat
 from django.http import HttpRequest
 from django.urls import reverse
@@ -37,6 +38,10 @@ REGISTRAR_SECTION_ROLE_LABELS = frozenset(
         UserRole.REGISTRAR_OFFICER.value.label,
     }
 )
+SECTION_CODE_RE = re.compile(
+    r"^(?P<course>[a-z]+\d+[a-z]?)(?:\s*(?:s|sec|section)?\s*(?P<number>\d+))?$",
+    re.IGNORECASE,
+)
 
 
 def _is_regio_lookup(request: HttpRequest) -> bool:
@@ -55,6 +60,23 @@ def _can_view_all_sections(request: HttpRequest) -> bool:
         user.has_perm("timetable.view_section")
         and user.groups.filter(name__in=REGISTRAR_SECTION_ROLE_LABELS).exists()
     )
+
+
+def _section_code_query(search_term: str) -> Q:
+    """Return a section-code query for inputs like ENVS208:s1 or ENVS208 1."""
+    normalized = re.sub(r"[:_-]+", " ", search_term.strip())
+    normalized = re.sub(r"\s+", " ", normalized)
+    match = SECTION_CODE_RE.match(normalized)
+    if not match:
+        return Q()
+    course_code = match.group("course")
+    query = Q(curriculum_course__course__short_code__iexact=course_code) | Q(
+        curriculum_course__course__code__iexact=course_code
+    )
+    section_number = match.group("number")
+    if section_number:
+        query &= Q(number=int(section_number))
+    return query
 
 
 @admin.register(Section)
@@ -100,7 +122,12 @@ class SecAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
         "faculty",
     )
     # fast starts-with on indexed code
-    search_fields = ("^curriculum_course__course__short_code",)
+    search_fields = (
+        "^curriculum_course__course__short_code",
+        "curriculum_course__course__code",
+        "curriculum_course__course__title",
+        "curriculum_course__course__department__code",
+    )
 
     def _get_dft_sem(self, request: HttpRequest) -> Semester | None:
         """Return the default semester used when creating sections."""
@@ -196,6 +223,10 @@ class SecAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
     def get_search_results(self, request, queryset, search_term):
         """Filter section autocomplete results by selected student when provided."""
         qs, use_distinct = super().get_search_results(request, queryset, search_term)
+        section_query = _section_code_query(search_term)
+        if section_query:
+            qs = qs | queryset.filter(section_query)
+            use_distinct = True
         # student_id = request.GET.get("student")
         # if not student_id:
         #     if _is_regio_lookup(request):
