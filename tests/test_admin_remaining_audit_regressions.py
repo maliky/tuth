@@ -11,11 +11,13 @@ from django.urls import reverse
 from impersonate.models import ImpersonationLog
 
 from app.academics.admin.inlines import CurriCrsIL
-from app.academics.models import Course, Curriculum
+from app.academics.models import Course, CurriCrs, Curriculum, Department
 from app.finance.models.invoice import StdSemesterInvoice
 from app.finance.models.status_types_methods import InvoiceStatus, Payer
 from app.people.models.student import Student
+from app.registry.models.registration import Registration
 from app.registry.models.status_types import RegistrationStatus
+from app.timetable.models.section import Section
 
 pytestmark = pytest.mark.django_db
 
@@ -66,6 +68,105 @@ def test_registration_admin_uses_resilient_jquery_loader(client, superuser) -> N
     source = Path("app/registry/static/registry/js/registration_admin.ts").read_text()
     assert "runWhenAdminJQueryIsReady(initRegistrationAdmin, 20)" in source
     assert "})(django.jQuery)" not in source
+
+
+def test_registration_admin_searches_student_and_course_section(
+    client,
+    superuser,
+    semester,
+) -> None:
+    """Registration admin search should match registrar-facing student and course keys."""
+    _login_admin(client, superuser)
+    RegistrationStatus._populate_attributes_and_db()
+    curriculum = Curriculum.get_dft("CURRI_REG_ADMIN_SEARCH")
+    department = Department.get_dft("ENVS")
+    target_course = Course.objects.create(
+        department=department,
+        number="208",
+        title="Environmental Systems",
+    )
+    other_course = Course.objects.create(
+        department=Department.get_dft("BIOL"),
+        number="110",
+        title="Biology Orientation",
+    )
+    target_section = Section.objects.create(
+        semester=semester,
+        curriculum_course=CurriCrs.objects.create(
+            curriculum=curriculum,
+            course=target_course,
+        ),
+        number=1,
+    )
+    other_section = Section.objects.create(
+        semester=semester,
+        curriculum_course=CurriCrs.objects.create(
+            curriculum=curriculum,
+            course=other_course,
+        ),
+        number=2,
+    )
+    target_student = Student.objects.create(
+        username="anthonyk.tchouin",
+        first_name="Anthony",
+        last_name="Tchouin",
+        student_id="TU-31625",
+        last_enrolled_semester=semester,
+    )
+    target_student.long_name = "Anthony Klakur Tchouin"
+    target_student.save(update_fields=["long_name"])
+    other_student = Student.objects.create(
+        username="other.student",
+        first_name="Other",
+        last_name="Student",
+        student_id="TU-99999",
+        last_enrolled_semester=semester,
+    )
+    target_registration = Registration.objects.create(
+        student=target_student,
+        section=target_section,
+    )
+    other_registration = Registration.objects.create(
+        student=other_student,
+        section=other_section,
+    )
+    changelist_url = reverse("admin:registry_registration_changelist")
+
+    for query in (
+        "31625",
+        "Anthony",
+        "Tchouin",
+        "anthonyk.tchouin",
+        "ENVS208",
+        "Environmental",
+        "ENVS208 1",
+    ):
+        response = client.get(changelist_url, {"q": query})
+        _assert_ok(response)
+        result_ids = {
+            registration.id for registration in response.context["cl"].result_list
+        }
+        assert target_registration.id in result_ids
+        assert other_registration.id not in result_ids
+
+    response = client.get(changelist_url)
+    _assert_ok(response)
+    content = response.content.decode()
+    assert "Registration" in content
+    assert str(target_section.semester) in content
+    assert f"{target_section.short_code} - {target_student}" in content
+
+    for params in (
+        {"section__curriculum_course__course": str(target_course.id)},
+        {"section": str(target_section.id)},
+    ):
+        response = client.get(changelist_url, params)
+        _assert_ok(response)
+        result_ids = {
+            registration.id for registration in response.context["cl"].result_list
+        }
+        assert target_registration.id in result_ids
+        assert other_registration.id not in result_ids
 
 
 def test_student_semester_invoice_add_omits_existing_row_inlines(

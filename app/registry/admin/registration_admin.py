@@ -11,6 +11,7 @@ from django.utils.html import format_html
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from import_export.admin import ImportExportModelAdmin
 
+from app.academics.models.course import Course
 from app.people.models.student import Student
 from app.registry.models.document import DocStatus, DocType
 
@@ -21,19 +22,37 @@ from app.registry.admin.resources import GradeResource
 from app.registry.admin.filters import GradeStdFlt
 from app.registry.models.registration import Registration, RegistrationStatus
 from app.registry.models.transcript import TranscriptRequest, TranscriptRequestStatus
-from app.timetable.admin.filters import (
-    SecBySemFlt,
-    SemFltAC,
-)
+from app.timetable.admin.filters import SemFltAC
 from app.timetable.admin.views import SecBySemAutocomplete
 from app.timetable.models.semester import Semester
 from app.timetable.models.section import Section
 from simple_history.admin import SimpleHistoryAdmin
 from guardian.admin import GuardedModelAdmin
+from app.shared.admin.filters import ScopedAutocompleteFilter
 from app.shared.admin.mixins import ScopedAutocompleteAdminMixin
 
 SectionQueryT: TypeAlias = QuerySet[Section]
 SemesterT: TypeAlias = Semester
+
+
+class RegioCourseFlt(ScopedAutocompleteFilter):
+    """Autocomplete course filter for registration rows."""
+
+    title = "Course"
+    parameter_name = "course"
+    field_name = "course"
+    lookup_map = (("section", "section__curriculum_course__course"),)
+    target_model = Course
+
+
+class RegioSectionFlt(ScopedAutocompleteFilter):
+    """Autocomplete section filter for registration rows."""
+
+    title = "Section"
+    parameter_name = "section"
+    field_name = "section"
+    lookup_map = (("section", "section"),)
+    target_model = Section
 
 
 def _open_regio_sem() -> Optional[SemesterT]:
@@ -248,14 +267,86 @@ class RegioAdmin(
     """Allow students to register only for eligible sections."""
 
     form = RegioAdminForm
-    list_display = ("student", "section", "status", "date_registered")
+    list_display = (
+        "section_student_index",
+        "student",
+        "section",
+        "semester_display",
+        "status",
+        "date_registered",
+    )
     autocomplete_fields = ("student", "section")
+    list_select_related = (
+        "student__user",
+        "section__semester__academic_year",
+        "section__curriculum_course__course",
+        "status",
+    )
     search_fields = (
         "student__student_id",
+        "student__long_name",
+        "student__user__first_name",
+        "student__user__last_name",
+        "student__user__username",
+        "section__curriculum_course__course__short_code",
+        "section__curriculum_course__course__code",
+        "section__curriculum_course__course__title",
+        "section__curriculum_course__course__department__code",
+        "section__number",
+        "section__semester__academic_year__code",
+        "section__semester__number",
+    )
+    list_filter = (SemFltAC, RegioCourseFlt, RegioSectionFlt)
+    ordering = (
+        "section__semester__start_date",
         "section__curriculum_course__course__code",
         "section__number",
+        "student__long_name",
+        "student__student_id",
     )
-    list_filter = (SemFltAC,)
+
+    def get_queryset(self, request):
+        """Annotate a sortable section-student key for the changelist."""
+        qs = super().get_queryset(request)
+        section_code = Case(
+            When(
+                section__curriculum_course__course__short_code__isnull=True,
+                then=F("section__curriculum_course__course__code"),
+            ),
+            When(
+                section__curriculum_course__course__short_code="",
+                then=F("section__curriculum_course__course__code"),
+            ),
+            default=F("section__curriculum_course__course__short_code"),
+            output_field=CharField(),
+        )
+        # Keep the registration index sortable by section first, then student.
+        return qs.annotate(
+            registration_sort_key=Concat(
+                section_code,
+                Value(":s"),
+                Cast(F("section__number"), CharField()),
+                Value(" "),
+                F("student__long_name"),
+                Value(" "),
+                F("student__student_id"),
+            )
+        )
+
+    @admin.display(description="Registration", ordering="registration_sort_key")
+    def section_student_index(self, obj):
+        """Display the section plus student name as the registration index."""
+        section = cast(Section | None, getattr(obj, "section", None))
+        student = cast(Student | None, getattr(obj, "student", None))
+        if not section or not student:
+            return "-"
+        return f"{section.short_code} - {student}"
+
+    @admin.display(description="Semester", ordering="section__semester")
+    def semester_display(self, obj):
+        """Display the semester attached to the registration section."""
+        section = cast(Section | None, getattr(obj, "section", None))
+        return section.semester if section else "-"
 
     def get_form(self, request, obj=None, **kwargs):
         """Select a bulk-add form for new registrations."""
