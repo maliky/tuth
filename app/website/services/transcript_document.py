@@ -16,6 +16,7 @@ from app.registry.gpa import effective_transcript_grades
 from app.registry.models.grade import Grade
 from app.timetable.models.semester import Semester
 from app.website.services.transcript_formatting import (
+    fmt_abbrev_date,
     fmt_date,
     fmt_gpa,
     fmt_number,
@@ -213,7 +214,11 @@ def _term_groups(grades: list[Grade]) -> list[TranscriptTermGroupT]:
 def build_transcript_document(student_id: int) -> TranscriptDocumentT:
     """Build a complete registrar transcript document payload."""
     student = get_object_or_404(
-        Student.objects.select_related("user", "entry_semester__academic_year"),
+        Student.objects.select_related(
+            "user",
+            "entry_semester__academic_year",
+            "last_enrolled_semester__academic_year",
+        ),
         pk=student_id,
     )
     curriculum = student.primary_curriculum
@@ -227,7 +232,13 @@ def build_transcript_document(student_id: int) -> TranscriptDocumentT:
     address_one, address_two = _address_lines(student)
     entry_semester = student.entry_semester
     enrollment_date = (
-        fmt_date(_semester_start(entry_semester)) if entry_semester else "N/A"
+        fmt_abbrev_date(_semester_start(entry_semester)) if entry_semester else "N/A"
+    )
+    last_enrolled_semester = student.last_enrolled_semester
+    completion_date = (
+        fmt_abbrev_date(_semester_end(last_enrolled_semester))
+        if last_enrolled_semester
+        else "N/A"
     )
     total_gpa = fmt_gpa(total_quality, int(total_attempted))
     institution_name = getattr(
@@ -256,7 +267,7 @@ def build_transcript_document(student_id: int) -> TranscriptDocumentT:
         "student_id": student.student_id or "Pending ID",
         "dob": fmt_date(student.birth_date) or "N/A",
         "enrollment_date": enrollment_date,
-        "completion_date": "N/A",
+        "completion_date": completion_date,
         "graduation_date": "N/A",
         "program_code": curriculum.short_name,
         "college": college.long_name or college.code,

@@ -9,15 +9,15 @@
         margin: {{ pdf_layout.page_margin }};
         @bottom-left {
           content: "Registrar: __________________";
-          font-size: 7px;
+          font-size: 8pt;
         }
         @bottom-center {
           content: "Page " counter(page) " of " counter(pages);
-          font-size: 8px;
+          font-size: 8pt;
         }
         @bottom-right {
           content: "Date: __________________";
-          font-size: 7px;
+          font-size: 8pt;
         }
       }
 
@@ -29,7 +29,7 @@
         }
         @bottom-center {
           content: "Page " counter(page) " of " counter(pages);
-          font-size: 8px;
+          font-size: 8pt;
         }
         @bottom-right {
           content: "";
@@ -39,8 +39,8 @@
       body {
         color: #111;
         font-family: "Times New Roman", "DejaVu Serif", serif;
-        font-size: 8px;
-        line-height: 1.08;
+        font-size: 8pt;
+        line-height: 1;
       }
 
       h1,
@@ -54,7 +54,7 @@
         display: table;
         table-layout: fixed;
         width: 100%;
-        margin-bottom: 2.7mm;
+        margin-bottom: 1.2mm;
       }
 
       .institution-identity {
@@ -71,17 +71,17 @@
 
       .logo-block {
         vertical-align: middle;
-        width: 17mm;
+        width: 15mm;
       }
 
       .logo {
-        max-height: 14.5mm;
-        max-width: 14.5mm;
+        max-height: 12.5mm;
+        max-width: 12.5mm;
       }
 
       .institution-contact {
-        font-size: 7.2px;
-        line-height: 1.05;
+        font-size: 8pt;
+        line-height: 0.94;
       }
 
       .institution-name,
@@ -91,8 +91,8 @@
       }
 
       .document-title {
-        font-size: 11px;
-        line-height: 1.05;
+        font-size: 9.5pt;
+        line-height: 0.96;
         display: table-cell;
         vertical-align: middle;
         width: 24%;
@@ -101,16 +101,16 @@
 
       .student-meta {
         display: table-cell;
-        font-size: 7.2px;
-        line-height: 1.05;
+        font-size: 8pt;
+        line-height: 0.94;
         text-align: right;
         vertical-align: middle;
         width: 34%;
       }
 
       .summary-strip {
-        font-size: 7.2px;
-        margin-bottom: 2.2mm;
+        font-size: 8pt;
+        margin-bottom: 1mm;
       }
 
       .summary-row {
@@ -123,17 +123,20 @@
         display: table-cell;
         min-width: 0;
         overflow: hidden;
-        padding-right: 2.2mm;
+        padding-right: 1.3mm;
         text-overflow: ellipsis;
         vertical-align: top;
         white-space: nowrap;
       }
 
       .summary-cell--program {
-        width: 42%;
+        width: 35%;
       }
 
-      .summary-cell--college,
+      .summary-cell--college {
+        width: 21.5%;
+      }
+
       .summary-cell--enrollment,
       .summary-cell--completion,
       .summary-cell--graduation {
@@ -155,23 +158,33 @@
       }
 
       .detail-spacer-cell {
-        width: 30mm;
+        border-left: 0.2mm solid #111;
+        width: 0;
       }
 
       .pdf-layout-portrait-two .detail-spacer-cell {
-        width: 3.5mm;
+        width: 0;
+      }
+
+      /* Keep the center divider readable while giving the columns the old spacer width. */
+      .detail-column-cell:first-child {
+        padding-right: 5mm;
+      }
+
+      .detail-column-cell:last-child {
+        padding-left: 5mm;
       }
 
       .detail-table {
         border-collapse: collapse;
-        font-size: 6.85px;
-        line-height: 1.02;
+        font-size: 8pt;
+        line-height: 0.96;
         table-layout: fixed;
         width: 100%;
       }
 
       .pdf-layout-portrait-two .detail-table {
-        font-size: 6.55px;
+        font-size: 8pt;
       }
 
       .course-col {
@@ -187,11 +200,11 @@
       }
 
       .pdf-layout-landscape-two .course-col {
-        width: 58%;
+        width: 61%;
       }
 
       .pdf-layout-landscape-two .grade-col {
-        width: 10%;
+        width: 7%;
       }
 
       .pdf-layout-landscape-two .num-col {
@@ -201,7 +214,7 @@
       .detail-table th {
         border-bottom: 0.22mm solid #111;
         font-weight: 700;
-        padding: 0 0.28mm 0.4mm;
+        padding: 0 0.18mm 0.2mm;
         text-align: right;
         white-space: nowrap;
       }
@@ -211,24 +224,24 @@
       }
 
       .detail-table td {
-        padding: 0.24mm 0.28mm;
+        padding: 0.08mm 0.18mm;
         vertical-align: top;
       }
 
       .program-block,
       .term-block {
         break-inside: avoid;
-        margin-top: 1.15mm;
+        margin-top: 0.35mm;
       }
 
       .program-block {
         font-weight: 700;
-        margin-bottom: 0.3mm;
+        margin-bottom: 0.1mm;
       }
 
       .term-heading td {
         font-weight: 700;
-        padding-top: 0.65mm;
+        padding-top: 0.25mm;
       }
 
       .course-line {
@@ -242,11 +255,11 @@
         text-overflow: ellipsis;
         vertical-align: top;
         white-space: nowrap;
-        width: 15mm;
+        width: 20mm;
       }
 
       .pdf-layout-portrait-two .course-code {
-        width: 13.5mm;
+        width: 18mm;
       }
 
       .course-title {
@@ -259,7 +272,7 @@
       }
 
       .pdf-layout-portrait-two .course-title {
-        max-width: 64%;
+        max-width: 60%;
       }
 
       .center {
@@ -274,28 +287,29 @@
 
       .totals-row td {
         font-weight: 700;
-        padding-top: 0.45mm;
+        padding-top: 0.16mm;
       }
 
       .totals-label {
-        padding-left: 15.9mm;
+        padding-left: 20.9mm;
         white-space: nowrap;
       }
 
       .pdf-layout-portrait-two .totals-label {
-        padding-left: 14.15mm;
+        padding-left: 18.9mm;
       }
 
       .conclusion {
         break-inside: avoid;
-        font-size: 7.2px;
-        margin-top: 2.4mm;
+        font-size: 8pt;
+        margin-top: 0.9mm;
         text-align: center;
       }
 
       .notice-final {
-        font-size: 6.9px;
-        margin-top: 1.6mm;
+        font-size: 8pt;
+        line-height: 0.96;
+        margin-top: 0.6mm;
         text-align: left;
       }
 
@@ -305,8 +319,8 @@
         display: table;
         table-layout: fixed;
         width: 100%;
-        margin-top: 2mm;
-        padding-top: 1.5mm;
+        margin-top: 0.9mm;
+        padding-top: 0.8mm;
         text-align: left;
       }
 
@@ -317,17 +331,17 @@
       }
 
       .verification-qr-cell {
-        width: 18mm;
+        width: 22mm;
       }
 
       .verification-qr {
-        height: 16mm;
-        width: 16mm;
+        height: 20mm;
+        width: 20mm;
       }
 
       .verification-copy {
-        font-size: 6.6px;
-        line-height: 1.15;
+        font-size: 8pt;
+        line-height: 0.96;
       }
 
       .verification-copy strong,
@@ -341,20 +355,20 @@
 
       .back-matter {
         break-before: left;
-        font-size: 7.6px;
-        line-height: 1.16;
+        font-size: 8pt;
+        line-height: 1.04;
         page: transcript-back;
       }
 
       .back-matter h2 {
-        font-size: 11px;
-        margin-bottom: 3mm;
+        font-size: 9.5pt;
+        margin-bottom: 2mm;
         text-align: center;
       }
 
       .back-matter h3 {
-        font-size: 8.2px;
-        margin: 3.5mm 0 1mm;
+        font-size: 8pt;
+        margin: 2.5mm 0 0.8mm;
       }
 
       .grade-scale-table {
@@ -421,19 +435,19 @@
     <section class="summary-strip">
       <div class="summary-row">
         <div class="summary-cell summary-cell--program">
-          <strong>Curriculum:</strong> {{ transcript.program_code }} -- {{ transcript.major_program }}
+          <strong>Curri:</strong> {{ transcript.program_code }} -- {{ transcript.major_program }}
         </div>
         <div class="summary-cell summary-cell--college">
           <strong>College:</strong> {{ transcript.college }}
         </div>
         <div class="summary-cell summary-cell--enrollment">
-          <strong>Enrollment:</strong> {{ transcript.enrollment_date }}
+          <strong>Enrol:</strong> {{ transcript.enrollment_date }}
         </div>
         <div class="summary-cell summary-cell--completion">
-          <strong>Completion:</strong> {{ transcript.completion_date }}
+          <strong>Comp:</strong> {{ transcript.completion_date }}
         </div>
         <div class="summary-cell summary-cell--graduation">
-          <strong>Graduation:</strong> {{ transcript.graduation_date }}
+          <strong>Grad:</strong> {{ transcript.graduation_date }}
         </div>
       </div>
     </section>

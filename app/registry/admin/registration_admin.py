@@ -295,7 +295,7 @@ class RegioAdmin(
         "section__semester__academic_year__code",
         "section__semester__number",
     )
-    list_filter = (SemFltAC, RegioStudentFlt, RegioSectionFlt)
+    list_filter = ("status", SemFltAC, RegioStudentFlt, RegioSectionFlt)
     ordering = (
         "section__semester__start_date",
         "section__curriculum_course__course__code",

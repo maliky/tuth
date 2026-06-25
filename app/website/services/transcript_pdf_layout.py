@@ -69,7 +69,7 @@ def transcript_pdf_layout(
             "earned_label": "Earned",
             "grade_label": "Grade",
             "page_margin": "10mm 10mm 15.5mm",
-            "points_label": "Qual.",
+            "points_label": "Pts",
             "term_columns": split_term_groups_for_columns(groups),
         }
     return {

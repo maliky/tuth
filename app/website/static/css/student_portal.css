@@ -293,6 +293,16 @@
   border-radius: var(--portal-radius);
   border: 1px solid var(--portal-border);
   box-shadow: var(--portal-shadow);
+  color: inherit;
+  display: block;
+  text-decoration: none;
+}
+
+.kpi-card--link:focus,
+.kpi-card--link:hover {
+  border-color: rgba(19, 69, 41, 0.34);
+  color: inherit;
+  text-decoration: none;
 }
 
 .kpi-value {

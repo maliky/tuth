@@ -18,6 +18,7 @@ class MetricT(TypedDict):
 
     label: str
     value: DisplayValueT
+    href: NotRequired[str]
 
 
 class PanelItemT(TypedDict):

@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+from urllib.parse import parse_qs, urlparse
+
 import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
+from django.contrib.admin.sites import AdminSite
+from django.test import RequestFactory
 from django.urls import reverse
 
+from app.registry.admin.registration_admin import RegioAdmin
 from app.registry.models.registration import Registration
 
 
@@ -155,16 +160,45 @@ def test_registrar_dashboard_scopes_pending_payment_metric(
     client.force_login(user)
     response = client.get(reverse("staff_role_dashboard", args=["registrar"]))
     metrics = response.context["metrics"]
+    content = response.content.decode()
     pending_metric = next(
         metric
         for metric in metrics
         if str(metric["label"]).startswith("Registrations pending payment")
     )
+    href = str(pending_metric["href"])
+    parsed_href = urlparse(href)
+    href_params = parse_qs(parsed_href.query)
 
     assert response.status_code == 200
     assert pending_metric["label"] == "Registrations pending payment (current term)"
     assert pending_metric["value"] == 1
-    assert "Registrations pending clearance" not in response.content.decode()
+    assert parsed_href.path == reverse("admin:registry_registration_changelist")
+    assert href_params["status__code__exact"] == ["pending"]
+    assert "semester" in href_params
+    assert (
+        Registration.objects.filter(
+            status__code="pending",
+            section__semester_id=int(href_params["semester"][0]),
+        ).count()
+        == pending_metric["value"]
+    )
+    assert (
+        'href="/admin/registry/registration/?status__code__exact=pending&amp;' in content
+    )
+    assert "Registrations pending clearance" not in content
+
+
+@pytest.mark.django_db
+def test_registration_admin_allows_pending_payment_status_filter() -> None:
+    """Registrar pending-payment links should be accepted by the admin changelist."""
+    request = RequestFactory().get(
+        reverse("admin:registry_registration_changelist"),
+        {"status__code__exact": "pending"},
+    )
+    model_admin = RegioAdmin(Registration, AdminSite())
+
+    assert model_admin.lookup_allowed("status__code__exact", "pending", request)
 
 
 @pytest.mark.django_db

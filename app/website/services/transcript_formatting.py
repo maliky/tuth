@@ -26,4 +26,11 @@ def fmt_date(value: date | None, *, short: bool = False) -> str:
     return f"{value.strftime('%B')} {value.day}, {value.year}"
 
 
-__all__ = ["fmt_date", "fmt_gpa", "fmt_number"]
+def fmt_abbrev_date(value: date | None) -> str:
+    """Return a readable abbreviated month transcript date label."""
+    if value is None:
+        return ""
+    return f"{value.strftime('%b')} {value.day}, {value.year}"
+
+
+__all__ = ["fmt_abbrev_date", "fmt_date", "fmt_gpa", "fmt_number"]

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from django.http import HttpRequest
 from django.urls import reverse
+from django.utils.http import urlencode
 
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
@@ -76,13 +77,22 @@ def _registrar_pending_payment_metric() -> MetricT:
         semester = Semester.get_current_sem()
         scope = "current term"
     if semester and semester.id:
+        query = urlencode(
+            {
+                "status__code__exact": "pending",
+                "semester": str(semester.id),
+            }
+        )
         return {
             "label": f"Registrations pending payment ({scope})",
             "value": pending_qs.filter(section__semester=semester).count(),
+            "href": f"{reverse('admin:registry_registration_changelist')}?{query}",
         }
+    query = urlencode({"status__code__exact": "pending"})
     return {
         "label": "Registrations pending payment (all terms)",
         "value": pending_qs.count(),
+        "href": f"{reverse('admin:registry_registration_changelist')}?{query}",
     }
 
 

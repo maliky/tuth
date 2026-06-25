@@ -77,26 +77,34 @@ def _box_position(box: object, attr: str) -> float:
     return 0.0
 
 
-def _rendered_first_page_texts(html: str) -> RenderedPageTextT:
-    """Render transcript HTML and return first-page text boxes."""
+def _rendered_page_texts(html: str) -> list[RenderedPageTextT]:
+    """Render transcript HTML and return text boxes grouped by page."""
     project_root = Path(__file__).resolve().parents[2]
     rendered = HTML(string=html, base_url=str(project_root)).render()
-    page = cast(object, rendered.pages[0])
-    stack: list[object] = [cast(object, getattr(page, "_page_box"))]
-    texts: list[RenderedTextT] = []
-    while stack:
-        box = stack.pop()
-        raw_text: object = getattr(box, "text", "")
-        if isinstance(raw_text, str) and raw_text:
-            texts.append(
-                (
-                    raw_text,
-                    _box_position(box, "position_x"),
-                    _box_position(box, "position_y"),
+    pages: list[RenderedPageTextT] = []
+    for raw_page in rendered.pages:
+        page = cast(object, raw_page)
+        stack: list[object] = [cast(object, getattr(page, "_page_box"))]
+        texts: list[RenderedTextT] = []
+        while stack:
+            box = stack.pop()
+            raw_text: object = getattr(box, "text", "")
+            if isinstance(raw_text, str) and raw_text:
+                texts.append(
+                    (
+                        raw_text,
+                        _box_position(box, "position_x"),
+                        _box_position(box, "position_y"),
+                    )
                 )
-            )
-        stack.extend(_box_children(box))
-    return _box_position(page, "width"), texts
+            stack.extend(_box_children(box))
+        pages.append((_box_position(page, "width"), texts))
+    return pages
+
+
+def _rendered_first_page_texts(html: str) -> RenderedPageTextT:
+    """Render transcript HTML and return first-page text boxes."""
+    return _rendered_page_texts(html)[0]
 
 
 def _history_section(
@@ -299,6 +307,9 @@ def test_transcript_pdf_html_uses_layout_selection_and_compact_grade_table(
         course_number="403",
         curriculum_short_name="CURRI_TRANSCRIPT_HTML",
     )
+    current.start_date = date(2026, 3, 4)
+    current.end_date = date(2026, 5, 6)
+    current.save(update_fields=["start_date", "end_date"])
     section.start_date = date(2026, 3, 4)
     section.end_date = date(2026, 5, 6)
     section.save(update_fields=["start_date", "end_date"])
@@ -311,6 +322,19 @@ def test_transcript_pdf_html_uses_layout_selection_and_compact_grade_table(
     document = build_transcript_document(student.id)
     html = render_transcript_document_html(document, layout="landscape")
 
+    assert document["enrollment_date"] == "Mar 4, 2026"
+    assert document["completion_date"] == "May 6, 2026"
+    assert document["graduation_date"] == "N/A"
+    assert "Curri:" in html
+    assert "<strong>Enrol:</strong> Mar 4, 2026" in html
+    assert "<strong>Comp:</strong> May 6, 2026" in html
+    assert "<strong>Grad:</strong> N/A" in html
+    assert "Curriculum:" not in html
+    assert "Enrollment:" not in html
+    assert "Completion:" not in html
+    assert "Graduation:" not in html
+    assert "March 4, 2026" not in html
+    assert "May 6, 2026" in html
     assert "@bottom-center" in html
     assert "Registrar: __________________" in html
     assert "Date: __________________" in html
@@ -329,6 +353,8 @@ def test_transcript_pdf_html_uses_layout_selection_and_compact_grade_table(
     assert 'class="summary-strip"' in html
     assert 'class="institution-identity-table"' in html
     assert 'class="summary-cell summary-cell--program"' in html
+    assert ".summary-cell--program {\n        width: 35%;" in html
+    assert ".summary-cell--college {\n        width: 21.5%;" in html
     assert 'class="detail-columns-table"' in html
     assert 'class="detail-columns"' not in html
     assert ".detail-columns {" not in html
@@ -339,7 +365,13 @@ def test_transcript_pdf_html_uses_layout_selection_and_compact_grade_table(
     assert "<th>Grade</th>" in html
     assert "<th>Att.</th>" in html
     assert "<th>Earned</th>" in html
-    assert "<th>Qual.</th>" in html
+    assert "<th>Pts</th>" in html
+    assert "font-size: 8pt;" in html
+    assert "font-size: 9pt;" not in html
+    assert "padding-right: 5mm;" in html
+    assert "padding-left: 5mm;" in html
+    assert "border-left: 0.2mm solid #111;" in html
+    assert "width: 30mm;" not in html
     assert "Transcript Summary" not in html
     assert 'class="summary-metrics"' not in html
     assert 'class="totals-table summary-totals"' not in html
@@ -383,6 +415,9 @@ def test_transcript_pdf_html_includes_qr_metadata_for_verified_artifact(
     assert "Token: qr-token-1" in html
     assert "https://tusis.koba.sarl/transcripts/verify/qr-token-1/" in html
     assert 'class="verification-qr-cell"' in html
+    assert "width: 22mm;" in html
+    assert "height: 20mm;" in html
+    assert "width: 20mm;" in html
     assert TINIEST_PNG_URI in html
     assert html.index('class="back-matter"') < html.index('class="verification-block"')
     assert html.index("***CONCLUSION OF TRANSCRIPT***") < html.index(
@@ -509,6 +544,65 @@ def test_landscape_pdf_render_keeps_transcript_rows_visible(
     assert 0 < positions[left_code][0] < page_width / 2
     assert page_width / 2 < positions[right_code][0] < page_width
     assert "Transcript Back Matter" not in {text for text, _x, _y in texts}
+
+
+def test_landscape_pdf_keeps_expected_max_record_on_first_page(
+    reg_sec_factory,
+    reg_std_factory,
+) -> None:
+    """Expected maximum transcripts should remain readable on the first page."""
+    semesters: list[Semester] = []
+    for index in range(10):
+        academic_year = AcademicYear.objects.create(start_date=date(2016 + index, 8, 1))
+        semesters.append(
+            Semester.objects.create(
+                academic_year=academic_year,
+                number=1,
+                start_date=date(2016 + index, 9, 1),
+            )
+        )
+
+    sections: list[Section] = []
+    curriculum: Curriculum | None = None
+    for semester_index, semester in enumerate(semesters):
+        for course_index in range(5):
+            section, curriculum = reg_sec_factory(
+                semester,
+                course_number=str(800 + semester_index * 5 + course_index),
+                curriculum_short_name="CURRI_TRANSCRIPT_EXPECTED_MAX",
+            )
+            course = section.curriculum_course.course
+            course.title = f"Expected Max Transcript Course {semester_index + 1}"
+            course.save(update_fields=["title"])
+            sections.append(section)
+    assert curriculum is not None
+
+    student = reg_std_factory(
+        "registrar_transcript_expected_max_student",
+        curriculum,
+        semesters[0],
+    )
+    for section in sections:
+        Grade.objects.create(student=student, section=section, value=_grade_value("a"))
+
+    document = build_transcript_document(student.id)
+    verified_document = transcript_document_with_verification(
+        document,
+        qr_code_uri=TINIEST_PNG_URI,
+        token="expected-max-token-1",
+        verification_url="https://tusis.koba.sarl/transcripts/verify/expected-max/",
+    )
+    html = render_transcript_document_html(verified_document, layout="landscape")
+    first_page_texts = {text for text, _x, _y in _rendered_page_texts(html)[0][1]}
+    course_codes = {
+        row["course_code"] for group in document["term_groups"] for row in group["rows"]
+    }
+
+    assert len(document["term_groups"]) == 10
+    assert sum(len(group["rows"]) for group in document["term_groups"]) == 50
+    assert course_codes <= first_page_texts
+    assert any("CONCLUSION" in text for text in first_page_texts)
+    assert "Transcript Back Matter" not in first_page_texts
 
 
 def test_transcript_pdf_layout_splits_terms_without_breaking_semesters(

@@ -1,10 +1,17 @@
 {% if metrics %}
   <div class="kpi-grid mb-4">
     {% for metric in metrics %}
-      <article class="kpi-card">
-        <p class="metric-card__label">{{ metric.label }}</p>
-        <p class="kpi-value mb-0">{{ metric.value }}</p>
-      </article>
+      {% if metric.href %}
+        <a class="kpi-card kpi-card--link" href="{{ metric.href }}">
+          <p class="metric-card__label">{{ metric.label }}</p>
+          <p class="kpi-value mb-0">{{ metric.value }}</p>
+        </a>
+      {% else %}
+        <article class="kpi-card">
+          <p class="metric-card__label">{{ metric.label }}</p>
+          <p class="kpi-value mb-0">{{ metric.value }}</p>
+        </article>
+      {% endif %}
     {% endfor %}
   </div>
 {% endif %}
