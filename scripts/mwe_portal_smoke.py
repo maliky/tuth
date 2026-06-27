@@ -24,7 +24,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 RouteSetT: TypeAlias = tuple[str, str, tuple[str, ...]]
 
-DEFAULT_BASE_URL: Final[str] = "https://tusis.koba.sarl"
+DEFAULT_BASE_URL: Final[str] = "https://sis.wvstu.online"
 DEFAULT_OUTPUT: Final[str] = "/tmp/tusis_arch_browser_smoke.json"
 DEFAULT_PASSWORD: Final[str] = "PassW0rd!"
 PAGE_TIMEOUT_SECONDS: Final[int] = 15

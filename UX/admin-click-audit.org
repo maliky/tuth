@@ -1,7 +1,7 @@
 * Tusis Django admin click audit
 :PROPERTIES:
 :DATE: 2026-06-02
-:TARGET: https://tusis.koba.sarl/admin/
+:TARGET: https://sis.wvstu.online/admin/
 :BASIC_AUTH: tusis:tusis
 :ADMIN_USER: dev
 :ARTIFACTS: /tmp/tusis_admin_click_audit_20260602T101726Z

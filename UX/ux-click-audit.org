@@ -1,7 +1,7 @@
 * Tusis UX click audit
 :PROPERTIES:
 :DATE: 2026-06-01
-:TARGET: https://tusis.koba.sarl
+:TARGET: https://sis.wvstu.online
 :ARTIFACTS: /tmp/tusis_ux_click_audit_20260601T193458Z
 :P2_P3_ARTIFACTS: /tmp/tusis_ux_p2_p3_verify_20260601T221640Z
 :END:

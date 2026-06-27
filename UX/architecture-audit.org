@@ -1,7 +1,7 @@
 #+TITLE: Tusis architecture and UX readiness audit
 :PROPERTIES:
 :DATE: 2026-06-02
-:TARGET: Local worktree and https://tusis.koba.sarl
+:TARGET: Local worktree and https://sis.wvstu.online
 :BASIC_AUTH: tusis:tusis
 :SOURCE_OF_TRUTH: UX/tu-web-design-guide.org
 :BROWSER_ARTIFACTS: /tmp/tusis_arch_browser_smoke.json /tmp/tusis_arch_browser_role_focus.json
