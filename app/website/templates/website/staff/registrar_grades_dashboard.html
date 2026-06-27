@@ -78,6 +78,11 @@
             <a class="btn portal-btn-outline btn-sm" href="{{ selected_student_snapshot.rosters_url }}">
               Class rosters
             </a>
+            {% if selected_student_snapshot.registration_url %}
+              <a class="btn portal-btn-outline btn-sm" href="{{ selected_student_snapshot.registration_url }}">
+                Correct registrations
+              </a>
+            {% endif %}
           </div>
         </div>
         <div class="account-profile-facts">
@@ -183,6 +188,14 @@
                         href="{{ semester.grade_editor_url }}"
                       >
                         Add/correct grades
+                      </a>
+                    {% endif %}
+                    {% if semester.can_manage_registrations %}
+                      <a
+                        class="btn portal-btn-outline btn-sm d-inline-flex align-items-center m-2"
+                        href="{{ semester.registration_editor_url }}"
+                      >
+                        Correct registrations
                       </a>
                     {% endif %}
                   </div>

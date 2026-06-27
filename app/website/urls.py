@@ -97,6 +97,16 @@ urlpatterns = [
         name="staff_grade_rosters",
     ),
     path(
+        "staff/<slug:role>/grade-rosters/students/autocomplete/",
+        views.staff_grade_roster_student_autocomplete,
+        name="staff_grade_roster_student_autocomplete",
+    ),
+    path(
+        "staff/<slug:role>/grade-rosters/faculty/autocomplete/",
+        views.staff_grade_roster_faculty_autocomplete,
+        name="staff_grade_roster_faculty_autocomplete",
+    ),
+    path(
         "staff/<slug:role>/grade-rosters/<int:section_id>/",
         views.staff_grade_roster_detail,
         name="staff_grade_roster_detail",
@@ -210,6 +220,16 @@ urlpatterns = [
         "registrar/grades/<int:student_id>/semesters/<int:semester_id>/grades/",
         views.reg_grade_semester_editor,
         name="reg_grade_semester_editor",
+    ),
+    path(
+        "registrar/registrations/<int:student_id>/semesters/<int:semester_id>/",
+        views.reg_registration_semester_editor,
+        name="reg_registration_semester_editor",
+    ),
+    path(
+        "registrar/registrations/semesters/<int:semester_id>/sections/autocomplete/",
+        views.reg_registration_section_autocomplete,
+        name="reg_registration_section_autocomplete",
     ),
     path(
         "registrar/grades/<int:student_id>/transcript/",

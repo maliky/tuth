@@ -1,4 +1,9 @@
 {% extends "website/staff/base.html" %}
+{% load static %}
+
+{% block staff_head_extra %}
+  <link rel="stylesheet" href="{% static 'admin/css/vendor/select2/select2.min.css' %}" />
+{% endblock %}
 
 {% block staff_header_actions %}
   <a class="btn portal-btn-outline btn-sm" href="{{ dashboard_url }}">
@@ -17,6 +22,63 @@
           while Registrar controls the open period.
         </p>
       </div>
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-lg-4">
+          <label class="form-label">Student</label>
+          <select
+            class="form-select"
+            name="student_id"
+            data-student-autocomplete
+            data-autocomplete-url="{{ student_autocomplete_url }}"
+          >
+            {% if selected_student_id %}
+              <option value="{{ selected_student_id }}" selected>
+                {{ selected_student_label }}
+              </option>
+            {% endif %}
+          </select>
+        </div>
+        <div class="col-lg-4">
+          <label class="form-label">Faculty</label>
+          <select
+            class="form-select"
+            name="faculty_id"
+            data-faculty-autocomplete
+            data-autocomplete-url="{{ faculty_autocomplete_url }}"
+          >
+            {% if selected_faculty_id %}
+              <option value="{{ selected_faculty_id }}" selected>
+                {{ selected_faculty_label }}
+              </option>
+            {% endif %}
+          </select>
+        </div>
+        <div class="col-lg-2">
+          <label class="form-label">Semester</label>
+          <select class="form-select" name="semester">
+            {% for option in semester_options %}
+              <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>
+                {{ option.label }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-lg-2">
+          <button class="btn portal-btn-accent w-100" type="submit">Filter</button>
+        </div>
+      </form>
+      {% if oversight_admin_links %}
+        <div class="registrar-admin-shortcuts">
+          <p class="eyebrow text-uppercase mb-2">Authorized database</p>
+          <div class="d-flex flex-wrap gap-2">
+            {% for link in oversight_admin_links %}
+              <a class="btn portal-btn-outline btn-sm" href="{{ link.href }}">
+                {{ link.label }}
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
     </div>
   </section>
 
@@ -69,7 +131,7 @@
             {% empty %}
               <tr>
                 <td colspan="7" class="text-center text-muted py-4">
-                  No assigned sections match this oversight scope.
+                  No grade rosters match the selected filters.
                 </td>
               </tr>
             {% endfor %}
@@ -79,23 +141,46 @@
     </div>
   </div>
 
-  {% if section_page.has_other_pages %}
-    <nav class="d-flex justify-content-between align-items-center mt-3" aria-label="Roster pages">
-      <span class="text-muted small">
-        Page {{ section_page.number }} of {{ section_page.paginator.num_pages }}
-      </span>
-      <div class="d-flex gap-2">
-        {% if section_page.has_previous %}
-          <a class="btn portal-btn-outline btn-sm" href="?page={{ section_page.previous_page_number }}">
-            Previous
-          </a>
-        {% endif %}
-        {% if section_page.has_next %}
-          <a class="btn portal-btn-outline btn-sm" href="?page={{ section_page.next_page_number }}">
-            Next
-          </a>
-        {% endif %}
-      </div>
-    </nav>
-  {% endif %}
+  {% with page=section_page %}
+    {% include "website/staff/partials/pagination.html" %}
+  {% endwith %}
+{% endblock %}
+
+{% block staff_body_extra %}
+  <script src="{% static 'admin/js/vendor/jquery/jquery.min.js' %}"></script>
+  <script src="{% static 'admin/js/vendor/select2/select2.full.min.js' %}"></script>
+  <script>
+    (function () {
+      const initAutocomplete = function (selector, placeholder) {
+        const select = document.querySelector(selector);
+        if (!select || !window.jQuery) {
+          return;
+        }
+        const url = select.dataset.autocompleteUrl;
+        const autocompleteUrl = new URL(
+          url,
+          `${window.location.protocol}//${window.location.host}`,
+        ).toString();
+        window.jQuery(select).select2({
+          allowClear: true,
+          placeholder: placeholder,
+          minimumInputLength: 2,
+          ajax: {
+            url: autocompleteUrl,
+            dataType: "json",
+            delay: 250,
+            data: function (params) {
+              return { q: params.term };
+            },
+            processResults: function (data) {
+              return data;
+            },
+          },
+        });
+      };
+
+      initAutocomplete("[data-student-autocomplete]", "Search by name or ID");
+      initAutocomplete("[data-faculty-autocomplete]", "Search by faculty");
+    })();
+  </script>
 {% endblock %}

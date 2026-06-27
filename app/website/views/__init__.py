@@ -33,6 +33,8 @@ from .faculty import (
 )
 from .grade_roster_oversight import (
     staff_grade_roster_detail,
+    staff_grade_roster_faculty_autocomplete,
+    staff_grade_roster_student_autocomplete,
     staff_grade_rosters,
 )
 from .registrar import (
@@ -46,6 +48,8 @@ from .registrar import (
     reg_grade_transcript_org,
     reg_grade_transcript_pdf,
     reg_grade_transcripts_bulk_pdf,
+    reg_registration_section_autocomplete,
+    reg_registration_semester_editor,
     reg_std_autocomplete,
 )
 from .staff_dashboards import staff_dashboard, staff_role_dashboard
@@ -90,9 +94,13 @@ __all__ = [
     "reg_grade_transcript_org",
     "reg_grade_transcript_pdf",
     "reg_grade_transcripts_bulk_pdf",
+    "reg_registration_section_autocomplete",
+    "reg_registration_semester_editor",
     "reg_std_autocomplete",
     "staff_dashboard",
     "staff_grade_roster_detail",
+    "staff_grade_roster_faculty_autocomplete",
+    "staff_grade_roster_student_autocomplete",
     "staff_grade_rosters",
     "staff_role_dashboard",
     "student_dashboard",

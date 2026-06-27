@@ -410,14 +410,14 @@ def test_transcript_pdf_html_includes_qr_metadata_for_verified_artifact(
         document,
         qr_code_uri=TINIEST_PNG_URI,
         token="qr-token-1",
-        verification_url="https://tusis.koba.sarl/transcripts/verify/qr-token-1/",
+        verification_url="https://sis.wvstu.online/transcripts/verify/qr-token-1/",
     )
 
     html = render_transcript_document_html(verified_document, layout="landscape")
 
     assert "Scan to verify transcript." in html
     assert "Token: qr-token-1" in html
-    assert "https://tusis.koba.sarl/transcripts/verify/qr-token-1/" in html
+    assert "https://sis.wvstu.online/transcripts/verify/qr-token-1/" in html
     assert 'class="verification-qr-cell"' in html
     assert "width: 22mm;" in html
     assert "height: 20mm;" in html
@@ -485,7 +485,7 @@ def test_verified_landscape_pdf_renders_long_transcript_without_grid_crash(
         document,
         qr_code_uri=TINIEST_PNG_URI,
         token="long-token-1",
-        verification_url="https://tusis.koba.sarl/transcripts/verify/long-token-1/",
+        verification_url="https://sis.wvstu.online/transcripts/verify/long-token-1/",
     )
     html = render_transcript_document_html(verified_document, layout="landscape")
     project_root = Path(__file__).resolve().parents[2]
@@ -594,7 +594,7 @@ def test_landscape_pdf_keeps_expected_max_record_on_first_page(
         document,
         qr_code_uri=TINIEST_PNG_URI,
         token="expected-max-token-1",
-        verification_url="https://tusis.koba.sarl/transcripts/verify/expected-max/",
+        verification_url="https://sis.wvstu.online/transcripts/verify/expected-max/",
     )
     html = render_transcript_document_html(verified_document, layout="landscape")
     first_page_texts = {text for text, _x, _y in _rendered_page_texts(html)[0][1]}

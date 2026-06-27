@@ -4,6 +4,11 @@
   <a class="btn portal-btn-outline btn-sm" href="{{ dashboard_url }}">
     Back to grade review
   </a>
+  {% if registration_editor_url %}
+    <a class="btn portal-btn-outline btn-sm" href="{{ registration_editor_url }}">
+      Correct registrations
+    </a>
+  {% endif %}
 {% endblock %}
 
 {% block staff_content %}

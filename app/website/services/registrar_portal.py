@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
 from datetime import date
-from typing import TypeAlias, TypedDict, cast
+from typing import NotRequired, TypeAlias, TypedDict, cast
 from urllib.parse import urlencode
 
 from django.contrib.auth.models import User
@@ -67,6 +67,8 @@ class RegSemGpT(TypedDict):
     gpa: str
     grade_editor_url: str
     can_manage_grades: bool
+    registration_editor_url: str
+    can_manage_registrations: bool
 
 
 class RegStdGpT(TypedDict):
@@ -95,6 +97,7 @@ class RegStudentSnapshotT(TypedDict):
     rows: list[RegSnapshotFactT]
     transcript_url: str
     rosters_url: str
+    registration_url: NotRequired[str]
 
 
 class RegSemesterWindowGroupT(TypedDict):
@@ -147,6 +150,13 @@ def can_manage_registrar_grades(user: User) -> bool:
             "registry.add_grade",
             "registry.change_grade",
         )
+    )
+
+
+def can_manage_registrar_registrations(user: User) -> bool:
+    """Return whether a registrar actor can use registration correction pages."""
+    return user_has_registrar_grade_role(user) and user.has_perm(
+        "registry.view_registration"
     )
 
 
@@ -317,15 +327,16 @@ def _roster_list_url(student_id: int, semester_param: str | None) -> str:
 def build_reg_student_snapshot(
     student: Student,
     semester_param: str | None,
+    can_manage_registrations: bool = False,
 ) -> RegStudentSnapshotT:
     """Return the selected-student summary for the registrar grades dashboard."""
     curriculum = student.primary_curriculum
     grade_count = Grade.objects.filter(student=student).count()
     registration_count = Registration.objects.filter(student=student).count()
-    return {
-        "name": _student_display_name(student),
-        "student_id": student.student_id or str(student.id),
-        "rows": [
+    snapshot = RegStudentSnapshotT(
+        name=_student_display_name(student),
+        student_id=student.student_id or str(student.id),
+        rows=[
             {"label": "Username", "value": _display_value(student.username)},
             {"label": "Program", "value": _display_value(curriculum.short_name)},
             {"label": "College", "value": _display_value(curriculum.college)},
@@ -346,9 +357,16 @@ def build_reg_student_snapshot(
             {"label": "Grade rows", "value": _display_value(grade_count)},
             {"label": "Registrations", "value": _display_value(registration_count)},
         ],
-        "transcript_url": reverse("reg_grade_transcript", args=[student.id]),
-        "rosters_url": _roster_list_url(student.id, semester_param),
-    }
+        transcript_url=reverse("reg_grade_transcript", args=[student.id]),
+        rosters_url=_roster_list_url(student.id, semester_param),
+    )
+    semester_id = clean_int(semester_param)
+    if can_manage_registrations and semester_id is not None:
+        snapshot["registration_url"] = reverse(
+            "reg_registration_semester_editor",
+            args=[student.id, semester_id],
+        )
+    return snapshot
 
 
 def _semester_options(
@@ -388,6 +406,7 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
     user = cast(User, request.user)
     sidebar_role = registrar_sidebar_role(user)
     can_manage_grades = can_manage_registrar_grades(user)
+    can_manage_registrations = can_manage_registrar_registrations(user)
     selected_student_id = clean_int(request.GET.get("student_id"))
     semester_param = request.GET.get("semester")
     semester_id = clean_int(semester_param)
@@ -466,6 +485,7 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
         grades_qs,
         registrations_qs,
         can_manage_grades=can_manage_grades,
+        can_manage_registrations=can_manage_registrations,
     )
     all_semesters_selected = semester_id is None
     pagination_query, pagination_hidden_fields = _pagination_hidden_fields(request)
@@ -480,6 +500,7 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
             selected_student_snapshot = build_reg_student_snapshot(
                 selected_student,
                 semester_param if semester_param_present else "all",
+                can_manage_registrations=can_manage_registrations,
             )
 
     return {
@@ -524,10 +545,22 @@ def _grade_editor_url(
     return reverse("reg_grade_semester_editor", args=[student_id, semester_id])
 
 
+def _registration_editor_url(
+    student_id: int,
+    semester_id: int,
+    can_manage_registrations: bool,
+) -> str:
+    """Return the registrar registration editor URL when this actor may use it."""
+    if not can_manage_registrations:
+        return ""
+    return reverse("reg_registration_semester_editor", args=[student_id, semester_id])
+
+
 def _semester_group(
     student_id: int,
     semester: Semester,
     can_manage_grades: bool,
+    can_manage_registrations: bool,
 ) -> RegSemGpT:
     """Return an initialized semester grade group."""
     return RegSemGpT(
@@ -538,6 +571,12 @@ def _semester_group(
         gpa="N/A",
         grade_editor_url=_grade_editor_url(student_id, semester.id, can_manage_grades),
         can_manage_grades=can_manage_grades,
+        registration_editor_url=_registration_editor_url(
+            student_id,
+            semester.id,
+            can_manage_registrations,
+        ),
+        can_manage_registrations=can_manage_registrations,
     )
 
 
@@ -562,6 +601,7 @@ def build_student_grade_groups(
     registrations: Iterable[Registration] | None = None,
     *,
     can_manage_grades: bool = False,
+    can_manage_registrations: bool = False,
 ) -> list[RegStdGpT]:
     """Group grade rows by student and semester for registrar pages."""
     student_groups: list[RegStdGpT] = []
@@ -599,6 +639,7 @@ def build_student_grade_groups(
                 grade.student_id,
                 semester,
                 can_manage_grades,
+                can_manage_registrations,
             )
             semester_group_lookup[semester.id] = current_semester_group
             grade_student_group["semesters"].append(current_semester_group)
@@ -657,6 +698,7 @@ def build_student_grade_groups(
                 registration.student_id,
                 semester,
                 can_manage_grades,
+                can_manage_registrations,
             )
             semester_group_lookup[semester.id] = current_semester_group
             grade_student_group["semesters"].append(current_semester_group)

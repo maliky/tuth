@@ -30,6 +30,12 @@ from app.website.services.registrar_grade_editor import (
     build_registrar_grade_editor_context,
     save_registrar_grade_editor,
 )
+from app.website.services.registrar_registration_editor import (
+    RegistrarRegistrationError,
+    build_registrar_registration_editor_context,
+    registrar_section_results,
+    save_registrar_registration_editor,
+)
 from app.website.services.registrar_rosters import (
     build_reg_class_roster_detail_context,
     build_reg_class_roster_list_context,
@@ -192,6 +198,70 @@ def reg_grade_semester_editor(
 
     context = build_registrar_grade_editor_context(request, student_id, semester_id)
     return render(request, "website/staff/registrar_grade_editor.html", context)
+
+
+@login_required
+@permission_required("registry.view_registration", raise_exception=True)
+def reg_registration_section_autocomplete(
+    request: HttpRequest,
+    semester_id: int,
+) -> HttpResponse:
+    """Return section suggestions for registrar registration correction."""
+    user = cast(User, request.user)
+    return JsonResponse(
+        {
+            "results": registrar_section_results(
+                user,
+                semester_id,
+                request.GET.get("q"),
+            )
+        }
+    )
+
+
+@login_required
+@permission_required("registry.view_registration", raise_exception=True)
+def reg_registration_semester_editor(
+    request: HttpRequest,
+    student_id: int,
+    semester_id: int,
+) -> HttpResponse:
+    """Render and process registrar registration corrections."""
+    user = cast(User, request.user)
+    if request.method == "POST":
+        try:
+            message = save_registrar_registration_editor(
+                user,
+                student_id,
+                semester_id,
+                request.POST,
+            )
+        except RegistrarRegistrationError as exc:
+            messages.error(request, str(exc))
+            context = build_registrar_registration_editor_context(
+                request,
+                student_id,
+                semester_id,
+            )
+            return render(
+                request,
+                "website/staff/registrar_registration_editor.html",
+                context,
+                status=400,
+            )
+        messages.success(request, message)
+        return redirect(
+            "reg_registration_semester_editor",
+            student_id=student_id,
+            semester_id=semester_id,
+        )
+
+    context = build_registrar_registration_editor_context(
+        request,
+        student_id,
+        semester_id,
+    )
+    return render(request, "website/staff/registrar_registration_editor.html", context)
 
 
 @login_required

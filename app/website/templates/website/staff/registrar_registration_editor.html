@@ -1,0 +1,170 @@
+{% extends "website/staff/base.html" %}
+{% load static %}
+
+{% block staff_head_extra %}
+  <link rel="stylesheet" href="{% static 'admin/css/vendor/select2/select2.min.css' %}" />
+{% endblock %}
+
+{% block staff_header_actions %}
+  <a class="btn portal-btn-outline btn-sm" href="{{ dashboard_url }}">
+    Back to grade review
+  </a>
+  <a class="btn portal-btn-outline btn-sm" href="{{ grade_editor_url }}">
+    Add/correct grades
+  </a>
+{% endblock %}
+
+{% block staff_content %}
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <section class="portal-filter-card mb-4">
+    <div class="portal-filter-card__body">
+      <div class="portal-filter-card__intro">
+        <p class="eyebrow text-uppercase mb-1">Official registration correction</p>
+        <h2>{{ student_label }}</h2>
+        <p class="mb-0 text-muted">
+          {{ semester_label }} · Status: {{ semester_status }}
+        </p>
+      </div>
+      {% if can_add_registration %}
+        <form method="post" action="{{ save_url }}" class="row g-3 align-items-end mt-2">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="add_registration" />
+          <div class="col-md-9">
+            <label class="form-label">Section</label>
+            <select
+              class="form-select"
+              name="section_id"
+              data-section-autocomplete
+              data-autocomplete-url="{{ section_autocomplete_url }}"
+            ></select>
+          </div>
+          <div class="col-md-3">
+            <button class="btn portal-btn-accent w-100" type="submit">
+              Add registration
+            </button>
+          </div>
+        </form>
+      {% endif %}
+    </div>
+  </section>
+
+  <div class="portal-panel-card">
+    <div class="portal-panel-card__stripe"></div>
+    <div class="portal-panel-card__body p-0">
+      <div class="course-table table-responsive mb-0">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Course</th>
+              <th>Section</th>
+              <th>Status</th>
+              <th>Move to</th>
+              <th class="text-end">Delete</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in registration_rows %}
+              <tr>
+                <td>
+                  <strong>{{ row.course_code }}</strong><br />
+                  <span class="text-muted">{{ row.course_title }}</span>
+                  {% if row.block_reason %}
+                    <br />
+                    <span class="status-badge status-pending">{{ row.block_reason }}</span>
+                  {% endif %}
+                </td>
+                <td>{{ row.section_label }}</td>
+                <td>{{ row.status_label }}</td>
+                <td>
+                  <form method="post" action="{{ save_url }}" class="d-flex gap-2 align-items-center">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="move_registration" />
+                    <input type="hidden" name="registration_id" value="{{ row.registration.id }}" />
+                    <select
+                      class="form-select form-select-sm"
+                      name="section_id"
+                      data-section-autocomplete
+                      data-autocomplete-url="{{ section_autocomplete_url }}"
+                      {% if not row.can_move %}disabled{% endif %}
+                    ></select>
+                    <button
+                      class="btn portal-btn-outline btn-sm"
+                      type="submit"
+                      {% if not row.can_move %}disabled{% endif %}
+                    >
+                      Move
+                    </button>
+                  </form>
+                </td>
+                <td class="text-end">
+                  <form method="post" action="{{ save_url }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_registration" />
+                    <input type="hidden" name="registration_id" value="{{ row.registration.id }}" />
+                    <button
+                      class="btn btn-sm btn-outline-danger"
+                      type="submit"
+                      {% if not row.can_delete %}disabled{% endif %}
+                    >
+                      Delete
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-muted py-4">
+                  No registrations were found for this student semester.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block staff_body_extra %}
+  <script src="{% static 'admin/js/vendor/jquery/jquery.min.js' %}"></script>
+  <script src="{% static 'admin/js/vendor/select2/select2.full.min.js' %}"></script>
+  <script>
+    (function () {
+      if (!window.jQuery) {
+        return;
+      }
+      document.querySelectorAll("[data-section-autocomplete]").forEach((select) => {
+        const $select = window.jQuery(select);
+        const url = select.dataset.autocompleteUrl;
+        const autocompleteUrl = new URL(
+          url,
+          `${window.location.protocol}//${window.location.host}`,
+        ).toString();
+        $select.select2({
+          allowClear: true,
+          placeholder: "Search by course, section, or program",
+          minimumInputLength: 2,
+          width: "100%",
+          ajax: {
+            url: autocompleteUrl,
+            dataType: "json",
+            delay: 250,
+            data: function (params) {
+              return { q: params.term };
+            },
+            processResults: function (data) {
+              return data;
+            },
+          },
+        });
+      });
+    })();
+  </script>
+{% endblock %}

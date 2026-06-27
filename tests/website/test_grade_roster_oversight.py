@@ -7,6 +7,7 @@ from typing import cast
 
 import pytest
 from django.contrib.auth.models import Group, User
+from django.core.management import call_command
 from django.urls import reverse
 
 from app.academics.models.college import College
@@ -291,6 +292,157 @@ def test_vpaa_sees_institution_rosters(client, oversight_semester):
         ).status_code
         == 200
     )
+
+
+def test_dean_filters_rosters_and_sees_authorized_database(
+    client,
+    oversight_semester,
+):
+    """Dean roster filters should stay college-scoped and expose allowed admin links."""
+    call_command("load_roles", verbosity=0)
+    college = College.objects.create(code="CDFLT", long_name="Dean Filter College")
+    other_college = College.objects.create(code="CDFLO", long_name="Dean Other College")
+    dean_user, _dean_faculty = _faculty_role_user(
+        "dean_filter",
+        "Dean",
+        college=college,
+    )
+    dean_user.is_staff = True
+    dean_user.save(update_fields=["is_staff"])
+    _fac_user, visible_faculty = _faculty_role_user(
+        "dean_filter_faculty",
+        "Faculty",
+        college=college,
+    )
+    _hidden_user, hidden_faculty = _faculty_role_user(
+        "dean_filter_hidden_faculty",
+        "Faculty",
+        college=college,
+    )
+    _other_user, other_faculty = _faculty_role_user(
+        "dean_filter_other_faculty",
+        "Faculty",
+        college=other_college,
+    )
+    visible_section = _section(
+        college=college,
+        department_code="DFV",
+        curriculum_code="CUR-DEAN-FILTER",
+        course_number="801",
+        faculty=visible_faculty,
+        semester=oversight_semester,
+    )
+    hidden_section = _section(
+        college=college,
+        department_code="DFH",
+        curriculum_code="CUR-DEAN-HIDDEN",
+        course_number="802",
+        faculty=hidden_faculty,
+        semester=oversight_semester,
+    )
+    out_of_scope_section = _section(
+        college=other_college,
+        department_code="DFO",
+        curriculum_code="CUR-DEAN-OTHER",
+        course_number="803",
+        faculty=other_faculty,
+        semester=oversight_semester,
+    )
+    student = _registered_grade(visible_section, "df_visible", "a")
+    hidden_student = _registered_grade(hidden_section, "df_hidden", "b")
+    _registered_grade(out_of_scope_section, "df_other", "c")
+
+    client.force_login(dean_user)
+    response = client.get(
+        reverse("staff_grade_rosters", args=["dean"]),
+        {
+            "student_id": str(student.id),
+            "faculty_id": str(visible_faculty.id),
+            "semester": str(oversight_semester.id),
+        },
+    )
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert "DFV801" in content
+    assert "DFH802" not in content
+    assert "DFO803" not in content
+    assert "Authorized database" in content
+    assert "Grades" in content
+
+    faculty_lookup = client.get(
+        reverse("staff_grade_roster_faculty_autocomplete", args=["dean"]),
+        {"q": "dean_filter"},
+    ).json()["results"]
+    faculty_ids = {row["id"] for row in faculty_lookup}
+    assert visible_faculty.id in faculty_ids
+    assert other_faculty.id not in faculty_ids
+
+    student_lookup = client.get(
+        reverse("staff_grade_roster_student_autocomplete", args=["dean"]),
+        {"q": "df_"},
+    ).json()["results"]
+    student_ids = {row["id"] for row in student_lookup}
+    assert student.id in student_ids
+    assert hidden_student.id in student_ids
+
+
+def test_vpaa_filters_rosters_across_colleges(client, oversight_semester):
+    """VPAA roster filters should search the institution-wide scope."""
+    college = College.objects.create(code="CVPF", long_name="VPAA Filter College")
+    other_college = College.objects.create(code="CVPG", long_name="VPAA Other College")
+    vpaa_user = _staff_role_user("vpaa_filter", "VPAA")
+    _fac_user, visible_faculty = _faculty_role_user(
+        "vpaa_filter_faculty",
+        "Faculty",
+        college=college,
+    )
+    _hidden_user, hidden_faculty = _faculty_role_user(
+        "vpaa_filter_hidden_faculty",
+        "Faculty",
+        college=other_college,
+    )
+    visible_section = _section(
+        college=college,
+        department_code="VFV",
+        curriculum_code="CUR-VPAA-FILTER",
+        course_number="901",
+        faculty=visible_faculty,
+        semester=oversight_semester,
+    )
+    hidden_section = _section(
+        college=other_college,
+        department_code="VFH",
+        curriculum_code="CUR-VPAA-HIDDEN",
+        course_number="902",
+        faculty=hidden_faculty,
+        semester=oversight_semester,
+    )
+    student = _registered_grade(visible_section, "vf_visible", "a")
+    _registered_grade(hidden_section, "vf_hidden", "b")
+
+    client.force_login(vpaa_user)
+    response = client.get(
+        reverse("staff_grade_rosters", args=["vpaa"]),
+        {
+            "student_id": str(student.id),
+            "faculty_id": str(visible_faculty.id),
+            "semester": str(oversight_semester.id),
+        },
+    )
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert "VFV901" in content
+    assert "VFH902" not in content
+
+    faculty_lookup = client.get(
+        reverse("staff_grade_roster_faculty_autocomplete", args=["vpaa"]),
+        {"q": "vpaa_filter"},
+    ).json()["results"]
+    faculty_ids = {row["id"] for row in faculty_lookup}
+    assert visible_faculty.id in faculty_ids
+    assert hidden_faculty.id in faculty_ids
 
 
 def test_faculty_cannot_open_academic_oversight_route(client):

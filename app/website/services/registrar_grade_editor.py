@@ -24,6 +24,7 @@ from app.website.services.grade_portal_common import (
 )
 from app.website.services.portal_types import PortalContextT
 from app.website.services.registrar_portal import (
+    can_manage_registrar_registrations,
     can_manage_registrar_grades,
     registrar_sidebar_role,
 )
@@ -185,6 +186,12 @@ def build_registrar_grade_editor_context(
         pk=semester_id,
     )
     sidebar_role = registrar_sidebar_role(user)
+    registration_editor_url = ""
+    if can_manage_registrar_registrations(user):
+        registration_editor_url = reverse(
+            "reg_registration_semester_editor",
+            args=[student.id, semester.id],
+        )
     return {
         "page_title": "Add or correct grades",
         "page_summary": "Registrar override for official student grade records.",
@@ -207,6 +214,7 @@ def build_registrar_grade_editor_context(
         "grade_rows": build_registrar_grade_editor_rows(student, semester),
         "grade_values": grade_value_options(),
         "dashboard_url": _dashboard_url(student.id, semester.id),
+        "registration_editor_url": registration_editor_url,
         "save_url": reverse("reg_grade_semester_editor", args=[student.id, semester.id]),
     }
 
