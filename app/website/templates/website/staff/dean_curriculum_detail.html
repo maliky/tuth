@@ -20,6 +20,17 @@
         <div class="col-md-3"><strong>Active</strong><br>{% if curriculum.is_active %}Yes{% else %}No{% endif %}</div>
         <div class="col-md-3"><strong>Courses</strong><br>{{ programs|length }}</div>
       </div>
+      <div class="row g-3 mt-1">
+        <div class="col-md-3"><strong>Total credits</strong><br>{{ credit_total }}</div>
+        <div class="col-md-9">
+          {% if curriculum.status_id != "approved" or not curriculum.is_active %}
+            <span class="badge text-bg-warning">Inactive or pending curriculum</span>
+            <span class="text-muted ms-2">Review carefully before treating this as the official program plan.</span>
+          {% else %}
+            <span class="badge text-bg-success">Official active curriculum</span>
+          {% endif %}
+        </div>
+      </div>
       <div class="mt-4 d-flex flex-wrap gap-2">
         {% if curriculum.status_id != "approved" %}
           {% if existing_request %}
@@ -44,36 +55,75 @@
         <h2>Programmed courses</h2>
         <p class="portal-panel-card__subtitle">Courses mapped to this curriculum.</p>
       </div>
-      {% if programs %}
-        <div class="table-responsive">
-          <table class="table align-middle mb-0 portal-table">
-            <thead>
-              <tr>
-                <th>Course</th>
-                <th>Credits</th>
-                <th>Level</th>
-                <th>Semester</th>
-                <th>Required</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for program in programs %}
-                <tr>
-                  <td>
-                    <strong>{{ program.course.short_code|default:program.course.code }}</strong><br>
-                    <span class="text-muted">{{ program.course.title }}</span>
-                  </td>
-                  <td>{{ program.credit_hours.code }}</td>
-                  <td>{{ program.level_number }}</td>
-                  <td>{{ program.semester_number }}</td>
-                  <td>{% if program.is_required %}Yes{% else %}No{% endif %}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+      {% if course_groups %}
+        {% for group in course_groups %}
+          <details class="registrar-window-group mb-3" {% if forloop.first %}open{% endif %}>
+            <summary class="portal-selection-bar d-flex align-items-center justify-content-between">
+              <span>
+                <strong>{{ group.label }}</strong>
+                <small class="text-muted d-block">
+                  {{ group.courses|length }} course(s), {{ group.credits }} credit(s)
+                </small>
+              </span>
+            </summary>
+            <div class="portal-accordion-card__body">
+              <div class="d-flex flex-wrap gap-2 mb-3">
+                {% for item in group.year_totals %}
+                  <span class="badge text-bg-light">{{ item.label }}: {{ item.credits }} credits</span>
+                {% endfor %}
+                {% for item in group.semester_totals %}
+                  <span class="badge text-bg-light">{{ item.label }}: {{ item.credits }} credits</span>
+                {% endfor %}
+              </div>
+              <div class="table-responsive">
+                <table class="table align-middle mb-0 portal-table">
+                  <thead>
+                    <tr>
+                      <th>Course</th>
+                      <th>Credits</th>
+                      <th>Semester</th>
+                      <th>Required</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for program in group.courses %}
+                      <tr>
+                        <td>
+                          <strong>{{ program.course.short_code|default:program.course.code }}</strong><br>
+                          <span class="text-muted">{{ program.course.title }}</span>
+                        </td>
+                        <td>{{ program.credit_hours.code }}</td>
+                        <td>{{ program.semester_number }}</td>
+                        <td>{% if program.is_required %}Yes{% else %}No{% endif %}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </details>
+        {% endfor %}
       {% else %}
         <div class="portal-empty-state">No courses are mapped to this curriculum yet.</div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="portal-panel-card mt-4">
+    <div class="portal-panel-card__stripe"></div>
+    <div class="portal-panel-card__body">
+      <div class="portal-panel-card__head mb-3">
+        <h2>Prerequisite graph</h2>
+        <p class="portal-panel-card__subtitle">Existing exported graph for this curriculum.</p>
+      </div>
+      {% if prereq_graph.available %}
+        <iframe
+          class="prereq-graph-frame"
+          src="{{ prereq_graph.embed_url }}"
+          title="Prerequisite graph for {{ curriculum.short_name }}"
+        ></iframe>
+      {% else %}
+        <div class="portal-empty-state">No exported prerequisite graph is available.</div>
       {% endif %}
     </div>
   </section>

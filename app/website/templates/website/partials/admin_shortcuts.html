@@ -1,0 +1,17 @@
+{% if admin_shortcuts %}
+  <section class="staff-admin-shortcuts portal-filter-card mb-4">
+    <div class="portal-filter-card__body">
+      <div class="portal-filter-card__intro">
+        <p class="eyebrow text-uppercase mb-1">Authorized database</p>
+        <h2>Direct admin access</h2>
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        {% for link in admin_shortcuts %}
+          <a class="btn portal-btn-outline btn-sm" href="{{ link.href }}">
+            {{ link.label }}
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+{% endif %}

@@ -1,0 +1,254 @@
+#+TITLE: TUSIS Preprod Enrollment Backfill and Dedupe Audit
+#+DATE: 2026-06-26
+#+STARTUP: overview
+
+* UX
+for dean should be limited to their college program
+sshould have access to schedules of their staff or course
+see detail and do crud action for their course details credit ect...
+
+chair should be able to update schedule for session, request new section
+dean, request new section
+vpaa, validate new section.
+
+meaning section can be created ut not validated and cannot be scheduled until validated by vpaa.
+
+* Curriculum Dedupe Audit
+
+|                          |      |                     |                                                                                             | <20>                                                                            |
+| Duplicate program        |      | Usage-based target  | Other copies                                                                                | Question                                                                        |
+|--------------------------+------+---------------------+---------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------|
+| BA - 2ndEd/Biology       | CED  | 66 DEFT usage=10569 | 248 EDRCE usage=1666; 257 CAS usage=188                                                     | Confirm canonical college/program; then run merge only for approved source ids. |
+| BA - 2ndEd/Chemistry     | CED  | 67 DEFT usage=4118  | 245 EDRCE usage=767; 265 CAS usage=24                                                       | Confirm canonical college/program; then run merge only for approved source ids. |
+| BA - 2ndEd/Eng Lit       | CED  | 69 DEFT usage=13431 | 230 EDRCE usage=2579                                                                        | Confirm canonical college/program; then run merge only for approved source ids. |
+| BA - 2ndEd/History       | CED  | 71 DEFT usage=6997  | 243 EDRCE usage=1125                                                                        | Confirm canonical college/program; then run merge only for approved source ids. |
+| BA - 2ndEd/Math          | CED  | 72 DEFT usage=13322 | 235 EDRCE usage=1904; 259 CHS usage=6                                                       | Confirm canonical college/program; then run merge only for approved source ids. |
+| BA - Early Child Dev     | CED  | 68 DEFT usage=6880  | 234 EDRCE usage=1362                                                                        | Confirm canonical college/program; then run merge only for approved source ids. |
+| BA - Guidance Counseling | CED  | 70 DEFT usage=8085  | 250 EDRCE usage=1456; 254 CAS usage=40                                                      | Confirm canonical college/program; then run merge only for approved source ids. |
+| BA - Primary Ed          | CED  | 73 DEFT usage=3665  | 244 EDRCE usage=283; 260 CAS usage=39                                                       | Confirm canonical college/program; then run merge only for approved source ids. |
+| BA - Psychology          | CAS  | 93 DEFT usage=887   | 215 CAS usage=486; 220 CHS usage=17                                                         | Confirm canonical college/program; then run merge only for approved source ids. |
+| BBA - Accounting         | CBA  | 62 DEFT usage=25339 | 237 CBA usage=5949; 262 CAFS usage=84                                                       | Confirm canonical college/program; then run merge only for approved source ids. |
+| BBA - Banking & Finance  | CBA  | 74 DEFT usage=7865  | 246 CBA usage=2197                                                                          | Confirm canonical college/program; then run merge only for approved source ids. |
+| BBA - Management         | CBA  | 76 DEFT usage=23805 | 236 CBA usage=6492                                                                          | Confirm canonical college/program; then run merge only for approved source ids. |
+| BPA - Management         | CBA  | 85 DEFT usage=32693 | 231 CBA usage=6318                                                                          | Confirm canonical college/program; then run merge only for approved source ids. |
+| BS - Agri                | CAFS | 63 DEFT usage=44583 | 192 CAFS usage=2099; 227 CAS usage=27; 200 CHS usage=0; 225 CBA usage=0                     | Confirm canonical college/program; then run merge only for approved source ids. |
+| BS - Agro                | CAFS | 64 DEFT usage=4913  | 193 CAFS usage=911                                                                          | Confirm canonical college/program; then run merge only for approved source ids. |
+| BS - Applied Agr         | CAFS | 204 DEFT usage=1264 | 92 CAFS usage=127                                                                           | Confirm canonical college/program; then run merge only for approved source ids. |
+| BS - Biology             | CAS  | 75 DEFT usage=18645 | 232 CAS usage=4243; 256 EDRCE usage=118; 263 CHS usage=33                                   | Confirm canonical college/program; then run merge only for approved source ids. |
+| BS - Civil Eng           | CET  | 78 DEFT usage=25398 | 233 CET usage=3498                                                                          | Confirm canonical college/program; then run merge only for approved source ids. |
+| BS - Computer Sci        | CET  | 79 DEFT usage=15503 | 238 CET usage=3660                                                                          | Confirm canonical college/program; then run merge only for approved source ids. |
+| BS - Economics           | CBA  | 65 DEFT usage=8108  | 247 CBA usage=1369; 264 CAS usage=4                                                         | Confirm canonical college/program; then run merge only for approved source ids. |
+| BS - Elec Eng            | CET  | 80 DEFT usage=16722 | 249 CAS usage=51                                                                            | Confirm canonical college/program; then run merge only for approved source ids. |
+| BS - Env Sci             | CAS  | 81 DEFT usage=20920 | 198 CAS usage=3165; 199 CHS usage=332; 210 CAFS usage=60; 212 CBA usage=43; 196 CET usage=0 | Confirm canonical college/program; then run merge only for approved source ids. |
+| BS - Mech Eng            | CET  | 83 DEFT usage=12794 | 241 CET usage=1643                                                                          | Confirm canonical college/program; then run merge only for approved source ids. |
+| BS - Midwifery           | CHS  | 77 DEFT usage=2995  | 252 CHS usage=1036                                                                          | Confirm canonical college/program; then run merge only for approved source ids. |
+| BS - Nursing             | CHS  | 84 DEFT usage=49091 | 242 CHS usage=8322; 253 CAS usage=191; 258 CBA usage=32                                     | Confirm canonical college/program; then run merge only for approved source ids. |
+| BS - Public Health       | CHS  | 86 DEFT usage=62879 | 239 CHS usage=8124; 255 CAS usage=144; 251 CBA usage=83                                     | Confirm canonical college/program; then run merge only for approved source ids. |
+| CAS-BIOL                 | x    | 133 DEFT usage=44   | 205 CHS usage=0; 211 EDRCE usage=0; 217 CAFS usage=0                                        | Confirm canonical college/program; then run merge only for approved source ids. |
+| CBA-ACCT                 | x    | 145 DEFT usage=53   | 194 CHS usage=0; 221 CAFS usage=0                                                           | Confirm canonical college/program; then run merge only for approved source ids. |
+| CBA-BFIN                 | x    | 146 DEFT usage=54   | 202 CAS usage=0                                                                             | Confirm canonical college/program; then run merge only for approved source ids. |
+| CBA-ECON                 | x    | 148 DEFT usage=52   | 218 CAS usage=0                                                                             | Confirm canonical college/program; then run merge only for approved source ids. |
+| CBA-PADM                 | x    | 147 DEFT usage=52   | 222 CHS usage=0                                                                             | Confirm canonical college/program; then run merge only for approved source ids. |
+| CET-CIVI                 | x    | 159 DEFT usage=63   | 203 EDRCE usage=0                                                                           | Confirm canonical college/program; then run merge only for approved source ids. |
+| CET-ELEC                 | x    | 161 DEFT usage=66   | 201 CAS usage=0                                                                             | Confirm canonical college/program; then run merge only for approved source ids. |
+| CHS-NURS                 | x    | 164 DEFT usage=42   | 197 CET usage=0; 207 CAS usage=0; 214 CBA usage=0                                           | Confirm canonical college/program; then run merge only for approved source ids. |
+| CHS-PUBH                 | x    | 165 DEFT usage=44   | 206 CBA usage=0; 209 CAS usage=0                                                            | Confirm canonical college/program; then run merge only for approved source ids. |
+| EDRCE-GCED               | x    | 150 DEFT usage=50   | 208 CAS usage=0                                                                             | Confirm canonical college/program; then run merge only for approved source ids. |
+| EDRCE-PEDU               | x    | 151 DEFT usage=50   | 219 CAS usage=0                                                                             | Confirm canonical college/program; then run merge only for approved source ids. |
+| EDRCE-SEDU-BIOL          | x    | 152 DEFT usage=46   | 191 CAS usage=0                                                                             | Confirm canonical college/program; then run merge only for approved source ids. |
+| EDRCE-SEDU-CHEM          | x    | 153 DEFT usage=44   | 229 CAS usage=0                                                                             | Confirm canonical college/program; then run merge only for approved source ids. |
+| EDRCE-SEDU-MATH          | x    | 157 DEFT usage=47   | 195 CHS usage=0                                                                             | Confirm canonical college/program; then run merge only for approved source ids. |
+| WASSCE_PREP              |      | 89 DEFT usage=301   | 226 CBA usage=193; 213 CAS usage=129; 228 CHS usage=21                                      | Confirm canonical college/program; then run merge only for approved source ids. |
+| WVSTU - GEN              |      | 61 DEFT usage=23063 | 223 CBA usage=78; 216 EDRCE usage=0; 224 CAS usage=0                                        | Confirm canonical college/program; then run merge only for approved source ids. |
+
+* Curriculum Dedupe Run Log
+
+** 2026-06-26 preprod run
+
+- Snapshot before apply: =/tmp/curriculum_dedup_before_20260626.sql= in the preprod DB container.
+- Dry-run log: =/tmp/curriculum_dedup_dry_20260626.log=.
+- Apply logs: =/tmp/curriculum_dedup_apply_20260626.log=, =/tmp/curriculum_dedup_apply_remaining2_20260626.log=, =/tmp/curriculum_dedup_apply_remaining3_20260626.log=.
+- Approved normal college merges: 44 of 48 source-to-target pairs completed.
+- Approved =x= cleanup: deleted 34 generated/source curricula and 707 curriculum-course rows after dependency checks showed no sections, grades, registrations, invoices, prerequisites, majors, minors, or enrollments.
+- Deferred normal pairs:
+  - =199 -> 198=, =BS - Env Sci=: apply failed because source curriculum still had child =academics_curricrs= rows during final delete.
+  - =253 -> 242=, =BS - Nursing=: blocked by 5 course-invoice references.
+  - =255 -> 239=, =BS - Public Health=: blocked by 6 course-invoice references.
+  - =257 -> 248=, =BA - 2ndEd/Biology=: blocked by 8 course-invoice references.
+- Validation for Oretha B. Gadeh, internal student id =2056=, student id =32268=: duplicate course registrations are now =none=; =BIO308=, =BIO402=, =BIO404=, and =ENVS208= each display once with grades.
+- Remaining duplicate short-name families include deferred rows and families not yet assigned/approved in this file, including =WASSCE_PREP= and =WVSTU - GEN=.
+
+** 2026-06-26 single-program entry semester backfill
+
+- Rule applied: for students with exactly one =people_stdcurrienroll= row, set both the enrollment entry semester and =people_student.entry_semester_id= to the earliest semester found from that student's registrations or grades.
+- Snapshot before apply: =/tmp/single_program_entry_semester_before_20260626.sql= in the preprod DB container.
+- Apply log: =/tmp/single_program_entry_semester_apply_20260626.log=.
+- Candidates with first-course semester: 5,916.
+- Rows updated: 66 enrollment rows and 5,913 student rows.
+- Post-check: 0 enrollment mismatches and 0 student mismatches among candidates.
+- Oretha B. Gadeh was not changed by this rule because she currently has multiple enrollment rows.
+
+** 2026-06-26 pending payment clearance
+
+- Scope applied: finance payments with =finance_payment.status_id='pending'=.
+- Snapshot before apply: =/tmp/clear_pending_payments_before_20260626.sql= in the preprod DB container.
+- Cleared payment =9473= for parent invoice =6018=, amount =45.00=.
+- Post-check: pending finance payments =0=; parent invoice =6018= is =cleared= with balance =0.00=; 3 affected registrations are =cleared=.
+
+* Academic Dashboard Plan
+
+** Summary
+
+Build dean and chair dashboards around the current semester, giving academic leaders
+a fast view of student enrollment by program, faculty workload, and schedule
+coverage. Use active/approved curricula as the main view, while keeping inactive or
+pending curricula visible but secondary. Curriculum detail pages should show courses
+grouped by level and semester, with credit summaries and prerequisite graph output.
+
+** Implementation Status
+
+*** DONE P1 Dean dashboard program enrollment chart
+
+- The dean dashboard shows active approved programs for the dean's college with
+  proportional horizontal stacked bars by student level.
+- Program rows preserve active programs with zero registrations and suppress the
+  level legend when the scoped chart has no enrollment data.
+
+*** DONE P2 Semester selector for academic dashboards
+
+- Dean and chair dashboard contexts expose a dashboard term selector.
+- The selected semester is used for enrollment, workload, and schedule summaries.
+
+*** DONE P3 Dean chair drilldown selector
+
+- The dean dashboard exposes a chair selector for chairs in the dean's college.
+- Selecting a chair adds a focused chair dashboard context below the dean summary.
+
+*** DONE P4 Chair dashboard v1 scope
+
+- Chair scope uses active role assignment department or college when present.
+- Department remains an optional grouping layer, with faculty profile department
+  and college fallbacks.
+
+*** DONE P5 Faculty workload and schedule summaries
+
+- Academic dashboards include program workload rows with faculty count, section
+  count, and credit totals.
+- Academic dashboards include compact schedule placement rows for the selected
+  semester.
+
+*** DONE P6 Curriculum list official-first grouping
+
+- The dean curriculum page shows approved active curricula first.
+- Inactive, pending, historical, or unapproved curricula are shown in a collapsed
+  secondary section.
+
+*** DONE P7 Curriculum detail course grouping
+
+- Curriculum details group programmed courses by level and semester.
+- The page shows credit totals per level group, semester, year, and curriculum.
+
+*** DONE P8 Read-only prerequisite graph display
+
+- Curriculum details show an existing exported prerequisite graph when available.
+- Missing graph exports are reported without generating new graph files.
+
+*** TODO P9 Add overload indicators to workload summaries
+
+- Define overload thresholds and show overload flags when enough faculty load data
+  is available.
+
+*** TODO P10 Replace compact schedule table with richer timetable visualization
+
+- Reuse the filtered schedule visualization from the class schedule or schedule
+  checker app for chair and dean drilldown contexts.
+
+*** TODO P11 Add full student section coverage details
+
+- Expand beyond the limited schedule rows so chairs can inspect student coverage
+  and room placement for all scoped sections in the selected semester.
+
+*** TODO P12 Add advanced gender visualization
+
+- Keep the current gender text and segment tooltips.
+- Add the requested gender proportion point overlay and linked level path only
+  after the horizontal bar layout is stable.
+
+*** TODO P13 Confirm long-term chair responsibility model
+
+- Decide whether role assignments are sufficient or whether Tusis needs an
+  explicit chair-program or chair-course responsibility model.
+
+*** TODO P14 Add dean-facing graph export workflow if needed
+
+- The current page only embeds existing graph output.
+- If deans need to generate graphs without admin access, add a controlled request
+  or export action instead of changing graph generation implicitly.
+
+** Dashboard Requirements
+
+*** Dean dashboard
+
+- Show enrollment statistics for the dean's college, grouped by program and student
+  level: freshman, sophomore, junior, senior, and other configured levels.
+- Use proportional stacked bars as the default visualization: each program is one
+  bar, total bar length represents enrollment count, segments represent levels, and
+  segment styling or tooltip includes gender split.
+- Show faculty and workload summaries for programs in the college: faculty count,
+  assigned sections, credit hours taught, and overload flags when available.
+- Provide access to chair-level views through a selector so the dean can inspect a
+  specific chair's dashboard context.
+- Keep course offerings and timetable views available through the chair-style
+  drilldown instead of duplicating all chair detail on the dean landing page.
+
+*** Chair dashboard
+
+- A chair can cover one or more responsibility scopes; department is optional, not
+  the only organizing unit.
+- V1 should use existing role assignment scope where possible, with department as an
+  optional grouping category.
+- Show program statistics like the dean view, scoped to the chair's programs and
+  courses.
+- Show current-semester timetable, room placement, faculty assignments, and student
+  section coverage.
+- Provide a semester dropdown so the chair can switch the dashboard from current
+  semester to another semester.
+
+** Curriculum Requirements
+
+*** Curriculum list
+
+- First show active and approved curricula.
+- Then show inactive, pending, historical, or unapproved curricula in a collapsed
+  section.
+- Within each section, approved curricula come before pending or revision curricula.
+
+*** Curriculum detail
+
+- Group courses by level, then by semester.
+- Show credit totals per semester, per year, and for the full curriculum.
+- Below the course listing, show the prerequisite graph generated from the existing
+  prerequisite graph export logic.
+- Make dirty or imported curricula visibly distinct from approved active curricula.
+
+** Data Note: Curriculum 237
+
+=/admin/academics/curriculum/237= is not an approved curriculum in preprod. It is
+=CBA / BBA - Accounting=, =status=pending=, =active=False=, with =420= mapped
+courses. Those many rows come from dirty imported =CurriCrs= mappings, including
+CBA, DEFT, CAFS, and CHS course rows.
+
+The approved CBA accounting curriculum is =28 / CBA-ACCT=, =status=approved=,
+=active=True=, with =29= mapped courses and no AGR rows. So the problem is not
+that approved curricula have too many courses; the issue is that pending
+duplicate/raw curricula are visible and easy to confuse with official curricula.
+
+** Assumptions
+
+- Use proportional stacked bars, not scaled pies, for v1 because they compare
+  program size, level mix, and gender split more reliably.
+- Use existing =RoleAssignment=, department, and faculty relationships for chair
+  scope in v1; avoid adding a new chair-program mapping model until the
+  responsibility model is confirmed.
+- Keep prerequisite graph rendering read-only on curriculum detail pages; do not
+  change graph generation behavior in this dashboard pass.

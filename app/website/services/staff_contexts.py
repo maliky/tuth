@@ -28,8 +28,15 @@ from app.registry.models.transcript import TranscriptRequest
 from app.shared.auth.perms import UserRole
 from app.shared.models import ApprovalQueue
 from app.timetable.models.academic_year import AcademicYear
+from app.timetable.models.schedule import Schedule
 from app.timetable.models.semester import Semester
 from app.timetable.models.section import Section
+from app.timetable.models.session import SecSession
+from app.website.services.academic_dashboard import (
+    build_chair_academic_dashboard,
+    build_dean_academic_dashboard,
+    chair_curriculum_scope,
+)
 from app.website.services.portal_types import (
     ActionT,
     MetricT,
@@ -64,6 +71,16 @@ REGISTRAR_ADMIN_SHORTCUTS: tuple[AdminModelShortcutSpecT, ...] = (
 
 FACULTY_ADMIN_SHORTCUTS: tuple[AdminModelShortcutSpecT, ...] = (
     ("Sections", Section),
+    ("Grades", Grade),
+)
+
+ACADEMIC_OVERSIGHT_ADMIN_SHORTCUTS: tuple[AdminModelShortcutSpecT, ...] = (
+    ("Curricula", Curriculum),
+    ("Sections", Section),
+    ("Section schedules", SecSession),
+    ("Schedules", Schedule),
+    ("Students", Student),
+    ("Registrations", Registration),
     ("Grades", Grade),
 )
 
@@ -125,8 +142,8 @@ def _build_staff_context(request: HttpRequest) -> RoleContextT:
         if staff_profile
         else [
             {
-                "label": "No staff profile",
-                "value": "Ask HR to complete your onboarding record.",
+                "label": "",
+                "value": "",
             }
         ]
     )
@@ -200,7 +217,8 @@ def _build_chair_context(request: HttpRequest) -> RoleContextT:
     if not faculty or not faculty.college:
         return _empty_role_context("No college associated to this chair account.")
 
-    curricula = Curriculum.objects.filter(college=faculty.college).order_by("code")
+    chair_scope = chair_curriculum_scope(faculty)
+    curricula = chair_scope["curricula"].order_by("code")
     workloads = (
         FacultyWorkloadSnapshot.objects.filter(faculty__college=faculty.college)
         .select_related("faculty", "semester")
@@ -255,8 +273,8 @@ def _build_chair_context(request: HttpRequest) -> RoleContextT:
     else:
         department_faculty_items = [
             {
-                "label": "Department not assigned",
-                "value": "Ask HR to link your profile to a department first.",
+                "label": "",
+                "value": "",
             }
         ]
 
@@ -279,11 +297,16 @@ def _build_chair_context(request: HttpRequest) -> RoleContextT:
         ],
         "panels": panels,
         "actions": [],
+        "academic_dashboard": build_chair_academic_dashboard(
+            request,
+            faculty=faculty,
+        ),
     }
 
 
 def _build_dean_context(request: HttpRequest) -> RoleContextT:
-    faculty_profile = _get_faculty_profile(_as_user(request.user))
+    user = _as_user(request.user)
+    faculty_profile = _get_faculty_profile(user)
     college = faculty_profile.college if faculty_profile else None
     approvals_qs = ApprovalQueue.objects.filter(target_role="dean").order_by(
         "-created_at"
@@ -326,8 +349,8 @@ def _build_dean_context(request: HttpRequest) -> RoleContextT:
     if not chairs_items:
         chairs_items = [
             {
-                "label": "No chairs assigned",
-                "value": "Ask HR to appoint department chairs for your college.",
+                "label": "",
+                "value": "",
             }
         ]
 
@@ -343,7 +366,7 @@ def _build_dean_context(request: HttpRequest) -> RoleContextT:
             }
         )
 
-    return {
+    context: RoleContextT = {
         "metrics": [
             {"label": "Requests awaiting review", "value": approvals_qs.count()},
         ],
@@ -358,10 +381,21 @@ def _build_dean_context(request: HttpRequest) -> RoleContextT:
             },
         ],
         "actions": actions,
+        "admin_shortcuts": _admin_shortcuts_for_models(
+            user,
+            ACADEMIC_OVERSIGHT_ADMIN_SHORTCUTS,
+        ),
     }
+    if college:
+        context["academic_dashboard"] = build_dean_academic_dashboard(
+            request,
+            college=college,
+        )
+    return context
 
 
-def _build_vpaa_context(_: HttpRequest) -> RoleContextT:
+def _build_vpaa_context(request: HttpRequest) -> RoleContextT:
+    user = _as_user(request.user)
     approvals_qs = ApprovalQueue.objects.filter(target_role="vpaa").order_by(
         "-created_at"
     )
@@ -405,6 +439,10 @@ def _build_vpaa_context(_: HttpRequest) -> RoleContextT:
             }
         ],
         "actions": actions,
+        "admin_shortcuts": _admin_shortcuts_for_models(
+            user,
+            ACADEMIC_OVERSIGHT_ADMIN_SHORTCUTS,
+        ),
     }
 
 

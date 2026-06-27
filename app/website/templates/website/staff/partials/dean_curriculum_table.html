@@ -1,0 +1,39 @@
+{% if curricula %}
+  <div class="table-responsive">
+    <table class="table align-middle mb-0 portal-table">
+      <thead>
+        <tr>
+          <th>Curriculum</th>
+          <th>College</th>
+          <th>Students</th>
+          <th>Courses</th>
+          <th>Status</th>
+          <th>Active</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for curriculum in curricula %}
+          <tr>
+            <td>
+              <strong>{{ curriculum.short_name }}</strong><br>
+              <span class="text-muted">{{ curriculum.long_name|default:"No long name recorded" }}</span>
+            </td>
+            <td>{{ curriculum.college }}</td>
+            <td>{{ curriculum.active_student_count|default:0 }}</td>
+            <td>{{ curriculum.programmed_course_count|default:0 }}</td>
+            <td><span class="badge text-bg-light">{{ curriculum.status.label }}</span></td>
+            <td>{% if curriculum.is_active %}Yes{% else %}No{% endif %}</td>
+            <td class="text-end">
+              <a class="btn portal-btn-accent btn-sm" href="{% url 'dean_curriculum_detail' curriculum.id %}">
+                Review
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="portal-empty-state">No curricula are available in this group.</div>
+{% endif %}

@@ -75,6 +75,37 @@ def test_multi_workspace_user_keeps_workspace_switcher(client):
 
 
 @pytest.mark.django_db
+def test_academic_leader_dashboards_show_authorized_database_links(client):
+    """Dean and VPAA dashboards should expose direct permitted admin links."""
+    User = get_user_model()
+    for role, username in (("dean", "dean_admin_links"), ("vpaa", "vpaa_admin_links")):
+        user = User.objects.create_user(username, password="PassW0rd!", is_staff=True)
+        group_name = "Dean" if role == "dean" else "VPAA"
+        group, _ = Group.objects.get_or_create(name=group_name)
+        user.groups.add(group)
+        user.user_permissions.add(
+            _perm("academics", "view_curriculum"),
+            _perm("timetable", "view_section"),
+            _perm("timetable", "view_secsession"),
+            _perm("timetable", "view_schedule"),
+        )
+
+        client.force_login(user)
+        response = client.get(reverse("staff_role_dashboard", args=[role]))
+        content = response.content.decode()
+
+        assert response.status_code == 200
+        assert "Authorized database" in content
+        assert content.index("Authorized database") < content.index(
+            "portal-workspace-grid"
+        )
+        assert reverse("admin:academics_curriculum_changelist") in content
+        assert reverse("admin:timetable_section_changelist") in content
+        assert reverse("admin:timetable_secsession_changelist") in content
+        assert reverse("admin:timetable_schedule_changelist") in content
+
+
+@pytest.mark.django_db
 def test_finance_officer_dashboard_dedupes_sidebar_actions(client):
     """Finance console links should not appear both in sidebar and action cards."""
     User = get_user_model()

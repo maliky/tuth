@@ -1,0 +1,42 @@
+{% with stack=chart.program_stack_chart %}
+  {% if stack.rows %}
+    <div class="academic-program-chart" aria-label="Student enrollment by active program and class level">
+      {% for row in stack.rows %}
+        <div class="academic-program-row{% if not row.total %} academic-program-row--empty{% endif %}">
+          <div class="academic-program-row__label">
+            <strong>{{ row.display_program }}</strong>
+            <span>{{ row.title }}</span>
+          </div>
+          <div class="academic-program-row__body">
+            <div class="academic-program-row__meta">
+              <strong>{{ row.total }} students</strong>
+              {% if row.total %}<span>{{ row.gender_text }}</span>{% endif %}
+            </div>
+            <div class="academic-program-row__track">
+              <div class="academic-program-row__scale" style="width: {{ row.scale_pct }};">
+                {% for segment in row.segments %}
+                  <span class="academic-bar__segment" style="width: {{ segment.width_pct }}; background: {{ segment.color }};" title="{{ segment.tooltip }}">
+                    <span class="academic-bar__segment-label">{{ segment.label }}</span>
+                  </span>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+
+      {% if stack.legend %}
+        <div class="academic-program-legend" aria-label="Class level legend">
+          {% for item in stack.legend %}
+            <span class="academic-program-legend__item">
+              <span class="academic-program-legend__swatch" style="background: {{ item.color }};"></span>
+              {{ item.label }}
+            </span>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="portal-empty-state">No active approved programs found for this scope.</div>
+  {% endif %}
+{% endwith %}
