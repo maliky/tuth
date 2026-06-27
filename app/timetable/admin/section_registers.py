@@ -38,6 +38,17 @@ REGISTRAR_SECTION_ROLE_LABELS = frozenset(
         UserRole.REGISTRAR_OFFICER.value.label,
     }
 )
+VPAA_SECTION_ROLE_LABELS = frozenset(
+    {
+        "VPAA",
+        UserRole.VPAA.value.label,
+    }
+)
+COLLEGE_SECTION_ROLE_LABELS = frozenset(
+    {
+        UserRole.DEAN.value.label,
+    }
+)
 SECTION_CODE_RE = re.compile(
     r"^(?P<course>[a-z]+\d+[a-z]?)(?:\s*(?:s|sec|section)?\s*(?P<number>\d+))?$",
     re.IGNORECASE,
@@ -58,7 +69,18 @@ def _can_view_all_sections(request: HttpRequest) -> bool:
     user = cast(User, request.user)
     return (
         user.has_perm("timetable.view_section")
-        and user.groups.filter(name__in=REGISTRAR_SECTION_ROLE_LABELS).exists()
+        and user.groups.filter(
+            name__in=REGISTRAR_SECTION_ROLE_LABELS | VPAA_SECTION_ROLE_LABELS
+        ).exists()
+    )
+
+
+def _can_view_college_sections(request: HttpRequest) -> bool:
+    """Return whether the user may view college-scoped sections."""
+    user = cast(User, request.user)
+    return (
+        user.has_perm("timetable.view_section")
+        and user.groups.filter(name__in=COLLEGE_SECTION_ROLE_LABELS).exists()
     )
 
 
@@ -181,6 +203,10 @@ class SecAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
             return qs.filter(semester=open_semester)
         # Registrar roles intentionally bypass faculty/college scoping.
         if can_view_all_sections:
+            return qs
+        if _can_view_college_sections(request):
+            if self.get_user_college(request) is None:
+                return qs.none()
             return qs
         try:
             faculty = request.user.staff.faculty

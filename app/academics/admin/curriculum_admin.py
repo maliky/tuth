@@ -49,6 +49,7 @@ from .actions import (
 from .filters import (
     CrsCollegeFlt,
     CrsCurriFlt,
+    CurriCollegeFltAC,
     CurriFltAC,
     CurriCrsFacultyFltAC,
     CurriCrsStdFltAC,
@@ -229,8 +230,8 @@ class CurriAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         "crs_count_link",
         "std_count",
     )
-    list_filter = (SemFltAC, "college")
-    list_editable = ("status", "is_active", "college")
+    list_filter = (SemFltAC, CurriCollegeFltAC, "is_active", "status")
+    list_editable = ("status", "is_active")
     autocomplete_fields = ("college",)
     inlines = [CurriCrsIL]
 

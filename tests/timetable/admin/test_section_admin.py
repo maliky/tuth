@@ -8,6 +8,8 @@ from django.contrib.auth.models import Permission, User
 from django.test import RequestFactory
 
 from app.academics.models import College, Course, CurriCrs, Curriculum, Department
+from app.people.models.faculty import Faculty
+from app.people.models.staffs import Staff
 from app.registry.models.grade import Grade, GradeValue
 from app.registry.models.credit_hours import CreditHour
 from app.shared.auth.perms import UserRole
@@ -67,6 +69,25 @@ def _registrar_user(username: str, role: UserRole) -> User:
     group = role.value.group
     group.permissions.add(_section_perm("view_section"))
     user.groups.add(group)
+    return user
+
+
+def _academic_section_user(
+    username: str,
+    role: UserRole,
+    *,
+    college: College | None = None,
+) -> User:
+    """Create an academic leader with section view permission."""
+    user = User.objects.create_user(username=username, is_staff=True)
+    group = role.value.group
+    group.permissions.add(_section_perm("view_section"))
+    user.groups.add(group)
+    if college is not None:
+        staff = Staff(user=user, position=role.value.label)
+        staff.save()
+        faculty = Faculty(staff_profile=staff, college=college)
+        faculty.save()
     return user
 
 
@@ -183,6 +204,61 @@ def test_sec_admin_registrar_sees_all_sections(section, sec_factory):
     section_ids = set(admin_obj.get_queryset(request).values_list("id", flat=True))
 
     assert {section.id, other_section.id}.issubset(section_ids)
+
+
+@pytest.mark.django_db
+def test_sec_admin_vpaa_sees_all_sections(section, sec_factory):
+    """VPAA should see institution-wide section schedules in admin."""
+    other_section = sec_factory("893", "CURRI_SECTION_ADMIN_VPAA", 1, 1)
+    user = _academic_section_user("section_admin_vpaa", UserRole.VPAA)
+    admin_obj = SecAdmin(Section, admin.site)
+    request = _section_admin_request(user)
+
+    section_ids = set(admin_obj.get_queryset(request).values_list("id", flat=True))
+
+    assert {section.id, other_section.id}.issubset(section_ids)
+
+
+@pytest.mark.django_db
+def test_sec_admin_dean_sees_college_sections_only(section, semester):
+    """Dean section schedules should stay scoped to the dean's college."""
+    dean_college = section.curriculum_course.curriculum.college
+    other_college = College.objects.create(
+        code="ENG", long_name="Engineering Section Admin"
+    )
+    department = Department.objects.create(code="ESEC", college=other_college)
+    course = Course.objects.create(
+        department=department,
+        number="894",
+        title="Dean Scope Engineering",
+    )
+    curriculum = Curriculum.objects.create(
+        short_name="ENG-DEAN-SCOPE",
+        college=other_college,
+        long_name="Dean Scope Program",
+    )
+    curriculum_course = CurriCrs.objects.create(
+        curriculum=curriculum,
+        course=course,
+        credit_hours=CreditHour.objects.get(code=3),
+    )
+    other_section = Section.objects.create(
+        curriculum_course=curriculum_course,
+        semester=semester,
+        number=1,
+    )
+    user = _academic_section_user(
+        "section_admin_dean",
+        UserRole.DEAN,
+        college=dean_college,
+    )
+    admin_obj = SecAdmin(Section, admin.site)
+    request = _section_admin_request(user)
+
+    section_ids = set(admin_obj.get_queryset(request).values_list("id", flat=True))
+
+    assert section.id in section_ids
+    assert other_section.id not in section_ids
 
 
 @pytest.mark.django_db

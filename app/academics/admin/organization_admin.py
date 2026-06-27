@@ -54,6 +54,8 @@ from .filters import (
     CurriCrsStdFltAC,
     DptCurriFltAC,
     DptFltAC,
+    PrereqCollegeFlt,
+    PrereqProgramFltAC,
 )
 from .inlines import (
     CrsCurriIL,
@@ -308,7 +310,7 @@ class PrerequisiteAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModel
 
     Options configured:
     - list_display shows the course, the prerequisite and the curriculum.
-    - list_filter uses :class:CurriFlt to narrow by curriculum.
+    - list_filter narrows by college, then program.
     - actions provides update_curri for bulk updates.
 
     Example:
@@ -322,7 +324,7 @@ class PrerequisiteAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModel
     # search_fields = ("course", "prerequisite_course") # not permitted no search of fk
     list_display = ("course", "prerequisite_course", "curriculum")
     autocomplete_fields = ("course", "prerequisite_course", "curriculum")
-    list_filter = (CurriFltAC,)
+    list_filter = (PrereqCollegeFlt, PrereqProgramFltAC)
     # search_fields = ("course", "prerequisite_course", "curriculum")
 
 

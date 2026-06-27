@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from typing import Sequence
 
-from admin_searchable_dropdown.filters import AutocompleteFilter
+from admin_searchable_dropdown.filters import (
+    AutocompleteFilter,
+    AutocompleteFilterFactory,
+)
 from django.contrib import admin
 
 from app.academics.models.curriculum import Curriculum
@@ -13,6 +16,8 @@ from app.people.models.faculty import Faculty
 from app.people.models.student import Student
 from app.shared.admin.filters import BaseCollegeFlt, ScopedAutocompleteFilter
 from app.shared.types import LookUpType
+
+CurriCollegeFltAC = AutocompleteFilterFactory("College", "college")
 
 DEPARTMENT_FIELD_LOOKUPS: LookUpType = (
     ("department", "department"),
@@ -52,6 +57,24 @@ class CurriFltAC(ScopedAutocompleteFilter):
     """Autocomplete filter constrained to curricula present in the queryset."""
 
     title = "Curriculum"
+    parameter_name = "curriculum"
+    field_name = "curriculum"
+    lookup_map = CURRICULUM_FIELD_LOOKUPS
+    target_model = Curriculum
+
+
+class PrereqCollegeFlt(BaseCollegeFlt):
+    """College filter for prerequisite rows scoped through their program."""
+
+    title = "College"
+    parameter_name = "curriculum__college"
+    field_path = "curriculum__college"
+
+
+class PrereqProgramFltAC(ScopedAutocompleteFilter):
+    """Program filter for prerequisite rows using the curriculum relation."""
+
+    title = "Program"
     parameter_name = "curriculum"
     field_name = "curriculum"
     lookup_map = CURRICULUM_FIELD_LOOKUPS

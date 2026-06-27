@@ -23,3 +23,18 @@ def test_academic_leaders_unlink_program_courses_without_deleting_catalog_course
         codenames = _group_codenames(role)
         assert "delete_curricrs" in codenames
         assert "delete_course" not in codenames
+
+
+def test_dean_and_vpaa_can_view_grade_roster_database_models():
+    """Dean and VPAA roles need database visibility for roster oversight."""
+    call_command("load_roles", verbosity=0)
+
+    expected = {
+        "view_grade",
+        "view_gradevalue",
+        "view_registration",
+        "view_section",
+        "view_student",
+    }
+    for role in (UserRole.DEAN, UserRole.VPAA):
+        assert expected <= _group_codenames(role)
