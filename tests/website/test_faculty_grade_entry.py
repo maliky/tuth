@@ -7,6 +7,7 @@ from django.urls import reverse
 
 import pytest
 
+from app.academics.choices import AcademicCareer
 from app.people.models.faculty import Faculty
 from app.people.models.student import Student
 from app.registry.models.grade import Grade, GradeValue
@@ -32,12 +33,16 @@ def _make_roster(
     """Create one assigned section with one registered student and grade row."""
     GradeValue._populate_attributes_and_db()
     section = sec_factory("771", "CURRI_FAC_GRADES", 1, 1)
+    section.curriculum_course.curriculum.academic_career = AcademicCareer.GRADUATE
+    section.curriculum_course.curriculum.save(update_fields=["academic_career"])
     section.faculty = faculty
     section.save(update_fields=["faculty"])
     student = std_factory("faculty_grade_student", "CURRI_FAC_GRADES")
     student.student_id = "FG-001"
     student.long_name = "Faculty Grade Student"
     student.save(update_fields=["student_id", "long_name"])
+    student.academic_career = AcademicCareer.GRADUATE
+    student.save(update_fields=["academic_career"])
     Registration.objects.create(student=student, section=section)
     grade = Grade.objects.create(student=student, section=section)
     return section, student, grade

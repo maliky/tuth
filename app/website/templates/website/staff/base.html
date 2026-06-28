@@ -3,7 +3,7 @@
 
 {% block page_title %}{{ page_title|default:"Staff workspace" }} · Tusis{% endblock %}
 
-{% block portal_body_class %}staff-portal-body{% endblock %}
+{% block portal_body_class %}staff-portal-body {{ portal_theme_class|default:"" }}{% endblock %}
 
 {% block extra_css %}
   <link rel="stylesheet" href="{% static 'css/staff-dashboard.css' %}" />

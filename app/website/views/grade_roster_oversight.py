@@ -80,7 +80,14 @@ def staff_grade_roster_student_autocomplete(
     _require_oversight_role(request, role)
     user = cast(User, request.user)
     return JsonResponse(
-        {"results": oversight_student_results(user, role, request.GET.get("q"))}
+        {
+            "results": oversight_student_results(
+                user,
+                role,
+                request.GET.get("q"),
+                request.GET,
+            )
+        }
     )
 
 
@@ -98,6 +105,7 @@ def staff_grade_transcript_student_autocomplete(
                 user,
                 role,
                 request.GET.get("q"),
+                request.GET,
             )
         }
     )
@@ -112,7 +120,14 @@ def staff_grade_roster_faculty_autocomplete(
     _require_oversight_role(request, role)
     user = cast(User, request.user)
     return JsonResponse(
-        {"results": oversight_faculty_results(user, role, request.GET.get("q"))}
+        {
+            "results": oversight_faculty_results(
+                user,
+                role,
+                request.GET.get("q"),
+                request.GET,
+            )
+        }
     )
 
 

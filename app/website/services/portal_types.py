@@ -63,6 +63,8 @@ class RoleContextT(TypedDict):
     admin_shortcuts: NotRequired[list[AdminShortcutT]]
     show_action_panel: NotRequired[bool]
     academic_dashboard: NotRequired[dict[str, object]]
+    career_selector: NotRequired[dict[str, object]]
+    portal_theme_class: NotRequired[str]
 
 
 class DashboardLinkT(TypedDict):

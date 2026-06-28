@@ -9,6 +9,39 @@
   --staff-shadow: 0 1px 2px rgba(15, 31, 28, 0.06);
 }
 
+.portal-theme-graduate {
+  --staff-primary: #8a6500;
+  --staff-accent: var(--tu-green);
+}
+
+.portal-theme-graduate .portal-sidebar {
+  border-right-color: #8a6500;
+}
+
+.portal-theme-graduate .portal-btn-accent,
+.portal-theme-graduate .portal-btn-primary {
+  background: #8a6500;
+  border-color: #8a6500;
+  color: #fff;
+}
+
+.portal-theme-graduate .portal-btn-accent:hover,
+.portal-theme-graduate .portal-btn-primary:hover {
+  background: #735300;
+  border-color: #735300;
+  color: #fff;
+}
+
+.portal-theme-graduate .portal-inner .portal-btn-outline {
+  border-color: rgba(138, 101, 0, 0.32);
+  color: #8a6500;
+}
+
+.portal-theme-graduate .portal-inner .portal-btn-outline:hover {
+  background: #8a6500;
+  color: #fff;
+}
+
 .staff-light-body {
   background-color: var(--staff-bg);
   min-height: 100vh;

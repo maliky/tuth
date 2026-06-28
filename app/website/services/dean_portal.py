@@ -15,6 +15,13 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.text import slugify
 
+from app.academics.career_scope import (
+    append_career_query,
+    academic_career_theme_class,
+    career_filter_options,
+    filter_by_academic_career,
+    selected_academic_career,
+)
 from app.academics.prereq_graph import export_prereq_graph
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.curriculum_course import CurriCrs
@@ -227,7 +234,13 @@ def pending_activation_count(user: User) -> int:
 def build_dean_curricula_context(request: HttpRequest) -> ContextT:
     """Build context for the dean curriculum list."""
     user = cast(User, request.user)
-    curricula = sorted(dean_curriculum_queryset(user), key=_curriculum_sort_key)
+    career = selected_academic_career(request.GET)
+    scoped_qs = filter_by_academic_career(
+        dean_curriculum_queryset(user),
+        "academic_career",
+        career,
+    )
+    curricula = sorted(scoped_qs, key=_curriculum_sort_key)
     _attach_curriculum_list_counts(curricula)
     primary_curricula = [
         curriculum for curriculum in curricula if _is_primary_curriculum(curriculum)
@@ -247,6 +260,9 @@ def build_dean_curricula_context(request: HttpRequest) -> ContextT:
         "secondary_curricula": secondary_curricula,
         "college": dean_college(user),
         "pending_activation_count": pending_activation_count(user),
+        "selected_academic_career": career,
+        "portal_theme_class": academic_career_theme_class(career),
+        "career_options": career_filter_options(career),
     }
 
 
@@ -256,6 +272,7 @@ def build_dean_curriculum_detail_context(
 ) -> ContextT:
     """Build context for one dean curriculum detail page."""
     user = cast(User, request.user)
+    career = selected_academic_career(request.GET)
     curriculum = get_object_or_404(dean_curriculum_queryset(user), pk=curriculum_id)
     programs = list(
         CurriCrs.objects.filter(curriculum=curriculum)
@@ -276,6 +293,9 @@ def build_dean_curriculum_detail_context(
         "credit_total": _curriculum_credit_total(programs),
         "prereq_graph": _prereq_graph_context(curriculum),
         "existing_request": existing_request,
+        "selected_academic_career": career,
+        "portal_theme_class": academic_career_theme_class(career),
+        "curricula_url": append_career_query(reverse("dean_curricula"), career),
     }
 
 

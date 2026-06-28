@@ -11,6 +11,7 @@ from django.utils.html import format_html
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from import_export.admin import ImportExportModelAdmin
 
+from app.academics.admin.filters import RegistrationCareerFlt
 from app.people.models.student import Student
 from app.registry.models.document import DocStatus, DocType
 
@@ -305,7 +306,13 @@ class RegioAdmin(
         "section__semester__academic_year__code",
         "section__semester__number",
     )
-    list_filter = ("status", SemFltAC, RegioStudentFlt, RegioSectionFlt)
+    list_filter = (
+        RegistrationCareerFlt,
+        "status",
+        SemFltAC,
+        RegioStudentFlt,
+        RegioSectionFlt,
+    )
     ordering = (
         "section__semester__start_date",
         "section__curriculum_course__course__code",

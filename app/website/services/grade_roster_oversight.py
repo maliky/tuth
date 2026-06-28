@@ -11,6 +11,14 @@ from django.http import Http404, HttpRequest, QueryDict
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 
+from app.academics.career_scope import (
+    CareerModeT,
+    append_career_query,
+    academic_career_theme_class,
+    career_filter_options,
+    filter_by_academic_career,
+    selected_academic_career,
+)
 from app.people.models.faculty import Faculty
 from app.people.models.role_assignment import RoleAssignment
 from app.people.models.student import Student
@@ -184,17 +192,31 @@ def _course_code(section: Section) -> str:
     return course.short_code or course.code or str(course)
 
 
-def scoped_grade_roster_sections(user: User, role_slug: str) -> SectionQueryT:
+def scoped_grade_roster_sections(
+    user: User,
+    role_slug: str,
+    academic_career: CareerModeT | None = None,
+) -> SectionQueryT:
     """Return sections visible to a Chair, Dean, or VPAA oversight role."""
+    career = academic_career or selected_academic_career(QueryDict(mutable=True))
     sections = _base_section_queryset()
     if role_slug == "vpaa":
-        return sections
+        return filter_by_academic_career(
+            sections,
+            "curriculum_course__curriculum__academic_career",
+            career,
+        )
 
     # Prefer explicit role assignments so staff-only deans/chairs still get
     # the scoped roster and autocomplete data attached to their assignment.
     assignment_filter = _assignment_section_filter(user, role_slug)
     if assignment_filter is not None:
-        return sections.filter(assignment_filter).distinct()
+        sections = sections.filter(assignment_filter)
+        return filter_by_academic_career(
+            sections,
+            "curriculum_course__curriculum__academic_career",
+            career,
+        )
 
     faculty = get_faculty_profile(user)
     if faculty is None:
@@ -203,17 +225,32 @@ def scoped_grade_roster_sections(user: User, role_slug: str) -> SectionQueryT:
     if role_slug == "dean":
         if not faculty.college_id:
             return sections.none()
-        return sections.filter(
+        sections = sections.filter(
             curriculum_course__course__department__college_id=faculty.college_id
+        )
+        return filter_by_academic_career(
+            sections,
+            "curriculum_course__curriculum__academic_career",
+            career,
         )
 
     if role_slug == "chair":
         department = faculty.staff_profile.department
         if department:
-            return sections.filter(curriculum_course__course__department=department)
+            sections = sections.filter(curriculum_course__course__department=department)
+            return filter_by_academic_career(
+                sections,
+                "curriculum_course__curriculum__academic_career",
+                career,
+            )
         if faculty.college_id:
-            return sections.filter(
+            sections = sections.filter(
                 curriculum_course__course__department__college_id=faculty.college_id
+            )
+            return filter_by_academic_career(
+                sections,
+                "curriculum_course__curriculum__academic_career",
+                career,
             )
     return sections.none()
 
@@ -224,7 +261,8 @@ def _filtered_sections(user: User, role_slug: str, params: QueryDict) -> Section
     selected_faculty_id = clean_int(params.get("faculty_id"))
     semester_param = params.get("semester")
     semester_id = None if semester_param == "all" else clean_int(semester_param)
-    sections = scoped_grade_roster_sections(user, role_slug)
+    career = selected_academic_career(params)
+    sections = scoped_grade_roster_sections(user, role_slug, career)
     if selected_student_id:
         sections = sections.filter(section_registrations__student_id=selected_student_id)
     if selected_faculty_id:
@@ -243,10 +281,12 @@ def _filtered_transcript_grades(
     selected_student_id = clean_int(params.get("student_id"))
     semester_param = params.get("semester")
     semester_id = None if semester_param == "all" else clean_int(semester_param)
-    scoped_section_ids = scoped_grade_roster_sections(user, role_slug).values_list(
-        "id",
-        flat=True,
-    )
+    career = selected_academic_career(params)
+    scoped_section_ids = scoped_grade_roster_sections(
+        user,
+        role_slug,
+        career,
+    ).values_list("id", flat=True)
     grades = Grade.objects.filter(section_id__in=scoped_section_ids)
     if selected_student_id:
         grades = grades.filter(student_id=selected_student_id)
@@ -387,6 +427,7 @@ def build_grade_roster_list_context(
     semester_id = None if semester_param == "all" else clean_int(semester_param)
     selected_student_id = clean_int(request.GET.get("student_id"))
     selected_faculty_id = clean_int(request.GET.get("faculty_id"))
+    career = selected_academic_career(request.GET)
     ordered_sections = _filtered_sections(user, role_slug, request.GET).order_by(
         "-semester__academic_year__start_date",
         "-semester__number",
@@ -413,9 +454,9 @@ def build_grade_roster_list_context(
                 "graded_count": graded_count,
                 "pending_count": max(roster_count - graded_count, 0),
                 "grade_entry_open": section.semester.status_id == "grade_entry",
-                "detail_url": reverse(
-                    "staff_grade_roster_detail",
-                    args=[role_slug, section.id],
+                "detail_url": append_career_query(
+                    reverse("staff_grade_roster_detail", args=[role_slug, section.id]),
+                    career,
                 ),
             }
         )
@@ -429,9 +470,15 @@ def build_grade_roster_list_context(
         "sidebar_links": build_staff_sidebar_links(role_slug, "grade_rosters"),
         "role_switcher": build_staff_role_switcher(user, role_slug),
         "breadcrumbs": _oversight_breadcrumbs(role_slug, ""),
-        "dashboard_url": reverse("staff_role_dashboard", args=[role_slug]),
+        "dashboard_url": append_career_query(
+            reverse("staff_role_dashboard", args=[role_slug]),
+            career,
+        ),
         "role_slug": role_slug,
         "scope_label": _scope_label(user, role_slug),
+        "selected_academic_career": career,
+        "portal_theme_class": academic_career_theme_class(career),
+        "career_options": career_filter_options(career),
         "student_autocomplete_url": reverse(
             "staff_grade_roster_student_autocomplete",
             args=[role_slug],
@@ -464,8 +511,9 @@ def build_grade_roster_detail_context(
 ) -> PortalContextT:
     """Build one read-only class roster with grade values for oversight roles."""
     user = _as_user(request.user)
+    career = selected_academic_career(request.GET)
     section = get_object_or_404(
-        scoped_grade_roster_sections(user, role_slug),
+        scoped_grade_roster_sections(user, role_slug, career),
         pk=section_id,
     )
     registrations = list(
@@ -504,10 +552,17 @@ def build_grade_roster_detail_context(
         "sidebar_links": build_staff_sidebar_links(role_slug, "grade_rosters"),
         "role_switcher": build_staff_role_switcher(user, role_slug),
         "breadcrumbs": _oversight_breadcrumbs(role_slug, course_code),
-        "dashboard_url": reverse("staff_role_dashboard", args=[role_slug]),
-        "list_url": reverse("staff_grade_rosters", args=[role_slug]),
+        "dashboard_url": append_career_query(
+            reverse("staff_role_dashboard", args=[role_slug]),
+            career,
+        ),
+        "list_url": append_career_query(
+            reverse("staff_grade_rosters", args=[role_slug]),
+            career,
+        ),
         "role_title": role_title,
         "role_slug": role_slug,
+        "portal_theme_class": academic_career_theme_class(career),
         "section": section,
         "course_code": course_code,
         "course_title": section.curriculum_course.course.title or "",
@@ -544,6 +599,7 @@ def build_grade_transcript_list_context(
     semester_param = request.GET.get("semester")
     semester_id = None if semester_param == "all" else clean_int(semester_param)
     selected_student_id = clean_int(request.GET.get("student_id"))
+    career = selected_academic_career(request.GET)
     scoped_grades = _filtered_transcript_grades(user, role_slug, request.GET)
     student_ids = scoped_grades.values_list("student_id", flat=True).distinct()
     ordered_students = (
@@ -579,9 +635,9 @@ def build_grade_transcript_list_context(
                 "grade_count": stats["grade_count"],
                 "section_count": stats["section_count"],
                 "latest_semester_label": latest_semester_labels.get(student.id, ""),
-                "detail_url": reverse(
-                    "staff_grade_transcript",
-                    args=[role_slug, student.id],
+                "detail_url": append_career_query(
+                    reverse("staff_grade_transcript", args=[role_slug, student.id]),
+                    career,
                 ),
             }
         )
@@ -595,9 +651,15 @@ def build_grade_transcript_list_context(
         "sidebar_links": build_staff_sidebar_links(role_slug, "grade_transcripts"),
         "role_switcher": build_staff_role_switcher(user, role_slug),
         "breadcrumbs": _transcript_breadcrumbs(role_slug, ""),
-        "dashboard_url": reverse("staff_role_dashboard", args=[role_slug]),
+        "dashboard_url": append_career_query(
+            reverse("staff_role_dashboard", args=[role_slug]),
+            career,
+        ),
         "role_slug": role_slug,
         "scope_label": _scope_label(user, role_slug),
+        "selected_academic_career": career,
+        "portal_theme_class": academic_career_theme_class(career),
+        "career_options": career_filter_options(career),
         "student_autocomplete_url": reverse(
             "staff_grade_transcript_student_autocomplete",
             args=[role_slug],
@@ -617,13 +679,15 @@ def _require_student_in_transcript_scope(
     user: User,
     role_slug: str,
     student_id: int,
+    academic_career: CareerModeT,
 ) -> Student:
     """Return a student only when a scoped course grade makes them visible."""
     student = get_object_or_404(Student.objects.select_related("user"), pk=student_id)
-    scoped_section_ids = scoped_grade_roster_sections(user, role_slug).values_list(
-        "id",
-        flat=True,
-    )
+    scoped_section_ids = scoped_grade_roster_sections(
+        user,
+        role_slug,
+        academic_career,
+    ).values_list("id", flat=True)
     # Academic transcript visibility is granted by scoped course-grade evidence.
     if not Grade.objects.filter(
         student_id=student.id,
@@ -640,7 +704,8 @@ def build_grade_transcript_context(
 ) -> PortalContextT:
     """Build one scoped academic transcript preview."""
     user = _as_user(request.user)
-    student = _require_student_in_transcript_scope(user, role_slug, student_id)
+    career = selected_academic_career(request.GET)
+    student = _require_student_in_transcript_scope(user, role_slug, student_id, career)
     transcript = build_transcript_document(student.id)
     return {
         "page_title": "Grade transcript",
@@ -654,7 +719,11 @@ def build_grade_transcript_context(
         "sidebar_links": build_staff_sidebar_links(role_slug, "grade_transcripts"),
         "role_switcher": build_staff_role_switcher(user, role_slug),
         "breadcrumbs": _transcript_breadcrumbs(role_slug, transcript["student_name"]),
-        "dashboard_url": reverse("staff_grade_transcripts", args=[role_slug]),
+        "dashboard_url": append_career_query(
+            reverse("staff_grade_transcripts", args=[role_slug]),
+            career,
+        ),
+        "portal_theme_class": academic_career_theme_class(career),
         "back_label": "Back to transcripts",
     }
 
@@ -701,14 +770,15 @@ def oversight_student_results(
     user: User,
     role_slug: str,
     query: str | None,
+    params: QueryDict | None = None,
 ) -> list[AutocompleteResultT]:
     """Return student suggestions limited to the current oversight scope."""
     clean_query = parse_str(query)
     if not clean_query:
         return []
-    section_ids = scoped_grade_roster_sections(user, role_slug).values_list(
-        "id",
-        flat=True,
+    career = selected_academic_career(params or QueryDict(mutable=True))
+    section_ids = scoped_grade_roster_sections(user, role_slug, career).values_list(
+        "id", flat=True
     )
     student_qs = (
         Student.objects.select_related("user")
@@ -733,6 +803,7 @@ def oversight_transcript_student_results(
     user: User,
     role_slug: str,
     query: str | None,
+    params: QueryDict | None = None,
 ) -> list[AutocompleteResultT]:
     """Return transcript student suggestions limited by scoped grade rows."""
     clean_query = parse_str(query)
@@ -741,7 +812,7 @@ def oversight_transcript_student_results(
     scoped_grade_students = _filtered_transcript_grades(
         user,
         role_slug,
-        QueryDict(mutable=True),
+        params or QueryDict(mutable=True),
     ).values_list("student_id", flat=True)
     student_qs = (
         Student.objects.select_related("user")
@@ -766,13 +837,15 @@ def oversight_faculty_results(
     user: User,
     role_slug: str,
     query: str | None,
+    params: QueryDict | None = None,
 ) -> list[AutocompleteResultT]:
     """Return faculty suggestions limited to the current oversight scope."""
     clean_query = parse_str(query)
     if not clean_query:
         return []
+    career = selected_academic_career(params or QueryDict(mutable=True))
     faculty_ids = (
-        scoped_grade_roster_sections(user, role_slug)
+        scoped_grade_roster_sections(user, role_slug, career)
         .exclude(faculty__isnull=True)
         .values_list("faculty_id", flat=True)
         .distinct()

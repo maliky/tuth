@@ -13,6 +13,7 @@ from django.utils.html import format_html
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from import_export.admin import ImportExportModelAdmin
 
+from app.academics.admin.filters import GradeCareerFlt
 from app.people.models.faculty import Faculty
 from app.people.models.student import Student
 from app.registry.models.document import DocStatus, DocType
@@ -100,7 +101,7 @@ class GradeAdmin(
         # "graded_on",
     )
     # list_filter = ['section__semester', GradeSecFlt]
-    list_filter = [SemFltAC, SecBySemFlt, GradeStdFlt]
+    list_filter = [GradeCareerFlt, SemFltAC, SecBySemFlt, GradeStdFlt]
     autocomplete_fields = ("student", "section", "value")
     list_select_related = (
         "student__user",

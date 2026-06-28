@@ -12,6 +12,14 @@ from django.http import HttpRequest, QueryDict
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 
+from app.academics.career_scope import (
+    CareerModeT,
+    append_career_query,
+    academic_career_theme_class,
+    career_selector_context,
+    filter_by_academic_career,
+    selected_academic_career,
+)
 from app.people.models.faculty import Faculty
 from app.registry.models.grade import Grade, GradeValue
 from app.registry.models.registration import Registration
@@ -69,13 +77,24 @@ def grade_entry_open(section: Section) -> bool:
     return section.semester.status_id == GRADE_ENTRY_STATUS
 
 
-def assigned_sections_for_faculty(faculty: Faculty) -> SectionQueryT:
+def assigned_sections_for_faculty(
+    faculty: Faculty,
+    academic_career: CareerModeT | None = None,
+) -> SectionQueryT:
     """Return the sections assigned to a faculty member."""
-    return Section.objects.filter(faculty=faculty).select_related(
+    sections = Section.objects.filter(faculty=faculty).select_related(
         "semester__academic_year",
         "semester__status",
         "curriculum_course__course",
         "curriculum_course__credit_hours",
+        "curriculum_course__curriculum",
+    )
+    if academic_career is None:
+        return sections
+    return filter_by_academic_career(
+        sections,
+        "curriculum_course__curriculum__academic_career",
+        academic_career,
     )
 
 
@@ -154,8 +173,9 @@ def build_faculty_grade_sections_context(request: HttpRequest) -> PortalContextT
     """Build the faculty section list for grade entry."""
     user = cast(User, request.user)
     faculty = require_faculty_profile(user)
+    career = selected_academic_career(request.GET)
     sections = list(
-        assigned_sections_for_faculty(faculty).order_by(
+        assigned_sections_for_faculty(faculty, career).order_by(
             "-semester__start_date",
             "-semester__number",
             "curriculum_course__course__short_code",
@@ -175,13 +195,19 @@ def build_faculty_grade_sections_context(request: HttpRequest) -> PortalContextT
                 "roster_count": roster_count,
                 "pending_count": max(roster_count - graded_count, 0),
                 "grade_entry_open": grade_entry_open(section),
-                "roster_url": reverse("faculty_grade_roster", args=[section.id]),
-                "download_url": reverse(
-                    "faculty_grade_roster_download",
-                    args=[section.id],
+                "roster_url": append_career_query(
+                    reverse("faculty_grade_roster", args=[section.id]),
+                    career,
+                ),
+                "download_url": append_career_query(
+                    reverse("faculty_grade_roster_download", args=[section.id]), career
                 ),
             }
         )
+    dashboard_url = append_career_query(
+        reverse("staff_role_dashboard", args=["faculty"]),
+        career,
+    )
     return {
         "page_title": "Faculty grades",
         "page_summary": (
@@ -198,8 +224,13 @@ def build_faculty_grade_sections_context(request: HttpRequest) -> PortalContextT
             {"label": "Grade entry", "href": ""},
         ],
         "section_rows": section_rows,
-        "dashboard_url": reverse("staff_role_dashboard", args=["faculty"]),
+        "dashboard_url": dashboard_url,
+        "portal_theme_class": academic_career_theme_class(career),
         "faculty_admin_links": _faculty_admin_links(user),
+        "career_selector": career_selector_context(
+            request.GET,
+            action_url=reverse("faculty_grade_sections"),
+        ),
     }
 
 
@@ -210,6 +241,8 @@ def build_faculty_grade_roster_context(
     """Build one editable faculty grade roster."""
     user = cast(User, request.user)
     section = get_faculty_section_or_404(user, section_id)
+    career = selected_academic_career(request.GET)
+    sections_url = append_career_query(reverse("faculty_grade_sections"), career)
     return {
         "page_title": f"Grade roster · {course_code(section)}",
         "page_summary": "Save grades explicitly or let Tusis autosave changed fields.",
@@ -221,7 +254,7 @@ def build_faculty_grade_roster_context(
                 "label": "Faculty dashboard",
                 "href": reverse("staff_role_dashboard", args=["faculty"]),
             },
-            {"label": "Grade entry", "href": reverse("faculty_grade_sections")},
+            {"label": "Grade entry", "href": sections_url},
             {"label": course_code(section), "href": ""},
         ],
         "section": section,
@@ -230,8 +263,12 @@ def build_faculty_grade_roster_context(
         "grade_entry_open": grade_entry_open(section),
         "grade_rows": build_faculty_grade_rows(section),
         "grade_values": grade_value_options(),
-        "dashboard_url": reverse("staff_role_dashboard", args=["faculty"]),
-        "sections_url": reverse("faculty_grade_sections"),
+        "dashboard_url": append_career_query(
+            reverse("staff_role_dashboard", args=["faculty"]),
+            career,
+        ),
+        "portal_theme_class": academic_career_theme_class(career),
+        "sections_url": sections_url,
         "download_url": reverse("faculty_grade_roster_download", args=[section.id]),
         "upload_url": reverse("faculty_grade_roster_upload", args=[section.id]),
         "autosave_url": reverse("faculty_grade_roster_autosave", args=[section.id]),

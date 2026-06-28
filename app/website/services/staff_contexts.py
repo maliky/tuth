@@ -6,6 +6,13 @@ from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.http import urlencode
 
+from app.academics.career_scope import (
+    CareerModeT,
+    append_career_query,
+    career_selector_context,
+    filter_by_academic_career,
+    selected_academic_career,
+)
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.curriculum_course import CurriCrs
@@ -87,14 +94,18 @@ ACADEMIC_OVERSIGHT_ADMIN_SHORTCUTS: tuple[AdminModelShortcutSpecT, ...] = (
 )
 
 
-def _grade_transcript_action(role_slug: str, scope_label: str) -> ActionT | None:
+def _grade_transcript_action(
+    role_slug: str,
+    scope_label: str,
+    career: CareerModeT,
+) -> ActionT | None:
     """Return the scoped grade-transcript action for an academic role."""
     transcripts_url = _maybe_reverse("staff_grade_transcripts", args=[role_slug])
     if not transcripts_url:
         return None
     return {
         "label": "Review grade transcripts",
-        "href": transcripts_url,
+        "href": append_career_query(transcripts_url, career),
         "description": f"Open transcript previews for students in the {scope_label} scope.",
         "variant": "primary",
     }
@@ -176,16 +187,25 @@ def _build_faculty_context(request: HttpRequest) -> RoleContextT:
     if not faculty:
         return _empty_role_context("No faculty profile linked to this account yet.")
 
-    sections_qs = Section.objects.filter(faculty=faculty).select_related(
-        "semester", "curriculum_course__course"
+    career = selected_academic_career(request.GET)
+    sections_qs = filter_by_academic_career(
+        Section.objects.filter(faculty=faculty).select_related(
+            "semester",
+            "curriculum_course__course",
+            "curriculum_course__curriculum",
+        ),
+        "curriculum_course__curriculum__academic_career",
+        career,
     )
     upcoming_sections = list(
         sections_qs.order_by(
             "semester__academic_year__start_date", "semester__number", "number"
         )[:5]
     )
-    pending_grades = Grade.objects.filter(
-        section__faculty=faculty, value__isnull=True
+    pending_grades = filter_by_academic_career(
+        Grade.objects.filter(section__faculty=faculty, value__isnull=True),
+        "section__curriculum_course__curriculum__academic_career",
+        career,
     ).count()
 
     panel_items: list[PanelItemT] = [
@@ -205,7 +225,7 @@ def _build_faculty_context(request: HttpRequest) -> RoleContextT:
         actions.append(
             {
                 "label": "Open grade entry",
-                "href": grades_url,
+                "href": append_career_query(grades_url, career),
                 "description": (
                     "Enter grades, autosave changes, or upload a CSV roster."
                 ),
@@ -224,6 +244,10 @@ def _build_faculty_context(request: HttpRequest) -> RoleContextT:
             user,
             FACULTY_ADMIN_SHORTCUTS,
         ),
+        "career_selector": career_selector_context(
+            request.GET,
+            action_url=reverse("staff_role_dashboard", args=["faculty"]),
+        ),
     }
 
 
@@ -232,8 +256,13 @@ def _build_chair_context(request: HttpRequest) -> RoleContextT:
     if not faculty or not faculty.college:
         return _empty_role_context("No college associated to this chair account.")
 
+    career = selected_academic_career(request.GET)
     chair_scope = chair_curriculum_scope(faculty)
-    curricula = chair_scope["curricula"].order_by("code")
+    curricula = filter_by_academic_career(
+        chair_scope["curricula"],
+        "academic_career",
+        career,
+    ).order_by("code")
     workloads = (
         FacultyWorkloadSnapshot.objects.filter(faculty__college=faculty.college)
         .select_related("faculty", "semester")
@@ -306,7 +335,7 @@ def _build_chair_context(request: HttpRequest) -> RoleContextT:
     ]
 
     actions: list[ActionT] = []
-    transcript_action = _grade_transcript_action("chair", "chair")
+    transcript_action = _grade_transcript_action("chair", "chair", career)
     if transcript_action:
         actions.append(transcript_action)
 
@@ -327,6 +356,7 @@ def _build_chair_context(request: HttpRequest) -> RoleContextT:
 def _build_dean_context(request: HttpRequest) -> RoleContextT:
     user = _as_user(request.user)
     college = dean_college_for_user(user)
+    career = selected_academic_career(request.GET)
     approvals_qs = ApprovalQueue.objects.filter(target_role="dean").order_by(
         "-created_at"
     )
@@ -379,12 +409,12 @@ def _build_dean_context(request: HttpRequest) -> RoleContextT:
         actions.append(
             {
                 "label": "Review curricula",
-                "href": curricula_url,
+                "href": append_career_query(curricula_url, career),
                 "description": "Review college curricula and request VPAA activation.",
                 "variant": "primary",
             }
         )
-    transcript_action = _grade_transcript_action("dean", "college")
+    transcript_action = _grade_transcript_action("dean", "college", career)
     if transcript_action:
         actions.append(transcript_action)
 
@@ -418,6 +448,7 @@ def _build_dean_context(request: HttpRequest) -> RoleContextT:
 
 def _build_vpaa_context(request: HttpRequest) -> RoleContextT:
     user = _as_user(request.user)
+    career = selected_academic_career(request.GET)
     approvals_qs = ApprovalQueue.objects.filter(target_role="vpaa").order_by(
         "-created_at"
     )
@@ -449,7 +480,7 @@ def _build_vpaa_context(request: HttpRequest) -> RoleContextT:
                 "variant": "primary",
             }
         )
-    transcript_action = _grade_transcript_action("vpaa", "university-wide")
+    transcript_action = _grade_transcript_action("vpaa", "university-wide", career)
     if transcript_action:
         actions.append(transcript_action)
 

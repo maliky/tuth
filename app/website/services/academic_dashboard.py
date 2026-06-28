@@ -8,6 +8,13 @@ from django.db.models import Q, QuerySet
 from django.http import HttpRequest
 from django.urls import reverse
 
+from app.academics.career_scope import (
+    CareerModeT,
+    academic_career_label,
+    career_filter_options,
+    filter_by_academic_career,
+    selected_academic_career,
+)
 from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
 from app.people.models.faculty import Faculty
@@ -106,12 +113,16 @@ def _dashboard_controls(
     semester: Semester,
     *,
     role: str,
+    career: CareerModeT,
 ) -> dict[str, object]:
     """Return common form controls for academic dashboards."""
     return {
         "selected_semester": semester,
         "selected_semester_label": _semester_label(semester),
         "semester_options": _semester_options(semester),
+        "selected_academic_career": career,
+        "selected_academic_career_label": academic_career_label(career),
+        "career_options": career_filter_options(career),
         "dashboard_url": reverse("staff_role_dashboard", args=[role]),
     }
 
@@ -230,7 +241,12 @@ def build_dean_academic_dashboard(
     college: College,
 ) -> DashboardContextT:
     """Return dean academic dashboard context for one college."""
-    curricula = _official_curricula(Curriculum.objects.filter(college=college))
+    career = selected_academic_career(request.GET)
+    curricula = filter_by_academic_career(
+        _official_curricula(Curriculum.objects.filter(college=college)),
+        "academic_career",
+        career,
+    )
     semester = selected_dashboard_semester(request)
     selected_chair = _selected_chair(request, college)
     selected_chair_id = selected_chair.id if selected_chair else None
@@ -242,16 +258,21 @@ def build_dean_academic_dashboard(
     )
     context.update(
         {
-            **_dashboard_controls(semester, role="dean"),
+            **_dashboard_controls(semester, role="dean", career=career),
             "chair_options": _chair_options(college, selected_chair_id),
         }
     )
     if selected_chair is not None:
         chair_scope = _chair_scope_from_faculty(selected_chair)
+        chair_curricula = filter_by_academic_career(
+            chair_scope["curricula"],
+            "academic_career",
+            career,
+        )
         context["focus"] = academic_chart_context(
             title=f"{selected_chair.staff_profile.long_name}",
             scope_label=chair_scope["label"],
-            curricula=chair_scope["curricula"],
+            curricula=chair_curricula,
             semester=semester,
         )
     return context
@@ -263,24 +284,31 @@ def build_chair_academic_dashboard(
     faculty: Faculty,
 ) -> DashboardContextT:
     """Return chair academic dashboard context for one chair profile."""
+    career = selected_academic_career(request.GET)
     scope = _chair_scope_from_faculty(faculty)
+    curricula = filter_by_academic_career(
+        scope["curricula"],
+        "academic_career",
+        career,
+    )
     semester = selected_dashboard_semester(request)
     context = academic_chart_context(
         title="Student enrollment by program",
         scope_label=scope["label"],
-        curricula=scope["curricula"],
+        curricula=curricula,
         semester=semester,
     )
-    context.update(_dashboard_controls(semester, role="chair"))
+    context.update(_dashboard_controls(semester, role="chair", career=career))
     return context
 
 
 def build_vpaa_academic_dashboard(request: HttpRequest) -> DashboardContextT:
     """Return VPAA dean-overview dashboard context for a selected dean role."""
     semester = selected_dashboard_semester(request)
+    career = selected_academic_career(request.GET)
     selected_role = selected_dean_role(request.GET.get("dean_role_id"))
     selected_role_id = selected_role.id if selected_role is not None else None
-    controls = _dashboard_controls(semester, role="vpaa")
+    controls = _dashboard_controls(semester, role="vpaa", career=career)
     options = dean_role_options(selected_role_id)
     if selected_role is None or selected_role.college is None:
         return {
@@ -295,7 +323,11 @@ def build_vpaa_academic_dashboard(request: HttpRequest) -> DashboardContextT:
         }
 
     college = selected_role.college
-    curricula = _official_curricula(Curriculum.objects.filter(college=college))
+    curricula = filter_by_academic_career(
+        _official_curricula(Curriculum.objects.filter(college=college)),
+        "academic_career",
+        career,
+    )
     context = academic_chart_context(
         title="Dean overview",
         scope_label=_college_label(college),

@@ -10,6 +10,14 @@
           </p>
         </div>
         <form class="academic-dashboard__filters" method="get" action="{{ academic_dashboard.dashboard_url }}">
+          {% if academic_dashboard.career_options %}
+            <label class="form-label mb-0" for="academic-career">Career</label>
+            <select id="academic-career" class="form-select form-select-sm" name="academic_career" onchange="this.form.submit()">
+              {% for career in academic_dashboard.career_options %}
+                <option value="{{ career.value }}" {% if career.selected %}selected{% endif %}>{{ career.label }}</option>
+              {% endfor %}
+            </select>
+          {% endif %}
           {% if academic_dashboard.dean_role_options %}
             <label class="form-label mb-0" for="academic-dean">Dean overview</label>
             <select id="academic-dean" class="form-select form-select-sm" name="dean_role_id" onchange="this.form.submit()">

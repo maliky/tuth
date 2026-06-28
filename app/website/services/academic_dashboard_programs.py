@@ -7,7 +7,7 @@ from typing import TypedDict
 
 from django.db.models import QuerySet
 
-from app.academics.choices import LEVEL_NUMBER
+from app.academics.choices import AcademicCareer, LEVEL_NUMBER
 from app.academics.models.curriculum import Curriculum
 from app.registry.models.grade import Grade
 from app.registry.models.registration import Registration
@@ -24,6 +24,10 @@ LEVEL_SPECS: tuple[tuple[str, str, str, str], ...] = (
     (LEVEL_NUMBER.THREE.label, "Junior", "Jr", "#a06b00"),
     (LEVEL_NUMBER.FOUR.label, "Senior", "Sr", "#7f3f46"),
 )
+GRADUATE_LEVEL_SPECS: tuple[tuple[str, str, str, str], ...] = (
+    ("graduate_1", "Graduate 1", "G1", "#2f6f4f"),
+    ("graduate_2", "Graduate 2", "G2", "#7f3f46"),
+)
 
 
 LevelCountT = TypedDict(
@@ -32,7 +36,13 @@ LevelCountT = TypedDict(
 )
 ProgramCountT = TypedDict(
     "ProgramCountT",
-    {"program": str, "title": str, "total": int, "levels": dict[str, LevelCountT]},
+    {
+        "program": str,
+        "title": str,
+        "academic_career": str,
+        "total": int,
+        "levels": dict[str, LevelCountT],
+    },
 )
 
 
@@ -51,6 +61,27 @@ def _level_from_credits(credits: int) -> str:
         if credits <= max_credits:
             return level
     return LEVEL_NUMBER.FOUR.label
+
+
+def _graduate_level_from_credits(credits: int) -> str:
+    """Return a graduate level bucket from completed credits."""
+    if credits <= 30:
+        return "graduate_1"
+    return "graduate_2"
+
+
+def _level_specs_for_career(career: str) -> tuple[tuple[str, str, str, str], ...]:
+    """Return dashboard level buckets for one academic career."""
+    if career == AcademicCareer.GRADUATE:
+        return GRADUATE_LEVEL_SPECS
+    return LEVEL_SPECS
+
+
+def _level_from_credits_for_career(credits: int, career: str) -> str:
+    """Return the student-progress bucket for one program career."""
+    if career == AcademicCareer.GRADUATE:
+        return _graduate_level_from_credits(credits)
+    return _level_from_credits(credits)
 
 
 def _completion_credits_by_student(student_ids: list[int]) -> dict[int, int]:
@@ -77,10 +108,13 @@ def _empty_program_count(curriculum: Curriculum) -> ProgramCountT:
     return {
         "program": curriculum.short_name,
         "title": curriculum.long_name or curriculum.short_name,
+        "academic_career": curriculum.academic_career,
         "total": 0,
         "levels": {
             key: {"count": 0, "female": 0, "male": 0, "unknown": 0}
-            for key, _label, _short, _color in LEVEL_SPECS
+            for key, _label, _short, _color in _level_specs_for_career(
+                curriculum.academic_career
+            )
         },
     }
 
@@ -95,6 +129,9 @@ def _program_counts(
     )
     program_counts = {
         curriculum.id: _empty_program_count(curriculum) for curriculum in curriculum_list
+    }
+    visible_careers = {
+        curriculum.academic_career for curriculum in curriculum_list if curriculum.id
     }
     active_by_key = {
         curriculum_match_key(curriculum.short_name): curriculum.id
@@ -116,6 +153,10 @@ def _program_counts(
             "section__curriculum_course__curriculum__long_name",
         )
     )
+    if visible_careers:
+        registrations = registrations.filter(
+            section__curriculum_course__curriculum__academic_career__in=visible_careers
+        )
     program_students: list[tuple[int, int, str]] = []
     seen_pairs: set[tuple[int, int]] = set()
     for registration in registrations:
@@ -138,7 +179,10 @@ def _program_counts(
         data = program_counts.get(target_id)
         if data is None:
             continue
-        level = _level_from_credits(credits_by_student.get(student_id, 0))
+        level = _level_from_credits_for_career(
+            credits_by_student.get(student_id, 0),
+            data["academic_career"],
+        )
         gender_key = {"f": "female", "m": "male"}.get(gender or "", "unknown")
         data["total"] += 1
         level_bucket = data["levels"][level]
@@ -175,7 +219,9 @@ def _chart_rows(counts: list[ProgramCountT]) -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
     for data in counts:
         segments: list[dict[str, object]] = []
-        for level, label, short, color in LEVEL_SPECS:
+        for level, label, short, color in _level_specs_for_career(
+            data["academic_career"]
+        ):
             bucket = data["levels"][level]
             count = bucket["count"]
             if not count:
@@ -246,16 +292,27 @@ def program_stack_chart(
     has_data = any(row["total"] for row in counts)
     return {
         "rows": _chart_rows(counts),
-        "legend": _legend_items() if has_data else [],
+        "legend": _legend_items(counts) if has_data else [],
         "has_data": has_data,
     }
 
 
-def _legend_items() -> list[dict[str, object]]:
+def _legend_items(counts: list[ProgramCountT]) -> list[dict[str, object]]:
     """Return legend items for student levels."""
-    return [
-        {"color": color, "label": label} for _level, label, _short, color in LEVEL_SPECS
-    ]
+    careers = {row["academic_career"] for row in counts if row["total"]}
+    mixed_careers = len(careers) > 1
+    items: list[dict[str, object]] = []
+    if AcademicCareer.UNDERGRADUATE in careers:
+        for _level, label, _short, color in LEVEL_SPECS:
+            # Mixed charts need career-specific labels for same-color buckets.
+            item_label = f"UG {label}" if mixed_careers else label
+            items.append({"color": color, "label": item_label})
+    if AcademicCareer.GRADUATE in careers:
+        items.extend(
+            {"color": color, "label": label}
+            for _level, label, _short, color in GRADUATE_LEVEL_SPECS
+        )
+    return items
 
 
 __all__ = ["program_stack_chart"]

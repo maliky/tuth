@@ -121,6 +121,11 @@
               {% if form.primary_curriculum.errors %}<div class="text-danger small mt-1">{{ form.primary_curriculum.errors|join:", " }}</div>{% endif %}
             </div>
             <div class="col-md-6">
+              {{ form.academic_career.label_tag }}
+              {{ form.academic_career }}
+              {% if form.academic_career.errors %}<div class="text-danger small mt-1">{{ form.academic_career.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
               {{ form.entry_semester.label_tag }}
               {{ form.entry_semester }}
               {% if form.entry_semester.errors %}<div class="text-danger small mt-1">{{ form.entry_semester.errors|join:", " }}</div>{% endif %}

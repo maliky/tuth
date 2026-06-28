@@ -15,6 +15,7 @@ from django.forms.utils import ErrorList
 from django.utils.text import slugify
 from django.utils.datastructures import MultiValueDict
 
+from app.academics.choices import AcademicCareer
 from app.academics.constants import MAX_STUDENT_CREDITS
 from app.academics.models.curriculum import Curriculum
 from app.people.models.student import Student
@@ -36,6 +37,7 @@ class StudentIntakeDataT(TypedDict):
     suffix_name: str
     email: str
     primary_curriculum: Curriculum
+    academic_career: str
     entry_semester: Semester | None
     last_enrolled_semester: Semester | None
     max_credit_hours: int
@@ -124,6 +126,12 @@ class StudentIntakeForm(forms.Form):
                 "data-curriculum-autocomplete": "true",
             }
         ),
+    )
+    academic_career = forms.ChoiceField(
+        label="Academic career",
+        choices=AcademicCareer.choices,
+        initial=AcademicCareer.UNDERGRADUATE,
+        widget=forms.Select(attrs={"class": "form-select"}),
     )
     entry_semester = forms.ModelChoiceField(
         label="Entry semester",
@@ -271,6 +279,7 @@ class StudentIntakeForm(forms.Form):
             self.fields["entry_semester"].initial = current_semester
             self.fields["last_enrolled_semester"].initial = current_semester
             self.fields["primary_curriculum"].initial = Curriculum.get_dft()
+            self.fields["academic_career"].initial = AcademicCareer.UNDERGRADUATE
             self.fields["max_credit_hours"].initial = MAX_STUDENT_CREDITS
             return
 
@@ -282,6 +291,7 @@ class StudentIntakeForm(forms.Form):
         self.fields["suffix_name"].initial = student.suffix_name
         self.fields["email"].initial = student.user.email
         self.fields["primary_curriculum"].initial = student.primary_curriculum
+        self.fields["academic_career"].initial = student.academic_career
         self.fields["entry_semester"].initial = student.entry_semester
         self.fields["last_enrolled_semester"].initial = student.last_enrolled_semester
         self.fields["max_credit_hours"].initial = student.max_credit_hours
@@ -313,6 +323,20 @@ class StudentIntakeForm(forms.Form):
             raise forms.ValidationError("That student ID is already assigned.")
         return value
 
+    def clean(self) -> dict[str, Any]:
+        """Validate career fields that depend on the selected curriculum."""
+        cleaned = super().clean() or {}
+        curriculum = cleaned.get("primary_curriculum")
+        career = cleaned.get("academic_career")
+        if isinstance(curriculum, Curriculum) and career != curriculum.academic_career:
+            self.add_error(
+                "academic_career",
+                forms.ValidationError(
+                    "Academic career must match the selected curriculum."
+                ),
+            )
+        return cleaned
+
 
 def _unique_student_username(first_name: str, last_name: str, student_id: str) -> str:
     """Return a stable username candidate for a new student account."""
@@ -328,6 +352,11 @@ def _unique_student_username(first_name: str, last_name: str, student_id: str) -
 
 def _student_intake_data(form: StudentIntakeForm) -> StudentIntakeDataT:
     """Narrow cleaned form values into a typed payload."""
+    curriculum = cast(Curriculum, form.cleaned_data["primary_curriculum"])
+    academic_career = cast(
+        str,
+        form.cleaned_data.get("academic_career") or curriculum.academic_career,
+    )
     return {
         "student_id": cast(str, form.cleaned_data["student_id"]),
         "first_name": cast(str, form.cleaned_data["first_name"]).strip(),
@@ -336,7 +365,8 @@ def _student_intake_data(form: StudentIntakeForm) -> StudentIntakeDataT:
         "prefix_name": cast(str, form.cleaned_data.get("prefix_name") or "").strip(),
         "suffix_name": cast(str, form.cleaned_data.get("suffix_name") or "").strip(),
         "email": cast(str, form.cleaned_data.get("email") or "").strip(),
-        "primary_curriculum": cast(Curriculum, form.cleaned_data["primary_curriculum"]),
+        "primary_curriculum": curriculum,
+        "academic_career": academic_career,
         "entry_semester": cast(Semester | None, form.cleaned_data["entry_semester"]),
         "last_enrolled_semester": cast(
             Semester | None,
@@ -411,6 +441,7 @@ def save_student_intake(
 
     if data["student_id"]:
         student.student_id = data["student_id"]
+    student.academic_career = data["academic_career"]
     student.entry_semester = data["entry_semester"]
     student.last_enrolled_semester = (
         data["last_enrolled_semester"] or data["entry_semester"]

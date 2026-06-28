@@ -10,6 +10,7 @@ from django.contrib.auth.models import Group, User
 from django.core.management import call_command
 from django.urls import reverse
 
+from app.academics.choices import AcademicCareer
 from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
@@ -84,6 +85,7 @@ def _section(
         short_name=curriculum_code,
         long_name=curriculum_code,
         college=college,
+        academic_career=AcademicCareer.GRADUATE,
     )
     curriculum_course = CurriCrs.objects.create(curriculum=curriculum, course=course)
     return Section.objects.create(
@@ -102,6 +104,7 @@ def _registered_grade(section: Section, username: str, grade_code: str) -> Stude
         first_name=username.title(),
         last_name="Student",
         student_id=f"SID-{username.upper()}",
+        academic_career=AcademicCareer.GRADUATE,
     )
     set_primary_std_curri_enroll(student, section.curriculum_course.curriculum)
     Registration.objects.create(student=student, section=section)

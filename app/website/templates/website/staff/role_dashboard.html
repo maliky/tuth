@@ -6,6 +6,7 @@
 
 {% block staff_content %}
   {% include "website/partials/admin_shortcuts.html" %}
+  {% include "website/staff/partials/academic_career_selector.html" %}
   <div class="portal-workspace-grid{% if show_action_panel is False %} portal-workspace-grid--single{% endif %}">
     <div class="staff-dashboard__primary">
       {% include "website/partials/portal_kpi_grid.html" %}

@@ -25,7 +25,7 @@
             <td><span class="badge text-bg-light">{{ curriculum.status.label }}</span></td>
             <td>{% if curriculum.is_active %}Yes{% else %}No{% endif %}</td>
             <td class="text-end">
-              <a class="btn portal-btn-accent btn-sm" href="{% url 'dean_curriculum_detail' curriculum.id %}">
+              <a class="btn portal-btn-accent btn-sm" href="{% url 'dean_curriculum_detail' curriculum.id %}?academic_career={{ selected_academic_career }}">
                 Review
               </a>
             </td>

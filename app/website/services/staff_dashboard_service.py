@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from urllib.parse import urlsplit, urlunsplit
 
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
 
+from app.academics.career_scope import academic_career_theme_class
 from app.website.services.portal_types import (
     ActionT,
     BreadcrumbT,
@@ -56,6 +58,24 @@ def _dedupe_sidebar_actions(
     ]
 
 
+def _selected_career_from_context(context: Mapping[str, object]) -> object:
+    """Return selected career from the role context, if present."""
+    direct = context.get("selected_academic_career")
+    if direct:
+        return direct
+    career_selector = context.get("career_selector")
+    if isinstance(career_selector, dict):
+        selected = career_selector.get("selected")
+        if selected:
+            return selected
+    academic_dashboard = context.get("academic_dashboard")
+    if isinstance(academic_dashboard, dict):
+        selected = academic_dashboard.get("selected_academic_career")
+        if selected:
+            return selected
+    return ""
+
+
 def render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse:
     """Render one staff role dashboard using the shared portal shell."""
     config = ROLE_CONFIG.get(role_slug)
@@ -75,6 +95,10 @@ def render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse:
         "eyebrow": role_slug.replace("_", " ").title(),
     }
     base.update(context)
+    if "portal_theme_class" not in base:
+        base["portal_theme_class"] = academic_career_theme_class(
+            _selected_career_from_context(context)
+        )
     sidebar_links = build_staff_sidebar_links(role_slug)
     # Keep admin escape hatches out of the portal action panel.
     actions = _dedupe_sidebar_actions(

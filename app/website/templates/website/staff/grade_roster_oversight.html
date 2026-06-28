@@ -23,7 +23,17 @@
         </p>
       </div>
       <form method="get" class="row g-3 align-items-end">
-        <div class="col-lg-4">
+        <div class="col-lg-2">
+          <label class="form-label">Career</label>
+          <select class="form-select" name="academic_career" data-career-filter>
+            {% for option in career_options %}
+              <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>
+                {{ option.label }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-lg-3">
           <label class="form-label">Student</label>
           <select
             class="form-select"
@@ -38,7 +48,7 @@
             {% endif %}
           </select>
         </div>
-        <div class="col-lg-4">
+        <div class="col-lg-3">
           <label class="form-label">Faculty</label>
           <select
             class="form-select"
@@ -170,7 +180,11 @@
             dataType: "json",
             delay: 250,
             data: function (params) {
-              return { q: params.term };
+              const career = document.querySelector("[data-career-filter]");
+              return {
+                q: params.term,
+                academic_career: career ? career.value : "graduate",
+              };
             },
             processResults: function (data) {
               return data;

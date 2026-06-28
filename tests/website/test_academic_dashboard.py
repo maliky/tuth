@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 from django.contrib.auth.models import Group, User
 from django.urls import reverse
 from django.utils.text import slugify
 
+from app.academics.choices import AcademicCareer
 from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.academics.models.curriculum import CurriStatus, Curriculum
@@ -27,6 +29,7 @@ from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester, SemesterStatus
 from app.timetable.models.session import SecSession
 from app.timetable.models.schedule import Schedule
+from app.website.services.academic_dashboard_programs import program_stack_chart
 
 pytestmark = pytest.mark.django_db
 
@@ -250,7 +253,11 @@ def test_dean_dashboard_shows_program_stats_workloads_and_chair_selector(client)
     client.force_login(dean_user)
     response = client.get(
         reverse("staff_role_dashboard", args=["dean"]),
-        {"semester": str(future_semester.id), "chair_id": str(chair_faculty.id)},
+        {
+            "academic_career": "all",
+            "semester": str(future_semester.id),
+            "chair_id": str(chair_faculty.id),
+        },
     )
     content = response.content.decode()
 
@@ -280,13 +287,188 @@ def test_dean_dashboard_shows_program_stats_workloads_and_chair_selector(client)
 
     sem2_response = client.get(
         reverse("staff_role_dashboard", args=["dean"]),
-        {"semester": str(second_semester.id)},
+        {"academic_career": "all", "semester": str(second_semester.id)},
     )
     sem2_content = sem2_response.content.decode()
 
     assert sem2_response.status_code == 200
     assert f'value="{second_semester.id}" selected' in sem2_content
     assert "90-91" not in sem2_content
+
+
+def test_program_stack_chart_uses_graduate_level_labels_for_graduate_programs():
+    """Graduate-only dashboard charts should use graduate level buckets."""
+    semester = _semester()
+    college = College.objects.create(code="GDASH", long_name="Graduate Dashboard")
+    department = Department.objects.create(code="GDB", college=college)
+    _faculty_user_account, faculty = _faculty_user(
+        "graduate_chart_faculty",
+        "Faculty",
+        college=college,
+        department=department,
+    )
+    curriculum, section = _curriculum_with_section(
+        college=college,
+        department=department,
+        short_name="GRAD-MBAM",
+        course_number="701",
+        semester=semester,
+        faculty=faculty,
+    )
+    curriculum.academic_career = AcademicCareer.GRADUATE
+    curriculum.save(update_fields=["academic_career"])
+    student = _registered_student(
+        "grad_chart",
+        curriculum,
+        section,
+        gender="f",
+        semester=semester,
+    )
+    student.academic_career = AcademicCareer.GRADUATE
+    student.save(update_fields=["academic_career"])
+
+    chart = program_stack_chart(Curriculum.objects.filter(pk=curriculum.pk), semester)
+    legend = cast(list[dict[str, Any]], chart["legend"])
+    rows = cast(list[dict[str, Any]], chart["rows"])
+    segments = cast(list[dict[str, Any]], rows[0]["segments"])
+
+    assert [row["label"] for row in legend] == ["Graduate 1", "Graduate 2"]
+    assert segments[0]["label"] == "G1 1"
+
+
+def test_program_stack_chart_labels_mixed_career_legends() -> None:
+    """All-career charts should not label graduate buckets as undergraduate."""
+    semester = _semester()
+    college = College.objects.create(code="MXD", long_name="Mixed Dashboard")
+    department = Department.objects.create(code="MXD", college=college)
+    _faculty_account, faculty = _faculty_user(
+        "mixed_chart_faculty",
+        "Faculty",
+        college=college,
+        department=department,
+    )
+    undergraduate_curriculum, undergraduate_section = _curriculum_with_section(
+        college=college,
+        department=department,
+        short_name="UG-MIX",
+        course_number="711",
+        semester=semester,
+        faculty=faculty,
+    )
+    graduate_curriculum, graduate_section = _curriculum_with_section(
+        college=college,
+        department=department,
+        short_name="GRAD-MIX",
+        course_number="712",
+        semester=semester,
+        faculty=faculty,
+    )
+    graduate_curriculum.academic_career = AcademicCareer.GRADUATE
+    graduate_curriculum.save(update_fields=["academic_career"])
+    undergraduate_student = _registered_student(
+        "mixed_ug",
+        undergraduate_curriculum,
+        undergraduate_section,
+        gender="m",
+        semester=semester,
+    )
+    graduate_student = _registered_student(
+        "mixed_grad",
+        graduate_curriculum,
+        graduate_section,
+        gender="f",
+        semester=semester,
+    )
+    graduate_student.academic_career = AcademicCareer.GRADUATE
+    graduate_student.save(update_fields=["academic_career"])
+
+    chart = program_stack_chart(Curriculum.objects.filter(college=college), semester)
+    legend = cast(list[dict[str, Any]], chart["legend"])
+    rows = cast(list[dict[str, Any]], chart["rows"])
+
+    assert undergraduate_student.academic_career == AcademicCareer.UNDERGRADUATE
+    assert [row["label"] for row in legend] == [
+        "UG Freshman",
+        "UG Sophomore",
+        "UG Junior",
+        "UG Senior",
+        "Graduate 1",
+        "Graduate 2",
+    ]
+    assert any(
+        segment["label"] == "G1 1"
+        for row in rows
+        for segment in cast(list[dict[str, Any]], row["segments"])
+    )
+
+
+def test_dean_dashboard_defaults_to_graduate_career(client):
+    """Academic dashboards should default to graduate programs."""
+    semester = _semester()
+    college = College.objects.create(code="GDEF", long_name="Graduate Default College")
+    department = Department.objects.create(code="GDD", college=college)
+    dean_user, _dean_faculty = _faculty_user(
+        "dean_grad_default",
+        "Dean",
+        college=college,
+    )
+    _faculty_user_account, faculty = _faculty_user(
+        "grad_default_faculty",
+        "Faculty",
+        college=college,
+        department=department,
+    )
+    graduate_curriculum, graduate_section = _curriculum_with_section(
+        college=college,
+        department=department,
+        short_name="GRAD-DEFAULT",
+        course_number="731",
+        semester=semester,
+        faculty=faculty,
+    )
+    graduate_curriculum.academic_career = AcademicCareer.GRADUATE
+    graduate_curriculum.save(update_fields=["academic_career"])
+    undergraduate_curriculum, undergraduate_section = _curriculum_with_section(
+        college=college,
+        department=department,
+        short_name="UG-DEFAULT",
+        course_number="732",
+        semester=semester,
+        faculty=faculty,
+    )
+    _registered_student(
+        "grad_default",
+        graduate_curriculum,
+        graduate_section,
+        gender="f",
+        semester=semester,
+    )
+    _registered_student(
+        "ug_default",
+        undergraduate_curriculum,
+        undergraduate_section,
+        gender="m",
+        semester=semester,
+    )
+
+    client.force_login(dean_user)
+    response = client.get(reverse("staff_role_dashboard", args=["dean"]))
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert "GRAD-DEFAULT" in content
+    assert "UG-DEFAULT" not in content
+    assert 'name="academic_career"' in content
+    assert 'value="graduate" selected' in content
+    assert "portal-theme-graduate" in content
+
+    all_response = client.get(
+        reverse("staff_role_dashboard", args=["dean"]),
+        {"academic_career": "all"},
+    )
+
+    assert all_response.status_code == 200
+    assert "portal-theme-graduate" not in all_response.content.decode()
 
 
 def test_dean_dashboard_schedule_coverage_lists_all_sections_and_tba(client):
@@ -334,7 +516,10 @@ def test_dean_dashboard_schedule_coverage_lists_all_sections_and_tba(client):
         )
 
     client.force_login(dean_user)
-    response = client.get(reverse("staff_role_dashboard", args=["dean"]))
+    response = client.get(
+        reverse("staff_role_dashboard", args=["dean"]),
+        {"academic_career": "all"},
+    )
     content = response.content.decode()
 
     assert response.status_code == 200
@@ -409,7 +594,10 @@ def test_dean_dashboard_prefers_role_assignment_college(client):
     )
 
     client.force_login(dean_user)
-    response = client.get(reverse("staff_role_dashboard", args=["dean"]))
+    response = client.get(
+        reverse("staff_role_dashboard", args=["dean"]),
+        {"academic_career": "all"},
+    )
     content = response.content.decode()
 
     assert response.status_code == 200
@@ -522,7 +710,11 @@ def test_vpaa_dashboard_selected_dean_role_scopes_to_college(client):
     client.force_login(vpaa_user)
     response = client.get(
         reverse("staff_role_dashboard", args=["vpaa"]),
-        {"dean_role_id": str(visible_role.id), "semester": str(semester.id)},
+        {
+            "academic_career": "all",
+            "dean_role_id": str(visible_role.id),
+            "semester": str(semester.id),
+        },
     )
     content = response.content.decode()
 
@@ -574,7 +766,11 @@ def test_vpaa_dashboard_dean_selector_uses_faculty_college_fallback(client):
     client.force_login(vpaa_user)
     response = client.get(
         reverse("staff_role_dashboard", args=["vpaa"]),
-        {"dean_role_id": f"faculty:{dean_faculty.id}", "semester": str(semester.id)},
+        {
+            "academic_career": "all",
+            "dean_role_id": f"faculty:{dean_faculty.id}",
+            "semester": str(semester.id),
+        },
     )
     content = response.content.decode()
 
@@ -661,7 +857,11 @@ def test_dean_dashboard_chair_selector_uses_department_scope(client):
     client.force_login(dean_user)
     response = client.get(
         reverse("staff_role_dashboard", args=["dean"]),
-        {"chair_id": str(chair_faculty.id), "semester": str(semester.id)},
+        {
+            "academic_career": "all",
+            "chair_id": str(chair_faculty.id),
+            "semester": str(semester.id),
+        },
     )
     content = response.content.decode()
 
@@ -717,7 +917,7 @@ def test_chair_dashboard_scopes_program_stats_to_chair_department(client):
     client.force_login(chair_user)
     response = client.get(
         reverse("staff_role_dashboard", args=["chair"]),
-        {"semester": str(semester.id)},
+        {"academic_career": "all", "semester": str(semester.id)},
     )
     content = response.content.decode()
 
@@ -759,7 +959,7 @@ def test_dean_curricula_orders_official_records_before_secondary_group(client):
     )
 
     client.force_login(user)
-    response = client.get(reverse("dean_curricula"))
+    response = client.get(reverse("dean_curricula"), {"academic_career": "all"})
     content = response.content.decode()
 
     assert response.status_code == 200
