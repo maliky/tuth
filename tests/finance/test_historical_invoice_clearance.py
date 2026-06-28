@@ -155,21 +155,24 @@ def test_historical_clearance_updates_one_pending_payment_and_skips_current(
     historical_invoice.refresh_from_db()
     current_parent.refresh_from_db()
     current_invoice.refresh_from_db()
-    assert payment.amount_paid == Decimal("90.00")
+    assert payment.amount_paid == Decimal("1.00")
     assert payment.status_id == "cleared"
     assert historical_parent.balance == Decimal("0.00")
     assert historical_invoice.balance == Decimal("0.00")
     assert current_parent.balance == Decimal("120.00")
     assert current_invoice.balance == Decimal("120.00")
-    assert _audit_rows(audit_path)[0]["action"] == "update_pending"
+    topup = Payment.objects.exclude(pk=payment.pk).get()
+    assert topup.amount_paid == Decimal("89.00")
+    assert topup.status_id == "cleared"
+    assert _audit_rows(audit_path)[0]["action"] == "clear_pending_and_create_payment"
 
 
-def test_historical_clearance_requires_manual_review_for_multiple_pending(
+def test_historical_clearance_clears_multiple_pending_and_creates_topup(
     curriculum_course_factory,
     sem_factory,
     tmp_path,
 ) -> None:
-    """Multiple pending rows must not be guessed or auto-merged."""
+    """Multiple pending rows should clear at face value before adding a top-up."""
     historical_semester = sem_factory(2, datetime(2025, 8, 1))
     cutoff_semester = sem_factory(3, datetime(2025, 8, 1))
     student = _student("hist_conflict", cutoff_semester)
@@ -201,9 +204,45 @@ def test_historical_clearance_requires_manual_review_for_multiple_pending(
 
     parent_invoice.refresh_from_db()
     invoice.refresh_from_db()
-    assert parent_invoice.balance == Decimal("90.00")
-    assert invoice.balance == Decimal("90.00")
-    assert Payment.objects.filter(status_id="pending").count() == 2
+    assert parent_invoice.balance == Decimal("0.00")
+    assert invoice.balance == Decimal("0.00")
+    assert Payment.objects.filter(status_id="pending").count() == 0
+    assert Payment.objects.filter(status_id="cleared").count() == 2
     rows = _audit_rows(audit_path)
-    assert rows[0]["status"] == "conflict"
-    assert rows[0]["action"] == "skip_multiple_pending"
+    assert rows[0]["status"] == "cleared"
+    assert rows[0]["action"] == "clear_pending"
+    assert "," in rows[0]["payment_ids"]
+
+
+def test_historical_clearance_all_open_includes_cutoff_semester(
+    curriculum_course_factory,
+    sem_factory,
+    tmp_path,
+) -> None:
+    """The all-open option should include open balances in the cutoff semester."""
+    cutoff_semester = sem_factory(3, datetime(2025, 8, 1))
+    student = _student("hist_all_open", cutoff_semester)
+    course = curriculum_course_factory("906", "CURR_HIST_CLEAR")
+    invoice, parent_invoice = _open_invoice(
+        student=student,
+        curriculum_course=course,
+        semester=cutoff_semester,
+        amount=Decimal("120.00"),
+    )
+    audit_path = tmp_path / "all_open.csv"
+
+    call_command(
+        "reconcile_historical_invoice_clearance",
+        cutoff_semester="25-26-S3",
+        log_path=str(audit_path),
+        apply=True,
+        all_open=True,
+    )
+
+    parent_invoice.refresh_from_db()
+    invoice.refresh_from_db()
+    assert parent_invoice.balance == Decimal("0.00")
+    assert invoice.balance == Decimal("0.00")
+    rows = _audit_rows(audit_path)
+    assert rows[0]["status"] == "cleared"
+    assert rows[0]["action"] == "create_payment"

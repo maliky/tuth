@@ -38,6 +38,7 @@ class ClearanceResult:
     action: str
     status: str
     payment_id: int | None
+    payment_ids: tuple[int, ...]
     previous_balance: Decimal
     message: str
 
@@ -47,7 +48,7 @@ class ClearanceRunResult:
     """Summary of one historical clearance run."""
 
     applied: bool
-    cutoff_label: str
+    scope_label: str
     stats: StatsT
     log_path: Path
 
@@ -55,7 +56,7 @@ class ClearanceRunResult:
         """Return a CLI-friendly summary line."""
         mode = "Applied" if self.applied else "Dry-run"
         return (
-            f"{mode} historical clearance before {self.cutoff_label}: "
+            f"{mode} invoice clearance for {self.scope_label}: "
             f"{self.stats['processed']} processed, {self.stats['cleared']} cleared, "
             f"{self.stats['would_clear']} would-clear, "
             f"{self.stats['conflict']} conflict, {self.stats['skipped']} skipped. "
@@ -69,9 +70,10 @@ def reconcile_historical_clearance(
     student_token: str = "",
     raw_log_path: str = "",
     apply_changes: bool = False,
+    all_open: bool = False,
 ) -> ClearanceRunResult:
     """Run historical invoice clearance and write an audit CSV."""
-    cutoff_semester = _resolve_cutoff_semester(cutoff_semester_code)
+    cutoff_semester = None if all_open else _resolve_cutoff_semester(cutoff_semester_code)
     selected_student_id = (
         _resolve_student_id(student_token.strip()) if student_token.strip() else None
     )
@@ -88,9 +90,15 @@ def reconcile_historical_clearance(
         audit_rows.append(audit_row(parent_invoice, result))
 
     write_audit_rows(log_path, audit_rows)
+    scope_label = "all open semesters"
+    if cutoff_semester is not None:
+        scope_label = (
+            f"semesters before {cutoff_semester.academic_year.code}-S"
+            f"{cutoff_semester.number}"
+        )
     return ClearanceRunResult(
         applied=apply_changes,
-        cutoff_label=f"{cutoff_semester.academic_year.code}-S{cutoff_semester.number}",
+        scope_label=scope_label,
         stats=stats,
         log_path=log_path,
     )
@@ -158,10 +166,10 @@ def _semester_is_before(candidate: Semester, cutoff: Semester) -> bool:
 
 
 def _target_parent_invoices(
-    cutoff_semester: Semester,
+    cutoff_semester: Semester | None,
     student_id: int | None,
 ) -> list[StdSemesterInvoice]:
-    """Return open parent invoices before the cutoff semester."""
+    """Return open parent invoices for the selected reconciliation scope."""
     qs = (
         StdSemesterInvoice.objects.filter(balance__gt=Decimal("0.00"))
         .select_related("student", "student__user", "semester", "semester__academic_year")
@@ -169,6 +177,8 @@ def _target_parent_invoices(
     )
     if student_id is not None:
         qs = qs.filter(student_id=student_id)
+    if cutoff_semester is None:
+        return list(qs)
     return [
         parent_invoice
         for parent_invoice in qs
@@ -184,14 +194,21 @@ def _reconcile_parent_invoice(
     parent_invoice = StdSemesterInvoice.objects.get(pk=parent_invoice_id)
     previous_balance = parent_invoice.get_balance()
     if previous_balance <= Decimal("0.00"):
-        return _result("skip_zero_balance", "skipped", None, previous_balance)
-    pending_ids = _pending_payment_ids(parent_invoice)
-    if len(pending_ids) > 1:
-        return _result("skip_multiple_pending", "conflict", None, previous_balance)
-    action = "update_pending" if pending_ids else "create_payment"
-    payment_id = int(pending_ids[0]) if pending_ids else None
+        return _result("skip_zero_balance", "skipped", None, (), previous_balance)
+    pending_payments = _pending_payments(parent_invoice)
+    pending_total = sum(
+        (payment.amount_paid for payment in pending_payments), Decimal("0.00")
+    )
+    action = _clearance_action(
+        pending_count=len(pending_payments),
+        pending_total=pending_total,
+        previous_balance=previous_balance,
+        dry_run=True,
+    )
+    payment_ids = tuple(int(payment.id) for payment in pending_payments)
+    payment_id = payment_ids[0] if payment_ids else None
     if not apply_changes:
-        return _result(f"would_{action}", "would_clear", payment_id, previous_balance)
+        return _result(action, "would_clear", payment_id, payment_ids, previous_balance)
     return _apply_parent_invoice_clearance(parent_invoice_id)
 
 
@@ -204,44 +221,79 @@ def _apply_parent_invoice_clearance(parent_invoice_id: int) -> ClearanceResult:
         parent_invoice.refresh_totals_from_sources(save_model=True)
         previous_balance = parent_invoice.get_balance()
         if previous_balance <= Decimal("0.00"):
-            return _result("skip_zero_balance", "skipped", None, previous_balance)
-        pending_ids = _pending_payment_ids(parent_invoice, lock=True)
-        if len(pending_ids) > 1:
-            return _result("skip_multiple_pending", "conflict", None, previous_balance)
-        payment = _payment_for_clearance(parent_invoice, pending_ids)
-        payment.amount_paid = previous_balance
-        payment.status_id = "cleared"
-        payment.payment_method_id = "cash"
-        payment.payer_id = "student"
-        payment.save()
+            return _result("skip_zero_balance", "skipped", None, (), previous_balance)
+        payment_ids: list[int] = []
+        pending_payments = _pending_payments(parent_invoice, lock=True)
+        pending_total = sum(
+            (payment.amount_paid for payment in pending_payments), Decimal("0.00")
+        )
+        # Preserve pending payment amounts as audit history, then add a top-up only
+        # for any remaining balance.
+        for payment in pending_payments:
+            payment.status_id = "cleared"
+            payment.payment_method_id = "cash"
+            payment.payer_id = "student"
+            payment.save()
+            payment_ids.append(int(payment.id))
+        parent_invoice.refresh_from_db()
+        parent_invoice.refresh_totals_from_sources(save_model=True)
+        remaining_balance = parent_invoice.get_balance()
+        if remaining_balance > Decimal("0.00"):
+            payment = Payment(
+                student_semester_invoice=parent_invoice,
+                amount_paid=remaining_balance,
+                status_id="cleared",
+                payment_method_id="cash",
+                payer_id="student",
+            )
+            payment.save()
+            payment_ids.append(int(payment.id))
         _assert_parent_cleared(parent_invoice.id)
-        action = "update_pending" if pending_ids else "create_payment"
-        return _result(action, "cleared", payment.id, previous_balance)
+        action = _clearance_action(
+            pending_count=len(pending_payments),
+            pending_total=pending_total,
+            previous_balance=previous_balance,
+            dry_run=False,
+        )
+        payment_id = payment_ids[-1] if payment_ids else None
+        return _result(
+            action,
+            "cleared",
+            payment_id,
+            tuple(payment_ids),
+            previous_balance,
+        )
 
 
-def _pending_payment_ids(
+def _pending_payments(
     parent_invoice: StdSemesterInvoice,
     *,
     lock: bool = False,
-) -> list[int]:
-    """Return pending payment ids for one parent invoice."""
+) -> list[Payment]:
+    """Return pending payments for one parent invoice."""
     qs = Payment.objects.filter(
         student_semester_invoice=parent_invoice,
         status_id="pending",
     ).order_by("id")
     if lock:
         qs = qs.select_for_update()
-    return [int(payment_id) for payment_id in qs.values_list("id", flat=True)]
+    return list(qs)
 
 
-def _payment_for_clearance(
-    parent_invoice: StdSemesterInvoice,
-    pending_ids: list[int],
-) -> Payment:
-    """Return existing pending payment or a new unsaved payment."""
-    if pending_ids:
-        return Payment.objects.get(pk=pending_ids[0])
-    return Payment(student_semester_invoice=parent_invoice)
+def _clearance_action(
+    *,
+    pending_count: int,
+    pending_total: Decimal,
+    previous_balance: Decimal,
+    dry_run: bool,
+) -> str:
+    """Return an audit action label for one invoice clearance."""
+    prefix = "would_" if dry_run else ""
+    if not pending_count:
+        return f"{prefix}create_payment"
+    if pending_total >= previous_balance:
+        return f"{prefix}clear_pending"
+    return f"{prefix}clear_pending_and_create_payment"
 
 
 def _assert_parent_cleared(parent_invoice_id: int) -> None:
@@ -260,6 +312,7 @@ def _result(
     action: str,
     status: str,
     payment_id: int | None,
+    payment_ids: tuple[int, ...],
     previous_balance: Decimal,
 ) -> ClearanceResult:
     """Build a result with a standard human-readable message."""
@@ -273,6 +326,7 @@ def _result(
         action=action,
         status=status,
         payment_id=payment_id,
+        payment_ids=payment_ids,
         previous_balance=previous_balance,
         message=messages.get(status, ""),
     )

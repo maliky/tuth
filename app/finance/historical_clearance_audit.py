@@ -20,6 +20,7 @@ class AuditRowT(TypedDict):
     parent_invoice_id: str
     previous_balance: str
     payment_id: str
+    payment_ids: str
     action: str
     status: str
     message: str
@@ -39,6 +40,7 @@ def audit_row(
         "parent_invoice_id": str(parent_invoice.id),
         "previous_balance": f"{result.previous_balance:.2f}",
         "payment_id": str(result.payment_id or ""),
+        "payment_ids": ",".join(str(payment_id) for payment_id in result.payment_ids),
         "action": result.action,
         "status": result.status,
         "message": result.message,

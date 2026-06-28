@@ -40,6 +40,11 @@ class Command(BaseCommand):
             action="store_true",
             help="Actually create/update cleared payment rows.",
         )
+        parser.add_argument(
+            "--all-open",
+            action="store_true",
+            help="Clear every open parent invoice, including the current semester.",
+        )
 
     def handle(self, *args: object, **options: object) -> None:
         """Run the historical clearance reconciliation."""
@@ -48,6 +53,7 @@ class Command(BaseCommand):
             student_token=str(options["student"]),
             raw_log_path=str(options["log_path"]),
             apply_changes=bool(options["apply"]),
+            all_open=bool(options["all_open"]),
         )
         self.stdout.write(self.style.SUCCESS(result.summary()))
 
