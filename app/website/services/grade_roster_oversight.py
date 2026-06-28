@@ -467,7 +467,11 @@ def build_grade_roster_list_context(
         "page_title": f"{role_title} grade rosters",
         "page_summary": "Read-only class roster and submitted grade oversight.",
         "eyebrow": role_slug.replace("_", " ").title(),
-        "sidebar_links": build_staff_sidebar_links(role_slug, "grade_rosters"),
+        "sidebar_links": build_staff_sidebar_links(
+            role_slug,
+            "grade_rosters",
+            academic_career=career,
+        ),
         "role_switcher": build_staff_role_switcher(user, role_slug),
         "breadcrumbs": _oversight_breadcrumbs(role_slug, ""),
         "dashboard_url": append_career_query(
@@ -549,7 +553,11 @@ def build_grade_roster_detail_context(
         "page_title": f"{course_code} roster",
         "page_summary": "Read-only roster; faculty owns grade entry.",
         "eyebrow": role_slug.replace("_", " ").title(),
-        "sidebar_links": build_staff_sidebar_links(role_slug, "grade_rosters"),
+        "sidebar_links": build_staff_sidebar_links(
+            role_slug,
+            "grade_rosters",
+            academic_career=career,
+        ),
         "role_switcher": build_staff_role_switcher(user, role_slug),
         "breadcrumbs": _oversight_breadcrumbs(role_slug, course_code),
         "dashboard_url": append_career_query(
@@ -648,7 +656,11 @@ def build_grade_transcript_list_context(
         "page_title": f"{role_title} grade transcripts",
         "page_summary": "Transcript previews for students with grades in your course scope.",
         "eyebrow": role_slug.replace("_", " ").title(),
-        "sidebar_links": build_staff_sidebar_links(role_slug, "grade_transcripts"),
+        "sidebar_links": build_staff_sidebar_links(
+            role_slug,
+            "grade_transcripts",
+            academic_career=career,
+        ),
         "role_switcher": build_staff_role_switcher(user, role_slug),
         "breadcrumbs": _transcript_breadcrumbs(role_slug, ""),
         "dashboard_url": append_career_query(
@@ -716,7 +728,11 @@ def build_grade_transcript_context(
         "generated_at": transcript["printed_date"],
         "transcript": transcript,
         "transcript_rows": flatten_transcript_rows(transcript),
-        "sidebar_links": build_staff_sidebar_links(role_slug, "grade_transcripts"),
+        "sidebar_links": build_staff_sidebar_links(
+            role_slug,
+            "grade_transcripts",
+            academic_career=career,
+        ),
         "role_switcher": build_staff_role_switcher(user, role_slug),
         "breadcrumbs": _transcript_breadcrumbs(role_slug, transcript["student_name"]),
         "dashboard_url": append_career_query(

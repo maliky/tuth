@@ -51,6 +51,15 @@ def _semester() -> Semester:
     )
 
 
+def _sidebar_href(response, label: str) -> str:
+    """Return one sidebar link href from a rendered staff page."""
+    return next(
+        str(link["href"])
+        for link in response.context["sidebar_links"]
+        if link["label"] == label
+    )
+
+
 def _faculty_user(
     username: str,
     role_name: str,
@@ -469,6 +478,62 @@ def test_dean_dashboard_defaults_to_graduate_career(client):
 
     assert all_response.status_code == 200
     assert "portal-theme-graduate" not in all_response.content.decode()
+    assert _sidebar_href(all_response, "Curriculum review") == (
+        f"{reverse('dean_curricula')}?academic_career=all"
+    )
+    assert _sidebar_href(all_response, "Grade rosters") == (
+        f"{reverse('staff_grade_rosters', args=['dean'])}?academic_career=all"
+    )
+    assert _sidebar_href(all_response, "Grade transcripts") == (
+        f"{reverse('staff_grade_transcripts', args=['dean'])}?academic_career=all"
+    )
+
+    undergrad_response = client.get(
+        reverse("staff_role_dashboard", args=["dean"]),
+        {"academic_career": "undergraduate"},
+    )
+
+    assert undergrad_response.status_code == 200
+    assert _sidebar_href(undergrad_response, "Curriculum review") == (
+        f"{reverse('dean_curricula')}?academic_career=undergraduate"
+    )
+
+
+def test_faculty_dashboard_preserves_career_scope_in_sidebar(client):
+    """Faculty dashboard task links should keep the selected career query."""
+    semester = _semester()
+    college = College.objects.create(code="FCAR", long_name="Faculty Career College")
+    department = Department.objects.create(code="FCR", college=college)
+    faculty_user, faculty = _faculty_user(
+        "faculty_career_sidebar",
+        "Faculty",
+        college=college,
+        department=department,
+    )
+    _curriculum, _section = _curriculum_with_section(
+        college=college,
+        department=department,
+        short_name="FAC-SCOPE",
+        course_number="733",
+        semester=semester,
+        faculty=faculty,
+    )
+
+    client.force_login(faculty_user)
+    response = client.get(
+        reverse("staff_role_dashboard", args=["faculty"]),
+        {"academic_career": "all"},
+    )
+    actions = response.context["actions"]
+
+    assert response.status_code == 200
+    assert _sidebar_href(response, "Dashboard") == (
+        f"{reverse('staff_role_dashboard', args=['faculty'])}?academic_career=all"
+    )
+    assert _sidebar_href(response, "Grade tasks") == (
+        f"{reverse('faculty_grade_sections')}?academic_career=all"
+    )
+    assert all(action["label"] != "Open grade entry" for action in actions)
 
 
 def test_dean_dashboard_schedule_coverage_lists_all_sections_and_tba(client):
@@ -967,6 +1032,12 @@ def test_dean_curricula_orders_official_records_before_secondary_group(client):
     assert "<th>Courses</th>" in content
     assert content.index(official.short_name) < content.index("Inactive or pending")
     assert pending.short_name in content
+    assert _sidebar_href(response, "Dashboard") == (
+        f"{reverse('staff_role_dashboard', args=['dean'])}?academic_career=all"
+    )
+    assert _sidebar_href(response, "Grade rosters") == (
+        f"{reverse('staff_grade_rosters', args=['dean'])}?academic_career=all"
+    )
 
 
 def test_dean_curriculum_detail_groups_courses_and_shows_graph_action(

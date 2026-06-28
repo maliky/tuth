@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from typing import cast
 
 from django.contrib.auth.models import AnonymousUser, User
 from django.urls import reverse
 
+from app.academics.career_scope import CAREER_ALL, CareerModeT, append_career_query
+from app.academics.choices import AcademicCareer
 from app.shared.auth.perms import UserRole
 from app.website.services.portal_types import (
     DashboardLinkT,
@@ -458,6 +461,32 @@ ROLE_CHILDREN: RoleChildMapT = _build_role_child_map(ROLE_INHERITANCE)
 
 ROLE_ORDER: dict[str, int] = {slug: idx for idx, slug in enumerate(ROLE_PRIORITY)}
 LOW_VALUE_SWITCHER_SLUGS: frozenset[RoleSlugT] = frozenset({"staff", "general"})
+CAREER_SCOPED_ROLE_SLUGS: frozenset[RoleSlugT] = frozenset(
+    {"faculty", "chair", "dean", "vpaa"}
+)
+CAREER_SCOPED_ROUTE_NAMES: frozenset[str] = frozenset(
+    {
+        "staff_role_dashboard",
+        "faculty_grade_sections",
+        "dean_curricula",
+        "staff_grade_rosters",
+        "staff_grade_transcripts",
+    }
+)
+CAREER_SCOPE_VALUES: frozenset[str] = frozenset(
+    {
+        AcademicCareer.GRADUATE.value,
+        AcademicCareer.UNDERGRADUATE.value,
+        CAREER_ALL,
+    }
+)
+
+
+def _clean_career_scope(value: str | None) -> CareerModeT | None:
+    """Return a valid career scope for sidebar links."""
+    if value in CAREER_SCOPE_VALUES:
+        return cast(CareerModeT, value)
+    return None
 
 
 def _user_membership_slugs(user: User) -> set[str]:
@@ -550,12 +579,29 @@ def _dashboard_href_for_role(role_slug: str) -> str:
     return reverse("staff_role_dashboard", args=[role_slug])
 
 
+def _task_is_career_scoped(role_slug: str, task: RoleTaskT) -> bool:
+    """Return True when a sidebar task should preserve academic career."""
+    route_name = task["route_name"]
+    if route_name not in CAREER_SCOPED_ROUTE_NAMES:
+        return False
+    if route_name == "staff_role_dashboard":
+        args = task.get("args") or [role_slug]
+        target_role = str(args[0]) if args else role_slug
+        return target_role in CAREER_SCOPED_ROLE_SLUGS
+    return role_slug in CAREER_SCOPED_ROLE_SLUGS
+
+
 def build_staff_sidebar_links(
-    role_slug: str, active_key: str = "overview"
+    role_slug: str,
+    active_key: str = "overview",
+    academic_career: str | None = None,
 ) -> list[SidebarLinkT]:
     """Build task-oriented staff navigation for the portal sidebar."""
     tasks = ROLE_TASKS.get(role_slug, ROLE_TASKS["general"])
     dashboard_href = _dashboard_href_for_role(role_slug)
+    career_scope = _clean_career_scope(academic_career)
+    if career_scope and role_slug in CAREER_SCOPED_ROLE_SLUGS:
+        dashboard_href = append_career_query(dashboard_href, career_scope)
     links: list[SidebarLinkT] = [
         {
             "label": "Dashboard",
@@ -573,6 +619,8 @@ def build_staff_sidebar_links(
         query = task.get("query", "")
         if query:
             href = f"{href}{query}"
+        if career_scope and _task_is_career_scoped(role_slug, task):
+            href = append_career_query(href, career_scope)
         if href in seen_hrefs:
             continue
         seen_hrefs.add(href)

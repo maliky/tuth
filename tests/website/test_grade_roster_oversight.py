@@ -62,6 +62,15 @@ def _staff_role_user(username: str, role_name: str) -> User:
     return user
 
 
+def _sidebar_href(response, label: str) -> str:
+    """Return one sidebar link href from a rendered staff page."""
+    return next(
+        str(link["href"])
+        for link in response.context["sidebar_links"]
+        if link["label"] == label
+    )
+
+
 def _section(
     *,
     college: College,
@@ -362,6 +371,7 @@ def test_dean_filters_rosters_and_sees_authorized_database(
     response = client.get(
         reverse("staff_grade_rosters", args=["dean"]),
         {
+            "academic_career": "all",
             "student_id": str(student.id),
             "faculty_id": str(visible_faculty.id),
             "semester": str(oversight_semester.id),
@@ -375,6 +385,12 @@ def test_dean_filters_rosters_and_sees_authorized_database(
     assert "DFO803" not in content
     assert "Authorized database" in content
     assert "Grades" in content
+    assert _sidebar_href(response, "Dashboard") == (
+        f"{reverse('staff_role_dashboard', args=['dean'])}?academic_career=all"
+    )
+    assert _sidebar_href(response, "Grade transcripts") == (
+        f"{reverse('staff_grade_transcripts', args=['dean'])}?academic_career=all"
+    )
 
     faculty_lookup = client.get(
         reverse("staff_grade_roster_faculty_autocomplete", args=["dean"]),
@@ -551,7 +567,10 @@ def test_chair_grade_transcripts_are_course_scoped(client, oversight_semester):
     hidden_student = _registered_grade(hidden_section, "chair_tr_hidden", "b")
 
     client.force_login(chair_user)
-    response = client.get(reverse("staff_grade_transcripts", args=["chair"]))
+    response = client.get(
+        reverse("staff_grade_transcripts", args=["chair"]),
+        {"academic_career": "all"},
+    )
     content = response.content.decode()
 
     assert response.status_code == 200
@@ -559,6 +578,12 @@ def test_chair_grade_transcripts_are_course_scoped(client, oversight_semester):
     assert hidden_student.student_id not in content
     assert reverse("staff_grade_transcript", args=["chair", visible_student.id]) in (
         content
+    )
+    assert _sidebar_href(response, "Dashboard") == (
+        f"{reverse('staff_role_dashboard', args=['chair'])}?academic_career=all"
+    )
+    assert _sidebar_href(response, "Grade rosters") == (
+        f"{reverse('staff_grade_rosters', args=['chair'])}?academic_career=all"
     )
 
     detail = client.get(

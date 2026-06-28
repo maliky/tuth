@@ -99,7 +99,11 @@ def render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse:
         base["portal_theme_class"] = academic_career_theme_class(
             _selected_career_from_context(context)
         )
-    sidebar_links = build_staff_sidebar_links(role_slug)
+    selected_career = _selected_career_from_context(context)
+    sidebar_links = build_staff_sidebar_links(
+        role_slug,
+        academic_career=str(selected_career) if selected_career else None,
+    )
     # Keep admin escape hatches out of the portal action panel.
     actions = _dedupe_sidebar_actions(
         _annotate_admin_actions(context["actions"]),

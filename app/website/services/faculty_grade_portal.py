@@ -214,7 +214,11 @@ def build_faculty_grade_sections_context(request: HttpRequest) -> PortalContextT
             "Enter section grades while the registrar grade-entry period is open."
         ),
         "eyebrow": "Faculty",
-        "sidebar_links": build_staff_sidebar_links("faculty", "faculty_grades"),
+        "sidebar_links": build_staff_sidebar_links(
+            "faculty",
+            "faculty_grades",
+            academic_career=career,
+        ),
         "role_switcher": build_staff_role_switcher(user, "faculty"),
         "breadcrumbs": [
             {
@@ -247,7 +251,11 @@ def build_faculty_grade_roster_context(
         "page_title": f"Grade roster · {course_code(section)}",
         "page_summary": "Save grades explicitly or let Tusis autosave changed fields.",
         "eyebrow": "Faculty",
-        "sidebar_links": build_staff_sidebar_links("faculty", "faculty_grades"),
+        "sidebar_links": build_staff_sidebar_links(
+            "faculty",
+            "faculty_grades",
+            academic_career=career,
+        ),
         "role_switcher": build_staff_role_switcher(user, "faculty"),
         "breadcrumbs": [
             {
