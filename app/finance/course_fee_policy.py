@@ -7,8 +7,9 @@ from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, TypeAlias, TypedDict
+from typing import TYPE_CHECKING, Iterable, TypeAlias, TypedDict, cast
 
+from app.academics.choices import AcademicCareer
 from app.shared.course_wrangling import course_key
 from app.timetable.utils import normalize_academic_year
 
@@ -69,12 +70,22 @@ class CourseFeeOverrideT:
 def course_fee_breakdown(
     curriculum_course: "CurriCrs",
     semester: "Semester | None" = None,
+    academic_career: str | None = None,
 ) -> CourseFeeBreakdownT:
     """Return the billing-policy amount for one curriculum course."""
     course = curriculum_course.course
     key = course_key_for_course(course)
     credit_hours = _credit_hours(curriculum_course)
-    tuition_rate = tuition_rate_for_semester(semester)
+    career = cast(
+        str,
+        academic_career
+        or getattr(
+            curriculum_course.curriculum,
+            "academic_career",
+            AcademicCareer.UNDERGRADUATE,
+        ),
+    )
+    tuition_rate = tuition_rate_for_semester(semester, academic_career=career)
     override = course_fee_override_for(course)
     if override and override.base_amount is not None:
         base_amount = override.base_amount
@@ -101,9 +112,12 @@ def course_fee_breakdown(
 def course_tuition_amount(
     curriculum_course: "CurriCrs",
     semester: "Semester | None" = None,
+    academic_career: str | None = None,
 ) -> MoneyT:
     """Return the base tuition amount after minimum/override policy."""
-    return course_fee_breakdown(curriculum_course, semester)["base_amount"]
+    return course_fee_breakdown(curriculum_course, semester, academic_career)[
+        "base_amount"
+    ]
 
 
 def course_policy_extra_amount(course: "Course") -> MoneyT:
@@ -117,16 +131,45 @@ def course_fee_override_for(course: "Course") -> CourseFeeOverrideT | None:
     return load_course_fee_overrides().get(course_key_for_course(course))
 
 
-def tuition_rate_for_semester(semester: "Semester | None") -> MoneyT:
-    """Return the SmartSchool tuition rate for the semester, or the default rate."""
+def tuition_rate_for_semester(
+    semester: "Semester | None",
+    *,
+    academic_career: str = AcademicCareer.UNDERGRADUATE,
+) -> MoneyT:
+    """Return model-backed tuition rate, falling back to legacy TSV defaults."""
     if semester is None:
         return DEFAULT_TUITION_RATE_PER_CREDIT
+    model_rate = _model_tuition_rate_for_semester(
+        semester,
+        academic_career=academic_career,
+    )
+    if model_rate is not None:
+        return model_rate
     academic_year = normalize_academic_year(getattr(semester.academic_year, "code", ""))
     semester_number = int(getattr(semester, "number", 0) or 0)
     return load_tuition_rates().get(
         (academic_year, semester_number),
         DEFAULT_TUITION_RATE_PER_CREDIT,
     )
+
+
+def _model_tuition_rate_for_semester(
+    semester: "Semester",
+    *,
+    academic_career: str,
+) -> MoneyT | None:
+    """Return a configured tuition rate without making model import mandatory."""
+    from app.finance.models.tuition import TuitionRate
+
+    rate = (
+        TuitionRate.objects.filter(
+            semester=semester,
+            academic_career=academic_career or AcademicCareer.UNDERGRADUATE,
+        )
+        .values_list("tuition_per_credit", flat=True)
+        .first()
+    )
+    return rate
 
 
 def is_general_science_course(course: "Course") -> bool:

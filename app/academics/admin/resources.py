@@ -13,11 +13,13 @@ from app.academics.admin.widgets import (
 )
 from app.academics.admin.course_resource import CrsResource
 
+from app.academics.choices import AcademicCareer
 from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum, CurriStatus
 from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.prerequisite import Prerequisite
 from app.academics.models.department import Department
+from app.shared.import_export_compat import ensure_dataset_column
 
 
 class CurriStatusWgt(widgets.ForeignKeyWidget):
@@ -75,6 +77,25 @@ class CurriResource(resources.ModelResource):
         attribute="is_active",
         widget=widgets.BooleanWidget(),
     )
+    academic_career_f = fields.Field(
+        column_name="academic_career",
+        attribute="academic_career",
+        default="undergraduate",
+    )
+
+    def before_import(self, dataset, **kwargs):
+        """Backfill fields added after legacy curriculum import bundles."""
+        ensure_dataset_column(
+            dataset,
+            "academic_career",
+            AcademicCareer.UNDERGRADUATE.value,
+        )
+
+    def before_import_row(self, row, **kwargs):
+        """Normalize blank career values from legacy curriculum rows."""
+        if not str(row.get("academic_career") or "").strip():
+            row["academic_career"] = AcademicCareer.UNDERGRADUATE.value
+        return super().before_import_row(row, **kwargs)
 
     def save_instance(self, instance, is_create, row, **kwargs):
         """Handle merge/replace logic for curriculum imports.
@@ -132,6 +153,7 @@ class CurriResource(resources.ModelResource):
             "college_f",
             "status_f",
             "is_active_f",
+            "academic_career_f",
             "list_courses_f",
         )
         skip_unchanged = True
@@ -218,6 +240,30 @@ class CurriCrsResource(resources.ModelResource):
         column_name="min_validated_credits",
         default=0,
     )
+    is_required_f = fields.Field(
+        attribute="is_required",
+        column_name="is_required",
+        default=False,
+        widget=widgets.BooleanWidget(),
+    )
+    is_elective_f = fields.Field(
+        attribute="is_elective",
+        column_name="is_elective",
+        default=False,
+        widget=widgets.BooleanWidget(),
+    )
+
+    def before_import(self, dataset, **kwargs):
+        """Backfill boolean flags omitted by older curriculum-course bundles."""
+        ensure_dataset_column(dataset, "is_required", "false")
+        ensure_dataset_column(dataset, "is_elective", "false")
+
+    def before_import_row(self, row, **kwargs):
+        """Normalize blank boolean flags from legacy curriculum-course rows."""
+        for column_name in ("is_required", "is_elective"):
+            if not str(row.get(column_name) or "").strip():
+                row[column_name] = "false"
+        return super().before_import_row(row, **kwargs)
 
     class Meta:
         model = CurriCrs
@@ -234,6 +280,8 @@ class CurriCrsResource(resources.ModelResource):
             "level_number_f",
             "required_group_number_f",
             "min_validated_credits_f",
+            "is_required_f",
+            "is_elective_f",
         )
         list_filter = ("curriculum_college", "curriculum")
         skip_unchanged = True

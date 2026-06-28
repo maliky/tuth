@@ -17,6 +17,7 @@ from app.finance.models.status_types_methods import (
     PaymentMethod,
     PaymentStatus,
 )
+from app.finance.models.tuition import TuitionRate
 
 __all__ = [
     "AccountChartType",
@@ -36,4 +37,5 @@ __all__ = [
     "Scholarship",
     "ScholarshipLetterTemplate",
     "ScholarshipTermSnapshot",
+    "TuitionRate",
 ]

@@ -54,6 +54,7 @@ from .filters import (
     CurriCrsStdFltAC,
     DptCurriFltAC,
     DptFltAC,
+    PrereqCareerFlt,
     PrereqCollegeFlt,
     PrereqProgramFltAC,
 )
@@ -324,7 +325,7 @@ class PrerequisiteAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModel
     # search_fields = ("course", "prerequisite_course") # not permitted no search of fk
     list_display = ("course", "prerequisite_course", "curriculum")
     autocomplete_fields = ("course", "prerequisite_course", "curriculum")
-    list_filter = (PrereqCollegeFlt, PrereqProgramFltAC)
+    list_filter = (PrereqCareerFlt, PrereqCollegeFlt, PrereqProgramFltAC)
     # search_fields = ("course", "prerequisite_course", "curriculum")
 
 

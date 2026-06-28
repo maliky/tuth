@@ -151,6 +151,13 @@ class LEVEL_NUMBER(IntegerChoices):
     UNDEF = 99, "undefined"  # undefined
 
 
+class AcademicCareer(TextChoices):
+    """Career axis used to separate undergraduate and graduate records."""
+
+    UNDERGRADUATE = "undergraduate", "Undergraduate"
+    GRADUATE = "graduate", "Graduate"
+
+
 # this translate UM_registrations.Major EnrollType? to standard curriculum
 # this translate UM_Crss.CrsCode/Course to a standard curriculum.
 # this translate UM_Registration.Major/Enrolltype to a standard curriculum.

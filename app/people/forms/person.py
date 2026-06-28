@@ -38,6 +38,7 @@ class StdForm(PersonFormMixin, forms.ModelForm):
     )
     SPECIFIC_FIELDS = (
         "student_id",
+        "academic_career",
         "primary_curriculum",
         "last_enrolled_semester",
         "entry_semester",

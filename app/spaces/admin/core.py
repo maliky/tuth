@@ -6,6 +6,7 @@ from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 
+from app.academics.admin.filters import RoomCareerFlt
 from app.spaces.models import Room, Space
 from app.timetable.admin.inlines import SecSessionIL
 from app.timetable.models.section import Section
@@ -53,7 +54,7 @@ class RoomAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, GuardedModelAdmin):
         "space",
     )
     list_display = ("code", "space", "standard_capacity", "exam_capacity")
-    list_filter = ("space",)
+    list_filter = (RoomCareerFlt, "space")
     search_fields = ("space__code", "code")
     autocomplete_fields = ["space"]
     inlines = [SecSessionIL]  #

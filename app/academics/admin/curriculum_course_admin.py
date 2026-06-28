@@ -49,6 +49,7 @@ from .actions import (
 from .filters import (
     CrsCollegeFlt,
     CrsCurriFlt,
+    CurriCrsCareerFlt,
     CurriFltAC,
     CurriCrsFacultyFltAC,
     CurriCrsStdFltAC,
@@ -125,6 +126,7 @@ class CurriCrsAdmin(ProtectedDeleteAdminMixin, MergeWizardMixin, CollegeRestrict
     )
     list_filter = (
         SemFltAC,
+        CurriCrsCareerFlt,
         "curriculum__college",
         CurriFltAC,
         DptFltAC,

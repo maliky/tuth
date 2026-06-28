@@ -7,12 +7,14 @@ from decimal import Decimal
 
 import pytest
 
+from app.academics.choices import AcademicCareer
 from app.academics.models.department import Department
 from app.finance.course_fee_policy import (
     course_fee_breakdown,
     tuition_rate_for_semester,
     unresolved_lab_fee_candidate_rows,
 )
+from app.finance.models.tuition import TuitionRate
 from app.registry.models.credit_hours import CreditHour
 
 pytestmark = pytest.mark.django_db
@@ -82,6 +84,30 @@ def test_tuition_rate_for_current_vacation_semester_uses_smartschool_rate(
     semester = sem_factory(3, datetime(2026, 6, 1))
 
     assert tuition_rate_for_semester(semester) == Decimal("5.00")
+
+
+def test_graduate_curriculum_uses_model_backed_career_tuition_rate(
+    curriculum_course_factory,
+    sem_factory,
+) -> None:
+    """Graduate curricula should bill from semester/career tuition policy."""
+    curriculum_course = curriculum_course_factory("601", "GRAD-MBAM-FEE")
+    curriculum_course.curriculum.academic_career = AcademicCareer.GRADUATE
+    curriculum_course.curriculum.save(update_fields=["academic_career"])
+    semester = sem_factory(1, datetime(2025, 8, 1))
+    _configure_course(curriculum_course, "MBAD", "601", 3)
+    TuitionRate.objects.create(
+        semester=semester,
+        academic_career=AcademicCareer.GRADUATE,
+        tuition_per_credit=Decimal("50.00"),
+        foreigner_tuition_per_credit=Decimal("50.00"),
+        source="test graduate rate",
+    )
+
+    breakdown = course_fee_breakdown(curriculum_course, semester)
+
+    assert breakdown["tuition_rate"] == Decimal("50.00")
+    assert breakdown["base_amount"] == Decimal("150.00")
 
 
 def test_tuition_rate_for_2023_semester_two_uses_corrected_smartschool_rate(

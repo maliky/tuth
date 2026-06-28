@@ -7,11 +7,12 @@ from __future__ import annotations
 from typing import cast
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q, Sum
 from simple_history.models import HistoricalRecords
 
-from app.academics.choices import LEVEL_NUMBER
+from app.academics.choices import AcademicCareer, LEVEL_NUMBER
 from app.academics.constants import MAX_STUDENT_CREDITS
 from app.academics.models.course import Course
 
@@ -24,6 +25,7 @@ from app.people.models.student_curriculum_enrollment import (
     sync_primary_std_curri_enroll,
 )
 from app.shared.mixins import SimpleTableMixin
+from app.people.utils import extract_id_num
 from app.shared.types import CrsQuery
 from app.timetable.models.semester import Semester
 
@@ -90,6 +92,7 @@ class Student(AbstractPerson):
 
     ID_FIELD = "student_id"
     ID_PREFIX = "TU-STD"
+    GRADUATE_ID_PREFIX = "GTU-"
     EMAIL_SUFFIX = ".stud@tubmanu.edu.lr"
     GROUP = "Student"  # must match the UserRole Gps
     STAFF_STATUS = False
@@ -107,6 +110,12 @@ class Student(AbstractPerson):
     student_id = models.CharField(max_length=20, unique=True, blank=True)
 
     # ~~~~~~~~ Optional ~~~~~~~~
+    academic_career = models.CharField(
+        max_length=20,
+        choices=AcademicCareer.choices,
+        default=AcademicCareer.UNDERGRADUATE,
+        db_index=True,
+    )
     last_enrolled_semester = models.ForeignKey(
         Semester,
         on_delete=models.PROTECT,
@@ -257,6 +266,23 @@ class Student(AbstractPerson):
         """
         super().save(*args, **kwargs)
         self._ensure_primary_curri_enrollment()
+
+    def _mk_id(self) -> str:
+        """Build a career-aware student id without numeric TU/GTU overlap."""
+        if self.academic_career != AcademicCareer.GRADUATE:
+            return super()._mk_id()
+        used_numbers = set()
+        for student_id in Student.objects.values_list("student_id", flat=True):
+            if not student_id:
+                continue
+            try:
+                used_numbers.add(extract_id_num(student_id))
+            except ValidationError:
+                continue
+        next_num = 1
+        while next_num in used_numbers:
+            next_num += 1
+        return f"{self.GRADUATE_ID_PREFIX}{next_num:05d}"
 
     def _ensure_primary_curri_enrollment(self) -> None:
         """Keep enrollment rows canonical after student save."""

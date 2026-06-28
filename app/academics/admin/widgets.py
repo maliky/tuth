@@ -5,7 +5,7 @@ from typing import Any, Optional
 from django.db import IntegrityError
 from import_export import widgets
 
-from app.academics.choices import COLLEGE_LONG_NAME
+from app.academics.choices import AcademicCareer, COLLEGE_LONG_NAME
 from app.academics.models.college import College
 from app.academics.models.concentration import Major
 from app.academics.models.course import Course
@@ -126,6 +126,17 @@ class CurriWgt(widgets.ForeignKeyWidget):
         curriculum = ensure_curri(
             curr_value, college=college, fuzzy_threshold=fuzzy_threshold
         )
+        career = get_in_row("academic_career", row) or get_in_row(
+            "curriculum_academic_career",
+            row,
+        )
+        normalized_career = str(career or "").strip().lower()
+        if (
+            normalized_career in AcademicCareer.values
+            and curriculum.academic_career != normalized_career
+        ):
+            curriculum.academic_career = normalized_career
+            curriculum.save(update_fields=["academic_career"])
 
         return curriculum
 

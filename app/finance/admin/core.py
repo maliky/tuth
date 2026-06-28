@@ -17,6 +17,7 @@ from app.finance.admin.invoice_admin import (
 )
 from app.finance.admin.payment_admin import LookupAdmin, PaymentAdmin
 from app.finance.admin.scholarship_admin import ScholarshipAdmin
+from app.finance.admin.tuition_admin import TuitionRateAdmin
 
 __all__ = [
     "AmountDueFlt",
@@ -31,4 +32,5 @@ __all__ = [
     "ScholarshipAdmin",
     "StaffChoiceField",
     "StdSemInvoiceAdmin",
+    "TuitionRateAdmin",
 ]

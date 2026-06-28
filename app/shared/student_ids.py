@@ -7,17 +7,20 @@ from typing import TypeAlias
 
 StudentIdKeyT: TypeAlias = str
 
-TU_NUMERIC_STUDENT_ID_RE = re.compile(r"^tu\s*-?\s*0*(?P<number>\d+)$", re.I)
+TU_NUMERIC_STUDENT_ID_RE = re.compile(
+    r"^(?P<prefix>g?tu)\s*-?\s*0*(?P<number>\d+)$", re.I
+)
 DIGIT_RE = re.compile(r"\d+")
 
 
 def canonical_student_id(value: str) -> str:
-    """Return a canonical student id while preserving non-TU legacy ids."""
+    """Return a canonical TU/GTU id while preserving non-matching legacy ids."""
     clean_value = value.strip()
     match = TU_NUMERIC_STUDENT_ID_RE.match(clean_value)
     if match is None:
         return clean_value
-    return f"TU-{int(match.group('number')):05d}"
+    prefix = match.group("prefix").upper()
+    return f"{prefix}-{int(match.group('number')):05d}"
 
 
 def student_id_exact_key(value: str) -> StudentIdKeyT:

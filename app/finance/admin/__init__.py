@@ -6,6 +6,7 @@ from app.finance.admin.core import (
     PaymentAdmin,
     ScholarshipAdmin,
     StdSemInvoiceAdmin,
+    TuitionRateAdmin,
 )
 
 
@@ -15,4 +16,5 @@ __all__ = [
     "PaymentAdmin",
     "ScholarshipAdmin",
     "StdSemInvoiceAdmin",
+    "TuitionRateAdmin",
 ]

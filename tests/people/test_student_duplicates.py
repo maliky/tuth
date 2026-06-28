@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 from django.contrib.auth.models import User
 
+from app.academics.choices import AcademicCareer
 from app.people.models.student import Student
 from app.people.models.student_curriculum_enrollment import set_primary_std_curri_enroll
 from app.people.services.student_duplicate_merge import safe_merge_student
@@ -52,10 +53,40 @@ def _student(
 def test_student_id_helpers_keep_exact_and_numeric_overlap_separate() -> None:
     """TU variants canonicalize; bare numeric ids remain a manual overlap."""
     assert canonical_student_id(" Tu-04047 ") == "TU-04047"
+    assert canonical_student_id(" gtu04047 ") == "GTU-04047"
     assert canonical_student_id("04047") == "04047"
     assert student_id_exact_key("Tu-04047") == student_id_exact_key("TU-04047")
+    assert student_id_exact_key("gtu04047") == student_id_exact_key("GTU-04047")
     assert student_id_exact_key("04047") != student_id_exact_key("TU-04047")
     assert student_id_digit_key("04047") == student_id_digit_key("TU-04047")
+
+
+def test_new_graduate_ids_skip_existing_tu_number_overlap(semester) -> None:
+    """Auto-generated GTU IDs should not reuse a number already held by TU."""
+    tu_user = User.objects.create_user(
+        username="tu_overlap",
+        first_name="Tu",
+        last_name="One",
+    )
+    Student(
+        user=tu_user,
+        student_id="TU-00001",
+        last_enrolled_semester=semester,
+    ).save()
+    grad_user = User.objects.create_user(
+        username="gtu_new",
+        first_name="Graduate",
+        last_name="New",
+    )
+
+    student = Student(
+        user=grad_user,
+        academic_career=AcademicCareer.GRADUATE,
+        last_enrolled_semester=semester,
+    )
+    student.save()
+
+    assert student.student_id == "GTU-00002"
 
 
 def test_safe_student_merge_moves_operational_rows_before_deleting_source(

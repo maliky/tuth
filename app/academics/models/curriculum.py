@@ -12,6 +12,7 @@ from django.db import models
 from django.db.models import Count
 from simple_history.models import HistoricalRecords
 
+from app.academics.choices import AcademicCareer
 from app.academics.models.college import College
 from app.shared.fuzzy_matching import token_similarity
 from app.shared.mixins import SimpleTableMixin, StatusableMixin
@@ -158,6 +159,12 @@ class Curriculum(StatusableMixin, models.Model):
 
     creation_date = models.DateField(default=date.today)
     is_active = models.BooleanField(default=False)
+    academic_career = models.CharField(
+        max_length=20,
+        choices=AcademicCareer.choices,
+        default=AcademicCareer.UNDERGRADUATE,
+        db_index=True,
+    )
 
     status = models.ForeignKey(
         "academics.CurriStatus",

@@ -8,6 +8,7 @@ import re
 from import_export import fields, resources
 from import_export.widgets import DateWidget, Widget
 
+from app.academics.choices import AcademicCareer
 from app.academics.admin.widgets import CurriWgt
 from app.people.admin.resources_mapping import (
     FACULTY_HEADER_MAP,
@@ -25,6 +26,8 @@ from app.people.models.faculty import Faculty
 from app.people.models.staffs import Staff
 from app.people.models.student import Student
 from app.shared.auth.perms import UserRole
+from app.shared.import_export_compat import ensure_dataset_column
+from app.shared.student_ids import canonical_student_id
 from app.shared.utils import get_in_row
 from app.timetable.admin.core_widgets import SemCodeWgt
 from app.timetable.ensures import ensure_academic_year_code
@@ -142,6 +145,7 @@ class StdResource(resources.ModelResource):
             "father_name",
             "first_name",
             "gender",
+            "academic_career",
             "last_enrolled_semester",
             "last_name",
             "last_school_attended",
@@ -166,9 +170,17 @@ class StdResource(resources.ModelResource):
     def before_import(self, dataset):
         headers = dataset.headers or []
         dataset.headers = [STUDENT_HEADER_MAP.get(h, h) for h in headers]
+        ensure_dataset_column(
+            dataset,
+            "academic_career",
+            AcademicCareer.UNDERGRADUATE.value,
+        )
 
     def before_import_row(self, row, **kwargs):
         """Inject derived columns to capture StudentInfo data."""
+        if not str(row.get("academic_career") or "").strip():
+            row["academic_career"] = AcademicCareer.UNDERGRADUATE.value
+
         # student_name = get_in_row("student_name", row)
 
         # Synthesize student_name when source data provides split columns
@@ -188,6 +200,9 @@ class StdResource(resources.ModelResource):
 
         _g = get_in_row("gender", row).lower()
         row["gender"] = GENDER_MAP.get(_g, _g)
+        student_id = get_in_row("student_id", row)
+        if student_id:
+            row["student_id"] = canonical_student_id(student_id)
 
         # entry_semester normalization
         entry_year_val = get_in_row("entry_year", row)

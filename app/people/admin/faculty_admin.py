@@ -19,7 +19,7 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
-from app.academics.admin.filters import CurriFltAC, DptFltAC
+from app.academics.admin.filters import CurriFltAC, DptFltAC, FacultyCareerFlt
 from app.people.admin.filters import (
     FacultyGpFAC,
     FacultyTeachingDptFltAC,
@@ -130,6 +130,7 @@ class FacultyAdmin(
         "possible_duplicates",
     )
     list_filter = [
+        FacultyCareerFlt,
         DptFltAC,
         FacultyTeachingDptFltAC,
         FacultyGpFAC,

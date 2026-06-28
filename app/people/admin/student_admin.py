@@ -20,7 +20,7 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
-from app.academics.admin.filters import CurriFltAC, DptFltAC
+from app.academics.admin.filters import AcademicCareerFlt, CurriFltAC, DptFltAC
 from app.people.admin.filters import (
     FacultyGpFAC,
     FacultyTeachingDptFltAC,
@@ -207,6 +207,7 @@ class StdAdmin(
         "marital_status",
         "gender",
         "curricula",
+        "academic_career",
         "last_enrolled_semester",
         "entry_semester",
         "last_school_attended",
@@ -219,6 +220,7 @@ class StdAdmin(
     )
     STUDENT_FIELDS = (
         "student_id",
+        "academic_career",
         "primary_curriculum",
         "last_enrolled_semester",
         "entry_semester",
@@ -248,6 +250,7 @@ class StdAdmin(
         # "last_enrolled_semester",
         "entry_semester",
         "last_enrolled_semester",
+        "academic_career",
         "birth_date",
         "duplicate_count_link",
         "possible_duplicates",
@@ -268,6 +271,7 @@ class StdAdmin(
         StdLevelFlt,
         StdCurriCrsFltAC,
         "curricula__college",
+        AcademicCareerFlt,
     )
     readonly_fields = ("student_id",)
     inlines = [StdGradeIL, DocStdIL]

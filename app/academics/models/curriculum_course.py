@@ -204,16 +204,20 @@ class CurriCrs(models.Model):
         ).distinct()
         return students_qs
 
-    def tuition_for(self, semester: Semester | None = None) -> Decimal:
+    def tuition_for(
+        self,
+        semester: Semester | None = None,
+        academic_career: str | None = None,
+    ) -> Decimal:
         """Return the billing-policy tuition amount for this curriculum course."""
-        return course_tuition_amount(self, semester)
+        return course_tuition_amount(self, semester, academic_career)
 
-    def total_fee(self, semester) -> Decimal:
+    def total_fee(self, semester, academic_career: str | None = None) -> Decimal:
         """Return tuition plus resolved additional fees for a semester."""
         fee_map, _ = resolve_crs_fee_stack_map(self.course, semester)
         fee_total = sum(fee_map.values(), Decimal("0.00"))
         policy_extra = course_policy_extra_amount(self.course)
-        return self.tuition_for(semester) + fee_total + policy_extra
+        return self.tuition_for(semester, academic_career) + fee_total + policy_extra
 
     def save(self, *args, **kwargs):
         """Make sure we set default before saving."""

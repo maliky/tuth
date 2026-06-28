@@ -47,6 +47,7 @@ from .actions import (
     update_level_number,
 )
 from .filters import (
+    AcademicCareerFlt,
     CrsCollegeFlt,
     CrsCurriFlt,
     CurriCollegeFltAC,
@@ -225,12 +226,13 @@ class CurriAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
         "short_name",
         "long_name",
         "college",
+        "academic_career",
         "is_active",
         "status",
         "crs_count_link",
         "std_count",
     )
-    list_filter = (SemFltAC, CurriCollegeFltAC, "is_active", "status")
+    list_filter = (SemFltAC, CurriCollegeFltAC, AcademicCareerFlt, "is_active", "status")
     list_editable = ("status", "is_active")
     autocomplete_fields = ("college",)
     inlines = [CurriCrsIL]
@@ -239,7 +241,14 @@ class CurriAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
     list_select_related = ("college",)
     search_fields = ("short_name", "long_name")
     # Keep short_name out of the wizard to avoid active-name uniqueness collisions.
-    merge_fields = ("long_name", "college", "status", "is_active", "description")
+    merge_fields = (
+        "long_name",
+        "college",
+        "academic_career",
+        "status",
+        "is_active",
+        "description",
+    )
     actions = ["export_prereq_graph_action", "copy_curri_action"]
 
     def std_count(self, obj):
@@ -397,6 +406,7 @@ class CurriAdmin(MergeWizardMixin, CollegeRestrictedAdmin):
                         short_name=self._build_copy_short_name(source),
                         long_name=source.long_name,
                         college=source.college,
+                        academic_career=source.academic_career,
                         description=source.description,
                         status_id="pending",
                         is_active=False,

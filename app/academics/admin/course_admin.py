@@ -49,6 +49,7 @@ from .actions import (
 from .filters import (
     CrsCollegeFlt,
     CrsCurriFlt,
+    CourseCareerFlt,
     CurriFltAC,
     CurriCrsFacultyFltAC,
     CurriCrsStdFltAC,
@@ -161,6 +162,7 @@ class CrsAdmin(DptRestrictedAdmin):
     list_editable = ("department",)
     list_filter = (
         SemFltAC,
+        CourseCareerFlt,
         DptFltAC,
         CrsCurriFlt,
         CrsCollegeFlt,

@@ -6,8 +6,10 @@ import pytest
 from tablib import Dataset
 
 from app.academics.admin.course_resource import CrsResource
-from app.academics.admin.resources import CurriCrsResource
+from app.academics.admin.resources import CurriCrsResource, CurriResource
 from app.academics.admin.widgets import CrsWgt
+from app.academics.choices import AcademicCareer
+from app.academics.models.curriculum import Curriculum
 from app.academics.models.curriculum_course import CurriCrs
 
 
@@ -122,3 +124,48 @@ def test_curricrs_resource_defaults_credit_hours_when_missing() -> None:
     assert not result.has_errors()
     curriculum_course = CurriCrs.objects.select_related("credit_hours").get()
     assert curriculum_course.credit_hours_id == 3
+
+
+@pytest.mark.django_db
+def test_curriculum_resource_defaults_legacy_academic_career() -> None:
+    """Older curriculum TSVs can omit academic_career."""
+    dataset = Dataset(
+        headers=[
+            "curriculum",
+            "long_name",
+            "college_code",
+            "status",
+            "is_active",
+            "list_courses",
+        ]
+    )
+    dataset.append(["BACC", "Accounting", "CBA", "pending", "false", ""])
+
+    result = CurriResource().import_data(dataset, dry_run=False, raise_errors=True)
+
+    assert not result.has_errors()
+    curriculum = Curriculum.objects.get(short_name="BACC")
+    assert curriculum.academic_career == AcademicCareer.UNDERGRADUATE
+
+
+@pytest.mark.django_db
+def test_curricrs_resource_defaults_legacy_elective_flags() -> None:
+    """Older curriculum-course TSVs can omit required/elective flags."""
+    dataset = Dataset(
+        headers=[
+            "curriculum",
+            "course_dept",
+            "course_no",
+            "college_code",
+            "course_title",
+            "credit_hours",
+        ]
+    )
+    dataset.append(["BACC", "ACCT", "103", "CBA", "Accounting III", "3"])
+
+    result = CurriCrsResource().import_data(dataset, dry_run=False, raise_errors=True)
+
+    assert not result.has_errors()
+    curriculum_course = CurriCrs.objects.get()
+    assert curriculum_course.is_required is False
+    assert curriculum_course.is_elective is False

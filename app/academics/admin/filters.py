@@ -10,6 +10,8 @@ from admin_searchable_dropdown.filters import (
 )
 from django.contrib import admin
 
+from app.academics.career_scope import CAREER_ALL
+from app.academics.choices import AcademicCareer
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.department import Department
 from app.people.models.faculty import Faculty
@@ -41,6 +43,110 @@ DEPARTMENT_CURRICULUM_LOOKUPS: LookUpType = (
 class CrsCollegeFlt(BaseCollegeFlt):
     field_path = "department__college"
     parameter_name = "department__college"
+
+
+class AcademicCareerFlt(admin.SimpleListFilter):
+    """Career filter that defaults changelists to graduate records."""
+
+    title = "Academic career"
+    parameter_name = "academic_career"
+    field_path = "academic_career"
+
+    def lookups(self, request, model_admin):
+        """Return explicit career choices plus the broad all scope."""
+        return [
+            (AcademicCareer.GRADUATE.value, AcademicCareer.GRADUATE.label),
+            (AcademicCareer.UNDERGRADUATE.value, AcademicCareer.UNDERGRADUATE.label),
+            (CAREER_ALL, "All"),
+        ]
+
+    def queryset(self, request, queryset):
+        """Apply graduate-by-default filtering to admin changelists."""
+        selected = self.value() or AcademicCareer.GRADUATE.value
+        if selected == CAREER_ALL:
+            return queryset
+        if selected in {
+            AcademicCareer.GRADUATE.value,
+            AcademicCareer.UNDERGRADUATE.value,
+        }:
+            return queryset.filter(**{self.field_path: selected}).distinct()
+        return queryset
+
+    def choices(self, changelist):
+        """Keep the sidebar selection truthful when using the default filter."""
+        selected = self.value() or AcademicCareer.GRADUATE.value
+        for lookup, title in self.lookup_choices:
+            yield {
+                "selected": selected == str(lookup),
+                "query_string": changelist.get_query_string(
+                    {self.parameter_name: lookup}
+                ),
+                "display": title,
+            }
+
+
+class CourseCareerFlt(AcademicCareerFlt):
+    """Filter courses through the curricula where they are used."""
+
+    parameter_name = "curricula__academic_career"
+    field_path = "curricula__academic_career"
+
+
+class CurriCrsCareerFlt(AcademicCareerFlt):
+    """Filter programmed courses by their owning curriculum career."""
+
+    parameter_name = "curriculum__academic_career"
+    field_path = "curriculum__academic_career"
+
+
+class PrereqCareerFlt(CurriCrsCareerFlt):
+    """Filter prerequisite rows by curriculum career."""
+
+
+class SectionCareerFlt(AcademicCareerFlt):
+    """Filter sections by the career of their curriculum course."""
+
+    parameter_name = "curriculum_course__curriculum__academic_career"
+    field_path = "curriculum_course__curriculum__academic_career"
+
+
+class SecSessionCareerFlt(AcademicCareerFlt):
+    """Filter section sessions by section curriculum career."""
+
+    parameter_name = "section__curriculum_course__curriculum__academic_career"
+    field_path = "section__curriculum_course__curriculum__academic_career"
+
+
+class ScheduleCareerFlt(AcademicCareerFlt):
+    """Filter schedule rows to those used by career-scoped sessions."""
+
+    parameter_name = "sessions__section__curriculum_course__curriculum__academic_career"
+    field_path = "sessions__section__curriculum_course__curriculum__academic_career"
+
+
+class FacultyCareerFlt(AcademicCareerFlt):
+    """Filter faculty by sections taught in the selected career."""
+
+    parameter_name = "section__curriculum_course__curriculum__academic_career"
+    field_path = "section__curriculum_course__curriculum__academic_career"
+
+
+class RoomCareerFlt(AcademicCareerFlt):
+    """Filter rooms by sessions scheduled for the selected career."""
+
+    parameter_name = "secsession__section__curriculum_course__curriculum__academic_career"
+    field_path = "secsession__section__curriculum_course__curriculum__academic_career"
+
+
+class RegistrationCareerFlt(AcademicCareerFlt):
+    """Filter registrations by the registered section career."""
+
+    parameter_name = "section__curriculum_course__curriculum__academic_career"
+    field_path = "section__curriculum_course__curriculum__academic_career"
+
+
+class GradeCareerFlt(RegistrationCareerFlt):
+    """Filter grades by the graded section career."""
 
 
 class DptFltAC(ScopedAutocompleteFilter):

@@ -11,7 +11,7 @@ from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
 
-from app.academics.admin.filters import CurriFltAC
+from app.academics.admin.filters import CurriFltAC, SectionCareerFlt
 from app.academics.models.curriculum_course import CurriCrs
 from app.people.models.faculty import Faculty
 from app.people.models.student import Student
@@ -127,6 +127,7 @@ class SecAdmin(ProtectedDeleteAdminMixin, CollegeRestrictedAdmin):
     inlines = [SecSessionIL, GradeIL]
     # Added curriculum filtering per section list requirements.
     list_filter = [
+        SectionCareerFlt,
         CollegeFltAC,
         SectionFacultyFltAc,
         CurriFltAC,

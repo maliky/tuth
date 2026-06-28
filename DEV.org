@@ -38,3 +38,28 @@ should follow normal curriculum semester sequence.
 default per credit is 50.  for the rest do not put default for now
 *** TODO Q13 Should graduate applicants/students use the same Student ID and user-account creation flow as undergraduate students, or should they receive a distinct graduate ID prefix and admissions intake workflow?
 We use id starting with GTU instead of TU-. but a studnet comming from TU with an ide already will only have ti prepended with G so for get TU-01234 become GTU-01234.
+
+** Additional observation
+  - Model changes require migrations; repo instructions currently say not to create migration files unless explicitly requested.
+You have my explicte authorazation to make this change    
+
+  - If academic_career is added only to Student and not Curriculum, graduate filtering will remain weak and dashboards/imports will be ambiguous.
+so add it to curriculum also
+
+  - Existing student ID normalization only knows canonical TU-; adding GTU may affect duplicate detection, imports, search, and forms.
+yes, that is correct. We alos have to be carreful not to create GTU ids that could match a potentialy converted TU id to GTU.  eg new grad student given GTU-01112 when a TU-01112 existe already. if later TU-01112 wants to take graduate classe we will not be able to apply the rule TU-digits GTU-same_digits.
+So here it is best to just create new GTU-ids... and forget the rule about TU- been converted to GTU.
+    
+  - The current tuition policy is semester-based, not student-career-based; graduate USD 50 tuition needs careful integration to avoid changing undergraduate billing.
+We need to make this semester and student-career based. requires changing the model. lets do it.    
+  - Shared course rows are useful, but an existing undergraduate course with the same department/number and a different title/description could create conflicts.
+We should not have smae departemnt number. grad numbers all should all start from  600 upwards
+
+  - Elective placeholder support can create fake-looking catalog courses if the codes and titles are not clearly labeled as elective groups.
+yes elective codes should just be listed as an elective and as offic of a description it should have the name and code of the alternate courses, for which descirption are provided
+
+  - Ignoring non-course prerequisite language may under-enforce proposal, standing, supervisor approval, or admission rules.
+I do not get where you need to enfore proposal and all... prerequiste only concern activites with courses code.  We do not handle other completion markers
+    
+  - Test graduate sections and mock grades can pollute real dashboards if not clearly marked or scoped to test data.
+scope the to the appropriate data.
