@@ -222,7 +222,9 @@ def _audit_rows(
                 "course_code": course.short_code or course.code,
                 "course_title": course.title or "",
                 "credits": str(curriculum_course.credit_hours_id),
-                "fee": str(section.fee_total_amount()),
+                "fee": str(
+                    section.fee_total_amount(registration.student.academic_career)
+                ),
                 "previous_status": "pending",
                 "new_status": "cleared",
                 "action": action,

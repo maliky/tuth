@@ -24,6 +24,7 @@ from app.finance.registration_invoices import (
     invoice_generation_registration_qs,
     invoiceable_registration_qs,
     materialize_registration_invoices,
+    registration_fee_total_amount,
 )
 from app.finance.models.status_types_methods import (
     InvoiceStatus,
@@ -307,7 +308,7 @@ def finance_officer_setup_registration_fee(request: HttpRequest) -> HttpResponse
 
     staff = getattr(request.user, "staff", None)
     with transaction.atomic():
-        current_amount = registration.section.fee_total_amount()
+        current_amount = registration_fee_total_amount(registration)
         additional_amount = amount - current_amount
         if additional_amount > Decimal("0.00"):
             ensure_course_default_fee(

@@ -8,8 +8,13 @@ from django.core.management import call_command
 
 import pytest
 
+from app.academics.choices import AcademicCareer
 from app.finance.models.invoice import CrsInvoice
-from app.finance.registration_invoices import ensure_course_invoice_for_registration
+from app.finance.models.tuition import TuitionRate
+from app.finance.registration_invoices import (
+    ensure_course_invoice_for_registration,
+    registration_invoice_amount,
+)
 from app.registry.models.credit_hours import CreditHour
 
 pytestmark = pytest.mark.django_db
@@ -37,6 +42,37 @@ def test_registration_invoice_helper_creates_course_invoice(regio_factory) -> No
     assert second_invoice == invoice
     assert second_created is False
     assert second_updated is False
+
+
+def test_registration_invoice_uses_student_career_for_shared_section(
+    regio_factory,
+) -> None:
+    """A graduate student in a shared section should bill at graduate tuition."""
+    registration = regio_factory("invoice_grad_student", "CURRI_INV_GRAD", "808", 1)
+    curriculum_course = registration.section.curriculum_course
+    curriculum_course.credit_hours = CreditHour.objects.get(code=3)
+    curriculum_course.save(update_fields=["credit_hours"])
+    registration.student.academic_career = AcademicCareer.GRADUATE
+    registration.student.save(update_fields=["academic_career"])
+    TuitionRate.objects.update_or_create(
+        semester=registration.section.semester,
+        academic_career=AcademicCareer.GRADUATE,
+        defaults={
+            "tuition_per_credit": Decimal("50.00"),
+            "foreigner_tuition_per_credit": Decimal("50.00"),
+            "source": "test shared-section graduate rate",
+        },
+    )
+
+    invoice, created, updated = ensure_course_invoice_for_registration(registration)
+
+    assert registration.section.fee_total_amount() == Decimal("15.00")
+    assert registration_invoice_amount(registration) == Decimal("150.00")
+    assert invoice is not None
+    assert created is True
+    assert updated is False
+    assert invoice.initial_amount_due == Decimal("150.00")
+    assert invoice.balance == Decimal("150.00")
 
 
 def test_backfill_registration_invoices_command_supports_dry_run(regio_factory) -> None:

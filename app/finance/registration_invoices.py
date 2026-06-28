@@ -133,7 +133,14 @@ def missing_registration_invoice_counts(
 
 def registration_invoice_amount(registration: Registration) -> Decimal:
     """Return the billable amount for a registration section."""
-    return registration.section.fee_total_amount()
+    return registration_fee_total_amount(registration)
+
+
+def registration_fee_total_amount(registration: Registration) -> Decimal:
+    """Return the section fee priced with the registration student's career."""
+    academic_career = getattr(registration.student, "academic_career", None)
+    # Student career controls billing when a section is shared across careers.
+    return registration.section.fee_total_amount(academic_career)
 
 
 def invoice_generation_registration_qs(
@@ -323,5 +330,6 @@ __all__ = [
     "materialize_registration_invoices",
     "missing_registration_invoice_counts",
     "missing_registration_invoice_student_ids",
+    "registration_fee_total_amount",
     "registration_invoice_amount",
 ]

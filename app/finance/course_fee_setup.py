@@ -9,6 +9,7 @@ from django.db import transaction
 
 from app.academics.models.course import Course
 from app.finance.models.fee_stack import CrsFeeStack, FeeStack, FeeStackLine
+from app.finance.registration_invoices import registration_fee_total_amount
 from app.finance.models.status_types_methods import FeeType
 from app.registry.models.registration import Registration
 
@@ -28,8 +29,9 @@ class CourseFeeSetupResultT(TypedDict):
 
 def suggested_registration_fee_amount(registration: Registration) -> Decimal:
     """Return a safe suggested fee for a zero-tuition special registration."""
-    if registration.section.fee_total_amount() > Decimal("0.00"):
-        return registration.section.fee_total_amount()
+    current_amount = registration_fee_total_amount(registration)
+    if current_amount > Decimal("0.00"):
+        return current_amount
     if infer_course_fee_type_code(registration.section.curriculum_course.course) in {
         "entrepreneurship_education_i",
         "entrepreneurship_education_ii",

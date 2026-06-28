@@ -124,9 +124,10 @@ class Section(models.Model):
         """Return 'True' if the section still has seats available."""
         return self.current_registrations < self.max_seats
 
-    def fee_total_amount(self) -> Decimal:
+    def fee_total_amount(self, academic_career: str | None = None) -> Decimal:
         """Return the total fee for the section including tuition."""
-        return self.curriculum_course.total_fee(self.semester)
+        # Registration callers pass the student's career for shared sections.
+        return self.curriculum_course.total_fee(self.semester, academic_career)
 
     def clean(self) -> None:
         """Check that the dates are correct."""

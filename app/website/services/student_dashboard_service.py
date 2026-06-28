@@ -29,7 +29,10 @@ from app.finance.fee_assignment import (
 from app.finance.models.invoice import CrsInvoice, StdSemesterInvoice
 from app.finance.models.payment import Payment
 from app.finance.payment_application import payment_application_for_parent_invoice
-from app.finance.registration_invoices import ensure_course_invoice_for_registration
+from app.finance.registration_invoices import (
+    ensure_course_invoice_for_registration,
+    registration_fee_total_amount,
+)
 from app.people.models.student import Student
 from app.registry.gpa import effective_transcript_grades, get_grade_points_and_credits
 from app.registry.models.grade import Grade
@@ -743,7 +746,7 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
                 "semester": str(section.semester),
                 "last_update": last_change.strftime("%b %d, %Y %H:%M"),
                 "payment_last_update": payment_last_update,
-                "fee": section.fee_total_amount(),
+                "fee": registration_fee_total_amount(reg),
                 "registration_id": reg.id,
                 "can_cancel": reg.status_id == "pending",
                 "can_view": can_view,
@@ -925,7 +928,7 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
                 "schedule": _format_schedule(section),
                 "seats_total": section.max_seats,
                 "seats_remaining": section.available_seats,
-                "fee": section.fee_total_amount(),
+                "fee": section.fee_total_amount(student.academic_career),
             }
             for section in course_sections
         ]
@@ -1024,7 +1027,7 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
     pending_registrations_list = list(pending_registrations)
     pending_total = sum(
         (
-            reg.section.fee_total_amount()
+            registration_fee_total_amount(reg)
             for reg in pending_registrations_list
             if (
                 reg.section.curriculum_course_id,
