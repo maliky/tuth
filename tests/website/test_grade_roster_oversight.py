@@ -16,8 +16,10 @@ from app.academics.models.curriculum import Curriculum
 from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.department import Department
 from app.people.models.faculty import Faculty
+from app.people.models.role_assignment import RoleAssignment
 from app.people.models.staffs import Staff
 from app.people.models.student import Student
+from app.people.models.student_curriculum_enrollment import set_primary_std_curri_enroll
 from app.registry.models.grade import Grade, GradeValue
 from app.registry.models.registration import Registration
 from app.timetable.models.academic_year import AcademicYear
@@ -101,6 +103,7 @@ def _registered_grade(section: Section, username: str, grade_code: str) -> Stude
         last_name="Student",
         student_id=f"SID-{username.upper()}",
     )
+    set_primary_std_curri_enroll(student, section.curriculum_course.curriculum)
     Registration.objects.create(student=student, section=section)
     Grade.objects.create(
         student=student,
@@ -387,6 +390,69 @@ def test_dean_filters_rosters_and_sees_authorized_database(
     assert hidden_student.id in student_ids
 
 
+def test_dean_role_assignment_scopes_student_autocomplete(
+    client,
+    oversight_semester,
+):
+    """Dean roster autocomplete should work for staff scoped by role assignment."""
+    college = College.objects.create(code="CDRA", long_name="Dean Role College")
+    other_college = College.objects.create(code="CDRB", long_name="Other Role College")
+    dean_user = _staff_role_user("dean_role_assignment", "Dean")
+    dean_group = Group.objects.get(name="Dean")
+    RoleAssignment.objects.create(
+        user=dean_user,
+        group=dean_group,
+        college=college,
+        start_date=date(2026, 1, 1),
+    )
+    _fac_user, visible_faculty = _faculty_role_user(
+        "dean_role_assignment_faculty",
+        "Faculty",
+        college=college,
+    )
+    _other_user, other_faculty = _faculty_role_user(
+        "dean_role_assignment_other",
+        "Faculty",
+        college=other_college,
+    )
+    visible_section = _section(
+        college=college,
+        department_code="DRA",
+        curriculum_code="CUR-DEAN-ROLE",
+        course_number="811",
+        faculty=visible_faculty,
+        semester=oversight_semester,
+    )
+    other_section = _section(
+        college=other_college,
+        department_code="DRB",
+        curriculum_code="CUR-DEAN-ROLE-OTHER",
+        course_number="812",
+        faculty=other_faculty,
+        semester=oversight_semester,
+    )
+    visible_student = _registered_grade(visible_section, "assign_visible", "a")
+    other_student = _registered_grade(other_section, "assign_hidden", "b")
+
+    client.force_login(dean_user)
+    response = client.get(reverse("staff_grade_rosters", args=["dean"]))
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert "CDRA" in content
+    assert "DRA811" in content
+    assert "DRB812" not in content
+    assert reverse("staff_grade_roster_student_autocomplete", args=["dean"]) in content
+
+    student_lookup = client.get(
+        reverse("staff_grade_roster_student_autocomplete", args=["dean"]),
+        {"q": "Assign"},
+    ).json()["results"]
+    student_ids = {row["id"] for row in student_lookup}
+    assert visible_student.id in student_ids
+    assert other_student.id not in student_ids
+
+
 def test_vpaa_filters_rosters_across_colleges(client, oversight_semester):
     """VPAA roster filters should search the institution-wide scope."""
     college = College.objects.create(code="CVPF", long_name="VPAA Filter College")
@@ -443,6 +509,227 @@ def test_vpaa_filters_rosters_across_colleges(client, oversight_semester):
     faculty_ids = {row["id"] for row in faculty_lookup}
     assert visible_faculty.id in faculty_ids
     assert hidden_faculty.id in faculty_ids
+
+
+def test_chair_grade_transcripts_are_course_scoped(client, oversight_semester):
+    """Chair transcript previews should include only scoped course-grade students."""
+    college = College.objects.create(code="CTRN", long_name="Chair Transcript College")
+    chair_department = Department.objects.create(code="CTR", college=college)
+    other_department = Department.objects.create(code="OTH", college=college)
+    chair_user, chair_faculty = _faculty_role_user(
+        "chair_transcripts",
+        "Chair",
+        college=college,
+        department=chair_department,
+    )
+    _other_user, other_faculty = _faculty_role_user(
+        "chair_transcripts_other",
+        "Faculty",
+        college=college,
+        department=other_department,
+    )
+    visible_section = _section(
+        college=college,
+        department_code="CTR",
+        curriculum_code="CUR-CHAIR-TRANSCRIPT",
+        course_number="511",
+        faculty=chair_faculty,
+        semester=oversight_semester,
+    )
+    hidden_section = _section(
+        college=college,
+        department_code="OTH",
+        curriculum_code="CUR-HIDDEN-TRANSCRIPT",
+        course_number="512",
+        faculty=other_faculty,
+        semester=oversight_semester,
+    )
+    visible_student = _registered_grade(visible_section, "chair_tr_visible", "a")
+    hidden_student = _registered_grade(hidden_section, "chair_tr_hidden", "b")
+
+    client.force_login(chair_user)
+    response = client.get(reverse("staff_grade_transcripts", args=["chair"]))
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert visible_student.student_id in content
+    assert hidden_student.student_id not in content
+    assert reverse("staff_grade_transcript", args=["chair", visible_student.id]) in (
+        content
+    )
+
+    detail = client.get(
+        reverse("staff_grade_transcript", args=["chair", visible_student.id])
+    )
+    detail_content = detail.content.decode()
+
+    assert detail.status_code == 200
+    assert visible_student.student_id in detail_content
+    assert "Download official transcript" not in detail_content
+    assert (
+        client.get(
+            reverse("staff_grade_transcript", args=["chair", hidden_student.id])
+        ).status_code
+        == 404
+    )
+
+    lookup = client.get(
+        reverse("staff_grade_transcript_student_autocomplete", args=["chair"]),
+        {"q": "SID-CHAIR_TR"},
+    ).json()["results"]
+    lookup_ids = {row["id"] for row in lookup}
+    assert visible_student.id in lookup_ids
+    assert hidden_student.id not in lookup_ids
+
+
+def test_dean_role_assignment_scopes_grade_transcripts(
+    client,
+    oversight_semester,
+):
+    """Staff-only deans should get college-scoped transcript previews."""
+    college = College.objects.create(code="DTRN", long_name="Dean Transcript College")
+    other_college = College.objects.create(code="DOTH", long_name="Other College")
+    dean_user = _staff_role_user("dean_transcripts_assignment", "Dean")
+    dean_group = Group.objects.get(name="Dean")
+    RoleAssignment.objects.create(
+        user=dean_user,
+        group=dean_group,
+        college=college,
+        start_date=date(2026, 1, 1),
+    )
+    _fac_user, visible_faculty = _faculty_role_user(
+        "dean_transcript_faculty",
+        "Faculty",
+        college=college,
+    )
+    _other_user, other_faculty = _faculty_role_user(
+        "dean_transcript_other",
+        "Faculty",
+        college=other_college,
+    )
+    visible_section = _section(
+        college=college,
+        department_code="DTR",
+        curriculum_code="CUR-DEAN-TRANSCRIPT",
+        course_number="611",
+        faculty=visible_faculty,
+        semester=oversight_semester,
+    )
+    hidden_section = _section(
+        college=other_college,
+        department_code="DOT",
+        curriculum_code="CUR-DEAN-TRANSCRIPT-HIDDEN",
+        course_number="612",
+        faculty=other_faculty,
+        semester=oversight_semester,
+    )
+    visible_student = _registered_grade(visible_section, "dean_tr_visible", "a")
+    hidden_student = _registered_grade(hidden_section, "dean_tr_hidden", "b")
+
+    client.force_login(dean_user)
+    response = client.get(reverse("staff_grade_transcripts", args=["dean"]))
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert visible_student.student_id in content
+    assert hidden_student.student_id not in content
+    assert (
+        client.get(
+            reverse("staff_grade_transcript", args=["dean", visible_student.id])
+        ).status_code
+        == 200
+    )
+    assert (
+        client.get(
+            reverse("staff_grade_transcript", args=["dean", hidden_student.id])
+        ).status_code
+        == 404
+    )
+
+
+def test_vpaa_grade_transcripts_are_university_wide(client, oversight_semester):
+    """VPAA transcript previews should cover graded students across colleges."""
+    first_college = College.objects.create(code="VTRN", long_name="VPAA Transcript A")
+    second_college = College.objects.create(code="VTRO", long_name="VPAA Transcript B")
+    vpaa_user = _staff_role_user("vpaa_transcripts", "VPAA")
+    _first_user, first_faculty = _faculty_role_user(
+        "vpaa_transcript_first",
+        "Faculty",
+        college=first_college,
+    )
+    _second_user, second_faculty = _faculty_role_user(
+        "vpaa_transcript_second",
+        "Faculty",
+        college=second_college,
+    )
+    first_section = _section(
+        college=first_college,
+        department_code="VTA",
+        curriculum_code="CUR-VPAA-TRANSCRIPT-A",
+        course_number="711",
+        faculty=first_faculty,
+        semester=oversight_semester,
+    )
+    second_section = _section(
+        college=second_college,
+        department_code="VTB",
+        curriculum_code="CUR-VPAA-TRANSCRIPT-B",
+        course_number="712",
+        faculty=second_faculty,
+        semester=oversight_semester,
+    )
+    first_student = _registered_grade(first_section, "vpaa_tr_first", "a")
+    second_student = _registered_grade(second_section, "vpaa_tr_second", "b")
+
+    client.force_login(vpaa_user)
+    response = client.get(reverse("staff_grade_transcripts", args=["vpaa"]))
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert first_student.student_id in content
+    assert second_student.student_id in content
+    assert (
+        client.get(
+            reverse("staff_grade_transcript", args=["vpaa", first_student.id])
+        ).status_code
+        == 200
+    )
+    assert (
+        client.get(
+            reverse("staff_grade_transcript", args=["vpaa", second_student.id])
+        ).status_code
+        == 200
+    )
+
+
+def test_academic_dashboards_link_to_grade_transcripts(client, oversight_semester):
+    """VPAA, dean, and chair dashboards should expose scoped transcript links."""
+    college = College.objects.create(code="LINK", long_name="Dashboard Link College")
+    department = Department.objects.create(code="LNK", college=college)
+    chair_user, _chair_faculty = _faculty_role_user(
+        "chair_transcript_link",
+        "Chair",
+        college=college,
+        department=department,
+    )
+    dean_user, _dean_faculty = _faculty_role_user(
+        "dean_transcript_link",
+        "Dean",
+        college=college,
+    )
+    vpaa_user = _staff_role_user("vpaa_transcript_link", "VPAA")
+
+    for role_slug, user in (
+        ("chair", chair_user),
+        ("dean", dean_user),
+        ("vpaa", vpaa_user),
+    ):
+        client.force_login(user)
+        response = client.get(reverse("staff_role_dashboard", args=[role_slug]))
+        content = response.content.decode()
+
+        assert response.status_code == 200
+        assert reverse("staff_grade_transcripts", args=[role_slug]) in content
 
 
 def test_faculty_cannot_open_academic_oversight_route(client):

@@ -1021,6 +1021,34 @@
   padding-top: 1rem;
 }
 
+.academic-schedule-metrics {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+  margin-bottom: 0.75rem;
+}
+
+.academic-schedule-metric {
+  background: rgba(15, 31, 28, 0.04);
+  border: 1px solid var(--staff-border);
+  border-radius: 0.35rem;
+  padding: 0.55rem 0.65rem;
+}
+
+.academic-schedule-metric span {
+  color: var(--staff-muted);
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.academic-schedule-metric strong {
+  color: var(--staff-primary);
+  display: block;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
 .prereq-graph-frame {
   border: 1px solid var(--staff-border);
   border-radius: 0.35rem;

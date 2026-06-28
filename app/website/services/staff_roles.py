@@ -201,6 +201,13 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
             "key": "grade_rosters",
             "icon": "bi-card-checklist",
         },
+        {
+            "label": "Grade transcripts",
+            "route_name": "staff_grade_transcripts",
+            "args": ["chair"],
+            "key": "grade_transcripts",
+            "icon": "bi-file-earmark-text",
+        },
     ],
     "dean": [
         {
@@ -228,6 +235,13 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
             "key": "grade_rosters",
             "icon": "bi-card-checklist",
         },
+        {
+            "label": "Grade transcripts",
+            "route_name": "staff_grade_transcripts",
+            "args": ["dean"],
+            "key": "grade_transcripts",
+            "icon": "bi-file-earmark-text",
+        },
     ],
     "vpaa": [
         {
@@ -242,6 +256,13 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
             "args": ["vpaa"],
             "key": "grade_rosters",
             "icon": "bi-card-checklist",
+        },
+        {
+            "label": "Grade transcripts",
+            "route_name": "staff_grade_transcripts",
+            "args": ["vpaa"],
+            "key": "grade_transcripts",
+            "icon": "bi-file-earmark-text",
         },
     ],
     "registrar": [
@@ -396,9 +417,7 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
 }
 
 EXPLICIT_ROLE_PARENT_EDGES: tuple[RoleEdgeT, ...] = (
-    ("chair", "dean"),
-    ("faculty", "chair"),
-    ("dean", "vpaa"),
+    # Academic leader drilldowns are scoped by selectors, not generic inheritance.
     ("registrar", "reg_officer"),
 )
 

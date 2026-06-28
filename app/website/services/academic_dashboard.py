@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TypedDict
 
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 from django.http import HttpRequest
 from django.urls import reverse
 
@@ -18,6 +18,10 @@ from app.timetable.models.semester import Semester
 from app.website.services.academic_dashboard_metrics import (
     DashboardContextT,
     academic_chart_context,
+)
+from app.website.services.academic_dashboard_roles import (
+    dean_role_options,
+    selected_dean_role,
 )
 
 
@@ -93,6 +97,25 @@ def _official_curricula(curricula: QuerySet[Curriculum]) -> QuerySet[Curriculum]
     return curricula.filter(status_id="approved", is_active=True)
 
 
+def _college_label(college: College) -> str:
+    """Return a readable college label for dashboard headings."""
+    return college.long_name or college.code
+
+
+def _dashboard_controls(
+    semester: Semester,
+    *,
+    role: str,
+) -> dict[str, object]:
+    """Return common form controls for academic dashboards."""
+    return {
+        "selected_semester": semester,
+        "selected_semester_label": _semester_label(semester),
+        "semester_options": _semester_options(semester),
+        "dashboard_url": reverse("staff_role_dashboard", args=[role]),
+    }
+
+
 def _chair_scope_from_faculty(faculty: Faculty) -> ScopeT:
     """Resolve curricula for a chair from role assignment, then profile fallback."""
     assignments = RoleAssignment.objects.filter(
@@ -127,11 +150,15 @@ def _chair_scope_from_faculty(faculty: Faculty) -> ScopeT:
             ).distinct(),
             "label": str(faculty.staff_profile.department),
         }
+    if faculty.college_id is None or faculty.college is None:
+        return {
+            "curricula": Curriculum.objects.none(),
+            "label": "Unassigned college",
+        }
+    college = faculty.college
     return {
-        "curricula": _official_curricula(
-            Curriculum.objects.filter(college=faculty.college)
-        ),
-        "label": str(faculty.college),
+        "curricula": _official_curricula(Curriculum.objects.filter(college=college)),
+        "label": _college_label(college),
     }
 
 
@@ -144,13 +171,11 @@ def _chair_options(
     college: College, selected_chair_id: int | None
 ) -> list[dict[str, object]]:
     """Return chair selector options for one dean college."""
-    chairs = (
-        Faculty.objects.filter(
-            college=college,
-            staff_profile__user__groups__name=UserRole.CHAIR.value.label,
-        )
-        .select_related("staff_profile__department", "staff_profile__user")
-        .order_by("staff_profile__department__code", "staff_profile__user__last_name")
+    chairs = _chair_faculty_queryset(college).order_by(
+        "staff_profile__department__code",
+        "staff_profile__user__last_name",
+        "staff_profile__user__first_name",
+        "id",
     )
     return [
         {
@@ -162,6 +187,31 @@ def _chair_options(
     ]
 
 
+def _chair_faculty_queryset(college: College) -> QuerySet[Faculty]:
+    """Return chair faculty rows attached to one dean college."""
+    return (
+        Faculty.objects.filter(
+            staff_profile__user__groups__name=UserRole.CHAIR.value.label
+        )
+        .filter(
+            Q(college=college)
+            | Q(staff_profile__department__college=college)
+            | Q(
+                staff_profile__user__role_assignments__group__name=UserRole.CHAIR.value.label,
+                staff_profile__user__role_assignments__college=college,
+                staff_profile__user__role_assignments__end_date__isnull=True,
+            )
+            | Q(
+                staff_profile__user__role_assignments__group__name=UserRole.CHAIR.value.label,
+                staff_profile__user__role_assignments__department__college=college,
+                staff_profile__user__role_assignments__end_date__isnull=True,
+            )
+        )
+        .select_related("staff_profile__department", "staff_profile__user")
+        .distinct()
+    )
+
+
 def _selected_chair(request: HttpRequest, college: College) -> Faculty | None:
     """Return the selected chair in the dean's college."""
     raw_value = request.GET.get("chair_id")
@@ -171,15 +221,7 @@ def _selected_chair(request: HttpRequest, college: College) -> Faculty | None:
         chair_id = int(raw_value)
     except ValueError:
         return None
-    return (
-        Faculty.objects.filter(
-            pk=chair_id,
-            college=college,
-            staff_profile__user__groups__name=UserRole.CHAIR.value.label,
-        )
-        .select_related("staff_profile__department", "staff_profile__user")
-        .first()
-    )
+    return _chair_faculty_queryset(college).filter(pk=chair_id).first()
 
 
 def build_dean_academic_dashboard(
@@ -194,17 +236,14 @@ def build_dean_academic_dashboard(
     selected_chair_id = selected_chair.id if selected_chair else None
     context = academic_chart_context(
         title="Student enrollment by program",
-        scope_label=str(college),
+        scope_label=_college_label(college),
         curricula=curricula,
         semester=semester,
     )
     context.update(
         {
-            "selected_semester": semester,
-            "selected_semester_label": _semester_label(semester),
-            "semester_options": _semester_options(semester),
+            **_dashboard_controls(semester, role="dean"),
             "chair_options": _chair_options(college, selected_chair_id),
-            "dashboard_url": reverse("staff_role_dashboard", args=["dean"]),
         }
     )
     if selected_chair is not None:
@@ -232,12 +271,41 @@ def build_chair_academic_dashboard(
         curricula=scope["curricula"],
         semester=semester,
     )
+    context.update(_dashboard_controls(semester, role="chair"))
+    return context
+
+
+def build_vpaa_academic_dashboard(request: HttpRequest) -> DashboardContextT:
+    """Return VPAA dean-overview dashboard context for a selected dean role."""
+    semester = selected_dashboard_semester(request)
+    selected_role = selected_dean_role(request.GET.get("dean_role_id"))
+    selected_role_id = selected_role.id if selected_role is not None else None
+    controls = _dashboard_controls(semester, role="vpaa")
+    options = dean_role_options(selected_role_id)
+    if selected_role is None or selected_role.college is None:
+        return {
+            "title": "Dean overview",
+            "scope_label": "Select a dean/college",
+            **controls,
+            "dean_role_options": options,
+            "empty_message": (
+                "Select a dean or college to load enrollment, workload, and "
+                "schedule data."
+            ),
+        }
+
+    college = selected_role.college
+    curricula = _official_curricula(Curriculum.objects.filter(college=college))
+    context = academic_chart_context(
+        title="Dean overview",
+        scope_label=_college_label(college),
+        curricula=curricula,
+        semester=semester,
+    )
     context.update(
         {
-            "selected_semester": semester,
-            "selected_semester_label": _semester_label(semester),
-            "semester_options": _semester_options(semester),
-            "dashboard_url": reverse("staff_role_dashboard", args=["chair"]),
+            **controls,
+            "dean_role_options": options,
         }
     )
     return context
@@ -246,6 +314,7 @@ def build_chair_academic_dashboard(
 __all__ = [
     "build_chair_academic_dashboard",
     "build_dean_academic_dashboard",
+    "build_vpaa_academic_dashboard",
     "chair_curriculum_scope",
     "selected_dashboard_semester",
 ]

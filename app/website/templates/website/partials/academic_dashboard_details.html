@@ -1,0 +1,106 @@
+<div class="academic-dashboard__tables">
+  <div>
+    <h3>Faculty workload by program</h3>
+    {% if dashboard.program_workloads %}
+      <div class="table-responsive">
+        <table class="table align-middle mb-0 portal-table">
+          <thead>
+            <tr>
+              <th>Program</th>
+              <th>Faculty</th>
+              <th>Sections</th>
+              <th>Credits</th>
+              <th>Overload</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in dashboard.program_workloads %}
+              <tr>
+                <td>{{ row.program }}</td>
+                <td>{{ row.faculty }}</td>
+                <td>{{ row.sections }}</td>
+                <td>{{ row.credits }}</td>
+                <td>
+                  <span class="badge text-bg-{{ row.overload_state }}">{{ row.overload_label }}</span>
+                  <small class="d-block text-muted">{{ row.overload_detail }}</small>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="portal-empty-state">No workload data for this semester.</div>
+    {% endif %}
+  </div>
+  <div>
+    <h3>Schedule placement</h3>
+    {% if dashboard.schedule_coverage.has_sections %}
+      <div class="academic-schedule-metrics">
+        {% for metric in dashboard.schedule_coverage.metrics %}
+          <div class="academic-schedule-metric">
+            <span>{{ metric.label }}</span>
+            <strong>{{ metric.value }}</strong>
+          </div>
+        {% endfor %}
+      </div>
+      {% if dashboard.schedule_coverage.has_slots %}
+        <div class="table-responsive mb-3">
+          <table class="table align-middle mb-0 portal-table">
+            <thead>
+              <tr>
+                <th>Day</th>
+                <th>Time</th>
+                <th>Room</th>
+                <th>Sections</th>
+                <th>Faculty</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for slot in dashboard.schedule_coverage.slots %}
+                <tr>
+                  <td>{{ slot.weekday }}</td>
+                  <td>{{ slot.time }}</td>
+                  <td>{{ slot.room }}</td>
+                  <td>{{ slot.sections }}</td>
+                  <td>{{ slot.faculty }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+      <div class="table-responsive">
+        <table class="table align-middle mb-0 portal-table">
+          <thead>
+            <tr>
+              <th>Program</th>
+              <th>Course</th>
+              <th>Faculty</th>
+              <th>Seats</th>
+              <th>Placement</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in dashboard.schedule_coverage.sections %}
+              <tr>
+                <td>{{ row.program }}</td>
+                <td>
+                  <strong>{{ row.course }}</strong><br>
+                  <span class="text-muted">{{ row.title }} · Sec {{ row.section }}</span>
+                </td>
+                <td>{{ row.faculty }}</td>
+                <td>{{ row.seats }} <span class="text-muted">({{ row.utilization }})</span></td>
+                <td>{{ row.placement }}</td>
+                <td><span class="badge text-bg-{{ row.status_class }}">{{ row.status }}</span></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="portal-empty-state">No scheduled sections for this semester.</div>
+    {% endif %}
+  </div>
+</div>

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 import pytest
@@ -15,13 +15,18 @@ from app.academics.models.course import Course
 from app.academics.models.curriculum import CurriStatus, Curriculum
 from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.department import Department
-from app.people.models.faculty import Faculty
+from app.people.models.faculty import Faculty, FacultyWorkloadSnapshot
+from app.people.models.role_assignment import RoleAssignment
 from app.people.models.staffs import Staff
 from app.people.models.student import Student
 from app.registry.models.registration import Registration
+from app.shared.auth.perms import UserRole
+from app.spaces.models.core import Room, Space
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester, SemesterStatus
+from app.timetable.models.session import SecSession
+from app.timetable.models.schedule import Schedule
 
 pytestmark = pytest.mark.django_db
 
@@ -128,6 +133,18 @@ def _registered_student(
     return student
 
 
+def _placed_session(section: Section, *, room_code: str = "101") -> SecSession:
+    """Attach one complete room/time placement to a section."""
+    space = Space.objects.create(code=f"SP{section.id}", full_name="Schedule Space")
+    room = Room.objects.create(code=room_code, space=space)
+    schedule = Schedule.objects.create(
+        weekday=1,
+        start_time="09:00",
+        end_time="10:15",
+    )
+    return SecSession.objects.create(section=section, room=room, schedule=schedule)
+
+
 def test_dean_dashboard_shows_program_stats_workloads_and_chair_selector(client):
     """Dean dashboard should show college enrollment and chair drilldown controls."""
     semester = _semester()
@@ -152,6 +169,17 @@ def test_dean_dashboard_shows_program_stats_workloads_and_chair_selector(client)
         course_number="701",
         semester=semester,
         faculty=chair_faculty,
+    )
+    section.current_registrations = 2
+    section.max_seats = 20
+    section.save(update_fields=["current_registrations", "max_seats"])
+    placed_session = _placed_session(section)
+    FacultyWorkloadSnapshot.objects.create(
+        faculty=chair_faculty,
+        semester=semester,
+        credit_hours_assigned=12,
+        credit_hours_delivered=15,
+        overload_flag=True,
     )
     _registered_student("dash_female", curriculum, section, gender="f", semester=semester)
     _registered_student("dash_male", curriculum, section, gender="m", semester=semester)
@@ -244,6 +272,10 @@ def test_dean_dashboard_shows_program_stats_workloads_and_chair_selector(client)
     assert "2 students" in content
     assert "Faculty workload by program" in content
     assert "Schedule placement" in content
+    assert "1 overload" in content
+    assert str(placed_session.room) in content
+    assert "09:00-10:15" in content
+    assert "2/20" in content
     assert chair_faculty.staff_profile.long_name in content
 
     sem2_response = client.get(
@@ -255,6 +287,388 @@ def test_dean_dashboard_shows_program_stats_workloads_and_chair_selector(client)
     assert sem2_response.status_code == 200
     assert f'value="{second_semester.id}" selected' in sem2_content
     assert "90-91" not in sem2_content
+
+
+def test_dean_dashboard_schedule_coverage_lists_all_sections_and_tba(client):
+    """Schedule coverage should include every scoped section, not only ten rows."""
+    semester = _semester()
+    college = College.objects.create(code="DSCH", long_name="Schedule College")
+    department = Department.objects.create(code="DSC", college=college)
+    dean_user, _dean_faculty = _faculty_user("dean_schedule", "Dean", college=college)
+    _faculty_account, faculty = _faculty_user(
+        "schedule_faculty",
+        "Faculty",
+        college=college,
+        department=department,
+    )
+    curriculum = Curriculum.objects.create(
+        college=college,
+        short_name="SCHED-CUR",
+        long_name="Schedule Curriculum",
+        status_id="approved",
+        is_active=True,
+    )
+    course = Course.objects.create(
+        department=department,
+        number="730",
+        title="Schedule Coverage",
+    )
+    curriculum_course = CurriCrs.objects.create(
+        curriculum=curriculum,
+        course=course,
+        level_number=1,
+    )
+    first_section = Section.objects.create(
+        curriculum_course=curriculum_course,
+        semester=semester,
+        faculty=faculty,
+        number=1,
+    )
+    placed_session = _placed_session(first_section, room_code="210")
+    for number in range(2, 13):
+        Section.objects.create(
+            curriculum_course=curriculum_course,
+            semester=semester,
+            faculty=faculty,
+            number=number,
+        )
+
+    client.force_login(dean_user)
+    response = client.get(reverse("staff_role_dashboard", args=["dean"]))
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert "Schedule placement" in content
+    assert str(placed_session.room) in content
+    assert "Sec 12" in content
+    assert ">12<" in content
+    assert ">1<" in content
+    assert ">11<" in content
+    assert "TBA" in content
+
+
+def test_dean_dashboard_prefers_role_assignment_college(client):
+    """Dean dashboard should use active dean role scope before profile fallback."""
+    semester = _semester()
+    profile_college = College.objects.create(code="DPROF", long_name="Profile College")
+    assigned_college = College.objects.create(
+        code="DROLE",
+        long_name="Assigned Dean College",
+    )
+    profile_department = Department.objects.create(code="DPF", college=profile_college)
+    assigned_department = Department.objects.create(
+        code="DRA",
+        college=assigned_college,
+    )
+    dean_user, _dean_faculty = _faculty_user(
+        "dean_role_scope",
+        "Dean",
+        college=profile_college,
+    )
+    _chair_user, chair_faculty = _faculty_user(
+        "dean_role_chair",
+        "Chair",
+        college=assigned_college,
+        department=assigned_department,
+    )
+    RoleAssignment.objects.create(
+        user=dean_user,
+        group=UserRole.DEAN.value.group,
+        college=assigned_college,
+        start_date=date.today(),
+    )
+    visible_curriculum, visible_section = _curriculum_with_section(
+        college=assigned_college,
+        department=assigned_department,
+        short_name="DEAN-ROLE",
+        course_number="711",
+        semester=semester,
+        faculty=chair_faculty,
+    )
+    hidden_curriculum, hidden_section = _curriculum_with_section(
+        college=profile_college,
+        department=profile_department,
+        short_name="DEAN-PROFILE",
+        course_number="712",
+        semester=semester,
+        faculty=chair_faculty,
+    )
+    _registered_student(
+        "dr_visible",
+        visible_curriculum,
+        visible_section,
+        gender="f",
+        semester=semester,
+    )
+    _registered_student(
+        "dr_hidden",
+        hidden_curriculum,
+        hidden_section,
+        gender="m",
+        semester=semester,
+    )
+
+    client.force_login(dean_user)
+    response = client.get(reverse("staff_role_dashboard", args=["dean"]))
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert "Assigned Dean College" in content
+    assert "DEAN-ROLE" in content
+    assert "DEAN-PROFILE" not in content
+
+
+def test_vpaa_dashboard_prompts_for_dean_before_chart(client):
+    """VPAA dashboard should not show dean data until one dean role is selected."""
+    _semester()
+    college = College.objects.create(code="VPSEL", long_name="VPAA Select College")
+    dean_user, _dean_faculty = _faculty_user("vpaa_select_dean", "Dean", college=college)
+    RoleAssignment.objects.create(
+        user=dean_user,
+        group=UserRole.DEAN.value.group,
+        college=college,
+        start_date=date.today(),
+    )
+    vpaa_user = User.objects.create_user("vpaa_prompt", password="PassW0rd!")
+    _group_user(vpaa_user, "VPAA")
+
+    client.force_login(vpaa_user)
+    response = client.get(reverse("staff_role_dashboard", args=["vpaa"]))
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert "Dean overview" in content
+    assert "Select dean/college" in content
+    assert "VPSEL -" in content
+    assert "Vpaa Select Dean" in content
+    assert "academic-program-chart" not in content
+    assert 'id="academic-chair"' not in content
+
+
+def test_vpaa_dashboard_selected_dean_role_scopes_to_college(client):
+    """VPAA selected dean overview should show one dean college only."""
+    semester = _semester()
+    visible_college = College.objects.create(code="VPVIS", long_name="Visible College")
+    hidden_college = College.objects.create(code="VPHID", long_name="Hidden College")
+    visible_department = Department.objects.create(code="VPV", college=visible_college)
+    hidden_department = Department.objects.create(code="VPH", college=hidden_college)
+    visible_dean, _visible_dean_faculty = _faculty_user(
+        "vpaa_visible_dean",
+        "Dean",
+        college=visible_college,
+    )
+    hidden_dean, _hidden_dean_faculty = _faculty_user(
+        "vpaa_hidden_dean",
+        "Dean",
+        college=hidden_college,
+    )
+    visible_role = RoleAssignment.objects.create(
+        user=visible_dean,
+        group=UserRole.DEAN.value.group,
+        college=visible_college,
+        start_date=date.today(),
+    )
+    RoleAssignment.objects.create(
+        user=hidden_dean,
+        group=UserRole.DEAN.value.group,
+        college=hidden_college,
+        start_date=date.today(),
+    )
+    _hidden_faculty_user, hidden_faculty = _faculty_user(
+        "vpaa_hidden_faculty",
+        "Faculty",
+        college=hidden_college,
+        department=hidden_department,
+    )
+    _visible_faculty_user, visible_faculty = _faculty_user(
+        "vpaa_chart_faculty",
+        "Faculty",
+        college=visible_college,
+        department=visible_department,
+    )
+    visible_curriculum, visible_section = _curriculum_with_section(
+        college=visible_college,
+        department=visible_department,
+        short_name="VPAA-VISIBLE",
+        course_number="721",
+        semester=semester,
+        faculty=visible_faculty,
+    )
+    hidden_curriculum, hidden_section = _curriculum_with_section(
+        college=hidden_college,
+        department=hidden_department,
+        short_name="VPAA-HIDDEN",
+        course_number="722",
+        semester=semester,
+        faculty=hidden_faculty,
+    )
+    _registered_student(
+        "vpaa_visible",
+        visible_curriculum,
+        visible_section,
+        gender="f",
+        semester=semester,
+    )
+    _registered_student(
+        "vpaa_hidden",
+        hidden_curriculum,
+        hidden_section,
+        gender="m",
+        semester=semester,
+    )
+    vpaa_user = User.objects.create_user("vpaa_selected", password="PassW0rd!")
+    _group_user(vpaa_user, "VPAA")
+
+    client.force_login(vpaa_user)
+    response = client.get(
+        reverse("staff_role_dashboard", args=["vpaa"]),
+        {"dean_role_id": str(visible_role.id), "semester": str(semester.id)},
+    )
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert "Visible College" in content
+    assert "VPAA-VISIBLE" in content
+    assert "VPAA-HIDDEN" not in content
+    assert "Faculty workload by program" in content
+    assert "Schedule placement" in content
+    assert "Sections" in content
+    assert "TBA" in content
+    assert 'id="academic-chair"' not in content
+
+
+def test_vpaa_dashboard_dean_selector_uses_faculty_college_fallback(client):
+    """VPAA should see dean group users even before scoped roles are backfilled."""
+    semester = _semester()
+    college = College.objects.create(code="VPFB", long_name="VPAA Fallback College")
+    department = Department.objects.create(code="VPF", college=college)
+    _dean_user, dean_faculty = _faculty_user(
+        "vpaa_fallback_dean",
+        "Dean",
+        college=college,
+    )
+    _faculty_account, faculty = _faculty_user(
+        "vpaa_fallback_faculty",
+        "Faculty",
+        college=college,
+        department=department,
+    )
+    curriculum, section = _curriculum_with_section(
+        college=college,
+        department=department,
+        short_name="VPAA-FALLBACK",
+        course_number="723",
+        semester=semester,
+        faculty=faculty,
+    )
+    _registered_student(
+        "vpaa_fb",
+        curriculum,
+        section,
+        gender="f",
+        semester=semester,
+    )
+    vpaa_user = User.objects.create_user("vpaa_fallback", password="PassW0rd!")
+    _group_user(vpaa_user, "VPAA")
+
+    client.force_login(vpaa_user)
+    response = client.get(
+        reverse("staff_role_dashboard", args=["vpaa"]),
+        {"dean_role_id": f"faculty:{dean_faculty.id}", "semester": str(semester.id)},
+    )
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert f'value="faculty:{dean_faculty.id}" selected' in content
+    assert "VPAA Fallback College" in content
+    assert "VPAA-FALLBACK" in content
+    assert 'id="academic-chair"' not in content
+
+
+def test_vpaa_dean_selector_exposes_one_active_dean_per_college(client):
+    """VPAA dean selector should collapse duplicate active dean roles by college."""
+    _semester()
+    college = College.objects.create(code="VPDUP", long_name="VPAA Duplicate College")
+    older_dean, _older_faculty = _faculty_user(
+        "vpaa_older_dean",
+        "Dean",
+        college=college,
+    )
+    newer_dean, _newer_faculty = _faculty_user(
+        "vpaa_newer_dean",
+        "Dean",
+        college=college,
+    )
+    RoleAssignment.objects.create(
+        user=older_dean,
+        group=UserRole.DEAN.value.group,
+        college=college,
+        start_date=date.today() - timedelta(days=7),
+    )
+    newer_role = RoleAssignment.objects.create(
+        user=newer_dean,
+        group=UserRole.DEAN.value.group,
+        college=college,
+        start_date=date.today(),
+    )
+    vpaa_user = User.objects.create_user("vpaa_dup", password="PassW0rd!")
+    _group_user(vpaa_user, "VPAA")
+
+    client.force_login(vpaa_user)
+    response = client.get(reverse("staff_role_dashboard", args=["vpaa"]))
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert content.count("VPDUP -") == 1
+    assert f'value="{newer_role.id}"' in content
+    assert "Vpaa Newer Dean" in content
+    assert "Vpaa Older Dean" not in content
+
+
+def test_dean_dashboard_chair_selector_uses_department_scope(client):
+    """Dean chair selector should include chairs scoped by department college."""
+    semester = _semester()
+    dean_college = College.objects.create(code="DCHF", long_name="Dean Chair Fallback")
+    other_college = College.objects.create(code="OCHF", long_name="Other College")
+    department = Department.objects.create(code="DCF", college=dean_college)
+    dean_user, _dean_faculty = _faculty_user(
+        "dean_chair_fallback",
+        "Dean",
+        college=dean_college,
+    )
+    _chair_user, chair_faculty = _faculty_user(
+        "chair_department_scope",
+        "Chair",
+        college=other_college,
+        department=department,
+    )
+    curriculum, section = _curriculum_with_section(
+        college=dean_college,
+        department=department,
+        short_name="CHAIR-DEPT",
+        course_number="724",
+        semester=semester,
+        faculty=chair_faculty,
+    )
+    _registered_student(
+        "chair_dept",
+        curriculum,
+        section,
+        gender="m",
+        semester=semester,
+    )
+
+    client.force_login(dean_user)
+    response = client.get(
+        reverse("staff_role_dashboard", args=["dean"]),
+        {"chair_id": str(chair_faculty.id), "semester": str(semester.id)},
+    )
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert f'value="{chair_faculty.id}" selected' in content
+    assert chair_faculty.staff_profile.long_name in content
+    assert "CHAIR-DEPT" in content
 
 
 def test_chair_dashboard_scopes_program_stats_to_chair_department(client):
@@ -357,6 +771,7 @@ def test_dean_curricula_orders_official_records_before_secondary_group(client):
 
 def test_dean_curriculum_detail_groups_courses_and_shows_graph_action(
     client,
+    monkeypatch,
     settings,
     tmp_path,
 ):
@@ -395,16 +810,34 @@ def test_dean_curriculum_detail_groups_courses_and_shows_graph_action(
     assert "Level 1 (Year 1 Semester 1)" in content
     assert "Level 2 (Year 1 Semester 2)" in content
     assert "Export prerequisite graph from admin" not in content
+    assert "Generate prerequisite graph" in content
     assert "No exported prerequisite graph is available." in content
 
-    graph_dir = Path(settings.MEDIA_ROOT) / "Prereq"
-    graph_dir.mkdir(parents=True)
     slug = slugify(curriculum.short_name, allow_unicode=False)
-    (graph_dir / f"{slug}.json").write_text("{}", encoding="utf-8")
-    graph_response = client.get(reverse("dean_curriculum_detail", args=[curriculum.id]))
+
+    def fake_export_graph(target: Curriculum) -> None:
+        """Write the JSON marker used by the graph viewer."""
+        graph_dir = Path(settings.MEDIA_ROOT) / "Prereq"
+        graph_dir.mkdir(parents=True)
+        graph_slug = slugify(target.short_name, allow_unicode=False)
+        (graph_dir / f"{graph_slug}.json").write_text("{}", encoding="utf-8")
+
+    monkeypatch.setattr(
+        "app.website.services.dean_portal.export_prereq_graph",
+        fake_export_graph,
+    )
+    graph_response = client.post(
+        reverse("dean_curriculum_export_prereq_graph", args=[curriculum.id]),
+        follow=True,
+    )
     graph_content = graph_response.content.decode()
     graph_url = reverse("academics_prereq_graph", args=[slug])
 
     assert graph_response.status_code == 200
+    assert "Regenerate prerequisite graph" in graph_content
     assert f'src="{graph_url}"' in graph_content
-    assert client.get(graph_url).status_code == 200
+    assert f'href="{graph_url}"' in graph_content
+    assert "Open graph" in graph_content
+    graph_view = client.get(graph_url)
+    assert graph_view.status_code == 200
+    assert graph_view.headers["X-Frame-Options"] == "SAMEORIGIN"

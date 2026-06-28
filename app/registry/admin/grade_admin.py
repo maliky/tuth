@@ -42,6 +42,7 @@ GRADE_UNRESTRICTED_ROLE_LABELS = frozenset(
     {
         UserRole.REGISTRAR.value.label,
         UserRole.REGISTRAR_OFFICER.value.label,
+        UserRole.VPAA.value.label,
     }
 )
 

@@ -1,0 +1,136 @@
+{% extends "website/staff/base.html" %}
+{% load static %}
+
+{% block staff_head_extra %}
+  <link rel="stylesheet" href="{% static 'admin/css/vendor/select2/select2.min.css' %}" />
+{% endblock %}
+
+{% block staff_header_actions %}
+  <a class="btn portal-btn-outline btn-sm" href="{{ dashboard_url }}">
+    Back to dashboard
+  </a>
+{% endblock %}
+
+{% block staff_content %}
+  <section class="portal-filter-card mb-4">
+    <div class="portal-filter-card__body">
+      <div class="portal-filter-card__intro">
+        <p class="eyebrow text-uppercase mb-1">Academic oversight</p>
+        <h2>Grade transcripts</h2>
+        <p class="mb-0 text-muted">
+          Scope: {{ scope_label }}. Students appear when they have grade rows in
+          courses visible to this role.
+        </p>
+      </div>
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-lg-6">
+          <label class="form-label">Student</label>
+          <select
+            class="form-select"
+            name="student_id"
+            data-student-autocomplete
+            data-autocomplete-url="{{ student_autocomplete_url }}"
+          >
+            {% if selected_student_id %}
+              <option value="{{ selected_student_id }}" selected>
+                {{ selected_student_label }}
+              </option>
+            {% endif %}
+          </select>
+        </div>
+        <div class="col-lg-3">
+          <label class="form-label">Semester</label>
+          <select class="form-select" name="semester">
+            {% for option in semester_options %}
+              <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>
+                {{ option.label }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-lg-3">
+          <button class="btn portal-btn-accent w-100" type="submit">Filter</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <div class="portal-panel-card">
+    <div class="portal-panel-card__stripe"></div>
+    <div class="portal-panel-card__body p-0">
+      <div class="course-table table-responsive mb-0">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Student ID</th>
+              <th>Latest scoped semester</th>
+              <th class="text-end">Grades</th>
+              <th class="text-end">Sections</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in transcript_rows %}
+              <tr>
+                <td>{{ row.student_label }}</td>
+                <td>{{ row.student_id }}</td>
+                <td>{{ row.latest_semester_label|default:"-" }}</td>
+                <td class="text-end">{{ row.grade_count }}</td>
+                <td class="text-end">{{ row.section_count }}</td>
+                <td class="text-end">
+                  <a class="btn portal-btn-accent btn-sm" href="{{ row.detail_url }}">
+                    View transcript
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                  No transcript students match the selected filters.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {% with page=student_page %}
+    {% include "website/staff/partials/pagination.html" %}
+  {% endwith %}
+{% endblock %}
+
+{% block staff_body_extra %}
+  <script src="{% static 'admin/js/vendor/jquery/jquery.min.js' %}"></script>
+  <script src="{% static 'admin/js/vendor/select2/select2.full.min.js' %}"></script>
+  <script>
+    (function () {
+      const select = document.querySelector("[data-student-autocomplete]");
+      if (!select || !window.jQuery) {
+        return;
+      }
+      const autocompleteUrl = new URL(
+        select.dataset.autocompleteUrl,
+        `${window.location.protocol}//${window.location.host}`,
+      ).toString();
+      window.jQuery(select).select2({
+        allowClear: true,
+        placeholder: "Search by name or ID",
+        minimumInputLength: 2,
+        ajax: {
+          url: autocompleteUrl,
+          dataType: "json",
+          delay: 250,
+          data: function (params) {
+            return { q: params.term };
+          },
+          processResults: function (data) {
+            return data;
+          },
+        },
+      });
+    })();
+  </script>
+{% endblock %}

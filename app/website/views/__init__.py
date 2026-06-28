@@ -5,6 +5,7 @@ from .auth import PortalLoginView, PortalLogoutView, portal_redirect
 from .dean import (
     dean_curricula,
     dean_curriculum_detail,
+    dean_curriculum_export_prereq_graph,
     dean_curriculum_request_activation,
 )
 from .enrollment import (
@@ -32,6 +33,9 @@ from .faculty import (
     faculty_grade_sections,
 )
 from .grade_roster_oversight import (
+    staff_grade_transcript,
+    staff_grade_transcript_student_autocomplete,
+    staff_grade_transcripts,
     staff_grade_roster_detail,
     staff_grade_roster_faculty_autocomplete,
     staff_grade_roster_student_autocomplete,
@@ -82,6 +86,7 @@ __all__ = [
     "curriculum_autocomplete",
     "dean_curricula",
     "dean_curriculum_detail",
+    "dean_curriculum_export_prereq_graph",
     "dean_curriculum_request_activation",
     "portal_redirect",
     "reg_class_roster_detail",
@@ -98,6 +103,9 @@ __all__ = [
     "reg_registration_semester_editor",
     "reg_std_autocomplete",
     "staff_dashboard",
+    "staff_grade_transcript",
+    "staff_grade_transcript_student_autocomplete",
+    "staff_grade_transcripts",
     "staff_grade_roster_detail",
     "staff_grade_roster_faculty_autocomplete",
     "staff_grade_roster_student_autocomplete",

@@ -8,13 +8,14 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
-from django.http import HttpRequest, HttpResponse
+from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
 from app.website.services.dean_portal import (
     build_dean_curricula_context,
     build_dean_curriculum_detail_context,
+    export_dean_prereq_graph,
     request_curriculum_activation,
 )
 from app.website.services.staff_portal import user_can_access_role
@@ -64,4 +65,26 @@ def dean_curriculum_request_activation(
             messages.success(request, "Curriculum activation request sent to VPAA.")
         else:
             messages.info(request, "A VPAA activation request is already open.")
+    return redirect("dean_curriculum_detail", curriculum_id=curriculum_id)
+
+
+@login_required
+@require_POST
+def dean_curriculum_export_prereq_graph(
+    request: HttpRequest,
+    curriculum_id: int,
+) -> HttpResponse:
+    """Generate prerequisite graph output for a dean-visible curriculum."""
+    user = _require_dean_access(request)
+    try:
+        curriculum = export_dean_prereq_graph(user=user, curriculum_id=curriculum_id)
+    except Http404:
+        raise
+    except Exception as exc:
+        messages.warning(request, f"Prerequisite graph export failed: {exc}")
+    else:
+        messages.success(
+            request,
+            f"Prerequisite graph generated for {curriculum.short_name}.",
+        )
     return redirect("dean_curriculum_detail", curriculum_id=curriculum_id)

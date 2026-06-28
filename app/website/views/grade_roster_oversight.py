@@ -12,10 +12,13 @@ from django.shortcuts import render
 
 from app.website.services.grade_roster_oversight import (
     OVERSIGHT_ROLE_SLUGS,
+    build_grade_transcript_context,
+    build_grade_transcript_list_context,
     build_grade_roster_detail_context,
     build_grade_roster_list_context,
     oversight_faculty_results,
     oversight_student_results,
+    oversight_transcript_student_results,
 )
 from app.website.services.staff_portal import user_can_access_role
 
@@ -49,6 +52,26 @@ def staff_grade_roster_detail(
 
 
 @login_required
+def staff_grade_transcripts(request: HttpRequest, role: str) -> HttpResponse:
+    """Render scoped student transcript previews for academic oversight."""
+    _require_oversight_role(request, role)
+    context = build_grade_transcript_list_context(request, role)
+    return render(request, "website/staff/grade_transcript_oversight.html", context)
+
+
+@login_required
+def staff_grade_transcript(
+    request: HttpRequest,
+    role: str,
+    student_id: int,
+) -> HttpResponse:
+    """Render one transcript preview after scoped grade visibility is proven."""
+    _require_oversight_role(request, role)
+    context = build_grade_transcript_context(request, role, student_id)
+    return render(request, "website/staff/registrar_grade_transcript.html", context)
+
+
+@login_required
 def staff_grade_roster_student_autocomplete(
     request: HttpRequest,
     role: str,
@@ -58,6 +81,25 @@ def staff_grade_roster_student_autocomplete(
     user = cast(User, request.user)
     return JsonResponse(
         {"results": oversight_student_results(user, role, request.GET.get("q"))}
+    )
+
+
+@login_required
+def staff_grade_transcript_student_autocomplete(
+    request: HttpRequest,
+    role: str,
+) -> HttpResponse:
+    """Return student suggestions for scoped academic transcript filters."""
+    _require_oversight_role(request, role)
+    user = cast(User, request.user)
+    return JsonResponse(
+        {
+            "results": oversight_transcript_student_results(
+                user,
+                role,
+                request.GET.get("q"),
+            )
+        }
     )
 
 
@@ -75,6 +117,9 @@ def staff_grade_roster_faculty_autocomplete(
 
 
 __all__ = [
+    "staff_grade_transcript",
+    "staff_grade_transcript_student_autocomplete",
+    "staff_grade_transcripts",
     "staff_grade_roster_detail",
     "staff_grade_roster_faculty_autocomplete",
     "staff_grade_roster_student_autocomplete",

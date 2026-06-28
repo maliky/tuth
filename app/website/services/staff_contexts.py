@@ -35,8 +35,10 @@ from app.timetable.models.session import SecSession
 from app.website.services.academic_dashboard import (
     build_chair_academic_dashboard,
     build_dean_academic_dashboard,
+    build_vpaa_academic_dashboard,
     chair_curriculum_scope,
 )
+from app.website.services.academic_dashboard_roles import dean_college_for_user
 from app.website.services.portal_types import (
     ActionT,
     MetricT,
@@ -83,6 +85,19 @@ ACADEMIC_OVERSIGHT_ADMIN_SHORTCUTS: tuple[AdminModelShortcutSpecT, ...] = (
     ("Registrations", Registration),
     ("Grades", Grade),
 )
+
+
+def _grade_transcript_action(role_slug: str, scope_label: str) -> ActionT | None:
+    """Return the scoped grade-transcript action for an academic role."""
+    transcripts_url = _maybe_reverse("staff_grade_transcripts", args=[role_slug])
+    if not transcripts_url:
+        return None
+    return {
+        "label": "Review grade transcripts",
+        "href": transcripts_url,
+        "description": f"Open transcript previews for students in the {scope_label} scope.",
+        "variant": "primary",
+    }
 
 
 def _registrar_pending_payment_metric() -> MetricT:
@@ -290,13 +305,18 @@ def _build_chair_context(request: HttpRequest) -> RoleContextT:
         },
     ]
 
+    actions: list[ActionT] = []
+    transcript_action = _grade_transcript_action("chair", "chair")
+    if transcript_action:
+        actions.append(transcript_action)
+
     return {
         "metrics": [
             {"label": "Active curricula", "value": curricula.count()},
             {"label": "Faculty snapshots", "value": len(workload_items)},
         ],
         "panels": panels,
-        "actions": [],
+        "actions": actions,
         "academic_dashboard": build_chair_academic_dashboard(
             request,
             faculty=faculty,
@@ -306,8 +326,7 @@ def _build_chair_context(request: HttpRequest) -> RoleContextT:
 
 def _build_dean_context(request: HttpRequest) -> RoleContextT:
     user = _as_user(request.user)
-    faculty_profile = _get_faculty_profile(user)
-    college = faculty_profile.college if faculty_profile else None
+    college = dean_college_for_user(user)
     approvals_qs = ApprovalQueue.objects.filter(target_role="dean").order_by(
         "-created_at"
     )
@@ -365,6 +384,9 @@ def _build_dean_context(request: HttpRequest) -> RoleContextT:
                 "variant": "primary",
             }
         )
+    transcript_action = _grade_transcript_action("dean", "college")
+    if transcript_action:
+        actions.append(transcript_action)
 
     context: RoleContextT = {
         "metrics": [
@@ -427,6 +449,9 @@ def _build_vpaa_context(request: HttpRequest) -> RoleContextT:
                 "variant": "primary",
             }
         )
+    transcript_action = _grade_transcript_action("vpaa", "university-wide")
+    if transcript_action:
+        actions.append(transcript_action)
 
     return {
         "metrics": [
@@ -443,6 +468,7 @@ def _build_vpaa_context(request: HttpRequest) -> RoleContextT:
             user,
             ACADEMIC_OVERSIGHT_ADMIN_SHORTCUTS,
         ),
+        "academic_dashboard": build_vpaa_academic_dashboard(request),
     }
 
 

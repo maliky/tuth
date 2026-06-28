@@ -2,7 +2,7 @@
 
 {% block staff_header_actions %}
   <a class="btn portal-btn-outline btn-sm" href="{{ dashboard_url }}">
-    Back to grades
+    {{ back_label|default:"Back to grades" }}
   </a>
 {% endblock %}
 
@@ -28,28 +28,30 @@
     </div>
   </section>
 
-  <section class="portal-panel-card mb-4">
-    <div class="portal-panel-card__body">
-      <div class="d-flex justify-content-between flex-wrap gap-3 align-items-center">
-        <div class="flex-grow-1">
-          <p class="text-uppercase small text-muted mb-1">Transcript export</p>
-          <h2 class="h5 mb-1">Download official record</h2>
-          <p class="text-muted mb-0">
-            Download the official transcript PDF directly.
-          </p>
-        </div>
-        <div class="d-flex flex-wrap gap-3 align-items-end">
-          <a
-            class="btn portal-btn-accent btn-sm"
-            href="{{ download_url }}"
-            data-transcript-pdf-download
-          >
-            Download official transcript
-          </a>
+  {% if download_url %}
+    <section class="portal-panel-card mb-4">
+      <div class="portal-panel-card__body">
+        <div class="d-flex justify-content-between flex-wrap gap-3 align-items-center">
+          <div class="flex-grow-1">
+            <p class="text-uppercase small text-muted mb-1">Transcript export</p>
+            <h2 class="h5 mb-1">Download official record</h2>
+            <p class="text-muted mb-0">
+              Download the official transcript PDF directly.
+            </p>
+          </div>
+          <div class="d-flex flex-wrap gap-3 align-items-end">
+            <a
+              class="btn portal-btn-accent btn-sm"
+              href="{{ download_url }}"
+              data-transcript-pdf-download
+            >
+              Download official transcript
+            </a>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
+  {% endif %}
 
   <section class="portal-panel-card">
     <div class="portal-accordion-card__header">

@@ -15,6 +15,7 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.text import slugify
 
+from app.academics.prereq_graph import export_prereq_graph
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.curriculum_course import CurriCrs
 from app.academics.models.college import College
@@ -184,6 +185,11 @@ def _prereq_graph_context(curriculum: Curriculum) -> dict[str, object]:
         "available": json_path.exists(),
         "view_url": view_url,
         "embed_url": view_url,
+        "export_label": (
+            "Regenerate prerequisite graph"
+            if json_path.exists()
+            else "Generate prerequisite graph"
+        ),
         "slug": slug,
     }
 
@@ -309,3 +315,14 @@ def request_curriculum_activation(
         },
     )
     return approval, True
+
+
+def export_dean_prereq_graph(
+    *,
+    user: User,
+    curriculum_id: int,
+) -> Curriculum:
+    """Generate prerequisite graph files for one dean-visible curriculum."""
+    curriculum = get_object_or_404(dean_curriculum_queryset(user), pk=curriculum_id)
+    export_prereq_graph(curriculum)
+    return curriculum

@@ -179,6 +179,34 @@ def test_grade_admin_registrar_officer_bypasses_faculty_scope(
 
 
 @pytest.mark.django_db
+def test_grade_admin_vpaa_bypasses_faculty_scope(
+    faculty,
+    faculty_factory,
+    sec_factory,
+    std_factory,
+) -> None:
+    """VPAA grade admin link should open institution-wide grade rows."""
+    own_grade = _make_grade(faculty, sec_factory, std_factory, "14")
+    other_grade = _make_grade(
+        faculty_factory("grade_admin_other_vpaa"),
+        sec_factory,
+        std_factory,
+        "15",
+    )
+    user = User.objects.create_user("grade_admin_vpaa", is_staff=True)
+    group = UserRole.VPAA.value.group
+    group.permissions.add(_grade_permission("view_grade"))
+    user.groups.add(group)
+    admin_obj = GradeAdmin(Grade, admin.site)
+
+    grade_ids = set(
+        admin_obj.get_queryset(_admin_request(user)).values_list("id", flat=True)
+    )
+
+    assert {own_grade.id, other_grade.id}.issubset(grade_ids)
+
+
+@pytest.mark.django_db
 def test_grade_student_autocomplete_faculty_sees_only_own_section_students(
     faculty,
     faculty_factory,

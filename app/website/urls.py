@@ -67,6 +67,11 @@ urlpatterns = [
         name="dean_curriculum_request_activation",
     ),
     path(
+        "staff/dean/curricula/<int:curriculum_id>/export-prereq-graph/",
+        views.dean_curriculum_export_prereq_graph,
+        name="dean_curriculum_export_prereq_graph",
+    ),
+    path(
         "staff/vpaa/approvals/",
         views.vpaa_approvals,
         name="vpaa_approvals",
@@ -110,6 +115,21 @@ urlpatterns = [
         "staff/<slug:role>/grade-rosters/<int:section_id>/",
         views.staff_grade_roster_detail,
         name="staff_grade_roster_detail",
+    ),
+    path(
+        "staff/<slug:role>/grade-transcripts/",
+        views.staff_grade_transcripts,
+        name="staff_grade_transcripts",
+    ),
+    path(
+        "staff/<slug:role>/grade-transcripts/students/autocomplete/",
+        views.staff_grade_transcript_student_autocomplete,
+        name="staff_grade_transcript_student_autocomplete",
+    ),
+    path(
+        "staff/<slug:role>/grade-transcripts/<int:student_id>/",
+        views.staff_grade_transcript,
+        name="staff_grade_transcript",
     ),
     path(
         "staff/finance/invoices/",

@@ -56,12 +56,31 @@ def test_faculty_dashboard_uses_sidebar_without_duplicate_action_panel(client):
 
 
 @pytest.mark.django_db
-def test_multi_workspace_user_keeps_workspace_switcher(client):
-    """Academic leaders with inherited workspaces still need quick switching."""
+def test_academic_leaders_do_not_get_unscoped_inherited_workspaces(client):
+    """Academic leaders should use scoped selectors, not generic inherited pages."""
     User = get_user_model()
-    user = User.objects.create_user("dean_multi_workspace", password="PassW0rd!")
+    user = User.objects.create_user("dean_no_inherited", password="PassW0rd!")
     dean_group, _ = Group.objects.get_or_create(name="Dean")
     user.groups.add(dean_group)
+
+    client.force_login(user)
+    response = client.get(reverse("staff_role_dashboard", args=["dean"]))
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert "portal-role-switcher" not in content
+    assert "Chair Curriculum Center" not in content
+    assert "Instruction Hub" not in content
+
+
+@pytest.mark.django_db
+def test_direct_multi_workspace_user_keeps_workspace_switcher(client):
+    """Direct memberships still show workspace switching."""
+    User = get_user_model()
+    user = User.objects.create_user("dean_direct_chair", password="PassW0rd!")
+    dean_group, _ = Group.objects.get_or_create(name="Dean")
+    chair_group, _ = Group.objects.get_or_create(name="Chair")
+    user.groups.add(dean_group, chair_group)
 
     client.force_login(user)
     response = client.get(reverse("staff_role_dashboard", args=["dean"]))
@@ -71,7 +90,7 @@ def test_multi_workspace_user_keeps_workspace_switcher(client):
     assert "portal-role-switcher" in content
     assert "Dean Oversight" in content
     assert "Chair Curriculum Center" in content
-    assert "Instruction Hub" in content
+    assert "Instruction Hub" not in content
 
 
 @pytest.mark.django_db

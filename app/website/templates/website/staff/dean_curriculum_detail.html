@@ -116,7 +116,16 @@
         <h2>Prerequisite graph</h2>
         <p class="portal-panel-card__subtitle">Existing exported graph for this curriculum.</p>
       </div>
+      <form class="mb-3" method="post" action="{% url 'dean_curriculum_export_prereq_graph' curriculum.id %}">
+        {% csrf_token %}
+        <button class="btn portal-btn-outline btn-sm" type="submit">{{ prereq_graph.export_label }}</button>
+      </form>
       {% if prereq_graph.available %}
+        <p class="mb-3">
+          <a class="btn portal-btn-outline btn-sm" href="{{ prereq_graph.view_url }}" target="_blank" rel="noopener">
+            Open graph
+          </a>
+        </p>
         <iframe
           class="prereq-graph-frame"
           src="{{ prereq_graph.embed_url }}"

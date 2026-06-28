@@ -7,14 +7,16 @@ from typing import TypeAlias, TypedDict, cast
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.db.models import Q, QuerySet
-from django.http import HttpRequest, QueryDict
+from django.http import Http404, HttpRequest, QueryDict
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 
 from app.people.models.faculty import Faculty
+from app.people.models.role_assignment import RoleAssignment
 from app.people.models.student import Student
 from app.registry.models.grade import Grade
 from app.registry.models.registration import Registration
+from app.shared.auth.perms import UserRole
 from app.shared.utils import parse_str
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
@@ -29,11 +31,17 @@ from app.website.services.staff_roles import (
     build_staff_role_switcher,
     build_staff_sidebar_links,
 )
+from app.website.services.transcript_document import (
+    build_transcript_document,
+    flatten_transcript_rows,
+)
 
 OVERSIGHT_ROLE_SLUGS = frozenset({"chair", "dean", "vpaa"})
 ROSTER_PAGE_SIZE = 25
 
 SectionQueryT: TypeAlias = QuerySet[Section]
+GradeQueryT: TypeAlias = QuerySet[Grade]
+RoleAssignmentQueryT: TypeAlias = QuerySet[RoleAssignment]
 
 
 class FilterOptionT(TypedDict):
@@ -75,6 +83,18 @@ class GradeRosterDetailRowT(TypedDict):
     grade_status: str
 
 
+class GradeTranscriptSummaryRowT(TypedDict):
+    """One student row in an academic transcript oversight index."""
+
+    student: Student
+    student_label: str
+    student_id: str
+    grade_count: int
+    section_count: int
+    latest_semester_label: str
+    detail_url: str
+
+
 OVERSIGHT_ADMIN_SHORTCUTS = (
     ("Students", Student),
     ("Registrations", Registration),
@@ -106,6 +126,58 @@ def _base_section_queryset() -> SectionQueryT:
     ).exclude(faculty__isnull=True)
 
 
+def _active_role_assignments(user: User, role_slug: str) -> RoleAssignmentQueryT:
+    """Return active academic role assignments that can scope oversight data."""
+    role_groups = {
+        "chair": UserRole.CHAIR.value.label,
+        "dean": UserRole.DEAN.value.label,
+    }
+    group_name = role_groups.get(role_slug)
+    if not group_name:
+        return RoleAssignment.objects.none()
+    return RoleAssignment.objects.filter(
+        user=user,
+        group__name=group_name,
+        end_date__isnull=True,
+    ).select_related("college", "department")
+
+
+def _assignment_section_filter(user: User, role_slug: str) -> Q | None:
+    """Return the section filter from scoped role assignments, if available."""
+    assignments = list(_active_role_assignments(user, role_slug))
+    department_ids = [row.department_id for row in assignments if row.department_id]
+    college_ids = [row.college_id for row in assignments if row.college_id]
+    scope_filter = Q()
+    has_scope = False
+    if department_ids:
+        scope_filter |= Q(
+            curriculum_course__course__department_id__in=department_ids,
+        )
+        has_scope = True
+    if college_ids:
+        scope_filter |= Q(
+            curriculum_course__course__department__college_id__in=college_ids,
+        )
+        has_scope = True
+    return scope_filter if has_scope else None
+
+
+def _assignment_scope_label(user: User, role_slug: str) -> str | None:
+    """Return a readable label for role-assignment based oversight scope."""
+    labels: list[str] = []
+    seen: set[str] = set()
+    for assignment in _active_role_assignments(user, role_slug):
+        target = assignment.department or assignment.college
+        if target is None:
+            continue
+        label = str(target)
+        if label in seen:
+            continue
+        labels.append(label)
+        seen.add(label)
+    return ", ".join(labels) if labels else None
+
+
 def _course_code(section: Section) -> str:
     """Return a familiar course code for list and detail pages."""
     course = section.curriculum_course.course
@@ -117,6 +189,12 @@ def scoped_grade_roster_sections(user: User, role_slug: str) -> SectionQueryT:
     sections = _base_section_queryset()
     if role_slug == "vpaa":
         return sections
+
+    # Prefer explicit role assignments so staff-only deans/chairs still get
+    # the scoped roster and autocomplete data attached to their assignment.
+    assignment_filter = _assignment_section_filter(user, role_slug)
+    if assignment_filter is not None:
+        return sections.filter(assignment_filter).distinct()
 
     faculty = get_faculty_profile(user)
     if faculty is None:
@@ -154,6 +232,27 @@ def _filtered_sections(user: User, role_slug: str, params: QueryDict) -> Section
     if semester_id:
         sections = sections.filter(semester_id=semester_id)
     return sections.distinct()
+
+
+def _filtered_transcript_grades(
+    user: User,
+    role_slug: str,
+    params: QueryDict,
+) -> GradeQueryT:
+    """Return grade rows whose course sections are visible to the role."""
+    selected_student_id = clean_int(params.get("student_id"))
+    semester_param = params.get("semester")
+    semester_id = None if semester_param == "all" else clean_int(semester_param)
+    scoped_section_ids = scoped_grade_roster_sections(user, role_slug).values_list(
+        "id",
+        flat=True,
+    )
+    grades = Grade.objects.filter(section_id__in=scoped_section_ids)
+    if selected_student_id:
+        grades = grades.filter(student_id=selected_student_id)
+    if semester_id:
+        grades = grades.filter(section__semester_id=semester_id)
+    return grades
 
 
 def _semester_options(semester_id: int | None) -> list[FilterOptionT]:
@@ -254,6 +353,9 @@ def _scope_label(user: User, role_slug: str) -> str:
     """Return a concise human-readable label for the current oversight scope."""
     if role_slug == "vpaa":
         return "Institution"
+    assignment_label = _assignment_scope_label(user, role_slug)
+    if assignment_label:
+        return assignment_label
     faculty = get_faculty_profile(user)
     if faculty is None:
         return "No academic assignment"
@@ -414,6 +516,149 @@ def build_grade_roster_detail_context(
     }
 
 
+def _transcript_latest_semester_labels(grades: GradeQueryT) -> dict[int, str]:
+    """Return the latest scoped semester label for each student in a grade set."""
+    labels: dict[int, str] = {}
+    ordered_grades = grades.select_related("section__semester__academic_year").order_by(
+        "student_id",
+        "-section__semester__start_date",
+        "-section__semester_id",
+        "-section_id",
+    )
+    for grade in ordered_grades:
+        if grade.student_id in labels:
+            continue
+        semester = grade.section.semester
+        labels[grade.student_id] = (
+            f"{semester.academic_year.code} · Semester {semester.number}"
+        )
+    return labels
+
+
+def build_grade_transcript_list_context(
+    request: HttpRequest,
+    role_slug: str,
+) -> PortalContextT:
+    """Build the student transcript index for academic oversight roles."""
+    user = _as_user(request.user)
+    semester_param = request.GET.get("semester")
+    semester_id = None if semester_param == "all" else clean_int(semester_param)
+    selected_student_id = clean_int(request.GET.get("student_id"))
+    scoped_grades = _filtered_transcript_grades(user, role_slug, request.GET)
+    student_ids = scoped_grades.values_list("student_id", flat=True).distinct()
+    ordered_students = (
+        Student.objects.select_related("user")
+        .filter(id__in=student_ids)
+        .order_by("long_name", "student_id", "id")
+    )
+    paginator = Paginator(ordered_students, ROSTER_PAGE_SIZE)
+    student_page = paginator.get_page(request.GET.get("page"))
+    students = list(cast(list[Student], student_page.object_list))
+    page_student_ids = [student.id for student in students]
+    page_grades = scoped_grades.filter(student_id__in=page_student_ids)
+    grade_stats: dict[int, dict[str, int]] = {}
+    student_section_ids: dict[int, set[int]] = {}
+    for grade in page_grades.only("student_id", "section_id"):
+        stats = grade_stats.setdefault(
+            grade.student_id,
+            {"grade_count": 0, "section_count": 0},
+        )
+        stats["grade_count"] += 1
+        student_section_ids.setdefault(grade.student_id, set()).add(grade.section_id)
+    for student_id, section_ids in student_section_ids.items():
+        grade_stats[student_id]["section_count"] = len(section_ids)
+    latest_semester_labels = _transcript_latest_semester_labels(page_grades)
+    rows: list[GradeTranscriptSummaryRowT] = []
+    for student in students:
+        stats = grade_stats.get(student.id, {"grade_count": 0, "section_count": 0})
+        rows.append(
+            {
+                "student": student,
+                "student_label": _student_label(student),
+                "student_id": student.student_id or str(student.id),
+                "grade_count": stats["grade_count"],
+                "section_count": stats["section_count"],
+                "latest_semester_label": latest_semester_labels.get(student.id, ""),
+                "detail_url": reverse(
+                    "staff_grade_transcript",
+                    args=[role_slug, student.id],
+                ),
+            }
+        )
+
+    role_title = _role_title(role_slug)
+    pagination_query, pagination_hidden_fields = _pagination_hidden_fields(request.GET)
+    return {
+        "page_title": f"{role_title} grade transcripts",
+        "page_summary": "Transcript previews for students with grades in your course scope.",
+        "eyebrow": role_slug.replace("_", " ").title(),
+        "sidebar_links": build_staff_sidebar_links(role_slug, "grade_transcripts"),
+        "role_switcher": build_staff_role_switcher(user, role_slug),
+        "breadcrumbs": _transcript_breadcrumbs(role_slug, ""),
+        "dashboard_url": reverse("staff_role_dashboard", args=[role_slug]),
+        "role_slug": role_slug,
+        "scope_label": _scope_label(user, role_slug),
+        "student_autocomplete_url": reverse(
+            "staff_grade_transcript_student_autocomplete",
+            args=[role_slug],
+        ),
+        "semester_options": _semester_options(semester_id),
+        "selected_student_id": selected_student_id,
+        "selected_student_label": _student_filter_label(selected_student_id),
+        "student_page": student_page,
+        "transcript_rows": rows,
+        "pagination_query": pagination_query,
+        "pagination_hidden_fields": pagination_hidden_fields,
+        "pagination_action": request.path,
+    }
+
+
+def _require_student_in_transcript_scope(
+    user: User,
+    role_slug: str,
+    student_id: int,
+) -> Student:
+    """Return a student only when a scoped course grade makes them visible."""
+    student = get_object_or_404(Student.objects.select_related("user"), pk=student_id)
+    scoped_section_ids = scoped_grade_roster_sections(user, role_slug).values_list(
+        "id",
+        flat=True,
+    )
+    # Academic transcript visibility is granted by scoped course-grade evidence.
+    if not Grade.objects.filter(
+        student_id=student.id,
+        section_id__in=scoped_section_ids,
+    ).exists():
+        raise Http404("No transcript grades are visible in this role scope.")
+    return student
+
+
+def build_grade_transcript_context(
+    request: HttpRequest,
+    role_slug: str,
+    student_id: int,
+) -> PortalContextT:
+    """Build one scoped academic transcript preview."""
+    user = _as_user(request.user)
+    student = _require_student_in_transcript_scope(user, role_slug, student_id)
+    transcript = build_transcript_document(student.id)
+    return {
+        "page_title": "Grade transcript",
+        "page_summary": "Academic oversight transcript preview.",
+        "eyebrow": role_slug.replace("_", " ").title(),
+        "std_label": transcript["student_name"],
+        "curriculum_label": transcript["major_program"],
+        "generated_at": transcript["printed_date"],
+        "transcript": transcript,
+        "transcript_rows": flatten_transcript_rows(transcript),
+        "sidebar_links": build_staff_sidebar_links(role_slug, "grade_transcripts"),
+        "role_switcher": build_staff_role_switcher(user, role_slug),
+        "breadcrumbs": _transcript_breadcrumbs(role_slug, transcript["student_name"]),
+        "dashboard_url": reverse("staff_grade_transcripts", args=[role_slug]),
+        "back_label": "Back to transcripts",
+    }
+
+
 def _oversight_breadcrumbs(role_slug: str, label: str) -> list[BreadcrumbT]:
     """Return breadcrumbs rooted in the active oversight workspace."""
     crumbs: list[BreadcrumbT] = [
@@ -424,6 +669,25 @@ def _oversight_breadcrumbs(role_slug: str, label: str) -> list[BreadcrumbT]:
         {
             "label": "Grade rosters",
             "href": reverse("staff_grade_rosters", args=[role_slug]),
+        },
+    ]
+    if label:
+        crumbs.append({"label": label, "href": ""})
+    else:
+        crumbs[-1]["href"] = ""
+    return crumbs
+
+
+def _transcript_breadcrumbs(role_slug: str, label: str) -> list[BreadcrumbT]:
+    """Return breadcrumbs rooted in the scoped transcript workspace."""
+    crumbs: list[BreadcrumbT] = [
+        {
+            "label": _role_title(role_slug),
+            "href": reverse("staff_role_dashboard", args=[role_slug]),
+        },
+        {
+            "label": "Grade transcripts",
+            "href": reverse("staff_grade_transcripts", args=[role_slug]),
         },
     ]
     if label:
@@ -449,6 +713,39 @@ def oversight_student_results(
     student_qs = (
         Student.objects.select_related("user")
         .filter(student_registrations__section_id__in=section_ids)
+        .filter(
+            Q(student_id__icontains=clean_query)
+            | Q(long_name__icontains=clean_query)
+            | Q(user__first_name__icontains=clean_query)
+            | Q(user__last_name__icontains=clean_query)
+            | Q(user__username__icontains=clean_query)
+        )
+        .distinct()
+        .order_by("long_name", "student_id")[:15]
+    )
+    return [
+        {"id": student.id, "text": f"{student.student_id} - {_student_label(student)}"}
+        for student in student_qs
+    ]
+
+
+def oversight_transcript_student_results(
+    user: User,
+    role_slug: str,
+    query: str | None,
+) -> list[AutocompleteResultT]:
+    """Return transcript student suggestions limited by scoped grade rows."""
+    clean_query = parse_str(query)
+    if not clean_query:
+        return []
+    scoped_grade_students = _filtered_transcript_grades(
+        user,
+        role_slug,
+        QueryDict(mutable=True),
+    ).values_list("student_id", flat=True)
+    student_qs = (
+        Student.objects.select_related("user")
+        .filter(id__in=scoped_grade_students)
         .filter(
             Q(student_id__icontains=clean_query)
             | Q(long_name__icontains=clean_query)
@@ -506,9 +803,12 @@ def oversight_faculty_results(
 
 __all__ = [
     "OVERSIGHT_ROLE_SLUGS",
+    "build_grade_transcript_context",
+    "build_grade_transcript_list_context",
     "build_grade_roster_detail_context",
     "build_grade_roster_list_context",
     "oversight_faculty_results",
     "oversight_student_results",
+    "oversight_transcript_student_results",
     "scoped_grade_roster_sections",
 ]

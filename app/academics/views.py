@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from app.shared.auth.perms import UserRole
 
@@ -31,6 +32,7 @@ def _can_view_prereq_graph(request: HttpRequest) -> bool:
 
 
 @login_required
+@xframe_options_sameorigin
 def prereq_graph_view(request: HttpRequest, slug: str) -> HttpResponse:
     """Render the prerequisite graph viewer for a curriculum slug."""
     if not _can_view_prereq_graph(request):
