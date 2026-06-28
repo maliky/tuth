@@ -52,7 +52,7 @@ def _profile_sidebar_context(user: User) -> dict[str, object]:
             "role_switcher": [],
             "sidebar_nav_label": "Student services",
             "sidebar_footer_title": "Advising",
-            "sidebar_footer_text": "advising@tusis.edu",
+            "sidebar_footer_text": "advising@wvstu.online",
         }
 
     role_slug = resolve_staff_role(user)
@@ -61,7 +61,7 @@ def _profile_sidebar_context(user: User) -> dict[str, object]:
         "role_switcher": build_staff_role_switcher(user, role_slug),
         "sidebar_nav_label": "Tasks",
         "sidebar_footer_title": "Support",
-        "sidebar_footer_text": "admin@tubmanu.edu.lr",
+        "sidebar_footer_text": "admin@wvstu.online",
     }
 
 
