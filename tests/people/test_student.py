@@ -79,6 +79,31 @@ def test_allowed_crss(student: Student, semester, curriculum_course_factory):
 
 
 @pytest.mark.django_db
+def test_allowed_crss_counts_d_grade_as_passing(
+    student: Student,
+    semester,
+    curriculum_course_factory,
+):
+    """A D grade should satisfy prerequisite checks."""
+    curriculum = student.primary_curriculum
+    prerequisite = curriculum_course_factory("109", curriculum.short_name)
+    target = curriculum_course_factory("110", curriculum.short_name)
+    Prerequisite.objects.create(
+        course=target.course,
+        prerequisite_course=prerequisite.course,
+        curriculum=curriculum,
+    )
+    section = Section.objects.create(
+        curriculum_course=prerequisite,
+        semester=semester,
+        number=1,
+    )
+    _graded_section(student, section, "d")
+
+    assert target.course in list(student.allowed_crss())
+
+
+@pytest.mark.django_db
 def test_std_save_assigns_gp(curriculum, std_factory):
     """Saving a Student shoul add the user to the student group."""
     stud = std_factory("newstud", curriculum.short_name)

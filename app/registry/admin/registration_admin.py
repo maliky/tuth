@@ -74,6 +74,7 @@ def _sec_queryset_for_std(student: Optional[Student]) -> SectionQueryT:
         return qs.none()
     return qs.filter(
         semester=open_semester,
+        curriculum_course__curriculum=student.primary_curriculum,
         curriculum_course__course__in=student.allowed_crss(),
     )
 
@@ -161,6 +162,15 @@ class RegioAdminForm(forms.ModelForm):
             student_obj = cast(Student, student)
             section_obj = cast(Section, section)
             allowed_crss = student_obj.allowed_crss()
+            if (
+                section_obj.curriculum_course.curriculum_id
+                != student_obj.primary_curriculum.id
+            ):
+                self.add_error(
+                    "section",
+                    "Selected section is outside this student's curriculum.",
+                )
+                return cleaned
             if not allowed_crss.filter(
                 pk=section_obj.curriculum_course.course_id
             ).exists():

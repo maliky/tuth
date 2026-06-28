@@ -95,6 +95,24 @@ def test_std_dashboard_prefers_open_sem(client):
 
 
 @pytest.mark.django_db
+def test_student_dashboard_collapses_registration_history(client, regio_factory):
+    """Student registration rows should render inside a collapsed drawer."""
+    registration = regio_factory("drawer_student", "CURRI_DRAWER", "250", 1)
+
+    client.force_login(registration.student.user)
+    response = client.get(reverse("student_dashboard"))
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert '<details class="student-course-drawer">' in content
+    assert "Registrations" in content
+    assert "1 course" in content
+    assert "data-course-table" in content
+    assert content.index("registration-layout") < content.index('id="courses"')
+    assert '<details class="student-course-drawer" open' not in content
+
+
+@pytest.mark.django_db
 def test_reg_dashboard_toggles_win(client):
     """Registrar dashboard should update semester status."""
     _ensure_sem_statuses()

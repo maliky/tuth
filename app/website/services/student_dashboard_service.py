@@ -308,14 +308,16 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
                 or 0
             )
             allowed_course_ids = set(student.allowed_crss().values_list("id", flat=True))
-            sections = (
+            sections = list(
                 Section.objects.filter(id__in=section_ids, semester=semester)
+                .filter(curriculum_course__curriculum=curriculum)
                 .select_related("curriculum_course__course")
                 .prefetch_related(
                     "curriculum_course__requirement_groups__members__required_course"
                 )
                 .order_by("id")
             )
+            unavailable_selection_count = max(len(set(section_ids)) - len(sections), 0)
             existing_regs = Registration.objects.filter(
                 student=student,
                 section__semester=semester,
@@ -371,7 +373,7 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
                 return _redirect_to_sem()
             created = 0
             updated = 0
-            skipped = 0
+            skipped = unavailable_selection_count
             cooldown_skipped = 0
             attempts_blocked = 0
             duplicate_course_skipped = 0
@@ -463,6 +465,20 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
                 _push_msg(
                     "info",
                     f"Skipped {skipped} section(s) already registered or unavailable.",
+                )
+            if (
+                unavailable_selection_count
+                and _is_ajax_request()
+                and not (created or updated)
+            ):
+                return JsonResponse(
+                    {
+                        "ok": False,
+                        "message": (
+                            "Selected section is not available for your curriculum."
+                        ),
+                    },
+                    status=400,
                 )
             if cooldown_skipped:
                 _push_msg(
@@ -1186,7 +1202,7 @@ def student_dashboard_response(request: HttpRequest) -> HttpResponse:  # noqa: C
         {
             "title": "Message your advisor",
             "description": "Need clearance? Let your college advisor know.",
-            "cta": "mailto:advising@tusis.edu",
+            "cta": "mailto:advising@wvstu.online",
         },
     ]
 

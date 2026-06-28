@@ -8,7 +8,7 @@ from typing import cast
 
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from simple_history.models import HistoricalRecords
 
 from app.academics.choices import LEVEL_NUMBER
@@ -16,6 +16,7 @@ from app.academics.constants import MAX_STUDENT_CREDITS
 from app.academics.models.course import Course
 
 from app.academics.models.curriculum import Curriculum
+from app.academics.models.prerequisite import Prerequisite
 from app.people.models.core import AbstractPerson
 from app.people.models.student_curriculum_enrollment import (
     get_primary_curriculum,
@@ -25,6 +26,50 @@ from app.people.models.student_curriculum_enrollment import (
 from app.shared.mixins import SimpleTableMixin
 from app.shared.types import CrsQuery
 from app.timetable.models.semester import Semester
+
+
+def _legacy_prerequisites_met(
+    *,
+    course: Course,
+    curriculum: Curriculum,
+    passed_ids: set[int],
+) -> bool:
+    """Return whether legacy prerequisite rows are satisfied."""
+    req_ids = set(
+        Prerequisite.objects.filter(
+            Q(curriculum=curriculum) | Q(curriculum__isnull=True),
+            course=course,
+        ).values_list("prerequisite_course_id", flat=True)
+    )
+    return req_ids.issubset(passed_ids)
+
+
+def _grouped_prerequisites_met(
+    *,
+    course_id: int,
+    curriculum: Curriculum,
+    passed_ids: set[int],
+) -> bool:
+    """Return whether grouped prerequisite rules are satisfied."""
+    from app.academics.models.curriculum_course import CurriCrs
+    from app.academics.models.requirement_group import ReqKind
+
+    curriculum_course = (
+        CurriCrs.objects.filter(curriculum=curriculum, course_id=course_id)
+        .prefetch_related("requirement_groups__members")
+        .first()
+    )
+    if curriculum_course is None:
+        return False
+    for req_group in curriculum_course.requirement_groups.all():
+        if req_group.kind not in {ReqKind.PREREQ_ALL, ReqKind.PREREQ_ANY}:
+            continue
+        member_ids = {member.required_course_id for member in req_group.members.all()}
+        if req_group.kind == ReqKind.PREREQ_ALL and not member_ids.issubset(passed_ids):
+            return False
+        if req_group.kind == ReqKind.PREREQ_ANY and member_ids.isdisjoint(passed_ids):
+            return False
+    return True
 
 
 class Student(AbstractPerson):
@@ -158,6 +203,19 @@ class Student(AbstractPerson):
         passed_ids = set(passed.values_list("id", flat=True))
 
         for course in all_courses.exclude(id__in=passed_ids):
+            # Enforce both legacy rows and grouped prereq rules before UI filters run.
+            if not _legacy_prerequisites_met(
+                course=course,
+                curriculum=curriculum,
+                passed_ids=passed_ids,
+            ):
+                continue
+            if not _grouped_prerequisites_met(
+                course_id=course.id,
+                curriculum=curriculum,
+                passed_ids=passed_ids,
+            ):
+                continue
             # > do not uncommnent below. I need to solve the
             # > prerequisits firsts.
             # req_ids = course.course_prereq_edges.filter(

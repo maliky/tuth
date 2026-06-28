@@ -17,6 +17,7 @@ from app.academics.models.requirement_group import (
 from app.finance.models.status_types_methods import InvoiceStatus, Payer
 from app.people.models.student import Student
 from app.people.models.student_curriculum_enrollment import (
+    StdCurriEnroll,
     set_primary_std_curri_enroll,
 )
 from app.registry.models.registration import Registration, RegistrationStatus
@@ -205,6 +206,52 @@ def test_register_post_requires_coreq_gp_in_same_action(
     )
 
 
+def test_register_post_rejects_cross_curriculum_section(
+    client,
+    curriculum_course_factory,
+    sem_factory,
+    user_factory,
+) -> None:
+    """Student POST must reject sections outside the primary curriculum row."""
+    semester = _open_regio_sem(sem_factory)
+    primary_course = curriculum_course_factory("922", "CURRI_SCOPE")
+    other_curriculum = curriculum_course_factory("923", "CURRI_OTHER").curriculum
+    other_curriculum_course = CurriCrs.objects.create(
+        curriculum=other_curriculum,
+        course=primary_course.course,
+    )
+    student = _std_for_curri(
+        user_factory=user_factory,
+        curriculum=primary_course.curriculum,
+        semester=semester,
+        username="scope_post_student",
+    )
+    other_section = Section.objects.create(
+        semester=semester,
+        curriculum_course=other_curriculum_course,
+        number=1,
+    )
+    client.force_login(student.user)
+
+    response = client.post(
+        reverse("student_dashboard"),
+        {
+            "action": "register",
+            "section_ids": str(other_section.id),
+            "semester_id": semester.id,
+        },
+        HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+    )
+    payload = response.json()
+
+    assert response.status_code == 400
+    assert payload["ok"] is False
+    assert "not available for your curriculum" in payload["message"]
+    assert not Registration.objects.filter(
+        student=student, section=other_section
+    ).exists()
+
+
 def test_dashboard_surfaces_coreq_reason_without_locking_initial_selection(
     client,
     curriculum_course_factory,
@@ -346,3 +393,51 @@ def test_dashboard_keeps_no_sec_crss_in_locked_information_list(
         for line in target_payload["reason_lines"]
     )
     assert target_payload["level_hint"] == "Level 3"
+
+
+def test_dashboard_hides_secondary_curriculum_courses(
+    client,
+    curriculum_course_factory,
+    sem_factory,
+    user_factory,
+) -> None:
+    """Secondary curriculum rows should not expand student registration choices."""
+    semester = _open_regio_sem(sem_factory)
+    primary_course = curriculum_course_factory("960", "CURRI_PRIMARY_ONLY")
+    secondary_course = curriculum_course_factory("961", "CURRI_SECONDARY_ONLY")
+    student = _std_for_curri(
+        user_factory=user_factory,
+        curriculum=primary_course.curriculum,
+        semester=semester,
+        username="primary_only_student",
+    )
+    StdCurriEnroll.objects.create(
+        student=student,
+        curriculum=secondary_course.curriculum,
+        entry_semester=semester,
+        is_primary=False,
+        is_active=True,
+    )
+    Section.objects.create(
+        semester=semester,
+        curriculum_course=primary_course,
+        number=1,
+    )
+    Section.objects.create(
+        semester=semester,
+        curriculum_course=secondary_course,
+        number=1,
+    )
+
+    client.force_login(student.user)
+    response = client.get(reverse("student_dashboard"), {"semester": semester.id})
+    assert response.status_code == 200
+
+    available_codes = {row["code"] for row in response.context["available_courses"]}
+    locked_codes = {row["code"] for row in response.context["locked_courses"]}
+    secondary_code = secondary_course.course.short_code or secondary_course.course.code
+    assert (
+        primary_course.course.short_code or primary_course.course.code
+    ) in available_codes
+    assert secondary_code not in available_codes
+    assert secondary_code not in locked_codes

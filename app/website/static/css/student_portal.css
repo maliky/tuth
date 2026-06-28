@@ -326,6 +326,50 @@
   overflow-x: auto;
 }
 
+.student-course-drawer {
+  background: #fff;
+  border: 1px solid var(--portal-border);
+  border-radius: var(--portal-radius);
+  box-shadow: var(--portal-shadow);
+}
+
+.student-course-drawer__summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  list-style: none;
+  padding: 1rem;
+}
+
+.student-course-drawer__summary::-webkit-details-marker {
+  display: none;
+}
+
+.student-course-drawer__summary::after {
+  color: var(--tu-green);
+  content: "Show";
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.student-course-drawer[open] .student-course-drawer__summary::after {
+  content: "Hide";
+}
+
+.student-course-drawer__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.student-course-drawer__body {
+  border-top: 1px solid var(--portal-border);
+  padding: 1rem;
+}
+
 .table thead th {
   border-bottom-width: 1px;
   font-size: 0.78rem;
