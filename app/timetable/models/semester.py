@@ -11,6 +11,7 @@ from django.db.models import Q
 from django.utils import timezone
 from simple_history.models import HistoricalRecords
 
+from app.academics.choices import AcademicCareer
 from app.shared.mixins import SimpleTableMixin, StatusableMixin
 from app.shared.types import OpenRegistrationSemesterResultT
 from app.timetable.choices import SEMESTER_NUMBER
@@ -29,11 +30,21 @@ def _academic_year_end_date(academic_year: AcademicYear) -> date:
     )
 
 
-def _dft_sem_dates(academic_year: AcademicYear, number: int) -> SemesterDateDefaultsT:
+def _dft_sem_dates(
+    academic_year: AcademicYear,
+    number: int,
+    academic_career: str = AcademicCareer.UNDERGRADUATE,
+) -> SemesterDateDefaultsT:
     """Return default semester start/end dates per academic year rules."""
     start_year = academic_year.start_date.year
     end_year = start_year + 1
     academic_year_end = _academic_year_end_date(academic_year)
+    if academic_career == AcademicCareer.GRADUATE:
+        if number == SEMESTER_NUMBER.FIRST:
+            return academic_year.start_date, date(end_year, 1, 31)
+        if number == SEMESTER_NUMBER.SECOND:
+            return date(end_year, 2, 1), academic_year_end
+        return academic_year.start_date, academic_year_end
     if number == 0:
         return academic_year.start_date, academic_year_end
     if number == SEMESTER_NUMBER.FIRST:
@@ -56,6 +67,12 @@ class Semester(StatusableMixin, models.Model):
     academic_year = models.ForeignKey("timetable.AcademicYear", on_delete=models.PROTECT)
     number = models.PositiveSmallIntegerField(
         choices=SEMESTER_NUMBER.choices, help_text="Semester number"
+    )
+    academic_career = models.CharField(
+        choices=AcademicCareer.choices,
+        db_index=True,
+        default=AcademicCareer.UNDERGRADUATE,
+        max_length=20,
     )
     status = models.ForeignKey(
         "timetable.SemesterStatus",
@@ -80,7 +97,11 @@ class Semester(StatusableMixin, models.Model):
         """Ensure default dates are applied when missing."""
         if not self.academic_year_id:
             return
-        default_start, default_end = _dft_sem_dates(self.academic_year, int(self.number))
+        default_start, default_end = _dft_sem_dates(
+            self.academic_year,
+            int(self.number),
+            self.academic_career,
+        )
         if not self.start_date:
             self.start_date = default_start
         if not self.end_date:
@@ -100,9 +121,10 @@ class Semester(StatusableMixin, models.Model):
             sub_end=self.end_date,
             container_start=self.academic_year.start_date,
             container_end=self.academic_year.end_date,
-            overlap_qs=Semester.objects.filter(academic_year=self.academic_year).exclude(
-                pk=self.pk
-            ),
+            overlap_qs=Semester.objects.filter(
+                academic_year=self.academic_year,
+                academic_career=self.academic_career,
+            ).exclude(pk=self.pk),
             overlap_message="Overlapping Semesters in the same academic year.",
             # Use a non-field error so admin list edits can render the message.
             label="__all__",
@@ -125,25 +147,38 @@ class Semester(StatusableMixin, models.Model):
         return self.status_id == self.REGISTRATION_OPEN_CODES
 
     @classmethod
-    def regio_open_sem(cls) -> OpenRegistrationSemesterResultT:
+    def regio_open_sem(
+        cls,
+        academic_career: str = AcademicCareer.UNDERGRADUATE,
+    ) -> OpenRegistrationSemesterResultT:
         """Return the open registration semester, with error msg if more than one exists."""
-        open_qs = cls.objects.filter(status_id=cls.REGISTRATION_OPEN_CODES)
+        open_qs = cls.objects.filter(
+            status_id=cls.REGISTRATION_OPEN_CODES,
+            academic_career=academic_career,
+        )
         if open_qs.count() > 1:
             return None, "Multiple semesters are open for registration."
         return open_qs.first(), None
 
     @classmethod
-    def get_current_sem(cls) -> "Semester":
+    def get_current_sem(
+        cls,
+        academic_career: str = AcademicCareer.UNDERGRADUATE,
+    ) -> "Semester":
         """Return the latest semester whose start date is on or before today."""
         today = timezone.now().date()
-        return cls.get_dft(today)
+        return cls.get_dft(today, academic_career=academic_career)
 
     @classmethod
-    def get_dft(cls, today: date | None = None) -> "Semester":
+    def get_dft(
+        cls,
+        today: date | None = None,
+        academic_career: str = AcademicCareer.UNDERGRADUATE,
+    ) -> "Semester":
         """Return the current semester or create one for the current academic year."""
         ref_date = today or timezone.now().date()
         semester = (
-            cls.objects.filter(start_date__lte=ref_date)
+            cls.objects.filter(academic_career=academic_career, start_date__lte=ref_date)
             .filter(Q(end_date__gte=ref_date) | Q(end_date__isnull=True))
             .order_by("-start_date")
             .first()
@@ -157,12 +192,17 @@ class Semester(StatusableMixin, models.Model):
 
         # Ensure statuses are present before creating a semester.
         SemesterStatus._populate_attributes_and_db()
-        sem1_start, sem1_end = _dft_sem_dates(ay, SEMESTER_NUMBER.FIRST)
+        sem1_start, sem1_end = _dft_sem_dates(
+            ay,
+            SEMESTER_NUMBER.FIRST,
+            academic_career,
+        )
 
         # Avoid duplicate semesters when the academic year already has Sem 1.
         semester, _created = cls.objects.get_or_create(
             academic_year=ay,
             number=SEMESTER_NUMBER.FIRST,
+            academic_career=academic_career,
             defaults={"start_date": sem1_start, "end_date": sem1_end},
         )
         return semester
@@ -170,13 +210,13 @@ class Semester(StatusableMixin, models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["academic_year", "number"], name="uniq_semester_per_year"
+                fields=["academic_year", "number", "academic_career"],
+                name="uniq_semester_per_year_career",
             ),
-            # I will need to take care of this migration online also
             models.UniqueConstraint(
-                fields=["status"],
+                fields=["status", "academic_career"],
                 condition=models.Q(status_id="registration"),
-                name="uniq_open_registration_semester",
+                name="uniq_open_registration_semester_career",
             ),
         ]
         ordering = ["start_date"]

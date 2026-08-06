@@ -13,6 +13,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
+from app.academics.career_scope import normalize_academic_career, selected_academic_career
 from app.people.models.student import Student
 from app.shared.utils import parse_str
 from app.website.forms.enrollment import StudentIntakeForm, save_student_intake
@@ -36,6 +37,7 @@ class StdAdminLookupForm(forms.Form):
     """Small helper form that opens a student profile inside the portal."""
 
     student = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+    academic_career = forms.CharField(widget=forms.HiddenInput(), required=False)
     student_query = forms.CharField(
         label="Student ID, name, college, program, or semester",
         widget=forms.TextInput(
@@ -61,6 +63,7 @@ class StdAdminLookupForm(forms.Form):
             "college": None,
             "program": None,
             "semester": None,
+            "academic_career": normalize_academic_career(cleaned.get("academic_career")),
         }
         student = apply_student_filters(student_search_queryset(), filters).first()
         if not student:
@@ -103,13 +106,29 @@ def _shell_context(
     *,
     active_key: str,
     label: str,
+    hidden_sidebar_keys: set[str] | None = None,
 ) -> dict[str, object]:
     """Return common enrollment portal shell values."""
     user = _enrollment_user(request)
     role_slug = _enrollment_role_slug(user)
+    career = selected_academic_career(request.GET)
+    hidden_keys = hidden_sidebar_keys or set()
+    sidebar_links = [
+        link
+        for link in build_staff_sidebar_links(
+            role_slug,
+            active_key,
+            academic_career=career,
+        )
+        if link["active"] or link["label"].lower().replace(" ", "_") not in hidden_keys
+    ]
     return {
-        "sidebar_links": build_staff_sidebar_links(role_slug, active_key),
-        "role_switcher": build_staff_role_switcher(user, role_slug),
+        "sidebar_links": sidebar_links,
+        "role_switcher": build_staff_role_switcher(
+            user,
+            role_slug,
+            academic_career=career,
+        ),
         "breadcrumbs": _staff_breadcrumb(label, user),
         "admin_shortcuts": enrollment_admin_shortcuts(user),
     }
@@ -150,7 +169,14 @@ def create_std(request: HttpRequest) -> HttpResponse:
         "eyebrow": "Enrollment",
         "curriculum_autocomplete_url": reverse("curriculum_autocomplete"),
     }
-    context.update(_shell_context(request, active_key="create_student", label=mode_label))
+    context.update(
+        _shell_context(
+            request,
+            active_key="create_student",
+            label=mode_label,
+            hidden_sidebar_keys={"student_lookup"},
+        )
+    )
     return render(request, "website/create_student.html", context)
 
 
@@ -222,7 +248,7 @@ def std_admin_edit(request: HttpRequest) -> HttpResponse:
         return redirect("std_detail", pk=student.pk)
 
     context: dict[str, object] = {
-        **build_student_directory_context(request),
+        **build_student_directory_context(request, action_url=reverse("std_admin_edit")),
         "form": form,
         "page_title": "Find student",
         "page_summary": "Search by ID, name, college, program, or semester and open the portal profile.",

@@ -23,6 +23,7 @@
 
 {% block header_actions %}
   {% block staff_header_actions %}{% endblock %}
+  {% include "website/staff/partials/academic_career_selector.html" %}
   {# Logout remains visible on all staff dashboards. #}
   <a class="btn portal-btn-accent btn-sm" href="{% url 'portal_logout' %}">
     Log out

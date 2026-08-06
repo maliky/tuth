@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
 from datetime import date
-from typing import NotRequired, TypeAlias, TypedDict, cast
+from typing import Final, Literal, NotRequired, TypeAlias, TypedDict, cast
 from urllib.parse import urlencode
 
 from django.contrib.auth.models import User
@@ -15,15 +15,30 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 
+from app.academics.career_scope import (
+    CareerModeT,
+    append_career_query,
+    career_selector_context,
+    filter_by_academic_career,
+    selected_academic_career,
+)
+from app.academics.choices import AcademicCareer
 from app.people.models.student import Student
 from app.registry.gpa import get_grade_points_and_credits
 from app.registry.models.grade import Grade
 from app.registry.models.registration import Registration
 from app.shared.auth.perms import UserRole
 from app.shared.utils import parse_str
+from app.timetable.graduate_calendar import GRADUATE_COURSE_WINDOW_YEAR_STARTS
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester, SemesterStatus
 from app.website.services.portal_types import PortalContextT
+from app.website.services.semester_scope import (
+    GRADUATE_SEMESTER_FLOOR,
+    filter_by_career_semester_floor,
+    semester_queryset_for_career,
+    should_apply_graduate_semester_floor,
+)
 from app.website.services.staff_portal import (
     build_staff_role_switcher,
     build_staff_sidebar_links,
@@ -37,6 +52,8 @@ from app.website.services.transcript_document import (
 
 ContextT: TypeAlias = PortalContextT
 SemesterWindowSortKeyT: TypeAlias = tuple[int, int, date, date, int, int]
+SemesterWindowCareerT: TypeAlias = Literal["undergraduate", "graduate"]
+USERNAME_DISPLAY_LIMIT: Final = 15
 REGISTRAR_GRADE_ROLE_LABELS = frozenset(
     {
         UserRole.REGISTRAR.value.label,
@@ -87,6 +104,7 @@ class RegSnapshotFactT(TypedDict):
 
     label: str
     value: str
+    title: NotRequired[str]
 
 
 class RegStudentSnapshotT(TypedDict):
@@ -268,12 +286,13 @@ def semester_window_sort_key(
     )
 
 
-def registrar_student_results(query: str | None) -> list[StudentAutocompleteResultT]:
+def registrar_student_results(request: HttpRequest) -> list[StudentAutocompleteResultT]:
     """Return student suggestions for the registrar grade dashboard."""
+    query = request.GET.get("q")
     clean_query = parse_str(query)
     if not clean_query:
         return []
-    students = (
+    students = filter_by_academic_career(
         Student.objects.select_related("user")
         .filter(
             Q(student_id__icontains=clean_query)
@@ -282,8 +301,11 @@ def registrar_student_results(query: str | None) -> list[StudentAutocompleteResu
             | Q(user__last_name__icontains=clean_query)
             | Q(user__username__icontains=clean_query)
         )
-        .order_by("long_name")[:15]
+        .filter(Q(grade__isnull=False) | Q(student_registrations__isnull=False)),
+        "academic_career",
+        selected_academic_career(request.GET),
     )
+    students = students.order_by("long_name")[:15]
     return [
         {
             "id": student.id,
@@ -299,6 +321,18 @@ def _display_value(value: object) -> str:
         return "Not set"
     text = str(value).strip()
     return text or "Not set"
+
+
+def _username_snapshot_fact(username: object) -> RegSnapshotFactT:
+    """Return the compact username fact for the registrar snapshot."""
+    value = _display_value(username)
+    fact = RegSnapshotFactT(
+        label="Username",
+        value=value[:USERNAME_DISPLAY_LIMIT],
+    )
+    if fact["value"] != value:
+        fact["title"] = value
+    return fact
 
 
 def _student_display_name(student: Student) -> str:
@@ -327,6 +361,7 @@ def _roster_list_url(student_id: int, semester_param: str | None) -> str:
 def build_reg_student_snapshot(
     student: Student,
     semester_param: str | None,
+    academic_career: CareerModeT,
     can_manage_registrations: bool = False,
 ) -> RegStudentSnapshotT:
     """Return the selected-student summary for the registrar grades dashboard."""
@@ -337,7 +372,7 @@ def build_reg_student_snapshot(
         name=_student_display_name(student),
         student_id=student.student_id or str(student.id),
         rows=[
-            {"label": "Username", "value": _display_value(student.username)},
+            _username_snapshot_fact(student.username),
             {"label": "Program", "value": _display_value(curriculum.short_name)},
             {"label": "College", "value": _display_value(curriculum.college)},
             {
@@ -358,7 +393,10 @@ def build_reg_student_snapshot(
             {"label": "Registrations", "value": _display_value(registration_count)},
         ],
         transcript_url=reverse("reg_grade_transcript", args=[student.id]),
-        rosters_url=_roster_list_url(student.id, semester_param),
+        rosters_url=append_career_query(
+            _roster_list_url(student.id, semester_param),
+            academic_career,
+        ),
     )
     semester_id = clean_int(semester_param)
     if can_manage_registrations and semester_id is not None:
@@ -370,16 +408,19 @@ def build_reg_student_snapshot(
 
 
 def _semester_options(
-    semester_id: int | None, all_selected: bool
+    semester_id: int | None,
+    all_selected: bool,
+    career: CareerModeT,
 ) -> list[SemesterOptionT]:
     """Build semester filter options for registrar pages."""
     options: list[SemesterOptionT] = [
         {"value": "all", "label": "All semesters", "selected": all_selected}
     ]
-    for sem in Semester.objects.select_related("academic_year").order_by(
-        "-academic_year__start_date",
-        "-number",
-    ):
+    semesters = semester_queryset_for_career(
+        career,
+        Semester.objects.select_related("academic_year"),
+    ).order_by("-academic_year__start_date", "-number")
+    for sem in semesters:
         options.append(
             {
                 "value": str(sem.id),
@@ -388,6 +429,21 @@ def _semester_options(
             }
         )
     return options
+
+
+def _student_semester_scope_q(career: CareerModeT) -> Q:
+    """Return student evidence limited by the graduate launch semester floor."""
+    if should_apply_graduate_semester_floor(career):
+        return Q(
+            grade__section__semester__academic_year__start_date__gte=(
+                GRADUATE_SEMESTER_FLOOR
+            )
+        ) | Q(
+            student_registrations__section__semester__academic_year__start_date__gte=(
+                GRADUATE_SEMESTER_FLOOR
+            )
+        )
+    return Q()
 
 
 def _pagination_hidden_fields(request: HttpRequest) -> tuple[str, list[dict[str, str]]]:
@@ -405,6 +461,7 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
     """Build context for the registrar grade dashboard."""
     user = cast(User, request.user)
     sidebar_role = registrar_sidebar_role(user)
+    career = selected_academic_career(request.GET)
     can_manage_grades = can_manage_registrar_grades(user)
     can_manage_registrations = can_manage_registrar_registrations(user)
     selected_student_id = clean_int(request.GET.get("student_id"))
@@ -415,22 +472,37 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
         semester_id = None
 
     if selected_student_id:
-        students_qs = Student.objects.filter(id=selected_student_id).select_related(
-            "user"
+        students_qs = filter_by_academic_career(
+            Student.objects.filter(id=selected_student_id).select_related("user"),
+            "academic_career",
+            career,
         )
         if semester_id:
             students_qs = students_qs.filter(
                 Q(grade__section__semester_id=semester_id)
                 | Q(student_registrations__section__semester_id=semester_id)
             )
+            students_qs = students_qs.filter(_student_semester_scope_q(career))
         else:
             students_qs = students_qs.filter(
                 Q(grade__isnull=False) | Q(student_registrations__isnull=False)
             )
+            students_qs = students_qs.filter(_student_semester_scope_q(career))
     else:
-        students_qs = Student.objects.filter(grade__isnull=False).select_related("user")
+        students_qs = filter_by_academic_career(
+            Student.objects.filter(grade__isnull=False).select_related("user"),
+            "academic_career",
+            career,
+        )
         if semester_id:
             students_qs = students_qs.filter(grade__section__semester_id=semester_id)
+            students_qs = students_qs.filter(_student_semester_scope_q(career))
+        else:
+            students_qs = filter_by_career_semester_floor(
+                students_qs,
+                "grade__section__semester",
+                career,
+            )
     students_qs = students_qs.distinct().order_by("long_name", "student_id")
 
     page_obj = Paginator(students_qs, 100).get_page(request.GET.get("page"))
@@ -455,6 +527,16 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
                 "section__curriculum_course__course__short_code",
             )
         )
+        grades_qs = filter_by_academic_career(
+            grades_qs,
+            "section__curriculum_course__curriculum__academic_career",
+            career,
+        )
+        grades_qs = filter_by_career_semester_floor(
+            grades_qs,
+            "section__semester",
+            career,
+        )
     if semester_id:
         grades_qs = grades_qs.filter(section__semester_id=semester_id)
 
@@ -477,6 +559,16 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
                 "section__curriculum_course__course__short_code",
             )
         )
+        registrations_qs = filter_by_academic_career(
+            registrations_qs,
+            "section__curriculum_course__curriculum__academic_career",
+            career,
+        )
+        registrations_qs = filter_by_career_semester_floor(
+            registrations_qs,
+            "section__semester",
+            career,
+        )
         if semester_id:
             registrations_qs = registrations_qs.filter(section__semester_id=semester_id)
 
@@ -492,14 +584,17 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
     selected_student_label = ""
     selected_student_snapshot: RegStudentSnapshotT | None = None
     if selected_student_id:
-        selected_student = (
-            Student.objects.select_related("user").filter(id=selected_student_id).first()
-        )
+        selected_student = filter_by_academic_career(
+            Student.objects.select_related("user").filter(id=selected_student_id),
+            "academic_career",
+            career,
+        ).first()
         if selected_student:
             selected_student_label = _student_label(selected_student)
             selected_student_snapshot = build_reg_student_snapshot(
                 selected_student,
                 semester_param if semester_param_present else "all",
+                career,
                 can_manage_registrations=can_manage_registrations,
             )
 
@@ -507,21 +602,41 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
         "page_title": "Registrar grades",
         "page_summary": "Find students, review grades, and download transcripts.",
         "eyebrow": "Registrar",
-        "sidebar_links": build_staff_sidebar_links(sidebar_role, "grades"),
-        "role_switcher": build_staff_role_switcher(user, "registrar"),
+        "sidebar_links": build_staff_sidebar_links(
+            sidebar_role,
+            "grades",
+            academic_career=career,
+        ),
+        "role_switcher": build_staff_role_switcher(
+            user,
+            "registrar",
+            academic_career=career,
+        ),
         "breadcrumbs": [
             {
                 "label": "Registrar dashboard",
-                "href": reverse("staff_role_dashboard", args=["registrar"]),
+                "href": append_career_query(
+                    reverse("staff_role_dashboard", args=["registrar"]),
+                    career,
+                ),
             },
             {"label": "Grade review", "href": ""},
         ],
         "student_groups": student_groups,
         "page_obj": page_obj,
-        "semester_options": _semester_options(semester_id, all_semesters_selected),
+        "semester_options": _semester_options(
+            semester_id,
+            all_semesters_selected,
+            career,
+        ),
         "selected_student_id": selected_student_id,
         "selected_student_label": selected_student_label,
         "selected_student_snapshot": selected_student_snapshot,
+        "selected_academic_career": career,
+        "career_selector": career_selector_context(
+            request.GET,
+            action_url=reverse("reg_grades_dashboard"),
+        ),
         "bulk_download_url": reverse("reg_grade_transcripts_bulk_pdf"),
         "registrar_admin_links": _admin_shortcuts_for_models(
             user,
@@ -530,7 +645,10 @@ def build_reg_grades_context(request: HttpRequest) -> ContextT:
         "pagination_query": pagination_query,
         "pagination_hidden_fields": pagination_hidden_fields,
         "pagination_action": request.path,
-        "student_autocomplete_url": reverse("reg_std_autocomplete"),
+        "student_autocomplete_url": append_career_query(
+            reverse("reg_std_autocomplete"),
+            career,
+        ),
     }
 
 
@@ -758,13 +876,29 @@ def build_reg_grade_transcript_context(request: HttpRequest, student_id: int) ->
     }
 
 
-def update_semester_window(semester_id: str | None, status_code: str | None) -> str:
+def _selected_window_career(request: HttpRequest) -> SemesterWindowCareerT:
+    """Return the course-window career, defaulting to graduate."""
+    career = selected_academic_career(request.GET or request.POST)
+    if career == AcademicCareer.UNDERGRADUATE.value:
+        return "undergraduate"
+    return "graduate"
+
+
+def update_semester_window(
+    semester_id: str | None,
+    status_code: str | None,
+    academic_career: SemesterWindowCareerT,
+) -> str:
     """Update one semester window and return the user-facing success text."""
     SemesterStatus._populate_attributes_and_db()
     statuses = set(SemesterStatus.objects.values_list("code", flat=True))
     if status_code not in statuses:
         raise ValueError("Unknown status.")
-    semester = get_object_or_404(Semester, pk=semester_id)
+    semester = get_object_or_404(
+        Semester,
+        pk=semester_id,
+        academic_career=academic_career,
+    )
     semester.status_id = status_code
     semester.save(update_fields=["status"])
     return f"{semester} status updated to {semester.status.label}."
@@ -773,23 +907,45 @@ def update_semester_window(semester_id: str | None, status_code: str | None) -> 
 def build_reg_windows_context(request: HttpRequest) -> ContextT:
     """Build context for registration and grade-entry window management."""
     SemesterStatus._populate_attributes_and_db()
-    semesters = (
-        Semester.objects.select_related("academic_year", "status")
-        .order_by("-academic_year__start_date", "-number")
-        .all()
+    career = _selected_window_career(request)
+    semesters = semester_queryset_for_career(
+        career,
+        Semester.objects.select_related("academic_year", "status"),
+    ).order_by("-academic_year__start_date", "-number")
+    if career == AcademicCareer.GRADUATE.value:
+        semesters = semesters.filter(
+            academic_year__start_date__in=GRADUATE_COURSE_WINDOW_YEAR_STARTS
+        )
+    dashboard_url = append_career_query(
+        reverse("staff_role_dashboard", args=["registrar"]),
+        career,
     )
     return {
         "semester_groups": group_semester_windows(list(semesters)),
         "statuses": SemesterStatus.objects.all().order_by("code"),
-        "page_title": "Semester windows",
+        "page_title": f"{AcademicCareer(career).label} semester windows",
         "page_summary": "Open registration and grade-entry periods from Tusis.",
         "eyebrow": "Registrar officer",
-        "sidebar_links": build_staff_sidebar_links("reg_officer", "semester_windows"),
-        "role_switcher": build_staff_role_switcher(cast(User, request.user), "registrar"),
+        "selected_academic_career": career,
+        "career_selector": career_selector_context(
+            request.GET,
+            action_url=reverse("reg_crs_wins"),
+            include_all=False,
+        ),
+        "sidebar_links": build_staff_sidebar_links(
+            "reg_officer",
+            "semester_windows",
+            academic_career=career,
+        ),
+        "role_switcher": build_staff_role_switcher(
+            cast(User, request.user),
+            "registrar",
+            academic_career=career,
+        ),
         "breadcrumbs": [
             {
                 "label": "Registrar dashboard",
-                "href": reverse("staff_role_dashboard", args=["registrar"]),
+                "href": dashboard_url,
             },
             {"label": "Semester windows", "href": ""},
         ],

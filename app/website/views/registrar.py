@@ -12,9 +12,15 @@ from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from app.academics.career_scope import (
+    append_career_query,
+    filter_by_academic_career,
+    selected_academic_career,
+)
 from app.people.models.student import Student
 from app.shared.auth.perms import UserRole
 from app.website.services.registrar_portal import (
@@ -79,11 +85,14 @@ def _bulk_transcript_students(request: HttpRequest) -> list[Student]:
     student_ids = _int_values(request.POST.getlist("student_ids"))
     if not student_ids:
         raise ValueError("Select at least one student transcript.")
-    return list(
+    students = filter_by_academic_career(
         Student.objects.filter(id__in=student_ids, grade__isnull=False)
         .distinct()
-        .order_by("long_name", "student_id")
+        .order_by("long_name", "student_id"),
+        "academic_career",
+        selected_academic_career(request.POST),
     )
+    return list(students)
 
 
 def _require_transcript_export_access(request: HttpRequest) -> None:
@@ -106,7 +115,7 @@ def _require_registrar_roster_access(request: HttpRequest) -> None:
 @permission_required("registry.view_grade", raise_exception=True)
 def reg_std_autocomplete(request: HttpRequest) -> HttpResponse:
     """Return student suggestions for the registrar grade dashboard."""
-    return JsonResponse({"results": registrar_student_results(request.GET.get("q"))})
+    return JsonResponse({"results": registrar_student_results(request)})
 
 
 @login_required
@@ -143,7 +152,9 @@ def reg_class_roster_detail(
 def reg_faculty_autocomplete(request: HttpRequest) -> HttpResponse:
     """Return faculty suggestions for registrar class roster filters."""
     _require_registrar_roster_access(request)
-    return JsonResponse({"results": registrar_faculty_results(request.GET.get("q"))})
+    return JsonResponse(
+        {"results": registrar_faculty_results(request.GET.get("q"), request.GET)}
+    )
 
 
 @login_required
@@ -289,14 +300,18 @@ def reg_grade_transcript_pdf(
 def reg_grade_transcripts_bulk_pdf(request: HttpRequest) -> HttpResponse:
     """Generate and download a ZIP of registrar transcript PDFs."""
     _require_transcript_export_access(request)
+    dashboard_url = append_career_query(
+        reverse("reg_grades_dashboard"),
+        selected_academic_career(request.POST),
+    )
     try:
         students = _bulk_transcript_students(request)
     except ValueError as exc:
         messages.error(request, str(exc))
-        return redirect("reg_grades_dashboard")
+        return redirect(dashboard_url)
     if not students:
         messages.error(request, "No transcript students matched the export request.")
-        return redirect("reg_grades_dashboard")
+        return redirect(dashboard_url)
 
     layout_key = _canonical_transcript_layout()
     timestamp = timezone.now().strftime("%Y%m%d_%H%M")
@@ -344,16 +359,20 @@ def reg_grade_transcript_org(
 def reg_crs_wins(request: HttpRequest) -> HttpResponse:
     """Allow registrar staff to manage semester statuses."""
     if request.method == "POST":
+        career = selected_academic_career(request.POST)
+        if career == "all":
+            career = "graduate"
         try:
             msg = update_semester_window(
                 request.POST.get("semester_id"),
                 request.POST.get("status_code"),
+                career,
             )
         except ValueError as exc:
             messages.error(request, str(exc))
-            return redirect("reg_crs_wins")
+            return redirect(append_career_query(reverse("reg_crs_wins"), career))
         messages.success(request, msg)
-        return redirect("reg_crs_wins")
+        return redirect(append_career_query(reverse("reg_crs_wins"), career))
 
     context = build_reg_windows_context(request)
     return render(request, "website/registrar_windows.html", context)

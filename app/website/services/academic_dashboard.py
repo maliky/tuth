@@ -30,6 +30,10 @@ from app.website.services.academic_dashboard_roles import (
     dean_role_options,
     selected_dean_role,
 )
+from app.website.services.semester_scope import (
+    semester_queryset_for_career,
+    should_apply_graduate_semester_floor,
+)
 
 
 class ScopeT(TypedDict):
@@ -52,14 +56,22 @@ def _reasonable_semester_queryset() -> QuerySet[Semester]:
     )
 
 
-def _dashboard_semester_queryset() -> QuerySet[Semester]:
+def _dashboard_semester_queryset(career: CareerModeT) -> QuerySet[Semester]:
     """Return valid dashboard terms, including terms with no scoped sections."""
-    return _reasonable_semester_queryset().order_by("-start_date", "-id")
+    semesters = (
+        Semester.objects.select_related("academic_year")
+        if should_apply_graduate_semester_floor(career)
+        else _reasonable_semester_queryset()
+    )
+    return semester_queryset_for_career(career, semesters).order_by("-start_date", "-id")
 
 
-def _semester_options(selected_semester: Semester) -> list[dict[str, object]]:
+def _semester_options(
+    selected_semester: Semester,
+    career: CareerModeT,
+) -> list[dict[str, object]]:
     """Return valid semester options for dashboard selectors."""
-    semesters = list(_dashboard_semester_queryset()[:12])
+    semesters = list(_dashboard_semester_queryset(career)[:12])
     selected_ids = {semester.id for semester in semesters}
     if selected_semester.id not in selected_ids:
         semesters.append(selected_semester)
@@ -82,7 +94,8 @@ def _semester_options(selected_semester: Semester) -> list[dict[str, object]]:
 
 def selected_dashboard_semester(request: HttpRequest) -> Semester:
     """Return the requested dashboard semester, defaulting to current or latest."""
-    dashboard_semesters = _dashboard_semester_queryset()
+    career = selected_academic_career(request.GET)
+    dashboard_semesters = _dashboard_semester_queryset(career)
     raw_value = request.GET.get("semester")
     if raw_value:
         try:
@@ -119,7 +132,7 @@ def _dashboard_controls(
     return {
         "selected_semester": semester,
         "selected_semester_label": _semester_label(semester),
-        "semester_options": _semester_options(semester),
+        "semester_options": _semester_options(semester, career),
         "selected_academic_career": career,
         "selected_academic_career_label": academic_career_label(career),
         "career_options": career_filter_options(career),

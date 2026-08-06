@@ -35,6 +35,7 @@ from app.website.services.grade_portal_common import (
     set_grade_code,
 )
 from app.website.services.portal_types import AdminShortcutT, PortalContextT
+from app.website.services.semester_scope import filter_by_career_semester_floor
 from app.website.services.staff_common import (
     admin_shortcuts_for_models,
     get_faculty_profile,
@@ -51,6 +52,16 @@ SectionQueryT: TypeAlias = QuerySet[Section]
 
 class FacultyGradeError(GradePortalError):
     """Raised when a faculty grade action cannot be applied safely."""
+
+
+def _clean_int(value: str | None) -> int | None:
+    """Return an integer query value or None."""
+    if not value:
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        return None
 
 
 def _faculty_admin_links(user: User) -> list[AdminShortcutT]:
@@ -91,17 +102,23 @@ def assigned_sections_for_faculty(
     )
     if academic_career is None:
         return sections
-    return filter_by_academic_career(
+    scoped = filter_by_academic_career(
         sections,
         "curriculum_course__curriculum__academic_career",
         academic_career,
     )
+    return filter_by_career_semester_floor(scoped, "semester", academic_career)
 
 
-def get_faculty_section_or_404(user: User, section_id: int) -> Section:
-    """Return an assigned section or raise 404 to avoid leaking section ids."""
+def get_faculty_section_or_404(
+    user: User,
+    section_id: int,
+    academic_career: CareerModeT | None = None,
+) -> Section:
+    """Return an assigned career-scoped section or raise 404."""
     faculty = require_faculty_profile(user)
-    return get_object_or_404(assigned_sections_for_faculty(faculty), pk=section_id)
+    sections = assigned_sections_for_faculty(faculty, academic_career)
+    return get_object_or_404(sections, pk=section_id)
 
 
 def course_code(section: Section) -> str:
@@ -174,8 +191,14 @@ def build_faculty_grade_sections_context(request: HttpRequest) -> PortalContextT
     user = cast(User, request.user)
     faculty = require_faculty_profile(user)
     career = selected_academic_career(request.GET)
+    selected_student_id = _clean_int(request.GET.get("student_id"))
+    sections_qs = assigned_sections_for_faculty(faculty, career)
+    if selected_student_id is not None:
+        sections_qs = sections_qs.filter(
+            section_registrations__student_id=selected_student_id
+        )
     sections = list(
-        assigned_sections_for_faculty(faculty, career).order_by(
+        sections_qs.distinct().order_by(
             "-semester__start_date",
             "-semester__number",
             "curriculum_course__course__short_code",
@@ -219,7 +242,11 @@ def build_faculty_grade_sections_context(request: HttpRequest) -> PortalContextT
             "faculty_grades",
             academic_career=career,
         ),
-        "role_switcher": build_staff_role_switcher(user, "faculty"),
+        "role_switcher": build_staff_role_switcher(
+            user,
+            "faculty",
+            academic_career=career,
+        ),
         "breadcrumbs": [
             {
                 "label": "Faculty dashboard",
@@ -230,6 +257,7 @@ def build_faculty_grade_sections_context(request: HttpRequest) -> PortalContextT
         "section_rows": section_rows,
         "dashboard_url": dashboard_url,
         "portal_theme_class": academic_career_theme_class(career),
+        "selected_academic_career": career,
         "faculty_admin_links": _faculty_admin_links(user),
         "career_selector": career_selector_context(
             request.GET,
@@ -244,8 +272,8 @@ def build_faculty_grade_roster_context(
 ) -> PortalContextT:
     """Build one editable faculty grade roster."""
     user = cast(User, request.user)
-    section = get_faculty_section_or_404(user, section_id)
     career = selected_academic_career(request.GET)
+    section = get_faculty_section_or_404(user, section_id, career)
     sections_url = append_career_query(reverse("faculty_grade_sections"), career)
     return {
         "page_title": f"Grade roster · {course_code(section)}",
@@ -256,7 +284,11 @@ def build_faculty_grade_roster_context(
             "faculty_grades",
             academic_career=career,
         ),
-        "role_switcher": build_staff_role_switcher(user, "faculty"),
+        "role_switcher": build_staff_role_switcher(
+            user,
+            "faculty",
+            academic_career=career,
+        ),
         "breadcrumbs": [
             {
                 "label": "Faculty dashboard",
@@ -277,10 +309,24 @@ def build_faculty_grade_roster_context(
         ),
         "portal_theme_class": academic_career_theme_class(career),
         "sections_url": sections_url,
-        "download_url": reverse("faculty_grade_roster_download", args=[section.id]),
-        "upload_url": reverse("faculty_grade_roster_upload", args=[section.id]),
-        "autosave_url": reverse("faculty_grade_roster_autosave", args=[section.id]),
+        "download_url": append_career_query(
+            reverse("faculty_grade_roster_download", args=[section.id]),
+            career,
+        ),
+        "upload_url": append_career_query(
+            reverse("faculty_grade_roster_upload", args=[section.id]),
+            career,
+        ),
+        "autosave_url": append_career_query(
+            reverse("faculty_grade_roster_autosave", args=[section.id]),
+            career,
+        ),
         "faculty_admin_links": _faculty_admin_links(user),
+        "selected_academic_career": career,
+        "career_selector": career_selector_context(
+            request.GET,
+            action_url=reverse("faculty_grade_roster", args=[section.id]),
+        ),
     }
 
 
@@ -315,9 +361,10 @@ def save_grade_autosave(
     section_id: int,
     grade_id: int,
     grade_code: str,
+    academic_career: CareerModeT | None = None,
 ) -> Grade:
     """Save one changed grade field for the faculty autosave endpoint."""
-    section = get_faculty_section_or_404(user, section_id)
+    section = get_faculty_section_or_404(user, section_id, academic_career)
     if not grade_entry_open(section):
         raise FacultyGradeError("Grade entry is closed for this section.")
     grade = get_object_or_404(

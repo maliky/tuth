@@ -15,6 +15,7 @@ from django.forms.utils import ErrorList
 from django.utils.text import slugify
 from django.utils.datastructures import MultiValueDict
 
+from app.academics.career_scope import normalize_academic_career
 from app.academics.choices import AcademicCareer
 from app.academics.constants import MAX_STUDENT_CREDITS
 from app.academics.models.curriculum import Curriculum
@@ -22,6 +23,7 @@ from app.people.models.student import Student
 from app.people.models.student_curriculum_enrollment import set_primary_std_curri_enroll
 from app.shared.student_ids import canonical_student_id
 from app.timetable.models.semester import Semester
+from app.website.services.semester_scope import semester_queryset_for_career
 
 StudentOptT: TypeAlias = Student | None
 
@@ -274,12 +276,39 @@ class StudentIntakeForm(forms.Form):
             renderer=renderer,
         )
         self.student = student
+        semester_career = normalize_academic_career(
+            student.academic_career
+            if student is not None
+            else AcademicCareer.GRADUATE.value
+        )
+        semester_queryset = semester_queryset_for_career(
+            semester_career,
+            Semester.objects.select_related("academic_year"),
+        ).order_by("-academic_year__start_date", "-number")
+        for field_name in ("entry_semester", "last_enrolled_semester"):
+            semester_field = cast(forms.ModelChoiceField, self.fields[field_name])
+            semester_field.queryset = semester_queryset
         if student is None:
-            current_semester = Semester.get_current_sem()
+            current_semester = semester_queryset.first() or Semester.get_current_sem()
             self.fields["entry_semester"].initial = current_semester
             self.fields["last_enrolled_semester"].initial = current_semester
-            self.fields["primary_curriculum"].initial = Curriculum.get_dft()
-            self.fields["academic_career"].initial = AcademicCareer.UNDERGRADUATE
+            primary_curriculum_field = cast(
+                forms.ModelChoiceField,
+                self.fields["primary_curriculum"],
+            )
+            graduate_curriculum = (
+                Curriculum.objects.filter(academic_career=AcademicCareer.GRADUATE)
+                .order_by("college__code", "long_name", "short_name")
+                .first()
+            )
+            primary_curriculum_queryset = (
+                primary_curriculum_field.queryset or Curriculum.objects.none()
+            )
+            primary_curriculum_field.queryset = primary_curriculum_queryset.filter(
+                academic_career=AcademicCareer.GRADUATE
+            ).order_by("college__code", "long_name", "short_name")
+            primary_curriculum_field.initial = graduate_curriculum or Curriculum.get_dft()
+            self.fields["academic_career"].initial = AcademicCareer.GRADUATE
             self.fields["max_credit_hours"].initial = MAX_STUDENT_CREDITS
             return
 

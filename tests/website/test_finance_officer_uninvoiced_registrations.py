@@ -10,6 +10,7 @@ from django.contrib.auth.models import Group, User
 from django.core.paginator import Paginator as DjangoPaginator
 from django.urls import reverse
 
+from app.academics.choices import AcademicCareer
 from app.academics.models.department import Department
 from app.finance.models.fee_stack import CrsFeeStack
 from app.finance.models.invoice import CrsInvoice
@@ -119,12 +120,56 @@ def test_finance_autocomplete_includes_students_with_missing_invoices(
 
     response = client.get(
         reverse("finance_officer_std_autocomplete"),
-        {"q": registration.student.student_id},
+        {
+            "q": registration.student.student_id,
+            "academic_career": "undergraduate",
+        },
     )
 
     assert response.status_code == 200
     payload = response.json()
     assert payload["results"][0]["id"] == registration.student.id
+
+
+def test_finance_people_can_select_career_for_console_and_student_search(
+    client,
+    regio_factory,
+) -> None:
+    """Finance console and autocomplete should honor the selected student career."""
+    graduate_registration = regio_factory(
+        "finance_career_grad_student",
+        "CURRI_FIN_GRAD",
+        "806",
+        1,
+    )
+    undergraduate_registration = regio_factory(
+        "finance_career_under_student",
+        "CURRI_FIN_UNDER",
+        "807",
+        1,
+    )
+    graduate_registration.student.academic_career = AcademicCareer.GRADUATE
+    graduate_registration.student.save(update_fields=["academic_career"])
+    undergraduate_registration.student.academic_career = AcademicCareer.UNDERGRADUATE
+    undergraduate_registration.student.save(update_fields=["academic_career"])
+
+    client.force_login(_finance_user())
+    console = client.get(
+        reverse("finance_officer_invoices"),
+        {"academic_career": "graduate"},
+    )
+    autocomplete = client.get(
+        reverse("finance_officer_std_autocomplete"),
+        {"q": "finance_career", "academic_career": "graduate"},
+    )
+
+    content = console.content.decode()
+    result_ids = {item["id"] for item in autocomplete.json()["results"]}
+    assert console.status_code == 200
+    assert console.context["selected_academic_career"] == "graduate"
+    assert 'name="academic_career" value="graduate"' in content
+    assert graduate_registration.student.id in result_ids
+    assert undergraduate_registration.student.id not in result_ids
 
 
 def test_finance_officer_sees_zero_credit_registrations_as_billable(

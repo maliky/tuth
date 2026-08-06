@@ -11,6 +11,16 @@ from django.db.models import Exists, Max, Min, OuterRef, Q, QuerySet
 from django.http import HttpRequest, QueryDict
 from django.urls import NoReverseMatch, reverse
 
+from app.academics.career_scope import (
+    CAREER_ALL,
+    CAREER_QUERY_PARAM,
+    CareerModeT,
+    append_career_query,
+    career_selector_context,
+    filter_by_academic_career,
+    normalize_academic_career,
+    selected_academic_career,
+)
 from app.finance.models.invoice import CrsInvoice
 from app.finance.models.payment import Payment
 from app.finance.payment_application import (
@@ -34,6 +44,7 @@ from app.registry.models.registration import Registration
 from app.timetable.models.semester import Semester
 from app.timetable.utils import format_datetime
 from app.website.services.portal_types import PortalContextT
+from app.website.services.semester_scope import semester_queryset_for_career
 from app.website.services.staff_portal import (
     build_staff_role_switcher,
     build_staff_sidebar_links,
@@ -155,7 +166,9 @@ def finance_std_ids(*, missing_semester_id: int | None = None) -> set[int]:
     )
 
 
-def finance_relevant_std_qs() -> QuerySet[Student]:
+def finance_relevant_std_qs(
+    academic_career: CareerModeT | None = None,
+) -> QuerySet[Student]:
     """Return students with direct finance activity or invoiceable registrations."""
     existing_registration_invoice = CrsInvoice.objects.filter(
         student_id=OuterRef("student_id"),
@@ -180,19 +193,29 @@ def finance_relevant_std_qs() -> QuerySet[Student]:
         flat=True,
     )
     # SQL subqueries keep autocomplete responsive without materializing history.
-    return Student.objects.select_related("user").filter(
+    students = Student.objects.select_related("user").filter(
         Q(id__in=invoice_student_ids)
         | Q(id__in=payment_student_ids)
         | Q(id__in=missing_registration_student_ids)
         | Q(id__in=stale_zero_invoice)
     )
+    if academic_career is not None:
+        students = filter_by_academic_career(
+            students,
+            "academic_career",
+            academic_career,
+        )
+    return students
 
 
-def finance_stds(query: str | None = None) -> QuerySet[Student]:
+def finance_stds(
+    query: str | None = None,
+    academic_career: CareerModeT | None = None,
+) -> QuerySet[Student]:
     """Return a queryset of finance-relevant students matching a query."""
     if not query:
         return Student.objects.none()
-    qs = finance_relevant_std_qs().filter(
+    qs = finance_relevant_std_qs(academic_career).filter(
         Q(student_id__icontains=query)
         | Q(long_name__icontains=query)
         | Q(user__first_name__icontains=query)
@@ -202,9 +225,12 @@ def finance_stds(query: str | None = None) -> QuerySet[Student]:
     return qs.order_by("long_name")
 
 
-def finance_std_by_id(student_id: int) -> Optional[Student]:
+def finance_std_by_id(
+    student_id: int,
+    academic_career: CareerModeT | None = None,
+) -> Optional[Student]:
     """Return a finance-relevant student by ID."""
-    return finance_relevant_std_qs().filter(id=student_id).first()
+    return finance_relevant_std_qs(academic_career).filter(id=student_id).first()
 
 
 def build_std_options(
@@ -473,6 +499,7 @@ def invoice_queryset(
     selected_student_id: Optional[int],
     status_filter: str,
     semester_id: Optional[int],
+    academic_career: CareerModeT | None = None,
 ) -> QuerySet[CrsInvoice]:
     """Return the base invoice queryset for the finance officer view."""
     qs = CrsInvoice.objects.select_related(
@@ -484,6 +511,8 @@ def invoice_queryset(
     ).order_by("-created_at")
     if selected_student_id:
         qs = qs.filter(student_id=selected_student_id)
+    if academic_career is not None:
+        qs = filter_by_academic_career(qs, "student__academic_career", academic_career)
     if semester_id:
         qs = qs.filter(semester_id=semester_id)
     if status_filter == "open":
@@ -494,31 +523,48 @@ def invoice_queryset(
 def uninvoiced_registration_queryset(
     selected_student_id: Optional[int],
     semester_id: Optional[int],
+    academic_career: CareerModeT | None = None,
 ) -> QuerySet[Registration]:
     """Return invoiceable registrations that finance still needs to materialize."""
-    return invoice_generation_registration_qs(
+    registrations = invoice_generation_registration_qs(
         student_id=selected_student_id,
         semester_id=semester_id,
     )
+    if academic_career is not None:
+        registrations = filter_by_academic_career(
+            registrations,
+            "student__academic_career",
+            academic_career,
+        )
+    return registrations
 
 
 def fee_setup_registration_queryset(
     selected_student_id: Optional[int],
     semester_id: Optional[int],
+    academic_career: CareerModeT | None = None,
 ) -> QuerySet[Registration]:
     """Return zero-credit registrations that still need course-fee setup."""
     # Include stale zero invoices; gp_fee_setup_registrations drops rows made billable.
-    return invoiceable_registration_qs(
+    registrations = invoiceable_registration_qs(
         student_id=selected_student_id,
         semester_id=semester_id,
         missing_only=False,
     ).filter(section__curriculum_course__credit_hours_id__lte=0)
+    if academic_career is not None:
+        registrations = filter_by_academic_career(
+            registrations,
+            "student__academic_career",
+            academic_career,
+        )
+    return registrations
 
 
 def payment_queryset(
     selected_student_id: Optional[int],
     status_filter: str,
     semester_id: Optional[int],
+    academic_career: CareerModeT | None = None,
 ) -> QuerySet[Payment]:
     """Return the base payment queryset for the finance officer view."""
     qs = (
@@ -537,6 +583,12 @@ def payment_queryset(
     )
     if selected_student_id:
         qs = qs.filter(student_semester_invoice__student_id=selected_student_id)
+    if academic_career is not None:
+        qs = filter_by_academic_career(
+            qs,
+            "student_semester_invoice__student__academic_career",
+            academic_career,
+        )
     if semester_id:
         qs = qs.filter(student_semester_invoice__semester_id=semester_id)
     if status_filter and status_filter != "all":
@@ -587,13 +639,13 @@ def _without_page_params(params: QueryDict) -> QueryDict:
 
 
 def _pagination_state(
-    request: HttpRequest,
+    params: QueryDict,
     *,
     page_param: str,
     semester_id: Optional[int],
 ) -> PaginationStateT:
     """Return encoded query and hidden fields for one pagination control."""
-    pagination_params = request.GET.copy()
+    pagination_params = params.copy()
     pagination_params.pop(page_param, None)
     if "semester" not in pagination_params and semester_id:
         pagination_params["semester"] = str(semester_id)
@@ -607,12 +659,48 @@ def _pagination_state(
     }
 
 
+def _current_finance_semester(career: CareerModeT) -> Semester | None:
+    """Return the default semester for the selected finance career."""
+    if career == CAREER_ALL:
+        return Semester.get_current_sem()
+    semesters = semester_queryset_for_career(
+        career,
+        Semester.objects.select_related("academic_year"),
+    )
+    return semesters.order_by("-start_date", "-id").first()
+
+
+def _effective_finance_career(
+    params: QueryDict,
+    selected_student_id: Optional[int],
+) -> CareerModeT:
+    """Return the finance career scope, inferring direct student links safely."""
+    career = selected_academic_career(params)
+    if not selected_student_id or params.get(CAREER_QUERY_PARAM):
+        return career
+    student_career = (
+        Student.objects.filter(pk=selected_student_id)
+        .values_list("academic_career", flat=True)
+        .first()
+    )
+    return normalize_academic_career(student_career, default=career)
+
+
+def _effective_finance_params(params: QueryDict, career: CareerModeT) -> QueryDict:
+    """Return GET params with the effective career scope made explicit."""
+    effective_params = params.copy()
+    effective_params[CAREER_QUERY_PARAM] = career
+    return effective_params
+
+
 def build_finance_console_context(request: HttpRequest) -> PortalContextT:
     """Build context for the finance officer invoice and payment console."""
     user = cast(User, request.user)
     tab = request.GET.get("tab", "invoices")
     search_query = request.GET.get("q", "").strip()
     selected_student_id = clean_int(request.GET.get("student_id"))
+    career = _effective_finance_career(request.GET, selected_student_id)
+    effective_get = _effective_finance_params(request.GET, career)
     invoice_status = request.GET.get("invoice_status") or None
     payment_status = request.GET.get("payment_status") or None
     semester_param = request.GET.get("semester")
@@ -629,14 +717,16 @@ def build_finance_console_context(request: HttpRequest) -> PortalContextT:
     if not selected_student_id and payment_status is None:
         payment_status = "pending"
     if not semester_param_present:
-        current_semester = None if selected_student_id else Semester.get_current_sem()
+        current_semester = (
+            None if selected_student_id else _current_finance_semester(career)
+        )
         if current_semester is not None:
             semester_id = current_semester.id
     all_semesters_selected = semester_param == "all" or (
         selected_student_id is not None and not semester_param_present
     )
 
-    base_params = _without_page_params(request.GET)
+    base_params = _without_page_params(effective_get)
     base_params.pop("tab", None)
     base_query = base_params.urlencode()
     if base_query:
@@ -645,20 +735,21 @@ def build_finance_console_context(request: HttpRequest) -> PortalContextT:
     else:
         invoice_tab_url = "?tab=invoices"
         payment_tab_url = "?tab=payments"
-    invoice_all_url = "?tab=invoices&invoice_status=all&semester=all"
-    payment_all_url = "?tab=payments&payment_status=all&semester=all"
+    career_query = f"&academic_career={career}"
+    invoice_all_url = f"?tab=invoices&invoice_status=all&semester=all{career_query}"
+    payment_all_url = f"?tab=payments&payment_status=all&semester=all{career_query}"
     pagination_state = _pagination_state(
-        request,
+        effective_get,
         page_param="page",
         semester_id=semester_id,
     )
     registration_pagination_state = _pagination_state(
-        request,
+        effective_get,
         page_param="registration_page",
         semester_id=semester_id,
     )
     fee_setup_pagination_state = _pagination_state(
-        request,
+        effective_get,
         page_param="fee_setup_page",
         semester_id=semester_id,
     )
@@ -666,7 +757,7 @@ def build_finance_console_context(request: HttpRequest) -> PortalContextT:
     student_options = []
     selected_student_label = ""
     if selected_student_id:
-        selected_student = finance_std_by_id(selected_student_id)
+        selected_student = finance_std_by_id(selected_student_id, career)
         if selected_student:
             student_options = build_std_options(
                 [selected_student],
@@ -677,19 +768,23 @@ def build_finance_console_context(request: HttpRequest) -> PortalContextT:
         selected_student_id,
         invoice_status or "open",
         semester_id,
+        career,
     )
     payment_qs = payment_queryset(
         selected_student_id,
         payment_status or "pending",
         semester_id,
+        career,
     )
     uninvoiced_registration_qs = uninvoiced_registration_queryset(
         selected_student_id,
         semester_id,
+        career,
     )
     fee_setup_registration_qs = fee_setup_registration_queryset(
         selected_student_id,
         semester_id,
+        career,
     )
 
     invoice_page = Paginator(invoice_qs, 100).get_page(request.GET.get("page"))
@@ -732,10 +827,11 @@ def build_finance_console_context(request: HttpRequest) -> PortalContextT:
             "selected": all_semesters_selected,
         }
     ]
-    for sem in Semester.objects.select_related("academic_year").order_by(
-        "-academic_year__start_date",
-        "-number",
-    ):
+    semesters = semester_queryset_for_career(
+        career,
+        Semester.objects.select_related("academic_year"),
+    ).order_by("-academic_year__start_date", "-number")
+    for sem in semesters:
         semester_options.append(
             {
                 "value": str(sem.id),
@@ -743,23 +839,39 @@ def build_finance_console_context(request: HttpRequest) -> PortalContextT:
                 "selected": semester_id == sem.id,
             }
         )
+    current_query = effective_get.urlencode()
+    current_path = f"{request.path}?{current_query}" if current_query else request.path
 
     active_task = "payment_validation" if tab == "payments" else "invoice_console"
     dashboard_url = reverse(
         "staff_role_dashboard",
         kwargs={"role": "finance_officer"},
     )
+    dashboard_url = append_career_query(dashboard_url, career)
     return {
         "page_title": "Finance Officer Console",
         "page_summary": "Review invoices, record payments, and clear balances.",
         "eyebrow": "Finance officer",
-        "sidebar_links": build_staff_sidebar_links("finance_officer", active_task),
-        "role_switcher": build_staff_role_switcher(user, "finance_officer"),
+        "sidebar_links": build_staff_sidebar_links(
+            "finance_officer",
+            active_task,
+            academic_career=career,
+        ),
+        "role_switcher": build_staff_role_switcher(
+            user,
+            "finance_officer",
+            academic_career=career,
+        ),
         "breadcrumbs": [
             {"label": "Finance overview", "href": dashboard_url},
             {"label": "Invoice console", "href": ""},
         ],
         "active_tab": tab,
+        "selected_academic_career": career,
+        "career_selector": career_selector_context(
+            effective_get,
+            action_url=reverse("finance_officer_invoices"),
+        ),
         "search_query": search_query,
         "student_options": student_options,
         "selected_student_id": selected_student_id,
@@ -784,7 +896,7 @@ def build_finance_console_context(request: HttpRequest) -> PortalContextT:
         "payment_page": payment_page,
         "uninvoiced_registration_page": uninvoiced_registration_page,
         "fee_setup_registration_page": fee_setup_registration_page,
-        "current_path": request.get_full_path(),
+        "current_path": current_path,
         "invoice_tab_url": invoice_tab_url,
         "payment_tab_url": payment_tab_url,
         "invoice_all_url": invoice_all_url,

@@ -77,6 +77,7 @@
         </div>
         <form method="post" action="{{ upload_url }}" enctype="multipart/form-data" class="row g-3 align-items-end">
           {% csrf_token %}
+          <input type="hidden" name="academic_career" value="{{ selected_academic_career }}">
           <div class="col-12 col-lg-8">
             <label class="form-label" for="id_roster_file">CSV roster file</label>
             <input id="id_roster_file" class="form-control" type="file" name="roster_file" accept=".csv,text/csv" />
@@ -96,6 +97,7 @@
 
   <form method="post" id="faculty-grade-roster-form" data-autosave-url="{{ autosave_url }}">
     {% csrf_token %}
+    <input type="hidden" name="academic_career" value="{{ selected_academic_career }}">
     <div class="portal-panel-card">
       <div class="portal-panel-card__stripe"></div>
       <div class="portal-panel-card__body p-0">
@@ -175,6 +177,7 @@
             const body = new URLSearchParams({
               grade_id: gradeId,
               grade_code: select.value,
+              academic_career: "{{ selected_academic_career|escapejs }}",
             });
             try {
               const response = await fetch(autosaveUrl, {

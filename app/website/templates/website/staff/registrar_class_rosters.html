@@ -19,6 +19,7 @@
         <h2>Class rosters</h2>
       </div>
       <form method="get" class="row g-3 align-items-end">
+        <input type="hidden" name="academic_career" value="{{ selected_academic_career }}" />
         <div class="col-lg-4">
           <label class="form-label">Student</label>
           <select
@@ -166,7 +167,10 @@
             dataType: "json",
             delay: 250,
             data: function (params) {
-              return { q: params.term };
+              return {
+                q: params.term,
+                academic_career: "{{ selected_academic_career }}",
+              };
             },
             processResults: function (data) {
               return data;

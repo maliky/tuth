@@ -7,6 +7,7 @@ from django.contrib.auth.models import Permission, User
 from django.urls import reverse
 from model_bakery import baker
 
+from app.academics.choices import AcademicCareer
 from app.academics.models.college import College
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
@@ -15,6 +16,7 @@ from app.academics.models.department import Department
 from app.shared.models import CreditHour
 from app.timetable.models.academic_year import AcademicYear
 from app.timetable.models.semester import Semester, SemesterStatus
+from app.timetable.graduate_calendar import ensure_graduate_semesters
 from app.website.services import registrar_portal
 from app.website.services.registrar_portal import group_semester_windows
 
@@ -133,13 +135,58 @@ def test_reg_dashboard_toggles_win(client):
 
     response = client.post(
         reverse("reg_crs_wins"),
-        {"semester_id": semester.id, "status_code": "registration"},
+        {
+            "semester_id": semester.id,
+            "status_code": "registration",
+            "academic_career": "undergraduate",
+        },
         follow=True,
     )
 
     assert response.status_code == 200
     semester.refresh_from_db()
     assert semester.status_id == "registration"
+
+
+@pytest.mark.django_db
+def test_semester_career_allows_parallel_undergraduate_and_graduate_windows() -> None:
+    """Undergraduate and graduate calendars may reuse year and semester number."""
+    academic_year = AcademicYear.objects.create(start_date=date(2026, 8, 1))
+    undergraduate = Semester.objects.create(
+        academic_year=academic_year,
+        number=1,
+        academic_career=AcademicCareer.UNDERGRADUATE,
+    )
+    graduate = Semester.objects.create(
+        academic_year=academic_year,
+        number=1,
+        academic_career=AcademicCareer.GRADUATE,
+    )
+
+    assert undergraduate.id != graduate.id
+    assert graduate.end_date == date(2027, 1, 31)
+
+
+@pytest.mark.django_db
+def test_open_registration_semester_is_scoped_by_career() -> None:
+    """One undergraduate and one graduate semester may both be registration-open."""
+    _ensure_sem_statuses()
+    academic_year = AcademicYear.objects.create(start_date=date(2026, 8, 1))
+    undergraduate = Semester.objects.create(
+        academic_year=academic_year,
+        number=1,
+        academic_career=AcademicCareer.UNDERGRADUATE,
+        status_id="registration",
+    )
+    graduate = Semester.objects.create(
+        academic_year=academic_year,
+        number=1,
+        academic_career=AcademicCareer.GRADUATE,
+        status_id="registration",
+    )
+
+    assert Semester.regio_open_sem(AcademicCareer.UNDERGRADUATE)[0] == undergraduate
+    assert Semester.regio_open_sem(AcademicCareer.GRADUATE)[0] == graduate
 
 
 @pytest.mark.django_db
@@ -199,7 +246,7 @@ def test_reg_window_groups_current_year_beats_open_non_current_year() -> None:
 
 @pytest.mark.django_db
 def test_reg_window_page_renders_foldable_groups(client, monkeypatch) -> None:
-    """Registrar window page should render foldable academic-year groups."""
+    """Registrar window page should render foldable undergraduate academic-year groups."""
     _ensure_sem_statuses()
     monkeypatch.setattr(registrar_portal.timezone, "localdate", lambda: date(2026, 3, 1))
     old_year = AcademicYear.objects.create(start_date=date(2024, 8, 1))
@@ -210,7 +257,10 @@ def test_reg_window_page_renders_foldable_groups(client, monkeypatch) -> None:
     registrar.user_permissions.add(Permission.objects.get(codename="change_semester"))
 
     client.force_login(registrar)
-    response = client.get(reverse("reg_crs_wins"))
+    response = client.get(
+        reverse("reg_crs_wins"),
+        {"academic_career": "undergraduate"},
+    )
 
     content = response.content.decode()
     assert response.status_code == 200
@@ -223,3 +273,54 @@ def test_reg_window_page_renders_foldable_groups(client, monkeypatch) -> None:
         '<details class="portal-accordion-card registrar-window-group mb-3" open>'
         in content
     )
+
+
+@pytest.mark.django_db
+def test_reg_window_page_defaults_to_graduate_launch_windows(client) -> None:
+    """Course windows should default to the graduate launch years only."""
+    _ensure_sem_statuses()
+    ensure_graduate_semesters()
+    old_year = AcademicYear.objects.create(start_date=date(2025, 8, 1))
+    Semester.objects.create(academic_year=old_year, number=1)
+    registrar = baker.make(User, username="registrar-window-graduate-default")
+    registrar.user_permissions.add(Permission.objects.get(codename="change_semester"))
+
+    client.force_login(registrar)
+    response = client.get(reverse("reg_crs_wins"))
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert response.context["selected_academic_career"] == "graduate"
+    assert "Graduate semester windows" in content
+    assert "26-27" in content
+    assert "27-28" in content
+    assert "25-26" not in content
+    assert 'aria-label="Academic career"' in content
+    assert ">Career<" not in content
+
+
+@pytest.mark.django_db
+def test_reg_window_post_preserves_graduate_scope(client) -> None:
+    """Updating a graduate semester should redirect back to the graduate view."""
+    _ensure_sem_statuses()
+    rows = ensure_graduate_semesters()
+    semester = next(row[0] for row in rows if row[0].number == 2)
+    registrar = baker.make(User, username="registrar-window-graduate-post")
+    registrar.user_permissions.add(Permission.objects.get(codename="change_semester"))
+
+    client.force_login(registrar)
+    response = client.post(
+        reverse("reg_crs_wins"),
+        {
+            "semester_id": semester.id,
+            "status_code": "grade_entry",
+            "academic_career": "graduate",
+        },
+        follow=True,
+    )
+    semester.refresh_from_db()
+
+    assert response.status_code == 200
+    assert response.redirect_chain[-1][0].endswith("?academic_career=graduate")
+    assert response.context["selected_academic_career"] == "graduate"
+    assert semester.status_id == "grade_entry"

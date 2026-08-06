@@ -10,8 +10,15 @@ from django.db import transaction
 
 from app.academics.choices import AcademicCareer
 from app.academics.models.curriculum import Curriculum
+from app.finance.models.invoice import StdSemesterInvoice
+from app.finance.models.payment import Payment
+from app.finance.models.status_types_methods import Payer, PaymentMethod, PaymentStatus
+from app.finance.registration_invoices import ensure_course_invoice_for_registration
 from app.people.models.student import Student
-from app.people.models.student_curriculum_enrollment import set_primary_std_curri_enroll
+from app.people.models.student_curriculum_enrollment import (
+    StdCurriEnroll,
+    set_primary_std_curri_enroll,
+)
 from app.registry.models.grade import Grade, GradeValue
 from app.registry.models.registration import Registration, RegistrationStatus
 from app.timetable.models.section import Section
@@ -29,15 +36,26 @@ class Command(BaseCommand):
         """Register command options."""
         parser.add_argument("--semester", required=True, help="Semester code.")
         parser.add_argument("--program", default="GRAD-MBAM", help="Curriculum code.")
+        parser.add_argument(
+            "--other-program",
+            default="GRAD-EDUC-CI",
+            help="Second graduate curriculum code for cross-college smoke data.",
+        )
         parser.add_argument("--apply", action="store_true", help="Persist changes.")
 
     def handle(self, *args: object, **options: object) -> None:
         """Seed smoke data inside one transaction."""
         semester = _semester_by_code(str(options["semester"]))
         curriculum = _graduate_curriculum(str(options["program"]))
+        other_curriculum = _graduate_curriculum(str(options["other_program"]))
         apply_changes = bool(options.get("apply"))
         with transaction.atomic():
             sections = _ensure_sections(curriculum, semester)
+            other_sections = (
+                sections
+                if other_curriculum.id == curriculum.id
+                else _ensure_sections(other_curriculum, semester)
+            )
             _ensure_student(
                 username="grad.mbam.smoke.first",
                 first_name="Graduate",
@@ -52,14 +70,25 @@ class Command(BaseCommand):
                 curriculum=curriculum,
                 semester=semester,
             )
+            _retire_legacy_smoke_student("grad.msgh.smoke.second")
+            third_student = _ensure_student(
+                username="grad.educ.smoke.second",
+                first_name="Graduate",
+                last_name="Education",
+                curriculum=other_curriculum,
+                semester=semester,
+            )
             grades = _ensure_second_year_history(second_student, sections)
+            cleared_payments = _clear_student_history_finance(second_student, sections)
+            other_grades = _ensure_second_year_history(third_student, other_sections)
             if not apply_changes:
                 transaction.set_rollback(True)
         mode = "applied" if apply_changes else "dry-run"
         self.stdout.write(
             self.style.SUCCESS(
-                f"graduate smoke seed {mode}: sections={len(sections)} "
-                f"students=2 grades={grades}"
+                f"graduate smoke seed {mode}: sections={len(sections) + len(other_sections)} "
+                f"students=3 grades={grades + other_grades} "
+                f"cleared_payments={cleared_payments}"
             )
         )
 
@@ -146,13 +175,30 @@ def _ensure_student(
     if SMOKE_MARKER not in student.bio:
         student.bio = f"{student.bio}\n{SMOKE_MARKER}".strip()
     student.save()
-    set_primary_std_curri_enroll(
+    enroll = set_primary_std_curri_enroll(
         student,
         curriculum,
         entry_semester_id=student.entry_semester_id,
         is_active=True,
     )
+    StdCurriEnroll.objects.filter(student=student, is_active=True).exclude(
+        pk=enroll.pk
+    ).update(is_active=False)
     return cast(Student, student)
+
+
+def _retire_legacy_smoke_student(username: str) -> None:
+    """Delete obsolete smoke-only student data from earlier seed versions."""
+    user = User.objects.filter(username=username).first()
+    if user is None:
+        return
+    student = Student.objects.filter(user=user).first()
+    if student is None:
+        user.delete()
+        return
+    if SMOKE_MARKER not in student.bio:
+        raise CommandError(f"Refusing to delete non-smoke student: {username}")
+    user.delete()
 
 
 def _ensure_second_year_history(student: Student, sections: list[Section]) -> int:
@@ -181,6 +227,63 @@ def _ensure_second_year_history(student: Student, sections: list[Section]) -> in
             grade.save(update_fields=["value", "info"])
         created += 1
     return created
+
+
+def _clear_student_history_finance(student: Student, sections: list[Section]) -> int:
+    """Create cleared finance rows for completed graduate smoke registrations."""
+    Payer._populate_attributes_and_db()
+    PaymentMethod._populate_attributes_and_db()
+    PaymentStatus._populate_attributes_and_db()
+    pending_status = RegistrationStatus.pending()
+    cleared_status = RegistrationStatus.cleared()
+    section_ids = [
+        section.id
+        for section in sections
+        if int(section.curriculum_course.level_number or 0) <= 2
+    ]
+    registrations = list(
+        Registration.objects.filter(
+            student=student,
+            section_id__in=section_ids,
+        ).select_related("section", "section__curriculum_course", "section__semester")
+    )
+    parent_ids: set[int] = set()
+    for registration in registrations:
+        # Completed smoke history needs invoice materialization before clearance.
+        Registration.objects.filter(pk=registration.pk).update(status=pending_status)
+        registration.status = pending_status
+        invoice, _created, _updated = ensure_course_invoice_for_registration(registration)
+        if invoice is None:
+            Registration.objects.filter(pk=registration.pk).update(status=cleared_status)
+            continue
+        if invoice.student_semester_invoice_id is not None:
+            parent_ids.add(invoice.student_semester_invoice_id)
+    cleared_payments = 0
+    parent_invoices = StdSemesterInvoice.objects.filter(pk__in=parent_ids)
+    for parent_invoice in parent_invoices:
+        parent_invoice.refresh_totals_from_sources(save_model=True)
+        balance = parent_invoice.get_balance()
+        if balance <= 0:
+            continue
+        payment = (
+            Payment.objects.filter(student_semester_invoice=parent_invoice)
+            .order_by("id")
+            .first()
+        )
+        if payment is None:
+            payment = Payment(student_semester_invoice=parent_invoice)
+        payment.amount_paid = balance
+        payment.payer_id = "student"
+        payment.payment_method = PaymentMethod.get_dft()
+        payment.status = PaymentStatus.cleared()
+        payment.save()
+        parent_invoice.refresh_totals_from_sources(save_model=True)
+        cleared_payments += 1
+    Registration.objects.filter(
+        student=student,
+        section_id__in=section_ids,
+    ).update(status=cleared_status)
+    return cleared_payments
 
 
 def _norm_sem_code(value: str) -> str:

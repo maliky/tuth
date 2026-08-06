@@ -53,9 +53,13 @@ def academic_career_theme_class(value: object) -> str:
     return ""
 
 
-def career_filter_options(selected: CareerModeT) -> list[dict[str, object]]:
+def career_filter_options(
+    selected: CareerModeT,
+    *,
+    include_all: bool = True,
+) -> list[dict[str, object]]:
     """Return selector options with graduate first."""
-    return [
+    options = [
         {
             "value": AcademicCareer.GRADUATE.value,
             "label": AcademicCareer.GRADUATE.label,
@@ -66,12 +70,16 @@ def career_filter_options(selected: CareerModeT) -> list[dict[str, object]]:
             "label": AcademicCareer.UNDERGRADUATE.label,
             "selected": selected == AcademicCareer.UNDERGRADUATE.value,
         },
-        {
-            "value": CAREER_ALL,
-            "label": "All",
-            "selected": selected == CAREER_ALL,
-        },
     ]
+    if include_all:
+        options.append(
+            {
+                "value": CAREER_ALL,
+                "label": "All",
+                "selected": selected == CAREER_ALL,
+            }
+        )
+    return options
 
 
 def filter_by_academic_career(
@@ -125,6 +133,7 @@ def career_selector_context(
     *,
     action_url: str,
     exclude: Iterable[str] = (),
+    include_all: bool = True,
 ) -> dict[str, object]:
     """Return context for a shared academic-career selector."""
     selected = selected_academic_career(params)
@@ -133,7 +142,7 @@ def career_selector_context(
         "param_name": CAREER_QUERY_PARAM,
         "selected": selected,
         "selected_label": academic_career_label(selected),
-        "options": career_filter_options(selected),
+        "options": career_filter_options(selected, include_all=include_all),
         "hidden_fields": career_hidden_fields(params, exclude=exclude),
     }
 

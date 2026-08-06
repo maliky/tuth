@@ -36,6 +36,7 @@ from app.finance.utils import create_pending_payments
 from app.registry.models.registration import Registration
 from app.shared.auth.perms import UserRole
 from app.shared.utils import parse_str
+from app.academics.career_scope import selected_academic_career
 from app.website.services.finance_portal import (
     build_finance_console_context,
     clean_int,
@@ -126,7 +127,7 @@ def finance_officer_std_autocomplete(request: HttpRequest) -> HttpResponse:
     """Return finance students for the select2 dropdown."""
     _require_finance_access(request)
     query = parse_str(request.GET.get("q"))
-    students = finance_stds(query)[:15]
+    students = finance_stds(query, selected_academic_career(request.GET))[:15]
     results = [
         {
             "id": student.id,

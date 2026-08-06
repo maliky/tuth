@@ -19,6 +19,7 @@
         <h2>Filter invoices and payments</h2>
       </div>
       <form method="get" class="row g-3 align-items-end finance-filter-grid">
+        <input type="hidden" name="academic_career" value="{{ selected_academic_career }}" />
         <input type="hidden" name="tab" value="{{ active_tab }}" />
         <div class="col-12 col-lg-5">
           <label class="form-label">Student</label>
@@ -634,7 +635,10 @@
             dataType: "json",
             delay: 250,
             data: function (params) {
-              return { q: params.term };
+              return {
+                q: params.term,
+                academic_career: "{{ selected_academic_career }}",
+              };
             },
             processResults: function (data) {
               return data;

@@ -69,6 +69,7 @@
                         >
                           {% csrf_token %}
                           <input type="hidden" name="semester_id" value="{{ semester.id }}" />
+                          <input type="hidden" name="academic_career" value="{{ selected_academic_career }}" />
                           <select name="status_code" class="form-select form-select-sm" aria-label="Status for {{ semester }}">
                             {% for status in statuses %}
                               <option value="{{ status.code }}" {% if semester.status_id == status.code %}selected{% endif %}>

@@ -29,6 +29,10 @@ from app.shared.utils import parse_str
 from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
 from app.website.services.portal_types import BreadcrumbT, PortalContextT
+from app.website.services.semester_scope import (
+    filter_by_career_semester_floor,
+    semester_queryset_for_career,
+)
 from app.website.services.staff_common import (
     _admin_shortcuts_for_models,
     _as_user,
@@ -101,6 +105,19 @@ class GradeTranscriptSummaryRowT(TypedDict):
     section_count: int
     latest_semester_label: str
     detail_url: str
+
+
+def _career_scoped_sections(
+    sections: SectionQueryT,
+    career: CareerModeT,
+) -> SectionQueryT:
+    """Apply career and launch-term visibility to an oversight section set."""
+    scoped = filter_by_academic_career(
+        sections,
+        "curriculum_course__curriculum__academic_career",
+        career,
+    )
+    return filter_by_career_semester_floor(scoped, "semester", career)
 
 
 OVERSIGHT_ADMIN_SHORTCUTS = (
@@ -201,22 +218,14 @@ def scoped_grade_roster_sections(
     career = academic_career or selected_academic_career(QueryDict(mutable=True))
     sections = _base_section_queryset()
     if role_slug == "vpaa":
-        return filter_by_academic_career(
-            sections,
-            "curriculum_course__curriculum__academic_career",
-            career,
-        )
+        return _career_scoped_sections(sections, career)
 
     # Prefer explicit role assignments so staff-only deans/chairs still get
     # the scoped roster and autocomplete data attached to their assignment.
     assignment_filter = _assignment_section_filter(user, role_slug)
     if assignment_filter is not None:
         sections = sections.filter(assignment_filter)
-        return filter_by_academic_career(
-            sections,
-            "curriculum_course__curriculum__academic_career",
-            career,
-        )
+        return _career_scoped_sections(sections, career)
 
     faculty = get_faculty_profile(user)
     if faculty is None:
@@ -228,30 +237,18 @@ def scoped_grade_roster_sections(
         sections = sections.filter(
             curriculum_course__course__department__college_id=faculty.college_id
         )
-        return filter_by_academic_career(
-            sections,
-            "curriculum_course__curriculum__academic_career",
-            career,
-        )
+        return _career_scoped_sections(sections, career)
 
     if role_slug == "chair":
         department = faculty.staff_profile.department
         if department:
             sections = sections.filter(curriculum_course__course__department=department)
-            return filter_by_academic_career(
-                sections,
-                "curriculum_course__curriculum__academic_career",
-                career,
-            )
+            return _career_scoped_sections(sections, career)
         if faculty.college_id:
             sections = sections.filter(
                 curriculum_course__course__department__college_id=faculty.college_id
             )
-            return filter_by_academic_career(
-                sections,
-                "curriculum_course__curriculum__academic_career",
-                career,
-            )
+            return _career_scoped_sections(sections, career)
     return sections.none()
 
 
@@ -295,15 +292,18 @@ def _filtered_transcript_grades(
     return grades
 
 
-def _semester_options(semester_id: int | None) -> list[FilterOptionT]:
+def _semester_options(
+    semester_id: int | None,
+    career: CareerModeT,
+) -> list[FilterOptionT]:
     """Return semester filter options for the oversight roster page."""
     options: list[FilterOptionT] = [
         {"value": "all", "label": "All semesters", "selected": semester_id is None}
     ]
-    semesters = Semester.objects.select_related("academic_year").order_by(
-        "-academic_year__start_date",
-        "-number",
-    )
+    semesters = semester_queryset_for_career(
+        career,
+        Semester.objects.select_related("academic_year"),
+    ).order_by("-academic_year__start_date", "-number")
     for semester in semesters:
         options.append(
             {
@@ -472,7 +472,11 @@ def build_grade_roster_list_context(
             "grade_rosters",
             academic_career=career,
         ),
-        "role_switcher": build_staff_role_switcher(user, role_slug),
+        "role_switcher": build_staff_role_switcher(
+            user,
+            role_slug,
+            academic_career=career,
+        ),
         "breadcrumbs": _oversight_breadcrumbs(role_slug, ""),
         "dashboard_url": append_career_query(
             reverse("staff_role_dashboard", args=[role_slug]),
@@ -491,7 +495,7 @@ def build_grade_roster_list_context(
             "staff_grade_roster_faculty_autocomplete",
             args=[role_slug],
         ),
-        "semester_options": _semester_options(semester_id),
+        "semester_options": _semester_options(semester_id, career),
         "selected_student_id": selected_student_id,
         "selected_student_label": _student_filter_label(selected_student_id),
         "selected_faculty_id": selected_faculty_id,
@@ -558,7 +562,11 @@ def build_grade_roster_detail_context(
             "grade_rosters",
             academic_career=career,
         ),
-        "role_switcher": build_staff_role_switcher(user, role_slug),
+        "role_switcher": build_staff_role_switcher(
+            user,
+            role_slug,
+            academic_career=career,
+        ),
         "breadcrumbs": _oversight_breadcrumbs(role_slug, course_code),
         "dashboard_url": append_career_query(
             reverse("staff_role_dashboard", args=[role_slug]),
@@ -661,7 +669,11 @@ def build_grade_transcript_list_context(
             "grade_transcripts",
             academic_career=career,
         ),
-        "role_switcher": build_staff_role_switcher(user, role_slug),
+        "role_switcher": build_staff_role_switcher(
+            user,
+            role_slug,
+            academic_career=career,
+        ),
         "breadcrumbs": _transcript_breadcrumbs(role_slug, ""),
         "dashboard_url": append_career_query(
             reverse("staff_role_dashboard", args=[role_slug]),
@@ -676,7 +688,7 @@ def build_grade_transcript_list_context(
             "staff_grade_transcript_student_autocomplete",
             args=[role_slug],
         ),
-        "semester_options": _semester_options(semester_id),
+        "semester_options": _semester_options(semester_id, career),
         "selected_student_id": selected_student_id,
         "selected_student_label": _student_filter_label(selected_student_id),
         "student_page": student_page,
@@ -733,7 +745,11 @@ def build_grade_transcript_context(
             "grade_transcripts",
             academic_career=career,
         ),
-        "role_switcher": build_staff_role_switcher(user, role_slug),
+        "role_switcher": build_staff_role_switcher(
+            user,
+            role_slug,
+            academic_career=career,
+        ),
         "breadcrumbs": _transcript_breadcrumbs(role_slug, transcript["student_name"]),
         "dashboard_url": append_career_query(
             reverse("staff_grade_transcripts", args=[role_slug]),

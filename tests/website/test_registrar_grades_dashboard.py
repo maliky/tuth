@@ -9,6 +9,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.urls import reverse
 
+from app.academics.choices import AcademicCareer
+from app.academics.models.curriculum import Curriculum
 from app.registry.models.grade import Grade, GradeValue
 from app.registry.models.registration import Registration
 from app.timetable.models.semester import SemesterStatus
@@ -41,6 +43,15 @@ def _grant_grade_editor_perms(user) -> None:
     )
 
 
+def _set_career(student, curricula: list[Curriculum], career: str) -> None:
+    """Place a student and related curricula in one academic career."""
+    student.academic_career = career
+    student.save(update_fields=["academic_career"])
+    for curriculum in curricula:
+        curriculum.academic_career = career
+        curriculum.save(update_fields=["academic_career"])
+
+
 def test_dashboard_dfts_to_all_sems_with_grades(
     client,
     reg_user_factory,
@@ -64,6 +75,11 @@ def test_dashboard_dfts_to_all_sems_with_grades(
         previous,
     )
     reg_grade_factory(previous_student, previous_section)
+    _set_career(
+        previous_student,
+        [curriculum],
+        AcademicCareer.GRADUATE,
+    )
 
     current_section, _current_curriculum = reg_sec_factory(
         current,
@@ -76,13 +92,73 @@ def test_dashboard_dfts_to_all_sems_with_grades(
         current,
     )
     reg_grade_factory(current_student, current_section)
+    _set_career(
+        current_student,
+        [curriculum, _current_curriculum],
+        AcademicCareer.GRADUATE,
+    )
 
     client.force_login(user)
     response = client.get(reverse("reg_grades_dashboard"))
 
     assert response.status_code == 200
     assert _selected_sem_value(response) == "all"
+    assert response.context["selected_academic_career"] == "graduate"
     assert len(response.context["student_groups"]) == 2
+
+
+def test_dashboard_defaults_to_grad_students_and_can_show_all_careers(
+    client,
+    reg_user_factory,
+    reg_sem_pair_factory,
+    reg_sec_factory,
+    reg_std_factory,
+    reg_grade_factory,
+) -> None:
+    """Registrar grade review should start in graduate scope, with all as opt-in."""
+    user = reg_user_factory("registrar_dashboard_career_default")
+    _academic_year, _previous, current = reg_sem_pair_factory()
+    grad_section, grad_curriculum = reg_sec_factory(
+        current,
+        course_number="321",
+        curriculum_short_name="CURRI_REG_GRAD",
+    )
+    grad_student = reg_std_factory("registrar_grad_student", grad_curriculum, current)
+    reg_grade_factory(grad_student, grad_section)
+    _set_career(grad_student, [grad_curriculum], AcademicCareer.GRADUATE)
+
+    undergrad_section, undergrad_curriculum = reg_sec_factory(
+        current,
+        course_number="322",
+        curriculum_short_name="CURRI_REG_UNDERGRAD",
+    )
+    undergrad_student = reg_std_factory(
+        "registrar_undergrad_student",
+        undergrad_curriculum,
+        current,
+    )
+    reg_grade_factory(undergrad_student, undergrad_section)
+    _set_career(
+        undergrad_student,
+        [undergrad_curriculum],
+        AcademicCareer.UNDERGRADUATE,
+    )
+
+    client.force_login(user)
+    default_response = client.get(reverse("reg_grades_dashboard"))
+    all_response = client.get(
+        reverse("reg_grades_dashboard"),
+        {"academic_career": "all"},
+    )
+
+    default_ids = {
+        group["student"].id for group in default_response.context["student_groups"]
+    }
+    all_ids = {group["student"].id for group in all_response.context["student_groups"]}
+    assert default_response.status_code == 200
+    assert default_response.context["selected_academic_career"] == "graduate"
+    assert default_ids == {grad_student.id}
+    assert all_ids == {grad_student.id, undergrad_student.id}
 
 
 def test_dashboard_explicit_semester_filter_limits_students(
@@ -112,7 +188,10 @@ def test_dashboard_explicit_semester_filter_limits_students(
     reg_grade_factory(current_student, current_section)
 
     client.force_login(user)
-    response = client.get(reverse("reg_grades_dashboard"), {"semester": str(current.id)})
+    response = client.get(
+        reverse("reg_grades_dashboard"),
+        {"semester": str(current.id), "academic_career": "all"},
+    )
     student_groups = response.context["student_groups"]
 
     assert response.status_code == 200
@@ -155,17 +234,22 @@ def test_dashboard_selected_student_shows_academic_snapshot_and_roster_link(
     client.force_login(user)
     response = client.get(
         reverse("reg_grades_dashboard"),
-        {"student_id": str(student.id), "semester": "all"},
+        {"student_id": str(student.id), "semester": "all", "academic_career": "all"},
     )
     snapshot = response.context["selected_student_snapshot"]
+    username_row = next(row for row in snapshot["rows"] if row["label"] == "Username")
     content = response.content.decode()
 
     assert response.status_code == 200
     assert snapshot["student_id"] == student.student_id
+    assert username_row["value"] == student.username[:15]
+    assert username_row["title"] == student.username
     assert snapshot["rosters_url"] == (
         f"{reverse('reg_class_rosters')}?student_id={student.id}&semester=all"
+        "&academic_career=all"
     )
     assert "Academic snapshot" in content
+    assert f'title="{student.username}"' in content
     assert curriculum.short_name in content
     assert student.student_id in content
     assert reverse("reg_class_roster_detail", args=[section.id]) in content
@@ -202,7 +286,10 @@ def test_registrar_grade_sidebar_includes_class_rosters_for_registrar(
     content = response.content.decode()
 
     assert response.status_code == 200
-    assert any(link["href"] == reverse("reg_class_rosters") for link in sidebar_links)
+    assert any(
+        link["href"] == f"{reverse('reg_class_rosters')}?academic_career=graduate"
+        for link in sidebar_links
+    )
     assert "Class rosters" in content
     assert reverse("reg_crs_wins") not in {link["href"] for link in sidebar_links}
 
@@ -269,7 +356,11 @@ def test_dashboard_shows_grade_editor_for_authorized_registrar(
     client.force_login(user)
     response = client.get(
         reverse("reg_grades_dashboard"),
-        {"student_id": str(student.id), "semester": str(current.id)},
+        {
+            "student_id": str(student.id),
+            "semester": str(current.id),
+            "academic_career": "all",
+        },
     )
     content = response.content.decode()
 
@@ -301,7 +392,11 @@ def test_dashboard_hides_grade_editor_without_change_permissions(
     client.force_login(user)
     response = client.get(
         reverse("reg_grades_dashboard"),
-        {"student_id": str(student.id), "semester": str(current.id)},
+        {
+            "student_id": str(student.id),
+            "semester": str(current.id),
+            "academic_career": "all",
+        },
     )
 
     assert response.status_code == 200

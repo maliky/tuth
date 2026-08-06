@@ -17,6 +17,7 @@
         <h2>Find transcripts by student or term</h2>
       </div>
       <form method="get" class="row g-3 align-items-end">
+        <input type="hidden" name="academic_career" value="{{ selected_academic_career }}" />
         <div class="col-md-6">
           <label class="form-label">Student</label>
           <select
@@ -89,7 +90,7 @@
           {% for row in selected_student_snapshot.rows %}
             <div class="account-profile-fact">
               <span>{{ row.label }}</span>
-              <strong>{{ row.value }}</strong>
+              <strong{% if row.title %} title="{{ row.title }}"{% endif %}>{{ row.value }}</strong>
             </div>
           {% endfor %}
         </div>
@@ -100,6 +101,7 @@
   {% if student_groups %}
     <form method="post" action="{{ bulk_download_url }}">
       {% csrf_token %}
+      <input type="hidden" name="academic_career" value="{{ selected_academic_career }}" />
       <div class="registrar-bulk-actions registrar-selection-toolbar d-flex flex-wrap gap-3 align-items-center mb-3">
         <label class="form-check d-inline-flex align-items-center gap-2 mb-0">
           <input
@@ -277,7 +279,10 @@
             dataType: "json",
             delay: 250,
             data: function (params) {
-              return { q: params.term };
+              return {
+                q: params.term,
+                academic_career: "{{ selected_academic_career }}",
+              };
             },
             processResults: function (data) {
               return data;

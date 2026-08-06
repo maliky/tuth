@@ -1,19 +1,12 @@
 {% if career_selector %}
-  <section class="portal-filter-card mb-4">
-    <div class="portal-filter-card__body">
-      <form class="d-flex flex-wrap align-items-end gap-3" method="get" action="{{ career_selector.action_url }}">
-        {% for field in career_selector.hidden_fields %}
-          <input type="hidden" name="{{ field.name }}" value="{{ field.value }}">
-        {% endfor %}
-        <div>
-          <label class="form-label mb-1" for="staff-academic-career">Academic career</label>
-          <select id="staff-academic-career" class="form-select form-select-sm" name="{{ career_selector.param_name }}" onchange="this.form.submit()">
-            {% for option in career_selector.options %}
-              <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-      </form>
-    </div>
-  </section>
+  <form class="staff-career-selector" method="get" action="{{ career_selector.action_url }}">
+    {% for field in career_selector.hidden_fields %}
+      <input type="hidden" name="{{ field.name }}" value="{{ field.value }}">
+    {% endfor %}
+    <select id="staff-academic-career" class="form-select form-select-sm" name="{{ career_selector.param_name }}" aria-label="Academic career" onchange="this.form.submit()">
+      {% for option in career_selector.options %}
+        <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.label }}</option>
+      {% endfor %}
+    </select>
+  </form>
 {% endif %}

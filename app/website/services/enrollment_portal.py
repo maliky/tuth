@@ -11,14 +11,27 @@ from django.db.models import Q, QuerySet
 from django.http import HttpRequest, QueryDict
 from django.urls import reverse
 
+from app.academics.career_scope import (
+    CareerModeT,
+    career_selector_context,
+    filter_by_academic_career,
+    selected_academic_career,
+)
 from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
 from app.people.models.student import Student
+from app.people.models.enrollment_application import (
+    EnrollmentApplication,
+    EnrollmentApplicationDoc,
+    EnrollmentCommunication,
+    EnrollmentEmailTemplate,
+)
 from app.registry.models.document import DocStd
 from app.registry.models.grade import Grade
 from app.registry.models.registration import Registration
 from app.timetable.models.semester import Semester
 from app.website.services.portal_types import AdminShortcutT
+from app.website.services.semester_scope import semester_queryset_for_career
 from app.website.services.staff_common import _admin_shortcuts_for_models
 
 StudentFilterValueT: TypeAlias = str | int | None
@@ -31,6 +44,10 @@ STUDENT_DIRECTORY_PAGE_SIZE = 25
 ENROLLMENT_ADMIN_SHORTCUTS: tuple[AdminShortcutSpecT, ...] = (
     ("Students", Student),
     ("Student documents", DocStd),
+    ("Enrollment requests", EnrollmentApplication),
+    ("Application documents", EnrollmentApplicationDoc),
+    ("Applicant messages", EnrollmentCommunication),
+    ("Enrollment email templates", EnrollmentEmailTemplate),
     ("Registrations", Registration),
     ("Programs / curricula", Curriculum),
     ("Colleges", College),
@@ -46,6 +63,7 @@ class StudentFiltersT(TypedDict):
     college: StudentFilterValueT
     program: StudentFilterValueT
     semester: StudentFilterValueT
+    academic_career: CareerModeT
 
 
 def clean_int(value: object) -> int | None:
@@ -82,6 +100,7 @@ def parse_student_filters(params: QueryDict) -> StudentFiltersT:
         "college": clean_int(params.get("college")),
         "program": clean_int(params.get("program")),
         "semester": clean_int(params.get("semester")),
+        "academic_career": selected_academic_career(params),
     }
 
 
@@ -90,6 +109,11 @@ def apply_student_filters(
     filters: StudentFiltersT,
 ) -> QuerySet[Student]:
     """Apply directory and autocomplete filters to a student queryset."""
+    queryset = filter_by_academic_career(
+        queryset,
+        "academic_career",
+        filters["academic_career"],
+    )
     q_value = filters["q"]
     if q_value:
         text_query = (
@@ -149,12 +173,21 @@ def _program_label(curriculum: Curriculum) -> str:
     return f"{curriculum.college.code} · {curriculum.short_name} · {long_name}"
 
 
-def build_student_directory_context(request: HttpRequest) -> dict[str, object]:
+def build_student_directory_context(
+    request: HttpRequest,
+    action_url: str | None = None,
+) -> dict[str, object]:
     """Build context for the enrollment student directory."""
     filters = parse_student_filters(request.GET)
     queryset = apply_student_filters(student_search_queryset(), filters).order_by(
         "long_name", "student_id"
     )
+    career = filters["academic_career"]
+    programs = filter_by_academic_career(
+        Curriculum.objects.select_related("college"),
+        "academic_career",
+        career,
+    ).order_by("college__code", "long_name", "short_name")
     paginator = Paginator(queryset, STUDENT_DIRECTORY_PAGE_SIZE)
     page_obj = paginator.get_page(request.GET.get("page"))
     return {
@@ -163,12 +196,15 @@ def build_student_directory_context(request: HttpRequest) -> dict[str, object]:
         "pagination_query": _query_without_page(request.GET),
         "filters": filters,
         "colleges": College.objects.order_by("code", "long_name"),
-        "programs": Curriculum.objects.select_related("college").order_by(
-            "college__code", "long_name", "short_name"
+        "programs": programs,
+        "career_selector": career_selector_context(
+            request.GET,
+            action_url=action_url or reverse("std_list"),
         ),
-        "semesters": Semester.objects.select_related("academic_year").order_by(
-            "-academic_year__start_date", "-number"
-        ),
+        "semesters": semester_queryset_for_career(
+            career,
+            Semester.objects.select_related("academic_year"),
+        ).order_by("-academic_year__start_date", "-number"),
     }
 
 
@@ -186,7 +222,7 @@ def student_result_label(student: Student) -> str:
 def build_student_autocomplete_results(request: HttpRequest) -> list[StudentResultT]:
     """Return JSON-ready student suggestions for lookup widgets."""
     filters = parse_student_filters(request.GET)
-    if not any(filters.values()):
+    if not any(value for key, value in filters.items() if key != "academic_career"):
         return []
     suggestions = apply_student_filters(student_search_queryset(), filters).order_by(
         "student_id", "long_name"
@@ -209,9 +245,12 @@ def build_student_autocomplete_results(request: HttpRequest) -> list[StudentResu
 def build_curriculum_autocomplete_results(request: HttpRequest) -> list[StudentResultT]:
     """Return JSON-ready curriculum suggestions for program selection."""
     query = str(request.GET.get("q") or "").strip()
-    curricula = Curriculum.objects.select_related("college").order_by(
-        "college__code", "long_name", "short_name"
-    )
+    career = selected_academic_career(request.GET)
+    curricula = filter_by_academic_career(
+        Curriculum.objects.select_related("college"),
+        "academic_career",
+        career,
+    ).order_by("college__code", "long_name", "short_name")
     if query:
         curricula = curricula.filter(
             Q(short_name__icontains=query)

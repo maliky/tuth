@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 from collections.abc import Iterable
 from datetime import date
 from io import BytesIO
@@ -15,6 +16,7 @@ from django.contrib.auth.models import Permission
 from django.urls import reverse
 from weasyprint import HTML
 
+from app.academics.choices import AcademicCareer
 from app.academics.models.course import Course
 from app.academics.models.curriculum import Curriculum
 from app.academics.models.curriculum_course import CurriCrs
@@ -28,6 +30,7 @@ from app.timetable.models.semester import Semester
 from app.website.services.transcript_document import build_transcript_document
 from app.website.services.transcript_artifacts import (
     load_transcript_artifact,
+    qr_code_data_uri,
     transcript_document_with_verification,
 )
 from app.website.services.transcript_pdf_layout import (
@@ -61,6 +64,18 @@ def _grade_value(code: str) -> GradeValue:
 def _grant_grade_view(user) -> None:
     """Grant broad grade visibility without registrar role membership."""
     user.user_permissions.add(Permission.objects.get(codename="view_grade"))
+
+
+def _set_student_career(
+    student: Student,
+    curriculum: Curriculum,
+    career: str,
+) -> None:
+    """Set a student's career and the matching transcript curriculum career."""
+    student.academic_career = career
+    student.save(update_fields=["academic_career"])
+    curriculum.academic_career = career
+    curriculum.save(update_fields=["academic_career"])
 
 
 def _box_children(box: object) -> list[object]:
@@ -105,6 +120,16 @@ def _rendered_page_texts(html: str) -> list[RenderedPageTextT]:
 def _rendered_first_page_texts(html: str) -> RenderedPageTextT:
     """Render transcript HTML and return first-page text boxes."""
     return _rendered_page_texts(html)[0]
+
+
+def test_transcript_qr_code_data_uri_uses_declared_python_dependency() -> None:
+    """Transcript QR rendering should work from the declared Python dependency."""
+    uri = qr_code_data_uri("https://sis.wvstu.online/transcripts/verify/test-token/")
+    prefix = "data:image/png;base64,"
+
+    assert uri.startswith(prefix)
+    png_bytes = base64.b64decode(uri.removeprefix(prefix))
+    assert png_bytes.startswith(b"\x89PNG\r\n\x1a\n")
 
 
 def _history_section(
@@ -187,7 +212,6 @@ def test_transcript_document_collapses_approved_duplicate_aliases(
 
 def test_registrar_transcript_pdf_download_uses_pdf_response(
     client,
-    monkeypatch,
     settings,
     tmp_path,
     reg_user_factory,
@@ -197,10 +221,6 @@ def test_registrar_transcript_pdf_download_uses_pdf_response(
 ) -> None:
     """Registrar users can download a generated transcript PDF."""
     settings.MEDIA_ROOT = tmp_path
-    monkeypatch.setattr(
-        "app.website.services.transcript_artifacts.qr_code_data_uri",
-        lambda _value: TINIEST_PNG_URI,
-    )
     user = reg_user_factory("registrar_transcript_pdf")
     _academic_year, _previous, current = reg_sem_pair_factory()
     section, curriculum = reg_sec_factory(
@@ -879,7 +899,11 @@ def test_registrar_bulk_transcript_download_exports_selected_students(
     client.force_login(user)
     response = client.post(
         reverse("reg_grade_transcripts_bulk_pdf"),
-        {"student_ids": [str(first_student.id)], "layout": "portrait"},
+        {
+            "student_ids": [str(first_student.id)],
+            "layout": "portrait",
+            "academic_career": "all",
+        },
     )
     with ZipFile(BytesIO(response.content)) as archive:
         names = archive.namelist()
@@ -895,6 +919,53 @@ def test_registrar_bulk_transcript_download_exports_selected_students(
     assert payload.startswith(b"%PDF")
 
 
+def test_registrar_bulk_transcript_download_uses_real_qr_artifact_path(
+    client,
+    monkeypatch,
+    settings,
+    tmp_path,
+    reg_user_factory,
+    reg_sem_pair_factory,
+    reg_sec_factory,
+    reg_std_factory,
+) -> None:
+    """Bulk export should exercise QR artifact generation for selected graduates."""
+    settings.MEDIA_ROOT = tmp_path
+    monkeypatch.setattr(
+        "app.website.services.transcript_artifacts.render_transcript_document_pdf",
+        lambda _document, *, layout: f"%PDF graduate bulk {layout}".encode(),
+    )
+    user = reg_user_factory("registrar_transcript_bulk_qr")
+    _academic_year, _previous, current = reg_sem_pair_factory()
+    section, curriculum = reg_sec_factory(
+        current,
+        course_number="408",
+        curriculum_short_name="CURRI_TRANSCRIPT_BULK_QR",
+    )
+    student = reg_std_factory("registrar_bulk_qr_student", curriculum, current)
+    _set_student_career(student, curriculum, AcademicCareer.GRADUATE.value)
+    Grade.objects.create(student=student, section=section, value=_grade_value("a"))
+
+    client.force_login(user)
+    response = client.post(
+        reverse("reg_grade_transcripts_bulk_pdf"),
+        {
+            "student_ids": [str(student.id)],
+            "academic_career": AcademicCareer.GRADUATE.value,
+        },
+    )
+    with ZipFile(BytesIO(response.content)) as archive:
+        names = archive.namelist()
+        payload = archive.read(names[0])
+
+    assert response.status_code == 200
+    assert response["Content-Type"] == "application/zip"
+    assert len(names) == 1
+    assert student.student_id in names[0]
+    assert payload.startswith(b"%PDF graduate bulk landscape")
+    assert list((tmp_path / "transcripts" / "manifests").glob("*.json"))
+
+
 def test_registrar_bulk_transcript_rejects_empty_selection(
     client,
     reg_user_factory,
@@ -903,10 +974,15 @@ def test_registrar_bulk_transcript_rejects_empty_selection(
     user = reg_user_factory("registrar_transcript_bulk_empty")
 
     client.force_login(user)
-    response = client.post(reverse("reg_grade_transcripts_bulk_pdf"), {})
+    response = client.post(
+        reverse("reg_grade_transcripts_bulk_pdf"),
+        {"academic_career": "graduate"},
+    )
 
     assert response.status_code == 302
-    assert response.headers["Location"] == reverse("reg_grades_dashboard")
+    assert response.headers["Location"] == (
+        f"{reverse('reg_grades_dashboard')}?academic_career=graduate"
+    )
 
 
 def test_registrar_bulk_transcript_requires_grade_permission(

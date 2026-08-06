@@ -8,6 +8,7 @@ import pytest
 from django.contrib.auth.models import Group, Permission, User
 from django.urls import reverse
 
+from app.academics.choices import AcademicCareer
 from app.academics.models.college import College
 from app.academics.models.curriculum import Curriculum
 from app.people.models.student import Student
@@ -50,6 +51,7 @@ def _student(
         student_id=student_id,
         entry_semester=semester,
         last_enrolled_semester=semester,
+        academic_career=curriculum.academic_career,
     )
     student.save()
     set_primary_std_curri_enroll(student, curriculum, entry_semester_id=semester.id)
@@ -92,7 +94,7 @@ def test_enrollment_dashboard_uses_sidebar_without_action_chips(client) -> None:
     assert response.status_code == 200
     assert "Student directory" in content
     assert "Student snapshot" not in content
-    assert "What can I do here?" not in content
+    assert "portal-actions-panel" not in content
 
 
 def test_enrollment_officer_only_sees_authorized_admin_shortcuts(client) -> None:
@@ -113,6 +115,9 @@ def test_enrollment_officer_only_sees_authorized_admin_shortcuts(client) -> None
 
     assert officer_response.status_code == 200
     assert "Authorized database" in officer_content
+    assert officer_content.index("Authorized database") > officer_content.index(
+        "portal-workspace-grid"
+    )
     assert reverse("admin:people_student_changelist") in officer_content
 
     clerk = User.objects.create_user(
@@ -130,6 +135,24 @@ def test_enrollment_officer_only_sees_authorized_admin_shortcuts(client) -> None
     assert "Authorized database" not in clerk_response.content.decode()
 
 
+def test_create_student_page_hides_lookup_sidebar_task(client) -> None:
+    """Student intake should not show the separate find-student shortcut."""
+    user = User.objects.create_user("enrollment_create_sidebar", password="PassW0rd!")
+    _group_user(user, "Enrollment")
+    user.user_permissions.add(_perm("people", "add_student"))
+    client.force_login(user)
+
+    response = client.get(reverse("create_std"))
+    content = response.content.decode()
+    sidebar_labels = {link["label"] for link in response.context["sidebar_links"]}
+
+    assert response.status_code == 200
+    assert "Student lookup" not in sidebar_labels
+    assert "Student directory" in sidebar_labels
+    assert "Create student" in sidebar_labels
+    assert reverse("std_admin_edit") not in content
+
+
 def test_student_directory_filters_by_name_college_program_and_semester(
     client,
     enrollment_user,
@@ -137,12 +160,15 @@ def test_student_directory_filters_by_name_college_program_and_semester(
     sem_factory,
 ) -> None:
     """Directory filters should narrow records by the requested student dimensions."""
-    semester = sem_factory(1, datetime(2026, 1, 1))
+    semester = sem_factory(1, datetime(2026, 8, 1))
+    semester.academic_career = AcademicCareer.GRADUATE
+    semester.save(update_fields=["academic_career"])
     other_college = College.objects.create(code="TCOL", long_name="Test College")
     other_curriculum = Curriculum.objects.create(
         short_name="T-PROG",
         long_name="Test Program",
         college=other_college,
+        academic_career=AcademicCareer.GRADUATE,
     )
     target = _student("alpha", "DIR1001", other_curriculum, semester)
     other = _student("beta", "DIR2002", curriculum, semester)
@@ -171,7 +197,11 @@ def test_student_intake_persists_expanded_profile_fields(
     sem_factory,
 ) -> None:
     """Portal intake should save the richer student profile without a second form."""
-    semester = sem_factory(1, datetime(2026, 1, 1))
+    curriculum.academic_career = AcademicCareer.GRADUATE
+    curriculum.save(update_fields=["academic_career"])
+    semester = sem_factory(1, datetime(2026, 8, 1))
+    semester.academic_career = AcademicCareer.GRADUATE
+    semester.save(update_fields=["academic_career"])
     user = User.objects.create_user("enrollment_intake", password="PassW0rd!")
     _group_user(user, "Enrollment")
     user.user_permissions.add(
@@ -190,6 +220,7 @@ def test_student_intake_persists_expanded_profile_fields(
             "suffix_name": "Jr.",
             "email": "intake.student@example.test",
             "primary_curriculum": str(curriculum.id),
+            "academic_career": "graduate",
             "entry_semester": str(semester.id),
             "last_enrolled_semester": str(semester.id),
             "max_credit_hours": "21",
@@ -214,6 +245,7 @@ def test_student_intake_persists_expanded_profile_fields(
     assert response.status_code == 302
     student = Student.objects.get(student_id="INT1001")
     assert student.middle_name == "Middle"
+    assert student.academic_career == AcademicCareer.GRADUATE
     assert student.prefix_name == "Miss."
     assert student.max_credit_hours == 21
     assert str(student.phone_number) == "+231770000001"
@@ -229,6 +261,8 @@ def test_student_and_program_autocomplete_include_richer_context(
     sem_factory,
 ) -> None:
     """Autocomplete endpoints should expose student and program context."""
+    curriculum.academic_career = AcademicCareer.GRADUATE
+    curriculum.save(update_fields=["academic_career"])
     semester = sem_factory(1, datetime(2026, 1, 1))
     student = _student("lookup", "LOOK1001", curriculum, semester)
     client.force_login(enrollment_user)

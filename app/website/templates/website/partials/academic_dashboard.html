@@ -11,8 +11,7 @@
         </div>
         <form class="academic-dashboard__filters" method="get" action="{{ academic_dashboard.dashboard_url }}">
           {% if academic_dashboard.career_options %}
-            <label class="form-label mb-0" for="academic-career">Career</label>
-            <select id="academic-career" class="form-select form-select-sm" name="academic_career" onchange="this.form.submit()">
+            <select id="academic-career" class="form-select form-select-sm" name="academic_career" aria-label="Academic career" onchange="this.form.submit()">
               {% for career in academic_dashboard.career_options %}
                 <option value="{{ career.value }}" {% if career.selected %}selected{% endif %}>{{ career.label }}</option>
               {% endfor %}

@@ -60,6 +60,15 @@ def _sidebar_href(response, label: str) -> str:
     )
 
 
+def _role_switcher_href(response, label: str) -> str:
+    """Return one role switcher href from a rendered staff page."""
+    return next(
+        str(role["href"])
+        for role in response.context["role_switcher"]
+        if role["label"] == label
+    )
+
+
 def _faculty_user(
     username: str,
     role_name: str,
@@ -264,7 +273,7 @@ def test_dean_dashboard_shows_program_stats_workloads_and_chair_selector(client)
         reverse("staff_role_dashboard", args=["dean"]),
         {
             "academic_career": "all",
-            "semester": str(future_semester.id),
+            "semester": str(semester.id),
             "chair_id": str(chair_faculty.id),
         },
     )
@@ -583,7 +592,7 @@ def test_dean_dashboard_schedule_coverage_lists_all_sections_and_tba(client):
     client.force_login(dean_user)
     response = client.get(
         reverse("staff_role_dashboard", args=["dean"]),
-        {"academic_career": "all"},
+        {"academic_career": "all", "semester": str(semester.id)},
     )
     content = response.content.decode()
 
@@ -1010,6 +1019,8 @@ def test_dean_curricula_orders_official_records_before_secondary_group(client):
         status_id="pending",
     )
     user, faculty = _faculty_user("dean_curri_list", "Dean", college=college)
+    chair_group, _created = Group.objects.get_or_create(name="Chair")
+    user.groups.add(chair_group)
     semester = _semester()
     department = Department.objects.create(code="DCLS", college=college)
     course = Course.objects.create(department=department, number="910", title="Counting")
@@ -1037,6 +1048,9 @@ def test_dean_curricula_orders_official_records_before_secondary_group(client):
     )
     assert _sidebar_href(response, "Grade rosters") == (
         f"{reverse('staff_grade_rosters', args=['dean'])}?academic_career=all"
+    )
+    assert _role_switcher_href(response, "Chair Curriculum Center") == (
+        f"{reverse('staff_role_dashboard', args=['chair'])}?academic_career=all"
     )
 
 

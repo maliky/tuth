@@ -48,6 +48,26 @@ def _make_roster(
     return section, student, grade
 
 
+def _make_undergraduate_roster(
+    faculty: Faculty,
+    sec_factory,
+    std_factory,
+) -> tuple[Section, Student, Grade]:
+    """Create one undergraduate section assigned to the same faculty."""
+    GradeValue._populate_attributes_and_db()
+    section = sec_factory("772", "CURRI_FAC_UNDER_GRADES", 1, 1)
+    section.faculty = faculty
+    section.save(update_fields=["faculty"])
+    student = std_factory("faculty_under_grade_student", "CURRI_FAC_UNDER_GRADES")
+    student.student_id = "FG-U001"
+    student.long_name = "Faculty Under Grade Student"
+    student.academic_career = AcademicCareer.UNDERGRADUATE
+    student.save(update_fields=["student_id", "long_name", "academic_career"])
+    Registration.objects.create(student=student, section=section)
+    grade = Grade.objects.create(student=student, section=section)
+    return section, student, grade
+
+
 def _csv_roster_text(*rows: str) -> str:
     """Return a CSV document with the canonical faculty roster headers."""
     return "\n".join([",".join(GRADE_CSV_HEADERS), *rows])
@@ -101,6 +121,65 @@ def test_faculty_grade_sections_show_only_assigned_sections(
     assert response.status_code == 200
     assert course_code(section) in content
     assert course_code(other_section) not in content
+
+
+@pytest.mark.django_db
+def test_faculty_grade_sections_switch_between_careers(
+    client,
+    faculty,
+    sec_factory,
+    std_factory,
+) -> None:
+    """Faculty grade entry should present separate career-scoped interfaces."""
+    graduate_section, _grad_student, _grad_grade = _make_roster(
+        faculty,
+        sec_factory,
+        std_factory,
+    )
+    undergraduate_section, _under_student, under_grade = _make_undergraduate_roster(
+        faculty,
+        sec_factory,
+        std_factory,
+    )
+    _open_grade_entry(undergraduate_section)
+
+    client.force_login(faculty.staff_profile.user)
+    default_response = client.get(reverse("faculty_grade_sections"))
+    undergraduate_response = client.get(
+        reverse("faculty_grade_sections"),
+        {"academic_career": "undergraduate"},
+    )
+
+    default_content = default_response.content.decode()
+    undergraduate_content = undergraduate_response.content.decode()
+    assert default_response.context["selected_academic_career"] == "graduate"
+    assert course_code(graduate_section) in default_content
+    assert course_code(undergraduate_section) not in default_content
+    assert course_code(undergraduate_section) in undergraduate_content
+    assert course_code(graduate_section) not in undergraduate_content
+
+    blocked_roster = client.get(
+        reverse("faculty_grade_roster", args=[undergraduate_section.id])
+    )
+    scoped_roster = client.get(
+        reverse("faculty_grade_roster", args=[undergraduate_section.id]),
+        {"academic_career": "undergraduate"},
+    )
+    saved = client.post(
+        reverse("faculty_grade_roster", args=[undergraduate_section.id]),
+        {
+            "academic_career": "undergraduate",
+            f"grade_{under_grade.id}": "a",
+        },
+        follow=False,
+    )
+
+    under_grade.refresh_from_db()
+    assert blocked_roster.status_code == 404
+    assert scoped_roster.status_code == 200
+    assert "academic_career=undergraduate" in saved["Location"]
+    assert under_grade.value is not None
+    assert under_grade.value.code == "a"
 
 
 @pytest.mark.django_db

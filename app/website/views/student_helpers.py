@@ -26,7 +26,10 @@ def _resolve_sem(
 ) -> tuple[Optional[Semester], list[Semester]]:
     """Return the semester that should drive course availability."""
     open_semesters = (
-        Semester.objects.filter(status_id=Semester.REGISTRATION_OPEN_CODES)
+        Semester.objects.filter(
+            status_id=Semester.REGISTRATION_OPEN_CODES,
+            academic_career=student.academic_career,
+        )
         .select_related("academic_year", "status")
         .order_by("academic_year__start_date", "number")
     )

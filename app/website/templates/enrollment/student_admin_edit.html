@@ -16,6 +16,12 @@
       </p>
       <form method="post" class="row g-3" novalidate>
         {% csrf_token %}
+        <input
+          type="hidden"
+          name="academic_career"
+          value="{{ filters.academic_career }}"
+          data-lookup-filter
+        />
         <div class="col-lg-5 col-md-12">
           {{ form.student_query.label_tag }}
           <div class="autocomplete-wrapper">

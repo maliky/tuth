@@ -218,7 +218,11 @@
           dataType: "json",
           delay: 250,
           data: function (params) {
-            return { q: params.term };
+            const career = document.querySelector("[name='academic_career']");
+            return {
+              q: params.term,
+              academic_career: career ? career.value : "graduate",
+            };
           },
           processResults: function (data) {
             return {

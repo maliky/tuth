@@ -12,6 +12,14 @@ from django.http import HttpRequest, QueryDict
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 
+from app.academics.career_scope import (
+    CareerModeT,
+    academic_career_theme_class,
+    append_career_query,
+    career_selector_context,
+    filter_by_academic_career,
+    selected_academic_career,
+)
 from app.people.models.faculty import Faculty
 from app.people.models.student import Student
 from app.registry.models.grade import Grade
@@ -21,6 +29,10 @@ from app.timetable.models.section import Section
 from app.timetable.models.semester import Semester
 from app.website.services.portal_types import BreadcrumbT, PortalContextT
 from app.website.services.registrar_portal import registrar_sidebar_role
+from app.website.services.semester_scope import (
+    filter_by_career_semester_floor,
+    semester_queryset_for_career,
+)
 from app.website.services.staff_common import _admin_shortcuts_for_models
 from app.website.services.staff_contexts import REGISTRAR_ADMIN_SHORTCUTS
 from app.website.services.staff_portal import (
@@ -122,9 +134,21 @@ def _base_section_queryset() -> SectionQueryT:
         "faculty__college",
         "semester__academic_year",
         "semester__status",
+        "curriculum_course__curriculum",
         "curriculum_course__course__department__college",
         "curriculum_course__course",
     )
+
+
+def _scoped_sections(params: QueryDict) -> SectionQueryT:
+    """Return roster sections limited by the selected academic career."""
+    career = selected_academic_career(params)
+    sections = filter_by_academic_career(
+        _base_section_queryset(),
+        "curriculum_course__curriculum__academic_career",
+        career,
+    )
+    return filter_by_career_semester_floor(sections, "semester", career)
 
 
 def _filtered_sections(params: QueryDict) -> SectionQueryT:
@@ -133,7 +157,7 @@ def _filtered_sections(params: QueryDict) -> SectionQueryT:
     selected_faculty_id = clean_int(params.get("faculty_id"))
     semester_param = params.get("semester")
     semester_id = None if semester_param == "all" else clean_int(semester_param)
-    sections = _base_section_queryset()
+    sections = _scoped_sections(params)
     if selected_student_id:
         sections = sections.filter(section_registrations__student_id=selected_student_id)
     if selected_faculty_id:
@@ -143,15 +167,18 @@ def _filtered_sections(params: QueryDict) -> SectionQueryT:
     return sections.distinct()
 
 
-def _semester_options(semester_id: int | None) -> list[FilterOptionT]:
+def _semester_options(
+    semester_id: int | None,
+    career: CareerModeT,
+) -> list[FilterOptionT]:
     """Return semester filter options for the registrar roster page."""
     options: list[FilterOptionT] = [
         {"value": "all", "label": "All semesters", "selected": semester_id is None}
     ]
-    semesters = Semester.objects.select_related("academic_year").order_by(
-        "-academic_year__start_date",
-        "-number",
-    )
+    semesters = semester_queryset_for_career(
+        career,
+        Semester.objects.select_related("academic_year"),
+    ).order_by("-academic_year__start_date", "-number")
     for semester in semesters:
         options.append(
             {
@@ -218,6 +245,7 @@ def _summary_row(
     section: Section,
     roster_counts: dict[int, int],
     graded_counts: dict[int, int],
+    academic_career: CareerModeT,
 ) -> RegistrarRosterSummaryRowT:
     """Return one rendered section summary row."""
     roster_count = roster_counts.get(section.id, 0)
@@ -231,18 +259,27 @@ def _summary_row(
         "graded_count": graded_count,
         "pending_count": max(roster_count - graded_count, 0),
         "grade_entry_open": section.semester.status_id == "grade_entry",
-        "detail_url": reverse("reg_class_roster_detail", args=[section.id]),
+        "detail_url": append_career_query(
+            reverse("reg_class_roster_detail", args=[section.id]),
+            academic_career,
+        ),
     }
 
 
-def _registrar_breadcrumbs(label: str) -> list[BreadcrumbT]:
+def _registrar_breadcrumbs(label: str, academic_career: CareerModeT) -> list[BreadcrumbT]:
     """Return breadcrumbs rooted in the registrar workspace."""
     crumbs: list[BreadcrumbT] = [
         {
             "label": "Registrar dashboard",
-            "href": reverse("staff_role_dashboard", args=["registrar"]),
+            "href": append_career_query(
+                reverse("staff_role_dashboard", args=["registrar"]),
+                academic_career,
+            ),
         },
-        {"label": "Class rosters", "href": reverse("reg_class_rosters")},
+        {
+            "label": "Class rosters",
+            "href": append_career_query(reverse("reg_class_rosters"), academic_career),
+        },
     ]
     if label:
         crumbs.append({"label": label, "href": ""})
@@ -255,6 +292,7 @@ def build_reg_class_roster_list_context(request: HttpRequest) -> PortalContextT:
     """Build the registrar class-roster list context."""
     user = cast(User, request.user)
     sidebar_role = registrar_sidebar_role(user)
+    career = selected_academic_career(request.GET)
     semester_param = request.GET.get("semester")
     semester_id = None if semester_param == "all" else clean_int(semester_param)
     selected_student_id = clean_int(request.GET.get("student_id"))
@@ -271,20 +309,44 @@ def build_reg_class_roster_list_context(request: HttpRequest) -> PortalContextT:
     section_ids = [section.id for section in section_list]
     roster_counts, graded_counts = _section_counts(section_ids)
     rows = [
-        _summary_row(section, roster_counts, graded_counts) for section in section_list
+        _summary_row(section, roster_counts, graded_counts, career)
+        for section in section_list
     ]
     pagination_query, pagination_hidden_fields = _pagination_hidden_fields(request.GET)
     return {
         "page_title": "Registrar class rosters",
         "page_summary": "Review section rosters by student, faculty, and semester.",
         "eyebrow": "Registrar officer",
-        "sidebar_links": build_staff_sidebar_links(sidebar_role, "class_rosters"),
-        "role_switcher": build_staff_role_switcher(user, "registrar"),
-        "breadcrumbs": _registrar_breadcrumbs(""),
-        "dashboard_url": reverse("staff_role_dashboard", args=["registrar"]),
-        "student_autocomplete_url": reverse("reg_std_autocomplete"),
-        "faculty_autocomplete_url": reverse("reg_faculty_autocomplete"),
-        "semester_options": _semester_options(semester_id),
+        "sidebar_links": build_staff_sidebar_links(
+            sidebar_role,
+            "class_rosters",
+            academic_career=career,
+        ),
+        "role_switcher": build_staff_role_switcher(
+            user,
+            "registrar",
+            academic_career=career,
+        ),
+        "breadcrumbs": _registrar_breadcrumbs("", career),
+        "dashboard_url": append_career_query(
+            reverse("staff_role_dashboard", args=["registrar"]),
+            career,
+        ),
+        "student_autocomplete_url": append_career_query(
+            reverse("reg_std_autocomplete"),
+            career,
+        ),
+        "faculty_autocomplete_url": append_career_query(
+            reverse("reg_faculty_autocomplete"),
+            career,
+        ),
+        "semester_options": _semester_options(semester_id, career),
+        "selected_academic_career": career,
+        "portal_theme_class": academic_career_theme_class(career),
+        "career_selector": career_selector_context(
+            request.GET,
+            action_url=reverse("reg_class_rosters"),
+        ),
         "selected_student_id": selected_student_id,
         "selected_student_label": _student_filter_label(selected_student_id),
         "selected_faculty_id": selected_faculty_id,
@@ -308,7 +370,8 @@ def build_reg_class_roster_detail_context(
     """Build one registrar class-roster detail context."""
     user = cast(User, request.user)
     sidebar_role = registrar_sidebar_role(user)
-    section = get_object_or_404(_base_section_queryset(), pk=section_id)
+    career = selected_academic_career(request.GET)
+    section = get_object_or_404(_scoped_sections(request.GET), pk=section_id)
     registrations = list(
         Registration.objects.filter(section=section)
         .select_related("student__user", "status")
@@ -343,11 +406,24 @@ def build_reg_class_roster_detail_context(
         "page_title": f"{course_code} class roster",
         "page_summary": "Read-only section roster for registrar review.",
         "eyebrow": "Registrar officer",
-        "sidebar_links": build_staff_sidebar_links(sidebar_role, "class_rosters"),
-        "role_switcher": build_staff_role_switcher(user, "registrar"),
-        "breadcrumbs": _registrar_breadcrumbs(course_code),
-        "dashboard_url": reverse("staff_role_dashboard", args=["registrar"]),
-        "list_url": reverse("reg_class_rosters"),
+        "sidebar_links": build_staff_sidebar_links(
+            sidebar_role,
+            "class_rosters",
+            academic_career=career,
+        ),
+        "role_switcher": build_staff_role_switcher(
+            user,
+            "registrar",
+            academic_career=career,
+        ),
+        "breadcrumbs": _registrar_breadcrumbs(course_code, career),
+        "dashboard_url": append_career_query(
+            reverse("staff_role_dashboard", args=["registrar"]),
+            career,
+        ),
+        "list_url": append_career_query(reverse("reg_class_rosters"), career),
+        "selected_academic_career": career,
+        "portal_theme_class": academic_career_theme_class(career),
         "section": section,
         "course_code": course_code,
         "course_title": section.curriculum_course.course.title or "",
@@ -356,17 +432,28 @@ def build_reg_class_roster_detail_context(
     }
 
 
-def registrar_faculty_results(query: str | None) -> list[AutocompleteResultT]:
+def registrar_faculty_results(
+    query: str | None,
+    params: QueryDict | None = None,
+) -> list[AutocompleteResultT]:
     """Return faculty suggestions for registrar roster filtering."""
     clean_query = parse_str(query)
     if not clean_query:
         return []
+    filter_params = params or QueryDict(mutable=True)
+    faculty_ids = (
+        _scoped_sections(filter_params)
+        .exclude(faculty__isnull=True)
+        .values_list("faculty_id", flat=True)
+        .distinct()
+    )
     faculty_qs = (
         Faculty.objects.select_related(
             "staff_profile__user",
             "staff_profile__department",
             "college",
         )
+        .filter(id__in=faculty_ids)
         .filter(
             Q(staff_profile__long_name__icontains=clean_query)
             | Q(staff_profile__staff_id__icontains=clean_query)

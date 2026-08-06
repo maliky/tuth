@@ -17,6 +17,7 @@
         <h2>Search student records</h2>
       </div>
       <form method="get" class="row g-3 align-items-end">
+        <input type="hidden" name="academic_career" value="{{ filters.academic_career }}" />
         <div class="col-lg-4 col-md-6">
           <label class="form-label" for="student-directory-q">Name or ID</label>
           <input
