@@ -2,11 +2,36 @@
 #+DATE: 2026-06-26
 #+STARTUP: overview
 
+* <2026-06-30 mar. 10:41>  note for developpement
+when mail are sent to student should have an email back to the plateform
+should check that each role has the necessary authorization to do his action in the backdatabase
+
+
+* <2026-06-30 mar. 07:06>
+have the request verify exprire after 1 hours not 30 minutes
+enrollement request visible by any enrollement person
+we need to add a small communication chanel, if the enrollement officer (only him) wants to send a communication to all or a selected subset of applicants.  I imagine a list of studdents, that on can select, before or after a filter operation on name, program, enrolleement date.
+For the email we need to create appropriate account on dove or postfix on this machine.   send email was already tested from a moodle plateform, so this should be straight forward.
+
+
+once the enrollement has been validated then the student can start to enroll.
+
+
+** roles and vocabulary
+Concerning the graduate school, we have one head of the graduate school under the vpaa then under him we have program coordinators. program coordinators can coordinate several program and correspond to what the dean do for their colleges.  for us it is another name for dean role but we have an additional role equivalent to the vpaa but with not view on the undergraduates data.  programm coordinator for now should be assigned to the deans we already mention, not much change there.
+
+** TODO Postponed graduate role UI: add a Graduate School Head role as a VPAA-like graduate-only oversight workspace with no undergraduate data access.
+** TODO Postponed graduate role UI: add Program Coordinator role labels and permissions as dean-like oversight for one or more graduate programs, initially mapped to the already mentioned deans.
+** TODO Postponed graduate role UI: update graduate dashboard navigation so these roles are shown with graduate vocabulary while preserving current dean/VPAA data scoping until the dedicated role pass.
+
+
+* <2026-06-29 lun. 06:55>
+make sure we have the graduate courses description available online for students throught the detail link or other
+
+There is too much redundancy text on the interface and it confuse the user.  the text is also to computer tech oriented eg console.
+- reduce the text
+
 * graduate programs
-I am considereing manipulatiing graduate data in the same db as the undergraduate data. but I need a strong separation  to filter out one or the other and not slow down querys done on the small graduate subset  with the large undergraduate dataset.
-
-apart from the new type of student, the rest of the application should be very similare to the existing, so I do not see the need to have a truely separated db.  some little rules may not aply to graduates for eg, maxium number fo  credit per semesters, or base cost per credit ohours but in general we have the same structure.  what do you recommend.  I would like to avoid duplicatein faculties and we can have and will have faculties doing courses both to undergraduate and graduate  so the need for a comprehensive db to handel schedule clashes or room allocation is necessary.  shared ressource, faculties rooms.
-
 ** Graduate import planning notes
 First pass source audit used ../../tucurricula/tu_graduate_curricula_2026.org and ../../tucurricula/Audit/build_graduate_curricula_org.py. The generated Org source has 11 candidate graduate/postgraduate curricula. Clean first-pass import candidates are grad-educ-ci, grad-mbam, grad-msgh, grad-pgde, grad-pgba, and grad-pgph because they have coherent course tables, totals, and matching course descriptions. grad-mbaf is almost ready but needs an explicit rule for the "choose one" elective placeholder. grad-educ-el is structurally clean but is secondary-source only and missing six course descriptions. grad-meng and grad-mscm have complete descriptions but need elective/track cleanup before import because the curriculum tables contain non-course elective placeholders. grad-clim should be skipped for now because the source explicitly says no course tables were available.
 
@@ -38,28 +63,3 @@ should follow normal curriculum semester sequence.
 default per credit is 50.  for the rest do not put default for now
 *** TODO Q13 Should graduate applicants/students use the same Student ID and user-account creation flow as undergraduate students, or should they receive a distinct graduate ID prefix and admissions intake workflow?
 We use id starting with GTU instead of TU-. but a studnet comming from TU with an ide already will only have ti prepended with G so for get TU-01234 become GTU-01234.
-
-** Additional observation
-  - Model changes require migrations; repo instructions currently say not to create migration files unless explicitly requested.
-You have my explicte authorazation to make this change    
-
-  - If academic_career is added only to Student and not Curriculum, graduate filtering will remain weak and dashboards/imports will be ambiguous.
-so add it to curriculum also
-
-  - Existing student ID normalization only knows canonical TU-; adding GTU may affect duplicate detection, imports, search, and forms.
-yes, that is correct. We alos have to be carreful not to create GTU ids that could match a potentialy converted TU id to GTU.  eg new grad student given GTU-01112 when a TU-01112 existe already. if later TU-01112 wants to take graduate classe we will not be able to apply the rule TU-digits GTU-same_digits.
-So here it is best to just create new GTU-ids... and forget the rule about TU- been converted to GTU.
-    
-  - The current tuition policy is semester-based, not student-career-based; graduate USD 50 tuition needs careful integration to avoid changing undergraduate billing.
-We need to make this semester and student-career based. requires changing the model. lets do it.    
-  - Shared course rows are useful, but an existing undergraduate course with the same department/number and a different title/description could create conflicts.
-We should not have smae departemnt number. grad numbers all should all start from  600 upwards
-
-  - Elective placeholder support can create fake-looking catalog courses if the codes and titles are not clearly labeled as elective groups.
-yes elective codes should just be listed as an elective and as offic of a description it should have the name and code of the alternate courses, for which descirption are provided
-
-  - Ignoring non-course prerequisite language may under-enforce proposal, standing, supervisor approval, or admission rules.
-I do not get where you need to enfore proposal and all... prerequiste only concern activites with courses code.  We do not handle other completion markers
-    
-  - Test graduate sections and mock grades can pollute real dashboards if not clearly marked or scoped to test data.
-scope the to the appropriate data.
