@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.utils.http import urlencode
 
 from app.academics.career_scope import (
+    CAREER_ALL,
     CareerModeT,
     append_career_query,
     career_selector_context,
@@ -19,7 +20,10 @@ from app.academics.models.curriculum_course import CurriCrs
 from app.finance.models.invoice import CrsInvoice
 from app.finance.models.payment import Payment
 from app.finance.registration_invoices import (
+    MissingRegistrationInvoiceCountsT,
+    invoice_generation_registration_qs,
     missing_registration_invoice_counts,
+    registration_invoice_amount,
 )
 from app.finance.models.scholarship import (
     Scholarship,
@@ -46,6 +50,7 @@ from app.website.services.academic_dashboard import (
     chair_curriculum_scope,
 )
 from app.website.services.academic_dashboard_roles import dean_college_for_user
+from app.website.services.semester_scope import semester_queryset_for_career
 from app.website.services.portal_types import (
     ActionT,
     MetricT,
@@ -697,16 +702,55 @@ def _build_donor_context(request: HttpRequest) -> RoleContextT:
     }
 
 
-def _build_finance_context(_: HttpRequest) -> RoleContextT:
-    current_semester = Semester.get_current_sem()
+def _finance_current_semester(career: CareerModeT) -> Semester | None:
+    """Return the dashboard semester for finance career-scoped metrics."""
+    if career == CAREER_ALL:
+        return Semester.get_current_sem()
+    semesters = semester_queryset_for_career(
+        career,
+        Semester.objects.select_related("academic_year"),
+    )
+    return semesters.order_by("-start_date", "-id").first()
+
+
+def _finance_missing_invoice_counts(
+    career: CareerModeT,
+    semester_id: int | None,
+) -> MissingRegistrationInvoiceCountsT:
+    """Return missing-invoice counts limited to the selected student career."""
+    if career == CAREER_ALL:
+        return missing_registration_invoice_counts(semester_id=semester_id)
+    counts: MissingRegistrationInvoiceCountsT = {"billable": 0, "fee_setup": 0}
+    registrations = filter_by_academic_career(
+        invoice_generation_registration_qs(semester_id=semester_id),
+        "student__academic_career",
+        career,
+    )
+    for registration in registrations.order_by():
+        if registration_invoice_amount(registration) > 0:
+            counts["billable"] += 1
+        else:
+            counts["fee_setup"] += 1
+    return counts
+
+
+def _build_finance_context(request: HttpRequest) -> RoleContextT:
+    career = selected_academic_career(request.GET)
+    current_semester = _finance_current_semester(career)
     current_semester_id = current_semester.id if current_semester else None
-    pending_payments = Payment.objects.filter(status__code="pending").count()
-    invoice_count = CrsInvoice.objects.filter(balance__gt=0).count()
+    pending_payments = filter_by_academic_career(
+        Payment.objects.filter(status__code="pending"),
+        "student_semester_invoice__student__academic_career",
+        career,
+    ).count()
+    invoice_count = filter_by_academic_career(
+        CrsInvoice.objects.filter(balance__gt=0),
+        "student__academic_career",
+        career,
+    ).count()
     # Scope dashboard work to the active billing semester; all-history scans are
     # kept for explicit reports, not every role-overview page load.
-    missing_invoice_counts = missing_registration_invoice_counts(
-        semester_id=current_semester_id
-    )
+    missing_invoice_counts = _finance_missing_invoice_counts(career, current_semester_id)
     uninvoiced_count = missing_invoice_counts["billable"]
     fee_setup_count = missing_invoice_counts["fee_setup"]
     actions: list[ActionT] = []
@@ -740,6 +784,11 @@ def _build_finance_context(_: HttpRequest) -> RoleContextT:
             }
         ],
         "actions": actions,
+        "selected_academic_career": career,
+        "career_selector": career_selector_context(
+            request.GET,
+            action_url=request.path,
+        ),
     }
 
 
