@@ -1,21 +1,69 @@
 {% extends "website/staff/base.html" %}
+{% load static %}
+
+{% block staff_head_extra %}
+  {% if dashboard_student_search %}
+    <link rel="stylesheet" href="{% static 'admin/css/vendor/select2/select2.min.css' %}" />
+  {% endif %}
+{% endblock %}
 
 {% block staff_header_actions %}
   {# Logout button rendered in staff base header for consistency. #}
 {% endblock %}
 
 {% block staff_content %}
-  {% include "website/partials/admin_shortcuts.html" %}
-  {% include "website/staff/partials/academic_career_selector.html" %}
-  <div class="portal-workspace-grid{% if show_action_panel is False %} portal-workspace-grid--single{% endif %}">
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+  <div class="portal-workspace-grid portal-workspace-grid--single">
     <div class="staff-dashboard__primary">
+      {% include "website/staff/partials/dashboard_student_search.html" %}
       {% include "website/partials/portal_kpi_grid.html" %}
       {% include "website/partials/academic_dashboard.html" %}
       {% include "website/partials/portal_panel_cards.html" %}
     </div>
-
-    {% if show_action_panel is not False %}
-      {% include "website/partials/portal_action_panel.html" %}
-    {% endif %}
   </div>
+  {% include "website/partials/admin_shortcuts.html" %}
+{% endblock %}
+
+{% block staff_body_extra %}
+  {% if dashboard_student_search %}
+    <script src="{% static 'admin/js/vendor/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'admin/js/vendor/select2/select2.full.min.js' %}"></script>
+    <script>
+      (function () {
+        const select = document.querySelector("[data-dashboard-student-autocomplete]");
+        if (!select || !window.jQuery) {
+          return;
+        }
+        const autocompleteUrl = new URL(
+          select.dataset.autocompleteUrl,
+          `${window.location.protocol}//${window.location.host}`,
+        ).toString();
+        window.jQuery(select).select2({
+          allowClear: true,
+          placeholder: "Search by name or ID",
+          minimumInputLength: 2,
+          ajax: {
+            url: autocompleteUrl,
+            dataType: "json",
+            delay: 250,
+            data: function (params) {
+              return {
+                q: params.term,
+                academic_career: select.dataset.academicCareer,
+              };
+            },
+            processResults: function (data) {
+              return data;
+            },
+          },
+        });
+      })();
+    </script>
+  {% endif %}
 {% endblock %}

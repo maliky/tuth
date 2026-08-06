@@ -11,6 +11,16 @@ urlpatterns = [
     path("", TemplateView.as_view(template_name="website/landing.html"), name="landing"),
     path("student/dashboard/", views.student_dashboard, name="student_dashboard"),
     path("staff/dashboard/", views.staff_dashboard, name="staff_dashboard"),
+    path(
+        "staff/<slug:role>/student-search/",
+        views.staff_dashboard_student_search,
+        name="staff_dashboard_student_search",
+    ),
+    path(
+        "staff/<slug:role>/student-search/autocomplete/",
+        views.staff_dashboard_student_search_autocomplete,
+        name="staff_dashboard_student_search_autocomplete",
+    ),
     path("staff/<slug:role>/", views.staff_role_dashboard, name="staff_role_dashboard"),
     path("portal/", views.portal_redirect, name="portal_redirect"),
     path("account/profile/", views.account_profile, name="account_profile"),

@@ -11,6 +11,7 @@ from django.contrib.admin.sites import AdminSite
 from django.test import RequestFactory
 from django.urls import reverse
 
+from app.academics.choices import AcademicCareer
 from app.registry.admin.registration_admin import RegioAdmin
 from app.registry.models.registration import Registration
 
@@ -20,6 +21,15 @@ def _perm(app_label: str, codename: str) -> Permission:
     return Permission.objects.get(
         content_type__app_label=app_label,
         codename=codename,
+    )
+
+
+def _role_switcher_href(response, label: str) -> str:
+    """Return one role switcher href from a rendered staff page."""
+    return next(
+        str(role["href"])
+        for role in response.context["role_switcher"]
+        if role["label"] == label
     )
 
 
@@ -52,7 +62,7 @@ def test_faculty_dashboard_uses_sidebar_without_duplicate_action_panel(client):
     assert "portal-role-switcher" not in content
     assert "Dashboard" in content
     assert reverse("faculty_grade_sections") in content
-    assert "What can I do here?" not in content
+    assert "portal-actions-panel" not in content
 
 
 @pytest.mark.django_db
@@ -75,15 +85,19 @@ def test_academic_leaders_do_not_get_unscoped_inherited_workspaces(client):
 
 @pytest.mark.django_db
 def test_direct_multi_workspace_user_keeps_workspace_switcher(client):
-    """Direct memberships still show workspace switching."""
+    """Direct memberships still show workspace switching with scoped career links."""
     User = get_user_model()
     user = User.objects.create_user("dean_direct_chair", password="PassW0rd!")
     dean_group, _ = Group.objects.get_or_create(name="Dean")
     chair_group, _ = Group.objects.get_or_create(name="Chair")
-    user.groups.add(dean_group, chair_group)
+    registrar_group, _ = Group.objects.get_or_create(name="Registrar")
+    user.groups.add(dean_group, chair_group, registrar_group)
 
     client.force_login(user)
-    response = client.get(reverse("staff_role_dashboard", args=["dean"]))
+    response = client.get(
+        reverse("staff_role_dashboard", args=["dean"]),
+        {"academic_career": "all"},
+    )
     content = response.content.decode()
 
     assert response.status_code == 200
@@ -91,6 +105,25 @@ def test_direct_multi_workspace_user_keeps_workspace_switcher(client):
     assert "Dean Oversight" in content
     assert "Chair Curriculum Center" in content
     assert "Instruction Hub" not in content
+    assert _role_switcher_href(response, "Dean Oversight") == (
+        f"{reverse('staff_role_dashboard', args=['dean'])}?academic_career=all"
+    )
+    assert _role_switcher_href(response, "Chair Curriculum Center") == (
+        f"{reverse('staff_role_dashboard', args=['chair'])}?academic_career=all"
+    )
+    assert _role_switcher_href(response, "Registrar Lifecycle Ops") == (
+        f"{reverse('staff_role_dashboard', args=['registrar'])}?academic_career=all"
+    )
+
+    undergrad_response = client.get(
+        reverse("staff_role_dashboard", args=["dean"]),
+        {"academic_career": "undergraduate"},
+    )
+
+    assert undergrad_response.status_code == 200
+    assert _role_switcher_href(undergrad_response, "Chair Curriculum Center") == (
+        f"{reverse('staff_role_dashboard', args=['chair'])}?academic_career=undergraduate"
+    )
 
 
 @pytest.mark.django_db
@@ -115,7 +148,7 @@ def test_academic_leader_dashboards_show_authorized_database_links(client):
 
         assert response.status_code == 200
         assert "Authorized database" in content
-        assert content.index("Authorized database") < content.index(
+        assert content.index("Authorized database") > content.index(
             "portal-workspace-grid"
         )
         assert reverse("admin:academics_curriculum_changelist") in content
@@ -140,7 +173,7 @@ def test_finance_officer_dashboard_dedupes_sidebar_actions(client):
     assert reverse("finance_officer_invoices") in content
     assert "Dashboard" in content
     assert "Open finance console" not in content
-    assert "What can I do here?" not in content
+    assert "portal-actions-panel" not in content
 
 
 @pytest.mark.django_db
@@ -166,6 +199,7 @@ def test_reg_officer_dashboard_shows_authorized_admin_shortcuts(client):
 
     assert response.status_code == 200
     assert "Authorized database" in content
+    assert content.index("Authorized database") > content.index("portal-workspace-grid")
     assert "portal-role-switcher" in content
     assert {
         "label": "Class rosters",
@@ -177,6 +211,68 @@ def test_reg_officer_dashboard_shows_authorized_admin_shortcuts(client):
     assert reverse("admin:people_student_changelist") in content
     assert reverse("admin:registry_registration_changelist") in content
     assert reverse("admin:registry_grade_changelist") not in content
+
+
+@pytest.mark.django_db
+def test_registrar_dashboard_student_search_targets_career_scoped_surfaces(
+    client,
+    reg_sem_pair_factory,
+    reg_sec_factory,
+    reg_std_factory,
+    reg_grade_factory,
+):
+    """Registrar dashboard search should find a career-scoped student and redirect."""
+    User = get_user_model()
+    user = User.objects.create_user("reg_dashboard_student_search", password="PassW0rd!")
+    registrar_group, _ = Group.objects.get_or_create(name="Registrar")
+    user.groups.add(registrar_group)
+    user.user_permissions.add(_perm("registry", "view_grade"))
+    _academic_year, _previous, current = reg_sem_pair_factory()
+    section, curriculum = reg_sec_factory(
+        current,
+        course_number="990",
+        curriculum_short_name="CURRI_REG_SEARCH",
+    )
+    student = reg_std_factory("reg_search_student", curriculum, current)
+    student.academic_career = AcademicCareer.GRADUATE
+    student.save(update_fields=["academic_career"])
+    curriculum.academic_career = AcademicCareer.GRADUATE
+    curriculum.save(update_fields=["academic_career"])
+    Registration.objects.create(student=student, section=section)
+    reg_grade_factory(student, section)
+
+    client.force_login(user)
+    dashboard = client.get(reverse("staff_role_dashboard", args=["registrar"]))
+    autocomplete = client.get(
+        reverse("staff_dashboard_student_search_autocomplete", args=["registrar"]),
+        {"q": student.student_id, "academic_career": "graduate"},
+    )
+    redirect_response = client.get(
+        reverse("staff_dashboard_student_search", args=["registrar"]),
+        {
+            "student_id": str(student.id),
+            "student_target": "registrar_rosters",
+            "academic_career": "graduate",
+        },
+    )
+
+    content = dashboard.content.decode()
+    assert dashboard.status_code == 200
+    assert "data-dashboard-student-autocomplete" in content
+    assert (
+        reverse(
+            "staff_dashboard_student_search",
+            args=["registrar"],
+        )
+        in content
+    )
+    assert autocomplete.status_code == 200
+    assert autocomplete.json()["results"][0]["id"] == student.id
+    assert redirect_response.status_code == 302
+    assert redirect_response["Location"] == (
+        f"{reverse('reg_class_rosters')}?academic_career=graduate"
+        f"&student_id={student.id}&semester=all"
+    )
 
 
 @pytest.mark.django_db

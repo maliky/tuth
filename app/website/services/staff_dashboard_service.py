@@ -9,7 +9,12 @@ from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
 
-from app.academics.career_scope import academic_career_theme_class
+from app.academics.career_scope import (
+    CAREER_QUERY_PARAM,
+    academic_career_theme_class,
+    career_selector_context,
+    normalize_academic_career,
+)
 from app.website.services.portal_types import (
     ActionT,
     BreadcrumbT,
@@ -17,6 +22,7 @@ from app.website.services.portal_types import (
     SidebarLinkT,
 )
 from app.website.services.staff_common import _annotate_admin_actions, _as_user
+from app.website.services.staff_student_search import dashboard_student_search_context
 from app.website.services.staff_roles import (
     ROLE_CONFIG,
     _build_accessible_dashboard_links,
@@ -76,16 +82,35 @@ def _selected_career_from_context(context: Mapping[str, object]) -> object:
     return ""
 
 
+def _selected_career_param(
+    request: HttpRequest,
+    context: Mapping[str, object],
+) -> str | None:
+    """Return the career scope that should be preserved in navigation links."""
+    selected = _selected_career_from_context(context)
+    if selected:
+        return str(selected)
+    return request.GET.get(CAREER_QUERY_PARAM) or None
+
+
 def render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse:
     """Render one staff role dashboard using the shared portal shell."""
     config = ROLE_CONFIG.get(role_slug)
     if not config:
         raise Http404("Unknown staff dashboard.")
     context = config["builder"](request)
+    selected_career_param = _selected_career_param(request, context)
+    selected_career = normalize_academic_career(selected_career_param)
     accessible_links = _build_accessible_dashboard_links(
-        _as_user(request.user), role_slug
+        _as_user(request.user),
+        role_slug,
+        academic_career=selected_career_param,
     )
-    role_switcher = build_staff_role_switcher(_as_user(request.user), role_slug)
+    role_switcher = build_staff_role_switcher(
+        _as_user(request.user),
+        role_slug,
+        academic_career=selected_career_param,
+    )
     base: PortalContextT = {
         "title": config["title"],
         "summary": config["summary"],
@@ -99,10 +124,18 @@ def render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse:
         base["portal_theme_class"] = academic_career_theme_class(
             _selected_career_from_context(context)
         )
-    selected_career = _selected_career_from_context(context)
+    if "career_selector" not in base:
+        base["career_selector"] = career_selector_context(
+            request.GET,
+            action_url=reverse("staff_role_dashboard", args=[role_slug]),
+        )
+    base["dashboard_student_search"] = dashboard_student_search_context(
+        role_slug,
+        selected_career,
+    )
     sidebar_links = build_staff_sidebar_links(
         role_slug,
-        academic_career=str(selected_career) if selected_career else None,
+        academic_career=selected_career_param,
     )
     # Keep admin escape hatches out of the portal action panel.
     actions = _dedupe_sidebar_actions(
@@ -110,7 +143,6 @@ def render_role_dashboard(request: HttpRequest, role_slug: str) -> HttpResponse:
         sidebar_links,
     )
     base["actions"] = actions
-    base["show_action_panel"] = bool(context.get("show_action_panel", True) and actions)
     base["accessible_dashboards"] = accessible_links
     base["role_switcher"] = role_switcher
     template_name = config.get("template", "website/staff/role_dashboard.html")

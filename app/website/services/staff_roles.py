@@ -462,7 +462,19 @@ ROLE_CHILDREN: RoleChildMapT = _build_role_child_map(ROLE_INHERITANCE)
 ROLE_ORDER: dict[str, int] = {slug: idx for idx, slug in enumerate(ROLE_PRIORITY)}
 LOW_VALUE_SWITCHER_SLUGS: frozenset[RoleSlugT] = frozenset({"staff", "general"})
 CAREER_SCOPED_ROLE_SLUGS: frozenset[RoleSlugT] = frozenset(
-    {"faculty", "chair", "dean", "vpaa"}
+    {
+        "faculty",
+        "chair",
+        "dean",
+        "vpaa",
+        "registrar",
+        "reg_officer",
+        "enrollment",
+        "enrollment_officer",
+        "finance",
+        "finance_officer",
+        "cashier",
+    }
 )
 CAREER_SCOPED_ROUTE_NAMES: frozenset[str] = frozenset(
     {
@@ -471,6 +483,15 @@ CAREER_SCOPED_ROUTE_NAMES: frozenset[str] = frozenset(
         "dean_curricula",
         "staff_grade_rosters",
         "staff_grade_transcripts",
+        "reg_grades_dashboard",
+        "reg_class_rosters",
+        "std_list",
+        "std_admin_edit",
+        "create_std",
+        "enrollment_applications",
+        "enrollment_communications",
+        "enrollment_email_template",
+        "finance_officer_invoices",
     }
 )
 CAREER_SCOPE_VALUES: frozenset[str] = frozenset(
@@ -526,11 +547,15 @@ def _accessible_role_slugs(user: User) -> set[str]:
 
 
 def _build_accessible_dashboard_links(
-    user: User, active_slug: str
+    user: User,
+    active_slug: str,
+    academic_career: str | None = None,
 ) -> list[DashboardLinkT]:
+    """Return accessible workspaces, preserving career scope for academic roles."""
     slugs = _accessible_role_slugs(user)
     ordered = sorted(slugs, key=lambda slug: ROLE_ORDER.get(slug, len(ROLE_PRIORITY)))
     links: list[DashboardLinkT] = []
+    career_scope = _clean_career_scope(academic_career)
     for slug in ordered:
         config = ROLE_CONFIG.get(slug)
         if not config:
@@ -541,6 +566,8 @@ def _build_accessible_dashboard_links(
             href = reverse("staff_dashboard")
         else:
             href = reverse("staff_role_dashboard", args=[slug])
+        if career_scope and slug in CAREER_SCOPED_ROLE_SLUGS:
+            href = append_career_query(href, career_scope)
         links.append(
             {
                 "label": config.get("title", slug.replace("_", " ").title()),
@@ -553,11 +580,19 @@ def _build_accessible_dashboard_links(
     return links
 
 
-def build_staff_role_switcher(user: User, active_slug: str) -> list[RoleSwitcherLinkT]:
+def build_staff_role_switcher(
+    user: User,
+    active_slug: str,
+    academic_career: str | None = None,
+) -> list[RoleSwitcherLinkT]:
     """Return role-switching links for the shared staff sidebar."""
     accessible_links = [
         link
-        for link in _build_accessible_dashboard_links(user, active_slug)
+        for link in _build_accessible_dashboard_links(
+            user,
+            active_slug,
+            academic_career=academic_career,
+        )
         if link["slug"] not in LOW_VALUE_SWITCHER_SLUGS
     ]
     if len(accessible_links) <= 1:

@@ -1,0 +1,35 @@
+{% if dashboard_student_search %}
+  <section class="portal-filter-card staff-student-search mb-4">
+    <div class="portal-filter-card__body">
+      <div class="portal-filter-card__intro">
+        <p class="eyebrow text-uppercase mb-1">Student search</p>
+        <h2>Find a student</h2>
+      </div>
+      <form method="get" action="{{ dashboard_student_search.action_url }}" class="row g-3 align-items-end">
+        <input type="hidden" name="academic_career" value="{{ dashboard_student_search.selected_academic_career }}" />
+        <div class="col-12 col-lg-6">
+          <label class="form-label" for="dashboard-student-search">Student</label>
+          <select
+            id="dashboard-student-search"
+            class="form-select"
+            name="student_id"
+            data-dashboard-student-autocomplete
+            data-autocomplete-url="{{ dashboard_student_search.autocomplete_url }}"
+            data-academic-career="{{ dashboard_student_search.selected_academic_career }}"
+          ></select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-4">
+          <label class="form-label" for="dashboard-student-target">Open</label>
+          <select id="dashboard-student-target" class="form-select" name="student_target">
+            {% for action in dashboard_student_search.actions %}
+              <option value="{{ action.value }}">{{ action.label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-2">
+          <button class="btn portal-btn-accent w-100" type="submit">Open</button>
+        </div>
+      </form>
+    </div>
+  </section>
+{% endif %}

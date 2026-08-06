@@ -56,7 +56,12 @@ from .registrar import (
     reg_registration_semester_editor,
     reg_std_autocomplete,
 )
-from .staff_dashboards import staff_dashboard, staff_role_dashboard
+from .staff_dashboards import (
+    staff_dashboard,
+    staff_dashboard_student_search,
+    staff_dashboard_student_search_autocomplete,
+    staff_role_dashboard,
+)
 from .transcripts import transcript_verify, transcript_verify_pdf
 from .vpaa import (
     vpaa_approval_approve,
@@ -103,6 +108,8 @@ __all__ = [
     "reg_registration_semester_editor",
     "reg_std_autocomplete",
     "staff_dashboard",
+    "staff_dashboard_student_search",
+    "staff_dashboard_student_search_autocomplete",
     "staff_grade_transcript",
     "staff_grade_transcript_student_autocomplete",
     "staff_grade_transcripts",
