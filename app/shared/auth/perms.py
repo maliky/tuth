@@ -331,6 +331,7 @@ ROLE_MATRIX = {
             "feestackline",
         ],
         "view": [
+            "course",
             "docdonor",
             "docstaff",
             "donor",
@@ -389,6 +390,7 @@ ROLE_MATRIX = {
             "feestackline",
         ],
         "view": [
+            "course",
             "docdonor",
             "docstaff",
             "docstd",

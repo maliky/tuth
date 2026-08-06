@@ -39,3 +39,12 @@ def test_expand_rights_resolves_to_existing_models() -> None:
 def test_load_roles_runs_with_explicit_finance_model_names() -> None:
     """load_roles command should run without relying on alias expansion."""
     call_command("load_roles", verbosity=0)
+
+
+def test_finance_roles_can_view_courses_for_fee_stack_autocomplete() -> None:
+    """Finance fee-stack editors need read-only course access for autocomplete."""
+    for role in ("finance", "finance_officer"):
+        assert "course" in ROLE_MATRIX[role]["view"]
+        assert "course" not in ROLE_MATRIX[role].get("add", [])
+        assert "course" not in ROLE_MATRIX[role].get("change", [])
+        assert "course" not in ROLE_MATRIX[role].get("delete", [])
