@@ -1,0 +1,146 @@
+{% extends "website/portal_base.html" %}
+{% load static %}
+
+{% block page_title %}Enrollment request · Tusis{% endblock %}
+{% block portal_body_class %}staff-portal-body{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/staff-dashboard.css' %}" />
+{% endblock %}
+
+{% block portal_sidebar %}
+  {% include "website/partials/sidebar.html" with sidebar_title=application.full_name sidebar_subtitle=application.get_status_display sidebar_links=sidebar_links sidebar_nav_label="Applicant" sidebar_avatar_initial=application.first_name sidebar_footer_title="Support" sidebar_footer_text="enrollment@wvstu.online" %}
+{% endblock %}
+
+{% block header_eyebrow %}Applicant portal{% endblock %}
+{% block header_title %}Enrollment request{% endblock %}
+{% block header_actions %}
+  <a class="btn portal-btn-accent btn-sm" href="{% url 'portal_logout' %}">Log out</a>
+{% endblock %}
+
+{% block content %}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="row g-4">
+    <div class="col-xl-4">
+      <section class="portal-panel-card h-100">
+        <div class="portal-panel-card__stripe"></div>
+        <div class="portal-panel-card__body">
+          <h2 class="h5 mb-3">Status</h2>
+          <p><strong>{{ application.get_status_display }}</strong></p>
+          <p class="mb-1">{{ application.get_academic_career_display }}</p>
+          <p class="mb-0">{{ application.desired_program_name }}</p>
+          <p class="mb-0 text-muted">{{ application.desired_academic_year|default:"" }}</p>
+        </div>
+      </section>
+    </div>
+    <div class="col-xl-8">
+      <section class="portal-panel-card h-100">
+        <div class="portal-panel-card__stripe"></div>
+        <div class="portal-panel-card__body">
+          <h2 class="h5 mb-3">Messages</h2>
+          <ul class="list-group list-group-flush">
+            {% for communication in communications %}
+              <li class="list-group-item px-0">
+                <strong>{{ communication.subject }}</strong><br />
+                <small class="text-muted">{{ communication.sent_at }}</small>
+                <p class="mb-0 mt-2">{{ communication.body|linebreaksbr }}</p>
+              </li>
+            {% empty %}
+              <li class="list-group-item px-0 text-muted">No messages yet.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  {% if can_edit_application %}
+    <section class="portal-panel-card mt-4">
+      <div class="portal-panel-card__stripe"></div>
+      <div class="portal-panel-card__body">
+        <h2 class="h5 mb-3">Application information</h2>
+        <form method="post" class="row g-3" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="action" value="profile" />
+          {% if profile_form.non_field_errors %}
+            <div class="col-12 text-danger small">{{ profile_form.non_field_errors|join:", " }}</div>
+          {% endif %}
+          <div class="col-md-4">{% include "website/enrollment_applications/_field.html" with field=profile_form.personal_email %}</div>
+          <div class="col-md-4">{% include "website/enrollment_applications/_field.html" with field=profile_form.academic_career %}</div>
+          <div class="col-md-4">{% include "website/enrollment_applications/_field.html" with field=profile_form.desired_curriculum %}</div>
+          <div class="col-md-4">{% include "website/enrollment_applications/_field.html" with field=profile_form.desired_academic_year %}</div>
+          <div class="col-md-2">{% include "website/enrollment_applications/_field.html" with field=profile_form.prefix_name %}</div>
+          <div class="col-md-3">{% include "website/enrollment_applications/_field.html" with field=profile_form.first_name %}</div>
+          <div class="col-md-3">{% include "website/enrollment_applications/_field.html" with field=profile_form.middle_name %}</div>
+          <div class="col-md-3">{% include "website/enrollment_applications/_field.html" with field=profile_form.last_name %}</div>
+          <div class="col-md-1">{% include "website/enrollment_applications/_field.html" with field=profile_form.suffix_name %}</div>
+          <div class="col-md-4">{% include "website/enrollment_applications/_field.html" with field=profile_form.phone_number %}</div>
+          <div class="col-md-4">{% include "website/enrollment_applications/_field.html" with field=profile_form.gender %}</div>
+          <div class="col-md-4">{% include "website/enrollment_applications/_field.html" with field=profile_form.birth_date %}</div>
+          <div class="col-md-4">{% include "website/enrollment_applications/_field.html" with field=profile_form.birth_place %}</div>
+          <div class="col-md-4">{% include "website/enrollment_applications/_field.html" with field=profile_form.nationality %}</div>
+          <div class="col-md-4">{% include "website/enrollment_applications/_field.html" with field=profile_form.origin_county %}</div>
+          <div class="col-md-4">{% include "website/enrollment_applications/_field.html" with field=profile_form.marital_status %}</div>
+          <div class="col-md-8">{% include "website/enrollment_applications/_field.html" with field=profile_form.physical_address %}</div>
+          <div class="col-md-6">{% include "website/enrollment_applications/_field.html" with field=profile_form.last_school_attended %}</div>
+          <div class="col-md-6">{% include "website/enrollment_applications/_field.html" with field=profile_form.emergency_contact %}</div>
+          <div class="col-12">{% include "website/enrollment_applications/_field.html" with field=profile_form.reason_for_leaving %}</div>
+          <div class="col-md-6">{% include "website/enrollment_applications/_field.html" with field=profile_form.father_name %}</div>
+          <div class="col-md-6">{% include "website/enrollment_applications/_field.html" with field=profile_form.mother_name %}</div>
+          <div class="col-md-6">{% include "website/enrollment_applications/_field.html" with field=profile_form.father_address %}</div>
+          <div class="col-md-6">{% include "website/enrollment_applications/_field.html" with field=profile_form.mother_address %}</div>
+          <div class="col-12">
+            <button class="btn portal-btn-accent" type="submit">Save application</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  {% else %}
+    <div class="alert alert-secondary mt-4">This request is read-only.</div>
+  {% endif %}
+
+  <div class="row g-4 mt-1">
+    {% if can_edit_application %}
+      <div class="col-xl-6">
+        <section class="portal-panel-card h-100">
+          <div class="portal-panel-card__stripe"></div>
+          <div class="portal-panel-card__body">
+            <h2 class="h5 mb-3">Upload document</h2>
+            <form method="post" enctype="multipart/form-data" class="row g-3" novalidate>
+              {% csrf_token %}
+              <input type="hidden" name="action" value="document" />
+              <div class="col-md-6">{% include "website/enrollment_applications/_field.html" with field=document_form.document_type %}</div>
+              <div class="col-md-6">{% include "website/enrollment_applications/_field.html" with field=document_form.data_file %}</div>
+              <div class="col-12">
+                <button class="btn portal-btn-accent" type="submit">Upload</button>
+              </div>
+            </form>
+          </div>
+        </section>
+      </div>
+    {% endif %}
+    <div class="{% if can_edit_application %}col-xl-6{% else %}col-12{% endif %}">
+      <section class="portal-panel-card h-100">
+        <div class="portal-panel-card__stripe"></div>
+        <div class="portal-panel-card__body">
+          <h2 class="h5 mb-3">Documents</h2>
+          <ul class="list-group list-group-flush">
+            {% for doc in documents %}
+              <li class="list-group-item px-0">
+                <strong>{{ doc.document_type }}</strong><br />
+                <small class="text-muted">{{ doc.status }} · {{ doc.data_file.name }}</small>
+              </li>
+            {% empty %}
+              <li class="list-group-item px-0 text-muted">No documents uploaded.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </section>
+    </div>
+  </div>
+{% endblock %}

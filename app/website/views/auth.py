@@ -25,6 +25,11 @@ def portal_redirect(request: HttpRequest) -> HttpResponse:
     if user.is_superuser or user_groups.intersection(ADMIN_PORTAL_GROUPS):
         return redirect("admin:index")
 
+    if getattr(user, "enrollment_application", None) and not getattr(
+        user, "student", None
+    ):
+        return redirect("applicant_dashboard")
+
     if getattr(user, "student", None):
         return redirect("student_dashboard")
 

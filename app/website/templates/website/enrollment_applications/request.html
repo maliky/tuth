@@ -1,0 +1,52 @@
+{% extends "website/base.html" %}
+
+{% block title %}Request enrollment · Tusis{% endblock %}
+
+{% block content %}
+  <section class="py-5">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-xl-10">
+          <div class="card shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex flex-wrap justify-content-between gap-2 mb-4">
+                <div>
+                  <p class="text-uppercase text-muted small mb-1">Enrollment</p>
+                  <h1 class="h3 mb-0">Request enrollment</h1>
+                </div>
+                <a class="btn btn-outline-secondary btn-sm align-self-start" href="{% url 'portal_login' %}">Sign in</a>
+              </div>
+
+              {% if messages %}
+                {% for message in messages %}
+                  <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+
+              <form method="post" enctype="multipart/form-data" class="row g-3" novalidate>
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                  <div class="col-12 text-danger small">{{ form.non_field_errors|join:", " }}</div>
+                {% endif %}
+
+                <div class="col-md-6">{% include "website/enrollment_applications/_field.html" with field=form.personal_email %}</div>
+                <div class="col-md-3">{% include "website/enrollment_applications/_field.html" with field=form.password1 %}</div>
+                <div class="col-md-3">{% include "website/enrollment_applications/_field.html" with field=form.password2 %}</div>
+                <div class="col-md-6">{% include "website/enrollment_applications/_field.html" with field=form.first_name %}</div>
+                <div class="col-md-6">{% include "website/enrollment_applications/_field.html" with field=form.last_name %}</div>
+                <div class="col-md-4">{% include "website/enrollment_applications/_field.html" with field=form.academic_career %}</div>
+                <div class="col-md-5">{% include "website/enrollment_applications/_field.html" with field=form.desired_curriculum %}</div>
+                <div class="col-md-3">{% include "website/enrollment_applications/_field.html" with field=form.desired_academic_year %}</div>
+
+                <div class="col-12">
+                  <button class="btn btn-success" type="submit">Submit request</button>
+                  <a class="btn btn-outline-secondary" href="{% url 'portal_login' %}">Back to sign in</a>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}

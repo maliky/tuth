@@ -173,6 +173,24 @@ MEDIA_URL = "/media/"
 STATIC_ROOT = BASE_DIR / "static/"
 MEDIA_ROOT = BASE_DIR / "media/"
 
+# Email is configured from environment so deployments can use the local mail stack.
+EMAIL_BACKEND = os.getenv(
+    "DJANGO_EMAIL_BACKEND",
+    "django.core.mail.backends.smtp.EmailBackend",
+)
+EMAIL_HOST = os.getenv("DJANGO_EMAIL_HOST", "localhost")
+EMAIL_PORT = int(os.getenv("DJANGO_EMAIL_PORT", "25"))
+EMAIL_HOST_USER = os.getenv("DJANGO_EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("DJANGO_EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.getenv("DJANGO_EMAIL_USE_TLS", "False") == "True"
+EMAIL_USE_SSL = os.getenv("DJANGO_EMAIL_USE_SSL", "False") == "True"
+DEFAULT_FROM_EMAIL = os.getenv("DJANGO_DEFAULT_FROM_EMAIL", "enrollment@wvstu.online")
+ENROLLMENT_DEFAULT_FROM_EMAIL = os.getenv(
+    "DJANGO_ENROLLMENT_FROM_EMAIL",
+    DEFAULT_FROM_EMAIL,
+)
+TUSIS_PUBLIC_BASE_URL = os.getenv("TUSIS_PUBLIC_BASE_URL", "")
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 

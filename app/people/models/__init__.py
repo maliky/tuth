@@ -1,6 +1,13 @@
 """Initialization for the models package."""
 
 from app.people.models.donor import Donor
+from app.people.models.enrollment_application import (
+    EnrollmentApplication,
+    EnrollmentApplicationDoc,
+    EnrollmentApplicationStatus,
+    EnrollmentCommunication,
+    EnrollmentEmailTemplate,
+)
 from app.people.models.student import Student
 from app.people.models.student_curriculum_enrollment import StdCurriEnroll
 from app.people.models.staffs import Staff
@@ -10,6 +17,11 @@ from .role_assignment import RoleAssignment
 
 __all__ = [
     "Donor",
+    "EnrollmentApplication",
+    "EnrollmentApplicationDoc",
+    "EnrollmentApplicationStatus",
+    "EnrollmentCommunication",
+    "EnrollmentEmailTemplate",
     "Faculty",
     "FacultyManager",
     "FacultyWorkloadSnapshot",

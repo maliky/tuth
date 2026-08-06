@@ -1,0 +1,110 @@
+{% extends "website/staff/base.html" %}
+
+{% block staff_header_actions %}
+  <a class="btn portal-btn-outline btn-sm" href="{% url 'enrollment_applications' %}">Requests</a>
+{% endblock %}
+
+{% block staff_content %}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="row g-4">
+    <div class="col-xl-6">
+      <section class="portal-panel-card h-100">
+        <div class="portal-panel-card__stripe"></div>
+        <div class="portal-panel-card__body">
+          <h2 class="h5 mb-3">Applicant</h2>
+          <dl class="row mb-0">
+            <dt class="col-sm-4">Name</dt><dd class="col-sm-8">{{ application.full_name }}</dd>
+            <dt class="col-sm-4">Email</dt><dd class="col-sm-8">{{ application.personal_email }}</dd>
+            <dt class="col-sm-4">Phone</dt><dd class="col-sm-8">{{ application.phone_number|default:"Not set" }}</dd>
+            <dt class="col-sm-4">Status</dt><dd class="col-sm-8">{{ application.get_status_display }}</dd>
+            <dt class="col-sm-4">Email verified</dt><dd class="col-sm-8">{{ application.is_email_verified|yesno:"Yes,No" }}</dd>
+          </dl>
+        </div>
+      </section>
+    </div>
+    <div class="col-xl-6">
+      <section class="portal-panel-card h-100">
+        <div class="portal-panel-card__stripe"></div>
+        <div class="portal-panel-card__body">
+          <h2 class="h5 mb-3">Program</h2>
+          <dl class="row mb-0">
+            <dt class="col-sm-4">Career</dt><dd class="col-sm-8">{{ application.get_academic_career_display }}</dd>
+            <dt class="col-sm-4">Program</dt><dd class="col-sm-8">{{ application.desired_program_name }}</dd>
+            <dt class="col-sm-4">College</dt><dd class="col-sm-8">{{ application.desired_curriculum.college }}</dd>
+            <dt class="col-sm-4">Academic year</dt><dd class="col-sm-8">{{ application.desired_academic_year|default:"Not set" }}</dd>
+            <dt class="col-sm-4">Converted</dt><dd class="col-sm-8">{{ application.converted_student|default:"No" }}</dd>
+          </dl>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <section class="portal-panel-card mt-4">
+    <div class="portal-panel-card__stripe"></div>
+    <div class="portal-panel-card__body">
+      <h2 class="h5 mb-3">Review</h2>
+      <form method="post" class="row g-3" novalidate>
+        {% csrf_token %}
+        <div class="col-md-4">{{ review_form.status.label_tag }}{{ review_form.status }}</div>
+        <div class="col-md-4 d-flex align-items-end gap-2">
+          {{ review_form.documents_reviewed }} {{ review_form.documents_reviewed.label_tag }}
+        </div>
+        <div class="col-md-4 d-flex align-items-end gap-2">
+          {{ review_form.placement_exam_completed }} {{ review_form.placement_exam_completed.label_tag }}
+        </div>
+        <div class="col-12">{{ review_form.review_notes.label_tag }}{{ review_form.review_notes }}</div>
+        {% if can_manage_requests %}
+          <div class="col-12 d-flex flex-wrap gap-2">
+            <button class="btn portal-btn-accent" type="submit" name="action" value="save">Save review</button>
+            <button class="btn btn-success" type="submit" name="action" value="approve">Approve</button>
+            <button class="btn btn-outline-danger" type="submit" name="action" value="reject">Reject</button>
+          </div>
+        {% endif %}
+      </form>
+    </div>
+  </section>
+
+  <div class="row g-4 mt-1">
+    <div class="col-xl-6">
+      <section class="portal-panel-card h-100">
+        <div class="portal-panel-card__stripe"></div>
+        <div class="portal-panel-card__body">
+          <h2 class="h5 mb-3">Documents</h2>
+          <ul class="list-group list-group-flush">
+            {% for doc in documents %}
+              <li class="list-group-item px-0">
+                <strong>{{ doc.document_type }}</strong><br />
+                <small class="text-muted">{{ doc.status }} · {{ doc.data_file.name }}</small>
+              </li>
+            {% empty %}
+              <li class="list-group-item px-0 text-muted">No documents uploaded.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </section>
+    </div>
+    <div class="col-xl-6">
+      <section class="portal-panel-card h-100">
+        <div class="portal-panel-card__stripe"></div>
+        <div class="portal-panel-card__body">
+          <h2 class="h5 mb-3">Communications</h2>
+          <ul class="list-group list-group-flush">
+            {% for communication in communications %}
+              <li class="list-group-item px-0">
+                <strong>{{ communication.subject }}</strong><br />
+                <small class="text-muted">{{ communication.sent_at }} · {{ communication.email_sent|yesno:"Sent,Stored only" }}</small>
+              </li>
+            {% empty %}
+              <li class="list-group-item px-0 text-muted">No communications sent.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </section>
+    </div>
+  </div>
+{% endblock %}

@@ -27,6 +27,17 @@ urlpatterns = [
     path("auth/login/", views.PortalLoginView.as_view(), name="portal_login"),
     path("auth/logout/", views.PortalLogoutView.as_view(), name="portal_logout"),
     path(
+        "enrollment/request/",
+        views.request_enrollment,
+        name="request_enrollment",
+    ),
+    path(
+        "enrollment/request/<path:token>/verify/",
+        views.verify_enrollment_request,
+        name="enrollment_application_verify",
+    ),
+    path("applicant/", views.applicant_dashboard, name="applicant_dashboard"),
+    path(
         "student/invoice/statement/",
         views.std_invoice_statement,
         name="std_invoice_statement",
@@ -215,6 +226,26 @@ urlpatterns = [
         "students/admin-edit/",
         views.std_admin_edit,
         name="std_admin_edit",
+    ),
+    path(
+        "enrollment/applications/",
+        views.enrollment_applications,
+        name="enrollment_applications",
+    ),
+    path(
+        "enrollment/applications/<int:application_id>/",
+        views.enrollment_application_detail,
+        name="enrollment_application_detail",
+    ),
+    path(
+        "enrollment/applications/email-template/",
+        views.enrollment_email_template,
+        name="enrollment_email_template",
+    ),
+    path(
+        "enrollment/applications/communications/",
+        views.enrollment_communications,
+        name="enrollment_communications",
     ),
     path(
         "registrar/course-windows/",

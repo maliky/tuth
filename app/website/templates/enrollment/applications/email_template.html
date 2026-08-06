@@ -1,0 +1,36 @@
+{% extends "website/staff/base.html" %}
+
+{% block staff_header_actions %}
+  <a class="btn portal-btn-outline btn-sm" href="{% url 'enrollment_applications' %}">Requests</a>
+{% endblock %}
+
+{% block staff_content %}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+  <section class="portal-panel-card">
+    <div class="portal-panel-card__stripe"></div>
+    <div class="portal-panel-card__body">
+      <h2 class="h5 mb-3">Verification email</h2>
+      <form method="post" class="row g-3" novalidate>
+        {% csrf_token %}
+        <div class="col-12">
+          {{ form.subject.label_tag }}
+          {{ form.subject }}
+          {% if form.subject.errors %}<div class="text-danger small">{{ form.subject.errors|join:", " }}</div>{% endif %}
+        </div>
+        <div class="col-12">
+          {{ form.body.label_tag }}
+          {{ form.body }}
+          {% if form.body.errors %}<div class="text-danger small">{{ form.body.errors|join:", " }}</div>{% endif %}
+          <div class="form-text">Available placeholders: {applicant_name}, {code}, {username}, {career}, {program}, {verification_url}</div>
+        </div>
+        <div class="col-12">
+          <button class="btn portal-btn-accent" type="submit">Save template</button>
+        </div>
+      </form>
+    </div>
+  </section>
+{% endblock %}

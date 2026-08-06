@@ -44,9 +44,14 @@
               {% if next %}
                 <input type="hidden" name="next" value="{{ next }}">
               {% endif %}
-              <button class="btn landing-primary-cta w-100" type="submit">
-                Continue
-              </button>
+              <div class="d-grid gap-2">
+                <button class="btn landing-primary-cta" type="submit">
+                  Continue
+                </button>
+                <a class="btn btn-outline-success" href="{% url 'request_enrollment' %}">
+                  Request enrollment
+                </a>
+              </div>
             </form>
 
             <p class="small text-muted mt-4 mb-0">

@@ -31,6 +31,7 @@ from app.finance.models.scholarship import (
     ScholarshipTermSnapshot,
 )
 from app.people.models.faculty import Faculty, FacultyWorkloadSnapshot
+from app.people.models.enrollment_application import EnrollmentApplication
 from app.people.models.student import Student
 from app.registry.models.document import DocStd
 from app.registry.models.grade import Grade
@@ -508,12 +509,30 @@ def _build_vpaa_context(request: HttpRequest) -> RoleContextT:
     }
 
 
-def _build_enrollment_context(request: HttpRequest) -> RoleContextT:
+def _build_enrollment_context_for_role(
+    request: HttpRequest,
+    role_slug: str,
+) -> RoleContextT:
+    """Build enrollment dashboard metrics for one enrollment role."""
     user = _as_user(request.user)
-    students_qs = Student.objects.all()
+    career = selected_academic_career(request.GET)
+    students_qs = filter_by_academic_career(
+        Student.objects.all(),
+        "academic_career",
+        career,
+    )
     total_students = students_qs.count()
-    onboarding = students_qs.filter(last_enrolled_semester__isnull=True).count()
-    pending_docs = DocStd.objects.filter(status__code="pending").count()
+    onboarding = filter_by_academic_career(
+        EnrollmentApplication.objects.exclude(status="approved"),
+        "academic_career",
+        career,
+    ).count()
+    pending_doc_qs = DocStd.objects.filter(status__code="pending")
+    pending_docs = filter_by_academic_career(
+        pending_doc_qs,
+        "person__academic_career",
+        career,
+    ).count()
     recent_students = list(students_qs.order_by("-id")[:6])
     student_items: list[PanelItemT] = [
         {
@@ -543,12 +562,19 @@ def _build_enrollment_context(request: HttpRequest) -> RoleContextT:
         ],
         "actions": [],
         "admin_shortcuts": enrollment_admin_shortcuts(user),
-        "show_action_panel": False,
+        "career_selector": career_selector_context(
+            request.GET,
+            action_url=reverse("staff_role_dashboard", args=[role_slug]),
+        ),
     }
 
 
+def _build_enrollment_context(request: HttpRequest) -> RoleContextT:
+    return _build_enrollment_context_for_role(request, "enrollment")
+
+
 def _build_enrollment_officer_context(request: HttpRequest) -> RoleContextT:
-    return _build_enrollment_context(request)
+    return _build_enrollment_context_for_role(request, "enrollment_officer")
 
 
 def _build_reg_context(request: HttpRequest) -> RoleContextT:

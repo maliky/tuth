@@ -1,0 +1,88 @@
+{% extends "website/staff/base.html" %}
+
+{% block staff_header_actions %}
+  <a class="btn portal-btn-outline btn-sm" href="{% url 'enrollment_applications' %}">Requests</a>
+{% endblock %}
+
+{% block staff_content %}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <section class="portal-filter-card mb-4">
+    <div class="portal-filter-card__body">
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label" for="id_q">Search</label>
+          <input class="form-control" id="id_q" name="q" value="{{ filters.q }}" placeholder="Name, email, program, college" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="id_status">Status</label>
+          <select class="form-select" id="id_status" name="status">
+            <option value="">All statuses</option>
+            {% for value,label in statuses %}
+              <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% if career_selector %}
+          <div class="col-md-3">
+            <label class="form-label" for="{{ career_selector.param_name }}">Academic career</label>
+            <select class="form-select" id="{{ career_selector.param_name }}" name="{{ career_selector.param_name }}">
+              {% for option in career_selector.options %}
+                <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        {% endif %}
+        <div class="col-md-2">
+          <button class="btn portal-btn-accent w-100" type="submit">Filter</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="portal-panel-card">
+    <div class="portal-panel-card__stripe"></div>
+    <div class="portal-panel-card__body">
+      <h2 class="h5 mb-3">Send message</h2>
+      <form method="post" class="row g-3" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+          <div class="col-12 text-danger small">{{ form.non_field_errors|join:", " }}</div>
+        {% endif %}
+        <div class="col-12">{{ form.subject.label_tag }}{{ form.subject }}</div>
+        <div class="col-12">{{ form.body.label_tag }}{{ form.body }}</div>
+        <div class="col-12 form-check ms-2">
+          {{ form.send_to_filtered }}
+          <label class="form-check-label" for="{{ form.send_to_filtered.id_for_label }}">Send to all filtered applicants</label>
+        </div>
+        <div class="col-12">
+          <h3 class="h6">Filtered applicants</h3>
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead><tr><th></th><th>Applicant</th><th>Program</th><th>Status</th></tr></thead>
+              <tbody>
+                {% for application in applications %}
+                  <tr>
+                    <td><input type="checkbox" name="selected_applications" value="{{ application.id }}" /></td>
+                    <td>{{ application.full_name }}<br /><small class="text-muted">{{ application.personal_email }}</small></td>
+                    <td>{{ application.desired_program_name }}</td>
+                    <td>{{ application.get_status_display }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="4" class="text-muted">No matching applicants.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="col-12">
+          <button class="btn portal-btn-accent" type="submit">Send communication</button>
+        </div>
+      </form>
+    </div>
+  </section>
+{% endblock %}

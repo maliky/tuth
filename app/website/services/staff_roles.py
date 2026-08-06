@@ -327,6 +327,12 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
             "icon": "bi-person-plus",
             "key": "create_student",
         },
+        {
+            "label": "Enrollment requests",
+            "route_name": "enrollment_applications",
+            "icon": "bi-file-earmark-person",
+            "key": "enrollment_requests",
+        },
     ],
     "enrollment_officer": [
         {
@@ -346,6 +352,24 @@ ROLE_TASKS: dict[str, list[RoleTaskT]] = {
             "route_name": "create_std",
             "icon": "bi-person-plus",
             "key": "create_student",
+        },
+        {
+            "label": "Enrollment requests",
+            "route_name": "enrollment_applications",
+            "icon": "bi-file-earmark-person",
+            "key": "enrollment_requests",
+        },
+        {
+            "label": "Applicant messages",
+            "route_name": "enrollment_communications",
+            "icon": "bi-envelope",
+            "key": "enrollment_communications",
+        },
+        {
+            "label": "Email template",
+            "route_name": "enrollment_email_template",
+            "icon": "bi-card-text",
+            "key": "enrollment_email_template",
         },
     ],
     "finance": [

@@ -17,6 +17,15 @@ from .enrollment import (
     std_detail,
     std_list,
 )
+from .enrollment_applications import (
+    applicant_dashboard,
+    enrollment_application_detail,
+    enrollment_applications,
+    enrollment_communications,
+    enrollment_email_template,
+    request_enrollment,
+    verify_enrollment_request,
+)
 from .finance_officer import (
     finance_officer_create_payments,
     finance_officer_generate_registration_invoices,
@@ -87,12 +96,17 @@ __all__ = [
     "PortalLoginView",
     "PortalLogoutView",
     "account_profile",
+    "applicant_dashboard",
     "create_std",
     "curriculum_autocomplete",
     "dean_curricula",
     "dean_curriculum_detail",
     "dean_curriculum_export_prereq_graph",
     "dean_curriculum_request_activation",
+    "enrollment_application_detail",
+    "enrollment_applications",
+    "enrollment_communications",
+    "enrollment_email_template",
     "portal_redirect",
     "reg_class_roster_detail",
     "reg_class_rosters",
@@ -139,6 +153,7 @@ __all__ = [
     "finance_officer_std_autocomplete",
     "finance_officer_setup_registration_fee",
     "finance_officer_update_payments",
+    "request_enrollment",
     "faculty_grade_roster",
     "faculty_grade_roster_autosave",
     "faculty_grade_roster_download",
@@ -149,4 +164,5 @@ __all__ = [
     "vpaa_approval_mark_review",
     "vpaa_approval_reject",
     "vpaa_approvals",
+    "verify_enrollment_request",
 ]
